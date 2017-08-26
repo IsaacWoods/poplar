@@ -4,27 +4,33 @@
 ARCH?=x86_64
 BUILD_DIR:=./build
 
+LFLAGS:=-n --gc-sections -T linker.ld
+
 ASM_SOURCES:=$(wildcard src/$(ARCH)/*.s)
 ASM_OBJS:=$(patsubst src/$(ARCH)/%.s, $(BUILD_DIR)/$(ARCH)/%.o, $(ASM_SOURCES))
 
-.PHONY: clean run debug
+.PHONY: clean run debug kernel
 
-os.iso: $(BUILD_DIR)/kernel.bin grub.cfg
+os.iso: grub.cfg $(BUILD_DIR)/kernel.bin
 	mkdir -p $(BUILD_DIR)/iso/boot/grub
 	cp $(BUILD_DIR)/kernel.bin $(BUILD_DIR)/iso/boot/kernel.bin
 	cp grub.cfg $(BUILD_DIR)/iso/boot/grub/grub.cfg
 	grub-mkrescue -o $@ $(BUILD_DIR)/iso 2> /dev/null
 	rm -r $(BUILD_DIR)/iso
 
-$(BUILD_DIR)/kernel.bin: $(ASM_OBJS) linker.ld
+$(BUILD_DIR)/kernel.bin: $(ASM_OBJS) kernel linker.ld
 	mkdir -p $(BUILD_DIR)/iso/boot/grub
-	ld -n -T linker.ld -o $@ $(ASM_OBJS)
+	ld $(LFLAGS) -o $@ $(ASM_OBJS) target/$(ARCH)-rustos/debug/librust_os.a
+
+kernel:
+	xargo build --target=$(ARCH)-rustos
 
 $(BUILD_DIR)/$(ARCH)%.o: src/$(ARCH)%.s
 	mkdir -p $(shell dirname $@)
 	nasm -g -felf64 $< -o $@
 
 clean:
+	cargo clean
 	rm -rf build
 	rm -rf os.iso
 

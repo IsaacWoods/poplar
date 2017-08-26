@@ -1,0 +1,10 @@
+[package]
+name = "rust_os"
+version = "0.0.1"
+authors = ["Isaac Woods"]
+
+[lib]
+crate-type = ["staticlib"]
+
+[dependencies]
+rlibc = "1.0"
