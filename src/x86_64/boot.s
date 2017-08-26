@@ -67,6 +67,55 @@ CheckLongModeSupported:
   mov al, 'L'
   call PrintError
 
+; This identity-maps the virtual memory space to the physical one
+SetupPageTables:
+  ; Map the first P4 entry to the P3 table
+  mov eax, p3_table
+  or eax, 0b11 ; Present + Writable
+  mov [p4_table], eax
+
+  ; Map the first P3 entry to the P2 table
+  mov eax, p2_table
+  or eax, 0b11  ; Present + Writable
+  mov [p3_table], eax
+
+  ; Match each P2 entry to a huge page (2MiB) (where ecx=index of P2 entry)
+  mov ecx, 0
+.map_p2:
+  mov eax, 0x200000 ; Make the page 2MiB
+  mul ecx
+  or eax, 0b10000011  ; Present + Writable + Huge
+  mov [p2_table + ecx * 8], eax
+
+  inc ecx
+  cmp ecx, 512
+  jne .map_p2
+
+  ret
+
+EnablePaging:
+  ; Load our P4 into CR3
+  mov eax, p4_table
+  mov cr3, eax
+
+  ; Enable Physical Address Extension
+  mov eax, cr4
+  or eax, 1<<5
+  mov cr4, eax
+
+  ; Set the Long Mode Bit in the EFER MSR
+  mov ecx, 0xC0000080
+  rdmsr
+  or eax, 1<<8
+  wrmsr
+
+  ; Enable paging
+  mov eax, cr0
+  or eax, 1<<31
+  mov cr0, eax
+
+  ret
+
 Start:
   mov esp, stack_top
 
@@ -80,11 +129,22 @@ Start:
   call CheckCpuidSupported
   call CheckLongModeSupported
 
+  call SetupPageTables
+  call EnablePaging
+
   ; Print OK
   mov dword [0xb8000], 0x2f4b2f4f
   hlt
 
 section .bss
+align 4096  ; Make sure the page-tables are page aligned
+p4_table:
+  resb 4096
+p3_table:
+  resb 4096
+p2_table:
+  resb 4096
+
 stack_bottom:
   resb 64
 stack_top:
