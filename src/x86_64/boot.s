@@ -116,6 +116,7 @@ EnablePaging:
 
   ret
 
+extern StartInLongMode
 Start:
   mov esp, stack_top
 
@@ -132,9 +133,23 @@ Start:
   call SetupPageTables
   call EnablePaging
 
-  ; Print OK
-  mov dword [0xb8000], 0x2f4b2f4f
+  ; We're now technically in Long Mode, but we still can't execute 64-bit instructions, because we've been put into
+  ; a 32-bit compatiblity submode. We now need to replace GRUB's crappy GDT with a proper one and far-jump to the
+  ; new code segment
+  lgdt [gdt64.pointer]
+  jmp gdt64.kernel_code:StartInLongMode
+
   hlt
+
+section .rodata
+gdt64:
+.zeroEntry: equ $-gdt64
+  dq 0
+.kernel_code: equ $-gdt64
+  dq (1<<43)|(1<<44)|(1<<47)|(1<<53)
+.pointer:
+  dw $-gdt64-1
+  dq gdt64
 
 section .bss
 align 4096  ; Make sure the page-tables are page aligned
