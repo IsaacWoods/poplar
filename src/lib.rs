@@ -1,23 +1,29 @@
+/*
+ * Copyright (C) 2017, Isaac Woods.
+ * See LICENCE.md
+ */
+
 #![feature(lang_items)]
+#![feature(const_fn)]
+#![feature(unique)]
 #![no_std]
 
+#![allow(unused_parens)]
+
 extern crate rlibc;
+extern crate volatile;
+extern crate spin;
+
+#[macro_use]
+mod vga_buffer;
 
 #[no_mangle]
 pub extern fn rust_main() {
     // XXX: The stack is very small and has no guard page!
-    let hello = b"Hello World!";
-    let color_byte = 0x1f;  // white on blue
+    vga_buffer::clear_screen();
+    println!("Hello, World!");
 
-    let mut hello_colored = [color_byte; 24];
-    for (i, char_byte) in hello.into_iter().enumerate() {
-        hello_colored[i*2] = *char_byte;
-    }
-
-    let buffer = (0xb8000) as *mut _;
-    unsafe { *buffer = hello_colored };
-
-//    loop { }
+    loop { }
 }
 
 #[lang = "eh_personality"] extern fn eh_personality() { }
