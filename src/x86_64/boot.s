@@ -116,9 +116,10 @@ EnablePaging:
 
   ret
 
-extern StartInLongMode
+extern InLongMode
 Start:
   mov esp, stack_top
+  mov edi, ebx        ; Move the pointer to the Multiboot struct into EDI
 
   ; Check that the multiboot magic GRUB returns is correct
   cmp eax, 0x36d76289
@@ -137,7 +138,7 @@ Start:
   ; a 32-bit compatiblity submode. We now need to replace GRUB's crappy GDT with a proper one and far-jump to the
   ; new code segment
   lgdt [gdt64.pointer]
-  jmp gdt64.kernel_code:StartInLongMode
+  jmp gdt64.kernel_code:InLongMode
 
   hlt
 
@@ -161,5 +162,5 @@ p2_table:
   resb 4096
 
 stack_bottom:
-  resb 64
+  resb 4096*4   ; 4 pages = 16kB
 stack_top:

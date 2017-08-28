@@ -1,4 +1,5 @@
 /target/
+/rust-os-gdb/
 Cargo.lock
 **/*.rs.bk
 

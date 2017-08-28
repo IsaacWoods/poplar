@@ -9,7 +9,7 @@ LFLAGS:=-n --gc-sections -T linker.ld
 ASM_SOURCES:=$(wildcard src/$(ARCH)/*.s)
 ASM_OBJS:=$(patsubst src/$(ARCH)/%.s, $(BUILD_DIR)/$(ARCH)/%.o, $(ASM_SOURCES))
 
-.PHONY: clean run debug kernel
+.PHONY: kernel clean run debug gdb
 
 os.iso: grub.cfg $(BUILD_DIR)/kernel.bin
 	mkdir -p $(BUILD_DIR)/iso/boot/grub
@@ -35,8 +35,11 @@ clean:
 	rm -rf os.iso
 
 run: os.iso
-	qemu-system-$(ARCH) -cdrom os.iso
+	qemu-system-$(ARCH) -enable-kvm -cdrom os.iso
 
 debug: os.iso
 	@echo "Connect with (gdb)target remote localhost:1234"
-	qemu-system-$(ARCH) -s -S -cdrom os.iso
+	qemu-system-$(ARCH) -enable-kvm -s -S -cdrom os.iso
+
+gdb:
+	rust-os-gdb/bin/rust-gdb "build/kernel.bin" -ex "target remote :1234"
