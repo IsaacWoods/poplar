@@ -14,6 +14,8 @@ extern crate rlibc;
 extern crate volatile;
 extern crate spin;
 extern crate multiboot2;
+#[macro_use] extern crate bitflags;
+extern crate x86_64;
 
 #[macro_use] mod vga_buffer;
 mod memory;
@@ -47,18 +49,13 @@ pub extern fn kmain(multiboot_ptr : usize)
     println!("Multiboot start: 0x{:x}, end: 0x{:x}", multiboot_start, multiboot_end);
     println!("Kernel start: 0x{:x}, end: 0x{:x}", kernel_start, kernel_end);
 
-    use memory::FrameAllocator;
+//    use memory::FrameAllocator;
     let mut frame_allocator = memory::AreaFrameAllocator::new(multiboot_start as usize,
                                                               multiboot_end as usize,
                                                               kernel_start as usize,
                                                               kernel_end as usize,
                                                               memory_map_tag.memory_areas());
-    println!("Page allocated: {:?}", frame_allocator.allocate_frame());
-    println!("Page allocated: {:?}", frame_allocator.allocate_frame());
-    println!("Page allocated: {:?}", frame_allocator.allocate_frame());
-    println!("Page allocated: {:?}", frame_allocator.allocate_frame());
-    println!("Page allocated: {:?}", frame_allocator.allocate_frame());
-    println!("Page allocated: {:?}", frame_allocator.allocate_frame());
+    memory::test_paging(&mut frame_allocator);
 
     loop { }
 }

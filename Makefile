@@ -15,7 +15,7 @@ os.iso: grub.cfg $(BUILD_DIR)/kernel.bin
 	mkdir -p $(BUILD_DIR)/iso/boot/grub
 	cp $(BUILD_DIR)/kernel.bin $(BUILD_DIR)/iso/boot/kernel.bin
 	cp grub.cfg $(BUILD_DIR)/iso/boot/grub/grub.cfg
-	grub-mkrescue -o $@ $(BUILD_DIR)/iso 2> /dev/null
+	grub2-mkrescue -o $@ $(BUILD_DIR)/iso 2> /dev/null
 	rm -r $(BUILD_DIR)/iso
 
 $(BUILD_DIR)/kernel.bin: $(ASM_OBJS) kernel linker.ld
