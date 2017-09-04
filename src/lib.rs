@@ -79,17 +79,12 @@ pub extern fn kmain(multiboot_ptr : usize)
                                                               kernel_start as usize,
                                                               kernel_end as usize,
                                                               memory_map_tag.memory_areas());
-//    memory::test_paging(&mut frame_allocator);
     enable_nxe();
     enable_write_protection();
     memory::remap_kernel(&mut frame_allocator, boot_info);
-    println!("We actually didn't crash!");
 
     loop { }
 }
-
-#[lang = "eh_personality"]
-extern fn eh_personality() { }
 
 #[lang = "panic_fmt"]
 #[no_mangle]
@@ -99,3 +94,6 @@ pub extern fn panic_fmt(fmt : core::fmt::Arguments, file : &'static str, line : 
     println!("    {}", fmt);
     loop {}
 }
+
+#[lang = "eh_personality"]
+extern fn eh_personality() { }

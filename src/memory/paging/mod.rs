@@ -218,34 +218,8 @@ pub fn remap_kernel<A>(allocator : &mut A, boot_info : &BootInformation) where A
         });
 
     let old_table = active_table.switch(new_table);
-}
 
-pub fn test_paging<A>(allocator : &mut A) where A : FrameAllocator
-{
-    let mut page_table = unsafe { ActivePageTable::new() };
-    
-    // Test map_to
-    let addr = 42*512*512*4096; // 42nd P3 entry
-    let page = Page::get_containing_page(addr);
-    let frame = allocator.allocate_frame().expect("run out of frames");
-    println!("None = {:?}, map to {:?}", page_table.translate(addr), frame);
-    page_table.map_to(page, frame, EntryFlags::empty(), allocator);
-    println!("Some = {:?}", page_table.translate(addr));
-    println!("next free frame: {:?}", allocator.allocate_frame());
-
-    // Try to read stuff from the mapped test page
-    println!("{:#x}", unsafe
-                      {
-                          *(Page::get_containing_page(addr).get_start_address() as *const u64)
-                      });
-
-    // Test unmap
-    page_table.unmap(Page::get_containing_page(addr), allocator);
-    println!("None = {:?}", page_table.translate(addr));
-
-    // Should cause a PF
-/*    println!("{:#x}", unsafe
-                      {
-                          *(Page::get_containing_page(addr).get_start_address() as *const u64)
-                      });*/
+    // Turn the old P4 into a guard page for the stack
+    let old_p4_page = Page::get_containing_page(old_table.p4_frame.get_start_address());
+    active_table.unmap(old_p4_page, allocator);
 }

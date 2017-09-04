@@ -113,7 +113,7 @@ impl Mapper
         tlb::flush(VirtualAddress(page.get_start_address()));
 
         // TODO free p(1,2,3) table if it has become empty
-        allocator.deallocate_frame(frame);
+//        allocator.deallocate_frame(frame); TODO
     }
 
     pub fn map_to<A>(&mut self, page : Page, frame : Frame, flags : EntryFlags, allocator : &mut A) where A : FrameAllocator
