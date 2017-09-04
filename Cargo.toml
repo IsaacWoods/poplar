@@ -13,3 +13,6 @@ spin = "0.4.5"
 multiboot2 = "0.1.0"
 bitflags = "0.9.1"
 x86_64="0.1.2"
+
+[dependencies.bump_allocator]
+path = "libs/bump_allocator"

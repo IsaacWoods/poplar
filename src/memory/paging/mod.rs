@@ -20,7 +20,32 @@ const ENTRY_COUNT : usize = 512;
 pub type PhysicalAddress = usize;
 pub type VirtualAddress  = usize;
 
-#[derive(Debug,Clone,Copy)]
+pub struct PageIter
+{
+    start : Page,
+    end   : Page,
+}
+
+impl Iterator for PageIter
+{
+    type Item = Page;
+
+    fn next(&mut self) -> Option<Page>
+    {
+        if self.start <= self.end
+        {
+            let page = self.start;
+            self.start.number += 1;
+            Some(page)
+        }
+        else
+        {
+            None
+        }
+    }
+}
+
+#[derive(Debug,Clone,Copy,PartialEq,Eq,PartialOrd,Ord)]
 pub struct Page
 {
   number : usize,
@@ -28,6 +53,15 @@ pub struct Page
 
 impl Page
 {
+    pub fn range_inclusive(start : Page, end : Page) -> PageIter
+    {
+        PageIter
+        {
+            start : start,
+            end   : end,
+        }
+    }
+
     fn get_start_address(&self) -> usize
     {
         self.number * PAGE_SIZE
@@ -163,7 +197,7 @@ impl InactivePageTable
     }
 }
 
-pub fn remap_kernel<A>(allocator : &mut A, boot_info : &BootInformation) where A : FrameAllocator
+pub fn remap_kernel<A>(allocator : &mut A, boot_info : &BootInformation) -> ActivePageTable where A : FrameAllocator
 {
     /*
      * First, we create a temporary page at an address that we know should be unused.
@@ -222,4 +256,6 @@ pub fn remap_kernel<A>(allocator : &mut A, boot_info : &BootInformation) where A
     // Turn the old P4 into a guard page for the stack
     let old_p4_page = Page::get_containing_page(old_table.p4_frame.get_start_address());
     active_table.unmap(old_p4_page, allocator);
+
+    active_table
 }

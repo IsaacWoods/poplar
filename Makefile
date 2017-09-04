@@ -30,7 +30,7 @@ $(BUILD_DIR)/$(ARCH)%.o: src/$(ARCH)%.s
 	nasm -g -felf64 $< -o $@
 
 clean:
-	cargo clean
+	xargo clean
 	rm -rf build
 	rm -rf os.iso
 
