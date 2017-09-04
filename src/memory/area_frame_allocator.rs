@@ -47,7 +47,7 @@ impl AreaFrameAllocator
         if let Some(area) = self.current_area
         {
             let start_frame = Frame::get_containing_frame(area.base_addr as usize);
-            if (self.next_free_frame < start_frame)
+            if self.next_free_frame < start_frame
             {
                 self.next_free_frame = start_frame;
             }

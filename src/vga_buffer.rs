@@ -127,7 +127,7 @@ impl Writer
             b'\n' => self.new_line(),
             byte =>
             {
-                if (self.col_position >= BUFFER_WIDTH)
+                if self.col_position >= BUFFER_WIDTH
                 {
                     self.new_line();
                 }

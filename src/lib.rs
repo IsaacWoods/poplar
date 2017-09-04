@@ -9,8 +9,6 @@
 #![feature(alloc)]
 #![no_std]
 
-#![allow(unused_parens)]
-
 extern crate rlibc;
 extern crate volatile;
 extern crate spin;
