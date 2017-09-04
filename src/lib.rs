@@ -20,6 +20,31 @@ extern crate x86_64;
 #[macro_use] mod vga_buffer;
 mod memory;
 
+/*
+ * Setting the NXE bit in the EFER allows us to use the No-Execute bit on page tables
+ * Without this, our paging system will cause Page Protection Violation exceptions
+ */
+fn enable_nxe()
+{
+    use x86_64::registers::msr::{IA32_EFER,rdmsr,wrmsr};
+
+    unsafe
+    {
+        let efer = rdmsr(IA32_EFER);
+        wrmsr(IA32_EFER, efer | (1<<11));
+    }
+}
+
+fn enable_write_protection()
+{
+    use x86_64::registers::control_regs::{Cr0,cr0,cr0_write};
+
+    unsafe
+    {
+        cr0_write(cr0() | Cr0::WRITE_PROTECT);
+    }
+}
+
 #[no_mangle]
 pub extern fn kmain(multiboot_ptr : usize)
 {
@@ -55,6 +80,8 @@ pub extern fn kmain(multiboot_ptr : usize)
                                                               kernel_end as usize,
                                                               memory_map_tag.memory_areas());
 //    memory::test_paging(&mut frame_allocator);
+    enable_nxe();
+    enable_write_protection();
     memory::remap_kernel(&mut frame_allocator, boot_info);
     println!("We actually didn't crash!");
 

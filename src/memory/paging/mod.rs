@@ -184,8 +184,6 @@ pub fn remap_kernel<A>(allocator : &mut A, boot_info : &BootInformation) where A
              */
             for section in elf_sections_tag.sections()
             {
-                use self::entry::WRITABLE;
-
                 if !(section.is_allocated())
                 {
                     // The section is not in memory, so skip it
@@ -195,7 +193,7 @@ pub fn remap_kernel<A>(allocator : &mut A, boot_info : &BootInformation) where A
                 assert!(section.start_address() % PAGE_SIZE == 0, "sections must be page aligned");
                 println!("mapping section at addr: {:#x}, size: {:#x}", section.addr, section.size);
 
-                let flags = WRITABLE;   // TODO: set these flags depending on section type
+                let flags = EntryFlags::from_elf_section(section);
                 let start_frame = Frame::get_containing_frame(section.start_address());
                 let end_frame = Frame::get_containing_frame(section.end_address() - 1);
 
@@ -220,7 +218,6 @@ pub fn remap_kernel<A>(allocator : &mut A, boot_info : &BootInformation) where A
         });
 
     let old_table = active_table.switch(new_table);
-    println!("Using new table!");
 }
 
 pub fn test_paging<A>(allocator : &mut A) where A : FrameAllocator
