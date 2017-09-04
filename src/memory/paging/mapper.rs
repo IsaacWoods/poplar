@@ -3,10 +3,10 @@
  * See LICENCE.md
  */
 
-use super::{VirtualAddress,PhysicalAddress,Page,ENTRY_COUNT};
+use super::{VirtualAddress,PhysicalAddress,Page,PAGE_SIZE,ENTRY_COUNT};
 use super::entry::*;
 use super::table::{self,Table,Level4};
-use memory::{PAGE_SIZE,Frame,FrameAllocator};
+use memory::{Frame,FrameAllocator};
 use core::ptr::Unique;
 
 pub struct Mapper

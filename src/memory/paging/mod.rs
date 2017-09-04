@@ -9,12 +9,14 @@ mod temporary_page;
 mod mapper;
 
 pub use self::entry::*;
+
 use self::mapper::Mapper;
 use self::temporary_page::TemporaryPage;
-use memory::{PAGE_SIZE,Frame,FrameAllocator};
+use memory::{Frame,FrameAllocator};
 use core::ops::{Deref,DerefMut};
 use multiboot2::BootInformation;
 
+pub const PAGE_SIZE : usize = 4096;
 const ENTRY_COUNT : usize = 512;
 
 pub type PhysicalAddress = usize;

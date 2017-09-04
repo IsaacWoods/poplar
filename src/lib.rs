@@ -3,20 +3,22 @@
  * See LICENCE.md
  */
 
+#![no_std]
+
 #![feature(lang_items)]
 #![feature(const_fn)]
 #![feature(unique)]
 #![feature(alloc)]
-#![no_std]
 
-extern crate rlibc;
+#[allow(unused_extern_crates)] extern crate rlibc;  // This is used, but the compiler doesn't realise it
 extern crate volatile;
 extern crate spin;
 extern crate multiboot2;
 #[macro_use] extern crate bitflags;
 extern crate x86_64;
-extern crate bump_allocator;
 #[macro_use] extern crate alloc;
+extern crate bump_allocator;
+
 #[macro_use] mod util;
 #[macro_use] mod vga_buffer;
 mod memory;

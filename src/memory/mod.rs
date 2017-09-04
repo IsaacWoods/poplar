@@ -9,10 +9,8 @@ mod paging;
 pub use self::area_frame_allocator::AreaFrameAllocator;
 pub use self::paging::remap_kernel;
 
-use self::paging::PhysicalAddress;
+use self::paging::{PAGE_SIZE,PhysicalAddress};
 use multiboot2::BootInformation;
-
-pub const PAGE_SIZE : usize = 4096;
 
 pub fn init(boot_info : &BootInformation)
 {
