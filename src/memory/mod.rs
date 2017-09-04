@@ -9,6 +9,7 @@ mod paging;
 pub use self::paging::test_paging;
 
 pub use self::area_frame_allocator::AreaFrameAllocator;
+pub use self::paging::remap_kernel;
 use self::paging::PhysicalAddress;
 
 pub const PAGE_SIZE : usize = 4096;
@@ -17,6 +18,31 @@ pub const PAGE_SIZE : usize = 4096;
 pub struct Frame
 {
     number : usize
+}
+
+struct FrameIter
+{
+    start : Frame,
+    end   : Frame
+}
+
+impl Iterator for FrameIter
+{
+    type Item = Frame;
+
+    fn next(&mut self) -> Option<Frame>
+    {
+        if self.start <= self.end
+        {
+            let frame = self.start.clone();
+            self.start.number += 1;
+            Some(frame)
+        }
+        else
+        {
+            None
+        }
+    }
 }
 
 impl Frame
@@ -29,6 +55,20 @@ impl Frame
     fn get_start_address(&self) -> PhysicalAddress
     {
         self.number * PAGE_SIZE
+    }
+
+    fn clone(&self) -> Frame
+    {
+        Frame { number : self.number }
+    }
+
+    fn range_inclusive(start : Frame, end : Frame) -> FrameIter
+    {
+        FrameIter
+        {
+            start : start,
+            end   : end
+        }
     }
 }
 

@@ -49,13 +49,14 @@ pub extern fn kmain(multiboot_ptr : usize)
     println!("Multiboot start: 0x{:x}, end: 0x{:x}", multiboot_start, multiboot_end);
     println!("Kernel start: 0x{:x}, end: 0x{:x}", kernel_start, kernel_end);
 
-//    use memory::FrameAllocator;
     let mut frame_allocator = memory::AreaFrameAllocator::new(multiboot_start as usize,
                                                               multiboot_end as usize,
                                                               kernel_start as usize,
                                                               kernel_end as usize,
                                                               memory_map_tag.memory_areas());
-    memory::test_paging(&mut frame_allocator);
+//    memory::test_paging(&mut frame_allocator);
+    memory::remap_kernel(&mut frame_allocator, boot_info);
+    println!("We actually didn't crash!");
 
     loop { }
 }
