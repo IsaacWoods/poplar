@@ -17,7 +17,7 @@ extern crate multiboot2;
 #[macro_use] extern crate bitflags;
 extern crate x86_64;
 #[macro_use] extern crate alloc;
-extern crate bump_allocator;
+extern crate hole_tracking_allocator;
 
 #[macro_use] mod util;
 #[macro_use] mod vga_buffer;

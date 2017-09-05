@@ -9,12 +9,11 @@
 #![no_std]
 
 extern crate alloc;
+extern crate spin;
 
 use core::ops::Deref;
 use alloc::allocator::{Alloc,Layout,AllocErr};
 use spin::Mutex;
-
-extern crate spin;
 
 pub const HEAP_START : usize = 0o000_001_000_000_0000;
 pub const HEAP_SIZE  : usize = 100 * 1024;  // 100 KiB

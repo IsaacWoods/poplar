@@ -10,7 +10,11 @@ pub use self::area_frame_allocator::AreaFrameAllocator;
 pub use self::paging::remap_kernel;
 
 use self::paging::{PAGE_SIZE,PhysicalAddress};
+use hole_tracking_allocator::ALLOCATOR;
 use multiboot2::BootInformation;
+
+pub const HEAP_START : usize = 0o000_001_000_000_0000;
+pub const HEAP_SIZE  : usize = 100 * 1024;  // 100 KiB
 
 pub fn init(boot_info : &BootInformation)
 {
@@ -19,7 +23,6 @@ pub fn init(boot_info : &BootInformation)
     use x86_64::registers::msr::{IA32_EFER,rdmsr,wrmsr};
     use x86_64::registers::control_regs::{Cr0,cr0,cr0_write};
     use self::paging::Page;
-    use bump_allocator::{HEAP_START,HEAP_SIZE};
 
     let memory_map_tag = boot_info.memory_map_tag().expect("Can't find memory map tag");
     let elf_sections_tag = boot_info.elf_sections_tag().expect("Can't find elf sections tag");
@@ -53,15 +56,19 @@ pub fn init(boot_info : &BootInformation)
 
     let mut active_table = paging::remap_kernel(&mut frame_allocator, boot_info);
 
-    /*
-     * Map the pages used by the heap
-     */
+    // Map the pages used by the heap
     let heap_start_page = Page::get_containing_page(HEAP_START);
     let heap_end_page = Page::get_containing_page(HEAP_START + HEAP_SIZE - 1);
 
     for page in Page::range_inclusive(heap_start_page, heap_end_page)
     {
         active_table.map(page, paging::WRITABLE, &mut frame_allocator);
+    }
+
+    // Create the heap
+    unsafe
+    {
+        ALLOCATOR.lock().init(HEAP_START, HEAP_SIZE);
     }
 }
 

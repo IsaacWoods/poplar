@@ -1,0 +1,11 @@
+[package]
+name = "hole_tracking_allocator"
+version = "0.1.0"
+authors = ["Isaac Woods <isaacwoods.home@gmail.com>"]
+
+[dependencies]
+spin = "0.4.5"
+
+[dependencies.lazy_static]
+version = "0.2.1"
+features = ["spin_no_std"]
