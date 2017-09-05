@@ -32,13 +32,6 @@ pub extern fn kmain(multiboot_ptr : usize)
     let boot_info = unsafe { multiboot2::load(multiboot_ptr) };
     memory::init(boot_info);
 
-    let mut vec_test = vec![1,2,3,4,5,6,7,8,9];
-    vec_test[3] = 42;
-    for i in &vec_test
-    {
-        print!("{} ", i);
-    }
-
     loop { }
 }
 

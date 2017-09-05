@@ -4,10 +4,11 @@
 ARCH?=x86_64
 BUILD_DIR:=./build
 
-LFLAGS:=-n --gc-sections -T linker.ld
+LINKER_SCRIPT=kernel/src/$(ARCH)/linker.ld
+LFLAGS:=-n --gc-sections -T $(LINKER_SCRIPT)
 
-ASM_SOURCES:=$(wildcard src/$(ARCH)/*.s)
-ASM_OBJS:=$(patsubst src/$(ARCH)/%.s, $(BUILD_DIR)/$(ARCH)/%.o, $(ASM_SOURCES))
+ASM_SOURCES:=$(wildcard kernel/src/$(ARCH)/*.s)
+ASM_OBJS:=$(patsubst kernel/src/$(ARCH)/%.s, $(BUILD_DIR)/$(ARCH)/%.o, $(ASM_SOURCES))
 
 .PHONY: kernel clean run debug gdb
 
@@ -18,19 +19,19 @@ os.iso: grub.cfg $(BUILD_DIR)/kernel.bin
 	grub2-mkrescue -o $@ $(BUILD_DIR)/iso 2> /dev/null
 	rm -r $(BUILD_DIR)/iso
 
-$(BUILD_DIR)/kernel.bin: $(ASM_OBJS) kernel linker.ld
+$(BUILD_DIR)/kernel.bin: $(ASM_OBJS) kernel $(LINKER_SCRIPT)
 	mkdir -p $(BUILD_DIR)/iso/boot/grub
-	ld $(LFLAGS) -o $@ $(ASM_OBJS) target/$(ARCH)-rustos/debug/librust_os.a
+	ld $(LFLAGS) -o $@ $(ASM_OBJS) kernel/target/$(ARCH)-rustos/debug/librust_os.a
 
 kernel:
-	xargo build --target=$(ARCH)-rustos
+	cd kernel ; xargo build --target=$(ARCH)-rustos
 
-$(BUILD_DIR)/$(ARCH)%.o: src/$(ARCH)%.s
+$(BUILD_DIR)/$(ARCH)%.o: kernel/src/$(ARCH)%.s
 	mkdir -p $(shell dirname $@)
 	nasm -g -felf64 $< -o $@
 
 clean:
-	xargo clean
+	cd kernel ; xargo clean
 	rm -rf build
 	rm -rf os.iso
 

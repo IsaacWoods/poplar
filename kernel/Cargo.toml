@@ -1,3 +1,5 @@
+[workspace]
+
 [package]
 name = "rust_os"
 version = "0.0.1"
@@ -15,4 +17,4 @@ bitflags    = "0.9.1"
 x86_64      = "0.1.2"
 
 [dependencies.hole_tracking_allocator]
-path = "libs/hole_tracking_allocator"
+path = "hole_tracking_allocator"
