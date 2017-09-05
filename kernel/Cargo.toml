@@ -16,5 +16,8 @@ multiboot2  = "0.1.0"
 bitflags    = "0.9.1"
 x86_64      = "0.1.2"
 
+[dependencies.rustos_common]
+path = "rustos_common"
+
 [dependencies.hole_tracking_allocator]
 path = "hole_tracking_allocator"

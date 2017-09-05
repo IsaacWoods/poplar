@@ -3,6 +3,8 @@
  * See LICENCE.md
  */
 
+#![no_std]
+
 #[macro_export]
 macro_rules! assert_first_call
 {
@@ -15,7 +17,7 @@ macro_rules! assert_first_call
     {{
         fn assert_first_call()
         {
-            use $crate::core::sync::atomic::{AtomicBool,ATOMIC_BOOL_INIT,Ordering};
+            use core::sync::atomic::{AtomicBool,ATOMIC_BOOL_INIT,Ordering};
             static CALLED : AtomicBool = ATOMIC_BOOL_INIT;
             let called = CALLED.swap(true, Ordering::Relaxed);
             assert!(!called, $($arg)+);
