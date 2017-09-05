@@ -6,6 +6,5 @@ authors = ["Isaac Woods <isaacwoods.home@gmail.com>"]
 [dependencies]
 spin = "0.4.5"
 
-[dependencies.lazy_static]
-version = "0.2.1"
-features = ["spin_no_std"]
+[dependencies.rustos_common]
+path = "../rustos_common"

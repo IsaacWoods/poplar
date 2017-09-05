@@ -11,8 +11,9 @@
 
 mod hole;
 
-extern crate alloc;
-extern crate spin;
+                extern crate alloc;
+                extern crate spin;
+#[macro_use]    extern crate rustos_common;
 
 use core::mem;
 use core::cmp::max;
@@ -50,6 +51,8 @@ impl HoleAllocator
      */
     pub unsafe fn init(&mut self, heap_bottom : usize, heap_size : usize)
     {
+        assert_first_call!("HoleAllocator::init() must only be called once");
+
         self.heap_bottom = heap_bottom;
         self.heap_size   = heap_size;
         self.holes       = HoleList::new(heap_bottom, heap_size);
