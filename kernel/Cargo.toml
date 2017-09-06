@@ -14,7 +14,12 @@ volatile    = "0.1.0"
 spin        = "0.4.5"
 multiboot2  = "0.1.0"
 bitflags    = "0.9.1"
+bit_field   = "0.7.0"
 x86_64      = "0.1.2"
+
+[dependencies.lazy_static]
+version = "0.2.4"
+features = ["spin_no_std"]
 
 [dependencies.rustos_common]
 path = "rustos_common"

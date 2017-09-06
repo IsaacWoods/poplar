@@ -9,11 +9,12 @@
 #![feature(global_allocator)]
 #![no_std]
 
-mod hole;
 
-                extern crate alloc;
-                extern crate spin;
-#[macro_use]    extern crate rustos_common;
+#[macro_use] extern crate rustos_common;
+             extern crate alloc;
+             extern crate spin;
+
+mod hole;
 
 use core::mem;
 use core::cmp::max;

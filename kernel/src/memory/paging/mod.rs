@@ -10,10 +10,10 @@ mod mapper;
 
 pub use self::entry::*;
 
+use core::ops::{Add,Deref,DerefMut};
 use self::mapper::Mapper;
 use self::temporary_page::TemporaryPage;
 use memory::{Frame,FrameAllocator};
-use core::ops::{Deref,DerefMut};
 use multiboot2::BootInformation;
 
 pub const PAGE_SIZE : usize = 4096;
@@ -22,10 +22,19 @@ const ENTRY_COUNT : usize = 512;
 pub type PhysicalAddress = usize;
 pub type VirtualAddress  = usize;
 
+#[derive(Clone)]
 pub struct PageIter
 {
     start : Page,
     end   : Page,
+}
+
+impl PageIter
+{
+    pub fn get_start_address(&self) -> usize
+    {
+        return self.start.get_start_address();
+    }
 }
 
 impl Iterator for PageIter
@@ -53,6 +62,19 @@ pub struct Page
   number : usize,
 }
 
+impl Add<usize> for Page
+{
+    type Output = Page;
+
+    fn add(self, rhs : usize) -> Page
+    {
+        Page
+        {
+            number : self.number + rhs
+        }
+    }
+}
+
 impl Page
 {
     pub fn range_inclusive(start : Page, end : Page) -> PageIter
@@ -64,7 +86,7 @@ impl Page
         }
     }
 
-    fn get_start_address(&self) -> usize
+    pub fn get_start_address(&self) -> usize
     {
         self.number * PAGE_SIZE
     }
