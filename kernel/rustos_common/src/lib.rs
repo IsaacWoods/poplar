@@ -5,6 +5,11 @@
 
 #![no_std]
 
+#![feature(const_fn)]
+#![feature(asm)]
+
+mod port;
+
 #[macro_export]
 macro_rules! assert_first_call
 {
