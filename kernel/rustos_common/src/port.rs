@@ -88,19 +88,13 @@ impl<T : PortSize> Port<T>
         }
     }
 
-    pub fn read(&self) -> T
+    pub unsafe fn read(&self) -> T
     {
-        unsafe
-        {
-            T::port_read(self.port)
-        }
+        T::port_read(self.port)
     }
 
-    pub fn write(&mut self, value : T)
+    pub unsafe fn write(&mut self, value : T)
     {
-        unsafe
-        {
-            T::port_write(self.port, value);
-        }
+        T::port_write(self.port, value);
     }
 }

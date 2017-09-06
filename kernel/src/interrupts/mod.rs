@@ -4,13 +4,15 @@
  */
 
 mod gdt;
+mod pic;
 
-use spin::Once;
+use spin::{Once,Mutex};
 use x86_64::VirtualAddress;
 use x86_64::structures::gdt::SegmentSelector;
 use x86_64::structures::idt::{Idt,ExceptionStackFrame};
 use x86_64::structures::tss::TaskStateSegment;
 use memory::{FrameAllocator,MemoryController};
+use self::pic::{PicPair};
 
 const DOUBLE_FAULT_IST_INDEX : usize = 0;
 
@@ -33,6 +35,8 @@ lazy_static!
 
 static TSS : Once<TaskStateSegment> = Once::new();
 static GDT : Once<gdt::Gdt>         = Once::new();
+
+static PIC_PAIR : Mutex<PicPair> = Mutex::new(unsafe { PicPair::new(0x20, 0x28) });
 
 pub fn init<A>(memory_controller : &mut MemoryController<A>) where A : FrameAllocator
 {
@@ -76,6 +80,7 @@ pub fn init<A>(memory_controller : &mut MemoryController<A>) where A : FrameAllo
     }
 
     IDT.load();
+    unsafe { PIC_PAIR.lock().remap(); }
 }
 
 extern "x86-interrupt" fn breakpoint_handler(stack_frame : &mut ExceptionStackFrame)
