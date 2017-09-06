@@ -40,11 +40,6 @@ pub extern fn kmain(multiboot_ptr : usize)
     let mut memory_controller = memory::init(boot_info);
     interrupts::init(&mut memory_controller);
 
-    unsafe
-    {
-        *(0xdeadbeef as *mut u64) = 42;
-    }
-
     println!("Hello, World!");
 
     loop { }

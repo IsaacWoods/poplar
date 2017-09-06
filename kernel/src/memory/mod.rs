@@ -18,7 +18,7 @@ use multiboot2::BootInformation;
 pub const HEAP_START : usize = 0o000_001_000_000_0000;
 pub const HEAP_SIZE  : usize = 100 * 1024;  // 100 KiB
 
-pub fn init(boot_info : &BootInformation) -> MemoryController
+pub fn init(boot_info : &BootInformation) -> MemoryController<AreaFrameAllocator>
 {
     assert_first_call!("memory::init() should only be called once");
 
@@ -149,14 +149,14 @@ pub trait FrameAllocator
     fn deallocate_frame(&mut self, frame : Frame);
 }
 
-pub struct MemoryController
+pub struct MemoryController<A : FrameAllocator>
 {
     active_table    : paging::ActivePageTable,
-    frame_allocator : AreaFrameAllocator,
+    frame_allocator : A,
     stack_allocator : StackAllocator
 }
 
-impl MemoryController
+impl<A> MemoryController<A> where A : FrameAllocator
 {
     pub fn alloc_stack(&mut self, size_in_pages : usize) -> Option<Stack>
     {

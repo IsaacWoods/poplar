@@ -10,7 +10,7 @@ use x86_64::VirtualAddress;
 use x86_64::structures::gdt::SegmentSelector;
 use x86_64::structures::idt::{Idt,ExceptionStackFrame};
 use x86_64::structures::tss::TaskStateSegment;
-use memory::MemoryController;
+use memory::{FrameAllocator,MemoryController};
 
 const DOUBLE_FAULT_IST_INDEX : usize = 0;
 
@@ -34,7 +34,7 @@ lazy_static!
 static TSS : Once<TaskStateSegment> = Once::new();
 static GDT : Once<gdt::Gdt>         = Once::new();
 
-pub fn init(memory_controller : &mut MemoryController)
+pub fn init<A>(memory_controller : &mut MemoryController<A>) where A : FrameAllocator
 {
     use x86_64::instructions::segmentation::set_cs;
     use x86_64::instructions::tables::load_tss;
