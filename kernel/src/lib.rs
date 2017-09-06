@@ -9,6 +9,7 @@
 #![feature(const_fn)]
 #![feature(unique)]
 #![feature(alloc)]
+#![feature(asm)]
 #![feature(abi_x86_interrupt)]
 
 /*
@@ -22,7 +23,7 @@
                                extern crate multiboot2;
 #[macro_use]                   extern crate bitflags;
                                extern crate bit_field;
-                               extern crate x86_64;
+#[macro_use]                   extern crate x86_64;
 #[macro_use]                   extern crate alloc;
 #[macro_use]                   extern crate rustos_common;
                                extern crate hole_tracking_allocator;
@@ -35,12 +36,11 @@
 pub extern fn kmain(multiboot_ptr : usize)
 {
     vga_buffer::clear_screen();
+    println!("Hello, World!");
 
     let boot_info = unsafe { multiboot2::load(multiboot_ptr) };
     let mut memory_controller = memory::init(boot_info);
     interrupts::init(&mut memory_controller);
-
-    println!("Hello, World!");
 
     loop { }
 }

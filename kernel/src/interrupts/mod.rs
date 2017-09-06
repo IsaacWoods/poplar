@@ -29,6 +29,9 @@ lazy_static!
                                 .set_stack_index(DOUBLE_FAULT_IST_INDEX as u16);
             }
 
+            idt[32].set_handler_fn(timer_handler);  // IRQ0
+            idt[33].set_handler_fn(key_handler);    // IRQ1
+
             idt
         };
 }
@@ -80,7 +83,11 @@ pub fn init<A>(memory_controller : &mut MemoryController<A>) where A : FrameAllo
     }
 
     IDT.load();
-    unsafe { PIC_PAIR.lock().remap(); }
+    unsafe
+    {
+        PIC_PAIR.lock().remap();
+        asm!("sti");
+    }
 }
 
 extern "x86-interrupt" fn breakpoint_handler(stack_frame : &mut ExceptionStackFrame)
@@ -89,8 +96,19 @@ extern "x86-interrupt" fn breakpoint_handler(stack_frame : &mut ExceptionStackFr
 }
 
 extern "x86-interrupt" fn double_fault_handler(stack_frame : &mut ExceptionStackFrame,
-                                               _error_code : u64)
+                                               error_code : u64)
 {
-    println!("EXCEPTION: DOUBLE FAULT\n{:#?}", stack_frame);
+    println!("EXCEPTION: DOUBLE FAULT   (Error code: {})\n{:#?}", error_code, stack_frame);
     loop { }
+}
+
+extern "x86-interrupt" fn timer_handler(_ : &mut ExceptionStackFrame)
+{
+    unsafe { PIC_PAIR.lock().send_eoi(32); }
+}
+
+extern "x86-interrupt" fn key_handler(_ : &mut ExceptionStackFrame)
+{
+    println!("Key press");
+    unsafe { PIC_PAIR.lock().send_eoi(33); }
 }
