@@ -10,7 +10,7 @@ mod stack_allocator;
 pub use self::area_frame_allocator::AreaFrameAllocator;
 pub use self::paging::remap_kernel;
 
-    use self::stack_allocator::{Stack,StackAllocator};
+use self::stack_allocator::{Stack,StackAllocator};
 use self::paging::{PAGE_SIZE,PhysicalAddress};
 use hole_tracking_allocator::ALLOCATOR;
 use multiboot2::BootInformation;

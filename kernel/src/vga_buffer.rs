@@ -112,19 +112,12 @@ impl fmt::Write for Writer
 
 impl Writer
 {
-/*    pub fn write_str(&mut self, s : &str)
-    {
-        for byte in s.bytes()
-        {
-            self.write_byte(byte);
-        }
-    }*/
-
     pub fn write_byte(&mut self, byte : u8)
     {
         match byte
         {
             b'\n' => self.new_line(),
+
             byte =>
             {
                 if self.col_position >= BUFFER_WIDTH

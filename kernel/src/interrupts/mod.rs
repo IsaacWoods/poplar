@@ -12,6 +12,7 @@ use x86_64::structures::gdt::SegmentSelector;
 use x86_64::structures::idt::{Idt,ExceptionStackFrame};
 use x86_64::structures::tss::TaskStateSegment;
 use memory::{FrameAllocator,MemoryController};
+use rustos_common::port::Port;
 use self::pic::{PicPair};
 
 const DOUBLE_FAULT_IST_INDEX : usize = 0;
@@ -107,8 +108,11 @@ extern "x86-interrupt" fn timer_handler(_ : &mut ExceptionStackFrame)
     unsafe { PIC_PAIR.lock().send_eoi(32); }
 }
 
+static KEYBOARD_PORT : Port<u8> = unsafe { Port::new(0x60) };
+
 extern "x86-interrupt" fn key_handler(_ : &mut ExceptionStackFrame)
 {
-    println!("Key press");
+    println!("Key interrupt: Scancode={:#x}", unsafe { KEYBOARD_PORT.read() });
+
     unsafe { PIC_PAIR.lock().send_eoi(33); }
 }

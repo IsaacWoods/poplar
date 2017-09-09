@@ -48,7 +48,7 @@ impl PicPair
     {
         /*
          * 0x80 is a port used by POST, that theoretically shouldn't actually do anything but block
-         * for long enough for the PICs to internalise the commands we issue them.
+         * for long enough for the PICs to actually do what we ask them to.
          */
         let mut wait_port : Port<u8> = Port::new(0x80);
         let mut wait = || { wait_port.write(0) };
