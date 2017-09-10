@@ -9,7 +9,7 @@ mod pic;
 use spin::{Once,Mutex};
 use x86_64::VirtualAddress;
 use x86_64::structures::gdt::SegmentSelector;
-use x86_64::structures::idt::{Idt,ExceptionStackFrame};
+use x86_64::structures::idt::{Idt,ExceptionStackFrame,PageFaultErrorCode};
 use x86_64::structures::tss::TaskStateSegment;
 use memory::{FrameAllocator,MemoryController};
 use rustos_common::port::Port;
@@ -23,6 +23,7 @@ lazy_static!
         {
             let mut idt = Idt::new();
             idt.breakpoint.set_handler_fn(breakpoint_handler);
+            idt.page_fault.set_handler_fn(page_fault_handler);
 
             unsafe
             {
@@ -87,13 +88,38 @@ pub fn init<A>(memory_controller : &mut MemoryController<A>) where A : FrameAllo
     unsafe
     {
         PIC_PAIR.lock().remap();
-        asm!("sti");
     }
 }
 
 extern "x86-interrupt" fn breakpoint_handler(stack_frame : &mut ExceptionStackFrame)
 {
     println!("EXCEPTION: BREAKPOINT\n{:#?}", stack_frame);
+}
+
+extern "x86-interrupt" fn page_fault_handler(stack_frame : &mut ExceptionStackFrame,
+                                             error_code  : PageFaultErrorCode)
+{
+    println!("PAGE FAULT!");
+
+    if error_code.contains(PageFaultErrorCode::PROTECTION_VIOLATION)    { println!("  * Caused by a page-protection-violation");                                }
+                                                                   else { println!("  * Caused by a not-present page");                                         }
+
+    if error_code.contains(PageFaultErrorCode::CAUSED_BY_WRITE)         { println!("  * Caused by an invalid write (maybe)");                                   }
+                                                                   else { println!("  * Caused by an invalid read (maybe)");                                    }
+
+    if error_code.contains(PageFaultErrorCode::USER_MODE)               { println!("  * Occured in user-mode (CPL=3) (doesn't = privilege violation)");         }
+                                                                   else { println!("  * Occured in supervisor mode (CPL=0,1,2) (not = privilege violation)");   }
+
+    if error_code.contains(PageFaultErrorCode::MALFORMED_TABLE)         { println!("  * Something's fucky with a page table");                                  }
+
+    if error_code.contains(PageFaultErrorCode::INSTRUCTION_FETCH)       { println!("  * Caused by an instruction fetch");                                       }
+
+    println!("\n{:#?}", stack_frame);
+
+    /*
+     * Page-faults can be recovered from and so are faults, but we never will so just give up.
+     */
+    loop { }
 }
 
 extern "x86-interrupt" fn double_fault_handler(stack_frame : &mut ExceptionStackFrame,
