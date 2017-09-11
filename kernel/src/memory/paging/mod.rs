@@ -245,6 +245,7 @@ pub fn remap_kernel<A>(allocator : &mut A, boot_info : &BootInformation) -> Acti
                 if !(section.is_allocated())
                 {
                     // The section is not in memory, so skip it
+//                    println!("Skipping unallocated section: {}", elf_sections_tag.string_table().section_name(section));
                     continue;
                 }
 
@@ -253,6 +254,7 @@ pub fn remap_kernel<A>(allocator : &mut A, boot_info : &BootInformation) -> Acti
                 let flags = EntryFlags::from_elf_section(section);
                 let start_frame = Frame::get_containing_frame(section.start_address());
                 let end_frame = Frame::get_containing_frame(section.end_address() - 1);
+                println!("Mapping kernel section to {:#x} to {:#x}", section.start_address(), section.end_address());
 
                 for frame in Frame::range_inclusive(start_frame, end_frame)
                 {
@@ -264,9 +266,26 @@ pub fn remap_kernel<A>(allocator : &mut A, boot_info : &BootInformation) -> Acti
             let vga_buffer_frame = Frame::get_containing_frame(0xb8000);
             mapper.identity_map(vga_buffer_frame, WRITABLE, allocator);
 
+            // Identity-map any modules loaded by GRUB
+            if boot_info.module_tags().count() > 0
+            {
+                let modules_start = boot_info.module_tags().map(|m| m.start_address()).min().unwrap() as usize;
+                let modules_end   = boot_info.module_tags().map(|m| m.end_address()  ).max().unwrap() as usize;
+//                println!("Mapping range {:#x} to {:#x} for GRUB modules", modules_start, modules_end);
+//                mapper.identity_map(Frame::get_containing_frame(modules_start), PRESENT, allocator);
+
+                for frame in Frame::range_inclusive(Frame::get_containing_frame(modules_start),
+                                                    Frame::get_containing_frame(modules_end))
+                {
+//                    println!("Mapping for module: {:#x}", frame.get_start_address());
+                    mapper.identity_map(frame, PRESENT, allocator);
+                }
+            }
+
             // Identity-map the Multiboot structure
             let multiboot_start = Frame::get_containing_frame(boot_info.start_address());
             let multiboot_end = Frame::get_containing_frame(boot_info.end_address() - 1);
+            println!("Mapping range {:#x} to {:#x} for Multiboot structure", boot_info.start_address(), boot_info.end_address());
 
             for frame in Frame::range_inclusive(multiboot_start, multiboot_end)
             {

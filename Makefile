@@ -4,20 +4,24 @@
 export ARCH?=x86_64
 export BUILD_DIR:=$(abspath ./build)
 
-.PHONY: kernel clean run debug gdb
+.PHONY: kernel clean run debug gdb test_program
 
-os.iso: grub.cfg kernel
+os.iso: grub.cfg kernel test_program
 	mkdir -p $(BUILD_DIR)/iso/boot/grub
 	cp $(BUILD_DIR)/kernel.bin $(BUILD_DIR)/iso/boot/kernel.bin
+	cp test_program/test_program.bin $(BUILD_DIR)/iso/test_program.bin
 	cp grub.cfg $(BUILD_DIR)/iso/boot/grub/grub.cfg
 	grub2-mkrescue -o $@ $(BUILD_DIR)/iso 2> /dev/null
-	rm -r $(BUILD_DIR)/iso
 
 kernel:
 	make -C kernel $(BUILD_DIR)/kernel.bin
 
+test_program:
+	make -C test_program test_program.bin
+
 clean:
 	make -C kernel clean
+	make -C test_program clean
 	rm -rf build
 	rm -rf os.iso
 
@@ -29,4 +33,4 @@ debug: os.iso
 	qemu-system-$(ARCH) -enable-kvm -s -S -cdrom os.iso
 
 gdb:
-	rust-os-gdb/bin/rust-gdb "build/kernel.bin" -ex "target remote :1234"
+	gdb/bin/rust-gdb -q "build/kernel.bin" -ex "target remote :1234"

@@ -13,8 +13,8 @@
 #![feature(abi_x86_interrupt)]
 
 /*
- * The compiler sometimes doesn't pick up on crates being used, so we have to supress a few
- * warnings.
+ * `rlibc` provides intrinsics that are linked against, and so the compiler doesn't pick up
+ * that it's actually used.
  */
 #[allow(unused_extern_crates)] extern crate rlibc;
                                extern crate volatile;
@@ -32,6 +32,8 @@
                                mod memory;
                                mod interrupts;
 
+use multiboot2::BootInformation;
+
 #[no_mangle]
 pub extern fn kmain(multiboot_ptr : usize)
 {
@@ -42,6 +44,20 @@ pub extern fn kmain(multiboot_ptr : usize)
     let mut memory_controller = memory::init(boot_info);
     interrupts::init(&mut memory_controller);
 
+    for module_tag in boot_info.module_tags()
+    {
+        println!("Loading and running {}", module_tag.name());
+        println!("  Start address: {:#x}, End address: {:#x}", module_tag.start_address(), module_tag.end_address());
+        let virtual_address = module_tag.start_address();
+        let code : unsafe extern "C" fn() -> u32 = unsafe
+                                                   {
+                                                       core::mem::transmute(virtual_address as *const ())
+                                                   };
+        let result : u32 = unsafe { (code)() };
+        println!("Result was {:#x}", result);
+    }
+
+    unsafe { asm!("sti"); }
     loop { }
 }
 
