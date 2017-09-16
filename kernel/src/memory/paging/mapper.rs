@@ -123,9 +123,7 @@ impl Mapper
         let p2 = p3.next_table_create(page.p3_index(), allocator);
         let p1 = p2.next_table_create(page.p2_index(), allocator);
     
-//        println!("Eat a dick: Frame : {:#x} Page: {:#x}", page.get_start_address(), page.get_start_address());
-//        println!("P1 index: {:#x}", page.p1_index());
-        assert!(p1[page.p1_index()].is_unused());
+        assert!(p1[page.p1_index()].is_unused(), "Tried to map a page that has already been mapped: {:#x}", page.get_start_address());
         p1[page.p1_index()].set(frame, flags | PRESENT);
     }
 }

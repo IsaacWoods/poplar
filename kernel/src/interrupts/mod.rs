@@ -104,15 +104,20 @@ extern "x86-interrupt" fn page_fault_handler(stack_frame : &mut ExceptionStackFr
     if error_code.contains(PageFaultErrorCode::PROTECTION_VIOLATION)    { println!("  * Caused by a page-protection-violation");                                }
                                                                    else { println!("  * Caused by a not-present page");                                         }
 
-    if error_code.contains(PageFaultErrorCode::CAUSED_BY_WRITE)         { println!("  * Caused by an invalid write (maybe)");                                   }
+    if error_code.contains(PageFaultErrorCode::INSTRUCTION_FETCH)
+    {
+        println!("  * Caused by an instruction fetch");
+    }
+    else
+    {
+        if error_code.contains(PageFaultErrorCode::CAUSED_BY_WRITE)     { println!("  * Caused by an invalid write (maybe)");                                   }
                                                                    else { println!("  * Caused by an invalid read (maybe)");                                    }
+    }
 
     if error_code.contains(PageFaultErrorCode::USER_MODE)               { println!("  * Occured in user-mode (CPL=3) (doesn't = privilege violation)");         }
                                                                    else { println!("  * Occured in supervisor mode (CPL=0,1,2) (not = privilege violation)");   }
 
     if error_code.contains(PageFaultErrorCode::MALFORMED_TABLE)         { println!("  * Something's fucky with a page table");                                  }
-
-    if error_code.contains(PageFaultErrorCode::INSTRUCTION_FETCH)       { println!("  * Caused by an instruction fetch");                                       }
 
     println!("\n{:#?}", stack_frame);
 

@@ -23,6 +23,7 @@ bits 32
 ;   'M' = Incorrect Multiboot magic
 ;   'C' = CPUID instruction is not supported
 ;   'L' = Long mode not available
+;   'R' = Returned from kernel when we should never return (or frankly ever be in this code again)
 PrintError:
   mov dword [0xb8000], 0x4f524f45
   mov dword [0xb8004], 0x4f3a4f52
@@ -145,6 +146,9 @@ Start:
   lgdt [gdt64.pointer]
   jmp gdt64.kernel_code:InLongMode
 
+  ; We should never get here
+  mov al, 'R'
+  call PrintError
   hlt
 
 section .rodata

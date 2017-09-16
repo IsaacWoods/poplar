@@ -6,18 +6,20 @@
 mod entry;
 mod table;
 mod temporary_page;
+mod temporary_vec;
 mod mapper;
 
 pub use self::entry::*;
 
 use core::ops::{Add,Deref,DerefMut};
 use self::mapper::Mapper;
+use self::temporary_vec::TemporaryVec;
 use self::temporary_page::TemporaryPage;
 use memory::{Frame,FrameAllocator};
 use multiboot2::BootInformation;
 
 pub const PAGE_SIZE : usize = 4096;
-const ENTRY_COUNT : usize = 512;
+const ENTRY_COUNT   : usize = 512;
 
 pub type PhysicalAddress = usize;
 pub type VirtualAddress  = usize;
@@ -27,14 +29,6 @@ pub struct PageIter
 {
     start : Page,
     end   : Page,
-}
-
-impl PageIter
-{
-    pub fn get_start_address(&self) -> usize
-    {
-        return self.start.get_start_address();
-    }
 }
 
 impl Iterator for PageIter
@@ -233,6 +227,19 @@ pub fn remap_kernel<A>(allocator : &mut A, boot_info : &BootInformation) -> Acti
                             InactivePageTable::new(frame, &mut active_table, &mut temporary_page)
                         };
 
+    /*
+     * We must only map each page once, so we store the list without actually mapping them, resolve
+     * duplicate page maps (when a page covers more than one structure), and then identity-map them
+     * all.
+     *
+     * XXX: We don't have a heap at this point, so we create temporary page and use `TemporaryVec`.
+     *      We store (the frame's flags, the frame itself, whether this is a duplicate entry).
+     */
+    let list_frame = allocator.allocate_frame().expect("run out of frames");
+    let mut list_page = TemporaryPage::new(Page { number : 0xcafebabe+1 }, allocator);
+    list_page.map(list_frame, &mut active_table);
+    let mut frame_list : TemporaryVec<(EntryFlags,Frame,bool)> = unsafe { TemporaryVec::new(&mut list_page) };
+
     active_table.with(&mut new_table, &mut temporary_page,
         |mapper| {
             let elf_sections_tag = boot_info.elf_sections_tag().expect("Memory map tag required");
@@ -242,10 +249,9 @@ pub fn remap_kernel<A>(allocator : &mut A, boot_info : &BootInformation) -> Acti
              */
             for section in elf_sections_tag.sections()
             {
+                // This section will not be allocated any memory, so skip it
                 if !(section.is_allocated())
                 {
-                    // The section is not in memory, so skip it
-//                    println!("Skipping unallocated section: {}", elf_sections_tag.string_table().section_name(section));
                     continue;
                 }
 
@@ -254,42 +260,67 @@ pub fn remap_kernel<A>(allocator : &mut A, boot_info : &BootInformation) -> Acti
                 let flags = EntryFlags::from_elf_section(section);
                 let start_frame = Frame::get_containing_frame(section.start_address());
                 let end_frame = Frame::get_containing_frame(section.end_address() - 1);
-                println!("Mapping kernel section to {:#x} to {:#x}", section.start_address(), section.end_address());
 
                 for frame in Frame::range_inclusive(start_frame, end_frame)
                 {
-                    mapper.identity_map(frame, flags, allocator);
+                    frame_list.push((flags, frame, true));
                 }
             }
 
             // Identity-map the VGA buffer
-            let vga_buffer_frame = Frame::get_containing_frame(0xb8000);
-            mapper.identity_map(vga_buffer_frame, WRITABLE, allocator);
+            frame_list.push((WRITABLE, Frame::get_containing_frame(0xb8000), true));
 
             // Identity-map any modules loaded by GRUB
             if boot_info.module_tags().count() > 0
             {
-                let modules_start = boot_info.module_tags().map(|m| m.start_address()).min().unwrap() as usize;
-                let modules_end   = boot_info.module_tags().map(|m| m.end_address()  ).max().unwrap() as usize;
-//                println!("Mapping range {:#x} to {:#x} for GRUB modules", modules_start, modules_end);
-//                mapper.identity_map(Frame::get_containing_frame(modules_start), PRESENT, allocator);
-
-                for frame in Frame::range_inclusive(Frame::get_containing_frame(modules_start),
-                                                    Frame::get_containing_frame(modules_end))
+                for module_tag in boot_info.module_tags()
                 {
-//                    println!("Mapping for module: {:#x}", frame.get_start_address());
-                    mapper.identity_map(frame, PRESENT, allocator);
+                    let module_start = module_tag.start_address() as usize;
+                    let module_end   = module_tag.end_address()   as usize;
+
+                    for frame in Frame::range_inclusive(Frame::get_containing_frame(module_start),
+                                                        Frame::get_containing_frame(module_end - 1))
+                    {
+                        frame_list.push((PRESENT, frame, true));
+                    }
                 }
             }
 
             // Identity-map the Multiboot structure
             let multiboot_start = Frame::get_containing_frame(boot_info.start_address());
             let multiboot_end = Frame::get_containing_frame(boot_info.end_address() - 1);
-            println!("Mapping range {:#x} to {:#x} for Multiboot structure", boot_info.start_address(), boot_info.end_address());
 
             for frame in Frame::range_inclusive(multiboot_start, multiboot_end)
             {
-                mapper.identity_map(frame, PRESENT, allocator);
+                frame_list.push((PRESENT, frame, true));
+            }
+
+            // Coalesce duplicate frame mappings and identity-map each required frame
+            for entry in frame_list.iter()
+            {
+                // If this frame has been marked a duplicate, skip it
+                if !(entry.2)
+                {
+                    continue;
+                }
+
+                let mut flags : EntryFlags = entry.0;
+                for duplicate in frame_list.iter().filter(
+                    |e| {
+                            e.1.get_start_address() == entry.1.get_start_address()
+                        })
+                {
+                    /*
+                     * This is a duplicate, but may have different permissions, so we merge them.
+                     * TODO: we need to consider each flag. e.g. if one has the no-execute and one
+                     * doesn't, we actually don't want it (with this we get it) because then the
+                     * page will be un-executable.
+                     */
+                    flags |= duplicate.0;
+                    duplicate.2 = false;
+                }
+
+                mapper.identity_map(entry.1.clone(), entry.0, allocator);
             }
         });
 

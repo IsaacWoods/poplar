@@ -53,6 +53,11 @@ impl TemporaryPage
     {
         active_table.unmap(self.page, &mut self.allocator)
     }
+
+    pub fn get_start_address(&self) -> usize
+    {
+        self.page.get_start_address()
+    }
 }
 
 /*

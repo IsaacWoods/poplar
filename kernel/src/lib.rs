@@ -32,8 +32,6 @@
                                mod memory;
                                mod interrupts;
 
-use multiboot2::BootInformation;
-
 #[no_mangle]
 pub extern fn kmain(multiboot_ptr : usize)
 {
