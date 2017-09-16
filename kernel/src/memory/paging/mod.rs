@@ -312,11 +312,8 @@ pub fn remap_kernel<A>(allocator : &mut A, boot_info : &BootInformation) -> Acti
                 {
                     /*
                      * This is a duplicate, but may have different permissions, so we merge them.
-                     * TODO: we need to consider each flag. e.g. if one has the no-execute and one
-                     * doesn't, we actually don't want it (with this we get it) because then the
-                     * page will be un-executable.
                      */
-                    flags |= duplicate.0;
+                    flags = flags.merge(duplicate.0);
                     duplicate.2 = false;
                 }
 
@@ -324,6 +321,7 @@ pub fn remap_kernel<A>(allocator : &mut A, boot_info : &BootInformation) -> Acti
             }
         });
 
+    list_page.unmap(&mut active_table);
     let old_table = active_table.switch(new_table);
 
     // Turn the old P4 into a guard page for the stack
