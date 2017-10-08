@@ -30,7 +30,7 @@ run: os.iso
 
 debug: os.iso
 	@echo "Connect with (gdb)target remote localhost:1234"
-	qemu-system-$(ARCH) -enable-kvm -s -S -cdrom os.iso
+	qemu-system-$(ARCH) -enable-kvm -no-reboot -no-shutdown -s -S -cdrom os.iso
 
 gdb:
 	gdb/bin/rust-gdb -q "build/kernel.bin" -ex "target remote :1234"

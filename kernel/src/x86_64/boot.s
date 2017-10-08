@@ -1,91 +1,30 @@
-; Copyright (C) 2017, Isaac Woods. 
-; See LICENCE.md
+; This creates some initial page tables to map the kernel, before we set real ones up from Rust
+; It maps a GiB with 512 2MiB pages, starting at KERNEL_OFFSET
+;extern KERNEL_OFFSET
+;KERNEL_OFFSET   equ 0xffffff0000100000
+;KERNEL_OFFSET   equ 0xC0000000
+;KERNEL_P4_INDEX equ ((KERNEL_OFFSET >> 27) & 0o777)
+;KERNEL_P3_INDEX equ ((KERNEL_OFFSET >> 18) & 0o777)
 
-section .multiboot
-multiboot_header:
-  dd 0xe85250d6                                                         ; Multiboot-2 magic
-  dd 0                                                                  ; Architecture=0 (P-mode i386)
-  dd multiboot_end - multiboot_header                                   ; Header length
-  dd 0x100000000-(0xe85250d6 + 0 + (multiboot_end - multiboot_header))  ; Checksum
-
-  ; More options can be inserted here
-
-  dw 0
-  dw 0
-  dd 8
-multiboot_end:
-
-section .text
-global Start
-bits 32
-
-; Prints "ERR: " followed by the ASCII character in AL. The last thing on the stack should be the address that called this function.
-;   'M' = Incorrect Multiboot magic
-;   'C' = CPUID instruction is not supported
-;   'L' = Long mode not available
-;   'R' = Returned from kernel when we should never return (or frankly ever be in this code again)
-PrintError:
-  mov dword [0xb8000], 0x4f524f45
-  mov dword [0xb8004], 0x4f3a4f52
-  mov dword [0xb8008], 0x4f204f20
-  mov byte  [0xb800a], al
-  hlt
-
-CheckCpuidSupported:
-  pushfd          ; Copy EFLAGS into EAX
-  pop eax
-  mov ecx, eax    ; Make a copy in ECX to compare later on
-  xor eax, 1<<21  ; Flip the ID bit
-  push eax        ; Copy EAX back into EFLAGS
-  popfd
-  pushfd          ; Read EFLAGS again (with the ID bit flipped or not)
-  pop eax
-  push ecx        ; Restore EFLAGS back to the old version
-  popfd
-
-  ; Compare the (potentially) flipped version to the first one
-  cmp eax, ecx
-  je .no_cpuid
-  ret
-.no_cpuid:
-  mov al, 'C'
-  call PrintError
-
-CheckLongModeSupported:
-  ; Test if we can access the Extended Processor Info
-  mov eax, 0x80000000
-  cpuid
-  cmp eax, 0x80000001
-  jb .no_long_mode
-
-  ; Check the EPI to see if long mode is available on this CPU
-  mov eax, 0x80000001
-  cpuid
-  test edx, 1<<29
-  jz .no_long_mode
-  ret
-.no_long_mode:
-  mov al, 'L'
-  call PrintError
-
-; This identity-maps the virtual memory space to the physical one
+; TODO: We probably need to identity-map the code we're currently executing (which can then be unmapped after the jump)
+%if 0
 SetupPageTables:
-  ; Recursively map the 511th entry of P4 to the P4 table itself
+  ; Recursively map the 511th entry of the P4 to itself
   mov eax, p4_table
   or eax, 0b11  ; Present + Writable
   mov [p4_table+511*8], eax
 
-  ; Map the first P4 entry to the P3 table
+  ; Map the correct P4 entry to the P3 table
   mov eax, p3_table
   or eax, 0b11 ; Present + Writable
-  mov [p4_table], eax
+  mov [p4_table+KERNEL_P4_INDEX*8], eax
 
-  ; Map the first P3 entry to the P2 table
+  ; Map the correct P3 entry to the P2 table
   mov eax, p2_table
   or eax, 0b11  ; Present + Writable
-  mov [p3_table], eax
+  mov [p3_table+KERNEL_P3_INDEX*8], eax
 
-  ; Match each P2 entry to a huge page (2MiB) (where ecx=index of P2 entry)
+  ; Match each entry in P2 to a huge page (2MiB) (where ecx=index of P2 entry)
   mov ecx, 0
 .map_p2:
   mov eax, 0x200000 ; Make the page 2MiB
@@ -101,7 +40,7 @@ SetupPageTables:
 
 EnablePaging:
   ; Load our P4 into CR3
-  mov eax, p4_table
+  mov eax, (p4_table - KERNEL_OFFSET)
   mov cr3, eax
 
   ; Enable Physical Address Extension
@@ -120,9 +59,11 @@ EnablePaging:
   or eax, 1<<31
   mov cr0, eax
 
-  ret
+  ; Start fetching instructions in the new address space by far jumping to an absolute address
+  lea ecx, [StartInHigherHalf]
+  jmp ecx
 
-extern InLongMode
+global Start
 Start:
   mov esp, stack_top
   mov edi, ebx        ; Move the pointer to the Multiboot struct into EDI
@@ -138,11 +79,16 @@ Start:
   call CheckLongModeSupported
 
   call SetupPageTables
-  call EnablePaging
+  jmp EnablePaging
 
-  ; We're now technically in Long Mode, but we still can't execute 64-bit instructions, because we've been put into
-  ; a 32-bit compatiblity submode. We now need to replace GRUB's crappy GDT with a proper one and far-jump to the
-  ; new code segment
+extern InLongMode
+StartInHigherHalf:
+  ; Load the stack again
+  mov esp, stack_top
+
+  ; We're now technically in Long Mode, but we still can't execute 64-bit instructions, because we've
+  ; been put into a 32-bit compatiblity submode. We now need to replace GRUB's GDT with a proper one
+  ; and far-jump to the new code segment
   lgdt [gdt64.pointer]
   jmp gdt64.kernel_code:InLongMode
 
@@ -150,6 +96,7 @@ Start:
   mov al, 'R'
   call PrintError
   hlt
+%endif
 
 section .rodata
 gdt64:

@@ -32,6 +32,8 @@ pub fn init(boot_info : &BootInformation) -> MemoryController<AreaFrameAllocator
     let kernel_start = elf_sections_tag.sections().filter(|s| s.is_allocated()).map(|s| s.addr).min().unwrap();
     let kernel_end = elf_sections_tag.sections().filter(|s| s.is_allocated()).map(|s| s.addr + s.size).max().unwrap();
 
+    println!("Loading kernel to: {:#x}", kernel_start);
+
     let mut frame_allocator = AreaFrameAllocator::new(boot_info.start_address() as usize,
                                                       boot_info.end_address()   as usize,
                                                       kernel_start              as usize,
