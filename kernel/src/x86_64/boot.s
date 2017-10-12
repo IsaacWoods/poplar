@@ -2,7 +2,6 @@
 ; It maps a GiB with 512 2MiB pages, starting at KERNEL_OFFSET
 ;extern KERNEL_OFFSET
 ;KERNEL_OFFSET   equ 0xffffff0000100000
-;KERNEL_OFFSET   equ 0xC0000000
 ;KERNEL_P4_INDEX equ ((KERNEL_OFFSET >> 27) & 0o777)
 ;KERNEL_P3_INDEX equ ((KERNEL_OFFSET >> 18) & 0o777)
 

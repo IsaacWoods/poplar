@@ -26,7 +26,7 @@ clean:
 	rm -rf os.iso
 
 run: os.iso
-	qemu-system-$(ARCH) -enable-kvm -cdrom os.iso
+	qemu-system-$(ARCH) -enable-kvm --no-reboot --no-shutdown -cdrom os.iso
 
 debug: os.iso
 	@echo "Connect with (gdb)target remote localhost:1234"

@@ -1,10 +1,8 @@
 ENTRY(BootstrapStart)
-
-/*KERNEL_OFFSET = 0xffffff0000100000;*/
-/*KERNEL_OFFSET = 0xC0100000;*/
+OUTPUT_FORMAT(elf64-x86-64)
 
 KERNEL_LMA = 0x100000;
-KERNEL_VMA = 0xC0000000;
+KERNEL_VMA = 0xffffffff80000000;
 
 SECTIONS
 {
@@ -14,9 +12,18 @@ SECTIONS
    */
   . = KERNEL_LMA;
 
-  .bootstrap.text :
+  /*
+   * This contains the Multiboot header, and so must appear near the end of the executable
+   */
+  .bootstrap.rodata :
   {
     KEEP(*(.multiboot))
+    *bootstrap.o (.rodata .rodata.*)
+    . = ALIGN(4K);
+  }
+
+  .bootstrap.text :
+  {
     *bootstrap.o (.text .text.*)
     . = ALIGN(4K);
   }
@@ -27,12 +34,6 @@ SECTIONS
     . = ALIGN(4K);
   }
 
-  .bootstrap.rodata :
-  {
-    *bootstrap.o (.rodata .rodata.*)
-    . = ALIGN(4K);
-  }
-
   /*
    * Then, we place everything else at proper virtual addresses
    */
@@ -40,7 +41,7 @@ SECTIONS
 
   .rodata : AT(ADDR(.rodata) - KERNEL_VMA)
   {
-    *(.rodata .rodata.*)
+    *(EXCLUDE_FILE(bootstrap.o) .rodata .rodata.*)
     . = ALIGN(4K);
   }
 
@@ -58,7 +59,7 @@ SECTIONS
 
   .bss : AT(ADDR(.bss) - KERNEL_VMA)
   {
-    *(.bss .bss.*)
+    *(EXCLUDE_FILE(bootstrap.o) .bss .bss.*)
     . = ALIGN(4K);
   }
 
@@ -80,6 +81,8 @@ SECTIONS
     *(.data.rel.ro .data.rel.ro.*)
     . = ALIGN(4K);
   }
+
+  _end = .;
 
   /DISCARD/ :
   {
