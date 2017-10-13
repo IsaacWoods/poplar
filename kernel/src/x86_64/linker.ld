@@ -1,4 +1,4 @@
-ENTRY(BootstrapStart)
+ENTRY(Start)
 OUTPUT_FORMAT(elf64-x86-64)
 
 KERNEL_LMA = 0x100000;
@@ -13,24 +13,18 @@ SECTIONS
   . = KERNEL_LMA;
 
   /*
-   * This contains the Multiboot header, and so must appear near the end of the executable
+   * This must appear first, because it contains the Multiboot header.
    */
-  .bootstrap.rodata :
+  .bootstrap_data :
   {
     KEEP(*(.multiboot))
-    *bootstrap.o (.rodata .rodata.*)
+    *(.bootstrap_data)
     . = ALIGN(4K);
   }
 
-  .bootstrap.text :
+  .bootstrap :
   {
-    *bootstrap.o (.text .text.*)
-    . = ALIGN(4K);
-  }
-
-  .bootstrap.bss :
-  {
-    *bootstrap.o (.bss)
+    *(.bootstrap)
     . = ALIGN(4K);
   }
 

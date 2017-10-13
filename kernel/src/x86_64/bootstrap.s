@@ -1,15 +1,6 @@
 ; Copyright (C) 2017, Isaac Woods. 
 ; See LICENCE.md
 
-; The bootstrap is physically-mapped into the executable, so we don't have to faff about with PIC. It
-; starts in 32-bit PM, identity-maps the first couple of MBs and enters long-mode, then sets up
-; higher-half mapping in the same set of page tables to map the kernel into the higher-half, then
-; jumps into the real code.
-
-; We place the kernel at -2GB because this allows compilers to use R_X86_64_32S relocations to
-; address kernel space
-KERNEL_VMA equ 0xFFFFFFFF80000000
-
 section .multiboot
 multiboot_header:
   dd 0xe85250d6                                                         ; Multiboot-2 magic
@@ -24,7 +15,102 @@ multiboot_header:
   dd 8
 multiboot_end:
 
-section .text
+; The bootstrap is a small physically-mapped bit of code for entering Long Mode and jumping into the
+; actual kernel.
+
+; We place the kernel at -2GB because this allows compilers to use R_X86_64_32S relocations to
+; address kernel space
+KERNEL_VMA equ 0xFFFFFFFF80000000
+
+; Constants for defining page tables
+PAGE_SIZE     equ 0x1000
+PAGE_PRESENT  equ 0x1
+PAGE_WRITABLE equ 0x2
+PAGE_USER     equ 0x4
+PAGE_HUGE     equ 0x80
+PAGE_NO_EXEC  equ 0x8000000000000000
+
+section .bootstrap_data
+align 4096
+bootstrap_stack_bottom:
+  times 4096 db 0   ; This should really be `resb`d in a BSS section, but that was effort
+bootstrap_stack_top:
+
+boot_pml4:
+  dq (boot_pml3l + PAGE_PRESENT + PAGE_WRITABLE)
+  times (512 - 4) dq 0
+  dq (identity_pml3 + PAGE_PRESENT + PAGE_WRITABLE)
+  dq (boot_pml4 + PAGE_PRESENT + PAGE_WRITABLE + PAGE_NO_EXEC)
+  dq (boot_pml3h + PAGE_PRESENT + PAGE_WRITABLE)
+
+boot_pml3l:
+  dq (boot_pml2 + PAGE_PRESENT + PAGE_WRITABLE)
+  dq 0
+  times (512 - 2) dq 0
+
+boot_pml3h:
+  times (512 - 2) dq 0
+  dq (boot_pml2 + PAGE_PRESENT + PAGE_WRITABLE)
+  dq 0
+
+boot_pml2:
+  dq (0x0 + PAGE_PRESENT + PAGE_WRITABLE + PAGE_HUGE)
+  times (512 - 1) dq 0
+
+identity_pml3:
+  times (512 - 5) dq 0
+  dq (pmm_stack_pml2 + PAGE_PRESENT + PAGE_WRITABLE)
+  dq (identity_pml2a + PAGE_PRESENT + PAGE_WRITABLE)
+  dq (identity_pml2b + PAGE_PRESENT + PAGE_WRITABLE)
+  dq (identity_pml2c + PAGE_PRESENT + PAGE_WRITABLE)
+  dq (identity_pml2d + PAGE_PRESENT + PAGE_WRITABLE)
+
+pmm_stack_pml2:
+  times (512 - 1) dq 0
+  dq (pmm_stack_pml1 + PAGE_PRESENT + PAGE_WRITABLE)
+
+pmm_stack_pml1:
+  times 512 dq 0
+
+identity_pml2a:
+  %assign pg 0
+  %rep 512
+    dq (pg + PAGE_PRESENT + PAGE_WRITABLE)
+    %assign pg pg+PAGE_SIZE*512
+  %endrep
+
+identity_pml2b:
+  %assign pg 0
+  %rep 512
+    dq (pg + PAGE_PRESENT + PAGE_WRITABLE)
+    %assign pg pg+PAGE_SIZE*512
+  %endrep
+
+identity_pml2c:
+  %assign pg 0
+  %rep 512
+    dq (pg + PAGE_PRESENT + PAGE_WRITABLE)
+    %assign pg pg+PAGE_SIZE*512
+  %endrep
+
+identity_pml2d:
+  %assign pg 0
+  %rep 512
+    dq (pg + PAGE_PRESENT + PAGE_WRITABLE)
+    %assign pg pg+PAGE_SIZE*512
+  %endrep
+
+gdt64:
+  dq 0                                ; Null selector
+  dq 0x00AF98000000FFFF               ; CS
+  dq 0x00CF92000000FFFF               ; DS TODO
+.end:
+  dq 0  ; Pad out so .pointer is 16-aligned
+.pointer:
+  dw .end-gdt64-1   ; Limit
+  dq gdt64          ; Base
+
+section .bootstrap
 bits 32
 
 ; Prints "ERR: " followed by the ASCII character in AL. The last thing on the stack should be the
@@ -76,39 +162,9 @@ CheckLongModeSupported:
   mov al, 'L'
   call PrintError
 
-SetupIdentityMap:
-  ; Recursively map 511th entry of P4 to itself
-  mov eax, common_p4
-  or eax, 0b11    ; Present + Writable
-  mov [common_p4+511*8], eax
-
-  ; Map first entry of P4 to P3
-  mov eax, identity_p3
-  or eax, 0b11    ; Present + Writable
-  mov [common_p4], eax
-
-  ; Map first entry of P3 to P2
-  mov eax, identity_p2
-  or eax, 0b11    ; Present + Writable
-  mov [identity_p3], eax
-
-  ; Map every P2 entry to a huge page starting at ECX * 2MiB
-  mov ecx, 0
-.map_p2_entry:
-  mov eax, 0x200000
-  mul ecx
-  or eax, 0b10000011  ; Present + Writable + Huge
-  mov [identity_p2 + ecx * 8], eax
-
-  inc ecx
-  cmp ecx, 512
-  jne .map_p2_entry
-
-  ret
-
 EnablePaging:
   ; Load the P4 pointer into CR3
-  mov eax, common_p4
+  mov eax, boot_pml4
   mov cr3, eax
 
   ; Enable PAE
@@ -129,8 +185,8 @@ EnablePaging:
 
   ret
 
-global BootstrapStart
-BootstrapStart:
+global Start
+Start:
   mov esp, bootstrap_stack_top
   mov edi, ebx  ; Move the pointer to the Multiboot structure into EDI
 
@@ -143,8 +199,6 @@ BootstrapStart:
 
   call CheckCpuidSupported
   call CheckLongModeSupported
-
-  call SetupIdentityMap
   call EnablePaging
 
   mov dword [0xb8064], 0x2f4b2f4f
@@ -152,97 +206,62 @@ BootstrapStart:
   ; We're now technically in Long-Mode, but we've been put in 32-bit compatibility submode until we
   ; install a valid GDT. We can then far-jump into the new code segment (in real Long-Mode :P).
   lgdt [gdt64.pointer]
-  jmp gdt64.codeSegment:InLongMode
 
-bits 64
-
-;KERNEL_OFFSET equ 0xffffff0000000000
-KERNEL_OFFSET   equ 0xffffffff80000000
-HIGHER_P4_INDEX equ ((KERNEL_OFFSET >> 39) & 0o777)
-HIGHER_P3_INDEX equ ((KERNEL_OFFSET >> 30) & 0o777)
-
-; This maps 1GB starting at KERNEL_OFFSET
-; We don't need to invalidate TLB entries because these pages should never have been mapped before
-MapHigherHalf:
-  ; Map correct entry of P4 to P3
-  mov eax, higher_p3
-  or eax, 0b11  ; Present + Writable
-  mov [common_p4+HIGHER_P4_INDEX*8], eax
-
-  ; Map correct entry of P3 to P2
-  mov eax, higher_p2
-  or eax, 0b11    ; Present + Writable
-  mov [higher_p3+HIGHER_P3_INDEX*8], eax
-
-  ; Map every P2 entry to a huge page starting at ECX * 2MiB
-  mov ecx, 0
-.map_p2_entry:
-  mov eax, 0x200000
-  mul ecx
-  or eax, 0b10000011  ; Present + Writable + Huge
-  mov [identity_p2 + ecx * 8], eax
-
-  inc ecx
-  cmp ecx, 512
-  jne .map_p2_entry
-
-  ; Reload CR3 to clear out the TLB
-  mov rax, cr3
-  mov cr3, rax
-
-  ret
-
-extern Entry64
-InLongMode:
-  ; Reload every data segment with 0 (Long-mode doesn't use segmentation)
-  mov ax, 0
+  ; Reload segment selectors
+  mov ax, 0x10
   mov ss, ax
+
+  mov ax, 0
   mov ds, ax
   mov es, ax
   mov fs, ax
   mov gs, ax
 
-  call MapHigherHalf
+  jmp 0x8:Trampoline
 
-  ; Correct the address of the Multiboot structure
-  mov rcx, qword KERNEL_OFFSET
-  add rdi, rcx
-
-  mov rax, qword Entry64
+bits 64
+Trampoline:
+  mov rax, qword InHigherHalf
   jmp rax
 
-  ; This *should* be unreachable
+section .text
+bits 64
+InHigherHalf:
+  ; Reload the GDT pointer with the correct virtual address
+  mov rax, [gdt64.pointer + 2]
+  mov rbx, KERNEL_VMA
+  add rax, rbx
+  mov [gdt64.pointer + 2], rax
+  mov rax, gdt64.pointer + KERNEL_VMA
+  lgdt [rax]
+
+  ; TODO: map in the rest of the kernel
+
+  ; Set up the real stack
+  mov rbp, 0  ; Terminate stack-traces in the higher-half (going lower leads to a clusterfuck)
+  mov rsp, stack_top
+
+  ; Unmap the identity-map and invalidate its TLB entries
+  mov qword [boot_pml4], 0x0
+  invlpg [0x0]
+
+  ; Clear RFLAGS (TODO: why do we need this?)
+  push 0x0
+  popf
+
+  ; Print OKAY
+  mov rax, 0x2f592f412f4b2f4f
+  mov qword [0xFFFFFFFF800b8000], rax
   hlt
+
+  ; Correct the address of the Multiboot structure
+  mov rcx, qword KERNEL_VMA
+  add rdi, rcx
+
+  ; TODO: Call into the kernel
 
 section .bss
 align 4096
-
-common_p4:
-  resb 4096
-
-; Identity page tables
-identity_p3:
-  resb 4096
-identity_p2:
-  resb 4096
-
-; Higher-half page tables
-higher_p3:
-  resb 4096
-higher_p2:
-  resb 4096
-
-; Bootstrap stack (very smol)
-bootstrap_stack_bottom:
-  resb 4096
-bootstrap_stack_top:
-
-section .rodata
-gdt64:
-  .nullEntry:  equ $-gdt64
-    dq 0
-  .codeSegment: equ $-gdt64
-    dq (1<<43)|(1<<44)|(1<<47)|(1<<53)
-  .pointer:
-    dw $-gdt64-1
-    dq gdt64
+stack_bottom:
+  resb 4096*4   ; 4 pages = 16kB
+stack_top:
