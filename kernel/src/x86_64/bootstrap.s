@@ -105,7 +105,7 @@ identity_pml2d:
 gdt64:
   dq 0                                ; Null selector
   dq 0x00AF98000000FFFF               ; CS
-  dq 0x00CF92000000FFFF               ; DS TODO
+  dq 0x00CF92000000FFFF               ; DS
 .end:
   dq 0  ; Pad out so .pointer is 16-aligned
 .pointer:
@@ -283,13 +283,9 @@ InHigherHalf:
   mov qword [boot_pml4], 0x0
   invlpg [0x0]
 
-  ; Clear RFLAGS (TODO: why do we need this?)
+  ; Clear RFLAGS
   push 0x0
   popf
-
-  ; Print OKAY
-  mov rax, 0x2f592f412f4b2f4f
-  mov qword [0xFFFFFFFF800b8000], rax
 
   ; Correct the address of the Multiboot structure
   mov rcx, qword KERNEL_VMA

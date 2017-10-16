@@ -96,7 +96,7 @@ pub static WRITER : Mutex<Writer> = Mutex::new(Writer
                                                {
                                                     col_position : 0,
                                                     color_code : ColorCode::new(Color::LightGreen, Color::Black),
-                                                    buffer : unsafe { Unique::new_unchecked(0xffffffff800b8000 as *mut _) },
+                                                    buffer : unsafe { Unique::new_unchecked(VGA_BUFFER_ADDRESS as *mut _) },
                                                });
 
 impl fmt::Write for Writer
