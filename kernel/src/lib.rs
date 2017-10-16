@@ -37,7 +37,7 @@ pub extern fn kmain(multiboot_ptr : usize)
 {
     vga_buffer::clear_screen();
     println!("Hello, World!");
-
+/*
     let boot_info = unsafe { multiboot2::load(multiboot_ptr) };
     let mut memory_controller = memory::init(boot_info);
     interrupts::init(&mut memory_controller);
@@ -56,7 +56,7 @@ pub extern fn kmain(multiboot_ptr : usize)
     }
 
     unsafe { asm!("sti"); }
-    loop { }
+    loop { }*/
 }
 
 #[lang = "eh_personality"]

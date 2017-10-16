@@ -11,6 +11,7 @@ SECTIONS
    * because we haven't enabled paging yet, and so code that uses virtual addresses won't work.
    */
   . = KERNEL_LMA;
+  _start = . + KERNEL_VMA;
 
   /*
    * This must appear first, because it contains the Multiboot header.

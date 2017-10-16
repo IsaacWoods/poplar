@@ -29,7 +29,7 @@ pub fn print(args : fmt::Arguments)
 
 pub fn clear_screen()
 {
-    for _ in 0..BUFFER_HEIGHT
+    for _ in 0..VGA_BUFFER_HEIGHT
     {
         println!("");
     }
@@ -76,12 +76,13 @@ struct ScreenChar
     color_code : ColorCode,
 }
 
-const BUFFER_WIDTH  : usize = 80;
-const BUFFER_HEIGHT : usize = 25;
+const VGA_BUFFER_WIDTH      : usize = 80;
+const VGA_BUFFER_HEIGHT     : usize = 25;
+const VGA_BUFFER_ADDRESS    : usize = 0xffffffff800b8000;
 
 struct Buffer
 {
-    chars : [[Volatile<ScreenChar>; BUFFER_WIDTH]; BUFFER_HEIGHT]
+    chars : [[Volatile<ScreenChar>; VGA_BUFFER_WIDTH]; VGA_BUFFER_HEIGHT]
 }
 
 pub struct Writer
@@ -95,7 +96,7 @@ pub static WRITER : Mutex<Writer> = Mutex::new(Writer
                                                {
                                                     col_position : 0,
                                                     color_code : ColorCode::new(Color::LightGreen, Color::Black),
-                                                    buffer : unsafe { Unique::new_unchecked(0xb8000 as *mut _) },
+                                                    buffer : unsafe { Unique::new_unchecked(0xffffffff800b8000 as *mut _) },
                                                });
 
 impl fmt::Write for Writer
@@ -120,12 +121,12 @@ impl Writer
 
             byte =>
             {
-                if self.col_position >= BUFFER_WIDTH
+                if self.col_position >= VGA_BUFFER_WIDTH
                 {
                     self.new_line();
                 }
 
-                let row = BUFFER_HEIGHT - 1;
+                let row = VGA_BUFFER_HEIGHT - 1;
                 let col = self.col_position;
                 let color_code = self.color_code;
 
@@ -149,9 +150,9 @@ impl Writer
 
     fn new_line(&mut self)
     {
-        for row in 1..BUFFER_HEIGHT
+        for row in 1..VGA_BUFFER_HEIGHT
         {
-            for col in 0..BUFFER_WIDTH
+            for col in 0..VGA_BUFFER_WIDTH
             {
                 let buffer = self.buffer();
                 let character = buffer.chars[row][col].read();
@@ -159,7 +160,7 @@ impl Writer
             }
         }
 
-        self.clear_row(BUFFER_HEIGHT-1);
+        self.clear_row(VGA_BUFFER_HEIGHT-1);
         self.col_position = 0;
     }
 
@@ -170,7 +171,7 @@ impl Writer
                         ascii_char: b' ',
                         color_code : self.color_code,
                     };
-        for col in 0..BUFFER_WIDTH
+        for col in 0..VGA_BUFFER_WIDTH
         {
             self.buffer().chars[row][col].write(blank);
         }

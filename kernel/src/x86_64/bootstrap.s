@@ -21,6 +21,8 @@ multiboot_end:
 ; We place the kernel at -2GB because this allows compilers to use R_X86_64_32S relocations to
 ; address kernel space
 KERNEL_VMA equ 0xFFFFFFFF80000000
+extern _start
+extern _end
 
 ; Constants for defining page tables
 PAGE_SIZE     equ 0x1000
@@ -226,6 +228,7 @@ Trampoline:
 
 section .text
 bits 64
+extern kmain
 InHigherHalf:
   ; Reload the GDT pointer with the correct virtual address
   mov rax, [gdt64.pointer + 2]
@@ -235,7 +238,42 @@ InHigherHalf:
   mov rax, gdt64.pointer + KERNEL_VMA
   lgdt [rax]
 
-  ; TODO: map in the rest of the kernel
+  ; Map the kernel
+  ; Calculate page number of the PHYSICAL start of the kernel
+  mov rax, _start - KERNEL_VMA
+  shr rax, 21 ; Divide by 0x200000
+
+  ; Calculate page number of the PHYSICAL end of the kernel
+  mov rbx, _end - KERNEL_VMA
+  shr rbx, 21 ; Divide by 0x200000
+
+  mov rcx, boot_pml2 + KERNEL_VMA ; Virtual address of the pointer into PML2
+  .map_page:
+    ; Calculate the address to put in the table entry
+        ; rdx = physical address of kernel memory
+        ; r8  = virtual address to map kernel page into
+    mov rdx, rax
+    shl rdx, 21 ; Multiply by 0x200000
+    mov r8, rdx
+    mov r9, KERNEL_VMA
+    add r8, r9
+    or rdx, PAGE_PRESENT + PAGE_WRITABLE + PAGE_HUGE
+
+    ; Write the page entry and invalidate the TLB entry
+    mov [rcx], rdx
+    invlpg [r8]
+    
+    ; Increment table pointer
+    add rcx, 8
+
+    ; Terminate loop if we've mapped the whole kernel
+    cmp rax, rbx
+    je .mapped_kernel
+
+    ; Increment page number and map next page
+    inc rax
+    jmp .map_page
+  .mapped_kernel:
 
   ; Set up the real stack
   mov rbp, 0  ; Terminate stack-traces in the higher-half (going lower leads to a clusterfuck)
@@ -252,13 +290,14 @@ InHigherHalf:
   ; Print OKAY
   mov rax, 0x2f592f412f4b2f4f
   mov qword [0xFFFFFFFF800b8000], rax
-  hlt
 
   ; Correct the address of the Multiboot structure
   mov rcx, qword KERNEL_VMA
   add rdi, rcx
 
-  ; TODO: Call into the kernel
+  ; Call into the kernel
+  call kmain
+  hlt
 
 section .bss
 align 4096
