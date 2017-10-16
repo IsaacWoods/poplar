@@ -7,4 +7,4 @@ test_program.bin: main.s
 	nasm -fbin -o $@ $<
 
 clean:
-	rm test_program.bin
+	rm -f test_program.bin
