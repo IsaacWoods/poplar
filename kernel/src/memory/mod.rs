@@ -15,6 +15,10 @@ use self::paging::{PAGE_SIZE,PhysicalAddress};
 use hole_tracking_allocator::ALLOCATOR;
 use multiboot2::BootInformation;
 
+/*
+ * TODO: can we share KERNEL_VMA as an external symbol and declare it in the linker script?
+ */
+pub const KERNEL_VMA : usize = 0xffffffff80000000;
 pub const HEAP_START : usize = 0o000_001_000_000_0000;
 pub const HEAP_SIZE  : usize = 100 * 1024;  // 100 KiB
 

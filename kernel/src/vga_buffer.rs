@@ -7,6 +7,7 @@ use core::fmt;
 use core::ptr::Unique;
 use volatile::Volatile;
 use spin::Mutex;
+use memory::KERNEL_VMA;
 
 macro_rules! println
 {
@@ -78,7 +79,7 @@ struct ScreenChar
 
 const VGA_BUFFER_WIDTH      : usize = 80;
 const VGA_BUFFER_HEIGHT     : usize = 25;
-const VGA_BUFFER_ADDRESS    : usize = 0xffffffff800b8000;
+const VGA_BUFFER_ADDRESS    : usize = KERNEL_VMA + 0xb8000;
 
 struct Buffer
 {
