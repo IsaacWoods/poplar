@@ -38,41 +38,35 @@ bootstrap_stack_bottom:
   times 4096 db 0   ; This should really be `resb`d in a BSS section, but that was effort
 bootstrap_stack_top:
 
+; These are the page maps we enter Long Mode with. They have identity mapping set up, along with the
+; higher-half mapping starting at 0xffffffff80000000 (P4=511, P3=510, P2=0 [Huge pages]).
 boot_pml4:
-  dq (boot_pml3l + PAGE_PRESENT + PAGE_WRITABLE)
-  times (512 - 4) dq 0
-  dq (identity_pml3 + PAGE_PRESENT + PAGE_WRITABLE)
-  dq (boot_pml4 + PAGE_PRESENT + PAGE_WRITABLE + PAGE_NO_EXEC)
-  dq (boot_pml3h + PAGE_PRESENT + PAGE_WRITABLE)
+  dq (boot_pml3l + PAGE_PRESENT + PAGE_WRITABLE)                ; 0
+  times (512 - 4) dq 0                                          ; ...
+  dq (identity_pml3 + PAGE_PRESENT + PAGE_WRITABLE)             ; 509   -- what the fuck is this??
+  dq (boot_pml4 + PAGE_PRESENT + PAGE_WRITABLE + PAGE_NO_EXEC)  ; 510
+  dq (boot_pml3h + PAGE_PRESENT + PAGE_WRITABLE)                ; 511
 
 boot_pml3l:
-  dq (boot_pml2 + PAGE_PRESENT + PAGE_WRITABLE)
-  dq 0
-  times (512 - 2) dq 0
+  dq (boot_pml2 + PAGE_PRESENT + PAGE_WRITABLE)                 ; 0
+  dq 0                                                          ; 1
+  times (512 - 2) dq 0                                          ; ...
 
 boot_pml3h:
-  times (512 - 2) dq 0
-  dq (boot_pml2 + PAGE_PRESENT + PAGE_WRITABLE)
-  dq 0
+  times (512 - 2) dq 0                                          ; ...
+  dq (boot_pml2 + PAGE_PRESENT + PAGE_WRITABLE)                 ; 510
+  dq 0                                                          ; 511
 
 boot_pml2:
-  dq (0x0 + PAGE_PRESENT + PAGE_WRITABLE + PAGE_HUGE)
+  dq (0x0 + PAGE_PRESENT + PAGE_WRITABLE + PAGE_HUGE)           ; 0
   times (512 - 1) dq 0
 
 identity_pml3:
-  times (512 - 5) dq 0
-  dq (pmm_stack_pml2 + PAGE_PRESENT + PAGE_WRITABLE)
-  dq (identity_pml2a + PAGE_PRESENT + PAGE_WRITABLE)
-  dq (identity_pml2b + PAGE_PRESENT + PAGE_WRITABLE)
-  dq (identity_pml2c + PAGE_PRESENT + PAGE_WRITABLE)
-  dq (identity_pml2d + PAGE_PRESENT + PAGE_WRITABLE)
-
-pmm_stack_pml2:
-  times (512 - 1) dq 0
-  dq (pmm_stack_pml1 + PAGE_PRESENT + PAGE_WRITABLE)
-
-pmm_stack_pml1:
-  times 512 dq 0
+  times (512 - 4) dq 0
+  dq (identity_pml2a + PAGE_PRESENT + PAGE_WRITABLE)            ; 508
+  dq (identity_pml2b + PAGE_PRESENT + PAGE_WRITABLE)            ; 509
+  dq (identity_pml2c + PAGE_PRESENT + PAGE_WRITABLE)            ; 510
+  dq (identity_pml2d + PAGE_PRESENT + PAGE_WRITABLE)            ; 511
 
 identity_pml2a:
   %assign pg 0
@@ -115,8 +109,7 @@ gdt64:
 section .bootstrap
 bits 32
 
-; Prints "ERR: " followed by the ASCII character in AL. The last thing on the stack should be the
-; address that called this function.
+; Prints "ERR: " followed by the ASCII character in AL
 ;   'M' = Incorrect Multiboot magic
 ;   'C' = CPUID instruction is not supported
 ;   'L' = Long mode not available
