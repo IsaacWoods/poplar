@@ -32,9 +32,9 @@ impl EntryFlags
         use multiboot2::{ELF_SECTION_ALLOCATED,ELF_SECTION_WRITABLE,ELF_SECTION_EXECUTABLE};
         let mut flags = EntryFlags::empty();
 
-        if  section.flags().contains(ELF_SECTION_ALLOCATED)  { flags |= PRESENT;    }
-        if  section.flags().contains(ELF_SECTION_WRITABLE)   { flags |= WRITABLE;   }
-        if !section.flags().contains(ELF_SECTION_EXECUTABLE) { flags |= NO_EXECUTE; }
+        if  section.flags().contains(ELF_SECTION_ALLOCATED)  { flags |= EntryFlags::PRESENT;    }
+        if  section.flags().contains(ELF_SECTION_WRITABLE)   { flags |= EntryFlags::WRITABLE;   }
+        if !section.flags().contains(ELF_SECTION_EXECUTABLE) { flags |= EntryFlags::NO_EXECUTE; }
 
         flags
     }
@@ -46,9 +46,9 @@ impl EntryFlags
         /*
          * If one frame *doesn't* have the NO_EXECUTE flag, it must be executable.
          */
-        if !self.contains(NO_EXECUTE) || !(other.contains(NO_EXECUTE))
+        if !self.contains(EntryFlags::NO_EXECUTE) || !(other.contains(EntryFlags::NO_EXECUTE))
         {
-            flags &= !(NO_EXECUTE);
+            flags &= !(EntryFlags::NO_EXECUTE);
         }
 
         flags
@@ -74,7 +74,7 @@ impl Entry
 
     pub fn get_pointed_frame(&self) -> Option<Frame>
     {
-        if self.flags().contains(PRESENT)
+        if self.flags().contains(EntryFlags::PRESENT)
         {
             Some(Frame::get_containing_frame(self.0 as usize & 0x000fffff_fffff000))
         }

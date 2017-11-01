@@ -77,7 +77,7 @@ impl StackAllocator
 
                 for page in Page::range_inclusive(start, end)
                 {
-                    active_table.map(page, paging::WRITABLE, frame_allocator);
+                    active_table.map(page, paging::entry::EntryFlags::WRITABLE, frame_allocator);
                 }
 
                 let top_of_stack = end.get_start_address() + PAGE_SIZE;

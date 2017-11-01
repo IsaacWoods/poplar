@@ -4,7 +4,7 @@
  */
 
 use super::{VirtualAddress,PhysicalAddress,Page,PAGE_SIZE,ENTRY_COUNT};
-use super::entry::*;
+use super::entry::EntryFlags;
 use super::table::{self,Table,Level4};
 use memory::{Frame,FrameAllocator};
 use core::ptr::Unique;
@@ -49,7 +49,7 @@ impl Mapper
                         // 1GiB page?
                         if let Some(start_frame) = p3_entry.get_pointed_frame()
                         {
-                            if p3_entry.flags().contains(HUGE_PAGE)
+                            if p3_entry.flags().contains(EntryFlags::HUGE_PAGE)
                             {
                                 assert!(start_frame.number % (ENTRY_COUNT * ENTRY_COUNT) == 0);
                                 return Some(Frame
@@ -65,7 +65,7 @@ impl Mapper
                             // 2MiB page?
                             if let Some(start_frame) = p2_entry.get_pointed_frame()
                             {
-                                if p2_entry.flags().contains(HUGE_PAGE)
+                                if p2_entry.flags().contains(EntryFlags::HUGE_PAGE)
                                 {
                                     // address must be 2MiB aligned
                                     assert!(start_frame.number % ENTRY_COUNT == 0);
@@ -89,11 +89,11 @@ impl Mapper
         self.map_to(page, frame, flags, allocator)
     }
 
-    pub fn identity_map<A>(&mut self, frame : Frame, flags : EntryFlags, allocator : &mut A) where A : FrameAllocator
+/*    pub fn identity_map<A>(&mut self, frame : Frame, flags : EntryFlags, allocator : &mut A) where A : FrameAllocator
     {
         let page = Page::get_containing_page(frame.get_start_address());
         self.map_to(page, frame, flags, allocator);
-    }
+    }*/
 
     pub fn unmap<A>(&mut self, page : Page, allocator : &mut A) where A : FrameAllocator
     {
@@ -116,14 +116,18 @@ impl Mapper
 //        allocator.deallocate_frame(frame); TODO
     }
 
+    /*
+     * This maps a given page to a given frame, with the specified flags.
+     */
     pub fn map_to<A>(&mut self, page : Page, frame : Frame, flags : EntryFlags, allocator : &mut A) where A : FrameAllocator
     {
+        println!("Mapping page({:x}) to frame({:x})", page.get_start_address(), frame.get_start_address());
         let p4 = self.p4_mut();
         let p3 = p4.next_table_create(page.p4_index(), allocator);
         let p2 = p3.next_table_create(page.p3_index(), allocator);
         let p1 = p2.next_table_create(page.p2_index(), allocator);
     
         assert!(p1[page.p1_index()].is_unused(), "Tried to map a page that has already been mapped: {:#x}", page.get_start_address());
-        p1[page.p1_index()].set(frame, flags | PRESENT);
+        p1[page.p1_index()].set(frame, flags | EntryFlags::PRESENT);
     }
 }

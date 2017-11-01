@@ -3,7 +3,7 @@
  * See LICENCE.md
  */
 
-mod entry;
+pub mod entry; // TODO: It isn't ideal to have this public, move reponsibility for this inside mod
 mod table;
 mod temporary_page;
 mod temporary_vec;
@@ -16,6 +16,7 @@ use self::mapper::Mapper;
 use self::temporary_vec::TemporaryVec;
 use self::temporary_page::TemporaryPage;
 use memory::{Frame,FrameAllocator};
+use memory::map::{TEMP_PAGE_A,TEMP_PAGE_B,RECURSIVE_ENTRY};
 use multiboot2::BootInformation;
 
 pub const PAGE_SIZE : usize = 4096;
@@ -53,7 +54,7 @@ impl Iterator for PageIter
 #[derive(Debug,Clone,Copy,PartialEq,Eq,PartialOrd,Ord)]
 pub struct Page
 {
-  number : usize,
+    number : usize,
 }
 
 impl Add<usize> for Page
@@ -148,14 +149,15 @@ impl ActivePageTable
             let p4_table = temporary_page.map_table_frame(original_p4.clone(), self);
 
             // Overwrite recursive mapping
-            self.p4_mut()[511].set(table.p4_frame.clone(), PRESENT | WRITABLE);
+            self.p4_mut()[RECURSIVE_ENTRY].set(table.p4_frame.clone(), EntryFlags::PRESENT |
+                                                                       EntryFlags::WRITABLE);
             tlb::flush_all();
 
             // Execute in the new context
             f(self);
 
             // Restore recursive mapping to original P4
-            p4_table[511].set(original_p4, PRESENT | WRITABLE);
+            p4_table[RECURSIVE_ENTRY].set(original_p4, EntryFlags::PRESENT | EntryFlags::WRITABLE);
             tlb::flush_all();
         }
 
@@ -205,9 +207,9 @@ impl InactivePageTable
          *       we try to unmap the temporary page.
          */
         {
-            let table = temporary_page.map_table_frame(frame.clone(), active_table);
+            let table = temporary_page.map_table_frame(frame.clone(), active_table);    // XXX: Causing crash
             table.zero();
-            table[511].set(frame.clone(), PRESENT | WRITABLE);
+            table[RECURSIVE_ENTRY].set(frame.clone(), EntryFlags::PRESENT | EntryFlags::WRITABLE);
         }
 
         temporary_page.unmap(active_table);
@@ -217,15 +219,20 @@ impl InactivePageTable
 
 pub fn remap_kernel<A>(allocator : &mut A, boot_info : &BootInformation) -> ActivePageTable where A : FrameAllocator
 {
+    use memory::map::KERNEL_VMA;
+
     /*
      * First, we create a temporary page at an address that we know should be unused.
      */
-    let mut temporary_page = TemporaryPage::new(Page { number : 0xcafebabe }, allocator);
+    let mut temporary_page = TemporaryPage::new(Page::get_containing_page(TEMP_PAGE_A), allocator);
+    println!("Created first temp page");
     let mut active_table = unsafe { ActivePageTable::new() };
+    println!("Created new active table");
     let mut new_table = {
                             let frame = allocator.allocate_frame().expect("run out of frames");
                             InactivePageTable::new(frame, &mut active_table, &mut temporary_page)
                         };
+    println!("Allocated new frame for table");
 
     /*
      * We must only map each page once, so we store the list without actually mapping them, resolve
@@ -236,10 +243,13 @@ pub fn remap_kernel<A>(allocator : &mut A, boot_info : &BootInformation) -> Acti
      *      We store (the frame's flags, the frame itself, whether this is a duplicate entry).
      */
     let list_frame = allocator.allocate_frame().expect("run out of frames");
-    let mut list_page = TemporaryPage::new(Page { number : 0xcafebabe+1 }, allocator);
+    let mut list_page = TemporaryPage::new(Page { number : TEMP_PAGE_B }, allocator);
     list_page.map(list_frame, &mut active_table);
     let mut frame_list : TemporaryVec<(EntryFlags,Frame,bool)> = unsafe { TemporaryVec::new(&mut list_page) };
 
+    /*
+     * TODO: Correctly map stuff here
+     */
     active_table.with(&mut new_table, &mut temporary_page,
         |mapper| {
             let elf_sections_tag = boot_info.elf_sections_tag().expect("Memory map tag required");
@@ -268,10 +278,11 @@ pub fn remap_kernel<A>(allocator : &mut A, boot_info : &BootInformation) -> Acti
             }
 
             // Identity-map the VGA buffer
-            frame_list.push((WRITABLE, Frame::get_containing_frame(0xb8000), true));
+            frame_list.push((EntryFlags::WRITABLE, Frame::get_containing_frame(0xb8000), true));
 
             // Identity-map any modules loaded by GRUB
-            if boot_info.module_tags().count() > 0
+            // TODO
+/*            if boot_info.module_tags().count() > 0
             {
                 for module_tag in boot_info.module_tags()
                 {
@@ -281,18 +292,18 @@ pub fn remap_kernel<A>(allocator : &mut A, boot_info : &BootInformation) -> Acti
                     for frame in Frame::range_inclusive(Frame::get_containing_frame(module_start),
                                                         Frame::get_containing_frame(module_end - 1))
                     {
-                        frame_list.push((PRESENT, frame, true));
+                        frame_list.push((EntryFlags::PRESENT, frame, true));
                     }
                 }
-            }
+            }*/
 
             // Identity-map the Multiboot structure
             let multiboot_start = Frame::get_containing_frame(boot_info.start_address());
-            let multiboot_end = Frame::get_containing_frame(boot_info.end_address() - 1);
+            let multiboot_end   = Frame::get_containing_frame(boot_info.end_address() - 1);
 
             for frame in Frame::range_inclusive(multiboot_start, multiboot_end)
             {
-                frame_list.push((PRESENT, frame, true));
+                frame_list.push((EntryFlags::PRESENT, frame, true));
             }
 
             // Coalesce duplicate frame mappings and identity-map each required frame
@@ -317,7 +328,7 @@ pub fn remap_kernel<A>(allocator : &mut A, boot_info : &BootInformation) -> Acti
                     duplicate.2 = false;
                 }
 
-                mapper.identity_map(entry.1.clone(), entry.0, allocator);
+                //mapper.identity_map(entry.1.clone(), entry.0, allocator);
             }
         });
 

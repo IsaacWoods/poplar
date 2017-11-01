@@ -7,7 +7,7 @@ use core::fmt;
 use core::ptr::Unique;
 use volatile::Volatile;
 use spin::Mutex;
-use memory::KERNEL_VMA;
+use memory::map::KERNEL_VMA;
 
 macro_rules! println
 {

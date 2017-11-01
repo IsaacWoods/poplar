@@ -4,7 +4,8 @@
  */
 
 use core::ops::{Index,IndexMut};
-use memory::paging::entry::*;
+use memory::map::P4_TABLE_ADDRESS;
+use memory::paging::entry::{Entry,EntryFlags};
 use memory::paging::ENTRY_COUNT;
 use memory::FrameAllocator;
 use core::marker::PhantomData;
@@ -31,7 +32,7 @@ pub struct Table<L : TableLevel>
     level : PhantomData<L>,
 }
 
-pub const P4 : *mut Table<Level4> = 0xffffffff_fffff000 as *mut _;
+pub const P4 : *mut Table<Level4> = P4_TABLE_ADDRESS as *mut _;
 
 impl<L> Table<L> where L : TableLevel
 {
@@ -49,10 +50,19 @@ impl<L> Table<L> where L : HierarchicalLevel
     fn next_table_address(&self, index : usize) -> Option<usize>
     {
         let entry_flags = self[index].flags();
-        if entry_flags.contains(PRESENT) && !entry_flags.contains(HUGE_PAGE)
+
+        if entry_flags.contains(EntryFlags::PRESENT) && !entry_flags.contains(EntryFlags::HUGE_PAGE)
         {
+            /*
+             * Now we can calculate the next table's address by going through one more layer of the
+             * recursive mapping.This doesn't always yield a canonical address, so we re-extend the
+             * sign extension.
+             *
+             * XXX: This only works for addresses requiring a sign-extension of 1 (works for all of
+             *      our page tables), but replace with real sign-extension if we need it.
+             */
             let table_address = (self as *const _) as usize;
-            Some((table_address << 9) | (index << 12))
+            Some(((table_address << 9) | (index << 12)) | 0o177777_000_000_000_000_0000)
         }
         else
         {
@@ -74,9 +84,10 @@ impl<L> Table<L> where L : HierarchicalLevel
     {
         if self.next_table(index).is_none()
         {
-            assert!(!self.entries[index].flags().contains(HUGE_PAGE), "mapping code does not support huge pages");
+            // TODO: this fucks up now :(
+            assert!(!self.entries[index].flags().contains(EntryFlags::HUGE_PAGE), "mapping code does not support huge pages");
             let frame = allocator.allocate_frame().expect("no frames available");
-            self.entries[index].set(frame, PRESENT | WRITABLE);
+            self.entries[index].set(frame, EntryFlags::PRESENT | EntryFlags::WRITABLE);
             self.next_table_mut(index).unwrap().zero();
         }
         self.next_table_mut(index).unwrap()

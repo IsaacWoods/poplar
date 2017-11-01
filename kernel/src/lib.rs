@@ -13,34 +13,41 @@
 #![feature(abi_x86_interrupt)]
 
 /*
- * `rlibc` provides intrinsics that are linked against, and so the compiler doesn't pick up
- * that it's actually used.
+ * `rlibc` just provides intrinsics that are linked against, and so the compiler doesn't pick up
+ * that it's actually used, so we suppress the warning.
  */
-#[allow(unused_extern_crates)] extern crate rlibc;
-                               extern crate volatile;
-                               extern crate spin;
-#[macro_use]                   extern crate lazy_static;
-                               extern crate multiboot2;
-#[macro_use]                   extern crate bitflags;
-                               extern crate bit_field;
-#[macro_use]                   extern crate x86_64;
-#[macro_use]                   extern crate alloc;
-#[macro_use]                   extern crate rustos_common;
-                               extern crate hole_tracking_allocator;
+#[allow(unused_extern_crates)]
+                extern crate rlibc;
+                extern crate volatile;
+                extern crate spin;
+#[macro_use]    extern crate lazy_static;
+                extern crate multiboot2;
+#[macro_use]    extern crate bitflags;
+                extern crate bit_field;
+#[macro_use]    extern crate x86_64;
+#[macro_use]    extern crate alloc;
+#[macro_use]    extern crate rustos_common;
+                extern crate hole_tracking_allocator;
 
-#[macro_use]                   mod vga_buffer;
-                               mod memory;
-                               mod interrupts;
+#[macro_use]    mod vga_buffer;
+                mod memory;
+                mod interrupts;
 
 #[no_mangle]
 pub extern fn kmain(multiboot_ptr : usize)
 {
     vga_buffer::clear_screen();
     println!("Hello, World!");
-/*
+
     let boot_info = unsafe { multiboot2::load(multiboot_ptr) };
+
+/*    for section in boot_info.elf_sections_tag().expect("Shit").sections()
+    {
+        println!("  * Addr: 0x{:x}, size: 0x{:x}, flags: 0x{:x}", section.addr, section.size, section.flags);
+    }*/
+
     let mut memory_controller = memory::init(boot_info);
-    interrupts::init(&mut memory_controller);
+/*    interrupts::init(&mut memory_controller);
 
     for module_tag in boot_info.module_tags()
     {
@@ -55,8 +62,9 @@ pub extern fn kmain(multiboot_ptr : usize)
         println!("Result was {:#x}", result);
     }
 
-    unsafe { asm!("sti"); }
-    loop { }*/
+    unsafe { asm!("sti"); }*/
+    println!("FINISHED ALL KERNEL SHITE");
+    loop { }
 }
 
 #[lang = "eh_personality"]

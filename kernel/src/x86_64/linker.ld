@@ -33,6 +33,7 @@ SECTIONS
    * Then, we place everything else at proper virtual addresses
    */
   . += KERNEL_VMA;
+  _higher_start = .;
 
   .rodata : AT(ADDR(.rodata) - KERNEL_VMA)
   {
@@ -78,12 +79,12 @@ SECTIONS
   }
 
   _end = .;
-
+/*
   /DISCARD/ :
   {
     *(.comment*)
     *(.gcc_except_table*)
     *(.eh_frame*)
     *(.note*)
-  }
+  }*/
 }

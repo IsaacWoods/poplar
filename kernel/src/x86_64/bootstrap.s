@@ -38,14 +38,13 @@ bootstrap_stack_bottom:
   times 4096 db 0   ; This should really be `resb`d in a BSS section, but that was effort
 bootstrap_stack_top:
 
-; These are the page maps we enter Long Mode with. They have identity mapping set up, along with the
-; higher-half mapping starting at 0xffffffff80000000 (P4=511, P3=510, P2=0 [Huge pages]).
+; These are the page maps we enter Long Mode with. They have identity mapping set up, along with a
+; 1GiB mapping in the higher half starting at 0xffffffff80000000 (P4=511, P3=510, P2=0 [Huge pages]).
 boot_pml4:
   dq (boot_pml3l + PAGE_PRESENT + PAGE_WRITABLE)                ; 0
-  times (512 - 4) dq 0                                          ; ...
-  dq (identity_pml3 + PAGE_PRESENT + PAGE_WRITABLE)             ; 509   -- what the fuck is this??
-  dq (boot_pml4 + PAGE_PRESENT + PAGE_WRITABLE + PAGE_NO_EXEC)  ; 510
-  dq (boot_pml3h + PAGE_PRESENT + PAGE_WRITABLE)                ; 511
+  times (512 - 3) dq 0                                          ; ...
+  dq (boot_pml4 + PAGE_PRESENT + PAGE_WRITABLE + PAGE_NO_EXEC)  ; 510 - Recursive mapping of the PML4
+  dq (boot_pml3h + PAGE_PRESENT + PAGE_WRITABLE)                ; 511 - Higher-half kernel mapping
 
 boot_pml3l:
   dq (boot_pml2 + PAGE_PRESENT + PAGE_WRITABLE)                 ; 0
@@ -58,42 +57,10 @@ boot_pml3h:
   dq 0                                                          ; 511
 
 boot_pml2:
-  dq (0x0 + PAGE_PRESENT + PAGE_WRITABLE + PAGE_HUGE)           ; 0
-  times (512 - 1) dq 0
-
-identity_pml3:
-  times (512 - 4) dq 0
-  dq (identity_pml2a + PAGE_PRESENT + PAGE_WRITABLE)            ; 508
-  dq (identity_pml2b + PAGE_PRESENT + PAGE_WRITABLE)            ; 509
-  dq (identity_pml2c + PAGE_PRESENT + PAGE_WRITABLE)            ; 510
-  dq (identity_pml2d + PAGE_PRESENT + PAGE_WRITABLE)            ; 511
-
-identity_pml2a:
   %assign pg 0
   %rep 512
-    dq (pg + PAGE_PRESENT + PAGE_WRITABLE)
-    %assign pg pg+PAGE_SIZE*512
-  %endrep
-
-identity_pml2b:
-  %assign pg 0
-  %rep 512
-    dq (pg + PAGE_PRESENT + PAGE_WRITABLE)
-    %assign pg pg+PAGE_SIZE*512
-  %endrep
-
-identity_pml2c:
-  %assign pg 0
-  %rep 512
-    dq (pg + PAGE_PRESENT + PAGE_WRITABLE)
-    %assign pg pg+PAGE_SIZE*512
-  %endrep
-
-identity_pml2d:
-  %assign pg 0
-  %rep 512
-    dq (pg + PAGE_PRESENT + PAGE_WRITABLE)
-    %assign pg pg+PAGE_SIZE*512
+    dq (pg + PAGE_PRESENT + PAGE_WRITABLE + PAGE_HUGE)
+    %assign pg pg+0x200000
   %endrep
 
 gdt64:
@@ -230,43 +197,6 @@ InHigherHalf:
   mov [gdt64.pointer + 2], rax
   mov rax, gdt64.pointer + KERNEL_VMA
   lgdt [rax]
-
-  ; Map the kernel
-  ; Calculate page number of the PHYSICAL start of the kernel
-  mov rax, _start - KERNEL_VMA
-  shr rax, 21 ; Divide by 0x200000
-
-  ; Calculate page number of the PHYSICAL end of the kernel
-  mov rbx, _end - KERNEL_VMA
-  shr rbx, 21 ; Divide by 0x200000
-
-  mov rcx, boot_pml2 + KERNEL_VMA ; Virtual address of the pointer into PML2
-  .map_page:
-    ; Calculate the address to put in the table entry
-        ; rdx = physical address of kernel memory
-        ; r8  = virtual address to map kernel page into
-    mov rdx, rax
-    shl rdx, 21 ; Multiply by 0x200000
-    mov r8, rdx
-    mov r9, KERNEL_VMA
-    add r8, r9
-    or rdx, PAGE_PRESENT + PAGE_WRITABLE + PAGE_HUGE
-
-    ; Write the page entry and invalidate the TLB entry
-    mov [rcx], rdx
-    invlpg [r8]
-    
-    ; Increment table pointer
-    add rcx, 8
-
-    ; Terminate loop if we've mapped the whole kernel
-    cmp rax, rbx
-    je .mapped_kernel
-
-    ; Increment page number and map next page
-    inc rax
-    jmp .map_page
-  .mapped_kernel:
 
   ; Set up the real stack
   mov rbp, 0  ; Terminate stack-traces in the higher-half (going lower leads to a clusterfuck)

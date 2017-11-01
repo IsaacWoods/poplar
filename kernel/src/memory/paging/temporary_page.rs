@@ -5,6 +5,7 @@
 
 use super::{Page,ActivePageTable,VirtualAddress};
 use super::table::{Table,Level1};
+use super::entry::EntryFlags;
 use memory::{Frame,FrameAllocator};
 
 pub struct TemporaryPage
@@ -30,9 +31,9 @@ impl TemporaryPage
      */
     pub fn map(&mut self, frame : Frame, active_table : &mut ActivePageTable) -> VirtualAddress
     {
-        use super::entry::WRITABLE;
-        assert!(active_table.translate_page(self.page).is_none(), "temp page is already mapped");
-        active_table.map_to(self.page, frame, WRITABLE, &mut self.allocator);
+        println!("Mapping temp page");
+//        assert!(active_table.translate_page(self.page).is_none(), "temp page is already mapped");
+        active_table.map_to(self.page, frame, EntryFlags::WRITABLE, &mut self.allocator);
         self.page.get_start_address()
     }
 

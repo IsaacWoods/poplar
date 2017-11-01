@@ -3,6 +3,7 @@
  * See LICENCE.md
  */
 
+pub mod map;
 mod area_frame_allocator;
 mod paging;
 mod stack_allocator;
@@ -10,17 +11,11 @@ mod stack_allocator;
 pub use self::area_frame_allocator::AreaFrameAllocator;
 pub use self::paging::remap_kernel;
 
+use self::map::{KERNEL_VMA,HEAP_START,HEAP_SIZE};
 use self::stack_allocator::{Stack,StackAllocator};
 use self::paging::{PAGE_SIZE,PhysicalAddress};
 use hole_tracking_allocator::ALLOCATOR;
 use multiboot2::BootInformation;
-
-/*
- * TODO: can we share KERNEL_VMA as an external symbol and declare it in the linker script?
- */
-pub const KERNEL_VMA : usize = 0xffffffff80000000;
-pub const HEAP_START : usize = 0o000_001_000_000_0000;
-pub const HEAP_SIZE  : usize = 100 * 1024;  // 100 KiB
 
 pub fn init(boot_info : &BootInformation) -> MemoryController<AreaFrameAllocator>
 {
@@ -30,13 +25,30 @@ pub fn init(boot_info : &BootInformation) -> MemoryController<AreaFrameAllocator
     use x86_64::registers::control_regs::{Cr0,cr0,cr0_write};
     use self::paging::Page;
 
-    let memory_map_tag = boot_info.memory_map_tag().expect("Can't find memory map tag");
+    let memory_map_tag   = boot_info.memory_map_tag().expect("Can't find memory map tag");
     let elf_sections_tag = boot_info.elf_sections_tag().expect("Can't find elf sections tag");
 
-    let kernel_start = elf_sections_tag.sections().filter(|s| s.is_allocated()).map(|s| s.addr).min().unwrap();
-    let kernel_end = elf_sections_tag.sections().filter(|s| s.is_allocated()).map(|s| s.addr + s.size).max().unwrap();
+    /*
+     * These constants are defined by the linker script.
+     */
+    extern
+    {
+        /*
+         * The ADDRESSES of these are the relevant locations.
+         */
+        static _higher_start : u8;
+        static _end          : u8;
+    }
 
-    println!("Loading kernel to: {:#x}", kernel_start);
+    /*
+     * We only want to map sections that appear in the higher-half, because we should never need
+     * any of the bootstrap stuff again.
+     */
+    let kernel_start = unsafe { ((&_higher_start as *const u8) as *const usize) as usize };
+    let kernel_end   = unsafe { ((&_end          as *const u8) as *const usize) as usize };
+
+    println!("Loading kernel to: ({:#x})---({:#x})", kernel_start, kernel_end);
+    println!("Boot start: {:#x}, boot end: {:#x}", boot_info.start_address() as usize, boot_info.end_address() as usize);
 
     let mut frame_allocator = AreaFrameAllocator::new(boot_info.start_address() as usize,
                                                       boot_info.end_address()   as usize,
@@ -58,15 +70,19 @@ pub fn init(boot_info : &BootInformation) -> MemoryController<AreaFrameAllocator
         cr0_write(cr0() | Cr0::WRITE_PROTECT);
     }
 
+    /*
+     * We can now replace the bootstrap paging structures with better ones that actually map the
+     * structures with the correct permissions.
+     */
     let mut active_table = paging::remap_kernel(&mut frame_allocator, boot_info);
 
     // Map the pages used by the heap
     let heap_start_page = Page::get_containing_page(HEAP_START);
-    let heap_end_page = Page::get_containing_page(HEAP_START + HEAP_SIZE - 1);
+    let heap_end_page   = Page::get_containing_page(HEAP_START + HEAP_SIZE - 1);
 
     for page in Page::range_inclusive(heap_start_page, heap_end_page)
     {
-        active_table.map(page, paging::WRITABLE, &mut frame_allocator);
+        active_table.map(page, paging::entry::EntryFlags::WRITABLE, &mut frame_allocator);
     }
 
     // Create the heap
