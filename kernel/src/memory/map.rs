@@ -45,12 +45,11 @@ pub const P4_TABLE_ADDRESS : usize = 0o177777_000_000_000_000_0000 + (RECURSIVE_
  * TODO: Can we validate the memory map by comparing _end and known areas with this memory map?
  */
 
-/* 0xffffffff90000000 */
-pub const TEMP_PAGE_A : usize = 0xffffffff90000000;
-pub const TEMP_PAGE_B : usize = TEMP_PAGE_A + PAGE_SIZE;
-
 /* 0xffffffffc0000000 */
 pub const HEAP_START : usize = KERNEL_VMA + 0o000_001_000_000_0000;
 pub const HEAP_SIZE  : usize = 100 * 1024;  // 100 KiB
 
 /* 0xffffffffc0019000 */
+
+/* 0xfffffffff0000000 */
+pub const TEMP_PAGE : usize = 0xfffffffff0000000;

@@ -16,7 +16,7 @@ use self::mapper::Mapper;
 use self::temporary_vec::TemporaryVec;
 use self::temporary_page::TemporaryPage;
 use memory::{Frame,FrameAllocator};
-use memory::map::{TEMP_PAGE_A,TEMP_PAGE_B,RECURSIVE_ENTRY};
+use memory::map::RECURSIVE_ENTRY;
 use multiboot2::BootInformation;
 
 pub const PAGE_SIZE : usize = 4096;
@@ -207,7 +207,7 @@ impl InactivePageTable
          *       we try to unmap the temporary page.
          */
         {
-            let table = temporary_page.map_table_frame(frame.clone(), active_table);    // XXX: Causing crash
+            let table = temporary_page.map_table_frame(frame.clone(), active_table);
             table.zero();
             table[RECURSIVE_ENTRY].set(frame.clone(), EntryFlags::PRESENT | EntryFlags::WRITABLE);
         }
@@ -219,66 +219,69 @@ impl InactivePageTable
 
 pub fn remap_kernel<A>(allocator : &mut A, boot_info : &BootInformation) -> ActivePageTable where A : FrameAllocator
 {
-    use memory::map::KERNEL_VMA;
+    use memory::map::{KERNEL_VMA,TEMP_PAGE};
 
-    /*
-     * First, we create a temporary page at an address that we know should be unused.
-     */
-    let mut temporary_page = TemporaryPage::new(Page::get_containing_page(TEMP_PAGE_A), allocator);
-    println!("Created first temp page");
+    // This represents the page tables created by the bootstrap
     let mut active_table = unsafe { ActivePageTable::new() };
-    println!("Created new active table");
-    let mut new_table = {
-                            let frame = allocator.allocate_frame().expect("run out of frames");
-                            InactivePageTable::new(frame, &mut active_table, &mut temporary_page)
-                        };
-    println!("Allocated new frame for table");
 
     /*
-     * We must only map each page once, so we store the list without actually mapping them, resolve
-     * duplicate page maps (when a page covers more than one structure), and then identity-map them
-     * all.
-     *
-     * XXX: We don't have a heap at this point, so we create temporary page and use `TemporaryVec`.
-     *      We store (the frame's flags, the frame itself, whether this is a duplicate entry).
+     * We can now allocate space for a new set of page tables, then temporarily map it into memory
+     * so we can create a new set of page tables.
      */
-    let list_frame = allocator.allocate_frame().expect("run out of frames");
-    let mut list_page = TemporaryPage::new(Page { number : TEMP_PAGE_B }, allocator);
-    list_page.map(list_frame, &mut active_table);
-    let mut frame_list : TemporaryVec<(EntryFlags,Frame,bool)> = unsafe { TemporaryVec::new(&mut list_page) };
+    let mut temporary_page = TemporaryPage::new(Page::get_containing_page(TEMP_PAGE), allocator);
+    let mut new_table =
+        {
+            let frame = allocator.allocate_frame().expect("run out of frames");
+            InactivePageTable::new(frame, &mut active_table, &mut temporary_page)
+        };
 
     /*
-     * TODO: Correctly map stuff here
+     * We now populate the new page tables for the kernel. We do this by installing the physical
+     * address of the inactive P4 into the active P4's recursive entry, then mapping stuff as if we
+     * were modifying the active tables, then switch to the real tables.
      */
     active_table.with(&mut new_table, &mut temporary_page,
         |mapper| {
             let elf_sections_tag = boot_info.elf_sections_tag().expect("Memory map tag required");
 
             /*
-             * Identity map all the sections of the kernel
+             * Map the kernel sections with the correct permissions.
              */
             for section in elf_sections_tag.sections()
             {
-                // This section will not be allocated any memory, so skip it
-                if !(section.is_allocated())
+                /*
+                 * Skip sections that either aren't to be allocated or are located before the start
+                 * of the the higher-half (and so are probably part of the bootstrap).
+                 */
+                if !section.is_allocated() || section.start_address() < KERNEL_VMA
                 {
                     continue;
                 }
 
                 assert!(section.start_address() % PAGE_SIZE == 0, "sections must be page aligned");
 
-                let flags = EntryFlags::from_elf_section(section);
+                let flags       = EntryFlags::from_elf_section(section);
                 let start_frame = Frame::get_containing_frame(section.start_address());
-                let end_frame = Frame::get_containing_frame(section.end_address() - 1);
+                let end_frame   = Frame::get_containing_frame(section.end_address() - 1);
 
                 for frame in Frame::range_inclusive(start_frame, end_frame)
                 {
-                    frame_list.push((flags, frame, true));
+                    let virtual_address  = frame.get_start_address();
+                    let physical_address = virtual_address - KERNEL_VMA;
+
+                    mapper.map_to(Page::get_containing_page(virtual_address),
+                                  Frame::get_containing_frame(physical_address),
+                                  flags,
+                                  allocator);
+
                 }
             }
 
-            // Identity-map the VGA buffer
-            frame_list.push((EntryFlags::WRITABLE, Frame::get_containing_frame(0xb8000), true));
+            // Map the framebuffer
+            mapper.map_to(Page::get_containing_page(KERNEL_VMA + 0xb8000),
+                          Frame::get_containing_frame(0xb8000),
+                          EntryFlags::WRITABLE,
+                          allocator);
 
             // Identity-map any modules loaded by GRUB
             // TODO
@@ -298,46 +301,20 @@ pub fn remap_kernel<A>(allocator : &mut A, boot_info : &BootInformation) -> Acti
             }*/
 
             // Identity-map the Multiboot structure
-            let multiboot_start = Frame::get_containing_frame(boot_info.start_address());
+/*            let multiboot_start = Frame::get_containing_frame(boot_info.start_address());
             let multiboot_end   = Frame::get_containing_frame(boot_info.end_address() - 1);
 
             for frame in Frame::range_inclusive(multiboot_start, multiboot_end)
             {
                 frame_list.push((EntryFlags::PRESENT, frame, true));
-            }
-
-            // Coalesce duplicate frame mappings and identity-map each required frame
-            for entry in frame_list.iter()
-            {
-                // If this frame has been marked a duplicate, skip it
-                if !(entry.2)
-                {
-                    continue;
-                }
-
-                let mut flags : EntryFlags = entry.0;
-                for duplicate in frame_list.iter().filter(
-                    |e| {
-                            e.1.get_start_address() == entry.1.get_start_address()
-                        })
-                {
-                    /*
-                     * This is a duplicate, but may have different permissions, so we merge them.
-                     */
-                    flags = flags.merge(duplicate.0);
-                    duplicate.2 = false;
-                }
-
-                //mapper.identity_map(entry.1.clone(), entry.0, allocator);
-            }
+            }*/
         });
 
-    list_page.unmap(&mut active_table);
     let old_table = active_table.switch(new_table);
 
     // Turn the old P4 into a guard page for the stack
-    let old_p4_page = Page::get_containing_page(old_table.p4_frame.get_start_address());
-    active_table.unmap(old_p4_page, allocator);
+/*    let old_p4_page = Page::get_containing_page(old_table.p4_frame.get_start_address());
+    active_table.unmap(old_p4_page, allocator);*/
 
     active_table
 }

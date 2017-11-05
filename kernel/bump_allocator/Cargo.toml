@@ -4,4 +4,5 @@ version = "0.1.0"
 authors = ["Isaac Woods <isaacwoods.home@gmail.com>"]
 
 [dependencies]
-spin = "0.4.5"
+#spin = "0.4.5"
+spin = "*"

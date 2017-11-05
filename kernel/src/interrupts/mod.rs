@@ -11,6 +11,8 @@ use x86_64::VirtualAddress;
 use x86_64::structures::gdt::SegmentSelector;
 use x86_64::structures::idt::{Idt,ExceptionStackFrame,PageFaultErrorCode};
 use x86_64::structures::tss::TaskStateSegment;
+use x86_64::instructions::segmentation::set_cs;
+use x86_64::instructions::tables::load_tss;
 use memory::{FrameAllocator,MemoryController};
 use rustos_common::port::Port;
 use self::pic::{PicPair};
@@ -45,9 +47,6 @@ static PIC_PAIR : Mutex<PicPair> = Mutex::new(unsafe { PicPair::new(0x20, 0x28) 
 
 pub fn init<A>(memory_controller : &mut MemoryController<A>) where A : FrameAllocator
 {
-    use x86_64::instructions::segmentation::set_cs;
-    use x86_64::instructions::tables::load_tss;
-
     /*
      * Allocate a 4096 byte (1 page) stack for the double-fault handler. Using a separate stack
      * avoids a triple fault happening when the guard page of the normal stack is hit (after a stack
@@ -85,10 +84,10 @@ pub fn init<A>(memory_controller : &mut MemoryController<A>) where A : FrameAllo
     }
 
     IDT.load();
-    unsafe
+/*    unsafe
     {
         PIC_PAIR.lock().remap();
-    }
+    }*/
 }
 
 extern "x86-interrupt" fn breakpoint_handler(stack_frame : &mut ExceptionStackFrame)

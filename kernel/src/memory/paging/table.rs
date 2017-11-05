@@ -21,10 +21,19 @@ impl TableLevel for Level3 { }
 impl TableLevel for Level2 { }
 impl TableLevel for Level1 { }
 
-pub trait HierarchicalLevel : TableLevel { type NextLevel : TableLevel; }
-impl HierarchicalLevel for Level4        { type NextLevel = Level3;     }
-impl HierarchicalLevel for Level3        { type NextLevel = Level2;     }
-impl HierarchicalLevel for Level2        { type NextLevel = Level1;     }
+/*
+ * Tables of levels implementing HierarchicalLevel are page tables whose children are other tables 
+ * (as opposed to actual frames (like in P1 tables)). This allows us to restrict certain operations
+ * (such as getting the next level of page tables) to tables with child tables.
+ */
+pub trait HierarchicalLevel : TableLevel
+{
+    type NextLevel : TableLevel;
+}
+
+impl HierarchicalLevel for Level4 { type NextLevel = Level3; }
+impl HierarchicalLevel for Level3 { type NextLevel = Level2; }
+impl HierarchicalLevel for Level2 { type NextLevel = Level1; }
 
 pub struct Table<L : TableLevel>
 {
@@ -62,7 +71,7 @@ impl<L> Table<L> where L : HierarchicalLevel
              *      our page tables), but replace with real sign-extension if we need it.
              */
             let table_address = (self as *const _) as usize;
-            Some(((table_address << 9) | (index << 12)) | 0o177777_000_000_000_000_0000)
+            Some(((table_address << 9) | (index << 12)) | (0o177777_000_000_000_000_0000 * ((table_address>>47)&0b1)))
         }
         else
         {
@@ -85,7 +94,7 @@ impl<L> Table<L> where L : HierarchicalLevel
         if self.next_table(index).is_none()
         {
             // TODO: this fucks up now :(
-            assert!(!self.entries[index].flags().contains(EntryFlags::HUGE_PAGE), "mapping code does not support huge pages");
+//            assert!(!self.entries[index].flags().contains(EntryFlags::HUGE_PAGE), "mapping code does not support huge pages");
             let frame = allocator.allocate_frame().expect("no frames available");
             self.entries[index].set(frame, EntryFlags::PRESENT | EntryFlags::WRITABLE);
             self.next_table_mut(index).unwrap().zero();

@@ -89,12 +89,6 @@ impl Mapper
         self.map_to(page, frame, flags, allocator)
     }
 
-/*    pub fn identity_map<A>(&mut self, frame : Frame, flags : EntryFlags, allocator : &mut A) where A : FrameAllocator
-    {
-        let page = Page::get_containing_page(frame.get_start_address());
-        self.map_to(page, frame, flags, allocator);
-    }*/
-
     pub fn unmap<A>(&mut self, page : Page, allocator : &mut A) where A : FrameAllocator
     {
         assert!(self.translate(page.get_start_address()).is_some());
@@ -121,7 +115,6 @@ impl Mapper
      */
     pub fn map_to<A>(&mut self, page : Page, frame : Frame, flags : EntryFlags, allocator : &mut A) where A : FrameAllocator
     {
-        println!("Mapping page({:x}) to frame({:x})", page.get_start_address(), frame.get_start_address());
         let p4 = self.p4_mut();
         let p3 = p4.next_table_create(page.p4_index(), allocator);
         let p2 = p3.next_table_create(page.p3_index(), allocator);

@@ -7,6 +7,7 @@
 
 #![feature(lang_items)]
 #![feature(const_fn)]
+#![feature(const_unique_new)]
 #![feature(unique)]
 #![feature(alloc)]
 #![feature(asm)]
@@ -46,7 +47,8 @@ pub extern fn kmain(multiboot_ptr : usize)
         println!("  * Addr: 0x{:x}, size: 0x{:x}, flags: 0x{:x}", section.addr, section.size, section.flags);
     }*/
 
-    let mut memory_controller = memory::init(boot_info);
+    memory::init(boot_info);
+//    let mut memory_controller = memory::init(boot_info);
 /*    interrupts::init(&mut memory_controller);
 
     for module_tag in boot_info.module_tags()
