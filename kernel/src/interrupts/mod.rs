@@ -98,25 +98,22 @@ extern "x86-interrupt" fn breakpoint_handler(stack_frame : &mut ExceptionStackFr
 extern "x86-interrupt" fn page_fault_handler(stack_frame : &mut ExceptionStackFrame,
                                              error_code  : PageFaultErrorCode)
 {
-    println!("PAGE FAULT!");
-
-    if error_code.contains(PageFaultErrorCode::PROTECTION_VIOLATION)    { println!("  * Caused by a page-protection-violation");                                }
-                                                                   else { println!("  * Caused by a not-present page");                                         }
-
-    if error_code.contains(PageFaultErrorCode::INSTRUCTION_FETCH)
+    println!("PAGE_FAULT: {}", match (/*  P  (Present        ) */(error_code.bits() >> 0) & 0b1,
+                                      /* R/W (Read/Write     ) */(error_code.bits() >> 1) & 0b1,
+                                      /* U/S (User/Supervisor) */(error_code.bits() >> 2) & 0b1)
     {
-        println!("  * Caused by an instruction fetch");
-    }
-    else
-    {
-        if error_code.contains(PageFaultErrorCode::CAUSED_BY_WRITE)     { println!("  * Caused by an invalid write (maybe)");                                   }
-                                                                   else { println!("  * Caused by an invalid read (maybe)");                                    }
-    }
+        (0, 0, 0) => "Kernel tried to read a non-present page"                                      ,
+        (0, 0, 1) => "Kernel tried to read a non-present page, causing a protection fault"          ,
+        (0, 1, 0) => "Kernel tried to write to a non-present page"                                  ,
+        (0, 1, 1) => "Kernel tried to write to a non-present page, causing a protection fault"      ,
+        (1, 0, 0) => "User process tried to read a non-present page"                                ,
+        (1, 0, 1) => "User process tried to read a non-present page, causing a protection fault"    ,
+        (1, 1, 0) => "User process tried to write to a non-present page"                            ,
+        (1, 1, 1) => "User process tried to write to a non-present page, causing a protection fault",
 
-    if error_code.contains(PageFaultErrorCode::USER_MODE)               { println!("  * Occured in user-mode (CPL=3) (doesn't = privilege violation)");         }
-                                                                   else { println!("  * Occured in supervisor mode (CPL=0,1,2) (not = privilege violation)");   }
+        (_, _, _) => { panic!("UNRECOGNISED PAGE-FAULT ERROR CODE"); },
+    });
 
-    if error_code.contains(PageFaultErrorCode::MALFORMED_TABLE)         { println!("  * Something's fucky with a page table");                                  }
 
     println!("\n{:#?}", stack_frame);
 
