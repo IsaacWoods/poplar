@@ -220,6 +220,10 @@ InHigherHalf:
 
 section .bss
 align 4096
+; We purposfully unmap this page to avoid the stack from overflowing into the space above this
+global _guard_page
+_guard_page:
+  resb 4096     ; 1 page
 stack_bottom:
   resb 4096*4   ; 4 pages = 16kB
 stack_top:

@@ -235,6 +235,15 @@ pub fn remap_kernel<A>(allocator : &mut A, boot_info : &BootInformation) -> Acti
             InactivePageTable::new(frame, &mut active_table, &mut temporary_page)
         };
 
+    extern
+    {
+        /*
+         * The ADDRESS of this is the location of the guard page.
+         */
+        static _guard_page : u8;
+    }
+    let guard_page_addr = unsafe { ((&_guard_page as *const u8) as *const usize) as usize };
+
     /*
      * We now populate the new page tables for the kernel. We do this by installing the physical
      * address of the inactive P4 into the active P4's recursive entry, then mapping stuff as if we
@@ -277,7 +286,9 @@ pub fn remap_kernel<A>(allocator : &mut A, boot_info : &BootInformation) -> Acti
                 }
             }
 
-            // Map the framebuffer
+            /*
+             * Map the framebuffer
+             */
             mapper.map_to(Page::get_containing_page(KERNEL_VMA + 0xb8000),
                           Frame::get_containing_frame(0xb8000),
                           EntryFlags::WRITABLE,
@@ -308,6 +319,15 @@ pub fn remap_kernel<A>(allocator : &mut A, boot_info : &BootInformation) -> Acti
             {
                 frame_list.push((EntryFlags::PRESENT, frame, true));
             }*/
+
+            /*
+             * Unmap the stack's guard page. This stops us overflowing the stack by causing a page
+             * fault if we try to access the memory directly above the stack.
+             *
+             * XXX: This assumes that `guard_page_addr` is page aligned, otherwise it will probably
+             *      not unmap the correct page.
+             */
+            mapper.unmap(Page::get_containing_page(guard_page_addr), allocator);
         });
 
     let old_table = active_table.switch(new_table);

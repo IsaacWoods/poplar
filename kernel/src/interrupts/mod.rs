@@ -84,10 +84,10 @@ pub fn init<A>(memory_controller : &mut MemoryController<A>) where A : FrameAllo
     }
 
     IDT.load();
-/*    unsafe
+    unsafe
     {
         PIC_PAIR.lock().remap();
-    }*/
+    }
 }
 
 extern "x86-interrupt" fn breakpoint_handler(stack_frame : &mut ExceptionStackFrame)

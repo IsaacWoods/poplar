@@ -15,7 +15,10 @@ pub enum Level3 { }
 pub enum Level2 { }
 pub enum Level1 { }
 
-pub trait TableLevel { }
+pub trait TableLevel
+{
+}
+
 impl TableLevel for Level4 { }
 impl TableLevel for Level3 { }
 impl TableLevel for Level2 { }
@@ -93,8 +96,7 @@ impl<L> Table<L> where L : HierarchicalLevel
     {
         if self.next_table(index).is_none()
         {
-            // TODO: this fucks up now :(
-//            assert!(!self.entries[index].flags().contains(EntryFlags::HUGE_PAGE), "mapping code does not support huge pages");
+            assert!(!self.entries[index].flags().contains(EntryFlags::HUGE_PAGE), "mapping code does not support huge pages");
             let frame = allocator.allocate_frame().expect("no frames available");
             self.entries[index].set(frame, EntryFlags::PRESENT | EntryFlags::WRITABLE);
             self.next_table_mut(index).unwrap().zero();
