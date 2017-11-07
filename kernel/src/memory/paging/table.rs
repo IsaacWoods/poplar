@@ -67,14 +67,12 @@ impl<L> Table<L> where L : HierarchicalLevel
         {
             /*
              * Now we can calculate the next table's address by going through one more layer of the
-             * recursive mapping.This doesn't always yield a canonical address, so we re-extend the
+             * recursive mapping. This doesn't always yield a canonical address, so we re-extend the
              * sign extension.
-             *
-             * XXX: This only works for addresses requiring a sign-extension of 1 (works for all of
-             *      our page tables), but replace with real sign-extension if we need it.
              */
             let table_address = (self as *const _) as usize;
-            Some(((table_address << 9) | (index << 12)) | (0o177777_000_000_000_000_0000 * ((table_address>>47)&0b1)))
+            let sign_extension = 0o177777_000_000_000_000_0000 * ((table_address >> 47) & 0b1);
+            Some((((table_address << 9) | (index << 12)) & ((1 << 48) - 1)) | sign_extension)
         }
         else
         {
