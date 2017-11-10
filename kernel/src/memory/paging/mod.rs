@@ -6,14 +6,12 @@
 pub mod entry; // TODO: It isn't ideal to have this public, move reponsibility for this inside mod
 mod table;
 mod temporary_page;
-mod temporary_vec;
 mod mapper;
 
 pub use self::entry::*;
 
 use core::ops::{Add,Deref,DerefMut};
 use self::mapper::Mapper;
-use self::temporary_vec::TemporaryVec;
 use self::temporary_page::TemporaryPage;
 use memory::{Frame,FrameAllocator};
 use memory::map::RECURSIVE_ENTRY;
@@ -311,14 +309,21 @@ pub fn remap_kernel<A>(allocator : &mut A, boot_info : &BootInformation) -> Acti
                 }
             }*/
 
-            // Identity-map the Multiboot structure
-/*            let multiboot_start = Frame::get_containing_frame(boot_info.start_address());
+            /*
+             * Map the Multiboot structure to KERNEL_VMA + its physical address
+             * XXX: We still need to keep this around because the frame allocator needs the memory
+             *      map this provides
+             */
+            let multiboot_start = Frame::get_containing_frame(boot_info.start_address());
             let multiboot_end   = Frame::get_containing_frame(boot_info.end_address() - 1);
 
             for frame in Frame::range_inclusive(multiboot_start, multiboot_end)
             {
-                frame_list.push((EntryFlags::PRESENT, frame, true));
-            }*/
+                mapper.map_to(Page::get_containing_page(frame.get_start_address()),
+                              Frame::get_containing_frame(frame.get_start_address() - KERNEL_VMA),
+                              EntryFlags::PRESENT,
+                              allocator);
+            }
 
             /*
              * Unmap the stack's guard page. This stops us overflowing the stack by causing a page
@@ -327,14 +332,10 @@ pub fn remap_kernel<A>(allocator : &mut A, boot_info : &BootInformation) -> Acti
              * XXX: This assumes that `guard_page_addr` is page aligned, otherwise it will probably
              *      not unmap the correct page.
              */
+            assert!(guard_page_addr % 4096 == 0, "Guard-page address isn't page aligned");
             mapper.unmap(Page::get_containing_page(guard_page_addr), allocator);
         });
 
     let old_table = active_table.switch(new_table);
-
-    // Turn the old P4 into a guard page for the stack
-/*    let old_p4_page = Page::get_containing_page(old_table.p4_frame.get_start_address());
-    active_table.unmap(old_p4_page, allocator);*/
-
     active_table
 }

@@ -66,7 +66,7 @@ impl<L> Table<L> where L : HierarchicalLevel
         if entry_flags.contains(EntryFlags::PRESENT) && !entry_flags.contains(EntryFlags::HUGE_PAGE)
         {
             /*
-             * Now we can calculate the next table's address by going through one more layer of the
+             * We can calculate the next table's address by going through one more layer of the
              * recursive mapping. This doesn't always yield a canonical address, so we re-extend the
              * sign extension.
              */

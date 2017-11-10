@@ -17,8 +17,7 @@ use self::paging::{PAGE_SIZE,PhysicalAddress};
 use hole_tracking_allocator::ALLOCATOR;
 use multiboot2::BootInformation;
 
-//pub fn init(boot_info : &BootInformation) -> MemoryController<AreaFrameAllocator>
-pub fn init(boot_info : &BootInformation)
+pub fn init(boot_info : &BootInformation) -> MemoryController<AreaFrameAllocator>
 {
     assert_first_call!("memory::init() should only be called once");
 
@@ -76,8 +75,10 @@ pub fn init(boot_info : &BootInformation)
      * structures with the correct permissions.
      */
     let mut active_table = paging::remap_kernel(&mut frame_allocator, boot_info);
-/*
-    // Map the pages used by the heap
+
+    /*
+     * Map the pages used by the heap, then create it
+     */
     let heap_start_page = Page::get_containing_page(HEAP_START);
     let heap_end_page   = Page::get_containing_page(HEAP_START + HEAP_SIZE - 1);
 
@@ -86,13 +87,14 @@ pub fn init(boot_info : &BootInformation)
         active_table.map(page, paging::entry::EntryFlags::WRITABLE, &mut frame_allocator);
     }
 
-    // Create the heap
     unsafe
     {
         ALLOCATOR.lock().init(HEAP_START, HEAP_SIZE);
     }
 
-    // Create a StackAllocator that allocates in the 100 pages directly following the heap
+    /*
+     * Create a StackAllocator that allocates in the 100 pages directly following the heap
+     */
     let stack_allocator = StackAllocator::new(Page::range_inclusive(heap_end_page + 1,
                                                                     heap_end_page + 101));
 
@@ -101,7 +103,7 @@ pub fn init(boot_info : &BootInformation)
         active_table    : active_table,
         frame_allocator : frame_allocator,
         stack_allocator : stack_allocator
-    }*/
+    }
 }
 
 struct FrameIter
