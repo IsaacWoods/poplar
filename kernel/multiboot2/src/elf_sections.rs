@@ -1,3 +1,8 @@
+/*
+ * Copyright (C) 2016, Philipp Oppermann.
+ * Copyright (C) 2017, Isaac Woods.
+ * See LICENCE.md
+ */
 
 #[derive(Debug)]
 #[repr(packed)] // repr(C) would add unwanted padding before first_section

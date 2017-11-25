@@ -1,3 +1,9 @@
+/*
+ * Copyright (C) 2016, Philipp Oppermann.
+ * Copyright (C) 2017, Isaac Woods.
+ * See LICENCE.md
+ */
+
 #[derive(Debug)]
 #[repr(C)]
 pub struct MemoryMapTag {

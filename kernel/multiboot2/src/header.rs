@@ -1,3 +1,9 @@
+/*
+ * Copyright (C) 2016, Philipp Oppermann.
+ * Copyright (C) 2017, Isaac Woods.
+ * See LICENCE.md
+ */
+
 #[repr(C)]
 pub struct Tag {
     pub typ: u32,
