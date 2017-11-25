@@ -12,7 +12,6 @@ crate-type = ["staticlib"]
 rlibc       = "*"
 volatile    = "*"
 spin        = "*"
-multiboot2  = "*"
 bitflags    = "*"
 bit_field   = "*"
 x86_64      = "*"
@@ -20,6 +19,9 @@ x86_64      = "*"
 [dependencies.lazy_static]
 version = "*"
 features = ["spin_no_std"]
+
+[dependencies.multiboot2]
+path = "multiboot2"
 
 [dependencies.rustos_common]
 path = "rustos_common"

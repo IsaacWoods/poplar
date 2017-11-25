@@ -1,0 +1,13 @@
+[package]
+name = "multiboot2"
+version = "0.3.2"
+authors = ["Philipp Oppermann <dev@phil-opp.com>", "Calvin Lee <cyrus296@gmail.com>"]
+license = "MIT/Apache-2.0"
+description = "An experimental Multiboot 2 crate for ELF-64 kernels."
+
+[dependencies.bitflags]
+version = "0.4.0"
+features = ["no_std"]
+
+[features]
+elf32 = []
