@@ -210,10 +210,6 @@ InHigherHalf:
   push 0x0
   popf
 
-  ; Correct the address of the Multiboot structure
-  ;mov rcx, qword KERNEL_VMA
-  ;add rdi, rcx
-
   ; Call into the kernel
   call kmain
   hlt
