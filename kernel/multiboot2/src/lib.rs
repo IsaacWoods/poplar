@@ -171,7 +171,7 @@ impl fmt::Debug for BootInformation
 
         if let Some(elf_sections_tag) = self.elf_sections()
         {
-            let string_table = elf_sections_tag.string_table();
+            let string_table = elf_sections_tag.string_table(self);
             writeln!(f, "kernel sections:")?;
 
             for s in elf_sections_tag.sections()

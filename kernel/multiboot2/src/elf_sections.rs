@@ -4,6 +4,8 @@
  * See LICENCE.md
  */
 
+use super::BootInformation;
+
 #[derive(Debug)]
 #[repr(packed)] // repr(C) would add unwanted padding before first_section
 pub struct ElfSectionsTag {
@@ -24,11 +26,10 @@ impl ElfSectionsTag {
         }
     }
 
-    pub fn string_table(&self) -> &'static StringTable {
+    pub fn string_table(&self, boot_info : &BootInformation) -> &'static StringTable {
         unsafe {
-            let string_table_ptr =
-                (&self.first_section as *const ElfSection).offset(self.shndx as isize);
-            &*((*string_table_ptr).addr as *const StringTable)
+            let string_table_ptr = (&self.first_section as *const ElfSection).offset(self.shndx as isize);
+            &*(((*string_table_ptr).addr + (boot_info.virtual_base() as u64)) as *const StringTable)
         }
     }
 }

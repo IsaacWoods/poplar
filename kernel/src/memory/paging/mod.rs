@@ -262,11 +262,11 @@ pub fn remap_kernel<A>(allocator : &mut A, boot_info : &BootInformation) -> Acti
                  */
                 if !section.is_allocated() || section.start_address() < KERNEL_VMA
                 {
-                    println!("Skipping section: {}", elf_sections_tag.string_table().section_name(section));
+                    println!("Skipping section: {}", elf_sections_tag.string_table(boot_info).section_name(section));
                     continue;
                 }
 
-                println!("Allocating section: {}", elf_sections_tag.string_table().section_name(section));
+                println!("Allocating section: {}", elf_sections_tag.string_table(boot_info).section_name(section));
                 assert!(section.start_address() % PAGE_SIZE == 0, "sections must be page aligned");
 
                 let flags       = EntryFlags::from_elf_section(section);
