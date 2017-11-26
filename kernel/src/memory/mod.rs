@@ -15,7 +15,7 @@ use self::map::{KERNEL_VMA,HEAP_START,HEAP_SIZE};
 use self::stack_allocator::{Stack,StackAllocator};
 use self::paging::{PAGE_SIZE,PhysicalAddress};
 use hole_tracking_allocator::ALLOCATOR;
-use multiboot2::BootInformation;
+use multiboot2::{BootInformation,MultibootStruct};
 
 pub fn init(boot_info : &BootInformation) -> MemoryController<AreaFrameAllocator>
 {
@@ -25,8 +25,8 @@ pub fn init(boot_info : &BootInformation) -> MemoryController<AreaFrameAllocator
     use x86_64::registers::control_regs::{Cr0,cr0,cr0_write};
     use self::paging::Page;
 
-    let memory_map_tag   = boot_info.memory_map_tag().expect("Can't find memory map tag");
-    let elf_sections_tag = boot_info.elf_sections_tag().expect("Can't find elf sections tag");
+    let memory_map_tag   = boot_info.memory_map().expect("Can't find memory map tag");
+    let elf_sections_tag = boot_info.elf_sections().expect("Can't find elf sections tag");
 
     /*
      * These constants are defined by the linker script.

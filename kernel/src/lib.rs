@@ -34,16 +34,21 @@
                 mod memory;
                 mod interrupts;
 
+use multiboot2::BootInformation;
+use memory::map::KERNEL_VMA;
+
 #[no_mangle]
 pub extern fn kmain(multiboot_ptr : usize)
 {
     vga_buffer::clear_screen();
     println!("Hello, World!");
 
-    let boot_info = unsafe { multiboot2::load(multiboot_ptr) };
-    let mut memory_controller = memory::init(boot_info);
-
-/*    interrupts::init(&mut memory_controller);
+    /*
+     * We are passed the *physical* address of the Multiboot struct, so we offset it by the virtual
+     * offset of the whole kernel.
+     */
+    let boot_info = unsafe { BootInformation::load(multiboot_ptr, KERNEL_VMA) };
+    let mut memory_controller = memory::init(&boot_info);
 
     for module_tag in boot_info.module_tags()
     {

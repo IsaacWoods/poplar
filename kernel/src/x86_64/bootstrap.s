@@ -211,8 +211,8 @@ InHigherHalf:
   popf
 
   ; Correct the address of the Multiboot structure
-  mov rcx, qword KERNEL_VMA
-  add rdi, rcx
+  ;mov rcx, qword KERNEL_VMA
+  ;add rdi, rcx
 
   ; Call into the kernel
   call kmain
