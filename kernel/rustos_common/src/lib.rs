@@ -15,7 +15,7 @@ macro_rules! assert_first_call
 {
     () =>
     {
-        assert_first_call!("assertion failed: function has already been called");
+        assert_first_call!("ASSERTION FAILED: function has already been called");
     };
 
     ($($arg:tt)+) =>

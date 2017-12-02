@@ -4,8 +4,43 @@
  */
 
 use rustos_common::port::Port;
+use core::fmt;
+use spin::Mutex;
 
-pub static mut COM1 : SerialPort = unsafe { SerialPort::new(0x3f8) };
+macro_rules! serial_println
+{
+    /*
+     * XXX: Serial ports generally expect both a carriage return and a line feed ("\n\r")
+     */
+    ($fmt:expr) => (serial_print!(concat!($fmt, "\n\r")));
+    ($fmt:expr, $($arg:tt)*) => (serial_print!(concat!($fmt, "\n\r"), $($arg)*));
+}
+
+macro_rules! serial_print
+{
+    ($($arg:tt)*) =>
+        ({
+            $crate::serial::print(format_args!($($arg)*));
+        });
+}
+
+pub fn initialise()
+{
+    assert_first_call!("Tried to initialise serial ports multiple times!");
+
+    unsafe
+    {
+        COM1.lock().initialise();
+    }
+}
+
+pub fn print(args : fmt::Arguments)
+{
+    use core::fmt::Write;
+    COM1.lock().write_fmt(args).unwrap();
+}
+
+pub static COM1 : Mutex<SerialPort> = Mutex::new(unsafe { SerialPort::new(0x3f8) });
 
 pub struct SerialPort
 {
@@ -15,6 +50,21 @@ pub struct SerialPort
     line_control_register       : Port<u8>,
     modem_control_register      : Port<u8>,
     line_status_register        : Port<u8>,
+}
+
+impl fmt::Write for SerialPort
+{
+    fn write_str(&mut self, s : &str) -> fmt::Result
+    {
+        for byte in s.bytes()
+        {
+            unsafe
+            {
+                self.write(byte);
+            }
+        }
+        Ok(())
+    }
 }
 
 impl SerialPort

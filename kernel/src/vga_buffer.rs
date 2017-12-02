@@ -17,9 +17,10 @@ macro_rules! println
 
 macro_rules! print
 {
-    ($($arg:tt)*) => ({
-        $crate::vga_buffer::print(format_args!($($arg)*));
-    });
+    ($($arg:tt)*) =>
+        ({
+            $crate::vga_buffer::print(format_args!($($arg)*));
+        });
 }
 
 pub fn print(args : fmt::Arguments)

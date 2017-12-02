@@ -31,25 +31,21 @@
                 extern crate hole_tracking_allocator;
 
 #[macro_use]    mod vga_buffer;
-                mod serial;
+#[macro_use]    mod serial;
                 mod memory;
                 mod interrupts;
 
 use multiboot2::BootInformation;
 use memory::map::KERNEL_VMA;
-use serial::COM1;
 
 #[no_mangle]
 pub extern fn kmain(multiboot_ptr : usize)
 {
+    serial::initialise();
+    serial_println!("Hello, World!");
+
     vga_buffer::clear_screen();
     println!("Hello, World!");
-
-    unsafe
-    {
-        COM1.initialise();
-        COM1.write('Z' as u8);
-    }
 
     /*
      * We are passed the *physical* address of the Multiboot struct, so we offset it by the virtual
