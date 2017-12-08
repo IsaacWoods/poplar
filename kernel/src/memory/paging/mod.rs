@@ -282,7 +282,6 @@ pub fn remap_kernel<A>(allocator : &mut A, boot_info : &BootInformation) -> Acti
                     assert!(Page::get_containing_page(virtual_address).get_start_address() == virtual_address);
                     assert!(Frame::get_containing_frame(physical_address).get_start_address() == physical_address);
 
-                    serial_println!("Mapping page {:#x} to frame {:#x}", virtual_address, physical_address);
                     mapper.map_to(Page::get_containing_page(virtual_address),
                                   Frame::get_containing_frame(physical_address),
                                   flags,
