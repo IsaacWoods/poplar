@@ -4,12 +4,12 @@
  */
 
 pub mod map;
-mod area_frame_allocator;
 mod paging;
+mod area_frame_allocator;
 mod stack_allocator;
 
 pub use self::area_frame_allocator::AreaFrameAllocator;
-pub use self::paging::remap_kernel;
+pub use self::paging::{VirtualAddress,remap_kernel};
 
 use self::map::{KERNEL_VMA,HEAP_START,HEAP_SIZE};
 use self::stack_allocator::{Stack,StackAllocator};

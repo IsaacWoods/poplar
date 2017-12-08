@@ -76,7 +76,7 @@ impl Gdt
 
 bitflags!
 {
-    struct DescriptorFlags : u64
+    pub struct DescriptorFlags : u64
     {
         const CONFORMING    = 1 << 42;
         const EXECUTABLE    = 1 << 43;
@@ -94,14 +94,6 @@ pub enum Descriptor
 
 impl Descriptor
 {
-    pub fn create_kernel_code_segment() -> Descriptor
-    {
-        Descriptor::UserSegment((DescriptorFlags::USER_SEGMENT  |
-                                 DescriptorFlags::PRESENT       |
-                                 DescriptorFlags::EXECUTABLE    |
-                                 DescriptorFlags::LONG_MODE).bits())
-    }
-
     /*
      * We require a static lifetime on the TSS structure because the CPU may access it upon any
      * interrupt.

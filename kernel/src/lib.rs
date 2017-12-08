@@ -53,7 +53,12 @@ pub extern fn kmain(multiboot_ptr : usize)
      */
     let boot_info = unsafe { BootInformation::load(multiboot_ptr, KERNEL_VMA) };
     let mut memory_controller = memory::init(&boot_info);
+//    panic!("");
+    interrupts::init(&mut memory_controller);
+    println!("Going to interrupt now!");
+    unsafe { asm!("int $$3"); }
 
+/*
     for module_tag in boot_info.module_tags()
     {
         println!("Loading and running {}", module_tag.name());

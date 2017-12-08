@@ -260,13 +260,14 @@ pub fn remap_kernel<A>(allocator : &mut A, boot_info : &BootInformation) -> Acti
                  * Skip sections that either aren't to be allocated or are located before the start
                  * of the the higher-half (and so are probably part of the bootstrap).
                  */
-                if !section.is_allocated() || section.start_address() < KERNEL_VMA
+                if !section.is_allocated() || (section.start_address() < KERNEL_VMA)
                 {
-                    println!("Skipping section: {}", elf_sections_tag.string_table(boot_info).section_name(section));
                     continue;
                 }
 
-                println!("Allocating section: {}", elf_sections_tag.string_table(boot_info).section_name(section));
+                serial_println!("Allocating section: {} to {:#x}-{:#x}", elf_sections_tag.string_table(boot_info).section_name(section),
+                                                                         section.start_address(),
+                                                                         section.end_address());
                 assert!(section.start_address() % PAGE_SIZE == 0, "sections must be page aligned");
 
                 let flags       = EntryFlags::from_elf_section(section);
@@ -278,6 +279,10 @@ pub fn remap_kernel<A>(allocator : &mut A, boot_info : &BootInformation) -> Acti
                     let virtual_address  = frame.get_start_address();
                     let physical_address = virtual_address - KERNEL_VMA;
 
+                    assert!(Page::get_containing_page(virtual_address).get_start_address() == virtual_address);
+                    assert!(Frame::get_containing_frame(physical_address).get_start_address() == physical_address);
+
+                    serial_println!("Mapping page {:#x} to frame {:#x}", virtual_address, physical_address);
                     mapper.map_to(Page::get_containing_page(virtual_address),
                                   Frame::get_containing_frame(physical_address),
                                   flags,
