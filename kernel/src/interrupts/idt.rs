@@ -55,29 +55,9 @@ impl IdtEntry
         }
     }
 
-    pub fn new(handler : HandlerFunc) -> IdtEntry
-    {
-        const KERNEL_CODE_SELECTOR : u16 = 0x8;
-
-        let address = handler as u64;
-        let mut flags : u8 = 0;
-        flags.set_bits(1..4, 0b111);   // Must be 1
-        flags.set_bit(7, true);        // Set Present bit
-
-        IdtEntry
-        {
-            address_0_15    : address as u16,
-            gdt_selector    : KERNEL_CODE_SELECTOR,
-            ist_offset      : 0,
-            flags           : flags,
-            address_16_31   : (address >> 16) as u16,
-            address_32_63   : (address >> 32) as u32,
-            reserved        : 0,
-        }
-    }
-
     pub fn set_handler(&mut self, handler : HandlerFunc)
     {
+        // TODO: don't hardcode code selector - get from new GDT
         const KERNEL_CODE_SELECTOR : u16 = 0x8;
         self.gdt_selector = KERNEL_CODE_SELECTOR;
 
@@ -103,7 +83,6 @@ impl Idt
 {
     pub fn new() -> Idt
     {
-//        Idt([IdtEntry::missing(); 256])
         Idt
         {
             entries : [IdtEntry::missing(); 256],
@@ -161,7 +140,6 @@ impl Index<usize> for Idt
 
     fn index(&self, index : usize) -> &IdtEntry
     {
-//        &self.0[index]
         &self.entries[index]
     }
 }
@@ -170,7 +148,6 @@ impl IndexMut<usize> for Idt
 {
     fn index_mut(&mut self, index : usize) -> &mut IdtEntry
     {
-//        &mut self.0[index]
         &mut self.entries[index]
     }
 }
