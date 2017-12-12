@@ -3,38 +3,30 @@
  * See LICENCE.md
  */
 
-mod gdt;
 mod idt;
 mod pic;
 
 use spin::{Once,Mutex};
-use x86_64::VirtualAddress;
-use x86_64::structures::gdt::SegmentSelector;
-use x86_64::structures::tss::TaskStateSegment;
-use x86_64::instructions::segmentation::set_cs;
-use x86_64::instructions::tables::load_tss;
+use x86_64::tss::Tss;
+use x86_64::gdt::{Gdt,GdtDescriptor,DescriptorFlags,SegmentSelector};
 use memory::{FrameAllocator,MemoryController};
 use rustos_common::port::Port;
-use self::gdt::{GdtDescriptor,DescriptorFlags};
 use self::idt::{Idt};
 use self::pic::{PicPair};
 
 const DOUBLE_FAULT_IST_INDEX : usize = 0;
 
-//static TSS : Once<TaskStateSegment> = Once::new();
-//static GDT : Once<gdt::Gdt>         = Once::new();
-
-//static PIC_PAIR : Mutex<PicPair> = Mutex::new(unsafe { PicPair::new(0x20, 0x28) });
-
-static mut GDT : Option<gdt::Gdt> = None;
+static mut TSS : Option<Tss> = None;
+static mut GDT : Option<Gdt> = None;
 static mut IDT : Option<Idt> = None;
+//static PIC_PAIR : Mutex<PicPair> = Mutex::new(unsafe { PicPair::new(0x20, 0x28) });
 
 fn unwrap_option<'a, T>(option : &'a mut Option<T>) -> &'a mut T
 {
     match option
     {
         &mut Some(ref mut value) => value,
-        &mut None => panic!("Shit"),
+        &mut None => panic!("Tried to unwrap None option"),
     }
 }
 
@@ -69,18 +61,20 @@ pub fn init<A>(memory_controller : &mut MemoryController<A>) where A : FrameAllo
 
     unsafe
     {
+        // Create a TSS
+        TSS = Some(Tss::new());
+
         /*
          * We need a new GDT, because the current one resides in the bootstrap and so is now not
          * mapped into the address space
          */
-        GDT = Some(gdt::Gdt::new());
+        GDT = Some(Gdt::new());
         let mut code_selector = unwrap_option(&mut GDT).add_entry(GdtDescriptor::UserSegment((DescriptorFlags::USER_SEGMENT  |
                                                                                               DescriptorFlags::PRESENT       |
                                                                                               DescriptorFlags::EXECUTABLE    |
                                                                                               DescriptorFlags::LONG_MODE).bits()));
-        unwrap_option(&mut GDT).load();
-        set_cs(code_selector);
-        //load_tss(tss_selector);
+        let mut tss_selector = unwrap_option(&mut GDT).add_entry(GdtDescriptor::create_tss_segment(unwrap_option(&mut TSS)));
+        unwrap_option(&mut GDT).load(code_selector, tss_selector);
 
         // Create the IDT
         IDT = Some(Idt::new());

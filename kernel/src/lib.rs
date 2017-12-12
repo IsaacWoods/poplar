@@ -21,17 +21,17 @@
                 extern crate rlibc;
                 extern crate volatile;
                 extern crate spin;
-#[macro_use]    extern crate lazy_static;
+//#[macro_use]    extern crate lazy_static;
                 extern crate multiboot2;
 #[macro_use]    extern crate bitflags;
                 extern crate bit_field;
-#[macro_use]    extern crate x86_64;
 #[macro_use]    extern crate alloc;
 #[macro_use]    extern crate rustos_common;
                 extern crate hole_tracking_allocator;
 
 #[macro_use]    mod vga_buffer;
 #[macro_use]    mod serial;
+#[macro_use]    mod x86_64;
                 mod memory;
                 mod interrupts;
 
@@ -41,6 +41,8 @@ use memory::map::KERNEL_VMA;
 #[no_mangle]
 pub extern fn kmain(multiboot_ptr : usize)
 {
+    x86_64::init_platform();
+
     serial::initialise();
     serial_println!("Hello, World!");
 
@@ -53,7 +55,6 @@ pub extern fn kmain(multiboot_ptr : usize)
      */
     let boot_info = unsafe { BootInformation::load(multiboot_ptr, KERNEL_VMA) };
     let mut memory_controller = memory::init(&boot_info);
-//    panic!("");
     interrupts::init(&mut memory_controller);
     println!("Going to interrupt now!");
     unsafe { asm!("int $$3"); }

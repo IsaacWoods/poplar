@@ -3,11 +3,12 @@
  * See LICENCE.md
  */
 
+use core::ptr::Unique;
 use super::{VirtualAddress,PhysicalAddress,Page,PAGE_SIZE,ENTRY_COUNT};
 use super::entry::EntryFlags;
 use super::table::{self,Table,Level4};
 use memory::{Frame,FrameAllocator};
-use core::ptr::Unique;
+use x86_64::tlb;
 
 pub struct Mapper
 {
@@ -101,10 +102,7 @@ impl Mapper
         let frame = p1[page.p1_index()].get_pointed_frame().unwrap();
         p1[page.p1_index()].set_unused();
     
-        // Clear the TLB entry for this page
-        use x86_64::instructions::tlb;
-        use x86_64::VirtualAddress;
-        tlb::flush(VirtualAddress(page.get_start_address()));
+        tlb::invalidate_page(page.get_start_address());
 
         // TODO free p(1,2,3) table if it has become empty
 //        allocator.deallocate_frame(frame); TODO

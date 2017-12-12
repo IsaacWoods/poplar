@@ -3,11 +3,30 @@
  * See LICENCE.md
  */
 
-use x86_64::PrivilegeLevel;
-use x86_64::structures::gdt::SegmentSelector;
-use x86_64::structures::tss::TaskStateSegment;
+use super::PrivilegeLevel;
+use super::tss::Tss;
 use bit_field::BitField;
 use core::mem::size_of;
+
+pub struct SegmentSelector(pub u16);
+
+impl SegmentSelector
+{
+    pub const fn new(index : u16, rpl : PrivilegeLevel) -> SegmentSelector
+    {
+        SegmentSelector(index << 3 | (rpl as u16))
+    }
+
+    pub fn index(&self) -> u16
+    {
+        self.0 >> 3
+    }
+
+    pub fn rpl(&self) -> PrivilegeLevel
+    {
+        PrivilegeLevel::from(self.0.get_bits(0..2))
+    }
+}
 
 bitflags!
 {
@@ -29,7 +48,7 @@ pub enum GdtDescriptor
 
 impl GdtDescriptor
 {
-    pub fn create_tss_segment(tss : &'static TaskStateSegment) -> GdtDescriptor
+    pub fn create_tss_segment(tss : &'static Tss) -> GdtDescriptor
     {
         let ptr = (tss as *const _) as u64;
         let mut low = DescriptorFlags::PRESENT.bits();
@@ -39,7 +58,7 @@ impl GdtDescriptor
         low.set_bits(56..64, ptr.get_bits(24..32));
 
         // Limit (which is inclusive so 1 less than size)
-        low.set_bits(0..16, (size_of::<TaskStateSegment>() - 1) as u64);
+        low.set_bits(0..16, (size_of::<Tss>() - 1) as u64);
 
         // Type (0b1001 = available 64-bit TSS)
         low.set_bits(40..44, 0b1001);
@@ -100,7 +119,8 @@ impl Gdt
         }
     }
 
-    pub fn load(&'static self)
+    pub fn load(&'static self, code_selector : SegmentSelector,
+                               tss_selector  : SegmentSelector)
     {
         #[repr(C,packed)]
         struct GdtPointer
@@ -117,7 +137,18 @@ impl Gdt
 
         unsafe
         {
+            // Load the GDT
             asm!("lgdt ($0)" :: "r" (&ptr) : "memory");
+
+            // Load the new CS
+            asm!("pushq $0; \
+                  leaq 1f(%rip), %rax; \
+                  pushq %rax; \
+                  lretq; \
+                  1:" :: "ri" (u64::from(code_selector.0)) : "rax" "memory");
+
+            // Load the task register with the TSS selector
+            asm!("ltr $0" :: "r" (tss_selector.0));
         }
     }
 }

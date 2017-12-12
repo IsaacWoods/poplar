@@ -9,21 +9,17 @@ mod area_frame_allocator;
 mod stack_allocator;
 
 pub use self::area_frame_allocator::AreaFrameAllocator;
-pub use self::paging::{VirtualAddress,remap_kernel};
+pub use self::paging::{PhysicalAddress,VirtualAddress,remap_kernel};
 
 use self::map::{KERNEL_VMA,HEAP_START,HEAP_SIZE};
 use self::stack_allocator::{Stack,StackAllocator};
-use self::paging::{PAGE_SIZE,PhysicalAddress};
+use self::paging::{PAGE_SIZE,Page};
 use hole_tracking_allocator::ALLOCATOR;
 use multiboot2::{BootInformation,MultibootStruct};
 
 pub fn init(boot_info : &BootInformation) -> MemoryController<AreaFrameAllocator>
 {
     assert_first_call!("memory::init() should only be called once");
-
-    use x86_64::registers::msr::{IA32_EFER,rdmsr,wrmsr};
-    use x86_64::registers::control_regs::{Cr0,cr0,cr0_write};
-    use self::paging::Page;
 
     let memory_map_tag   = boot_info.memory_map().expect("Can't find memory map tag");
     let elf_sections_tag = boot_info.elf_sections().expect("Can't find elf sections tag");
@@ -55,21 +51,6 @@ pub fn init(boot_info : &BootInformation) -> MemoryController<AreaFrameAllocator
                                                       kernel_start              as usize,
                                                       kernel_end                as usize,
                                                       memory_map_tag.memory_areas());
-
-    unsafe
-    {
-        /*
-         * Set the NXE bit in the EFER allows us to use the No-Execute bit on page table entries.
-         */
-        let efer = rdmsr(IA32_EFER);
-        wrmsr(IA32_EFER, efer | (1<<11));
-
-        /*
-         * Enable Write Protection
-         */
-        cr0_write(cr0() | Cr0::WRITE_PROTECT);
-    }
-
     /*
      * We can now replace the bootstrap paging structures with better ones that actually map the
      * structures with the correct permissions.

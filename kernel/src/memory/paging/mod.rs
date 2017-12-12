@@ -16,6 +16,7 @@ use self::temporary_page::TemporaryPage;
 use memory::{Frame,FrameAllocator};
 use memory::map::RECURSIVE_ENTRY;
 use multiboot2::BootInformation;
+use x86_64::tlb;
 
 pub const PAGE_SIZE : usize = 4096;
 const ENTRY_COUNT   : usize = 512;
@@ -137,26 +138,25 @@ impl ActivePageTable
                    f : F
                   ) where F : FnOnce(&mut Mapper)
     {
-        use x86_64::registers::control_regs;
-        use x86_64::instructions::tlb;
-
         // Inner scope used to end the borrow of `temporary_page`
         {
             // Backup the current P4 and temporarily map it
-            let original_p4 = Frame::get_containing_frame(control_regs::cr3().0 as usize);
+            let original_p4 = Frame::get_containing_frame(read_control_reg!(cr3) as usize);
             let p4_table = temporary_page.map_table_frame(original_p4.clone(), self);
 
             // Overwrite recursive mapping
             self.p4_mut()[RECURSIVE_ENTRY].set(table.p4_frame.clone(), EntryFlags::PRESENT |
                                                                        EntryFlags::WRITABLE);
-            tlb::flush_all();
+
+            // Flush the TLB
+            tlb::flush();
 
             // Execute in the new context
             f(self);
 
             // Restore recursive mapping to original P4
             p4_table[RECURSIVE_ENTRY].set(original_p4, EntryFlags::PRESENT | EntryFlags::WRITABLE);
-            tlb::flush_all();
+            tlb::flush();
         }
 
         temporary_page.unmap(self);
@@ -167,12 +167,9 @@ impl ActivePageTable
      */
     pub fn switch(&mut self, new_table : InactivePageTable) -> InactivePageTable
     {
-        use x86_64::PhysicalAddress;
-        use x86_64::registers::control_regs;
-
         let old_table = InactivePageTable
                         {
-                            p4_frame : Frame::get_containing_frame(control_regs::cr3().0 as usize)
+                            p4_frame : Frame::get_containing_frame(read_control_reg!(cr3) as usize)
                         };
 
         unsafe
@@ -181,7 +178,7 @@ impl ActivePageTable
              * NOTE: We don't need to flush the TLB here because the CPU does it automatically when
              *       CR3 is reloaded.
              */
-            control_regs::cr3_write(PhysicalAddress(new_table.p4_frame.get_start_address() as u64));
+            write_control_reg!(cr3, new_table.p4_frame.get_start_address() as u64);
         }
 
         old_table
