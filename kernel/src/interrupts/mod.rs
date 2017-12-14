@@ -6,13 +6,12 @@
 mod idt;
 mod pic;
 
-use spin::{Once,Mutex};
 use x86_64::tss::Tss;
-use x86_64::gdt::{Gdt,GdtDescriptor,DescriptorFlags,SegmentSelector};
+use x86_64::gdt::{Gdt,GdtDescriptor,DescriptorFlags};
 use memory::{FrameAllocator,MemoryController};
 use rustos_common::port::Port;
-use self::idt::{Idt};
-use self::pic::{PicPair};
+use self::idt::Idt;
+use self::pic::PicPair;
 
 const DOUBLE_FAULT_IST_INDEX : usize = 0;
 
@@ -69,16 +68,16 @@ pub fn init<A>(memory_controller : &mut MemoryController<A>) where A : FrameAllo
          * mapped into the address space
          */
         GDT = Some(Gdt::new());
-        let mut code_selector = unwrap_option(&mut GDT).add_entry(GdtDescriptor::UserSegment((DescriptorFlags::USER_SEGMENT  |
-                                                                                              DescriptorFlags::PRESENT       |
-                                                                                              DescriptorFlags::EXECUTABLE    |
-                                                                                              DescriptorFlags::LONG_MODE).bits()));
-        let mut tss_selector = unwrap_option(&mut GDT).add_entry(GdtDescriptor::create_tss_segment(unwrap_option(&mut TSS)));
+        let code_selector = unwrap_option(&mut GDT).add_entry(GdtDescriptor::UserSegment((DescriptorFlags::USER_SEGMENT  |
+                                                                                          DescriptorFlags::PRESENT       |
+                                                                                          DescriptorFlags::EXECUTABLE    |
+                                                                                          DescriptorFlags::LONG_MODE).bits()));
+        let tss_selector = unwrap_option(&mut GDT).add_entry(GdtDescriptor::create_tss_segment(unwrap_option(&mut TSS)));
         unwrap_option(&mut GDT).load(code_selector, tss_selector);
 
         // Create the IDT
         IDT = Some(Idt::new());
-        unwrap_option(&mut IDT).breakpoint().set_handler(breakpoint_handler);
+        unwrap_option(&mut IDT).breakpoint().set_handler(breakpoint_handler, code_selector);
         unwrap_option(&mut IDT).load();
 
         // PIC_PAIR.lock().remap();

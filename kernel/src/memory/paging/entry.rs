@@ -38,21 +38,6 @@ impl EntryFlags
 
         flags
     }
-
-    pub fn merge(&self, other : EntryFlags) -> EntryFlags
-    {
-        let mut flags : EntryFlags = *self | other;
-
-        /*
-         * If one frame *doesn't* have the NO_EXECUTE flag, it must be executable.
-         */
-        if !self.contains(EntryFlags::NO_EXECUTE) || !(other.contains(EntryFlags::NO_EXECUTE))
-        {
-            flags &= !(EntryFlags::NO_EXECUTE);
-        }
-
-        flags
-    }
 }
 
 impl Entry

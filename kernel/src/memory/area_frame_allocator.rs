@@ -95,8 +95,11 @@ impl FrameAllocator for AreaFrameAllocator
         }
     }
 
-    fn deallocate_frame(&mut self, frame : Frame)
+    fn deallocate_frame(&mut self, _frame : Frame)
     {
-        unimplemented!()
+        /*
+         * NOTE: A better frame allocator would track freed frames to reallocate later, but we
+         * don't bother.
+         */
     }
 }

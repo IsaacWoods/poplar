@@ -61,25 +61,3 @@ impl From<u16> for PrivilegeLevel
         }
     }
 }
-
-pub fn read_msr(msr : u32) -> u64
-{
-    let (high, low) : (u32, u32);
-    unsafe
-    {
-        asm!("rdmsr" : "={eax}"(low), "={edx}"(high)
-                     : "{ecx}"(msr)
-                     : "memory"
-                     : "volatile");
-    }
-    ((high as u64) << 32) | (low as u64)
-}
-
-pub unsafe fn write_msr(msr : u32, value : u64)
-{
-    let low  = value as u32;
-    let high = (value >> 32) as u32;
-    asm!("wrmsr" :: "{ecx}"(msr), "{eax}"(low), "{edx}"(high)
-                  : "memory"
-                  : "volatile");
-}

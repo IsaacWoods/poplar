@@ -11,18 +11,16 @@ mod stack_allocator;
 pub use self::area_frame_allocator::AreaFrameAllocator;
 pub use self::paging::{PhysicalAddress,VirtualAddress,remap_kernel};
 
-use self::map::{KERNEL_VMA,HEAP_START,HEAP_SIZE};
+use self::map::{HEAP_START,HEAP_SIZE};
 use self::stack_allocator::{Stack,StackAllocator};
 use self::paging::{PAGE_SIZE,Page};
 use hole_tracking_allocator::ALLOCATOR;
-use multiboot2::{BootInformation,MultibootStruct};
+use multiboot2::BootInformation;
 
 pub fn init(boot_info : &BootInformation) -> MemoryController<AreaFrameAllocator>
 {
     assert_first_call!("memory::init() should only be called once");
-
     let memory_map_tag   = boot_info.memory_map().expect("Can't find memory map tag");
-    let elf_sections_tag = boot_info.elf_sections().expect("Can't find elf sections tag");
 
     /*
      * These constants are defined by the linker script.

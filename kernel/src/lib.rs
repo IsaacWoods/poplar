@@ -21,7 +21,6 @@
                 extern crate rlibc;
                 extern crate volatile;
                 extern crate spin;
-//#[macro_use]    extern crate lazy_static;
                 extern crate multiboot2;
 #[macro_use]    extern crate bitflags;
                 extern crate bit_field;

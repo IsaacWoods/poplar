@@ -93,7 +93,7 @@ impl SerialPort
         self.modem_control_register.write(0x0B);        // Enable IRQs, set RTS/DSR
     }
 
-    pub unsafe fn read(&self) -> u8
+/*    pub unsafe fn read(&self) -> u8
     {
         while (self.line_status_register.read() & 1) == 0
         {
@@ -102,7 +102,7 @@ impl SerialPort
         }
 
         self.data_register.read()
-    }
+    }*/
 
     pub unsafe fn write(&mut self, value : u8)
     {

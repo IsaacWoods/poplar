@@ -3,10 +3,10 @@
  * See LICENCE.md
  */
 
-use memory::VirtualAddress;
 use core::mem::size_of;
 use core::ops::{Index,IndexMut};
 use bit_field::BitField;
+use x86_64::gdt::SegmentSelector;
 
 /*
  * `flags` looks like:
@@ -55,16 +55,14 @@ impl IdtEntry
         }
     }
 
-    pub fn set_handler(&mut self, handler : HandlerFunc)
+    pub fn set_handler(&mut self, handler : HandlerFunc, code_selector : SegmentSelector)
     {
-        // TODO: don't hardcode code selector - get from new GDT
-        const KERNEL_CODE_SELECTOR : u16 = 0x8;
-        self.gdt_selector = KERNEL_CODE_SELECTOR;
-
         let mut flags : u8 = 0;
         flags.set_bits(1..4, 0b111);    // Must be 1
         flags.set_bit(7, true);         // Set Present
         self.flags = flags;
+
+        self.gdt_selector = code_selector.table_offset();
 
         let address = handler as u64;
         self.address_0_15  = address as u16;

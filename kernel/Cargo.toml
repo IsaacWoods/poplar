@@ -15,10 +15,6 @@ spin        = "*"
 bitflags    = "*"
 bit_field   = "*"
 
-[dependencies.lazy_static]
-version = "*"
-features = ["spin_no_std"]
-
 [dependencies.multiboot2]
 path = "multiboot2"
 

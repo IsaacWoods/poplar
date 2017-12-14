@@ -330,15 +330,13 @@ pub fn remap_kernel<A>(allocator : &mut A, boot_info : &BootInformation) -> Acti
 
             /*
              * Unmap the stack's guard page. This stops us overflowing the stack by causing a page
-             * fault if we try to access the memory directly above the stack.
-             *
-             * XXX: This assumes that `guard_page_addr` is page aligned, otherwise it will probably
-             *      not unmap the correct page.
+             * fault if we try to access the memory directly above the stack. The address given
+             * must obviously be page-aligned.
              */
             assert!(guard_page_addr % 4096 == 0, "Guard-page address isn't page aligned");
             mapper.unmap(Page::get_containing_page(guard_page_addr), allocator);
         });
 
-    let old_table = active_table.switch(new_table);
+    active_table.switch(new_table);
     active_table
 }

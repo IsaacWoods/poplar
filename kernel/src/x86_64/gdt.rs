@@ -8,6 +8,7 @@ use super::tss::Tss;
 use bit_field::BitField;
 use core::mem::size_of;
 
+#[derive(Clone,Copy)]
 pub struct SegmentSelector(pub u16);
 
 impl SegmentSelector
@@ -17,14 +18,9 @@ impl SegmentSelector
         SegmentSelector(index << 3 | (rpl as u16))
     }
 
-    pub fn index(&self) -> u16
+    pub fn table_offset(&self) -> u16
     {
-        self.0 >> 3
-    }
-
-    pub fn rpl(&self) -> PrivilegeLevel
-    {
-        PrivilegeLevel::from(self.0.get_bits(0..2))
+        (self.0 >> 3) * 0x8
     }
 }
 

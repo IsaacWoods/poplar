@@ -105,7 +105,7 @@ impl Mapper
         tlb::invalidate_page(page.get_start_address());
 
         // TODO free p(1,2,3) table if it has become empty
-//        allocator.deallocate_frame(frame); TODO
+        allocator.deallocate_frame(frame);
     }
 
     /*
