@@ -41,8 +41,6 @@ use memory::map::KERNEL_VMA;
 #[no_mangle]
 pub extern fn kmain(multiboot_ptr : usize)
 {
-    x86_64::init_platform();
-
     serial::initialise();
     serial_println!("Hello, World!");
 

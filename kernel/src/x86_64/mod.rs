@@ -83,19 +83,3 @@ pub unsafe fn write_msr(msr : u32, value : u64)
                   : "memory"
                   : "volatile");
 }
-
-pub fn init_platform()
-{
-    assert_first_call!("Must only initialise platform once!");
-    const IA32_EFER : u32 = 0xC0000080;
-
-    unsafe
-    {
-        // Set the NXE bit in the EFER, to allow the use of the No-Execute bit on page tables
-        let efer = read_msr(IA32_EFER);
-        write_msr(IA32_EFER, efer | (1<<11));
-
-        // Enable write protection
-        write_control_reg!(cr0, read_control_reg!(cr0) | (1<<16));
-    }
-}

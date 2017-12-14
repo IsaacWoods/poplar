@@ -206,6 +206,17 @@ InHigherHalf:
   mov qword [boot_pml4], 0x0
   invlpg [0x0]
 
+  ; Set the NXE bit in the EFER, to allow use of the No-Execute bit on page table entries
+  mov ecx, 0xC0000080
+  rdmsr
+  or eax, (1<<11) ; Set bit 11 in the lower-part of the EFER
+  wrmsr
+
+  ; Enable write-protection (bit 16 of CR0)
+  mov rax, cr0
+  or rax, (1<<16)
+  mov cr0, rax
+
   ; Clear RFLAGS
   push 0x0
   popf
