@@ -12,6 +12,8 @@
 #![feature(alloc)]
 #![feature(asm)]
 #![feature(abi_x86_interrupt)]
+#![feature(naked_functions)]
+#![feature(core_intrinsics)]
 
 /*
  * `rlibc` just provides intrinsics that are linked against, and so the compiler doesn't pick up
@@ -54,7 +56,7 @@ pub extern fn kmain(multiboot_ptr : usize)
     let mut memory_controller = memory::init(&boot_info);
     interrupts::init(&mut memory_controller);
     println!("Going to interrupt now!");
-    unsafe { asm!("int $$3"); }
+    unsafe { asm!("ud2"); }
 
 /*
     for module_tag in boot_info.module_tags()

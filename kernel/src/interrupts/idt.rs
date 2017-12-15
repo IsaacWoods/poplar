@@ -55,7 +55,7 @@ impl IdtEntry
         }
     }
 
-    pub fn set_handler(&mut self, handler : HandlerFunc, code_selector : SegmentSelector)
+    pub fn set_handler(&mut self, handler : HandlerFunc, code_selector : SegmentSelector) -> &mut Self
     {
         let mut flags : u8 = 0;
         flags.set_bits(1..4, 0b111);    // Must be 1
@@ -68,6 +68,14 @@ impl IdtEntry
         self.address_0_15  = address as u16;
         self.address_16_31 = (address >> 16) as u16;
         self.address_32_63 = (address >> 32) as u32;
+
+        self
+    }
+
+    pub fn set_ist_handler(&mut self, stack_offset : u8) -> &mut Self
+    {
+        self.ist_offset = stack_offset;
+        self
     }
 }
 

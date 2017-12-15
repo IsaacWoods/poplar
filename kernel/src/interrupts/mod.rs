@@ -13,6 +13,17 @@ use rustos_common::port::Port;
 use self::idt::Idt;
 use self::pic::PicPair;
 
+#[derive(Debug)]
+#[repr(C)]
+struct ExceptionStackFrame
+{
+    instruction_pointer : u64,
+    code_segment        : u64,
+    cpu_flags           : u64,
+    stack_pointer       : u64,
+    stack_segment       : u64,
+}
+
 const DOUBLE_FAULT_IST_INDEX : usize = 0;
 
 static mut TSS : Option<Tss> = None;
@@ -29,6 +40,28 @@ fn unwrap_option<'a, T>(option : &'a mut Option<T>) -> &'a mut T
     }
 }
 
+macro_rules! wrap_handler
+{
+    ($name : ident) =>
+    {{
+        #[naked]
+        extern "C" fn wrapper() -> !
+        {
+            unsafe
+            {
+                asm!("mov rdi, rsp
+                      sub rsp, 8        // Align the stack pointer
+                      call $0"
+                     :: "i"($name as extern "C" fn(&ExceptionStackFrame) -> !)
+                     : "rdi"
+                     : "intel");
+                ::core::intrinsics::unreachable();
+            }
+        }
+        wrapper
+    }}
+}
+
 pub fn init<A>(memory_controller : &mut MemoryController<A>) where A : FrameAllocator
 {
     /*
@@ -37,31 +70,13 @@ pub fn init<A>(memory_controller : &mut MemoryController<A>) where A : FrameAllo
      * overflow) which would otherwise
      *      Page Fault -> Page Fault -> Double Fault -> Page Fault -> Triple Fault
      */
-//    let double_fault_stack = memory_controller.alloc_stack(1).expect("Failed to allocate double-fault stack");
-
-/*    let tss = TSS.call_once(
-        || {
-            let mut tss = TaskStateSegment::new();
-            tss.interrupt_stack_table[DOUBLE_FAULT_IST_INDEX] = VirtualAddress(double_fault_stack.top());
-            tss
-        });
-
-    let mut code_selector = SegmentSelector(0);
-    let mut tss_selector  = SegmentSelector(0);
-    let gdt = GDT.call_once(
-        || {
-            let mut gdt = gdt::Gdt::new();
-            code_selector = gdt.add_entry(gdt::Descriptor::create_kernel_code_segment());
-            tss_selector  = gdt.add_entry(gdt::Descriptor::create_tss_segment(&tss));
-            gdt
-        });
-
-    gdt.load();*/
+    let double_fault_stack = memory_controller.alloc_stack(1).expect("Failed to allocate double-fault stack");
 
     unsafe
     {
         // Create a TSS
         TSS = Some(Tss::new());
+        unwrap_option(&mut TSS).interrupt_stack_table[DOUBLE_FAULT_IST_INDEX] = double_fault_stack.top();
 
         /*
          * We need a new GDT, because the current one resides in the bootstrap and so is now not
@@ -77,18 +92,24 @@ pub fn init<A>(memory_controller : &mut MemoryController<A>) where A : FrameAllo
 
         // Create the IDT
         IDT = Some(Idt::new());
-        unwrap_option(&mut IDT).breakpoint().set_handler(breakpoint_handler, code_selector);
+        unwrap_option(&mut IDT).breakpoint().set_handler(wrap_handler!(breakpoint_handler), code_selector)
+                                            .set_ist_handler(DOUBLE_FAULT_IST_INDEX as u8);
+        unwrap_option(&mut IDT).invalid_opcode().set_handler(wrap_handler!(invalid_opcode_handler), code_selector);
         unwrap_option(&mut IDT).load();
 
         // PIC_PAIR.lock().remap();
     }
 }
 
-//extern "x86-interrupt" fn breakpoint_handler(stack_frame : &mut ExceptionStackFrame)
-extern "C" fn breakpoint_handler() -> !
+extern "C" fn invalid_opcode_handler(stack_frame : &ExceptionStackFrame) -> !
 {
-    //println!("EXCEPTION: BREAKPOINT\n{:#?}", stack_frame);
-    println!("BREAKPOINT!");
+    println!("INVALID OPCODE AT: {:#x}", stack_frame.instruction_pointer);
+    loop {}
+}
+
+extern "C" fn breakpoint_handler(stack_frame : &ExceptionStackFrame) -> !
+{
+    println!("BREAKPOINT: {:#?}", stack_frame);
     loop {}
 }
 /*
