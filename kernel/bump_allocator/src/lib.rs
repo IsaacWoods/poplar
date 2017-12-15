@@ -60,6 +60,15 @@ unsafe impl Alloc for BumpAllocator
         }
     }
 
+    /*
+     * This is called if we run out of memory. The default implementation caused an Invalid Opcode
+     * Exception, which is unwanted. Instead, we just panic the kernel.
+     */
+    fn oom(&mut self, _ : AllocErr) -> !
+    {
+        panic!("Out of memory");
+    }
+
     unsafe fn dealloc(&mut self, _ptr : *mut u8, _layout : Layout)
     {
         // We just leak the memory
