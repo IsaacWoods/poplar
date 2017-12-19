@@ -55,11 +55,8 @@ pub extern fn kmain(multiboot_ptr : usize)
     let boot_info = unsafe { BootInformation::load(multiboot_ptr, KERNEL_VMA) };
     let mut memory_controller = memory::init(&boot_info);
     interrupts::init(&mut memory_controller);
-    println!("Going to interrupt now!");
-    unsafe { asm!("ud2"); }
 
-/*
-    for module_tag in boot_info.module_tags()
+    for module_tag in boot_info.modules()
     {
         println!("Loading and running {}", module_tag.name());
         println!("  Start address: {:#x}, End address: {:#x}", module_tag.start_address(), module_tag.end_address());
@@ -72,7 +69,7 @@ pub extern fn kmain(multiboot_ptr : usize)
         println!("Result was {:#x}", result);
     }
 
-    unsafe { asm!("sti"); }*/
+    //unsafe { asm!("sti"); }*/
     println!("FINISHED ALL KERNEL SHITE");
     loop { }
 }

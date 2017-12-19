@@ -62,6 +62,29 @@ macro_rules! wrap_handler
     }}
 }
 
+macro_rules! wrap_handler_with_error_code
+{
+    ($name : ident) =>
+    {{
+         #[naked]
+         extern "C" fn wrapper() -> !
+         {
+             unsafe
+             {
+                 asm!("pop rsi          // Pop the error code
+                       mov rdi, rsp
+                       sub rsp, 8       // Align the stack pointer
+                       call $0"
+                      :: "i"($name as extern "C" fn(&ExceptionStackFrame,u64) -> !)
+                      : "rdi","rsi"
+                      : "intel");
+                 ::core::intrinsics::unreachable();
+             }
+         }
+         wrapper
+    }}
+}
+
 pub fn init<A>(memory_controller : &mut MemoryController<A>) where A : FrameAllocator
 {
     /*
@@ -95,6 +118,7 @@ pub fn init<A>(memory_controller : &mut MemoryController<A>) where A : FrameAllo
         unwrap_option(&mut IDT).breakpoint().set_handler(wrap_handler!(breakpoint_handler), code_selector)
                                             .set_ist_handler(DOUBLE_FAULT_IST_INDEX as u8);
         unwrap_option(&mut IDT).invalid_opcode().set_handler(wrap_handler!(invalid_opcode_handler), code_selector);
+        unwrap_option(&mut IDT).page_fault().set_handler(wrap_handler_with_error_code!(page_fault_handler), code_selector);
         unwrap_option(&mut IDT).load();
 
         // PIC_PAIR.lock().remap();
@@ -112,13 +136,12 @@ extern "C" fn breakpoint_handler(stack_frame : &ExceptionStackFrame) -> !
     println!("BREAKPOINT: {:#?}", stack_frame);
     loop {}
 }
-/*
-extern "x86-interrupt" fn page_fault_handler(stack_frame : &mut ExceptionStackFrame,
-                                             error_code  : PageFaultErrorCode)
+
+extern "C" fn page_fault_handler(stack_frame : &ExceptionStackFrame, error_code  : u64) -> !
 {
-    println!("PAGE_FAULT: {}", match (/*  P  (Present        ) */(error_code.bits() >> 0) & 0b1,
-                                      /* R/W (Read/Write     ) */(error_code.bits() >> 1) & 0b1,
-                                      /* U/S (User/Supervisor) */(error_code.bits() >> 2) & 0b1)
+    println!("PAGE_FAULT: {} ({:#x})", match (/*  P  (Present        ) */(error_code >> 0) & 0b1,
+                                              /* R/W (Read/Write     ) */(error_code >> 1) & 0b1,
+                                              /* U/S (User/Supervisor) */(error_code >> 2) & 0b1)
     {
         (0, 0, 0) => "Kernel tried to read a non-present page"                                      ,
         (0, 0, 1) => "Kernel tried to read a non-present page, causing a protection fault"          ,
@@ -130,7 +153,8 @@ extern "x86-interrupt" fn page_fault_handler(stack_frame : &mut ExceptionStackFr
         (1, 1, 1) => "User process tried to write to a non-present page, causing a protection fault",
 
         (_, _, _) => { panic!("UNRECOGNISED PAGE-FAULT ERROR CODE"); },
-    });
+    },
+    read_control_reg!(cr2));        // CR2 holds the address of the page that caused the #PF
 
 
     println!("\n{:#?}", stack_frame);
@@ -140,7 +164,7 @@ extern "x86-interrupt" fn page_fault_handler(stack_frame : &mut ExceptionStackFr
      */
     loop { }
 }
-
+/*
 extern "x86-interrupt" fn double_fault_handler(stack_frame : &mut ExceptionStackFrame,
                                                error_code : u64)
 {
