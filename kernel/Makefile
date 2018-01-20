@@ -15,7 +15,7 @@ $(BUILD_DIR)/kernel.bin: $(ASM_OBJS) kernel $(LINKER_SCRIPT)
 	ld $(LFLAGS) -o $@ $(ASM_OBJS) target/$(ARCH)-rustos/debug/librust_os.a
 
 kernel:
-	xargo build --target=$(ARCH)-rustos
+	RUST_TARGET_PATH="$(shell pwd)" xargo build --target=$(ARCH)-rustos
 
 $(BUILD_DIR)/$(ARCH)%.o: src/$(ARCH)%.s
 	mkdir -p $(shell dirname $@)

@@ -67,6 +67,7 @@ gdt64:
   dq 0                                ; Null selector
   dq 0x00AF98000000FFFF               ; CS
   dq 0x00CF92000000FFFF               ; DS
+;  dq 0                                ; DS (null - not needed in Long Mode)
 .end:
   dq 0  ; Pad out so .pointer is 16-aligned
 .pointer:
@@ -168,21 +169,19 @@ Start:
   ; We're now technically in Long-Mode, but we've been put in 32-bit compatibility submode until we
   ; install a valid GDT. We can then far-jump into the new code segment (in real Long-Mode :P).
   lgdt [gdt64.pointer]
+  jmp 0x8:Trampoline
 
-  ; Reload segment selectors
-  mov ax, 0x10
-  mov ss, ax
-
+bits 64
+Trampoline:
+  ; Long Mode doesn't need valid selectors, and in some cases having them will actually break things
+  ; e.g. iret checks for valid selectors, and our GDT won't match so we'll #GP
   mov ax, 0
   mov ds, ax
   mov es, ax
   mov fs, ax
   mov gs, ax
+  mov ss, ax
 
-  jmp 0x8:Trampoline
-
-bits 64
-Trampoline:
   mov rax, qword InHigherHalf
   jmp rax
 

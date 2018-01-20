@@ -6,6 +6,8 @@
 mod idt;
 mod pic;
 
+use core::fmt;
+use spin::Mutex;
 use x86_64::tss::Tss;
 use x86_64::gdt::{Gdt,GdtDescriptor,DescriptorFlags};
 use memory::{FrameAllocator,MemoryController};
@@ -13,7 +15,6 @@ use rustos_common::port::Port;
 use self::idt::Idt;
 use self::pic::PicPair;
 
-#[derive(Debug)]
 #[repr(C)]
 struct ExceptionStackFrame
 {
@@ -24,12 +25,25 @@ struct ExceptionStackFrame
     stack_segment       : u64,
 }
 
+impl fmt::Debug for ExceptionStackFrame
+{
+    fn fmt(&self, f : &mut fmt::Formatter) -> fmt::Result
+    {
+        write!(f, "Exception occurred at {:#x}:{:x} with flags {:#x} and stack {:#x}:{:x}",
+                  self.code_segment,
+                  self.instruction_pointer,
+                  self.cpu_flags,
+                  self.stack_segment,
+                  self.stack_pointer)
+    }
+}
+
 const DOUBLE_FAULT_IST_INDEX : usize = 0;
 
 static mut TSS : Option<Tss> = None;
 static mut GDT : Option<Gdt> = None;
 static mut IDT : Option<Idt> = None;
-//static PIC_PAIR : Mutex<PicPair> = Mutex::new(unsafe { PicPair::new(0x20, 0x28) });
+static PIC_PAIR : Mutex<PicPair> = Mutex::new(unsafe { PicPair::new(0x20, 0x28) });
 
 fn unwrap_option<'a, T>(option : &'a mut Option<T>) -> &'a mut T
 {
@@ -37,6 +51,40 @@ fn unwrap_option<'a, T>(option : &'a mut Option<T>) -> &'a mut T
     {
         &mut Some(ref mut value) => value,
         &mut None => panic!("Tried to unwrap None option"),
+    }
+}
+
+macro_rules! save_regs
+{
+    () =>
+    {
+        asm!("push rax
+              push rcx
+              push rdx
+              push rsi
+              push rdi
+              push r8
+              push r9
+              push r10
+              push r11"
+             :::: "intel", "volatile");
+    }
+}
+
+macro_rules! restore_regs
+{
+    () =>
+    {
+        asm!("pop r11
+              pop r10
+              pop r9
+              pop r8
+              pop rdi
+              pop rsi
+              pop rdx
+              pop rcx
+              pop rax"
+             :::: "intel", "volatile");
     }
 }
 
@@ -49,12 +97,20 @@ macro_rules! wrap_handler
         {
             unsafe
             {
+                /*
+                 * To calculate the address of the exception stack frame, we add 0x48 bytes
+                 * (9 registers X 64-bits). We don't need to align the stack; it should be aligned
+                 * already.
+                 */
+                save_regs!();
                 asm!("mov rdi, rsp
-                      sub rsp, 8        // Align the stack pointer
+                      add rdi, 0x48
                       call $0"
-                     :: "i"($name as extern "C" fn(&ExceptionStackFrame) -> !)
+                     :: "i"($name as extern "C" fn(&ExceptionStackFrame))
                      : "rdi"
-                     : "intel");
+                     : "intel", "volatile");
+                restore_regs!();
+                asm!("iretq" :::: "intel", "volatile");
                 ::core::intrinsics::unreachable();
             }
         }
@@ -71,13 +127,24 @@ macro_rules! wrap_handler_with_error_code
          {
              unsafe
              {
-                 asm!("pop rsi          // Pop the error code
+                 /*
+                  * We also need to skip the saved callee registers here, but also need to skip
+                  * over the error code to get to the exception stack frame, so we skip 0x50 bytes.
+                  * However, in this case we also need to manually align the stack.
+                  */
+                 save_regs!();
+                 asm!("mov rsi, [rsp+0x48]  // Put the error code into RSI
                        mov rdi, rsp
-                       sub rsp, 8       // Align the stack pointer
-                       call $0"
-                      :: "i"($name as extern "C" fn(&ExceptionStackFrame,u64) -> !)
+                       add rdi, 0x50
+                       sub rsp, 8           // Align the stack pointer
+                       call $0
+                       add rsp, 8           // Undo the stack alignment"
+                      :: "i"($name as extern "C" fn(&ExceptionStackFrame,u64))
                       : "rdi","rsi"
-                      : "intel");
+                      : "intel", "volatile");
+                 restore_regs!();
+                 asm!("add rsp, 8   // Pop the error code
+                       iretq" :::: "intel", "volatile");
                  ::core::intrinsics::unreachable();
              }
          }
@@ -88,18 +155,19 @@ macro_rules! wrap_handler_with_error_code
 pub fn init<A>(memory_controller : &mut MemoryController<A>) where A : FrameAllocator
 {
     /*
-     * Allocate a 4KiB stack for the double-fault handler. Using a separate stack
-     * avoids a triple fault happening when the guard page of the normal stack is hit (after a stack
-     * overflow) which would otherwise
+     * Allocate a 4KiB stack for the double-fault handler. Using a separate stack avoids a triple
+     * fault happening when the guard page of the normal stack is hit (after a stack overflow),
+     * which would otherwise:
      *      Page Fault -> Page Fault -> Double Fault -> Page Fault -> Triple Fault
      */
-    let double_fault_stack = memory_controller.alloc_stack(1).expect("Failed to allocate double-fault stack");
+    let double_fault_stack = memory_controller.alloc_stack(1).expect("Failed to allocate stack");
 
     unsafe
     {
         // Create a TSS
         TSS = Some(Tss::new());
         unwrap_option(&mut TSS).interrupt_stack_table[DOUBLE_FAULT_IST_INDEX] = double_fault_stack.top();
+        serial_println!("TSS: {:#?}", unwrap_option(&mut TSS));
 
         /*
          * We need a new GDT, because the current one resides in the bootstrap and so is now not
@@ -111,33 +179,37 @@ pub fn init<A>(memory_controller : &mut MemoryController<A>) where A : FrameAllo
                                                                                           DescriptorFlags::EXECUTABLE    |
                                                                                           DescriptorFlags::LONG_MODE).bits()));
         let tss_selector = unwrap_option(&mut GDT).add_entry(GdtDescriptor::create_tss_segment(unwrap_option(&mut TSS)));
+        println!("TSS selector: {:?}", tss_selector);
         unwrap_option(&mut GDT).load(code_selector, tss_selector);
 
         // Create the IDT
         IDT = Some(Idt::new());
-        unwrap_option(&mut IDT).breakpoint().set_handler(wrap_handler!(breakpoint_handler), code_selector)
-                                            .set_ist_handler(DOUBLE_FAULT_IST_INDEX as u8);
-        unwrap_option(&mut IDT).invalid_opcode().set_handler(wrap_handler!(invalid_opcode_handler), code_selector);
-        unwrap_option(&mut IDT).page_fault().set_handler(wrap_handler_with_error_code!(page_fault_handler), code_selector);
+
+        /* #BP */unwrap_option(&mut IDT).breakpoint()    .set_handler(wrap_handler!(breakpoint_handler),                     code_selector);
+        /* #UD */unwrap_option(&mut IDT).invalid_opcode().set_handler(wrap_handler!(invalid_opcode_handler),                 code_selector);
+        /* #PF */unwrap_option(&mut IDT).page_fault()    .set_handler(wrap_handler_with_error_code!(page_fault_handler),     code_selector);
+        /* #DF */unwrap_option(&mut IDT).double_fault()  .set_handler(wrap_handler_with_error_code!(double_fault_handler),   code_selector)
+                                                         .set_ist_handler(DOUBLE_FAULT_IST_INDEX as u8);
+        unwrap_option(&mut IDT).irq(0).set_handler(wrap_handler!(timer_handler), code_selector);
+        unwrap_option(&mut IDT).irq(1).set_handler(wrap_handler!(key_handler), code_selector);
         unwrap_option(&mut IDT).load();
 
-        // PIC_PAIR.lock().remap();
+        PIC_PAIR.lock().remap();
     }
 }
 
-extern "C" fn invalid_opcode_handler(stack_frame : &ExceptionStackFrame) -> !
+extern "C" fn invalid_opcode_handler(stack_frame : &ExceptionStackFrame)
 {
     println!("INVALID OPCODE AT: {:#x}", stack_frame.instruction_pointer);
     loop {}
 }
 
-extern "C" fn breakpoint_handler(stack_frame : &ExceptionStackFrame) -> !
+extern "C" fn breakpoint_handler(stack_frame : &ExceptionStackFrame)
 {
     println!("BREAKPOINT: {:#?}", stack_frame);
-    loop {}
 }
 
-extern "C" fn page_fault_handler(stack_frame : &ExceptionStackFrame, error_code  : u64) -> !
+extern "C" fn page_fault_handler(stack_frame : &ExceptionStackFrame, error_code  : u64)
 {
     println!("PAGE_FAULT: {} ({:#x})", match (/*  P  (Present        ) */(error_code >> 0) & 0b1,
                                               /* R/W (Read/Write     ) */(error_code >> 1) & 0b1,
@@ -154,7 +226,7 @@ extern "C" fn page_fault_handler(stack_frame : &ExceptionStackFrame, error_code 
 
         (_, _, _) => { panic!("UNRECOGNISED PAGE-FAULT ERROR CODE"); },
     },
-    read_control_reg!(cr2));        // CR2 holds the address of the page that caused the #PF
+    read_control_reg!(cr2));    // CR2 holds the address of the page that caused the #PF
 
 
     println!("\n{:#?}", stack_frame);
@@ -164,24 +236,23 @@ extern "C" fn page_fault_handler(stack_frame : &ExceptionStackFrame, error_code 
      */
     loop { }
 }
-/*
-extern "x86-interrupt" fn double_fault_handler(stack_frame : &mut ExceptionStackFrame,
-                                               error_code : u64)
+
+extern "C" fn double_fault_handler(stack_frame : &ExceptionStackFrame, error_code : u64)
 {
     println!("EXCEPTION: DOUBLE FAULT   (Error code: {})\n{:#?}", error_code, stack_frame);
     loop { }
 }
 
-extern "x86-interrupt" fn timer_handler(_ : &mut ExceptionStackFrame)
+extern "C" fn timer_handler(_ : &ExceptionStackFrame)
 {
     unsafe { PIC_PAIR.lock().send_eoi(32); }
 }
 
 static KEYBOARD_PORT : Port<u8> = unsafe { Port::new(0x60) };
 
-extern "x86-interrupt" fn key_handler(_ : &mut ExceptionStackFrame)
+extern "C" fn key_handler(_ : &ExceptionStackFrame)
 {
     println!("Key interrupt: Scancode={:#x}", unsafe { KEYBOARD_PORT.read() });
 
     unsafe { PIC_PAIR.lock().send_eoi(33); }
-}*/
+}

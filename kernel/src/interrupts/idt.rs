@@ -117,7 +117,13 @@ impl Idt
     pub fn simd_exception               (&mut self) -> &mut IdtEntry { &mut (self[19]) }
     pub fn virtualization_exception     (&mut self) -> &mut IdtEntry { &mut (self[20]) }
     // XXX: 21 to 31 - Intel reserved
-    
+
+    pub fn irq(&mut self, index : usize) -> &mut IdtEntry
+    {
+        const IRQ_BASE : usize = 32;
+        &mut self[IRQ_BASE + index]
+    }
+
     pub fn load(&'static self)
     {
         #[repr(C,packed)]

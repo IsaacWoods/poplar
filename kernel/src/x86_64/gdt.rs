@@ -8,7 +8,7 @@ use super::tss::Tss;
 use bit_field::BitField;
 use core::mem::size_of;
 
-#[derive(Clone,Copy)]
+#[derive(Clone,Copy,Debug)]
 pub struct SegmentSelector(pub u16);
 
 impl SegmentSelector
@@ -36,6 +36,7 @@ bitflags!
     }
 }
 
+#[derive(Debug)]
 pub enum GdtDescriptor
 {
     UserSegment(u64),
