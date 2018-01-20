@@ -4,7 +4,7 @@
  * See LICENCE.md
  */
 
-#[derive(Debug)]
+#[derive(Clone,Copy,Debug)]
 #[repr(packed)] // repr(C) would add unwanted padding before first_section
 pub struct CommandLineTag {
     typ: u32,

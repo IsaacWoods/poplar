@@ -6,7 +6,7 @@
 
 use super::BootInformation;
 
-#[derive(Debug)]
+#[derive(Clone,Copy,Debug)]
 #[repr(packed)] // repr(C) would add unwanted padding before first_section
 pub struct ElfSectionsTag {
     typ: u32,
@@ -20,7 +20,7 @@ pub struct ElfSectionsTag {
 impl ElfSectionsTag {
     pub fn sections(&'static self) -> ElfSectionIter {
         ElfSectionIter {
-            current_section: &self.first_section,
+            current_section: unsafe { &self.first_section },
             remaining_sections: self.number_of_sections - 1,
             entry_size: self.entry_size,
         }
@@ -84,7 +84,7 @@ impl Iterator for ElfSectionIter {
 }
 
 #[cfg(feature = "elf32")]
-#[derive(Debug)]
+#[derive(Clone,Copy,Debug)]
 #[repr(C)]
 pub struct ElfSection {
     name_index: u32,
@@ -100,7 +100,7 @@ pub struct ElfSection {
 }
 
 #[cfg(not(feature = "elf32"))]
-#[derive(Debug)]
+#[derive(Clone,Copy,Debug)]
 #[repr(C)]
 pub struct ElfSection {
     name_index: u32,
@@ -161,7 +161,7 @@ impl ElfSection {
     }
 }
 
-#[derive(PartialEq, Eq, Debug, Copy, Clone)]
+#[derive(PartialEq,Eq,Debug,Clone,Copy)]
 #[repr(u32)]
 pub enum ElfSectionType {
     Unused = 0,

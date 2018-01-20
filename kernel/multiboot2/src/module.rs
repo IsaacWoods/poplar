@@ -7,7 +7,7 @@
 use header::{Tag, TagIter};
 
 #[repr(packed)]
-#[derive(Debug)]
+#[derive(Clone,Copy,Debug)]
 pub struct ModuleTag {
     typ: u32,
     size: u32,
