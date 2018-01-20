@@ -3,17 +3,14 @@
  * See LICENCE.md
  */
 
-mod idt;
-mod pic;
-
 use core::fmt;
 use spin::Mutex;
 use x86_64::tss::Tss;
 use x86_64::gdt::{Gdt,GdtDescriptor,DescriptorFlags};
+use x86_64::idt::Idt;
+use x86_64::pic::PicPair;
 use memory::{FrameAllocator,MemoryController};
 use rustos_common::port::Port;
-use self::idt::Idt;
-use self::pic::PicPair;
 
 #[repr(C)]
 struct ExceptionStackFrame
@@ -167,11 +164,12 @@ pub fn init<A>(memory_controller : &mut MemoryController<A>) where A : FrameAllo
         // Create a TSS
         TSS = Some(Tss::new());
         unwrap_option(&mut TSS).interrupt_stack_table[DOUBLE_FAULT_IST_INDEX] = double_fault_stack.top();
-        serial_println!("TSS: {:#?}", unwrap_option(&mut TSS));
 
         /*
          * We need a new GDT, because the current one resides in the bootstrap and so is now not
-         * mapped into the address space
+         * mapped into the address space.
+         * XXX: We don't bother creating a new data segment. This relies on all the segment
+         * registers (*especially SS*) being cleared (which should've been done in the bootstrap).
          */
         GDT = Some(Gdt::new());
         let code_selector = unwrap_option(&mut GDT).add_entry(GdtDescriptor::UserSegment((DescriptorFlags::USER_SEGMENT  |
@@ -179,7 +177,6 @@ pub fn init<A>(memory_controller : &mut MemoryController<A>) where A : FrameAllo
                                                                                           DescriptorFlags::EXECUTABLE    |
                                                                                           DescriptorFlags::LONG_MODE).bits()));
         let tss_selector = unwrap_option(&mut GDT).add_entry(GdtDescriptor::create_tss_segment(unwrap_option(&mut TSS)));
-        println!("TSS selector: {:?}", tss_selector);
         unwrap_option(&mut GDT).load(code_selector, tss_selector);
 
         // Create the IDT

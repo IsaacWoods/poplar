@@ -34,8 +34,10 @@ macro_rules! write_control_reg
 }
 
 pub mod gdt;
+pub mod idt;
 pub mod tlb;
 pub mod tss;
+pub mod pic;
 
 #[derive(Copy,Clone,PartialEq,Eq)]
 #[repr(u8)]
