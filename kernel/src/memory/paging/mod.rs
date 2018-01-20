@@ -295,22 +295,21 @@ pub fn remap_kernel<A>(allocator : &mut A, boot_info : &BootInformation) -> Acti
                           EntryFlags::WRITABLE,
                           allocator);
 
-            // Identity-map any modules loaded by GRUB
-            // TODO
-/*            if boot_info.module_tags().count() > 0
+            /*
+             * Map modules loaded by GRUB
+             */
+            for module_tag in boot_info.modules()
             {
-                for module_tag in boot_info.module_tags()
-                {
-                    let module_start = module_tag.start_address() as usize;
-                    let module_end   = module_tag.end_address()   as usize;
+                let module_start = module_tag.start_address() as usize;
+                let module_end   = module_tag.end_address()   as usize;
+                println!("Mapping module to {:#x}-{:#x}", module_start, module_end);
 
-                    for frame in Frame::range_inclusive(Frame::get_containing_frame(module_start),
-                                                        Frame::get_containing_frame(module_end - 1))
-                    {
-                        frame_list.push((EntryFlags::PRESENT, frame, true));
-                    }
-                }
-            }*/
+/*                for frame in Frame::range_inclusive(Frame::get_containing_frame(module_start),
+                                                    Frame::get_containing_frame(module_end - 1))
+                {
+                    frame_list.push((EntryFlags::PRESENT, frame, true));
+                }*/
+            }
 
             /*
              * Map the Multiboot structure to KERNEL_VMA + its physical address

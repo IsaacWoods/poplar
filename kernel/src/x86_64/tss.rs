@@ -11,7 +11,7 @@ use ::memory::VirtualAddress;
  * prevent triple-faults from occuring if we overflow the kernel stack).
  */
 
-#[derive(Debug)]
+#[derive(Clone,Copy,Debug)]
 #[repr(C,packed)]
 pub struct Tss
 {

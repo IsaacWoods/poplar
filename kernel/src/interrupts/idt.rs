@@ -85,6 +85,17 @@ pub struct Idt
     entries : [IdtEntry; 256],
 }
 
+macro_rules! idt_entry
+{
+    ($name : ident, $entry : expr) =>
+    {
+        #[allow(dead_code)] pub fn $name(&mut self) -> &mut IdtEntry
+        {
+            &mut (self[$entry])
+        }
+    };
+}
+
 impl Idt
 {
     pub fn new() -> Idt
@@ -95,28 +106,28 @@ impl Idt
         }
     }
 
-    pub fn divide_error                 (&mut self) -> &mut IdtEntry { &mut (self[ 0]) }
-    pub fn debug_exception              (&mut self) -> &mut IdtEntry { &mut (self[ 1]) }
-    pub fn nmi                          (&mut self) -> &mut IdtEntry { &mut (self[ 2]) }
-    pub fn breakpoint                   (&mut self) -> &mut IdtEntry { &mut (self[ 3]) }
-    pub fn overflow                     (&mut self) -> &mut IdtEntry { &mut (self[ 4]) }
-    pub fn bound_range_exceeded         (&mut self) -> &mut IdtEntry { &mut (self[ 5]) }
-    pub fn invalid_opcode               (&mut self) -> &mut IdtEntry { &mut (self[ 6]) }
-    pub fn device_not_available         (&mut self) -> &mut IdtEntry { &mut (self[ 7]) }
-    pub fn double_fault                 (&mut self) -> &mut IdtEntry { &mut (self[ 8]) }
-    pub fn coprocessor_segment_overrun  (&mut self) -> &mut IdtEntry { &mut (self[ 9]) }
-    pub fn invalid_tss                  (&mut self) -> &mut IdtEntry { &mut (self[10]) }
-    pub fn segment_not_present          (&mut self) -> &mut IdtEntry { &mut (self[11]) }
-    pub fn stack_segment_fault          (&mut self) -> &mut IdtEntry { &mut (self[12]) }
-    pub fn general_proctection_fault    (&mut self) -> &mut IdtEntry { &mut (self[13]) }
-    pub fn page_fault                   (&mut self) -> &mut IdtEntry { &mut (self[14]) }
-    // XXX: 15 - Intel reserved
-    pub fn x87_fault                    (&mut self) -> &mut IdtEntry { &mut (self[16]) }
-    pub fn alignment_check              (&mut self) -> &mut IdtEntry { &mut (self[17]) }
-    pub fn machine_check                (&mut self) -> &mut IdtEntry { &mut (self[18]) }
-    pub fn simd_exception               (&mut self) -> &mut IdtEntry { &mut (self[19]) }
-    pub fn virtualization_exception     (&mut self) -> &mut IdtEntry { &mut (self[20]) }
-    // XXX: 21 to 31 - Intel reserved
+    idt_entry!(divide_error                 , 0 );
+    idt_entry!(debug_exception              , 1 );
+    idt_entry!(nmi                          , 2 );
+    idt_entry!(breakpoint                   , 3 );
+    idt_entry!(overflow                     , 4 );
+    idt_entry!(bound_range_exceeded         , 5 );
+    idt_entry!(invalid_opcode               , 6 );
+    idt_entry!(device_not_available         , 7 );
+    idt_entry!(double_fault                 , 8 );
+    idt_entry!(coprocessor_segment_overrun  , 9 );
+    idt_entry!(invalid_tss                  , 10);
+    idt_entry!(segment_not_present          , 11);
+    idt_entry!(stack_segment_fault          , 12);
+    idt_entry!(general_proctection_fault    , 13);
+    idt_entry!(page_fault                   , 14);
+    // XXX: 15 is reserved by Intel
+    idt_entry!(x87_fault                    , 16);
+    idt_entry!(alignment_check              , 17);
+    idt_entry!(machine_check                , 18);
+    idt_entry!(simd_exception               , 19);
+    idt_entry!(virtualization_exception     , 20);
+    // XXX: 21 to 31 are reserved by Intel
 
     pub fn irq(&mut self, index : usize) -> &mut IdtEntry
     {

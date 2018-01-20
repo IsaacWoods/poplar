@@ -55,7 +55,6 @@ pub extern fn kmain(multiboot_ptr : usize)
     let boot_info = unsafe { BootInformation::load(multiboot_ptr, KERNEL_VMA) };
     let mut memory_controller = memory::init(&boot_info);
     interrupts::init(&mut memory_controller);
-    unsafe { asm!("int3"); }
 
 /*    for module_tag in boot_info.modules()
     {
@@ -70,8 +69,8 @@ pub extern fn kmain(multiboot_ptr : usize)
         println!("Result was {:#x}", result);
     }*/
 
-//    unsafe { asm!("sti"); }
-    println!("FINISHED ALL KERNEL SHITE");
+    unsafe { asm!("sti"); }
+    println!("ENTERING KERNEL LOOP");
     loop { }
 }
 
