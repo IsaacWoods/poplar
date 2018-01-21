@@ -3,7 +3,7 @@
  * See LICENCE.md
  */
 
-pub mod entry; // TODO: It isn't ideal to have this public, move reponsibility for this inside mod
+pub(super) mod entry;
 mod table;
 mod temporary_page;
 mod mapper;
