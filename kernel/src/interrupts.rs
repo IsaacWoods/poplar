@@ -9,7 +9,7 @@ use x86_64::tss::Tss;
 use x86_64::gdt::{Gdt,GdtDescriptor,DescriptorFlags};
 use x86_64::idt::Idt;
 use x86_64::pic::PicPair;
-use memory::{FrameAllocator,MemoryController};
+use x86_64::memory::{FrameAllocator,MemoryController};
 use rustos_common::port::Port;
 
 #[repr(C)]

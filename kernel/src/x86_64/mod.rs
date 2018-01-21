@@ -33,6 +33,7 @@ macro_rules! write_control_reg
     };
 }
 
+pub mod memory;
 pub mod gdt;
 pub mod idt;
 pub mod tlb;

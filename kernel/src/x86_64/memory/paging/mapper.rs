@@ -4,10 +4,11 @@
  */
 
 use core::ptr::Unique;
-use super::{VirtualAddress,PhysicalAddress,Page,PAGE_SIZE,ENTRY_COUNT};
+use x86_64::memory::{Frame,FrameAllocator};
+use x86_64::memory::{VirtualAddress,PhysicalAddress,Page,PAGE_SIZE};
+use super::ENTRY_COUNT;
 use super::entry::EntryFlags;
 use super::table::{self,Table,Level4};
-use memory::{Frame,FrameAllocator};
 use x86_64::tlb;
 
 pub struct Mapper

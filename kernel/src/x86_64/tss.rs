@@ -3,7 +3,7 @@
  * See LICENCE.md
  */
 
-use ::memory::VirtualAddress;
+use super::memory::VirtualAddress;
 
 /*
  * Hardware task switching isn't supported on x86_64, but we still have the TSS structure. It's

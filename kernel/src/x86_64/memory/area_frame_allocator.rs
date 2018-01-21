@@ -3,7 +3,7 @@
  * See LICENCE.md
  */
 
-use memory::{Frame,FrameAllocator};
+use super::{Frame,FrameAllocator};
 use multiboot2::{MemoryAreaIter,MemoryArea};
 
 pub struct AreaFrameAllocator

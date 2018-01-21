@@ -3,7 +3,7 @@
  * See LICENCE.md
  */
 
-use ::memory::VirtualAddress;
+use super::memory::VirtualAddress;
 
 pub fn invalidate_page(address : VirtualAddress)
 {

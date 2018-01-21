@@ -3,8 +3,8 @@
  * See LICENCE.md
  */
 
-use memory::{PAGE_SIZE,FrameAllocator};
-use memory::paging::{self,Page,PageIter,ActivePageTable};
+use super::{PAGE_SIZE,FrameAllocator};
+use super::paging::{self,Page,PageIter,ActivePageTable};
 
 #[derive(Debug)]
 pub struct Stack
@@ -25,7 +25,10 @@ impl Stack
         }
     }
 
-    pub fn top(&self)    -> usize { self.top    }
+    pub fn top(&self) -> usize
+    {
+        self.top
+    }
 }
 
 pub struct StackAllocator

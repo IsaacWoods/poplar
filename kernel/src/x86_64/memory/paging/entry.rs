@@ -3,7 +3,7 @@
  * See LICENCE.md
  */
 
-use memory::Frame;
+use x86_64::memory::Frame;
 use multiboot2::ElfSection;
 
 pub struct Entry(u64);

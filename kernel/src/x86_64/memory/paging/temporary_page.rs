@@ -6,7 +6,7 @@
 use super::{Page,ActivePageTable,VirtualAddress};
 use super::table::{Table,Level1};
 use super::entry::EntryFlags;
-use memory::{Frame,FrameAllocator};
+use x86_64::memory::{Frame,FrameAllocator};
 
 pub struct TemporaryPage
 {

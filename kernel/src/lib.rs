@@ -33,11 +33,10 @@
 #[macro_use]    mod vga_buffer;
 #[macro_use]    mod serial;
 #[macro_use]    mod x86_64;
-                mod memory;
                 mod interrupts;
 
 use multiboot2::BootInformation;
-use memory::map::KERNEL_VMA;
+use x86_64::memory::map::KERNEL_VMA;
 
 #[no_mangle]
 pub extern fn kmain(multiboot_ptr : usize)
@@ -53,7 +52,7 @@ pub extern fn kmain(multiboot_ptr : usize)
      * offset of the whole kernel.
      */
     let boot_info = unsafe { BootInformation::load(multiboot_ptr, KERNEL_VMA) };
-    let mut memory_controller = memory::init(&boot_info);
+    let mut memory_controller = x86_64::memory::init(&boot_info);
     interrupts::init(&mut memory_controller);
 
 /*    for module_tag in boot_info.modules()
