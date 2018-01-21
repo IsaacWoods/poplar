@@ -20,7 +20,7 @@ macro_rules! serial_print
 {
     ($($arg:tt)*) =>
         ({
-            $crate::serial::print(format_args!($($arg)*));
+            $crate::x86_64::serial::print(format_args!($($arg)*));
         });
 }
 

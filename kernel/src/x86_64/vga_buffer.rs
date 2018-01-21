@@ -19,7 +19,7 @@ macro_rules! print
 {
     ($($arg:tt)*) =>
         ({
-            $crate::vga_buffer::print(format_args!($($arg)*));
+            $crate::x86_64::vga_buffer::print(format_args!($($arg)*));
         });
 }
 

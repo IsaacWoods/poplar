@@ -30,45 +30,15 @@
 #[macro_use]    extern crate rustos_common;
                 extern crate hole_tracking_allocator;
 
-#[macro_use]    mod vga_buffer;
-#[macro_use]    mod serial;
-#[macro_use]    mod x86_64;
-                mod interrupts;
-
-use multiboot2::BootInformation;
-use x86_64::memory::map::KERNEL_VMA;
+#[macro_use] mod x86_64;
+use x86_64 as platform;
 
 #[no_mangle]
 pub extern fn kmain(multiboot_ptr : usize)
 {
-    serial::initialise();
-    serial_println!("Hello, World!");
-
-    vga_buffer::clear_screen();
+    platform::init_platform(multiboot_ptr);
     println!("Hello, World!");
 
-    /*
-     * We are passed the *physical* address of the Multiboot struct, so we offset it by the virtual
-     * offset of the whole kernel.
-     */
-    let boot_info = unsafe { BootInformation::load(multiboot_ptr, KERNEL_VMA) };
-    let mut memory_controller = x86_64::memory::init(&boot_info);
-    interrupts::init(&mut memory_controller);
-
-/*    for module_tag in boot_info.modules()
-    {
-        println!("Loading and running {}", module_tag.name());
-        println!("  Start address: {:#x}, End address: {:#x}", module_tag.start_address(), module_tag.end_address());
-        let virtual_address = module_tag.start_address();
-        let code : unsafe extern "C" fn() -> u32 = unsafe
-                                                   {
-                                                       core::mem::transmute(virtual_address as *const ())
-                                                   };
-        let result : u32 = unsafe { (code)() };
-        println!("Result was {:#x}", result);
-    }*/
-
-    unsafe { asm!("sti"); }
     println!("ENTERING KERNEL LOOP");
     loop { }
 }

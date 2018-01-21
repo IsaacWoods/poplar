@@ -33,12 +33,15 @@ macro_rules! write_control_reg
     };
 }
 
-pub mod memory;
-pub mod gdt;
-pub mod idt;
-pub mod tlb;
-pub mod tss;
-pub mod pic;
+#[macro_use]    pub mod vga_buffer;
+#[macro_use]    pub mod serial;
+                pub mod memory;
+                    mod interrupts;
+                pub mod gdt;
+                pub mod idt;
+                pub mod tlb;
+                pub mod tss;
+                pub mod pic;
 
 #[derive(Copy,Clone,PartialEq,Eq)]
 #[repr(u8)]
@@ -63,4 +66,39 @@ impl From<u16> for PrivilegeLevel
             _ => panic!("Invalid privilege level used!"),
         }
     }
+}
+
+pub fn init_platform(multiboot_ptr : usize)
+{
+    use multiboot2::BootInformation;
+    use x86_64::memory::map::KERNEL_VMA;
+
+    serial::initialise();
+    serial_println!("Kernel connected to COM1");
+
+    vga_buffer::clear_screen();
+
+    /*
+     * We are passed the *physical* address of the Multiboot struct, so we offset it by the virtual
+     * offset of the whole kernel.
+     */
+    let boot_info = unsafe { BootInformation::load(multiboot_ptr, KERNEL_VMA) };
+    let mut memory_controller = memory::init(&boot_info);
+
+    interrupts::init(&mut memory_controller);
+
+/*    for module_tag in boot_info.modules()
+    {
+        println!("Loading and running {}", module_tag.name());
+        println!("  Start address: {:#x}, End address: {:#x}", module_tag.start_address(), module_tag.end_address());
+        let virtual_address = module_tag.start_address();
+        let code : unsafe extern "C" fn() -> u32 = unsafe
+                                                   {
+                                                       core::mem::transmute(virtual_address as *const ())
+                                                   };
+        let result : u32 = unsafe { (code)() };
+        println!("Result was {:#x}", result);
+    }*/
+
+    unsafe { asm!("sti"); }
 }
