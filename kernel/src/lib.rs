@@ -11,7 +11,6 @@
 #![feature(unique)]
 #![feature(alloc)]
 #![feature(asm)]
-#![feature(abi_x86_interrupt)]
 #![feature(naked_functions)]
 #![feature(core_intrinsics)]
 
