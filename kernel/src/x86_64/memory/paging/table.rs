@@ -6,7 +6,7 @@
 use core::ops::{Index,IndexMut};
 use x86_64::memory::FrameAllocator;
 use x86_64::memory::map::P4_TABLE_ADDRESS;
-use super::ENTRY_COUNT;
+use super::{ENTRY_COUNT,VirtualAddress};
 use x86_64::memory::paging::entry::{Entry,EntryFlags};
 use core::marker::PhantomData;
 
@@ -67,12 +67,13 @@ impl<L> Table<L> where L : HierarchicalLevel
         {
             /*
              * We can calculate the next table's address by going through one more layer of the
-             * recursive mapping. This doesn't always yield a canonical address, so we re-extend the
-             * sign extension.
+             * recursive mapping.
+             *
+             * XXX: This doesn't always yield a canonical address, so we make sure to canonicalise
+             * it.
              */
             let table_address = (self as *const _) as usize;
-            let sign_extension = 0o177777_000_000_000_000_0000 * ((table_address >> 47) & 0b1);
-            Some((((table_address << 9) | (index << 12)) & ((1 << 48) - 1)) | sign_extension)
+            Some(VirtualAddress::new((table_address << 9) | (index << 12)).canonicalise().into())
         }
         else
         {

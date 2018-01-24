@@ -18,6 +18,19 @@ impl VirtualAddress
         VirtualAddress(address)
     }
 
+    pub const fn from_page_table_offsets(p4     : usize,
+                                         p3     : usize,
+                                         p2     : usize,
+                                         p1     : usize,
+                                         offset : usize) -> VirtualAddress
+    {
+        VirtualAddress::new((p4<<39) |
+                            (p3<<30) |
+                            (p2<<21) |
+                            (p1<<12) |
+                            (offset<<0)).canonicalise()
+    }
+
     pub const fn ptr<T>(self) -> *const T
     {
         self.0 as *const T
@@ -41,6 +54,17 @@ impl VirtualAddress
     pub const fn offset_into_page(&self) -> usize
     {
         self.0 % PAGE_SIZE
+    }
+
+    /*
+     * Addresses are always expected by the CPU to be canonical (bits 48 to 63 are the same as bit
+     * 47). If a calculation leaves an address non-canonical, make sure to re-canonicalise it with
+     * this function.
+     */
+    pub const fn canonicalise(self) -> VirtualAddress
+    {
+        VirtualAddress::new(0o177777_000_000_000_000_0000 * ((self.0 >> 47) & 0b1) |
+                            (self.0 & ((1 << 48) - 1)))
     }
 }
 
