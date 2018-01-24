@@ -35,8 +35,8 @@ impl Mapper
 
     pub fn translate(&self, virtual_address : VirtualAddress) -> Option<PhysicalAddress>
     {
-        let offset = virtual_address % PAGE_SIZE;
-        self.translate_page(Page::get_containing_page(virtual_address)).map(|frame| frame.number * PAGE_SIZE + offset)
+        let maybe_frame = self.translate_page(Page::get_containing_page(virtual_address));
+        maybe_frame.map(|frame| (frame.number * PAGE_SIZE + virtual_address.offset_into_page()).into())
     }
 
     pub fn translate_page(&self, page : Page) -> Option<Frame>

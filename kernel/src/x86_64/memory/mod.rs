@@ -4,13 +4,14 @@
  */
 
 pub mod map;
-mod paging;
+pub mod paging;
 mod area_frame_allocator;
 mod stack_allocator;
 
 pub use self::area_frame_allocator::AreaFrameAllocator;
 pub use self::paging::{PhysicalAddress,VirtualAddress,remap_kernel};
 
+// TODO: eww?
 pub(self) use self::paging::PAGE_SIZE;
 
 use self::map::{HEAP_START,HEAP_SIZE};
@@ -40,16 +41,17 @@ pub fn init(boot_info : &BootInformation) -> MemoryController<AreaFrameAllocator
      * We only want to map sections that appear in the higher-half, because we should never need
      * any of the bootstrap stuff again.
      */
-    let kernel_start = unsafe { ((&_higher_start as *const u8) as *const usize) as usize };
-    let kernel_end   = unsafe { ((&_end          as *const u8) as *const usize) as usize };
+    let kernel_start : VirtualAddress = unsafe { (&_higher_start as *const u8).into() };
+    let kernel_end   : VirtualAddress = unsafe { (&_end          as *const u8).into() };
+    serial_println!("Loading kernel to: ({:#x})---({:#x})", kernel_start, kernel_end);
 
-    println!("Loading kernel to: ({:#x})---({:#x})", kernel_start, kernel_end);
-    println!("Boot start: {:#x}, boot end: {:#x}", boot_info.start_address() as usize, boot_info.end_address() as usize);
-
-    let mut frame_allocator = AreaFrameAllocator::new(boot_info.start_address() as usize,
-                                                      boot_info.end_address()   as usize,
-                                                      kernel_start              as usize,
-                                                      kernel_end                as usize,
+    /*
+     * TODO: are we using the correct addresses for the kernel start&end, this appears iffy?
+     */
+    let mut frame_allocator = AreaFrameAllocator::new(boot_info.start_address().into(),
+                                                      boot_info.end_address().into(),
+                                                      usize::from(kernel_start).into(),
+                                                      usize::from(kernel_end).into(),
                                                       memory_map_tag.memory_areas());
     /*
      * We can now replace the bootstrap paging structures with better ones that actually map the
@@ -61,7 +63,7 @@ pub fn init(boot_info : &BootInformation) -> MemoryController<AreaFrameAllocator
      * Map the pages used by the heap, then create it
      */
     let heap_start_page = Page::get_containing_page(HEAP_START);
-    let heap_end_page   = Page::get_containing_page(HEAP_START + HEAP_SIZE - 1);
+    let heap_end_page   = Page::get_containing_page(HEAP_START.offset(HEAP_SIZE - 1));
 
     for page in Page::range_inclusive(heap_start_page, heap_end_page)
     {
@@ -70,7 +72,7 @@ pub fn init(boot_info : &BootInformation) -> MemoryController<AreaFrameAllocator
 
     unsafe
     {
-        ALLOCATOR.lock().init(HEAP_START, HEAP_SIZE);
+        ALLOCATOR.lock().init(HEAP_START.into(), HEAP_SIZE);
     }
 
     /*
@@ -120,14 +122,14 @@ pub struct Frame
 
 impl Frame
 {
-    fn get_containing_frame(address : usize) -> Frame
+    fn get_containing_frame(address : PhysicalAddress) -> Frame
     {
-        Frame { number : address / PAGE_SIZE }
+        Frame { number : usize::from(address) / PAGE_SIZE }
     }
 
     fn get_start_address(&self) -> PhysicalAddress
     {
-        self.number * PAGE_SIZE
+        (self.number * PAGE_SIZE).into()
     }
 
     fn clone(&self) -> Frame

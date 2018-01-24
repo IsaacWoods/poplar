@@ -7,6 +7,7 @@ use core::fmt;
 use core::ptr::Unique;
 use volatile::Volatile;
 use spin::Mutex;
+use x86_64::memory::paging::VirtualAddress;
 use x86_64::memory::map::KERNEL_VMA;
 
 macro_rules! println
@@ -80,7 +81,7 @@ struct ScreenChar
 
 const VGA_BUFFER_WIDTH      : usize = 80;
 const VGA_BUFFER_HEIGHT     : usize = 25;
-const VGA_BUFFER_ADDRESS    : usize = KERNEL_VMA + 0xb8000;
+const VGA_BUFFER_ADDRESS    : VirtualAddress = KERNEL_VMA.offset(0xb8000);
 
 struct Buffer
 {
@@ -98,7 +99,7 @@ pub static WRITER : Mutex<Writer> = Mutex::new(Writer
                                                {
                                                     col_position : 0,
                                                     color_code : ColorCode::new(Color::LightGreen, Color::Black),
-                                                    buffer : unsafe { Unique::new_unchecked(VGA_BUFFER_ADDRESS as *mut _) },
+                                                    buffer : unsafe { Unique::new_unchecked(VGA_BUFFER_ADDRESS.mut_ptr()) },
                                                });
 
 impl fmt::Write for Writer

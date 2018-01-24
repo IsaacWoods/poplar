@@ -4,18 +4,18 @@
  */
 
 use super::{PAGE_SIZE,FrameAllocator};
-use super::paging::{self,Page,PageIter,ActivePageTable};
+use super::paging::{self,Page,PageIter,VirtualAddress,ActivePageTable};
 
 #[derive(Debug)]
 pub struct Stack
 {
-    top     : usize,
-    bottom  : usize,
+    top     : VirtualAddress,
+    bottom  : VirtualAddress,
 }
 
 impl Stack
 {
-    fn new(top : usize, bottom : usize) -> Stack
+    fn new(top : VirtualAddress, bottom : VirtualAddress) -> Stack
     {
         assert!(top > bottom);
         Stack
@@ -25,7 +25,7 @@ impl Stack
         }
     }
 
-    pub fn top(&self) -> usize
+    pub fn top(&self) -> VirtualAddress
     {
         self.top
     }
@@ -47,9 +47,9 @@ impl StackAllocator
     }
 
     pub fn alloc_stack<A : FrameAllocator>(&mut self,
-                                           active_table : &mut ActivePageTable,
-                                           frame_allocator: &mut A,
-                                           size_in_pages : usize) -> Option<Stack>
+                                           active_table     : &mut ActivePageTable,
+                                           frame_allocator  : &mut A,
+                                           size_in_pages    : usize) -> Option<Stack>
     {
         if size_in_pages == 0
         {
@@ -83,7 +83,7 @@ impl StackAllocator
                     active_table.map(page, paging::entry::EntryFlags::WRITABLE, frame_allocator);
                 }
 
-                let top_of_stack = end.get_start_address() + PAGE_SIZE;
+                let top_of_stack = end.get_start_address().offset(PAGE_SIZE);
                 Some(Stack::new(top_of_stack, start.get_start_address()))
             }
 

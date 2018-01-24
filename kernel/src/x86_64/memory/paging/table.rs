@@ -44,7 +44,7 @@ pub struct Table<L : TableLevel>
     level : PhantomData<L>,
 }
 
-pub const P4 : *mut Table<Level4> = P4_TABLE_ADDRESS as *mut _;
+pub const P4 : *mut Table<Level4> = P4_TABLE_ADDRESS.mut_ptr();
 
 impl<L> Table<L> where L : TableLevel
 {

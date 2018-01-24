@@ -82,7 +82,7 @@ pub fn init_platform(multiboot_ptr : usize)
      * We are passed the *physical* address of the Multiboot struct, so we offset it by the virtual
      * offset of the whole kernel.
      */
-    let boot_info = unsafe { BootInformation::load(multiboot_ptr, KERNEL_VMA) };
+    let boot_info = unsafe { BootInformation::load(multiboot_ptr, KERNEL_VMA.into()) };
     let mut memory_controller = memory::init(&boot_info);
 
     interrupts::init(&mut memory_controller);

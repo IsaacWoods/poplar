@@ -7,8 +7,12 @@ pub(super) mod entry;
 mod table;
 mod temporary_page;
 mod mapper;
+mod physical_address;
+mod virtual_address;
 
 pub use self::entry::*;
+pub use self::physical_address::PhysicalAddress;
+pub use self::virtual_address::VirtualAddress;
 
 use core::ops::{Add,Deref,DerefMut};
 use self::mapper::Mapper;
@@ -18,11 +22,8 @@ use super::map::RECURSIVE_ENTRY;
 use multiboot2::BootInformation;
 use x86_64::tlb;
 
-pub const PAGE_SIZE : usize = 4096;
-pub(super) const ENTRY_COUNT   : usize = 512;
-
-pub type PhysicalAddress = usize;
-pub type VirtualAddress  = usize;
+pub(super) const PAGE_SIZE      : usize = 4096;
+pub(super) const ENTRY_COUNT    : usize = 512;
 
 #[derive(Clone)]
 pub struct PageIter
@@ -80,15 +81,17 @@ impl Page
         }
     }
 
-    pub fn get_start_address(&self) -> usize
+    pub fn get_start_address(&self) -> VirtualAddress
     {
-        self.number * PAGE_SIZE
+        (self.number * PAGE_SIZE).into()
     }
 
     pub fn get_containing_page(address : VirtualAddress) -> Page
     {
-        assert!(address < 0x0000_8000_0000_0000 || address >= 0xffff_8000_0000_0000, "invalid address: 0x{:x}", address);
-        Page { number : address / PAGE_SIZE }
+        assert!(address < 0x0000_8000_0000_0000.into() || address >= 0xffff_8000_0000_0000.into(),
+                "Invalid address: {:#x}", address);
+
+        Page { number : usize::from(address) / PAGE_SIZE }
     }
     
     fn p4_index(&self) -> usize { (self.number >> 27) & 0o777 }
@@ -141,7 +144,7 @@ impl ActivePageTable
         // Inner scope used to end the borrow of `temporary_page`
         {
             // Backup the current P4 and temporarily map it
-            let original_p4 = Frame::get_containing_frame(read_control_reg!(cr3) as usize);
+            let original_p4 = Frame::get_containing_frame((read_control_reg!(cr3) as usize).into());
             let p4_table = temporary_page.map_table_frame(original_p4.clone(), self);
 
             // Overwrite recursive mapping
@@ -169,7 +172,7 @@ impl ActivePageTable
     {
         let old_table = InactivePageTable
                         {
-                            p4_frame : Frame::get_containing_frame(read_control_reg!(cr3) as usize)
+                            p4_frame : Frame::get_containing_frame((read_control_reg!(cr3) as usize).into())
                         };
 
         unsafe
@@ -178,7 +181,7 @@ impl ActivePageTable
              * NOTE: We don't need to flush the TLB here because the CPU does it automatically when
              *       CR3 is reloaded.
              */
-            write_control_reg!(cr3, new_table.p4_frame.get_start_address() as u64);
+            write_control_reg!(cr3, usize::from(new_table.p4_frame.get_start_address()) as u64);
         }
 
         old_table
@@ -192,7 +195,9 @@ pub struct InactivePageTable
 
 impl InactivePageTable
 {
-    pub fn new(frame : Frame, active_table : &mut ActivePageTable, temporary_page : &mut TemporaryPage) -> InactivePageTable
+    pub fn new(frame : Frame,
+               active_table : &mut ActivePageTable,
+               temporary_page : &mut TemporaryPage) -> InactivePageTable
     {
         /*
          * We firstly temporarily map the page table into memory so we can zero it.
@@ -212,7 +217,9 @@ impl InactivePageTable
     }
 }
 
-pub fn remap_kernel<A>(allocator : &mut A, boot_info : &BootInformation) -> ActivePageTable where A : FrameAllocator
+pub fn remap_kernel<A>(allocator : &mut A,
+                       boot_info : &BootInformation) -> ActivePageTable
+    where A : FrameAllocator
 {
     use x86_64::memory::map::{KERNEL_VMA,TEMP_PAGE};
 
@@ -237,7 +244,8 @@ pub fn remap_kernel<A>(allocator : &mut A, boot_info : &BootInformation) -> Acti
          */
         static _guard_page : u8;
     }
-    let guard_page_addr = unsafe { ((&_guard_page as *const u8) as *const usize) as usize };
+    let guard_page_addr : VirtualAddress = unsafe { (&_guard_page as *const u8).into() };
+    assert!(guard_page_addr.is_page_aligned(), "Guard page address is not page aligned!");
 
     /*
      * We now populate the new page tables for the kernel. We do this by installing the physical
@@ -257,24 +265,26 @@ pub fn remap_kernel<A>(allocator : &mut A, boot_info : &BootInformation) -> Acti
                  * Skip sections that either aren't to be allocated or are located before the start
                  * of the the higher-half (and so are probably part of the bootstrap).
                  */
-                if !section.is_allocated() || (section.start_address() < KERNEL_VMA)
+                if !section.is_allocated() ||
+                   (VirtualAddress::new(section.start_address()) < KERNEL_VMA)
                 {
                     continue;
                 }
 
-                serial_println!("Allocating section: {} to {:#x}-{:#x}", elf_sections_tag.string_table(boot_info).section_name(section),
-                                                                         section.start_address(),
-                                                                         section.end_address());
                 assert!(section.start_address() % PAGE_SIZE == 0, "sections must be page aligned");
+                serial_println!("Allocating section: {} to {:#x}-{:#x}",
+                                elf_sections_tag.string_table(boot_info).section_name(section),
+                                section.start_address(),
+                                section.end_address());
 
                 let flags       = EntryFlags::from_elf_section(section);
-                let start_frame = Frame::get_containing_frame(section.start_address());
-                let end_frame   = Frame::get_containing_frame(section.end_address() - 1);
+                let start_page  = Page::get_containing_page(section.start_address().into());
+                let end_page    = Page::get_containing_page((section.end_address() - 1).into());
 
-                for frame in Frame::range_inclusive(start_frame, end_frame)
+                for page in Page::range_inclusive(start_page, end_page)
                 {
-                    let virtual_address  = frame.get_start_address();
-                    let physical_address = virtual_address - KERNEL_VMA;
+                    let virtual_address  = page.get_start_address();
+                    let physical_address = PhysicalAddress::new(usize::from(virtual_address) - usize::from(KERNEL_VMA));
 
                     assert!(Page::get_containing_page(virtual_address).get_start_address() == virtual_address);
                     assert!(Frame::get_containing_frame(physical_address).get_start_address() == physical_address);
@@ -290,8 +300,8 @@ pub fn remap_kernel<A>(allocator : &mut A, boot_info : &BootInformation) -> Acti
             /*
              * Map the framebuffer
              */
-            mapper.map_to(Page::get_containing_page(KERNEL_VMA + 0xb8000),
-                          Frame::get_containing_frame(0xb8000),
+            mapper.map_to(Page::get_containing_page(KERNEL_VMA + 0xb8000.into()),
+                          Frame::get_containing_frame(0xb8000.into()),
                           EntryFlags::WRITABLE,
                           allocator);
 
@@ -302,7 +312,7 @@ pub fn remap_kernel<A>(allocator : &mut A, boot_info : &BootInformation) -> Acti
             {
                 let module_start = module_tag.start_address() as usize;
                 let module_end   = module_tag.end_address()   as usize;
-                println!("Mapping module to {:#x}-{:#x}", module_start, module_end);
+                serial_println!("Mapping module to {:#x}-{:#x}", module_start, module_end);
 
 /*                for frame in Frame::range_inclusive(Frame::get_containing_frame(module_start),
                                                     Frame::get_containing_frame(module_end - 1))
@@ -316,23 +326,23 @@ pub fn remap_kernel<A>(allocator : &mut A, boot_info : &BootInformation) -> Acti
              * XXX: We still need to keep this around because the frame allocator needs the memory
              *      map this provides
              */
-            let multiboot_start = Frame::get_containing_frame(boot_info.start_address());
-            let multiboot_end   = Frame::get_containing_frame(boot_info.end_address() - 1);
+            let multiboot_start = Frame::get_containing_frame(boot_info.start_address().into());
+            let multiboot_end   = Frame::get_containing_frame((boot_info.end_address() - 1).into());
 
-            for frame in Frame::range_inclusive(multiboot_start, multiboot_end)
+            for frame_it in Frame::range_inclusive(multiboot_start, multiboot_end)
             {
-                mapper.map_to(Page::get_containing_page(frame.get_start_address()),
-                              Frame::get_containing_frame(frame.get_start_address() - KERNEL_VMA),
+                let frame_address : usize = usize::from(frame_it.get_start_address());
+
+                mapper.map_to(Page::get_containing_page(frame_address.into()),
+                              Frame::get_containing_frame((frame_address - usize::from(KERNEL_VMA)).into()),
                               EntryFlags::PRESENT,
                               allocator);
             }
 
             /*
              * Unmap the stack's guard page. This stops us overflowing the stack by causing a page
-             * fault if we try to access the memory directly above the stack. The address given
-             * must obviously be page-aligned.
+             * fault if we try to access the memory directly above the stack.
              */
-            assert!(guard_page_addr % 4096 == 0, "Guard-page address isn't page aligned");
             mapper.unmap(Page::get_containing_page(guard_page_addr), allocator);
         });
 

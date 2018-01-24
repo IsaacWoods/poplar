@@ -3,6 +3,8 @@
  * See LICENCE.md
  */
 
+use super::paging::VirtualAddress;
+
 /*
  * On kernel entry, the page tables that the bootstrap set up are still active. It maps the kernel
  * into the higher-half at 0xffffffff80000000+{kernel physical base}. In total, it maps one page
@@ -25,15 +27,20 @@
  * page.
  */
 pub const RECURSIVE_ENTRY : usize = 510;
-                                     /* sign extension */
-pub const P4_TABLE_ADDRESS : usize = 0o177777_000_000_000_000_0000 + (RECURSIVE_ENTRY<<39) // P4 slot
-                                                                   + (RECURSIVE_ENTRY<<30) // P3 slot
-                                                                   + (RECURSIVE_ENTRY<<21) // P2 slot
-                                                                   + (RECURSIVE_ENTRY<<12) // P1 slot
-                                                                   + (0<<0);               // Offset
+
+/*
+ * TODO: replace this with a const function for traversing page tables to make it clearer
+ * what this is actually doing?
+ */
+pub const P4_TABLE_ADDRESS : VirtualAddress = VirtualAddress::new((0o177777_000_000_000_000_0000    // Sign extension
+                                                                   + (RECURSIVE_ENTRY<<39)           // P4
+                                                                   + (RECURSIVE_ENTRY<<30)           // P3 slot
+                                                                   + (RECURSIVE_ENTRY<<21)           // P2 slot
+                                                                   + (RECURSIVE_ENTRY<<12)           // P1 slot
+                                                                   + (0<<0)));                       // Offset
 
 /* 0xffffffff80000000 */
-pub const KERNEL_VMA : usize = 0xffffffff80000000;
+pub const KERNEL_VMA : VirtualAddress = VirtualAddress::new(0xffffffff80000000);
 
 /*
  * This is where the kernel will be mapped into. We obviously don't know exactly how much memory
@@ -43,10 +50,10 @@ pub const KERNEL_VMA : usize = 0xffffffff80000000;
  */
 
 /* 0xffffffffc0000000 */
-pub const HEAP_START : usize = KERNEL_VMA + 0o000_001_000_000_0000;
-pub const HEAP_SIZE  : usize = 100 * 1024;  // 100 KiB
+pub const HEAP_START : VirtualAddress = KERNEL_VMA.offset(0o000_001_000_000_0000);
+pub const HEAP_SIZE : usize = 100 * 1024;  // 100 KiB
 
 /* 0xffffffffc0019000 */
 
 /* 0xfffffffff0000000 */
-pub const TEMP_PAGE : usize = 0xfffffffff0000000;
+pub const TEMP_PAGE : VirtualAddress = VirtualAddress::new(0xfffffffff0000000);

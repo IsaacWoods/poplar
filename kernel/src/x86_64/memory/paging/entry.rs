@@ -61,7 +61,7 @@ impl Entry
     {
         if self.flags().contains(EntryFlags::PRESENT)
         {
-            Some(Frame::get_containing_frame(self.0 as usize & 0x000fffff_fffff000))
+            Some(Frame::get_containing_frame((self.0 as usize & 0x000fffff_fffff000).into()))
         }
         else
         {
@@ -71,7 +71,7 @@ impl Entry
 
     pub fn set(&mut self, frame : Frame, flags : EntryFlags)
     {
-        assert!(frame.get_start_address() & !0x000fffff_fffff000 == 0);
-        self.0 = (frame.get_start_address() as u64) | flags.bits();
+        assert!(usize::from(frame.get_start_address()) & !0x000fffff_fffff000 == 0);
+        self.0 = (usize::from(frame.get_start_address()) as u64) | flags.bits();
     }
 }

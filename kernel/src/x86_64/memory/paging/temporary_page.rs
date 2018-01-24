@@ -44,9 +44,11 @@ impl TemporaryPage
      *       becuase this temporary page won't be part of the recursive
      *       structure
      */
-    pub fn map_table_frame(&mut self, frame : Frame, active_table : &mut ActivePageTable) -> &mut Table<Level1>
+    pub fn map_table_frame(&mut self,
+                           frame        : Frame,
+                           active_table : &mut ActivePageTable) -> &mut Table<Level1>
     {
-        unsafe { &mut *(self.map(frame, active_table) as *mut Table<Level1>) }
+        unsafe { &mut *(self.map(frame, active_table).mut_ptr() as *mut Table<Level1>) }
     }
 
     pub fn unmap(&mut self, active_table : &mut ActivePageTable)

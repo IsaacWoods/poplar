@@ -31,9 +31,9 @@ impl Tss
         Tss
         {
             reserved_1              : 0,
-            privilege_stack_table   : [0; 3],
+            privilege_stack_table   : [VirtualAddress::new(0); 3],
             reserved_2              : 0,
-            interrupt_stack_table   : [0; 7],
+            interrupt_stack_table   : [VirtualAddress::new(0); 7],
             reserved_3              : 0,
             reserved_4              : 0,
             iomap_base              : 0,
