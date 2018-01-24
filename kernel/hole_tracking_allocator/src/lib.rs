@@ -3,12 +3,12 @@
  * See LICENCE.md
  */
 
-#![feature(unique)]
+#![no_std]
+
 #![feature(const_fn)]
 #![feature(alloc,allocator_api)]
 #![feature(global_allocator)]
-#![no_std]
-
+#![feature(pointer_methods)]
 
 #[macro_use] extern crate rustos_common;
              extern crate alloc;

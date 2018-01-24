@@ -148,8 +148,8 @@ impl ActivePageTable
             let p4_table = temporary_page.map_table_frame(original_p4.clone(), self);
 
             // Overwrite recursive mapping
-            self.p4_mut()[RECURSIVE_ENTRY].set(table.p4_frame.clone(), EntryFlags::PRESENT |
-                                                                       EntryFlags::WRITABLE);
+            self.p4[RECURSIVE_ENTRY].set(table.p4_frame.clone(), EntryFlags::PRESENT |
+                                                                 EntryFlags::WRITABLE);
 
             // Flush the TLB
             tlb::flush();

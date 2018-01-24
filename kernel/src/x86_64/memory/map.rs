@@ -32,12 +32,12 @@ pub const RECURSIVE_ENTRY : usize = 510;
  * TODO: replace this with a const function for traversing page tables to make it clearer
  * what this is actually doing?
  */
-pub const P4_TABLE_ADDRESS : VirtualAddress = VirtualAddress::new((0o177777_000_000_000_000_0000    // Sign extension
+pub const P4_TABLE_ADDRESS : VirtualAddress = VirtualAddress::new(0o177777_000_000_000_000_0000    // Sign extension
                                                                    + (RECURSIVE_ENTRY<<39)           // P4
                                                                    + (RECURSIVE_ENTRY<<30)           // P3 slot
                                                                    + (RECURSIVE_ENTRY<<21)           // P2 slot
                                                                    + (RECURSIVE_ENTRY<<12)           // P1 slot
-                                                                   + (0<<0)));                       // Offset
+                                                                   + (0<<0));                       // Offset
 
 /* 0xffffffff80000000 */
 pub const KERNEL_VMA : VirtualAddress = VirtualAddress::new(0xffffffff80000000);

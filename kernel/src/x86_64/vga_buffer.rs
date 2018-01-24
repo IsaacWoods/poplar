@@ -4,7 +4,6 @@
  */
 
 use core::fmt;
-use core::ptr::Unique;
 use volatile::Volatile;
 use spin::Mutex;
 use x86_64::memory::paging::VirtualAddress;
@@ -79,9 +78,9 @@ struct ScreenChar
     color_code : ColorCode,
 }
 
-const VGA_BUFFER_WIDTH      : usize = 80;
-const VGA_BUFFER_HEIGHT     : usize = 25;
-const VGA_BUFFER_ADDRESS    : VirtualAddress = KERNEL_VMA.offset(0xb8000);
+const VGA_BUFFER_WIDTH      : usize             = 80;
+const VGA_BUFFER_HEIGHT     : usize             = 25;
+const VGA_BUFFER_ADDRESS    : VirtualAddress    = KERNEL_VMA.offset(0xb8000);
 
 struct Buffer
 {
@@ -90,16 +89,21 @@ struct Buffer
 
 pub struct Writer
 {
-    col_position : usize,
-    color_code : ColorCode,
-    buffer : Unique<Buffer>,
+    col_position    : usize,
+    color_code      : ColorCode,
+    buffer          : *mut Buffer,
 }
+
+/*
+ * Is it actually safe to send this across threads??
+ */
+unsafe impl Send for Writer { }
 
 pub static WRITER : Mutex<Writer> = Mutex::new(Writer
                                                {
-                                                    col_position : 0,
-                                                    color_code : ColorCode::new(Color::LightGreen, Color::Black),
-                                                    buffer : unsafe { Unique::new_unchecked(VGA_BUFFER_ADDRESS.mut_ptr()) },
+                                                    col_position    : 0,
+                                                    color_code      : ColorCode::new(Color::LightGreen, Color::Black),
+                                                    buffer          : VGA_BUFFER_ADDRESS.mut_ptr(),
                                                });
 
 impl fmt::Write for Writer
@@ -116,6 +120,11 @@ impl fmt::Write for Writer
 
 impl Writer
 {
+    fn buffer(&mut self) -> &'static mut Buffer
+    {
+        unsafe { &mut *self.buffer }
+    }
+
     pub fn write_byte(&mut self, byte : u8)
     {
         match byte
@@ -134,20 +143,12 @@ impl Writer
                 let color_code = self.color_code;
 
                 self.buffer().chars[row][col].write(ScreenChar
-                                                    {
-                                                        ascii_char : byte,
-                                                        color_code : color_code,
-                                                    });
+                                                   {
+                                                       ascii_char : byte,
+                                                       color_code : color_code,
+                                                   });
                 self.col_position += 1;
             }
-        }
-    }
-
-    fn buffer(&mut self) -> &mut Buffer
-    {
-        unsafe
-        {
-            self.buffer.as_mut()
         }
     }
 
@@ -157,13 +158,12 @@ impl Writer
         {
             for col in 0..VGA_BUFFER_WIDTH
             {
-                let buffer = self.buffer();
-                let character = buffer.chars[row][col].read();
-                buffer.chars[row-1][col].write(character);
+                let character = self.buffer().chars[row][col].read();
+                self.buffer().chars[row - 1][col].write(character);
             }
         }
 
-        self.clear_row(VGA_BUFFER_HEIGHT-1);
+        self.clear_row(VGA_BUFFER_HEIGHT - 1);
         self.col_position = 0;
     }
 
@@ -174,6 +174,7 @@ impl Writer
                         ascii_char: b' ',
                         color_code : self.color_code,
                     };
+
         for col in 0..VGA_BUFFER_WIDTH
         {
             self.buffer().chars[row][col].write(blank);

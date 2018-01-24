@@ -3,7 +3,6 @@
  * See LICENCE.md
  */
 
-use core::ptr::Unique;
 use x86_64::memory::{Frame,FrameAllocator};
 use x86_64::memory::{VirtualAddress,PhysicalAddress,Page,PAGE_SIZE};
 use super::ENTRY_COUNT;
@@ -13,24 +12,17 @@ use x86_64::tlb;
 
 pub struct Mapper
 {
-    p4 : Unique<Table<Level4>>,
+    pub p4 : &'static mut Table<Level4>,
 }
 
 impl Mapper
 {
     pub unsafe fn new() -> Mapper
     {
-        Mapper { p4 : Unique::new_unchecked(table::P4) }
-    }
-
-    pub fn p4(&self) -> &Table<Level4>
-    {
-        unsafe { self.p4.as_ref() }
-    }
-
-    pub fn p4_mut(&mut self) -> &mut Table<Level4>
-    {
-        unsafe { self.p4.as_mut() }
+        Mapper
+        {
+            p4 : &mut *table::P4,
+        }
     }
 
     pub fn translate(&self, virtual_address : VirtualAddress) -> Option<PhysicalAddress>
@@ -41,7 +33,7 @@ impl Mapper
 
     pub fn translate_page(&self, page : Page) -> Option<Frame>
     {
-        let p3 = self.p4().next_table(page.p4_index());
+        let p3 = self.p4.next_table(page.p4_index());
 
         let huge_page =
             || {
@@ -95,7 +87,7 @@ impl Mapper
     {
         assert!(self.translate(page.get_start_address()).is_some());
 
-        let p1 = self.p4_mut()
+        let p1 = self.p4
                      .next_table_mut(page.p4_index())
                      .and_then(|p3| p3.next_table_mut(page.p3_index()))
                      .and_then(|p2| p2.next_table_mut(page.p2_index()))
@@ -112,10 +104,10 @@ impl Mapper
     /*
      * This maps a given page to a given frame, with the specified flags.
      */
-    pub fn map_to<A>(&mut self, page : Page, frame : Frame, flags : EntryFlags, allocator : &mut A) where A : FrameAllocator
+    pub fn map_to<A>(&mut self, page : Page, frame : Frame, flags : EntryFlags, allocator : &mut A)
+        where A : FrameAllocator
     {
-        let p4 = self.p4_mut();
-        let p3 = p4.next_table_create(page.p4_index(), allocator);
+        let p3 = self.p4.next_table_create(page.p4_index(), allocator);
         let p2 = p3.next_table_create(page.p3_index(), allocator);
         let p1 = p2.next_table_create(page.p2_index(), allocator);
     
