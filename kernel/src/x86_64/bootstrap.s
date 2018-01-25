@@ -25,11 +25,11 @@ extern _start
 extern _end
 
 ; Constants for defining page tables
-PAGE_SIZE         equ 0x1000
+PAGE_SIZE       equ 0x1000
 PAGE_PRESENT    equ 0x1
-PAGE_WRITABLE equ 0x2
-PAGE_USER         equ 0x4
-PAGE_HUGE         equ 0x80
+PAGE_WRITABLE   equ 0x2
+PAGE_USER       equ 0x4
+PAGE_HUGE       equ 0x80
 PAGE_NO_EXEC    equ 0x8000000000000000
 
 section .bootstrap_data

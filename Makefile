@@ -4,8 +4,9 @@
 export ARCH?=x86_64
 export BUILD_DIR:=$(abspath ./build)
 
-.PHONY: kernel clean run debug gdb test_program
+.PHONY: kernel bootloader clean run debug gdb test_program
 
+# TODO: When we move to using the bootloader, add the phony dependency here
 os.iso: grub.cfg kernel test_program
 	mkdir -p $(BUILD_DIR)/iso/boot/grub
 	cp $(BUILD_DIR)/kernel.bin $(BUILD_DIR)/iso/boot/kernel.bin
@@ -16,10 +17,18 @@ os.iso: grub.cfg kernel test_program
 kernel:
 	make -C kernel $(BUILD_DIR)/kernel.bin
 
+bootloader:
+	mkdir -p iso
+	make -C bootloader
+	cp bootloader/bootloader.img bootloader.img
+	cp bootloader/bootloader.img iso/bootloader.img
+	mkisofs -o bootloader.iso -V 'RustOS' -b bootloader.img iso/
+
 test_program:
 	make -C test_program test_program.bin
 
 clean:
+	make -C bootloader clean
 	make -C kernel clean
 	make -C test_program clean
 	rm -rf build
