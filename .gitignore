@@ -5,6 +5,7 @@ Cargo.lock
 
 /build/
 /iso/
+*.img
 *.iso
 *.o
 *.bin
