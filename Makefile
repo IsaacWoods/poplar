@@ -17,13 +17,15 @@ os.iso: grub.cfg kernel test_program
 kernel:
 	make -C kernel $(BUILD_DIR)/kernel.bin
 
-bootloader:
-	mkdir -p iso
-	make -C bootloader
+bootloader.iso: bootloader
 	cp bootloader/bootloader.img bootloader.img		# Needs to be in . for some reason ¯\_(ツ)_/¯
 	cp bootloader/bootloader.img iso/bootloader.img
 	mkisofs -o bootloader.iso -V 'RustOS' -b bootloader.img -hide bootloader.img iso/
 	rm bootloader.img
+
+bootloader:
+	mkdir -p iso
+	make -C bootloader
 
 test_program:
 	make -C test_program test_program.bin

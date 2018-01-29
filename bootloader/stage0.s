@@ -1,13 +1,20 @@
 [ORG 0x7c00]
 bits 16
 
+; Upon calling our bootsector, the BIOS will put the drive number we're booting from in DL
 start:
     cli
 
+    ; Initalise segment registers to 0; they may start with uninitialised values
     xor ax, ax
-    mov ds, ax      ; Initialise DS to 0
-    mov ss, ax      ; Initialise SS to 0
-    mov esp, 0x9c00  ; Set stack to 2000h past entry point
+    mov ds, ax
+    mov es, ax
+    mov fs, ax
+    mov gs, ax
+    mov ss, ax
+
+    ; Set stack to 2000h past entry point
+    mov esp, 0x9c00
 
     mov si, msg
     call print
@@ -23,7 +30,10 @@ start:
     mov bx, 0x08
     mov ds, bx
 
+.hang:
+    cli
     hlt
+    jmp .hang
 
 print:
     lodsb
