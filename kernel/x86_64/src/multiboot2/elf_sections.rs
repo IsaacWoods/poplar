@@ -121,6 +121,7 @@ pub struct ElfSection
 }
 
 impl ElfSection {
+    #[allow(unused)]
     pub fn section_type(&self) -> ElfSectionType
     {
         match self.typ
@@ -141,11 +142,6 @@ impl ElfSection {
             0x7000_0000...0x7FFF_FFFF   => ElfSectionType::ProcessorSpecific,
             _ => panic!(),
         }
-    }
-
-    pub fn section_type_raw(&self) -> u32
-    {
-        self.typ
     }
 
     pub fn start_address(&self) -> usize
@@ -176,6 +172,7 @@ impl ElfSection {
 
 #[derive(Clone,Copy,Debug,PartialEq,Eq)]
 #[repr(u32)]
+#[allow(unused)]
 pub enum ElfSectionType
 {
     Unused                      = 0,

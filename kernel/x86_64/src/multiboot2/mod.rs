@@ -60,11 +60,6 @@ impl BootInformation
         self.virtual_base
     }
 
-    pub fn multiboot_struct(&self) -> &'static MultibootStruct
-    {
-        self.multiboot_struct
-    }
-
     pub fn start_address(&self) -> usize
     {
         self.multiboot_struct as *const _ as usize

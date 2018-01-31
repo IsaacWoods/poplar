@@ -19,15 +19,15 @@
 #[macro_use]        mod control_reg;
 #[macro_use]    pub mod vga_buffer;
 #[macro_use]    pub mod serial;
-                pub mod memory;
+                    mod memory;
                     mod interrupts;
-                pub mod gdt;
-                pub mod idt;
-                pub mod tlb;
-                pub mod tss;
-                pub mod pic;
-                pub mod port;
-                pub mod multiboot2;
+                    mod gdt;
+                    mod idt;
+                    mod tlb;
+                    mod tss;
+                    mod pic;
+                    mod port;
+                    mod multiboot2;
 
 #[derive(Copy,Clone,PartialEq,Eq)]
 #[repr(u8)]
