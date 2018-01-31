@@ -18,5 +18,5 @@ bit_field   = "*"
 [dependencies.x86_64]
 path = "x86_64"
 
-[dependencies.rustos_common]
-path = "rustos_common"
+[dependencies.util]
+path = "util"

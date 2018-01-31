@@ -15,6 +15,7 @@
 #[macro_use]    extern crate bitflags;
                 extern crate bit_field;
                 extern crate hole_tracking_allocator;
+#[macro_use]    extern crate util;
 
 #[macro_use]        mod control_reg;
 #[macro_use]    pub mod vga_buffer;

@@ -6,11 +6,12 @@
 #![no_std]
 
 #![feature(const_fn)]
-#![feature(alloc,allocator_api)]
+#![feature(alloc)]
+#![feature(allocator_api)]
 #![feature(global_allocator)]
 #![feature(pointer_methods)]
 
-#[macro_use] extern crate rustos_common;
+#[macro_use] extern crate util;
              extern crate alloc;
              extern crate spin;
 

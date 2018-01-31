@@ -1,5 +1,5 @@
 [package]
-name = "rustos_common"
+name = "util"
 version = "0.1.0"
 authors = ["Isaac Woods <isaacwoods.home@gmail.com>"]
 

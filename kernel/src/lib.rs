@@ -25,7 +25,7 @@
 #[macro_use]    extern crate bitflags;
                 extern crate bit_field;
 #[macro_use]    extern crate alloc;
-#[macro_use]    extern crate rustos_common;
+#[macro_use]    extern crate util;
 #[macro_use]    extern crate x86_64 as platform;
 
 mod panic;

@@ -25,7 +25,7 @@ macro_rules! serial_print
 
 pub fn initialise()
 {
-//    assert_first_call!("Tried to initialise serial ports multiple times!");
+    assert_first_call!("Tried to initialise serial ports multiple times!");
 
     unsafe
     {

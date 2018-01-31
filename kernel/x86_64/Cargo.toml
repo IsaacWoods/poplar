@@ -13,3 +13,6 @@ spin      = "*"
 
 [dependencies.hole_tracking_allocator]
 path = "../hole_tracking_allocator"
+
+[dependencies.util]
+path = "../util"
