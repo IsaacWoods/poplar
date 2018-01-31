@@ -16,36 +16,7 @@
                 extern crate bit_field;
                 extern crate hole_tracking_allocator;
 
-/*
- * XXX: Macros have to be defined before they can be used, so define them before the module defs.
- */
-macro_rules! read_control_reg
-{
-    ($reg : ident) =>
-    {
-        {
-            let result : u64;
-            unsafe
-            {
-                asm!(concat!("mov %", stringify!($reg), ", $0") : "=r"(result));
-            }
-            result
-        }
-    };
-}
-
-/*
- * Because the asm! macro is not wrapped, a call to this macro will need to be inside an unsafe
- * block, which is intended because writing to control registers is probably kinda dangerous.
- */
-macro_rules! write_control_reg
-{
-    ($reg : ident, $value : expr) =>
-    {
-        asm!(concat!("mov $0, %", stringify!($reg)) :: "r"($value) : "memory");
-    };
-}
-
+#[macro_use]        mod control_reg;
 #[macro_use]    pub mod vga_buffer;
 #[macro_use]    pub mod serial;
                 pub mod memory;
