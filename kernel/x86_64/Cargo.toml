@@ -13,6 +13,3 @@ spin      = "*"
 
 [dependencies.hole_tracking_allocator]
 path = "../hole_tracking_allocator"
-
-[features]
-elf32 = []

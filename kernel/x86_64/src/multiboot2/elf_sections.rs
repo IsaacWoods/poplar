@@ -81,23 +81,6 @@ impl Iterator for ElfSectionIter {
     }
 }
 
-#[cfg(feature = "elf32")]
-#[derive(Clone,Copy,Debug)]
-#[repr(C)]
-pub struct ElfSection {
-    name_index: u32,
-    typ: u32,
-    flags: u32,
-    addr: u32,
-    offset: u32,
-    size: u32,
-    link: u32,
-    info: u32,
-    addralign: u32,
-    entry_size: u32,
-}
-
-#[cfg(not(feature = "elf32"))]
 #[derive(Clone,Copy,Debug)]
 #[repr(C)]
 pub struct ElfSection {
