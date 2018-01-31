@@ -5,12 +5,12 @@
 
 use core::fmt;
 use spin::Mutex;
-use x86_64::tss::Tss;
-use x86_64::gdt::{Gdt,GdtDescriptor,DescriptorFlags};
-use x86_64::idt::Idt;
-use x86_64::pic::PicPair;
-use x86_64::memory::{FrameAllocator,MemoryController};
-use rustos_common::port::Port;
+use tss::Tss;
+use gdt::{Gdt,GdtDescriptor,DescriptorFlags};
+use idt::Idt;
+use pic::PicPair;
+use memory::{FrameAllocator,MemoryController};
+use port::Port;
 
 #[repr(C)]
 struct ExceptionStackFrame

@@ -6,20 +6,22 @@
 use core::fmt;
 use volatile::Volatile;
 use spin::Mutex;
-use x86_64::memory::paging::VirtualAddress;
-use x86_64::memory::map::KERNEL_VMA;
+use memory::paging::VirtualAddress;
+use memory::map::KERNEL_VMA;
 
+#[macro_export]
 macro_rules! println
 {
     ($fmt:expr) => (print!(concat!($fmt, "\n")));
     ($fmt:expr, $($arg:tt)*) => (print!(concat!($fmt, "\n"), $($arg)*));
 }
 
+#[macro_export]
 macro_rules! print
 {
     ($($arg:tt)*) =>
         ({
-            $crate::x86_64::vga_buffer::print(format_args!($($arg)*));
+            $crate::vga_buffer::print(format_args!($($arg)*));
         });
 }
 

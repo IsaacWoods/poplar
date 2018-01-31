@@ -3,7 +3,7 @@
  * See LICENCE.md
  */
 
-use rustos_common::port::Port;
+use port::Port;
 
 struct Pic
 {

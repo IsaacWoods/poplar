@@ -15,11 +15,8 @@ spin        = "*"
 bitflags    = "*"
 bit_field   = "*"
 
-[dependencies.multiboot2]
-path = "multiboot2"
+[dependencies.x86_64]
+path = "x86_64"
 
 [dependencies.rustos_common]
 path = "rustos_common"
-
-[dependencies.hole_tracking_allocator]
-path = "hole_tracking_allocator"

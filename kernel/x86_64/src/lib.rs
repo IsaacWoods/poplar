@@ -3,6 +3,19 @@
  * See LICENCE.md
  */
 
+#![no_std]
+
+#![feature(asm)]
+#![feature(const_fn)]
+#![feature(naked_functions)]
+#![feature(core_intrinsics)]
+
+                extern crate volatile;
+                extern crate spin;
+#[macro_use]    extern crate bitflags;
+                extern crate bit_field;
+                extern crate hole_tracking_allocator;
+
 /*
  * XXX: Macros have to be defined before they can be used, so define them before the module defs.
  */
@@ -42,6 +55,8 @@ macro_rules! write_control_reg
                 pub mod tlb;
                 pub mod tss;
                 pub mod pic;
+                pub mod port;
+                pub mod multiboot2;
 
 #[derive(Copy,Clone,PartialEq,Eq)]
 #[repr(u8)]
@@ -71,7 +86,7 @@ impl From<u16> for PrivilegeLevel
 pub fn init_platform(multiboot_ptr : usize)
 {
     use multiboot2::BootInformation;
-    use x86_64::memory::map::KERNEL_VMA;
+    use memory::map::KERNEL_VMA;
 
     serial::initialise();
     serial_println!("Kernel connected to COM1");

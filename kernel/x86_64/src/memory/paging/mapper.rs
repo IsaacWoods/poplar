@@ -4,12 +4,12 @@
  */
 
 use core::ops::Range;
-use x86_64::memory::{Frame,FrameAllocator};
-use x86_64::memory::{VirtualAddress,PhysicalAddress,Page,PAGE_SIZE};
-use super::ENTRY_COUNT;
-use super::entry::EntryFlags;
-use super::table::{self,Table,Level4};
-use x86_64::tlb;
+use memory::{Frame,FrameAllocator};
+use memory::{VirtualAddress,PhysicalAddress,Page,PAGE_SIZE};
+use memory::paging::ENTRY_COUNT;
+use memory::paging::entry::EntryFlags;
+use memory::paging::table::{self,Table,Level4};
+use tlb;
 
 pub struct Mapper
 {
@@ -119,7 +119,7 @@ impl Mapper
                                  allocator : &mut A)
         where A : FrameAllocator
     {
-        use x86_64::memory::map::KERNEL_VMA;
+        use memory::map::KERNEL_VMA;
 
         for frame in Frame::range_inclusive(Frame::get_containing_frame(range.start),
                                             Frame::get_containing_frame(range.end))

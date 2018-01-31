@@ -3,10 +3,10 @@
  * See LICENCE.md
  */
 
-use super::{Page,ActivePageTable,VirtualAddress};
-use super::table::{Table,Level1};
-use super::entry::EntryFlags;
-use x86_64::memory::{Frame,FrameAllocator};
+use memory::paging::{Page,ActivePageTable,VirtualAddress};
+use memory::paging::table::{Table,Level1};
+use memory::paging::entry::EntryFlags;
+use memory::{Frame,FrameAllocator};
 
 pub struct TemporaryPage
 {

@@ -20,7 +20,8 @@ impl Iterator for TagIter {
 
     fn next(&mut self) -> Option<&'static Tag> {
         match unsafe{&*self.current} {
-            &Tag{typ:0, size:8} => None, // end tag
+            &Tag { typ : 0, size : 8 } => None, // end tag
+
             tag => {
                 // go to next tag
                 let mut tag_addr = self.current as usize;

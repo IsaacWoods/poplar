@@ -22,15 +22,11 @@
 
                 extern crate volatile;
                 extern crate spin;
-                extern crate multiboot2;
 #[macro_use]    extern crate bitflags;
                 extern crate bit_field;
 #[macro_use]    extern crate alloc;
 #[macro_use]    extern crate rustos_common;
-                extern crate hole_tracking_allocator;
-
-#[macro_use] mod x86_64;
-use x86_64 as platform;
+#[macro_use]    extern crate x86_64 as platform;
 
 mod panic;
 pub use panic::panic_fmt;

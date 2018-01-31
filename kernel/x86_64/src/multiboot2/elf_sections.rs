@@ -4,6 +4,7 @@
  * See LICENCE.md
  */
 
+use core::{str,slice};
 use super::BootInformation;
 
 #[derive(Clone,Copy,Debug)]
@@ -38,12 +39,11 @@ pub struct StringTable(u8);
 
 impl StringTable {
     pub fn section_name(&self, section: &ElfSection) -> &'static str {
-        use core::{str, slice};
-
         let name_ptr = unsafe {
             (&self.0 as *const u8).offset(section.name_index as isize)
         };
-        let strlen = {
+
+        let length = {
             let mut len = 0;
             while unsafe { *name_ptr.offset(len) } != 0 {
                 len += 1;
@@ -51,9 +51,7 @@ impl StringTable {
             len as usize
         };
 
-        str::from_utf8( unsafe {
-            slice::from_raw_parts(name_ptr, strlen)
-        }).unwrap()
+        str::from_utf8(unsafe { slice::from_raw_parts(name_ptr, length) }).unwrap()
     }
 }
 
@@ -157,7 +155,7 @@ impl ElfSection {
     }
 
     pub fn is_allocated(&self) -> bool {
-        self.flags().contains(ELF_SECTION_ALLOCATED)
+        self.flags().contains(ElfSectionFlags::ALLOCATED)
     }
 }
 
@@ -187,10 +185,10 @@ type ElfSectionFlagsType = u32;
 type ElfSectionFlagsType = u64;
 
 bitflags! {
-    flags ElfSectionFlags: ElfSectionFlagsType {
-        const ELF_SECTION_WRITABLE = 0x1,
-        const ELF_SECTION_ALLOCATED = 0x2,
-        const ELF_SECTION_EXECUTABLE = 0x4,
+    pub struct ElfSectionFlags : ElfSectionFlagsType {
+        const WRITABLE      = 0x1;
+        const ALLOCATED     = 0x2;
+        const EXECUTABLE    = 0x4;
         // plus environment-specific use at 0x0F000000
         // plus processor-specific use at 0xF0000000
     }

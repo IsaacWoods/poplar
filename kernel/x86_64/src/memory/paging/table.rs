@@ -4,10 +4,10 @@
  */
 
 use core::ops::{Index,IndexMut};
-use x86_64::memory::FrameAllocator;
-use x86_64::memory::map::P4_TABLE_ADDRESS;
-use super::{ENTRY_COUNT,VirtualAddress};
-use x86_64::memory::paging::entry::{Entry,EntryFlags};
+use memory::FrameAllocator;
+use memory::map::P4_TABLE_ADDRESS;
+use memory::paging::{ENTRY_COUNT,VirtualAddress};
+use memory::paging::entry::{Entry,EntryFlags};
 use core::marker::PhantomData;
 
 pub enum Level4 { }

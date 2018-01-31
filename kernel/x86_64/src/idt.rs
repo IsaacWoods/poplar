@@ -6,7 +6,7 @@
 use core::mem::size_of;
 use core::ops::{Index,IndexMut};
 use bit_field::BitField;
-use x86_64::gdt::SegmentSelector;
+use gdt::SegmentSelector;
 
 /*
  * `flags` looks like:

@@ -4,7 +4,8 @@
  * See LICENCE.md
  */
 
-use header::{Tag, TagIter};
+use core::{mem,str,slice};
+use super::header::{Tag,TagIter};
 
 #[repr(packed)]
 #[derive(Clone,Copy,Debug)]
@@ -21,11 +22,9 @@ impl ModuleTag {
     // as valid utf-8, therefore this function produces
     // defined behavior
     pub fn name(&self) -> &str {
-        use core::{mem,str,slice};
-        let strlen = self.size as usize - mem::size_of::<ModuleTag>();
+        let length = self.size as usize - mem::size_of::<ModuleTag>();
         unsafe {
-            str::from_utf8_unchecked(
-                slice::from_raw_parts(&self.name_byte as *const u8, strlen))
+            str::from_utf8_unchecked(slice::from_raw_parts(&self.name_byte as *const u8, length))
         }
     }
 

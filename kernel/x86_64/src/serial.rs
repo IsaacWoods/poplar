@@ -3,27 +3,29 @@
  * See LICENCE.md
  */
 
-use rustos_common::port::Port;
 use core::fmt;
 use spin::Mutex;
+use port::Port;
 
+#[macro_export]
 macro_rules! serial_println
 {
     ($fmt:expr) => (serial_print!(concat!($fmt, "\n")));
     ($fmt:expr, $($arg:tt)*) => (serial_print!(concat!($fmt, "\n"), $($arg)*));
 }
 
+#[macro_export]
 macro_rules! serial_print
 {
     ($($arg:tt)*) =>
         ({
-            $crate::x86_64::serial::print(format_args!($($arg)*));
+            $crate::serial::print(format_args!($($arg)*));
         });
 }
 
 pub fn initialise()
 {
-    assert_first_call!("Tried to initialise serial ports multiple times!");
+//    assert_first_call!("Tried to initialise serial ports multiple times!");
 
     unsafe
     {

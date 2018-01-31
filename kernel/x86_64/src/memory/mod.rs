@@ -19,7 +19,7 @@ use multiboot2::BootInformation;
 
 pub fn init(boot_info : &BootInformation) -> MemoryController<AreaFrameAllocator>
 {
-    assert_first_call!("memory::init() should only be called once");
+//    assert_first_call!("memory::init() should only be called once");
     let memory_map_tag = boot_info.memory_map().expect("Can't find memory map tag");
 
     /*

@@ -20,7 +20,7 @@ use self::temporary_page::TemporaryPage;
 use super::{Frame,FrameAllocator};
 use super::map::RECURSIVE_ENTRY;
 use multiboot2::BootInformation;
-use x86_64::tlb;
+use tlb;
 
 pub(super) const PAGE_SIZE      : usize = 4096;
 pub(super) const ENTRY_COUNT    : usize = 512;
@@ -221,7 +221,7 @@ pub fn remap_kernel<A>(allocator : &mut A,
                        boot_info : &BootInformation) -> ActivePageTable
     where A : FrameAllocator
 {
-    use x86_64::memory::map::{KERNEL_VMA,TEMP_PAGE};
+    use memory::map::{KERNEL_VMA,TEMP_PAGE};
 
     // This represents the page tables created by the bootstrap
     let mut active_table = unsafe { ActivePageTable::new() };

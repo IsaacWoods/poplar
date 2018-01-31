@@ -8,8 +8,6 @@
 #![feature(const_fn)]
 #![feature(asm)]
 
-pub mod port;
-
 #[macro_export]
 macro_rules! assert_first_call
 {

@@ -4,19 +4,13 @@
  * See LICENCE.md
  */
 
-#![no_std]
-
 use core::fmt;
-
-use header::{Tag, TagIter};
-pub use boot_loader_name::BootLoaderNameTag;
-pub use elf_sections::{ElfSectionsTag, ElfSection, ElfSectionIter, ElfSectionType, ElfSectionFlags, StringTable};
-pub use elf_sections::{ELF_SECTION_WRITABLE, ELF_SECTION_ALLOCATED, ELF_SECTION_EXECUTABLE};
-pub use memory_map::{MemoryMapTag, MemoryArea, MemoryAreaIter};
-pub use module::{ModuleTag, ModuleIter};
-pub use command_line::CommandLineTag;
-
-#[macro_use] extern crate bitflags;
+use self::header::{Tag, TagIter};
+pub use self::boot_loader_name::BootLoaderNameTag;
+pub use self::elf_sections::{ElfSectionsTag,ElfSection,ElfSectionIter,ElfSectionType,ElfSectionFlags,StringTable};
+pub use self::memory_map::{MemoryMapTag, MemoryArea, MemoryAreaIter};
+pub use self::module::{ModuleTag, ModuleIter};
+pub use self::command_line::CommandLineTag;
 
 mod header;
 mod boot_loader_name;
@@ -35,8 +29,8 @@ pub struct MultibootStruct
 
 pub struct BootInformation
 {
-    virtual_base : usize,
-    multiboot_struct : &'static MultibootStruct,
+    virtual_base        : usize,
+    multiboot_struct    : &'static MultibootStruct,
 }
 
 impl BootInformation

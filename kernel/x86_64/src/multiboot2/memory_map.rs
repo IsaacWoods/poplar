@@ -18,6 +18,7 @@ impl MemoryMapTag {
     pub fn memory_areas(&self) -> MemoryAreaIter {
         let self_ptr = self as *const MemoryMapTag;
         let start_area = (&self.first_area) as *const MemoryArea;
+
         MemoryAreaIter {
             current_area: start_area as u64,
             last_area: (self_ptr as u64 + (self.size - self.entry_size) as u64),
