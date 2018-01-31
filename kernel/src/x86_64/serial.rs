@@ -9,11 +9,8 @@ use spin::Mutex;
 
 macro_rules! serial_println
 {
-    /*
-     * XXX: Serial ports generally expect both a carriage return and a line feed ("\n\r")
-     */
-    ($fmt:expr) => (serial_print!(concat!($fmt, "\n\r")));
-    ($fmt:expr, $($arg:tt)*) => (serial_print!(concat!($fmt, "\n\r"), $($arg)*));
+    ($fmt:expr) => (serial_print!(concat!($fmt, "\n")));
+    ($fmt:expr, $($arg:tt)*) => (serial_print!(concat!($fmt, "\n"), $($arg)*));
 }
 
 macro_rules! serial_print
@@ -60,7 +57,19 @@ impl fmt::Write for SerialPort
         {
             unsafe
             {
-                self.write(byte);
+                match byte
+                {
+                    /*
+                     * XXX: Serial ports expect both a carriage return and a line feed ("\n\r")
+                     */
+                    b'\n' =>
+                    {
+                        self.write(b'\n');
+                        self.write(b'\r');
+                    },
+
+                    _ => self.write(byte),
+                }
             }
         }
         Ok(())
