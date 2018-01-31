@@ -16,6 +16,11 @@ impl PhysicalAddress
     {
         PhysicalAddress(address)
     }
+
+    pub const fn offset(&self, offset : isize) -> PhysicalAddress
+    {
+        PhysicalAddress::new(((self.0 as isize) + offset) as usize)
+    }
 }
 
 impl fmt::LowerHex for PhysicalAddress

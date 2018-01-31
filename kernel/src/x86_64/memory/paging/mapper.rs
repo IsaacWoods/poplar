@@ -3,6 +3,7 @@
  * See LICENCE.md
  */
 
+use core::ops::Range;
 use x86_64::memory::{Frame,FrameAllocator};
 use x86_64::memory::{VirtualAddress,PhysicalAddress,Page,PAGE_SIZE};
 use super::ENTRY_COUNT;
@@ -102,6 +103,47 @@ impl Mapper
     }
 
     /*
+     * This maps a range of physical addresses (aligned to their respective page boundaries) to the
+     * same range of virtual addresses, offsetted by the KERNEL_VMA.
+     * 
+     * If any of the pages in the range are already mapped: they are left alone (and so the range
+     * is still effectively correly mapped) if the mapped physical address is the same, and the
+     * requested flags are the same or less permissive, and we panic otherwise.
+     *
+     * NOTE: This behaviour is required for the page table creation in `remap_kernel`, as the
+     * Multiboot structure can overlap with pages previously mapped for modules.
+     */
+    pub fn identity_map_range<A>(&mut self,
+                                 range : Range<PhysicalAddress>,
+                                 flags : EntryFlags,
+                                 allocator : &mut A)
+        where A : FrameAllocator
+    {
+        use x86_64::memory::map::KERNEL_VMA;
+
+        for frame in Frame::range_inclusive(Frame::get_containing_frame(range.start),
+                                            Frame::get_containing_frame(range.end))
+        {
+            let virtual_address = KERNEL_VMA + usize::from(frame.get_start_address()).into();
+            let page = Page::get_containing_page(virtual_address);
+
+            let p3 = self.p4.next_table_create(page.p4_index(), allocator);
+            let p2 = p3.next_table_create(page.p3_index(), allocator);
+            let p1 = p2.next_table_create(page.p2_index(), allocator);
+
+            if p1[page.p1_index()].is_unused() ||
+               (p1[page.p1_index()].flags().is_compatible(flags | EntryFlags::PRESENT))
+            {
+                p1[page.p1_index()].set(frame, flags | EntryFlags::PRESENT);
+            }
+            else
+            {
+                panic!("Tried to map a range in which a page is already mapped, but with a different virtual address or with more permissive flags: {:#x}->{:#x}", page.get_start_address(), frame.get_start_address());
+            }
+        }
+    }
+
+    /*
      * This maps a given page to a given frame, with the specified flags.
      */
     pub fn map_to<A>(&mut self, page : Page, frame : Frame, flags : EntryFlags, allocator : &mut A)
@@ -110,7 +152,7 @@ impl Mapper
         let p3 = self.p4.next_table_create(page.p4_index(), allocator);
         let p2 = p3.next_table_create(page.p3_index(), allocator);
         let p1 = p2.next_table_create(page.p2_index(), allocator);
-    
+
         assert!(p1[page.p1_index()].is_unused(), "Tried to map a page that has already been mapped: {:#x}", page.get_start_address());
         p1[page.p1_index()].set(frame, flags | EntryFlags::PRESENT);
     }

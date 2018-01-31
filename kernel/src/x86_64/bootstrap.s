@@ -8,7 +8,10 @@ multiboot_header:
     dd multiboot_end - multiboot_header                                     ; Header length
     dd 0x100000000-(0xe85250d6 + 0 + (multiboot_end - multiboot_header))    ; Checksum
 
-    ; More options go here
+    ; Tell GRUB to page-align modules
+    dw 6
+    dw 0
+    dd 8
 
     dw 0
     dw 0
@@ -84,7 +87,7 @@ PrintError:
     mov dword [0xb8000], 0x4f524f45
     mov dword [0xb8004], 0x4f3a4f52
     mov dword [0xb8008], 0x4f204f20
-    mov byte    [0xb800a], al
+    mov byte  [0xb800a], al
     hlt
 
 CheckCpuidSupported:

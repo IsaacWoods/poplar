@@ -310,15 +310,20 @@ pub fn remap_kernel<A>(allocator : &mut A,
              */
             for module_tag in boot_info.modules()
             {
-                let module_start = module_tag.start_address() as usize;
-                let module_end   = module_tag.end_address()   as usize;
-                serial_println!("Mapping module to {:#x}-{:#x}", module_start, module_end);
+                let module_start : PhysicalAddress = (module_tag.start_address() as usize).into();
+                let module_end   : PhysicalAddress = (module_tag.end_address()   as usize).into();
+                serial_println!("Mapping module in range: {:#x}-{:#x}", module_start, module_end);
 
-/*                for frame in Frame::range_inclusive(Frame::get_containing_frame(module_start),
-                                                    Frame::get_containing_frame(module_end - 1))
+                for frame in Frame::range_inclusive(Frame::get_containing_frame(module_start),
+                                                    Frame::get_containing_frame(module_end.offset(-1)))
                 {
-                    frame_list.push((EntryFlags::PRESENT, frame, true));
-                }*/
+                    let virtual_address : VirtualAddress = KERNEL_VMA + usize::from(frame.get_start_address()).into();
+
+                    mapper.map_to(Page::get_containing_page(virtual_address),
+                                  frame,
+                                  EntryFlags::PRESENT,
+                                  allocator);
+                }
             }
 
             /*
@@ -326,18 +331,9 @@ pub fn remap_kernel<A>(allocator : &mut A,
              * XXX: We still need to keep this around because the frame allocator needs the memory
              *      map this provides
              */
-            let multiboot_start = Frame::get_containing_frame(boot_info.start_address().into());
-            let multiboot_end   = Frame::get_containing_frame((boot_info.end_address() - 1).into());
-
-            for frame_it in Frame::range_inclusive(multiboot_start, multiboot_end)
-            {
-                let frame_address : usize = usize::from(frame_it.get_start_address());
-
-                mapper.map_to(Page::get_containing_page(frame_address.into()),
-                              Frame::get_containing_frame((frame_address - usize::from(KERNEL_VMA)).into()),
-                              EntryFlags::PRESENT,
-                              allocator);
-            }
+            let multiboot_start : PhysicalAddress = (boot_info.start_address() - usize::from(KERNEL_VMA)).into();
+            let multiboot_end   : PhysicalAddress = (boot_info.end_address() - usize::from(KERNEL_VMA)).into();
+            mapper.identity_map_range(multiboot_start..multiboot_end, EntryFlags::PRESENT, allocator);
 
             /*
              * Unmap the stack's guard page. This stops us overflowing the stack by causing a page

@@ -38,6 +38,19 @@ impl EntryFlags
 
         flags
     }
+
+    /*
+     * True if the given set of flags is compatible with `self`. False if not compatible, or would
+     * create potential security vulnerability, such as:
+     *      * Allows execution as code when `self` prevents it
+     *      * Is accessible in user-mode when `self` is not
+     *      * Can be written to when `self` can't be
+     *  TODO: maybe actually think about whether they can be different but still compatible
+     */
+    pub fn is_compatible(&self, other : EntryFlags) -> bool
+    {
+        *self == other
+    }
 }
 
 impl Entry
