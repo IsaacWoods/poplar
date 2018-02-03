@@ -276,21 +276,14 @@ pub fn remap_kernel<A>(allocator : &mut A,
                                 section.start_as_virtual(),
                                 section.end_as_virtual());
 
-                let flags       = EntryFlags::from_elf_section(section);
-                let start_page  = Page::get_containing_page(section.start_as_virtual());
-                let end_page    = Page::get_containing_page(section.end_as_virtual().offset(-1));
-
-                for page in Page::range_inclusive(start_page, end_page)
+                for page in Page::range_inclusive(Page::get_containing_page(section.start_as_virtual()),
+                                                  Page::get_containing_page(section.end_as_virtual().offset(-1)))
                 {
-                    let virtual_address  = page.get_start_address();
-                    let physical_address = PhysicalAddress::new(usize::from(virtual_address) - usize::from(KERNEL_VMA));
+                    let physical_address = PhysicalAddress::new(usize::from(page.get_start_address()) - usize::from(KERNEL_VMA));
 
-                    assert!(Page::get_containing_page(virtual_address).get_start_address() == virtual_address);
-                    assert!(Frame::get_containing_frame(physical_address).get_start_address() == physical_address);
-
-                    mapper.map_to(Page::get_containing_page(virtual_address),
+                    mapper.map_to(page,
                                   Frame::get_containing_frame(physical_address),
-                                  flags,
+                                  EntryFlags::from_elf_section(section),
                                   allocator);
 
                 }
@@ -299,10 +292,9 @@ pub fn remap_kernel<A>(allocator : &mut A,
             /*
              * Map the framebuffer
              */
-            mapper.map_to(Page::get_containing_page(KERNEL_VMA + 0xb8000.into()),
-                          Frame::get_containing_frame(0xb8000.into()),
-                          EntryFlags::WRITABLE,
-                          allocator);
+            mapper.identity_map_range(0xb8000.into()..(0xb8000+0x1000).into(),
+                                      EntryFlags::WRITABLE,
+                                      allocator);
 
             /*
              * Map modules loaded by GRUB
