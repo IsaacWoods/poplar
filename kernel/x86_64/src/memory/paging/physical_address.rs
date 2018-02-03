@@ -8,7 +8,7 @@ use core::ops::{Add,Sub};
 use core::cmp::Ordering;
 
 #[derive(Clone,Copy,Debug)]
-pub struct PhysicalAddress(usize);
+pub struct PhysicalAddress(pub(super) usize);
 
 impl PhysicalAddress
 {
@@ -20,6 +20,17 @@ impl PhysicalAddress
     pub const fn offset(&self, offset : isize) -> PhysicalAddress
     {
         PhysicalAddress::new(((self.0 as isize) + offset) as usize)
+    }
+
+    /*
+     * Map this physical address into a virtual address, assuming that physical memory has been
+     * mapped to KERNEL_VMA+{physical address}. 
+     *
+     * XXX: This is true for a lot of structures, but should not be taken as a given.
+     */
+    pub const fn into_kernel_space(&self) -> super::VirtualAddress
+    {
+        super::VirtualAddress::new(self.0 + ::memory::map::KERNEL_VMA.0)
     }
 }
 

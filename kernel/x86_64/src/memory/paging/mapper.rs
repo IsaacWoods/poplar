@@ -119,12 +119,10 @@ impl Mapper
                                  allocator : &mut A)
         where A : FrameAllocator
     {
-        use memory::map::KERNEL_VMA;
-
         for frame in Frame::range_inclusive(Frame::get_containing_frame(range.start),
                                             Frame::get_containing_frame(range.end))
         {
-            let virtual_address = KERNEL_VMA + usize::from(frame.get_start_address()).into();
+            let virtual_address = frame.get_start_address().into_kernel_space();
             let page = Page::get_containing_page(virtual_address);
 
             let p3 = self.p4.next_table_create(page.p4_index(), allocator);

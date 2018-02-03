@@ -9,7 +9,7 @@ use core::cmp::Ordering;
 use super::PAGE_SIZE;
 
 #[derive(Clone,Copy,Debug)]
-pub struct VirtualAddress(usize);
+pub struct VirtualAddress(pub(super) usize);
 
 impl VirtualAddress
 {

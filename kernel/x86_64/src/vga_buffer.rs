@@ -6,8 +6,7 @@
 use core::fmt;
 use volatile::Volatile;
 use spin::Mutex;
-use memory::paging::VirtualAddress;
-use memory::map::KERNEL_VMA;
+use memory::paging::{PhysicalAddress,VirtualAddress};
 
 #[macro_export]
 macro_rules! println
@@ -82,7 +81,7 @@ struct ScreenChar
 
 const VGA_BUFFER_WIDTH      : usize             = 80;
 const VGA_BUFFER_HEIGHT     : usize             = 25;
-const VGA_BUFFER_ADDRESS    : VirtualAddress    = KERNEL_VMA.offset(0xb8000);
+const VGA_BUFFER_ADDRESS    : VirtualAddress    = PhysicalAddress::new(0xb8000).into_kernel_space();
 
 struct Buffer
 {
