@@ -39,7 +39,6 @@ impl BootInformation
     pub unsafe fn load(physical_address: PhysicalAddress) -> BootInformation
     {
         let virtual_address = physical_address.into_kernel_space();
-        println!("Multiboot virtual address: {:#x}", virtual_address);
         assert!(virtual_address.is_aligned_to(8));
 
         let multiboot = &*(virtual_address.ptr() as *const MultibootStruct);

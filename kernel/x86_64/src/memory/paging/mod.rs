@@ -309,20 +309,12 @@ pub fn remap_kernel<A>(allocator : &mut A,
              */
             for module_tag in boot_info.modules()
             {
-                let module_start : PhysicalAddress = (module_tag.start_address() as usize).into();
-                let module_end   : PhysicalAddress = (module_tag.end_address()   as usize).into();
-                serial_println!("Mapping module in range: {:#x}-{:#x}", module_start, module_end);
+                serial_println!("Mapping module in range: {:#x}-{:#x}", module_tag.start_address(),
+                                                                        module_tag.end_address());
 
-                for frame in Frame::range_inclusive(Frame::get_containing_frame(module_start),
-                                                    Frame::get_containing_frame(module_end.offset(-1)))
-                {
-                    let virtual_address : VirtualAddress = KERNEL_VMA + usize::from(frame.get_start_address()).into();
-
-                    mapper.map_to(Page::get_containing_page(virtual_address),
-                                  frame,
-                                  EntryFlags::PRESENT,
-                                  allocator);
-                }
+                mapper.identity_map_range(module_tag.start_address()..module_tag.end_address(),
+                                          EntryFlags::PRESENT,
+                                          allocator);
             }
 
             /*

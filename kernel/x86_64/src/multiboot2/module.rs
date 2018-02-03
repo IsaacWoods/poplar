@@ -6,6 +6,7 @@
 
 use core::{mem,str,slice};
 use super::header::{Tag,TagIter};
+use ::memory::paging::PhysicalAddress;
 
 #[repr(packed)]
 #[derive(Clone,Copy,Debug)]
@@ -35,14 +36,14 @@ impl ModuleTag
         }
     }
 
-    pub fn start_address(&self) -> u32
+    pub fn start_address(&self) -> PhysicalAddress
     {
-        self.mod_start
+        PhysicalAddress::new(self.mod_start as usize)
     }
 
-    pub fn end_address(&self) -> u32
+    pub fn end_address(&self) -> PhysicalAddress
     {
-        self.mod_end
+        PhysicalAddress::new(self.mod_end as usize)
     }
 }
 
