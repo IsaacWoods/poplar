@@ -83,7 +83,7 @@ impl StackAllocator
                     active_table.map(page, paging::entry::EntryFlags::WRITABLE, frame_allocator);
                 }
 
-                let top_of_stack = end.get_start_address().offset(PAGE_SIZE);
+                let top_of_stack = end.get_start_address().offset(PAGE_SIZE as isize);
                 Some(Stack::new(top_of_stack, start.get_start_address()))
             }
 

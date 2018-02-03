@@ -6,6 +6,7 @@
 
 use core::fmt;
 use self::header::{Tag, TagIter};
+use ::memory::paging::{PhysicalAddress,VirtualAddress};
 pub use self::boot_loader_name::BootLoaderNameTag;
 pub use self::elf_sections::{ElfSectionsTag,ElfSection,ElfSectionIter,ElfSectionType,ElfSectionFlags,StringTable};
 pub use self::memory_map::{MemoryMapTag, MemoryArea, MemoryAreaIter};
@@ -29,45 +30,48 @@ pub struct MultibootStruct
 
 pub struct BootInformation
 {
-    virtual_base        : usize,
-    multiboot_struct    : &'static MultibootStruct,
+    physical_address : PhysicalAddress,
+    multiboot_struct : &'static MultibootStruct,
 }
 
 impl BootInformation
 {
-    /*
-     * The Multiboot structure uses physical addresses, so if non-identity paging is used, we need to
-     * offset everything by a virtual base.
-     */
-    pub unsafe fn load(address: usize, virtual_base : usize) -> BootInformation
+    pub unsafe fn load(physical_address: PhysicalAddress) -> BootInformation
     {
-        assert_eq!(0, address & 0b111);
+        let virtual_address = physical_address.into_kernel_space();
+        println!("Multiboot virtual address: {:#x}", virtual_address);
+        assert!(virtual_address.is_aligned_to(8));
 
-        let multiboot = &*((address + virtual_base) as *const MultibootStruct);
+        let multiboot = &*(virtual_address.ptr() as *const MultibootStruct);
         assert_eq!(0, multiboot.total_size & 0b111);
     
         let boot_info = BootInformation
                         {
-                            virtual_base : virtual_base,
+                            physical_address : physical_address,
                             multiboot_struct : multiboot,
                         };
         assert!(boot_info.has_valid_end_tag());
         boot_info
     }
 
-    pub fn virtual_base(&self) -> usize
+    pub fn physical_start(&self) -> PhysicalAddress
     {
-        self.virtual_base
+        self.physical_address
     }
 
-    pub fn start_address(&self) -> usize
+    pub fn physical_end(&self) -> PhysicalAddress
     {
-        self.multiboot_struct as *const _ as usize
+        self.physical_address.offset(self.total_size() as isize)
     }
 
-    pub fn end_address(&self) -> usize
+    pub fn start_address(&self) -> VirtualAddress
     {
-        self.start_address() + self.total_size()
+        VirtualAddress::new(self.multiboot_struct as *const _ as usize)
+    }
+
+    pub fn end_address(&self) -> VirtualAddress
+    {
+        self.start_address().offset(self.total_size() as isize)
     }
 
     pub fn total_size(&self) -> usize
@@ -160,14 +164,14 @@ impl fmt::Debug for BootInformation
 
         if let Some(elf_sections_tag) = self.elf_sections()
         {
-            let string_table = elf_sections_tag.string_table(self);
+            let string_table = elf_sections_tag.string_table();
             writeln!(f, "kernel sections:")?;
 
             for s in elf_sections_tag.sections()
             {
                 writeln!(f, "    name: {:15}, S: {:#08X}, E: {:#08X}, L: {:#08X}, F: {:#04X}",
-                    string_table.section_name(s), s.start_address(),
-                    s.start_address() + s.size(), s.size(), s.flags().bits())?;
+                    string_table.section_name(s), s.start_as_virtual(),
+                    s.end_as_virtual(), s.size(), s.flags().bits())?;
             }
         }
 

@@ -51,3 +51,6 @@ pub const HEAP_SIZE : usize = 100 * 1024;  // 100 KiB
 
 /* 0xfffffffff0000000 */
 pub const TEMP_PAGE : VirtualAddress = VirtualAddress::new(0xfffffffff0000000);
+
+/* 0xffffffffffffffff */
+pub const KERNEL_SPACE_END : VirtualAddress = VirtualAddress::new(0xffffffffffffffff);

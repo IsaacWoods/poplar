@@ -265,21 +265,20 @@ pub fn remap_kernel<A>(allocator : &mut A,
                  * Skip sections that either aren't to be allocated or are located before the start
                  * of the the higher-half (and so are probably part of the bootstrap).
                  */
-                if !section.is_allocated() ||
-                   (VirtualAddress::new(section.start_address()) < KERNEL_VMA)
+                if !section.is_allocated() || !section.start_as_virtual().is_in_kernel_space()
                 {
                     continue;
                 }
 
-                assert!(section.start_address() % PAGE_SIZE == 0, "sections must be page aligned");
+                assert!(section.start_as_virtual().is_page_aligned(), "sections must be page aligned");
                 serial_println!("Allocating section: {} to {:#x}-{:#x}",
-                                elf_sections_tag.string_table(boot_info).section_name(section),
-                                section.start_address(),
-                                section.end_address());
+                                elf_sections_tag.string_table().section_name(section),
+                                section.start_as_virtual(),
+                                section.end_as_virtual());
 
                 let flags       = EntryFlags::from_elf_section(section);
-                let start_page  = Page::get_containing_page(section.start_address().into());
-                let end_page    = Page::get_containing_page((section.end_address() - 1).into());
+                let start_page  = Page::get_containing_page(section.start_as_virtual());
+                let end_page    = Page::get_containing_page(section.end_as_virtual().offset(-1));
 
                 for page in Page::range_inclusive(start_page, end_page)
                 {
@@ -331,9 +330,9 @@ pub fn remap_kernel<A>(allocator : &mut A,
              * XXX: We still need to keep this around because the frame allocator needs the memory
              *      map this provides
              */
-            let multiboot_start : PhysicalAddress = (boot_info.start_address() - usize::from(KERNEL_VMA)).into();
-            let multiboot_end   : PhysicalAddress = (boot_info.end_address() - usize::from(KERNEL_VMA)).into();
-            mapper.identity_map_range(multiboot_start..multiboot_end, EntryFlags::PRESENT, allocator);
+            mapper.identity_map_range(boot_info.physical_start()..boot_info.physical_end(),
+                                      EntryFlags::PRESENT,
+                                      allocator);
 
             /*
              * Unmap the stack's guard page. This stops us overflowing the stack by causing a page

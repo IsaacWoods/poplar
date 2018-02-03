@@ -41,14 +41,24 @@ impl VirtualAddress
         self.0 as *mut T
     }
 
-    pub const fn offset(&self, offset : usize) -> VirtualAddress
+    pub const fn offset(&self, offset : isize) -> VirtualAddress
     {
-        VirtualAddress::new(self.0 + offset)
+        VirtualAddress::new(((self.0 as isize) + offset) as usize)
     }
 
     pub const fn is_page_aligned(&self) -> bool
     {
         self.0 % PAGE_SIZE == 0
+    }
+
+    pub const fn is_aligned_to(&self, alignment : usize) -> bool
+    {
+        self.0 % alignment == 0
+    }
+
+    pub const fn is_in_kernel_space(&self) -> bool
+    {
+        self.0 >= ::memory::map::KERNEL_VMA.0 && self.0 <= ::memory::map::KERNEL_SPACE_END.0
     }
 
     pub const fn offset_into_page(&self) -> usize
@@ -99,14 +109,6 @@ impl From<VirtualAddress> for usize
         address.0
     }
 }
-
-/*impl Into<usize> for VirtualAddress
-{
-    fn into(self) -> usize
-    {
-        self.0
-    }
-}*/
 
 impl<T> From<*const T> for VirtualAddress
 {

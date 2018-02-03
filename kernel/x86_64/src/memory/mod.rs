@@ -45,8 +45,8 @@ pub fn init(boot_info : &BootInformation) -> MemoryController<AreaFrameAllocator
     /*
      * TODO: are we using the correct addresses for the kernel start&end, this appears iffy?
      */
-    let mut frame_allocator = AreaFrameAllocator::new(boot_info.start_address().into(),
-                                                      boot_info.end_address().into(),
+    let mut frame_allocator = AreaFrameAllocator::new(boot_info.physical_start(),
+                                                      boot_info.physical_end(),
                                                       usize::from(kernel_start).into(),
                                                       usize::from(kernel_end).into(),
                                                       memory_map_tag.memory_areas());
@@ -60,7 +60,7 @@ pub fn init(boot_info : &BootInformation) -> MemoryController<AreaFrameAllocator
      * Map the pages used by the heap, then create it
      */
     let heap_start_page = Page::get_containing_page(HEAP_START);
-    let heap_end_page   = Page::get_containing_page(HEAP_START.offset(HEAP_SIZE - 1));
+    let heap_end_page   = Page::get_containing_page(HEAP_START.offset((HEAP_SIZE - 1) as isize));
 
     for page in Page::range_inclusive(heap_start_page, heap_end_page)
     {

@@ -6,6 +6,7 @@
 
 use core::{str,slice};
 use super::BootInformation;
+use ::memory::paging::{PhysicalAddress,VirtualAddress};
 
 #[derive(Clone,Copy,Debug)]
 #[repr(packed)] // repr(C) would add unwanted padding before first_section
@@ -31,12 +32,12 @@ impl ElfSectionsTag
         }
     }
 
-    pub fn string_table(&self, boot_info : &BootInformation) -> &'static StringTable
+    pub fn string_table(&self) -> &'static StringTable
     {
         unsafe
         {
             let string_table_ptr = (&self.first_section as *const ElfSection).offset(self.shndx as isize);
-            &*(((*string_table_ptr).addr + (boot_info.virtual_base() as u64)) as *const StringTable)
+            &*((*string_table_ptr).start_as_physical().into_kernel_space().ptr() as *const StringTable)
         }
     }
 }
@@ -111,7 +112,7 @@ pub struct ElfSection
     name_index  : u32,
     typ         : u32,
     flags       : u64,
-    addr        : u64,
+    addr        : u64,      // XXX: Depending on the section, this could be physical **or** virtual!
     offset      : u64,
     size        : u64,
     link        : u32,
@@ -144,14 +145,24 @@ impl ElfSection {
         }
     }
 
-    pub fn start_address(&self) -> usize
+    pub fn start_as_physical(&self) -> PhysicalAddress
     {
-        self.addr as usize
+        PhysicalAddress::new(self.addr as usize)
     }
 
-    pub fn end_address(&self) -> usize
+    pub fn end_as_physical(&self) -> PhysicalAddress
     {
-        (self.addr + self.size) as usize
+        self.start_as_physical().offset(self.size as isize)
+    }
+
+    pub fn start_as_virtual(&self) -> VirtualAddress
+    {
+        VirtualAddress::new(self.addr as usize)
+    }
+
+    pub fn end_as_virtual(&self) -> VirtualAddress
+    {
+        self.start_as_virtual().offset(self.size as isize)
     }
 
     pub fn size(&self) -> usize

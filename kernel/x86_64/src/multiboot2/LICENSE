@@ -1,6 +1,3 @@
-Some of this code has been adapted from the `multiboot2-elf64` crate by Philipp
-Oppermann, and so the contents of this folder exclusively is also copyrighted by them
-
 The MIT License (MIT)
 
 Copyright (c) 2016, Philipp Oppermann.

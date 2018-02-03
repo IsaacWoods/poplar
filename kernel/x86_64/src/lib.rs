@@ -30,6 +30,8 @@
                     mod port;
                     mod multiboot2;
 
+use memory::paging::PhysicalAddress;
+
 #[derive(Copy,Clone,PartialEq,Eq)]
 #[repr(u8)]
 pub enum PrivilegeLevel
@@ -55,10 +57,10 @@ impl From<u16> for PrivilegeLevel
     }
 }
 
-pub fn init_platform(multiboot_ptr : usize)
+pub fn init_platform<T>(multiboot_address : T)
+    where T : Into<PhysicalAddress>
 {
     use multiboot2::BootInformation;
-    use memory::map::KERNEL_VMA;
 
     serial::initialise();
     serial_println!("Kernel connected to COM1");
@@ -69,7 +71,7 @@ pub fn init_platform(multiboot_ptr : usize)
      * We are passed the *physical* address of the Multiboot struct, so we offset it by the virtual
      * offset of the whole kernel.
      */
-    let boot_info = unsafe { BootInformation::load(multiboot_ptr, KERNEL_VMA.into()) };
+    let boot_info = unsafe { BootInformation::load(multiboot_address.into()) };
     let mut memory_controller = memory::init(&boot_info);
 
     interrupts::init(&mut memory_controller);
