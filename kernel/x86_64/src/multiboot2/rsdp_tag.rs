@@ -13,3 +13,11 @@ pub struct RsdpTag
     size            : u32,
     rsdp            : RSDP,
 }
+
+impl RsdpTag
+{
+    pub fn rsdp(&'static self) -> &'static RSDP
+    {
+        &self.rsdp
+    }
+}

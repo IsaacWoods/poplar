@@ -32,6 +32,7 @@
                     mod acpi;
 
 use memory::paging::PhysicalAddress;
+use acpi::AcpiInfo;
 
 #[derive(Copy,Clone,PartialEq,Eq)]
 #[repr(u8)]
@@ -75,7 +76,9 @@ pub fn init_platform<T>(multiboot_address : T)
     let boot_info = unsafe { BootInformation::load(multiboot_address.into()) };
     let mut memory_controller = memory::init(&boot_info);
 
-    serial_println!("RSDP tag: {:#?}", boot_info.extended_rsdp());
+    let acpi_info = AcpiInfo::new(&boot_info);
+
+    serial_println!("RSDP tag: {:#?}", acpi_info);
 
     interrupts::init(&mut memory_controller);
 
