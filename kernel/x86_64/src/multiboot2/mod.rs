@@ -8,6 +8,7 @@ use core::fmt;
 use self::header::{Tag, TagIter};
 use ::memory::paging::{PhysicalAddress,VirtualAddress};
 pub use self::boot_loader_name::BootLoaderNameTag;
+pub use self::rsdp_tag::RsdpTag;
 pub use self::elf_sections::{ElfSectionsTag,ElfSection,ElfSectionIter,ElfSectionType,ElfSectionFlags,StringTable};
 pub use self::memory_map::{MemoryMapTag, MemoryArea, MemoryAreaIter};
 pub use self::module::{ModuleTag, ModuleIter};
@@ -19,6 +20,7 @@ mod elf_sections;
 mod memory_map;
 mod module;
 mod command_line;
+mod rsdp_tag;
 
 #[repr(C)]
 pub struct MultibootStruct
@@ -86,6 +88,11 @@ impl BootInformation
     pub fn memory_map(&self) -> Option<&'static MemoryMapTag>
     {
         self.tag(6).map(|tag| unsafe { &*(tag as *const Tag as *const MemoryMapTag) })
+    }
+
+    pub fn rsdp(&self) -> Option<&'static RsdpTag>
+    {
+        self.tag(14).map(|tag| unsafe { &*(tag as *const Tag as *const RsdpTag) })
     }
 
     pub fn modules(&self) -> ModuleIter

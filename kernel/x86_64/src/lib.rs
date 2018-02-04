@@ -29,6 +29,7 @@
                     mod pic;
                     mod port;
                     mod multiboot2;
+                    mod acpi;
 
 use memory::paging::PhysicalAddress;
 
@@ -73,6 +74,8 @@ pub fn init_platform<T>(multiboot_address : T)
      */
     let boot_info = unsafe { BootInformation::load(multiboot_address.into()) };
     let mut memory_controller = memory::init(&boot_info);
+
+    serial_println!("RSDP tag: {:#?}", boot_info.extended_rsdp());
 
     interrupts::init(&mut memory_controller);
 
