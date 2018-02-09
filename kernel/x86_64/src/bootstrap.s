@@ -175,9 +175,17 @@ Start:
 
 bits 64
 Trampoline:
-    ; Long Mode doesn't need valid selectors, and in some cases having them will actually break things
-    ; e.g. iret checks for valid selectors, and our GDT won't match so we'll #GP
-    mov ax, 0
+    ; Reload the GDT pointer with the correct virtual address
+    mov rax, [gdt64.pointer + 2]
+    mov rbx, KERNEL_VMA
+    add rax, rbx
+    mov [gdt64.pointer + 2], rax
+    mov rax, gdt64.pointer + KERNEL_VMA
+    lgdt [rax]
+
+    ; Long Mode doesn't need valid selectors, and in some cases having them will actually break
+    ; things e.g. iret checks for valid selectors, and our GDT won't match so we'd #GP
+    xor ax, ax
     mov ds, ax
     mov es, ax
     mov fs, ax
@@ -191,14 +199,6 @@ section .text
 bits 64
 extern kmain
 InHigherHalf:
-    ; Reload the GDT pointer with the correct virtual address
-    mov rax, [gdt64.pointer + 2]
-    mov rbx, KERNEL_VMA
-    add rax, rbx
-    mov [gdt64.pointer + 2], rax
-    mov rax, gdt64.pointer + KERNEL_VMA
-    lgdt [rax]
-
     ; Set up the real stack
     mov rbp, 0          ; Terminate stack-traces in the higher-half (makes no sense to go lower)
     mov rsp, stack_top

@@ -114,9 +114,9 @@ impl Mapper
      * Multiboot structure can overlap with pages previously mapped for modules.
      */
     pub fn identity_map_range<A>(&mut self,
-                                 range : Range<PhysicalAddress>,
-                                 flags : EntryFlags,
-                                 allocator : &mut A)
+                                 range      : Range<PhysicalAddress>,
+                                 flags      : EntryFlags,
+                                 allocator  : &mut A)
         where A : FrameAllocator
     {
         for frame in Frame::range_inclusive(Frame::get_containing_frame(range.start),
