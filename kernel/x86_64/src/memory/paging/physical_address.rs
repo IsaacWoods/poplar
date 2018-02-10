@@ -6,6 +6,7 @@
 use core::fmt;
 use core::ops::{Add,Sub};
 use core::cmp::Ordering;
+use super::PAGE_SIZE;
 
 #[derive(Clone,Copy,Debug)]
 pub struct PhysicalAddress(pub(super) usize);
@@ -20,6 +21,11 @@ impl PhysicalAddress
     pub const fn offset(&self, offset : isize) -> PhysicalAddress
     {
         PhysicalAddress::new(((self.0 as isize) + offset) as usize)
+    }
+
+    pub const fn offset_into_frame(&self) -> usize
+    {
+        self.0 % PAGE_SIZE
     }
 
     /*

@@ -5,7 +5,6 @@
  */
 
 use core::{str,slice};
-use super::BootInformation;
 use ::memory::paging::{PhysicalAddress,VirtualAddress};
 
 #[derive(Clone,Copy,Debug)]

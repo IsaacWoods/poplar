@@ -206,7 +206,7 @@ extern "C" fn breakpoint_handler(stack_frame : &ExceptionStackFrame)
     println!("BREAKPOINT: {:#?}", stack_frame);
 }
 
-extern "C" fn page_fault_handler(stack_frame : &ExceptionStackFrame, error_code  : u64)
+extern "C" fn page_fault_handler(_stack_frame : &ExceptionStackFrame, error_code  : u64)
 {
     println!("PAGE_FAULT: {} ({:#x})", match (/*  P  (Present        ) */(error_code >> 0) & 0b1,
                                               /* R/W (Read/Write     ) */(error_code >> 1) & 0b1,
@@ -224,9 +224,6 @@ extern "C" fn page_fault_handler(stack_frame : &ExceptionStackFrame, error_code 
         (_, _, _) => { panic!("UNRECOGNISED PAGE-FAULT ERROR CODE"); },
     },
     read_control_reg!(cr2));    // CR2 holds the address of the page that caused the #PF
-
-
-    println!("\n{:#?}", stack_frame);
 
     /*
      * Page-faults can be recovered from and so are faults, but we never will so just give up.

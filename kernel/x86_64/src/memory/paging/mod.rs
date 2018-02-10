@@ -3,7 +3,7 @@
  * See LICENCE.md
  */
 
-pub(super) mod entry;
+pub(crate) mod entry;
 mod table;
 mod temporary_page;
 mod mapper;
@@ -131,14 +131,17 @@ impl ActivePageTable
     }
 
     /*
+     * This uses a trick with the recursive mapping technique we use to alter an InactivePageTable,
+     * by mapping its P4 address as if it were the active table's P4.
+     *
      * By returning a Mapper to the closure, instead of `self` (which is a ActivePageTable), we
      * stop it from calling this `with` method again, which fails because the recursive mapping
      * wouldn't be set up correctly.
      */
     pub fn with<F>(&mut self,
-                   table : &mut InactivePageTable,
-                   temporary_page : &mut temporary_page::TemporaryPage,
-                   f : F
+                   table            : &mut InactivePageTable,
+                   temporary_page   : &mut temporary_page::TemporaryPage,
+                   f                : F
                   ) where F : FnOnce(&mut Mapper)
     {
         // Inner scope used to end the borrow of `temporary_page`
@@ -195,9 +198,9 @@ pub struct InactivePageTable
 
 impl InactivePageTable
 {
-    pub fn new(frame : Frame,
-               active_table : &mut ActivePageTable,
-               temporary_page : &mut TemporaryPage) -> InactivePageTable
+    pub fn new(frame            : Frame,
+               active_table     : &mut ActivePageTable,
+               temporary_page   : &mut TemporaryPage) -> InactivePageTable
     {
         /*
          * We firstly temporarily map the page table into memory so we can zero it.

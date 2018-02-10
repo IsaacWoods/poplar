@@ -9,11 +9,11 @@ mod area_frame_allocator;
 mod stack_allocator;
 
 pub use self::area_frame_allocator::AreaFrameAllocator;
-pub use self::paging::{PhysicalAddress,VirtualAddress,remap_kernel};
+pub use self::paging::{PhysicalAddress,VirtualAddress,Page,entry::EntryFlags};
 
 use self::map::{HEAP_START,HEAP_SIZE};
 use self::stack_allocator::{Stack,StackAllocator};
-use self::paging::{PAGE_SIZE,Page};
+use self::paging::PAGE_SIZE;
 use hole_tracking_allocator::ALLOCATOR;
 use multiboot2::BootInformation;
 
@@ -119,7 +119,7 @@ pub struct Frame
 
 impl Frame
 {
-    fn get_containing_frame(address : PhysicalAddress) -> Frame
+    pub fn get_containing_frame(address : PhysicalAddress) -> Frame
     {
         Frame { number : usize::from(address) / PAGE_SIZE }
     }
@@ -152,21 +152,17 @@ pub trait FrameAllocator
 
 pub struct MemoryController<A : FrameAllocator>
 {
-    active_table    : paging::ActivePageTable,
-    frame_allocator : A,
-    stack_allocator : StackAllocator
+    pub active_table    : paging::ActivePageTable,
+    pub frame_allocator : A,
+    pub stack_allocator : StackAllocator
 }
 
 impl<A> MemoryController<A> where A : FrameAllocator
 {
     pub fn alloc_stack(&mut self, size_in_pages : usize) -> Option<Stack>
     {
-        let &mut MemoryController
-                 {
-                     ref mut active_table,
-                     ref mut frame_allocator,
-                     ref mut stack_allocator
-                 } = self;
-        stack_allocator.alloc_stack(active_table, frame_allocator, size_in_pages)
+        self.stack_allocator.alloc_stack(&mut self.active_table,
+                                         &mut self.frame_allocator,
+                                         size_in_pages)
     }
 }

@@ -9,9 +9,12 @@
 #![feature(const_fn)]
 #![feature(naked_functions)]
 #![feature(core_intrinsics)]
+#![feature(alloc)]
+#![feature(use_nested_groups)]
 
                 extern crate volatile;
                 extern crate spin;
+#[macro_use]    extern crate alloc;
 #[macro_use]    extern crate bitflags;
                 extern crate bit_field;
                 extern crate hole_tracking_allocator;
@@ -76,11 +79,9 @@ pub fn init_platform<T>(multiboot_address : T)
     let boot_info = unsafe { BootInformation::load(multiboot_address.into()) };
     let mut memory_controller = memory::init(&boot_info);
 
-    let acpi_info = AcpiInfo::new(&boot_info);
-
-    serial_println!("RSDP tag: {:#?}", acpi_info);
-
     interrupts::init(&mut memory_controller);
+    let acpi_info = AcpiInfo::new(&boot_info, &mut memory_controller);
+
 
 /*    for module_tag in boot_info.modules()
     {

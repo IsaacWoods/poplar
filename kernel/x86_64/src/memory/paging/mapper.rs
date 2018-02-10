@@ -144,7 +144,11 @@ impl Mapper
     /*
      * This maps a given page to a given frame, with the specified flags.
      */
-    pub fn map_to<A>(&mut self, page : Page, frame : Frame, flags : EntryFlags, allocator : &mut A)
+    pub fn map_to<A>(&mut self,
+                     page       : Page,
+                     frame      : Frame,
+                     flags      : EntryFlags,
+                     allocator  : &mut A)
         where A : FrameAllocator
     {
         let p3 = self.p4.next_table_create(page.p4_index(), allocator);
