@@ -5,7 +5,7 @@
 
 pub mod entry;
 mod table;
-pub mod temporary_page;
+mod temporary_page;
 mod mapper;
 mod physical_address;
 mod virtual_address;
@@ -54,7 +54,7 @@ impl Iterator for PageIter
 #[derive(Debug,Clone,Copy,PartialEq,Eq,PartialOrd,Ord)]
 pub struct Page
 {
-    number : usize,
+    pub(in ::memory) number : usize,
 }
 
 impl Add<usize> for Page
@@ -81,7 +81,7 @@ impl Page
         }
     }
 
-    pub fn get_start_address(&self) -> VirtualAddress
+    pub fn start_address(&self) -> VirtualAddress
     {
         (self.number * PAGE_SIZE).into()
     }
@@ -233,7 +233,7 @@ pub fn remap_kernel<A>(allocator : &mut A,
      * We can now allocate space for a new set of page tables, then temporarily map it into memory
      * so we can create a new set of page tables.
      */
-    let mut temporary_page = TemporaryPage::new(Page::get_containing_page(TEMP_PAGE), allocator);
+    let mut temporary_page = TemporaryPage::new(TEMP_PAGE, allocator);
     let mut new_table =
         {
             let frame = allocator.allocate_frame().expect("run out of frames");
@@ -282,7 +282,7 @@ pub fn remap_kernel<A>(allocator : &mut A,
                 for page in Page::range_inclusive(Page::get_containing_page(section.start_as_virtual()),
                                                   Page::get_containing_page(section.end_as_virtual().offset(-1)))
                 {
-                    let physical_address = PhysicalAddress::new(usize::from(page.get_start_address()) - usize::from(KERNEL_VMA));
+                    let physical_address = PhysicalAddress::new(usize::from(page.start_address()) - usize::from(KERNEL_VMA));
 
                     mapper.map_to(page,
                                   Frame::get_containing_frame(physical_address),

@@ -7,7 +7,7 @@ use core::{str,mem,ptr};
 use memory::{MemoryController,Frame,Page,FrameAllocator,EntryFlags};
 use memory::paging::{PhysicalAddress,VirtualAddress,TemporaryPage};
 use multiboot2::BootInformation;
-use alloc::{boxed::Box,Vec,String};
+use alloc::boxed::Box;
 
 /*
  * The RSDP (Root System Descriptor Pointer) is the first ACPI structure located.
@@ -35,31 +35,18 @@ impl RSDP
 
         let mut sum : usize  = 0;
 
-        for byte in self.signature.iter()
+        for i in 0..mem::size_of::<RSDP>()
         {
-            sum += *byte as usize;
-        }
-
-        sum += self.checksum as usize;
-
-        for byte in self.oem_id.iter()
-        {
-            sum += *byte as usize;
-        }
-
-        sum += self.revision as usize;
-
-        for byte in unsafe { mem::transmute::<u32,[u8; 4]>(self.rsdt_address) }.iter()
-        {
-            sum += *byte as usize;
+            sum += unsafe { *(self as *const RSDP as *const u8).offset(i as isize) } as usize;
         }
 
         // Check that the lowest byte is 0
-        match sum & 0b11111111
+        if sum & 0b11111111 != 0
         {
-            0 => Ok(()),
-            _ => Err("Checksum is incorrect"),
+            return Err("RSDP has incorrect checksum");
         }
+
+        Ok(())
     }
 }
 
@@ -83,32 +70,31 @@ struct SDTHeader
     // ...
 }
 
-fn validate_sdt(table_ptr : *const SDTHeader, signature : &str) -> Result<(), &str>
+impl SDTHeader
 {
-    // Check the SDT's signature
-    if unsafe { str::from_utf8_unchecked(&(*table_ptr).signature) } != signature
+    fn validate(&self, signature : &str) -> Result<(), &str>
     {
-        return Err("SDT has incorrect signature");
+        // Check the signature
+        if unsafe { str::from_utf8_unchecked(&self.signature) } != signature
+        {
+            return Err("SDT has incorrect signature");
+        }
+
+        let mut sum : usize  = 0;
+
+        for i in 0..self.length
+        {
+            sum += unsafe { *(self as *const SDTHeader as *const u8).offset(i as isize) } as usize;
+        }
+
+        // Check that the lowest byte is 0
+        if sum & 0b11111111 != 0
+        {
+            return Err("SDT has incorrect checksum");
+        }
+
+        Ok(())
     }
-
-    // Sum all of the bytes of the SDT
-    let mut sum : usize = 0;
-    let length = unsafe { *table_ptr }.length;
-    println!("SDT length: {}", length);
-    let bytes = table_ptr as *const u8;
-
-    for i in 0..length
-    {
-        sum += unsafe { *(table_ptr as *const u8).offset(i as isize) } as usize;
-    }
-
-    // Check that the lower byte of the sum is 0
-    if sum & 0b11111111 != 0
-    {
-        return Err("SDT has incorrect checksum");
-    }
-
-    Ok(())
 }
 
 #[derive(Clone,Copy,Debug)]
@@ -131,30 +117,30 @@ pub struct FADT
     dsdt_address        : u32,
     reserved_1          : u8,
     power_profile       : u8,
-    SCI_interrupt       : u16,
-    SMI_command_port    : u32,
+    sci_interrupt       : u16,
+    smi_command_port    : u32,
     acpi_enable         : u8,
     acpi_disable        : u8,
-    S4BIOS_REQ          : u8,
-    PSTATE_control      : u8,
-    PM1a_event_block    : u32,
-    PM1b_event_block    : u32,
-    PM1a_control_block  : u32,
-    PM1b_control_block  : u32,
-    PM2_control_block   : u32,
-    PM_timer_block      : u32,
-    GPE0_block          : u32,
-    GPE1_block          : u32,
-    PM1_event_length    : u8,
-    PM1_control_length  : u8,
-    PM2_control_length  : u8,
-    PM_timer_length     : u8,
-    GPE0_length         : u8,
-    GPE1_length         : u8,
-    GPE1_base           : u8,
-    CState_control      : u8,
-    worst_C2_latency    : u16,
-    worst_C3_latency    : u16,
+    s4bios_req          : u8,
+    pstate_control      : u8,
+    pm1a_event_block    : u32,
+    pm1b_event_block    : u32,
+    pm1a_control_block  : u32,
+    pm1b_control_block  : u32,
+    pm2_control_block   : u32,
+    pm_timer_block      : u32,
+    gpe0_block          : u32,
+    gpe1_block          : u32,
+    pm1_event_length    : u8,
+    pm1_control_length  : u8,
+    pm2_control_length  : u8,
+    pm_timer_length     : u8,
+    gpe0_length         : u8,
+    gpe1_length         : u8,
+    gpe1_base           : u8,
+    cstate_control      : u8,
+    worst_c2_latency    : u16,
+    worst_c3_latency    : u16,
     flush_size          : u16,
     flush_stride        : u16,
     duty_offset         : u8,
@@ -185,64 +171,53 @@ struct RSDT
 
 impl RSDT
 {
-    fn parse<A>(&'static self,
-                memory_controller : &mut MemoryController<A>) -> Vec<(String, *mut SDTHeader)>
+    fn parse<A>(&self,
+                acpi_info           : &mut AcpiInfo,
+                memory_controller   : &mut MemoryController<A>)
         where A : FrameAllocator
     {
+        use ::memory::map::TEMP_PAGE;
+
         let num_tables = (self.header.length as usize - mem::size_of::<SDTHeader>()) / mem::size_of::<u32>();
         serial_println!("RSDT has pointers to {} SDTs", num_tables);
 
-        let mut tables = Vec::<(String, *mut SDTHeader)>::with_capacity(num_tables);
+        let table_base_ptr = VirtualAddress::new(self as *const RSDT as usize).offset(mem::size_of::<SDTHeader>() as isize).ptr() as *const u32;
 
         for i in 0..num_tables
         {
-            let pointer_address = unsafe { (VirtualAddress::new(self as *const RSDT as usize).offset(mem::size_of::<SDTHeader>() as isize).ptr() as *const u32).offset(i as isize) };
-
-            // TODO: map and extract each SDT and put it into the vector
+            let pointer_address = unsafe { table_base_ptr.offset(i as isize) };
             let physical_address = PhysicalAddress::new(unsafe { *pointer_address } as usize);
-            let mut temporary_page = TemporaryPage::new(Page::get_containing_page(::memory::map::TEMP_PAGE), &mut memory_controller.frame_allocator);
+            let mut temporary_page = TemporaryPage::new(TEMP_PAGE, &mut memory_controller.frame_allocator);
             temporary_page.map(Frame::get_containing_frame(physical_address), &mut memory_controller.active_table);
-            let virtual_address = ::memory::map::TEMP_PAGE.offset(physical_address.offset_into_frame() as isize);
 
-            let sdt_pointer = virtual_address.ptr() as *const SDTHeader;
+            let sdt_pointer = TEMP_PAGE.start_address().offset(physical_address.offset_into_frame() as isize).ptr() as *const SDTHeader;
+            let signature = unsafe { str::from_utf8_unchecked(&(*sdt_pointer).signature) };
+            serial_println!("Found SDT: {} at {:#x}", signature, physical_address);
 
-            /*
-             * Find the signature of this SDT.
-             * XXX: This can't be used to create the vector, its memory will be unmapped when the temporary page is!
-             */
-            let inplace_signature = unsafe { str::from_utf8_unchecked(&(*sdt_pointer).signature) };
-            serial_println!("Found table: {} at {:#x}", inplace_signature, physical_address);
-
-            match inplace_signature.as_ref()
+            match signature.as_ref()
             {
                 "FACP" =>
                 {
                     let fadt : Box<FADT> = unsafe { Box::new(ptr::read_unaligned(sdt_pointer as *const FADT)) };
-                    tables.push((String::from(unsafe { str::from_utf8_unchecked(&fadt.header.signature) }),
-                                 Box::into_raw(fadt) as *mut SDTHeader));
+                    fadt.header.validate("FACP").unwrap();
+                    acpi_info.fadt = Some(fadt);
                 },
 
-                _      => println!("Unknown table: {}", inplace_signature),
+                _      => println!("Unknown table: {}", signature),
             }
 
             temporary_page.unmap(&mut memory_controller.active_table);
         }
-
-        tables
     }
 }
 
 #[derive(Clone,Debug)]
 pub struct AcpiInfo
 {
-    rsdp    : &'static RSDP,
+    pub(self) rsdp    : &'static RSDP,
+    pub(self) rsdt    : Box<RSDT>,
 
-    /*
-     * XXX: To allow storage of any type of table, we convert from a Box -> the wrapped raw pointer.
-     *      To avoid leaking the memory, these must be converted back and dropped correctly when this
-     *      is dropped.
-     */
-    tables  : Vec<(String, *mut SDTHeader)>,
+    pub(self) fadt    : Option<Box<FADT>>,
 }
 
 impl AcpiInfo
@@ -251,55 +226,33 @@ impl AcpiInfo
                   memory_controller    : &mut MemoryController<A>) -> AcpiInfo
         where A : FrameAllocator
     {
+        use ::memory::map::TEMP_PAGE;
+
         let rsdp : &'static RSDP = boot_info.rsdp().expect("Couldn't find RSDP tag").rsdp();
         rsdp.validate().unwrap();
 
         let oem_str = unsafe { str::from_utf8_unchecked(&rsdp.oem_id) };
         serial_println!("Loading ACPI tables with OEM ID: {}", oem_str);
-        println!("RSDT physical address is: {:#x}", rsdp.rsdt_address);
 
-        let rsdt_address = PhysicalAddress::new(rsdp.rsdt_address as usize);
-        memory_controller.active_table.map_to(Page::get_containing_page(::memory::map::RSDT_ADDRESS),
-                                              Frame::get_containing_frame(rsdt_address),
-                                              EntryFlags::PRESENT,
-                                              &mut memory_controller.frame_allocator);
+        let physical_address = PhysicalAddress::new(rsdp.rsdt_address as usize);
+        let mut temporary_page = TemporaryPage::new(TEMP_PAGE, &mut memory_controller.frame_allocator);
+        temporary_page.map(Frame::get_containing_frame(physical_address), &mut memory_controller.active_table);
+        let rsdt_ptr = (TEMP_PAGE.start_address().offset(physical_address.offset_into_frame() as isize)).ptr() as *const SDTHeader;
 
-        let rsdt_ptr = (::memory::map::RSDT_ADDRESS.offset(rsdt_address.offset_into_frame() as isize)).ptr() as *const SDTHeader;
-        validate_sdt(rsdt_ptr, "RSDT").unwrap();
+        let rsdt : Box<RSDT> = unsafe { Box::new(ptr::read_unaligned(rsdt_ptr as *const RSDT)) };
+        rsdt.header.validate("RSDT").unwrap();
+        temporary_page.unmap(&mut memory_controller.active_table);
 
-        let rsdt : &'static RSDT = unsafe { &*(rsdt_ptr as *const RSDT) };
-        let tables = rsdt.parse(memory_controller);
+        let mut acpi_info = AcpiInfo
+                            {
+                                rsdp,
+                                rsdt    : unsafe { mem::uninitialized() },
+                                fadt    : None,
+                            };
 
-        AcpiInfo
-        {
-            rsdp,
-            tables,
-        }
-    }
+        rsdt.parse(&mut acpi_info, memory_controller);
+        acpi_info.rsdt = rsdt;
 
-    fn table(&self, signature : &str) -> Option<*const SDTHeader>
-    {
-        self.tables.iter().find(|table| table.0 == signature).map(|table| table.1 as *const SDTHeader)
-    }
-
-    pub fn fadt(&self) -> Option<&FADT>
-    {
-        self.table("FACP").map(|table| unsafe { &*(table as *const FADT) })
-    }
-}
-
-impl Drop for AcpiInfo
-{
-    fn drop(&mut self)
-    {
-        serial_println!("Dropping ACPIInfo");
-        for table in self.tables.iter()
-        {
-            match table.0.as_ref()
-            {
-                "FACP" => unsafe { ptr::drop_in_place(table.1 as *mut FADT) },
-                _      => panic!("Found table with signature '{}' that is not handled during drop!", table.0),
-            };
-        }
+        acpi_info
     }
 }

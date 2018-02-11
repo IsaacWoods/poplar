@@ -81,7 +81,6 @@ pub fn init_platform<T>(multiboot_address : T)
 
     interrupts::init(&mut memory_controller);
     let acpi_info = AcpiInfo::new(&boot_info, &mut memory_controller);
-    serial_println!("{:#?}", acpi_info.fadt().unwrap());
 
 /*    for module_tag in boot_info.modules()
     {

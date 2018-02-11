@@ -149,11 +149,6 @@ impl ElfSection {
         PhysicalAddress::new(self.addr as usize)
     }
 
-    pub fn end_as_physical(&self) -> PhysicalAddress
-    {
-        self.start_as_physical().offset(self.size as isize)
-    }
-
     pub fn start_as_virtual(&self) -> VirtualAddress
     {
         VirtualAddress::new(self.addr as usize)

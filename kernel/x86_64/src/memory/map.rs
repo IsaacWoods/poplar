@@ -3,7 +3,7 @@
  * See LICENCE.md
  */
 
-use super::paging::VirtualAddress;
+use super::paging::{VirtualAddress,Page,PAGE_SIZE};
 
 /*
  * On kernel entry, the page tables that the bootstrap set up are still active. It maps the kernel
@@ -48,10 +48,9 @@ pub const HEAP_START : VirtualAddress = KERNEL_VMA.offset(0o000_001_000_000_0000
 pub const HEAP_SIZE  : usize = 100 * 1024;  // 100 KiB
 
 /* 0xffffffffc0019000 */
-pub const RSDT_ADDRESS : VirtualAddress = VirtualAddress::new(0xffffffffc0019000);
 
 /* 0xfffffffff0000000 */
-pub const TEMP_PAGE : VirtualAddress = VirtualAddress::new(0xfffffffff0000000);
+pub const TEMP_PAGE : Page = Page { number : 0xfffffffff0000000 / PAGE_SIZE };
 
 /* 0xffffffffffffffff */
 pub const KERNEL_SPACE_END : VirtualAddress = VirtualAddress::new(0xffffffffffffffff);

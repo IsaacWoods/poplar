@@ -86,7 +86,7 @@ impl Mapper
 
     pub fn unmap<A>(&mut self, page : Page, allocator : &mut A) where A : FrameAllocator
     {
-        assert!(self.translate(page.get_start_address()).is_some());
+        assert!(self.translate(page.start_address()).is_some());
 
         let p1 = self.p4
                      .next_table_mut(page.p4_index())
@@ -96,7 +96,7 @@ impl Mapper
         let frame = p1[page.p1_index()].get_pointed_frame().unwrap();
         p1[page.p1_index()].set_unused();
     
-        tlb::invalidate_page(page.get_start_address());
+        tlb::invalidate_page(page.start_address());
 
         // TODO free p(1,2,3) table if it has become empty
         allocator.deallocate_frame(frame);
@@ -136,7 +136,7 @@ impl Mapper
             }
             else
             {
-                panic!("Tried to map a range in which a page is already mapped, but with a different virtual address or with more permissive flags: {:#x}->{:#x}", page.get_start_address(), frame.get_start_address());
+                panic!("Tried to map a range in which a page is already mapped, but with a different virtual address or with more permissive flags: {:#x}->{:#x}", page.start_address(), frame.get_start_address());
             }
         }
     }
@@ -155,7 +155,7 @@ impl Mapper
         let p2 = p3.next_table_create(page.p3_index(), allocator);
         let p1 = p2.next_table_create(page.p2_index(), allocator);
 
-        assert!(p1[page.p1_index()].is_unused(), "Tried to map a page that has already been mapped: {:#x}", page.get_start_address());
+        assert!(p1[page.p1_index()].is_unused(), "Tried to map a page that has already been mapped: {:#x}", page.start_address());
         p1[page.p1_index()].set(frame, flags | EntryFlags::PRESENT);
     }
 }

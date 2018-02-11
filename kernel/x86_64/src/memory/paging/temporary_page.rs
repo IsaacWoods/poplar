@@ -33,7 +33,7 @@ impl TemporaryPage
     {
         assert!(active_table.translate_page(self.page).is_none(), "temp page is already mapped");
         active_table.map_to(self.page, frame, EntryFlags::WRITABLE, &mut self.allocator);
-        self.page.get_start_address()
+        self.page.start_address()
     }
 
     /*
