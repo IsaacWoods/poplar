@@ -3,9 +3,9 @@
  * See LICENCE.md
  */
 
-pub(crate) mod entry;
+pub mod entry;
 mod table;
-mod temporary_page;
+pub mod temporary_page;
 mod mapper;
 mod physical_address;
 mod virtual_address;
@@ -13,10 +13,10 @@ mod virtual_address;
 pub use self::entry::*;
 pub use self::physical_address::PhysicalAddress;
 pub use self::virtual_address::VirtualAddress;
+pub use self::temporary_page::TemporaryPage;
 
 use core::ops::{Add,Deref,DerefMut};
 use self::mapper::Mapper;
-use self::temporary_page::TemporaryPage;
 use super::{Frame,FrameAllocator};
 use super::map::RECURSIVE_ENTRY;
 use multiboot2::BootInformation;
