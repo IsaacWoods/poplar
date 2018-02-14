@@ -6,7 +6,7 @@ Current tasks and plans for the future are summarised in the Roadmap and [on the
 - [x] Physical memory management
 - [x] Virtual memory management / `kalloc` sort of thing
 - [x] Exception and interrupt support
-- [.] ACPI framework
+- [ ] ACPI framework
 - [x] Load and execute flat binary program
 - [ ] Better physical memory allocation (keeping track of freed frames)
 - [ ] Better virtual memory allocation

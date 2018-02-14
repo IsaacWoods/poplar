@@ -3,7 +3,7 @@
  * See LICENCE.md
  */
 
-use ::acpi::RSDP;
+use ::acpi::Rsdp;
 
 #[derive(Clone,Copy,Debug)]
 #[repr(packed)]
@@ -11,12 +11,12 @@ pub struct RsdpTag
 {
     typ             : u32,
     size            : u32,
-    rsdp            : RSDP,
+    rsdp            : Rsdp,
 }
 
 impl RsdpTag
 {
-    pub fn rsdp(&'static self) -> &'static RSDP
+    pub fn rsdp(&'static self) -> &'static Rsdp
     {
         &self.rsdp
     }
