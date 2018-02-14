@@ -1,0 +1,148 @@
+/*
+ * Copyright (C) 2017, Isaac Woods.
+ * See LICENCE.md
+ */
+
+use core::{mem,ptr};
+use alloc::boxed::Box;
+use super::{AcpiInfo,SdtHeader};
+use ::memory::paging::{PhysicalAddress,VirtualAddress};
+
+#[derive(Clone,Copy,Debug)]
+#[repr(packed)]
+pub struct MadtHeader
+{
+    header              : SdtHeader,
+    local_apic_address  : u32,
+    flags               : u32,
+    /*
+     * After this, there are a number of entries (also variable length). It's not really practical to
+     * represent this whole structure in Rust nicely, so we don't.
+     */
+}
+
+#[derive(Clone,Copy,Debug)]
+#[repr(packed)]
+struct MadtEntryHeader
+{
+    entry_type  : u8,
+    length      : u8,
+}
+
+#[derive(Clone,Copy,Debug)]
+#[repr(packed)]
+struct LocalApicEntry
+{
+    header          : MadtEntryHeader,
+    processor_id    : u8,
+    apic_id         : u8,
+    flags           : u32,
+}
+
+#[derive(Clone,Copy,Debug)]
+#[repr(packed)]
+struct IoApicEntry
+{
+    header                          : MadtEntryHeader,
+    id                              : u8,
+    reserved_1                      : u8,
+    address                         : u32,
+    global_system_interrupt_base    : u32,
+}
+
+#[derive(Clone,Copy,Debug)]
+#[repr(packed)]
+struct InterruptSourceOverrideEntry
+{
+    header                  : MadtEntryHeader,
+    bus_source              : u8,
+    irq_source              : u8,
+    global_system_interrupt : u32,
+    flags                   : u16,
+}
+
+#[derive(Clone,Copy,Debug)]
+#[repr(packed)]
+struct NonMaskableInterruptEntry
+{
+    header          : MadtEntryHeader,
+    processor_id    : u8,
+    flags           : u16,
+    lint            : u8,
+}
+
+#[derive(Clone,Copy,Debug)]
+#[repr(packed)]
+struct LocalApicAddressOverrideEntry
+{
+    header  : MadtEntryHeader,
+    address : u64,
+}
+
+pub(super) fn parse_madt(ptr : *const SdtHeader, acpi_info : &mut AcpiInfo)
+{
+    let madt : Box<MadtHeader> = Box::new(unsafe { ptr::read_unaligned(ptr as *const MadtHeader) });
+    //madt.header.validate("APIC").unwrap(); //TODO: why isn't checksum correct?
+    acpi_info.local_apic_address = PhysicalAddress::new(madt.local_apic_address as usize);
+    acpi_info.legacy_pics_active = (madt.flags & 0b1) == 1;
+
+    let mut entry_address = VirtualAddress::new(ptr as usize).offset(mem::size_of::<MadtHeader>() as isize);
+    let end_address = VirtualAddress::new(ptr as usize).offset((madt.header.length - 1) as isize);
+
+    while entry_address < end_address
+    {
+        let header = unsafe { ptr::read_unaligned(entry_address.ptr() as *const MadtEntryHeader) };
+
+        match header.entry_type
+        {
+            0 =>    // Processor local APIC
+            {
+                serial_println!("Found MADT entry: processor local APIC (type=0)");
+                let entry = unsafe { ptr::read_unaligned(entry_address.ptr() as *const LocalApicEntry) };
+                serial_println!("{:#?}", entry);
+                // TODO: keep track of each core and its local APIC
+                entry_address = entry_address.offset(mem::size_of::<LocalApicEntry>() as isize);
+            },
+
+            1 =>    // I/O APIC
+            {
+                serial_println!("Found MADT entry: I/O APIC (type=1)");
+                let entry = unsafe { ptr::read_unaligned(entry_address.ptr() as *const IoApicEntry) };
+
+                acpi_info.ioapic_address = PhysicalAddress::new(entry.address as usize);
+                acpi_info.ioapic_global_interrupt_base = entry.global_system_interrupt_base;
+                entry_address = entry_address.offset(12);
+            },
+
+            2 =>    // Interrupt source override
+            {
+                serial_println!("Found MADT entry: interrupt source override (type=2)");
+                let entry = unsafe { ptr::read_unaligned(entry_address.ptr() as *const InterruptSourceOverrideEntry) };
+//                serial_println!("{:#?}", entry);
+                // TODO: register the override - we probably need it to correctly configure the
+                // IOAPIC and local APICs?
+                entry_address = entry_address.offset(10);
+            },
+
+            4 =>    // Non-maskable interrupt
+            {
+                serial_println!("Found MADT entry: non-maskable interrupt(type=4)");
+                let entry = unsafe { ptr::read_unaligned(entry_address.ptr() as *const NonMaskableInterruptEntry) };
+                serial_println!("{:#?}", entry);
+                // TODO: keep track of this - we need it to configure LINT0 and LINT1 in the local
+                // vector table of the local APIC
+                entry_address = entry_address.offset(6);
+            },
+
+            5 =>    // Local APIC address override
+            {
+                serial_println!("Found MADT entry: local APIC address override (type=5)");
+                let entry = unsafe { ptr::read_unaligned(entry_address.ptr() as *const LocalApicAddressOverrideEntry) };
+                acpi_info.local_apic_address = PhysicalAddress::new(entry.address as usize);
+                entry_address = entry_address.offset(12);
+            },
+
+            _ => panic!("Unknown MADT entry type: {}", header.entry_type),
+        }
+    }
+}
