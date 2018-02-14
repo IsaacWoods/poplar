@@ -82,18 +82,17 @@ pub fn init_platform<T>(multiboot_address : T)
     interrupts::init(&mut memory_controller);
     let acpi_info = AcpiInfo::new(&boot_info, &mut memory_controller);
 
-/*    for module_tag in boot_info.modules()
+    for module_tag in boot_info.modules()
     {
-        println!("Loading and running {}", module_tag.name());
-        println!("  Start address: {:#x}, End address: {:#x}", module_tag.start_address(), module_tag.end_address());
-        let virtual_address = module_tag.start_address();
+        println!("Running module: {}", module_tag.name());
+        let virtual_address = module_tag.start_address().into_kernel_space();
         let code : unsafe extern "C" fn() -> u32 = unsafe
                                                    {
-                                                       core::mem::transmute(virtual_address as *const ())
+                                                       core::mem::transmute(virtual_address.ptr() as *const ())
                                                    };
         let result : u32 = unsafe { (code)() };
         println!("Result was {:#x}", result);
-    }*/
+    }
 
     unsafe { asm!("sti"); }
 }

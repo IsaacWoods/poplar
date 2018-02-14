@@ -22,10 +22,10 @@
 
                 extern crate volatile;
                 extern crate spin;
-#[macro_use]    extern crate bitflags;
+                extern crate bitflags;
                 extern crate bit_field;
-#[macro_use]    extern crate alloc;
-#[macro_use]    extern crate util;
+                extern crate alloc;
+                extern crate util;
 #[macro_use]    extern crate x86_64 as platform;
 
 mod panic;
