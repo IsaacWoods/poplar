@@ -29,7 +29,7 @@
                     mod idt;
                     mod tlb;
                     mod tss;
-                    mod pic;
+                    mod i8259_pic;
                     mod port;
                     mod multiboot2;
                     mod acpi;
@@ -78,9 +78,21 @@ pub fn init_platform<T>(multiboot_address : T)
      */
     let boot_info = unsafe { BootInformation::load(multiboot_address.into()) };
     let mut memory_controller = memory::init(&boot_info);
-
     interrupts::init(&mut memory_controller);
+
     let acpi_info = AcpiInfo::new(&boot_info, &mut memory_controller);
+
+    /*
+     * If the legacy 8259 PIC is active, we now disable it.
+     */
+    if acpi_info.legacy_pics_active
+    {
+        unsafe
+        {
+            i8259_pic::PIC_PAIR.lock().remap();
+            i8259_pic::PIC_PAIR.lock().disable();
+        }
+    }
 
     for module_tag in boot_info.modules()
     {

@@ -3,7 +3,10 @@
  * See LICENCE.md
  */
 
+use spin::Mutex;
 use port::Port;
+
+pub static PIC_PAIR : Mutex<PicPair> = Mutex::new(unsafe { PicPair::new(0x20, 0x28) });
 
 struct Pic
 {
@@ -88,5 +91,18 @@ impl PicPair
         }
 
         self.0.send_eoi();
+    }
+
+    pub unsafe fn disable(&mut self)
+    {
+        /*
+         * To disable the PIC, we set the mask to not send interrupts for any of the ISRs. We need
+         * to disable the legacy PIC on systems that have/emulate it when we want to use the APIC
+         * instead.
+         * XXX: The PIC may still send spurious interrupts regardless of the mask, so we must also
+         *      remap it correctly to avoid triggering exceptions.
+         */
+        self.0.data_port.write(0xff);
+        self.1.data_port.write(0xff);
     }
 }

@@ -4,11 +4,9 @@
  */
 
 use core::fmt;
-use spin::Mutex;
 use tss::Tss;
 use gdt::{Gdt,GdtDescriptor,DescriptorFlags};
 use idt::Idt;
-use pic::PicPair;
 use memory::{FrameAllocator,MemoryController};
 use port::Port;
 
@@ -40,7 +38,6 @@ const DOUBLE_FAULT_IST_INDEX : usize = 0;
 static mut TSS : Option<Tss> = None;
 static mut GDT : Option<Gdt> = None;
 static mut IDT : Option<Idt> = None;
-static PIC_PAIR : Mutex<PicPair> = Mutex::new(unsafe { PicPair::new(0x20, 0x28) });
 
 fn unwrap_option<'a, T>(option : &'a mut Option<T>) -> &'a mut T
 {
@@ -190,8 +187,6 @@ pub fn init<A>(memory_controller : &mut MemoryController<A>) where A : FrameAllo
         unwrap_option(&mut IDT).irq(0).set_handler(wrap_handler!(timer_handler), code_selector);
         unwrap_option(&mut IDT).irq(1).set_handler(wrap_handler!(key_handler), code_selector);
         unwrap_option(&mut IDT).load();
-
-        PIC_PAIR.lock().remap();
     }
 }
 
@@ -241,7 +236,7 @@ extern "C" fn double_fault_handler(stack_frame : &ExceptionStackFrame, error_cod
 
 extern "C" fn timer_handler(_ : &ExceptionStackFrame)
 {
-    unsafe { PIC_PAIR.lock().send_eoi(32); }
+    unsafe { ::i8259_pic::PIC_PAIR.lock().send_eoi(32); }
 }
 
 static KEYBOARD_PORT : Port<u8> = unsafe { Port::new(0x60) };
@@ -250,5 +245,5 @@ extern "C" fn key_handler(_ : &ExceptionStackFrame)
 {
     println!("Key interrupt: Scancode={:#x}", unsafe { KEYBOARD_PORT.read() });
 
-    unsafe { PIC_PAIR.lock().send_eoi(33); }
+    unsafe { ::i8259_pic::PIC_PAIR.lock().send_eoi(33); }
 }
