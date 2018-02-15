@@ -111,6 +111,8 @@ impl Iterator for FrameIter
     }
 }
 
+pub(self) const FRAME_SIZE : usize = 4096;
+
 #[derive(Debug,PartialEq,Eq,PartialOrd,Ord)]
 pub struct Frame
 {
@@ -121,12 +123,12 @@ impl Frame
 {
     pub fn get_containing_frame(address : PhysicalAddress) -> Frame
     {
-        Frame { number : usize::from(address) / PAGE_SIZE }
+        Frame { number : usize::from(address) / FRAME_SIZE }
     }
 
     fn get_start_address(&self) -> PhysicalAddress
     {
-        (self.number * PAGE_SIZE).into()
+        (self.number * FRAME_SIZE).into()
     }
 
     fn clone(&self) -> Frame

@@ -133,10 +133,11 @@ impl Mapper
                (p1[page.p1_index()].flags().is_compatible(flags | EntryFlags::PRESENT))
             {
                 p1[page.p1_index()].set(frame, flags | EntryFlags::PRESENT);
+                tlb::invalidate_page(page.start_address());
             }
             else
             {
-                panic!("Tried to map a range in which a page is already mapped, but with a different virtual address or with more permissive flags: {:#x}->{:#x}", page.start_address(), frame.get_start_address());
+                panic!("Tried to map a range in which a page is already mapped, but with more permissive flags: {:#x}->{:#x}", page.start_address(), frame.get_start_address());
             }
         }
     }
@@ -157,5 +158,6 @@ impl Mapper
 
         assert!(p1[page.p1_index()].is_unused(), "Tried to map a page that has already been mapped: {:#x}", page.start_address());
         p1[page.p1_index()].set(frame, flags | EntryFlags::PRESENT);
+        tlb::invalidate_page(page.start_address());
     }
 }

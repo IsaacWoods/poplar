@@ -6,7 +6,7 @@
 use core::fmt;
 use core::ops::{Add,Sub};
 use core::cmp::Ordering;
-use super::PAGE_SIZE;
+use ::memory::FRAME_SIZE;
 
 #[derive(Clone,Copy,Debug)]
 pub struct PhysicalAddress(pub(super) usize);
@@ -25,7 +25,12 @@ impl PhysicalAddress
 
     pub const fn offset_into_frame(&self) -> usize
     {
-        self.0 % PAGE_SIZE
+        self.0 % FRAME_SIZE
+    }
+
+    pub const fn is_frame_aligned(&self) -> bool
+    {
+        self.offset_into_frame() == 0
     }
 
     /*
