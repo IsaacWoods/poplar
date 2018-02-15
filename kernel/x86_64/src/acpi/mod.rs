@@ -148,9 +148,9 @@ impl Rsdt
 
             match signature.as_ref()
             {
-                "FACP" => self::fadt::parse_fadt(sdt_pointer, acpi_info),
-                "APIC" => self::madt::parse_madt(sdt_pointer, acpi_info),
-                _      => println!("Unknown table: {}", signature),
+                "FACP" => fadt::parse_fadt(sdt_pointer, acpi_info),
+                "APIC" => madt::parse_madt(sdt_pointer, acpi_info),
+                _      => serial_println!("Unknown SDT type: {}", signature),
             }
 
             temporary_page.unmap(&mut memory_controller.active_table);

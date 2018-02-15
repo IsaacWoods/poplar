@@ -75,8 +75,7 @@ pub fn init(boot_info : &BootInformation) -> MemoryController<AreaFrameAllocator
     /*
      * Create a StackAllocator that allocates in the 100 pages directly following the heap
      */
-    let stack_allocator = StackAllocator::new(Page::range_inclusive(heap_end_page + 1,
-                                                                    heap_end_page + 101));
+    let stack_allocator = StackAllocator::new(map::STACK_SPACE_TOP, map::STACK_SPACE_BOTTOM);
 
     MemoryController
     {

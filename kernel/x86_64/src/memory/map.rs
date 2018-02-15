@@ -48,6 +48,8 @@ pub const HEAP_START : VirtualAddress = KERNEL_VMA.offset(0o000_001_000_000_0000
 pub const HEAP_SIZE  : usize = 100 * 1024;  // 100 KiB
 
 /* 0xffffffffc0019000 */
+pub const STACK_SPACE_TOP       : VirtualAddress = VirtualAddress::new(0xffffffffc0019000);
+pub const STACK_SPACE_BOTTOM    : VirtualAddress = VirtualAddress::new(0xffffffffc007d000 - 1);
 
 /* 0xfffffffff0000000 */
 pub const TEMP_PAGE : Page = Page { number : 0xfffffffff0000000 / PAGE_SIZE };

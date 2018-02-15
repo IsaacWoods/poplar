@@ -38,11 +38,12 @@ pub struct StackAllocator
 
 impl StackAllocator
 {
-    pub fn new(page_range : PageIter) -> StackAllocator
+    pub fn new(space_top : VirtualAddress, space_bottom : VirtualAddress) -> StackAllocator
     {
         StackAllocator
         {
-            range : page_range
+            range : Page::range_inclusive(Page::get_containing_page(space_top),
+                                          Page::get_containing_page(space_bottom)),
         }
     }
 
