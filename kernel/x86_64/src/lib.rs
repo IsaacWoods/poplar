@@ -30,12 +30,14 @@
                     mod tlb;
                     mod tss;
                     mod i8259_pic;
+                    mod apic;
                     mod port;
                     mod multiboot2;
                     mod acpi;
 
 use memory::paging::PhysicalAddress;
 use acpi::AcpiInfo;
+use apic::{LocalApic,IoApic};
 
 #[derive(Copy,Clone,PartialEq,Eq)]
 #[repr(u8)]
@@ -78,21 +80,24 @@ pub fn init_platform<T>(multiboot_address : T)
      */
     let boot_info = unsafe { BootInformation::load(multiboot_address.into()) };
     let mut memory_controller = memory::init(&boot_info);
-    interrupts::init(&mut memory_controller);
-
-    let acpi_info = AcpiInfo::new(&boot_info, &mut memory_controller);
 
     /*
-     * If the legacy 8259 PIC is active, we now disable it.
+     * We want to use the APIC, so we remap and disable the legacy PIC.
+     * XXX: We do this regardless of whether ACPI tells us we need to.
      */
-    if acpi_info.legacy_pics_active
+    unsafe
     {
-        unsafe
-        {
-            i8259_pic::PIC_PAIR.lock().remap();
-            i8259_pic::PIC_PAIR.lock().disable();
-        }
+        let mut legacy_pic = i8259_pic::PIC_PAIR.lock();
+        legacy_pic.remap();
+        legacy_pic.disable();
     }
+
+    /*
+     * We now find and parse the ACPI tables. This also initialises the local APIC and IOAPIC, as
+     * they are detailed by the MADT.
+     */
+    let acpi_info = AcpiInfo::new(&boot_info, &mut memory_controller);
+    interrupts::init(&mut memory_controller);
 
     for module_tag in boot_info.modules()
     {

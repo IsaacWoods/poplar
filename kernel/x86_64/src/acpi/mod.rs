@@ -9,6 +9,7 @@ mod madt;
 use core::{str,mem,ptr};
 use memory::{MemoryController,Frame,FrameAllocator};
 use memory::paging::{PhysicalAddress,VirtualAddress,TemporaryPage};
+use apic::{LocalApic,IoApic};
 use multiboot2::BootInformation;
 use alloc::boxed::Box;
 use self::fadt::Fadt;
@@ -149,7 +150,7 @@ impl Rsdt
             match signature.as_ref()
             {
                 "FACP" => fadt::parse_fadt(sdt_pointer, acpi_info),
-                "APIC" => madt::parse_madt(sdt_pointer, acpi_info),
+                "APIC" => madt::parse_madt(sdt_pointer, acpi_info, memory_controller),
                 _      => serial_println!("Unknown SDT type: {}", signature),
             }
 
@@ -161,17 +162,14 @@ impl Rsdt
 #[derive(Clone,Debug)]
 pub struct AcpiInfo
 {
-    pub rsdp                            : &'static Rsdp,
-    pub rsdt                            : Option<Box<Rsdt>>,
-
+    pub rsdp        : &'static Rsdp,
+    pub rsdt        : Option<Box<Rsdt>>,
+    
     // FADT
-    pub fadt                            : Option<Box<Fadt>>,
+    pub fadt        : Option<Box<Fadt>>,
 
-    // MADT
-    pub local_apic_address              : PhysicalAddress,
-    pub legacy_pics_active              : bool,
-    pub ioapic_address                  : PhysicalAddress,
-    pub ioapic_global_interrupt_base    : u32,
+    pub local_apic  : Option<LocalApic>,
+    pub io_apic     : Option<IoApic>,
 }
 
 impl AcpiInfo
@@ -198,12 +196,10 @@ impl AcpiInfo
         let mut acpi_info = AcpiInfo
                             {
                                 rsdp,
-                                rsdt                            : None,
-                                fadt                            : None,
-                                local_apic_address              : 0.into(),
-                                legacy_pics_active              : true,
-                                ioapic_address                  : 0.into(),
-                                ioapic_global_interrupt_base    : 0,
+                                rsdt        : None,
+                                fadt        : None,
+                                local_apic  : None,
+                                io_apic     : None,
                             };
 
         rsdt.parse(&mut acpi_info, memory_controller);

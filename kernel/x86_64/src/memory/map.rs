@@ -51,6 +51,10 @@ pub const HEAP_SIZE  : usize = 100 * 1024;  // 100 KiB
 pub const STACK_SPACE_TOP       : VirtualAddress = VirtualAddress::new(0xffffffffc0019000);
 pub const STACK_SPACE_BOTTOM    : VirtualAddress = VirtualAddress::new(0xffffffffc007d000 - 1);
 
+/* 0xffffffffc007d000 */
+pub const LOCAL_APIC_REGISTER_SPACE : VirtualAddress = VirtualAddress::new(0xffffffffc007d000);
+pub const IOAPIC_REGISTER_SPACE     : VirtualAddress = VirtualAddress::new(0xffffffffc007e000);
+
 /* 0xfffffffff0000000 */
 pub const TEMP_PAGE : Page = Page { number : 0xfffffffff0000000 / PAGE_SIZE };
 
