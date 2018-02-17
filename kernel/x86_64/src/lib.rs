@@ -37,7 +37,6 @@
 
 use memory::paging::PhysicalAddress;
 use acpi::AcpiInfo;
-use apic::{LocalApic,IoApic};
 
 #[derive(Copy,Clone,PartialEq,Eq)]
 #[repr(u8)]
@@ -104,7 +103,7 @@ pub fn init_platform<T>(multiboot_address : T)
      */
     let acpi_info = AcpiInfo::new(&boot_info, &mut memory_controller);
     interrupts::init(&mut memory_controller);
-    acpi_info.local_apic.unwrap().enable_timer(6);
+    apic::LOCAL_APIC.lock().enable_timer(6);
 
     for module_tag in boot_info.modules()
     {

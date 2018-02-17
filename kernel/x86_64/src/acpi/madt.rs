@@ -8,7 +8,7 @@ use alloc::boxed::Box;
 use super::{AcpiInfo,SdtHeader};
 use ::memory::{MemoryController,FrameAllocator};
 use ::memory::paging::{PhysicalAddress,VirtualAddress};
-use ::apic::{LocalApic,IoApic};
+use ::apic::{LOCAL_APIC,IoApic};
 
 #[derive(Clone,Copy,Debug)]
 #[repr(packed)]
@@ -93,8 +93,9 @@ pub(super) fn parse_madt<A>(ptr                : *const SdtHeader,
     let madt : Box<MadtHeader> = Box::new(unsafe { ptr::read_unaligned(ptr as *const MadtHeader) });
     //madt.header.validate("APIC").unwrap(); //TODO: why isn't checksum correct?
 
+    // Initialise the local APIC
     let local_apic_address = PhysicalAddress::new(madt.local_apic_address as usize);
-    acpi_info.local_apic = Some(unsafe { LocalApic::new(local_apic_address, memory_controller) });
+    LOCAL_APIC.lock().enable(local_apic_address, memory_controller);
 
     let mut entry_address = VirtualAddress::new(ptr as usize).offset(mem::size_of::<MadtHeader>() as isize);
     let end_address = VirtualAddress::new(ptr as usize).offset((madt.header.length - 1) as isize);
@@ -120,7 +121,7 @@ pub(super) fn parse_madt<A>(ptr                : *const SdtHeader,
                 let entry = unsafe { ptr::read_unaligned(entry_address.ptr() as *const IoApicEntry) };
 
                 let io_apic_address = PhysicalAddress::new(entry.address as usize);
-                acpi_info.io_apic = Some(unsafe { IoApic::new(io_apic_address, memory_controller) });
+                //acpi_info.io_apic = Some(unsafe { IoApic::new(io_apic_address, memory_controller) });
                 // TODO: do something with the global system interrupt base?
                 entry_address = entry_address.offset(12);
             },
@@ -153,7 +154,7 @@ pub(super) fn parse_madt<A>(ptr                : *const SdtHeader,
                 serial_println!("Found MADT entry: local APIC address override (type=5)");
                 let entry = unsafe { ptr::read_unaligned(entry_address.ptr() as *const LocalApicAddressOverrideEntry) };
                 let local_apic_address_override = PhysicalAddress::new(entry.address as usize);
-                acpi_info.local_apic = Some(unsafe { LocalApic::new(local_apic_address_override, memory_controller) });
+                panic!("We don't support systems with overridden local APIC addresses: {:#x}", local_apic_address_override);
                 entry_address = entry_address.offset(12);
             },
 

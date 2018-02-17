@@ -9,7 +9,6 @@ mod madt;
 use core::{str,mem,ptr};
 use memory::{MemoryController,Frame,FrameAllocator};
 use memory::paging::{PhysicalAddress,VirtualAddress,TemporaryPage};
-use apic::{LocalApic,IoApic};
 use multiboot2::BootInformation;
 use alloc::boxed::Box;
 use self::fadt::Fadt;
@@ -167,9 +166,6 @@ pub struct AcpiInfo
     
     // FADT
     pub fadt        : Option<Box<Fadt>>,
-
-    pub local_apic  : Option<LocalApic>,
-    pub io_apic     : Option<IoApic>,
 }
 
 impl AcpiInfo
@@ -198,8 +194,6 @@ impl AcpiInfo
                                 rsdp,
                                 rsdt        : None,
                                 fadt        : None,
-                                local_apic  : None,
-                                io_apic     : None,
                             };
 
         rsdt.parse(&mut acpi_info, memory_controller);

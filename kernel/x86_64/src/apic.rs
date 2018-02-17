@@ -4,31 +4,32 @@
  */
 
 use core::ptr;
+use spin::Mutex;
 use ::memory::{Frame,MemoryController,FrameAllocator};
 use ::memory::map::{LOCAL_APIC_REGISTER_SPACE,IOAPIC_REGISTER_SPACE};
 use ::memory::paging::{PhysicalAddress,Page,EntryFlags};
 
+pub static LOCAL_APIC : Mutex<LocalApic> = Mutex::new(LocalApic::placeholder());
+
 #[derive(Clone,Copy,Debug)]
 pub struct LocalApic
 {
+    is_enabled      : bool,
     register_base   : PhysicalAddress,
 }
 
 impl LocalApic
 {
-    pub unsafe fn new<A>(register_base     : PhysicalAddress,
-                         memory_controller : &mut MemoryController<A>) -> LocalApic
-        where A : FrameAllocator
+    /*
+     * This creates a placeholder LocalApic so we can initialise the Mutex statically.
+     * XXX: This does not actually initialise the APIC
+     */
+    pub const fn placeholder() -> LocalApic
     {
-        assert!(register_base.is_frame_aligned(), "Expected local APIC registers to be frame aligned");
-        memory_controller.active_table.map_to(Page::get_containing_page(LOCAL_APIC_REGISTER_SPACE),
-                                              Frame::get_containing_frame(register_base),
-                                              EntryFlags::WRITABLE,
-                                              &mut memory_controller.frame_allocator);
-
         LocalApic
         {
-            register_base,
+            is_enabled      : false,
+            register_base   : PhysicalAddress::new(0),
         }
     }
 
@@ -37,8 +38,18 @@ impl LocalApic
         LOCAL_APIC_REGISTER_SPACE.offset(offset as isize).mut_ptr() as *mut u32
     }
 
-    pub fn enable(&self)
+    pub fn enable<A>(&self,
+                     register_base : PhysicalAddress,
+                     memory_controller : &mut MemoryController<A>)
+        where A : FrameAllocator
     {
+        // Map the configuration space into virtual memory
+        assert!(register_base.is_frame_aligned(), "Expected local APIC registers to be frame aligned");
+        memory_controller.active_table.map_to(Page::get_containing_page(LOCAL_APIC_REGISTER_SPACE),
+                                              Frame::get_containing_frame(register_base),
+                                              EntryFlags::WRITABLE,
+                                              &mut memory_controller.frame_allocator);
+
         /*
          * Enable the APIC by setting bit 8 of the Spurious Interrupt Vector Register. Also set the
          * number of the spurious interrupt to 0xFF.
@@ -53,7 +64,7 @@ impl LocalApic
         {
             ptr::write(self.get_register_ptr(0x320), 32 | 0x20000); // LVT = IRQ0, periodic mode
             ptr::write(self.get_register_ptr(0x3E0), 0x3);          // Set the timer divisor = 16
-            ptr::write(self.get_register_ptr(0x380), 10000);        // Set initial count to 10000
+            ptr::write(self.get_register_ptr(0x380), 100000000);    // Set initial count
         }
     }
 
