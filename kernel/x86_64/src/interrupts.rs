@@ -179,10 +179,11 @@ pub fn init<A>(memory_controller : &mut MemoryController<A>) where A : FrameAllo
         // Create the IDT
         IDT = Some(Idt::new());
 
-        /* #BP */unwrap_option(&mut IDT).breakpoint()    .set_handler(wrap_handler!(breakpoint_handler),                     code_selector);
-        /* #UD */unwrap_option(&mut IDT).invalid_opcode().set_handler(wrap_handler!(invalid_opcode_handler),                 code_selector);
-        /* #PF */unwrap_option(&mut IDT).page_fault()    .set_handler(wrap_handler_with_error_code!(page_fault_handler),     code_selector);
-        /* #DF */unwrap_option(&mut IDT).double_fault()  .set_handler(wrap_handler_with_error_code!(double_fault_handler),   code_selector)
+                 unwrap_option(&mut IDT).nmi()           .set_handler(wrap_handler!(nmi_handler),                               code_selector);
+        /* #BP */unwrap_option(&mut IDT).breakpoint()    .set_handler(wrap_handler!(breakpoint_handler),                        code_selector);
+        /* #UD */unwrap_option(&mut IDT).invalid_opcode().set_handler(wrap_handler!(invalid_opcode_handler),                    code_selector);
+        /* #PF */unwrap_option(&mut IDT).page_fault()    .set_handler(wrap_handler_with_error_code!(page_fault_handler),        code_selector);
+        /* #DF */unwrap_option(&mut IDT).double_fault()  .set_handler(wrap_handler_with_error_code!(double_fault_handler),      code_selector)
                                                          .set_ist_handler(DOUBLE_FAULT_IST_INDEX as u8);
         unwrap_option(&mut IDT).irq(0).set_handler(wrap_handler!(timer_handler), code_selector);
         unwrap_option(&mut IDT).irq(1).set_handler(wrap_handler!(key_handler), code_selector);

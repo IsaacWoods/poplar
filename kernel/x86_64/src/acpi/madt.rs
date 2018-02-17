@@ -8,7 +8,7 @@ use alloc::boxed::Box;
 use super::{AcpiInfo,SdtHeader};
 use ::memory::{MemoryController,FrameAllocator};
 use ::memory::paging::{PhysicalAddress,VirtualAddress};
-use ::apic::{LOCAL_APIC,IoApic};
+use ::apic::{LOCAL_APIC,IO_APIC};
 
 #[derive(Clone,Copy,Debug)]
 #[repr(packed)]
@@ -95,7 +95,7 @@ pub(super) fn parse_madt<A>(ptr                : *const SdtHeader,
 
     // Initialise the local APIC
     let local_apic_address = PhysicalAddress::new(madt.local_apic_address as usize);
-    LOCAL_APIC.lock().enable(local_apic_address, memory_controller);
+    unsafe { LOCAL_APIC.lock().enable(local_apic_address, memory_controller) };
 
     let mut entry_address = VirtualAddress::new(ptr as usize).offset(mem::size_of::<MadtHeader>() as isize);
     let end_address = VirtualAddress::new(ptr as usize).offset((madt.header.length - 1) as isize);
@@ -121,7 +121,7 @@ pub(super) fn parse_madt<A>(ptr                : *const SdtHeader,
                 let entry = unsafe { ptr::read_unaligned(entry_address.ptr() as *const IoApicEntry) };
 
                 let io_apic_address = PhysicalAddress::new(entry.address as usize);
-                //acpi_info.io_apic = Some(unsafe { IoApic::new(io_apic_address, memory_controller) });
+                unsafe { IO_APIC.lock().enable(io_apic_address, memory_controller) };
                 // TODO: do something with the global system interrupt base?
                 entry_address = entry_address.offset(12);
             },
