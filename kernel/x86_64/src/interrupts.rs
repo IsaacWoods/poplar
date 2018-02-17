@@ -197,6 +197,11 @@ extern "C" fn invalid_opcode_handler(stack_frame : &ExceptionStackFrame)
     loop {}
 }
 
+extern "C" fn nmi_handler(_ : &ExceptionStackFrame)
+{
+    println!("NMI occured!");
+}
+
 extern "C" fn breakpoint_handler(stack_frame : &ExceptionStackFrame)
 {
     println!("BREAKPOINT: {:#?}", stack_frame);
