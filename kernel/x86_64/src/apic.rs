@@ -26,7 +26,6 @@ impl LocalApic
                                               EntryFlags::WRITABLE,
                                               &mut memory_controller.frame_allocator);
 
-
         LocalApic
         {
             register_base,
@@ -45,6 +44,17 @@ impl LocalApic
          * number of the spurious interrupt to 0xFF.
          */
         unsafe { ptr::write(self.get_register_ptr(0xF0), (1<<8) | 0xFF) };
+    }
+
+    pub fn enable_timer(&self, frequency : u64)
+    {
+        // TODO: use the PIT or something to actually calculate the frequency the APIC is running at
+        unsafe
+        {
+            ptr::write(self.get_register_ptr(0x320), 32 | 0x20000); // LVT = IRQ0, periodic mode
+            ptr::write(self.get_register_ptr(0x3E0), 0x3);          // Set the timer divisor = 16
+            ptr::write(self.get_register_ptr(0x380), 10000);        // Set initial count to 10000
+        }
     }
 
     pub fn send_eoi(&self)

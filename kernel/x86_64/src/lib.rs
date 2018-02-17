@@ -93,11 +93,18 @@ pub fn init_platform<T>(multiboot_address : T)
     }
 
     /*
+     * We write 0 to CR8 (the Task Priority Register) to say that we want to recieve all
+     * interrupts.
+     */
+    unsafe { write_control_reg!(cr8, 0u64); }
+
+    /*
      * We now find and parse the ACPI tables. This also initialises the local APIC and IOAPIC, as
      * they are detailed by the MADT.
      */
     let acpi_info = AcpiInfo::new(&boot_info, &mut memory_controller);
     interrupts::init(&mut memory_controller);
+    acpi_info.local_apic.unwrap().enable_timer(6);
 
     for module_tag in boot_info.modules()
     {

@@ -129,7 +129,7 @@ pub(super) fn parse_madt<A>(ptr                : *const SdtHeader,
             {
                 serial_println!("Found MADT entry: interrupt source override (type=2)");
                 let entry = unsafe { ptr::read_unaligned(entry_address.ptr() as *const InterruptSourceOverrideEntry) };
-//                serial_println!("{:#?}", entry);
+                serial_println!("{:#?}", entry);
                 // TODO: Idk do stuff with this?
                 entry_address = entry_address.offset(10);
             },

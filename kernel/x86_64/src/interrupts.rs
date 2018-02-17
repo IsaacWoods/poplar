@@ -236,7 +236,14 @@ extern "C" fn double_fault_handler(stack_frame : &ExceptionStackFrame, error_cod
 
 extern "C" fn timer_handler(_ : &ExceptionStackFrame)
 {
-    unsafe { ::i8259_pic::PIC_PAIR.lock().send_eoi(32); }
+    println!("Tick");
+//    unsafe { ::i8259_pic::PIC_PAIR.lock().send_eoi(32); }
+    unsafe
+    {
+        use core::ptr;
+        // Send an EOI    TODO: actually do this through the real Local APIC?
+        ptr::write(::memory::map::LOCAL_APIC_REGISTER_SPACE.offset(0xB0).mut_ptr() as *mut u32, 0);
+    }
 }
 
 static KEYBOARD_PORT : Port<u8> = unsafe { Port::new(0x60) };
