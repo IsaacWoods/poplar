@@ -57,7 +57,7 @@ impl LocalApic
          * Enable the APIC by setting bit 8 of the Spurious Interrupt Vector Register. Also set the
          * number of the spurious interrupt to 0xFF.
          */
-        ptr::write(self.get_register_ptr(0xF0), (1<<8) | 0xFF);
+        ptr::write_volatile(self.get_register_ptr(0xF0), (1<<8) | 0xFF);
     }
 
     pub fn register_interrupt_source_override(&self, bus : u8, irq : u8, global_interrupt : u32)
@@ -70,9 +70,9 @@ impl LocalApic
         // TODO: use the PIT or something to actually calculate the frequency the APIC is running at
         unsafe
         {
-            ptr::write(self.get_register_ptr(0x320), 32 | 0x20000); // LVT = IRQ0, periodic mode
-            ptr::write(self.get_register_ptr(0x3E0), 0x3);          // Set the timer divisor = 16
-            ptr::write(self.get_register_ptr(0x380), 100000000);    // Set initial count
+            ptr::write_volatile(self.get_register_ptr(0x320), 32 | 0x20000); // LVT = IRQ0, periodic mode
+            ptr::write_volatile(self.get_register_ptr(0x3E0), 0x3);          // Set the timer divisor = 16
+            ptr::write_volatile(self.get_register_ptr(0x380), 100000000);    // Set initial count
         }
     }
 
@@ -82,7 +82,7 @@ impl LocalApic
          * To send an EOI, we write 0 to the register with offset 0xB0. Writing any other value
          * will cause a #GP.
          */
-        unsafe { ptr::write(self.get_register_ptr(0xB0), 0) };
+        unsafe { ptr::write_volatile(self.get_register_ptr(0xB0), 0) };
     }
 }
 
@@ -117,5 +117,17 @@ impl IoApic
                                               Frame::get_containing_frame(register_base),
                                               EntryFlags::WRITABLE,
                                               &mut memory_controller.frame_allocator);
+    }
+
+    unsafe fn read_register(register : u32) -> u32
+    {
+        ptr::write_volatile(IOAPIC_REGISTER_SPACE.mut_ptr() as *mut u32, register);
+        ptr::read_volatile(IOAPIC_REGISTER_SPACE.offset(0x10).ptr() as *const u32)
+    }
+
+    unsafe fn write_register(register : u32, value : u32)
+    {
+        ptr::write_volatile(IOAPIC_REGISTER_SPACE.mut_ptr() as *mut u32, register);
+        ptr::write_volatile(IOAPIC_REGISTER_SPACE.mut_ptr() as *mut u32, value);
     }
 }
