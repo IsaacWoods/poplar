@@ -1,20 +1,12 @@
-# RustOS
-An x86_64 OS written in Rust. Currently Multiboot compatible and loaded with GRUB2.
-Current tasks and plans for the future are summarised in the Roadmap and [on the Trello board](https://trello.com/b/ouyF5ARK/os).
+# Pebble
+Pebble is a toy kernel written in Rust for x86_64. It is Multiboot compatible and can be booted by GRUB2.
+It is currently very early in development, but future plans are summarised in the roadmap and tracked on the [Trello board](https://trello.com/b/ouyF5ARK/os).
 
-# Roadmap
-- [x] Physical memory management
-- [x] Virtual memory management / `kalloc` sort of thing
-- [x] Exception and interrupt support
-- [ ] ACPI framework
-- [x] Load and execute flat binary program
-- [ ] Better physical memory allocation (keeping track of freed frames)
-- [ ] Better virtual memory allocation
-- [ ] Use APIC & disable PIC
-- [ ] Running processes in user mode
+# Features / Roadmap
+- [x] Kernel support for `alloc` crate
+- [x] ACPI framework
+- [x] APIC support
+- [ ] Userland programs
 - [ ] System calls
 - [ ] Scheduling
-- [ ] Test harness (maybe using [utest](https://github.com/japaric/utest)) for running unit and regression tests
-- [ ] Compile-time memory-map validation
-- [ ] Print a stack trace when the kernel panics
-- [ ] Custom bootloader and replace `multiboot2` crate (?)
+- [ ] Test harness (maybe using [utest](https://github.com/japaric/utest))
