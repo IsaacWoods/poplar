@@ -129,10 +129,12 @@ impl Idt
     idt_entry!(virtualization_exception     , 20);
     // XXX: 21 to 31 are reserved by Intel
 
-    pub fn irq(&mut self, index : usize) -> &mut IdtEntry
+    /*
+     * This assumes that the interrupt is issued by the APIC
+     */
+    pub fn apic_irq(&mut self, index : u8) -> &mut IdtEntry
     {
-        const IRQ_BASE : usize = 32;
-        &mut self[IRQ_BASE + index]
+        &mut self[::interrupts::IOAPIC_BASE + index]
     }
 
     pub fn load(&'static self)
@@ -157,20 +159,20 @@ impl Idt
     }
 }
 
-impl Index<usize> for Idt
+impl Index<u8> for Idt
 {
     type Output = IdtEntry;
 
-    fn index(&self, index : usize) -> &IdtEntry
+    fn index(&self, index : u8) -> &IdtEntry
     {
-        &self.entries[index]
+        &self.entries[index as usize]
     }
 }
 
-impl IndexMut<usize> for Idt
+impl IndexMut<u8> for Idt
 {
-    fn index_mut(&mut self, index : usize) -> &mut IdtEntry
+    fn index_mut(&mut self, index : u8) -> &mut IdtEntry
     {
-        &mut self.entries[index]
+        &mut self.entries[index as usize]
     }
 }

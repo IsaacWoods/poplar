@@ -8,7 +8,7 @@ use alloc::boxed::Box;
 use super::{AcpiInfo,SdtHeader};
 use ::memory::{MemoryController,FrameAllocator};
 use ::memory::paging::{PhysicalAddress,VirtualAddress};
-use ::apic::{LOCAL_APIC,IO_APIC};
+use ::apic::{LOCAL_APIC,IO_APIC,DeliveryMode,PinPolarity,TriggerMode};
 
 #[derive(Clone,Copy,Debug)]
 #[repr(packed)]
@@ -131,7 +131,22 @@ pub(super) fn parse_madt<A>(ptr                : *const SdtHeader,
                 serial_println!("Found MADT entry: interrupt source override (type=2)");
                 let entry = unsafe { ptr::read_unaligned(entry_address.ptr() as *const InterruptSourceOverrideEntry) };
                 serial_println!("{:#?}", entry);
-                // TODO: Idk do stuff with this?
+
+                let pin_polarity = if (entry.flags & 2) > 0 { PinPolarity::Low  }
+                                                       else { PinPolarity::High };
+
+                let trigger_mode = if (entry.flags & 8) > 0 { TriggerMode::Level }
+                                                       else { TriggerMode::Edge  };
+
+                // TODO: do we need to minus the global interrupt base from `entry.global_system_interrupt`
+                IO_APIC.lock().write_entry(entry.global_system_interrupt as u8,
+                                           ::interrupts::IOAPIC_BASE + entry.irq_source,
+                                           DeliveryMode::Fixed,
+                                           pin_polarity,
+                                           trigger_mode,
+                                           true,    // Masked by default
+                                           0xFF);
+
                 entry_address = entry_address.offset(10);
             },
 

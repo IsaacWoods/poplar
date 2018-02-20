@@ -5,8 +5,10 @@
 
 use spin::Mutex;
 use port::Port;
+use ::interrupts::LEGACY_PIC_BASE;
 
-pub static PIC_PAIR : Mutex<PicPair> = Mutex::new(unsafe { PicPair::new(0x20, 0x28) });
+pub static PIC_PAIR : Mutex<PicPair> = Mutex::new(unsafe { PicPair::new(LEGACY_PIC_BASE,
+                                                                        LEGACY_PIC_BASE + 8) });
 
 struct Pic
 {

@@ -9,6 +9,24 @@ use gdt::{Gdt,GdtDescriptor,DescriptorFlags};
 use idt::Idt;
 use memory::{FrameAllocator,MemoryController};
 use port::Port;
+use apic::{LOCAL_APIC,IO_APIC};
+
+/*
+ * |------------------|-----------------------------|
+ * | Interrupt Vector |            Usage            |
+ * |------------------|-----------------------------|
+ * |       00-1F      | Intel Reserved (Exceptions) |
+ * |       20-2F      | i8259 PIC Interrupts        |
+ * |       30-47      | IOAPIC Interrupts           |
+ * |        48        | Local APIC timer            |
+ * |        ..        | Unused                      |
+ * |        FF        | APIC spurious interrupt     |
+ * |------------------|-----------------------------|
+ */
+pub const LEGACY_PIC_BASE           : u8 = 0x20;
+pub const IOAPIC_BASE               : u8 = 0x30;
+pub const LOCAL_APIC_TIMER          : u8 = 0x48;
+pub const APIC_SPURIOUS_INTERRUPT   : u8 = 0xFF;
 
 #[repr(C)]
 struct ExceptionStackFrame
@@ -179,15 +197,34 @@ pub fn init<A>(memory_controller : &mut MemoryController<A>) where A : FrameAllo
         // Create the IDT
         IDT = Some(Idt::new());
 
-                 unwrap_option(&mut IDT).nmi()           .set_handler(wrap_handler!(nmi_handler),                               code_selector);
-        /* #BP */unwrap_option(&mut IDT).breakpoint()    .set_handler(wrap_handler!(breakpoint_handler),                        code_selector);
-        /* #UD */unwrap_option(&mut IDT).invalid_opcode().set_handler(wrap_handler!(invalid_opcode_handler),                    code_selector);
-        /* #PF */unwrap_option(&mut IDT).page_fault()    .set_handler(wrap_handler_with_error_code!(page_fault_handler),        code_selector);
-        /* #DF */unwrap_option(&mut IDT).double_fault()  .set_handler(wrap_handler_with_error_code!(double_fault_handler),      code_selector)
-                                                         .set_ist_handler(DOUBLE_FAULT_IST_INDEX as u8);
-        unwrap_option(&mut IDT).irq(0).set_handler(wrap_handler!(timer_handler), code_selector);
-        unwrap_option(&mut IDT).irq(1).set_handler(wrap_handler!(key_handler), code_selector);
+        /*
+         * Install exception handlers
+         */
+        unwrap_option(&mut IDT).nmi()           .set_handler(wrap_handler!(nmi_handler),                            code_selector);
+        unwrap_option(&mut IDT).breakpoint()    .set_handler(wrap_handler!(breakpoint_handler),                     code_selector);
+        unwrap_option(&mut IDT).invalid_opcode().set_handler(wrap_handler!(invalid_opcode_handler),                 code_selector);
+        unwrap_option(&mut IDT).page_fault()    .set_handler(wrap_handler_with_error_code!(page_fault_handler),     code_selector);
+        unwrap_option(&mut IDT).double_fault()  .set_handler(wrap_handler_with_error_code!(double_fault_handler),   code_selector).set_ist_handler(DOUBLE_FAULT_IST_INDEX as u8);
+
+        /*
+         * Install handlers for local APIC interrupts
+         */
+        unwrap_option(&mut IDT)[LOCAL_APIC_TIMER].set_handler(wrap_handler!(apic_timer_handler),        code_selector);
+        unwrap_option(&mut IDT)[APIC_SPURIOUS_INTERRUPT].set_handler(wrap_handler!(spurious_handler),   code_selector);
+
+        /*
+         * Install handlers for ISA IRQs from the IOAPIC
+         */
+        unwrap_option(&mut IDT).apic_irq(0).set_handler(wrap_handler!(pit_handler), code_selector);
+        unwrap_option(&mut IDT).apic_irq(1).set_handler(wrap_handler!(key_handler), code_selector);
+
         unwrap_option(&mut IDT).load();
+
+        /*
+         * Unmask handled entries on the IOAPIC
+         */
+        IO_APIC.lock().set_irq_mask(2, false);  // PIT
+        IO_APIC.lock().set_irq_mask(1, false);  // PS/2 controller
     }
 }
 
@@ -240,10 +277,17 @@ extern "C" fn double_fault_handler(stack_frame : &ExceptionStackFrame, error_cod
     loop { }
 }
 
-extern "C" fn timer_handler(_ : &ExceptionStackFrame)
+extern "C" fn pit_handler(_ : &ExceptionStackFrame)
 {
-    println!("Tick");
-    ::apic::LOCAL_APIC.lock().send_eoi();
+    // XXX: Printing here seems to lock everything up (probably due to the contention on the mutex
+    // involved) so probably avoid that.
+    LOCAL_APIC.lock().send_eoi();
+}
+
+extern "C" fn apic_timer_handler(_ : &ExceptionStackFrame)
+{
+    println!("APIC Tick");
+    LOCAL_APIC.lock().send_eoi();
 }
 
 static KEYBOARD_PORT : Port<u8> = unsafe { Port::new(0x60) };
@@ -251,6 +295,7 @@ static KEYBOARD_PORT : Port<u8> = unsafe { Port::new(0x60) };
 extern "C" fn key_handler(_ : &ExceptionStackFrame)
 {
     println!("Key interrupt: Scancode={:#x}", unsafe { KEYBOARD_PORT.read() });
-
-    unsafe { ::i8259_pic::PIC_PAIR.lock().send_eoi(33); }
+    LOCAL_APIC.lock().send_eoi();
 }
+
+extern "C" fn spurious_handler(_ : &ExceptionStackFrame) { }
