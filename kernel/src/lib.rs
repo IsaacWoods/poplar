@@ -36,9 +36,9 @@ pub use panic::panic_fmt;
 pub extern fn kmain(multiboot_ptr : usize)
 {
     platform::init_platform(multiboot_ptr);
+    trace!("Control passed to kernel crate");
 
     println!("Hello, World!");
-    info!("The kernel says helllloooo");
     loop { }
 }
 

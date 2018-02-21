@@ -32,7 +32,7 @@ impl Rsdp
     fn validate(&self) -> Result<(), &str>
     {
         // Check the RSDP's signature (should be "RSD PTR ")
-        if unsafe { str::from_utf8_unchecked(&self.signature) } != "RSD PTR "
+        if &self.signature != b"RSD PTR "
         {
             return Err("RSDP has incorrect signature");
         }
@@ -55,7 +55,7 @@ impl Rsdp
 
     fn oem_str<'a>(&'a self) -> &'a str
     {
-        unsafe { str::from_utf8_unchecked(&self.oem_id) }
+        str::from_utf8(&self.oem_id).expect("Could not extract OEM ID from RSDP")
     }
 }
 
@@ -84,7 +84,12 @@ impl SdtHeader
     fn validate(&self, signature : &str) -> Result<(), &str>
     {
         // Check the signature
-        if unsafe { str::from_utf8_unchecked(&self.signature) } != signature
+        let table_signature = match str::from_utf8(&self.signature)
+                              {
+                                  Ok(signature) => signature,
+                                  _ => return Err("SDT has incorrect signature"),
+                              };
+        if table_signature != signature
         {
             return Err("SDT has incorrect signature");
         }
@@ -99,7 +104,6 @@ impl SdtHeader
         // Check that the lowest byte is 0
         if sum & 0b11111111 != 0
         {
-            println!("SDT has incorrect final sum: {} (checksum: {}) (length: {}={:#x})", sum, self.checksum, self.length, self.length);
             return Err("SDT has incorrect checksum");
         }
 
@@ -143,10 +147,10 @@ impl Rsdt
             let sdt_pointer = TEMP_PAGE.start_address().offset(physical_address.offset_into_frame() as isize).ptr() as *const SdtHeader;
             let signature = unsafe { str::from_utf8_unchecked(&(*sdt_pointer).signature) };
 
-            match signature.as_ref()
+            match unsafe { &(*sdt_pointer).signature }
             {
-                "FACP" => fadt::parse_fadt(sdt_pointer, acpi_info),
-                "APIC" => madt::parse_madt(sdt_pointer, acpi_info, memory_controller),
+                b"FACP" => fadt::parse_fadt(sdt_pointer, acpi_info),
+                b"APIC" => madt::parse_madt(sdt_pointer, acpi_info, memory_controller),
                 _      => warn!("Unhandled SDT type: {}", signature),
             }
 
