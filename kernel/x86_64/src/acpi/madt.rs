@@ -108,16 +108,15 @@ pub(super) fn parse_madt<A>(ptr                : *const SdtHeader,
         {
             0 =>    // Processor local APIC
             {
-                serial_println!("Found MADT entry: processor local APIC (type=0)");
+                trace!("Found MADT entry: processor local APIC (type=0)");
                 let entry = unsafe { ptr::read_unaligned(entry_address.ptr() as *const LocalApicEntry) };
-                serial_println!("{:#?}", entry);
                 // TODO: keep track of each core and its local APIC
                 entry_address = entry_address.offset(mem::size_of::<LocalApicEntry>() as isize);
             },
 
             1 =>    // I/O APIC
             {
-                serial_println!("Found MADT entry: I/O APIC (type=1)");
+                trace!("Found MADT entry: I/O APIC (type=1)");
                 let entry = unsafe { ptr::read_unaligned(entry_address.ptr() as *const IoApicEntry) };
                 let io_apic_address = PhysicalAddress::new(entry.address as usize);
 
@@ -133,7 +132,7 @@ pub(super) fn parse_madt<A>(ptr                : *const SdtHeader,
 
             2 =>    // Interrupt source override
             {
-                serial_println!("Found MADT entry: interrupt source override (type=2)");
+                trace!("Found MADT entry: interrupt source override (type=2)");
                 let entry = unsafe { ptr::read_unaligned(entry_address.ptr() as *const InterruptSourceOverrideEntry) };
 
                 let pin_polarity = if (entry.flags & 2) > 0 { PinPolarity::Low  }
@@ -156,7 +155,7 @@ pub(super) fn parse_madt<A>(ptr                : *const SdtHeader,
 
             4 =>    // Non-maskable interrupt
             {
-                serial_println!("Found MADT entry: non-maskable interrupt(type=4)");
+                trace!("Found MADT entry: non-maskable interrupt(type=4)");
                 let entry = unsafe { ptr::read_unaligned(entry_address.ptr() as *const NonMaskableInterruptEntry) };
                 assert_eq!(entry.processor_id, 0xFF, "Unhandled case - NMI for subset of processors!");
 
@@ -179,7 +178,7 @@ pub(super) fn parse_madt<A>(ptr                : *const SdtHeader,
                  * and won't redo config by previous entries) but QEMU doesn't use it so idc for
                  * now.
                  */
-                serial_println!("Found MADT entry: local APIC address override (type=5)");
+                trace!("Found MADT entry: local APIC address override (type=5)");
                 let entry = unsafe { ptr::read_unaligned(entry_address.ptr() as *const LocalApicAddressOverrideEntry) };
                 let local_apic_address_override = PhysicalAddress::new(entry.address as usize);
                 panic!("We don't support systems with overridden local APIC addresses: {:#x}", local_apic_address_override);

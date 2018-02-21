@@ -19,6 +19,7 @@
                 extern crate bit_field;
                 extern crate hole_tracking_allocator;
 #[macro_use]    extern crate util;
+#[macro_use]    extern crate log;
 
 #[macro_use]        mod control_reg;
 #[macro_use]    pub mod vga_buffer;
@@ -69,7 +70,9 @@ pub fn init_platform<T>(multiboot_address : T)
     use multiboot2::BootInformation;
 
     serial::initialise();
-    serial_println!("Kernel connected to COM1");
+    log::set_logger(&serial::SERIAL_LOGGER).unwrap();
+    log::set_max_level(log::LevelFilter::Trace);
+    info!("Kernel connected to COM1");
 
     vga_buffer::clear_screen();
 

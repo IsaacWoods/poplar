@@ -7,20 +7,31 @@ use core::fmt;
 use spin::Mutex;
 use port::Port;
 
-#[macro_export]
-macro_rules! serial_println
-{
-    ($fmt:expr) => (serial_print!(concat!($fmt, "\n")));
-    ($fmt:expr, $($arg:tt)*) => (serial_print!(concat!($fmt, "\n"), $($arg)*));
-}
+pub static COM1             : Mutex<SerialPort> = Mutex::new(unsafe { SerialPort::new(0x3f8) });
+pub static SERIAL_LOGGER    : SerialLogger = SerialLogger;
 
-#[macro_export]
-macro_rules! serial_print
+pub struct SerialLogger;
+
+impl ::log::Log for SerialLogger
 {
-    ($($arg:tt)*) =>
-        ({
-            $crate::serial::print(format_args!($($arg)*));
-        });
+    fn enabled(&self, metadata : &::log::Metadata) -> bool
+    {
+        true
+    }
+
+    fn log(&self, record : &::log::Record)
+    {
+        use core::fmt::Write;
+
+        if self.enabled(record.metadata())
+        {
+            COM1.lock().write_fmt(format_args!("[{}] {}\n", record.level(), record.args())).unwrap();
+        }
+    }
+
+    fn flush(&self)
+    {
+    }
 }
 
 pub fn initialise()
@@ -32,14 +43,6 @@ pub fn initialise()
         COM1.lock().initialise();
     }
 }
-
-pub fn print(args : fmt::Arguments)
-{
-    use core::fmt::Write;
-    COM1.lock().write_fmt(args).unwrap();
-}
-
-pub static COM1 : Mutex<SerialPort> = Mutex::new(unsafe { SerialPort::new(0x3f8) });
 
 pub struct SerialPort
 {
@@ -104,7 +107,8 @@ impl SerialPort
         self.modem_control_register.write(0x0B);        // Enable IRQs, set RTS/DSR
     }
 
-/*    pub unsafe fn read(&self) -> u8
+    #[allow(unused)]
+    pub unsafe fn read(&self) -> u8
     {
         while (self.line_status_register.read() & 1) == 0
         {
@@ -113,7 +117,7 @@ impl SerialPort
         }
 
         self.data_register.read()
-    }*/
+    }
 
     pub unsafe fn write(&mut self, value : u8)
     {

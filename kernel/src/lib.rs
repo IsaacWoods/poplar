@@ -26,6 +26,7 @@
                 extern crate bit_field;
                 extern crate alloc;
                 extern crate util;
+#[macro_use]    extern crate log;
 #[macro_use]    extern crate x86_64 as platform;
 
 mod panic;
@@ -37,6 +38,7 @@ pub extern fn kmain(multiboot_ptr : usize)
     platform::init_platform(multiboot_ptr);
 
     println!("Hello, World!");
+    info!("The kernel says helllloooo");
     loop { }
 }
 

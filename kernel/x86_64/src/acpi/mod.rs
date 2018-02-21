@@ -131,8 +131,6 @@ impl Rsdt
         use ::memory::map::TEMP_PAGE;
 
         let num_tables = (self.header.length as usize - mem::size_of::<SdtHeader>()) / mem::size_of::<u32>();
-        serial_println!("RSDT has pointers to {} SDTs", num_tables);
-
         let table_base_ptr = VirtualAddress::new(self as *const Rsdt as usize).offset(mem::size_of::<SdtHeader>() as isize).ptr() as *const u32;
 
         for i in 0..num_tables
@@ -144,13 +142,12 @@ impl Rsdt
 
             let sdt_pointer = TEMP_PAGE.start_address().offset(physical_address.offset_into_frame() as isize).ptr() as *const SdtHeader;
             let signature = unsafe { str::from_utf8_unchecked(&(*sdt_pointer).signature) };
-            serial_println!("Found SDT: {} at {:#x}", signature, physical_address);
 
             match signature.as_ref()
             {
                 "FACP" => fadt::parse_fadt(sdt_pointer, acpi_info),
                 "APIC" => madt::parse_madt(sdt_pointer, acpi_info, memory_controller),
-                _      => serial_println!("Unknown SDT type: {}", signature),
+                _      => warn!("Unhandled SDT type: {}", signature),
             }
 
             temporary_page.unmap(&mut memory_controller.active_table);
@@ -163,8 +160,6 @@ pub struct AcpiInfo
 {
     pub rsdp        : &'static Rsdp,
     pub rsdt        : Option<Box<Rsdt>>,
-    
-    // FADT
     pub fadt        : Option<Box<Fadt>>,
 }
 
@@ -179,7 +174,7 @@ impl AcpiInfo
         let rsdp : &'static Rsdp = boot_info.rsdp().expect("Couldn't find RSDP tag").rsdp();
         rsdp.validate().unwrap();
 
-        serial_println!("Loading ACPI tables with OEM ID: {}", rsdp.oem_str());
+        trace!("Loading ACPI tables with OEM ID: {}", rsdp.oem_str());
         let physical_address = PhysicalAddress::new(rsdp.rsdt_address as usize);
         let mut temporary_page = TemporaryPage::new(TEMP_PAGE, &mut memory_controller.frame_allocator);
         temporary_page.map(Frame::get_containing_frame(physical_address), &mut memory_controller.active_table);

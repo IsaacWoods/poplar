@@ -2,7 +2,7 @@
 name = "x86_64"
 version = "0.0.1"
 authors = ["Isaac Woods <isaacwoods.home@gmail.com>",
-           "Philipp Opperman <dev@phil-opp.com>",
+           "Philipp Oppermann <dev@phil-opp.com>",
            "Calvin Lee <cyrus296@gmail.com>"]
 
 [dependencies]
@@ -10,6 +10,10 @@ bitflags  = "*"
 bit_field = "*"
 volatile  = "*"
 spin      = "*"
+
+[dependencies.log]
+version             = "*"
+default-features    = false
 
 [dependencies.hole_tracking_allocator]
 path = "../hole_tracking_allocator"

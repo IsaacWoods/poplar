@@ -15,6 +15,10 @@ spin        = "*"
 bitflags    = "*"
 bit_field   = "*"
 
+[dependencies.log]
+version             = "*"
+default-features    = false
+
 [dependencies.x86_64]
 path = "x86_64"
 

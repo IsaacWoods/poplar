@@ -9,8 +9,8 @@ pub extern fn panic_fmt(fmt     : ::core::fmt::Arguments,
                         file    : &'static str,
                         line    : u32) -> !
 {
-    serial_println!("\n\nPANIC in {} at line {}:", file, line);
-    serial_println!("      {}", fmt);
+    error!("\n\nPANIC in {} at line {}:", file, line);
+    error!("      {}", fmt);
 
     println!("\n\nPANIC in {} at line {}:", file, line);
     println!("      {}", fmt);

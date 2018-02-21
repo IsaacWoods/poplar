@@ -40,7 +40,7 @@ pub fn init(boot_info : &BootInformation) -> MemoryController<AreaFrameAllocator
      */
     let kernel_start : VirtualAddress = unsafe { (&_higher_start as *const u8).into() };
     let kernel_end   : VirtualAddress = unsafe { (&_end          as *const u8).into() };
-    serial_println!("Loading kernel to: ({:#x})---({:#x})", kernel_start, kernel_end);
+    info!("Loading kernel to: ({:#x})---({:#x})", kernel_start, kernel_end);
 
     /*
      * TODO: are we using the correct addresses for the kernel start&end, this appears iffy?

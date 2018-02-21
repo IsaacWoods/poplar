@@ -274,10 +274,10 @@ pub fn remap_kernel<A>(allocator : &mut A,
                 }
 
                 assert!(section.start_as_virtual().is_page_aligned(), "sections must be page aligned");
-                serial_println!("Allocating section: {} to {:#x}-{:#x}",
-                                elf_sections_tag.string_table().section_name(section),
-                                section.start_as_virtual(),
-                                section.end_as_virtual());
+                trace!("Allocating section: {} to {:#x}-{:#x}",
+                       elf_sections_tag.string_table().section_name(section),
+                       section.start_as_virtual(),
+                       section.end_as_virtual());
 
                 for page in Page::range_inclusive(Page::get_containing_page(section.start_as_virtual()),
                                                   Page::get_containing_page(section.end_as_virtual().offset(-1)))
@@ -304,8 +304,8 @@ pub fn remap_kernel<A>(allocator : &mut A,
              */
             for module_tag in boot_info.modules()
             {
-                serial_println!("Mapping module in range: {:#x}-{:#x}", module_tag.start_address(),
-                                                                        module_tag.end_address());
+                trace!("Mapping module in range: {:#x}-{:#x}", module_tag.start_address(),
+                                                               module_tag.end_address());
 
                 mapper.identity_map_range(module_tag.start_address()..module_tag.end_address(),
                                           EntryFlags::PRESENT,

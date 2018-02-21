@@ -130,7 +130,6 @@ impl IoApic
         where A : FrameAllocator
     {
         assert!(!self.is_enabled);
-        serial_println!("Mapping IOAPIC at physical address: {:#x}", register_base);
         self.global_interrupt_base = global_interrupt_base;
 
         // Map the configuration space to virtual memory
