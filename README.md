@@ -18,7 +18,7 @@ To build Pebble, you will need:
 - [ ] Userland programs
 - [ ] System calls
 - [ ] Scheduling
-- [ ] Logging framework using the `log` crate
+- [x] Logging framework using the `log` crate
 - [ ] Test harness (maybe using [utest](https://github.com/japaric/utest))
 
 # Acknowledgements
