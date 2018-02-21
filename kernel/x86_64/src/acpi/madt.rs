@@ -119,10 +119,15 @@ pub(super) fn parse_madt<A>(ptr                : *const SdtHeader,
             {
                 serial_println!("Found MADT entry: I/O APIC (type=1)");
                 let entry = unsafe { ptr::read_unaligned(entry_address.ptr() as *const IoApicEntry) };
-
                 let io_apic_address = PhysicalAddress::new(entry.address as usize);
-                unsafe { IO_APIC.lock().enable(io_apic_address, memory_controller) };
-                // TODO: do something with the global system interrupt base?
+
+                unsafe
+                {
+                    IO_APIC.lock().enable(io_apic_address,
+                                          entry.global_system_interrupt_base as u8,
+                                          memory_controller);
+                }
+
                 entry_address = entry_address.offset(12);
             },
 
@@ -130,7 +135,6 @@ pub(super) fn parse_madt<A>(ptr                : *const SdtHeader,
             {
                 serial_println!("Found MADT entry: interrupt source override (type=2)");
                 let entry = unsafe { ptr::read_unaligned(entry_address.ptr() as *const InterruptSourceOverrideEntry) };
-                serial_println!("{:#?}", entry);
 
                 let pin_polarity = if (entry.flags & 2) > 0 { PinPolarity::Low  }
                                                        else { PinPolarity::High };
@@ -138,14 +142,14 @@ pub(super) fn parse_madt<A>(ptr                : *const SdtHeader,
                 let trigger_mode = if (entry.flags & 8) > 0 { TriggerMode::Level }
                                                        else { TriggerMode::Edge  };
 
-                // TODO: do we need to minus the global interrupt base from `entry.global_system_interrupt`
-                IO_APIC.lock().write_entry(entry.global_system_interrupt as u8,
-                                           ::interrupts::IOAPIC_BASE + entry.irq_source,
-                                           DeliveryMode::Fixed,
-                                           pin_polarity,
-                                           trigger_mode,
-                                           true,    // Masked by default
-                                           0xFF);
+                let io_apic = IO_APIC.lock();
+                io_apic.write_entry((entry.global_system_interrupt as u8) - io_apic.global_interrupt_base(),
+                                    ::interrupts::IOAPIC_BASE + entry.irq_source,
+                                    DeliveryMode::Fixed,
+                                    pin_polarity,
+                                    trigger_mode,
+                                    true,    // Masked by default
+                                    0xFF);
 
                 entry_address = entry_address.offset(10);
             },

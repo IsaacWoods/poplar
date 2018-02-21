@@ -83,8 +83,9 @@ impl LocalApic
 #[derive(Clone,Copy,Debug)]
 pub struct IoApic
 {
-    is_enabled      : bool,
-    register_base   : PhysicalAddress,
+    is_enabled              : bool,
+    register_base           : PhysicalAddress,
+    global_interrupt_base   : u8,
 }
 
 #[allow(unused)]
@@ -116,18 +117,21 @@ impl IoApic
     {
         IoApic
         {
-            is_enabled      : false,
-            register_base   : PhysicalAddress::new(0),
+            is_enabled              : false,
+            register_base           : PhysicalAddress::new(0),
+            global_interrupt_base   : 0,
         }
     }
 
-    pub unsafe fn enable<A>(&self,
-                            register_base      : PhysicalAddress,
-                            memory_controller  : &mut MemoryController<A>)
+    pub unsafe fn enable<A>(&mut self,
+                            register_base           : PhysicalAddress,
+                            global_interrupt_base   : u8,
+                            memory_controller       : &mut MemoryController<A>)
         where A : FrameAllocator
     {
         assert!(!self.is_enabled);
         serial_println!("Mapping IOAPIC at physical address: {:#x}", register_base);
+        self.global_interrupt_base = global_interrupt_base;
 
         // Map the configuration space to virtual memory
         assert!(register_base.is_frame_aligned(), "Expected IOAPIC registers to be frame aligned");
@@ -151,6 +155,11 @@ impl IoApic
                              true,  // Masked by default
                              0xff);
         }
+    }
+
+    pub fn global_interrupt_base(&self) -> u8
+    {
+        self.global_interrupt_base
     }
 
     unsafe fn read_register(&self, register : u32) -> u32
