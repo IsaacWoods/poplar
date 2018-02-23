@@ -8,22 +8,6 @@ use volatile::Volatile;
 use spin::Mutex;
 use memory::paging::{PhysicalAddress,VirtualAddress};
 
-#[macro_export]
-macro_rules! println
-{
-    ($fmt:expr) => (print!(concat!($fmt, "\n")));
-    ($fmt:expr, $($arg:tt)*) => (print!(concat!($fmt, "\n"), $($arg)*));
-}
-
-#[macro_export]
-macro_rules! print
-{
-    ($($arg:tt)*) =>
-        ({
-            $crate::vga_buffer::print(format_args!($($arg)*));
-        });
-}
-
 pub fn print(args : fmt::Arguments)
 {
     use core::fmt::Write;
@@ -34,7 +18,7 @@ pub fn clear_screen()
 {
     for _ in 0..VGA_BUFFER_HEIGHT
     {
-        println!("");
+        print(format_args!(""));
     }
 }
 
@@ -96,7 +80,7 @@ pub struct Writer
 }
 
 /*
- * Is it actually safe to send this across threads??
+ * TODO: Is it actually safe to send this across threads??
  */
 unsafe impl Send for Writer { }
 

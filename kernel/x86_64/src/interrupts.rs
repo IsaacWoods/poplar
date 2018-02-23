@@ -230,23 +230,23 @@ pub fn init<A>(memory_controller : &mut MemoryController<A>) where A : FrameAllo
 
 extern "C" fn invalid_opcode_handler(stack_frame : &ExceptionStackFrame)
 {
-    println!("INVALID OPCODE AT: {:#x}", stack_frame.instruction_pointer);
+    error!("INVALID OPCODE AT: {:#x}", stack_frame.instruction_pointer);
     loop {}
 }
 
 extern "C" fn nmi_handler(_ : &ExceptionStackFrame)
 {
-    println!("NMI occured!");
+    info!("NMI occured!");
 }
 
 extern "C" fn breakpoint_handler(stack_frame : &ExceptionStackFrame)
 {
-    println!("BREAKPOINT: {:#?}", stack_frame);
+    info!("BREAKPOINT: {:#?}", stack_frame);
 }
 
 extern "C" fn page_fault_handler(stack_frame : &ExceptionStackFrame, error_code  : u64)
 {
-    println!("PAGE_FAULT: {} ({:#x})", match (/*  P  (Present        ) */(error_code >> 0) & 0b1,
+    error!("PAGE_FAULT: {} ({:#x})", match (/*  P  (Present        ) */(error_code >> 0) & 0b1,
                                               /* R/W (Read/Write     ) */(error_code >> 1) & 0b1,
                                               /* U/S (User/Supervisor) */(error_code >> 2) & 0b1)
     {
@@ -263,7 +263,7 @@ extern "C" fn page_fault_handler(stack_frame : &ExceptionStackFrame, error_code 
     },
     read_control_reg!(cr2));    // CR2 holds the address of the page that caused the #PF
 
-    println!("{:#?}", stack_frame);
+    error!("{:#?}", stack_frame);
 
     /*
      * Page-faults can be recovered from and so are faults, but we never will so just give up.
@@ -273,7 +273,7 @@ extern "C" fn page_fault_handler(stack_frame : &ExceptionStackFrame, error_code 
 
 extern "C" fn double_fault_handler(stack_frame : &ExceptionStackFrame, error_code : u64)
 {
-    println!("EXCEPTION: DOUBLE FAULT   (Error code: {})\n{:#?}", error_code, stack_frame);
+    error!("EXCEPTION: DOUBLE FAULT   (Error code: {})\n{:#?}", error_code, stack_frame);
     loop { }
 }
 
@@ -286,7 +286,7 @@ extern "C" fn pit_handler(_ : &ExceptionStackFrame)
 
 extern "C" fn apic_timer_handler(_ : &ExceptionStackFrame)
 {
-    println!("APIC Tick");
+    trace!("APIC Tick");
     LOCAL_APIC.lock().send_eoi();
 }
 
@@ -294,7 +294,7 @@ static KEYBOARD_PORT : Port<u8> = unsafe { Port::new(0x60) };
 
 extern "C" fn key_handler(_ : &ExceptionStackFrame)
 {
-    println!("Key interrupt: Scancode={:#x}", unsafe { KEYBOARD_PORT.read() });
+    info!("Key interrupt: Scancode={:#x}", unsafe { KEYBOARD_PORT.read() });
     LOCAL_APIC.lock().send_eoi();
 }
 

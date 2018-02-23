@@ -1,15 +1,21 @@
+[workspace]
+
 [package]
-name = "x86_64"
+name = "kernel_x86_64"
 version = "0.0.1"
 authors = ["Isaac Woods <isaacwoods.home@gmail.com>",
            "Philipp Oppermann <dev@phil-opp.com>",
            "Calvin Lee <cyrus296@gmail.com>"]
 
+[lib]
+crate-type = ["staticlib"]
+
 [dependencies]
-bitflags  = "*"
-bit_field = "*"
-volatile  = "*"
-spin      = "*"
+rlibc       = "*"
+bitflags    = "*"
+bit_field   = "*"
+volatile    = "*"
+spin        = "*"
 
 [dependencies.log]
 version             = "*"
@@ -18,5 +24,8 @@ default-features    = false
 [dependencies.hole_tracking_allocator]
 path = "../hole_tracking_allocator"
 
-[dependencies.util]
-path = "../util"
+[dependencies.arch]
+path = "../arch"
+
+[dependencies.kernel]
+path = ".."

@@ -14,13 +14,13 @@ pebble.iso: grub.cfg kernel test_program
 	grub2-mkrescue -o $@ $(BUILD_DIR)/iso 2> /dev/null
 
 kernel:
-	make -C kernel $(BUILD_DIR)/kernel.bin
+	make -C kernel/$(ARCH) $(BUILD_DIR)/kernel.bin
 
 test_program:
 	make -C test_program test_program.bin
 
 clean:
-	make -C kernel clean
+	make -C kernel/$(ARCH) clean
 	make -C test_program clean
 	rm -rf build
 	rm -rf pebble.iso

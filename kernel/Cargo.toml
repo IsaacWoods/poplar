@@ -1,15 +1,11 @@
 [workspace]
 
 [package]
-name = "rust_os"
+name = "kernel"
 version = "0.0.1"
 authors = ["Isaac Woods"]
 
-[lib]
-crate-type = ["staticlib"]
-
 [dependencies]
-rlibc       = "*"
 volatile    = "*"
 spin        = "*"
 bitflags    = "*"
@@ -19,8 +15,5 @@ bit_field   = "*"
 version             = "*"
 default-features    = false
 
-[dependencies.x86_64]
-path = "x86_64"
-
-[dependencies.util]
-path = "util"
+[dependencies.arch]
+path = "arch"

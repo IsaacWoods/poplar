@@ -1,5 +1,5 @@
 [package]
-name = "util"
+name = "arch"
 version = "0.1.0"
 authors = ["Isaac Woods <isaacwoods.home@gmail.com>"]
 

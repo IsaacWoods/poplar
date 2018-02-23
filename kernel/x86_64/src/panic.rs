@@ -11,8 +11,5 @@ pub extern fn panic_fmt(fmt     : ::core::fmt::Arguments,
 {
     error!("\n\nPANIC in {} at line {}:", file, line);
     error!("      {}", fmt);
-
-    println!("\n\nPANIC in {} at line {}:", file, line);
-    println!("      {}", fmt);
     loop {}
 }

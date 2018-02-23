@@ -197,7 +197,7 @@ Trampoline:
 
 section .text
 bits 64
-extern kmain
+extern kstart
 InHigherHalf:
     ; Set up the real stack
     mov rbp, 0          ; Terminate stack-traces in the higher-half (makes no sense to go lower)
@@ -223,7 +223,7 @@ InHigherHalf:
     popf
 
     ; Call into the kernel
-    call kmain
+    call kstart
     hlt
 
 section .bss

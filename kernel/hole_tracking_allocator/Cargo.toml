@@ -6,5 +6,5 @@ authors = ["Isaac Woods <isaacwoods.home@gmail.com>"]
 [dependencies]
 spin = "*"
 
-[dependencies.util]
-path = "../util"
+[dependencies.arch]
+path = "../arch"

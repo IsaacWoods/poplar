@@ -5,6 +5,7 @@
 
 #![no_std]
 
+#![feature(lang_items)]
 #![feature(asm)]
 #![feature(const_fn)]
 #![feature(naked_functions)]
@@ -12,29 +13,39 @@
 #![feature(alloc)]
 #![feature(use_nested_groups)]
 
+/*
+ * `rlibc` just provides intrinsics that are linked against, and so the compiler doesn't pick up
+ * that it's actually used, so we suppress the warning.
+ */
+#[allow(unused_extern_crates)] extern crate rlibc;
+
                 extern crate volatile;
                 extern crate spin;
 #[macro_use]    extern crate alloc;
 #[macro_use]    extern crate bitflags;
                 extern crate bit_field;
                 extern crate hole_tracking_allocator;
-#[macro_use]    extern crate util;
 #[macro_use]    extern crate log;
+#[macro_use]    extern crate arch;
+                extern crate kernel;
 
-#[macro_use]        mod control_reg;
-#[macro_use]    pub mod vga_buffer;
-#[macro_use]    pub mod serial;
-                    mod memory;
-                    mod interrupts;
-                    mod gdt;
-                    mod idt;
-                    mod tlb;
-                    mod tss;
-                    mod i8259_pic;
-                    mod apic;
-                    mod port;
-                    mod multiboot2;
-                    mod acpi;
+#[macro_use]    mod control_reg;
+#[macro_use]    mod vga_buffer;
+#[macro_use]    mod serial;
+                mod panic;
+                mod memory;
+                mod interrupts;
+                mod gdt;
+                mod idt;
+                mod tlb;
+                mod tss;
+                mod i8259_pic;
+                mod apic;
+                mod port;
+                mod multiboot2;
+                mod acpi;
+
+pub use panic::panic_fmt;
 
 use memory::paging::PhysicalAddress;
 use acpi::AcpiInfo;
@@ -64,8 +75,8 @@ impl From<u16> for PrivilegeLevel
     }
 }
 
-pub fn init_platform<T>(multiboot_address : T)
-    where T : Into<PhysicalAddress>
+#[no_mangle]
+pub extern fn kstart(multiboot_address : PhysicalAddress)
 {
     use multiboot2::BootInformation;
 
@@ -110,15 +121,25 @@ pub fn init_platform<T>(multiboot_address : T)
 
     for module_tag in boot_info.modules()
     {
-        println!("Running module: {}", module_tag.name());
+        info!("Running module: {}", module_tag.name());
         let virtual_address = module_tag.start_address().into_kernel_space();
         let code : unsafe extern "C" fn() -> u32 = unsafe
                                                    {
                                                        core::mem::transmute(virtual_address.ptr() as *const ())
                                                    };
         let result : u32 = unsafe { (code)() };
-        println!("Result was {:#x}", result);
+        info!("Result was {:#x}", result);
     }
 
     unsafe { asm!("sti"); }
+
+    /*
+     * Pass control to the kernel proper.
+     */
+    kernel::kernel_main();
+}
+
+#[lang = "eh_personality"]
+extern fn eh_personality()
+{
 }
