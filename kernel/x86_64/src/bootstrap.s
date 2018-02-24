@@ -1,6 +1,7 @@
 ; Copyright (C) 2017, Isaac Woods. 
 ; See LICENCE.md
 
+; GRUB2 expects tags to be aligned on 8-byte boundaries
 section .multiboot
 multiboot_header:
     dd 0xe85250d6                                                           ; Multiboot-2 magic
@@ -9,10 +10,21 @@ multiboot_header:
     dd 0x100000000-(0xe85250d6 + 0 + (multiboot_end - multiboot_header))    ; Checksum
 
     ; Tell GRUB to page-align modules
+    align 8
     dw 6
     dw 0
     dd 8
 
+    ; Tell GRUB to switch to 640x480 VGA mode
+    align 8
+    dw 5
+    dw 0    ; Flags
+    dd 20   ; Size
+    dd 640  ; Width
+    dd 480  ; Height
+    dd 24   ; Depth
+
+    align 8
     dw 0
     dw 0
     dd 8

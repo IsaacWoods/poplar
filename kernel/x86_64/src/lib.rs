@@ -107,6 +107,8 @@ pub extern fn kstart(multiboot_address : PhysicalAddress)
     interrupts::init(&mut memory_controller);
     apic::LOCAL_APIC.lock().enable_timer(6);
 
+    info!("Framebuffer: {:#?}", boot_info.framebuffer_info());
+
     for module_tag in boot_info.modules()
     {
         info!("Running module: {}", module_tag.name());

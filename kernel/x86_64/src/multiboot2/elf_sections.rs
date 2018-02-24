@@ -8,7 +8,7 @@ use core::{str,slice};
 use ::memory::paging::{PhysicalAddress,VirtualAddress};
 
 #[derive(Clone,Copy,Debug)]
-#[repr(packed)] // repr(C) would add unwanted padding before first_section
+#[repr(packed)]
 pub struct ElfSectionsTag
 {
     typ                 : u32,

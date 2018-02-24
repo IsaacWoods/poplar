@@ -4,16 +4,6 @@
  * See LICENCE.md
  */
 
-use core::fmt;
-use self::header::{Tag, TagIter};
-use ::memory::paging::{PhysicalAddress,VirtualAddress};
-pub use self::boot_loader_name::BootLoaderNameTag;
-pub use self::rsdp_tag::RsdpTag;
-pub use self::elf_sections::{ElfSectionsTag,ElfSection,ElfSectionIter,ElfSectionType,ElfSectionFlags,StringTable};
-pub use self::memory_map::{MemoryMapTag, MemoryArea, MemoryAreaIter};
-pub use self::module::{ModuleTag, ModuleIter};
-pub use self::command_line::CommandLineTag;
-
 mod header;
 mod boot_loader_name;
 mod elf_sections;
@@ -21,6 +11,18 @@ mod memory_map;
 mod module;
 mod command_line;
 mod rsdp_tag;
+mod framebuffer_tag;
+
+use core::fmt;
+use self::header::{Tag, TagIter};
+use ::memory::paging::{PhysicalAddress,VirtualAddress};
+pub use self::boot_loader_name::BootLoaderNameTag;
+pub use self::rsdp_tag::RsdpTag;
+pub use self::framebuffer_tag::FramebufferTag;
+pub use self::elf_sections::{ElfSectionsTag,ElfSection,ElfSectionIter,ElfSectionType,ElfSectionFlags,StringTable};
+pub use self::memory_map::{MemoryMapTag, MemoryArea, MemoryAreaIter};
+pub use self::module::{ModuleTag, ModuleIter};
+pub use self::command_line::CommandLineTag;
 
 #[repr(C)]
 pub struct MultibootStruct
@@ -78,6 +80,11 @@ impl BootInformation
     pub fn total_size(&self) -> usize
     {
         self.multiboot_struct.total_size as usize
+    }
+
+    pub fn framebuffer_info(&self) -> Option<&'static FramebufferTag>
+    {
+        self.tag(8).map(|tag| unsafe { &*(tag as *const Tag as *const FramebufferTag) })
     }
 
     pub fn elf_sections(&self) -> Option<&'static ElfSectionsTag>
