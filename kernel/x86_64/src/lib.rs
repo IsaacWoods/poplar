@@ -61,7 +61,7 @@ impl Architecture for X86_64
 
     fn clear_screen(&self)
     {
-        vga_buffer::clear_screen();
+        vga_buffer::WRITER.lock().clear_buffer();
     }
 }
 
@@ -74,8 +74,6 @@ pub extern fn kstart(multiboot_address : PhysicalAddress)
     log::set_logger(&serial::SERIAL_LOGGER).unwrap();
     log::set_max_level(log::LevelFilter::Trace);
     info!("Kernel connected to COM1");
-
-    vga_buffer::clear_screen();
 
     /*
      * We are passed the *physical* address of the Multiboot struct, so we offset it by the virtual

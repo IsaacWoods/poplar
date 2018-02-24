@@ -14,16 +14,6 @@ pub fn print(args : fmt::Arguments)
     WRITER.lock().write_fmt(args).unwrap();
 }
 
-pub fn clear_screen()
-{
-    warn!("clearing");
-    // TODO: fix
-    for _ in 0..VGA_BUFFER_HEIGHT
-    {
-        print(format_args!(""));
-    }
-}
-
 #[allow(dead_code)]
 #[repr(u8)]
 #[derive(Debug,Clone,Copy)]
@@ -107,6 +97,14 @@ impl fmt::Write for Writer
 
 impl Writer
 {
+    pub fn clear_buffer(&mut self)
+    {
+        for row in 0..VGA_BUFFER_HEIGHT
+        {
+            self.clear_row(row);
+        }
+    }
+
     fn buffer(&mut self) -> &'static mut Buffer
     {
         unsafe { &mut *self.buffer }
