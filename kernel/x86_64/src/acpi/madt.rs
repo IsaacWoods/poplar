@@ -163,8 +163,8 @@ pub(super) fn parse_madt<A>(ptr                : *const SdtHeader,
                 let nmi_entry = (0b100<<8) | 2; // Non-maskable interrupt on vector 2
                 match entry.lint
                 {
-                    0 => unsafe { ptr::write(LOCAL_APIC.lock().get_register_ptr(0x350), nmi_entry) },
-                    1 => unsafe { ptr::write(LOCAL_APIC.lock().get_register_ptr(0x360), nmi_entry) },
+                    0 => unsafe { ptr::write(LOCAL_APIC.lock().register_ptr(0x350), nmi_entry) },
+                    1 => unsafe { ptr::write(LOCAL_APIC.lock().register_ptr(0x360), nmi_entry) },
                     _ => panic!("LINT for MADT entry-type=4 should either be 0 or 1!"),
                 }
 

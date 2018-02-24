@@ -59,8 +59,8 @@ pub fn init(boot_info : &BootInformation) -> MemoryController<AreaFrameAllocator
     /*
      * Map the pages used by the heap, then create it
      */
-    let heap_start_page = Page::get_containing_page(HEAP_START);
-    let heap_end_page   = Page::get_containing_page(HEAP_START.offset((HEAP_SIZE - 1) as isize));
+    let heap_start_page = Page::containing_page(HEAP_START);
+    let heap_end_page   = Page::containing_page(HEAP_START.offset((HEAP_SIZE - 1) as isize));
 
     for page in Page::range_inclusive(heap_start_page, heap_end_page)
     {
@@ -120,12 +120,12 @@ pub struct Frame
 
 impl Frame
 {
-    pub fn get_containing_frame(address : PhysicalAddress) -> Frame
+    pub fn containing_frame(address : PhysicalAddress) -> Frame
     {
         Frame { number : usize::from(address) / FRAME_SIZE }
     }
 
-    fn get_start_address(&self) -> PhysicalAddress
+    fn start_address(&self) -> PhysicalAddress
     {
         (self.number * FRAME_SIZE).into()
     }

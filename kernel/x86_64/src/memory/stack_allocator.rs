@@ -42,8 +42,8 @@ impl StackAllocator
     {
         StackAllocator
         {
-            range : Page::range_inclusive(Page::get_containing_page(space_top),
-                                          Page::get_containing_page(space_bottom)),
+            range : Page::range_inclusive(Page::containing_page(space_top),
+                                          Page::containing_page(space_bottom)),
         }
     }
 

@@ -35,7 +35,7 @@ impl LocalApic
         }
     }
 
-    pub unsafe fn get_register_ptr(&self, offset : usize) -> *mut u32
+    pub unsafe fn register_ptr(&self, offset : usize) -> *mut u32
     {
         LOCAL_APIC_REGISTER_SPACE.offset(offset as isize).mut_ptr() as *mut u32
     }
@@ -49,14 +49,14 @@ impl LocalApic
 
         // Map the configuration space into virtual memory
         assert!(register_base.is_frame_aligned(), "Expected local APIC registers to be frame aligned");
-        memory_controller.active_table.map_to(Page::get_containing_page(LOCAL_APIC_REGISTER_SPACE),
-                                              Frame::get_containing_frame(register_base),
+        memory_controller.active_table.map_to(Page::containing_page(LOCAL_APIC_REGISTER_SPACE),
+                                              Frame::containing_frame(register_base),
                                               EntryFlags::WRITABLE,
                                               &mut memory_controller.frame_allocator);
 
         let spurious_interrupt_vector = (1<<8) |                                        // Enable the local APIC by setting bit 8
                                         ::interrupts::APIC_SPURIOUS_INTERRUPT as u32;   // Set the interrupt vector of the spurious interrupt
-        ptr::write_volatile(self.get_register_ptr(0xF0), spurious_interrupt_vector);
+        ptr::write_volatile(self.register_ptr(0xF0), spurious_interrupt_vector);
     }
 
     pub fn enable_timer(&self, frequency : u64)
@@ -64,9 +64,9 @@ impl LocalApic
         // TODO: use the PIT or something to actually calculate the frequency the APIC is running at
         unsafe
         {
-            ptr::write_volatile(self.get_register_ptr(0x320), ::interrupts::LOCAL_APIC_TIMER as u32 | 0x20000); // Set the LVT entry
-            ptr::write_volatile(self.get_register_ptr(0x3E0), 0x3);          // Set the timer divisor = 16
-            ptr::write_volatile(self.get_register_ptr(0x380), 100000000);    // Set initial count
+            ptr::write_volatile(self.register_ptr(0x320), ::interrupts::LOCAL_APIC_TIMER as u32 | 0x20000); // Set the LVT entry
+            ptr::write_volatile(self.register_ptr(0x3E0), 0x3);          // Set the timer divisor = 16
+            ptr::write_volatile(self.register_ptr(0x380), 100000000);    // Set initial count
         }
     }
 
@@ -76,7 +76,7 @@ impl LocalApic
          * To send an EOI, we write 0 to the register with offset 0xB0. Writing any other value
          * will cause a #GP.
          */
-        unsafe { ptr::write_volatile(self.get_register_ptr(0xB0), 0) };
+        unsafe { ptr::write_volatile(self.register_ptr(0xB0), 0) };
     }
 }
 
@@ -134,8 +134,8 @@ impl IoApic
 
         // Map the configuration space to virtual memory
         assert!(register_base.is_frame_aligned(), "Expected IOAPIC registers to be frame aligned");
-        memory_controller.active_table.map_to(Page::get_containing_page(IOAPIC_REGISTER_SPACE),
-                                              Frame::get_containing_frame(register_base),
+        memory_controller.active_table.map_to(Page::containing_page(IOAPIC_REGISTER_SPACE),
+                                              Frame::containing_frame(register_base),
                                               EntryFlags::WRITABLE,
                                               &mut memory_controller.frame_allocator);
 

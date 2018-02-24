@@ -28,7 +28,7 @@ impl Mapper
 
     pub fn translate(&self, virtual_address : VirtualAddress) -> Option<PhysicalAddress>
     {
-        let maybe_frame = self.translate_page(Page::get_containing_page(virtual_address));
+        let maybe_frame = self.translate_page(Page::containing_page(virtual_address));
         maybe_frame.map(|frame| (frame.number * PAGE_SIZE + virtual_address.offset_into_page()).into())
     }
 
@@ -119,11 +119,11 @@ impl Mapper
                                  allocator  : &mut A)
         where A : FrameAllocator
     {
-        for frame in Frame::range_inclusive(Frame::get_containing_frame(range.start),
-                                            Frame::get_containing_frame(range.end.offset(-1)))
+        for frame in Frame::range_inclusive(Frame::containing_frame(range.start),
+                                            Frame::containing_frame(range.end.offset(-1)))
         {
-            let virtual_address = frame.get_start_address().into_kernel_space();
-            let page = Page::get_containing_page(virtual_address);
+            let virtual_address = frame.start_address().into_kernel_space();
+            let page = Page::containing_page(virtual_address);
 
             let p3 = self.p4.next_table_create(page.p4_index(), allocator);
             let p2 = p3.next_table_create(page.p3_index(), allocator);
@@ -137,7 +137,7 @@ impl Mapper
             }
             else
             {
-                panic!("Tried to map a range in which a page is already mapped, but with more permissive flags: {:#x}->{:#x}", page.start_address(), frame.get_start_address());
+                panic!("Tried to map a range in which a page is already mapped, but with more permissive flags: {:#x}->{:#x}", page.start_address(), frame.start_address());
             }
         }
     }

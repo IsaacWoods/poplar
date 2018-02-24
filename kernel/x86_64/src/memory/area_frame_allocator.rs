@@ -28,13 +28,13 @@ impl AreaFrameAllocator
     {
         let mut allocator = AreaFrameAllocator
             {
-                next_free_frame : Frame::get_containing_frame(0.into()),
+                next_free_frame : Frame::containing_frame(0.into()),
                 current_area    : None,
                 areas           : memory_areas,
-                multiboot_start : Frame::get_containing_frame(multiboot_start),
-                multiboot_end   : Frame::get_containing_frame(multiboot_end),
-                kernel_start    : Frame::get_containing_frame(kernel_start),
-                kernel_end      : Frame::get_containing_frame(kernel_end),
+                multiboot_start : Frame::containing_frame(multiboot_start),
+                multiboot_end   : Frame::containing_frame(multiboot_end),
+                kernel_start    : Frame::containing_frame(kernel_start),
+                kernel_end      : Frame::containing_frame(kernel_end),
             };
         allocator.switch_to_next_area();
         allocator
@@ -45,12 +45,12 @@ impl AreaFrameAllocator
         self.current_area = self.areas.clone().filter(
             |area| {
                 let address = area.start_address() + area.size() + 1;
-                Frame::get_containing_frame((address as usize).into()) >= self.next_free_frame
+                Frame::containing_frame((address as usize).into()) >= self.next_free_frame
             }).min_by_key(|area| area.start_address());
 
         if let Some(area) = self.current_area
         {
-            let start_frame = Frame::get_containing_frame((area.start_address() as usize).into());
+            let start_frame = Frame::containing_frame((area.start_address() as usize).into());
             if self.next_free_frame < start_frame
             {
                 self.next_free_frame = start_frame;
@@ -69,7 +69,7 @@ impl FrameAllocator for AreaFrameAllocator
             let frame = Frame { number : self.next_free_frame.number };
 
             // The last frame of the current area
-            let current_area_last_frame = Frame::get_containing_frame(((area.start_address() + area.size() - 1) as usize).into());
+            let current_area_last_frame = Frame::containing_frame(((area.start_address() + area.size() - 1) as usize).into());
 
             if frame > current_area_last_frame
             {

@@ -86,7 +86,7 @@ impl Page
         (self.number * PAGE_SIZE).into()
     }
 
-    pub fn get_containing_page(address : VirtualAddress) -> Page
+    pub fn containing_page(address : VirtualAddress) -> Page
     {
         assert!(address < 0x0000_8000_0000_0000.into() || address >= 0xffff_8000_0000_0000.into(),
                 "Invalid address: {:#x}", address);
@@ -147,7 +147,7 @@ impl ActivePageTable
         // Inner scope used to end the borrow of `temporary_page`
         {
             // Backup the current P4 and temporarily map it
-            let original_p4 = Frame::get_containing_frame((read_control_reg!(cr3) as usize).into());
+            let original_p4 = Frame::containing_frame((read_control_reg!(cr3) as usize).into());
             let p4_table = temporary_page.map_table_frame(original_p4.clone(), self);
 
             // Overwrite recursive mapping
@@ -175,7 +175,7 @@ impl ActivePageTable
     {
         let old_table = InactivePageTable
                         {
-                            p4_frame : Frame::get_containing_frame((read_control_reg!(cr3) as usize).into())
+                            p4_frame : Frame::containing_frame((read_control_reg!(cr3) as usize).into())
                         };
 
         unsafe
@@ -184,7 +184,7 @@ impl ActivePageTable
              * NOTE: We don't need to flush the TLB here because the CPU does it automatically when
              *       CR3 is reloaded.
              */
-            write_control_reg!(cr3, usize::from(new_table.p4_frame.get_start_address()) as u64);
+            write_control_reg!(cr3, usize::from(new_table.p4_frame.start_address()) as u64);
         }
 
         old_table
@@ -279,13 +279,13 @@ pub fn remap_kernel<A>(allocator : &mut A,
                        section.start_as_virtual(),
                        section.end_as_virtual());
 
-                for page in Page::range_inclusive(Page::get_containing_page(section.start_as_virtual()),
-                                                  Page::get_containing_page(section.end_as_virtual().offset(-1)))
+                for page in Page::range_inclusive(Page::containing_page(section.start_as_virtual()),
+                                                  Page::containing_page(section.end_as_virtual().offset(-1)))
                 {
                     let physical_address = PhysicalAddress::new(usize::from(page.start_address()) - usize::from(KERNEL_VMA));
 
                     mapper.map_to(page,
-                                  Frame::get_containing_frame(physical_address),
+                                  Frame::containing_frame(physical_address),
                                   EntryFlags::from_elf_section(section),
                                   allocator);
 
@@ -325,7 +325,7 @@ pub fn remap_kernel<A>(allocator : &mut A,
              * Unmap the stack's guard page. This stops us overflowing the stack by causing a page
              * fault if we try to access the memory directly above the stack.
              */
-            mapper.unmap(Page::get_containing_page(guard_page_addr), allocator);
+            mapper.unmap(Page::containing_page(guard_page_addr), allocator);
         });
 
     active_table.switch(new_table);
