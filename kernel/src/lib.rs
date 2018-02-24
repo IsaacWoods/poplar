@@ -16,8 +16,12 @@
 #[macro_use]    extern crate log;
 #[macro_use]    extern crate arch;
 
-pub fn kernel_main()
+use arch::Architecture;
+
+pub fn kernel_main<A>(architecture : A)
+    where A : Architecture
 {
     trace!("Control passed to kernel crate");
+    architecture.clear_screen();
     loop { }
 }

@@ -16,6 +16,8 @@ pub fn print(args : fmt::Arguments)
 
 pub fn clear_screen()
 {
+    warn!("clearing");
+    // TODO: fix
     for _ in 0..VGA_BUFFER_HEIGHT
     {
         print(format_args!(""));

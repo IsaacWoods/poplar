@@ -49,29 +49,19 @@ pub use panic::panic_fmt;
 
 use memory::paging::PhysicalAddress;
 use acpi::AcpiInfo;
+use arch::Architecture;
 
-#[derive(Copy,Clone,PartialEq,Eq)]
-#[repr(u8)]
-pub enum PrivilegeLevel
+struct X86_64
 {
-    Ring0 = 0,
-    Ring1 = 1,
-    Ring2 = 2,
-    Ring3 = 3,
 }
 
-impl From<u16> for PrivilegeLevel
+impl Architecture for X86_64
 {
-    fn from(value : u16) -> Self
+    type MemoryAddress = memory::paging::VirtualAddress;
+
+    fn clear_screen(&self)
     {
-        match value
-        {
-            0 => PrivilegeLevel::Ring0,
-            1 => PrivilegeLevel::Ring1,
-            2 => PrivilegeLevel::Ring2,
-            3 => PrivilegeLevel::Ring3,
-            _ => panic!("Invalid privilege level used!"),
-        }
+        vga_buffer::clear_screen();
     }
 }
 
@@ -136,7 +126,8 @@ pub extern fn kstart(multiboot_address : PhysicalAddress)
     /*
      * Pass control to the kernel proper.
      */
-    kernel::kernel_main();
+    let arch = X86_64 { };
+    kernel::kernel_main(arch);
 }
 
 #[lang = "eh_personality"]
