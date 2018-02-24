@@ -22,7 +22,7 @@ multiboot_header:
     dd 20   ; Size
     dd 640  ; Width
     dd 480  ; Height
-    dd 24   ; Depth
+    dd 32   ; Depth
 
     align 8
     dw 0
