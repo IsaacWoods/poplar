@@ -64,7 +64,7 @@ bitflags!
 pub enum GdtDescriptor
 {
     UserSegment(u64),
-    SystemSegment(u64,u64)
+    SystemSegment(u64,u64),     // The TSS is 16 bytes long
 }
 
 impl GdtDescriptor
@@ -99,7 +99,7 @@ pub struct Gdt
 
 impl Gdt
 {
-    pub fn new() -> Gdt
+    pub const fn new() -> Gdt
     {
         Gdt
         {

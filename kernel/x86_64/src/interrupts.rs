@@ -51,21 +51,6 @@ impl fmt::Debug for ExceptionStackFrame
     }
 }
 
-const DOUBLE_FAULT_IST_INDEX : usize = 0;
-
-static mut TSS : Option<Tss> = None;
-static mut GDT : Option<Gdt> = None;
-static mut IDT : Option<Idt> = None;
-
-fn unwrap_option<'a, T>(option : &'a mut Option<T>) -> &'a mut T
-{
-    match option
-    {
-        &mut Some(ref mut value) => value,
-        &mut None => panic!("Tried to unwrap None option"),
-    }
-}
-
 macro_rules! save_regs
 {
     () =>
@@ -111,8 +96,8 @@ macro_rules! wrap_handler
             {
                 /*
                  * To calculate the address of the exception stack frame, we add 0x48 bytes
-                 * (9 registers X 64-bits). We don't need to align the stack; it should be aligned
-                 * already.
+                 * (9 registers times 64-bits). We don't need to align the stack; it should be
+                 * aligned already.
                  */
                 save_regs!();
                 asm!("mov rdi, rsp
@@ -164,6 +149,12 @@ macro_rules! wrap_handler_with_error_code
     }}
 }
 
+const DOUBLE_FAULT_IST_INDEX : usize = 0;
+
+static mut TSS : Tss = Tss::new();
+static mut GDT : Gdt = Gdt::new();
+static mut IDT : Idt = Idt::new();
+
 pub fn init<A>(memory_controller : &mut MemoryController<A>) where A : FrameAllocator
 {
     /*
@@ -176,9 +167,10 @@ pub fn init<A>(memory_controller : &mut MemoryController<A>) where A : FrameAllo
 
     unsafe
     {
-        // Create a TSS
-        TSS = Some(Tss::new());
-        unwrap_option(&mut TSS).interrupt_stack_table[DOUBLE_FAULT_IST_INDEX] = double_fault_stack.top();
+        /*
+         * Create the TSS
+         */
+        TSS.interrupt_stack_table[DOUBLE_FAULT_IST_INDEX] = double_fault_stack.top();
 
         /*
          * We need a new GDT, because the current one resides in the bootstrap and so is now not
@@ -186,39 +178,37 @@ pub fn init<A>(memory_controller : &mut MemoryController<A>) where A : FrameAllo
          * XXX: We don't bother creating a new data segment. This relies on all the segment
          * registers (*especially SS*) being cleared (which should've been done in the bootstrap).
          */
-        GDT = Some(Gdt::new());
-        let code_selector = unwrap_option(&mut GDT).add_entry(GdtDescriptor::UserSegment((DescriptorFlags::USER_SEGMENT  |
-                                                                                          DescriptorFlags::PRESENT       |
-                                                                                          DescriptorFlags::EXECUTABLE    |
-                                                                                          DescriptorFlags::LONG_MODE).bits()));
-        let tss_selector = unwrap_option(&mut GDT).add_entry(GdtDescriptor::create_tss_segment(unwrap_option(&mut TSS)));
-        unwrap_option(&mut GDT).load(code_selector, tss_selector);
-
-        // Create the IDT
-        IDT = Some(Idt::new());
+        let kernel_code = GDT.add_entry(GdtDescriptor::UserSegment((DescriptorFlags::USER_SEGMENT  |
+                                                                    DescriptorFlags::PRESENT       |
+                                                                    DescriptorFlags::EXECUTABLE    |
+                                                                    DescriptorFlags::LONG_MODE).bits()));
+        let tss = GDT.add_entry(GdtDescriptor::create_tss_segment(&mut TSS));
+        GDT.load(kernel_code, tss);
 
         /*
+         * Create the IDT.
+         *
          * Install exception handlers
          */
-        unwrap_option(&mut IDT).nmi()           .set_handler(wrap_handler!(nmi_handler),                            code_selector);
-        unwrap_option(&mut IDT).breakpoint()    .set_handler(wrap_handler!(breakpoint_handler),                     code_selector);
-        unwrap_option(&mut IDT).invalid_opcode().set_handler(wrap_handler!(invalid_opcode_handler),                 code_selector);
-        unwrap_option(&mut IDT).page_fault()    .set_handler(wrap_handler_with_error_code!(page_fault_handler),     code_selector);
-        unwrap_option(&mut IDT).double_fault()  .set_handler(wrap_handler_with_error_code!(double_fault_handler),   code_selector).set_ist_handler(DOUBLE_FAULT_IST_INDEX as u8);
+        IDT.nmi()           .set_handler(wrap_handler!(nmi_handler),                            kernel_code);
+        IDT.breakpoint()    .set_handler(wrap_handler!(breakpoint_handler),                     kernel_code);
+        IDT.invalid_opcode().set_handler(wrap_handler!(invalid_opcode_handler),                 kernel_code);
+        IDT.page_fault()    .set_handler(wrap_handler_with_error_code!(page_fault_handler),     kernel_code);
+        IDT.double_fault()  .set_handler(wrap_handler_with_error_code!(double_fault_handler),   kernel_code).set_ist_handler(DOUBLE_FAULT_IST_INDEX as u8);
 
         /*
          * Install handlers for local APIC interrupts
          */
-        unwrap_option(&mut IDT)[LOCAL_APIC_TIMER].set_handler(wrap_handler!(apic_timer_handler),        code_selector);
-        unwrap_option(&mut IDT)[APIC_SPURIOUS_INTERRUPT].set_handler(wrap_handler!(spurious_handler),   code_selector);
+        IDT[LOCAL_APIC_TIMER].set_handler(wrap_handler!(apic_timer_handler),        kernel_code);
+        IDT[APIC_SPURIOUS_INTERRUPT].set_handler(wrap_handler!(spurious_handler),   kernel_code);
 
         /*
          * Install handlers for ISA IRQs from the IOAPIC
          */
-        unwrap_option(&mut IDT).apic_irq(0).set_handler(wrap_handler!(pit_handler), code_selector);
-        unwrap_option(&mut IDT).apic_irq(1).set_handler(wrap_handler!(key_handler), code_selector);
+        IDT.apic_irq(0).set_handler(wrap_handler!(pit_handler), kernel_code);
+        IDT.apic_irq(1).set_handler(wrap_handler!(key_handler), kernel_code);
 
-        unwrap_option(&mut IDT).load();
+        IDT.load();
 
         /*
          * Unmask handled entries on the IOAPIC

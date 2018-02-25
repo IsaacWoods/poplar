@@ -38,17 +38,14 @@ pub type HandlerFunc = extern "C" fn () -> !;
 
 impl IdtEntry
 {
-    pub fn missing() -> IdtEntry
+    pub const fn missing() -> IdtEntry
     {
-        let mut flags : u8 = 0;
-        flags.set_bits(1..4, 0b111);    // Must be 1
-
         IdtEntry
         {
             address_0_15    : 0,
             gdt_selector    : 0,
             ist_offset      : 0,
-            flags           : flags,
+            flags           : 0b1110,
             address_16_31   : 0,
             address_32_63   : 0,
             reserved        : 0,
@@ -98,7 +95,7 @@ macro_rules! idt_entry
 
 impl Idt
 {
-    pub fn new() -> Idt
+    pub const fn new() -> Idt
     {
         Idt
         {
