@@ -236,7 +236,10 @@ InHigherHalf:
 
     ; Call into the kernel
     call kstart
+
     hlt
+.loop:
+    jmp .loop
 
 section .bss
 align 4096

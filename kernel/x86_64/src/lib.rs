@@ -66,7 +66,7 @@ impl Architecture for X86_64
 }
 
 #[no_mangle]
-pub extern fn kstart(multiboot_address : PhysicalAddress)
+pub extern fn kstart(multiboot_address : PhysicalAddress) -> !
 {
     use multiboot2::BootInformation;
 
@@ -128,6 +128,8 @@ pub extern fn kstart(multiboot_address : PhysicalAddress)
      */
     let arch = X86_64 { };
     kernel::kernel_main(arch);
+
+    loop { }
 }
 
 #[lang = "eh_personality"]
