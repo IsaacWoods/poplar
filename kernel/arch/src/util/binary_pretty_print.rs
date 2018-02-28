@@ -8,6 +8,9 @@ use core::{mem,fmt};
 
 pub struct BinaryPrettyPrint<T : fmt::Binary + PrimInt>(pub T);
 
+/*
+ * This prints the number in the form `00000000-00000000`
+ */
 impl<T : fmt::Binary + PrimInt> fmt::Display for BinaryPrettyPrint<T>
 {
     fn fmt(&self, f : &mut fmt::Formatter) -> fmt::Result
@@ -21,6 +24,27 @@ impl<T : fmt::Binary + PrimInt> fmt::Display for BinaryPrettyPrint<T>
             write!(f, "{:>08b}-", (self.0 >> (byte * 8)) & byte_mask);
         }
         write!(f, "{:>08b}", self.0 & byte_mask);
+
+        Ok(())
+    }
+}
+
+/*
+ * This prints the number in the form `00000000(8)-00000000(0)`
+ */
+impl<T : fmt::Binary + PrimInt> fmt::Debug for BinaryPrettyPrint<T>
+{
+    fn fmt(&self, f : &mut fmt::Formatter) -> fmt::Result
+    {
+        let byte_mask : T = T::from(0xff).unwrap();
+        let max_byte = mem::size_of::<T>() - 1;
+
+        for i in 0..max_byte
+        {
+            let byte = max_byte - i;
+            write!(f, "{:>08b}({})-", (self.0 >> (byte * 8)) & byte_mask, byte * 8);
+        }
+        write!(f, "{:>08b}(0)", self.0 & byte_mask);
 
         Ok(())
     }
