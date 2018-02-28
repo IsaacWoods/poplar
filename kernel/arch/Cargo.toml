@@ -3,4 +3,6 @@ name = "arch"
 version = "0.1.0"
 authors = ["Isaac Woods <isaacwoods.home@gmail.com>"]
 
-[dependencies]
+[dependencies.num-traits]
+version             = "*"
+default-features    = false

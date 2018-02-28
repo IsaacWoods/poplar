@@ -3,4 +3,5 @@
 
 [BITS 64]
 mov rax, 0xDEADBEEF
-ret
+loop:
+    jmp loop
