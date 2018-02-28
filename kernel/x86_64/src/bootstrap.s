@@ -119,6 +119,7 @@ CheckCpuidSupported:
     je .no_cpuid
     ret
 .no_cpuid:
+    ; TODO: print better error
     mov al, 'C'
     call PrintError
 
@@ -136,6 +137,7 @@ CheckLongModeSupported:
     jz .no_long_mode
     ret
 .no_long_mode:
+    ; TODO: print better error
     mov al, 'L'
     call PrintError
 
@@ -170,6 +172,7 @@ Start:
     ; Check that GRUB passed us the correct magic number
     cmp eax, 0x36d76289
     je .multiboot_fine
+    ; TODO: print better error
     mov al, 'M'
     call PrintError
 .multiboot_fine:
@@ -178,10 +181,11 @@ Start:
     call CheckLongModeSupported
     call EnablePaging
 
+    ; Print 'OK' for early debugging perposes
     mov dword [0xb8064], 0x2f4b2f4f
 
     ; We're now technically in Long-Mode, but we've been put in 32-bit compatibility submode until we
-    ; install a valid GDT. We can then far-jump into the new code segment (in real Long-Mode :P).
+    ; install a valid GDT. We can then far-jump into the new code segment and enter Long Mode for real.
     lgdt [gdt64.pointer]
     jmp 0x8:Trampoline
 
@@ -195,8 +199,7 @@ Trampoline:
     mov rax, gdt64.pointer + KERNEL_VMA
     lgdt [rax]
 
-    ; Long Mode doesn't need valid selectors, and in some cases having them will actually break
-    ; things e.g. iret checks for valid selectors, and our GDT won't match so we'd #GP
+    ; Until we install a real GDT, we'll zero all the data and stack selectors. We make sure to leave CS.
     xor ax, ax
     mov ds, ax
     mov es, ax
@@ -213,7 +216,7 @@ extern kstart
 InHigherHalf:
     ; Set up the real stack
     mov rbp, 0          ; Terminate stack-traces in the higher-half (makes no sense to go lower)
-    mov rsp, stack_top
+    mov rsp, _stack_top
 
     ; Unmap the identity-map and invalidate its TLB entries
     mov qword [boot_pml4], 0x0
@@ -237,16 +240,22 @@ InHigherHalf:
     ; Call into the kernel
     call kstart
 
-    hlt
+    ; TODO: print error message for returning from kernel
+    cli
 .loop:
+    hlt
     jmp .loop
 
 section .bss
 align 4096
-; We purposefully unmap this page to avoid the stack from overflowing into the space above this
+
+; We reserve a guard page, which is unmapped when we install the real page tables and will page-fault
+; if we overflow the kernel stack
 global _guard_page
+global _stack_bottom
+global _stack_top
 _guard_page:
     resb 4096       ; 1 page
-stack_bottom:
+_stack_bottom:
     resb 4096*4     ; 4 pages = 16kB
-stack_top:
+_stack_top:
