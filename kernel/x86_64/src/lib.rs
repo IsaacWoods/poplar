@@ -87,23 +87,6 @@ pub extern fn kstart(multiboot_address : PhysicalAddress) -> !
     let mut memory_controller = memory::init(&boot_info);
 
     /*
-     * We want to use the APIC, so we remap and disable the legacy PIC.
-     * XXX: We do this regardless of whether ACPI tells us we need to.
-     */
-    unsafe
-    {
-        let mut legacy_pic = i8259_pic::PIC_PAIR.lock();
-        legacy_pic.remap();
-        legacy_pic.disable();
-    }
-
-    /*
-     * We write 0 to CR8 (the Task Priority Register) to say that we want to recieve all
-     * interrupts.
-     */
-    unsafe { write_control_reg!(cr8, 0u64); }
-
-    /*
      * We can create and install a TSS and new GDT.
      *
      * Allocate a 4KiB stack for the double-fault handler. Using a separate stack for double-faults

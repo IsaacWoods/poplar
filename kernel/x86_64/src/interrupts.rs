@@ -157,6 +157,21 @@ pub fn init<A>(memory_controller    : &mut MemoryController<A>,
     unsafe
     {
         /*
+         * We want to use the APIC, so we remap and disable the legacy PIC.
+         * XXX: We do this regardless of whether ACPI tells us we need to, because some chipsets
+         *      lie.
+         */
+        let mut legacy_pic = ::i8259_pic::PIC_PAIR.lock();
+        legacy_pic.remap();
+        legacy_pic.disable();
+
+        /*
+         * We write 0 to CR8 (the Task Priority Register) to say that we want to recieve all
+         * interrupts.
+         */
+        write_control_reg!(cr8, 0u64);
+
+        /*
          * Install exception handlers
          */
         IDT.nmi()                       .set_handler(wrap_handler!(nmi_handler),                                        gdt_selectors.kernel_code);
