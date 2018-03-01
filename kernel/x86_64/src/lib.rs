@@ -12,6 +12,7 @@
 #![feature(core_intrinsics)]
 #![feature(alloc)]
 #![feature(use_nested_groups)]
+#![feature(type_ascription)]
 
 /*
  * `rlibc` just provides intrinsics that are linked against, and so the compiler doesn't pick up
@@ -44,6 +45,7 @@
                 mod port;
                 mod multiboot2;
                 mod acpi;
+                mod user_mode;
 
 pub use panic::panic_fmt;
 
@@ -52,6 +54,7 @@ use acpi::AcpiInfo;
 use arch::Architecture;
 use gdt::{Gdt,GdtSelectors};
 use tss::Tss;
+use user_mode::enter_usermode;
 
 struct X86_64
 {
@@ -109,28 +112,25 @@ pub extern fn kstart(multiboot_address : PhysicalAddress) -> !
     let acpi_info = AcpiInfo::new(&boot_info, &mut memory_controller);
     interrupts::init(&mut memory_controller, &gdt_selectors);
     apic::LOCAL_APIC.lock().enable_timer(6);
-
-    info!("Framebuffer: {:#?}", boot_info.framebuffer_info());
-
-    for module_tag in boot_info.modules()
-    {
-        info!("Running module: {}", module_tag.name());
-        let virtual_address = module_tag.start_address().into_kernel_space();
-        let code : unsafe extern "C" fn() -> u32 = unsafe
-                                                   {
-                                                       core::mem::transmute(virtual_address.ptr() as *const ())
-                                                   };
-        let result : u32 = unsafe { (code)() };
-        info!("Result was {:#x}", result);
-    }
-
     unsafe { asm!("sti"); }
+
+    let module_tag = boot_info.modules().nth(0).unwrap();
+    info!("Running module: {}", module_tag.name());
+    let virtual_address = module_tag.start_address().into_kernel_space();
+    trace!("{}", unsafe { core::ptr::read(virtual_address.ptr() as *const u8) });
+    unsafe { enter_usermode(virtual_address, gdt_selectors); }
+/*    let code : unsafe extern "C" fn() -> u32 = unsafe
+                                               {
+                                                   core::mem::transmute(virtual_address.ptr() as *const ())
+                                               };
+    let result : u32 = unsafe { (code)() };
+    info!("Result was {:#x}", result);*/
 
     /*
      * Pass control to the kernel proper.
      */
-    let arch = X86_64 { };
-    kernel::kernel_main(arch);
+/*    let arch = X86_64 { };
+    kernel::kernel_main(arch);*/
 
     loop { }
 }
