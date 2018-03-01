@@ -4,8 +4,7 @@
  */
 
 use core::fmt;
-use tss::Tss;
-use gdt::{Gdt,GdtDescriptor,DescriptorFlags};
+use gdt::GdtSelectors;
 use idt::Idt;
 use memory::{FrameAllocator,MemoryController};
 use port::Port;
@@ -149,64 +148,35 @@ macro_rules! wrap_handler_with_error_code
     }}
 }
 
-const DOUBLE_FAULT_IST_INDEX : usize = 0;
-
-static mut TSS : Tss = Tss::new();
-static mut GDT : Gdt = Gdt::new();
 static mut IDT : Idt = Idt::new();
 
-pub fn init<A>(memory_controller : &mut MemoryController<A>) where A : FrameAllocator
+pub fn init<A>(memory_controller    : &mut MemoryController<A>,
+               gdt_selectors        : &GdtSelectors)
+    where A : FrameAllocator
 {
-    /*
-     * Allocate a 4KiB stack for the double-fault handler. Using a separate stack avoids a triple
-     * fault happening when the guard page of the normal stack is hit (after a stack overflow),
-     * which would otherwise:
-     *      Page Fault -> Page Fault -> Double Fault -> Page Fault -> Triple Fault
-     */
-    let double_fault_stack = memory_controller.alloc_stack(1).expect("Failed to allocate stack");
-
     unsafe
     {
         /*
-         * Create the TSS
-         */
-        TSS.interrupt_stack_table[DOUBLE_FAULT_IST_INDEX] = double_fault_stack.top();
-
-        /*
-         * We need a new GDT, because the current one resides in the bootstrap and so is now not
-         * mapped into the address space.
-         * XXX: We don't bother creating a new data segment. This relies on all the segment
-         * registers (*especially SS*) being cleared (which should've been done in the bootstrap).
-         */
-        let kernel_code = GDT.add_entry(GdtDescriptor::UserSegment((DescriptorFlags::USER_SEGMENT  |
-                                                                    DescriptorFlags::PRESENT       |
-                                                                    DescriptorFlags::EXECUTABLE    |
-                                                                    DescriptorFlags::LONG_MODE).bits()));
-        let tss = GDT.add_entry(GdtDescriptor::create_tss_segment(&mut TSS));
-        GDT.load(kernel_code, tss);
-
-        /*
-         * Create the IDT.
-         *
          * Install exception handlers
          */
-        IDT.nmi()           .set_handler(wrap_handler!(nmi_handler),                            kernel_code);
-        IDT.breakpoint()    .set_handler(wrap_handler!(breakpoint_handler),                     kernel_code);
-        IDT.invalid_opcode().set_handler(wrap_handler!(invalid_opcode_handler),                 kernel_code);
-        IDT.page_fault()    .set_handler(wrap_handler_with_error_code!(page_fault_handler),     kernel_code);
-        IDT.double_fault()  .set_handler(wrap_handler_with_error_code!(double_fault_handler),   kernel_code).set_ist_handler(DOUBLE_FAULT_IST_INDEX as u8);
+        IDT.nmi()                       .set_handler(wrap_handler!(nmi_handler),                                        gdt_selectors.kernel_code);
+        IDT.breakpoint()                .set_handler(wrap_handler!(breakpoint_handler),                                 gdt_selectors.kernel_code);
+        IDT.invalid_opcode()            .set_handler(wrap_handler!(invalid_opcode_handler),                             gdt_selectors.kernel_code);
+        IDT.general_protection_fault()  .set_handler(wrap_handler_with_error_code!(general_protection_fault_handler),   gdt_selectors.kernel_code);
+        IDT.page_fault()                .set_handler(wrap_handler_with_error_code!(page_fault_handler),                 gdt_selectors.kernel_code);
+        IDT.double_fault()              .set_handler(wrap_handler_with_error_code!(double_fault_handler),               gdt_selectors.kernel_code).set_ist_handler(::tss::DOUBLE_FAULT_IST_INDEX as u8);
 
         /*
          * Install handlers for local APIC interrupts
          */
-        IDT[LOCAL_APIC_TIMER].set_handler(wrap_handler!(apic_timer_handler),        kernel_code);
-        IDT[APIC_SPURIOUS_INTERRUPT].set_handler(wrap_handler!(spurious_handler),   kernel_code);
+        IDT[LOCAL_APIC_TIMER].set_handler(wrap_handler!(apic_timer_handler),        gdt_selectors.kernel_code);
+        IDT[APIC_SPURIOUS_INTERRUPT].set_handler(wrap_handler!(spurious_handler),   gdt_selectors.kernel_code);
 
         /*
          * Install handlers for ISA IRQs from the IOAPIC
          */
-        IDT.apic_irq(0).set_handler(wrap_handler!(pit_handler), kernel_code);
-        IDT.apic_irq(1).set_handler(wrap_handler!(key_handler), kernel_code);
+        IDT.apic_irq(0).set_handler(wrap_handler!(pit_handler), gdt_selectors.kernel_code);
+        IDT.apic_irq(1).set_handler(wrap_handler!(key_handler), gdt_selectors.kernel_code);
 
         IDT.load();
 

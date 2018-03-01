@@ -116,7 +116,7 @@ impl Idt
     idt_entry!(invalid_tss                  , 10);
     idt_entry!(segment_not_present          , 11);
     idt_entry!(stack_segment_fault          , 12);
-    idt_entry!(general_proctection_fault    , 13);
+    idt_entry!(general_protection_fault     , 13);
     idt_entry!(page_fault                   , 14);
     // XXX: 15 is reserved by Intel
     idt_entry!(x87_fault                    , 16);

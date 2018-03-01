@@ -50,6 +50,8 @@ pub use panic::panic_fmt;
 use memory::paging::PhysicalAddress;
 use acpi::AcpiInfo;
 use arch::Architecture;
+use gdt::{Gdt,GdtSelectors};
+use tss::Tss;
 
 struct X86_64
 {
@@ -64,6 +66,8 @@ impl Architecture for X86_64
         vga_buffer::WRITER.lock().clear_buffer();
     }
 }
+
+static mut TSS : Tss = Tss::new();
 
 #[no_mangle]
 pub extern fn kstart(multiboot_address : PhysicalAddress) -> !
@@ -100,11 +104,27 @@ pub extern fn kstart(multiboot_address : PhysicalAddress) -> !
     unsafe { write_control_reg!(cr8, 0u64); }
 
     /*
+     * We can create and install a TSS and new GDT.
+     *
+     * Allocate a 4KiB stack for the double-fault handler. Using a separate stack for double-faults
+     * avoids a triple fault happening when the guard page of the normal stack is hit (after a stack
+     * overflow), which would otherwise:
+     *      Page Fault -> Page Fault -> Double Fault -> Page Fault -> Triple Fault
+     */
+    let double_fault_stack = memory_controller.alloc_stack(1).expect("Failed to allocate stack");
+    unsafe
+    {
+        TSS.interrupt_stack_table[tss::DOUBLE_FAULT_IST_INDEX] = double_fault_stack.top();
+        TSS.privilege_stack_table[0] = memory::get_kernel_stack_top();    // TODO: do we need to update this to the top of the kernel stack on ring0 exit?
+    }
+    let gdt_selectors = Gdt::install(unsafe { &mut TSS });
+
+    /*
      * We now find and parse the ACPI tables. This also initialises the local APIC and IOAPIC, as
      * they are detailed by the MADT.
      */
     let acpi_info = AcpiInfo::new(&boot_info, &mut memory_controller);
-    interrupts::init(&mut memory_controller);
+    interrupts::init(&mut memory_controller, &gdt_selectors);
     apic::LOCAL_APIC.lock().enable_timer(6);
 
     info!("Framebuffer: {:#?}", boot_info.framebuffer_info());

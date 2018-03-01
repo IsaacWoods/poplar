@@ -17,6 +17,26 @@ use self::paging::PAGE_SIZE;
 use hole_tracking_allocator::ALLOCATOR;
 use multiboot2::BootInformation;
 
+extern
+{
+    /*
+     * The ADDRESSES of these symbols are the top and bottom of the stack, respectively.
+     * They are defined by the bootloader asm.
+     */
+    static _stack_bottom    : u8;
+    static _stack_top       : u8;
+}
+
+pub fn get_kernel_stack_bottom() -> VirtualAddress
+{
+    VirtualAddress::new(unsafe { (&_stack_bottom) } as *const u8 as usize)
+}
+
+pub fn get_kernel_stack_top() -> VirtualAddress
+{
+    VirtualAddress::new(unsafe { (&_stack_top) } as *const u8 as usize)
+}
+
 pub fn init(boot_info : &BootInformation) -> MemoryController<AreaFrameAllocator>
 {
     assert_first_call!("memory::init() should only be called once");
