@@ -314,8 +314,6 @@ pub fn remap_kernel<A>(allocator : &mut A,
 
             /*
              * Map the Multiboot structure to KERNEL_VMA + its physical address
-             * XXX: We still need to keep this around because the frame allocator needs the memory
-             *      map this provides
              */
             mapper.identity_map_range(boot_info.physical_start()..boot_info.physical_end(),
                                       EntryFlags::PRESENT,

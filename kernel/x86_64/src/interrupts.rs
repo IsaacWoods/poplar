@@ -234,22 +234,37 @@ extern "C" fn breakpoint_handler(stack_frame : &ExceptionStackFrame)
     info!("BREAKPOINT: {:#?}", stack_frame);
 }
 
+extern "C" fn general_protection_fault_handler(stack_frame : &ExceptionStackFrame, error_code : u64)
+{
+    error!("General protection fault: (error code = {:#x})", error_code);
+    error!("{:#?}", stack_frame);
+    loop { }
+}
+
 extern "C" fn page_fault_handler(stack_frame : &ExceptionStackFrame, error_code  : u64)
 {
-    error!("PAGE_FAULT: {} ({:#x})", match (/*  P  (Present        ) */(error_code >> 0) & 0b1,
-                                              /* R/W (Read/Write     ) */(error_code >> 1) & 0b1,
-                                              /* U/S (User/Supervisor) */(error_code >> 2) & 0b1)
+    error!("PAGE_FAULT: {} ({:#x})", match (/* U/S (User/Supervisor )*/(error_code >> 2) & 0b1,
+                                            /* I/D (Instruction/Data)*/(error_code >> 4) & 0b1,
+                                            /* R/W (Read/Write      )*/(error_code >> 1) & 0b1,
+                                            /*  P  (Present         )*/(error_code >> 0) & 0b1)
     {
-        (0, 0, 0) => "Kernel tried to read a non-present page"                                      ,
-        (0, 0, 1) => "Kernel tried to read a non-present page, causing a protection fault"          ,
-        (0, 1, 0) => "Kernel tried to write to a non-present page"                                  ,
-        (0, 1, 1) => "Kernel tried to write to a non-present page, causing a protection fault"      ,
-        (1, 0, 0) => "User process tried to read a non-present page"                                ,
-        (1, 0, 1) => "User process tried to read a non-present page, causing a protection fault"    ,
-        (1, 1, 0) => "User process tried to write to a non-present page"                            ,
-        (1, 1, 1) => "User process tried to write to a non-present page, causing a protection fault",
+        // Page faults caused by the kernel
+        (0, 0, 0, 0) => "Kernel read non-present page",
+        (0, 0, 0, 1) => "Kernel read present page",
+        (0, 0, 1, 0) => "Kernel wrote to non-present page",
+        (0, 0, 1, 1) => "Kernel wrote to present page",
+        (0, 1, _, 0) => "Kernel fetched instruction from non-present page",
+        (0, 1, _, 1) => "Kernel fetched instruction from present page",
 
-        (_, _, _) => { panic!("UNRECOGNISED PAGE-FAULT ERROR CODE"); },
+        // Page faults caused by user processes
+        (1, 0, 0, 0) => "User process read non-present page",
+        (1, 0, 0, 1) => "User process read present page (probable access violation)",
+        (1, 0, 1, 0) => "User process wrote to non-present page",
+        (1, 0, 1, 1) => "User process wrote to present page (probable access violation)",
+        (1, 1, _, 0) => "User process fetched instruction from non-present page",
+        (1, 1, _, 1) => "User process fetched instruction from present page (probable access violation)",
+
+        (_, _, _, _) => { panic!("INVALID PAGE-FAULT ERROR CODE"); },
     },
     read_control_reg!(cr2));    // CR2 holds the address of the page that caused the #PF
 
