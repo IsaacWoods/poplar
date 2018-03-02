@@ -26,8 +26,7 @@
                 extern crate bit_field;
                 extern crate hole_tracking_allocator;
 #[macro_use]    extern crate log;
-#[macro_use]    extern crate arch;
-                extern crate kernel;
+#[macro_use]    extern crate kernel;
 
 #[macro_use]    mod control_reg;
 #[macro_use]    mod vga_buffer;
@@ -50,7 +49,7 @@ pub use panic::panic_fmt;
 
 use memory::paging::PhysicalAddress;
 use acpi::AcpiInfo;
-use arch::Architecture;
+use kernel::Architecture;
 use gdt::Gdt;
 use tss::Tss;
 use user_mode::enter_usermode;

@@ -11,9 +11,10 @@ spin        = "*"
 bitflags    = "*"
 bit_field   = "*"
 
-[dependencies.log]
+[dependencies.num-traits]
 version             = "*"
 default-features    = false
 
-[dependencies.arch]
-path = "arch"
+[dependencies.log]
+version             = "*"
+default-features    = false

@@ -11,7 +11,7 @@
 #![feature(global_allocator)]
 #![feature(pointer_methods)]
 
-#[macro_use] extern crate arch;
+#[macro_use] extern crate kernel;
              extern crate alloc;
              extern crate spin;
 

@@ -12,13 +12,15 @@
                 extern crate spin;
                 extern crate bitflags;
                 extern crate bit_field;
+                extern crate num_traits;
                 extern crate alloc;
 #[macro_use]    extern crate log;
-                extern crate arch;
 
 mod process;
+mod arch;
+mod util;
 
-use arch::Architecture;
+pub use arch::Architecture;
 
 pub fn kernel_main<A>(architecture : A)
     where A : Architecture

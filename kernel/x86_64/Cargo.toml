@@ -24,8 +24,5 @@ default-features    = false
 [dependencies.hole_tracking_allocator]
 path = "../hole_tracking_allocator"
 
-[dependencies.arch]
-path = "../arch"
-
 [dependencies.kernel]
 path = ".."
