@@ -6,7 +6,6 @@
 use core::fmt;
 use gdt::GdtSelectors;
 use idt::Idt;
-use memory::{FrameAllocator,MemoryController};
 use port::Port;
 use apic::{LOCAL_APIC,IO_APIC};
 
@@ -150,9 +149,7 @@ macro_rules! wrap_handler_with_error_code
 
 static mut IDT : Idt = Idt::new();
 
-pub fn init<A>(memory_controller    : &mut MemoryController<A>,
-               gdt_selectors        : &GdtSelectors)
-    where A : FrameAllocator
+pub fn init(gdt_selectors : &GdtSelectors)
 {
     unsafe
     {

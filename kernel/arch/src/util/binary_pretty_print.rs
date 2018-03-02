@@ -21,9 +21,9 @@ impl<T : fmt::Binary + PrimInt> fmt::Display for BinaryPrettyPrint<T>
         for i in 0..max_byte
         {
             let byte = max_byte - i;
-            write!(f, "{:>08b}-", (self.0 >> (byte * 8)) & byte_mask);
+            write!(f, "{:>08b}-", (self.0 >> (byte * 8)) & byte_mask).unwrap();
         }
-        write!(f, "{:>08b}", self.0 & byte_mask);
+        write!(f, "{:>08b}", self.0 & byte_mask).unwrap();
 
         Ok(())
     }
@@ -42,9 +42,9 @@ impl<T : fmt::Binary + PrimInt> fmt::Debug for BinaryPrettyPrint<T>
         for i in 0..max_byte
         {
             let byte = max_byte - i;
-            write!(f, "{:>08b}({})-", (self.0 >> (byte * 8)) & byte_mask, byte * 8);
+            write!(f, "{:>08b}({})-", (self.0 >> (byte * 8)) & byte_mask, byte * 8).unwrap();
         }
-        write!(f, "{:>08b}(0)", self.0 & byte_mask);
+        write!(f, "{:>08b}(0)", self.0 & byte_mask).unwrap();
 
         Ok(())
     }

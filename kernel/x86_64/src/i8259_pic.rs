@@ -19,6 +19,7 @@ struct Pic
 
 impl Pic
 {
+    #[allow(unused)]
     unsafe fn send_eoi(&mut self)
     {
         self.command_port.write(0x20);
@@ -85,6 +86,7 @@ impl PicPair
         self.1.data_port.write(slave_mask);
     }
 
+    #[allow(unused)]
     pub unsafe fn send_eoi(&mut self, id : u8)
     {
         if id >= self.1.vector_offset

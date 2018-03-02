@@ -151,7 +151,7 @@ impl Rsdt
             {
                 b"FACP" => fadt::parse_fadt(sdt_pointer, acpi_info),
                 b"APIC" => madt::parse_madt(sdt_pointer, acpi_info, memory_controller),
-                _      => warn!("Unhandled SDT type: {}", signature),
+                _       => warn!("Unhandled SDT type: {}", signature),
             }
 
             temporary_page.unmap(&mut memory_controller.active_table);

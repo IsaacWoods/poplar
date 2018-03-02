@@ -216,7 +216,7 @@ extern kstart
 InHigherHalf:
     ; Set up the real stack
     mov rbp, 0          ; Terminate stack-traces in the higher-half (makes no sense to go lower)
-    mov rsp, _stack_top
+    mov rsp, _kernel_stack_top
 
     ; Unmap the identity-map and invalidate its TLB entries
     mov qword [boot_pml4], 0x0
@@ -252,10 +252,9 @@ align 4096
 ; We reserve a guard page, which is unmapped when we install the real page tables and will page-fault
 ; if we overflow the kernel stack
 global _guard_page
-global _stack_bottom
-global _stack_top
+global _kernel_stack_top
 _guard_page:
     resb 4096       ; 1 page
-_stack_bottom:
+stack_bottom:
     resb 4096*4     ; 4 pages = 16kB
-_stack_top:
+_kernel_stack_top:

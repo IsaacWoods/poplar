@@ -14,7 +14,7 @@
                 extern crate bit_field;
                 extern crate alloc;
 #[macro_use]    extern crate log;
-#[macro_use]    extern crate arch;
+                extern crate arch;
 
 mod process;
 

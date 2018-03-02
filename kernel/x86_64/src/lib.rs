@@ -11,7 +11,6 @@
 #![feature(naked_functions)]
 #![feature(core_intrinsics)]
 #![feature(alloc)]
-#![feature(use_nested_groups)]
 #![feature(type_ascription)]
 
 /*
@@ -22,7 +21,7 @@
 
                 extern crate volatile;
                 extern crate spin;
-#[macro_use]    extern crate alloc;
+                extern crate alloc;
 #[macro_use]    extern crate bitflags;
                 extern crate bit_field;
                 extern crate hole_tracking_allocator;
@@ -52,7 +51,7 @@ pub use panic::panic_fmt;
 use memory::paging::PhysicalAddress;
 use acpi::AcpiInfo;
 use arch::Architecture;
-use gdt::{Gdt,GdtSelectors};
+use gdt::Gdt;
 use tss::Tss;
 use user_mode::enter_usermode;
 
@@ -110,7 +109,7 @@ pub extern fn kstart(multiboot_address : PhysicalAddress) -> !
      * they are detailed by the MADT.
      */
     let acpi_info = AcpiInfo::new(&boot_info, &mut memory_controller);
-    interrupts::init(&mut memory_controller, &gdt_selectors);
+    interrupts::init(&gdt_selectors);
     apic::LOCAL_APIC.lock().enable_timer(6);
     unsafe { asm!("sti"); }
 
@@ -122,10 +121,10 @@ pub extern fn kstart(multiboot_address : PhysicalAddress) -> !
     /*
      * Pass control to the kernel proper.
      */
-/*    let arch = X86_64 { };
-    kernel::kernel_main(arch);*/
+    // let arch = X86_64 { };
+    // kernel::kernel_main(arch);
 
-    loop { }
+    // loop { }
 }
 
 #[lang = "eh_personality"]

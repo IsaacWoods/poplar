@@ -8,6 +8,7 @@ use volatile::Volatile;
 use spin::Mutex;
 use memory::paging::{PhysicalAddress,VirtualAddress};
 
+#[allow(unused)]
 pub fn print(args : fmt::Arguments)
 {
     use core::fmt::Write;

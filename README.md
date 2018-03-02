@@ -4,12 +4,12 @@ It is currently very early in development, but future plans are summarised in th
 
 # Dependencies
 To build Pebble, you will need:
-* Nightly `rustc` - tested with `rustc 1.25.0-nightly` (if Pebble fails to build with a later nightly, please open an issue!)
+* Nightly `rustc` - tested with `rustc 1.26.0-nightly` (if Pebble fails to build with a later nightly, please open an issue!)
 * Xargo - run `cargo install xargo`
 * The Rust source code - run `rustup component add rust-src`
 * `grub2-mkrescue` - this should already be installed on systems that are booted by GRUB2
-* [for running `make run`] `qemu-system-x86_64`
-* [for running `make gdb`] [`rust-gdb`](https://github.com/phil-opp/binutils-gdb#gdb-for-64-bit-rust-operating-systems)
+* [for `make run`] `qemu-system-x86_64`
+* [for `make gdb`] [`rust-gdb`](https://github.com/phil-opp/binutils-gdb#gdb-for-64-bit-rust-operating-systems)
 
 # Features / Roadmap
 - [x] Kernel support for `alloc` crate

@@ -179,13 +179,14 @@ pub(super) fn parse_madt<A>(ptr                : *const SdtHeader,
                  * now.
                  */
                 trace!("Found MADT entry: local APIC address override (type=5)");
-                let entry = unsafe { ptr::read_unaligned(entry_address.ptr() as *const LocalApicAddressOverrideEntry) };
-                let local_apic_address_override = PhysicalAddress::new(entry.address as usize);
-                panic!("We don't support systems with overridden local APIC addresses: {:#x}", local_apic_address_override);
-                entry_address = entry_address.offset(12);
+                panic!("We don't support systems where the local APIC has been overridden!");
+
+                // let entry = unsafe { ptr::read_unaligned(entry_address.ptr() as *const LocalApicAddressOverrideEntry) };
+                // let local_apic_address_override = PhysicalAddress::new(entry.address as usize);
+                // entry_address = entry_address.offset(12);
             },
 
-            _ => panic!("Unknown MADT entry type: {}", header.entry_type),
+            _ => warn!("Unknown MADT entry type: '{}'. Ignoring.", header.entry_type),
         }
     }
 }

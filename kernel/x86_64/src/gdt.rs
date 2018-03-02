@@ -81,7 +81,7 @@ struct SystemSegment(u64,u64);
 #[repr(packed)]
 pub struct Gdt
 {
-    null        : UserSegment,
+    _null       : UserSegment,
     kernel_code : UserSegment,
     kernel_data : UserSegment,
     user_code   : UserSegment,
@@ -107,7 +107,7 @@ impl Gdt
     {
         Gdt
         {
-            null        : UserSegment(0),
+            _null       : UserSegment(0),
             kernel_code : UserSegment(0),
             kernel_data : UserSegment(0),
             user_code   : UserSegment(0),
@@ -122,11 +122,11 @@ impl Gdt
 
         unsafe
         {
-            GDT.kernel_code = Gdt::create_code_segment(PrivilegeLevel::Ring0);      // 0x8
-            GDT.kernel_data = Gdt::create_data_segment(PrivilegeLevel::Ring0);      // 0x10
-            GDT.user_code   = Gdt::create_code_segment(PrivilegeLevel::Ring3);      // 0x18
-            GDT.user_data   = Gdt::create_data_segment(PrivilegeLevel::Ring3);      // 0x20
-            GDT.tss         = Gdt::create_tss_segment(tss, PrivilegeLevel::Ring0);  // 0x28
+            GDT.kernel_code = Gdt::create_code_segment(PrivilegeLevel::Ring0);  // 0x8
+            GDT.kernel_data = Gdt::create_data_segment(PrivilegeLevel::Ring0);  // 0x10
+            GDT.user_code   = Gdt::create_code_segment(PrivilegeLevel::Ring3);  // 0x18
+            GDT.user_data   = Gdt::create_data_segment(PrivilegeLevel::Ring3);  // 0x20
+            GDT.tss         = Gdt::create_tss_segment(tss);                     // 0x28
         }
 
         let selectors = GdtSelectors
@@ -199,7 +199,7 @@ impl Gdt
         UserSegment(flags.bits() | ((privilege_level.into() : u16) as u64) << 45)
     }
 
-    fn create_tss_segment(tss : &'static Tss, privilege_level : PrivilegeLevel) -> SystemSegment
+    fn create_tss_segment(tss : &'static Tss) -> SystemSegment
     {
         let ptr = (tss as *const _) as u64;
         let mut low = DescriptorFlags::PRESENT.bits();

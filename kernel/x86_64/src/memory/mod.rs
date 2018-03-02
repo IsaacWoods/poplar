@@ -20,21 +20,14 @@ use multiboot2::BootInformation;
 extern
 {
     /*
-     * The ADDRESSES of these symbols are the top and bottom of the stack, respectively.
-     * They are defined by the bootloader asm.
+     * The ADDRESS of this symbol is the top of the kernel stack;
      */
-    static _stack_bottom    : u8;
-    static _stack_top       : u8;
-}
-
-pub fn get_kernel_stack_bottom() -> VirtualAddress
-{
-    VirtualAddress::new(unsafe { (&_stack_bottom) } as *const u8 as usize)
+    static _kernel_stack_top : u8;
 }
 
 pub fn get_kernel_stack_top() -> VirtualAddress
 {
-    VirtualAddress::new(unsafe { (&_stack_top) } as *const u8 as usize)
+    VirtualAddress::new(unsafe { (&_kernel_stack_top) } as *const u8 as usize)
 }
 
 pub fn init(boot_info : &BootInformation) -> MemoryController<AreaFrameAllocator>
