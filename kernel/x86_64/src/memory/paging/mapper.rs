@@ -130,9 +130,9 @@ impl Mapper
             let p1 = p2.next_table_create(page.p2_index(), allocator);
 
             if p1[page.p1_index()].is_unused() ||
-               (p1[page.p1_index()].flags().is_compatible(flags | EntryFlags::PRESENT))
+               (p1[page.p1_index()].flags().is_compatible(flags | EntryFlags::default()))
             {
-                p1[page.p1_index()].set(frame, flags | EntryFlags::PRESENT);
+                p1[page.p1_index()].set(frame, flags | EntryFlags::default());
                 tlb::invalidate_page(page.start_address());
             }
             else
@@ -157,7 +157,7 @@ impl Mapper
         let p1 = p2.next_table_create(page.p2_index(), allocator);
 
         assert!(p1[page.p1_index()].is_unused(), "Tried to map a page that has already been mapped: {:#x}", page.start_address());
-        p1[page.p1_index()].set(frame, flags | EntryFlags::PRESENT);
+        p1[page.p1_index()].set(frame, flags | EntryFlags::default());
         tlb::invalidate_page(page.start_address());
     }
 }

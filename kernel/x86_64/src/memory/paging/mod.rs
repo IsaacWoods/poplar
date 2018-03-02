@@ -308,13 +308,15 @@ pub fn remap_kernel<A>(allocator : &mut A,
                                                                module_tag.end_address());
 
                 mapper.identity_map_range(module_tag.start_address()..module_tag.end_address(),
-                                          EntryFlags::PRESENT,
+                                          EntryFlags::PRESENT | EntryFlags::USER_ACCESSIBLE,
                                           allocator);
             }
 
             /*
              * Map the Multiboot structure to KERNEL_VMA + its physical address
              */
+            trace!("Mapping Multiboot structure to {:#x}-{:#x}", boot_info.physical_start().into_kernel_space(),
+                                                                 boot_info.physical_end().into_kernel_space());
             mapper.identity_map_range(boot_info.physical_start()..boot_info.physical_end(),
                                       EntryFlags::PRESENT,
                                       allocator);

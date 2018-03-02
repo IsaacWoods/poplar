@@ -117,14 +117,7 @@ pub extern fn kstart(multiboot_address : PhysicalAddress) -> !
     let module_tag = boot_info.modules().nth(0).unwrap();
     info!("Running module: {}", module_tag.name());
     let virtual_address = module_tag.start_address().into_kernel_space();
-    trace!("{}", unsafe { core::ptr::read(virtual_address.ptr() as *const u8) });
     unsafe { enter_usermode(virtual_address, gdt_selectors); }
-/*    let code : unsafe extern "C" fn() -> u32 = unsafe
-                                               {
-                                                   core::mem::transmute(virtual_address.ptr() as *const ())
-                                               };
-    let result : u32 = unsafe { (code)() };
-    info!("Result was {:#x}", result);*/
 
     /*
      * Pass control to the kernel proper.

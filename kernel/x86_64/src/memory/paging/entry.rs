@@ -25,6 +25,15 @@ bitflags!
     }
 }
 
+impl Default for EntryFlags
+{
+    fn default() -> EntryFlags
+    {
+        // TODO: this shouldn't make all pages user-accessible
+        EntryFlags::PRESENT | EntryFlags::USER_ACCESSIBLE
+    }
+}
+
 impl EntryFlags
 {
     pub fn from_elf_section(section : &ElfSection) -> EntryFlags
