@@ -6,7 +6,7 @@
 use core::mem::size_of;
 use core::ops::{Index,IndexMut};
 use bit_field::BitField;
-use gdt::SegmentSelector;
+use gdt::{SegmentSelector,PrivilegeLevel};
 
 /*
  * `flags` looks like:
@@ -45,14 +45,16 @@ impl IdtEntry
             address_0_15    : 0,
             gdt_selector    : 0,
             ist_offset      : 0,
-            flags           : 0b1110,
+            flags           : 0b00001110,
             address_16_31   : 0,
             address_32_63   : 0,
             reserved        : 0,
         }
     }
 
-    pub fn set_handler(&mut self, handler : HandlerFunc, code_selector : SegmentSelector) -> &mut Self
+    pub fn set_handler(&mut self,
+                       handler          : HandlerFunc,
+                       code_selector    : SegmentSelector) -> &mut Self
     {
         let mut flags : u8 = 0;
         flags.set_bits(1..4, 0b111);    // Must be 1
@@ -72,6 +74,12 @@ impl IdtEntry
     pub fn set_ist_handler(&mut self, stack_offset : u8) -> &mut Self
     {
         self.ist_offset = stack_offset;
+        self
+    }
+
+    pub fn set_privilege_level(&mut self, privilege_level : PrivilegeLevel) -> &mut Self
+    {
+        self.flags.set_bits(5..7, privilege_level.into() : u8);
         self
     }
 }

@@ -8,7 +8,7 @@ use core::ops::{Add,Sub};
 use core::cmp::Ordering;
 use ::memory::FRAME_SIZE;
 
-#[derive(Clone,Copy,Debug)]
+#[derive(Clone,Copy)]
 pub struct PhysicalAddress(pub(super) usize);
 
 impl PhysicalAddress
@@ -49,7 +49,7 @@ impl fmt::LowerHex for PhysicalAddress
 {
     fn fmt(&self, f : &mut fmt::Formatter) -> fmt::Result
     {
-        write!(f, "{:x}", self.0)
+        write!(f, "{:#x}", self.0)
     }
 }
 
@@ -57,7 +57,15 @@ impl fmt::UpperHex for PhysicalAddress
 {
     fn fmt(&self, f : &mut fmt::Formatter) -> fmt::Result
     {
-        write!(f, "{:x}", self.0)
+        write!(f, "{:#X}", self.0)
+    }
+}
+
+impl fmt::Debug for PhysicalAddress
+{
+    fn fmt(&self, f : &mut fmt::Formatter) -> fmt::Result
+    {
+        write!(f, "{:#x}", self)
     }
 }
 

@@ -8,7 +8,7 @@ use core::ops::{Add,Sub};
 use core::cmp::Ordering;
 use super::PAGE_SIZE;
 
-#[derive(Clone,Copy,Debug)]
+#[derive(Clone,Copy)]
 pub struct VirtualAddress(pub(super) usize);
 
 impl VirtualAddress
@@ -24,11 +24,11 @@ impl VirtualAddress
                                          p1     : usize,
                                          offset : usize) -> VirtualAddress
     {
-        VirtualAddress::new((p4<<39) |
-                            (p3<<30) |
-                            (p2<<21) |
-                            (p1<<12) |
-                            (offset<<0)).canonicalise()
+        VirtualAddress::new((p4 << 39) |
+                            (p3 << 30) |
+                            (p2 << 21) |
+                            (p1 << 12) |
+                            (offset << 0)).canonicalise()
     }
 
     pub const fn ptr<T>(self) -> *const T
@@ -82,7 +82,7 @@ impl fmt::LowerHex for VirtualAddress
 {
     fn fmt(&self, f : &mut fmt::Formatter) -> fmt::Result
     {
-        write!(f, "{:x}", self.0)
+        write!(f, "{:#x}", self.0)
     }
 }
 
@@ -90,7 +90,15 @@ impl fmt::UpperHex for VirtualAddress
 {
     fn fmt(&self, f : &mut fmt::Formatter) -> fmt::Result
     {
-        write!(f, "{:x}", self.0)
+        write!(f, "{:#X}", self.0)
+    }
+}
+
+impl fmt::Debug for VirtualAddress
+{
+    fn fmt(&self, f : &mut fmt::Formatter) -> fmt::Result
+    {
+        write!(f, "{:#x}", self)
     }
 }
 

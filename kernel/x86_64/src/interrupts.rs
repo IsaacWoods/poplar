@@ -3,8 +3,9 @@
  * See LICENCE.md
  */
 
-use core::fmt;
-use gdt::GdtSelectors;
+use memory::paging::VirtualAddress;
+use registers::CpuFlags;
+use gdt::{GdtSelectors,PrivilegeLevel};
 use idt::Idt;
 use port::Port;
 use apic::{LOCAL_APIC,IO_APIC};
@@ -17,36 +18,27 @@ use apic::{LOCAL_APIC,IO_APIC};
  * |       20-2F      | i8259 PIC Interrupts        |
  * |       30-47      | IOAPIC Interrupts           |
  * |        48        | Local APIC timer            |
- * |        ..        | Unused                      |
+ * |        ..        |                             |
+ * |        80        | System calls                |
+ * |        ..        |                             |
  * |        FF        | APIC spurious interrupt     |
  * |------------------|-----------------------------|
  */
 pub const LEGACY_PIC_BASE           : u8 = 0x20;
 pub const IOAPIC_BASE               : u8 = 0x30;
 pub const LOCAL_APIC_TIMER          : u8 = 0x48;
+pub const SYSTEM_CALL               : u8 = 0x80;
 pub const APIC_SPURIOUS_INTERRUPT   : u8 = 0xFF;
 
+#[derive(Clone,Copy,Debug)]
 #[repr(C)]
-struct ExceptionStackFrame
+struct InterruptStackFrame
 {
-    instruction_pointer : u64,
+    instruction_pointer : VirtualAddress,
     code_segment        : u64,
-    cpu_flags           : u64,
-    stack_pointer       : u64,
+    cpu_flags           : CpuFlags,
+    stack_pointer       : VirtualAddress,
     stack_segment       : u64,
-}
-
-impl fmt::Debug for ExceptionStackFrame
-{
-    fn fmt(&self, f : &mut fmt::Formatter) -> fmt::Result
-    {
-        write!(f, "Exception occurred at {:#x}:{:x} with flags {:#x} and stack {:#x}:{:x}",
-                  self.code_segment,
-                  self.instruction_pointer,
-                  self.cpu_flags,
-                  self.stack_segment,
-                  self.stack_pointer)
-    }
 }
 
 macro_rules! save_regs
@@ -101,7 +93,7 @@ macro_rules! wrap_handler
                 asm!("mov rdi, rsp
                       add rdi, 0x48
                       call $0"
-                     :: "i"($name as extern "C" fn(&ExceptionStackFrame))
+                     :: "i"($name as extern "C" fn(&InterruptStackFrame))
                      : "rdi"
                      : "intel", "volatile");
                 restore_regs!();
@@ -134,7 +126,7 @@ macro_rules! wrap_handler_with_error_code
                        sub rsp, 8           // Align the stack pointer
                        call $0
                        add rsp, 8           // Undo the stack alignment"
-                      :: "i"($name as extern "C" fn(&ExceptionStackFrame,u64))
+                      :: "i"($name as extern "C" fn(&InterruptStackFrame,u64))
                       : "rdi","rsi"
                       : "intel", "volatile");
                  restore_regs!();
@@ -190,40 +182,47 @@ pub fn init(gdt_selectors : &GdtSelectors)
         IDT.apic_irq(0).set_handler(wrap_handler!(pit_handler), gdt_selectors.kernel_code);
         IDT.apic_irq(1).set_handler(wrap_handler!(key_handler), gdt_selectors.kernel_code);
 
+        /*
+         * Install system call handler
+         */
+        IDT[SYSTEM_CALL].set_handler(wrap_handler!(system_call_handler), gdt_selectors.kernel_code)
+                        .set_privilege_level(PrivilegeLevel::Ring3);
+
         IDT.load();
 
         /*
          * Unmask handled entries on the IOAPIC
+         * TODO: Better way of specifying/looking up the global system interrupt number for these
          */
         IO_APIC.lock().set_irq_mask(2, false);  // PIT
         IO_APIC.lock().set_irq_mask(1, false);  // PS/2 controller
     }
 }
 
-extern "C" fn invalid_opcode_handler(stack_frame : &ExceptionStackFrame)
+extern "C" fn invalid_opcode_handler(stack_frame : &InterruptStackFrame)
 {
     error!("INVALID OPCODE AT: {:#x}", stack_frame.instruction_pointer);
     loop {}
 }
 
-extern "C" fn nmi_handler(_ : &ExceptionStackFrame)
+extern "C" fn nmi_handler(_ : &InterruptStackFrame)
 {
     info!("NMI occured!");
 }
 
-extern "C" fn breakpoint_handler(stack_frame : &ExceptionStackFrame)
+extern "C" fn breakpoint_handler(stack_frame : &InterruptStackFrame)
 {
     info!("BREAKPOINT: {:#?}", stack_frame);
 }
 
-extern "C" fn general_protection_fault_handler(stack_frame : &ExceptionStackFrame, error_code : u64)
+extern "C" fn general_protection_fault_handler(stack_frame : &InterruptStackFrame, error_code : u64)
 {
     error!("General protection fault: (error code = {:#x})", error_code);
     error!("{:#?}", stack_frame);
     loop { }
 }
 
-extern "C" fn page_fault_handler(stack_frame : &ExceptionStackFrame, error_code  : u64)
+extern "C" fn page_fault_handler(stack_frame : &InterruptStackFrame, error_code  : u64)
 {
     error!("PAGE_FAULT: {} ({:#x})", match (/* U/S (User/Supervisor )*/(error_code >> 2) & 0b1,
                                             /* I/D (Instruction/Data)*/(error_code >> 4) & 0b1,
@@ -258,20 +257,20 @@ extern "C" fn page_fault_handler(stack_frame : &ExceptionStackFrame, error_code 
     loop { }
 }
 
-extern "C" fn double_fault_handler(stack_frame : &ExceptionStackFrame, error_code : u64)
+extern "C" fn double_fault_handler(stack_frame : &InterruptStackFrame, error_code : u64)
 {
     error!("EXCEPTION: DOUBLE FAULT   (Error code: {})\n{:#?}", error_code, stack_frame);
     loop { }
 }
 
-extern "C" fn pit_handler(_ : &ExceptionStackFrame)
+extern "C" fn pit_handler(_ : &InterruptStackFrame)
 {
     // XXX: Printing here seems to lock everything up (probably due to the contention on the mutex
     // involved) so probably avoid that.
     LOCAL_APIC.lock().send_eoi();
 }
 
-extern "C" fn apic_timer_handler(_ : &ExceptionStackFrame)
+extern "C" fn apic_timer_handler(_ : &InterruptStackFrame)
 {
     trace!("APIC Tick");
     LOCAL_APIC.lock().send_eoi();
@@ -279,10 +278,16 @@ extern "C" fn apic_timer_handler(_ : &ExceptionStackFrame)
 
 static KEYBOARD_PORT : Port<u8> = unsafe { Port::new(0x60) };
 
-extern "C" fn key_handler(_ : &ExceptionStackFrame)
+extern "C" fn key_handler(_ : &InterruptStackFrame)
 {
     info!("Key interrupt: Scancode={:#x}", unsafe { KEYBOARD_PORT.read() });
     LOCAL_APIC.lock().send_eoi();
 }
 
-extern "C" fn spurious_handler(_ : &ExceptionStackFrame) { }
+extern "C" fn system_call_handler(stack_frame : &InterruptStackFrame)
+{
+    info!("System call!");
+    info!("{:#?}", stack_frame);
+}
+
+extern "C" fn spurious_handler(_ : &InterruptStackFrame) { }

@@ -17,9 +17,9 @@ pub enum PrivilegeLevel
     Ring3 = 3,
 }
 
-impl From<u16> for PrivilegeLevel
+impl From<u8> for PrivilegeLevel
 {
-    fn from(value : u16) -> Self
+    fn from(value : u8) -> Self
     {
         match value
         {
@@ -32,9 +32,9 @@ impl From<u16> for PrivilegeLevel
     }
 }
 
-impl Into<u16> for PrivilegeLevel
+impl Into<u8> for PrivilegeLevel
 {
-    fn into(self) -> u16
+    fn into(self) -> u8
     {
         match self
         {
@@ -187,7 +187,7 @@ impl Gdt
                     DescriptorFlags::EXECUTABLE     |
                     DescriptorFlags::LONG_MODE;
 
-        UserSegment(flags.bits() | ((privilege_level.into() : u16) as u64) << 45)
+        UserSegment(flags.bits() | ((privilege_level.into() : u8) as u64) << 45)
     }
 
     fn create_data_segment(privilege_level : PrivilegeLevel) -> UserSegment
@@ -196,7 +196,7 @@ impl Gdt
                     DescriptorFlags::PRESENT        |
                     DescriptorFlags::WRITABLE;
 
-        UserSegment(flags.bits() | ((privilege_level.into() : u16) as u64) << 45)
+        UserSegment(flags.bits() | ((privilege_level.into() : u8) as u64) << 45)
     }
 
     fn create_tss_segment(tss : &'static Tss) -> SystemSegment

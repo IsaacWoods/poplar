@@ -28,7 +28,7 @@
 #[macro_use]    extern crate log;
 #[macro_use]    extern crate kernel;
 
-#[macro_use]    mod control_reg;
+#[macro_use]    mod registers;
 #[macro_use]    mod vga_buffer;
 #[macro_use]    mod serial;
                 mod panic;
