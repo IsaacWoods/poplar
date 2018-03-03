@@ -13,17 +13,17 @@ impl fmt::Debug for CpuFlags
     fn fmt(&self, f : &mut fmt::Formatter) -> fmt::Result
     {
         write!(f, "[{}{}{}{}{}{}{}{}{}{}{}] {:#x}",
-                  if self.0 & 0x0000_0001 > 0 { 'C' } else { '-' },         // Carry flag
-                  if self.0 & 0x0000_0004 > 0 { 'P' } else { '-' },         // Parity flag
-                  if self.0 & 0x0000_0010 > 0 { 'A' } else { '-' },         // Adjust flag
-                  if self.0 & 0x0000_0040 > 0 { 'Z' } else { '-' },         // Zero flag
-                  if self.0 & 0x0000_0080 > 0 { 'S' } else { '-' },         // Sign flag
-                  if self.0 & 0x0000_0100 > 0 { 'T' } else { '-' },         // Trap flag
-                  if self.0 & 0x0000_0200 > 0 { 'I' } else { '-' },         // Interrupt flag
-                  if self.0 & 0x0000_0400 > 0 { 'D' } else { '-' },         // Direction flag
-                  if self.0 & 0x0000_0800 > 0 { 'O' } else { '-' },         // Overflow flag
-                  ['0','1','2','3'][(self.0 & 0x0000_3001 >> 12) as usize], // I/O privilege level
                   if self.0 & 0x0000_4000 > 0 { 'N' } else { '-' },         // Nested Task flag
+                  ['0','1','2','3'][(self.0 & 0x0000_3001 >> 12) as usize], // I/O privilege level
+                  if self.0 & 0x0000_0800 > 0 { 'O' } else { '-' },         // Overflow flag
+                  if self.0 & 0x0000_0400 > 0 { 'D' } else { '-' },         // Direction flag
+                  if self.0 & 0x0000_0200 > 0 { 'I' } else { '-' },         // Interrupt flag
+                  if self.0 & 0x0000_0100 > 0 { 'T' } else { '-' },         // Trap flag
+                  if self.0 & 0x0000_0080 > 0 { 'S' } else { '-' },         // Sign flag
+                  if self.0 & 0x0000_0040 > 0 { 'Z' } else { '-' },         // Zero flag
+                  if self.0 & 0x0000_0010 > 0 { 'A' } else { '-' },         // Adjust flag
+                  if self.0 & 0x0000_0004 > 0 { 'P' } else { '-' },         // Parity flag
+                  if self.0 & 0x0000_0001 > 0 { 'C' } else { '-' },         // Carry flag
                   self.0)
     }
 }
