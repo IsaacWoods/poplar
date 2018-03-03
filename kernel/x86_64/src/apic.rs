@@ -49,10 +49,10 @@ impl LocalApic
 
         // Map the configuration space into virtual memory
         assert!(register_base.is_frame_aligned(), "Expected local APIC registers to be frame aligned");
-        memory_controller.active_table.map_to(Page::containing_page(LOCAL_APIC_REGISTER_SPACE),
-                                              Frame::containing_frame(register_base),
-                                              EntryFlags::WRITABLE,
-                                              &mut memory_controller.frame_allocator);
+        memory_controller.kernel_page_table.map_to(Page::containing_page(LOCAL_APIC_REGISTER_SPACE),
+                                                   Frame::containing_frame(register_base),
+                                                   EntryFlags::WRITABLE,
+                                                   &mut memory_controller.frame_allocator);
 
         let spurious_interrupt_vector = (1<<8) |                                        // Enable the local APIC by setting bit 8
                                         ::interrupts::APIC_SPURIOUS_INTERRUPT as u32;   // Set the interrupt vector of the spurious interrupt
@@ -134,10 +134,10 @@ impl IoApic
 
         // Map the configuration space to virtual memory
         assert!(register_base.is_frame_aligned(), "Expected IOAPIC registers to be frame aligned");
-        memory_controller.active_table.map_to(Page::containing_page(IOAPIC_REGISTER_SPACE),
-                                              Frame::containing_frame(register_base),
-                                              EntryFlags::WRITABLE,
-                                              &mut memory_controller.frame_allocator);
+        memory_controller.kernel_page_table.map_to(Page::containing_page(IOAPIC_REGISTER_SPACE),
+                                                   Frame::containing_frame(register_base),
+                                                   EntryFlags::WRITABLE,
+                                                   &mut memory_controller.frame_allocator);
 
         /*
          * Map all ISA IRQs (these can be remapped by Interrupt Source Override entries in the

@@ -44,6 +44,7 @@
                 mod multiboot2;
                 mod acpi;
                 mod user_mode;
+                mod process;
 
 pub use panic::panic_fmt;
 

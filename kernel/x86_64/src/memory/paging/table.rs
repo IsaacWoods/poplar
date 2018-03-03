@@ -44,6 +44,10 @@ pub struct Table<L : TableLevel>
     level : PhantomData<L>,
 }
 
+/*
+ * This uses recursive page table mapping to access the page tables, so always points to the
+ * *currently installed* tables.
+ */
 pub const P4 : *mut Table<Level4> = P4_TABLE_ADDRESS.mut_ptr();
 
 impl<L> Table<L> where L : TableLevel

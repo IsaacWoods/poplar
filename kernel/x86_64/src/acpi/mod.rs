@@ -142,7 +142,8 @@ impl Rsdt
             let pointer_address = unsafe { table_base_ptr.offset(i as isize) };
             let physical_address = PhysicalAddress::new(unsafe { *pointer_address } as usize);
             let mut temporary_page = TemporaryPage::new(TEMP_PAGE, &mut memory_controller.frame_allocator);
-            temporary_page.map(Frame::containing_frame(physical_address), &mut memory_controller.active_table);
+            temporary_page.map(Frame::containing_frame(physical_address),
+                               &mut memory_controller.kernel_page_table);
 
             let sdt_pointer = TEMP_PAGE.start_address().offset(physical_address.offset_into_frame() as isize).ptr() as *const SdtHeader;
             let signature = unsafe { str::from_utf8_unchecked(&(*sdt_pointer).signature) };
@@ -154,7 +155,7 @@ impl Rsdt
                 _       => warn!("Unhandled SDT type: {}", signature),
             }
 
-            temporary_page.unmap(&mut memory_controller.active_table);
+            temporary_page.unmap(&mut memory_controller.kernel_page_table);
         }
     }
 }
@@ -181,12 +182,13 @@ impl AcpiInfo
         trace!("Loading ACPI tables with OEM ID: {}", rsdp.oem_str());
         let physical_address = PhysicalAddress::new(rsdp.rsdt_address as usize);
         let mut temporary_page = TemporaryPage::new(TEMP_PAGE, &mut memory_controller.frame_allocator);
-        temporary_page.map(Frame::containing_frame(physical_address), &mut memory_controller.active_table);
+        temporary_page.map(Frame::containing_frame(physical_address),
+                           &mut memory_controller.kernel_page_table);
         let rsdt_ptr = (TEMP_PAGE.start_address().offset(physical_address.offset_into_frame() as isize)).ptr() as *const SdtHeader;
 
         let rsdt : Box<Rsdt> = unsafe { Box::new(ptr::read_unaligned(rsdt_ptr as *const Rsdt)) };
         rsdt.header.validate("RSDT").unwrap();
-        temporary_page.unmap(&mut memory_controller.active_table);
+        temporary_page.unmap(&mut memory_controller.kernel_page_table);
 
         let mut acpi_info = AcpiInfo
                             {

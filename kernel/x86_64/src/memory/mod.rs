@@ -92,9 +92,9 @@ pub fn init(boot_info : &BootInformation) -> MemoryController<AreaFrameAllocator
 
     MemoryController
     {
-        active_table    : active_table,
-        frame_allocator : frame_allocator,
-        stack_allocator : stack_allocator
+        kernel_page_table : active_table,
+        frame_allocator,
+        stack_allocator,
     }
 }
 
@@ -125,7 +125,7 @@ impl Iterator for FrameIter
 
 pub(self) const FRAME_SIZE : usize = 4096;
 
-#[derive(Debug,PartialEq,Eq,PartialOrd,Ord)]
+#[derive(Clone,Debug,PartialEq,Eq,PartialOrd,Ord)]
 pub struct Frame
 {
     number : usize
@@ -141,11 +141,6 @@ impl Frame
     fn start_address(&self) -> PhysicalAddress
     {
         (self.number * FRAME_SIZE).into()
-    }
-
-    fn clone(&self) -> Frame
-    {
-        Frame { number : self.number }
     }
 
     fn range_inclusive(start : Frame, end : Frame) -> FrameIter
@@ -166,16 +161,16 @@ pub trait FrameAllocator
 
 pub struct MemoryController<A : FrameAllocator>
 {
-    pub active_table    : paging::ActivePageTable,
-    pub frame_allocator : A,
-    pub stack_allocator : StackAllocator
+    pub kernel_page_table   : paging::ActivePageTable,
+    pub frame_allocator     : A,
+    pub stack_allocator     : StackAllocator
 }
 
 impl<A> MemoryController<A> where A : FrameAllocator
 {
     pub fn alloc_stack(&mut self, size_in_pages : usize) -> Option<Stack>
     {
-        self.stack_allocator.alloc_stack(&mut self.active_table,
+        self.stack_allocator.alloc_stack(&mut self.kernel_page_table,
                                          &mut self.frame_allocator,
                                          size_in_pages)
     }
