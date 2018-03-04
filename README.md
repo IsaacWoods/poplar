@@ -1,6 +1,6 @@
 # The Pebble Microkernel
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![](https://tokei.rs/b1/github/Aaronepower/tokei)](https://github.com/pebble-os/kernel)
+[![](https://tokei.rs/b1/github/pebble-os/kernel)](https://github.com/Aaronepower/tokei)
 
 This is the Pebble microkernel. It is written in Rust and currently only supports x86_64.
 It is Multiboot2 compatible and can be booted by GRUB2.
