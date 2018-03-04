@@ -3,8 +3,8 @@
 
 .PHONY: clean
 
-test_program.bin: main.s
+flat_binary.bin: flat_binary.s
 	nasm -fbin -o $@ $<
 
 clean:
-	rm -f test_program.bin
+	rm -f flat_binary.bin

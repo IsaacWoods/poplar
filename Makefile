@@ -4,24 +4,24 @@
 export ARCH?=x86_64
 export BUILD_DIR:=$(abspath ./build)
 
-.PHONY: kernel clean run debug gdb test_program
+.PHONY: kernel clean run debug gdb flat_binary_test
 
-pebble.iso: grub.cfg kernel test_program
+pebble.iso: grub.cfg kernel flat_binary_test
 	mkdir -p $(BUILD_DIR)/iso/boot/grub
 	cp $(BUILD_DIR)/kernel.bin $(BUILD_DIR)/iso/boot/kernel.bin
-	cp test_program/test_program.bin $(BUILD_DIR)/iso/test_program.bin
+	cp flat_binary_test/flat_binary.bin $(BUILD_DIR)/iso/flat_binary.bin
 	cp grub.cfg $(BUILD_DIR)/iso/boot/grub/grub.cfg
 	grub2-mkrescue -o $@ $(BUILD_DIR)/iso 2> /dev/null
 
 kernel:
 	make -C kernel/$(ARCH) $(BUILD_DIR)/kernel.bin
 
-test_program:
-	make -C test_program test_program.bin
+flat_binary_test:
+	make -C flat_binary_test flat_binary.bin
 
 clean:
 	make -C kernel/$(ARCH) clean
-	make -C test_program clean
+	make -C flat_binary_test clean
 	rm -rf build
 	rm -rf pebble.iso
 
