@@ -5,16 +5,8 @@
 This is the Pebble microkernel. It is written in Rust and currently only supports x86_64.
 It is Multiboot2 compatible and can be booted by GRUB2.
 
-# Dependencies
-To build the microkernel, you will need:
-* Nightly `rustc` - tested with `rustc 1.26.0-nightly` (if Pebble fails to build with a later nightly, please open an issue!)
-* Xargo - run `cargo install xargo`
-* The Rust source code - run `rustup component add rust-src`
-* `grub2-mkrescue` - this should already be installed on systems that are booted by GRUB2
-* [for `make run`] `qemu-system-x86_64`
-* [for `make gdb`] [`rust-gdb`](https://github.com/phil-opp/binutils-gdb#gdb-for-64-bit-rust-operating-systems)
 
-# Bird's-eye view
+# Bird's Eye View
 The kernel is made up of a few crates, centered around the `kernel` crate:
 ```
 
@@ -36,7 +28,7 @@ The kernel is made up of a few crates, centered around the `kernel` crate:
 It also provides the kernel interface to userland programs and services.
 * The "architecture crate" (e.g. `x86_64`) contains platform-specific kernel code, including the entry to the kernel and memory management code.
 It initialises the platform, then passes control to the `kernel` crate.
-* `log` is used for logging across all kernel crates. The actual logger is created and maintained by the architecture crate.
+* `log` is used for logging across all kernel crates. The actual logger is created by the architecture crate.
 
 This entire crate heirachy is compiled into a static library from the architecture crate, and then linked against other kernel objects (depending on platform).
 This modularity is meant to make it as easy as possible to extend the kernel to other architectures in the future.
