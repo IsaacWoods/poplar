@@ -164,14 +164,14 @@ macro_rules! wrap_syscall_handler
             unsafe
             {
                 asm!("// Push syscall info
-                      push rsi
-                      push rdx
-                      push rcx
-                      push rbx
-                      push rax
-                      push rdi
+                      push rsi      // E
+                      push rdx      // D
+                      push rcx      // C
+                      push rbx      // B
+                      push rax      // A
+                      push rdi      // Syscall number
 
-                      // Save all normal regs except RAX
+                      // Save usual regs except RAX
                       push rcx
                       push rdx
                       push rsi

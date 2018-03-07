@@ -6,7 +6,7 @@ This is the Pebble microkernel. It is written in Rust and currently only support
 It is Multiboot2 compatible and can be booted by GRUB2.
 
 
-# Bird's Eye View
+# Design
 The kernel is made up of a few crates, centered around the `kernel` crate:
 ```
 
