@@ -41,6 +41,19 @@ struct InterruptStackFrame
     stack_segment       : u64,
 }
 
+#[derive(Clone,Copy,Debug)]
+#[repr(C)]
+struct SyscallStackFrame
+{
+    syscall_info        : ::kernel::syscall::SyscallInfo,
+
+    instruction_pointer : VirtualAddress,
+    code_segment        : u64,
+    cpu_flags           : CpuFlags,
+    stack_pointer       : VirtualAddress,
+    stack_segment       : u64,
+}
+
 macro_rules! save_regs
 {
     () =>
@@ -141,6 +154,62 @@ macro_rules! wrap_handler_with_error_code
     }}
 }
 
+macro_rules! wrap_syscall_handler
+{
+    ($name : ident) =>
+    {{
+        #[naked]
+        extern "C" fn wrapper() -> !
+        {
+            unsafe
+            {
+                asm!("// Push syscall info
+                      push rsi
+                      push rdx
+                      push rcx
+                      push rbx
+                      push rax
+                      push rdi
+
+                      // Save all normal regs except RAX
+                      push rcx
+                      push rdx
+                      push rsi
+                      push rdi
+                      push r8
+                      push r9
+                      push r10
+                      push r11
+
+                      // Call the handler, which leaves the syscall result in RAX
+                      mov rdi, rsp
+                      add rdi, 0x40
+                      call $0
+
+                      // Restore regs
+                      pop r11
+                      pop r10
+                      pop r9
+                      pop r8
+                      pop rdi
+                      pop rsi
+                      pop rdx
+                      pop rcx
+
+                      // Remove the syscall info and return
+                      add rsp, 0x30
+                      iretq"
+                     :
+                     : "i"($name as extern "C" fn(&SyscallStackFrame))
+                     : "rdi", "rax"
+                     : "intel", "volatile");
+                ::core::intrinsics::unreachable();
+            }
+        }
+        wrapper
+    }}
+}
+
 static mut IDT : Idt = Idt::new();
 
 pub fn init(gdt_selectors : &GdtSelectors)
@@ -187,7 +256,7 @@ pub fn init(gdt_selectors : &GdtSelectors)
         /*
          * Install system call handler
          */
-        IDT[SYSTEM_CALL].set_handler(wrap_handler!(system_call_handler), gdt_selectors.kernel_code)
+        IDT[SYSTEM_CALL].set_handler(wrap_syscall_handler!(system_call_handler), gdt_selectors.kernel_code)
                         .set_privilege_level(PrivilegeLevel::Ring3);
 
         IDT.load();
@@ -286,10 +355,21 @@ extern "C" fn key_handler(_ : &InterruptStackFrame)
     LOCAL_APIC.lock().send_eoi();
 }
 
-extern "C" fn system_call_handler(stack_frame : &InterruptStackFrame)
+extern "C" fn system_call_handler(stack_frame : &SyscallStackFrame)
 {
-    info!("System call!");
-    info!("{:#?}", stack_frame);
+    use ::kernel::syscall::dispatch_syscall;
+
+    unsafe
+    {
+        /*
+         * We return the result of the syscall in RAX
+         */
+        asm!(""
+             :
+             : "{rax}"(dispatch_syscall(&stack_frame.syscall_info) as u64)
+             : "rax"
+             : "intel", "volatile");
+    }
 }
 
 extern "C" fn spurious_handler(_ : &InterruptStackFrame) { }

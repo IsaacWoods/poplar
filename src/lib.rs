@@ -16,8 +16,9 @@
                 extern crate alloc;
 #[macro_use]    extern crate log;
 
-pub mod process;
 pub mod arch;
+pub mod process;
+pub mod syscall;
 pub mod util;
 
 pub use arch::Architecture;
