@@ -1,5 +1,4 @@
 **/target/
-/gdb/
 Cargo.lock
 **/*.rs.bk
 
