@@ -27,6 +27,7 @@
                 extern crate hole_tracking_allocator;
 #[macro_use]    extern crate log;
 #[macro_use]    extern crate kernel;
+                extern crate pebble_syscall_common;
 
 #[macro_use]    mod registers;
 #[macro_use]    mod vga_buffer;

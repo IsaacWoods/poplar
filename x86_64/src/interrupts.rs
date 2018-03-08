@@ -9,6 +9,7 @@ use gdt::{GdtSelectors,PrivilegeLevel};
 use idt::Idt;
 use port::Port;
 use apic::{LOCAL_APIC,IO_APIC};
+use pebble_syscall_common::SyscallInfo;
 
 /*
  * |------------------|-----------------------------|
@@ -45,7 +46,7 @@ struct InterruptStackFrame
 #[repr(C)]
 struct SyscallStackFrame
 {
-    syscall_info        : ::kernel::syscall::SyscallInfo,
+    syscall_info        : SyscallInfo,
 
     instruction_pointer : VirtualAddress,
     code_segment        : u64,
@@ -146,7 +147,11 @@ macro_rules! wrap_handler_with_error_code
                       : "intel", "volatile");
                  restore_regs!();
                  asm!("add rsp, 8   // Pop the error code
-                       iretq" :::: "intel", "volatile");
+                       iretq"
+                      :
+                      :
+                      :
+                      : "intel", "volatile");
                  ::core::intrinsics::unreachable();
              }
          }

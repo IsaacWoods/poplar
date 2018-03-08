@@ -3,22 +3,38 @@
  * See LICENCE.md
  */
 
-#[derive(Clone,Copy,Debug)]
-#[cfg_attr(target_arch="x86_64", repr(packed))]
-pub struct SyscallInfo
+use pebble_syscall_common::{SyscallInfo,SyscallType,SyscallResult};
+
+/*
+ * Slices in Rust are represented by two words (where word-size is the same as usize):
+ *     -------------------
+ *     | length |   ptr  |
+ *     -------------------
+ *  NOTE: Length is the number of *elements*, not bytes!
+ */
+unsafe fn as_slice<'a, T>(ptr : usize, length : usize) -> &'a [T]
 {
-    syscall_number  : usize,
-    a               : usize,
-    b               : usize,
-    c               : usize,
-    d               : usize,
-    e               : usize,
+    ::core::slice::from_raw_parts(ptr as *const T, length)
 }
 
-#[inline(never)]
-pub fn dispatch_syscall(info : &SyscallInfo) -> usize
+pub fn dispatch_syscall(info : &SyscallInfo) -> SyscallResult
 {
     info!("{},{},{},{},{},{}", info.syscall_number, info.a, info.b, info.c, info.d, info.e);
-    0xDEADBEEF
-    // TODO
+
+    match SyscallType::from(info.syscall_number)
+    {
+        SyscallType::Unknown => SyscallResult::ErrUnknownSyscall,
+
+        SyscallType::DebugMsg =>
+        {
+            let msg = ::core::str::from_utf8(unsafe { as_slice(info.a, info.b) }).unwrap();
+            trace!("Usermode process says: {}", msg);
+            SyscallResult::Success
+        },
+
+        SyscallType::Write =>
+        {
+            SyscallResult::ErrUnknownSyscall
+        },
+    }
 }

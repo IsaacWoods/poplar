@@ -6,10 +6,11 @@ version = "0.0.1"
 authors = ["Isaac Woods"]
 
 [dependencies]
-volatile    = "*"
-spin        = "*"
-bitflags    = "*"
-bit_field   = "*"
+volatile                = "*"
+spin                    = "*"
+bitflags                = "*"
+bit_field               = "*"
+pebble_syscall_common   = "*"
 
 [dependencies.num-traits]
 version             = "*"

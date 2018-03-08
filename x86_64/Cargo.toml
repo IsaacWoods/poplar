@@ -11,15 +11,16 @@ authors = ["Isaac Woods <isaacwoods.home@gmail.com>",
 crate-type = ["staticlib"]
 
 [dependencies]
-rlibc       = "*"
-bitflags    = "*"
-bit_field   = "*"
-volatile    = "*"
-spin        = "*"
+rlibc                   = "*"
+bitflags                = "*"
+bit_field               = "*"
+volatile                = "*"
+spin                    = "*"
+pebble_syscall_common   = "*"
 
 [dependencies.log]
-version             = "*"
-default-features    = false
+version                 = "*"
+default-features        = false
 
 [dependencies.hole_tracking_allocator]
 path = "../hole_tracking_allocator"
