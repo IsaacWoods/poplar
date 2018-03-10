@@ -28,6 +28,7 @@
 #[macro_use]    extern crate log;
 #[macro_use]    extern crate kernel;
                 extern crate pebble_syscall_common;
+                extern crate goblin;
 
 #[macro_use]    mod registers;
 #[macro_use]    mod vga_buffer;
@@ -114,6 +115,7 @@ pub extern fn kstart(multiboot_address : PhysicalAddress) -> !
     apic::LOCAL_APIC.lock().enable_timer(6);
     unsafe { asm!("sti"); }
 
+    // TODO: parse ELF and start process properly
     let module_tag = boot_info.modules().nth(0).unwrap();
     info!("Running module: {}", module_tag.name());
     let virtual_address = module_tag.start_address().into_kernel_space();
@@ -125,7 +127,7 @@ pub extern fn kstart(multiboot_address : PhysicalAddress) -> !
     // let arch = X86_64 { };
     // kernel::kernel_main(arch);
 
-    // loop { }
+    loop { }
 }
 
 #[lang = "eh_personality"]

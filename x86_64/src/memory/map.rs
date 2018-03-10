@@ -21,12 +21,17 @@ use super::paging::{VirtualAddress,Page,PAGE_SIZE};
  * (0x0 - 0xffffffff7fffffff) can be used by user-mode processes and other stuff.
  */
 
+pub const KERNEL_START_P4 : usize = 511;
+pub const KERNEL_START_P3 : usize = 510;
+pub const KERNEL_START_P2 : usize = 0;
+pub const KERNEL_START_P1 : usize = 0;
+
 /*
  * This is the address for addressing into the P4 table directly (through the 510th P4 entry).
  * We achieve this by recursively addressing this entry 4 times, so P4 looks like a normal memory
  * page.
  */
-pub const RECURSIVE_ENTRY : usize = 510;
+pub const RECURSIVE_ENTRY  : usize = 510;
 pub const P4_TABLE_ADDRESS : VirtualAddress = VirtualAddress::from_page_table_offsets(RECURSIVE_ENTRY,
                                                                                       RECURSIVE_ENTRY,
                                                                                       RECURSIVE_ENTRY,

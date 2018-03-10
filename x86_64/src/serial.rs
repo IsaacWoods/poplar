@@ -14,7 +14,7 @@ pub struct SerialLogger;
 
 impl ::log::Log for SerialLogger
 {
-    fn enabled(&self, metadata : &::log::Metadata) -> bool
+    fn enabled(&self, _metadata : &::log::Metadata) -> bool
     {
         true
     }

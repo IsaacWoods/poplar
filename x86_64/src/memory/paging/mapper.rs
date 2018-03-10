@@ -42,7 +42,7 @@ impl Mapper
                     |p3| {
                         let p3_entry = &p3[page.p3_index()];
                         // 1GiB page?
-                        if let Some(start_frame) = p3_entry.get_pointed_frame()
+                        if let Some(start_frame) = p3_entry.pointed_frame()
                         {
                             if p3_entry.flags().contains(EntryFlags::HUGE_PAGE)
                             {
@@ -58,7 +58,7 @@ impl Mapper
                         {
                             let p2_entry = &p2[page.p2_index()];
                             // 2MiB page?
-                            if let Some(start_frame) = p2_entry.get_pointed_frame()
+                            if let Some(start_frame) = p2_entry.pointed_frame()
                             {
                                 if p2_entry.flags().contains(EntryFlags::HUGE_PAGE)
                                 {
@@ -74,7 +74,7 @@ impl Mapper
     
         p3.and_then(|p3| p3.next_table(page.p3_index()))
           .and_then(|p2| p2.next_table(page.p2_index()))
-          .and_then(|p1| p1[page.p1_index()].get_pointed_frame())
+          .and_then(|p1| p1[page.p1_index()].pointed_frame())
           .or_else(huge_page)
     }
 
@@ -93,7 +93,7 @@ impl Mapper
                      .and_then(|p3| p3.next_table_mut(page.p3_index()))
                      .and_then(|p2| p2.next_table_mut(page.p2_index()))
                      .expect("we don't support huge pages");
-        let frame = p1[page.p1_index()].get_pointed_frame().unwrap();
+        let frame = p1[page.p1_index()].pointed_frame().unwrap();
         p1[page.p1_index()].set_unused();
     
         tlb::invalidate_page(page.start_address());
@@ -112,6 +112,8 @@ impl Mapper
      *
      * NOTE: This behaviour is required for the page table creation in `remap_kernel`, as the
      * Multiboot structure can overlap with pages previously mapped for modules.
+     * TODO: Is this still required if we don't map modules like that? And now that modules are
+     * page-aligned?
      */
     pub fn identity_map_range<A>(&mut self,
                                  range      : Range<PhysicalAddress>,

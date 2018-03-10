@@ -22,6 +22,11 @@ pebble_syscall_common   = "*"
 version                 = "*"
 default-features        = false
 
+[dependencies.goblin]
+version                 = "*"
+default-features        = false
+features                = ["elf64"]
+
 [dependencies.hole_tracking_allocator]
 path = "../hole_tracking_allocator"
 

@@ -40,9 +40,9 @@ impl EntryFlags
     {
         let mut flags = EntryFlags::empty();
 
-        if  section.flags().contains(ElfSectionFlags::ALLOCATED)  { flags |= EntryFlags::PRESENT;    }
-        if  section.flags().contains(ElfSectionFlags::WRITABLE)   { flags |= EntryFlags::WRITABLE;   }
-        if !section.flags().contains(ElfSectionFlags::EXECUTABLE) { flags |= EntryFlags::NO_EXECUTE; }
+        if  section.flags().contains(ElfSectionFlags::ALLOCATED)  { flags |= EntryFlags::PRESENT;   }
+        if  section.flags().contains(ElfSectionFlags::WRITABLE)   { flags |= EntryFlags::WRITABLE;  }
+        if !section.flags().contains(ElfSectionFlags::EXECUTABLE) { flags |= EntryFlags::NO_EXECUTE;}
 
         flags
     }
@@ -78,7 +78,7 @@ impl Entry
         EntryFlags::from_bits_truncate(self.0)
     }
 
-    pub fn get_pointed_frame(&self) -> Option<Frame>
+    pub fn pointed_frame(&self) -> Option<Frame>
     {
         if self.flags().contains(EntryFlags::PRESENT)
         {
