@@ -51,7 +51,7 @@ impl Iterator for PageIter
     }
 }
 
-#[derive(Debug,Clone,Copy,PartialEq,Eq,PartialOrd,Ord)]
+#[derive(Clone,Copy,Debug,PartialEq,Eq,PartialOrd,Ord)]
 pub struct Page
 {
     pub(in ::memory) number : usize,
@@ -61,7 +61,7 @@ impl Add<usize> for Page
 {
     type Output = Page;
 
-    fn add(self, rhs : usize) -> Page
+    fn add(self, rhs : usize) -> Self
     {
         Page
         {

@@ -11,10 +11,10 @@ mod stack_allocator;
 pub use self::area_frame_allocator::AreaFrameAllocator;
 pub use self::paging::{PhysicalAddress,VirtualAddress,Page,entry::EntryFlags};
 
+use core::ops::Add;
 use self::map::{HEAP_START,HEAP_SIZE};
 use self::stack_allocator::{Stack,StackAllocator};
 use self::paging::PAGE_SIZE;
-use hole_tracking_allocator::ALLOCATOR;
 use multiboot2::BootInformation;
 
 extern
@@ -82,7 +82,7 @@ pub fn init(boot_info : &BootInformation) -> MemoryController<AreaFrameAllocator
 
     unsafe
     {
-        ALLOCATOR.lock().init(HEAP_START.into(), HEAP_SIZE);
+        ::allocator::ALLOCATOR.lock().init(HEAP_START.into(), HEAP_SIZE);
     }
 
     /*
@@ -125,10 +125,23 @@ impl Iterator for FrameIter
 
 pub(self) const FRAME_SIZE : usize = 4096;
 
-#[derive(Clone,Debug,PartialEq,Eq,PartialOrd,Ord)]
+#[derive(Clone,Copy,Debug,PartialEq,Eq,PartialOrd,Ord)]
 pub struct Frame
 {
     number : usize
+}
+
+impl Add<usize> for Frame
+{
+    type Output = Frame;
+
+    fn add(self, rhs : usize) -> Self
+    {
+        Frame
+        {
+            number : self.number + rhs
+        }
+    }
 }
 
 impl Frame

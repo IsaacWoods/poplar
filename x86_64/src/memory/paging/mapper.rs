@@ -4,6 +4,7 @@
  */
 
 use core::ops::Range;
+use alloc::heap::{Layout,Alloc};
 use memory::{Frame,FrameAllocator};
 use memory::{VirtualAddress,PhysicalAddress,Page,PAGE_SIZE};
 use memory::paging::ENTRY_COUNT;
@@ -14,6 +15,18 @@ use tlb;
 pub struct Mapper
 {
     pub p4 : &'static mut Table<Level4>,
+}
+
+/*
+ * This represents a region of physical memory mapped into the virtual address space. The virtual
+ * memory is allocated using `alloc::heap::allocate` and freed using `alloc::heap::deallocate`.
+ */
+pub struct PhysicalMapping<T>
+{
+    start   : Page,
+    end     : Page,
+    ptr     : *mut T,
+    layout  : Layout,
 }
 
 impl Mapper
@@ -78,13 +91,65 @@ impl Mapper
           .or_else(huge_page)
     }
 
-    pub fn map<A>(&mut self, page : Page, flags : EntryFlags, allocator : &mut A) where A : FrameAllocator
+    pub fn map<A>(&mut self, page : Page, flags : EntryFlags, allocator : &mut A)
+        where A : FrameAllocator
     {
         let frame = allocator.allocate_frame().expect("out of memory");
         self.map_to(page, frame, flags, allocator)
     }
 
-    pub fn unmap<A>(&mut self, page : Page, allocator : &mut A) where A : FrameAllocator
+    pub fn map_physical_region<T,A>(&mut self,
+                                    start       : PhysicalAddress,
+                                    end         : PhysicalAddress,
+                                    flags       : EntryFlags,
+                                    allocator   : &mut A) -> PhysicalMapping<T>
+        where A : FrameAllocator
+    {
+        assert!(end > start, "End address must be higher in memory than start");
+
+        let start_frame = Frame::containing_frame(start);
+        let end_frame   = Frame::containing_frame(end);
+        let size        = usize::from(end_frame.start_address() - start_frame.start_address());
+
+        let layout = Layout::from_size_align(size, PAGE_SIZE).unwrap();
+        let ptr = unsafe { ::allocator::ALLOCATOR.lock().alloc(layout.clone()) }.expect("Could not allocate memory to map physical region into!") as *mut T ;
+        let start_page  = Page::containing_page(VirtualAddress::from(ptr));
+        let end_page    = Page::containing_page(VirtualAddress::from(ptr).offset(size as isize));
+
+        for i in 0..(size / PAGE_SIZE + 1)
+        {
+            self.map_to(start_page + i,
+                        start_frame + i,
+                        flags,
+                        allocator);
+        }
+
+        PhysicalMapping
+        {
+            start   : start_page,
+            end     : end_page,
+            ptr,
+            layout,
+        }
+    }
+
+    pub fn unmap_physical_region<T,A>(&mut self,
+                                      region    : PhysicalMapping<T>,
+                                      allocator : &mut A)
+        where A : FrameAllocator
+    {
+        unsafe { ::allocator::ALLOCATOR.lock().dealloc(region.ptr as *mut u8, region.layout); }
+        
+        // TODO: We should remap this into the correct physical memory in the heap, otherwise we'll
+        // page fault when we hit it again!
+        for page in Page::range_inclusive(region.start, region.end)
+        {
+            self.unmap(page, allocator);
+        }
+    }
+
+    pub fn unmap<A>(&mut self, page : Page, allocator : &mut A)
+        where A : FrameAllocator
     {
         assert!(self.translate(page.start_address()).is_some());
 

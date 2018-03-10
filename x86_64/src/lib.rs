@@ -12,6 +12,7 @@
 #![feature(core_intrinsics)]
 #![feature(alloc)]
 #![feature(type_ascription)]
+#![feature(allocator_api)]
 
 /*
  * `rlibc` just provides intrinsics that are linked against, and so the compiler doesn't pick up
@@ -24,7 +25,7 @@
                 extern crate alloc;
 #[macro_use]    extern crate bitflags;
                 extern crate bit_field;
-                extern crate hole_tracking_allocator;
+                extern crate hole_tracking_allocator as allocator;
 #[macro_use]    extern crate log;
 #[macro_use]    extern crate kernel;
                 extern crate pebble_syscall_common;

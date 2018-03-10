@@ -126,6 +126,14 @@ impl<T> From<*const T> for VirtualAddress
     }
 }
 
+impl<T> From<*mut T> for VirtualAddress
+{
+    fn from(ptr : *mut T) -> VirtualAddress
+    {
+        (ptr as usize).into()
+    }
+}
+
 impl Add<VirtualAddress> for VirtualAddress
 {
     type Output = VirtualAddress;
