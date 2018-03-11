@@ -29,7 +29,7 @@
 #[macro_use]    extern crate log;
 #[macro_use]    extern crate kernel;
                 extern crate pebble_syscall_common;
-                extern crate goblin;
+                extern crate xmas_elf;
 
 #[macro_use]    mod registers;
 #[macro_use]    mod vga_buffer;
@@ -53,9 +53,10 @@ pub use panic::panic_fmt;
 
 use memory::paging::PhysicalAddress;
 use acpi::AcpiInfo;
-use kernel::Architecture;
+use kernel::{Architecture,process::ProcessId};
 use gdt::Gdt;
 use tss::Tss;
+use process::Process;
 use user_mode::enter_usermode;
 
 struct X86_64
@@ -119,8 +120,14 @@ pub extern fn kstart(multiboot_address : PhysicalAddress) -> !
     // TODO: parse ELF and start process properly
     let module_tag = boot_info.modules().nth(0).unwrap();
     info!("Running module: {}", module_tag.name());
-    let virtual_address = module_tag.start_address().into_kernel_space();
-    unsafe { enter_usermode(virtual_address, gdt_selectors); }
+
+    let process = Process::new(ProcessId(0),
+                               module_tag.start_address(),
+                               module_tag.end_address(),
+                               &mut memory_controller);
+
+    // let virtual_address = module_tag.start_address().into_kernel_space();
+    // unsafe { enter_usermode(virtual_address, gdt_selectors); }
 
     /*
      * Pass control to the kernel proper.

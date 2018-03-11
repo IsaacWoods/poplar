@@ -11,6 +11,7 @@ mod physical_address;
 mod virtual_address;
 
 pub use self::entry::*;
+pub use self::mapper::PhysicalMapping;
 pub use self::physical_address::PhysicalAddress;
 pub use self::virtual_address::VirtualAddress;
 pub use self::temporary_page::TemporaryPage;
@@ -22,8 +23,8 @@ use super::map::RECURSIVE_ENTRY;
 use multiboot2::BootInformation;
 use tlb;
 
-pub(super) const PAGE_SIZE      : usize = 4096;
-pub(super) const ENTRY_COUNT    : usize = 512;
+pub const PAGE_SIZE     : usize = 4096;
+pub const ENTRY_COUNT   : usize = 512;
 
 #[derive(Clone)]
 pub struct PageIter
@@ -125,7 +126,7 @@ impl DerefMut for ActivePageTable
 
 impl ActivePageTable
 {
-    unsafe fn new() -> ActivePageTable
+    pub unsafe fn new() -> ActivePageTable
     {
         ActivePageTable { mapper : Mapper::new() }
     }

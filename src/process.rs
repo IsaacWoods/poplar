@@ -4,7 +4,7 @@
  */
 
 #[derive(Clone,Copy,Debug)]
-pub struct ProcessId(pub(self) u16);
+pub struct ProcessId(pub u16);
 
 /*
  * The actual representation of a process is platform-dependent, so we use this to refer to the

@@ -17,15 +17,11 @@ bit_field               = "*"
 volatile                = "*"
 spin                    = "*"
 pebble_syscall_common   = "*"
+xmas-elf                = "*"
 
 [dependencies.log]
 version                 = "*"
 default-features        = false
-
-[dependencies.goblin]
-version                 = "*"
-default-features        = false
-features                = ["elf64"]
 
 [dependencies.hole_tracking_allocator]
 path = "../hole_tracking_allocator"

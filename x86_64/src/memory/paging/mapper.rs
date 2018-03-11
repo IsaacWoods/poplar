@@ -23,10 +23,12 @@ pub struct Mapper
  */
 pub struct PhysicalMapping<T>
 {
-    start   : Page,
-    end     : Page,
-    ptr     : *mut T,
-    layout  : Layout,
+    pub start       : Page,
+    pub end         : Page,
+    pub region_ptr  : *mut T,
+    pub layout      : Layout,
+    pub ptr         : *mut T,
+    pub size        : usize,
 }
 
 impl Mapper
@@ -109,15 +111,17 @@ impl Mapper
 
         let start_frame = Frame::containing_frame(start);
         let end_frame   = Frame::containing_frame(end);
-        let size        = usize::from(end_frame.start_address() - start_frame.start_address());
+        let region_size = usize::from(end_frame.start_address() - start_frame.start_address());
 
-        let layout = Layout::from_size_align(size, PAGE_SIZE).unwrap();
-        let ptr = unsafe { ::allocator::ALLOCATOR.lock().alloc(layout.clone()) }.expect("Could not allocate memory to map physical region into!") as *mut T ;
+        let layout = Layout::from_size_align(region_size, PAGE_SIZE).unwrap();
+        let ptr = unsafe { ::allocator::ALLOCATOR.lock().alloc(layout.clone()) }.expect("Could not allocate memory to map physical region into!") as *mut T;
         let start_page  = Page::containing_page(VirtualAddress::from(ptr));
-        let end_page    = Page::containing_page(VirtualAddress::from(ptr).offset(size as isize));
+        let end_page    = Page::containing_page(VirtualAddress::from(ptr).offset(region_size as isize));
 
-        for i in 0..(size / PAGE_SIZE + 1)
+        for i in 0..(region_size / PAGE_SIZE + 1)
         {
+            self.unmap(start_page + i, allocator);
+
             self.map_to(start_page + i,
                         start_frame + i,
                         flags,
@@ -126,10 +130,12 @@ impl Mapper
 
         PhysicalMapping
         {
-            start   : start_page,
-            end     : end_page,
-            ptr,
+            start       : start_page,
+            end         : end_page,
+            region_ptr  : ptr,
             layout,
+            ptr         : VirtualAddress::from(ptr).offset(usize::from(start - start_frame.start_address()) as isize).mut_ptr(),
+            size        : usize::from(end - start),
         }
     }
 
@@ -138,7 +144,7 @@ impl Mapper
                                       allocator : &mut A)
         where A : FrameAllocator
     {
-        unsafe { ::allocator::ALLOCATOR.lock().dealloc(region.ptr as *mut u8, region.layout); }
+        unsafe { ::allocator::ALLOCATOR.lock().dealloc(region.region_ptr as *mut u8, region.layout); }
         
         // TODO: We should remap this into the correct physical memory in the heap, otherwise we'll
         // page fault when we hit it again!
