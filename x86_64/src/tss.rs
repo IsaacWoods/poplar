@@ -41,4 +41,9 @@ impl Tss
             iomap_base              : 0,
         }
     }
+
+    pub fn set_kernel_stack(&mut self, address : VirtualAddress)
+    {
+        self.privilege_stack_table[0] = address;
+    }
 }

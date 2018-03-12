@@ -46,7 +46,6 @@
                 mod port;
                 mod multiboot2;
                 mod acpi;
-                mod user_mode;
                 mod process;
 
 pub use panic::panic_fmt;
@@ -57,7 +56,6 @@ use kernel::{Architecture,process::ProcessId};
 use gdt::Gdt;
 use tss::Tss;
 use process::Process;
-use user_mode::enter_usermode;
 
 struct X86_64
 {
@@ -73,7 +71,7 @@ impl Architecture for X86_64
     }
 }
 
-static mut TSS : Tss = Tss::new();
+pub static mut TSS : Tss = Tss::new();
 
 #[no_mangle]
 pub extern fn kstart(multiboot_address : PhysicalAddress) -> !
@@ -104,7 +102,7 @@ pub extern fn kstart(multiboot_address : PhysicalAddress) -> !
     unsafe
     {
         TSS.interrupt_stack_table[tss::DOUBLE_FAULT_IST_INDEX] = double_fault_stack.top();
-        TSS.privilege_stack_table[0] = memory::get_kernel_stack_top();    // TODO: do we need to update this to the top of the kernel stack on ring0 exit?
+        TSS.set_kernel_stack(memory::get_kernel_stack_top());
     }
     let gdt_selectors = Gdt::install(unsafe { &mut TSS });
 
@@ -121,10 +119,11 @@ pub extern fn kstart(multiboot_address : PhysicalAddress) -> !
     let module_tag = boot_info.modules().nth(0).unwrap();
     info!("Running module: {}", module_tag.name());
 
-    let process = Process::new(ProcessId(0),
-                               module_tag.start_address(),
-                               module_tag.end_address(),
-                               &mut memory_controller);
+    let mut process = Process::new(ProcessId(0),
+                                   module_tag.start_address(),
+                                   module_tag.end_address(),
+                                   &mut memory_controller);
+    unsafe { process.drop_to_usermode(gdt_selectors, &mut memory_controller); }
 
     // let virtual_address = module_tag.start_address().into_kernel_space();
     // unsafe { enter_usermode(virtual_address, gdt_selectors); }

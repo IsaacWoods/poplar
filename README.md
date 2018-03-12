@@ -6,7 +6,7 @@ This is the Pebble microkernel. It is written in Rust and currently only support
 It is Multiboot2 compatible and can be booted by GRUB2.
 
 
-# Design
+## Design
 The kernel is made up of a few crates, centered around the `kernel` crate:
 ```
 
@@ -33,7 +33,7 @@ It initialises the platform, then passes control to the `kernel` crate.
 This entire crate heirachy is compiled into a static library from the architecture crate, and then linked against other kernel objects (depending on platform).
 This modularity is meant to make it as easy as possible to extend the kernel to other architectures in the future.
 
-# Features / Roadmap
+## Features / Roadmap
 - [x] `alloc` support
 - [x] ACPI framework
 - [x] APIC support

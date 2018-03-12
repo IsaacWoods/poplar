@@ -169,16 +169,8 @@ impl ActivePageTable
         temporary_page.unmap(self);
     }
 
-    /*
-     * This switches to a new page table and returns the old (now inactive) one
-     */
-    pub fn switch(&mut self, new_table : InactivePageTable) -> InactivePageTable
+    pub fn switch(&mut self, new_table : InactivePageTable) -> ActivePageTable
     {
-        let old_table = InactivePageTable
-                        {
-                            p4_frame : Frame::containing_frame((read_control_reg!(cr3) as usize).into())
-                        };
-
         unsafe
         {
             /*
@@ -188,7 +180,7 @@ impl ActivePageTable
             write_control_reg!(cr3, usize::from(new_table.p4_frame.start_address()) as u64);
         }
 
-        old_table
+        unsafe { ActivePageTable::new() }
     }
 }
 
