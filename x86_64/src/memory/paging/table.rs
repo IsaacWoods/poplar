@@ -96,15 +96,20 @@ impl<L> Table<L> where L : HierarchicalLevel
     }
 
     pub fn next_table_create<A>(&mut self,
-                                index : usize,
-                                allocator : &mut A) -> &mut Table<L::NextLevel>
+                                index           : usize,
+                                user_accessible : bool,
+                                allocator       : &mut A) -> &mut Table<L::NextLevel>
         where A : FrameAllocator
     {
         if self.next_table(index).is_none()
         {
             assert!(!self.entries[index].flags().contains(EntryFlags::HUGE_PAGE), "mapping code does not support huge pages");
             let frame = allocator.allocate_frame().expect("no frames available");
-            self.entries[index].set(frame, EntryFlags::default() | EntryFlags::WRITABLE);
+
+            self.entries[index].set(frame, EntryFlags::default() |
+                                           EntryFlags::WRITABLE  |
+                                           if user_accessible { EntryFlags::USER_ACCESSIBLE } else { EntryFlags::empty() });
+
             self.next_table_mut(index).unwrap().zero();
         }
         self.next_table_mut(index).unwrap()

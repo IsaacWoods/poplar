@@ -4,7 +4,7 @@
  */
 
 use memory::Frame;
-use multiboot2::{ElfSection,ElfSectionFlags};
+use multiboot2::ElfSectionFlags;
 
 pub struct Entry(u64);
 
@@ -29,14 +29,13 @@ impl Default for EntryFlags
 {
     fn default() -> EntryFlags
     {
-        // TODO: this shouldn't make all pages user-accessible
-        EntryFlags::PRESENT | EntryFlags::USER_ACCESSIBLE
+        EntryFlags::PRESENT
     }
 }
 
 impl EntryFlags
 {
-    pub fn from_elf_section(section : &ElfSection) -> EntryFlags
+    pub fn from_elf_section(section : &::multiboot2::ElfSection) -> EntryFlags
     {
         let mut flags = EntryFlags::empty();
 

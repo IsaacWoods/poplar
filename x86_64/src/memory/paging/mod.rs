@@ -293,19 +293,6 @@ pub fn remap_kernel<A>(allocator : &mut A,
                                       allocator);
 
             /*
-             * Map modules loaded by GRUB
-             */
-            for module_tag in boot_info.modules()
-            {
-                trace!("Mapping module in range: {:#x}-{:#x}", module_tag.start_address(),
-                                                               module_tag.end_address());
-
-                mapper.identity_map_range(module_tag.start_address()..module_tag.end_address(),
-                                          EntryFlags::PRESENT | EntryFlags::USER_ACCESSIBLE,
-                                          allocator);
-            }
-
-            /*
              * Map the Multiboot structure to KERNEL_VMA + its physical address
              */
             trace!("Mapping Multiboot structure to {:#x}-{:#x}", boot_info.physical_start().into_kernel_space(),

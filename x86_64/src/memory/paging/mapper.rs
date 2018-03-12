@@ -198,9 +198,10 @@ impl Mapper
             let virtual_address = frame.start_address().into_kernel_space();
             let page = Page::containing_page(virtual_address);
 
-            let p3 = self.p4.next_table_create(page.p4_index(), allocator);
-            let p2 = p3.next_table_create(page.p3_index(), allocator);
-            let p1 = p2.next_table_create(page.p2_index(), allocator);
+            let user_accessible = flags.contains(EntryFlags::USER_ACCESSIBLE);
+            let p3 = self.p4.next_table_create(page.p4_index(), user_accessible, allocator);
+            let p2 =      p3.next_table_create(page.p3_index(), user_accessible, allocator);
+            let p1 =      p2.next_table_create(page.p2_index(), user_accessible, allocator);
 
             if p1[page.p1_index()].is_unused() ||
                (p1[page.p1_index()].flags().is_compatible(flags | EntryFlags::default()))
@@ -225,9 +226,14 @@ impl Mapper
                      allocator  : &mut A)
         where A : FrameAllocator
     {
-        let p3 = self.p4.next_table_create(page.p4_index(), allocator);
-        let p2 = p3.next_table_create(page.p3_index(), allocator);
-        let p1 = p2.next_table_create(page.p2_index(), allocator);
+        /*
+         * If the page to be mapped is user-accessible, all the previous paging structures must be
+         * too, otherwise we'll still page-fault.
+         */
+        let user_accessible = flags.contains(EntryFlags::USER_ACCESSIBLE);
+        let p3 = self.p4.next_table_create(page.p4_index(), user_accessible, allocator);
+        let p2 =      p3.next_table_create(page.p3_index(), user_accessible, allocator);
+        let p1 =      p2.next_table_create(page.p2_index(), user_accessible, allocator);
 
         assert!(p1[page.p1_index()].is_unused(), "Tried to map a page that has already been mapped: {:#x}", page.start_address());
         p1[page.p1_index()].set(frame, flags | EntryFlags::default());
