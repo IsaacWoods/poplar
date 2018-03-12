@@ -19,16 +19,20 @@ unsafe fn as_slice<'a, T>(ptr : usize, length : usize) -> &'a [T]
 
 pub fn dispatch_syscall(info : &SyscallInfo) -> SyscallResult
 {
-    info!("{},{},{},{},{},{}", info.syscall_number, info.a, info.b, info.c, info.d, info.e);
+    trace!("Syscall: {:?}", info);
 
     match SyscallType::from(info.syscall_number)
     {
-        SyscallType::Unknown => SyscallResult::ErrUnknownSyscall,
+        SyscallType::Unknown =>
+        {
+            warn!("Unknown syscall with number {} issued by process!", info.syscall_number);
+            SyscallResult::ErrUnknownSyscall
+        },
 
         SyscallType::DebugMsg =>
         {
             let msg = ::core::str::from_utf8(unsafe { as_slice(info.a, info.b) }).unwrap();
-            trace!("Usermode process says: {}", msg);
+            info!("Usermode process says: {}", msg);
             SyscallResult::Success
         },
 

@@ -20,7 +20,7 @@ use multiboot2::BootInformation;
 extern
 {
     /*
-     * The ADDRESS of this symbol is the top of the kernel stack;
+     * The ADDRESS of this symbol is the top of the kernel stack
      */
     static _kernel_stack_top : u8;
 }
@@ -53,7 +53,7 @@ pub fn init(boot_info : &BootInformation) -> MemoryController<AreaFrameAllocator
      */
     let kernel_start : VirtualAddress = unsafe { (&_higher_start as *const u8).into() };
     let kernel_end   : VirtualAddress = unsafe { (&_end          as *const u8).into() };
-    info!("Loading kernel to: ({:#x})---({:#x})", kernel_start, kernel_end);
+    trace!("Loading kernel to: ({:#x})---({:#x})", kernel_start, kernel_end);
 
     /*
      * TODO: are we using the correct addresses for the kernel start&end, this appears iffy?
