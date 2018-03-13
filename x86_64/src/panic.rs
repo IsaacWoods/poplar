@@ -9,7 +9,6 @@ pub extern fn panic_fmt(fmt     : ::core::fmt::Arguments,
                         file    : &'static str,
                         line    : u32) -> !
 {
-    error!("\n\nPANIC in {} at line {}:", file, line);
-    error!("      {}", fmt);
+    error!("PANIC in {} at line {}: \n    {}", file, line, fmt);
     loop {}
 }
