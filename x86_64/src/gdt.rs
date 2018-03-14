@@ -154,7 +154,11 @@ impl Gdt
         unsafe
         {
             // Load the GDT
-            asm!("lgdt ($0)" :: "r" (&ptr) : "memory");
+            asm!("lgdt [$0]"
+                 :
+                 : "r"(&ptr)
+                 : "rax", "memory"
+                 : "intel", "volatile");
 
             // Load the new data segments
             asm!("mov ds, ax
@@ -167,14 +171,22 @@ impl Gdt
                  : "intel", "volatile");
 
             // Load the new CS
-            asm!("pushq $0; \
-                  leaq 1f(%rip), %rax; \
-                  pushq %rax; \
-                  lretq; \
-                  1:" :: "ri" (u64::from(selectors.kernel_code.0)) : "rax" "memory");
+            asm!("push $0
+                  lea rax, [rip+0x3]
+                  push rax
+                  retfq
+                  1:"
+                 :
+                 : "r"(u64::from(selectors.kernel_code.0))
+                 : "rax", "memory"
+                 : "intel", "volatile");
 
             // Load the task register with the TSS selector
-            asm!("ltr $0" :: "r" (selectors.tss.0));
+            asm!("ltr $0"
+                 :
+                 : "r" (selectors.tss.0)
+                 :
+                 : "intel", "volatile");
         }
 
         selectors
