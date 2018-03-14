@@ -113,12 +113,10 @@ pub extern fn kstart(multiboot_address : PhysicalAddress) -> !
     let acpi_info = AcpiInfo::new(&boot_info, &mut memory_controller);
     interrupts::init(&gdt_selectors);
     apic::LOCAL_APIC.lock().enable_timer(6);
-    unsafe { asm!("sti"); }
+    interrupts::enable();
 
-    // TODO: parse ELF and start process properly
     let module_tag = boot_info.modules().nth(0).unwrap();
     info!("Running module: {}", module_tag.name());
-
     let mut process = Process::new(ProcessId(0),
                                    module_tag.start_address(),
                                    module_tag.end_address(),

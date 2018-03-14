@@ -275,6 +275,14 @@ pub fn init(gdt_selectors : &GdtSelectors)
     }
 }
 
+pub fn enable()
+{
+    unsafe
+    {
+        asm!("sti");
+    }
+}
+
 extern "C" fn invalid_opcode_handler(stack_frame : &InterruptStackFrame)
 {
     error!("INVALID OPCODE AT: {:#x}", stack_frame.instruction_pointer);
