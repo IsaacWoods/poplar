@@ -21,13 +21,20 @@ pub mod arch;
 pub mod process;
 pub mod syscall;
 pub mod util;
+pub mod vfs;
 
 pub use arch::Architecture;
+
+use vfs::FileManager;
 
 pub fn kernel_main<A>(architecture : A)
     where A : Architecture
 {
     trace!("Control passed to kernel crate");
     architecture.clear_screen();
+
+    let file_manager = FileManager::new();
+    let test_file = file_manager.open("/ramdisk/test_file");
+
     loop { }
 }

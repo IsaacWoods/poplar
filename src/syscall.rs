@@ -25,7 +25,7 @@ pub fn dispatch_syscall(info : &SyscallInfo) -> SyscallResult
     {
         SyscallType::Unknown =>
         {
-            warn!("Unknown syscall with number {} issued by process!", unsafe { info.syscall_number });
+            warn!("Unknown syscall with number {} issued by process!", info.syscall_number);
             SyscallResult::ErrUnknownSyscall
         },
 

@@ -121,7 +121,7 @@ pub extern fn kstart(multiboot_address : PhysicalAddress) -> !
                                    module_tag.start_address(),
                                    module_tag.end_address(),
                                    &mut memory_controller);
-    unsafe { process.drop_to_usermode(gdt_selectors, &mut memory_controller); }
+//    unsafe { process.drop_to_usermode(gdt_selectors, &mut memory_controller); }
 
     // let virtual_address = module_tag.start_address().into_kernel_space();
     // unsafe { enter_usermode(virtual_address, gdt_selectors); }
@@ -129,8 +129,8 @@ pub extern fn kstart(multiboot_address : PhysicalAddress) -> !
     /*
      * Pass control to the kernel proper.
      */
-    // let arch = X86_64 { };
-    // kernel::kernel_main(arch);
+    let arch = X86_64 { };
+    kernel::kernel_main(arch);
 
     loop { }
 }
