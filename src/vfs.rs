@@ -5,6 +5,15 @@
 
 use alloc::{String,boxed::Box,BTreeMap};
 
+#[derive(Debug)]
+pub enum FileError
+{
+    DoesNotExist(String),
+    MalformedPath(String),
+}
+
+pub type Result<T> = ::core::result::Result<T,FileError>;
+
 pub struct File<'a>
 {
     name        : String,
@@ -64,8 +73,32 @@ impl FileManager
         self.filesystems.insert(mount_point, filesystem);
     }
 
-    pub fn open(&self, path : &str) -> File
+    pub fn open(&self, path : &str) -> Result<File>
     {
-        unimplemented!();
+        let filesystem : &Box<Filesystem>;
+
+        if !path.starts_with('/')
+        {
+            return Err(FileError::MalformedPath(String::from(path)));
+        }
+
+        /*
+         * We are searching from the root of the filesystem. Therefore, the first part of the
+         * path will be the mount point of the filesystem.
+         */
+        let mut path_parts = path[1..].split('/');
+
+        match self.filesystems.get(path_parts.next().unwrap())
+        {
+            Some(filesystem) =>
+            {
+                Ok(filesystem.open(&(path_parts.collect() : String)))
+            },
+
+            None =>
+            {
+                return Err(FileError::DoesNotExist(String::from(path)));
+            },
+        }
     }
 }

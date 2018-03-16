@@ -7,6 +7,7 @@
 
 #![feature(alloc)]
 #![feature(core_intrinsics)]
+#![feature(type_ascription)]
 
                 extern crate volatile;
                 extern crate spin;
@@ -34,7 +35,7 @@ pub fn kernel_main<A>(architecture : A)
     architecture.clear_screen();
 
     let file_manager = FileManager::new();
-    let test_file = file_manager.open("/ramdisk/test_file");
+    let test_file = file_manager.open("/ramdisk/test_file").unwrap();
 
     loop { }
 }
