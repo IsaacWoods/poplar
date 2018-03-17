@@ -3,34 +3,37 @@
  * See LICENCE.md
  */
 
-use alloc::{String,boxed::Box,BTreeMap};
+use core::any::Any;
+use alloc::{String,Vec,boxed::Box,BTreeMap};
 
 #[derive(Debug)]
 pub enum FileError
 {
     DoesNotExist(String),
     MalformedPath(String),
+    IsReadOnly(String),
 }
 
 pub type Result<T> = ::core::result::Result<T,FileError>;
 
 pub struct File<'a>
 {
-    name        : String,
-    file_system : &'a Filesystem,
+    pub name        : String,
+    pub file_system : &'a Filesystem,
+    pub data        : Box<Any>,
 }
 
 impl<'a> File<'a>
 {
-    // pub fn read(&self) -> stuff
-    // {
-    //     self.file_system.read(&self)
-    // }
+    pub fn read(&self) -> Result<Vec<u8>>
+    {
+        self.file_system.read(self)
+    }
 
-    // pub fn write(&mut self, stuff : &stuff)
-    // {
-    //     self.file_system.write(&mut self, stuff);
-    // }
+    pub fn write(&mut self, stuff : &[u8]) -> Result<()>
+    {
+        self.file_system.write(self, stuff)
+    }
 
     pub fn close(self)
     {
@@ -44,10 +47,10 @@ impl<'a> File<'a>
  */
 pub trait Filesystem
 {
-    fn open(&self, path : &str) -> File;
+    fn open(&self, path : &str) -> Result<File>;
     fn close(&self, file : File);
-    // fn read(&self, file : &File) -> stuff;
-    // fn write(&mut self, file : &mut File, stuff : &stuff);
+    fn read(&self, file : &File) -> Result<Vec<u8>>;
+    fn write(&self, file : &mut File, stuff : &[u8]) -> Result<()>;
 }
 
 /*
@@ -68,9 +71,10 @@ impl FileManager
         }
     }
 
-    pub fn add_filesystem(&mut self, mount_point : String, filesystem : Box<Filesystem>)
+    pub fn add_filesystem(&mut self, mount_point : &str, filesystem : Box<Filesystem>)
     {
-        self.filesystems.insert(mount_point, filesystem);
+        assert!(mount_point.starts_with('/'), "Filesystem mount points must be absolute paths!");
+        self.filesystems.insert(String::from(&mount_point[1..]), filesystem);
     }
 
     pub fn open(&self, path : &str) -> Result<File>
@@ -92,12 +96,12 @@ impl FileManager
         {
             Some(filesystem) =>
             {
-                Ok(filesystem.open(&(path_parts.collect() : String)))
+                filesystem.open(&(path_parts.collect() : String))
             },
 
             None =>
             {
-                return Err(FileError::DoesNotExist(String::from(path)));
+                Err(FileError::DoesNotExist(String::from(path)))
             },
         }
     }

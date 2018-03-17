@@ -36,6 +36,7 @@ This modularity is meant to make it as easy as possible to extend the kernel to 
 ## Features / Roadmap
 - [x] `alloc` support
 - [x] ACPI framework
+- [ ] AML interpreter
 - [x] APIC support
 - [ ] Userland programs
 - [ ] System calls
