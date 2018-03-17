@@ -51,7 +51,7 @@
 pub use panic::panic_fmt;
 
 use memory::{MemoryController,FrameAllocator};
-use memory::paging::{PhysicalAddress,VirtualAddress};
+use memory::paging::PhysicalAddress;
 use acpi::AcpiInfo;
 use kernel::{Architecture,process::ProcessId,arch::MemoryAddress};
 use gdt::Gdt;
