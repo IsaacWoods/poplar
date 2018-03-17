@@ -99,12 +99,21 @@ impl Ramdisk
                 let size = (*header_ptr).size();
 
                 // Strip the trailing null bytes from the end of the slice
-                let mut filename = String::from(str::from_utf8(&(*header_ptr).filename).expect("Couldn't decode TAR header filename"));
-                filename.retain(|c| c != '\u{0}');
+                let mut filename_slice = str::from_utf8(&(*header_ptr).filename).expect("Couldn't decode TAR header filename");
+                let filename = match filename_slice.find('\u{0}')
+                               {
+                                   Some(index) =>
+                                   {
+                                       let (filename, _) = filename_slice.split_at(index);
+                                       filename
+                                   },
+
+                                   None => filename_slice,
+                               };
 
                 self.files.push(RamdiskFile
                                 {
-                                    path    : filename,
+                                    path    : String::from(filename),
                                     pointer : (header_address + mem::size_of::<TarHeader>()) as *const u8,
                                     size,
                                 });
