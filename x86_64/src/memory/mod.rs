@@ -9,13 +9,14 @@ mod area_frame_allocator;
 mod stack_allocator;
 
 pub use self::area_frame_allocator::AreaFrameAllocator;
-pub use self::paging::{PhysicalAddress,VirtualAddress,Page,entry::EntryFlags};
+pub use self::paging::{PhysicalAddress,VirtualAddress,Page,entry::EntryFlags,PhysicalMapping};
 
 use core::ops::Add;
+use alloc::BTreeMap;
+use multiboot2::BootInformation;
 use self::map::{HEAP_START,HEAP_SIZE};
 use self::stack_allocator::{Stack,StackAllocator};
 use self::paging::PAGE_SIZE;
-use multiboot2::BootInformation;
 
 extern
 {
@@ -86,6 +87,20 @@ pub fn init(boot_info : &BootInformation) -> MemoryController<AreaFrameAllocator
     }
 
     /*
+     * We can now map each module into the virtual address space
+     */
+    let mut loaded_modules = BTreeMap::new();
+    for module_tag in boot_info.modules()
+    {
+        let physical_mapping = active_table.map_physical_region(module_tag.start_address(),
+                                                                module_tag.end_address(),
+                                                                EntryFlags::PRESENT,
+                                                                &mut frame_allocator);
+        loaded_modules.insert(module_tag.name(), physical_mapping);
+    }
+    info!("Loaded {} modules", loaded_modules.len());
+
+    /*
      * Create a StackAllocator that allocates in the 100 pages directly following the heap
      */
     let stack_allocator = StackAllocator::new(map::STACK_SPACE_TOP, map::STACK_SPACE_BOTTOM);
@@ -95,6 +110,7 @@ pub fn init(boot_info : &BootInformation) -> MemoryController<AreaFrameAllocator
         kernel_page_table : active_table,
         frame_allocator,
         stack_allocator,
+        loaded_modules,
     }
 }
 
@@ -176,7 +192,8 @@ pub struct MemoryController<A : FrameAllocator>
 {
     pub kernel_page_table   : paging::ActivePageTable,
     pub frame_allocator     : A,
-    pub stack_allocator     : StackAllocator
+    pub stack_allocator     : StackAllocator,
+    pub loaded_modules      : BTreeMap<&'static str, PhysicalMapping<u8>>,
 }
 
 impl<A> MemoryController<A> where A : FrameAllocator

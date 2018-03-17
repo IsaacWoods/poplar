@@ -50,20 +50,38 @@
 
 pub use panic::panic_fmt;
 
-use memory::paging::PhysicalAddress;
+use memory::{MemoryController,FrameAllocator};
+use memory::paging::{PhysicalAddress,VirtualAddress};
 use acpi::AcpiInfo;
 use kernel::{Architecture,process::ProcessId};
 use gdt::Gdt;
 use tss::Tss;
 use process::Process;
 
-struct X86_64
+pub struct Platform<A>
+    where A : FrameAllocator
 {
+    pub memory_controller   : MemoryController<A>,
 }
 
-impl Architecture for X86_64
+impl<A> Platform<A>
+    where A : FrameAllocator
 {
-    type MemoryAddress = memory::paging::VirtualAddress;
+    fn new(memory_controller : MemoryController<A>) -> Platform<A>
+    {
+        assert_first_call!("Tried to initialise platform struct more than once!");
+
+        Platform
+        {
+            memory_controller,
+        }
+    }
+}
+
+impl<A> Architecture for Platform<A>
+    where A : FrameAllocator
+{
+    type MemoryAddress = VirtualAddress;
 
     fn clear_screen(&self)
     {
@@ -83,12 +101,13 @@ pub extern fn kstart(multiboot_address : PhysicalAddress) -> !
     log::set_max_level(log::LevelFilter::Trace);
     info!("Kernel connected to COM1");
 
+
     /*
      * We are passed the *physical* address of the Multiboot struct, so we offset it by the virtual
      * offset of the whole kernel.
      */
     let boot_info = unsafe { BootInformation::load(multiboot_address.into()) };
-    let mut memory_controller = memory::init(&boot_info);
+    let mut platform = Platform::new(memory::init(&boot_info));
 
     /*
      * We can create and install a TSS and new GDT.
@@ -98,7 +117,7 @@ pub extern fn kstart(multiboot_address : PhysicalAddress) -> !
      * overflow), which would otherwise:
      *      Page Fault -> Page Fault -> Double Fault -> Page Fault -> Triple Fault
      */
-    let double_fault_stack = memory_controller.alloc_stack(1).expect("Failed to allocate stack");
+    let double_fault_stack = platform.memory_controller.alloc_stack(1).expect("Failed to allocate stack");
     unsafe
     {
         TSS.interrupt_stack_table[tss::DOUBLE_FAULT_IST_INDEX] = double_fault_stack.top();
@@ -110,29 +129,26 @@ pub extern fn kstart(multiboot_address : PhysicalAddress) -> !
      * We now find and parse the ACPI tables. This also initialises the local APIC and IOAPIC, as
      * they are detailed by the MADT.
      */
-    let acpi_info = AcpiInfo::new(&boot_info, &mut memory_controller);
+    let acpi_info = AcpiInfo::new(&boot_info, &mut platform.memory_controller);
     interrupts::init(&gdt_selectors);
     apic::LOCAL_APIC.lock().enable_timer(6);
     interrupts::enable();
 
-    let module_tag = boot_info.modules().nth(0).unwrap();
-    info!("Running module: {}", module_tag.name());
-    let mut process = Process::new(ProcessId(0),
-                                   module_tag.start_address(),
-                                   module_tag.end_address(),
-                                   &mut memory_controller);
+    // let module_tag = boot_info.modules().nth(0).unwrap();
+    // info!("Running module: {}", module_tag.name());
+    // let mut process = Process::new(ProcessId(0),
+    //                                module_tag.start_address(),
+    //                                module_tag.end_address(),
+    //                                &mut memory_controller);
 //    unsafe { process.drop_to_usermode(gdt_selectors, &mut memory_controller); }
 
     // let virtual_address = module_tag.start_address().into_kernel_space();
     // unsafe { enter_usermode(virtual_address, gdt_selectors); }
 
     /*
-     * Pass control to the kernel proper.
+     * Pass control to the kernel.
      */
-    let arch = X86_64 { };
-    kernel::kernel_main(arch);
-
-    loop { }
+    kernel::kernel_main(platform);
 }
 
 #[lang = "eh_personality"]

@@ -28,7 +28,7 @@ pub use arch::Architecture;
 
 use vfs::FileManager;
 
-pub fn kernel_main<A>(architecture : A)
+pub fn kernel_main<A>(architecture : A) -> !
     where A : Architecture
 {
     trace!("Control passed to kernel crate");
