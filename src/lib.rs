@@ -34,6 +34,8 @@ pub fn kernel_main<A>(architecture : A) -> !
     trace!("Control passed to kernel crate");
     architecture.clear_screen();
 
+    info!("Module: {:?}", architecture.get_module_address("test_asm"));
+
     let file_manager = FileManager::new();
     let test_file = file_manager.open("/ramdisk/test_file").unwrap();
 

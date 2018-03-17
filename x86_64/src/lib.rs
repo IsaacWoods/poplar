@@ -53,7 +53,7 @@ pub use panic::panic_fmt;
 use memory::{MemoryController,FrameAllocator};
 use memory::paging::{PhysicalAddress,VirtualAddress};
 use acpi::AcpiInfo;
-use kernel::{Architecture,process::ProcessId};
+use kernel::{Architecture,process::ProcessId,arch::MemoryAddress};
 use gdt::Gdt;
 use tss::Tss;
 use process::Process;
@@ -81,11 +81,18 @@ impl<A> Platform<A>
 impl<A> Architecture for Platform<A>
     where A : FrameAllocator
 {
-    type MemoryAddress = VirtualAddress;
-
     fn clear_screen(&self)
     {
         vga_buffer::WRITER.lock().clear_buffer();
+    }
+
+    fn get_module_address(&self, module_name : &str) -> Option<(MemoryAddress,MemoryAddress)>
+    {
+        self.memory_controller.loaded_modules.get(module_name).map(
+            |mapping| {
+                (mapping.ptr as usize, mapping.ptr as usize + mapping.size)
+            })
+
     }
 }
 
@@ -107,7 +114,10 @@ pub extern fn kstart(multiboot_address : PhysicalAddress) -> !
      * offset of the whole kernel.
      */
     let boot_info = unsafe { BootInformation::load(multiboot_address.into()) };
-    let mut platform = Platform::new(memory::init(&boot_info));
+    let mut platform = {
+                           let mut memory_controller = memory::init(&boot_info);
+                           Platform::new(memory_controller)
+                       };
 
     /*
      * We can create and install a TSS and new GDT.
