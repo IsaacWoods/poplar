@@ -99,7 +99,7 @@ impl Ramdisk
                 let size = (*header_ptr).size();
 
                 // Strip the trailing null bytes from the end of the slice
-                let mut filename_slice = str::from_utf8(&(*header_ptr).filename).expect("Couldn't decode TAR header filename");
+                let filename_slice = str::from_utf8(&(*header_ptr).filename).expect("Couldn't decode TAR header filename");
                 let filename = match filename_slice.find('\u{0}')
                                {
                                    Some(index) =>

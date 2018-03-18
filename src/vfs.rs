@@ -79,8 +79,6 @@ impl FileManager
 
     pub fn open(&self, path : &str) -> Result<File>
     {
-        let filesystem : &Box<Filesystem>;
-
         if !path.starts_with('/')
         {
             return Err(FileError::MalformedPath(String::from(path)));
