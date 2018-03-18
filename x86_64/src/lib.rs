@@ -42,6 +42,7 @@
                 mod tlb;
                 mod tss;
                 mod i8259_pic;
+                mod pit;
                 mod apic;
                 mod port;
                 mod multiboot2;

@@ -33,7 +33,7 @@ pub const APIC_SPURIOUS_INTERRUPT   : u8 = 0xFF;
 
 #[derive(Clone,Copy,Debug)]
 #[repr(C)]
-struct InterruptStackFrame
+pub struct InterruptStackFrame
 {
     instruction_pointer : VirtualAddress,
     code_segment        : u64,
@@ -44,10 +44,9 @@ struct InterruptStackFrame
 
 #[derive(Clone,Copy,Debug)]
 #[repr(C)]
-struct SyscallStackFrame
+pub struct SyscallStackFrame
 {
     syscall_info        : SyscallInfo,
-
     instruction_pointer : VirtualAddress,
     code_segment        : u64,
     cpu_flags           : CpuFlags,
@@ -91,7 +90,7 @@ macro_rules! restore_regs
 
 macro_rules! wrap_handler
 {
-    ($name : ident) =>
+    ($name : path) =>
     {{
         #[naked]
         extern "C" fn wrapper() -> !
@@ -122,7 +121,7 @@ macro_rules! wrap_handler
 
 macro_rules! wrap_handler_with_error_code
 {
-    ($name : ident) =>
+    ($name : path) =>
     {{
          #[naked]
          extern "C" fn wrapper() -> !
@@ -161,7 +160,7 @@ macro_rules! wrap_handler_with_error_code
 
 macro_rules! wrap_syscall_handler
 {
-    ($name : ident) =>
+    ($name : path) =>
     {{
         #[naked]
         extern "C" fn wrapper() -> !
@@ -255,7 +254,7 @@ pub fn init(gdt_selectors : &GdtSelectors)
         /*
          * Install handlers for ISA IRQs from the IOAPIC
          */
-        IDT.apic_irq(0).set_handler(wrap_handler!(pit_handler), gdt_selectors.kernel_code);
+        IDT.apic_irq(0).set_handler(wrap_handler!(::pit::pit_handler), gdt_selectors.kernel_code);
         IDT.apic_irq(1).set_handler(wrap_handler!(key_handler), gdt_selectors.kernel_code);
 
         /*
@@ -345,13 +344,6 @@ extern "C" fn double_fault_handler(stack_frame : &InterruptStackFrame, error_cod
 {
     error!("EXCEPTION: DOUBLE FAULT   (Error code: {})\n{:#?}", error_code, stack_frame);
     loop { }
-}
-
-extern "C" fn pit_handler(_ : &InterruptStackFrame)
-{
-    // XXX: Printing here seems to lock everything up (probably due to the contention on the mutex
-    // involved) so probably avoid that.
-    LOCAL_APIC.lock().send_eoi();
 }
 
 extern "C" fn apic_timer_handler(_ : &InterruptStackFrame)
