@@ -248,7 +248,7 @@ pub fn init(gdt_selectors : &GdtSelectors)
         /*
          * Install handlers for local APIC interrupts
          */
-        IDT[LOCAL_APIC_TIMER].set_handler(wrap_handler!(apic_timer_handler),        gdt_selectors.kernel_code);
+        IDT[LOCAL_APIC_TIMER].set_handler(wrap_handler!(::apic::apic_timer_handler),        gdt_selectors.kernel_code);
         IDT[APIC_SPURIOUS_INTERRUPT].set_handler(wrap_handler!(spurious_handler),   gdt_selectors.kernel_code);
 
         /*
@@ -344,12 +344,6 @@ extern "C" fn double_fault_handler(stack_frame : &InterruptStackFrame, error_cod
 {
     error!("EXCEPTION: DOUBLE FAULT   (Error code: {})\n{:#?}", error_code, stack_frame);
     loop { }
-}
-
-extern "C" fn apic_timer_handler(_ : &InterruptStackFrame)
-{
-    trace!("APIC Tick");
-    LOCAL_APIC.lock().send_eoi();
 }
 
 static KEYBOARD_PORT : Port<u8> = unsafe { Port::new(0x60) };

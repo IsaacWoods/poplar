@@ -9,9 +9,15 @@ use bit_field::BitField;
 use ::memory::{Frame,MemoryController,FrameAllocator};
 use ::memory::map::{LOCAL_APIC_REGISTER_SPACE,IOAPIC_REGISTER_SPACE};
 use ::memory::paging::{PhysicalAddress,Page,EntryFlags};
+use interrupts::InterruptStackFrame;
 
 pub static LOCAL_APIC   : Mutex<LocalApic> = Mutex::new(LocalApic::placeholder());
 pub static IO_APIC      : Mutex<IoApic>    = Mutex::new(IoApic::placeholder());
+
+pub extern "C" fn apic_timer_handler(_ : &InterruptStackFrame)
+{
+    LOCAL_APIC.lock().send_eoi();
+}
 
 #[derive(Clone,Copy,Debug)]
 pub struct LocalApic
@@ -59,14 +65,36 @@ impl LocalApic
         ptr::write_volatile(self.register_ptr(0xF0), spurious_interrupt_vector);
     }
 
-    pub fn enable_timer(&self, frequency : u64)
+    /// Set the local APIC timer to interrupt every `duration` ms, and then enable it
+    pub fn enable_timer(&self, duration : usize)
     {
-        // TODO: use the PIT or something to actually calculate the frequency the APIC is running at
+        trace!("Timing local APIC bus frequency [freezing here suggests problem with PIT sleep]");
         unsafe
         {
-            ptr::write_volatile(self.register_ptr(0x320), ::interrupts::LOCAL_APIC_TIMER as u32 | 0x20000); // Set the LVT entry
-            ptr::write_volatile(self.register_ptr(0x3E0), 0x3);          // Set the timer divisor = 16
-            ptr::write_volatile(self.register_ptr(0x380), 100000000);    // Set initial count
+            /*
+             * Set divide value to 16 and initial counter value to -1. We use 16 because apparently
+             * some hardware has issues with other divide values (especially 1, which would be the
+             * simplest otherwise). 16 seems to be the most supported.
+             */
+            ptr::write_volatile(self.register_ptr(0x3E0), 0x3);
+            ptr::write_volatile(self.register_ptr(0x380), 0xFFFFFFFF);
+
+            /*
+             * Sleep for 10ms with the PIT and then stop the APIC timer
+             */
+            ::pit::PIT.do_sleep(10);
+            ptr::write_volatile(self.register_ptr(0x320), 0x10000);
+
+            let ticks_in_10ms = (0xFFFFFFFF - ptr::read_volatile(self.register_ptr(0x390))) as usize;
+            trace!("Timing of local APIC bus frequency complete");
+
+            /*
+             * Start the APIC timer in Periodic mode with a divide value of 16 again, to interrupt
+             * every 10 ms.
+             */
+            ptr::write_volatile(self.register_ptr(0x320), ::interrupts::LOCAL_APIC_TIMER as u32 | 0x20000);
+            ptr::write_volatile(self.register_ptr(0x3E0), 0x3);
+            ptr::write_volatile(self.register_ptr(0x380), ((ticks_in_10ms / 10) * duration) as u32);
         }
     }
 

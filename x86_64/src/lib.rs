@@ -109,7 +109,6 @@ pub extern fn kstart(multiboot_address : PhysicalAddress) -> !
     log::set_max_level(log::LevelFilter::Trace);
     info!("Kernel connected to COM1");
 
-
     /*
      * We are passed the *physical* address of the Multiboot struct, so we offset it by the virtual
      * offset of the whole kernel.
@@ -142,8 +141,18 @@ pub extern fn kstart(multiboot_address : PhysicalAddress) -> !
      */
     let acpi_info = AcpiInfo::new(&boot_info, &mut platform.memory_controller);
     interrupts::init(&gdt_selectors);
-    apic::LOCAL_APIC.lock().enable_timer(6);
     interrupts::enable();
+
+    /*
+     * We can now initialise the local APIC timer to interrupt every 10ms. This uses the PIT to
+     * determine the frequency the timer is running at, so interrupts must be enabled at this point.
+     */
+    apic::LOCAL_APIC.lock().enable_timer(10);
+
+    /*
+     * Set the PIT to generate an interrupt every 10ms.
+     */
+    unsafe { pit::PIT.init(10); }
 
     // let module_tag = boot_info.modules().nth(0).unwrap();
     // info!("Running module: {}", module_tag.name());
