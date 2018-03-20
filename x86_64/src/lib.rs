@@ -31,12 +31,14 @@
                 extern crate pebble_syscall_common;
                 extern crate xmas_elf;
 
+                mod multiboot2;
 #[macro_use]    mod registers;
 #[macro_use]    mod vga_buffer;
 #[macro_use]    mod serial;
                 mod panic;
                 mod memory;
                 mod interrupts;
+                mod cpu;
                 mod gdt;
                 mod idt;
                 mod tlb;
@@ -45,12 +47,12 @@
                 mod pit;
                 mod apic;
                 mod port;
-                mod multiboot2;
                 mod acpi;
                 mod process;
 
 pub use panic::panic_fmt;
 
+use alloc::Vec;
 use memory::{MemoryController,FrameAllocator};
 use memory::paging::PhysicalAddress;
 use acpi::AcpiInfo;
@@ -58,11 +60,13 @@ use kernel::{Architecture,process::ProcessId,arch::MemoryAddress};
 use gdt::Gdt;
 use tss::Tss;
 use process::Process;
+use cpu::Cpu;
 
 pub struct Platform<A>
     where A : FrameAllocator
 {
     pub memory_controller   : MemoryController<A>,
+    pub cpus                : Vec<Cpu>,
 }
 
 impl<A> Platform<A>
@@ -75,6 +79,7 @@ impl<A> Platform<A>
         Platform
         {
             memory_controller,
+            cpus                : Vec::new(),
         }
     }
 }
@@ -139,9 +144,14 @@ pub extern fn kstart(multiboot_address : PhysicalAddress) -> !
      * We now find and parse the ACPI tables. This also initialises the local APIC and IOAPIC, as
      * they are detailed by the MADT.
      */
-    let acpi_info = AcpiInfo::new(&boot_info, &mut platform.memory_controller);
+    let acpi_info = AcpiInfo::new(&boot_info, &mut platform);
     interrupts::init(&gdt_selectors);
     interrupts::enable();
+
+    for cpu in platform.cpus.iter()
+    {
+        info!("CPU: {:?}", cpu);
+    }
 
     /*
      * We can now initialise the local APIC timer to interrupt every 10ms. This uses the PIT to

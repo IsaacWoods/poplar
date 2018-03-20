@@ -4,11 +4,14 @@
  */
 
 use core::{mem,ptr};
+use bit_field::BitField;
 use alloc::boxed::Box;
+use ::Platform;
 use super::{AcpiInfo,SdtHeader};
-use ::memory::{MemoryController,FrameAllocator};
-use ::memory::paging::{PhysicalAddress,VirtualAddress};
-use ::apic::{LOCAL_APIC,IO_APIC,DeliveryMode,PinPolarity,TriggerMode};
+use cpu::{Cpu,CpuState};
+use memory::FrameAllocator;
+use memory::paging::{PhysicalAddress,VirtualAddress};
+use apic::{LOCAL_APIC,IO_APIC,DeliveryMode,PinPolarity,TriggerMode};
 
 #[derive(Clone,Copy,Debug)]
 #[repr(packed)]
@@ -85,9 +88,9 @@ struct LocalApicAddressOverrideEntry
  * It seems way too coupled to initialise the local APIC and IOAPIC here, but it's very convienient
  * while we have all the data from the MADT already mapped.
  */
-pub(super) fn parse_madt<A>(ptr                : *const SdtHeader,
-                            acpi_info          : &mut AcpiInfo,
-                            memory_controller  : &mut MemoryController<A>)
+pub(super) fn parse_madt<A>(ptr         : *const SdtHeader,
+                            acpi_info   : &mut AcpiInfo,
+                            platform    : &mut Platform<A>)
     where A : FrameAllocator
 {
     let madt : Box<MadtHeader> = Box::new(unsafe { ptr::read_unaligned(ptr as *const MadtHeader) });
@@ -95,7 +98,7 @@ pub(super) fn parse_madt<A>(ptr                : *const SdtHeader,
 
     // Initialise the local APIC
     let local_apic_address = PhysicalAddress::new(madt.local_apic_address as usize);
-    unsafe { LOCAL_APIC.lock().enable(local_apic_address, memory_controller) };
+    unsafe { LOCAL_APIC.lock().enable(local_apic_address, &mut platform.memory_controller) };
 
     let mut entry_address = VirtualAddress::new(ptr as usize).offset(mem::size_of::<MadtHeader>() as isize);
     let end_address = VirtualAddress::new(ptr as usize).offset((madt.header.length - 1) as isize);
@@ -110,7 +113,19 @@ pub(super) fn parse_madt<A>(ptr                : *const SdtHeader,
             {
                 trace!("Found MADT entry: processor local APIC (type=0)");
                 let entry = unsafe { ptr::read_unaligned(entry_address.ptr() as *const LocalApicEntry) };
-                // TODO: keep track of each core and its local APIC
+
+                let is_ap       = false;    // TODO
+                let is_disabled = unsafe { entry.flags.get_bit(0) };
+
+                let state = match (is_ap, is_disabled)
+                            {
+                                (_,true)        => CpuState::Disabled,
+                                (true,false)    => CpuState::WaitingForSipi,
+                                (false,false)   => CpuState::Running,
+                            };
+                // TODO: find out if it's an AP, and the correct state
+                platform.cpus.push(Cpu::new(entry.processor_id, entry.apic_id, is_ap, state));
+
                 entry_address = entry_address.offset(mem::size_of::<LocalApicEntry>() as isize);
             },
 
@@ -124,7 +139,7 @@ pub(super) fn parse_madt<A>(ptr                : *const SdtHeader,
                 {
                     IO_APIC.lock().enable(io_apic_address,
                                           entry.global_system_interrupt_base as u8,
-                                          memory_controller);
+                                          &mut platform.memory_controller);
                 }
 
                 entry_address = entry_address.offset(12);

@@ -7,7 +7,8 @@ mod fadt;
 mod madt;
 
 use core::{str,mem,ptr};
-use memory::{MemoryController,Frame,FrameAllocator};
+use ::Platform;
+use memory::{Frame,FrameAllocator};
 use memory::paging::{PhysicalAddress,VirtualAddress,TemporaryPage};
 use multiboot2::BootInformation;
 use alloc::boxed::Box;
@@ -128,8 +129,8 @@ pub struct Rsdt
 impl Rsdt
 {
     fn parse<A>(&self,
-                acpi_info           : &mut AcpiInfo,
-                memory_controller   : &mut MemoryController<A>)
+                acpi_info   : &mut AcpiInfo,
+                platform    : &mut Platform<A>)
         where A : FrameAllocator
     {
         use ::memory::map::TEMP_PAGE;
@@ -141,9 +142,9 @@ impl Rsdt
         {
             let pointer_address = unsafe { table_base_ptr.offset(i as isize) };
             let physical_address = PhysicalAddress::new(unsafe { *pointer_address } as usize);
-            let mut temporary_page = TemporaryPage::new(TEMP_PAGE, &mut memory_controller.frame_allocator);
+            let mut temporary_page = TemporaryPage::new(TEMP_PAGE, &mut platform.memory_controller.frame_allocator);
             temporary_page.map(Frame::containing_frame(physical_address),
-                               &mut memory_controller.kernel_page_table);
+                               &mut platform.memory_controller.kernel_page_table);
 
             let sdt_pointer = TEMP_PAGE.start_address().offset(physical_address.offset_into_frame() as isize).ptr() as *const SdtHeader;
             let signature = unsafe { str::from_utf8_unchecked(&(*sdt_pointer).signature) };
@@ -151,11 +152,11 @@ impl Rsdt
             match unsafe { &(*sdt_pointer).signature }
             {
                 b"FACP" => fadt::parse_fadt(sdt_pointer, acpi_info),
-                b"APIC" => madt::parse_madt(sdt_pointer, acpi_info, memory_controller),
+                b"APIC" => madt::parse_madt(sdt_pointer, acpi_info, platform),
                 _       => warn!("Unhandled SDT type: {}", signature),
             }
 
-            temporary_page.unmap(&mut memory_controller.kernel_page_table);
+            temporary_page.unmap(&mut platform.memory_controller.kernel_page_table);
         }
     }
 }
@@ -170,8 +171,8 @@ pub struct AcpiInfo
 
 impl AcpiInfo
 {
-    pub fn new<A>(boot_info            : &BootInformation,
-                  memory_controller    : &mut MemoryController<A>) -> AcpiInfo
+    pub fn new<A>(boot_info : &BootInformation,
+                  platform  : &mut Platform<A>) -> AcpiInfo
         where A : FrameAllocator
     {
         use ::memory::map::TEMP_PAGE;
@@ -181,14 +182,14 @@ impl AcpiInfo
 
         trace!("Loading ACPI tables with OEM ID: {}", rsdp.oem_str());
         let physical_address = PhysicalAddress::new(rsdp.rsdt_address as usize);
-        let mut temporary_page = TemporaryPage::new(TEMP_PAGE, &mut memory_controller.frame_allocator);
+        let mut temporary_page = TemporaryPage::new(TEMP_PAGE, &mut platform.memory_controller.frame_allocator);
         temporary_page.map(Frame::containing_frame(physical_address),
-                           &mut memory_controller.kernel_page_table);
+                           &mut platform.memory_controller.kernel_page_table);
         let rsdt_ptr = (TEMP_PAGE.start_address().offset(physical_address.offset_into_frame() as isize)).ptr() as *const SdtHeader;
 
         let rsdt : Box<Rsdt> = unsafe { Box::new(ptr::read_unaligned(rsdt_ptr as *const Rsdt)) };
         rsdt.header.validate("RSDT").unwrap();
-        temporary_page.unmap(&mut memory_controller.kernel_page_table);
+        temporary_page.unmap(&mut platform.memory_controller.kernel_page_table);
 
         let mut acpi_info = AcpiInfo
                             {
@@ -197,7 +198,7 @@ impl AcpiInfo
                                 fadt        : None,
                             };
 
-        rsdt.parse(&mut acpi_info, memory_controller);
+        rsdt.parse(&mut acpi_info, platform);
         acpi_info.rsdt = Some(rsdt);
 
         acpi_info
