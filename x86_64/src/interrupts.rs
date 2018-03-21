@@ -269,8 +269,8 @@ pub fn init(gdt_selectors : &GdtSelectors)
          * Unmask handled entries on the IOAPIC
          * TODO: Better way of specifying/looking up the global system interrupt number for these
          */
-        IO_APIC.lock().set_irq_mask(2, false);  // PIT
-        IO_APIC.lock().set_irq_mask(1, false);  // PS/2 controller
+        IO_APIC.set_irq_mask(2, false); // PIT
+        IO_APIC.set_irq_mask(1, false); // PS/2 controller
     }
 }
 
@@ -351,7 +351,7 @@ static KEYBOARD_PORT : Port<u8> = unsafe { Port::new(0x60) };
 extern "C" fn key_handler(_ : &InterruptStackFrame)
 {
     info!("Key interrupt: Scancode={:#x}", unsafe { KEYBOARD_PORT.read() });
-    LOCAL_APIC.lock().send_eoi();
+    unsafe { LOCAL_APIC.send_eoi(); }
 }
 
 extern "C" fn system_call_handler(stack_frame : &SyscallStackFrame)

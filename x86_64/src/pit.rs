@@ -94,7 +94,7 @@ pub extern "C" fn pit_handler(_ : &InterruptStackFrame)
         {
             PIT.sleeping = false;
         }
-    }
 
-    LOCAL_APIC.lock().send_eoi();
+        LOCAL_APIC.send_eoi();
+    }
 }

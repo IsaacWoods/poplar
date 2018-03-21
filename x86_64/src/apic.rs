@@ -6,24 +6,24 @@
 use core::ptr;
 use spin::Mutex;
 use bit_field::BitField;
-use ::memory::{Frame,MemoryController,FrameAllocator};
-use ::memory::map::{LOCAL_APIC_REGISTER_SPACE,IOAPIC_REGISTER_SPACE};
-use ::memory::paging::{PhysicalAddress,Page,EntryFlags};
+use ::memory::{MemoryController,FrameAllocator};
+use ::memory::paging::{PhysicalAddress,VirtualAddress,EntryFlags,PhysicalMapping};
 use interrupts::InterruptStackFrame;
 
-pub static LOCAL_APIC   : Mutex<LocalApic> = Mutex::new(LocalApic::placeholder());
-pub static IO_APIC      : Mutex<IoApic>    = Mutex::new(IoApic::placeholder());
+pub static mut LOCAL_APIC   : LocalApic = LocalApic::placeholder();
+pub static mut IO_APIC      : IoApic    = IoApic::placeholder();
 
 pub extern "C" fn apic_timer_handler(_ : &InterruptStackFrame)
 {
-    LOCAL_APIC.lock().send_eoi();
+    unsafe { LOCAL_APIC.send_eoi(); }
 }
 
-#[derive(Clone,Copy,Debug)]
+#[derive(Clone,Debug)]
 pub struct LocalApic
 {
     is_enabled      : bool,
     register_base   : PhysicalAddress,
+    mapping         : Option<PhysicalMapping<u32>>,
 }
 
 impl LocalApic
@@ -38,15 +38,17 @@ impl LocalApic
         {
             is_enabled      : false,
             register_base   : PhysicalAddress::new(0),
+            mapping         : None,
         }
     }
 
     pub unsafe fn register_ptr(&self, offset : usize) -> *mut u32
     {
-        LOCAL_APIC_REGISTER_SPACE.offset(offset as isize).mut_ptr() as *mut u32
+        let mapping = self.mapping.as_ref().expect("Tried to get register ptr to unmapped local APIC");
+        VirtualAddress::from(mapping.ptr).offset(offset as isize).mut_ptr() as *mut u32
     }
 
-    pub unsafe fn enable<A>(&self,
+    pub unsafe fn enable<A>(&mut self,
                             register_base       : PhysicalAddress,
                             memory_controller   : &mut MemoryController<A>)
         where A : FrameAllocator
@@ -54,14 +56,17 @@ impl LocalApic
         assert!(!self.is_enabled);
 
         // Map the configuration space into virtual memory
-        assert!(register_base.is_frame_aligned(), "Expected local APIC registers to be frame aligned");
-        memory_controller.kernel_page_table.map_to(Page::containing_page(LOCAL_APIC_REGISTER_SPACE),
-                                                   Frame::containing_frame(register_base),
-                                                   EntryFlags::WRITABLE,
-                                                   &mut memory_controller.frame_allocator);
+        self.mapping = Some(memory_controller.kernel_page_table
+                                             .map_physical_region(register_base,
+                                                                  register_base.offset(4096-1),
+                                                                  EntryFlags::WRITABLE | EntryFlags::NO_CACHE,
+                                                                  &mut memory_controller.frame_allocator));
 
-        let spurious_interrupt_vector = (1<<8) |                                        // Enable the local APIC by setting bit 8
-                                        ::interrupts::APIC_SPURIOUS_INTERRUPT as u32;   // Set the interrupt vector of the spurious interrupt
+        /*
+         * - Enable the local APIC by setting bit 8
+         * - Set eh spurious interrupt vector
+         */
+        let spurious_interrupt_vector = (1<<8) | ::interrupts::APIC_SPURIOUS_INTERRUPT as u32;
         ptr::write_volatile(self.register_ptr(0xF0), spurious_interrupt_vector);
     }
 
@@ -108,11 +113,12 @@ impl LocalApic
     }
 }
 
-#[derive(Clone,Copy,Debug)]
+#[derive(Clone,Debug)]
 pub struct IoApic
 {
     is_enabled              : bool,
     register_base           : PhysicalAddress,
+    mapping                 : Option<PhysicalMapping<u32>>,
     global_interrupt_base   : u8,
 }
 
@@ -147,6 +153,7 @@ impl IoApic
         {
             is_enabled              : false,
             register_base           : PhysicalAddress::new(0),
+            mapping                 : None,
             global_interrupt_base   : 0,
         }
     }
@@ -161,11 +168,11 @@ impl IoApic
         self.global_interrupt_base = global_interrupt_base;
 
         // Map the configuration space to virtual memory
-        assert!(register_base.is_frame_aligned(), "Expected IOAPIC registers to be frame aligned");
-        memory_controller.kernel_page_table.map_to(Page::containing_page(IOAPIC_REGISTER_SPACE),
-                                                   Frame::containing_frame(register_base),
-                                                   EntryFlags::WRITABLE,
-                                                   &mut memory_controller.frame_allocator);
+        self.mapping = Some(memory_controller.kernel_page_table
+                                             .map_physical_region(register_base,
+                                                                  register_base.offset(4096-1),
+                                                                  EntryFlags::WRITABLE | EntryFlags::NO_CACHE,
+                                                                  &mut memory_controller.frame_allocator));
 
         /*
          * Map all ISA IRQs (these can be remapped by Interrupt Source Override entries in the
@@ -191,14 +198,16 @@ impl IoApic
 
     unsafe fn read_register(&self, register : u32) -> u32
     {
-        ptr::write_volatile(IOAPIC_REGISTER_SPACE.mut_ptr() as *mut u32, register);
-        ptr::read_volatile(IOAPIC_REGISTER_SPACE.offset(0x10).ptr() as *const u32)
+        let mapping = self.mapping.as_ref().expect("Tried to read register for unmapped IOAPIC");
+        ptr::write_volatile(mapping.ptr, register);
+        ptr::read_volatile(VirtualAddress::from(mapping.ptr).offset(0x10).ptr())
     }
 
     unsafe fn write_register(&self, register : u32, value : u32)
     {
-        ptr::write_volatile(IOAPIC_REGISTER_SPACE.mut_ptr() as *mut u32, register);
-        ptr::write_volatile(IOAPIC_REGISTER_SPACE.offset(0x10).mut_ptr() as *mut u32, value);
+        let mapping = self.mapping.as_ref().expect("Tried to read register for unmapped IOAPIC");
+        ptr::write_volatile(mapping.ptr, register);
+        ptr::write_volatile(VirtualAddress::from(mapping.ptr).offset(0x10).mut_ptr(), value);
     }
 
     pub fn set_irq_mask(&self, irq : u8, masked : bool)

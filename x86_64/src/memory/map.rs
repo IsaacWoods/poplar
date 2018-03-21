@@ -57,10 +57,6 @@ pub const STACK_SPACE_TOP       : VirtualAddress = VirtualAddress::new(0xfffffff
 pub const STACK_SPACE_BOTTOM    : VirtualAddress = VirtualAddress::new(0xffffffffc007d000 - 1);
 
 /* 0xffffffffc007d000 */
-pub const LOCAL_APIC_REGISTER_SPACE : VirtualAddress = VirtualAddress::new(0xffffffffc007d000);
-pub const IOAPIC_REGISTER_SPACE     : VirtualAddress = VirtualAddress::new(0xffffffffc007e000);
-
-/* 0xffffffffc007f000 */
 
 /* 0xfffffffff0000000 */
 pub const TEMP_PAGE : Page = Page { number : 0xfffffffff0000000 / PAGE_SIZE };

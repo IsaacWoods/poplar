@@ -17,10 +17,10 @@ pub struct Mapper
     pub p4 : &'static mut Table<Level4>,
 }
 
-/*
- * This represents a region of physical memory mapped into the virtual address space. The virtual
- * memory is allocated using `alloc::heap::allocate` and freed using `alloc::heap::deallocate`.
- */
+/// A region of physical memory mapped into the virtual address space, allocated on the heap.
+/// Useful for when you want to just map some physical memory, and don't care where in the virtual
+/// address space it ends up.
+#[derive(Clone,Debug)]
 pub struct PhysicalMapping<T>
 {
     pub start       : Page,

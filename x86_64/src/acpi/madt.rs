@@ -20,10 +20,6 @@ pub struct MadtHeader
     header              : SdtHeader,
     local_apic_address  : u32,
     flags               : u32,
-    /*
-     * After this, there are a number of entries (also variable length). It's not really practical to
-     * represent this whole structure in Rust nicely, so we don't.
-     */
 }
 
 #[derive(Clone,Copy,Debug)]
@@ -98,7 +94,7 @@ pub(super) fn parse_madt<A>(ptr         : *const SdtHeader,
 
     // Initialise the local APIC
     let local_apic_address = PhysicalAddress::new(madt.local_apic_address as usize);
-    unsafe { LOCAL_APIC.lock().enable(local_apic_address, &mut platform.memory_controller) };
+    unsafe { LOCAL_APIC.enable(local_apic_address, &mut platform.memory_controller); }
 
     let mut entry_address = VirtualAddress::new(ptr as usize).offset(mem::size_of::<MadtHeader>() as isize);
     let end_address = VirtualAddress::new(ptr as usize).offset((madt.header.length - 1) as isize);
@@ -123,9 +119,8 @@ pub(super) fn parse_madt<A>(ptr         : *const SdtHeader,
                                 (true,false)    => CpuState::WaitingForSipi,
                                 (false,false)   => CpuState::Running,
                             };
-                // TODO: find out if it's an AP, and the correct state
-                platform.cpus.push(Cpu::new(entry.processor_id, entry.apic_id, is_ap, state));
 
+                platform.cpus.push(Cpu::new(entry.processor_id, entry.apic_id, is_ap, state));
                 entry_address = entry_address.offset(mem::size_of::<LocalApicEntry>() as isize);
             },
 
@@ -137,9 +132,9 @@ pub(super) fn parse_madt<A>(ptr         : *const SdtHeader,
 
                 unsafe
                 {
-                    IO_APIC.lock().enable(io_apic_address,
-                                          entry.global_system_interrupt_base as u8,
-                                          &mut platform.memory_controller);
+                    IO_APIC.enable(io_apic_address,
+                                   entry.global_system_interrupt_base as u8,
+                                   &mut platform.memory_controller);
                 }
 
                 entry_address = entry_address.offset(12);
@@ -156,14 +151,16 @@ pub(super) fn parse_madt<A>(ptr         : *const SdtHeader,
                 let trigger_mode = if (entry.flags & 8) > 0 { TriggerMode::Level }
                                                        else { TriggerMode::Edge  };
 
-                let io_apic = IO_APIC.lock();
-                io_apic.write_entry((entry.global_system_interrupt as u8) - io_apic.global_interrupt_base(),
-                                    ::interrupts::IOAPIC_BASE + entry.irq_source,
-                                    DeliveryMode::Fixed,
-                                    pin_polarity,
-                                    trigger_mode,
-                                    true,    // Masked by default
-                                    0xFF);
+                unsafe
+                {
+                    IO_APIC.write_entry((entry.global_system_interrupt as u8) - IO_APIC.global_interrupt_base(),
+                                        ::interrupts::IOAPIC_BASE + entry.irq_source,
+                                        DeliveryMode::Fixed,
+                                        pin_polarity,
+                                        trigger_mode,
+                                        true,    // Masked by default
+                                        0xFF);
+                }
 
                 entry_address = entry_address.offset(10);
             },
@@ -178,8 +175,8 @@ pub(super) fn parse_madt<A>(ptr         : *const SdtHeader,
                 let nmi_entry = (0b100<<8) | 2; // Non-maskable interrupt on vector 2
                 match entry.lint
                 {
-                    0 => unsafe { ptr::write(LOCAL_APIC.lock().register_ptr(0x350), nmi_entry) },
-                    1 => unsafe { ptr::write(LOCAL_APIC.lock().register_ptr(0x360), nmi_entry) },
+                    0 => unsafe { ptr::write(LOCAL_APIC.register_ptr(0x350), nmi_entry) },
+                    1 => unsafe { ptr::write(LOCAL_APIC.register_ptr(0x360), nmi_entry) },
                     _ => panic!("LINT for MADT entry-type=4 should either be 0 or 1!"),
                 }
 

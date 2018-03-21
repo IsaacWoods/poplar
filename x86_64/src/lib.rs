@@ -157,7 +157,7 @@ pub extern fn kstart(multiboot_address : PhysicalAddress) -> !
      * We can now initialise the local APIC timer to interrupt every 10ms. This uses the PIT to
      * determine the frequency the timer is running at, so interrupts must be enabled at this point.
      */
-    apic::LOCAL_APIC.lock().enable_timer(10);
+    unsafe { apic::LOCAL_APIC.enable_timer(10); }
 
     /*
      * Set the PIT to generate an interrupt every 10ms.
