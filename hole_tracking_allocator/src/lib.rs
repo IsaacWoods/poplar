@@ -14,6 +14,7 @@
 #[macro_use] extern crate kernel;
              extern crate alloc;
              extern crate spin;
+#[macro_use] extern crate log;
 
 mod hole;
 
@@ -121,6 +122,8 @@ unsafe impl<'a> Alloc for &'a LockedHoleAllocator
  */
 pub fn align_down(addr : usize, align : usize) -> usize
 {
+    assert!(align == 0 || align.is_power_of_two(), "Can only align to a power of two");
+
     if align.is_power_of_two()
     {
         /*
@@ -133,13 +136,10 @@ pub fn align_down(addr : usize, align : usize) -> usize
          */
         addr & !(align - 1)
     }
-    else if align == 0
-    {
-        addr
-    }
     else
     {
-        panic!("Can only align to a power of 2");
+        assert!(align == 0);
+        addr
     }
 }
 

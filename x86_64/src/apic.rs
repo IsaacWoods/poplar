@@ -59,7 +59,7 @@ impl LocalApic
         self.mapping = Some(memory_controller.kernel_page_table
                                              .map_physical_region(register_base,
                                                                   register_base.offset(4096-1),
-                                                                  EntryFlags::WRITABLE | EntryFlags::NO_CACHE,
+                                                                  EntryFlags::WRITABLE /*| EntryFlags::NO_CACHE*/,
                                                                   &mut memory_controller.frame_allocator));
 
         /*

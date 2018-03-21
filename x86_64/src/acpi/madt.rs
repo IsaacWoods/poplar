@@ -111,7 +111,7 @@ pub(super) fn parse_madt<A>(ptr         : *const SdtHeader,
                 let entry = unsafe { ptr::read_unaligned(entry_address.ptr() as *const LocalApicEntry) };
 
                 let is_ap       = false;    // TODO
-                let is_disabled = unsafe { entry.flags.get_bit(0) };
+                let is_disabled = unsafe { !entry.flags.get_bit(0) };
 
                 let state = match (is_ap, is_disabled)
                             {

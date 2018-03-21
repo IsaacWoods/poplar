@@ -42,21 +42,18 @@ pub const P4_TABLE_ADDRESS : VirtualAddress = VirtualAddress::from_page_table_of
 pub const KERNEL_VMA : VirtualAddress = VirtualAddress::new(0xffffffff80000000);
 
 /*
- * This is where the kernel will be mapped into. We obviously don't know exactly how much memory
- * this will use.
- *
- * TODO: Can we validate the memory map by comparing _end and known areas with this memory map?
+ * The kernel is mapped here. We don't know how much space it'll use, so we leave plenty of space.
  */
 
 /* 0xffffffffc0000000 */
-pub const HEAP_START : VirtualAddress = KERNEL_VMA.offset(0o000_001_000_000_0000);
-pub const HEAP_SIZE  : usize = 100 * 1024;  // 100 KiB
+pub const HEAP_START : VirtualAddress = VirtualAddress::new(0xffffffffc0000000);
+pub const HEAP_SIZE  : usize = 200 * 1024;  // 200 KiB
 
-/* 0xffffffffc0019000 */
-pub const STACK_SPACE_TOP       : VirtualAddress = VirtualAddress::new(0xffffffffc0019000);
-pub const STACK_SPACE_BOTTOM    : VirtualAddress = VirtualAddress::new(0xffffffffc007d000 - 1);
+/* 0xffffffffd0000000 */
+pub const STACK_SPACE_TOP       : VirtualAddress = VirtualAddress::new(0xffffffffd0000000);
+pub const STACK_SPACE_BOTTOM    : VirtualAddress = VirtualAddress::new(0xffffffffd0064000 - 1);
 
-/* 0xffffffffc007d000 */
+/* 0xffffffffd0064000 */
 
 /* 0xfffffffff0000000 */
 pub const TEMP_PAGE : Page = Page { number : 0xfffffffff0000000 / PAGE_SIZE };

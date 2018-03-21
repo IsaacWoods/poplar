@@ -118,6 +118,7 @@ impl HoleList
     }
 }
 
+#[derive(Clone,Debug)]
 struct Allocation
 {
     info          : HoleInfo,
@@ -261,7 +262,8 @@ fn deallocate(mut hole : &mut Hole, addr : usize, mut size : usize)
                  *      Before: ___XXX____YYYY___    (X=this hole, Y=next hole)
                  *      After : ___XXXFFFFYYYY___    (F=freed block)
                  */
-                hole.size += size + next.size;                          // Merge F and Y into X
+                hole.size += size;                                      // Merge F into X
+                hole.size += next.size;                                 // Merge Y into X
                 hole.next = hole.next.as_mut().unwrap().next.take();    // Remove Y
             }
 

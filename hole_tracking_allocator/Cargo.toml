@@ -6,5 +6,9 @@ authors = ["Isaac Woods <isaacwoods.home@gmail.com>"]
 [dependencies]
 spin = "*"
 
+[dependencies.log]
+version                 = "*"
+default-features        = false
+
 [dependencies.kernel]
 path = ".."

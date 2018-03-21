@@ -76,6 +76,7 @@ pub fn init(boot_info : &BootInformation) -> MemoryController<AreaFrameAllocator
     let heap_start_page = Page::containing_page(HEAP_START);
     let heap_end_page   = Page::containing_page(HEAP_START.offset((HEAP_SIZE - 1) as isize));
 
+    trace!("Mapping heap pages in range: {:#x} to {:#x}", heap_start_page.start_address(), heap_end_page.start_address());
     for page in Page::range_inclusive(heap_start_page, heap_end_page)
     {
         active_table.map(page, paging::entry::EntryFlags::WRITABLE, &mut frame_allocator);
@@ -170,6 +171,11 @@ impl Frame
     fn start_address(&self) -> PhysicalAddress
     {
         (self.number * FRAME_SIZE).into()
+    }
+
+    fn end_address(&self) -> PhysicalAddress
+    {
+        self.start_address().offset((FRAME_SIZE-1) as isize)
     }
 
     fn range_inclusive(start : Frame, end : Frame) -> FrameIter
