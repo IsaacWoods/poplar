@@ -9,6 +9,7 @@
 #![feature(core_intrinsics)]
 #![feature(type_ascription)]
 #![feature(string_retain)]
+#![feature(pattern)]
 
                 extern crate volatile;
                 extern crate spin;
@@ -28,7 +29,7 @@ pub mod ramdisk;
 
 pub use arch::Architecture;
 
-use alloc::boxed::Box;
+use alloc::rc::Rc;
 use vfs::FileManager;
 use ramdisk::Ramdisk;
 
@@ -42,12 +43,12 @@ pub fn kernel_main<A>(architecture : A) -> !
     
     // Register ramdisk
     let (ramdisk_start, ramdisk_end) = architecture.get_module_address("ramdisk").expect("Couldn't load ramdisk");
-    file_manager.add_filesystem("/ramdisk", Box::new(Ramdisk::new(ramdisk_start, ramdisk_end)));
+    file_manager.mount("/ramdisk", Rc::new(Ramdisk::new(ramdisk_start, ramdisk_end)));
 
     let test_file = file_manager.open("/ramdisk/test_file").unwrap();
     let other_test = file_manager.open("/ramdisk/other_test_file").unwrap();
-    info!("Test file contents: {}", core::str::from_utf8(&*test_file.read().unwrap()).unwrap());
-    info!("Other test file contents: {}", core::str::from_utf8(&*other_test.read().unwrap()).unwrap());
+    info!("Test file contents: {}", core::str::from_utf8(&file_manager.read(&test_file).unwrap()).unwrap());
+    info!("Other test file contents: {}", core::str::from_utf8(&file_manager.read(&other_test).unwrap()).unwrap());
 
     loop { }
 }

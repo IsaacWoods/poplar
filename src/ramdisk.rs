@@ -7,9 +7,9 @@
  */
 
 use core::{mem,str,slice};
-use alloc::{String,Vec,boxed::Box};
-use ::arch::MemoryAddress;
-use ::vfs::{File,Filesystem,Result,FileError};
+use alloc::{String,Vec,rc::Rc,boxed::Box};
+use arch::MemoryAddress;
+use vfs::{File,Filesystem,FileError};
 
 #[derive(Clone,Copy)]
 #[repr(C)]
@@ -131,7 +131,7 @@ impl Ramdisk
 
 impl Filesystem for Ramdisk
 {
-    fn open(&self, path : &str) -> Result<File>
+    fn open(&self, filesystem : Rc<Filesystem>, path : &str) -> Result<File, FileError>
     {
         for file in self.files.iter()
         {
@@ -139,28 +139,28 @@ impl Filesystem for Ramdisk
             {
                 return Ok(File
                           {
-                              name          : String::from(path),
-                              file_system   : self,
+                              name          : file.path.clone(),
+                              filesystem,
                               data          : Box::new(file.clone()),
                           });
             }
         }
 
-        Err(FileError::DoesNotExist(String::from(path)))
+        Err(FileError::DoesNotExist)
     }
 
-    fn close(&self, _file : File)
+    fn close(&self, _file : &File)
     {
     }
 
-    fn read(&self, file : &File) -> Result<Vec<u8>>
+    fn read(&self, file : &File) -> Result<Vec<u8>, FileError>
     {
         let file_data = file.data.downcast_ref::<RamdiskFile>().unwrap();
         Ok(unsafe { slice::from_raw_parts(file_data.pointer, file_data.size) }.to_vec())
     }
 
-    fn write(&self, file : &mut File, _ : &[u8]) -> Result<()>
+    fn write(&self, _ : &File, _ : &[u8]) -> Result<(), FileError>
     {
-        Err(FileError::IsReadOnly(file.name.clone()))
+        Err(FileError::IsReadOnly)
     }
 }

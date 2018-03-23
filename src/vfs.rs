@@ -4,61 +4,69 @@
  */
 
 use core::any::Any;
-use alloc::{String,Vec,boxed::Box,BTreeMap};
+use core::str::Split;
+use alloc::{String,Vec,boxed::Box,rc::Rc,BTreeMap};
+use libpebble::fs::FileHandle;
 
 #[derive(Debug)]
 pub enum FileError
 {
-    DoesNotExist(String),
-    MalformedPath(String),
-    IsReadOnly(String),
+    DoesNotExist,
+    IsReadOnly,
+    MalformedPath,
 }
 
-pub type Result<T> = ::core::result::Result<T,FileError>;
-
-pub struct File<'a>
+pub struct File
 {
     pub name        : String,
-    pub file_system : &'a Filesystem,
+    pub filesystem  : Rc<Filesystem>,
     pub data        : Box<Any>,
 }
 
-impl<'a> File<'a>
+impl File
 {
-    pub fn read(&self) -> Result<Vec<u8>>
+    pub fn read(&self) -> Result<Vec<u8>, FileError>
     {
-        self.file_system.read(self)
+        self.filesystem.read(self)
     }
 
-    pub fn write(&mut self, stuff : &[u8]) -> Result<()>
+    pub fn write(&mut self, stuff : &[u8]) -> Result<(), FileError>
     {
-        self.file_system.write(self, stuff)
+        self.filesystem.write(self, stuff)
     }
 
     pub fn close(self)
     {
-        self.file_system.close(self);
+        self.filesystem.close(&self);
     }
 }
 
-/*
- * A filesystem is something that contains files (or can be treated as if it abstractly contained
- * files). It provides the implementations for managing the file on it.
- */
+/// A filesystem is something that contains files (or can be treated as if it abstractly contained
+/// files). It provides the implementations for managing the file on it.
+/// These do not take the correct types, because if they did you can't borrow the filesystem as
+/// well. These therefore should not be called manually, only internally. Use the methods on
+/// `File` instead.
 pub trait Filesystem
 {
-    fn open(&self, path : &str) -> Result<File>;
-    fn close(&self, file : File);
-    fn read(&self, file : &File) -> Result<Vec<u8>>;
-    fn write(&self, file : &mut File, stuff : &[u8]) -> Result<()>;
+    fn open(&self, filesystem : Rc<Filesystem>, path : &str) -> Result<File, FileError>;
+    fn close(&self, file : &File);
+    fn read(&self, file : &File) -> Result<Vec<u8>, FileError>;
+    fn write(&self, file : &File, stuff : &[u8]) -> Result<(), FileError>;
 }
 
-/*
- * This manages a set of filesystems and presents them as one virtual filesystem.
- */
+fn parse_path<'a>(path : &'a str) -> Result<Split<'a, char>, FileError>
+{
+    // TODO: canonicalise the path
+    
+    assert!(path.starts_with('/'), "Path isn't absolute");
+    Ok(path[1..].split('/'))
+}
+
+/// This manages a set of filesystems and presents them as one virtual filesystem.
 pub struct FileManager
 {
-    filesystems : BTreeMap<String, Box<Filesystem>>,
+    opened_files    : BTreeMap<FileHandle, File>,
+    filesystems     : BTreeMap<String, Rc<Filesystem>>,
 }
 
 impl FileManager
@@ -67,40 +75,54 @@ impl FileManager
     {
         FileManager
         {
-            filesystems : BTreeMap::new(),
+            opened_files    : BTreeMap::new(),
+            filesystems     : BTreeMap::new(),
         }
     }
 
-    pub fn add_filesystem(&mut self, mount_point : &str, filesystem : Box<Filesystem>)
+    /// Mount a filesystem at the specified path
+    pub fn mount(&mut self, mount_point : &str, filesystem : Rc<Filesystem>)
     {
         assert!(mount_point.starts_with('/'), "Filesystem mount points must be absolute paths!");
         self.filesystems.insert(String::from(&mount_point[1..]), filesystem);
     }
 
-    pub fn open(&self, path : &str) -> Result<File>
+    pub fn open(&mut self, path : &str) -> Result<FileHandle, FileError>
     {
-        if !path.starts_with('/')
-        {
-            return Err(FileError::MalformedPath(String::from(path)));
-        }
-
-        /*
-         * We are searching from the root of the filesystem. Therefore, the first part of the
-         * path will be the mount point of the filesystem.
-         */
-        let mut path_parts = path[1..].split('/');
+        let mut path_parts = parse_path(path)?;
 
         match self.filesystems.get(path_parts.next().unwrap())
         {
             Some(filesystem) =>
             {
-                filesystem.open(&(path_parts.collect() : String))
+                let file = filesystem.open(filesystem.clone(), &(path_parts.collect() : String))?;
+                let handle = FileHandle(self.opened_files.len());
+                self.opened_files.insert(handle.clone(), file);
+                Ok(handle)
             },
 
             None =>
             {
-                Err(FileError::DoesNotExist(String::from(path)))
+                Err(FileError::DoesNotExist)
             },
         }
+    }
+
+    pub fn read(&self, handle : &FileHandle) -> Result<Vec<u8>, FileError>
+    {
+        assert!(self.opened_files.contains_key(&handle), "Tried to read from file handle that isn't open");
+        self.opened_files.get(handle).unwrap().read()
+    }
+
+    pub fn write(&mut self, handle : &FileHandle, stuff : &[u8]) -> Result<(), FileError>
+    {
+        assert!(self.opened_files.contains_key(&handle), "Tried to write to file handle that isn't open");
+        self.opened_files.get_mut(handle).unwrap().write(stuff)
+    }
+
+    pub fn close(&mut self, handle : FileHandle)
+    {
+        assert!(self.opened_files.contains_key(&handle), "Tried to close file handle that isn't open");
+        self.opened_files.remove(&handle).unwrap().close();
     }
 }
