@@ -10,7 +10,14 @@ volatile                = "*"
 spin                    = "*"
 bitflags                = "*"
 bit_field               = "*"
-pebble_syscall_common   = "*"
+
+[dependencies.libpebble]
+version                 = "*"
+default-features        = false
+features                = ["kernel"]
+
+[patch.crates-io]
+libpebble = { path = "../libpebble", features = ["kernel"] }
 
 [dependencies.num-traits]
 version             = "*"

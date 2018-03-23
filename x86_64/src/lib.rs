@@ -28,7 +28,7 @@
                 extern crate hole_tracking_allocator as allocator;
 #[macro_use]    extern crate log;
 #[macro_use]    extern crate kernel;
-                extern crate pebble_syscall_common;
+                extern crate libpebble;
                 extern crate xmas_elf;
 
                 mod multiboot2;

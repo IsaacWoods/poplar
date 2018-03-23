@@ -9,7 +9,7 @@ use gdt::{GdtSelectors,PrivilegeLevel};
 use idt::Idt;
 use port::Port;
 use apic::{LOCAL_APIC,IO_APIC};
-use pebble_syscall_common::SyscallInfo;
+use libpebble::syscall::SyscallInfo;
 
 /*
  * |------------------|-----------------------------|

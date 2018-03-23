@@ -4,7 +4,6 @@
  */
 
 use core::ptr;
-use spin::Mutex;
 use bit_field::BitField;
 use ::memory::{MemoryController,FrameAllocator};
 use ::memory::paging::{PhysicalAddress,VirtualAddress,EntryFlags,PhysicalMapping};

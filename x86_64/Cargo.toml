@@ -16,12 +16,16 @@ bitflags                = "*"
 bit_field               = "*"
 volatile                = "*"
 spin                    = "*"
-pebble_syscall_common   = "*"
 xmas-elf                = "*"
 
 [dependencies.log]
 version                 = "*"
 default-features        = false
+
+[dependencies.libpebble]
+version                 = "*"
+default-features        = false
+features                = ["kernel"]
 
 [dependencies.hole_tracking_allocator]
 path = "../hole_tracking_allocator"

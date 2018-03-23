@@ -17,7 +17,7 @@
                 extern crate num_traits;
                 extern crate alloc;
 #[macro_use]    extern crate log;
-                extern crate pebble_syscall_common;
+                extern crate libpebble;
 
 pub mod arch;
 pub mod process;

@@ -3,7 +3,7 @@
  * See LICENCE.md
  */
 
-use pebble_syscall_common::{SyscallInfo,SyscallType,SyscallResult};
+use libpebble::syscall::{SyscallInfo,SyscallType,SyscallResult};
 
 /*
  * Slices in Rust are represented by two words (where word-size is the same as usize):
