@@ -3,7 +3,7 @@
  * See LICENCE.md
  */
 
-use core::ops::Range;
+use core::ops::{Range,Deref};
 use alloc::heap::{Layout,Alloc};
 use memory::{Frame,FrameAllocator};
 use memory::{VirtualAddress,PhysicalAddress,Page,PAGE_SIZE};
@@ -29,6 +29,16 @@ pub struct PhysicalMapping<T>
     pub layout      : Layout,
     pub ptr         : *mut T,
     pub size        : usize,
+}
+
+impl<T> Deref for PhysicalMapping<T>
+{
+    type Target = T;
+
+    fn deref(&self) -> &Self::Target
+    {
+        unsafe { &*self.ptr }
+    }
 }
 
 impl Mapper

@@ -5,14 +5,16 @@
 
 mod fadt;
 mod madt;
+mod dsdt;
 
-use core::{str,mem,ptr};
-use ::Platform;
+use core::{str,mem};
+use Platform;
 use memory::{Frame,FrameAllocator};
-use memory::paging::{PhysicalAddress,VirtualAddress,TemporaryPage};
+use memory::paging::{PhysicalAddress,VirtualAddress,TemporaryPage,PhysicalMapping,EntryFlags};
 use multiboot2::BootInformation;
-use alloc::boxed::Box;
 use self::fadt::Fadt;
+use self::madt::MadtHeader;
+use self::dsdt::Dsdt;
 
 /*
  * The RSDP (Root System Descriptor Pointer) is the first ACPI structure located.
@@ -120,43 +122,85 @@ pub struct Rsdt
     header  : SdtHeader,
     /*
      * There may be less/more than 8 tables, but there isn't really a good way of representing a
-     * run-time splice without messing up the representation. The actual number of tables here is:
-     * `(header.length - size_of::<SDTHeader>) / 4`
+     * run-time slice without messing up the representation.
+     * The actual number of tables here is: `(header.length - size_of::<SDTHeader>) / 4`
      */
     tables  : [u32; 8],
 }
 
-impl Rsdt
+unsafe fn peek_at_table<A>(table_address    : PhysicalAddress,
+                           platform         : &mut Platform<A>) -> ([u8; 4], u32)
+    where A : FrameAllocator
 {
-    fn parse<A>(&self,
-                acpi_info   : &mut AcpiInfo,
-                platform    : &mut Platform<A>)
-        where A : FrameAllocator
+    use ::memory::map::TEMP_PAGE;
+
+    let signature   : [u8; 4];
+    let length      : u32;
+
     {
-        use ::memory::map::TEMP_PAGE;
+        let mut temporary_page = TemporaryPage::new(TEMP_PAGE, &mut platform.memory_controller.frame_allocator);
+        temporary_page.map(Frame::containing_frame(table_address), &mut platform.memory_controller.kernel_page_table);
+        let sdt_pointer = TEMP_PAGE.start_address().offset(table_address.offset_into_frame() as isize).ptr() as *const SdtHeader;
 
-        let num_tables = (self.header.length as usize - mem::size_of::<SdtHeader>()) / mem::size_of::<u32>();
-        let table_base_ptr = VirtualAddress::new(self as *const Rsdt as usize).offset(mem::size_of::<SdtHeader>() as isize).ptr() as *const u32;
+        signature = (*sdt_pointer).signature;
+        length = (*sdt_pointer).length;
 
-        for i in 0..num_tables
+        temporary_page.unmap(&mut platform.memory_controller.kernel_page_table);
+    }
+
+    (signature, length)
+}
+
+fn parse_rsdt<A>(acpi_info : &mut AcpiInfo, platform : &mut Platform<A>)
+    where A : FrameAllocator
+{
+    let num_tables = (acpi_info.rsdt.header.length as usize - mem::size_of::<SdtHeader>()) / mem::size_of::<u32>();
+    let table_base_ptr = VirtualAddress::from(acpi_info.rsdt.ptr).offset(mem::size_of::<SdtHeader>() as isize).ptr() as *const u32;
+
+    for i in 0..num_tables
+    {
+        /*
+         * We temporarily map each just a page of the table to get the signature and length of
+         * the table, then map it properly
+         */
+        let pointer_address = unsafe { table_base_ptr.offset(i as isize) };
+        let table_address = PhysicalAddress::new(unsafe { *pointer_address } as usize);
+        let (signature, length) = unsafe { peek_at_table(table_address, platform) };
+
+        match &signature
         {
-            let pointer_address = unsafe { table_base_ptr.offset(i as isize) };
-            let physical_address = PhysicalAddress::new(unsafe { *pointer_address } as usize);
-            let mut temporary_page = TemporaryPage::new(TEMP_PAGE, &mut platform.memory_controller.frame_allocator);
-            temporary_page.map(Frame::containing_frame(physical_address),
-                               &mut platform.memory_controller.kernel_page_table);
-
-            let sdt_pointer = TEMP_PAGE.start_address().offset(physical_address.offset_into_frame() as isize).ptr() as *const SdtHeader;
-            let signature = unsafe { str::from_utf8_unchecked(&(*sdt_pointer).signature) };
-
-            match unsafe { &(*sdt_pointer).signature }
+            b"FACP" =>
             {
-                b"FACP" => fadt::parse_fadt(sdt_pointer, acpi_info),
-                b"APIC" => madt::parse_madt(sdt_pointer, acpi_info, platform),
-                _       => warn!("Unhandled SDT type: {}", signature),
-            }
+                let fadt_mapping = platform.memory_controller
+                                           .kernel_page_table
+                                           .map_physical_region::<Fadt, A>(table_address,
+                                                                           table_address.offset(length as isize),
+                                                                           EntryFlags::PRESENT | EntryFlags::WRITABLE,
+                                                                           &mut platform.memory_controller.frame_allocator);
+                (*fadt_mapping).header.validate("FACP").unwrap();
+                acpi_info.fadt = Some(fadt_mapping);
+            },
 
-            temporary_page.unmap(&mut platform.memory_controller.kernel_page_table);
+            b"APIC" =>
+            {
+                let madt_mapping = platform.memory_controller
+                                           .kernel_page_table
+                                           .map_physical_region::<MadtHeader, A>(table_address,
+                                                                                 table_address.offset(length as isize),
+                                                                                 EntryFlags::PRESENT | EntryFlags::WRITABLE,
+                                                                                 &mut platform.memory_controller.frame_allocator);
+                (*madt_mapping).header.validate("APIC").unwrap();
+                madt::parse_madt(&madt_mapping, platform);
+            },
+
+            _ =>
+            {
+                match str::from_utf8(&signature)
+                {
+                    Ok(signature_str) => warn!("Unhandled SDT type: {}", signature_str),
+                    Err(_) => error!("Unhandled SDT type; signature is not valid!"),
+                }
+            },
         }
     }
 }
@@ -165,42 +209,47 @@ impl Rsdt
 pub struct AcpiInfo
 {
     pub rsdp        : &'static Rsdp,
-    pub rsdt        : Option<Box<Rsdt>>,
-    pub fadt        : Option<Box<Fadt>>,
+    pub rsdt        : PhysicalMapping<Rsdt>,
+    pub fadt        : Option<PhysicalMapping<Fadt>>,
+    pub dsdt        : Option<PhysicalMapping<Dsdt>>,
 }
 
 impl AcpiInfo
 {
     pub fn new<A>(boot_info : &BootInformation,
-                  platform  : &mut Platform<A>) -> AcpiInfo
+                  platform  : &mut Platform<A>) -> Option<AcpiInfo>
         where A : FrameAllocator
     {
-        use ::memory::map::TEMP_PAGE;
-
         let rsdp : &'static Rsdp = boot_info.rsdp().expect("Couldn't find RSDP tag").rsdp();
+        let rsdt_address = PhysicalAddress::from(rsdp.rsdt_address as usize);
         rsdp.validate().unwrap();
 
         trace!("Loading ACPI tables with OEM ID: {}", rsdp.oem_str());
-        let physical_address = PhysicalAddress::new(rsdp.rsdt_address as usize);
-        let mut temporary_page = TemporaryPage::new(TEMP_PAGE, &mut platform.memory_controller.frame_allocator);
-        temporary_page.map(Frame::containing_frame(physical_address),
-                           &mut platform.memory_controller.kernel_page_table);
-        let rsdt_ptr = (TEMP_PAGE.start_address().offset(physical_address.offset_into_frame() as isize)).ptr() as *const SdtHeader;
+        let (rsdt_signature, rsdt_length) = unsafe { peek_at_table(rsdt_address, platform) };
 
-        let rsdt : Box<Rsdt> = unsafe { Box::new(ptr::read_unaligned(rsdt_ptr as *const Rsdt)) };
-        rsdt.header.validate("RSDT").unwrap();
-        temporary_page.unmap(&mut platform.memory_controller.kernel_page_table);
+        if &rsdt_signature != b"RSDT"
+        {
+            return None;
+        }
+
+        let rsdt_mapping = platform.memory_controller
+                                   .kernel_page_table
+                                   .map_physical_region::<Rsdt, A>(rsdt_address,
+                                                                   rsdt_address.offset(rsdt_length as isize),
+                                                                   EntryFlags::PRESENT,
+                                                                   &mut platform.memory_controller.frame_allocator);
 
         let mut acpi_info = AcpiInfo
                             {
                                 rsdp,
-                                rsdt        : None,
-                                fadt        : None,
+                                rsdt    : rsdt_mapping,
+                                fadt    : None,
+                                dsdt    : None,
                             };
 
-        rsdt.parse(&mut acpi_info, platform);
-        acpi_info.rsdt = Some(rsdt);
+        (*acpi_info.rsdt).header.validate("RSDT").unwrap();
+        parse_rsdt(&mut acpi_info, platform);
 
-        acpi_info
+        Some(acpi_info)
     }
 }

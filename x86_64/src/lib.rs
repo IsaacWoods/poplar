@@ -144,7 +144,7 @@ pub extern fn kstart(multiboot_address : PhysicalAddress) -> !
      * We now find and parse the ACPI tables. This also initialises the local APIC and IOAPIC, as
      * they are detailed by the MADT.
      */
-    let acpi_info = AcpiInfo::new(&boot_info, &mut platform);
+    let acpi_info = AcpiInfo::new(&boot_info, &mut platform).expect("Failed to parse ACPI tables");
     interrupts::init(&gdt_selectors);
     interrupts::enable();
 

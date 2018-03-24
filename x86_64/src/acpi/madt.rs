@@ -5,19 +5,18 @@
 
 use core::{mem,ptr};
 use bit_field::BitField;
-use alloc::boxed::Box;
 use ::Platform;
-use super::{AcpiInfo,SdtHeader};
+use super::SdtHeader;
 use cpu::{Cpu,CpuState};
 use memory::FrameAllocator;
-use memory::paging::{PhysicalAddress,VirtualAddress};
+use memory::paging::{PhysicalAddress,VirtualAddress,PhysicalMapping};
 use apic::{LOCAL_APIC,IO_APIC,DeliveryMode,PinPolarity,TriggerMode};
 
 #[derive(Clone,Copy,Debug)]
 #[repr(packed)]
 pub struct MadtHeader
 {
-    header              : SdtHeader,
+    pub(super) header   : SdtHeader,
     local_apic_address  : u32,
     flags               : u32,
 }
@@ -84,20 +83,16 @@ struct LocalApicAddressOverrideEntry
  * It seems way too coupled to initialise the local APIC and IOAPIC here, but it's very convienient
  * while we have all the data from the MADT already mapped.
  */
-pub(super) fn parse_madt<A>(ptr         : *const SdtHeader,
-                            acpi_info   : &mut AcpiInfo,
+pub(super) fn parse_madt<A>(mapping     : &PhysicalMapping<MadtHeader>,
                             platform    : &mut Platform<A>)
     where A : FrameAllocator
 {
-    let madt : Box<MadtHeader> = Box::new(unsafe { ptr::read_unaligned(ptr as *const MadtHeader) });
-    //madt.header.validate("APIC").unwrap(); //TODO: why isn't checksum correct?
-
     // Initialise the local APIC
-    let local_apic_address = PhysicalAddress::new(madt.local_apic_address as usize);
+    let local_apic_address = PhysicalAddress::new((*mapping).local_apic_address as usize);
     unsafe { LOCAL_APIC.enable(local_apic_address, &mut platform.memory_controller); }
 
-    let mut entry_address = VirtualAddress::new(ptr as usize).offset(mem::size_of::<MadtHeader>() as isize);
-    let end_address = VirtualAddress::new(ptr as usize).offset((madt.header.length - 1) as isize);
+    let mut entry_address = VirtualAddress::from(mapping.ptr).offset(mem::size_of::<MadtHeader>() as isize);
+    let end_address = VirtualAddress::from(mapping.ptr).offset(((*mapping).header.length - 1) as isize);
 
     while entry_address < end_address
     {
