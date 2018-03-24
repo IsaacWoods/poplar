@@ -128,6 +128,8 @@ pub struct Rsdt
     tables  : [u32; 8],
 }
 
+/// This temporarily maps a SDT to get its signature and length, then unmaps it
+/// It's used to calculate the size we need to actually map
 unsafe fn peek_at_table<A>(table_address    : PhysicalAddress,
                            platform         : &mut Platform<A>) -> ([u8; 4], u32)
     where A : FrameAllocator
@@ -159,10 +161,6 @@ fn parse_rsdt<A>(acpi_info : &mut AcpiInfo, platform : &mut Platform<A>)
 
     for i in 0..num_tables
     {
-        /*
-         * We temporarily map each just a page of the table to get the signature and length of
-         * the table, then map it properly
-         */
         let pointer_address = unsafe { table_base_ptr.offset(i as isize) };
         let table_address = PhysicalAddress::new(unsafe { *pointer_address } as usize);
         let (signature, length) = unsafe { peek_at_table(table_address, platform) };
@@ -175,10 +173,22 @@ fn parse_rsdt<A>(acpi_info : &mut AcpiInfo, platform : &mut Platform<A>)
                                            .kernel_page_table
                                            .map_physical_region::<Fadt, A>(table_address,
                                                                            table_address.offset(length as isize),
-                                                                           EntryFlags::PRESENT | EntryFlags::WRITABLE,
+                                                                           EntryFlags::PRESENT,
                                                                            &mut platform.memory_controller.frame_allocator);
                 (*fadt_mapping).header.validate("FACP").unwrap();
+                let dsdt_address = PhysicalAddress::from((*fadt_mapping).dsdt_address as usize);
                 acpi_info.fadt = Some(fadt_mapping);
+
+                // Now we have the FADT, we can map and parse the DSDT
+                let (_, dsdt_length) = unsafe { peek_at_table(dsdt_address, platform) };
+                let dsdt_mapping = platform.memory_controller
+                                           .kernel_page_table
+                                           .map_physical_region::<Dsdt, A>(dsdt_address,
+                                                                           dsdt_address.offset(dsdt_length as isize),
+                                                                           EntryFlags::PRESENT,
+                                                                           &mut platform.memory_controller.frame_allocator);
+                (*dsdt_mapping).header.validate("DSDT").unwrap();
+                dsdt::parse_dsdt(&dsdt_mapping, acpi_info);
             },
 
             b"APIC" =>
@@ -187,7 +197,7 @@ fn parse_rsdt<A>(acpi_info : &mut AcpiInfo, platform : &mut Platform<A>)
                                            .kernel_page_table
                                            .map_physical_region::<MadtHeader, A>(table_address,
                                                                                  table_address.offset(length as isize),
-                                                                                 EntryFlags::PRESENT | EntryFlags::WRITABLE,
+                                                                                 EntryFlags::PRESENT,
                                                                                  &mut platform.memory_controller.frame_allocator);
                 (*madt_mapping).header.validate("APIC").unwrap();
                 madt::parse_madt(&madt_mapping, platform);
