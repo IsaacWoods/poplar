@@ -24,14 +24,12 @@ pub mod arch;
 pub mod process;
 pub mod syscall;
 pub mod util;
-pub mod vfs;
-pub mod ramdisk;
+pub mod fs;
 
 pub use arch::Architecture;
 
 use alloc::rc::Rc;
-use vfs::FileManager;
-use ramdisk::Ramdisk;
+use fs::{FileManager,ramdisk::Ramdisk};
 
 pub fn kernel_main<A>(architecture : A) -> !
     where A : Architecture

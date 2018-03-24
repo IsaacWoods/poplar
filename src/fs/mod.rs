@@ -3,6 +3,8 @@
  * See LICENCE.md
  */
 
+pub mod ramdisk;
+
 use core::any::Any;
 use core::str::Split;
 use alloc::{String,Vec,boxed::Box,rc::Rc,BTreeMap};
@@ -43,7 +45,7 @@ impl File
 
 /// A filesystem is something that contains files (or can be treated as if it abstractly contained
 /// files). It provides the implementations for managing the file on it.
-/// These do not take the correct types, because if they did you can't borrow the filesystem as
+/// These do not take the correct types, because if they did we couldn't borrow the filesystem as
 /// well. These therefore should not be called manually, only internally. Use the methods on
 /// `File` instead.
 pub trait Filesystem
@@ -57,6 +59,9 @@ pub trait Filesystem
 fn parse_path<'a>(path : &'a str) -> Result<Split<'a, char>, FileError>
 {
     // TODO: canonicalise the path
+    //  * If not absolute, prepend with current working directory
+    //  * Expand '.' and '..'
+    //  * Remove assert below
     
     assert!(path.starts_with('/'), "Path isn't absolute");
     Ok(path[1..].split('/'))

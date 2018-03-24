@@ -9,7 +9,7 @@
 use core::{mem,str,slice};
 use alloc::{String,Vec,rc::Rc,boxed::Box};
 use arch::MemoryAddress;
-use vfs::{File,Filesystem,FileError};
+use super::{File,Filesystem,FileError};
 
 #[derive(Clone,Copy)]
 #[repr(C)]
