@@ -6,6 +6,7 @@
 mod fadt;
 mod madt;
 mod dsdt;
+mod aml;
 
 use core::{str,mem};
 use Platform;

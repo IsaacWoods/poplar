@@ -3,8 +3,10 @@
  * See LICENCE.md
  */
 
-use memory::paging::PhysicalMapping;
+use core::mem;
+use memory::paging::{VirtualAddress,PhysicalMapping};
 use super::{SdtHeader,AcpiInfo};
+use super::aml::AmlParser;
 
 #[derive(Clone,Debug)]
 #[repr(packed)]
@@ -15,5 +17,11 @@ pub struct Dsdt
 
 pub fn parse_dsdt(mapping : &PhysicalMapping<Dsdt>, acpi_info : &mut AcpiInfo)
 {
-    info!("Parsing DSDT: {:#x},{}", ::memory::paging::VirtualAddress::from(mapping.ptr).offset(::core::mem::size_of::<SdtHeader>() as isize), mapping.size);
+    let mut parser = unsafe
+                     {
+                         AmlParser::new(VirtualAddress::from(mapping.ptr as usize).offset(mem::size_of::<SdtHeader>() as isize),
+                                        (*mapping).header.length as usize - mem::size_of::<SdtHeader>())
+                     };
+
+    parser.parse(acpi_info);
 }
