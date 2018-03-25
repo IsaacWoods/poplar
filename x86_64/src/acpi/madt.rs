@@ -105,7 +105,11 @@ pub(super) fn parse_madt<A>(mapping     : &PhysicalMapping<MadtHeader>,
                 trace!("Found MADT entry: processor local APIC (type=0)");
                 let entry = unsafe { ptr::read_unaligned(entry_address.ptr() as *const LocalApicEntry) };
 
-                let is_ap       = false;    // TODO
+                /*
+                 * The first CPU described in the MADT is the BSP. Subsequent ones are APs, and
+                 * should be brought up in the order they are defined in.
+                 */
+                let is_ap       = platform.bootstrap_cpu.is_some();
                 let is_disabled = unsafe { !entry.flags.get_bit(0) };
 
                 let state = match (is_ap, is_disabled)
@@ -115,7 +119,19 @@ pub(super) fn parse_madt<A>(mapping     : &PhysicalMapping<MadtHeader>,
                                 (false,false)   => CpuState::Running,
                             };
 
-                platform.cpus.push(Cpu::new(entry.processor_id, entry.apic_id, is_ap, state));
+                match is_ap
+                {
+                    false => platform.bootstrap_cpu = Some(Cpu::new(entry.processor_id,
+                                                                    entry.apic_id,
+                                                                    false,
+                                                                    state)),
+
+                    true => platform.application_cpus.push(Cpu::new(entry.processor_id,
+                                                                    entry.apic_id,
+                                                                    true,
+                                                                    state)),
+                }
+
                 entry_address = entry_address.offset(mem::size_of::<LocalApicEntry>() as isize);
             },
 

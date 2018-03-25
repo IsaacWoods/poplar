@@ -66,7 +66,8 @@ pub struct Platform<A>
     where A : FrameAllocator
 {
     pub memory_controller   : MemoryController<A>,
-    pub cpus                : Vec<Cpu>,
+    pub bootstrap_cpu       : Option<Cpu>,
+    pub application_cpus    : Vec<Cpu>,
 }
 
 impl<A> Platform<A>
@@ -79,7 +80,8 @@ impl<A> Platform<A>
         Platform
         {
             memory_controller,
-            cpus                : Vec::new(),
+            bootstrap_cpu       : None,
+            application_cpus    : Vec::new(),
         }
     }
 }
@@ -148,9 +150,10 @@ pub extern fn kstart(multiboot_address : PhysicalAddress) -> !
     interrupts::init(&gdt_selectors);
     interrupts::enable();
 
-    for cpu in platform.cpus.iter()
+    info!("BSP: {:?}", platform.bootstrap_cpu);
+    for cpu in platform.application_cpus.iter()
     {
-        info!("CPU: {:?}", cpu);
+        info!("AP: {:?}", cpu);
     }
 
     /*
