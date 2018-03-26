@@ -40,3 +40,19 @@ impl Cpu
         }
     }
 }
+
+/// Notify the CPU that this is a spinlock wait loop. This allows certain memory and cache access
+/// optimizations. Unsafe as `pause` is a specialised instruction, and can be detrimental to CPU
+/// performance if misused.
+pub unsafe fn notify_spinlock()
+{
+    asm!("pause");
+}
+
+/// Idle the CPU until an interrupt wakes it up. Useful for spinning until an interrupt handler
+/// signals that something is done. Unsafe because it halts the system, and turns on interrupts!
+pub unsafe fn wait_for_interrupt()
+{
+    asm!("sti
+          hlt");
+}

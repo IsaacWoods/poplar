@@ -3,6 +3,7 @@
  * See LICENCE.md
  */
 
+use cpu;
 use port::Port;
 use interrupts::InterruptStackFrame;
 use apic::LOCAL_APIC;
@@ -78,7 +79,7 @@ impl Pit
              */
             while self.sleeping
             {
-                // TODO: spinlock
+                cpu::wait_for_interrupt();
             }
         }
     }
