@@ -256,5 +256,5 @@ global _kernel_stack_top
 _guard_page:
     resb 4096       ; 1 page
 stack_bottom:
-    resb 4096*4     ; 4 pages = 16kB
+    resb 16*4096    ; 16 pages = 64kB
 _kernel_stack_top:
