@@ -141,13 +141,13 @@ pub extern fn kstart(multiboot_address : PhysicalAddress) -> !
         TSS.set_kernel_stack(memory::get_kernel_stack_top());
     }
     let gdt_selectors = Gdt::install(unsafe { &mut TSS });
+    interrupts::init(&gdt_selectors);
 
     /*
      * We now find and parse the ACPI tables. This also initialises the local APIC and IOAPIC, as
      * they are detailed by the MADT.
      */
     let acpi_info = AcpiInfo::new(&boot_info, &mut platform).expect("Failed to parse ACPI tables");
-    interrupts::init(&gdt_selectors);
     interrupts::enable();
 
     info!("BSP: {:?}", platform.bootstrap_cpu);

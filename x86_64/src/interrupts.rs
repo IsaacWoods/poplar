@@ -248,8 +248,8 @@ pub fn init(gdt_selectors : &GdtSelectors)
         /*
          * Install handlers for local APIC interrupts
          */
-        IDT[LOCAL_APIC_TIMER].set_handler(wrap_handler!(::apic::apic_timer_handler),        gdt_selectors.kernel_code);
-        IDT[APIC_SPURIOUS_INTERRUPT].set_handler(wrap_handler!(spurious_handler),   gdt_selectors.kernel_code);
+        IDT[LOCAL_APIC_TIMER].set_handler(wrap_handler!(::apic::apic_timer_handler),    gdt_selectors.kernel_code);
+        IDT[APIC_SPURIOUS_INTERRUPT].set_handler(wrap_handler!(spurious_handler),       gdt_selectors.kernel_code);
 
         /*
          * Install handlers for ISA IRQs from the IOAPIC
@@ -264,13 +264,6 @@ pub fn init(gdt_selectors : &GdtSelectors)
                         .set_privilege_level(PrivilegeLevel::Ring3);
 
         IDT.load();
-
-        /*
-         * Unmask handled entries on the IOAPIC
-         * TODO: Better way of specifying/looking up the global system interrupt number for these
-         */
-        IO_APIC.set_irq_mask(2, false); // PIT
-        IO_APIC.set_irq_mask(1, false); // PS/2 controller
     }
 }
 
@@ -278,6 +271,13 @@ pub fn enable()
 {
     unsafe
     {
+        /*
+         * Unmask handled entries on the IOAPIC
+         * TODO: Better way of specifying/looking up the global system interrupt number for these
+         */
+        IO_APIC.set_irq_mask(2, false); // PIT
+        IO_APIC.set_irq_mask(1, false); // PS/2 controller
+
         asm!("sti");
     }
 }
