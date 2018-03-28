@@ -10,5 +10,7 @@ pub extern fn panic_fmt(fmt     : ::core::fmt::Arguments,
                         line    : u32) -> !
 {
     error!("PANIC in {} at line {}: \n    {}", file, line, fmt);
+
+    #[allow(empty_loop)]
     loop {}
 }

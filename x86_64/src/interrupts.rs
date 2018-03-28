@@ -285,6 +285,8 @@ pub fn enable()
 extern "C" fn invalid_opcode_handler(stack_frame : &InterruptStackFrame)
 {
     error!("INVALID OPCODE AT: {:#x}", stack_frame.instruction_pointer);
+
+    #[allow(empty_loop)]
     loop {}
 }
 
@@ -302,6 +304,8 @@ extern "C" fn general_protection_fault_handler(stack_frame : &InterruptStackFram
 {
     error!("General protection fault: (error code = {:#x})", error_code);
     error!("{:#?}", stack_frame);
+
+    #[allow(empty_loop)]
     loop { }
 }
 
@@ -337,12 +341,15 @@ extern "C" fn page_fault_handler(stack_frame : &InterruptStackFrame, error_code 
     /*
      * Page-faults can be recovered from and so are faults, but we never will so just give up.
      */
+    #[allow(empty_loop)]
     loop { }
 }
 
 extern "C" fn double_fault_handler(stack_frame : &InterruptStackFrame, error_code : u64)
 {
     error!("EXCEPTION: DOUBLE FAULT   (Error code: {})\n{:#?}", error_code, stack_frame);
+
+    #[allow(empty_loop)]
     loop { }
 }
 

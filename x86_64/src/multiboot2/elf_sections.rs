@@ -36,7 +36,7 @@ impl ElfSectionsTag
         unsafe
         {
             let string_table_ptr = (&self.first_section as *const ElfSection).offset(self.shndx as isize);
-            &*((*string_table_ptr).start_as_physical().into_kernel_space().ptr() as *const StringTable)
+            &*((*string_table_ptr).start_as_physical().in_kernel_space().ptr() as *const StringTable)
         }
     }
 }
@@ -88,7 +88,7 @@ impl Iterator for ElfSectionIter
         else
         {
             let section = self.current_section;
-            let next_section_addr = (self.current_section as *const _ as u64) + self.entry_size as u64;
+            let next_section_addr = (self.current_section as *const _ as u64) + u64::from(self.entry_size);
             self.current_section = unsafe { &*(next_section_addr as *const ElfSection) };
             self.remaining_sections -= 1;
 

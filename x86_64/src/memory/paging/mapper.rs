@@ -205,7 +205,7 @@ impl Mapper
         for frame in Frame::range_inclusive(Frame::containing_frame(range.start),
                                             Frame::containing_frame(range.end.offset(-1)))
         {
-            let virtual_address = frame.start_address().into_kernel_space();
+            let virtual_address = frame.start_address().in_kernel_space();
             let page = Page::containing_page(virtual_address);
 
             let user_accessible = flags.contains(EntryFlags::USER_ACCESSIBLE);

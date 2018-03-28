@@ -39,7 +39,7 @@ impl PhysicalAddress
      *
      * XXX: This is true for a lot of structures, but should not be taken as a given.
      */
-    pub const fn into_kernel_space(&self) -> super::VirtualAddress
+    pub const fn in_kernel_space(&self) -> super::VirtualAddress
     {
         super::VirtualAddress::new(self.0 + ::memory::map::KERNEL_VMA.0)
     }

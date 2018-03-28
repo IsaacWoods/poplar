@@ -20,8 +20,8 @@ impl Stack
         assert!(top > bottom);
         Stack
         {
-            top     : top,
-            bottom  : bottom
+            top,
+            bottom,
         }
     }
 
@@ -47,10 +47,11 @@ impl StackAllocator
         }
     }
 
-    pub fn alloc_stack<A : FrameAllocator>(&mut self,
-                                           active_table     : &mut ActivePageTable,
-                                           frame_allocator  : &mut A,
-                                           size_in_pages    : usize) -> Option<Stack>
+    pub fn alloc_stack<A>(&mut self,
+                          active_table     : &mut ActivePageTable,
+                          frame_allocator  : &mut A,
+                          size_in_pages    : usize) -> Option<Stack>
+        where A : FrameAllocator
     {
         if size_in_pages == 0
         {

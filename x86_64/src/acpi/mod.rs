@@ -49,7 +49,7 @@ impl Rsdp
         }
 
         // Check that the lowest byte is 0
-        if sum & 0b11111111 != 0
+        if sum & 0b1111_1111 != 0
         {
             return Err("RSDP has incorrect checksum");
         }
@@ -57,7 +57,7 @@ impl Rsdp
         Ok(())
     }
 
-    fn oem_str<'a>(&'a self) -> &'a str
+    fn oem_str(&self) -> &str
     {
         str::from_utf8(&self.oem_id).expect("Could not extract OEM ID from RSDP")
     }
@@ -106,7 +106,7 @@ impl SdtHeader
         }
 
         // Check that the lowest byte is 0
-        if sum & 0b11111111 != 0
+        if sum & 0b1111_1111 != 0
         {
             return Err("SDT has incorrect checksum");
         }

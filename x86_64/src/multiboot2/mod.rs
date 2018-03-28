@@ -42,7 +42,7 @@ impl BootInformation
 {
     pub unsafe fn load(physical_address: PhysicalAddress) -> BootInformation
     {
-        let virtual_address = physical_address.into_kernel_space();
+        let virtual_address = physical_address.in_kernel_space();
         assert!(virtual_address.is_aligned_to(8));
 
         let multiboot = &*(virtual_address.ptr() as *const MultibootStruct);
@@ -50,7 +50,7 @@ impl BootInformation
     
         let boot_info = BootInformation
                         {
-                            physical_address : physical_address,
+                            physical_address,
                             multiboot_struct : multiboot,
                         };
         assert!(boot_info.has_valid_end_tag());

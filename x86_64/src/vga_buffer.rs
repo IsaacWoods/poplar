@@ -58,7 +58,7 @@ struct ScreenChar
 
 const VGA_BUFFER_WIDTH      : usize             = 80;
 const VGA_BUFFER_HEIGHT     : usize             = 25;
-const VGA_BUFFER_ADDRESS    : VirtualAddress    = PhysicalAddress::new(0xb8000).into_kernel_space();
+const VGA_BUFFER_ADDRESS    : VirtualAddress    = PhysicalAddress::new(0xb8000).in_kernel_space();
 
 struct Buffer
 {
@@ -73,7 +73,7 @@ pub struct Writer
 }
 
 /*
- * TODO: Is it actually safe to send this across threads??
+ * TODO: Is it actually safe to send this across threads?? Answer: No probably not.
  */
 unsafe impl Send for Writer { }
 
@@ -131,7 +131,7 @@ impl Writer
                 self.buffer().chars[row][col].write(ScreenChar
                                                    {
                                                        ascii_char : byte,
-                                                       color_code : color_code,
+                                                       color_code,
                                                    });
                 self.col_position += 1;
             }

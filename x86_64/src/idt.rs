@@ -45,7 +45,7 @@ impl IdtEntry
             address_0_15    : 0,
             gdt_selector    : 0,
             ist_offset      : 0,
-            flags           : 0b00001110,
+            flags           : 0b0000_1110,
             address_16_31   : 0,
             address_32_63   : 0,
             reserved        : 0,

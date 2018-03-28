@@ -10,8 +10,8 @@ use memory::{Frame,FrameAllocator};
 
 pub struct TemporaryPage
 {
-    page : Page,
-    allocator : TinyAllocator,
+    page        : Page,
+    allocator   : TinyAllocator,
 }
 
 impl TemporaryPage
@@ -20,7 +20,7 @@ impl TemporaryPage
     {
         TemporaryPage
         {
-            page : page,
+            page,
             allocator : TinyAllocator::new(allocator)
         }
     }
@@ -31,7 +31,7 @@ impl TemporaryPage
      */
     pub fn map(&mut self, frame : Frame, active_table : &mut ActivePageTable) -> VirtualAddress
     {
-        assert!(active_table.translate_page(self.page).is_none(), "temp page is already mapped");
+        assert!(active_table.translate_page(self.page).is_none(), "Temp page is already mapped");
         active_table.map_to(self.page, frame, EntryFlags::WRITABLE, &mut self.allocator);
         self.page.start_address()
     }

@@ -39,24 +39,24 @@ pub const P4_TABLE_ADDRESS : VirtualAddress = VirtualAddress::from_page_table_of
                                                                                       0);
 
 /* 0xffffffff80000000 */
-pub const KERNEL_VMA : VirtualAddress = VirtualAddress::new(0xffffffff80000000);
+pub const KERNEL_VMA : VirtualAddress = VirtualAddress::new(0xffff_ffff_8000_0000);
 
 /*
  * The kernel is mapped here. We don't know how much space it'll use, so we leave plenty of space.
  */
 
 /* 0xffffffffc0000000 */
-pub const HEAP_START : VirtualAddress = VirtualAddress::new(0xffffffffc0000000);
+pub const HEAP_START : VirtualAddress = VirtualAddress::new(0xffff_ffff_c000_0000);
 pub const HEAP_SIZE  : usize = 200 * 1024;  // 200 KiB
 
 /* 0xffffffffd0000000 */
-pub const STACK_SPACE_TOP       : VirtualAddress = VirtualAddress::new(0xffffffffd0000000);
-pub const STACK_SPACE_BOTTOM    : VirtualAddress = VirtualAddress::new(0xffffffffd0064000 - 1);
+pub const STACK_SPACE_TOP       : VirtualAddress = VirtualAddress::new(0xffff_ffff_d000_0000);
+pub const STACK_SPACE_BOTTOM    : VirtualAddress = VirtualAddress::new(0xffff_ffff_d006_4000 - 1);
 
 /* 0xffffffffd0064000 */
 
 /* 0xfffffffff0000000 */
-pub const TEMP_PAGE : Page = Page { number : 0xfffffffff0000000 / PAGE_SIZE };
+pub const TEMP_PAGE : Page = Page { number : 0xffff_ffff_f000_0000 / PAGE_SIZE };
 
 /* 0xffffffffffffffff */
-pub const KERNEL_SPACE_END : VirtualAddress = VirtualAddress::new(0xffffffffffffffff);
+pub const KERNEL_SPACE_END : VirtualAddress = VirtualAddress::new(0xffff_ffff_ffff_ffff);

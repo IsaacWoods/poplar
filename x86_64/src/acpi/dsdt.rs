@@ -23,8 +23,6 @@ pub fn parse_dsdt(mapping : &PhysicalMapping<Dsdt>, acpi_info : &mut AcpiInfo)
                                         (*mapping).header.length as usize - mem::size_of::<SdtHeader>())
                      };
 
-    let parse_result = parser.parse(acpi_info);
-
     match parser.parse(acpi_info)
     {
         Ok(_) =>

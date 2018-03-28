@@ -199,7 +199,7 @@ impl Gdt
                     DescriptorFlags::EXECUTABLE     |
                     DescriptorFlags::LONG_MODE;
 
-        UserSegment(flags.bits() | ((privilege_level.into() : u8) as u64) << 45)
+        UserSegment(flags.bits() | u64::from(privilege_level.into() : u8) << 45)
     }
 
     fn create_data_segment(privilege_level : PrivilegeLevel) -> UserSegment
@@ -208,7 +208,7 @@ impl Gdt
                     DescriptorFlags::PRESENT        |
                     DescriptorFlags::WRITABLE;
 
-        UserSegment(flags.bits() | ((privilege_level.into() : u8) as u64) << 45)
+        UserSegment(flags.bits() | u64::from(privilege_level.into() : u8) << 45)
     }
 
     fn create_tss_segment(tss : &'static Tss) -> SystemSegment

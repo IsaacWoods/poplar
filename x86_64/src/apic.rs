@@ -65,7 +65,7 @@ impl LocalApic
          * - Enable the local APIC by setting bit 8
          * - Set eh spurious interrupt vector
          */
-        let spurious_interrupt_vector = (1<<8) | ::interrupts::APIC_SPURIOUS_INTERRUPT as u32;
+        let spurious_interrupt_vector = (1<<8) | u32::from(::interrupts::APIC_SPURIOUS_INTERRUPT);
         ptr::write_volatile(self.register_ptr(0xF0), spurious_interrupt_vector);
     }
 
@@ -81,7 +81,7 @@ impl LocalApic
              * simplest otherwise). 16 seems to be the most supported.
              */
             ptr::write_volatile(self.register_ptr(0x3E0), 0x3);
-            ptr::write_volatile(self.register_ptr(0x380), 0xFFFFFFFF);
+            ptr::write_volatile(self.register_ptr(0x380), 0xFFFF_FFFF);
 
             /*
              * Sleep for 10ms with the PIT and then stop the APIC timer
@@ -89,14 +89,14 @@ impl LocalApic
             ::pit::PIT.do_sleep(10);
             ptr::write_volatile(self.register_ptr(0x320), 0x10000);
 
-            let ticks_in_10ms = (0xFFFFFFFF - ptr::read_volatile(self.register_ptr(0x390))) as usize;
+            let ticks_in_10ms = (0xFFFF_FFFF - ptr::read_volatile(self.register_ptr(0x390))) as usize;
             trace!("Timing of local APIC bus frequency complete");
 
             /*
              * Start the APIC timer in Periodic mode with a divide value of 16 again, to interrupt
              * every 10 ms.
              */
-            ptr::write_volatile(self.register_ptr(0x320), ::interrupts::LOCAL_APIC_TIMER as u32 | 0x20000);
+            ptr::write_volatile(self.register_ptr(0x320), u32::from(::interrupts::LOCAL_APIC_TIMER) | 0x20000);
             ptr::write_volatile(self.register_ptr(0x3E0), 0x3);
             ptr::write_volatile(self.register_ptr(0x380), ((ticks_in_10ms / 10) * duration) as u32);
         }
@@ -121,7 +121,7 @@ pub struct IoApic
     global_interrupt_base   : u8,
 }
 
-#[allow(unused)]
+#[derive(Clone,Copy,Debug)]
 pub enum DeliveryMode
 {
     Fixed,
@@ -132,12 +132,14 @@ pub enum DeliveryMode
     ExtINT,
 }
 
+#[derive(Clone,Copy,Debug)]
 pub enum PinPolarity
 {
     Low,
     High,
 }
 
+#[derive(Clone,Copy,Debug)]
 pub enum TriggerMode
 {
     Edge,
@@ -218,19 +220,19 @@ impl IoApic
 
     fn read_entry_raw(&self, irq : u8) -> u64
     {
-        let register_base = 0x10 + (irq as u32) * 2;
+        let register_base = 0x10 + u32::from(irq) * 2;
         let mut entry : u64 = 0;
         unsafe
         {
-            entry.set_bits(0..32 , self.read_register(register_base + 0) as u64);
-            entry.set_bits(32..64, self.read_register(register_base + 1) as u64);
+            entry.set_bits(0..32 , u64::from(self.read_register(register_base + 0)));
+            entry.set_bits(32..64, u64::from(self.read_register(register_base + 1)));
         }
         entry
     }
 
     unsafe fn write_entry_raw(&self, irq : u8, entry : u64)
     {
-        let register_base = 0x10 + (irq as u32) * 2;
+        let register_base = 0x10 + u32::from(irq) * 2;
         self.write_register(register_base + 0, entry.get_bits(0..32) as u32);
         self.write_register(register_base + 1, entry.get_bits(32..64) as u32);
     }
@@ -238,6 +240,7 @@ impl IoApic
     /*
      * NOTE: We always use Physical Destination Mode.
      */
+    #[allow(too_many_arguments)]
     pub fn write_entry(&self,
                        irq              : u8,
                        vector           : u8,
@@ -248,7 +251,7 @@ impl IoApic
                        destination      : u8)
     {
         let mut entry : u64 = 0;
-        entry.set_bits(0..8, vector as u64);
+        entry.set_bits(0..8, u64::from(vector));
         entry.set_bits(8..11, match delivery_mode
                               {
                                   DeliveryMode::Fixed           => 0b000,
@@ -272,7 +275,7 @@ impl IoApic
                               TriggerMode::Level    => true,
                           });
         entry.set_bit(16, masked);
-        entry.set_bits(56..64, destination as u64);
+        entry.set_bits(56..64, u64::from(destination));
 
         unsafe { self.write_entry_raw(irq, entry); }
     }

@@ -129,7 +129,7 @@ impl Iterator for FrameIter
     {
         if self.start <= self.end
         {
-            let frame = self.start.clone();
+            let frame = self.start;
             self.start.number += 1;
             Some(frame)
         }
@@ -182,8 +182,8 @@ impl Frame
     {
         FrameIter
         {
-            start : start,
-            end   : end
+            start,
+            end,
         }
     }
 }
@@ -194,7 +194,8 @@ pub trait FrameAllocator
     fn deallocate_frame(&mut self, frame : Frame);
 }
 
-pub struct MemoryController<A : FrameAllocator>
+pub struct MemoryController<A>
+    where A : FrameAllocator
 {
     pub kernel_page_table   : paging::ActivePageTable,
     pub frame_allocator     : A,
@@ -202,7 +203,8 @@ pub struct MemoryController<A : FrameAllocator>
     pub loaded_modules      : BTreeMap<&'static str, PhysicalMapping<u8>>,
 }
 
-impl<A> MemoryController<A> where A : FrameAllocator
+impl<A> MemoryController<A>
+    where A : FrameAllocator
 {
     pub fn alloc_stack(&mut self, size_in_pages : usize) -> Option<Stack>
     {

@@ -245,14 +245,14 @@ impl AmlParser
 
         if byte_data_count == 0
         {
-            return Ok(lead_byte.get_bits(0..6) as u32);
+            return Ok(u32::from(lead_byte.get_bits(0..6)));
         }
 
-        let mut length = lead_byte.get_bits(0..4) as u32;
+        let mut length = u32::from(lead_byte.get_bits(0..4));
 
         for i in 0..byte_data_count
         {
-            length += (self.stream.next().unwrap() as u32) << 4 + i * 8;
+            length += u32::from(self.stream.next().unwrap()) << (4 + i * 8);
         }
 
         /*
@@ -312,7 +312,7 @@ impl AmlParser
                 let seg_count = self.stream.next().unwrap();
                 let mut path = String::new();
 
-                for i in 0..seg_count
+                for _ in 0..seg_count
                 {
                     path.push_str(str::from_utf8(&self.parse_name_seg()?).unwrap());
                 }

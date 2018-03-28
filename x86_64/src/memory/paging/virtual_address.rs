@@ -73,8 +73,10 @@ impl VirtualAddress
      */
     pub const fn canonicalise(self) -> VirtualAddress
     {
-        VirtualAddress::new(0o177777_000_000_000_000_0000 * ((self.0 >> 47) & 0b1) |
-                            (self.0 & ((1 << 48) - 1)))
+        #[allow(inconsistent_digit_grouping)]
+        const SIGN_EXTENSION : usize = 0o177777_000_000_000_000_0000;
+
+        VirtualAddress::new((SIGN_EXTENSION * ((self.0 >> 47) & 0b1)) | (self.0 & ((1 << 48) - 1)))
     }
 }
 

@@ -14,12 +14,13 @@
 #![feature(type_ascription)]
 #![feature(allocator_api)]
 
+#![allow(identity_op)]
+
 /*
  * `rlibc` just provides intrinsics that are linked against, and so the compiler doesn't pick up
  * that it's actually used, so we suppress the warning.
  */
-#[allow(unused_extern_crates)] extern crate rlibc;
-
+                extern crate rlibc;
                 extern crate volatile;
                 extern crate spin;
                 extern crate alloc;
@@ -120,7 +121,7 @@ pub extern fn kstart(multiboot_address : PhysicalAddress) -> !
      * We are passed the *physical* address of the Multiboot struct, so we offset it by the virtual
      * offset of the whole kernel.
      */
-    let boot_info = unsafe { BootInformation::load(multiboot_address.into()) };
+    let boot_info = unsafe { BootInformation::load(multiboot_address) };
     let mut platform = {
                            let mut memory_controller = memory::init(&boot_info);
                            Platform::new(memory_controller)
@@ -151,7 +152,7 @@ pub extern fn kstart(multiboot_address : PhysicalAddress) -> !
     interrupts::enable();
 
     info!("BSP: {:?}", platform.bootstrap_cpu);
-    for cpu in platform.application_cpus.iter()
+    for cpu in &platform.application_cpus
     {
         info!("AP: {:?}", cpu);
     }

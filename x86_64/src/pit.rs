@@ -18,7 +18,8 @@ pub struct Pit
     channel_0       : Port<u8>,
 }
 
-const PIT_FREQUENCY : usize = 1193180;
+/// This is the frequency the PIT oscillator runs at in Hz.
+const PIT_FREQUENCY : usize = 1_193_180;
 
 impl Pit
 {
@@ -44,7 +45,7 @@ impl Pit
              * Tell the PIC that we're gonna specify both bytes of a Mode 3 divisor (to generate a
              * square wave) on Channel 0.
              */
-            self.command_port.write(0b00110110);
+            self.command_port.write(0b0011_0110);
 
             self.channel_0.write(divisor.get_bits(0..8) as u8);     // Write low byte
             self.channel_0.write(divisor.get_bits(8..16) as u8);    // Write high byte
@@ -64,7 +65,7 @@ impl Pit
             /*
              * Tell the PIC we're gonna specify both bytes of a Mode 0 counter value on Channel 0.
              */
-            self.command_port.write(0b00110000);
+            self.command_port.write(0b0011_0000);
 
             /*
              * Specify the counter value to count down from. This also starts the countdown.
@@ -77,6 +78,7 @@ impl Pit
              * When the count down reaches zero, an interrupt will be sent, since we're on Channel
              * 0, so we spinlock until we get the interrupt, then return.
              */
+            #[allow(while_immutable_condition)]
             while self.sleeping
             {
                 cpu::wait_for_interrupt();

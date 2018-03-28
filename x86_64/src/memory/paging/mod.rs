@@ -77,8 +77,8 @@ impl Page
     {
         PageIter
         {
-            start : start,
-            end   : end,
+            start,
+            end,
         }
     }
 
@@ -149,11 +149,10 @@ impl ActivePageTable
         {
             // Backup the current P4 and temporarily map it
             let original_p4 = Frame::containing_frame((read_control_reg!(cr3) as usize).into());
-            let p4_table = temporary_page.map_table_frame(original_p4.clone(), self);
+            let p4_table = temporary_page.map_table_frame(original_p4, self);
 
             // Overwrite recursive mapping
-            self.p4[RECURSIVE_ENTRY].set(table.p4_frame.clone(), EntryFlags::PRESENT |
-                                                                 EntryFlags::WRITABLE);
+            self.p4[RECURSIVE_ENTRY].set(table.p4_frame, EntryFlags::PRESENT | EntryFlags::WRITABLE);
 
             // Flush the TLB
             tlb::flush();
@@ -169,6 +168,7 @@ impl ActivePageTable
         temporary_page.unmap(self);
     }
 
+    #[allow(needless_pass_by_value)]    // We move the table, so it can't be used once it's not mapped
     pub fn switch(&mut self, new_table : InactivePageTable) -> ActivePageTable
     {
         unsafe
@@ -203,9 +203,9 @@ impl InactivePageTable
          *       we try to unmap the temporary page.
          */
         {
-            let table = temporary_page.map_table_frame(frame.clone(), active_table);
+            let table = temporary_page.map_table_frame(frame, active_table);
             table.zero();
-            table[RECURSIVE_ENTRY].set(frame.clone(), EntryFlags::PRESENT | EntryFlags::WRITABLE);
+            table[RECURSIVE_ENTRY].set(frame, EntryFlags::PRESENT | EntryFlags::WRITABLE);
         }
 
         temporary_page.unmap(active_table);
@@ -295,8 +295,8 @@ pub fn remap_kernel<A>(allocator : &mut A,
             /*
              * Map the Multiboot structure to KERNEL_VMA + its physical address
              */
-            trace!("Mapping Multiboot structure to {:#x}-{:#x}", boot_info.physical_start().into_kernel_space(),
-                                                                 boot_info.physical_end().into_kernel_space());
+            trace!("Mapping Multiboot structure to {:#x}-{:#x}", boot_info.physical_start().in_kernel_space(),
+                                                                 boot_info.physical_end().in_kernel_space());
             mapper.identity_map_range(boot_info.physical_start()..boot_info.physical_end(),
                                       EntryFlags::PRESENT,
                                       allocator);

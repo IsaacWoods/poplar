@@ -119,17 +119,19 @@ pub(super) fn parse_madt<A>(mapping     : &PhysicalMapping<MadtHeader>,
                                 (false,false)   => CpuState::Running,
                             };
 
-                match is_ap
+                if is_ap
                 {
-                    false => platform.bootstrap_cpu = Some(Cpu::new(entry.processor_id,
-                                                                    entry.apic_id,
-                                                                    false,
-                                                                    state)),
-
-                    true => platform.application_cpus.push(Cpu::new(entry.processor_id,
-                                                                    entry.apic_id,
-                                                                    true,
-                                                                    state)),
+                    platform.application_cpus.push(Cpu::new(entry.processor_id,
+                                                            entry.apic_id,
+                                                            true,
+                                                            state));
+                }
+                else
+                {
+                    platform.bootstrap_cpu = Some(Cpu::new(entry.processor_id,
+                                                           entry.apic_id,
+                                                           false,
+                                                           state));
                 }
 
                 entry_address = entry_address.offset(mem::size_of::<LocalApicEntry>() as isize);

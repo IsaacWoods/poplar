@@ -51,7 +51,7 @@ pub fn module_iter(iter: TagIter) -> ModuleIter
 {
     ModuleIter
     {
-        iter: iter
+        iter,
     }
 }
 

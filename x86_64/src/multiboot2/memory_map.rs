@@ -25,7 +25,7 @@ impl MemoryMapTag
         MemoryAreaIter
         {
             current_area    : start_area as u64,
-            last_area       : (self_ptr as u64 + (self.size - self.entry_size) as u64),
+            last_area       : self_ptr as u64 + u64::from(self.size - self.entry_size),
             entry_size      : self.entry_size,
         }
     }
@@ -80,7 +80,7 @@ impl Iterator for MemoryAreaIter
         else
         {
             let area = unsafe { &*(self.current_area as *const MemoryArea) };
-            self.current_area = self.current_area + (self.entry_size as u64);
+            self.current_area += u64::from(self.entry_size);
     
             match area.typ
             {

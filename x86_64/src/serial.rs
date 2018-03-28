@@ -87,7 +87,7 @@ impl SerialPort
     {
         SerialPort
         {
-            data_register               : Port::new(address + 0),
+            data_register               : Port::new(address),
             interrupt_enable_register   : Port::new(address + 1),
             interrupt_identity_register : Port::new(address + 2),
             line_control_register       : Port::new(address + 3),

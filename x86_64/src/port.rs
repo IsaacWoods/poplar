@@ -76,15 +76,14 @@ pub struct Port<T : PortSize>
 
 impl<T : PortSize> Port<T>
 {
-    /*
-     * Unsafe because writing to random memory addresses can generally do really bad stuff.
-     */
+    /// Create a new `Port` at the specified I/O address. Unsafe because writing to random IO ports
+    /// is bad.
     pub const unsafe fn new(port : u16) -> Port<T>
     {
         Port
         {
-            port : port,
-            phantom : PhantomData
+            port,
+            phantom : PhantomData,
         }
     }
 
