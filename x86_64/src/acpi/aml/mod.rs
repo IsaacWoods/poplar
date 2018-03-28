@@ -79,6 +79,14 @@ impl Iterator for AmlStream
     }
 }
 
+#[derive(Debug)]
+pub enum AmlError
+{
+    UnexpectedByte(u8),
+    RanOutOfBytes,
+    Unimplemented,
+}
+
 pub(super) struct AmlParser
 {
     pub(self) stream                : Peekable<AmlStream>,
@@ -103,7 +111,7 @@ impl AmlParser
         }
     }
 
-    fn consume<F>(&mut self, predicate : F) -> u8
+    fn consume<F>(&mut self, predicate : F) -> Result<u8, AmlError>
         where F : Fn(u8) -> bool
     {
         let byte = self.stream.next().expect("Consume hit end of stream");
@@ -113,36 +121,43 @@ impl AmlParser
             panic!("AML parser consumed unexpected byte: {:#x}", byte);
         }
 
-        byte
+        Ok(byte)
     }
 
-    pub(super) fn parse(&mut self, acpi_info : &mut AcpiInfo)
+    pub(super) fn parse(&mut self, acpi_info : &mut AcpiInfo) -> Result<(), AmlError>
     {
         while let Some(_) = self.stream.peek()
         {
-            self.parse_term_obj(acpi_info);
+            self.parse_term_obj(acpi_info)?;
         }
+
+        Ok(())
     }
 
     /*
      * This keeps parsing TermObjs until the end of the current PkgLength
      */
-    fn parse_term_list(&mut self, acpi_info : &mut AcpiInfo) -> Vec<TermObj>
+    fn parse_term_list(&mut self, acpi_info : &mut AcpiInfo) -> Result<Vec<TermObj>, AmlError>
     {
         /*
          * TermList := Nothing | <TermObj TermList>
          */
-        assert!(self.remaining_pkg_bytes > 0);
+        if self.remaining_pkg_bytes == 0
+        {
+            return Err(AmlError::RanOutOfBytes);
+        }
 
         let mut list = Vec::new();
+
         while self.remaining_pkg_bytes > 0
         {
-            list.push(self.parse_term_obj(acpi_info));
+            list.push(self.parse_term_obj(acpi_info)?);
         }
-        list
+
+        Ok(list)
     }
 
-    fn parse_term_obj(&mut self, acpi_info : &mut AcpiInfo) -> TermObj
+    fn parse_term_obj(&mut self, acpi_info : &mut AcpiInfo) -> Result<TermObj, AmlError>
     {
         /*
          * TermObj := NameSpaceModifierObj | NamedObj | Type1Opcode | Type2Opcode
@@ -167,53 +182,54 @@ impl AmlParser
                          * RegionLen    := TermArg => Integer
                          */
                         info!("Parsing OpReginOp");
-                        let name_string     = self.parse_name_string();
+                        let name_string     = self.parse_name_string()?;
                         info!("Name string is {:?}", name_string);
                         let region_space    = self.stream.next().unwrap();
                         info!("Region space is {:#x}", region_space);
-                        let region_offset   = self.parse_term_arg();
+                        let region_offset   = self.parse_term_arg()?;
                         info!("Region offset is {:?}", region_offset);
-                        let region_len      = self.parse_term_arg();
+                        let region_len      = self.parse_term_arg()?;
                         info!("Region len is {:?}", region_len);
-                        TermObj::NameSpaceModifierObj { } // TODO
+
+                        Err(AmlError::Unimplemented)
                     },
 
-                    _ => unimplemented!(),
+                    _ => Err(AmlError::Unimplemented),
                 }
             },
 
             byte =>
             {
-                panic!("Unrecognised AML opcode at top-level: {:#x}", byte);
+                Err(AmlError::UnexpectedByte(byte))
             },
         }
     }
 
-    fn parse_term_arg(&mut self) -> TermArg
+    fn parse_term_arg(&mut self) -> Result<TermArg, AmlError>
     {
         /*
          * TermArg := Type2Opcode | DataObject | ArgObj | LocalObj
          */
         // TODO
-        TermArg { }
+        Ok(TermArg { })
     }
 
-    fn parse_scope_op(&mut self, acpi_info : &mut AcpiInfo) -> TermObj
+    fn parse_scope_op(&mut self, acpi_info : &mut AcpiInfo) -> Result<TermObj, AmlError>
     {
         /*
          * DefScope := 0x10 PkgLength NameString TermList
          */
-        let pkg_length = self.parse_pkg_length();
+        let pkg_length = self.parse_pkg_length()?;
         info!("Pkg length = {},{}", pkg_length, self.remaining_pkg_bytes);
-        let name_string = self.parse_name_string();
+        let name_string = self.parse_name_string()?;
         info!("Name string: {}", name_string);
-        let term_list = self.parse_term_list(acpi_info);
+        let term_list = self.parse_term_list(acpi_info)?;
 
         // TODO: no
-        term_list[0].clone()
+        Ok(term_list[0].clone())
     }
 
-    fn parse_pkg_length(&mut self) -> u32
+    fn parse_pkg_length(&mut self) -> Result<u32, AmlError>
     {
         /*
          * PkgLength := PkgLeadByte |
@@ -229,7 +245,7 @@ impl AmlParser
 
         if byte_data_count == 0
         {
-            return lead_byte.get_bits(0..6) as u32;
+            return Ok(lead_byte.get_bits(0..6) as u32);
         }
 
         let mut length = lead_byte.get_bits(0..4) as u32;
@@ -243,19 +259,18 @@ impl AmlParser
          * Set the number of bytes left in the current structure, minus the size of this PkgLength.
          */
         self.remaining_pkg_bytes = length as usize - 1 - byte_data_count as usize;
-
-        length
+        Ok(length)
     }
 
-    fn parse_name_seg(&mut self) -> [u8; 4]
+    fn parse_name_seg(&mut self) -> Result<[u8; 4], AmlError>
     {
-        [self.consume(is_lead_name_char),
-         self.consume(is_name_char),
-         self.consume(is_name_char),
-         self.consume(is_name_char)]
+        Ok([self.consume(is_lead_name_char)?,
+            self.consume(is_name_char)?,
+            self.consume(is_name_char)?,
+            self.consume(is_name_char)?])
     }
 
-    fn parse_name_path(&mut self) -> String
+    fn parse_name_path(&mut self) -> Result<String, AmlError>
     {
         /*
          * NamePath         := NameSeg | DualNamePath | MultiNamePath | NullPath
@@ -270,7 +285,7 @@ impl AmlParser
             opcodes::NULL_NAME =>
             {
                 self.stream.next().unwrap();
-                String::from("")
+                Ok(String::from(""))
             },
 
             opcodes::DUAL_NAME_PREFIX =>
@@ -279,13 +294,13 @@ impl AmlParser
                  * NamePath := DualNamePath
                  */
                 self.stream.next().unwrap();
-                let first = self.parse_name_seg();
-                let second = self.parse_name_seg();
+                let first = self.parse_name_seg()?;
+                let second = self.parse_name_seg()?;
 
                 let mut path = String::new();
                 path.push_str(str::from_utf8(&first).unwrap());
                 path.push_str(str::from_utf8(&second).unwrap());
-                path
+                Ok(path)
             },
 
             opcodes::MULTI_NAME_PREFIX =>
@@ -299,10 +314,10 @@ impl AmlParser
 
                 for i in 0..seg_count
                 {
-                    path.push_str(str::from_utf8(&self.parse_name_seg()).unwrap());
+                    path.push_str(str::from_utf8(&self.parse_name_seg()?).unwrap());
                 }
 
-                path
+                Ok(path)
             },
 
             _ =>
@@ -311,14 +326,14 @@ impl AmlParser
                  * We've already parsed one of the bytes, so we manually parse the other three,
                  * rather than using `parse_name_seg`
                  */
-                String::from(str::from_utf8(&[self.consume(is_name_char),
-                                              self.consume(is_name_char),
-                                              self.consume(is_name_char)]).unwrap())
+                Ok(String::from(str::from_utf8(&[self.consume(is_name_char)?,
+                                                 self.consume(is_name_char)?,
+                                                 self.consume(is_name_char)?]).unwrap()))
             },
         }
     }
 
-    fn parse_name_string(&mut self) -> String
+    fn parse_name_string(&mut self) -> Result<String, AmlError>
     {
 
         /*
@@ -336,8 +351,8 @@ impl AmlParser
                  */
                 self.stream.next().unwrap();
                 let mut name = String::from("\\");
-                name += &self.parse_name_path();
-                name
+                name += &self.parse_name_path()?;
+                Ok(name)
             },
 
             b'^' =>
@@ -349,7 +364,7 @@ impl AmlParser
                 let string = String::from("^");
                 error!("Haven't actually parsed this name string, TODO");
                 //TODO
-                string
+                Ok(string)
             },
 
             _ =>
@@ -358,8 +373,8 @@ impl AmlParser
                  * NameString := PrefixPath[Nothing] NamePath
                  */
                 let mut name = String::from(str::from_utf8(&[self.stream.next().unwrap()]).unwrap());
-                name += &self.parse_name_path();
-                name
+                name += &self.parse_name_path()?;
+                Ok(name)
             },
         }
     }

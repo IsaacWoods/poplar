@@ -23,5 +23,18 @@ pub fn parse_dsdt(mapping : &PhysicalMapping<Dsdt>, acpi_info : &mut AcpiInfo)
                                         (*mapping).header.length as usize - mem::size_of::<SdtHeader>())
                      };
 
-    parser.parse(acpi_info);
+    let parse_result = parser.parse(acpi_info);
+
+    match parser.parse(acpi_info)
+    {
+        Ok(_) =>
+        {
+        },
+
+        Err(error) =>
+        {
+            error!("Failed to parse DSDT (error: {:?})", error);
+            warn!("The kernel will carry on, but functionality may be reduced / we might crash");
+        },
+    }
 }
