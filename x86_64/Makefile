@@ -15,7 +15,7 @@ $(BUILD_DIR)/kernel.bin: $(ASM_OBJS) kernel $(LINKER_SCRIPT)
 	ld $(LFLAGS) -o $@ $(ASM_OBJS) target/$(ARCH)-pebble/debug/lib$(ARCH).a
 
 kernel:
-	RUST_TARGET_PATH="$(shell pwd)" xargo build --target=$(ARCH)-pebble
+	RUST_TARGET_PATH="$(shell pwd)" xargo build --target=$(ARCH)-pebble-kernel
 
 $(BUILD_DIR)/$(ARCH)%.o: src%.s
 	mkdir -p $(shell dirname $@)
