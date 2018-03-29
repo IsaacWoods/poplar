@@ -23,8 +23,11 @@ pub struct Mapper
 #[derive(Clone,Debug)]
 pub struct PhysicalMapping<T>
 {
-    pub start       : Page,
-    pub end         : Page,
+    pub start       : PhysicalAddress,
+    pub end         : PhysicalAddress,
+
+    pub start_page  : Page,
+    pub end_page    : Page,
     pub region_ptr  : *mut T,
     pub layout      : Layout,
     pub ptr         : *mut T,
@@ -140,8 +143,10 @@ impl Mapper
 
         PhysicalMapping
         {
-            start       : start_page,
-            end         : end_page,
+            start,
+            end,
+            start_page  : start_page,
+            end_page    : end_page,
             region_ptr  : ptr,
             layout,
             ptr         : VirtualAddress::from(ptr).offset(usize::from(start - start_frame.start_address()) as isize).mut_ptr(),
@@ -158,7 +163,7 @@ impl Mapper
         
         // TODO: We should remap this into the correct physical memory in the heap, otherwise we'll
         // page fault when we hit it again!
-        for page in Page::range_inclusive(region.start, region.end)
+        for page in Page::range_inclusive(region.start_page, region.end_page)
         {
             self.unmap(page, allocator);
         }

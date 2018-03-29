@@ -8,7 +8,7 @@
 
 use core::{mem,str,slice};
 use alloc::{String,Vec,rc::Rc,boxed::Box};
-use arch::MemoryAddress;
+use arch::{MemoryAddress,ModuleMapping};
 use super::{File,Filesystem,FileError};
 
 #[derive(Clone,Copy)]
@@ -51,9 +51,10 @@ impl TarHeader
 #[derive(Clone)]
 struct RamdiskFile
 {
-    path    : String,
-    pointer : *const u8,
-    size    : usize,
+    path                : String,
+    pointer             : *const u8,
+    physical_address    : MemoryAddress,
+    size                : usize,
 }
 
 pub struct Ramdisk
@@ -65,22 +66,22 @@ pub struct Ramdisk
 
 impl Ramdisk
 {
-    pub fn new(start : MemoryAddress, end : MemoryAddress) -> Ramdisk
+    pub fn new(mapping : &ModuleMapping) -> Ramdisk
     {
         assert!(mem::size_of::<TarHeader>() == 512);
 
         let mut ramdisk = Ramdisk
                           {
-                              start : start,
-                              end   : end,
+                              start : mapping.virtual_start,
+                              end   : mapping.virtual_end,
                               files : Vec::new(),
                           };
 
-        ramdisk.parse_headers();
+        ramdisk.parse_headers(mapping);
         ramdisk
     }
 
-    fn parse_headers(&mut self)
+    fn parse_headers(&mut self, mapping : &ModuleMapping)
     {
         unsafe
         {
@@ -111,10 +112,14 @@ impl Ramdisk
                                    None => filename_slice,
                                };
 
+                let data_address = header_address + mem::size_of::<TarHeader>();
+                let physical_data_address = mapping.physical_start + data_address - mapping.virtual_start;
+
                 self.files.push(RamdiskFile
                                 {
-                                    path    : String::from(filename),
-                                    pointer : (header_address + mem::size_of::<TarHeader>()) as *const u8,
+                                    path                : String::from(filename),
+                                    pointer             : data_address as *const _,
+                                    physical_address    : physical_data_address,
                                     size,
                                 });
 
@@ -162,5 +167,11 @@ impl Filesystem for Ramdisk
     fn write(&self, _ : &File, _ : &[u8]) -> Result<(), FileError>
     {
         Err(FileError::IsReadOnly)
+    }
+
+    fn get_physical_mapping(&self, file : &File) -> Option<(MemoryAddress, MemoryAddress)>
+    {
+        let file_data = file.data.downcast_ref::<RamdiskFile>().unwrap();
+        Some((file_data.physical_address, file_data.physical_address + file_data.size))
     }
 }

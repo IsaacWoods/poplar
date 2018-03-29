@@ -40,13 +40,14 @@ pub fn kernel_main<A>(architecture : A) -> !
     let mut file_manager = FileManager::new();
     
     // Register ramdisk
-    let (ramdisk_start, ramdisk_end) = architecture.get_module_address("ramdisk").expect("Couldn't load ramdisk");
-    file_manager.mount("/ramdisk", Rc::new(Ramdisk::new(ramdisk_start, ramdisk_end)));
+    let ramdisk_mapping = architecture.get_module_mapping("ramdisk").expect("Couldn't load ramdisk");
+    file_manager.mount("/ramdisk", Rc::new(Ramdisk::new(&ramdisk_mapping)));
 
     let test_file = file_manager.open("/ramdisk/test_file").unwrap();
-    let other_test = file_manager.open("/ramdisk/other_test_file").unwrap();
     info!("Test file contents: {}", core::str::from_utf8(&file_manager.read(&test_file).unwrap()).unwrap());
-    info!("Other test file contents: {}", core::str::from_utf8(&file_manager.read(&other_test).unwrap()).unwrap());
+
+    let test_process = file_manager.open("/ramdisk/test_process.elf").unwrap();
+    info!("Test process is mapped to physical memory: {:?}", unsafe { file_manager.get_physical_mapping(test_process).unwrap() });
 
     loop { }
 }

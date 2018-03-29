@@ -8,6 +8,7 @@ pub mod ramdisk;
 use core::any::Any;
 use core::str::Split;
 use alloc::{String,Vec,boxed::Box,rc::Rc,BTreeMap};
+use arch::MemoryAddress;
 use libpebble::fs::FileHandle;
 
 #[derive(Debug)]
@@ -54,6 +55,7 @@ pub trait Filesystem
     fn close(&self, file : &File);
     fn read(&self, file : &File) -> Result<Vec<u8>, FileError>;
     fn write(&self, file : &File, stuff : &[u8]) -> Result<(), FileError>;
+    fn get_physical_mapping(&self, file : &File) -> Option<(MemoryAddress, MemoryAddress)>;
 }
 
 fn parse_path<'a>(path : &'a str) -> Result<Split<'a, char>, FileError>
@@ -129,5 +131,14 @@ impl FileManager
     {
         assert!(self.opened_files.contains_key(&handle), "Tried to close file handle that isn't open");
         self.opened_files.remove(&handle).unwrap().close();
+    }
+
+    /// Some filesystems may be backed by loaded physical memory (or just physically mapped memory
+    /// for open files). This provides that physical mapping, if it exists.
+    pub unsafe fn get_physical_mapping(&self, handle : FileHandle) -> Option<(MemoryAddress,
+                                                                              MemoryAddress)>
+    {
+        let file : &File = self.opened_files.get(&handle).unwrap();
+        file.filesystem.get_physical_mapping(file)
     }
 }

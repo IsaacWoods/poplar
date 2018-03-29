@@ -57,7 +57,9 @@ use alloc::Vec;
 use memory::{MemoryController,FrameAllocator};
 use memory::paging::PhysicalAddress;
 use acpi::AcpiInfo;
-use kernel::{Architecture,process::ProcessId,arch::MemoryAddress};
+use kernel::process::ProcessId;
+use kernel::arch::{Architecture,ModuleMapping};
+use libpebble::fs::FileHandle;
 use gdt::Gdt;
 use tss::Tss;
 use process::Process;
@@ -95,13 +97,24 @@ impl<A> Architecture for Platform<A>
         vga_buffer::WRITER.lock().clear_buffer();
     }
 
-    fn get_module_address(&self, module_name : &str) -> Option<(MemoryAddress,MemoryAddress)>
+    fn get_module_mapping(&self, module_name : &str) -> Option<ModuleMapping>
     {
         self.memory_controller.loaded_modules.get(module_name).map(
             |mapping| {
-                (mapping.ptr as usize, mapping.ptr as usize + mapping.size)
+                ModuleMapping
+                {
+                    physical_start  : usize::from(mapping.start),
+                    physical_end    : usize::from(mapping.end),
+                    virtual_start   : mapping.ptr as usize,
+                    virtual_end     : mapping.ptr as usize + mapping.size,
+                }
             })
+    }
 
+    fn create_process(&mut self, image_file : &FileHandle) -> ProcessId
+    {
+        // TODO
+        unimplemented!();
     }
 }
 
