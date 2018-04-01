@@ -10,14 +10,12 @@ volatile                = "*"
 spin                    = "*"
 bitflags                = "*"
 bit_field               = "*"
+clippy                  = {version = "*", optional = true }
 
 [dependencies.libpebble]
-version                 = "*"
+path                    = "../libpebble"
 default-features        = false
 features                = ["kernel"]
-
-[patch.crates-io]
-libpebble = { path = "../libpebble", features = ["kernel"] }
 
 [dependencies.num-traits]
 version             = "*"

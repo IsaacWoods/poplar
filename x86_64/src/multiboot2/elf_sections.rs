@@ -55,6 +55,8 @@ impl StringTable
         let length = {
                          let mut len = 0;
 
+                         // TODO: This is a bug in clippy - see rust-clippy#2584
+                         #[allow(while_immutable_condition)]
                          while unsafe { *name_ptr.offset(len) } != 0
                          {
                              len += 1;

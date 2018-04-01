@@ -11,6 +11,9 @@
 #![feature(string_retain)]
 #![feature(pattern)]
 
+#![cfg_attr(feature = "clippy", feature(plugin))]
+#![cfg_attr(feature = "clippy", plugin(clippy))]
+
                 extern crate volatile;
                 extern crate spin;
                 extern crate bitflags;

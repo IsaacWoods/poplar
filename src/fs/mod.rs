@@ -135,10 +135,10 @@ impl FileManager
 
     /// Some filesystems may be backed by loaded physical memory (or just physically mapped memory
     /// for open files). This provides that physical mapping, if it exists.
-    pub unsafe fn get_physical_mapping(&self, handle : FileHandle) -> Option<(MemoryAddress,
-                                                                              MemoryAddress)>
+    pub unsafe fn get_physical_mapping(&self, handle : &FileHandle) -> Option<(MemoryAddress,
+                                                                               MemoryAddress)>
     {
-        let file : &File = self.opened_files.get(&handle).unwrap();
+        let file : &File = self.opened_files.get(handle).unwrap();
         file.filesystem.get_physical_mapping(file)
     }
 }

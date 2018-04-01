@@ -14,6 +14,9 @@
 #![feature(type_ascription)]
 #![feature(allocator_api)]
 
+#![cfg_attr(feature = "clippy", feature(plugin))]
+#![cfg_attr(feature = "clippy", plugin(clippy))]
+
 #![allow(identity_op)]
 
 /*

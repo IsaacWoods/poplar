@@ -17,13 +17,14 @@ bit_field               = "*"
 volatile                = "*"
 spin                    = "*"
 xmas-elf                = "*"
+clippy                  = {version = "*", optional = true}
 
 [dependencies.log]
 version                 = "*"
 default-features        = false
 
 [dependencies.libpebble]
-version                 = "*"
+path                    = "../../libpebble"
 default-features        = false
 features                = ["kernel"]
 
