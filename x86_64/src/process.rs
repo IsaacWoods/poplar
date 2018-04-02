@@ -131,9 +131,9 @@ impl Process
                             }
                         },
 
-                        _ =>
+                        typ =>
                         {
-                            error!("Unsupported program header type in parsed ELF!");
+                            error!("Unsupported program header type in parsed ELF: {:?}", typ);
                         },
                     }
                 }
