@@ -3,13 +3,14 @@
  * See LICENCE.md
  */
 
-use alloc::Vec;
 use xmas_elf::{ElfFile,program::Type};
-use ::gdt::GdtSelectors;
-use ::memory::{Frame,FrameAllocator,MemoryController};
-use ::memory::paging::{Page,PhysicalAddress,VirtualAddress,InactivePageTable,ActivePageTable,
-                       TemporaryPage,PAGE_SIZE};
-use ::kernel::process::ProcessId;
+use gdt::GdtSelectors;
+use memory::{Frame,FrameAllocator,MemoryController};
+use memory::paging::{Page,PhysicalAddress,VirtualAddress,InactivePageTable,ActivePageTable,
+                     TemporaryPage,PAGE_SIZE};
+use kernel::node::Node;
+use kernel::process::ProcessMessage;
+use libpebble::node::NodeId;
 
 pub enum ProcessState
 {
@@ -25,7 +26,6 @@ pub struct Image
 
 pub struct Process
 {
-    id          : ProcessId,
     state       : ProcessState,
     image       : Image,
     // threads     : Vec<Thread>,
@@ -41,8 +41,7 @@ pub struct Thread
 
 impl Process
 {
-    pub fn new<A>(id                : ProcessId,
-                  image_start       : PhysicalAddress,
+    pub fn new<A>(image_start       : PhysicalAddress,
                   image_end         : PhysicalAddress,
                   memory_controller : &mut MemoryController<A>) -> Process
         where A : FrameAllocator
@@ -150,7 +149,6 @@ impl Process
 
         Process
         {
-            id,
             state           : ProcessState::NotRunning(page_tables),
             image           : Image
                               {
@@ -245,5 +243,25 @@ impl Process
               : // We technically don't clobber anything because this never returns
               : "intel", "volatile");
         unreachable!();
+    }
+}
+
+impl Node for Process
+{
+    type MessageType = ProcessMessage;
+
+    fn message(&self, sender : NodeId, message : ProcessMessage)
+    {
+        // TODO: what should we do here? We somehow need to signal to the process that it's
+        // recieved a message, which is gonna be handled in userspace. We could reserve some memory
+        // as a sort-of queue to put unhandled messages in, and then expect the process to empty it
+        // as it pleases. What happens when we run out of space in this queue (we could expand it,
+        // up to a threshold, then terminate the process?) Or just terminate it right away for
+        // simplicity?
+        //
+        // Do we also want to map the process address space for each message, or keep it in a
+        // kernel-space queue for a while and map it when we do a context switch into that process?
+        // That seems like a better design.
+        unimplemented!();
     }
 }

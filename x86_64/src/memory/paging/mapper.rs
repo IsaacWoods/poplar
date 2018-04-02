@@ -145,8 +145,8 @@ impl Mapper
         {
             start,
             end,
-            start_page  : start_page,
-            end_page    : end_page,
+            start_page,
+            end_page,
             region_ptr  : ptr,
             layout,
             ptr         : VirtualAddress::from(ptr).offset(usize::from(start - start_frame.start_address()) as isize).mut_ptr(),

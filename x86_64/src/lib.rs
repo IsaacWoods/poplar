@@ -56,13 +56,13 @@
 
 pub use panic::panic_fmt;
 
-use alloc::Vec;
+use alloc::{Vec,boxed::Box};
 use memory::{MemoryController,FrameAllocator};
 use memory::paging::PhysicalAddress;
 use acpi::AcpiInfo;
-use kernel::process::ProcessId;
-use kernel::arch::{Architecture,ModuleMapping};
-use libpebble::fs::FileHandle;
+use kernel::arch::{Architecture,MemoryAddress,ModuleMapping};
+use kernel::node::Node;
+use kernel::process::ProcessMessage;
 use gdt::Gdt;
 use tss::Tss;
 use process::Process;
@@ -95,11 +95,6 @@ impl<A> Platform<A>
 impl<A> Architecture for Platform<A>
     where A : FrameAllocator
 {
-    fn clear_screen(&self)
-    {
-        vga_buffer::WRITER.lock().clear_buffer();
-    }
-
     fn get_module_mapping(&self, module_name : &str) -> Option<ModuleMapping>
     {
         self.memory_controller.loaded_modules.get(module_name).map(
@@ -114,10 +109,13 @@ impl<A> Architecture for Platform<A>
             })
     }
 
-    fn create_process(&mut self, image_file : &FileHandle) -> ProcessId
+    fn create_process(&mut self,
+                      image_start   : MemoryAddress,
+                      image_end     : MemoryAddress) -> Box<Node<MessageType=ProcessMessage>>
     {
-        // TODO
-        unimplemented!();
+        Box::new(Process::new(PhysicalAddress::new(image_start),
+                              PhysicalAddress::new(image_end),
+                              &mut self.memory_controller))
     }
 }
 

@@ -28,17 +28,19 @@ pub mod process;
 pub mod syscall;
 pub mod util;
 pub mod fs;
+pub mod node;
 
 pub use arch::Architecture;
 
-use alloc::rc::Rc;
+use alloc::{String,rc::Rc};
 use fs::{FileManager,ramdisk::Ramdisk};
 
-pub fn kernel_main<A>(architecture : A) -> !
+pub fn kernel_main<A>(mut architecture : A) -> !
     where A : Architecture
 {
     trace!("Control passed to kernel crate");
-    architecture.clear_screen();
+
+    let mut root_node = node::make_root_node();
 
     let mut file_manager = FileManager::new();
     
@@ -49,8 +51,10 @@ pub fn kernel_main<A>(architecture : A) -> !
     let test_file = file_manager.open("/ramdisk/test_file").unwrap();
     info!("Test file contents: {}", core::str::from_utf8(&file_manager.read(&test_file).unwrap()).unwrap());
 
-    let test_process = file_manager.open("/ramdisk/test_process.elf").unwrap();
-    info!("Test process is mapped to physical memory: {:?}", unsafe { file_manager.get_physical_mapping(test_process).unwrap() });
+    let test_process_image = file_manager.open("/ramdisk/test_process.elf").unwrap();
+    let (image_start, image_end) = unsafe { file_manager.get_physical_mapping(&test_process_image).unwrap() };
+    let test_process = architecture.create_process(image_start, image_end);
+    root_node.add_child(Some(String::from("test_process")), test_process);
 
     loop { }
 }

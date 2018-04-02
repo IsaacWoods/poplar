@@ -3,8 +3,9 @@
  * See LICENCE.md
  */
 
-use process::ProcessId;
-use libpebble::fs::FileHandle;
+use alloc::boxed::Box;
+use node::Node;
+use process::ProcessMessage;
 
 /// This represents a memory address, whatever that might be on the given architecture. It is
 /// always the maximum integer width for the current platform, so should be guaranteed to hold a
@@ -30,7 +31,11 @@ pub struct ModuleMapping
 /// to platform-specific operations and types for the rest of the kernel to use.
 pub trait Architecture
 {
-    fn clear_screen(&self);
     fn get_module_mapping(&self, module_name : &str) -> Option<ModuleMapping>;
-    fn create_process(&mut self, file : &FileHandle) -> ProcessId;
+
+    /// Create a new process. The representation is platform-specific, and so it's just required to
+    /// be a node with the correct message type (`ProcessMessage`).
+    fn create_process(&mut self,
+                      image_start : MemoryAddress,
+                      image_end : MemoryAddress) -> Box<Node<MessageType=ProcessMessage>>;
 }
