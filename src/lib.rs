@@ -33,6 +33,9 @@ pub mod node;
 pub use arch::Architecture;
 
 use alloc::{String,rc::Rc};
+use libpebble::node::NodeId;
+use node::NodeManager;
+use process::ProcessMessage;
 use fs::{FileManager,ramdisk::Ramdisk};
 
 pub fn kernel_main<A>(mut architecture : A) -> !
@@ -40,7 +43,8 @@ pub fn kernel_main<A>(mut architecture : A) -> !
 {
     trace!("Control passed to kernel crate");
 
-    let mut root_node = node::make_root_node();
+    let mut node_manager = NodeManager::new();
+    // TODO: make kernel node
 
     let mut file_manager = FileManager::new();
     
@@ -54,7 +58,9 @@ pub fn kernel_main<A>(mut architecture : A) -> !
     let test_process_image = file_manager.open("/ramdisk/test_process.elf").unwrap();
     let (image_start, image_end) = unsafe { file_manager.get_physical_mapping(&test_process_image).unwrap() };
     let test_process = architecture.create_process(image_start, image_end);
-    root_node.add_child(Some(String::from("test_process")), test_process);
+
+    let test_process_id = node_manager.add_root_node(Some(String::from("test_process")), test_process);
+    node_manager.get(test_process_id).message(NodeId(0), ProcessMessage::DropIntoUsermode);  // TODO: use kernel's node id
 
     loop { }
 }

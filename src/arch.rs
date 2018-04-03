@@ -36,6 +36,6 @@ pub trait Architecture
     /// Create a new process. The representation is platform-specific, and so it's just required to
     /// be a node with the correct message type (`ProcessMessage`).
     fn create_process(&mut self,
-                      image_start : MemoryAddress,
-                      image_end : MemoryAddress) -> Box<Node<MessageType=ProcessMessage>>;
+                      image_start   : MemoryAddress,
+                      image_end     : MemoryAddress) -> Box<Node<MessageType=ProcessMessage>>;
 }

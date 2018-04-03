@@ -3,6 +3,7 @@
  * See LICENCE.md
  */
 
+use core::fmt;
 use xmas_elf::{ElfFile,program::Type};
 use gdt::GdtSelectors;
 use memory::{Frame,FrameAllocator,MemoryController};
@@ -18,12 +19,26 @@ pub enum ProcessState
     Running(ActivePageTable),
 }
 
+impl fmt::Debug for ProcessState
+{
+    fn fmt(&self, f : &mut fmt::Formatter) -> fmt::Result
+    {
+        match *self
+        {
+            ProcessState::NotRunning(_) => write!(f, "Process is not running"),
+            ProcessState::Running(_)    => write!(f, "Process is running"),
+        }
+    }
+}
+
+#[derive(Debug)]
 pub struct Image
 {
     start   : PhysicalAddress,
     end     : PhysicalAddress,
 }
 
+#[derive(Debug)]
 pub struct Process
 {
     state       : ProcessState,
@@ -32,6 +47,7 @@ pub struct Process
     thread      : Thread,
 }
 
+#[derive(Debug)]
 pub struct Thread
 {
     instruction_pointer : VirtualAddress,
@@ -262,6 +278,15 @@ impl Node for Process
         // Do we also want to map the process address space for each message, or keep it in a
         // kernel-space queue for a while and map it when we do a context switch into that process?
         // That seems like a better design.
-        unimplemented!();
+        match message
+        {
+            ProcessMessage::DropIntoUsermode =>
+            {
+                info!("Dropping to usermode in process!");
+                // TODO: call `self.drop_into_usermode`. We need to access the GDT and memory
+                // controller from somewhere (so probably make the central platform struct thing
+                // static mut?)
+            },
+        }
     }
 }

@@ -3,11 +3,9 @@
  * See LICENCE.md
  */
 
-// /// The actual representation of a process is left up to the architecure crate, so we use this to
-// /// represent a particular process outside it.
-// #[derive(Clone,Copy,Debug)]
-// pub struct ProcessId(pub u16);
-
-pub struct ProcessMessage
+pub enum ProcessMessage
 {
+    /// This drops to usermode and starts executing the process this message is sent to. The call
+    /// to `message` is diverging for this message.
+    DropIntoUsermode,
 }
