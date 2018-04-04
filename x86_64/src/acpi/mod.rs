@@ -69,7 +69,7 @@ impl Rsdp
  */
 #[derive(Clone,Copy,Debug)]
 #[repr(packed)]
-struct SdtHeader
+pub struct SdtHeader
 {
     signature           : [u8; 4],
     length              : u32,
@@ -115,20 +115,6 @@ impl SdtHeader
     }
 }
 
-
-#[derive(Clone,Copy,Debug)]
-#[repr(packed)]
-pub struct Rsdt
-{
-    header  : SdtHeader,
-    /*
-     * There may be less/more than 8 tables, but there isn't really a good way of representing a
-     * run-time slice without messing up the representation.
-     * The actual number of tables here is: `(header.length - size_of::<SDTHeader>) / 4`
-     */
-    tables  : [u32; 8],
-}
-
 /// This temporarily maps a SDT to get its signature and length, then unmaps it
 /// It's used to calculate the size we need to actually map
 unsafe fn peek_at_table(table_address : PhysicalAddress, platform : &mut Platform) -> ([u8; 4], u32)
@@ -139,7 +125,6 @@ unsafe fn peek_at_table(table_address : PhysicalAddress, platform : &mut Platfor
     let length      : u32;
 
     {
-        // let mut temporary_page = TemporaryPage::new(TEMP_PAGE, &mut platform.memory_controller.frame_allocator);
         let mut temporary_page = TemporaryPage::new(TEMP_PAGE);
         temporary_page.map(Frame::containing_frame(table_address),
                            &mut platform.memory_controller.kernel_page_table,
@@ -158,7 +143,7 @@ unsafe fn peek_at_table(table_address : PhysicalAddress, platform : &mut Platfor
 
 fn parse_rsdt(acpi_info : &mut AcpiInfo, platform : &mut Platform)
 {
-    let num_tables = (acpi_info.rsdt.header.length as usize - mem::size_of::<SdtHeader>()) / mem::size_of::<u32>();
+    let num_tables = (acpi_info.rsdt.length as usize - mem::size_of::<SdtHeader>()) / mem::size_of::<u32>();
     let table_base_ptr = VirtualAddress::from(acpi_info.rsdt.ptr).offset(mem::size_of::<SdtHeader>() as isize).ptr() as *const u32;
 
     for i in 0..num_tables
@@ -221,7 +206,7 @@ fn parse_rsdt(acpi_info : &mut AcpiInfo, platform : &mut Platform)
 pub struct AcpiInfo
 {
     pub rsdp    : &'static Rsdp,
-    pub rsdt    : PhysicalMapping<Rsdt>,
+    pub rsdt    : PhysicalMapping<SdtHeader>,   // XXX: Mapped area is bigger than SdtHeader
     pub fadt    : Option<PhysicalMapping<Fadt>>,
     pub dsdt    : Option<PhysicalMapping<Dsdt>>,
 }
@@ -244,10 +229,10 @@ impl AcpiInfo
 
         let rsdt_mapping = platform.memory_controller
                                    .kernel_page_table
-                                   .map_physical_region::<Rsdt>(rsdt_address,
-                                                                rsdt_address.offset(rsdt_length as isize),
-                                                                EntryFlags::PRESENT,
-                                                                &mut platform.memory_controller.frame_allocator);
+                                   .map_physical_region::<SdtHeader>(rsdt_address,
+                                                                     rsdt_address.offset(rsdt_length as isize),
+                                                                     EntryFlags::PRESENT,
+                                                                     &mut platform.memory_controller.frame_allocator);
 
         let mut acpi_info = AcpiInfo
                             {
@@ -257,7 +242,7 @@ impl AcpiInfo
                                 dsdt    : None,
                             };
 
-        (*acpi_info.rsdt).header.validate("RSDT").unwrap();
+        (*acpi_info.rsdt).validate("RSDT").unwrap();
         parse_rsdt(&mut acpi_info, platform);
 
         Some(acpi_info)
