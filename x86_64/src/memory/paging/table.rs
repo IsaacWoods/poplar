@@ -50,7 +50,8 @@ pub struct Table<L : TableLevel>
  */
 pub const P4 : *mut Table<Level4> = P4_TABLE_ADDRESS.mut_ptr();
 
-impl<L> Table<L> where L : TableLevel
+impl<L> Table<L>
+    where L : TableLevel
 {
     pub fn zero(&mut self)
     {
@@ -61,7 +62,8 @@ impl<L> Table<L> where L : TableLevel
     }
 }
 
-impl<L> Table<L> where L : HierarchicalLevel
+impl<L> Table<L>
+    where L : HierarchicalLevel
 {
     fn next_table_address(&self, index : usize) -> Option<usize>
     {
@@ -95,11 +97,10 @@ impl<L> Table<L> where L : HierarchicalLevel
         self.next_table_address(index).map(|address| unsafe { &mut *(address as *mut _) })
     }
 
-    pub fn next_table_create<A>(&mut self,
-                                index           : usize,
-                                user_accessible : bool,
-                                allocator       : &mut A) -> &mut Table<L::NextLevel>
-        where A : FrameAllocator
+    pub fn next_table_create(&mut self,
+                            index           : usize,
+                            user_accessible : bool,
+                            allocator       : &mut FrameAllocator) -> &mut Table<L::NextLevel>
     {
         if self.next_table(index).is_none()
         {
@@ -112,11 +113,13 @@ impl<L> Table<L> where L : HierarchicalLevel
 
             self.next_table_mut(index).unwrap().zero();
         }
+
         self.next_table_mut(index).unwrap()
     }
 }
 
-impl<L> Index<usize> for Table<L> where L : TableLevel
+impl<L> Index<usize> for Table<L>
+    where L : TableLevel
 {
     type Output = Entry;
 
@@ -126,7 +129,8 @@ impl<L> Index<usize> for Table<L> where L : TableLevel
     }
 }
 
-impl<L> IndexMut<usize> for Table<L> where L : TableLevel
+impl<L> IndexMut<usize> for Table<L>
+    where L : TableLevel
 {
     fn index_mut(&mut self, index : usize) -> &mut Entry
     {

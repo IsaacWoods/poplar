@@ -1,103 +1,58 @@
 /*
- * Copyright (C) 2017, Isaac Woods.
+ * Copyright (C) 2017, Pebble Developers.
  * See LICENCE.md
  */
 
+use memory::{Frame,FrameAllocator};
 use memory::paging::{Page,ActivePageTable,VirtualAddress};
 use memory::paging::table::{Table,Level1};
 use memory::paging::entry::EntryFlags;
-use memory::{Frame,FrameAllocator};
 
 pub struct TemporaryPage
 {
-    page        : Page,
-    allocator   : TinyAllocator,
+    page : Page,
 }
 
 impl TemporaryPage
 {
-    pub fn new<A>(page : Page, allocator : &mut A) -> TemporaryPage where A : FrameAllocator
+    pub fn new(page : Page) -> TemporaryPage
     {
         TemporaryPage
         {
             page,
-            allocator : TinyAllocator::new(allocator)
         }
     }
 
-    /*
-     * Map this temporary page into the given frame in the active page table. Return the start
-     * address of the page.
-     */
-    pub fn map(&mut self, frame : Frame, active_table : &mut ActivePageTable) -> VirtualAddress
+    /// Map this temporary page into the given frame in the active page table. Return the start
+    /// address of the page.
+    pub fn map(&mut self,
+               frame            : Frame,
+               active_table     : &mut ActivePageTable,
+               frame_allocator  : &mut FrameAllocator) -> VirtualAddress
     {
         assert!(active_table.translate_page(self.page).is_none(), "Temp page is already mapped");
-        active_table.map_to(self.page, frame, EntryFlags::WRITABLE, &mut self.allocator);
+        active_table.map_to(self.page,
+                            frame,
+                            EntryFlags::WRITABLE,
+                            frame_allocator);
         self.page.start_address()
     }
 
-    /*
-     * Maps a given frame into memory and returns it as a P1.
-     * Used to temporarily map page tables into memory.
-     *
-     * NOTE: We return a Level1 table so next_table() can't be called,
-     *       becuase this temporary page won't be part of the recursive
-     *       structure
-     */
+    /// Maps a given frame into memory and returns it as a P1.
+    /// Used to temporarily map page tables into memory. We return a Level1 table so next_table()
+    /// can't be called, becuase this temporary page won't be part of the recursive structure
     pub fn map_table_frame(&mut self,
-                           frame        : Frame,
-                           active_table : &mut ActivePageTable) -> &mut Table<Level1>
+                           frame            : Frame,
+                           active_table     : &mut ActivePageTable,
+                           frame_allocator  : &mut FrameAllocator) -> &mut Table<Level1>
     {
-        unsafe { &mut *(self.map(frame, active_table).mut_ptr() as *mut Table<Level1>) }
+        unsafe { &mut *(self.map(frame, active_table, frame_allocator).mut_ptr() as *mut Table<Level1>) }
     }
 
-    pub fn unmap(&mut self, active_table : &mut ActivePageTable)
+    pub fn unmap(&mut self,
+                 active_table       : &mut ActivePageTable,
+                 frame_allocator    : &mut FrameAllocator)
     {
-        active_table.unmap(self.page, &mut self.allocator)
-    }
-}
-
-/*
- * TinyAllocator is an allocator that can only hold 3 frames. It is only useful when temporarily
- * mapping pages, to store a single set of page table pages (one P3, one P2 and one P1).
- */
-struct TinyAllocator([Option<Frame>; 3]);
-
-impl TinyAllocator
-{
-    fn new<A>(allocator : &mut A) -> TinyAllocator where A : FrameAllocator
-    {
-        let mut f = || allocator.allocate_frame();
-        let frames = [f(), f(), f()];
-        TinyAllocator(frames)
-    }
-}
-
-impl FrameAllocator for TinyAllocator
-{
-    fn allocate_frame(&mut self) -> Option<Frame>
-    {
-        for frame_option in &mut self.0
-        {
-            if frame_option.is_some()
-            {
-                return frame_option.take();
-            }
-        }
-        None
-    }
-
-    fn deallocate_frame(&mut self, frame : Frame)
-    {
-        for frame_option in &mut self.0
-        {
-            if frame_option.is_none()
-            {
-                *frame_option = Some(frame);
-                return;
-            }
-        }
-        // TODO: not sure why we're hitting this now. Can we just leak the frame?
-//        panic!("Tiny allocator can only hold 3 frames");
+        active_table.unmap(self.page, frame_allocator)
     }
 }

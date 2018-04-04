@@ -6,9 +6,8 @@
 use core::fmt;
 use xmas_elf::{ElfFile,program::Type};
 use gdt::GdtSelectors;
-use memory::{Frame,FrameAllocator,MemoryController};
-use memory::paging::{Page,PhysicalAddress,VirtualAddress,InactivePageTable,ActivePageTable,
-                     TemporaryPage,PAGE_SIZE};
+use memory::{Frame,MemoryController};
+use memory::paging::{Page,PhysicalAddress,VirtualAddress,InactivePageTable,ActivePageTable,PAGE_SIZE};
 use kernel::node::Node;
 use kernel::process::ProcessMessage;
 use libpebble::node::NodeId;
@@ -57,21 +56,18 @@ pub struct Thread
 
 impl Process
 {
-    pub fn new<A>(image_start       : PhysicalAddress,
-                  image_end         : PhysicalAddress,
-                  memory_controller : &mut MemoryController<A>) -> Process
-        where A : FrameAllocator
+    pub fn new(image_start          : PhysicalAddress,
+               image_end            : PhysicalAddress,
+               memory_controller    : &mut MemoryController) -> Process
     {
         use ::memory::paging::{EntryFlags,PhysicalMapping,ActivePageTable};
         use ::memory::map::KERNEL_START_P4;
 
-        let mut temporary_page = TemporaryPage::new(::memory::map::TEMP_PAGE,
-                                                    &mut memory_controller.frame_allocator);
-
-        let elf_temp_mapping : PhysicalMapping<u8> = memory_controller.kernel_page_table.map_physical_region(image_start,
-                                                                                       image_end,
-                                                                                       EntryFlags::PRESENT,
-                                                                                       &mut memory_controller.frame_allocator);
+        let elf_temp_mapping : PhysicalMapping<u8> = memory_controller.kernel_page_table
+                                                                      .map_physical_region(image_start,
+                                                                                           image_end,
+                                                                                           EntryFlags::PRESENT,
+                                                                                           &mut memory_controller.frame_allocator);
         let elf = ElfFile::new(unsafe { ::core::slice::from_raw_parts(elf_temp_mapping.ptr, elf_temp_mapping.size) }).unwrap();
         let entry_point = VirtualAddress::new(elf.header.pt2.entry_point() as usize);
 
@@ -81,7 +77,7 @@ impl Process
                 let frame = memory_controller.frame_allocator.allocate_frame().unwrap();
                 InactivePageTable::new(frame,
                                        &mut memory_controller.kernel_page_table,
-                                       &mut temporary_page)
+                                       &mut memory_controller.frame_allocator)
             };
 
         let kernel_p4_frame = memory_controller.kernel_page_table.p4[KERNEL_START_P4].pointed_frame().expect("Could not find kernel P4 frame");
@@ -92,8 +88,8 @@ impl Process
          */
         let mut kernel_table = unsafe { ActivePageTable::new() };
 
-        kernel_table.with(&mut page_tables, &mut temporary_page,
-            |mapper| {
+        kernel_table.with(&mut page_tables, &mut memory_controller.frame_allocator,// &mut temporary_page,
+            |mapper, allocator| {
                 /*
                  * We map the entire kernel into each user-mode process. Instead of cloning the
                  * entire thing, we just steal the frame from the kernel's P4.
@@ -143,7 +139,7 @@ impl Process
                                 mapper.map_to(Page::containing_page(page_address),
                                               Frame::containing_frame(frame_address),
                                               flags,
-                                              &mut memory_controller.frame_allocator);
+                                              allocator);
                             }
                         },
 
@@ -181,8 +177,7 @@ impl Process
         }
     }
 
-    pub unsafe fn switch_to<A>(&mut self, memory_controller : &mut MemoryController<A>)
-        where A : FrameAllocator
+    pub unsafe fn switch_to(&mut self, memory_controller : &mut MemoryController)
     {
         use ::core::mem;
 
@@ -209,10 +204,9 @@ impl Process
         mem::forget(uninitialized);
     }
 
-    pub unsafe fn drop_to_usermode<A>(&mut self,
-                                      gdt_selectors     : GdtSelectors,
-                                      memory_controller : &mut MemoryController<A>) -> !
-        where A : FrameAllocator
+    pub unsafe fn drop_to_usermode(&mut self,
+                                   gdt_selectors        : GdtSelectors,
+                                   memory_controller    : &mut MemoryController) -> !
     {
         // Save the current kernel stack in the TSS
         let rsp : VirtualAddress;

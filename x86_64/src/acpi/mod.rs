@@ -10,7 +10,7 @@ mod aml;
 
 use core::{str,mem};
 use Platform;
-use memory::{Frame,FrameAllocator};
+use memory::Frame;
 use memory::paging::{PhysicalAddress,VirtualAddress,TemporaryPage,PhysicalMapping,EntryFlags};
 use multiboot2::BootInformation;
 use self::fadt::Fadt;
@@ -131,9 +131,7 @@ pub struct Rsdt
 
 /// This temporarily maps a SDT to get its signature and length, then unmaps it
 /// It's used to calculate the size we need to actually map
-unsafe fn peek_at_table<A>(table_address    : PhysicalAddress,
-                           platform         : &mut Platform<A>) -> ([u8; 4], u32)
-    where A : FrameAllocator
+unsafe fn peek_at_table(table_address : PhysicalAddress, platform : &mut Platform) -> ([u8; 4], u32)
 {
     use ::memory::map::TEMP_PAGE;
 
@@ -141,21 +139,24 @@ unsafe fn peek_at_table<A>(table_address    : PhysicalAddress,
     let length      : u32;
 
     {
-        let mut temporary_page = TemporaryPage::new(TEMP_PAGE, &mut platform.memory_controller.frame_allocator);
-        temporary_page.map(Frame::containing_frame(table_address), &mut platform.memory_controller.kernel_page_table);
+        // let mut temporary_page = TemporaryPage::new(TEMP_PAGE, &mut platform.memory_controller.frame_allocator);
+        let mut temporary_page = TemporaryPage::new(TEMP_PAGE);
+        temporary_page.map(Frame::containing_frame(table_address),
+                           &mut platform.memory_controller.kernel_page_table,
+                           &mut platform.memory_controller.frame_allocator);
         let sdt_pointer = TEMP_PAGE.start_address().offset(table_address.offset_into_frame() as isize).ptr() as *const SdtHeader;
 
         signature = (*sdt_pointer).signature;
         length = (*sdt_pointer).length;
 
-        temporary_page.unmap(&mut platform.memory_controller.kernel_page_table);
+        temporary_page.unmap(&mut platform.memory_controller.kernel_page_table,
+                             &mut platform.memory_controller.frame_allocator);
     }
 
     (signature, length)
 }
 
-fn parse_rsdt<A>(acpi_info : &mut AcpiInfo, platform : &mut Platform<A>)
-    where A : FrameAllocator
+fn parse_rsdt(acpi_info : &mut AcpiInfo, platform : &mut Platform)
 {
     let num_tables = (acpi_info.rsdt.header.length as usize - mem::size_of::<SdtHeader>()) / mem::size_of::<u32>();
     let table_base_ptr = VirtualAddress::from(acpi_info.rsdt.ptr).offset(mem::size_of::<SdtHeader>() as isize).ptr() as *const u32;
@@ -172,10 +173,10 @@ fn parse_rsdt<A>(acpi_info : &mut AcpiInfo, platform : &mut Platform<A>)
             {
                 let fadt_mapping = platform.memory_controller
                                            .kernel_page_table
-                                           .map_physical_region::<Fadt, A>(table_address,
-                                                                           table_address.offset(length as isize),
-                                                                           EntryFlags::PRESENT,
-                                                                           &mut platform.memory_controller.frame_allocator);
+                                           .map_physical_region::<Fadt>(table_address,
+                                                                        table_address.offset(length as isize),
+                                                                        EntryFlags::PRESENT,
+                                                                        &mut platform.memory_controller.frame_allocator);
                 (*fadt_mapping).header.validate("FACP").unwrap();
                 let dsdt_address = PhysicalAddress::from((*fadt_mapping).dsdt_address as usize);
                 acpi_info.fadt = Some(fadt_mapping);
@@ -184,10 +185,10 @@ fn parse_rsdt<A>(acpi_info : &mut AcpiInfo, platform : &mut Platform<A>)
                 let (_, dsdt_length) = unsafe { peek_at_table(dsdt_address, platform) };
                 let dsdt_mapping = platform.memory_controller
                                            .kernel_page_table
-                                           .map_physical_region::<Dsdt, A>(dsdt_address,
-                                                                           dsdt_address.offset(dsdt_length as isize),
-                                                                           EntryFlags::PRESENT,
-                                                                           &mut platform.memory_controller.frame_allocator);
+                                           .map_physical_region::<Dsdt>(dsdt_address,
+                                                                        dsdt_address.offset(dsdt_length as isize),
+                                                                        EntryFlags::PRESENT,
+                                                                        &mut platform.memory_controller.frame_allocator);
                 (*dsdt_mapping).header.validate("DSDT").unwrap();
                 dsdt::parse_dsdt(&dsdt_mapping, acpi_info);
             },
@@ -196,10 +197,10 @@ fn parse_rsdt<A>(acpi_info : &mut AcpiInfo, platform : &mut Platform<A>)
             {
                 let madt_mapping = platform.memory_controller
                                            .kernel_page_table
-                                           .map_physical_region::<MadtHeader, A>(table_address,
-                                                                                 table_address.offset(length as isize),
-                                                                                 EntryFlags::PRESENT,
-                                                                                 &mut platform.memory_controller.frame_allocator);
+                                           .map_physical_region::<MadtHeader>(table_address,
+                                                                              table_address.offset(length as isize),
+                                                                              EntryFlags::PRESENT,
+                                                                              &mut platform.memory_controller.frame_allocator);
                 (*madt_mapping).header.validate("APIC").unwrap();
                 madt::parse_madt(&madt_mapping, platform);
             },
@@ -219,17 +220,15 @@ fn parse_rsdt<A>(acpi_info : &mut AcpiInfo, platform : &mut Platform<A>)
 #[derive(Clone,Debug)]
 pub struct AcpiInfo
 {
-    pub rsdp        : &'static Rsdp,
-    pub rsdt        : PhysicalMapping<Rsdt>,
-    pub fadt        : Option<PhysicalMapping<Fadt>>,
-    pub dsdt        : Option<PhysicalMapping<Dsdt>>,
+    pub rsdp    : &'static Rsdp,
+    pub rsdt    : PhysicalMapping<Rsdt>,
+    pub fadt    : Option<PhysicalMapping<Fadt>>,
+    pub dsdt    : Option<PhysicalMapping<Dsdt>>,
 }
 
 impl AcpiInfo
 {
-    pub fn new<A>(boot_info : &BootInformation,
-                  platform  : &mut Platform<A>) -> Option<AcpiInfo>
-        where A : FrameAllocator
+    pub fn new(boot_info : &BootInformation, platform : &mut Platform) -> Option<AcpiInfo>
     {
         let rsdp : &'static Rsdp = boot_info.rsdp().expect("Couldn't find RSDP tag").rsdp();
         let rsdt_address = PhysicalAddress::from(rsdp.rsdt_address as usize);
@@ -245,10 +244,10 @@ impl AcpiInfo
 
         let rsdt_mapping = platform.memory_controller
                                    .kernel_page_table
-                                   .map_physical_region::<Rsdt, A>(rsdt_address,
-                                                                   rsdt_address.offset(rsdt_length as isize),
-                                                                   EntryFlags::PRESENT,
-                                                                   &mut platform.memory_controller.frame_allocator);
+                                   .map_physical_region::<Rsdt>(rsdt_address,
+                                                                rsdt_address.offset(rsdt_length as isize),
+                                                                EntryFlags::PRESENT,
+                                                                &mut platform.memory_controller.frame_allocator);
 
         let mut acpi_info = AcpiInfo
                             {

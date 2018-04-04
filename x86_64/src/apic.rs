@@ -5,7 +5,7 @@
 
 use core::ptr;
 use bit_field::BitField;
-use ::memory::{MemoryController,FrameAllocator};
+use ::memory::MemoryController;
 use ::memory::paging::{PhysicalAddress,VirtualAddress,EntryFlags,PhysicalMapping};
 use interrupts::InterruptStackFrame;
 
@@ -47,10 +47,9 @@ impl LocalApic
         VirtualAddress::from(mapping.ptr).offset(offset as isize).mut_ptr() as *mut u32
     }
 
-    pub unsafe fn enable<A>(&mut self,
-                            register_base       : PhysicalAddress,
-                            memory_controller   : &mut MemoryController<A>)
-        where A : FrameAllocator
+    pub unsafe fn enable(&mut self,
+                         register_base      : PhysicalAddress,
+                         memory_controller  : &mut MemoryController)
     {
         assert!(!self.is_enabled);
 
@@ -159,11 +158,10 @@ impl IoApic
         }
     }
 
-    pub unsafe fn enable<A>(&mut self,
-                            register_base           : PhysicalAddress,
-                            global_interrupt_base   : u8,
-                            memory_controller       : &mut MemoryController<A>)
-        where A : FrameAllocator
+    pub unsafe fn enable(&mut self,
+                         register_base          : PhysicalAddress,
+                         global_interrupt_base  : u8,
+                         memory_controller      : &mut MemoryController)
     {
         assert!(!self.is_enabled);
         self.global_interrupt_base = global_interrupt_base;

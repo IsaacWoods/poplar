@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017, Isaac Woods.
+ * Copyright (C) 2017, Pebble Developers.
  * See LICENCE.md
  */
 
@@ -141,15 +141,17 @@ impl ActivePageTable
      */
     pub fn with<F>(&mut self,
                    table            : &mut InactivePageTable,
-                   temporary_page   : &mut temporary_page::TemporaryPage,
+                   frame_allocator  : &mut FrameAllocator,
                    f                : F
-                  ) where F : FnOnce(&mut Mapper)
+                  ) where F : FnOnce(&mut Mapper, &mut FrameAllocator)
     {
+        let mut temporary_page = TemporaryPage::new(::memory::map::TEMP_PAGE);
+
         // Inner scope used to end the borrow of `temporary_page`
         {
             // Backup the current P4 and temporarily map it
             let original_p4 = Frame::containing_frame((read_control_reg!(cr3) as usize).into());
-            let p4_table = temporary_page.map_table_frame(original_p4, self);
+            let p4_table = temporary_page.map_table_frame(original_p4, self, frame_allocator);
 
             // Overwrite recursive mapping
             self.p4[RECURSIVE_ENTRY].set(table.p4_frame, EntryFlags::PRESENT | EntryFlags::WRITABLE);
@@ -158,14 +160,14 @@ impl ActivePageTable
             tlb::flush();
 
             // Execute in the new context
-            f(self);
+            f(self, frame_allocator);
 
             // Restore recursive mapping to original P4
             p4_table[RECURSIVE_ENTRY].set(original_p4, EntryFlags::PRESENT | EntryFlags::WRITABLE);
             tlb::flush();
         }
 
-        temporary_page.unmap(self);
+        temporary_page.unmap(self, frame_allocator);
     }
 
     #[allow(needless_pass_by_value)]    // We move the table, so it can't be used once it's not mapped
@@ -193,7 +195,7 @@ impl InactivePageTable
 {
     pub fn new(frame            : Frame,
                active_table     : &mut ActivePageTable,
-               temporary_page   : &mut TemporaryPage) -> InactivePageTable
+               frame_allocator  : &mut FrameAllocator) -> InactivePageTable
     {
         /*
          * We firstly temporarily map the page table into memory so we can zero it.
@@ -202,22 +204,23 @@ impl InactivePageTable
          * NOTE: We use an inner scope here to make sure that `table` is dropped before
          *       we try to unmap the temporary page.
          */
+        let mut temporary_page = TemporaryPage::new(::memory::map::TEMP_PAGE);
+
         {
-            let table = temporary_page.map_table_frame(frame, active_table);
+            let table = temporary_page.map_table_frame(frame, active_table, frame_allocator);
             table.zero();
             table[RECURSIVE_ENTRY].set(frame, EntryFlags::PRESENT | EntryFlags::WRITABLE);
         }
 
-        temporary_page.unmap(active_table);
+        temporary_page.unmap(active_table, frame_allocator);
         InactivePageTable { p4_frame : frame }
     }
 }
 
-pub fn remap_kernel<A>(allocator : &mut A,
-                       boot_info : &BootInformation) -> ActivePageTable
-    where A : FrameAllocator
+pub fn remap_kernel(boot_info       : &BootInformation,
+                    frame_allocator : &mut FrameAllocator) -> ActivePageTable
 {
-    use memory::map::{KERNEL_VMA,TEMP_PAGE};
+    use memory::map::KERNEL_VMA;
 
     // This represents the page tables created by the bootstrap
     let mut active_table = unsafe { ActivePageTable::new() };
@@ -226,11 +229,10 @@ pub fn remap_kernel<A>(allocator : &mut A,
      * We can now allocate space for a new set of page tables, then temporarily map it into memory
      * so we can create a new set of page tables.
      */
-    let mut temporary_page = TemporaryPage::new(TEMP_PAGE, allocator);
     let mut new_table =
         {
-            let frame = allocator.allocate_frame().expect("run out of frames");
-            InactivePageTable::new(frame, &mut active_table, &mut temporary_page)
+            let frame = frame_allocator.allocate_frame().expect("run out of frames");
+            InactivePageTable::new(frame, &mut active_table, frame_allocator)
         };
 
     extern
@@ -248,8 +250,8 @@ pub fn remap_kernel<A>(allocator : &mut A,
      * address of the inactive P4 into the active P4's recursive entry, then mapping stuff as if we
      * were modifying the active tables, then switch to the real tables.
      */
-    active_table.with(&mut new_table, &mut temporary_page,
-        |mapper| {
+    active_table.with(&mut new_table, frame_allocator,
+        |mapper, allocator| {
             let elf_sections_tag = boot_info.elf_sections().expect("Memory map tag required");
 
             /*

@@ -8,7 +8,6 @@ use bit_field::BitField;
 use ::Platform;
 use super::SdtHeader;
 use cpu::{Cpu,CpuState};
-use memory::FrameAllocator;
 use memory::paging::{PhysicalAddress,VirtualAddress,PhysicalMapping};
 use apic::{LOCAL_APIC,IO_APIC,DeliveryMode,PinPolarity,TriggerMode};
 
@@ -83,9 +82,7 @@ struct LocalApicAddressOverrideEntry
  * It seems way too coupled to initialise the local APIC and IOAPIC here, but it's very convienient
  * while we have all the data from the MADT already mapped.
  */
-pub(super) fn parse_madt<A>(mapping     : &PhysicalMapping<MadtHeader>,
-                            platform    : &mut Platform<A>)
-    where A : FrameAllocator
+pub(super) fn parse_madt(mapping : &PhysicalMapping<MadtHeader>, platform : &mut Platform)
 {
     // Initialise the local APIC
     let local_apic_address = PhysicalAddress::new((*mapping).local_apic_address as usize);

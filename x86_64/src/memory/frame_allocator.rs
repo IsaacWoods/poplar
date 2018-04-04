@@ -1,13 +1,13 @@
 /*
- * Copyright (C) 2017, Isaac Woods.
+ * Copyright (C) 2017, Pebble Developers.
  * See LICENCE.md
  */
 
-use super::{Frame,FrameAllocator};
+use super::Frame;
 use super::paging::PhysicalAddress;
 use multiboot2::{MemoryAreaIter,MemoryArea};
 
-pub struct AreaFrameAllocator
+pub struct FrameAllocator
 {
     next_free_frame : Frame,
     current_area    : Option<&'static MemoryArea>,
@@ -18,24 +18,25 @@ pub struct AreaFrameAllocator
     kernel_end      : Frame,
 }
 
-impl AreaFrameAllocator
+impl FrameAllocator
 {
     pub fn new(multiboot_start  : PhysicalAddress,
                multiboot_end    : PhysicalAddress,
                kernel_start     : PhysicalAddress,
                kernel_end       : PhysicalAddress,
-               memory_areas     : MemoryAreaIter) -> AreaFrameAllocator
+               memory_areas     : MemoryAreaIter) -> FrameAllocator
     {
-        let mut allocator = AreaFrameAllocator
-            {
-                next_free_frame : Frame::containing_frame(0.into()),
-                current_area    : None,
-                areas           : memory_areas,
-                multiboot_start : Frame::containing_frame(multiboot_start),
-                multiboot_end   : Frame::containing_frame(multiboot_end),
-                kernel_start    : Frame::containing_frame(kernel_start),
-                kernel_end      : Frame::containing_frame(kernel_end),
-            };
+        let mut allocator = FrameAllocator
+                            {
+                                next_free_frame : Frame::containing_frame(0.into()),
+                                current_area    : None,
+                                areas           : memory_areas,
+                                multiboot_start : Frame::containing_frame(multiboot_start),
+                                multiboot_end   : Frame::containing_frame(multiboot_end),
+                                kernel_start    : Frame::containing_frame(kernel_start),
+                                kernel_end      : Frame::containing_frame(kernel_end),
+                            };
+
         allocator.switch_to_next_area();
         allocator
     }
@@ -57,11 +58,8 @@ impl AreaFrameAllocator
             }
         }
     }
-}
 
-impl FrameAllocator for AreaFrameAllocator
-{
-    fn allocate_frame(&mut self) -> Option<Frame>
+    pub fn allocate_frame(&mut self) -> Option<Frame>
     {
         if let Some(area) = self.current_area
         {
@@ -99,7 +97,7 @@ impl FrameAllocator for AreaFrameAllocator
         }
     }
 
-    fn deallocate_frame(&mut self, _frame : Frame)
+    pub fn deallocate_frame(&mut self, _frame : Frame)
     {
         /*
          * NOTE: A better frame allocator would track freed frames to reallocate later, but we

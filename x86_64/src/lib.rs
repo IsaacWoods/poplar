@@ -57,7 +57,7 @@
 pub use panic::panic_fmt;
 
 use alloc::{Vec,boxed::Box};
-use memory::{MemoryController,FrameAllocator};
+use memory::MemoryController;
 use memory::paging::PhysicalAddress;
 use acpi::AcpiInfo;
 use kernel::arch::{Architecture,MemoryAddress,ModuleMapping};
@@ -68,18 +68,16 @@ use tss::Tss;
 use process::Process;
 use cpu::Cpu;
 
-pub struct Platform<A>
-    where A : FrameAllocator
+pub struct Platform
 {
-    pub memory_controller   : MemoryController<A>,
+    pub memory_controller   : MemoryController,
     pub bootstrap_cpu       : Option<Cpu>,
     pub application_cpus    : Vec<Cpu>,
 }
 
-impl<A> Platform<A>
-    where A : FrameAllocator
+impl Platform
 {
-    fn new(memory_controller : MemoryController<A>) -> Platform<A>
+    fn new(memory_controller : MemoryController) -> Platform
     {
         assert_first_call!("Tried to initialise platform struct more than once!");
 
@@ -92,8 +90,7 @@ impl<A> Platform<A>
     }
 }
 
-impl<A> Architecture for Platform<A>
-    where A : FrameAllocator
+impl Architecture for Platform
 {
     fn get_module_mapping(&self, module_name : &str) -> Option<ModuleMapping>
     {
@@ -137,7 +134,7 @@ pub extern fn kstart(multiboot_address : PhysicalAddress) -> !
      */
     let boot_info = unsafe { BootInformation::load(multiboot_address) };
     let mut platform = {
-                           let mut memory_controller = memory::init(&boot_info);
+                           let memory_controller = memory::init(&boot_info);
                            Platform::new(memory_controller)
                        };
 

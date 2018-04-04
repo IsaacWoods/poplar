@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017, Isaac Woods.
+ * Copyright (C) 2017, Pebble Developers.
  * See LICENCE.md
  */
 
@@ -106,19 +106,17 @@ impl Mapper
           .or_else(huge_page)
     }
 
-    pub fn map<A>(&mut self, page : Page, flags : EntryFlags, allocator : &mut A)
-        where A : FrameAllocator
+    pub fn map(&mut self, page : Page, flags : EntryFlags, allocator : &mut FrameAllocator)
     {
         let frame = allocator.allocate_frame().expect("out of memory");
         self.map_to(page, frame, flags, allocator)
     }
 
-    pub fn map_physical_region<T,A>(&mut self,
-                                    start       : PhysicalAddress,
-                                    end         : PhysicalAddress,
-                                    flags       : EntryFlags,
-                                    allocator   : &mut A) -> PhysicalMapping<T>
-        where A : FrameAllocator
+    pub fn map_physical_region<T>(&mut self,
+                                  start         : PhysicalAddress,
+                                  end           : PhysicalAddress,
+                                  flags         : EntryFlags,
+                                  allocator     : &mut FrameAllocator) -> PhysicalMapping<T>
     {
         assert!(end > start, "End address must be higher in memory than start");
 
@@ -154,10 +152,9 @@ impl Mapper
         }
     }
 
-    pub fn unmap_physical_region<T,A>(&mut self,
-                                      region    : PhysicalMapping<T>,
-                                      allocator : &mut A)
-        where A : FrameAllocator
+    pub fn unmap_physical_region<T>(&mut self,
+                                    region      : PhysicalMapping<T>,
+                                    allocator   : &mut FrameAllocator)
     {
         unsafe { ::allocator::ALLOCATOR.lock().dealloc(region.region_ptr as *mut u8, region.layout); }
         
@@ -169,8 +166,7 @@ impl Mapper
         }
     }
 
-    pub fn unmap<A>(&mut self, page : Page, allocator : &mut A)
-        where A : FrameAllocator
+    pub fn unmap(&mut self, page : Page, allocator : &mut FrameAllocator)
     {
         assert!(self.translate(page.start_address()).is_some());
 
@@ -201,11 +197,10 @@ impl Mapper
      * TODO: Is this still required if we don't map modules like that? And now that modules are
      * page-aligned?
      */
-    pub fn identity_map_range<A>(&mut self,
-                                 range      : Range<PhysicalAddress>,
-                                 flags      : EntryFlags,
-                                 allocator  : &mut A)
-        where A : FrameAllocator
+    pub fn identity_map_range(&mut self,
+                              range         : Range<PhysicalAddress>,
+                              flags         : EntryFlags,
+                              allocator     : &mut FrameAllocator)
     {
         for frame in Frame::range_inclusive(Frame::containing_frame(range.start),
                                             Frame::containing_frame(range.end.offset(-1)))
@@ -234,12 +229,11 @@ impl Mapper
     /*
      * This maps a given page to a given frame, with the specified flags.
      */
-    pub fn map_to<A>(&mut self,
-                     page       : Page,
-                     frame      : Frame,
-                     flags      : EntryFlags,
-                     allocator  : &mut A)
-        where A : FrameAllocator
+    pub fn map_to(&mut self,
+                  page          : Page,
+                  frame         : Frame,
+                  flags         : EntryFlags,
+                  allocator     : &mut FrameAllocator)
     {
         /*
          * If the page to be mapped is user-accessible, all the previous paging structures must be

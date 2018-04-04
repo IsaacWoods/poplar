@@ -1,14 +1,14 @@
 /*
- * Copyright (C) 2017, Isaac Woods.
+ * Copyright (C) 2017, Pebble Developers.
  * See LICENCE.md
  */
 
 pub mod map;
 pub mod paging;
-mod area_frame_allocator;
+mod frame_allocator;
 mod stack_allocator;
 
-pub use self::area_frame_allocator::AreaFrameAllocator;
+pub use self::frame_allocator::FrameAllocator;
 pub use self::paging::{PhysicalAddress,VirtualAddress,Page,entry::EntryFlags,PhysicalMapping};
 
 use core::ops::Add;
@@ -31,7 +31,7 @@ pub fn get_kernel_stack_top() -> VirtualAddress
     VirtualAddress::new(unsafe { (&_kernel_stack_top) } as *const u8 as usize)
 }
 
-pub fn init(boot_info : &BootInformation) -> MemoryController<AreaFrameAllocator>
+pub fn init(boot_info : &BootInformation) -> MemoryController
 {
     assert_first_call!("memory::init() should only be called once");
     let memory_map_tag = boot_info.memory_map().expect("Can't find memory map tag");
@@ -59,16 +59,17 @@ pub fn init(boot_info : &BootInformation) -> MemoryController<AreaFrameAllocator
     /*
      * TODO: are we using the correct addresses for the kernel start&end, this appears iffy?
      */
-    let mut frame_allocator = AreaFrameAllocator::new(boot_info.physical_start(),
-                                                      boot_info.physical_end(),
-                                                      usize::from(kernel_start).into(),
-                                                      usize::from(kernel_end).into(),
-                                                      memory_map_tag.memory_areas());
+    let mut frame_allocator = FrameAllocator::new(boot_info.physical_start(),
+                                                  boot_info.physical_end(),
+                                                  usize::from(kernel_start).into(),
+                                                  usize::from(kernel_end).into(),
+                                                  memory_map_tag.memory_areas());
+
     /*
      * We can now replace the bootstrap paging structures with better ones that actually map the
      * structures with the correct permissions.
      */
-    let mut active_table = paging::remap_kernel(&mut frame_allocator, boot_info);
+    let mut active_table = paging::remap_kernel(boot_info, &mut frame_allocator);
 
     /*
      * Map the pages used by the heap, then create it
@@ -188,23 +189,15 @@ impl Frame
     }
 }
 
-pub trait FrameAllocator
-{
-    fn allocate_frame(&mut self) -> Option<Frame>;
-    fn deallocate_frame(&mut self, frame : Frame);
-}
-
-pub struct MemoryController<A>
-    where A : FrameAllocator
+pub struct MemoryController
 {
     pub kernel_page_table   : paging::ActivePageTable,
-    pub frame_allocator     : A,
+    pub frame_allocator     : FrameAllocator,
     pub stack_allocator     : StackAllocator,
     pub loaded_modules      : BTreeMap<&'static str, PhysicalMapping<u8>>,
 }
 
-impl<A> MemoryController<A>
-    where A : FrameAllocator
+impl MemoryController
 {
     pub fn alloc_stack(&mut self, size_in_pages : usize) -> Option<Stack>
     {

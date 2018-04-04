@@ -47,11 +47,10 @@ impl StackAllocator
         }
     }
 
-    pub fn alloc_stack<A>(&mut self,
-                          active_table     : &mut ActivePageTable,
-                          frame_allocator  : &mut A,
-                          size_in_pages    : usize) -> Option<Stack>
-        where A : FrameAllocator
+    pub fn alloc_stack(&mut self,
+                       active_table     : &mut ActivePageTable,
+                       frame_allocator  : &mut FrameAllocator,
+                       size_in_pages    : usize) -> Option<Stack>
     {
         if size_in_pages == 0
         {
