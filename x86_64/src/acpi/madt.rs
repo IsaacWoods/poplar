@@ -5,9 +5,9 @@
 
 use core::{mem,ptr};
 use bit_field::BitField;
-use ::Platform;
-use super::SdtHeader;
+use super::{SdtHeader,AcpiInfo};
 use cpu::{Cpu,CpuState};
+use memory::MemoryController;
 use memory::paging::{PhysicalAddress,VirtualAddress,PhysicalMapping};
 use apic::{LOCAL_APIC,IO_APIC,DeliveryMode,PinPolarity,TriggerMode};
 
@@ -80,13 +80,16 @@ struct LocalApicAddressOverrideEntry
 
 /*
  * It seems way too coupled to initialise the local APIC and IOAPIC here, but it's very convienient
- * while we have all the data from the MADT already mapped.
+ * while we have all the data from the MADT already mapped. Takes a reference to the platform
+ * instead of using the global to enfore as much borrow-checking as we can.
  */
-pub(super) fn parse_madt(mapping : &PhysicalMapping<MadtHeader>, platform : &mut Platform)
+pub(super) fn parse_madt(mapping            : &PhysicalMapping<MadtHeader>,
+                         acpi_info          : &mut AcpiInfo,
+                         memory_controller  : &mut MemoryController)
 {
     // Initialise the local APIC
     let local_apic_address = PhysicalAddress::new((*mapping).local_apic_address as usize);
-    unsafe { LOCAL_APIC.enable(local_apic_address, &mut platform.memory_controller); }
+    unsafe { LOCAL_APIC.enable(local_apic_address, memory_controller); }
 
     let mut entry_address = VirtualAddress::from(mapping.ptr).offset(mem::size_of::<MadtHeader>() as isize);
     let end_address = VirtualAddress::from(mapping.ptr).offset(((*mapping).header.length - 1) as isize);
@@ -106,29 +109,29 @@ pub(super) fn parse_madt(mapping : &PhysicalMapping<MadtHeader>, platform : &mut
                  * The first CPU described in the MADT is the BSP. Subsequent ones are APs, and
                  * should be brought up in the order they are defined in.
                  */
-                let is_ap       = platform.bootstrap_cpu.is_some();
+                let is_ap       = acpi_info.bootstrap_cpu.is_some();
                 let is_disabled = unsafe { !entry.flags.get_bit(0) };
 
                 let state = match (is_ap, is_disabled)
                             {
-                                (_,true)        => CpuState::Disabled,
-                                (true,false)    => CpuState::WaitingForSipi,
-                                (false,false)   => CpuState::Running,
+                                (_    , true ) => CpuState::Disabled,
+                                (true , false) => CpuState::WaitingForSipi,
+                                (false, false) => CpuState::Running,
                             };
 
                 if is_ap
                 {
-                    platform.application_cpus.push(Cpu::new(entry.processor_id,
-                                                            entry.apic_id,
-                                                            true,
-                                                            state));
+                    acpi_info.application_cpus.push(Cpu::new(entry.processor_id,
+                                                             entry.apic_id,
+                                                             true,
+                                                             state));
                 }
                 else
                 {
-                    platform.bootstrap_cpu = Some(Cpu::new(entry.processor_id,
-                                                           entry.apic_id,
-                                                           false,
-                                                           state));
+                    acpi_info.bootstrap_cpu = Some(Cpu::new(entry.processor_id,
+                                                            entry.apic_id,
+                                                            false,
+                                                            state));
                 }
 
                 entry_address = entry_address.offset(mem::size_of::<LocalApicEntry>() as isize);
@@ -144,7 +147,7 @@ pub(super) fn parse_madt(mapping : &PhysicalMapping<MadtHeader>, platform : &mut
                 {
                     IO_APIC.enable(io_apic_address,
                                    entry.global_system_interrupt_base as u8,
-                                   &mut platform.memory_controller);
+                                   memory_controller);
                 }
 
                 entry_address = entry_address.offset(12);

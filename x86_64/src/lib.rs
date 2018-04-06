@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017, Isaac Woods.
+ * Copyright (C) 2017, Pebble Developers.
  * See LICENCE.md
  */
 
@@ -56,7 +56,7 @@
 
 pub use panic::panic_fmt;
 
-use alloc::{Vec,boxed::Box};
+use alloc::boxed::Box;
 use memory::MemoryController;
 use memory::paging::PhysicalAddress;
 use acpi::AcpiInfo;
@@ -66,26 +66,21 @@ use kernel::process::ProcessMessage;
 use gdt::Gdt;
 use tss::Tss;
 use process::Process;
-use cpu::Cpu;
+
+pub static mut PLATFORM : Platform = Platform::placeholder();
 
 pub struct Platform
 {
-    pub memory_controller   : MemoryController,
-    pub bootstrap_cpu       : Option<Cpu>,
-    pub application_cpus    : Vec<Cpu>,
+    pub memory_controller   : Option<MemoryController>,
 }
 
 impl Platform
 {
-    fn new(memory_controller : MemoryController) -> Platform
+    const fn placeholder() -> Platform
     {
-        assert_first_call!("Tried to initialise platform struct more than once!");
-
         Platform
         {
-            memory_controller,
-            bootstrap_cpu       : None,
-            application_cpus    : Vec::new(),
+            memory_controller   : None,
         }
     }
 }
@@ -94,7 +89,7 @@ impl Architecture for Platform
 {
     fn get_module_mapping(&self, module_name : &str) -> Option<ModuleMapping>
     {
-        self.memory_controller.loaded_modules.get(module_name).map(
+        self.memory_controller.as_ref().unwrap().loaded_modules.get(module_name).map(
             |mapping| {
                 ModuleMapping
                 {
@@ -112,7 +107,7 @@ impl Architecture for Platform
     {
         Box::new(Process::new(PhysicalAddress::new(image_start),
                               PhysicalAddress::new(image_end),
-                              &mut self.memory_controller))
+                              &mut self.memory_controller.as_mut().unwrap()))
     }
 }
 
@@ -133,20 +128,17 @@ pub extern fn kstart(multiboot_address : PhysicalAddress) -> !
      * offset of the whole kernel.
      */
     let boot_info = unsafe { BootInformation::load(multiboot_address) };
-    let mut platform = {
-                           let memory_controller = memory::init(&boot_info);
-                           Platform::new(memory_controller)
-                       };
+    unsafe { PLATFORM.memory_controller = Some(memory::init(&boot_info)); }
 
     /*
-     * We can create and install a TSS and new GDT.
+     * We can now create and install a TSS and new GDT.
      *
      * Allocate a 4KiB stack for the double-fault handler. Using a separate stack for double-faults
      * avoids a triple fault happening when the guard page of the normal stack is hit (after a stack
      * overflow), which would otherwise:
      *      Page Fault -> Page Fault -> Double Fault -> Page Fault -> Triple Fault
      */
-    let double_fault_stack = platform.memory_controller.alloc_stack(1).expect("Failed to allocate stack");
+    let double_fault_stack = unsafe { PLATFORM.memory_controller.as_mut().unwrap().alloc_stack(1).expect("Failed to allocate stack") };
     unsafe
     {
         TSS.interrupt_stack_table[tss::DOUBLE_FAULT_IST_INDEX] = double_fault_stack.top();
@@ -159,11 +151,11 @@ pub extern fn kstart(multiboot_address : PhysicalAddress) -> !
      * We now find and parse the ACPI tables. This also initialises the local APIC and IOAPIC, as
      * they are detailed by the MADT.
      */
-    let acpi_info = AcpiInfo::new(&boot_info, &mut platform).expect("Failed to parse ACPI tables");
+    let acpi_info = AcpiInfo::new(&boot_info, unsafe { PLATFORM.memory_controller.as_mut().unwrap() }).expect("Failed to parse ACPI tables");
     interrupts::enable();
 
-    info!("BSP: {:?}", platform.bootstrap_cpu);
-    for cpu in &platform.application_cpus
+    info!("BSP: {:?}", acpi_info.bootstrap_cpu);
+    for cpu in acpi_info.application_cpus
     {
         info!("AP: {:?}", cpu);
     }
@@ -193,7 +185,7 @@ pub extern fn kstart(multiboot_address : PhysicalAddress) -> !
     /*
      * Pass control to the kernel.
      */
-    kernel::kernel_main(platform);
+    kernel::kernel_main(unsafe { &mut PLATFORM });
 }
 
 #[lang = "eh_personality"]

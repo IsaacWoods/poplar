@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017, Isaac Woods.
+ * Copyright (C) 2017, Pebble Developers.
  * See LICENCE.md
  */
 
@@ -9,8 +9,9 @@ mod dsdt;
 mod aml;
 
 use core::{str,mem};
-use Platform;
-use memory::Frame;
+use alloc::Vec;
+use cpu::Cpu;
+use memory::{Frame,MemoryController};
 use memory::paging::{PhysicalAddress,VirtualAddress,TemporaryPage,PhysicalMapping,EntryFlags};
 use multiboot2::BootInformation;
 use self::fadt::Fadt;
@@ -117,7 +118,8 @@ impl SdtHeader
 
 /// This temporarily maps a SDT to get its signature and length, then unmaps it
 /// It's used to calculate the size we need to actually map
-unsafe fn peek_at_table(table_address : PhysicalAddress, platform : &mut Platform) -> ([u8; 4], u32)
+unsafe fn peek_at_table(table_address       : PhysicalAddress,
+                        memory_controller   : &mut MemoryController) -> ([u8; 4], u32)
 {
     use ::memory::map::TEMP_PAGE;
 
@@ -127,21 +129,21 @@ unsafe fn peek_at_table(table_address : PhysicalAddress, platform : &mut Platfor
     {
         let mut temporary_page = TemporaryPage::new(TEMP_PAGE);
         temporary_page.map(Frame::containing_frame(table_address),
-                           &mut platform.memory_controller.kernel_page_table,
-                           &mut platform.memory_controller.frame_allocator);
+                           &mut memory_controller.kernel_page_table,
+                           &mut memory_controller.frame_allocator);
         let sdt_pointer = TEMP_PAGE.start_address().offset(table_address.offset_into_frame() as isize).ptr() as *const SdtHeader;
 
         signature = (*sdt_pointer).signature;
         length = (*sdt_pointer).length;
 
-        temporary_page.unmap(&mut platform.memory_controller.kernel_page_table,
-                             &mut platform.memory_controller.frame_allocator);
+        temporary_page.unmap(&mut memory_controller.kernel_page_table,
+                             &mut memory_controller.frame_allocator);
     }
 
     (signature, length)
 }
 
-fn parse_rsdt(acpi_info : &mut AcpiInfo, platform : &mut Platform)
+fn parse_rsdt(acpi_info : &mut AcpiInfo, memory_controller : &mut MemoryController)
 {
     let num_tables = (acpi_info.rsdt.length as usize - mem::size_of::<SdtHeader>()) / mem::size_of::<u32>();
     let table_base_ptr = VirtualAddress::from(acpi_info.rsdt.ptr).offset(mem::size_of::<SdtHeader>() as isize).ptr() as *const u32;
@@ -150,44 +152,42 @@ fn parse_rsdt(acpi_info : &mut AcpiInfo, platform : &mut Platform)
     {
         let pointer_address = unsafe { table_base_ptr.offset(i as isize) };
         let table_address = PhysicalAddress::new(unsafe { *pointer_address } as usize);
-        let (signature, length) = unsafe { peek_at_table(table_address, platform) };
+        let (signature, length) = unsafe { peek_at_table(table_address, memory_controller) };
 
         match &signature
         {
             b"FACP" =>
             {
-                let fadt_mapping = platform.memory_controller
-                                           .kernel_page_table
-                                           .map_physical_region::<Fadt>(table_address,
-                                                                        table_address.offset(length as isize),
-                                                                        EntryFlags::PRESENT,
-                                                                        &mut platform.memory_controller.frame_allocator);
+                let fadt_mapping = memory_controller.kernel_page_table
+                                                    .map_physical_region::<Fadt>(table_address,
+                                                                                 table_address.offset(length as isize),
+                                                                                 EntryFlags::PRESENT,
+                                                                                 &mut memory_controller.frame_allocator);
                 (*fadt_mapping).header.validate("FACP").unwrap();
                 let dsdt_address = PhysicalAddress::from((*fadt_mapping).dsdt_address as usize);
                 acpi_info.fadt = Some(fadt_mapping);
 
                 // Now we have the FADT, we can map and parse the DSDT
-                let (_, dsdt_length) = unsafe { peek_at_table(dsdt_address, platform) };
-                let dsdt_mapping = platform.memory_controller
-                                           .kernel_page_table
-                                           .map_physical_region::<Dsdt>(dsdt_address,
-                                                                        dsdt_address.offset(dsdt_length as isize),
-                                                                        EntryFlags::PRESENT,
-                                                                        &mut platform.memory_controller.frame_allocator);
+                let (_, dsdt_length) = unsafe { peek_at_table(dsdt_address, memory_controller) };
+                let dsdt_mapping = memory_controller.kernel_page_table
+                                                    .map_physical_region::<Dsdt>(dsdt_address,
+                                                                                 dsdt_address.offset(dsdt_length as isize),
+                                                                                 EntryFlags::PRESENT,
+                                                                                 &mut memory_controller.frame_allocator);
                 (*dsdt_mapping).header.validate("DSDT").unwrap();
                 dsdt::parse_dsdt(&dsdt_mapping, acpi_info);
             },
 
             b"APIC" =>
             {
-                let madt_mapping = platform.memory_controller
-                                           .kernel_page_table
-                                           .map_physical_region::<MadtHeader>(table_address,
-                                                                              table_address.offset(length as isize),
-                                                                              EntryFlags::PRESENT,
-                                                                              &mut platform.memory_controller.frame_allocator);
+                let madt_mapping = memory_controller.kernel_page_table
+                                                    .map_physical_region::<MadtHeader>(table_address,
+                                                                                       table_address.offset(length as isize),
+                                                                                       EntryFlags::PRESENT,
+                                                                                       &mut memory_controller.frame_allocator);
+
                 (*madt_mapping).header.validate("APIC").unwrap();
-                madt::parse_madt(&madt_mapping, platform);
+                madt::parse_madt(&madt_mapping, acpi_info, memory_controller);
             },
 
             _ =>
@@ -205,45 +205,50 @@ fn parse_rsdt(acpi_info : &mut AcpiInfo, platform : &mut Platform)
 #[derive(Clone,Debug)]
 pub struct AcpiInfo
 {
-    pub rsdp    : &'static Rsdp,
-    pub rsdt    : PhysicalMapping<SdtHeader>,   // XXX: Mapped area is bigger than SdtHeader
-    pub fadt    : Option<PhysicalMapping<Fadt>>,
-    pub dsdt    : Option<PhysicalMapping<Dsdt>>,
+    pub rsdp                : &'static Rsdp,
+    pub rsdt                : PhysicalMapping<SdtHeader>,
+    pub fadt                : Option<PhysicalMapping<Fadt>>,
+    pub dsdt                : Option<PhysicalMapping<Dsdt>>,
+
+    pub bootstrap_cpu       : Option<Cpu>,
+    pub application_cpus    : Vec<Cpu>,
 }
 
 impl AcpiInfo
 {
-    pub fn new(boot_info : &BootInformation, platform : &mut Platform) -> Option<AcpiInfo>
+    pub fn new(boot_info : &BootInformation, memory_controller : &mut MemoryController) -> Option<AcpiInfo>
     {
         let rsdp : &'static Rsdp = boot_info.rsdp().expect("Couldn't find RSDP tag").rsdp();
         let rsdt_address = PhysicalAddress::from(rsdp.rsdt_address as usize);
         rsdp.validate().unwrap();
 
         trace!("Loading ACPI tables with OEM ID: {}", rsdp.oem_str());
-        let (rsdt_signature, rsdt_length) = unsafe { peek_at_table(rsdt_address, platform) };
+        let (rsdt_signature, rsdt_length) = unsafe { peek_at_table(rsdt_address, memory_controller) };
 
         if &rsdt_signature != b"RSDT"
         {
             return None;
         }
 
-        let rsdt_mapping = platform.memory_controller
-                                   .kernel_page_table
-                                   .map_physical_region::<SdtHeader>(rsdt_address,
-                                                                     rsdt_address.offset(rsdt_length as isize),
-                                                                     EntryFlags::PRESENT,
-                                                                     &mut platform.memory_controller.frame_allocator);
+        let rsdt_mapping = memory_controller.kernel_page_table
+                                            .map_physical_region::<SdtHeader>(rsdt_address,
+                                                                              rsdt_address.offset(rsdt_length as isize),
+                                                                              EntryFlags::PRESENT,
+                                                                              &mut memory_controller.frame_allocator);
 
         let mut acpi_info = AcpiInfo
                             {
                                 rsdp,
-                                rsdt    : rsdt_mapping,
-                                fadt    : None,
-                                dsdt    : None,
+                                rsdt                : rsdt_mapping,
+                                fadt                : None,
+                                dsdt                : None,
+
+                                bootstrap_cpu       : None,
+                                application_cpus    : Vec::new(),
                             };
 
         (*acpi_info.rsdt).validate("RSDT").unwrap();
-        parse_rsdt(&mut acpi_info, platform);
+        parse_rsdt(&mut acpi_info, memory_controller);
 
         Some(acpi_info)
     }

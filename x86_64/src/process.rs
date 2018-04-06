@@ -277,6 +277,7 @@ impl Node for Process
             ProcessMessage::DropIntoUsermode =>
             {
                 info!("Dropping to usermode in process!");
+                // self.drop_into_usermode(gdt_selectors, memory_controller);
                 // TODO: call `self.drop_into_usermode`. We need to access the GDT and memory
                 // controller from somewhere (so probably make the central platform struct thing
                 // static mut?)

@@ -38,7 +38,7 @@ use node::NodeManager;
 use process::ProcessMessage;
 use fs::{FileManager,ramdisk::Ramdisk};
 
-pub fn kernel_main<A>(mut architecture : A) -> !
+pub fn kernel_main<A>(architecture : &mut A) -> !
     where A : Architecture
 {
     trace!("Control passed to kernel crate");
