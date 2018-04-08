@@ -33,8 +33,15 @@ pub(super) enum TermObj
 }
 
 #[derive(Clone,Debug)]
-pub(super) struct TermArg
+pub(super) enum TermArg
 {
+    ByteData(u8),
+    WordData(u16),
+    DWordData(u32),
+    QWordData(u64),
+    ZeroOp,
+    OneOp,
+    OnesOp,
 }
 
 struct AmlStream
@@ -84,7 +91,7 @@ pub enum AmlError
 {
     UnexpectedByte(u8),
     RanOutOfBytes,
-    Unimplemented,
+    Unimplemented(&'static str),
 }
 
 pub(super) struct AmlParser
@@ -191,10 +198,10 @@ impl AmlParser
                         let region_len      = self.parse_term_arg()?;
                         info!("Region len is {:?}", region_len);
 
-                        Err(AmlError::Unimplemented)
+                        Err(AmlError::Unimplemented("OpRegionOp"))
                     },
 
-                    _ => Err(AmlError::Unimplemented),
+                    _ => Err(AmlError::Unimplemented("Thing in ExtOpPrefix")),
                 }
             },
 
@@ -209,9 +216,70 @@ impl AmlParser
     {
         /*
          * TermArg := Type2Opcode | DataObject | ArgObj | LocalObj
+         * DataObject := ComputationalData | DefPackage | DefVarPackage
+         * ComputationalData := <0x0A ByteData> | <0x0B WordData> | <0x0C DWordData> |
+         *                      <0x0D AsciiCharList NullChar> | <0x0E QWordData> | ConstObj |
+         *                      RevisionOp | DefBuffer
+         * ConstObj := ZeroOp(0x00) | OneOp(0x01) | OnesOp(0xFF)
+         *
+         * TODO: RevisionOp, DefBuffer
          */
-        // TODO
-        Ok(TermArg { })
+        match self.stream.next().unwrap()
+        {
+            opcodes::BYTE_PREFIX =>
+            {
+                Ok(TermArg::ByteData(self.stream.next().unwrap()))
+            },
+
+            opcodes::WORD_PREFIX =>
+            {
+                let mut data = u16::from(self.stream.next().unwrap());
+                data += u16::from(self.stream.next().unwrap()) << 8;
+
+                Ok(TermArg::WordData(data))
+            },
+
+            opcodes::DWORD_PREFIX =>
+            {
+                let mut data = u32::from(self.stream.next().unwrap());
+
+                for i in 1..4
+                {
+                    data += u32::from(self.stream.next().unwrap()) << (i * 8);
+                }
+
+                Ok(TermArg::DWordData(data))
+            },
+
+            opcodes::QWORD_PREFIX =>
+            {
+                let mut data = u64::from(self.stream.next().unwrap());
+
+                for i in 1..8
+                {
+                    data += u64::from(self.stream.next().unwrap()) << (i * 8);
+                }
+
+                Ok(TermArg::QWordData(data))
+            },
+
+            opcodes::ZERO_OP =>
+            {
+                Ok(TermArg::ZeroOp)
+            },
+
+            opcodes::ONE_OP =>
+            {
+                Ok(TermArg::OneOp)
+            },
+
+            opcodes::ONES_OP =>
+            {
+                Ok(TermArg::OnesOp)
+            },
+
+            byte => Err(AmlError::UnexpectedByte(byte)),
+        }
     }
 
     fn parse_scope_op(&mut self, acpi_info : &mut AcpiInfo) -> Result<TermObj, AmlError>
