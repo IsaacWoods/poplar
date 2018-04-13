@@ -1,13 +1,14 @@
 /*
- * Copyright (C) 2017, Isaac Woods.
+ * Copyright (C) 2017, Pebble Developers.
  * See LICENCE.md
  */
 
-use core::fmt;
-use xmas_elf::{ElfFile,program::Type};
+use core::{fmt,ptr};
+use xmas_elf::{ElfFile,program::{Type,ProgramHeader}};
 use gdt::GdtSelectors;
-use memory::{Frame,MemoryController};
-use memory::paging::{Page,PhysicalAddress,VirtualAddress,InactivePageTable,ActivePageTable,PAGE_SIZE};
+use memory::{Frame,MemoryController,FrameAllocator};
+use memory::paging::{Page,PhysicalAddress,VirtualAddress,InactivePageTable,ActivePageTable,PAGE_SIZE,
+                     EntryFlags,Mapper};
 use kernel::node::Node;
 use kernel::process::ProcessMessage;
 use libpebble::node::NodeId;
@@ -60,14 +61,14 @@ impl Process
                image_end            : PhysicalAddress,
                memory_controller    : &mut MemoryController) -> Process
     {
-        use ::memory::paging::{EntryFlags,PhysicalMapping,ActivePageTable};
         use ::memory::map::KERNEL_START_P4;
 
-        let elf_temp_mapping : PhysicalMapping<u8> = memory_controller.kernel_page_table
-                                                                      .map_physical_region(image_start,
-                                                                                           image_end,
-                                                                                           EntryFlags::PRESENT,
-                                                                                           &mut memory_controller.frame_allocator);
+        info!("Creating process with image between {:#x} and {:#x}", image_start, image_end);
+        let elf_temp_mapping = memory_controller.kernel_page_table
+                                                .map_physical_region(image_start,
+                                                                     image_end,
+                                                                     EntryFlags::PRESENT,
+                                                                     &mut memory_controller.frame_allocator);
         let elf = ElfFile::new(unsafe { ::core::slice::from_raw_parts(elf_temp_mapping.ptr, elf_temp_mapping.size) }).unwrap();
         let entry_point = VirtualAddress::new(elf.header.pt2.entry_point() as usize);
 
@@ -80,21 +81,24 @@ impl Process
                                        &mut memory_controller.frame_allocator)
             };
 
-        let kernel_p4_frame = memory_controller.kernel_page_table.p4[KERNEL_START_P4].pointed_frame().expect("Could not find kernel P4 frame");
-
         /*
-         * We can't borrow the real ActivePageTable because then we can't allocate in the closure.
-         * This should do as good a job.
+         * This is the frame holding the kernel's P3 - we copy its address into the 511th entry of
+         * every process' P4 to keep the kernel mapped.
          */
-        let mut kernel_table = unsafe { ActivePageTable::new() };
+        let kernel_p3_frame = memory_controller.kernel_page_table
+                                               .p4[KERNEL_START_P4]
+                                               .pointed_frame()
+                                               .expect("Could not find kernel P3 frame");
 
-        kernel_table.with(&mut page_tables, &mut memory_controller.frame_allocator,// &mut temporary_page,
+        let kernel_table = &mut memory_controller.kernel_page_table;
+
+        kernel_table.with(&mut page_tables, &mut memory_controller.frame_allocator,
             |mapper, allocator| {
                 /*
                  * We map the entire kernel into each user-mode process. Instead of cloning the
                  * entire thing, we just steal the frame from the kernel's P4.
                  */
-                mapper.p4[KERNEL_START_P4].set(kernel_p4_frame, EntryFlags::PRESENT |
+                mapper.p4[KERNEL_START_P4].set(kernel_p3_frame, EntryFlags::PRESENT |
                                                                 EntryFlags::WRITABLE);
 
                 /*
@@ -104,43 +108,28 @@ impl Process
                 {
                     match program_header.get_type().unwrap()
                     {
-                        Type::Null => {},
-
                         Type::Load =>
                         {
-                            let physical_address = image_start.offset(program_header.offset() as isize);
-                            let flags = {
-                                            let mut flags = EntryFlags::PRESENT |
-                                                            EntryFlags::USER_ACCESSIBLE;
+                            info!("Mapping LOAD segment for process");
+                            let image_segment_start = VirtualAddress::from(elf_temp_mapping.ptr).offset(program_header.offset() as isize);
+                            // map_load_segment(image_segment_start, &program_header, mapper, allocator);
 
-                                            if program_header.flags().is_write()
-                                            {
-                                                flags |= EntryFlags::WRITABLE;
-                                            }
+                            info!("Testing mapping stuff and things. Mapping address 0x400000");
+                            const ADDRESS : VirtualAddress = VirtualAddress::new(0x6000);
 
-                                            if !program_header.flags().is_execute()
-                                            {
-                                                flags |= EntryFlags::NO_EXECUTE;
-                                            }
+                            let page = Page::containing_page(ADDRESS);
+                            info!("Containing page starts at {:#x}", page.start_address());
+                            let frame = allocator.allocate_frame().expect("Oopsie poopsie");
+                            mapper.map_to(page, frame, EntryFlags::PRESENT | EntryFlags::WRITABLE, allocator);
+                            info!("Page mapped. Reading from page");
 
-                                            flags
-                                        };
+                            ::tlb::flush();
 
-                            // TODO: This should remind us to do this properly when we hit BSS
-                            // sections and stuff
-                            assert!(program_header.file_size() == program_header.mem_size());
-
-                            let num_pages = program_header.mem_size() as usize / PAGE_SIZE + 1;
-                            for i in 0..num_pages
+                            unsafe
                             {
-                                let offset = (i * PAGE_SIZE) as isize;
-                                let frame_address = physical_address.offset(offset);
-                                let page_address = VirtualAddress::new(program_header.virtual_addr() as usize).offset(offset);
-                                mapper.map_to(Page::containing_page(page_address),
-                                              Frame::containing_frame(frame_address),
-                                              flags,
-                                              allocator);
+                                info!("Read from page: {}", ptr::read::<u8>(ADDRESS.ptr()));
                             }
+                            info!("Paging test complete");
                         },
 
                         typ =>
@@ -205,7 +194,7 @@ impl Process
     }
 
     pub unsafe fn drop_to_usermode(&mut self,
-                                   gdt_selectors        : GdtSelectors,
+                                   gdt_selectors        : &GdtSelectors,
                                    memory_controller    : &mut MemoryController) -> !
     {
         // Save the current kernel stack in the TSS
@@ -260,7 +249,7 @@ impl Node for Process
 {
     type MessageType = ProcessMessage;
 
-    fn message(&self, sender : NodeId, message : ProcessMessage)
+    fn message(&mut self, sender : NodeId, message : ProcessMessage)
     {
         // TODO: what should we do here? We somehow need to signal to the process that it's
         // recieved a message, which is gonna be handled in userspace. We could reserve some memory
@@ -274,14 +263,75 @@ impl Node for Process
         // That seems like a better design.
         match message
         {
-            ProcessMessage::DropIntoUsermode =>
+            ProcessMessage::DropToUsermode =>
             {
+                use ::PLATFORM;
+
                 info!("Dropping to usermode in process!");
-                // self.drop_into_usermode(gdt_selectors, memory_controller);
-                // TODO: call `self.drop_into_usermode`. We need to access the GDT and memory
-                // controller from somewhere (so probably make the central platform struct thing
-                // static mut?)
+                unsafe
+                {
+                    self.drop_to_usermode(PLATFORM.gdt_selectors.as_ref().unwrap(),
+                                          PLATFORM.memory_controller.as_mut().unwrap());
+                }
             },
         }
+    }
+}
+
+fn map_load_segment(image_segment_start : VirtualAddress,
+                    segment             : &ProgramHeader,
+                    mapper              : &mut Mapper,
+                    allocator           : &mut FrameAllocator)
+{
+    panic!("Remove this panic");
+    let flags = {
+                    let mut flags = EntryFlags::PRESENT |
+                                    EntryFlags::USER_ACCESSIBLE;
+
+                    if segment.flags().is_write()
+                    {
+                        flags |= EntryFlags::WRITABLE;
+                    }
+
+                    if !segment.flags().is_execute()
+                    {
+                        flags |= EntryFlags::NO_EXECUTE;
+                    }
+
+                    flags
+                };
+
+    // TODO: This should remind us to do this properly when we hit BSS
+    // sections and stuff
+    assert!(segment.file_size() == segment.mem_size());
+
+    /*
+     * The segment may not be frame-aligned and so will not map correctly
+     * onto its virtual address, so we remap it onto a frame boundary.
+     *
+     * TODO: if we create multiple instances of one process, we'd be
+     * keeping multiple copies of the same image. We should sort-of cache
+     * images, which are then referenced by their processes
+     */
+    // TODO: replace this with a map_page_range function or something?
+    let virtual_address = VirtualAddress::new(segment.virtual_addr() as usize);
+    info!("LOAD virtual address {:#x}", virtual_address);
+    let num_pages = segment.mem_size() as usize / PAGE_SIZE;
+    for page in Page::range_inclusive(Page::containing_page(virtual_address),
+                                      Page::containing_page(virtual_address.offset(segment.mem_size() as isize)))
+    {
+        // Map the page
+        info!("Page start address = {:#x}", page.start_address());
+        info!("Mapping page for process {:?}", page);
+        mapper.map(page, flags, allocator);
+    }
+
+    info!("First page mapped to {:?}", mapper.translate(virtual_address));
+
+    // Copy the data into the image
+    unsafe
+    {
+        info!("Read from \"mapped\" page: {}", ptr::read::<u8>(virtual_address.mut_ptr()));
+        // ptr::copy::<u8>(image_segment_start.ptr(), virtual_address.mut_ptr(), segment.file_size() as usize);
     }
 }

@@ -11,13 +11,12 @@ mod physical_address;
 mod virtual_address;
 
 pub use self::entry::*;
-pub use self::mapper::PhysicalMapping;
+pub use self::mapper::{Mapper,PhysicalMapping};
 pub use self::physical_address::PhysicalAddress;
 pub use self::virtual_address::VirtualAddress;
 pub use self::temporary_page::TemporaryPage;
 
 use core::ops::{Add,Deref,DerefMut};
-use self::mapper::Mapper;
 use super::{Frame,FrameAllocator};
 use super::map::RECURSIVE_ENTRY;
 use multiboot2::BootInformation;
@@ -142,8 +141,8 @@ impl ActivePageTable
     pub fn with<F>(&mut self,
                    table            : &mut InactivePageTable,
                    frame_allocator  : &mut FrameAllocator,
-                   f                : F
-                  ) where F : FnOnce(&mut Mapper, &mut FrameAllocator)
+                   f                : F)
+        where F : FnOnce(&mut Mapper, &mut FrameAllocator)
     {
         let mut temporary_page = TemporaryPage::new(::memory::map::TEMP_PAGE);
 
@@ -154,6 +153,7 @@ impl ActivePageTable
             let p4_table = temporary_page.map_table_frame(original_p4, self, frame_allocator);
 
             // Overwrite recursive mapping
+            info!("Switching recursive mapping to frame {:?}", table.p4_frame);
             self.p4[RECURSIVE_ENTRY].set(table.p4_frame, EntryFlags::PRESENT | EntryFlags::WRITABLE);
 
             // Flush the TLB
@@ -163,6 +163,7 @@ impl ActivePageTable
             f(self, frame_allocator);
 
             // Restore recursive mapping to original P4
+            info!("Restoring recursive mapping to frame {:?}", original_p4);
             p4_table[RECURSIVE_ENTRY].set(original_p4, EntryFlags::PRESENT | EntryFlags::WRITABLE);
             tlb::flush();
         }

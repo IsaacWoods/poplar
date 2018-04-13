@@ -41,13 +41,10 @@ impl HierarchicalLevel for Level2 { type NextLevel = Level1; }
 pub struct Table<L : TableLevel>
 {
     entries : [Entry; ENTRY_COUNT],
-    level : PhantomData<L>,
+    level   : PhantomData<L>,
 }
 
-/*
- * This uses recursive page table mapping to access the page tables, so always points to the
- * *currently installed* tables.
- */
+/// This is the **currently installed** P4.
 pub const P4 : *mut Table<Level4> = P4_TABLE_ADDRESS.mut_ptr();
 
 impl<L> Table<L>
@@ -75,8 +72,8 @@ impl<L> Table<L>
              * We can calculate the next table's address by going through one more layer of the
              * recursive mapping.
              *
-             * XXX: This doesn't always yield a canonical address, so we make sure to canonicalise
-             * it.
+             * XXX: This can make the address non-canonical, as we shift the old table address up
+             *      into the old sign-extension, so we make sure to canonicalise it again.
              */
             let table_address = (self as *const _) as usize;
             Some(VirtualAddress::new((table_address << 9) | (index << 12)).canonicalise().into())
@@ -104,6 +101,7 @@ impl<L> Table<L>
     {
         if self.next_table(index).is_none()
         {
+            warn!("Had to make new page table at index {}", index);
             assert!(!self.entries[index].flags().contains(EntryFlags::HUGE_PAGE), "mapping code does not support huge pages");
             let frame = allocator.allocate_frame().expect("no frames available");
 

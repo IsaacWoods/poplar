@@ -19,10 +19,6 @@
 
 #![allow(identity_op)]
 
-/*
- * `rlibc` just provides intrinsics that are linked against, and so the compiler doesn't pick up
- * that it's actually used, so we suppress the warning.
- */
                 extern crate rlibc;
                 extern crate volatile;
                 extern crate spin;
@@ -63,7 +59,7 @@ use acpi::AcpiInfo;
 use kernel::arch::{Architecture,MemoryAddress,ModuleMapping};
 use kernel::node::Node;
 use kernel::process::ProcessMessage;
-use gdt::Gdt;
+use gdt::{Gdt,GdtSelectors};
 use tss::Tss;
 use process::Process;
 
@@ -72,6 +68,7 @@ pub static mut PLATFORM : Platform = Platform::placeholder();
 pub struct Platform
 {
     pub memory_controller   : Option<MemoryController>,
+    pub gdt_selectors       : Option<GdtSelectors>,
 }
 
 impl Platform
@@ -81,6 +78,7 @@ impl Platform
         Platform
         {
             memory_controller   : None,
+            gdt_selectors       : None,
         }
     }
 }
@@ -146,10 +144,11 @@ pub extern fn kstart(multiboot_address : PhysicalAddress) -> !
     }
     let gdt_selectors = Gdt::install(unsafe { &mut TSS });
     interrupts::init(&gdt_selectors);
+    unsafe { PLATFORM.gdt_selectors = Some(gdt_selectors); }
 
     /*
      * We now find and parse the ACPI tables. This also initialises the local APIC and IOAPIC, as
-     * they are detailed by the MADT.
+     * they are described by the MADT. We then enable interrupts.
      */
     let acpi_info = AcpiInfo::new(&boot_info, unsafe { PLATFORM.memory_controller.as_mut().unwrap() }).expect("Failed to parse ACPI tables");
     interrupts::enable();
@@ -163,27 +162,13 @@ pub extern fn kstart(multiboot_address : PhysicalAddress) -> !
     /*
      * We can now initialise the local APIC timer to interrupt every 10ms. This uses the PIT to
      * determine the frequency the timer is running at, so interrupts must be enabled at this point.
+     * We also re-initialise the PIT to tick every 10ms.
      */
     unsafe { apic::LOCAL_APIC.enable_timer(10); }
-
-    /*
-     * Set the PIT to generate an interrupt every 10ms.
-     */
     unsafe { pit::PIT.init(10); }
 
-    // let module_tag = boot_info.modules().nth(0).unwrap();
-    // info!("Running module: {}", module_tag.name());
-    // let mut process = Process::new(ProcessId(0),
-    //                                module_tag.start_address(),
-    //                                module_tag.end_address(),
-    //                                &mut memory_controller);
-//    unsafe { process.drop_to_usermode(gdt_selectors, &mut memory_controller); }
-
-    // let virtual_address = module_tag.start_address().into_kernel_space();
-    // unsafe { enter_usermode(virtual_address, gdt_selectors); }
-
     /*
-     * Pass control to the kernel.
+     * Finally, we can pass control to the kernel.
      */
     kernel::kernel_main(unsafe { &mut PLATFORM });
 }

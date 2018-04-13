@@ -198,6 +198,7 @@ impl AmlParser
                         let region_len      = self.parse_term_arg()?;
                         info!("Region len is {:?}", region_len);
 
+                        // TODO: return a thing here
                         Err(AmlError::Unimplemented("OpRegionOp"))
                     },
 

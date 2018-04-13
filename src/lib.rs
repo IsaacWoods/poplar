@@ -60,7 +60,7 @@ pub fn kernel_main<A>(architecture : &mut A) -> !
     let test_process = architecture.create_process(image_start, image_end);
 
     let test_process_id = node_manager.add_root_node(Some(String::from("test_process")), test_process);
-    node_manager.get(test_process_id).message(NodeId(0), ProcessMessage::DropIntoUsermode);  // TODO: use kernel's node id
+    node_manager.get(test_process_id).message(NodeId(0), ProcessMessage::DropToUsermode);  // TODO: use kernel's node id
 
     loop { }
 }

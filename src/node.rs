@@ -62,12 +62,12 @@ impl NodeManager
         id
     }
 
-    pub fn get<M>(&mut self, id : NodeId) -> &Box<Node<MessageType=M>>
+    pub fn get<M>(&mut self, id : NodeId) -> &mut Box<Node<MessageType=M>>
     {
-        let any_node = self.nodes.get(&id).unwrap();
+        let any_node = self.nodes.get_mut(&id).unwrap();
         unsafe
         {
-            downcast_message_type_ref(&any_node.node)
+            downcast_message_type_ref(&mut any_node.node)
         }
     }
 }
@@ -77,7 +77,7 @@ pub trait Node : Debug
     type MessageType;
 
     /// Send a message to this node.
-    fn message(&self, sender : NodeId, message : Self::MessageType);
+    fn message(&mut self, sender : NodeId, message : Self::MessageType);
 }
 
 #[derive(Debug)]
@@ -117,7 +117,7 @@ unsafe fn upcast_message_type<M>(node : Box<Node<MessageType=M>>) -> Box<Node<Me
 /// `M`. Unsafe because you must be sure that the node is actually of the correct message type, or
 /// you'll send it the wrong one later. Also unsafe because the conditions of `Any` aren't
 /// enforcable - MessageType must not include non-`'static` references or this may produce UB.
-unsafe fn downcast_message_type_ref<M>(node : &Box<Node<MessageType=Any>>) -> &Box<Node<MessageType=M>>
+unsafe fn downcast_message_type_ref<M>(node : &mut Box<Node<MessageType=Any>>) -> &mut Box<Node<MessageType=M>>
     where M : ?Sized
 {
     mem::transmute(node)

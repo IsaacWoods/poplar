@@ -9,6 +9,7 @@ use gdt::{GdtSelectors,PrivilegeLevel};
 use idt::Idt;
 use port::Port;
 use apic::{LOCAL_APIC,IO_APIC};
+use kernel::util::BinaryPrettyPrint;
 use libpebble::syscall::SyscallInfo;
 
 /*
@@ -336,6 +337,7 @@ extern "C" fn page_fault_handler(stack_frame : &InterruptStackFrame, error_code 
     },
     read_control_reg!(cr2));    // CR2 holds the address of the page that caused the #PF
 
+    error!("Error code: {:?}", BinaryPrettyPrint(error_code));
     error!("{:#?}", stack_frame);
 
     /*
