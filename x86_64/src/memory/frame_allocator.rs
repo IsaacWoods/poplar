@@ -3,6 +3,7 @@
  * See LICENCE.md
  */
 
+use core::ops::Range;
 use super::Frame;
 use super::paging::PhysicalAddress;
 use multiboot2::{MemoryAreaIter,MemoryArea};
@@ -63,8 +64,8 @@ impl FrameAllocator
     {
         if let Some(area) = self.current_area
         {
-            // Clone the next free frame to return it if it's free
-            let frame = Frame { number : self.next_free_frame.number };
+            // Keep the next free frame to return it if it's free
+            let frame = self.next_free_frame;
 
             // The last frame of the current area
             let current_area_last_frame = Frame::containing_frame(((area.start_address() + area.size() - 1) as usize).into());
@@ -89,6 +90,47 @@ impl FrameAllocator
             }
 
             self.allocate_frame()
+        }
+        else
+        {
+            // There are no more free frames
+            None
+        }
+    }
+
+    /// Allocates a contiguous block of frames, if possible. Returns `None` if a contiguous
+    /// allocation of that size is not possible. Because the end of a `Range` is exclusive, this
+    /// function returns the frame number after the last one, so `end` is **not** included in the
+    /// allocation.
+    pub fn allocate_frame_block(&mut self, block_size : usize) -> Option<Range<Frame>>
+    {
+        if let Some(area) = self.current_area
+        {
+            /*
+             * We're looking for an area with enough free contiguous frames to satisfy the
+             * allocation. If the current area doesn't, we switch to the next one.
+             *
+             * XXX TODO FIXME: This is terrible way of doing it, especially if we try and make
+             * large allocations, because it will skip over areas permanently that could fit
+             * smaller allocations. This must be fixed when we iterate the physical memory manager.
+             */
+            let frame = self.next_free_frame;
+            let current_area_last_frame = Frame::containing_frame(((area.start_address() + area.size() - 1) as usize).into());
+            let block_last_frame = self.next_free_frame + (block_size - 1);
+
+            // XXX: We ignore the kernel and multiboot structure reservations for now, and just
+            // hope we don't hit them
+            if current_area_last_frame < block_last_frame
+            {
+                // Allocation doesn't fit, switch to the next area
+                self.switch_to_next_area();
+                self.allocate_frame_block(block_size)
+            }
+            else
+            {
+                self.next_free_frame = block_last_frame + 1;
+                Some(Range { start : frame, end : block_last_frame + 1 })
+            }
         }
         else
         {

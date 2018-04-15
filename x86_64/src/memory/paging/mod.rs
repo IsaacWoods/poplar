@@ -131,12 +131,16 @@ impl ActivePageTable
     }
 
     /*
-     * This uses a trick with the recursive mapping technique we use to alter an InactivePageTable,
+     * This uses a trick with the recursive mapping technique we use to alter an `InactivePageTable`,
      * by mapping its P4 address as if it were the active table's P4.
      *
-     * By returning a Mapper to the closure, instead of `self` (which is a ActivePageTable), we
+     * By returning a `Mapper` to the closure, instead of an `ActivePageTable`, we stop it from
      * stop it from calling this `with` method again, which fails because the recursive mapping
      * wouldn't be set up correctly.
+     *
+     * XXX: Within the closure, the inactive page tables can be modified, but they are not mapped.
+     *      To read or write to addresses mapped, they must be temporarily mapped into the active
+     *      page tables.
      */
     pub fn with<F>(&mut self,
                    table            : &mut InactivePageTable,
@@ -153,7 +157,6 @@ impl ActivePageTable
             let p4_table = temporary_page.map_table_frame(original_p4, self, frame_allocator);
 
             // Overwrite recursive mapping
-            info!("Switching recursive mapping to frame {:?}", table.p4_frame);
             self.p4[RECURSIVE_ENTRY].set(table.p4_frame, EntryFlags::PRESENT | EntryFlags::WRITABLE);
 
             // Flush the TLB
@@ -163,7 +166,6 @@ impl ActivePageTable
             f(self, frame_allocator);
 
             // Restore recursive mapping to original P4
-            info!("Restoring recursive mapping to frame {:?}", original_p4);
             p4_table[RECURSIVE_ENTRY].set(original_p4, EntryFlags::PRESENT | EntryFlags::WRITABLE);
             tlb::flush();
         }

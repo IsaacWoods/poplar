@@ -101,7 +101,6 @@ impl<L> Table<L>
     {
         if self.next_table(index).is_none()
         {
-            warn!("Had to make new page table at index {}", index);
             assert!(!self.entries[index].flags().contains(EntryFlags::HUGE_PAGE), "mapping code does not support huge pages");
             let frame = allocator.allocate_frame().expect("no frames available");
 

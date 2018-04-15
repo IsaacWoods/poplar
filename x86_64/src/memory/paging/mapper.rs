@@ -235,20 +235,14 @@ impl Mapper
                   flags         : EntryFlags,
                   allocator     : &mut FrameAllocator)
     {
-        trace!("Mapping page starting {:#x}({})({})({})({}) to frame starting {:#x}", page.start_address(),
-                                                                                      page.p4_index(),
-                                                                                      page.p3_index(),
-                                                                                      page.p2_index(),
-                                                                                      page.p1_index(),
-                                                                                      frame.start_address());
         /*
          * If the page to be mapped is user-accessible, all the previous paging structures must be
          * too, otherwise we'll still page-fault.
          */
         let user_accessible = flags.contains(EntryFlags::USER_ACCESSIBLE);
-        trace!("Getting P3"); let p3 = self.p4.next_table_create(page.p4_index(), user_accessible, allocator);
-        trace!("Getting P2"); let p2 =      p3.next_table_create(page.p3_index(), user_accessible, allocator);
-        trace!("Getting P1"); let p1 =      p2.next_table_create(page.p2_index(), user_accessible, allocator);
+        let p3 = self.p4.next_table_create(page.p4_index(), user_accessible, allocator);
+        let p2 =      p3.next_table_create(page.p3_index(), user_accessible, allocator);
+        let p1 =      p2.next_table_create(page.p2_index(), user_accessible, allocator);
 
         assert!(p1[page.p1_index()].is_unused(), "Tried to map a page that has already been mapped: {:#x}", page.start_address());
         p1[page.p1_index()].set(frame, flags | EntryFlags::default());
