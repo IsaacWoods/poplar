@@ -1,0 +1,6 @@
+[submodule "rust"]
+	path = rust
+	url = https://github.com/pebble-os/rust
+[submodule "libpebble"]
+	path = libpebble
+	url = https://github.com/pebble-os/libpebble
