@@ -61,7 +61,7 @@ use kernel::node::Node;
 use kernel::process::ProcessMessage;
 use gdt::{Gdt,GdtSelectors};
 use tss::Tss;
-use process::Process;
+use process::{Process,ProcessImage};
 
 pub static mut PLATFORM : Platform = Platform::placeholder();
 
@@ -103,8 +103,9 @@ impl Architecture for Platform
                       image_start   : MemoryAddress,
                       image_end     : MemoryAddress) -> Box<Node<MessageType=ProcessMessage>>
     {
-        Box::new(Process::new(PhysicalAddress::new(image_start),
-                              PhysicalAddress::new(image_end),
+        Box::new(Process::new(ProcessImage::from_elf(PhysicalAddress::new(image_start),
+                                                     PhysicalAddress::new(image_end),
+                                                     self.memory_controller.as_mut().unwrap()),
                               &mut self.memory_controller.as_mut().unwrap()))
     }
 }

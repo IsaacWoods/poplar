@@ -3,7 +3,6 @@
  * See LICENCE.md
  */
 
-use core::ops::Range;
 use super::Frame;
 use super::paging::PhysicalAddress;
 use multiboot2::{MemoryAreaIter,MemoryArea};
@@ -99,10 +98,9 @@ impl FrameAllocator
     }
 
     /// Allocates a contiguous block of frames, if possible. Returns `None` if a contiguous
-    /// allocation of that size is not possible. Because the end of a `Range` is exclusive, this
-    /// function returns the frame number after the last one, so `end` is **not** included in the
-    /// allocation.
-    pub fn allocate_frame_block(&mut self, block_size : usize) -> Option<Range<Frame>>
+    /// allocation of that size is not possible. On success, returns a tuple where the first
+    /// element is the first frame, and the second element is the last frame.
+    pub fn allocate_frame_block(&mut self, block_size : usize) -> Option<(Frame, Frame)>
     {
         if let Some(area) = self.current_area
         {
@@ -129,7 +127,7 @@ impl FrameAllocator
             else
             {
                 self.next_free_frame = block_last_frame + 1;
-                Some(Range { start : frame, end : block_last_frame + 1 })
+                Some((frame, block_last_frame))
             }
         }
         else

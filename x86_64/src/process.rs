@@ -4,6 +4,7 @@
  */
 
 use core::{fmt,ptr};
+use alloc::Vec;
 use xmas_elf::{ElfFile,program::{Type,ProgramHeader}};
 use gdt::GdtSelectors;
 use memory::{Frame,MemoryController,FrameAllocator};
@@ -31,18 +32,129 @@ impl fmt::Debug for ProcessState
     }
 }
 
-#[derive(Debug)]
-pub struct Image
+#[derive(Clone,Copy,Debug)]
+pub struct ImageSegment
 {
-    start   : PhysicalAddress,
-    end     : PhysicalAddress,
+    address : VirtualAddress,       // This is the address that this segment should be mapped at
+    start   : Frame,
+    end     : Frame,
+    flags   : EntryFlags,
+}
+
+/// This is the image of a process, and represents the segments that should be loaded into memory
+/// holding the code and data for a process. While instances of the same process can share
+/// read-only segments in theory, each process must have its own `ProcessImage`.
+// TODO: share read-only segments?
+#[derive(Debug)]
+pub struct ProcessImage
+{
+    pub segments    : Vec<ImageSegment>,
+    pub entry_point : VirtualAddress,
+}
+
+impl ProcessImage
+{
+    pub fn from_elf(start               : PhysicalAddress,
+                    end                 : PhysicalAddress,
+                    memory_controller   : &mut MemoryController) -> ProcessImage
+    {
+        info!("Creating process with image between {:#x} and {:#x}", start, end);
+
+        // TODO: now that we're going to copy all of this out, just `read` the elf normally? And
+        // pass a file descriptor or node or whatever?
+        let elf_temp_mapping = memory_controller.kernel_page_table
+                                                .map_physical_region(start,
+                                                                     end,
+                                                                     EntryFlags::PRESENT,
+                                                                     &mut memory_controller.frame_allocator);
+        let elf = ElfFile::new(unsafe { ::core::slice::from_raw_parts(elf_temp_mapping.ptr, elf_temp_mapping.size) }).unwrap();
+
+        let mut segments = Vec::new();
+        let entry_point = VirtualAddress::new(elf.header.pt2.entry_point() as usize);
+
+        /*
+         * Allocate memory for, and copy contents of, each segment in the ELF
+         */
+        for program_header in elf.program_iter()
+        {
+            match program_header.get_type().unwrap()
+            {
+                Type::Load =>
+                {
+                    info!("Loading LOAD segment for process");
+                    let image_segment_start = VirtualAddress::from(elf_temp_mapping.ptr).offset(program_header.offset() as isize);
+                    let virtual_address = VirtualAddress::from(program_header.virtual_addr() as usize);
+                    let flags = {
+                                    let mut flags = EntryFlags::PRESENT |
+                                                    EntryFlags::USER_ACCESSIBLE;
+
+                                    if program_header.flags().is_write()
+                                    {
+                                        flags |= EntryFlags::WRITABLE;
+                                    }
+
+                                    if !program_header.flags().is_execute()
+                                    {
+                                        flags |= EntryFlags::NO_EXECUTE;
+                                    }
+
+                                    flags
+                                };
+
+                    let needed_frames = Frame::needed_frames(program_header.mem_size() as usize);
+
+                    let (segment_start, segment_end) = memory_controller
+                                                       .frame_allocator
+                                                       .allocate_frame_block(needed_frames)
+                                                       .expect("Could not allocate frames for segment");
+
+                    let segment_temp_mapping = memory_controller.kernel_page_table
+                                                                .map_physical_region::<u8>(segment_start.start_address(),
+                                                                                           segment_end.end_address(),
+                                                                                           EntryFlags::PRESENT | EntryFlags::WRITABLE,
+                                                                                           &mut memory_controller.frame_allocator);
+
+                    // TODO: we should probably manually zero the entire segment if file_size < mem_size
+                    unsafe
+                    {
+                        ptr::copy::<u8>(image_segment_start.ptr(),
+                                        segment_temp_mapping.ptr,
+                                        program_header.file_size() as usize);
+                    }
+
+                    segments.push(ImageSegment
+                                  {
+                                      address   : virtual_address,
+                                      start     : segment_start,
+                                      end       : segment_end,
+                                      flags,
+                                  });
+
+                    // TODO: get working: some issue with how the heap tries to free the memory
+                    // used - move away from using the heap for physical mappings?
+                    // memory_controller.kernel_page_table.unmap_physical_region(segment_temp_mapping,
+                    //                                                           &mut memory_controller.frame_allocator);
+                },
+
+                typ =>
+                {
+                    error!("Unsupported program header type in parsed ELF: {:?}", typ);
+                },
+            }
+        }
+
+        ProcessImage
+        {
+            segments,
+            entry_point,
+        }
+    }
 }
 
 #[derive(Debug)]
 pub struct Process
 {
     state       : ProcessState,
-    image       : Image,
     // threads     : Vec<Thread>,
     thread      : Thread,
 }
@@ -57,20 +169,12 @@ pub struct Thread
 
 impl Process
 {
-    pub fn new(image_start          : PhysicalAddress,
-               image_end            : PhysicalAddress,
+    pub fn new(image                : ProcessImage,
                memory_controller    : &mut MemoryController) -> Process
     {
         use ::memory::map::KERNEL_START_P4;
 
-        info!("Creating process with image between {:#x} and {:#x}", image_start, image_end);
-        let elf_temp_mapping = memory_controller.kernel_page_table
-                                                .map_physical_region(image_start,
-                                                                     image_end,
-                                                                     EntryFlags::PRESENT,
-                                                                     &mut memory_controller.frame_allocator);
-        let elf = ElfFile::new(unsafe { ::core::slice::from_raw_parts(elf_temp_mapping.ptr, elf_temp_mapping.size) }).unwrap();
-        let entry_point = VirtualAddress::new(elf.header.pt2.entry_point() as usize);
+        let entry_point = image.entry_point;
 
         // Create the process' page tables
         let mut page_tables =
@@ -101,41 +205,18 @@ impl Process
                 mapper.p4[KERNEL_START_P4].set(kernel_p3_frame, EntryFlags::PRESENT |
                                                                 EntryFlags::WRITABLE);
 
-                /*
-                 * Map the image.
-                 */
-                for program_header in elf.program_iter()
+                for segment in image.segments
                 {
-                    match program_header.get_type().unwrap()
+                    info!("Mapping segment starting {:#x} into process address space", segment.address);
+                    for (i, frame) in Frame::range_inclusive(segment.start, segment.end).enumerate()
                     {
-                        Type::Load =>
-                        {
-                            info!("Mapping LOAD segment for process");
-                            let image_segment_start = VirtualAddress::from(elf_temp_mapping.ptr).offset(program_header.offset() as isize);
-                            // map_load_segment(image_segment_start, &program_header, mapper, allocator);
+                        let page_address = segment.address.offset((i * PAGE_SIZE) as isize);
+                        assert!(page_address.is_page_aligned());
 
-                            info!("Testing mapping stuff and things. Mapping address 0x400000");
-                            const ADDRESS : VirtualAddress = VirtualAddress::new(0x6000);
-
-                            let page = Page::containing_page(ADDRESS);
-                            info!("Containing page starts at {:#x}", page.start_address());
-                            let frame = allocator.allocate_frame().expect("Oopsie poopsie");
-                            mapper.map_to(page, frame, EntryFlags::PRESENT | EntryFlags::WRITABLE, allocator);
-                            info!("Page mapped. Reading from page");
-
-                            ::tlb::flush();
-
-                            unsafe
-                            {
-                                info!("Read from page: {}", ptr::read::<u8>(ADDRESS.ptr()));
-                            }
-                            info!("Paging test complete");
-                        },
-
-                        typ =>
-                        {
-                            error!("Unsupported program header type in parsed ELF: {:?}", typ);
-                        },
+                        mapper.map_to(Page::containing_page(page_address),
+                                      frame,
+                                      segment.flags,
+                                      allocator);
                     }
                 }
                 
@@ -151,11 +232,6 @@ impl Process
         Process
         {
             state           : ProcessState::NotRunning(page_tables),
-            image           : Image
-                              {
-                                  start : image_start,
-                                  end   : image_end,
-                              },
             // threads         : Vec::new(),
             thread          : Thread
                               {
@@ -275,63 +351,5 @@ impl Node for Process
                 }
             },
         }
-    }
-}
-
-fn map_load_segment(image_segment_start : VirtualAddress,
-                    segment             : &ProgramHeader,
-                    mapper              : &mut Mapper,
-                    allocator           : &mut FrameAllocator)
-{
-    panic!("Remove this panic");
-    let flags = {
-                    let mut flags = EntryFlags::PRESENT |
-                                    EntryFlags::USER_ACCESSIBLE;
-
-                    if segment.flags().is_write()
-                    {
-                        flags |= EntryFlags::WRITABLE;
-                    }
-
-                    if !segment.flags().is_execute()
-                    {
-                        flags |= EntryFlags::NO_EXECUTE;
-                    }
-
-                    flags
-                };
-
-    // TODO: This should remind us to do this properly when we hit BSS
-    // sections and stuff
-    assert!(segment.file_size() == segment.mem_size());
-
-    /*
-     * The segment may not be frame-aligned and so will not map correctly
-     * onto its virtual address, so we remap it onto a frame boundary.
-     *
-     * TODO: if we create multiple instances of one process, we'd be
-     * keeping multiple copies of the same image. We should sort-of cache
-     * images, which are then referenced by their processes
-     */
-    // TODO: replace this with a map_page_range function or something?
-    let virtual_address = VirtualAddress::new(segment.virtual_addr() as usize);
-    info!("LOAD virtual address {:#x}", virtual_address);
-    let num_pages = segment.mem_size() as usize / PAGE_SIZE;
-    for page in Page::range_inclusive(Page::containing_page(virtual_address),
-                                      Page::containing_page(virtual_address.offset(segment.mem_size() as isize)))
-    {
-        // Map the page
-        info!("Page start address = {:#x}", page.start_address());
-        info!("Mapping page for process {:?}", page);
-        mapper.map(page, flags, allocator);
-    }
-
-    info!("First page mapped to {:?}", mapper.translate(virtual_address));
-
-    // Copy the data into the image
-    unsafe
-    {
-        info!("Read from \"mapped\" page: {}", ptr::read::<u8>(virtual_address.mut_ptr()));
-        // ptr::copy::<u8>(image_segment_start.ptr(), virtual_address.mut_ptr(), segment.file_size() as usize);
     }
 }

@@ -116,7 +116,7 @@ pub fn init(boot_info : &BootInformation) -> MemoryController
     }
 }
 
-struct FrameIter
+pub struct FrameIter
 {
     start : Frame,
     end   : Frame
@@ -169,23 +169,36 @@ impl Frame
         Frame { number : usize::from(address) / FRAME_SIZE }
     }
 
-    fn start_address(&self) -> PhysicalAddress
+    pub fn start_address(&self) -> PhysicalAddress
     {
         (self.number * FRAME_SIZE).into()
     }
 
-    fn end_address(&self) -> PhysicalAddress
+    pub fn end_address(&self) -> PhysicalAddress
     {
-        self.start_address().offset((FRAME_SIZE-1) as isize)
+        self.start_address().offset((FRAME_SIZE - 1) as isize)
     }
 
-    fn range_inclusive(start : Frame, end : Frame) -> FrameIter
+    pub fn range_inclusive(start : Frame, end : Frame) -> FrameIter
     {
         FrameIter
         {
             start,
             end,
         }
+    }
+    
+    /// Calculate the number of frames needed to store a structure of size `size` bytes.
+    pub fn needed_frames(size : usize) -> usize
+    {
+        (size / FRAME_SIZE) + if size % FRAME_SIZE > 0
+                              {
+                                  1     // Needs part of another frame, add an extra one
+                              }
+                              else
+                              {
+                                  0     // Lies on a frame boundary, does not need extra frame
+                              }
     }
 }
 

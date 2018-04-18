@@ -127,7 +127,7 @@ impl Mapper
         let layout = Layout::from_size_align(region_size, PAGE_SIZE).unwrap();
         let ptr = unsafe { ::allocator::ALLOCATOR.lock().alloc(layout.clone()) }.expect("Could not allocate memory to map physical region into!") as *mut T;
         let start_page  = Page::containing_page(VirtualAddress::from(ptr));
-        let end_page    = Page::containing_page(VirtualAddress::from(ptr).offset((region_size-1) as isize));
+        let end_page    = Page::containing_page(VirtualAddress::from(ptr).offset((region_size - 1) as isize));
 
         for i in 0..(region_size / PAGE_SIZE + 1)
         {
