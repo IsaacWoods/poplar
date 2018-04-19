@@ -4,7 +4,8 @@
  */
 
 use core::ops::{Range,Deref};
-use alloc::heap::{Layout,Alloc};
+use core::alloc::Opaque;
+use alloc::heap::{Layout,GlobalAlloc};
 use memory::{Frame,FrameAllocator};
 use memory::{VirtualAddress,PhysicalAddress,Page,PAGE_SIZE};
 use memory::paging::ENTRY_COUNT;
@@ -125,7 +126,8 @@ impl Mapper
         let region_size = usize::from(end_frame.end_address() - start_frame.start_address());
 
         let layout = Layout::from_size_align(region_size, PAGE_SIZE).unwrap();
-        let ptr = unsafe { ::allocator::ALLOCATOR.lock().alloc(layout.clone()) }.expect("Could not allocate memory to map physical region into!") as *mut T;
+        let ptr = unsafe { ::allocator::ALLOCATOR.alloc(layout.clone()) } as *mut T;
+        assert!(!ptr.is_null(), "Failed to allocate memory for physical mapping");
         let start_page  = Page::containing_page(VirtualAddress::from(ptr));
         let end_page    = Page::containing_page(VirtualAddress::from(ptr).offset((region_size - 1) as isize));
 
@@ -156,7 +158,7 @@ impl Mapper
                                     region      : PhysicalMapping<T>,
                                     allocator   : &mut FrameAllocator)
     {
-        unsafe { ::allocator::ALLOCATOR.lock().dealloc(region.region_ptr as *mut u8, region.layout); }
+        unsafe { ::allocator::ALLOCATOR.dealloc(region.region_ptr as *mut Opaque, region.layout); }
         
         // TODO: We should remap this into the correct physical memory in the heap, otherwise we'll
         // page fault when we hit it again!

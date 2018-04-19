@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017, Isaac Woods.
+ * Copyright (C) 2017, Pebble Developers.
  * See LICENCE.md
  */
 
@@ -21,7 +21,8 @@ mod hole;
 use core::mem;
 use core::cmp::max;
 use core::ops::Deref;
-use alloc::allocator::{Alloc,Layout,AllocErr};
+use core::alloc::Opaque;
+use alloc::allocator::{GlobalAlloc,Layout};
 use spin::Mutex;
 use hole::{Hole,HoleList};
 
@@ -62,27 +63,6 @@ impl HoleAllocator
     }
 }
 
-unsafe impl Alloc for HoleAllocator
-{
-    unsafe fn alloc(&mut self, layout : Layout) -> Result<*mut u8,AllocErr>
-    {
-        let size = max(layout.size(), HoleList::get_min_size());
-        let size = align_up(size, mem::align_of::<Hole>());
-        let layout = Layout::from_size_align(size, layout.align()).unwrap();
-
-        self.holes.allocate_first_fit(layout)
-    }
-
-    unsafe fn dealloc(&mut self, ptr : *mut u8, layout : Layout)
-    {
-        let size = max(layout.size(), HoleList::get_min_size());
-        let size = align_up(size, mem::align_of::<Hole>());
-        let layout = Layout::from_size_align(size, layout.align()).unwrap();
-
-        self.holes.deallocate(ptr, layout)
-    }
-}
-
 pub struct LockedHoleAllocator(Mutex<HoleAllocator>);
 
 impl LockedHoleAllocator
@@ -103,16 +83,24 @@ impl Deref for LockedHoleAllocator
     }
 }
 
-unsafe impl<'a> Alloc for &'a LockedHoleAllocator
+unsafe impl GlobalAlloc for LockedHoleAllocator
 {
-    unsafe fn alloc(&mut self, layout : Layout) -> Result<*mut u8,AllocErr>
+    unsafe fn alloc(&self, layout : Layout) -> *mut Opaque
     {
-        self.0.lock().alloc(layout)
+        let size = max(layout.size(), HoleList::get_min_size());
+        let size = align_up(size, mem::align_of::<Hole>());
+        let layout = Layout::from_size_align(size, layout.align()).unwrap();
+
+        self.0.lock().holes.allocate_first_fit(layout).unwrap_or(0x0 as *mut Opaque)
     }
 
-    unsafe fn dealloc(&mut self, ptr : *mut u8, layout : Layout)
+    unsafe fn dealloc(&self, ptr : *mut Opaque, layout : Layout)
     {
-        self.0.lock().dealloc(ptr, layout)
+        let size = max(layout.size(), HoleList::get_min_size());
+        let size = align_up(size, mem::align_of::<Hole>());
+        let layout = Layout::from_size_align(size, layout.align()).unwrap();
+
+        self.0.lock().holes.deallocate(ptr, layout)
     }
 }
 

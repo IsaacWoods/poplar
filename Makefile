@@ -11,11 +11,11 @@ GRUB_MKRESCUE ?= grub2-mkrescue
 .PHONY: kernel rust ramdisk test_asm test_rust clean qemu gdb
 
 #pebble.iso: kernel ramdisk test_asm test_rust grub.cfg
-pebble.iso: kernel ramdisk test_asm grub.cfg
+pebble.iso: kernel ramdisk test_asm kernel/grub.cfg
 	mkdir -p $(BUILD_DIR)/iso/boot/grub
 	cp $(BUILD_DIR)/kernel.bin $(BUILD_DIR)/iso/boot/kernel.bin
 	cp test_asm/test_asm.elf $(BUILD_DIR)/iso/test_asm.elf
-	cp grub.cfg $(BUILD_DIR)/iso/boot/grub/grub.cfg
+	cp kernel/grub.cfg $(BUILD_DIR)/iso/boot/grub/grub.cfg
 	$(GRUB_MKRESCUE) -o $@ $(BUILD_DIR)/iso 2> /dev/null
 
 kernel:

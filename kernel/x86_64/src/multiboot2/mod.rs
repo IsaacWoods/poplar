@@ -94,6 +94,7 @@ impl BootInformation
 
     pub fn memory_map(&self) -> Option<&'static MemoryMapTag>
     {
+        #[allow(cast_ptr_alignment)]
         self.tag(6).map(|tag| unsafe { &*(tag as *const Tag as *const MemoryMapTag) })
     }
 

@@ -1,9 +1,10 @@
 /*
- * Copyright (C) 2017, Isaac Woods.
+ * Copyright (C) 2017, Pebble Developers.
  * See LICENCE.md
  */
 
 use core::mem::{self,size_of};
+use core::alloc::Opaque;
 use alloc::allocator::{Layout,AllocErr};
 use super::align_up;
 
@@ -51,11 +52,9 @@ impl HoleList
         }
     }
 
-    /*
-     * Create a new `HoleList` that contains the given hole. Unsafe because it is undefined
-     * bahaviour if the address passes is invalid or if [hole_addr, hole_addr+size) is used
-     * somewhere.
-     */
+    /// Create a new `HoleList` that contains the given hole. Unsafe because it is undefined
+    /// bahaviour if the address passes is invalid or if [hole_addr, hole_addr+size) is used
+    /// somewhere.
     pub unsafe fn new(hole_addr : usize, hole_size : usize) -> HoleList
     {
         assert!(size_of::<Hole>() == Self::get_min_size());
@@ -77,11 +76,9 @@ impl HoleList
         }
     }
 
-    /*
-     * Search for a big enough hole for the given `Layout` with its required alignment. This uses
-     * the first-fit strategy, and so is O(n)
-     */
-    pub fn allocate_first_fit(&mut self, layout : Layout) -> Result<*mut u8,AllocErr>
+    /// Search for a big enough hole for the given `Layout` with its required alignment. This uses
+    /// the first-fit strategy, and so is O(n)
+    pub fn allocate_first_fit(&mut self, layout : Layout) -> Result<*mut Opaque, AllocErr>
     {
         assert!(layout.size() >= Self::get_min_size());
 
@@ -97,17 +94,15 @@ impl HoleList
                     deallocate(&mut self.first, padding.addr, padding.size);
                 }
 
-                allocation.info.addr as *mut u8
+                allocation.info.addr as *mut Opaque
             })
     }
 
-    /*
-     * Free an allocation defined by `ptr` and `layout`. Unsafe because if `ptr` was not returned
-     * by a call to `allocate_first_fit`, undefined behaviour may occur. Deallocates by walking the
-     * list and inserts the given hole at the correct position. If the freed block is adjacent to
-     * another one, they are merged.
-     */
-    pub unsafe fn deallocate(&mut self, ptr : *mut u8, layout : Layout)
+    /// Free an allocation defined by `ptr` and `layout`. Unsafe because if `ptr` was not returned
+    /// by a call to `allocate_first_fit`, undefined behaviour may occur. Deallocates by walking the
+    /// list and inserts the given hole at the correct position. If the freed block is adjacent to
+    /// another one, they are merged.
+    pub unsafe fn deallocate(&mut self, ptr : *mut Opaque, layout : Layout)
     {
         deallocate(&mut self.first, ptr as usize, layout.size());
     }
@@ -203,7 +198,7 @@ fn split_hole(hole: HoleInfo, required_layout : Layout) -> Option<Allocation>
          })
 }
 
-fn allocate_first_fit(mut previous : &mut Hole, layout : Layout) -> Result<Allocation,AllocErr>
+fn allocate_first_fit(mut previous : &mut Hole, layout : Layout) -> Result<Allocation, AllocErr>
 {
     loop
     {
@@ -231,7 +226,7 @@ fn allocate_first_fit(mut previous : &mut Hole, layout : Layout) -> Result<Alloc
             None =>
             {
                 // This is the last hole, so no hole is big enough for this allocation :(
-                return Err(AllocErr::Exhausted { request : layout });
+                return Err(AllocErr { });
             }
         }
     }
