@@ -102,6 +102,11 @@ unsafe impl GlobalAlloc for LockedHoleAllocator
 
         self.0.lock().holes.deallocate(ptr, layout)
     }
+
+    fn oom(&self) -> !
+    {
+        panic!("Kernel ran out of heap memory!");
+    }
 }
 
 /*
