@@ -1,4 +1,4 @@
-; Copyright (C) 2017, Isaac Woods. 
+; Copyright (C) 2017, Pebble Developers. 
 ; See LICENCE.md
 
 ; GRUB2 expects tags to be aligned on 8-byte boundaries

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017, Isaac Woods.
+ * Copyright (C) 2017, Pebble Developers.
  * See LICENCE.md
  */
 

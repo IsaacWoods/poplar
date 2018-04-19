@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017, Isaac Woods.
+ * Copyright (C) 2017, Pebble Developers.
  * See LICENCE.md
  *
  * This assumes that a byte is 8 bits long. I don't think I'll ever be insane enough to cater for a
