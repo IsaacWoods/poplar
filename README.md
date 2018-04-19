@@ -1,4 +1,5 @@
 # Pebble
+[![Gitter chat](https://badges.gitter.im/gitterHQ/gitter.png)](https://gitter.im/pebble-os/Lobby)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![](https://tokei.rs/b1/github/Aaronepower/tokei)](https://github.com/pebble-os/pebble)
 [![Build Status](https://travis-ci.org/pebble-os/pebble.svg?branch=master)](https://travis-ci.org/pebble-os/pebble)
