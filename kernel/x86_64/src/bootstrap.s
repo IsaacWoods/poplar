@@ -240,7 +240,8 @@ InHigherHalf:
     ; Call into the kernel
     call kstart
 
-    ; TODO: print error message for returning from kernel
+    ; If the kernel returns (it shouldn't), put an error value in RAX and loop
+    mov rax, 0xDEADBABA
     cli
 .loop:
     hlt
@@ -256,5 +257,5 @@ global _kernel_stack_top
 _guard_page:
     resb 4096       ; 1 page
 stack_bottom:
-    resb 16*4096    ; 16 pages = 64kB
+    resb 16*4096    ; 16 pages = 64KiB
 _kernel_stack_top:
