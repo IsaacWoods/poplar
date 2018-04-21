@@ -291,13 +291,6 @@ pub fn remap_kernel(boot_info       : &BootInformation,
             }
 
             /*
-             * Map the framebuffer
-             */
-            mapper.identity_map_range(0xb8000.into()..(0xb8000+0x1000).into(),
-                                      EntryFlags::WRITABLE,
-                                      allocator);
-
-            /*
              * Map the Multiboot structure to KERNEL_VMA + its physical address
              */
             trace!("Mapping Multiboot structure to {:#x}-{:#x}", boot_info.physical_start().in_kernel_space(),
