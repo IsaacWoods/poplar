@@ -16,9 +16,9 @@ use super::paging::{VirtualAddress,Page,PAGE_SIZE};
  * for when we screw it up.
  *
  * The kernel is mapped from -2GB at 0xffffffff8000000 + its physical address. This is located at
- * [P4=511, P3=510, P2=0,P1=0] onwards. Obviously, this means we can't use the last PML4 entry for
+ * [P4=511, P3=510, P2=0, P1=0] onwards. Obviously, this means we can't use the last PML4 entry for
  * recursive mapping, so we instead use the 510th. The lower part of the virtual address space
- * (0x0 - 0xffffffff7fffffff) can be used by user-mode processes and other stuff.
+ * (0x0 - 0xfffffeffffffffff) can be used by userland.
  */
 
 pub const KERNEL_START_P4 : usize = 511;
