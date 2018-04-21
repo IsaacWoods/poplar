@@ -33,7 +33,6 @@
 
                 mod multiboot2;
 #[macro_use]    mod registers;
-#[macro_use]    mod vga_buffer;
 #[macro_use]    mod serial;
                 mod panic;
                 mod memory;
