@@ -78,7 +78,7 @@ impl Mapper
                                 assert!(start_frame.number % (ENTRY_COUNT * ENTRY_COUNT) == 0);
                                 return Some(Frame
                                             {
-                                                number : start_frame.number + page.p2_index() * ENTRY_COUNT + page.p1_index()
+                                                number : start_frame.number + usize::from(page.p2_index()) * ENTRY_COUNT + usize::from(page.p1_index())
                                             });
                             }
                         }
@@ -93,7 +93,7 @@ impl Mapper
                                 {
                                     // address must be 2MiB aligned
                                     assert!(start_frame.number % ENTRY_COUNT == 0);
-                                    return Some(Frame { number : start_frame.number + page.p1_index() });
+                                    return Some(Frame { number : start_frame.number + usize::from(page.p1_index()) });
                                 }
                             }
                         }

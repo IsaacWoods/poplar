@@ -62,7 +62,7 @@ impl<L> Table<L>
 impl<L> Table<L>
     where L : HierarchicalLevel
 {
-    fn next_table_address(&self, index : usize) -> Option<usize>
+    fn next_table_address(&self, index : u16) -> Option<VirtualAddress>
     {
         let entry_flags = self[index].flags();
 
@@ -76,7 +76,7 @@ impl<L> Table<L>
              *      into the old sign-extension, so we make sure to canonicalise it again.
              */
             let table_address = (self as *const _) as usize;
-            Some(VirtualAddress::new((table_address << 9) | (index << 12)).canonicalise().into())
+            Some(VirtualAddress::new((table_address << 9) | (usize::from(index) << 12)).canonicalise())
         }
         else
         {
@@ -84,29 +84,29 @@ impl<L> Table<L>
         }
     }
 
-    pub fn next_table(&self, index : usize) -> Option<&Table<L::NextLevel>>
+    pub fn next_table(&self, index : u16) -> Option<&Table<L::NextLevel>>
     {
-        self.next_table_address(index).map(|address| unsafe { &*(address as *const _) })
+        self.next_table_address(index).map(|address| unsafe { &*address.ptr() })
     }
 
-    pub fn next_table_mut(&mut self, index : usize) -> Option<&mut Table<L::NextLevel>>
+    pub fn next_table_mut(&mut self, index : u16) -> Option<&mut Table<L::NextLevel>>
     {
-        self.next_table_address(index).map(|address| unsafe { &mut *(address as *mut _) })
+        self.next_table_address(index).map(|address| unsafe { &mut *address.mut_ptr() })
     }
 
     pub fn next_table_create(&mut self,
-                            index           : usize,
+                            index           : u16,
                             user_accessible : bool,
                             allocator       : &mut FrameAllocator) -> &mut Table<L::NextLevel>
     {
         if self.next_table(index).is_none()
         {
-            assert!(!self.entries[index].flags().contains(EntryFlags::HUGE_PAGE), "mapping code does not support huge pages");
+            assert!(!self.entries[index as usize].flags().contains(EntryFlags::HUGE_PAGE), "mapping code does not support huge pages");
             let frame = allocator.allocate_frame().expect("no frames available");
 
-            self.entries[index].set(frame, EntryFlags::default() |
-                                           EntryFlags::WRITABLE  |
-                                           if user_accessible { EntryFlags::USER_ACCESSIBLE } else { EntryFlags::empty() });
+            self.entries[index as usize].set(frame, EntryFlags::default() |
+                                                    EntryFlags::WRITABLE  |
+                                                    if user_accessible { EntryFlags::USER_ACCESSIBLE } else { EntryFlags::empty() });
 
             self.next_table_mut(index).unwrap().zero();
         }
@@ -115,22 +115,22 @@ impl<L> Table<L>
     }
 }
 
-impl<L> Index<usize> for Table<L>
+impl<L> Index<u16> for Table<L>
     where L : TableLevel
 {
     type Output = Entry;
 
-    fn index(&self, index : usize) -> &Entry
+    fn index(&self, index : u16) -> &Entry
     {
-        &self.entries[index]
+        &self.entries[index as usize]
     }
 }
 
-impl<L> IndexMut<usize> for Table<L>
+impl<L> IndexMut<u16> for Table<L>
     where L : TableLevel
 {
-    fn index_mut(&mut self, index : usize) -> &mut Entry
+    fn index_mut(&mut self, index : u16) -> &mut Entry
     {
-        &mut self.entries[index]
+        &mut self.entries[index as usize]
     }
 }

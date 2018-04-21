@@ -18,16 +18,16 @@ impl VirtualAddress
         VirtualAddress(address)
     }
 
-    pub const fn from_page_table_offsets(p4     : usize,
-                                         p3     : usize,
-                                         p2     : usize,
-                                         p1     : usize,
+    pub const fn from_page_table_offsets(p4     : u16,
+                                         p3     : u16,
+                                         p2     : u16,
+                                         p1     : u16,
                                          offset : usize) -> VirtualAddress
     {
-        VirtualAddress::new((p4 << 39) |
-                            (p3 << 30) |
-                            (p2 << 21) |
-                            (p1 << 12) |
+        VirtualAddress::new(((p4 as usize) << 39) |
+                            ((p3 as usize) << 30) |
+                            ((p2 as usize) << 21) |
+                            ((p1 as usize) << 12) |
                             (offset << 0)).canonicalise()
     }
 

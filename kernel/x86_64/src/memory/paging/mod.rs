@@ -94,10 +94,10 @@ impl Page
         Page { number : usize::from(address) / PAGE_SIZE }
     }
     
-    fn p4_index(&self) -> usize { (self.number >> 27) & 0o777 }
-    fn p3_index(&self) -> usize { (self.number >> 18) & 0o777 }
-    fn p2_index(&self) -> usize { (self.number >>  9) & 0o777 }
-    fn p1_index(&self) -> usize { (self.number >>  0) & 0o777 }
+    fn p4_index(&self) -> u16 { ((self.number >> 27) & 0o777) as u16 }
+    fn p3_index(&self) -> u16 { ((self.number >> 18) & 0o777) as u16 }
+    fn p2_index(&self) -> u16 { ((self.number >>  9) & 0o777) as u16 }
+    fn p1_index(&self) -> u16 { ((self.number >>  0) & 0o777) as u16 }
 }
 
 pub struct ActivePageTable
