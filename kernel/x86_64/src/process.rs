@@ -276,7 +276,7 @@ impl Process
         // Save the current kernel stack in the TSS
         let rsp : VirtualAddress;
         asm!("" : "={rsp}"(rsp) : : : "intel", "volatile");
-        ::TSS.set_kernel_stack(rsp);
+        ::PLATFORM.tss.set_kernel_stack(rsp);
 
         // Switch to the process's address space
         self.switch_to(memory_controller);

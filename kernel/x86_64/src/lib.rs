@@ -68,6 +68,7 @@ pub struct Platform
 {
     pub memory_controller   : Option<MemoryController>,
     pub gdt_selectors       : Option<GdtSelectors>,
+    pub tss                 : Tss,
 }
 
 impl Platform
@@ -78,6 +79,7 @@ impl Platform
         {
             memory_controller   : None,
             gdt_selectors       : None,
+            tss                 : Tss::new(),
         }
     }
 }
@@ -109,8 +111,6 @@ impl Architecture for Platform
     }
 }
 
-pub static mut TSS : Tss = Tss::new();
-
 #[no_mangle]
 pub extern fn kstart(multiboot_address : PhysicalAddress) -> !
 {
@@ -139,10 +139,10 @@ pub extern fn kstart(multiboot_address : PhysicalAddress) -> !
     let double_fault_stack = unsafe { PLATFORM.memory_controller.as_mut().unwrap().alloc_stack(1).expect("Failed to allocate stack") };
     unsafe
     {
-        TSS.interrupt_stack_table[tss::DOUBLE_FAULT_IST_INDEX] = double_fault_stack.top();
-        TSS.set_kernel_stack(memory::get_kernel_stack_top());
+        PLATFORM.tss.interrupt_stack_table[tss::DOUBLE_FAULT_IST_INDEX] = double_fault_stack.top();
+        PLATFORM.tss.set_kernel_stack(memory::get_kernel_stack_top());
     }
-    let gdt_selectors = Gdt::install(unsafe { &mut TSS });
+    let gdt_selectors = Gdt::install(unsafe { &mut PLATFORM.tss });
     interrupts::init(&gdt_selectors);
     unsafe { PLATFORM.gdt_selectors = Some(gdt_selectors); }
 
