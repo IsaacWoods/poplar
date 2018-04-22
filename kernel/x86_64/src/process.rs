@@ -162,6 +162,9 @@ pub struct Process
 #[derive(Debug)]
 pub struct Thread
 {
+    stack_top           : VirtualAddress,
+    stack_size          : usize,
+
     instruction_pointer : VirtualAddress,
     stack_pointer       : VirtualAddress,
     base_pointer        : VirtualAddress,
@@ -173,6 +176,10 @@ impl Process
                memory_controller    : &mut MemoryController) -> Process
     {
         use ::memory::map::KERNEL_START_P4;
+
+        const STACK_BOTTOM          : VirtualAddress = VirtualAddress::new(0x1000_0000);  // TODO: decide actual address
+        const INITIAL_STACK_SIZE    : usize = 2 * PAGE_SIZE;
+        const STACK_TOP             : VirtualAddress = STACK_BOTTOM.offset((INITIAL_STACK_SIZE - 1) as isize);
 
         let entry_point = image.entry_point;
 
@@ -205,6 +212,7 @@ impl Process
                 mapper.p4[KERNEL_START_P4].set(kernel_p3_frame, EntryFlags::PRESENT |
                                                                 EntryFlags::WRITABLE);
 
+                // Map in each segment from the image
                 for segment in image.segments
                 {
                     info!("Mapping segment starting {:#x} into process address space", segment.address);
@@ -218,6 +226,16 @@ impl Process
                                       segment.flags,
                                       allocator);
                     }
+                }
+
+
+                // Allocate a stack for the main thread
+                for stack_page in Page::range_inclusive(Page::containing_page(STACK_BOTTOM),
+                                                        Page::containing_page(STACK_TOP))
+                {
+                    mapper.map(stack_page,
+                               EntryFlags::PRESENT | EntryFlags::USER_ACCESSIBLE | EntryFlags::WRITABLE,
+                               allocator);
                 }
                 
                 // TODO: Map stuff for the new process
@@ -235,9 +253,12 @@ impl Process
             // threads         : Vec::new(),
             thread          : Thread
                               {
+                                  stack_top             : STACK_TOP,
+                                  stack_size            : INITIAL_STACK_SIZE,
+
                                   instruction_pointer   : entry_point,
-                                  stack_pointer         : 0.into(),
-                                  base_pointer          : 0.into(),
+                                  stack_pointer         : STACK_TOP,
+                                  base_pointer          : STACK_TOP,
                               },
         }
     }

@@ -5,13 +5,18 @@
 section .text
 
 _start:
+    call print_message
+    call print_message
+    mov rax, 0xDEADBEEF
+.loop:
+    jmp .loop
+
+print_message:
     mov rdi, 1
     mov rax, msg
     mov rbx, 20
     int 0x80
-    mov rax, 0xDEADBEEF
-.loop:
-    jmp .loop
+    ret
 
 align 4096
 section .rodata
