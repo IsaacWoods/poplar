@@ -12,7 +12,7 @@
 const MESSAGE : &'static str = "Hello from no-std Rust!";
 
 #[no_mangle]
-pub extern fn _start() -> !
+pub extern "C" fn _start() -> !
 {
     unsafe
     {
