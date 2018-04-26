@@ -18,6 +18,7 @@
 #![cfg_attr(feature = "clippy", plugin(clippy))]
 
 #![allow(identity_op)]
+#![allow(new_without_default)]
 
                 extern crate rlibc;
                 extern crate volatile;
