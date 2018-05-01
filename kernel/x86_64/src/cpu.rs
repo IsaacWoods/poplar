@@ -56,3 +56,8 @@ pub unsafe fn wait_for_interrupt()
     asm!("sti
           hlt");
 }
+
+pub unsafe fn halt()
+{
+    asm!("hlt");
+}
