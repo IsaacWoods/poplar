@@ -3,6 +3,13 @@
  * See LICENCE.md
  */
 
+
+#[lang = "eh_personality"]
+#[no_mangle]
+pub extern "C" fn rust_eh_personality()
+{
+}
+
 #[lang = "panic_fmt"]
 #[no_mangle]
 pub extern fn panic_fmt(fmt     : ::core::fmt::Arguments,
@@ -13,4 +20,17 @@ pub extern fn panic_fmt(fmt     : ::core::fmt::Arguments,
 
     #[allow(empty_loop)]
     loop {}
+}
+
+#[allow(non_snake_case)]
+#[no_mangle]
+pub extern fn _Unwind_Resume()
+{
+    loop
+    {
+        unsafe
+        {
+            cpu::halt();
+        }
+    }
 }

@@ -174,7 +174,9 @@ pub extern fn kstart(multiboot_address : PhysicalAddress) -> !
     kernel::kernel_main(unsafe { &mut PLATFORM });
 }
 
-#[lang = "eh_personality"]
-extern fn eh_personality()
+#[lang = "oom"]
+#[no_mangle]
+pub extern fn rust_oom() -> !
 {
+    panic!("Kernel ran out of heap memory!");
 }
