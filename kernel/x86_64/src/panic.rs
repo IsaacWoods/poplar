@@ -3,6 +3,7 @@
  * See LICENCE.md
  */
 
+use cpu;
 
 #[lang = "eh_personality"]
 #[no_mangle]

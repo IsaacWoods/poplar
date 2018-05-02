@@ -16,17 +16,19 @@ impl PortSize for u8
     unsafe fn port_read(port : u16) -> u8
     {
         let result : u8;
-        asm!("inb %dx, %al" : "={al}"(result)
-                            : "{dx}"(port)
-                            :: "volatile");
+        asm!("in al, dx" : "={al}"(result)
+                         : "{dx}"(port)
+                         :
+                         : "volatile", "intel");
         result
     }
 
     unsafe fn port_write(port : u16, value : u8)
     {
-        asm!("outb %al, %dx" :: "{dx}"(port)
-                              , "{al}"(value)
-                             :: "volatile");
+        asm!("out dx, al" :
+                          : "{dx}"(port), "{al}"(value)
+                          :
+                          : "volatile", "intel");
     }
 }
 
@@ -35,17 +37,19 @@ impl PortSize for u16
     unsafe fn port_read(port : u16) -> u16
     {
         let result : u16;
-        asm!("inw %dx, %ax" : "={ax}"(result)
-                            : "{dx}"(port)
-                            :: "volatile");
+        asm!("in ax, dx" : "={ax}"(result)
+                         : "{dx}"(port)
+                         :
+                         : "volatile", "intel");
         result
     }
 
     unsafe fn port_write(port : u16, value : u16)
     {
-        asm!("outw %ax, %dx" :: "{dx}"(port)
-                              , "{ax}"(value)
-                             :: "volatile");
+        asm!("out dx, ax" :
+                          : "{dx}"(port), "{ax}"(value)
+                          :
+                          : "volatile", "intel");
     }
 }
 
@@ -54,17 +58,19 @@ impl PortSize for u32
     unsafe fn port_read(port : u16) -> u32
     {
         let result : u32;
-        asm!("inl %dx, %eax" : "={eax}"(result)
-                             : "{dx}"(port)
-                             :: "volatile");
+        asm!("in eax, dx" : "={eax}"(result)
+                          : "{dx}"(port)
+                          :
+                          : "volatile", "intel");
         result
     }
 
     unsafe fn port_write(port : u16, value : u32)
     {
-        asm!("outl %eax, %dx" :: "{dx}"(port)
-                               , "{eax}"(value)
-                              :: "volatile");
+        asm!("out dx, eax" :
+                           : "{dx}"(port), "{eax}"(value)
+                           :
+                           : "volatile", "intel");
     }
 }
 
