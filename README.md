@@ -8,7 +8,7 @@ Pebble is an operating system written in Rust, centered around message passing b
 It currently only supports x86_64 and is Multiboot2 compatible.
 
 ## Building
-The microkernel currently builds with nightly `rustc 1.27.0-nightly 2018-04-18`. If it fails to build
+The microkernel currently builds with nightly `rustc 1.27.0-nightly 2018-04-29`. If it fails to build
 for you with a later nightly, please file an issue!
 
 1) Build the custom `rustc` and `libstd` with `cd rust; ./x.py build --target=x86_64-unknown-pebble` (NOT CURRENTLY NEEDED)
