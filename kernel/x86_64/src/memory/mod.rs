@@ -166,6 +166,11 @@ impl Frame
 {
     pub fn containing_frame(address : PhysicalAddress) -> Frame
     {
+        /*
+         * A physical address must be smaller than 2^52 to be valid
+         */
+        debug_assert!(usize::from(address) < 2usize.pow(52), "{:#x} is not a valid physical address", address);
+
         Frame { number : usize::from(address) / FRAME_SIZE }
     }
 
