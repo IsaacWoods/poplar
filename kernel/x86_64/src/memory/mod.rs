@@ -56,13 +56,10 @@ pub fn init(boot_info : &BootInformation) -> MemoryController
     let kernel_end   : VirtualAddress = unsafe { (&_end          as *const u8).into() };
     trace!("Loading kernel to: ({:#x})---({:#x})", kernel_start, kernel_end);
 
-    /*
-     * TODO: are we using the correct addresses for the kernel start&end, this appears iffy?
-     */
     let mut frame_allocator = FrameAllocator::new(boot_info.physical_start(),
                                                   boot_info.physical_end(),
-                                                  usize::from(kernel_start).into(),
-                                                  usize::from(kernel_end).into(),
+                                                  PhysicalAddress::from_kernel_space(kernel_start),
+                                                  PhysicalAddress::from_kernel_space(kernel_end),
                                                   memory_map_tag.memory_areas());
 
     /*

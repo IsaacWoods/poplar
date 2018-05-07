@@ -33,15 +33,20 @@ impl PhysicalAddress
         self.offset_into_frame() == 0
     }
 
-    /*
-     * Map this physical address into a virtual address, assuming that physical memory has been
-     * mapped to KERNEL_VMA+{physical address}. 
-     *
-     * XXX: This is true for a lot of structures, but should not be taken as a given.
-     */
+    /// Map this physical address into the kernel virtual address space, assuming that physical
+    /// address has been mapped to `KERNEL_VMA+{physical address}`. This is true for a lot of
+    /// structures, but absolutely should NOT be taken as given.
     pub const fn in_kernel_space(&self) -> super::VirtualAddress
     {
         super::VirtualAddress::new(self.0 + ::memory::map::KERNEL_VMA.0)
+    }
+
+    /// Map a virtual address in the kernel virtual address space to its physical address, assuming
+    /// that physical memory has been mapped to `KERNEL_VMA+{physical_address}`. This is true for a
+    /// lot of structures, but absolutely should NOT be taken as given.
+    pub const fn from_kernel_space(address : super::VirtualAddress) -> PhysicalAddress
+    {
+        PhysicalAddress(address.0 - ::memory::map::KERNEL_VMA.0)
     }
 }
 
