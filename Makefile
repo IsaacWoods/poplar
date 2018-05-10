@@ -10,11 +10,9 @@ GRUB_MKRESCUE ?= grub2-mkrescue
 
 .PHONY: kernel rust ramdisk test_asm test_rust clean qemu gdb
 
-#pebble.iso: kernel ramdisk test_asm test_rust grub.cfg
-pebble.iso: kernel ramdisk test_asm kernel/grub.cfg
+pebble.iso: kernel ramdisk kernel/grub.cfg
 	mkdir -p $(BUILD_DIR)/iso/boot/grub
 	cp $(BUILD_DIR)/kernel.bin $(BUILD_DIR)/iso/boot/kernel.bin
-	cp test_asm/test_asm.elf $(BUILD_DIR)/iso/test_asm.elf
 	cp kernel/grub.cfg $(BUILD_DIR)/iso/boot/grub/grub.cfg
 	$(GRUB_MKRESCUE) -o $@ $(BUILD_DIR)/iso 2> /dev/null
 
@@ -35,12 +33,12 @@ ramdisk:
 
 test_asm:
 	make -C test_asm test_asm.elf
-	cp test_asm/test_asm.elf $(RAMDISK)/test_process.elf
+	# cp test_asm/test_asm.elf $(RAMDISK)/test_process.elf
 
 test_rust:
 	cd test_rust && \
 	cargo rustc -- -Z pre-link-arg=-nostartfiles && \
-	#cp target/debug/test_rust $(RAMDISK)/test_process.elf && \
+	cp target/x86_64-pebble-nostd/debug/test_rust $(RAMDISK)/test_process.elf && \
 	cd ..
 
 # This does NOT clean the Rust submodule - it takes ages to build and you probably don't want to
