@@ -28,6 +28,9 @@ default-features        = false
 [dependencies.heap_allocator]
 path = "../heap_allocator"
 
+[dependencies.multiboot2]
+path = "../multiboot2"
+
 [dependencies.kernel]
 path = ".."
 

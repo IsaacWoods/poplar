@@ -26,7 +26,7 @@ pub fn get_kernel_stack_top() -> VirtualAddress {
 
 pub fn init(boot_info: &BootInformation) -> MemoryController {
     assert_first_call!("memory::init() should only be called once");
-    let memory_map_tag = boot_info.memory_map().expect("Can't find memory map tag");
+    let memory_map_tag = boot_info.memory_map_tag().expect("Can't find memory map tag");
 
     /*
      */

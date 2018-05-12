@@ -28,13 +28,13 @@ extern crate common;
 extern crate kernel;
 extern crate libmessage;
 extern crate xmas_elf;
+extern crate acpi;
 
 mod multiboot2;
 #[macro_use]
 mod registers;
 #[macro_use]
 mod serial;
-mod acpi;
 mod apic;
 mod cpu;
 mod gdt;
@@ -161,27 +161,26 @@ pub extern "C" fn kstart(multiboot_address: PhysicalAddress) -> ! {
      * We now find and parse the ACPI tables. This also initialises the local APIC and IOAPIC, as
      * they are described by the MADT. We then enable interrupts.
      */
-    let acpi_info = AcpiInfo::new(&boot_info, unsafe {
-        PLATFORM.memory_controller.as_mut().unwrap()
-    }).expect("Failed to parse ACPI tables");
-    interrupts::enable();
+    // let acpi_info = AcpiInfo::new(&boot_info, unsafe { PLATFORM.memory_controller.as_mut().unwrap() }).expect("Failed to parse ACPI tables");
+    // interrupts::enable();
 
-    info!("BSP: {:?}", acpi_info.bootstrap_cpu);
-    for cpu in acpi_info.application_cpus {
-        info!("AP: {:?}", cpu);
-    }
+    // info!("BSP: {:?}", acpi_info.bootstrap_cpu);
+    // for cpu in acpi_info.application_cpus
+    // {
+    //     info!("AP: {:?}", cpu);
+    // }
 
     /*
      * We can now initialise the local APIC timer to interrupt every 10ms. This uses the PIT to
      * determine the frequency the timer is running at, so interrupts must be enabled at this point.
      * We also re-initialise the PIT to tick every 10ms.
      */
-    unsafe {
-        apic::LOCAL_APIC.enable_timer(10);
-    }
-    unsafe {
-        pit::PIT.init(10);
-    }
+    // unsafe {
+    //     apic::LOCAL_APIC.enable_timer(10);
+    // }
+    // unsafe {
+    //     pit::PIT.init(10);
+    // }
 
     /*
      * Finally, we can pass control to the kernel.
