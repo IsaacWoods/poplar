@@ -161,6 +161,8 @@ pub extern "C" fn kstart(multiboot_address: PhysicalAddress) -> ! {
      * We now find and parse the ACPI tables. This also initialises the local APIC and IOAPIC, as
      * they are described by the MADT. We then enable interrupts.
      */
+    let rsdp_tag = boot_info.rsdp_v1_tag().expect("Failed to get RSDP V1 tag");
+    rsdp_tag.validate().expect("Failed to validate RSDP tag");
     // let acpi_info = AcpiInfo::new(&boot_info, unsafe { PLATFORM.memory_controller.as_mut().unwrap() }).expect("Failed to parse ACPI tables");
     // interrupts::enable();
 
