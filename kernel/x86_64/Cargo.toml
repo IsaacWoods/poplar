@@ -31,6 +31,9 @@ path = "../heap_allocator"
 [dependencies.multiboot2]
 path = "../multiboot2"
 
+[dependencies.acpi]
+path = "../acpi"
+
 [dependencies.kernel]
 path = ".."
 

@@ -9,11 +9,14 @@
 #![feature(allocator_api)]
 #![feature(panic_implementation)]
 #![feature(panic_info_message)]
+#![feature(extern_prelude)]
+
 #![cfg_attr(feature = "clippy", feature(plugin))]
 #![cfg_attr(feature = "clippy", plugin(clippy))]
 #![allow(identity_op)]
 #![allow(new_without_default)]
 
+<<<<<<< HEAD
 extern crate alloc;
 extern crate spin;
 extern crate volatile;
@@ -51,16 +54,20 @@ mod tss;
 
 pub use panic::{_Unwind_Resume, panic, rust_eh_personality};
 
-use acpi::AcpiInfo;
 use alloc::boxed::Box;
 use gdt::{Gdt, GdtSelectors};
 use kernel::arch::{Architecture, MemoryAddress, ModuleMapping};
+use memory::MemoryController;
+use memory::paging::PhysicalAddress;
+use kernel::arch::{Architecture,MemoryAddress,ModuleMapping};
 use kernel::node::Node;
 use kernel::process::ProcessMessage;
 use memory::paging::PhysicalAddress;
 use memory::MemoryController;
 use process::{Process, ProcessImage};
 use tss::Tss;
+use acpi_handler::PebbleAcpiHandler;
+use process::{Process,ProcessImage};
 
 pub static mut PLATFORM: Platform = Platform::placeholder();
 
@@ -161,9 +168,12 @@ pub extern "C" fn kstart(multiboot_address: PhysicalAddress) -> ! {
      * We now find and parse the ACPI tables. This also initialises the local APIC and IOAPIC, as
      * they are described by the MADT. We then enable interrupts.
      */
+    // TODO: actually handle both types of tag for systems with ACPI Version 2.0+
     let rsdp_tag = boot_info.rsdp_v1_tag().expect("Failed to get RSDP V1 tag");
     rsdp_tag.validate().expect("Failed to validate RSDP tag");
-    // let acpi_info = AcpiInfo::new(&boot_info, unsafe { PLATFORM.memory_controller.as_mut().unwrap() }).expect("Failed to parse ACPI tables");
+    PebbleAcpiHandler::parse_acpi(unsafe { PLATFORM.memory_controller.as_mut().unwrap() },
+                                  PhysicalAddress::new(rsdp_tag.rsdt_address()),
+                                  rsdp_tag.revision());
     // interrupts::enable();
 
     // info!("BSP: {:?}", acpi_info.bootstrap_cpu);
@@ -185,7 +195,7 @@ pub extern "C" fn kstart(multiboot_address: PhysicalAddress) -> ! {
     // }
 
     /*
-     * Finally, we can pass control to the kernel.
+     * Finally, we pass control to the kernel.
      */
     kernel::kernel_main(unsafe { &mut PLATFORM });
 }
