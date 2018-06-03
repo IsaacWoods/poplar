@@ -23,11 +23,6 @@ clippy                  = {version = "*", optional = true}
 version                 = "*"
 default-features        = false
 
-[dependencies.libpebble]
-path                    = "../../libpebble"
-default-features        = false
-features                = ["kernel"]
-
 [dependencies.hole_tracking_allocator]
 path = "../hole_tracking_allocator"
 

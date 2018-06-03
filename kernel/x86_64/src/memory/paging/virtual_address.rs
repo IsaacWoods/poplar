@@ -4,7 +4,6 @@
  */
 
 use core::fmt;
-use core::alloc::Opaque;
 use core::ops::{Add,Sub};
 use core::cmp::Ordering;
 use super::PAGE_SIZE;

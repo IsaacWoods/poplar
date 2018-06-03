@@ -10,11 +10,6 @@ bitflags                = "*"
 bit_field               = "*"
 clippy                  = {version = "*", optional = true }
 
-[dependencies.libpebble]
-path                    = "../libpebble"
-default-features        = false
-features                = ["kernel"]
-
 [dependencies.num-traits]
 version             = "*"
 default-features    = false
