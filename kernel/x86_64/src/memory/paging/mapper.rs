@@ -29,7 +29,7 @@ pub struct PhysicalMapping<T>
 
     pub start_page  : Page,
     pub end_page    : Page,
-    pub region_ptr  : *mut T,
+    pub region_ptr  : *mut Opaque,
     pub layout      : Layout,
     pub ptr         : *mut T,
     pub size        : usize,
@@ -126,7 +126,7 @@ impl Mapper
         let region_size = usize::from(end_frame.end_address() - start_frame.start_address());
 
         let layout = Layout::from_size_align(region_size, PAGE_SIZE).unwrap();
-        let ptr = unsafe { ::allocator::ALLOCATOR.alloc(layout.clone()) } as *mut T;
+        let ptr = unsafe { ::allocator::ALLOCATOR.alloc(layout) } as *mut T;
         assert!(!ptr.is_null(), "Failed to allocate memory for physical mapping");
         let start_page  = Page::containing_page(VirtualAddress::from(ptr));
         let end_page    = Page::containing_page(VirtualAddress::from(ptr).offset((region_size - 1) as isize));
@@ -147,7 +147,7 @@ impl Mapper
             end,
             start_page,
             end_page,
-            region_ptr  : ptr,
+            region_ptr  : ptr as *mut Opaque,
             layout,
             ptr         : VirtualAddress::from(ptr).offset(usize::from(start - start_frame.start_address()) as isize).mut_ptr(),
             size        : usize::from(end - start),
