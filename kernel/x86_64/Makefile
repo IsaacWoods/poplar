@@ -16,8 +16,8 @@ $(BUILD_DIR)/kernel.bin: $(ASM_OBJS) kernel $(LINKER_SCRIPT)
 	ld $(LFLAGS) -o $@ $(ASM_OBJS) target/$(TARGET)/debug/lib$(ARCH).a
 
 kernel:
-	# RUST_TARGET_PATH="$(shell pwd)" xargo build --target=$(TARGET) --features "clippy"
-	RUST_TARGET_PATH="$(shell pwd)" xargo build --target=$(TARGET)
+	# cargo xbuild --target=$(TARGET).json --features "clippy"
+	cargo xbuild --target=$(TARGET).json
 
 $(BUILD_DIR)/$(ARCH)%.o: src%.s
 	mkdir -p $(shell dirname $@)
@@ -25,5 +25,5 @@ $(BUILD_DIR)/$(ARCH)%.o: src%.s
 
 clean:
 	rm -f $(ASM_OBJS)
-	xargo clean
+	cargo clean
 	rm -f Cargo.lock
