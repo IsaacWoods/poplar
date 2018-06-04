@@ -10,7 +10,6 @@ use idt::Idt;
 use port::Port;
 use apic::{LOCAL_APIC,IO_APIC};
 use kernel::util::BinaryPrettyPrint;
-use libpebble::syscall::SyscallInfo;
 
 /*
  * |------------------|-----------------------------|
@@ -20,8 +19,6 @@ use libpebble::syscall::SyscallInfo;
  * |       20-2F      | i8259 PIC Interrupts        |
  * |       30-47      | IOAPIC Interrupts           |
  * |        48        | Local APIC timer            |
- * |        ..        |                             |
- * |        80        | System calls                |
  * |        ..        |                             |
  * |        FF        | APIC spurious interrupt     |
  * |------------------|-----------------------------|
@@ -36,18 +33,6 @@ pub const APIC_SPURIOUS_INTERRUPT   : u8 = 0xFF;
 #[repr(C)]
 pub struct InterruptStackFrame
 {
-    instruction_pointer : VirtualAddress,
-    code_segment        : u64,
-    cpu_flags           : CpuFlags,
-    stack_pointer       : VirtualAddress,
-    stack_segment       : u64,
-}
-
-#[derive(Clone,Copy,Debug)]
-#[repr(C)]
-pub struct SyscallStackFrame
-{
-    syscall_info        : SyscallInfo,
     instruction_pointer : VirtualAddress,
     code_segment        : u64,
     cpu_flags           : CpuFlags,
@@ -159,62 +144,6 @@ macro_rules! wrap_handler_with_error_code
     }}
 }
 
-macro_rules! wrap_syscall_handler
-{
-    ($name : path) =>
-    {{
-        #[naked]
-        extern "C" fn wrapper() -> !
-        {
-            unsafe
-            {
-                asm!("// Push syscall info
-                      push rsi      // E
-                      push rdx      // D
-                      push rcx      // C
-                      push rbx      // B
-                      push rax      // A
-                      push rdi      // Syscall number
-
-                      // Save usual regs except RAX
-                      push rcx
-                      push rdx
-                      push rsi
-                      push rdi
-                      push r8
-                      push r9
-                      push r10
-                      push r11
-
-                      // Call the handler, which leaves the syscall result in RAX
-                      mov rdi, rsp
-                      add rdi, 0x40
-                      call $0
-
-                      // Restore regs
-                      pop r11
-                      pop r10
-                      pop r9
-                      pop r8
-                      pop rdi
-                      pop rsi
-                      pop rdx
-                      pop rcx
-
-                      // Remove the syscall info and return
-                      add rsp, 0x30
-                      iretq"
-                     :
-                     : "i"($name as extern "C" fn(&SyscallStackFrame))
-                     : "rdi", "rax"
-                     : "intel", "volatile");
-                ::core::intrinsics::unreachable();
-            }
-        }
-        wrapper
-    }}
-}
-
 static mut IDT : Idt = Idt::new();
 
 pub fn init(gdt_selectors : &GdtSelectors)
@@ -257,12 +186,6 @@ pub fn init(gdt_selectors : &GdtSelectors)
          */
         IDT.apic_irq(0).set_handler(wrap_handler!(::pit::pit_handler), gdt_selectors.kernel_code);
         IDT.apic_irq(1).set_handler(wrap_handler!(key_handler), gdt_selectors.kernel_code);
-
-        /*
-         * Install system call handler
-         */
-        IDT[SYSTEM_CALL].set_handler(wrap_syscall_handler!(system_call_handler), gdt_selectors.kernel_code)
-                        .set_privilege_level(PrivilegeLevel::Ring3);
 
         IDT.load();
     }
@@ -361,23 +284,6 @@ extern "C" fn key_handler(_ : &InterruptStackFrame)
 {
     info!("Key interrupt: Scancode={:#x}", unsafe { KEYBOARD_PORT.read() });
     unsafe { LOCAL_APIC.send_eoi(); }
-}
-
-extern "C" fn system_call_handler(stack_frame : &SyscallStackFrame)
-{
-    use ::kernel::syscall::dispatch_syscall;
-
-    unsafe
-    {
-        /*
-         * We return the result of the syscall in RAX
-         */
-        asm!(""
-             :
-             : "{rax}"(dispatch_syscall(&stack_frame.syscall_info) as u64)
-             : "rax"
-             : "intel", "volatile");
-    }
 }
 
 extern "C" fn spurious_handler(_ : &InterruptStackFrame) { }
