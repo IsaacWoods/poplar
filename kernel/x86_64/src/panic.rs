@@ -4,6 +4,8 @@
  */
 
 use cpu;
+use core::intrinsics;
+use core::panic::PanicInfo;
 
 #[lang = "eh_personality"]
 #[no_mangle]
@@ -11,16 +13,26 @@ pub extern "C" fn rust_eh_personality()
 {
 }
 
-#[lang = "panic_fmt"]
+#[panic_implementation]
 #[no_mangle]
-pub extern fn panic_fmt(fmt     : ::core::fmt::Arguments,
-                        file    : &'static str,
-                        line    : u32) -> !
+pub extern fn panic(info: &PanicInfo) -> !
 {
-    error!("PANIC in {} at line {}: \n    {}", file, line, fmt);
+    if let Some(location) = info.location()
+    {
+        error!("PANIC in {} at line {}: \n    {}", location.file(), location.line(), info.message().unwrap());
+    }
+    else
+    {
+        error!("PANIC at ???: \n    {}", info.message().unwrap());
+    }
 
-    #[allow(empty_loop)]
-    loop {}
+    loop
+    {
+        unsafe
+        {
+            cpu::halt();
+        }
+    }
 }
 
 #[allow(non_snake_case)]

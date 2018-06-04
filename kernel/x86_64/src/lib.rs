@@ -13,6 +13,8 @@
 #![feature(alloc)]
 #![feature(type_ascription)]
 #![feature(allocator_api)]
+#![feature(panic_implementation)]
+#![feature(panic_info_message)]
 
 #![cfg_attr(feature = "clippy", feature(plugin))]
 #![cfg_attr(feature = "clippy", plugin(clippy))]
@@ -49,7 +51,7 @@
                 mod acpi;
                 mod process;
 
-pub use panic::panic_fmt;
+pub use panic::panic;
 
 use alloc::boxed::Box;
 use memory::MemoryController;
