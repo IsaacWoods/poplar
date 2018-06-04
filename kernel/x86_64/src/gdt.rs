@@ -3,26 +3,22 @@
  * See LICENCE.md
  */
 
-use core::mem::size_of;
 use bit_field::BitField;
-use ::tss::Tss;
+use core::mem::size_of;
+use tss::Tss;
 
-#[derive(Copy,Clone,PartialEq,Eq)]
+#[derive(Copy, Clone, PartialEq, Eq)]
 #[repr(u8)]
-pub enum PrivilegeLevel
-{
+pub enum PrivilegeLevel {
     Ring0 = 0,
     Ring1 = 1,
     Ring2 = 2,
     Ring3 = 3,
 }
 
-impl From<u8> for PrivilegeLevel
-{
-    fn from(value : u8) -> Self
-    {
-        match value
-        {
+impl From<u8> for PrivilegeLevel {
+    fn from(value: u8) -> Self {
+        match value {
             0 => PrivilegeLevel::Ring0,
             1 => PrivilegeLevel::Ring1,
             2 => PrivilegeLevel::Ring2,
@@ -32,12 +28,9 @@ impl From<u8> for PrivilegeLevel
     }
 }
 
-impl Into<u8> for PrivilegeLevel
-{
-    fn into(self) -> u8
-    {
-        match self
-        {
+impl Into<u8> for PrivilegeLevel {
+    fn into(self) -> u8 {
+        match self {
             PrivilegeLevel::Ring0 => 0,
             PrivilegeLevel::Ring1 => 1,
             PrivilegeLevel::Ring2 => 2,
@@ -46,18 +39,15 @@ impl Into<u8> for PrivilegeLevel
     }
 }
 
-#[derive(Clone,Copy,Debug)]
+#[derive(Clone, Copy, Debug)]
 pub struct SegmentSelector(pub u16);
 
-impl SegmentSelector
-{
-    pub const fn new(index : u16, rpl : PrivilegeLevel) -> SegmentSelector
-    {
+impl SegmentSelector {
+    pub const fn new(index: u16, rpl: PrivilegeLevel) -> SegmentSelector {
         SegmentSelector(index << 3 | (rpl as u16))
     }
 
-    pub fn table_offset(&self) -> u16
-    {
+    pub fn table_offset(&self) -> u16 {
         (self.0 >> 3) * 0x8
     }
 }
@@ -76,83 +66,72 @@ bitflags!
 }
 
 struct UserSegment(u64);
-struct SystemSegment(u64,u64);
+struct SystemSegment(u64, u64);
 
 #[repr(packed)]
-pub struct Gdt
-{
-    _null       : UserSegment,
-    kernel_code : UserSegment,
-    kernel_data : UserSegment,
-    user_code   : UserSegment,
-    user_data   : UserSegment,
-    tss         : SystemSegment,
+pub struct Gdt {
+    _null: UserSegment,
+    kernel_code: UserSegment,
+    kernel_data: UserSegment,
+    user_code: UserSegment,
+    user_data: UserSegment,
+    tss: SystemSegment,
 }
 
-#[derive(Clone,Copy,Debug)]
-pub struct GdtSelectors
-{
-    pub kernel_code : SegmentSelector,
-    pub kernel_data : SegmentSelector,
-    pub user_code   : SegmentSelector,
-    pub user_data   : SegmentSelector,
-    pub tss         : SegmentSelector,
+#[derive(Clone, Copy, Debug)]
+pub struct GdtSelectors {
+    pub kernel_code: SegmentSelector,
+    pub kernel_data: SegmentSelector,
+    pub user_code: SegmentSelector,
+    pub user_data: SegmentSelector,
+    pub tss: SegmentSelector,
 }
 
-static mut GDT : Gdt = Gdt::placeholder();
+static mut GDT: Gdt = Gdt::placeholder();
 
-impl Gdt
-{
-    const fn placeholder() -> Gdt
-    {
-        Gdt
-        {
-            _null       : UserSegment(0),
-            kernel_code : UserSegment(0),
-            kernel_data : UserSegment(0),
-            user_code   : UserSegment(0),
-            user_data   : UserSegment(0),
-            tss         : SystemSegment(0,0),
+impl Gdt {
+    const fn placeholder() -> Gdt {
+        Gdt {
+            _null: UserSegment(0),
+            kernel_code: UserSegment(0),
+            kernel_data: UserSegment(0),
+            user_code: UserSegment(0),
+            user_data: UserSegment(0),
+            tss: SystemSegment(0, 0),
         }
     }
 
-    pub fn install(tss : &'static mut Tss) -> GdtSelectors
-    {
+    pub fn install(tss: &'static mut Tss) -> GdtSelectors {
         assert_first_call!("Tried to install GDT more than once!");
 
-        unsafe
-        {
-            GDT.kernel_code = Gdt::create_code_segment(PrivilegeLevel::Ring0);  // 0x8
-            GDT.kernel_data = Gdt::create_data_segment(PrivilegeLevel::Ring0);  // 0x10
-            GDT.user_code   = Gdt::create_code_segment(PrivilegeLevel::Ring3);  // 0x18
-            GDT.user_data   = Gdt::create_data_segment(PrivilegeLevel::Ring3);  // 0x20
-            GDT.tss         = Gdt::create_tss_segment(tss);                     // 0x28
+        unsafe {
+            GDT.kernel_code = Gdt::create_code_segment(PrivilegeLevel::Ring0); // 0x8
+            GDT.kernel_data = Gdt::create_data_segment(PrivilegeLevel::Ring0); // 0x10
+            GDT.user_code = Gdt::create_code_segment(PrivilegeLevel::Ring3); // 0x18
+            GDT.user_data = Gdt::create_data_segment(PrivilegeLevel::Ring3); // 0x20
+            GDT.tss = Gdt::create_tss_segment(tss); // 0x28
         }
 
-        let selectors = GdtSelectors
-                        {
-                            kernel_code : SegmentSelector::new(1, PrivilegeLevel::Ring0),
-                            kernel_data : SegmentSelector::new(2, PrivilegeLevel::Ring0),
-                            user_code   : SegmentSelector::new(3, PrivilegeLevel::Ring3),
-                            user_data   : SegmentSelector::new(4, PrivilegeLevel::Ring3),
-                            tss         : SegmentSelector::new(5, PrivilegeLevel::Ring3),
-                        };
+        let selectors = GdtSelectors {
+            kernel_code: SegmentSelector::new(1, PrivilegeLevel::Ring0),
+            kernel_data: SegmentSelector::new(2, PrivilegeLevel::Ring0),
+            user_code: SegmentSelector::new(3, PrivilegeLevel::Ring3),
+            user_data: SegmentSelector::new(4, PrivilegeLevel::Ring3),
+            tss: SegmentSelector::new(5, PrivilegeLevel::Ring3),
+        };
 
-        #[repr(C,packed)]
-        struct GdtPointer
-        {
-            limit : u16,    // The maximum addressable byte of the table
-            base  : u64,    // Virtual address of the start of the table
+        #[repr(C, packed)]
+        struct GdtPointer {
+            limit: u16, // The maximum addressable byte of the table
+            base: u64,  // Virtual address of the start of the table
         }
 
-        let ptr = GdtPointer
-                  {
-                      limit : (size_of::<Gdt>() - 1) as u16,
-                      base  : unsafe { &GDT as *const _ as u64 },
-                  };
+        let ptr = GdtPointer {
+            limit: (size_of::<Gdt>() - 1) as u16,
+            base: unsafe { &GDT as *const _ as u64 },
+        };
 
-        unsafe
-        {
+        unsafe {
             // Load the GDT
             asm!("lgdt [$0]"
                  :
@@ -192,27 +171,23 @@ impl Gdt
         selectors
     }
 
-    fn create_code_segment(privilege_level : PrivilegeLevel) -> UserSegment
-    {
-        let flags = DescriptorFlags::USER_SEGMENT   |
-                    DescriptorFlags::PRESENT        |
-                    DescriptorFlags::EXECUTABLE     |
-                    DescriptorFlags::LONG_MODE;
+    fn create_code_segment(privilege_level: PrivilegeLevel) -> UserSegment {
+        let flags = DescriptorFlags::USER_SEGMENT
+            | DescriptorFlags::PRESENT
+            | DescriptorFlags::EXECUTABLE
+            | DescriptorFlags::LONG_MODE;
 
-        UserSegment(flags.bits() | u64::from(privilege_level.into() : u8) << 45)
+        UserSegment(flags.bits() | u64::from(privilege_level.into(): u8) << 45)
     }
 
-    fn create_data_segment(privilege_level : PrivilegeLevel) -> UserSegment
-    {
-        let flags = DescriptorFlags::USER_SEGMENT   |
-                    DescriptorFlags::PRESENT        |
-                    DescriptorFlags::WRITABLE;
+    fn create_data_segment(privilege_level: PrivilegeLevel) -> UserSegment {
+        let flags =
+            DescriptorFlags::USER_SEGMENT | DescriptorFlags::PRESENT | DescriptorFlags::WRITABLE;
 
-        UserSegment(flags.bits() | u64::from(privilege_level.into() : u8) << 45)
+        UserSegment(flags.bits() | u64::from(privilege_level.into(): u8) << 45)
     }
 
-    fn create_tss_segment(tss : &'static Tss) -> SystemSegment
-    {
+    fn create_tss_segment(tss: &'static Tss) -> SystemSegment {
         let ptr = (tss as *const _) as u64;
         let mut low = DescriptorFlags::PRESENT.bits();
 

@@ -3,79 +3,72 @@
  * See LICENCE.md
  */
 
-use core::{mem,ptr};
+use super::{AcpiInfo, SdtHeader};
+use apic::{DeliveryMode, PinPolarity, TriggerMode, IO_APIC, LOCAL_APIC};
 use bit_field::BitField;
-use super::{SdtHeader,AcpiInfo};
-use cpu::{Cpu,CpuState};
+use core::{mem, ptr};
+use cpu::{Cpu, CpuState};
+use memory::paging::{PhysicalAddress, PhysicalMapping, VirtualAddress};
 use memory::MemoryController;
-use memory::paging::{PhysicalAddress,VirtualAddress,PhysicalMapping};
-use apic::{LOCAL_APIC,IO_APIC,DeliveryMode,PinPolarity,TriggerMode};
 
-#[derive(Clone,Copy,Debug)]
+#[derive(Clone, Copy, Debug)]
 #[repr(packed)]
-pub struct MadtHeader
-{
-    pub(super) header   : SdtHeader,
-    local_apic_address  : u32,
-    flags               : u32,
+pub struct MadtHeader {
+    pub(super) header: SdtHeader,
+    local_apic_address: u32,
+    flags: u32,
 }
 
-#[derive(Clone,Copy,Debug)]
+#[derive(Clone, Copy, Debug)]
 #[repr(packed)]
-struct MadtEntryHeader
-{
-    entry_type  : u8,
-    length      : u8,
+struct MadtEntryHeader {
+    entry_type: u8,
+    length: u8,
 }
 
-#[derive(Clone,Copy,Debug)]
+#[derive(Clone, Copy, Debug)]
 #[repr(packed)]
-struct LocalApicEntry
-{
-    header          : MadtEntryHeader,
-    processor_id    : u8,
-    apic_id         : u8,
-    flags           : u32,
+struct LocalApicEntry {
+    header: MadtEntryHeader,
+    processor_id: u8,
+    apic_id: u8,
+    flags: u32,
 }
 
-#[derive(Clone,Copy,Debug)]
+#[derive(Clone, Copy, Debug)]
 #[repr(packed)]
-struct IoApicEntry
-{
-    header                          : MadtEntryHeader,
-    id                              : u8,
-    reserved_1                      : u8,
-    address                         : u32,
-    global_system_interrupt_base    : u32,
+struct IoApicEntry {
+    header: MadtEntryHeader,
+    id: u8,
+    reserved_1: u8,
+    address: u32,
+    global_system_interrupt_base: u32,
 }
 
-#[derive(Clone,Copy,Debug)]
+#[derive(Clone, Copy, Debug)]
 #[repr(packed)]
-struct InterruptSourceOverrideEntry
-{
-    header                  : MadtEntryHeader,
-    bus_source              : u8,
-    irq_source              : u8,
-    global_system_interrupt : u32,
-    flags                   : u16,
+struct InterruptSourceOverrideEntry {
+    header: MadtEntryHeader,
+    bus_source: u8,
+    irq_source: u8,
+    global_system_interrupt: u32,
+    flags: u16,
 }
 
-#[derive(Clone,Copy,Debug)]
+#[derive(Clone, Copy, Debug)]
 #[repr(packed)]
-struct NonMaskableInterruptEntry
-{
-    header          : MadtEntryHeader,
-    processor_id    : u8,
-    flags           : u16,
-    lint            : u8,
+struct NonMaskableInterruptEntry {
+    header: MadtEntryHeader,
+    processor_id: u8,
+    flags: u16,
+    lint: u8,
 }
 
-#[derive(Clone,Copy,Debug)]
+#[derive(Clone, Copy, Debug)]
 #[repr(packed)]
-struct LocalApicAddressOverrideEntry
-{
-    header  : MadtEntryHeader,
-    address : u64,
+struct LocalApicAddressOverrideEntry {
+    header: MadtEntryHeader,
+    address: u64,
 }
 
 /*
@@ -83,19 +76,23 @@ struct LocalApicAddressOverrideEntry
  * while we have all the data from the MADT already mapped. Takes a reference to the platform
  * instead of using the global to enfore as much borrow-checking as we can.
  */
-pub(super) fn parse_madt(mapping            : &PhysicalMapping<MadtHeader>,
-                         acpi_info          : &mut AcpiInfo,
-                         memory_controller  : &mut MemoryController)
-{
+pub(super) fn parse_madt(
+    mapping: &PhysicalMapping<MadtHeader>,
+    acpi_info: &mut AcpiInfo,
+    memory_controller: &mut MemoryController,
+) {
     // Initialise the local APIC
     let local_apic_address = PhysicalAddress::new((*mapping).local_apic_address as usize);
-    unsafe { LOCAL_APIC.enable(local_apic_address, memory_controller); }
+    unsafe {
+        LOCAL_APIC.enable(local_apic_address, memory_controller);
+    }
 
-    let mut entry_address = VirtualAddress::from(mapping.ptr).offset(mem::size_of::<MadtHeader>() as isize);
-    let end_address = VirtualAddress::from(mapping.ptr).offset(((*mapping).header.length - 1) as isize);
+    let mut entry_address =
+        VirtualAddress::from(mapping.ptr).offset(mem::size_of::<MadtHeader>() as isize);
+    let end_address =
+        VirtualAddress::from(mapping.ptr).offset(((*mapping).header.length - 1) as isize);
 
-    while entry_address < end_address
-    {
+    while entry_address < end_address {
         let header = unsafe { ptr::read_unaligned(entry_address.ptr() as *const MadtEntryHeader) };
 
         match header.entry_type

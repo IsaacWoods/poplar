@@ -8,7 +8,7 @@ export RAMDISK ?= $(abspath ./ramdisk)
 RUST_GDB_INSTALL_PATH ?= ~/bin/rust-gdb/bin/
 GRUB_MKRESCUE ?= grub2-mkrescue
 
-.PHONY: kernel rust ramdisk test_asm test_rust clean qemu gdb update
+.PHONY: kernel rust ramdisk test_asm test_rust clean qemu gdb update fmt
 
 pebble.iso: kernel ramdisk kernel/grub.cfg
 	mkdir -p $(BUILD_DIR)/iso/boot/grub
@@ -51,6 +51,13 @@ update:
 	cargo update && \
 	cd x86_64 && \
 	cargo update && \
+	cd ../..
+
+fmt:
+	cd kernel && \
+	cargo fmt && \
+	cd x86_64 && \
+	cargo fmt && \
 	cd ../..
 
 qemu: pebble.iso

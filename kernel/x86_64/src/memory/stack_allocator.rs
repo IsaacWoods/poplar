@@ -3,57 +3,47 @@
  * See LICENCE.md
  */
 
-use super::{PAGE_SIZE,FrameAllocator};
-use super::paging::{self,Page,PageIter,VirtualAddress,ActivePageTable};
+use super::paging::{self, ActivePageTable, Page, PageIter, VirtualAddress};
+use super::{FrameAllocator, PAGE_SIZE};
 
 #[derive(Debug)]
-pub struct Stack
-{
-    top     : VirtualAddress,
-    bottom  : VirtualAddress,
+pub struct Stack {
+    top: VirtualAddress,
+    bottom: VirtualAddress,
 }
 
-impl Stack
-{
-    fn new(top : VirtualAddress, bottom : VirtualAddress) -> Stack
-    {
+impl Stack {
+    fn new(top: VirtualAddress, bottom: VirtualAddress) -> Stack {
         assert!(top > bottom);
-        Stack
-        {
-            top,
-            bottom,
-        }
+        Stack { top, bottom }
     }
 
-    pub fn top(&self) -> VirtualAddress
-    {
+    pub fn top(&self) -> VirtualAddress {
         self.top
     }
 }
 
-pub struct StackAllocator
-{
-    range : PageIter
+pub struct StackAllocator {
+    range: PageIter,
 }
 
-impl StackAllocator
-{
-    pub fn new(space_top : VirtualAddress, space_bottom : VirtualAddress) -> StackAllocator
-    {
-        StackAllocator
-        {
-            range : Page::range_inclusive(Page::containing_page(space_top),
-                                          Page::containing_page(space_bottom)),
+impl StackAllocator {
+    pub fn new(space_top: VirtualAddress, space_bottom: VirtualAddress) -> StackAllocator {
+        StackAllocator {
+            range: Page::range_inclusive(
+                Page::containing_page(space_top),
+                Page::containing_page(space_bottom),
+            ),
         }
     }
 
-    pub fn alloc_stack(&mut self,
-                       active_table     : &mut ActivePageTable,
-                       frame_allocator  : &mut FrameAllocator,
-                       size_in_pages    : usize) -> Option<Stack>
-    {
-        if size_in_pages == 0
-        {
+    pub fn alloc_stack(
+        &mut self,
+        active_table: &mut ActivePageTable,
+        frame_allocator: &mut FrameAllocator,
+        size_in_pages: usize,
+    ) -> Option<Stack> {
+        if size_in_pages == 0 {
             return None;
         }
 
@@ -64,23 +54,17 @@ impl StackAllocator
 
         let guard_page = range.next();
         let stack_start = range.next();
-        let stack_end = if size_in_pages == 1
-                        {
-                            stack_start
-                        }
-                        else
-                        {
-                            range.nth(size_in_pages - 2)
-                        };
+        let stack_end = if size_in_pages == 1 {
+            stack_start
+        } else {
+            range.nth(size_in_pages - 2)
+        };
 
-        match (guard_page,stack_start,stack_end)
-        {
-            (Some(_),Some(start),Some(end)) =>
-            {
+        match (guard_page, stack_start, stack_end) {
+            (Some(_), Some(start), Some(end)) => {
                 self.range = range;
 
-                for page in Page::range_inclusive(start, end)
-                {
+                for page in Page::range_inclusive(start, end) {
                     active_table.map(page, paging::entry::EntryFlags::WRITABLE, frame_allocator);
                 }
 
@@ -88,7 +72,7 @@ impl StackAllocator
                 Some(Stack::new(top_of_stack, start.start_address()))
             }
 
-            _ => None
+            _ => None,
         }
     }
 }
