@@ -1,9 +1,6 @@
-/*
- * Copyright (C) 2017, Pebble Developers.
- * See LICENCE.md
- */
+#![no_std]
 
-pub use self::binary_pretty_print::BinaryPrettyPrint;
+extern crate num_traits;
 
 pub mod binary_pretty_print;
 

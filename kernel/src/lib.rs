@@ -11,19 +11,19 @@
 #![feature(pattern)]
 #![cfg_attr(feature = "clippy", feature(plugin))]
 #![cfg_attr(feature = "clippy", plugin(clippy))]
+#![feature(global_allocator)]
 
 extern crate alloc;
 extern crate bit_field;
 extern crate bitflags;
-extern crate num_traits;
 extern crate spin;
 extern crate volatile;
 #[macro_use]
 extern crate log;
+extern crate heap_allocator as allocator;
 
 pub mod arch;
 pub mod process;
-pub mod util;
 // pub mod fs;
 // pub mod node;
 
@@ -33,6 +33,10 @@ use alloc::{rc::Rc, String};
 // use node::NodeManager;
 use process::ProcessMessage;
 // use fs::{FileManager,ramdisk::Ramdisk};
+use allocator::LockedHoleAllocator;
+
+#[global_allocator]
+pub static ALLOCATOR: LockedHoleAllocator = LockedHoleAllocator::empty();
 
 pub fn kernel_main<A>(architecture: &mut A) -> !
 where

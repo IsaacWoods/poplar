@@ -23,8 +23,11 @@ clippy                  = {version = "*", optional = true}
 version                 = "*"
 default-features        = false
 
-[dependencies.hole_tracking_allocator]
-path = "../hole_tracking_allocator"
+[dependencies.heap_allocator]
+path = "../heap_allocator"
 
 [dependencies.kernel]
 path = ".."
+
+[dependencies.common]
+path = "../common"

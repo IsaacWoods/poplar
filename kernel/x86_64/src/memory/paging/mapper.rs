@@ -117,7 +117,7 @@ impl Mapper {
         let region_size = usize::from(end_frame.end_address() - start_frame.start_address());
 
         let layout = Layout::from_size_align(region_size, PAGE_SIZE).unwrap();
-        let ptr = unsafe { ::allocator::ALLOCATOR.alloc(layout) } as *mut T;
+        let ptr = unsafe { ::kernel::ALLOCATOR.alloc(layout) } as *mut T;
         assert!(
             !ptr.is_null(),
             "Failed to allocate memory for physical mapping"
@@ -152,7 +152,7 @@ impl Mapper {
         allocator: &mut FrameAllocator,
     ) {
         unsafe {
-            ::allocator::ALLOCATOR.dealloc(region.region_ptr as *mut Opaque, region.layout);
+            ::kernel::ALLOCATOR.dealloc(region.region_ptr as *mut Opaque, region.layout);
         }
 
         // TODO: We should remap this into the correct physical memory in the heap, otherwise we'll

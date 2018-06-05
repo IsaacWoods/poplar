@@ -1,7 +1,7 @@
 [package]
-name = "hole_tracking_allocator"
+name = "heap_allocator"
 version = "0.1.0"
-authors = ["Isaac Woods <isaacwoods.home@gmail.com>"]
+authors = ["Isaac Woods <isaac@isaacwoods.tk>"]
 
 [dependencies]
 spin = "*"
@@ -10,5 +10,5 @@ spin = "*"
 version                 = "*"
 default-features        = false
 
-[dependencies.kernel]
-path = ".."
+[dependencies.common]
+path = "../common"

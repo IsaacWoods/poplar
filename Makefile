@@ -58,6 +58,8 @@ fmt:
 	cargo fmt && \
 	cd x86_64 && \
 	cargo fmt && \
+	cd ../heap_allocator && \
+	cargo fmt && \
 	cd ../..
 
 qemu: pebble.iso

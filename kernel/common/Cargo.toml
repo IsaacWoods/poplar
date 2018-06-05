@@ -1,0 +1,10 @@
+[package]
+name = "common"
+version = "0.1.0"
+authors = ["Isaac Woods <isaac@isaacwoods.tk>"]
+
+[dependencies]
+
+[dependencies.num-traits]
+version             = "*"
+default-features    = false

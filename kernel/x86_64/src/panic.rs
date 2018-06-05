@@ -3,7 +3,6 @@
  * See LICENCE.md
  */
 
-use core::intrinsics;
 use core::panic::PanicInfo;
 use cpu;
 

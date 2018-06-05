@@ -1,9 +1,6 @@
 /*
- * Copyright (C) 2017, Pebble Developers.
- * See LICENCE.md
- *
- * This assumes that a byte is 8 bits long. I don't think I'll ever be insane enough to cater for a
- * platform where this isn't true, so I'm gonna call this platform-independent.
+ * NOTE: This assumes that a byte is 8 bits long. I don't think I'll ever be insane enough to cater
+ * for an architecture where this isn't true, so I'm gonna call this platform-independent.
  */
 
 use core::{fmt, mem};

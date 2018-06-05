@@ -10,10 +10,9 @@ bitflags                = "*"
 bit_field               = "*"
 clippy                  = {version = "*", optional = true }
 
-[dependencies.num-traits]
-version             = "*"
-default-features    = false
-
 [dependencies.log]
 version             = "*"
 default-features    = false
+
+[dependencies.heap_allocator]
+path = "heap_allocator"

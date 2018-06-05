@@ -6,7 +6,7 @@
 use apic::{IO_APIC, LOCAL_APIC};
 use gdt::{GdtSelectors, PrivilegeLevel};
 use idt::Idt;
-use kernel::util::BinaryPrettyPrint;
+use common::binary_pretty_print::BinaryPrettyPrint;
 use memory::paging::VirtualAddress;
 use port::Port;
 use registers::CpuFlags;
@@ -26,7 +26,6 @@ use registers::CpuFlags;
 pub const LEGACY_PIC_BASE: u8 = 0x20;
 pub const IOAPIC_BASE: u8 = 0x30;
 pub const LOCAL_APIC_TIMER: u8 = 0x48;
-pub const SYSTEM_CALL: u8 = 0x80;
 pub const APIC_SPURIOUS_INTERRUPT: u8 = 0xFF;
 
 #[derive(Clone, Copy, Debug)]

@@ -26,9 +26,10 @@ extern crate volatile;
 #[macro_use]
 extern crate bitflags;
 extern crate bit_field;
-extern crate hole_tracking_allocator as allocator;
 #[macro_use]
 extern crate log;
+#[macro_use]
+extern crate common;
 #[macro_use]
 extern crate kernel;
 extern crate xmas_elf;
@@ -53,7 +54,7 @@ mod tlb;
 mod tss;
 // mod process;
 
-pub use panic::panic;
+pub use panic::{_Unwind_Resume, panic, rust_eh_personality};
 
 use acpi::AcpiInfo;
 use alloc::boxed::Box;
