@@ -1,0 +1,6 @@
+[package]
+name = "libmessage"
+version = "0.1.0"
+authors = ["Isaac Woods <isaac@isaacwoods.tk>"]
+
+[dependencies]

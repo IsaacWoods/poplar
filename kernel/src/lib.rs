@@ -16,6 +16,7 @@ extern crate volatile;
 #[macro_use]
 extern crate log;
 extern crate heap_allocator as allocator;
+extern crate libmessage;
 
 pub mod arch;
 pub mod process;
