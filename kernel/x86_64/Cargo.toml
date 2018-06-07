@@ -10,8 +10,10 @@ authors = ["Isaac Woods <isaac@isaacwoods.tk>",
 [lib]
 crate-type = ["staticlib"]
 
+[package.metadata.cargo-xbuild]
+memcpy = true
+
 [dependencies]
-rlibc                   = "*"
 bitflags                = "*"
 bit_field               = "*"
 volatile                = "*"

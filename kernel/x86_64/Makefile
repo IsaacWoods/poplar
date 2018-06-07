@@ -1,6 +1,3 @@
-# Copyright (C) 2017, Pebble Developers.
-# See LICENCE.md
-
 LINKER_SCRIPT = linker.ld
 LFLAGS :=-n --gc-sections -T $(LINKER_SCRIPT)
 TARGET := $(ARCH)-pebble-kernel

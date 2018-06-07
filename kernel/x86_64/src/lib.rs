@@ -15,7 +15,6 @@
 #![allow(new_without_default)]
 
 extern crate alloc;
-extern crate rlibc;
 extern crate spin;
 extern crate volatile;
 #[macro_use]
