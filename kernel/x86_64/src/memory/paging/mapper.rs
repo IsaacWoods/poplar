@@ -1,8 +1,3 @@
-/*
- * Copyright (C) 2017, Pebble Developers.
- * See LICENCE.md
- */
-
 use alloc::heap::{GlobalAlloc, Layout};
 use core::alloc::Opaque;
 use core::ops::{Deref, Range};

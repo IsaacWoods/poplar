@@ -1,8 +1,3 @@
-/*
- * Copyright (C) 2018, Pebble Developers.
- * See LICENCE.md
- */
-
 pub mod ramdisk;
 
 use core::any::Any;

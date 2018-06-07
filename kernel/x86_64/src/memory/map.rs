@@ -1,8 +1,3 @@
-/*
- * Copyright (C) 2017, Pebble Developers.
- * See LICENCE.md
- */
-
 use super::paging::{Page, VirtualAddress, PAGE_SIZE};
 
 /*

@@ -1,8 +1,3 @@
-/*
- * Copyright (C) 2017, Pebble Developers.
- * See LICENCE.md
- */
-
 use interrupts::LEGACY_PIC_BASE;
 use port::Port;
 use spin::Mutex;

@@ -1,8 +1,3 @@
-/*
- * Copyright (C) 2017, Pebble Developers.
- * See LICENCE.md
- */
-
 use apic::{IO_APIC, LOCAL_APIC};
 use gdt::{GdtSelectors, PrivilegeLevel};
 use idt::Idt;

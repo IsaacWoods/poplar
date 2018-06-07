@@ -1,8 +1,3 @@
-/*
- * Copyright (C) 2017, Pebble Developers.
- * See LICENCE.md
- */
-
 use memory::paging::entry::EntryFlags;
 use memory::paging::table::{Level1, Table};
 use memory::paging::{ActivePageTable, Page, VirtualAddress};

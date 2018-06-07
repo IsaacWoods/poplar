@@ -1,8 +1,3 @@
-/*
- * Copyright (C) 2018, Pebble Developers.
- * See LICENCE.md
- */
-
 use core::{mem, ptr::NonNull, any::Any};
 use alloc::BTreeMap;
 use acpi::AcpiHandler;

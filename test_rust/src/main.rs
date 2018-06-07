@@ -1,8 +1,3 @@
-/*
- * Copyright (C) 2018, Pebble Developers.
- * See LICENCE.md
- */
-
 #![feature(lang_items)]
 #![feature(asm)]
 

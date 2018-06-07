@@ -1,8 +1,3 @@
-/*
- * Copyright (C) 2017, Pebble Developers.
- * See LICENCE.md
- */
-
 mod frame_allocator;
 pub mod map;
 pub mod paging;
@@ -34,11 +29,11 @@ pub fn init(boot_info: &BootInformation) -> MemoryController {
     let memory_map_tag = boot_info.memory_map().expect("Can't find memory map tag");
 
     /*
-     * These constants are defined by the linker script.
      */
     extern "C" {
         /*
-         * The ADDRESSES of these are the relevant locations.
+         * The ADDRESSES of these are the start of the higher-half part of the kernel, and the end
+         * of it, respectively. The symbols are defined in the linker script.
          */
         static _higher_start: u8;
         static _end: u8;

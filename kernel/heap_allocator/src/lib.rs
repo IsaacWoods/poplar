@@ -1,8 +1,3 @@
-/*
- * Copyright (C) 2017, Pebble Developers.
- * See LICENCE.md
- */
-
 #![no_std]
 #![feature(const_fn)]
 #![feature(alloc)]

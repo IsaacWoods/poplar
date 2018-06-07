@@ -1,6 +1,3 @@
-; Copyright (C) 2017, Pebble Developers.
-; See LICENCE.md
-
 [BITS 64]
 section .text
 

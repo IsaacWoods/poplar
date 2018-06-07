@@ -1,8 +1,3 @@
-/*
- * Copyright (C) 2017, Pebble Developers.
- * See LICENCE.md
- */
-
 use super::memory::VirtualAddress;
 
 pub const DOUBLE_FAULT_IST_INDEX: usize = 0;

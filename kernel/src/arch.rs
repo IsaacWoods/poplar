@@ -1,8 +1,3 @@
-/*
- * Copyright (C) 2017, Pebble Developers.
- * See LICENCE.md
- */
-
 use alloc::boxed::Box;
 // use node::Node;
 use process::ProcessMessage;

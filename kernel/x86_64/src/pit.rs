@@ -1,8 +1,3 @@
-/*
- * Copyright (C) 2018, Pebble Developers.
- * See LICENCE.md
- */
-
 use apic::LOCAL_APIC;
 use bit_field::BitField;
 use cpu;

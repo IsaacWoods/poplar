@@ -1,8 +1,3 @@
-/*
- * Copyright (C) 2017, Pebble Developers.
- * See LICENCE.md
- */
-
 use core::{fmt,ptr};
 use alloc::Vec;
 use xmas_elf::{ElfFile,program::{Type,ProgramHeader}};

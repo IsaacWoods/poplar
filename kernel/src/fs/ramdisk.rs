@@ -1,7 +1,4 @@
 /*
- * Copyright (C) 2018, Pebble Developers.
- * See LICENCE.md
- *
  * We use a TAR archive as a ramdisk. It contains a number of 512-byte headers, one for each file,
  * each followed by the content of that file.
  */

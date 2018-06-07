@@ -1,8 +1,3 @@
-/*
- * Copyright (C) 2018, Pebble Developers.
- * See LICENCE.md
- */
-
 /// The state of a CPU. The bootstrap processor will start in `Running`, while the APs start in
 /// `WaitingForSipi`. Processors marked `Disabled` are disabled (for faulty hardware, for
 /// example)

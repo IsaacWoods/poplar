@@ -1,8 +1,3 @@
-/*
- * Copyright (C) 2017, Pebble Developers.
- * See LICENCE.md
- */
-
 use core::marker::PhantomData;
 use core::ops::{Index, IndexMut};
 use memory::map::P4_TABLE_ADDRESS;

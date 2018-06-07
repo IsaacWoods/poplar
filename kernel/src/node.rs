@@ -1,8 +1,3 @@
-/*
- * Copyright (C) 2018, Pebble Developers.
- * See LICENCE.md
- */
-
 use core::{mem,fmt::Debug};
 use core::any::Any;
 use alloc::{String,Vec,boxed::Box,BTreeMap};

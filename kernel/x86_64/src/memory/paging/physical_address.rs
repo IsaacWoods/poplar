@@ -1,8 +1,3 @@
-/*
- * Copyright (C) 2017, Pebble Developers.
- * See LICENCE.md
- */
-
 use core::cmp::Ordering;
 use core::fmt;
 use core::ops::{Add, Sub};

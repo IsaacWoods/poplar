@@ -1,8 +1,3 @@
-/*
- * Copyright (C) 2017, Pebble Developers.
- * See LICENCE.md
- */
-
 use super::PAGE_SIZE;
 use core::cmp::Ordering;
 use core::fmt;

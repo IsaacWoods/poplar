@@ -1,8 +1,3 @@
-/*
- * Copyright (C) 2017, Pebble Developers.
- * See LICENCE.md
- */
-
 use bit_field::BitField;
 use core::ptr;
 use interrupts::InterruptStackFrame;

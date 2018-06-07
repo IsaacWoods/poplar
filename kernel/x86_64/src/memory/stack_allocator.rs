@@ -1,8 +1,3 @@
-/*
- * Copyright (C) 2017, Pebble Developers.
- * See LICENCE.md
- */
-
 use super::paging::{self, ActivePageTable, Page, PageIter, VirtualAddress};
 use super::{FrameAllocator, PAGE_SIZE};
 

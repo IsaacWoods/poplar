@@ -1,6 +1,3 @@
-# Copyright (C) 2018, Pebble Developers
-# See LICENCE.md
-
 export ARCH ?= x86_64
 export BUILD_DIR ?= $(abspath ./build)
 export RAMDISK ?= $(abspath ./ramdisk)
