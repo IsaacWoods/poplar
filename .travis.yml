@@ -13,6 +13,7 @@ install:
   - sudo apt-get install qemu-system
   - cargo install xargo
   - rustup component add rust-src
+  - cargo install cargo-xbuild
 
 script:
   - GRUB_MKRESCUE=grub-mkrescue make
