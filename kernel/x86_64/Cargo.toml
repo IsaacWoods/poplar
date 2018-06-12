@@ -33,3 +33,7 @@ path = ".."
 
 [dependencies.common]
 path = "../common"
+
+[dependencies.libmessage]
+path = "../../libmessage"
+features = ["kernel"]

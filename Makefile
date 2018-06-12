@@ -7,7 +7,7 @@ GRUB_MKRESCUE ?= grub2-mkrescue
 
 .PHONY: kernel rust ramdisk test_asm test_rust clean qemu gdb update fmt
 
-pebble.iso: kernel ramdisk kernel/grub.cfg
+pebble.iso: kernel ramdisk test_rust kernel/grub.cfg
 	mkdir -p $(BUILD_DIR)/iso/boot/grub
 	cp $(BUILD_DIR)/kernel.bin $(BUILD_DIR)/iso/boot/kernel.bin
 	cp kernel/grub.cfg $(BUILD_DIR)/iso/boot/grub/grub.cfg
@@ -58,6 +58,9 @@ fmt:
 	cd ../heap_allocator && \
 	cargo fmt && \
 	cd ../..
+	cd libmessage && \
+	cargo fmt && \
+	cd ..
 
 qemu: pebble.iso
 	qemu-system-$(ARCH)\

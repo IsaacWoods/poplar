@@ -13,8 +13,7 @@ $(BUILD_DIR)/kernel.bin: $(ASM_OBJS) kernel $(LINKER_SCRIPT)
 	ld $(LFLAGS) -o $@ $(ASM_OBJS) target/$(TARGET)/debug/lib$(ARCH).a
 
 kernel:
-	# cargo xbuild --target=$(TARGET).json --features "clippy"
-	cargo xbuild --target=$(TARGET).json
+	cargo xbuild --target=$(TARGET).json --features "clippy"
 
 $(BUILD_DIR)/$(ARCH)%.o: src%.s
 	mkdir -p $(shell dirname $@)

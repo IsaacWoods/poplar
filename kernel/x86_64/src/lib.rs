@@ -26,6 +26,7 @@ extern crate log;
 extern crate common;
 #[macro_use]
 extern crate kernel;
+extern crate libmessage;
 extern crate xmas_elf;
 
 mod multiboot2;
@@ -44,22 +45,22 @@ mod memory;
 mod panic;
 mod pit;
 mod port;
+mod process;
 mod tlb;
 mod tss;
-// mod process;
 
 pub use panic::{_Unwind_Resume, panic, rust_eh_personality};
 
 use acpi::AcpiInfo;
 use alloc::boxed::Box;
+use gdt::{Gdt, GdtSelectors};
 use kernel::arch::{Architecture, MemoryAddress, ModuleMapping};
+use kernel::node::Node;
+use kernel::process::ProcessMessage;
 use memory::paging::PhysicalAddress;
 use memory::MemoryController;
-// use kernel::node::Node;
-// use kernel::process::ProcessMessage;
-use gdt::{Gdt, GdtSelectors};
+use process::{Process, ProcessImage};
 use tss::Tss;
-// use process::{Process,ProcessImage};
 
 pub static mut PLATFORM: Platform = Platform::placeholder();
 
@@ -94,15 +95,20 @@ impl Architecture for Platform {
             })
     }
 
-    // fn create_process(&mut self,
-    //                   image_start   : MemoryAddress,
-    //                   image_end     : MemoryAddress) -> Box<Node<MessageType=ProcessMessage>>
-    // {
-    //     Box::new(Process::new(ProcessImage::from_elf(PhysicalAddress::new(image_start),
-    //                                                  PhysicalAddress::new(image_end),
-    //                                                  self.memory_controller.as_mut().unwrap()),
-    //                           &mut self.memory_controller.as_mut().unwrap()))
-    // }
+    fn create_process(
+        &mut self,
+        image_start: MemoryAddress,
+        image_end: MemoryAddress,
+    ) -> Box<Node<MessageType = ProcessMessage>> {
+        Box::new(Process::new(
+            ProcessImage::from_elf(
+                PhysicalAddress::new(image_start),
+                PhysicalAddress::new(image_end),
+                self.memory_controller.as_mut().unwrap(),
+            ),
+            &mut self.memory_controller.as_mut().unwrap(),
+        ))
+    }
 }
 
 #[no_mangle]

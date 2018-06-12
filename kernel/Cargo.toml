@@ -19,3 +19,4 @@ path = "heap_allocator"
 
 [dependencies.libmessage]
 path = "../libmessage"
+features = ["kernel"]

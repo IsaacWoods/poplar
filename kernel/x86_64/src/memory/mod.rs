@@ -85,7 +85,9 @@ pub fn init(boot_info: &BootInformation) -> MemoryController {
     }
 
     unsafe {
-        ::kernel::ALLOCATOR.lock().init(HEAP_START.into(), HEAP_SIZE);
+        ::kernel::ALLOCATOR
+            .lock()
+            .init(HEAP_START.into(), HEAP_SIZE);
     }
 
     /*

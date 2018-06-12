@@ -1,7 +1,7 @@
 use apic::{IO_APIC, LOCAL_APIC};
+use common::binary_pretty_print::BinaryPrettyPrint;
 use gdt::{GdtSelectors, PrivilegeLevel};
 use idt::Idt;
-use common::binary_pretty_print::BinaryPrettyPrint;
 use memory::paging::VirtualAddress;
 use port::Port;
 use registers::CpuFlags;
