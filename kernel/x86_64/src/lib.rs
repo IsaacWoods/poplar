@@ -16,7 +16,6 @@
 #![allow(identity_op)]
 #![allow(new_without_default)]
 
-<<<<<<< HEAD
 extern crate alloc;
 extern crate spin;
 extern crate volatile;
@@ -32,8 +31,8 @@ extern crate kernel;
 extern crate libmessage;
 extern crate xmas_elf;
 extern crate acpi;
+extern crate multiboot2;
 
-mod multiboot2;
 #[macro_use]
 mod registers;
 #[macro_use]
@@ -51,6 +50,7 @@ mod port;
 mod process;
 mod tlb;
 mod tss;
+mod acpi_handler;
 
 pub use panic::{_Unwind_Resume, panic, rust_eh_personality};
 
@@ -59,15 +59,11 @@ use gdt::{Gdt, GdtSelectors};
 use kernel::arch::{Architecture, MemoryAddress, ModuleMapping};
 use memory::MemoryController;
 use memory::paging::PhysicalAddress;
-use kernel::arch::{Architecture,MemoryAddress,ModuleMapping};
 use kernel::node::Node;
 use kernel::process::ProcessMessage;
-use memory::paging::PhysicalAddress;
-use memory::MemoryController;
 use process::{Process, ProcessImage};
 use tss::Tss;
 use acpi_handler::PebbleAcpiHandler;
-use process::{Process,ProcessImage};
 
 pub static mut PLATFORM: Platform = Platform::placeholder();
 
@@ -128,10 +124,10 @@ pub extern "C" fn kstart(multiboot_address: PhysicalAddress) -> ! {
     info!("Kernel connected to COM1");
 
     /*
-     * We are passed the *physical* address of the Multiboot struct, so we offset it by the virtual
-     * offset of the whole kernel.
+     * We are passed the *physical* address of the Multiboot struct, so we need to translate it
+     * into the higher half.
      */
-    let boot_info = unsafe { BootInformation::load(multiboot_address) };
+    let boot_info = unsafe { multiboot2::load(usize::from(multiboot_address.in_kernel_space())) };
     unsafe {
         PLATFORM.memory_controller = Some(memory::init(&boot_info));
     }
