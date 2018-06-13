@@ -52,11 +52,11 @@ pub fn init(boot_info: &BootInformation) -> MemoryController {
     );
 
     let mut frame_allocator = FrameAllocator::new(
-        boot_info.physical_start(),
-        boot_info.physical_end(),
+        PhysicalAddress::from_kernel_space(boot_info.start_address().into()),
+        PhysicalAddress::from_kernel_space(boot_info.end_address().into()),
         PhysicalAddress::from_kernel_space(kernel_start),
         PhysicalAddress::from_kernel_space(kernel_end),
-        memory_map_tag.memory_areas(),
+        memory_map_tag.memory_areas()
     );
 
     /*
@@ -94,10 +94,10 @@ pub fn init(boot_info: &BootInformation) -> MemoryController {
      * We can now map each module into the virtual address space
      */
     let mut loaded_modules = BTreeMap::new();
-    for module_tag in boot_info.modules() {
+    for module_tag in boot_info.module_tags() {
         let physical_mapping = active_table.map_physical_region(
-            module_tag.start_address(),
-            module_tag.end_address(),
+            PhysicalAddress::new(module_tag.start_address() as usize),
+            PhysicalAddress::new(module_tag.end_address() as usize),
             EntryFlags::PRESENT,
             &mut frame_allocator,
         );

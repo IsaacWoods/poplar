@@ -248,67 +248,47 @@ pub fn remap_kernel(
          * Map the kernel sections with the correct permissions.
          */
         for section in elf_sections_tag.sections() {
+            let section_start = VirtualAddress::new(section.start_address() as usize);
+            let section_end = VirtualAddress::new(section.end_address() as usize);
+
             /*
              * Skip sections that either aren't to be allocated or are located before the start
              * of the the higher-half (and so are probably part of the bootstrap).
              */
-            for section in elf_sections_tag.sections()
+            if !section.is_allocated() || !section_start.is_in_kernel_space()
             {
-                let section_start = VirtualAddress::new(section.start_address() as usize);
-                let section_end = VirtualAddress::new(section.end_address() as usize);
-
-                /*
-                 * Skip sections that either aren't to be allocated or are located before the start
-                 * of the the higher-half (and so are probably part of the bootstrap).
-                 */
-                if !section.is_allocated() || !section_start.is_in_kernel_space()
-                {
-                    continue;
-                }
-
-                assert!(section_start.is_page_aligned(), "sections must be page aligned");
-                trace!("Allocating section: {} to {:#x}-{:#x}",
-                       // section.name(),
-                       "Potato",        // FIXME: needs changes in `multiboot2`
-                       section_start,
-                       section_end);
-
-                for page in Page::range_inclusive(Page::containing_page(section_start),
-                                                  Page::containing_page(section_end.offset(-1)))
-                {
-                    let physical_address = PhysicalAddress::new(usize::from(page.start_address()) - usize::from(KERNEL_VMA));
-
-                    mapper.map_to(page,
-                                  Frame::containing_frame(physical_address),
-                                  EntryFlags::from_elf_section(&section),
-                                  allocator);
-
-                }
+                continue;
             }
 
-            /*
-             * Map the Multiboot structure to KERNEL_VMA + its physical address
-             */
-            let multiboot_start = VirtualAddress::new(boot_info.start_address());
-            let multiboot_end = VirtualAddress::new(boot_info.end_address());
-            trace!("Mapping Multiboot structure to {:#x}-{:#x}", multiboot_start, multiboot_end);
-            mapper.identity_map_range(PhysicalAddress::from_kernel_space(multiboot_start)..PhysicalAddress::from_kernel_space(multiboot_end),
-                                      EntryFlags::PRESENT,
-                                      allocator);
+            assert!(section_start.is_page_aligned(), "sections must be page aligned");
+            trace!("Allocating section: {} to {:#x}-{:#x}",
+                   // section.name(),
+                   "Potato",        // FIXME: needs changes in `multiboot2`
+                   section_start,
+                   section_end);
+
+            for page in Page::range_inclusive(Page::containing_page(section_start),
+                                              Page::containing_page(section_end.offset(-1)))
+            {
+                let physical_address = PhysicalAddress::new(usize::from(page.start_address()) - usize::from(KERNEL_VMA));
+
+                mapper.map_to(page,
+                              Frame::containing_frame(physical_address),
+                              EntryFlags::from_elf_section(&section),
+                              allocator);
+
+            }
+        }
 
         /*
          * Map the Multiboot structure to KERNEL_VMA + its physical address
          */
-        trace!(
-            "Mapping Multiboot structure to {:#x}-{:#x}",
-            boot_info.physical_start().in_kernel_space(),
-            boot_info.physical_end().in_kernel_space()
-        );
-        mapper.identity_map_range(
-            boot_info.physical_start()..boot_info.physical_end(),
-            EntryFlags::PRESENT,
-            allocator,
-        );
+        let multiboot_start = VirtualAddress::new(boot_info.start_address());
+        let multiboot_end = VirtualAddress::new(boot_info.end_address());
+        trace!("Mapping Multiboot structure to {:#x}-{:#x}", multiboot_start, multiboot_end);
+        mapper.identity_map_range(PhysicalAddress::from_kernel_space(multiboot_start)..PhysicalAddress::from_kernel_space(multiboot_end),
+                                  EntryFlags::PRESENT,
+                                  allocator);
 
         /*
          * Unmap the stack's guard page. This stops us overflowing the stack by causing a page
