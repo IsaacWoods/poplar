@@ -6,7 +6,6 @@
 #![feature(pattern)]
 #![cfg_attr(feature = "clippy", feature(plugin))]
 #![cfg_attr(feature = "clippy", plugin(clippy))]
-#![feature(global_allocator)]
 #![feature(box_syntax)]
 
 extern crate alloc;

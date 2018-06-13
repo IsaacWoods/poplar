@@ -348,10 +348,9 @@ impl Node for Process {
                 info!("Dropping to usermode!");
                 unsafe {
                     self.drop_to_usermode(
-                       PLATFORM.gdt_selectors.as_ref().unwrap(),
-                       PLATFORM.memory_controller.as_mut().unwrap(),
+                        PLATFORM.gdt_selectors.as_ref().unwrap(),
+                        PLATFORM.memory_controller.as_mut().unwrap(),
                     );
-                    unreachable!();
                 }
             }
         }

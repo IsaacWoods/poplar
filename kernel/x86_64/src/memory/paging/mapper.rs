@@ -1,5 +1,4 @@
-use alloc::heap::{GlobalAlloc, Layout};
-use core::alloc::Opaque;
+use core::alloc::{GlobalAlloc, Layout};
 use core::ops::{Deref, Range};
 use memory::paging::entry::EntryFlags;
 use memory::paging::table::{self, Level4, Table};
@@ -22,7 +21,7 @@ pub struct PhysicalMapping<T> {
 
     pub start_page: Page,
     pub end_page: Page,
-    pub region_ptr: *mut Opaque,
+    pub region_ptr: *mut u8,
     pub layout: Layout,
     pub ptr: *mut T,
     pub size: usize,
@@ -132,7 +131,7 @@ impl Mapper {
             end,
             start_page,
             end_page,
-            region_ptr: ptr as *mut Opaque,
+            region_ptr: ptr as *mut u8,
             layout,
             ptr: VirtualAddress::from(ptr)
                 .offset(usize::from(start - start_frame.start_address()) as isize)
@@ -147,7 +146,7 @@ impl Mapper {
         allocator: &mut FrameAllocator,
     ) {
         unsafe {
-            ::kernel::ALLOCATOR.dealloc(region.region_ptr as *mut Opaque, region.layout);
+            ::kernel::ALLOCATOR.dealloc(region.region_ptr, region.layout);
         }
 
         // TODO: We should remap this into the correct physical memory in the heap, otherwise we'll

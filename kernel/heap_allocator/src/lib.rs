@@ -14,7 +14,6 @@ extern crate log;
 mod hole;
 
 use alloc::allocator::{GlobalAlloc, Layout};
-use core::alloc::Opaque;
 use core::cmp::max;
 use core::mem;
 use core::ops::Deref;
@@ -67,7 +66,7 @@ impl Deref for LockedHoleAllocator {
 }
 
 unsafe impl GlobalAlloc for LockedHoleAllocator {
-    unsafe fn alloc(&self, layout: Layout) -> *mut Opaque {
+    unsafe fn alloc(&self, layout: Layout) -> *mut u8 {
         let size = max(layout.size(), HoleList::get_min_size());
         let size = align_up(size, mem::align_of::<Hole>());
         let layout = Layout::from_size_align(size, layout.align()).unwrap();
@@ -76,10 +75,10 @@ unsafe impl GlobalAlloc for LockedHoleAllocator {
             .lock()
             .holes
             .allocate_first_fit(layout)
-            .unwrap_or(0x0 as *mut Opaque)
+            .unwrap_or(0x0 as *mut u8)
     }
 
-    unsafe fn dealloc(&self, ptr: *mut Opaque, layout: Layout) {
+    unsafe fn dealloc(&self, ptr: *mut u8, layout: Layout) {
         let size = max(layout.size(), HoleList::get_min_size());
         let size = align_up(size, mem::align_of::<Hole>());
         let layout = Layout::from_size_align(size, layout.align()).unwrap();

@@ -1,6 +1,5 @@
 use super::align_up;
 use alloc::allocator::{AllocErr, Layout};
-use core::alloc::Opaque;
 use core::mem::{self, size_of};
 
 #[derive(Debug, Clone, Copy)]
@@ -62,7 +61,7 @@ impl HoleList {
 
     /// Search for a big enough hole for the given `Layout` with its required alignment. This uses
     /// the first-fit strategy, and so is O(n)
-    pub fn allocate_first_fit(&mut self, layout: Layout) -> Result<*mut Opaque, AllocErr> {
+    pub fn allocate_first_fit(&mut self, layout: Layout) -> Result<*mut u8, AllocErr> {
         assert!(layout.size() >= Self::get_min_size());
 
         allocate_first_fit(&mut self.first, layout).map(|allocation| {
@@ -74,7 +73,7 @@ impl HoleList {
                 deallocate(&mut self.first, padding.addr, padding.size);
             }
 
-            allocation.info.addr as *mut Opaque
+            allocation.info.addr as *mut u8
         })
     }
 
@@ -82,7 +81,7 @@ impl HoleList {
     /// by a call to `allocate_first_fit`, undefined behaviour may occur. Deallocates by walking the
     /// list and inserts the given hole at the correct position. If the freed block is adjacent to
     /// another one, they are merged.
-    pub unsafe fn deallocate(&mut self, ptr: *mut Opaque, layout: Layout) {
+    pub unsafe fn deallocate(&mut self, ptr: *mut u8, layout: Layout) {
         deallocate(&mut self.first, ptr as usize, layout.size());
     }
 
