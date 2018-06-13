@@ -341,38 +341,19 @@ impl Process {
 impl Node for Process {
     type MessageType = ProcessMessage;
 
-    fn message(&self, sender: NodeId, message: ProcessMessage) -> Result<(), ()> {
-        info!("Process recieved message: {:?}", message);
-        Ok(())
+    fn message(&mut self, sender: NodeId, message: ProcessMessage) -> Result<(), ()> {
+        match message {
+            ProcessMessage::DropToUsermode => {
+                use PLATFORM;
+                info!("Dropping to usermode!");
+                unsafe {
+                    self.drop_to_usermode(
+                       PLATFORM.gdt_selectors.as_ref().unwrap(),
+                       PLATFORM.memory_controller.as_mut().unwrap(),
+                    );
+                    unreachable!();
+                }
+            }
+        }
     }
 }
-
-//impl Node for Process {
-//    type MessageType = ProcessMessage;
-
-//    fn message(&mut self, sender: NodeId, message: ProcessMessage) {
-//        // TODO: what should we do here? We somehow need to signal to the process that it's
-//        // recieved a message, which is gonna be handled in userspace. We could reserve some memory
-//        // as a sort-of queue to put unhandled messages in, and then expect the process to empty it
-//        // as it pleases. What happens when we run out of space in this queue (we could expand it,
-//        // up to a threshold, then terminate the process?) Or just terminate it right away for
-//        // simplicity?
-//        //
-//        // Do we also want to map the process address space for each message, or keep it in a
-//        // kernel-space queue for a while and map it when we do a context switch into that process?
-//        // That seems like a better design.
-//        match message {
-//            ProcessMessage::DropToUsermode => {
-//                use PLATFORM;
-
-//                info!("Dropping to usermode in process!");
-//                unsafe {
-//                    self.drop_to_usermode(
-//                        PLATFORM.gdt_selectors.as_ref().unwrap(),
-//                        PLATFORM.memory_controller.as_mut().unwrap(),
-//                    );
-//                }
-//            }
-//        }
-//    }
-//}

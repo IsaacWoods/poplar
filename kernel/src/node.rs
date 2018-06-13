@@ -6,7 +6,7 @@ use libmessage::{Message, NodeId};
 pub trait Node {
     type MessageType: Message;
 
-    fn message(&self, sender: NodeId, message: Self::MessageType) -> Result<(), ()>;
+    fn message(&mut self, sender: NodeId, message: Self::MessageType) -> Result<(), ()>;
 }
 
 pub struct NodeManager {
@@ -37,11 +37,11 @@ impl NodeManager {
         id
     }
 
-    pub fn get_node<M>(&self, id: NodeId) -> Option<&Box<Node<MessageType = M>>>
+    pub fn get_node<M>(&mut self, id: NodeId) -> Option<&mut Box<Node<MessageType = M>>>
     where
         M: Message,
     {
-        Some(unsafe { downcast_message_type_ref(self.nodes.get(&id)?) })
+        Some(unsafe { downcast_message_type_ref(self.nodes.get_mut(&id)?) })
     }
 }
 
@@ -60,8 +60,8 @@ where
 /// you'll send it the wrong one later. Also unsafe because the conditions of `Any` aren't
 /// enforcable - MessageType must not include non-`'static` references or this may produce UB.
 unsafe fn downcast_message_type_ref<M>(
-    node: &Box<Node<MessageType = Any>>,
-) -> &Box<Node<MessageType = M>>
+    node: &mut Box<Node<MessageType = Any>>,
+) -> &mut Box<Node<MessageType = M>>
 where
     M: ?Sized,
 {
