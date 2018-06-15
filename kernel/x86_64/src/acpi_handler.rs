@@ -1,5 +1,4 @@
-use core::{mem, ptr::NonNull, any::Any};
-use alloc::BTreeMap;
+use core::ptr::NonNull;
 use acpi::AcpiHandler;
 use acpi::PhysicalMapping as AcpiPhysicalMapping;
 use memory::MemoryController;
@@ -25,12 +24,13 @@ impl<'a> PebbleAcpiHandler<'a>
 
         match acpi::parse_rsdt(&mut handler, revision, usize::from(rsdt_address))
         {
-            Ok(()) => { },
+            Ok(()) => { }
 
             Err(err) =>
             {
-                panic!("Failed to do ACPI stuff and things: {:?}", err);
-            },
+                error!("Failed to parse system's ACPI tables: {:?}", err);
+                warn!("Continuing. Some functionality may not work, or the kernel may crash!");
+            }
         }
     }
 }

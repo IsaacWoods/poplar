@@ -116,8 +116,6 @@ impl Architecture for Platform {
 
 #[no_mangle]
 pub extern "C" fn kstart(multiboot_address: PhysicalAddress) -> ! {
-    use multiboot2::BootInformation;
-
     serial::initialise();
     log::set_logger(&serial::SERIAL_LOGGER).unwrap();
     log::set_max_level(log::LevelFilter::Trace);
@@ -166,7 +164,8 @@ pub extern "C" fn kstart(multiboot_address: PhysicalAddress) -> ! {
      */
     // TODO: actually handle both types of tag for systems with ACPI Version 2.0+
     let rsdp_tag = boot_info.rsdp_v1_tag().expect("Failed to get RSDP V1 tag");
-    rsdp_tag.validate().expect("Failed to validate RSDP tag");
+    // TODO: validate the RSDP tag
+    // rsdp_tag.validate().expect("Failed to validate RSDP tag");
     PebbleAcpiHandler::parse_acpi(unsafe { PLATFORM.memory_controller.as_mut().unwrap() },
                                   PhysicalAddress::new(rsdp_tag.rsdt_address()),
                                   rsdp_tag.revision());
