@@ -1,6 +1,6 @@
 use apic::{IO_APIC, LOCAL_APIC};
 use common::binary_pretty_print::BinaryPrettyPrint;
-use gdt::GdtSelectors;
+use gdt::{GdtSelectors, PrivilegeLevel};
 use idt::Idt;
 use memory::paging::VirtualAddress;
 use port::Port;
@@ -15,12 +15,15 @@ use registers::CpuFlags;
  * |       30-47      | IOAPIC Interrupts           |
  * |        48        | Local APIC timer            |
  * |        ..        |                             |
+ * |        80        | Yield from usermode         |
+ * |        ..        |                             |
  * |        FF        | APIC spurious interrupt     |
  * |------------------|-----------------------------|
  */
 pub const LEGACY_PIC_BASE: u8 = 0x20;
 pub const IOAPIC_BASE: u8 = 0x30;
 pub const LOCAL_APIC_TIMER: u8 = 0x48;
+pub const YIELD_FROM_USERMODE: u8 = 0x80;
 pub const APIC_SPURIOUS_INTERRUPT: u8 = 0xFF;
 
 #[derive(Clone, Copy, Debug)]
@@ -188,6 +191,11 @@ pub fn init(gdt_selectors: &GdtSelectors) {
         IDT.apic_irq(1)
             .set_handler(wrap_handler!(key_handler), gdt_selectors.kernel_code);
 
+        /*
+         * Install handler for yielding from usermode.
+         */
+        IDT[YIELD_FROM_USERMODE].set_handler(wrap_handler!(process_yield_handler), gdt_selectors.kernel_code).set_privilege_level(PrivilegeLevel::Ring3);
+
         IDT.load();
     }
 }
@@ -291,6 +299,10 @@ extern "C" fn key_handler(_: &InterruptStackFrame) {
     unsafe {
         LOCAL_APIC.send_eoi();
     }
+}
+
+extern "C" fn process_yield_handler(_: &InterruptStackFrame) {
+    info!("Yield from usermode!");
 }
 
 extern "C" fn spurious_handler(_: &InterruptStackFrame) {}

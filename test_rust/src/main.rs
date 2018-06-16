@@ -8,10 +8,12 @@ use core::panic::PanicInfo;
 #[no_mangle]
 pub extern "C" fn _start() -> ! {
     unsafe {
-        asm!("mov rax, 0xdeadbeef"
+        asm!("mov rax, 0xdeadbeef
+              int 0x80
+              mov rbx, 0xcafebabe"
              :
              :
-             : "rax"
+             : "rax", "rbx"
              : "intel", "volatile");
     }
 
