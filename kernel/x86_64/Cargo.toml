@@ -19,7 +19,6 @@ bit_field               = "*"
 volatile                = "*"
 spin                    = "*"
 xmas-elf                = "*"
-clippy                  = {version = "*", optional = true}
 
 [dependencies.log]
 version                 = "*"

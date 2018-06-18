@@ -30,7 +30,7 @@ ramdisk:
 
 test_rust:
 	cd test_rust && \
-	cargo rustc -- -Z pre-link-arg=-nostartfiles && \
+	cargo xbuild --target=x86_64-pebble-nostd.json && \
 	cp target/x86_64-pebble-nostd/debug/test_rust $(RAMDISK)/test_process.elf && \
 	cd ..
 

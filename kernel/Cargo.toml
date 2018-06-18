@@ -8,7 +8,6 @@ volatile                = "*"
 spin                    = "*"
 bitflags                = "*"
 bit_field               = "*"
-clippy                  = {version = "*", optional = true }
 
 [dependencies.log]
 version             = "*"

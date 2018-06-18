@@ -4,8 +4,6 @@
 #![feature(type_ascription)]
 #![feature(string_retain)]
 #![feature(pattern)]
-#![cfg_attr(feature = "clippy", feature(plugin))]
-#![cfg_attr(feature = "clippy", plugin(clippy))]
 #![feature(box_syntax)]
 
 extern crate alloc;

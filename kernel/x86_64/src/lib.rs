@@ -11,8 +11,6 @@
 #![feature(panic_info_message)]
 #![feature(extern_prelude)]
 
-#![cfg_attr(feature = "clippy", feature(plugin))]
-#![cfg_attr(feature = "clippy", plugin(clippy))]
 #![allow(identity_op)]
 #![allow(new_without_default)]
 
