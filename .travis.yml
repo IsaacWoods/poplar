@@ -3,6 +3,9 @@ sudo: required
 rust:
   - nightly
 
+git:
+  depth: 10
+
 install:
   - sudo apt-get install nasm
   - sudo apt-get install grub2 grub2-common grub-common
