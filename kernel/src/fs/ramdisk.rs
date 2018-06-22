@@ -50,8 +50,7 @@ struct RamdiskFile {
 }
 
 pub struct Ramdisk {
-    start: MemoryAddress,
-    end: MemoryAddress,
+    address: MemoryAddress,
     files: Vec<RamdiskFile>,
 }
 
@@ -60,8 +59,7 @@ impl Ramdisk {
         assert!(mem::size_of::<TarHeader>() == 512);
 
         let mut ramdisk = Ramdisk {
-            start: mapping.virtual_start,
-            end: mapping.virtual_end,
+            address: mapping.virtual_start,
             files: Vec::new(),
         };
 
@@ -71,7 +69,7 @@ impl Ramdisk {
 
     fn parse_headers(&mut self, mapping: &ModuleMapping) {
         unsafe {
-            let mut header_address = self.start;
+            let mut header_address = self.address;
 
             loop {
                 let header_ptr = header_address as *const TarHeader;
@@ -132,20 +130,12 @@ impl Filesystem for Ramdisk {
 
     fn close(&self, _file: &File) {}
 
-    fn read(&self, file: &File) -> Result<Vec<u8>, FileError> {
+    fn read<'a>(&self, file: &'a File) -> Result<&'a [u8], FileError> {
         let file_data = file.data.downcast_ref::<RamdiskFile>().unwrap();
-        Ok(unsafe { slice::from_raw_parts(file_data.pointer, file_data.size) }.to_vec())
+        Ok(unsafe { slice::from_raw_parts(file_data.pointer, file_data.size) })
     }
 
     fn write(&self, _: &File, _: &[u8]) -> Result<(), FileError> {
         Err(FileError::IsReadOnly)
-    }
-
-    fn get_physical_mapping(&self, file: &File) -> Option<(MemoryAddress, MemoryAddress)> {
-        let file_data = file.data.downcast_ref::<RamdiskFile>().unwrap();
-        Some((
-            file_data.physical_address,
-            file_data.physical_address + file_data.size,
-        ))
     }
 }

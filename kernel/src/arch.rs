@@ -1,4 +1,5 @@
 use alloc::boxed::Box;
+use fs::File;
 use node::Node;
 use process::ProcessMessage;
 
@@ -28,9 +29,5 @@ pub trait Architecture {
 
     /// Create a new process. The representation is platform-specific, and so it's just required to
     /// be a node with the correct message type (`ProcessMessage`).
-    fn create_process(
-        &mut self,
-        image_start: MemoryAddress,
-        image_end: MemoryAddress,
-    ) -> Box<Node<MessageType = ProcessMessage>>;
+    fn create_process(&mut self, image: &File) -> Box<Node<MessageType = ProcessMessage>>;
 }

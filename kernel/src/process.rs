@@ -1,6 +1,6 @@
 use alloc::boxed::Box;
 use libmessage::{Message, MessageHeader};
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub enum ProcessMessage {
@@ -9,4 +9,4 @@ pub enum ProcessMessage {
     DropToUsermode,
 }
 
-impl<'a> Message<'a> for ProcessMessage { }
+impl<'a> Message<'a> for ProcessMessage {}

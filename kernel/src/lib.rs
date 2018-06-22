@@ -26,25 +26,21 @@ pub mod process;
 
 pub use arch::Architecture;
 
-use alloc::{rc::Rc, String, boxed::Box};
+use alloc::rc::Rc;
 use allocator::LockedHoleAllocator;
 use fs::{ramdisk::Ramdisk, FileManager};
-use libmessage::{NodeId, MessageHeader, Message, kernel::KernelMessage};
+use libmessage::{kernel::KernelMessage, Message, MessageHeader, NodeId};
 use node::{Node, NodeManager};
 use process::ProcessMessage;
 
 #[global_allocator]
 pub static ALLOCATOR: LockedHoleAllocator = LockedHoleAllocator::empty();
 
-struct KernelNode {
-
-}
+struct KernelNode {}
 
 impl KernelNode {
     fn new() -> KernelNode {
-        KernelNode {
-
-        }
+        KernelNode {}
     }
 }
 
@@ -76,16 +72,11 @@ where
     let test_file = file_manager.open("/ramdisk/test_file").unwrap();
     info!(
         "Test file contents: {}",
-        core::str::from_utf8(&file_manager.read(&test_file).unwrap()).unwrap()
+        core::str::from_utf8(&test_file.read().expect("Failed to read test file")).unwrap()
     );
 
     let test_process_image = file_manager.open("/ramdisk/test_process.elf").unwrap();
-    let (image_start, image_end) = unsafe {
-        file_manager
-            .get_physical_mapping(&test_process_image)
-            .unwrap()
-    };
-    let test_process = architecture.create_process(image_start, image_end);
+    let test_process = architecture.create_process(&test_process_image);
 
     let test_process_id = node_manager.add_node(test_process);
     node_manager

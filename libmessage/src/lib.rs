@@ -7,15 +7,15 @@ extern crate serde;
 #[macro_use]
 extern crate serde_derive;
 
-pub mod serializer;
-pub mod kernel;
 pub mod buffers;
 mod format;
+pub mod kernel;
+pub mod serializer;
 
-use core::fmt::Display;
 use bytes_iter::ByteReader;
+use core::fmt::Display;
 use core::slice;
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
 /// Each node has a unique ID that can be used to identify it. The raw value can be accessed within
 /// the kernel.
@@ -103,7 +103,7 @@ impl<'a> RawMessage<'a> {
 // TODO: should we use SerializeOwned or Serialize<'de> where 'de is the lifetime of the data
 // within the raw message? How long do messages stay in the receive-buffer (until they're dropped,
 // maybe (how can we implement a custom `drop` on all messages tho? (custom derive could do it)))
-pub trait Message<'de>: Serialize + Deserialize<'de> { }
+pub trait Message<'de>: Serialize + Deserialize<'de> {}
 
 pub trait MessageWriter {
     fn write_u8(&mut self, value: u8) -> Result<()>;

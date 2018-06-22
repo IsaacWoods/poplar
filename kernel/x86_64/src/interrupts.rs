@@ -47,7 +47,7 @@ macro_rules! save_regs {
               push r9
               push r10
               push r11"
-                                     :::: "intel", "volatile");
+                                             :::: "intel", "volatile");
     };
 }
 
@@ -62,7 +62,7 @@ macro_rules! restore_regs {
               pop rdx
               pop rcx
               pop rax"
-                                     :::: "intel", "volatile");
+                                             :::: "intel", "volatile");
     };
 }
 
@@ -80,10 +80,10 @@ macro_rules! wrap_handler {
                 asm!("mov rdi, rsp
                       add rdi, 0x48
                       call $0"
-                                 :
-                                 : "i"($name as extern "C" fn(&InterruptStackFrame))
-                                 : "rdi"
-                                 : "intel", "volatile");
+                                     :
+                                     : "i"($name as extern "C" fn(&InterruptStackFrame))
+                                     : "rdi"
+                                     : "intel", "volatile");
                 restore_regs!();
                 asm!("iretq" : : : : "intel", "volatile");
                 ::core::intrinsics::unreachable();
@@ -110,17 +110,17 @@ macro_rules! wrap_handler_with_error_code {
                        sub rsp, 8           // Align the stack pointer
                        call $0
                        add rsp, 8           // Undo the stack alignment"
-                                  :
-                                  : "i"($name as extern "C" fn(&InterruptStackFrame,u64))
-                                  : "rdi","rsi"
-                                  : "intel", "volatile");
+                                      :
+                                      : "i"($name as extern "C" fn(&InterruptStackFrame,u64))
+                                      : "rdi","rsi"
+                                      : "intel", "volatile");
                 restore_regs!();
                 asm!("add rsp, 8   // Pop the error code
                        iretq"
-                                  :
-                                  :
-                                  :
-                                  : "intel", "volatile");
+                                      :
+                                      :
+                                      :
+                                      : "intel", "volatile");
                 ::core::intrinsics::unreachable();
             }
         }
@@ -194,7 +194,12 @@ pub fn init(gdt_selectors: &GdtSelectors) {
         /*
          * Install handler for yielding from usermode.
          */
-        IDT[YIELD_FROM_USERMODE].set_handler(wrap_handler!(process_yield_handler), gdt_selectors.kernel_code).set_privilege_level(PrivilegeLevel::Ring3);
+        IDT[YIELD_FROM_USERMODE]
+            .set_handler(
+                wrap_handler!(process_yield_handler),
+                gdt_selectors.kernel_code,
+            )
+            .set_privilege_level(PrivilegeLevel::Ring3);
 
         IDT.load();
     }

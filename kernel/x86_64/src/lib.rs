@@ -10,7 +10,6 @@
 #![feature(panic_implementation)]
 #![feature(panic_info_message)]
 #![feature(extern_prelude)]
-
 #![allow(identity_op)]
 #![allow(new_without_default)]
 
@@ -24,17 +23,17 @@ extern crate bit_field;
 extern crate log;
 #[macro_use]
 extern crate common;
-#[macro_use]
+extern crate acpi;
 extern crate kernel;
 extern crate libmessage;
-extern crate xmas_elf;
-extern crate acpi;
 extern crate multiboot2;
+extern crate xmas_elf;
 
 #[macro_use]
 mod registers;
 #[macro_use]
 mod serial;
+mod acpi_handler;
 mod apic;
 mod cpu;
 mod gdt;
@@ -48,21 +47,20 @@ mod port;
 mod process;
 mod tlb;
 mod tss;
-mod acpi_handler;
 
 pub use panic::{_Unwind_Resume, panic, rust_eh_personality};
 
+use acpi_handler::PebbleAcpiHandler;
 use alloc::boxed::Box;
 use gdt::{Gdt, GdtSelectors};
 use kernel::arch::{Architecture, MemoryAddress, ModuleMapping};
-use memory::MemoryController;
-use memory::paging::PhysicalAddress;
+use kernel::fs::File;
 use kernel::node::Node;
-use kernel::fs::FileHandle;
 use kernel::process::ProcessMessage;
+use memory::paging::PhysicalAddress;
+use memory::MemoryController;
 use process::{Process, ProcessImage};
 use tss::Tss;
-use acpi_handler::PebbleAcpiHandler;
 
 pub static mut PLATFORM: Platform = Platform::placeholder();
 
@@ -97,17 +95,9 @@ impl Architecture for Platform {
             })
     }
 
-    fn create_process(
-        &mut self,
-        image_start: MemoryAddress,
-        image_end: MemoryAddress,
-    ) -> Box<Node<MessageType = ProcessMessage>> {
+    fn create_process(&mut self, image: &File) -> Box<Node<MessageType = ProcessMessage>> {
         Box::new(Process::new(
-            ProcessImage::from_elf(
-                PhysicalAddress::new(image_start),
-                PhysicalAddress::new(image_end),
-                self.memory_controller.as_mut().unwrap(),
-            ),
+            ProcessImage::from_elf(image, self.memory_controller.as_mut().unwrap()),
             &mut self.memory_controller.as_mut().unwrap(),
         ))
     }
@@ -165,9 +155,11 @@ pub extern "C" fn kstart(multiboot_address: PhysicalAddress) -> ! {
     let rsdp_tag = boot_info.rsdp_v1_tag().expect("Failed to get RSDP V1 tag");
     // TODO: validate the RSDP tag
     // rsdp_tag.validate().expect("Failed to validate RSDP tag");
-    PebbleAcpiHandler::parse_acpi(unsafe { PLATFORM.memory_controller.as_mut().unwrap() },
-                                  PhysicalAddress::new(rsdp_tag.rsdt_address()),
-                                  rsdp_tag.revision());
+    PebbleAcpiHandler::parse_acpi(
+        unsafe { PLATFORM.memory_controller.as_mut().unwrap() },
+        PhysicalAddress::new(rsdp_tag.rsdt_address()),
+        rsdp_tag.revision(),
+    );
     // interrupts::enable();
 
     // info!("BSP: {:?}", acpi_info.bootstrap_cpu);

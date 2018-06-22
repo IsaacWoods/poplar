@@ -4,7 +4,7 @@ use core::mem;
 use libmessage::{Message, NodeId};
 
 pub trait Node {
-    type MessageType: for <'a> Message<'a>;
+    type MessageType: for<'a> Message<'a>;
 
     fn message(&mut self, sender: NodeId, message: Self::MessageType) -> Result<(), ()>;
 }

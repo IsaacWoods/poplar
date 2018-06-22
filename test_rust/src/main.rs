@@ -14,7 +14,7 @@ pub extern "C" fn _start() -> ! {
     let send_buffer = unsafe { SendBuffer::new() };
     let message = KernelMessage::A;
     send_buffer.send(&message).unwrap();
-    unsafe { asm!("int 0x80" :::: "intel", "volatle"); }
+    unsafe { asm!("int 0x80" :::: "intel"); }
 
     loop {}
 }

@@ -1,16 +1,16 @@
 use alloc::{boxed::Box, Vec};
 use core::{fmt, ptr};
 use gdt::GdtSelectors;
+use kernel::fs::File;
 use kernel::node::Node;
 use kernel::process::ProcessMessage;
 use libmessage::{Message, NodeId};
 use memory::paging::{
-    ActivePageTable, EntryFlags, InactivePageTable, Mapper, Page, PhysicalAddress, VirtualAddress,
-    PAGE_SIZE,
+    ActivePageTable, EntryFlags, InactivePageTable, Page, VirtualAddress, PAGE_SIZE,
 };
-use memory::{Frame, FrameAllocator, MemoryController};
+use memory::{Frame, MemoryController};
 use xmas_elf::{
-    program::{ProgramHeader, Type},
+    program::{SegmentData, Type},
     ElfFile,
 };
 
@@ -47,27 +47,10 @@ pub struct ProcessImage {
 }
 
 impl ProcessImage {
-    pub fn from_elf(
-        start: PhysicalAddress,
-        end: PhysicalAddress,
-        memory_controller: &mut MemoryController,
-    ) -> ProcessImage {
-        info!(
-            "Creating process with image between {:#x} and {:#x}",
-            start, end
-        );
-
-        // TODO: now that we're going to copy all of this out, just `read` the elf normally? And
-        // pass a file descriptor or node or whatever?
-        let elf_temp_mapping = memory_controller.kernel_page_table.map_physical_region(
-            start,
-            end,
-            EntryFlags::PRESENT,
-            &mut memory_controller.frame_allocator,
-        );
-        let elf = ElfFile::new(unsafe {
-            ::core::slice::from_raw_parts(elf_temp_mapping.ptr, elf_temp_mapping.size)
-        }).unwrap();
+    pub fn from_elf(image: &File, memory_controller: &mut MemoryController) -> ProcessImage {
+        // TODO: proper error handling
+        let elf =
+            ElfFile::new(image.read().expect("Failed to read image")).expect("Failed to parse ELF");
 
         let mut segments = Vec::new();
         let entry_point = VirtualAddress::new(elf.header.pt2.entry_point() as usize);
@@ -78,9 +61,6 @@ impl ProcessImage {
         for program_header in elf.program_iter() {
             match program_header.get_type().unwrap() {
                 Type::Load => {
-                    info!("Loading LOAD segment for process");
-                    let image_segment_start = VirtualAddress::from(elf_temp_mapping.ptr)
-                        .offset(program_header.offset() as isize);
                     let virtual_address =
                         VirtualAddress::from(program_header.virtual_addr() as usize);
                     let flags = {
@@ -113,13 +93,16 @@ impl ProcessImage {
                             &mut memory_controller.frame_allocator,
                         );
 
-                    // TODO: we should probably manually zero the entire segment if file_size < mem_size
-                    unsafe {
-                        ptr::copy::<u8>(
-                            image_segment_start.ptr(),
-                            segment_temp_mapping.ptr,
-                            program_header.file_size() as usize,
-                        );
+                    // TODO: why doesn't ProgramHeader have a `raw_data` getter? Maybe we could
+                    // upstream one?
+                    if let SegmentData::Undefined(data) = program_header.get_data(&elf).unwrap() {
+                        unsafe {
+                            // TODO: if data.len() < mem_size, we should probably zero the rest of
+                            // the segment
+                            ptr::copy::<u8>(data.as_ptr(), segment_temp_mapping.ptr, data.len());
+                        }
+                    } else {
+                        panic!("xmas-elf should always give us a SegmentData::Undefined for a LOAD segment!");
                     }
 
                     segments.push(ImageSegment {
