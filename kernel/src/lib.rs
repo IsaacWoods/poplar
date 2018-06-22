@@ -15,6 +15,9 @@ extern crate volatile;
 extern crate log;
 extern crate heap_allocator as allocator;
 extern crate libmessage;
+extern crate serde;
+#[macro_use]
+extern crate serde_derive;
 
 pub mod arch;
 pub mod fs;
@@ -23,26 +26,46 @@ pub mod process;
 
 pub use arch::Architecture;
 
-use alloc::{rc::Rc, String};
+use alloc::{rc::Rc, String, boxed::Box};
 use allocator::LockedHoleAllocator;
 use fs::{ramdisk::Ramdisk, FileManager};
-use libmessage::NodeId;
-use node::NodeManager;
+use libmessage::{NodeId, MessageHeader, Message, kernel::KernelMessage};
+use node::{Node, NodeManager};
 use process::ProcessMessage;
 
 #[global_allocator]
 pub static ALLOCATOR: LockedHoleAllocator = LockedHoleAllocator::empty();
+
+struct KernelNode {
+
+}
+
+impl KernelNode {
+    fn new() -> KernelNode {
+        KernelNode {
+
+        }
+    }
+}
+
+impl Node for KernelNode {
+    type MessageType = KernelMessage;
+
+    fn message(&mut self, sender: NodeId, message: KernelMessage) -> Result<(), ()> {
+        unimplemented!();
+    }
+}
 
 pub fn kernel_main<A>(architecture: &mut A) -> !
 where
     A: Architecture,
 {
     trace!("Control passed to kernel crate");
-
     let mut node_manager = NodeManager::new();
-    // TODO: make kernel node
-
     let mut file_manager = FileManager::new();
+
+    // Create the kernel node
+    node_manager.add_node(box KernelNode::new());
 
     // Register ramdisk
     let ramdisk_mapping = architecture

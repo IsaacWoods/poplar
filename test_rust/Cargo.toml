@@ -4,6 +4,7 @@ version = "0.1.0"
 authors = ["Isaac Woods <isaac@isaacwoods.tk>"]
 
 [dependencies]
+libmessage = { path = "../libmessage" }
 
 [profile.dev]
 panic = "abort"

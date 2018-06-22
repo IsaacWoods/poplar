@@ -58,6 +58,7 @@ use kernel::arch::{Architecture, MemoryAddress, ModuleMapping};
 use memory::MemoryController;
 use memory::paging::PhysicalAddress;
 use kernel::node::Node;
+use kernel::fs::FileHandle;
 use kernel::process::ProcessMessage;
 use process::{Process, ProcessImage};
 use tss::Tss;

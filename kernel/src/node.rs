@@ -4,7 +4,7 @@ use core::mem;
 use libmessage::{Message, NodeId};
 
 pub trait Node {
-    type MessageType: Message;
+    type MessageType: for <'a> Message<'a>;
 
     fn message(&mut self, sender: NodeId, message: Self::MessageType) -> Result<(), ()>;
 }
@@ -30,7 +30,7 @@ impl NodeManager {
 
     pub fn add_node<M>(&mut self, node: Box<Node<MessageType = M>>) -> NodeId
     where
-        M: Message,
+        M: for<'a> Message<'a>,
     {
         let id = self.allocate_node_id();
         self.nodes.insert(id, unsafe { upcast_message_type(node) });
@@ -39,7 +39,7 @@ impl NodeManager {
 
     pub fn get_node<M>(&mut self, id: NodeId) -> Option<&mut Box<Node<MessageType = M>>>
     where
-        M: Message,
+        M: for<'a> Message<'a>,
     {
         Some(unsafe { downcast_message_type_ref(self.nodes.get_mut(&id)?) })
     }
