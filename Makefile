@@ -5,13 +5,17 @@ export RAMDISK ?= $(abspath ./ramdisk)
 RUST_GDB_INSTALL_PATH ?= ~/bin/rust-gdb/bin/
 GRUB_MKRESCUE ?= grub2-mkrescue
 
-.PHONY: kernel rust ramdisk test_rust clean qemu gdb update fmt
+.PHONY: prepare kernel rust ramdisk test_rust clean qemu gdb update fmt
 
-pebble.iso: kernel ramdisk test_rust kernel/grub.cfg
-	mkdir -p $(BUILD_DIR)/iso/boot/grub
+pebble.iso: prepare kernel test_rust ramdisk kernel/grub.cfg
 	cp $(BUILD_DIR)/kernel.bin $(BUILD_DIR)/iso/boot/kernel.bin
 	cp kernel/grub.cfg $(BUILD_DIR)/iso/boot/grub/grub.cfg
 	$(GRUB_MKRESCUE) -o $@ $(BUILD_DIR)/iso 2> /dev/null
+
+# This is a general target to prepare the directory structure so all the things exist when we expect them to
+prepare:
+	@mkdir -p $(RAMDISK)
+	@mkdir -p $(BUILD_DIR)/iso/boot/grub
 
 kernel:
 	make -C kernel/$(ARCH) $(BUILD_DIR)/kernel.bin
@@ -21,8 +25,8 @@ rust:
 	python ./x.py build --stage=1 --incremental --target=x86_64-unknown-pebble src/libstd && \
 	cd ..
 
+# This must be depended upon AFTER everything has been put in $(RAMDISK)
 ramdisk:
-	mkdir -p $(RAMDISK) && \
 	cd $(RAMDISK) && \
 	echo "This is a file on the ramdisk" > test_file && \
 	tar -c -f $(BUILD_DIR)/iso/ramdisk.tar * && \
