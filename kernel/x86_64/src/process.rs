@@ -4,7 +4,7 @@ use gdt::GdtSelectors;
 use kernel::fs::File;
 use kernel::node::Node;
 use kernel::process::ProcessMessage;
-use libmessage::{Message, NodeId};
+use libmessage::NodeId;
 use memory::paging::{
     ActivePageTable, EntryFlags, InactivePageTable, Page, VirtualAddress, PAGE_SIZE,
 };
@@ -216,10 +216,15 @@ impl Process {
                 ) {
                     mapper.map(
                         stack_page,
-                        EntryFlags::PRESENT | EntryFlags::USER_ACCESSIBLE | EntryFlags::WRITABLE,
+                        EntryFlags::PRESENT | EntryFlags::USER_ACCESSIBLE | EntryFlags::WRITABLE | EntryFlags::NO_EXECUTE,
                         allocator,
                     );
                 }
+
+                // Allocate and map the Send Buffer
+                mapper.map(Page::containing_page(::libmessage::process::SEND_BUFFER_ADDRESS.into()),
+                           EntryFlags::PRESENT | EntryFlags::USER_ACCESSIBLE | EntryFlags::WRITABLE | EntryFlags::NO_EXECUTE,
+                           allocator);
 
                 // TODO: Map stuff for the new process
                 //          * The ELF sections - makes up the image
@@ -280,6 +285,11 @@ impl Process {
 
         // Switch to the process's address space
         self.switch_to(memory_controller);
+
+        // TEMP: zero the Send Buffer for Isaac's sanity
+        ::core::intrinsics::volatile_set_memory(0xff_0000_0000 as *mut u8,
+                                                0x00,
+                                                4096);
 
         // Jump into ring3
         asm!("cli

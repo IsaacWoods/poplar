@@ -1,6 +1,4 @@
-use alloc::boxed::Box;
-use libmessage::{Message, MessageHeader};
-use serde::{Deserialize, Serialize};
+use libmessage::Message;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub enum ProcessMessage {
