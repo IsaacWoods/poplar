@@ -47,6 +47,7 @@ mod port;
 mod process;
 mod tlb;
 mod tss;
+mod pci;
 
 pub use panic::{_Unwind_Resume, panic, rust_eh_personality};
 
@@ -61,6 +62,7 @@ use memory::paging::PhysicalAddress;
 use memory::MemoryController;
 use process::{Process, ProcessImage};
 use tss::Tss;
+use pci::Pci;
 
 pub static mut PLATFORM: Platform = Platform::placeholder();
 
@@ -179,6 +181,12 @@ pub extern "C" fn kstart(multiboot_address: PhysicalAddress) -> ! {
     // unsafe {
     //     pit::PIT.init(10);
     // }
+
+    /*
+     * Scan for PCI devices
+     */
+    let mut pci = unsafe { Pci::new() };
+    pci.scan_buses();
 
     /*
      * Finally, we pass control to the kernel.
