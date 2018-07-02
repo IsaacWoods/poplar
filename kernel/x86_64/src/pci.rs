@@ -22,13 +22,31 @@ impl Pci {
         }
     }
 
-    // TODO: this should be replaced by a better recursive scanning method
-    pub fn scan_buses(&mut self) {
+    pub fn scan(&mut self) {
         info!("Scanning PCI bus");
-        for bus in 0..=255 {
-            for device in 0..=31 {
-                self.check_device(bus, device);
+        let header_type = self.get_header_type(0, 0, 0);
+
+        if header_type.get_bit(7) {
+            /*
+             * There's multiple PCI host controllers.
+             */
+            for function in 0..8 {
+                if self.get_vendor_id(0, 0, function) != 0xffff {
+                    break;
+                }
+                self.check_bus(function);
             }
+        } else {
+            /*
+             * It's a single PCI host controller.
+             */
+            self.check_bus(0);
+        }
+    }
+
+    fn check_bus(&mut self, bus: u8) {
+        for device in 0..32 {
+            self.check_device(bus, device);
         }
     }
 
@@ -62,6 +80,12 @@ impl Pci {
             (word.get_bits(8..15) as u8, word.get_bits(0..8) as u8)
         };
         info!("Found PCI function with class={:#x}, subclass={:#x}", class, subclass);
+
+        // If the function is a PCI-PCI bridge, we need to scan the bus it connects to
+        if class == 0x06 && subclass == 0x04 {
+            let secondary_bus = self.read_config_word(bus, device, function, 0x18).get_bits(8..16) as u8;
+            self.check_bus(secondary_bus);
+        }
     }
 
     fn get_header_type(&mut self, bus: u8, device: u8, function: u8) -> u8 {

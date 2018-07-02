@@ -186,7 +186,7 @@ pub extern "C" fn kstart(multiboot_address: PhysicalAddress) -> ! {
      * Scan for PCI devices
      */
     let mut pci = unsafe { Pci::new() };
-    pci.scan_buses();
+    pci.scan();
 
     /*
      * Finally, we pass control to the kernel.
