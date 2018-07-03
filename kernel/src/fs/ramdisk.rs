@@ -1,7 +1,5 @@
-/*
- * We use a TAR archive as a ramdisk. It contains a number of 512-byte headers, one for each file,
- * each followed by the content of that file.
- */
+//! We use a TAR archive as a ramdisk. It contains a number of 512-byte headers, one for each file,
+//! each followed by the content of that file.
 
 use super::{File, FileError, Filesystem};
 use alloc::{boxed::Box, rc::Rc, String, Vec};

@@ -42,12 +42,12 @@ mod idt;
 mod interrupts;
 mod memory;
 mod panic;
+mod pci;
 mod pit;
 mod port;
 mod process;
 mod tlb;
 mod tss;
-mod pci;
 
 pub use panic::{_Unwind_Resume, panic, rust_eh_personality};
 
@@ -60,9 +60,9 @@ use kernel::node::Node;
 use kernel::process::ProcessMessage;
 use memory::paging::PhysicalAddress;
 use memory::MemoryController;
+use pci::Pci;
 use process::{Process, ProcessImage};
 use tss::Tss;
-use pci::Pci;
 
 pub static mut PLATFORM: Platform = Platform::placeholder();
 

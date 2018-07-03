@@ -1,13 +1,13 @@
-/// We only support PCI access mechanism 1. Mechanism 2 is only likely to exist in hardware from
-/// 1992-1993, and systems with memory-mapped PCI access will also support mechanism 1 for
-/// backwards compatibility.
-///
-/// In the future, we should add support for memory-mapped access for PCIe. We should also check
-/// the ACPI tables to see if the hardware supports each mechanism - it can be dangerous to probe
-/// IO ports that don't exist.
+//! We only support PCI access mechanism 1. Mechanism 2 is only likely to exist in hardware from
+//! 1992-1993, and systems with memory-mapped PCI access will also support mechanism 1 for
+//! backwards compatibility.
+//!
+//! In the future, we should add support for memory-mapped access for PCIe. We should also check
+//! the ACPI tables to see if the hardware supports each mechanism - it can be dangerous to probe
+//! IO ports that don't exist.
 
-use port::Port;
 use bit_field::BitField;
+use port::Port;
 
 pub struct Pci {
     address_port: Port<u32>,
@@ -28,7 +28,7 @@ impl Pci {
 
         if header_type.get_bit(7) {
             /*
-             * There's multiple PCI host controllers.
+             * There are multiple PCI host controllers.
              */
             for function in 0..8 {
                 if self.get_vendor_id(0, 0, function) != 0xffff {
@@ -100,7 +100,7 @@ impl Pci {
         self.read_config_word(bus, device, function, 0x2)
     }
 
-    fn read_config_word(&mut self, bus: u8, device: u8, function: u8, offset: u8)  -> u16 {
+    fn read_config_word(&mut self, bus: u8, device: u8, function: u8, offset: u8) -> u16 {
         /*
          * |------------|----------|------------|---------------|-----------------|---|---|
          * |     31     |  23-16   |   15-11    |      10-8     |      7-2        | 1 | 0 |
@@ -115,13 +115,15 @@ impl Pci {
          * set the last two bits to 0), then we mask to get the correct word of the register.
          */
         let mut address: u32 = 0;
-        address.set_bit(31, true);  // Set the Enable Bit
+        address.set_bit(31, true); // Set the Enable Bit
         address.set_bits(16..24, bus as u32);
         address.set_bits(11..16, device as u32);
         address.set_bits(8..11, function as u32);
         address.set_bits(0..8, (offset & 0xfc) as u32);
 
-        unsafe { self.address_port.write(address); }
+        unsafe {
+            self.address_port.write(address);
+        }
         (unsafe { self.data_port.read() } >> ((offset & 2) * 8) & 0xffff) as u16
     }
 }

@@ -1,20 +1,15 @@
-use super::paging::{Page, VirtualAddress, PAGE_SIZE};
+//! This defines a whole bunch of constants the define the kernel address space.
+//!
+//! On kernel entry, the page tables that the bootstrap set up are still active. It maps the kernel
+//! into the higher-half at 0xffffffff80000000+{kernel physical base}. In total, it maps one page
+//! directory (P2) of Huge Pages, so maps 1GiB in the range 0xffffffff80000000-0xffffffffc0000000.
+//!
+//! The kernel is mapped from -2GB at 0xffffffff8000000 + its physical address. This is located at
+//! [P4=511, P3=510, P2=0, P1=0] onwards. Obviously, this means we can't use the last PML4 entry for
+//! recursive mapping, so we instead use the 510th. The lower part of the virtual address space
+//! (0x0 - 0xfffffeffffffffff) can be used by userland.
 
-/*
- * On kernel entry, the page tables that the bootstrap set up are still active. It maps the kernel
- * into the higher-half at 0xffffffff80000000+{kernel physical base}. In total, it maps one page
- * directory (P2) of Huge Pages, so maps 1GiB in the range 0xffffffff80000000-0xffffffffc0000000.
- *
- * --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- ---
- *
- * These are all the constants used to define the memory mapping, so we can see it all in one go
- * for when we screw it up.
- *
- * The kernel is mapped from -2GB at 0xffffffff8000000 + its physical address. This is located at
- * [P4=511, P3=510, P2=0, P1=0] onwards. Obviously, this means we can't use the last PML4 entry for
- * recursive mapping, so we instead use the 510th. The lower part of the virtual address space
- * (0x0 - 0xfffffeffffffffff) can be used by userland.
- */
+use super::paging::{Page, VirtualAddress, PAGE_SIZE};
 
 pub const KERNEL_START_P4: u16 = 511;
 pub const KERNEL_START_P3: u16 = 510;

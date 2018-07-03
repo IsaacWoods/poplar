@@ -6,9 +6,9 @@ extern crate serde;
 #[macro_use]
 extern crate serde_derive;
 
-pub mod process;
 mod format;
 pub mod kernel;
+pub mod process;
 pub mod serializer;
 
 use core::fmt::Display;
