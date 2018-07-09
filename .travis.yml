@@ -20,3 +20,9 @@ script:
 
 notifications:
   email: false
+  irc:
+    channels:
+      - "chat.freenode.net#pebble-os"
+    on_sucess: change
+    on_failure: always
+    skip_join: true
