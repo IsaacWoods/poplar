@@ -9,7 +9,7 @@ pub use self::paging::{entry::EntryFlags, Page, PhysicalAddress, PhysicalMapping
 use self::map::{HEAP_SIZE, HEAP_START};
 use self::paging::PAGE_SIZE;
 use self::stack_allocator::{Stack, StackAllocator};
-use alloc::BTreeMap;
+use alloc::collections::BTreeMap;
 use core::ops::Add;
 use multiboot2::BootInformation;
 

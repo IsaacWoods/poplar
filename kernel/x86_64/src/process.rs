@@ -1,4 +1,4 @@
-use alloc::{boxed::Box, Vec};
+use alloc::{boxed::Box, vec::Vec};
 use core::{fmt, ptr};
 use gdt::GdtSelectors;
 use kernel::fs::File;

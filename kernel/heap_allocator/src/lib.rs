@@ -13,7 +13,7 @@ extern crate log;
 
 mod hole;
 
-use alloc::allocator::{GlobalAlloc, Layout};
+use core::alloc::{GlobalAlloc, Layout};
 use core::cmp::max;
 use core::mem;
 use core::ops::Deref;

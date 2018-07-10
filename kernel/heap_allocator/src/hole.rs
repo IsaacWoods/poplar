@@ -1,5 +1,5 @@
 use super::align_up;
-use alloc::allocator::{AllocErr, Layout};
+use core::alloc::{AllocErr, Layout};
 use core::mem::{self, size_of};
 
 #[derive(Debug, Clone, Copy)]

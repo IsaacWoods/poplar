@@ -8,16 +8,7 @@ pub extern "C" fn rust_eh_personality() {}
 #[panic_implementation]
 #[no_mangle]
 pub extern "C" fn panic(info: &PanicInfo) -> ! {
-    if let Some(location) = info.location() {
-        error!(
-            "PANIC in {} at line {}: \n    {}",
-            location.file(),
-            location.line(),
-            info.message().unwrap()
-        );
-    } else {
-        error!("PANIC at ???: \n    {}", info.message().unwrap());
-    }
+    error!("KERNEL PANIC: {}", info);
 
     loop {
         unsafe {

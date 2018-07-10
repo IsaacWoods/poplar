@@ -2,7 +2,7 @@
 //! each followed by the content of that file.
 
 use super::{File, FileError, Filesystem};
-use alloc::{boxed::Box, rc::Rc, String, Vec};
+use alloc::{boxed::Box, rc::Rc, string::String, vec::Vec};
 use arch::{MemoryAddress, ModuleMapping};
 use core::{mem, slice, str};
 

@@ -1,4 +1,4 @@
-use alloc::{boxed::Box, BTreeMap};
+use alloc::{boxed::Box, collections::BTreeMap};
 use core::any::Any;
 use core::mem;
 use libmessage::{Message, NodeId};
