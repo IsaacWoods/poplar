@@ -4,25 +4,22 @@ rust:
   - nightly
 
 git:
-  depth: 10
+  depth: 5
 
 install:
   - sudo apt-get install nasm
   - sudo apt-get install grub2 grub2-common grub-common
   - sudo apt-get install xorriso
-  - sudo apt-get install qemu-system
   - rustup component add rust-src
   - cargo install cargo-xbuild
 
 script:
   - GRUB_MKRESCUE=grub-mkrescue make
-  # - qemu-system-x86_64 -vga=-nographic -smp 2 -usb -device usb-ehci,id=ehci --no-reboot -cdrom pebble.iso
 
 notifications:
   email: false
   irc:
     channels:
       - "chat.freenode.net#pebble-os"
-    on_sucess: change
+    on_success: change
     on_failure: always
-    skip_join: true
