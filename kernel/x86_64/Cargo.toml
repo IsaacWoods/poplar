@@ -1,5 +1,3 @@
-[workspace]
-
 [package]
 name = "x86_64"
 version = "0.0.1"

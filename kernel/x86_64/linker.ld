@@ -37,13 +37,13 @@ SECTIONS
 
     .rodata : AT(ADDR(.rodata) - KERNEL_VMA)
     {
-        *(EXCLUDE_FILE(bootstrap.o) .rodata .rodata.*)
+        *(.rodata .rodata.*)
         . = ALIGN(4K);
     }
 
     .text : AT(ADDR(.text) - KERNEL_VMA)
     {
-        *(EXCLUDE_FILE(bootstrap.o) .text .text.*)
+        *(.text .text.*)
         . = ALIGN(4K);
     }
 
@@ -55,7 +55,7 @@ SECTIONS
 
     .bss : AT(ADDR(.bss) - KERNEL_VMA)
     {
-        *(EXCLUDE_FILE(bootstrap.o) .bss .bss.*)
+        *(.bss .bss.*)
         . = ALIGN(4K);
     }
 
@@ -79,12 +79,12 @@ SECTIONS
     }
 
     _end = .;
-/*
+
     /DISCARD/ :
     {
         *(.comment*)
         *(.gcc_except_table*)
         *(.eh_frame*)
         *(.note*)
-    }*/
+    }
 }

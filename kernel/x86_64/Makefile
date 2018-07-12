@@ -10,7 +10,7 @@ ASM_OBJS:=$(patsubst src/%.s, $(BUILD_DIR)/$(ARCH)/%.o, $(ASM_SOURCES))
 
 $(BUILD_DIR)/kernel.bin: $(ASM_OBJS) kernel $(LINKER_SCRIPT)
 	mkdir -p $(BUILD_DIR)/iso/boot/grub
-	ld $(LFLAGS) -o $@ $(ASM_OBJS) target/$(TARGET)/debug/lib$(ARCH).a
+	ld $(LFLAGS) -o $@ $(ASM_OBJS) ../target/$(TARGET)/debug/lib$(ARCH).a
 
 kernel:
 	cargo xbuild --target=$(TARGET).json

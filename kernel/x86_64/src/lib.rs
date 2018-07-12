@@ -10,6 +10,7 @@
 #![feature(panic_implementation)]
 #![feature(panic_info_message)]
 #![feature(extern_prelude)]
+#![feature(alloc_error_handler)]
 #![allow(identity_op)]
 #![allow(new_without_default)]
 
@@ -194,8 +195,9 @@ pub extern "C" fn kstart(multiboot_address: PhysicalAddress) -> ! {
     kernel::kernel_main(unsafe { &mut PLATFORM });
 }
 
-#[lang = "oom"]
+#[alloc_error_handler]
 #[no_mangle]
-pub extern "C" fn rust_oom() -> ! {
+pub extern fn rust_oom(_: core::alloc::Layout) -> ! {
+    // TODO: handle this better
     panic!("Kernel ran out of heap memory!");
 }
