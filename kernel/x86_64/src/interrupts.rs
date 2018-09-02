@@ -1,3 +1,4 @@
+use acpi::{interrupt::InterruptModel, Acpi};
 use apic::{IO_APIC, LOCAL_APIC};
 use common::binary_pretty_print::BinaryPrettyPrint;
 use gdt::{GdtSelectors, PrivilegeLevel};
@@ -74,6 +75,7 @@ macro_rules! restore_regs {
 
 macro_rules! wrap_handler {
     ($name:path) => {{
+        #[rustfmt::skip]
         #[naked]
         extern "C" fn wrapper() -> ! {
             unsafe {
@@ -86,16 +88,16 @@ macro_rules! wrap_handler {
                 asm!("mov rdi, rsp
                       add rdi, 0x48
                       call $0"
-                         :
-                         : "i"($name as extern "C" fn(&InterruptStackFrame))
-                         : "rdi"
-                         : "intel", "volatile");
+                     :
+                     : "i"($name as extern "C" fn(&InterruptStackFrame))
+                     : "rdi"
+                     : "intel", "volatile");
                 restore_regs!();
                 asm!("iretq"
-                         :
-                         :
-                         :
-                         : "intel", "volatile");
+                     :
+                     :
+                     :
+                     : "intel", "volatile");
                 ::core::intrinsics::unreachable();
             }
         }
@@ -105,6 +107,7 @@ macro_rules! wrap_handler {
 
 macro_rules! wrap_handler_with_error_code {
     ($name:path) => {{
+        #[rustfmt::skip]
         #[naked]
         extern "C" fn wrapper() -> ! {
             unsafe {
@@ -115,22 +118,22 @@ macro_rules! wrap_handler_with_error_code {
                  */
                 save_regs!();
                 asm!("mov rsi, [rsp+0x48]  // Put the error code into RSI
-                       mov rdi, rsp
-                       add rdi, 0x50
-                       sub rsp, 8           // Align the stack pointer
-                       call $0
-                       add rsp, 8           // Undo the stack alignment"
-                         :
-                         : "i"($name as extern "C" fn(&InterruptStackFrame,u64))
-                         : "rdi","rsi"
-                         : "intel", "volatile");
+                      mov rdi, rsp
+                      add rdi, 0x50
+                      sub rsp, 8           // Align the stack pointer
+                      call $0
+                      add rsp, 8           // Undo the stack alignment"
+                     :
+                     : "i"($name as extern "C" fn(&InterruptStackFrame,u64))
+                     : "rdi","rsi"
+                     : "intel", "volatile");
                 restore_regs!();
                 asm!("add rsp, 8   // Pop the error code
-                       iretq"
-                         :
-                         :
-                         :
-                         : "intel", "volatile");
+                      iretq"
+                     :
+                     :
+                     :
+                     : "intel", "volatile");
                 ::core::intrinsics::unreachable();
             }
         }
@@ -140,23 +143,8 @@ macro_rules! wrap_handler_with_error_code {
 
 static mut IDT: Idt = Idt::new();
 
-pub fn init(gdt_selectors: &GdtSelectors) {
+pub fn init(acpi_info: &Acpi, gdt_selectors: &GdtSelectors) {
     unsafe {
-        /*
-         * We want to use the APIC, so we remap and disable the legacy PIC.
-         * XXX: We do this regardless of whether ACPI tells us we need to, because some chipsets
-         *      lie.
-         */
-        let mut legacy_pic = ::i8259_pic::PIC_PAIR.lock();
-        legacy_pic.remap();
-        legacy_pic.disable();
-
-        /*
-         * We write 0 to CR8 (the Task Priority Register) to say that we want to recieve all
-         * interrupts.
-         */
-        write_control_reg!(cr8, 0u64);
-
         /*
          * Install exception handlers
          */
@@ -180,36 +168,65 @@ pub fn init(gdt_selectors: &GdtSelectors) {
             .set_handler(
                 wrap_handler_with_error_code!(double_fault_handler),
                 gdt_selectors.kernel_code,
-            )
-            .set_ist_handler(::tss::DOUBLE_FAULT_IST_INDEX as u8);
+            ).set_ist_handler(::tss::DOUBLE_FAULT_IST_INDEX as u8);
 
         /*
-         * Install handlers for local APIC interrupts
-         */
-        IDT[LOCAL_APIC_TIMER].set_handler(
-            wrap_handler!(::apic::apic_timer_handler),
-            gdt_selectors.kernel_code,
-        );
-        IDT[APIC_SPURIOUS_INTERRUPT]
-            .set_handler(wrap_handler!(spurious_handler), gdt_selectors.kernel_code);
-
-        /*
-         * Install handlers for ISA IRQs from the IOAPIC
-         */
-        IDT.apic_irq(0)
-            .set_handler(wrap_handler!(::pit::pit_handler), gdt_selectors.kernel_code);
-        IDT.apic_irq(1)
-            .set_handler(wrap_handler!(key_handler), gdt_selectors.kernel_code);
-
-        /*
-         * Install handler for yielding from usermode.
+         * Install handler for yielding from usermode
          */
         IDT[YIELD_FROM_USERMODE]
             .set_handler(
                 wrap_handler!(process_yield_handler),
                 gdt_selectors.kernel_code,
-            )
-            .set_privilege_level(PrivilegeLevel::Ring3);
+            ).set_privilege_level(PrivilegeLevel::Ring3);
+
+        match acpi_info.interrupt_model() {
+            &Some(InterruptModel::Apic {
+                local_apic_address,
+                ref io_apics,
+                ref local_apic_nmi_line,
+                ref interrupt_source_overrides,
+                ref nmi_sources,
+                also_has_legacy_pics,
+            }) => {
+                /*
+                 * If they exist, we remap the legacy PICs away from the exception IRQs and then
+                 * mask them.
+                 */
+                if also_has_legacy_pics {
+                    let mut legacy_pics = ::i8259_pic::PIC_PAIR.lock();
+                    legacy_pics.remap();
+                    legacy_pics.disable();
+                }
+
+                /*
+                 * We write 0 to CR8 (the Task Priority Register) to say that we want to recieve all
+                 * interrupts.
+                 */
+                write_control_reg!(cr8, 0u64);
+
+                /*
+                 * Install handlers for local APIC interrupts
+                 */
+                IDT[LOCAL_APIC_TIMER].set_handler(
+                    wrap_handler!(::apic::apic_timer_handler),
+                    gdt_selectors.kernel_code,
+                );
+                IDT[APIC_SPURIOUS_INTERRUPT]
+                    .set_handler(wrap_handler!(spurious_handler), gdt_selectors.kernel_code);
+
+                /*
+                 * Install handlers for ISA IRQs from the IOAPIC
+                 */
+                IDT.apic_irq(0)
+                    .set_handler(wrap_handler!(::pit::pit_handler), gdt_selectors.kernel_code);
+                IDT.apic_irq(1)
+                    .set_handler(wrap_handler!(key_handler), gdt_selectors.kernel_code);
+            }
+
+            _ => {
+                panic!("No supported interrupt model");
+            }
+        }
 
         IDT.load();
     }
@@ -282,8 +299,8 @@ extern "C" fn page_fault_handler(stack_frame: &InterruptStackFrame, error_code: 
                 panic!("INVALID PAGE-FAULT ERROR CODE");
             }
         },
-        read_control_reg!(cr2)
-    ); // CR2 holds the address of the page that caused the #PF
+        read_control_reg!(cr2) // CR2 holds the address of the page that caused the #PF
+    );
 
     error!("Error code: {:?}", BinaryPrettyPrint(error_code));
     error!("{:#?}", stack_frame);

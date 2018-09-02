@@ -1,6 +1,6 @@
 pub mod ramdisk;
 
-use alloc::{boxed::Box, rc::Rc, collections::BTreeMap, string::String};
+use alloc::{boxed::Box, collections::BTreeMap, rc::Rc, string::String};
 use core::any::Any;
 use core::str::Split;
 

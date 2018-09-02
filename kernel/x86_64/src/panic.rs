@@ -5,7 +5,7 @@ use cpu;
 #[no_mangle]
 pub extern "C" fn rust_eh_personality() {}
 
-#[panic_implementation]
+#[panic_handler]
 #[no_mangle]
 pub extern "C" fn panic(info: &PanicInfo) -> ! {
     error!("KERNEL PANIC: {}", info);

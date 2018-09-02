@@ -41,8 +41,7 @@ impl FrameAllocator {
             .filter(|area| {
                 let address = area.start_address() + area.size() + 1;
                 Frame::containing_frame((address as usize).into()) >= self.next_free_frame
-            })
-            .min_by_key(|area| area.start_address());
+            }).min_by_key(|area| area.start_address());
 
         if let Some(area) = self.current_area {
             let start_frame = Frame::containing_frame((area.start_address() as usize).into());

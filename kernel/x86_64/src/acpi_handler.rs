@@ -1,5 +1,5 @@
-use acpi::AcpiHandler;
 use acpi::PhysicalMapping as AcpiPhysicalMapping;
+use acpi::{Acpi, AcpiHandler, Processor};
 use core::ptr::NonNull;
 use memory::paging::{EntryFlags, PhysicalAddress, PhysicalMapping};
 use memory::MemoryController;
@@ -11,21 +11,22 @@ pub struct PebbleAcpiHandler<'a> {
 
 impl<'a> PebbleAcpiHandler<'a> {
     pub fn parse_acpi(
-        memory_controller: &mut MemoryController,
+        memory_controller: &'a mut MemoryController,
         rsdt_address: PhysicalAddress,
         revision: u8,
-    ) {
+    ) -> Result<Acpi, ()> {
         let mut handler = PebbleAcpiHandler {
             memory_controller,
             // mapped_regions        : BTreeMap::new(),
         };
 
         match acpi::parse_rsdt(&mut handler, revision, usize::from(rsdt_address)) {
-            Ok(()) => {}
+            Ok(acpi) => Ok(acpi),
 
             Err(err) => {
                 error!("Failed to parse system's ACPI tables: {:?}", err);
                 warn!("Continuing. Some functionality may not work, or the kernel may crash!");
+                Err(())
             }
         }
     }

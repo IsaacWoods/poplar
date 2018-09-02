@@ -7,7 +7,7 @@
 #![feature(alloc)]
 #![feature(type_ascription)]
 #![feature(allocator_api)]
-#![feature(panic_implementation)]
+#![feature(panic_handler)]
 #![feature(panic_info_message)]
 #![feature(extern_prelude)]
 #![feature(alloc_error_handler)]
@@ -123,6 +123,20 @@ pub extern "C" fn kstart(multiboot_address: PhysicalAddress) -> ! {
     }
 
     /*
+     * We now find and parse the ACPI tables.
+     */
+    // TODO: actually handle both types of tag for systems with ACPI Version 2.0+
+    let rsdp_tag = boot_info.rsdp_v1_tag().expect("Failed to get RSDP V1 tag");
+    // TODO: validate the RSDP tag
+    // rsdp_tag.validate().expect("Failed to validate RSDP tag");
+    let acpi_info = PebbleAcpiHandler::parse_acpi(
+        unsafe { PLATFORM.memory_controller.as_mut().unwrap() },
+        PhysicalAddress::new(rsdp_tag.rsdt_address()),
+        rsdp_tag.revision(),
+    ).expect("Failed to parse ACPI tables");
+    info!("ACPI info: {:#?}", acpi_info);
+
+    /*
      * We can now create and install a TSS and new GDT.
      *
      * Allocate a 4KiB stack for the double-fault handler. Using a separate stack for double-faults
@@ -145,24 +159,11 @@ pub extern "C" fn kstart(multiboot_address: PhysicalAddress) -> ! {
             .set_kernel_stack(memory::get_kernel_stack_top());
     }
     let gdt_selectors = Gdt::install(unsafe { &mut PLATFORM.tss });
-    interrupts::init(&gdt_selectors);
+    interrupts::init(&acpi_info, &gdt_selectors);
     unsafe {
         PLATFORM.gdt_selectors = Some(gdt_selectors);
     }
 
-    /*
-     * We now find and parse the ACPI tables. This also initialises the local APIC and IOAPIC, as
-     * they are described by the MADT. We then enable interrupts.
-     */
-    // TODO: actually handle both types of tag for systems with ACPI Version 2.0+
-    let rsdp_tag = boot_info.rsdp_v1_tag().expect("Failed to get RSDP V1 tag");
-    // TODO: validate the RSDP tag
-    // rsdp_tag.validate().expect("Failed to validate RSDP tag");
-    PebbleAcpiHandler::parse_acpi(
-        unsafe { PLATFORM.memory_controller.as_mut().unwrap() },
-        PhysicalAddress::new(rsdp_tag.rsdt_address()),
-        rsdp_tag.revision(),
-    );
     // interrupts::enable();
 
     // info!("BSP: {:?}", acpi_info.bootstrap_cpu);
@@ -197,7 +198,7 @@ pub extern "C" fn kstart(multiboot_address: PhysicalAddress) -> ! {
 
 #[alloc_error_handler]
 #[no_mangle]
-pub extern fn rust_oom(_: core::alloc::Layout) -> ! {
+pub extern "C" fn rust_oom(_: core::alloc::Layout) -> ! {
     // TODO: handle this better
     panic!("Kernel ran out of heap memory!");
 }

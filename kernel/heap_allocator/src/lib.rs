@@ -2,7 +2,6 @@
 #![feature(const_fn)]
 #![feature(alloc)]
 #![feature(allocator_api)]
-#![feature(pointer_methods)]
 
 #[macro_use]
 extern crate common;
