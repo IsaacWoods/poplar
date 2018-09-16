@@ -1,7 +1,28 @@
+use bit_field::BitField;
 use core::fmt;
 
 #[derive(Clone, Copy)]
 pub struct CpuFlags(pub u64);
+
+impl CpuFlags {
+    pub fn read() -> CpuFlags {
+        let flags: u64;
+        unsafe {
+            asm!("pushfq
+                  pop rax"
+                 : "={rax}"(flags)
+                 :
+                 : "rax"
+                 : "intel", "volatile");
+        }
+
+        CpuFlags(flags)
+    }
+
+    pub fn interrupts_enabled(&self) -> bool {
+        self.0.get_bit(9)
+    }
+}
 
 impl fmt::Debug for CpuFlags {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {

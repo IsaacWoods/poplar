@@ -47,7 +47,7 @@ impl VirtualAddress {
         self.0 % alignment == 0
     }
 
-    pub const fn is_in_kernel_space(&self) -> bool {
+    pub fn is_in_kernel_space(&self) -> bool {
         self.0 >= ::memory::map::KERNEL_VMA.0 && self.0 <= ::memory::map::KERNEL_SPACE_END.0
     }
 

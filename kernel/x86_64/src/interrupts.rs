@@ -73,9 +73,9 @@ macro_rules! restore_regs {
     };
 }
 
+#[rustfmt::skip]
 macro_rules! wrap_handler {
     ($name:path) => {{
-        #[rustfmt::skip]
         #[naked]
         extern "C" fn wrapper() -> ! {
             unsafe {
@@ -105,9 +105,9 @@ macro_rules! wrap_handler {
     }};
 }
 
+#[rustfmt::skip]
 macro_rules! wrap_handler_with_error_code {
     ($name:path) => {{
-        #[rustfmt::skip]
         #[naked]
         extern "C" fn wrapper() -> ! {
             unsafe {

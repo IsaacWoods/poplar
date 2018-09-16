@@ -17,8 +17,12 @@ impl ::log::Log for SerialLogger {
 
         if self.enabled(record.metadata()) {
             COM1.lock()
-                .write_fmt(format_args!("[{}] {}\n", record.level(), record.args()))
-                .unwrap();
+                .write_fmt(format_args!(
+                    "[{}][{}] {}\n",
+                    record.level(),
+                    record.target(),
+                    record.args()
+                )).unwrap();
         }
     }
 

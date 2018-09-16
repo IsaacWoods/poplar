@@ -1,7 +1,7 @@
-use apic::LOCAL_APIC;
 use bit_field::BitField;
 use cpu;
 use interrupts::InterruptStackFrame;
+use local_apic::LocalApic;
 use port::Port;
 
 pub static mut PIT: Pit = Pit::new();
@@ -81,6 +81,6 @@ pub extern "C" fn pit_handler(_: &InterruptStackFrame) {
             PIT.sleeping = false;
         }
 
-        LOCAL_APIC.send_eoi();
+        LocalApic::send_eoi();
     }
 }

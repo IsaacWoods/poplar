@@ -7,10 +7,10 @@
 #![feature(alloc)]
 #![feature(type_ascription)]
 #![feature(allocator_api)]
-#![feature(panic_handler)]
 #![feature(panic_info_message)]
 #![feature(extern_prelude)]
 #![feature(alloc_error_handler)]
+#![allow(unknown_lints)]
 #![allow(identity_op)]
 #![allow(new_without_default)]
 
@@ -35,12 +35,13 @@ mod registers;
 #[macro_use]
 mod serial;
 mod acpi_handler;
-mod apic;
 mod cpu;
 mod gdt;
 mod i8259_pic;
 mod idt;
 mod interrupts;
+mod io_apic;
+mod local_apic;
 mod memory;
 mod panic;
 mod pci;
