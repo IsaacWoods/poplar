@@ -1,7 +1,7 @@
 use acpi::PhysicalMapping as AcpiPhysicalMapping;
-use acpi::{Acpi, AcpiHandler, Processor};
+use acpi::{Acpi, AcpiHandler};
 use core::ptr::NonNull;
-use memory::paging::{EntryFlags, PhysicalAddress, PhysicalMapping};
+use memory::paging::{EntryFlags, PhysicalAddress};
 use memory::MemoryController;
 
 pub struct PebbleAcpiHandler<'a> {

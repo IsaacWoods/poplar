@@ -273,62 +273,65 @@ impl Process {
         mem::forget(uninitialized);
     }
 
-    pub unsafe fn drop_to_usermode(
-        &mut self,
-        gdt_selectors: &GdtSelectors,
-        memory_controller: &mut MemoryController,
-    ) -> ! {
-        // Save the current kernel stack in the TSS
-        let rsp: VirtualAddress;
-        asm!("" : "={rsp}"(rsp) : : : "intel", "volatile");
-        ::PLATFORM.tss.set_kernel_stack(rsp);
+    /*
+     * TODO: pass all the shite we need to this method and maybe make it a method on
+     * `Architecture`? This shouldn't be something invocated by a message to the process cause
+     * that's gross, it turns out.
+     */
+    // pub unsafe fn drop_to_usermode(
+    //     &mut self,
+    //     gdt_selectors: &GdtSelectors,
+    //     memory_controller: &mut MemoryController,
+    // ) -> ! {
+    //     // Save the current kernel stack in the TSS
+    //     let rsp: VirtualAddress;
+    //     asm!("" : "={rsp}"(rsp) : : : "intel", "volatile");
+    //     ::PLATFORM.tss.set_kernel_stack(rsp);
 
-        // Switch to the process's address space
-        self.switch_to(memory_controller);
+    //     // Switch to the process's address space
+    //     self.switch_to(memory_controller);
 
-        // TEMP: zero the Send Buffer for Isaac's sanity
-        ::core::intrinsics::volatile_set_memory(0xff_0000_0000 as *mut u8,
-                                                0x00,
-                                                4096);
+    //     // TEMP: zero the Send Buffer for Isaac's sanity
+    //     ::core::intrinsics::volatile_set_memory(SEND_BUFFER_ADDRESS as *mut u8, 0x00, 4096);
 
-        // Jump into ring3
-        asm!("cli
-              push r10      // Push selector for user data segment
-              push r11      // Push new stack pointer
-              push r12      // Push new RFLAGS
-              push r13      // Push selector for user code segment
-              push r14      // Push new instruction pointer
+    //     // Jump into ring3
+    //     asm!("cli
+    //           push r10      // Push selector for user data segment
+    //           push r11      // Push new stack pointer
+    //           push r12      // Push new RFLAGS
+    //           push r13      // Push selector for user code segment
+    //           push r14      // Push new instruction pointer
 
-              xor rax, rax
-              xor rbx, rbx
-              xor rcx, rcx
-              xor rdx, rdx
-              xor rsi, rsi
-              xor rdi, rdi
-              xor r8, r8
-              xor r9, r9
-              xor r10, r10
-              xor r11, r11
-              xor r12, r12
-              xor r13, r13
-              xor r14, r14
-              xor r15, r15
+    //           xor rax, rax
+    //           xor rbx, rbx
+    //           xor rcx, rcx
+    //           xor rdx, rdx
+    //           xor rsi, rsi
+    //           xor rdi, rdi
+    //           xor r8, r8
+    //           xor r9, r9
+    //           xor r10, r10
+    //           xor r11, r11
+    //           xor r12, r12
+    //           xor r13, r13
+    //           xor r14, r14
+    //           xor r15, r15
 
-              iretq"
-              :
-              : "{r10}"(gdt_selectors.user_data.0),
-                "{r11}"(self.thread.stack_pointer),
-                "{rbp}"(self.thread.base_pointer),
-                "{r12}"(1 << 9 | 1 << 2),   // We probably shouldn't leak flags out of kernel-space, 
-                                            // so we set them to the bare minimum:
-                                            //     * Bit 2 must be 1
-                                            //     * Enable interrupts by setting bit 9
-                "{r13}"(gdt_selectors.user_code.0),
-                "{r14}"(self.thread.instruction_pointer)
-              : // We technically don't clobber anything because this never returns
-              : "intel", "volatile");
-        unreachable!();
-    }
+    //           iretq"
+    //           :
+    //           : "{r10}"(gdt_selectors.user_data.0),
+    //             "{r11}"(self.thread.stack_pointer),
+    //             "{rbp}"(self.thread.base_pointer),
+    //             "{r12}"(1 << 9 | 1 << 2),   // We probably shouldn't leak flags out of kernel-space,
+    //                                         // so we set them to the bare minimum:
+    //                                         //     * Bit 2 must be 1
+    //                                         //     * Enable interrupts by setting bit 9
+    //             "{r13}"(gdt_selectors.user_code.0),
+    //             "{r14}"(self.thread.instruction_pointer)
+    //           : // We technically don't clobber anything because this never returns
+    //           : "intel", "volatile");
+    //     unreachable!();
+    // }
 }
 
 impl Node for Process {
@@ -337,14 +340,21 @@ impl Node for Process {
     fn message(&mut self, sender: NodeId, message: ProcessMessage) -> Result<(), ()> {
         match message {
             ProcessMessage::DropToUsermode => {
-                use PLATFORM;
-                info!("Dropping to usermode!");
-                unsafe {
-                    self.drop_to_usermode(
-                        PLATFORM.gdt_selectors.as_ref().unwrap(),
-                        PLATFORM.memory_controller.as_mut().unwrap(),
-                    );
-                }
+                /*
+                 * TODO: I don't think this should be a whole message, as it then means we need to
+                 * access stuff from here so need the disgusting `PLATFORM` thing and we only ever
+                 * need to do it once. The first process might also be a tad special in terms of
+                 * how it's loaded eventually so we might want to prepare for that idk.
+                 */
+                unimplemented!();
+                // use PLATFORM;
+                // info!("Dropping to usermode!");
+                // unsafe {
+                //     self.drop_to_usermode(
+                //         PLATFORM.gdt_selectors.as_ref().unwrap(),
+                //         PLATFORM.memory_controller.as_mut().unwrap(),
+                //     );
+                // }
             }
         }
     }

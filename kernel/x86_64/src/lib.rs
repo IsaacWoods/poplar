@@ -55,8 +55,8 @@ pub use panic::{_Unwind_Resume, panic, rust_eh_personality};
 
 use acpi_handler::PebbleAcpiHandler;
 use alloc::boxed::Box;
-use gdt::{Gdt, GdtSelectors};
-use kernel::arch::{Architecture, MemoryAddress, ModuleMapping};
+use gdt::Gdt;
+use kernel::arch::{Architecture, ModuleMapping};
 use kernel::fs::File;
 use kernel::node::Node;
 use kernel::process::ProcessMessage;
@@ -64,31 +64,14 @@ use memory::paging::PhysicalAddress;
 use memory::MemoryController;
 use pci::Pci;
 use process::{Process, ProcessImage};
-use tss::Tss;
-
-pub static mut PLATFORM: Platform = Platform::placeholder();
 
 pub struct Platform {
-    pub memory_controller: Option<MemoryController>,
-    pub gdt_selectors: Option<GdtSelectors>,
-    pub tss: Tss,
-}
-
-impl Platform {
-    const fn placeholder() -> Platform {
-        Platform {
-            memory_controller: None,
-            gdt_selectors: None,
-            tss: Tss::new(),
-        }
-    }
+    memory_controller: MemoryController,
 }
 
 impl Architecture for Platform {
     fn get_module_mapping(&self, module_name: &str) -> Option<ModuleMapping> {
         self.memory_controller
-            .as_ref()
-            .unwrap()
             .loaded_modules
             .get(module_name)
             .map(|mapping| ModuleMapping {
@@ -101,14 +84,16 @@ impl Architecture for Platform {
 
     fn create_process(&mut self, image: &File) -> Box<Node<MessageType = ProcessMessage>> {
         Box::new(Process::new(
-            ProcessImage::from_elf(image, self.memory_controller.as_mut().unwrap()),
-            &mut self.memory_controller.as_mut().unwrap(),
+            ProcessImage::from_elf(image, &mut self.memory_controller),
+            &mut self.memory_controller,
         ))
     }
 }
 
 #[no_mangle]
 pub extern "C" fn kstart(multiboot_address: PhysicalAddress) -> ! {
+    use tss::TSS;
+
     serial::initialise();
     log::set_logger(&serial::SERIAL_LOGGER).unwrap();
     log::set_max_level(log::LevelFilter::Trace);
@@ -119,9 +104,7 @@ pub extern "C" fn kstart(multiboot_address: PhysicalAddress) -> ! {
      * into the higher half.
      */
     let boot_info = unsafe { multiboot2::load(usize::from(multiboot_address.in_kernel_space())) };
-    unsafe {
-        PLATFORM.memory_controller = Some(memory::init(&boot_info));
-    }
+    let mut memory_controller = memory::init(&boot_info);
 
     /*
      * We now find and parse the ACPI tables.
@@ -131,7 +114,7 @@ pub extern "C" fn kstart(multiboot_address: PhysicalAddress) -> ! {
     // TODO: validate the RSDP tag
     // rsdp_tag.validate().expect("Failed to validate RSDP tag");
     let acpi_info = PebbleAcpiHandler::parse_acpi(
-        unsafe { PLATFORM.memory_controller.as_mut().unwrap() },
+        &mut memory_controller,
         PhysicalAddress::new(rsdp_tag.rsdt_address()),
         rsdp_tag.revision(),
     ).expect("Failed to parse ACPI tables");
@@ -145,33 +128,17 @@ pub extern "C" fn kstart(multiboot_address: PhysicalAddress) -> ! {
      * overflow), which would otherwise:
      *      Page Fault -> Page Fault -> Double Fault -> Page Fault -> Triple Fault
      */
-    let double_fault_stack = unsafe {
-        PLATFORM
-            .memory_controller
-            .as_mut()
-            .unwrap()
-            .alloc_stack(1)
-            .expect("Failed to allocate stack")
-    };
+    let double_fault_stack = memory_controller
+        .alloc_stack(1)
+        .expect("Failed to allocate stack!");
     unsafe {
-        PLATFORM.tss.interrupt_stack_table[tss::DOUBLE_FAULT_IST_INDEX] = double_fault_stack.top();
-        PLATFORM
-            .tss
-            .set_kernel_stack(memory::get_kernel_stack_top());
+        TSS.interrupt_stack_table[tss::DOUBLE_FAULT_IST_INDEX] = double_fault_stack.top();
+        TSS.set_kernel_stack(memory::get_kernel_stack_top());
     }
-    let gdt_selectors = Gdt::install(unsafe { &mut PLATFORM.tss });
-    interrupts::init(&acpi_info, &gdt_selectors);
-    unsafe {
-        PLATFORM.gdt_selectors = Some(gdt_selectors);
-    }
+    let gdt_selectors = Gdt::install(unsafe { &mut TSS });
+    interrupts::init(&acpi_info, &gdt_selectors, &mut memory_controller);
 
     // interrupts::enable();
-
-    // info!("BSP: {:?}", acpi_info.bootstrap_cpu);
-    // for cpu in acpi_info.application_cpus
-    // {
-    //     info!("AP: {:?}", cpu);
-    // }
 
     /*
      * We can now initialise the local APIC timer to interrupt every 10ms. This uses the PIT to
@@ -194,7 +161,8 @@ pub extern "C" fn kstart(multiboot_address: PhysicalAddress) -> ! {
     /*
      * Finally, we pass control to the kernel.
      */
-    kernel::kernel_main(unsafe { &mut PLATFORM });
+    let mut platform = Platform { memory_controller };
+    kernel::kernel_main(&mut platform);
 }
 
 #[alloc_error_handler]

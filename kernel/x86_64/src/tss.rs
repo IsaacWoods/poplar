@@ -2,6 +2,8 @@ use super::memory::VirtualAddress;
 
 pub const DOUBLE_FAULT_IST_INDEX: usize = 0;
 
+pub static mut TSS: Tss = Tss::new();
+
 /// Hardware task switching isn't supported on x86_64, but we still have the TSS structure. It's
 /// used to store kernel-level stacks that should be used if interrupts occur (this is used to
 /// prevent triple-faults from occuring if we overflow the kernel stack).
