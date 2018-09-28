@@ -3,6 +3,8 @@ pub type NotImplemented = &'static mut ();
 pub type Event = usize;
 pub type Handle = *mut ();
 
+pub struct Guid(pub u128);
+
 const ERROR_BIT: usize = 1 << 63;
 
 #[repr(usize)]

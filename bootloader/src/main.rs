@@ -5,10 +5,13 @@
 mod uefi;
 #[macro_use]
 mod text;
+mod boot;
+mod memory;
 
+use boot::BootServices;
 use core::panic::PanicInfo;
-use uefi::{Handle, UefiStatus, NotImplemented};
-use text::{TextOutput, TextInput};
+use text::{TextInput, TextOutput};
+use uefi::{Handle, NotImplemented, UefiStatus};
 
 pub static mut SYSTEM_TABLE: *mut SystemTable = 0x0 as *mut SystemTable;
 
@@ -34,7 +37,7 @@ pub struct SystemTable {
     pub console_error_handle: Handle,
     pub console_error: &'static mut TextOutput,
     pub runtime_services: NotImplemented,
-    pub boot_services: NotImplemented,
+    pub boot_services: &'static mut BootServices,
     pub total_table_entries: usize,
     // pub configuration_tables: *const ConfigurationTable,
     pub configuration_tables: *const (),
