@@ -7,11 +7,13 @@ mod uefi;
 mod text;
 mod boot;
 mod memory;
+mod runtime;
 
 use boot::BootServices;
 use core::panic::PanicInfo;
 use text::{TextInput, TextOutput};
-use uefi::{Handle, NotImplemented, UefiStatus};
+use uefi::{Handle, UefiStatus, Guid};
+use runtime::RuntimeServices;
 
 pub static mut SYSTEM_TABLE: *mut SystemTable = 0x0 as *mut SystemTable;
 
@@ -26,6 +28,12 @@ pub struct TableHeader {
 }
 
 #[repr(C)]
+pub struct ConfigurationTable {
+    pub vendor_guid: Guid,
+    pub vendor_table: usize,
+}
+
+#[repr(C)]
 pub struct SystemTable {
     pub header: TableHeader,
     pub firmware_vendor: *const u16,
@@ -36,11 +44,10 @@ pub struct SystemTable {
     pub console_out: &'static mut TextOutput,
     pub console_error_handle: Handle,
     pub console_error: &'static mut TextOutput,
-    pub runtime_services: NotImplemented,
+    pub runtime_services: &'static mut RuntimeServices,
     pub boot_services: &'static mut BootServices,
     pub total_table_entries: usize,
-    // pub configuration_tables: *const ConfigurationTable,
-    pub configuration_tables: *const (),
+    pub configuration_tables: *const ConfigurationTable,
 }
 
 #[no_mangle]
@@ -53,6 +60,12 @@ pub extern "win64" fn uefi_main(
     }
 
     println!("Hello from Rust UEFI land!!!");
+
+    let mut time: crate::runtime::Time = Default::default();
+    let mut capabilities: crate::runtime::TimeCapabilities = Default::default();
+    println!("{:?}", unsafe { ((&mut *SYSTEM_TABLE).runtime_services.get_time)(&mut time, &mut capabilities) });
+    println!("Time: {:?}, capabilities: {:?}", time, capabilities);
+
     UefiStatus::Success
 }
 
