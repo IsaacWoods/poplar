@@ -8,6 +8,7 @@ edition = "2018"
 fixedvec = "0.2"
 
 [profile.release]
+debug = true
 lto = true
 
 [package.metadata.cargo-xbuild]

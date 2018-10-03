@@ -1,4 +1,4 @@
-#![feature(try_trait, uniform_paths, const_raw_ptr_deref)]
+#![feature(try_trait, uniform_paths, const_raw_ptr_deref, decl_macro)]
 #![no_std]
 #![no_main]
 
@@ -11,9 +11,16 @@ mod runtime;
 
 use boot::BootServices;
 use core::panic::PanicInfo;
-use text::{TextInput, TextOutput};
-use uefi::{Handle, UefiStatus, Guid};
+use memory::MemoryDescriptor;
 use runtime::RuntimeServices;
+use text::{TextInput, TextOutput};
+use uefi::{Guid, Handle, UefiStatus};
+
+/// This is a wrapper to access the system table from the mutable static. It evaluates to an
+/// expression of type `&mut SystemTable`.
+macro system_table() {
+    unsafe { &mut *crate::SYSTEM_TABLE }
+}
 
 pub static mut SYSTEM_TABLE: *mut SystemTable = 0x0 as *mut SystemTable;
 
@@ -60,12 +67,6 @@ pub extern "win64" fn uefi_main(
     }
 
     println!("Hello from Rust UEFI land!!!");
-
-    let mut time: crate::runtime::Time = Default::default();
-    let mut capabilities: crate::runtime::TimeCapabilities = Default::default();
-    println!("{:?}", unsafe { ((&mut *SYSTEM_TABLE).runtime_services.get_time)(&mut time, &mut capabilities) });
-    println!("Time: {:?}, capabilities: {:?}", time, capabilities);
-
     UefiStatus::Success
 }
 

@@ -1,28 +1,22 @@
 {
-	"llvm-target": "x86_64-pc-windows-msvc",
-	"data-layout": "e-m:e-i64:64-f80:128-n8:16:32:64-S128",
-	"arch": "x86_64",
-	"target-endian": "little",
-	"target-pointer-width": "64",
-	"target-c-int-width": "32",
-	"os": "none",
-	"linker-flavor": "lld-link",
-	"executables": true,
-	"features": "-mmx,-sse,+soft-float",
-	"disable-redzone": true,
-	"panic-strategy": "abort",
-	"no-default-libraries": true,
-	"pre-link-args": {
-		"lld-link": [
-			"/NOLOGO",
-			"/NXCOMPAT",
-			"/SUBSYSTEM:EFI_APPLICATION",
-			"/MACHINE:x64",
-			"/ENTRY:uefi_main"
-		]
-	},
-	"cpu": "x86-64",
-	"env": "msvc",
-	"exe-suffix": ".efi",
-	"dynamic-linking": false
+    "llvm-target": "x86_64-pc-windows-msvc",
+    "target-endian": "little",
+    "target-pointer-width": "64",
+    "target-c-int-width": "32",
+    "os": "none",
+    "arch": "x86_64",
+    "data-layout": "e-m:e-i64:64-f80:128-n8:16:32:64-S128",
+    "executables": true,
+    "disable-redzone": true,
+    "panic-strategy": "abort",
+    "linker-flavor": "lld-link",
+    "pre-link-args": {
+        "lld-link": [
+            "/SUBSYSTEM:EFI_Application",
+            "/ENTRY:uefi_main"
+        ]
+    },
+    "exe-suffix": ".efi",
+    "position-independent-executables": "true",
+    "emit-debug-gdb-scripts": false
 }
