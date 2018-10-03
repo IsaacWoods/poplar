@@ -12,6 +12,7 @@ image.img:
 	mformat -i efi.img -h 32 -t 32 -n 64 -c 1
 	# Copy the bootloader over and merge the images
 	mcopy -i efi.img target/uefi_x64/release/bootloader.efi ::boot.efi
+	mcopy -i efi.img test.txt ::
 	dd if=efi.img of=image.img bs=512 count=91669 seek=2048 conv=notrunc
 	rm efi.img
 

@@ -6,6 +6,7 @@ edition = "2018"
 
 [dependencies]
 fixedvec = "0.2"
+bitflags = "1"
 
 [profile.release]
 debug = true
