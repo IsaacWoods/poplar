@@ -1,7 +1,7 @@
 use super::{BootServices, Pool};
 use core::{mem, slice};
-use crate::types::Status;
 use crate::memory::{MemoryDescriptor, MemoryMap, MemoryType, PhysicalAddress};
+use crate::types::Status;
 
 /// Type of memory allocation to perform
 #[repr(C)]
@@ -83,13 +83,13 @@ impl BootServices {
     }
 
     /// Allocates a slice from pool memory
-    pub fn allocate_slice<'a, T>(&'a self, count: usize) -> Result<Pool<'a, [T]>, Status> {
+    pub fn allocate_slice<T>(&self, count: usize) -> Result<Pool<[T]>, Status> {
         let ptr = self.allocate_pool(MemoryType::LoaderData, count * mem::size_of::<T>())?;
         unsafe {
-            Ok(Pool::new_unchecked(
-                slice::from_raw_parts_mut(ptr as *mut T, count),
-                self,
-            ))
+            Ok(Pool::new_unchecked(slice::from_raw_parts_mut(
+                ptr as *mut T,
+                count,
+            )))
         }
     }
 

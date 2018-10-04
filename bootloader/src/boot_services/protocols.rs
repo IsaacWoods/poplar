@@ -1,7 +1,7 @@
 use super::{BootServices, Pool};
 use core::{mem, slice};
-use crate::types::{BootMemory, Handle, Status};
 use crate::memory::MemoryType;
+use crate::types::{BootMemory, Handle, Status};
 
 /// Globally-unique identifier, used in UEFI to distinguish protocols
 #[derive(Clone, Copy, Debug, PartialEq)]
@@ -42,12 +42,12 @@ pub enum SearchType {
 
 impl BootServices {
     /// Returns a slice of handles that support the specified protocols
-    pub fn locate_handle<'a>(
-        &'a self,
+    pub fn locate_handle(
+        &self,
         search_type: SearchType,
         protocol: Option<&Guid>,
         search_key: Option<*const ()>,
-    ) -> Result<Pool<'a, [Handle]>, Status> {
+    ) -> Result<Pool<[Handle]>, Status> {
         // Prepare arguments
         let protocol: *const Guid = protocol.map_or(0 as _, |g| g as _);
         let search_key = search_key.unwrap_or(0 as *const ());
@@ -67,10 +67,10 @@ impl BootServices {
         // Return a slice over the contents
         let num_handles = buf_size / mem::size_of::<Handle>();
         unsafe {
-            Ok(Pool::new_unchecked(
-                slice::from_raw_parts_mut(buf, num_handles),
-                self,
-            ))
+            Ok(Pool::new_unchecked(slice::from_raw_parts_mut(
+                buf,
+                num_handles,
+            )))
         }
     }
 

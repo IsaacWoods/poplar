@@ -1,7 +1,8 @@
 use core::{mem, ops::Drop, slice};
-use crate::boot_services::{utf16_to_str, BootServices, Guid, Pool, Protocol};
-use crate::types::{Bool, Char16, BootMemory, Status};
+use crate::boot_services::{utf16_to_str, Guid, Pool, Protocol};
 use crate::memory::MemoryType;
+use crate::system_table;
+use crate::types::{Bool, BootMemory, Char16, Status};
 
 /// Provides file based access to supported file systems
 #[repr(C)]
@@ -57,28 +58,32 @@ impl File {
     }
 
     /// Returns information about a file
-    pub fn get_info<'a, T>(&self, boot_services: &'a BootServices) -> Result<Pool<'a, T>, Status>
+    pub fn get_info<T>(&self) -> Result<Pool<T>, Status>
     where
         T: FileInformationType + Sized,
     {
         let mut buf_size = mem::size_of::<T>();
-        let buf = boot_services.allocate_pool(MemoryType::LoaderData, buf_size)?;
+        let buf = system_table()
+            .boot_services
+            .allocate_pool(MemoryType::LoaderData, buf_size)?;
         let res = (self._get_info)(self, T::guid(), &mut buf_size, buf);
         if res == Status::Success {
             // If the initial buffer happened to be large enough, return it
             // This should never happen, because the length of the file name or volume label should
             // always be greater than 1
-            return Ok(unsafe { Pool::new_unchecked(buf as *mut T, boot_services) });
+            return Ok(unsafe { Pool::new_unchecked(buf as *mut T) });
         } else if res != Status::BufferTooSmall {
             return Err(res);
         }
 
         // Reallocate the buffer with the specified size
-        boot_services.free_pool(buf)?;
-        let buf = boot_services.allocate_pool(MemoryType::LoaderData, buf_size)?;
+        system_table().boot_services.free_pool(buf)?;
+        let buf = system_table()
+            .boot_services
+            .allocate_pool(MemoryType::LoaderData, buf_size)?;
         (self._get_info)(self, T::guid(), &mut buf_size, buf)
             .as_result()
-            .map(|_| unsafe { Pool::new_unchecked(buf as *mut T, boot_services) })
+            .map(|_| unsafe { Pool::new_unchecked(buf as *mut T) })
     }
 }
 
@@ -148,17 +153,14 @@ pub struct FileSystemInfo {
 }
 
 impl FileSystemInfo {
-    pub fn volume_label<'a>(
-        &self,
-        boot_services: &'a BootServices,
-    ) -> Result<Pool<'a, str>, Status> {
+    pub fn volume_label(&self) -> Result<Pool<str>, Status> {
         let buf = unsafe {
             let buf_size =
                 self._size - (mem::size_of::<FileSystemInfo>() - mem::size_of::<Char16>());
             slice::from_raw_parts(&(self._volume_label), buf_size)
         };
 
-        utf16_to_str(buf, boot_services)
+        utf16_to_str(buf)
     }
 }
 
@@ -186,7 +188,8 @@ static FILE_SYSTEM_INFO_GUID: Guid = Guid {
 #[repr(C)]
 pub struct SimpleFileSystem {
     pub revision: u64,
-    pub _open_volume: extern "win64" fn(this: &SimpleFileSystem, root: &mut BootMemory<File>) -> Status,
+    pub _open_volume:
+        extern "win64" fn(this: &SimpleFileSystem, root: &mut BootMemory<File>) -> Status,
 }
 
 impl SimpleFileSystem {

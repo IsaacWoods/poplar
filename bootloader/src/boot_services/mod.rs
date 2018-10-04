@@ -13,12 +13,10 @@ use core::{
     str::from_utf8_unchecked_mut,
     sync::atomic::AtomicPtr,
 };
-use crate::types::{
-    Char16, BootMemory, Handle, Status, TableHeader,
-};
-use crate::memory::{PhysicalAddress, MemoryDescriptor, MemoryType};
+use crate::memory::{MemoryDescriptor, MemoryType, PhysicalAddress};
+use crate::system_table;
+use crate::types::{BootMemory, Char16, Handle, Status, TableHeader};
 
-/// Contains pointers to all of the boot services
 #[repr(C)]
 pub struct BootServices {
     pub hdr: TableHeader,
@@ -147,10 +145,7 @@ impl fmt::Debug for BootServices {
 }
 
 /// Encodes the given str to UTF-16 code units
-pub fn str_to_utf16<'a>(
-    src: &str,
-    boot_services: &'a BootServices,
-) -> Result<Pool<'a, [Char16]>, Status> {
+pub fn str_to_utf16(src: &str) -> Result<Pool<[Char16]>, Status> {
     // Allocate a slice of Char16 from pool memory
     // TODO: use boot_services.allocate_slice
     // This needs to be done manually because a slice is not Sized
@@ -162,11 +157,10 @@ pub fn str_to_utf16<'a>(
     // An extra 2 bytes for a null terminator
     buf_len += 2;
     let mut buf = unsafe {
-        let ptr = boot_services.allocate_pool(MemoryType::LoaderData, buf_len)?;
-        Pool::new_unchecked(
-            slice::from_raw_parts_mut(ptr as *mut Char16, buf_len / 2),
-            boot_services,
-        )
+        let ptr = system_table()
+            .boot_services
+            .allocate_pool(MemoryType::LoaderData, buf_len)?;
+        Pool::new_unchecked(slice::from_raw_parts_mut(ptr as *mut Char16, buf_len / 2))
     };
 
     // Copy encoded characters into the new slice
@@ -187,10 +181,7 @@ pub fn str_to_utf16<'a>(
 }
 
 /// Decodes a str from the given UTF-16 code units
-pub fn utf16_to_str<'a>(
-    src: &[Char16],
-    boot_services: &'a BootServices,
-) -> Result<Pool<'a, str>, Status> {
+pub fn utf16_to_str(src: &[Char16]) -> Result<Pool<str>, Status> {
     // Create an iterator of Rust `char` over the UTF-16 slice
     let chars = decode_utf16(
         src.iter().cloned().take_while(|c| *c != 0x0000), // stop when we encounter a null code unit
@@ -201,7 +192,9 @@ pub fn utf16_to_str<'a>(
     // TODO: use boot_services.allocate_slice
     let buf_len: usize = chars.clone().map(|c| c.len_utf8()).sum();
     let buf: &mut [u8] = unsafe {
-        let ptr = boot_services.allocate_pool(MemoryType::LoaderData, buf_len)?;
+        let ptr = system_table()
+            .boot_services
+            .allocate_pool(MemoryType::LoaderData, buf_len)?;
         slice::from_raw_parts_mut(ptr, buf_len)
     };
 
@@ -217,10 +210,5 @@ pub fn utf16_to_str<'a>(
     }
 
     // Re-interpret the buffer as a str behind a custom pointer
-    unsafe {
-        Ok(Pool::new_unchecked(
-            from_utf8_unchecked_mut(buf),
-            boot_services,
-        ))
-    }
+    unsafe { Ok(Pool::new_unchecked(from_utf8_unchecked_mut(buf))) }
 }
