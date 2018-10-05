@@ -1,6 +1,3 @@
-[submodule "kernel/multiboot2"]
-	path = kernel/multiboot2
-    url = https://github.com/IsaacWoods/multiboot2-elf64.git
 [submodule "kernel/acpi"]
     path = kernel/acpi
     url = https://github.com/IsaacWoods/acpi.git
