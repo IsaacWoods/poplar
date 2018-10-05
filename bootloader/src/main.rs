@@ -1,4 +1,10 @@
-#![feature(const_fn, lang_items, ptr_internals, decl_macro)]
+#![feature(
+    const_fn,
+    lang_items,
+    ptr_internals,
+    decl_macro,
+    panic_info_message
+)]
 #![no_std]
 #![no_main]
 
@@ -43,23 +49,30 @@ macro println {
 
 #[no_mangle]
 pub extern "win64" fn uefi_main(image_handle: Handle, system_table: &'static SystemTable) -> ! {
+    /*
+     * The first thing we do is set the global reference to the system table. Until we do this,
+     * the "safe" `system_table` function is not.
+     */
     unsafe {
         SYSTEM_TABLE = system_table;
     }
 
     println!("Hello UEFI!");
 
-    let file_data = match read_file("Boot", "test.txt", image_handle) {
+    let file_data = match read_file("BOOT", "test.txt", image_handle) {
         Ok(data) => data,
-        Err(err) => {
-            println!("Failed to read file: {:?}", err);
-            loop {}
-        }
+        Err(err) => panic!("Failed to read file: {:?}", err),
     };
     println!(
         "File: {}",
         core::str::from_utf8(&file_data).expect("Failed to parse file data")
     );
+
+    let memory_map = match system_table.boot_services.get_memory_map() {
+        Ok(map) => map,
+        Err(err) => panic!("Failed to get memory map: {:?}", err),
+    };
+    println!("{:?}", memory_map);
 
     loop {}
 }
@@ -106,10 +119,11 @@ fn read_file(volume_label: &str, path: &str, image_handle: Handle) -> Result<Poo
 pub fn panic(info: &PanicInfo) -> ! {
     let location = info.location().unwrap();
     println!(
-        "Panic in {}({}:{})",
+        "Panic in {}({}:{}): {}",
         location.file(),
         location.line(),
-        location.column()
+        location.column(),
+        info.message().unwrap()
     );
     loop {}
 }
