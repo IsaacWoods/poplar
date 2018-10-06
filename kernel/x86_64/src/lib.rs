@@ -1,15 +1,16 @@
 #![no_std]
-#![feature(lang_items)]
-#![feature(asm)]
-#![feature(const_fn)]
-#![feature(naked_functions)]
-#![feature(core_intrinsics)]
-#![feature(alloc)]
-#![feature(type_ascription)]
-#![feature(allocator_api)]
-#![feature(panic_info_message)]
-#![feature(extern_prelude)]
-#![feature(alloc_error_handler)]
+#![feature(
+    lang_items,
+    asm,
+    const_fn,
+    naked_functions,
+    alloc,
+    type_ascription,
+    allocator_api,
+    panic_info_message,
+    alloc_error_handler,
+    core_intrinsics
+)]
 #![allow(unknown_lints)]
 #![allow(identity_op)]
 #![allow(new_without_default)]

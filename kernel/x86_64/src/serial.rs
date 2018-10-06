@@ -22,7 +22,8 @@ impl ::log::Log for SerialLogger {
                     record.level(),
                     record.target(),
                     record.args()
-                )).unwrap();
+                ))
+                .unwrap();
         }
     }
 

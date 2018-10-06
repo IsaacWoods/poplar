@@ -27,6 +27,7 @@ path = "../heap_allocator"
 
 [dependencies.acpi]
 path = "../acpi"
+features = ["debug_parser"]
 
 [dependencies.kernel]
 path = ".."

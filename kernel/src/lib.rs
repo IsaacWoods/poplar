@@ -1,10 +1,5 @@
 #![no_std]
-#![feature(alloc)]
-#![feature(core_intrinsics)]
-#![feature(type_ascription)]
-#![feature(string_retain)]
-#![feature(pattern)]
-#![feature(box_syntax)]
+#![feature(alloc, core_intrinsics, type_ascription, pattern, box_syntax)]
 
 extern crate alloc;
 extern crate bit_field;
@@ -16,9 +11,6 @@ extern crate log;
 extern crate heap_allocator as allocator;
 extern crate libmessage;
 extern crate serde;
-#[macro_use]
-extern crate serde_derive;
-
 pub mod arch;
 pub mod fs;
 pub mod node;

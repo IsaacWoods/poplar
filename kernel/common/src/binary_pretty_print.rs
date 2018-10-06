@@ -41,7 +41,8 @@ impl<T: fmt::Binary + PrimInt> fmt::Debug for BinaryPrettyPrint<T> {
                 "{:>08b}({})-",
                 (self.0 >> (byte * 8)) & byte_mask,
                 byte * 8
-            ).unwrap();
+            )
+            .unwrap();
         }
         write!(f, "{:>08b}(0)", self.0 & byte_mask).unwrap();
 

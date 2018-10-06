@@ -216,15 +216,23 @@ impl Process {
                 ) {
                     mapper.map(
                         stack_page,
-                        EntryFlags::PRESENT | EntryFlags::USER_ACCESSIBLE | EntryFlags::WRITABLE | EntryFlags::NO_EXECUTE,
+                        EntryFlags::PRESENT
+                            | EntryFlags::USER_ACCESSIBLE
+                            | EntryFlags::WRITABLE
+                            | EntryFlags::NO_EXECUTE,
                         allocator,
                     );
                 }
 
                 // Allocate and map the Send Buffer
-                mapper.map(Page::containing_page(::libmessage::process::SEND_BUFFER_ADDRESS.into()),
-                           EntryFlags::PRESENT | EntryFlags::USER_ACCESSIBLE | EntryFlags::WRITABLE | EntryFlags::NO_EXECUTE,
-                           allocator);
+                mapper.map(
+                    Page::containing_page(SEND_BUFFER_ADDRESS.into()),
+                    EntryFlags::PRESENT
+                        | EntryFlags::USER_ACCESSIBLE
+                        | EntryFlags::WRITABLE
+                        | EntryFlags::NO_EXECUTE,
+                    allocator,
+                );
 
                 // TODO: Map stuff for the new process
                 //          * The ELF sections - makes up the image
