@@ -5,9 +5,9 @@ export RAMDISK ?= $(abspath ./ramdisk)
 RUST_GDB_INSTALL_PATH ?= ~/bin/rust-gdb/bin/
 GRUB_MKRESCUE ?= grub2-mkrescue
 
-.PHONY: prepare kernel rust ramdisk test_rust clean qemu gdb update fmt
+.PHONY: prepare kernel rust ramdisk clean qemu gdb update fmt
 
-pebble.iso: prepare kernel test_rust ramdisk kernel/grub.cfg
+pebble.iso: prepare kernel ramdisk kernel/grub.cfg
 	cp $(BUILD_DIR)/kernel.bin $(BUILD_DIR)/iso/boot/kernel.bin
 	cp kernel/grub.cfg $(BUILD_DIR)/iso/boot/grub/grub.cfg
 	$(GRUB_MKRESCUE) -o $@ $(BUILD_DIR)/iso 2> /dev/null
@@ -30,12 +30,6 @@ ramdisk:
 	cd $(RAMDISK) && \
 	echo "This is a file on the ramdisk" > test_file && \
 	tar -c -f $(BUILD_DIR)/iso/ramdisk.tar * && \
-	cd ..
-
-test_rust:
-	cd test_rust && \
-	cargo xbuild --target=x86_64-pebble-nostd.json && \
-	cp target/x86_64-pebble-nostd/debug/test_rust $(RAMDISK)/test_process.elf && \
 	cd ..
 
 # This does NOT clean the Rust submodule - it takes ages to build and you probably don't want to

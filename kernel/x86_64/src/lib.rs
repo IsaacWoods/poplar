@@ -27,7 +27,6 @@ extern crate common;
 extern crate acpi;
 extern crate kernel;
 extern crate libmessage;
-extern crate multiboot2;
 extern crate xmas_elf;
 
 #[macro_use]

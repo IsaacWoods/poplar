@@ -3,7 +3,6 @@ members = [
     "acpi",
     "common",
     "heap_allocator",
-    "multiboot2",
     "x86_64",
 ]
 
