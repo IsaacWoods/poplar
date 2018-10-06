@@ -1,12 +1,13 @@
 # Pebble
-[![Gitter chat](https://badges.gitter.im/gitterHQ/gitter.png)](https://gitter.im/pebble-os/Lobby)
+[![Build Status](https://travis-ci.org/pebble-os/pebble.svg?branch=master)](https://travis-ci.org/pebble-os/pebble)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![](https://tokei.rs/b1/github/IsaacWoods/pebble)](https://github.com/Aaronepower/tokei)
-[![Build Status](https://travis-ci.org/IsaacWoods/pebble.svg?branch=master)](https://travis-ci.org/IsaacWoods/pebble)
+[![Gitter chat](https://badges.gitter.im/gitterHQ/gitter.png)](https://gitter.im/pebble-os/Lobby)
 
-Pebble is an operating system written in Rust, centered around message passing between 'nodes'.
-It currently only supports x86_64 and is Multiboot2 compatible.
-Pebble is currently very early in development.
+**Pebble is still very early in development**
+
+Pebble is an operating system written in Rust, with a focus on safety and simplicity. It is designed to be simple to understand, extend, and develop for. Pebble does not aim for POSIX compliance.
+
+The best way to learn about Pebble is to read [the book](https://pebble-os.github.io/book).
 
 ## Acknowledgements
 - [Phil Oppermann's great set of tutorials](https://os.phil-opp.com/)
