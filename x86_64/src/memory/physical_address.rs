@@ -3,19 +3,21 @@ use core::cmp::Ordering;
 use core::fmt;
 use core::ops::{Add, Sub};
 
+/// Represents an address in the physical memory space.
 #[derive(Clone, Copy)]
-pub struct PhysicalAddress(usize);
+#[repr(transparent)]
+pub struct PhysicalAddress(u64);
 
 impl PhysicalAddress {
-    pub const fn new(address: usize) -> PhysicalAddress {
+    pub const fn new(address: u64) -> PhysicalAddress {
         PhysicalAddress(address)
     }
 
-    pub const fn offset(&self, offset: isize) -> PhysicalAddress {
-        PhysicalAddress::new(((self.0 as isize) + offset) as usize)
+    pub const fn offset(&self, offset: i64) -> PhysicalAddress {
+        PhysicalAddress::new(((self.0 as i64) + offset) as u64)
     }
 
-    pub const fn offset_into_frame(&self) -> usize {
+    pub const fn offset_into_frame(&self) -> u64 {
         self.0 % FRAME_SIZE
     }
 
@@ -42,14 +44,14 @@ impl fmt::Debug for PhysicalAddress {
     }
 }
 
-impl From<usize> for PhysicalAddress {
-    fn from(address: usize) -> PhysicalAddress {
+impl From<u64> for PhysicalAddress {
+    fn from(address: u64) -> PhysicalAddress {
         PhysicalAddress(address)
     }
 }
 
-impl From<PhysicalAddress> for usize {
-    fn from(address: PhysicalAddress) -> usize {
+impl From<PhysicalAddress> for u64 {
+    fn from(address: PhysicalAddress) -> u64 {
         address.0
     }
 }

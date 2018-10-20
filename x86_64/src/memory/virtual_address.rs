@@ -3,11 +3,31 @@ use core::cmp::Ordering;
 use core::fmt;
 use core::ops::{Add, Sub};
 
+/// Represents a canonical virtual address. To be canonical, the address must be in the ranges
+/// `0x0000_0000_0000_0000` to `0x0000_8000_0000_0000` or `0xffff_8000_0000_0000` to
+/// `0xffff_ffff_ffff_ffff`.
 #[derive(Clone, Copy)]
-pub struct VirtualAddress(usize);
+#[repr(transparent)]
+pub struct VirtualAddress(u64);
 
 impl VirtualAddress {
-    pub const fn new(address: usize) -> VirtualAddress {
+    /// Create a new `VirtualAddress` from the given address. If the given address is not a valid
+    /// canonical address, this returns `None`.
+    /*
+     * TODO: this should be made `const` when CTFE supports matches, then we should use it for all
+     * the constants that currently use `new_unchecked`
+     */
+    pub fn new(address: u64) -> Option<VirtualAddress> {
+        match address {
+            0x0000_0000_0000_0000..=0x0000_7fff_ffff_ffff => Some(VirtualAddress(address)),
+            0xffff_8000_0000_0000..=0xffff_ffff_ffff_ffff => Some(VirtualAddress(address)),
+            _ => None,
+        }
+    }
+
+    /// Create a new `VirtualAddress` from the given address, which is assumed to be canonical.
+    /// Unsafe because using a non-canonical address can cause General Protection faults.
+    pub const unsafe fn new_unchecked(address: u64) -> VirtualAddress {
         VirtualAddress(address)
     }
 
@@ -18,12 +38,12 @@ impl VirtualAddress {
         p1: u16,
         offset: usize,
     ) -> VirtualAddress {
-        VirtualAddress::new(
-            ((p4 as usize) << 39)
-                | ((p3 as usize) << 30)
-                | ((p2 as usize) << 21)
-                | ((p1 as usize) << 12)
-                | (offset << 0),
+        VirtualAddress(
+            ((p4 as u64) << 39)
+                | ((p3 as u64) << 30)
+                | ((p2 as u64) << 21)
+                | ((p1 as u64) << 12)
+                | ((offset as u64) << 0),
         )
         .canonicalise()
     }
@@ -36,19 +56,19 @@ impl VirtualAddress {
         self.0 as *mut T
     }
 
-    pub const fn offset(&self, offset: isize) -> VirtualAddress {
-        VirtualAddress::new(((self.0 as isize) + offset) as usize)
+    pub const fn offset(&self, offset: i64) -> VirtualAddress {
+        VirtualAddress(((self.0 as i64) + offset) as u64).canonicalise()
     }
 
     pub const fn is_page_aligned(&self) -> bool {
         self.0 % PAGE_SIZE == 0
     }
 
-    pub const fn is_aligned_to(&self, alignment: usize) -> bool {
+    pub const fn is_aligned_to(&self, alignment: u64) -> bool {
         self.0 % alignment == 0
     }
 
-    pub const fn offset_into_page(&self) -> usize {
+    pub const fn offset_into_page(&self) -> u64 {
         self.0 % PAGE_SIZE
     }
 
@@ -57,9 +77,9 @@ impl VirtualAddress {
     /// this function.
     pub const fn canonicalise(self) -> VirtualAddress {
         #[allow(inconsistent_digit_grouping)]
-        const SIGN_EXTENSION: usize = 0o177777_000_000_000_000_0000;
+        const SIGN_EXTENSION: u64 = 0o177777_000_000_000_000_0000;
 
-        VirtualAddress::new((SIGN_EXTENSION * ((self.0 >> 47) & 0b1)) | (self.0 & ((1 << 48) - 1)))
+        VirtualAddress((SIGN_EXTENSION * ((self.0 >> 47) & 0b1)) | (self.0 & ((1 << 48) - 1)))
     }
 }
 
@@ -81,27 +101,27 @@ impl fmt::Debug for VirtualAddress {
     }
 }
 
-impl From<usize> for VirtualAddress {
-    fn from(address: usize) -> VirtualAddress {
+impl From<u64> for VirtualAddress {
+    fn from(address: u64) -> VirtualAddress {
         VirtualAddress(address)
     }
 }
 
-impl From<VirtualAddress> for usize {
-    fn from(address: VirtualAddress) -> usize {
+impl From<VirtualAddress> for u64 {
+    fn from(address: VirtualAddress) -> u64 {
         address.0
     }
 }
 
 impl<T> From<*const T> for VirtualAddress {
     fn from(ptr: *const T) -> VirtualAddress {
-        (ptr as usize).into()
+        (ptr as u64).into()
     }
 }
 
 impl<T> From<*mut T> for VirtualAddress {
     fn from(ptr: *mut T) -> VirtualAddress {
-        (ptr as usize).into()
+        (ptr as u64).into()
     }
 }
 

@@ -1,3 +1,4 @@
+pub mod kernel_map;
 pub mod paging;
 
 mod physical_address;
