@@ -3,18 +3,26 @@ use core::cmp::Ordering;
 use core::fmt;
 use core::ops::{Add, Sub};
 
-/// Represents an address in the physical memory space.
+/// Represents an address in the physical memory space. A valid physical address is smaller than
+/// 2^52
 #[derive(Clone, Copy)]
 #[repr(transparent)]
 pub struct PhysicalAddress(u64);
 
 impl PhysicalAddress {
-    pub const fn new(address: u64) -> PhysicalAddress {
-        PhysicalAddress(address)
+    // TODO: make `const` when const match is supported
+    pub fn new(address: u64) -> Option<PhysicalAddress> {
+        // This constant has to exist because we can't use expressions in a range
+        const MAX_PHYSICAL_ADDRESS: u64 = (1 << 52) - 1;
+
+        match address {
+            0..=MAX_PHYSICAL_ADDRESS => Some(PhysicalAddress(address)),
+            _ => None,
+        }
     }
 
-    pub const fn offset(&self, offset: i64) -> PhysicalAddress {
-        PhysicalAddress::new(((self.0 as i64) + offset) as u64)
+    pub const fn new_unchecked(address: u64) -> PhysicalAddress {
+        PhysicalAddress(address)
     }
 
     pub const fn offset_into_frame(&self) -> u64 {
@@ -44,12 +52,6 @@ impl fmt::Debug for PhysicalAddress {
     }
 }
 
-impl From<u64> for PhysicalAddress {
-    fn from(address: u64) -> PhysicalAddress {
-        PhysicalAddress(address)
-    }
-}
-
 impl From<PhysicalAddress> for u64 {
     fn from(address: PhysicalAddress) -> u64 {
         address.0
@@ -57,18 +59,18 @@ impl From<PhysicalAddress> for u64 {
 }
 
 impl Add<PhysicalAddress> for PhysicalAddress {
-    type Output = PhysicalAddress;
+    type Output = Option<PhysicalAddress>;
 
-    fn add(self, rhs: PhysicalAddress) -> PhysicalAddress {
-        (self.0 + rhs.0).into()
+    fn add(self, rhs: PhysicalAddress) -> Self::Output {
+        PhysicalAddress::new(self.0 + rhs.0)
     }
 }
 
 impl Sub<PhysicalAddress> for PhysicalAddress {
-    type Output = PhysicalAddress;
+    type Output = Option<PhysicalAddress>;
 
-    fn sub(self, rhs: PhysicalAddress) -> PhysicalAddress {
-        (self.0 - rhs.0).into()
+    fn sub(self, rhs: PhysicalAddress) -> Self::Output {
+        PhysicalAddress::new(self.0 - rhs.0)
     }
 }
 

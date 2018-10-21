@@ -101,12 +101,6 @@ impl fmt::Debug for VirtualAddress {
     }
 }
 
-impl From<u64> for VirtualAddress {
-    fn from(address: u64) -> VirtualAddress {
-        VirtualAddress(address)
-    }
-}
-
 impl From<VirtualAddress> for u64 {
     fn from(address: VirtualAddress) -> u64 {
         address.0
@@ -115,29 +109,29 @@ impl From<VirtualAddress> for u64 {
 
 impl<T> From<*const T> for VirtualAddress {
     fn from(ptr: *const T) -> VirtualAddress {
-        (ptr as u64).into()
+        VirtualAddress::new(ptr as u64).expect("Pointer is non-canonical!")
     }
 }
 
 impl<T> From<*mut T> for VirtualAddress {
     fn from(ptr: *mut T) -> VirtualAddress {
-        (ptr as u64).into()
+        VirtualAddress::new(ptr as u64).expect("Pointer is non-canonical!")
     }
 }
 
 impl Add<VirtualAddress> for VirtualAddress {
-    type Output = VirtualAddress;
+    type Output = Option<VirtualAddress>;
 
-    fn add(self, rhs: VirtualAddress) -> VirtualAddress {
-        (self.0 + rhs.0).into()
+    fn add(self, rhs: VirtualAddress) -> Self::Output {
+        VirtualAddress::new(self.0 + rhs.0)
     }
 }
 
 impl Sub<VirtualAddress> for VirtualAddress {
-    type Output = VirtualAddress;
+    type Output = Option<VirtualAddress>;
 
-    fn sub(self, rhs: VirtualAddress) -> VirtualAddress {
-        (self.0 - rhs.0).into()
+    fn sub(self, rhs: VirtualAddress) -> Self::Output {
+        VirtualAddress::new(self.0 - rhs.0)
     }
 }
 
