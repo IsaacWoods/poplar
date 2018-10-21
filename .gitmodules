@@ -1,6 +1,3 @@
 [submodule "kernel/acpi"]
     path = kernel/acpi
     url = https://github.com/IsaacWoods/acpi.git
-[submodule "rust"]
-	path = rust
-	url = https://github.com/IsaacWoods/rust
