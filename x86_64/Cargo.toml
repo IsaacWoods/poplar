@@ -5,3 +5,5 @@ authors = ["Isaac Woods"]
 edition = "2018"
 
 [dependencies]
+bitflags = "1"
+bit_field = "0.9"

@@ -58,19 +58,19 @@ impl From<PhysicalAddress> for u64 {
     }
 }
 
-impl Add<PhysicalAddress> for PhysicalAddress {
+impl Add<u64> for PhysicalAddress {
     type Output = Option<PhysicalAddress>;
 
-    fn add(self, rhs: PhysicalAddress) -> Self::Output {
-        PhysicalAddress::new(self.0 + rhs.0)
+    fn add(self, rhs: u64) -> Self::Output {
+        PhysicalAddress::new(self.0 + rhs)
     }
 }
 
-impl Sub<PhysicalAddress> for PhysicalAddress {
+impl Sub<u64> for PhysicalAddress {
     type Output = Option<PhysicalAddress>;
 
-    fn sub(self, rhs: PhysicalAddress) -> Self::Output {
-        PhysicalAddress::new(self.0 - rhs.0)
+    fn sub(self, rhs: u64) -> Self::Output {
+        PhysicalAddress::new(self.0 - rhs)
     }
 }
 

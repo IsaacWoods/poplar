@@ -31,6 +31,12 @@ impl VirtualAddress {
         VirtualAddress(address)
     }
 
+    /// Create a new `VirtualAddress` from the given address, canonicalising it if it is not
+    /// already canonical, by the logic in the `VirtualAddress::canonicalise` method.
+    pub const fn new_canonicalise(address: u64) -> VirtualAddress {
+        VirtualAddress(address).canonicalise()
+    }
+
     pub const fn from_page_table_offsets(
         p4: u16,
         p3: u16,
@@ -119,19 +125,19 @@ impl<T> From<*mut T> for VirtualAddress {
     }
 }
 
-impl Add<VirtualAddress> for VirtualAddress {
+impl Add<u64> for VirtualAddress {
     type Output = Option<VirtualAddress>;
 
-    fn add(self, rhs: VirtualAddress) -> Self::Output {
-        VirtualAddress::new(self.0 + rhs.0)
+    fn add(self, rhs: u64) -> Self::Output {
+        VirtualAddress::new(self.0 + rhs)
     }
 }
 
-impl Sub<VirtualAddress> for VirtualAddress {
+impl Sub<u64> for VirtualAddress {
     type Output = Option<VirtualAddress>;
 
-    fn sub(self, rhs: VirtualAddress) -> Self::Output {
-        VirtualAddress::new(self.0 - rhs.0)
+    fn sub(self, rhs: u64) -> Self::Output {
+        VirtualAddress::new(self.0 - rhs)
     }
 }
 
