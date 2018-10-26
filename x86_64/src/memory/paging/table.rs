@@ -103,7 +103,7 @@ where
         &mut self,
         index: u16,
         user_accessible: bool,
-        allocator: &mut A,
+        allocator: &A,
     ) -> &mut Table<L::NextLevel>
     where
         A: FrameAllocator,

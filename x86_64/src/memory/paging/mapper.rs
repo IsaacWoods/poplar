@@ -45,14 +45,14 @@ impl Mapper {
 
     /// Map the given `Page` somewhere in physical memory. Allocates a page using the given
     /// `FrameAllocator`.
-    pub fn map<A>(&mut self, page: Page, flags: EntryFlags, allocator: &mut A)
+    pub fn map<A>(&mut self, page: Page, flags: EntryFlags, allocator: &A)
     where
         A: FrameAllocator,
     {
         self.map_to(page, allocator.allocate().unwrap(), flags, allocator);
     }
 
-    pub fn map_to<A>(&mut self, page: Page, frame: Frame, flags: EntryFlags, allocator: &mut A)
+    pub fn map_to<A>(&mut self, page: Page, frame: Frame, flags: EntryFlags, allocator: &A)
     where
         A: FrameAllocator,
     {
@@ -78,7 +78,7 @@ impl Mapper {
         tlb::invalidate_page(page.start_address());
     }
 
-    pub fn unmap<A>(&mut self, page: Page, allocator: &mut A)
+    pub fn unmap<A>(&mut self, page: Page, allocator: &A)
     where
         A: FrameAllocator,
     {
