@@ -1,5 +1,5 @@
 use super::entry::EntryFlags;
-use super::table::{Level4, Table};
+use super::table::{IdentityMapping, Level4, RecursiveMapping, Table, TableMapping};
 use super::{Frame, FrameAllocator, Page};
 use crate::hw::tlb;
 use crate::memory::{PhysicalAddress, VirtualAddress};
@@ -14,17 +14,30 @@ use crate::memory::{PhysicalAddress, VirtualAddress};
 /// blocks of memory, rather than containing child tables). This shouldn't be a problem if you use
 /// `Mapper` to create page tables as Pebble does, but may create problems if you try and interpret
 /// existing page tables (set up by the UEFI, for example) with `Mapper`.
-pub struct Mapper {
-    p4: &'static mut Table<Level4>,
+pub struct Mapper<M: 'static + TableMapping> {
+    p4: &'static mut Table<Level4, M>,
 }
 
-impl Mapper {
-    pub unsafe fn new() -> Mapper {
+impl Mapper<RecursiveMapping> {
+    pub(super) unsafe fn new() -> Mapper<RecursiveMapping> {
         Mapper {
-            p4: &mut *super::table::P4,
+            p4: &mut *(super::table::P4),
         }
     }
+}
 
+impl Mapper<IdentityMapping> {
+    pub(super) unsafe fn new(p4_address: PhysicalAddress) -> Mapper<IdentityMapping> {
+        Mapper {
+            p4: &mut *(VirtualAddress::new_unchecked(u64::from(p4_address)).mut_ptr()),
+        }
+    }
+}
+
+impl<M> Mapper<M>
+where
+    M: TableMapping,
+{
     /// Get the `PhysicalAddress` a given `VirtualAddress` is mapped to by these page tables, if
     /// it's mapped. If these page tables don't map it to any physical frame, this returns `None`.
     pub fn translate(&self, address: VirtualAddress) -> Option<PhysicalAddress> {
@@ -62,11 +75,11 @@ impl Mapper {
          * for other pages in those structures.
          */
         let user_accessible = flags.contains(EntryFlags::USER_ACCESSIBLE);
-        let p3 = self
+        let p1 = self
             .p4
-            .next_table_create(page.p4_index(), user_accessible, allocator);
-        let p2 = p3.next_table_create(page.p3_index(), user_accessible, allocator);
-        let p1 = p2.next_table_create(page.p2_index(), user_accessible, allocator);
+            .next_table_create(page.p4_index(), user_accessible, allocator)
+            .next_table_create(page.p3_index(), user_accessible, allocator)
+            .next_table_create(page.p2_index(), user_accessible, allocator);
 
         assert!(
             p1[page.p1_index()].is_unused(),
