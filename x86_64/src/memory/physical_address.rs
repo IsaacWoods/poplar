@@ -5,7 +5,7 @@ use core::ops::{Add, Sub};
 
 /// Represents an address in the physical memory space. A valid physical address is smaller than
 /// 2^52
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Default)]
 #[repr(transparent)]
 pub struct PhysicalAddress(u64);
 

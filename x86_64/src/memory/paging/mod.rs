@@ -27,6 +27,12 @@ where
     _mapping: PhantomData<M>,
 }
 
+impl InactivePageTable<IdentityMapping> {
+    pub fn mapper<'a>(&'a mut self) -> Mapper<'a, IdentityMapping> {
+        unsafe { Mapper::<IdentityMapping>::new(self.p4_frame.start_address()) }
+    }
+}
+
 impl<M> InactivePageTable<M>
 where
     M: TableMapping,
@@ -72,14 +78,14 @@ pub struct ActivePageTable<M>
 where
     M: 'static + TableMapping,
 {
-    mapper: Mapper<M>,
+    mapper: Mapper<'static, M>,
 }
 
 impl<M> Deref for ActivePageTable<M>
 where
     M: 'static + TableMapping,
 {
-    type Target = Mapper<M>;
+    type Target = Mapper<'static, M>;
 
     fn deref(&self) -> &Self::Target {
         &self.mapper

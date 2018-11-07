@@ -1,5 +1,5 @@
 #![no_std]
-#![feature(asm, decl_macro, never_type)]
+#![feature(asm, decl_macro, never_type, step_trait)]
 #![allow(unknown_lints)]
 
 pub mod boot;

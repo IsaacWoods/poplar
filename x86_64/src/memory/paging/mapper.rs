@@ -14,27 +14,27 @@ use crate::memory::{PhysicalAddress, VirtualAddress};
 /// blocks of memory, rather than containing child tables). This shouldn't be a problem if you use
 /// `Mapper` to create page tables as Pebble does, but may create problems if you try and interpret
 /// existing page tables (set up by the UEFI, for example) with `Mapper`.
-pub struct Mapper<M: 'static + TableMapping> {
-    p4: &'static mut Table<Level4, M>,
+pub struct Mapper<'a, M: 'a + TableMapping> {
+    p4: &'a mut Table<Level4, M>,
 }
 
-impl Mapper<RecursiveMapping> {
-    pub(super) unsafe fn new() -> Mapper<RecursiveMapping> {
+impl Mapper<'static, RecursiveMapping> {
+    pub(super) unsafe fn new() -> Mapper<'static, RecursiveMapping> {
         Mapper {
             p4: &mut *(super::table::P4),
         }
     }
 }
 
-impl Mapper<IdentityMapping> {
-    pub(super) unsafe fn new(p4_address: PhysicalAddress) -> Mapper<IdentityMapping> {
+impl<'a> Mapper<'a, IdentityMapping> {
+    pub(super) unsafe fn new(p4_address: PhysicalAddress) -> Mapper<'a, IdentityMapping> {
         Mapper {
             p4: &mut *(VirtualAddress::new_unchecked(u64::from(p4_address)).mut_ptr()),
         }
     }
 }
 
-impl<M> Mapper<M>
+impl<M> Mapper<'_, M>
 where
     M: TableMapping,
 {

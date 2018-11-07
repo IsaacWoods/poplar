@@ -77,8 +77,16 @@ impl TableMapping for IdentityMapping {
         L: HierarchicalLevel,
         Self: Sized,
     {
-        // TODO
-        unimplemented!();
+        /*
+         * With an identity mapping, the virtual address of the page table will be the same as
+         * the physical address of the frame that contains it, so we just return that.
+         *
+         * We don't need to check the entry's `PRESENT` flag because `pointed_frame` already does
+         * it.
+         */
+        table[index]
+            .pointed_frame()
+            .and_then(|frame| VirtualAddress::new(u64::from(frame.start_address())))
     }
 }
 
@@ -90,7 +98,8 @@ impl TableMapping for RecursiveMapping {
     {
         let entry_flags = table[index].flags();
 
-        if entry_flags.contains(EntryFlags::PRESENT) && !entry_flags.contains(EntryFlags::HUGE_PAGE) {
+        if entry_flags.contains(EntryFlags::PRESENT) && !entry_flags.contains(EntryFlags::HUGE_PAGE)
+        {
             /*
              * We can calculate the next table's address by going through one more layer of the
              * recursive mapping.
@@ -99,7 +108,9 @@ impl TableMapping for RecursiveMapping {
              * the sign-extension bits, so we make sure to re-canonicalise it again.
              */
             let table_address = table as *const _ as u64;
-            Some(VirtualAddress::new_canonicalise((table_address << 9) | u64::from(index) << 12))
+            Some(VirtualAddress::new_canonicalise(
+                (table_address << 9) | u64::from(index) << 12,
+            ))
         } else {
             None
         }
