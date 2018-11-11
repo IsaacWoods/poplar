@@ -1,25 +1,23 @@
 language: rust
 sudo: required
 rust:
-  - nightly
+  -nightly
 
 git:
   depth: 5
 
 install:
-  - sudo apt-get install nasm
-  - sudo apt-get install grub2 grub2-common grub-common
-  - sudo apt-get install xorriso
-  - rustup component add rust-src
-  - cargo install cargo-xbuild
+  -rustup component add rust-src
+  -cargo install cargo-xbuild
 
 script:
-  - GRUB_MKRESCUE=grub-mkrescue make
+  -make
+
+branches:
+  only:
+    -staging
+    -trying
+    -master
 
 notifications:
   email: false
-  irc:
-    channels:
-      - "chat.freenode.net#pebble-os"
-    on_success: change
-    on_failure: always
