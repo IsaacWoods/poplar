@@ -13,9 +13,10 @@ use core::{
     str::from_utf8_unchecked_mut,
     sync::atomic::AtomicPtr,
 };
-use crate::memory::{MemoryDescriptor, MemoryType, PhysicalAddress};
+use crate::memory::{MemoryDescriptor, MemoryType};
 use crate::system_table;
 use crate::types::{BootMemory, Char16, Handle, Status, TableHeader};
+use x86_64::memory::PhysicalAddress;
 
 #[repr(C)]
 pub struct BootServices {

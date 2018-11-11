@@ -1,7 +1,8 @@
 use super::{BootServices, Pool};
 use core::{mem, slice};
-use crate::memory::{MemoryDescriptor, MemoryMap, MemoryType, PhysicalAddress};
+use crate::memory::{MemoryDescriptor, MemoryMap, MemoryType};
 use crate::types::Status;
+use x86_64::memory::PhysicalAddress;
 
 /// Type of memory allocation to perform
 #[repr(C)]

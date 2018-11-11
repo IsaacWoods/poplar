@@ -1,7 +1,47 @@
-use core::ops;
+use core::ops::{Range, Index};
+use crate::boot_services::AllocateType;
+use crate::system_table;
+use x86_64::memory::paging::{Frame, FrameAllocator, FRAME_SIZE};
+use x86_64::memory::{PhysicalAddress, VirtualAddress};
 
-pub type PhysicalAddress = *mut u8;
-pub type VirtualAddress = u64;
+pub struct BootFrameAllocator;
+
+impl FrameAllocator for BootFrameAllocator {
+    fn allocate_n(&self, n: usize) -> Result<Range<Frame>, !> {
+        /*
+         * Allocate a frame using the UEFI memory boot services. This allocator is only used by the
+         * page tables code, so set the memory type to `PebblePageTables`.
+         */
+        let mut frame_start = PhysicalAddress::default();
+        system_table()
+            .boot_services
+            .allocate_pages(
+                AllocateType::AllocateAnyPages,
+                MemoryType::PebblePageTables,
+                n,
+                &mut frame_start,
+            )
+            .unwrap();
+
+        // Zero it for sanity's sake
+        unsafe {
+            system_table().boot_services.set_mem(
+                u64::from(frame_start) as *mut _,
+                n * (FRAME_SIZE as usize),
+                0,
+            );
+        }
+
+        Ok(Frame::contains(frame_start)..Frame::contains(frame_start) + n as u64)
+    }
+
+    fn free(&self, frame: Frame) {
+        panic!(
+            "Physical memory freed in bootloader: frame starting at {:#x}",
+            frame.start_address()
+        );
+    }
+}
 
 /// Describes a region of memory
 #[derive(Debug)]
@@ -35,7 +75,7 @@ impl MemoryMap {
     }
 }
 
-impl ops::Index<usize> for MemoryMap {
+impl Index<usize> for MemoryMap {
     type Output = MemoryDescriptor;
 
     fn index(&self, index: usize) -> &MemoryDescriptor {
@@ -99,4 +139,15 @@ pub enum MemoryType {
     PalCode,
     PersistentMemory,
     MaxMemoryType,
+
+    /*
+     * Values between 0x8000_0000 and 0xffff_ffff are free to use by OS loaders for their own
+     * purposes. We use a few so the OS can locate itself and things like the page tables when we
+     * hand over control (this isn't how the OS *should* locate these structures [it should instead
+     * use the passed `BootInformation` struct], but these values identify the used regions in the
+     * memory map easily).
+     */
+    PebbleKernelMemory = 0x8000_0000,
+    PebblePageTables = 0x8000_0001,
+    PebbleBootInformation = 0x8000_0002,
 }
