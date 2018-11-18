@@ -5,7 +5,8 @@
     decl_macro,
     panic_info_message,
     asm,
-    never_type
+    never_type,
+    cell_update,
 )]
 #![no_std]
 #![no_main]
@@ -84,10 +85,11 @@ pub extern "win64" fn uefi_main(image_handle: Handle, system_table: &'static Sys
 
     println!("Hello UEFI!");
 
+    let allocator = BootFrameAllocator::new(16);
     let mut page_table = create_page_table();
     let mut mapper = page_table.mapper();
 
-    let kernel_entry = match load_kernel(image_handle, &mut mapper) {
+    let kernel_entry = match load_kernel(image_handle, &mut mapper, &allocator) {
         Ok(entry_point) => entry_point,
         Err(err) => panic!("Failed to load kernel: {:?}", err),
     };
@@ -139,6 +141,7 @@ fn create_page_table() -> InactivePageTable<IdentityMapping> {
 fn load_kernel(
     image_handle: Handle,
     mapper: &mut Mapper<IdentityMapping>,
+    allocator: &BootFrameAllocator,
 ) -> Result<fn(&BootInformation) -> !, Status> {
     let file_data = match read_file("BOOT", "kernel.elf", image_handle) {
         Ok(data) => data,
@@ -179,7 +182,7 @@ fn load_kernel(
         Err(err) => panic!("Failed to allocate physical memory for kernel: {:?}", err),
     }
     println!(
-        "Allocated physical memory for kernel at {:?}, kernel_size = {:#x}",
+        "Allocated physical memory for kernel at {:?}, kernel_size = {} bytes",
         kernel_physical_base, kernel_size
     );
 
@@ -223,6 +226,7 @@ fn load_kernel(
                     VirtualAddress::new(section.address()).unwrap(),
                     section.size(),
                     section.flags(),
+                    allocator
                 );
 
                 // Copy the section from the image into its new home
@@ -245,6 +249,7 @@ fn load_kernel(
                     VirtualAddress::new(section.address()).unwrap(),
                     section.size(),
                     section.flags(),
+                    allocator
                 );
 
                 /*
@@ -274,6 +279,7 @@ fn map_section(
     virtual_address: VirtualAddress,
     section_size: u64,
     elf_flags: u64,
+    allocator: &BootFrameAllocator,
 ) {
     /*
      * XXX: This is a tad hacky, but because the addresses should be page-aligned, the half-open
@@ -300,7 +306,7 @@ fn map_section(
     }
 
     for (frame, page) in frames.zip(pages) {
-        mapper.map_to(page, frame, flags, &BootFrameAllocator);
+        mapper.map_to(page, frame, flags, allocator);
     }
 }
 
