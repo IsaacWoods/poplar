@@ -1,23 +1,23 @@
 language: rust
 sudo: required
 rust:
-  -nightly
+  - nightly
 
 git:
   depth: 5
 
 install:
-  -rustup component add rust-src
-  -cargo install cargo-xbuild
+  - rustup component add rust-src
+  - cargo install cargo-xbuild
 
 script:
-  -make
+  - make
 
 branches:
   only:
-    -staging
-    -trying
-    -master
+    - staging
+    - trying
+    - master
 
 notifications:
   email: false
