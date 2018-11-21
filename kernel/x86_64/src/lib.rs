@@ -28,7 +28,7 @@ extern crate log;
 extern crate common;
 extern crate acpi;
 extern crate kernel;
-extern crate libmessage;
+// extern crate libmessage;
 extern crate xmas_elf;
 
 #[macro_use]

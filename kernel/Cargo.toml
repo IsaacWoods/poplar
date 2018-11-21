@@ -29,6 +29,6 @@ default-features    = false
 [dependencies.heap_allocator]
 path = "heap_allocator"
 
-[dependencies.libmessage]
-path = "../libmessage"
-features = ["kernel"]
+# [dependencies.libmessage]
+# path = "../libmessage"
+# features = ["kernel"]
