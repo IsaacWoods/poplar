@@ -22,6 +22,9 @@ xmas-elf                = "*"
 version                 = "*"
 default-features        = false
 
+[dependencies.x86_64]
+path = "../../x86_64"
+
 [dependencies.heap_allocator]
 path = "../heap_allocator"
 

@@ -6,7 +6,7 @@
     panic_info_message,
     asm,
     never_type,
-    cell_update,
+    cell_update
 )]
 #![no_std]
 #![no_main]
@@ -30,7 +30,7 @@ use crate::memory::{BootFrameAllocator, MemoryType};
 use crate::protocols::{FileAttributes, FileInfo, FileMode, FileSystemInfo, SimpleFileSystem};
 use crate::system_table::SystemTable;
 use crate::types::{Handle, Status};
-use x86_64::boot::BootInformation;
+use x86_64::boot::BootInfo;
 use x86_64::memory::paging::entry::EntryFlags;
 use x86_64::memory::paging::table::IdentityMapping;
 use x86_64::memory::paging::{Frame, InactivePageTable, Mapper, Page, FRAME_SIZE};
@@ -142,7 +142,7 @@ fn load_kernel(
     image_handle: Handle,
     mapper: &mut Mapper<IdentityMapping>,
     allocator: &BootFrameAllocator,
-) -> Result<fn(&BootInformation) -> !, Status> {
+) -> Result<fn(&BootInfo) -> !, Status> {
     let file_data = match read_file("BOOT", "kernel.elf", image_handle) {
         Ok(data) => data,
         Err(err) => panic!("Failed to read kernel ELF from disk: {:?}", err),
@@ -226,7 +226,7 @@ fn load_kernel(
                     VirtualAddress::new(section.address()).unwrap(),
                     section.size(),
                     section.flags(),
-                    allocator
+                    allocator,
                 );
 
                 // Copy the section from the image into its new home
@@ -249,7 +249,7 @@ fn load_kernel(
                     VirtualAddress::new(section.address()).unwrap(),
                     section.size(),
                     section.flags(),
-                    allocator
+                    allocator,
                 );
 
                 /*

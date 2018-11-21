@@ -1,37 +1,10 @@
-ENTRY(Start)
+ENTRY(kstart)
 OUTPUT_FORMAT(elf64-x86-64)
 
-KERNEL_LMA = 0x100000;
 KERNEL_VMA = 0xffffffff80000000;
 
 SECTIONS
 {
-    /*
-     * First, we physically-map a bootstrap section that will load the 64-bit code. This is required
-     * because we haven't enabled paging yet, and so code that uses virtual addresses won't work.
-     */
-    . = KERNEL_LMA;
-    _start = . + KERNEL_VMA;
-
-    /*
-     * This must appear first, because it contains the Multiboot header.
-     */
-    .bootstrap_data :
-    {
-        KEEP(*(.multiboot))
-        *(.bootstrap_data)
-        . = ALIGN(4K);
-    }
-
-    .bootstrap :
-    {
-        *(.bootstrap)
-        . = ALIGN(4K);
-    }
-
-    /*
-     * Then, we place everything else at proper virtual addresses
-     */
     . += KERNEL_VMA;
     _higher_start = .;
 
