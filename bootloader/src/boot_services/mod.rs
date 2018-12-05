@@ -15,7 +15,7 @@ use core::{
 };
 use crate::memory::{MemoryDescriptor, MemoryType};
 use crate::system_table;
-use crate::types::{BootMemory, Char16, Handle, Status, TableHeader};
+use crate::types::{Char16, Handle, Status, TableHeader};
 use x86_64::memory::PhysicalAddress;
 
 #[repr(C)]
@@ -100,7 +100,7 @@ pub struct BootServices {
     pub _open_protocol: extern "win64" fn(
         handle: Handle,
         protocol: &Guid,
-        interface: &mut BootMemory<()>,
+        interface: &mut *mut (),
         agent_handle: Handle,
         controller_handle: Handle,
         attributes: OpenProtocolAttributes,
