@@ -1,6 +1,7 @@
 use super::BootServices;
-use core::mem;
 use crate::types::Status;
+use bitflags::bitflags;
+use core::mem;
 
 #[derive(Debug)]
 pub struct Event(());

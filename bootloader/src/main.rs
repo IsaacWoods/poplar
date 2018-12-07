@@ -1,3 +1,5 @@
+#![no_std]
+#![no_main]
 #![feature(
     const_fn,
     lang_items,
@@ -8,11 +10,6 @@
     never_type,
     cell_update
 )]
-#![no_std]
-#![no_main]
-
-#[macro_use]
-extern crate bitflags;
 
 mod boot_services;
 mod memory;
@@ -21,20 +18,21 @@ mod runtime_services;
 mod system_table;
 mod types;
 
-use core::fmt::Write;
-use core::mem;
-use core::panic::PanicInfo;
-use core::slice;
 use crate::boot_services::{AllocateType, OpenProtocolAttributes, Pool, Protocol, SearchType};
 use crate::memory::{BootFrameAllocator, MemoryType};
 use crate::protocols::{FileAttributes, FileInfo, FileMode, FileSystemInfo, SimpleFileSystem};
 use crate::system_table::SystemTable;
 use crate::types::{Handle, Status};
+use core::fmt::Write;
+use core::mem;
+use core::panic::PanicInfo;
+use core::slice;
 use mer::{
     section::{SectionHeader, SectionType},
     Elf,
 };
 use x86_64::boot::BootInfo;
+use x86_64::hw::registers::{read_control_reg, read_msr, write_control_reg, write_msr};
 use x86_64::memory::paging::entry::EntryFlags;
 use x86_64::memory::paging::table::IdentityMapping;
 use x86_64::memory::paging::{Frame, InactivePageTable, Mapper, Page, FRAME_SIZE};

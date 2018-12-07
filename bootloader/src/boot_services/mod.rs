@@ -7,15 +7,15 @@ pub use self::events::*;
 pub use self::memory::*;
 pub use self::pool_ptr::*;
 pub use self::protocols::*;
+use crate::memory::{MemoryDescriptor, MemoryType};
+use crate::system_table;
+use crate::types::{Char16, Handle, Status, TableHeader};
 use core::{
     char::{decode_utf16, REPLACEMENT_CHARACTER},
     fmt, slice,
     str::from_utf8_unchecked_mut,
     sync::atomic::AtomicPtr,
 };
-use crate::memory::{MemoryDescriptor, MemoryType};
-use crate::system_table;
-use crate::types::{Char16, Handle, Status, TableHeader};
 use x86_64::memory::PhysicalAddress;
 
 #[repr(C)]
@@ -46,19 +46,20 @@ pub struct BootServices {
     pub _free_pool: extern "win64" fn(buffer: *mut u8) -> Status,
 
     // Event & Timer Services
-    pub _create_event:
-        extern "win64" fn(
-            event_type: EventType,
-            notify_tpl: TaskPriorityLevel,
-            notify_function: extern "win64" fn(event: &Event, context: *const ()),
-            notify_context: *const (),
-            event: &mut &Event,
-        ) -> Status,
+    pub _create_event: extern "win64" fn(
+        event_type: EventType,
+        notify_tpl: TaskPriorityLevel,
+        notify_function: extern "win64" fn(event: &Event, context: *const ()),
+        notify_context: *const (),
+        event: &mut &Event,
+    ) -> Status,
     pub _set_timer:
         extern "win64" fn(event: &Event, timer_type: TimerDelay, trigger_time: u64) -> Status,
-    pub _wait_for_event:
-        extern "win64" fn(number_of_events: usize, event: *const &Event, index: &mut usize)
-            -> Status,
+    pub _wait_for_event: extern "win64" fn(
+        number_of_events: usize,
+        event: *const &Event,
+        index: &mut usize,
+    ) -> Status,
     pub _signal_event: extern "win64" fn(event: &Event) -> Status,
     pub _close_event: extern "win64" fn(event: &Event) -> Status,
     pub _check_event: extern "win64" fn(event: &Event) -> Status,

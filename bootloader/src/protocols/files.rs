@@ -1,8 +1,9 @@
-use core::{mem, ops::Drop, slice};
 use crate::boot_services::{utf16_to_str, Guid, Pool, Protocol};
 use crate::memory::MemoryType;
 use crate::system_table;
 use crate::types::{Bool, Char16, Status};
+use bitflags::bitflags;
+use core::{mem, ops::Drop, slice};
 
 /// Provides file based access to supported file systems
 #[repr(C)]
@@ -188,8 +189,7 @@ static FILE_SYSTEM_INFO_GUID: Guid = Guid {
 #[repr(C)]
 pub struct SimpleFileSystem {
     pub revision: u64,
-    pub _open_volume:
-        extern "win64" fn(this: &SimpleFileSystem, root: &mut *mut File) -> Status,
+    pub _open_volume: extern "win64" fn(this: &SimpleFileSystem, root: &mut *mut File) -> Status,
 }
 
 impl SimpleFileSystem {

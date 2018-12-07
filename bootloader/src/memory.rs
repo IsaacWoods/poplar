@@ -1,7 +1,7 @@
-use core::cell::Cell;
-use core::ops::{Index, Range};
 use crate::boot_services::AllocateType;
 use crate::system_table;
+use core::cell::Cell;
+use core::ops::{Index, Range};
 use x86_64::memory::paging::{Frame, FrameAllocator, FRAME_SIZE};
 use x86_64::memory::{PhysicalAddress, VirtualAddress};
 

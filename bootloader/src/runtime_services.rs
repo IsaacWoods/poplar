@@ -1,5 +1,5 @@
-use core::fmt;
 use crate::types::{Char16, Status, TableHeader};
+use core::fmt;
 
 /// Contains pointers to all of the runtime services
 #[repr(C)]

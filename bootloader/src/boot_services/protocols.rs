@@ -1,7 +1,8 @@
 use super::{BootServices, Pool};
-use core::{mem, slice};
 use crate::memory::MemoryType;
 use crate::types::{Handle, Status};
+use bitflags::bitflags;
+use core::{mem, slice};
 
 /// Globally-unique identifier, used in UEFI to distinguish protocols
 #[derive(Clone, Copy, Debug, PartialEq)]
