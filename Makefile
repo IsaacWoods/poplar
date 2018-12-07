@@ -34,9 +34,9 @@ kernel:
 	ld -n --gc-sections -T linker.ld -o $(BUILD_DIR)/fat/kernel.elf ../target/$(ARCH)-pebble-kernel/debug/libx86_64.a &&\
 	cd ..
 
-# This does NOT clean the Rust submodule - it takes ages to build and you probably don't want to
 clean:
-	make -C kernel/$(ARCH) clean
+	cd bootloader && cargo clean
+	cd kernel && cargo clean
 	rm -rf build pebble.iso
 
 update:
