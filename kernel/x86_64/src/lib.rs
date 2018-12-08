@@ -15,10 +15,10 @@
 #![allow(identity_op)]
 #![allow(new_without_default)]
 
-extern crate x86_64;
 extern crate alloc;
 extern crate spin;
 extern crate volatile;
+extern crate x86_64;
 #[macro_use]
 extern crate bitflags;
 extern crate bit_field;

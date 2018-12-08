@@ -6,7 +6,7 @@ KERNEL_VMA = 0xffffffff80000000;
 SECTIONS
 {
     . += KERNEL_VMA;
-    _higher_start = .;
+    _kernel_start = .;
 
     .rodata : AT(ADDR(.rodata) - KERNEL_VMA)
     {
@@ -30,6 +30,17 @@ SECTIONS
     {
         *(.bss .bss.*)
         . = ALIGN(4K);
+
+        /*
+         * We reserve a guard page that should be unmapped by the bootloader. This will cause a
+         * page-fault if accessed and so will detect a stack overflow.
+         */
+        _guard_page = .;
+        . += 4K;
+        _stack_bottom = .;
+        . += 16K;
+        _stack_top = .;
+        /* No need to add more alignment here - it will already be page-aligned */
     }
 
     .got : AT(ADDR(.got) - KERNEL_VMA)
@@ -51,7 +62,7 @@ SECTIONS
         . = ALIGN(4K);
     }
 
-    _end = .;
+    _kernel_end = .;
 
     /DISCARD/ :
     {

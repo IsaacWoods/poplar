@@ -24,7 +24,6 @@ use crate::protocols::{FileAttributes, FileInfo, FileMode, FileSystemInfo, Simpl
 use crate::system_table::SystemTable;
 use crate::types::{Handle, Status};
 use core::fmt::Write;
-use core::mem;
 use core::panic::PanicInfo;
 use core::slice;
 use mer::{
@@ -41,44 +40,18 @@ use x86_64::memory::{PhysicalAddress, VirtualAddress};
 static mut SYSTEM_TABLE: *const SystemTable = 0 as *const _;
 static mut IMAGE_HANDLE: Handle = 0;
 
-/// Returns a reference to the `SystemTable`. This is safe to call after the global has been
-/// initialised, which we do straight after control is passed to us.
-pub fn system_table() -> &'static SystemTable {
-    unsafe { &*SYSTEM_TABLE }
-}
-
-pub fn image_handle() -> Handle {
-    unsafe { IMAGE_HANDLE }
-}
-
-macro print {
-    ($($arg: tt)*) => {
-        (&*system_table().console_out).write_fmt(format_args!($($arg)*)).expect("Failed to write to console");
-    }
-}
-
-macro println {
-    ($fmt: expr) => {
-        print!(concat!($fmt, "\r\n"));
-    },
-
-    ($fmt: expr, $($arg: tt)*) => {
-        print!(concat!($fmt, "\r\n"), $($arg)*);
-    }
-}
-
 /// Describes the loaded kernel image, including its entry point and where it expects the stack to
 /// be.
 struct KernelInfo {
-    entry_point: fn(&BootInfo) -> !,
+    entry_point: VirtualAddress,
     stack_top: VirtualAddress,
 }
 
 #[no_mangle]
 pub extern "win64" fn uefi_main(image_handle: Handle, system_table: &'static SystemTable) -> ! {
     /*
-     * The first thing we do is set the global references to the system table and image handle. Until we do this,
-     * their "safe" getters are not.
+     * The first thing we do is set the global references to the system table and image handle.
+     * Until we do this, their "safe" getters are not.
      */
     unsafe {
         SYSTEM_TABLE = system_table;
@@ -87,7 +60,7 @@ pub extern "win64" fn uefi_main(image_handle: Handle, system_table: &'static Sys
 
     println!("Hello UEFI!");
 
-    let allocator = BootFrameAllocator::new(16);
+    let allocator = BootFrameAllocator::new(32);
     let mut page_table = create_page_table();
     let mut mapper = page_table.mapper();
 
@@ -105,11 +78,15 @@ pub extern "win64" fn uefi_main(image_handle: Handle, system_table: &'static Sys
      * Identity-map the bootloader and UEFI runtime stuff into the kernel address space. This is
      * needed so we don't page fault when we switch to the new page tables, and so we can still use
      * runtime services.
+     *
+     * TODO: why do we need boot services code mapped after we've exited them??
      */
     for entry in memory_map.iter() {
         match entry.memory_type {
             MemoryType::LoaderCode
             | MemoryType::LoaderData
+            | MemoryType::BootServicesCode
+            | MemoryType::BootServicesData
             | MemoryType::RuntimeServicesCode
             | MemoryType::RuntimeServicesData => {
                 let virtual_start = VirtualAddress::new(u64::from(entry.physical_start)).unwrap();
@@ -142,11 +119,38 @@ pub extern "win64" fn uefi_main(image_handle: Handle, system_table: &'static Sys
         .exit_boot_services(image_handle, memory_map.key)
         .unwrap();
 
+    /*
+     * We can now setup for kernel entry by switching to the new kernel page tables and enabling
+     * the features we want in the kernel.
+     */
     setup_for_kernel();
     unsafe {
         page_table.switch_to::<IdentityMapping>();
     }
-    loop {}
+
+    /*
+     * TODO: allocate a `BootInfo` somewhere and pass its address to the kernel in the correct way
+     * (we might have to change the entry point's ABI to do this safely).
+     */
+
+    /*
+     * Jump into the kernel!
+     *
+     * Because we change the stack pointer, we need to pre-load the kernel entry point into a
+     * register, as local variables will no longer be available. We also disable interrupts until
+     * the kernel has a chance to install its own IDT and configure the interrupt controller.
+     */
+    unsafe {
+        asm!("cli
+              mov rsp, rax
+              jmp rbx"
+         :
+         : "{rax}"(kernel_info.stack_top), "{rbx}"(kernel_info.entry_point)
+         : "rax", "rbx", "rsp"
+         : "intel"
+        );
+    }
+    unreachable!();
 }
 
 /// Set up a common kernel environment. Some of this stuff will already be true for everything we'll
@@ -200,6 +204,7 @@ fn load_kernel(
     mapper: &mut Mapper<IdentityMapping>,
     allocator: &BootFrameAllocator,
 ) -> Result<KernelInfo, Status> {
+    println!("Loading kernel");
     let file_data = match read_file("BOOT", "kernel.elf", image_handle) {
         Ok(data) => data,
         Err(err) => panic!("Failed to read kernel ELF from disk: {:?}", err),
@@ -218,7 +223,6 @@ fn load_kernel(
             kernel_size
         }
     });
-    println!("Found kernel size: {}", kernel_size);
 
     if kernel_size % FRAME_SIZE != 0 {
         panic!(
@@ -298,19 +302,28 @@ fn load_kernel(
      * allocated for it, and has been mapped into the page tables. However, we need to go back and
      * unmap the guard page, and extract the address of the top of the stack.
      */
-    let guard_page_address = match elf.symbols().find(|symbol| symbol.name(&elf) == Some("_guard_page")) {
+    let guard_page_address = match elf
+        .symbols()
+        .find(|symbol| symbol.name(&elf) == Some("_guard_page"))
+    {
         Some(symbol) => VirtualAddress::new(symbol.value).unwrap(),
         None => panic!("Kernel does not have a '_guard_page' symbol!"),
     };
-
-    assert!(guard_page_address.is_page_aligned(), "Guard page address is not page-aligned");
+    assert!(
+        guard_page_address.is_page_aligned(),
+        "Guard page address is not page-aligned"
+    );
     mapper.unmap(Page::contains(guard_page_address), allocator);
 
-    let stack_top = match elf.symbols().find(|symbol| symbol.name(&elf) == Some("_stack_top")) {
+    let stack_top = match elf
+        .symbols()
+        .find(|symbol| symbol.name(&elf) == Some("_stack_top"))
+    {
         Some(symbol) => VirtualAddress::new(symbol.value).unwrap(),
         None => panic!("Kernel does not have a '_stack_top' symbol"),
     };
     assert!(stack_top.is_page_aligned(), "Stack is not page aligned");
+
     /*
      * Big Scary Transmute™: we turn a virtual address into a function pointer which can be called
      * from Rust. This is safe if:
@@ -318,8 +331,9 @@ fn load_kernel(
      *     - We have loaded the kernel ELF correctly
      *     - The correct virtual mappings are installed
      */
+    println!("Kernel entry point is {:#x}", elf.entry_point() as u64);
     Ok(KernelInfo {
-        entry_point: unsafe { mem::transmute(elf.entry_point()) },
+        entry_point: VirtualAddress::new(elf.entry_point() as u64).unwrap(),
         stack_top,
     })
 }
@@ -351,7 +365,7 @@ fn map_section(
     if section.is_writable() {
         flags |= EntryFlags::WRITABLE;
     }
-    if section.is_executable() {
+    if !section.is_executable() {
         flags |= EntryFlags::NO_EXECUTE;
     }
 
@@ -409,4 +423,30 @@ pub fn panic(info: &PanicInfo) -> ! {
         info.message().unwrap()
     );
     loop {}
+}
+
+macro print {
+    ($($arg: tt)*) => {
+        (&*system_table().console_out).write_fmt(format_args!($($arg)*)).expect("Failed to write to console");
+    }
+}
+
+macro println {
+    ($fmt: expr) => {
+        print!(concat!($fmt, "\r\n"));
+    },
+
+    ($fmt: expr, $($arg: tt)*) => {
+        print!(concat!($fmt, "\r\n"), $($arg)*);
+    }
+}
+
+/// Returns a reference to the `SystemTable`. This is safe to call after the global has been
+/// initialised, which we do straight after control is passed to us.
+pub fn system_table() -> &'static SystemTable {
+    unsafe { &*SYSTEM_TABLE }
+}
+
+pub fn image_handle() -> Handle {
+    unsafe { IMAGE_HANDLE }
 }
