@@ -53,9 +53,6 @@ pub fn image_handle() -> Handle {
 
 macro print {
     ($($arg: tt)*) => {
-        // TODO: for some reason, this still doesn't make the trait visible. Maybe an issue with
-        // this nightly?
-        // use core::fmt::Write;
         (&*system_table().console_out).write_fmt(format_args!($($arg)*)).expect("Failed to write to console");
     }
 }
@@ -105,6 +102,37 @@ pub extern "win64" fn uefi_main(image_handle: Handle, system_table: &'static Sys
     };
 
     /*
+     * Identity-map the bootloader and UEFI runtime stuff into the kernel address space. This is
+     * needed so we don't page fault when we switch to the new page tables, and so we can still use
+     * runtime services.
+     */
+    for entry in memory_map.iter() {
+        match entry.memory_type {
+            MemoryType::LoaderCode
+            | MemoryType::LoaderData
+            | MemoryType::RuntimeServicesCode
+            | MemoryType::RuntimeServicesData => {
+                let virtual_start = VirtualAddress::new(u64::from(entry.physical_start)).unwrap();
+                let frames = Frame::contains(entry.physical_start)
+                    ..(Frame::contains(entry.physical_start) + entry.number_of_pages);
+                let pages = Page::contains(virtual_start)
+                    ..(Page::contains(virtual_start) + entry.number_of_pages);
+
+                for (frame, page) in frames.zip(pages) {
+                    mapper.map_to(
+                        page,
+                        frame,
+                        EntryFlags::PRESENT | EntryFlags::WRITABLE,
+                        &allocator,
+                    );
+                }
+            }
+
+            _ => {}
+        }
+    }
+
+    /*
      * We now terminate the boot services. If this is successful, we become responsible for the
      * running of the system and may no longer make use of any boot services, including the console
      * protocols.
@@ -113,7 +141,29 @@ pub extern "win64" fn uefi_main(image_handle: Handle, system_table: &'static Sys
         .boot_services
         .exit_boot_services(image_handle, memory_map.key)
         .unwrap();
+
+    setup_for_kernel();
+    unsafe { page_table.switch_to::<IdentityMapping>(); }
     loop {}
+}
+
+/// Set up a common kernel environment. Some of this stuff will already be true for everything we'll
+/// successfully boot on realistically, but it doesn't hurt to explicitly set it up.
+fn setup_for_kernel() {
+    let mut cr4 = read_control_reg!(CR4);
+    cr4 |= 1 << 7; // Enable global pages
+    cr4 |= 1 << 5; // Enable PAE
+    cr4 |= 1 << 2; // Only allow use of the RDTSC instruction in ring 0
+    unsafe {
+        write_control_reg!(CR4, cr4);
+    }
+
+    let mut efer = read_msr!(x86_64::hw::registers::EFER);
+    efer |= 1 << 8; // Enable long mode
+    efer |= 1 << 11; // Enable use of the NX bit in the page tables
+    unsafe {
+        write_msr!(x86_64::hw::registers::EFER, efer);
+    }
 }
 
 fn create_page_table() -> InactivePageTable<IdentityMapping> {
