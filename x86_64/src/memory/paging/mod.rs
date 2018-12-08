@@ -17,6 +17,7 @@ pub const PAGE_SIZE: u64 = 0x1000;
 use self::table::{IdentityMapping, RecursiveMapping, TableMapping};
 use super::PhysicalAddress;
 use core::marker::PhantomData;
+use crate::hw::registers::{read_control_reg, write_control_reg};
 
 /// Represents a set of page tables that are not currently mapped.
 pub struct InactivePageTable<M>
@@ -47,7 +48,9 @@ where
             _mapping: PhantomData,
         }
     }
+}
 
+impl InactivePageTable<IdentityMapping> {
     /// Switch to this set of page tables. This returns a tuple containing the new
     /// `ActivePageTable` (that this has become), and the previously-active set of tables as an
     /// `InactivePageTable`.
@@ -57,17 +60,51 @@ where
     /// this can't be type-checked.
     ///
     /// # Generic parameters
-    /// The two generic parameters, `O` and `N` denote the mappings of the newly-inactive and the
-    /// newly-active set of page tables respectively. For example, if you create, in an
-    /// identity-mapped environment, an `InactivePageTable<IdentityMapping>` with a recursive
-    /// mapping, `O` should be `IdentityMapping` and `N` should be `RecursiveMapping`.
-    pub unsafe fn switch_to<O, N>(self) -> (ActivePageTable<N>, InactivePageTable<O>)
+    /// The generic parameter `N` represents the `TableMapping` that the currently installed set of
+    /// page tables have. This is used to construct the returned `InactivePageTable<N>`.
+    pub unsafe fn switch_to<N>(self) -> (ActivePageTable<IdentityMapping>, InactivePageTable<N>)
     where
-        O: TableMapping,
         N: TableMapping,
     {
-        // TODO
-        unimplemented!();
+        let old_table_address = PhysicalAddress::new(read_control_reg!(cr3)).unwrap();
+
+        unsafe {
+            /*
+             * NOTE: We don't need to flush the TLB here because it's cleared when CR3 changes.
+             */
+            write_control_reg!(cr3, u64::from(self.p4_frame.start_address()));
+        }
+
+        (ActivePageTable::<IdentityMapping>::new(self.p4_frame.start_address()), InactivePageTable::<N>::new(Frame::contains(old_table_address)))
+    }
+}
+
+impl InactivePageTable<RecursiveMapping> {
+    /// Switch to this set of page tables. This returns a tuple containing the new
+    /// `ActivePageTable` (that this has become), and the previously-active set of tables as an
+    /// `InactivePageTable`.
+    ///
+    /// Unsafe because you are required to specify the correct `TableMapping` for the currently
+    /// installed set of page tables (the one that is returned as an `InactivePageTable<A>`), as
+    /// this can't be type-checked.
+    ///
+    /// # Generic parameters
+    /// The generic parameter `N` represents the `TableMapping` that the currently installed set of
+    /// page tables have. This is used to construct the returned `InactivePageTable<N>`.
+    pub unsafe fn switch_to<N>(self) -> (ActivePageTable<RecursiveMapping>, InactivePageTable<N>)
+    where
+        N: TableMapping,
+    {
+        let old_table_address = PhysicalAddress::new(read_control_reg!(cr3)).unwrap();
+
+        unsafe {
+            /*
+             * NOTE: We don't need to flush the TLB here because it's cleared when CR3 changes.
+             */
+            write_control_reg!(cr3, u64::from(self.p4_frame.start_address()));
+        }
+
+        (ActivePageTable::<RecursiveMapping>::new(), InactivePageTable::<N>::new(Frame::contains(old_table_address)))
     }
 }
 
