@@ -16,8 +16,8 @@ pub const PAGE_SIZE: u64 = 0x1000;
 
 use self::table::{IdentityMapping, RecursiveMapping, TableMapping};
 use super::PhysicalAddress;
-use core::marker::PhantomData;
 use crate::hw::registers::{read_control_reg, write_control_reg};
+use core::marker::PhantomData;
 
 /// Represents a set of page tables that are not currently mapped.
 pub struct InactivePageTable<M>
@@ -75,7 +75,10 @@ impl InactivePageTable<IdentityMapping> {
             write_control_reg!(cr3, u64::from(self.p4_frame.start_address()));
         }
 
-        (ActivePageTable::<IdentityMapping>::new(self.p4_frame.start_address()), InactivePageTable::<N>::new(Frame::contains(old_table_address)))
+        (
+            ActivePageTable::<IdentityMapping>::new(self.p4_frame.start_address()),
+            InactivePageTable::<N>::new(Frame::contains(old_table_address)),
+        )
     }
 }
 
@@ -104,7 +107,10 @@ impl InactivePageTable<RecursiveMapping> {
             write_control_reg!(cr3, u64::from(self.p4_frame.start_address()));
         }
 
-        (ActivePageTable::<RecursiveMapping>::new(), InactivePageTable::<N>::new(Frame::contains(old_table_address)))
+        (
+            ActivePageTable::<RecursiveMapping>::new(),
+            InactivePageTable::<N>::new(Frame::contains(old_table_address)),
+        )
     }
 }
 

@@ -1,7 +1,7 @@
 use super::PAGE_SIZE;
+use crate::memory::VirtualAddress;
 use bit_field::BitField;
 use core::iter::Step;
-use crate::memory::VirtualAddress;
 use core::ops::{Add, AddAssign};
 
 #[derive(Clone, Copy, Debug, PartialOrd, Ord, PartialEq, Eq)]

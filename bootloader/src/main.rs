@@ -143,7 +143,9 @@ pub extern "win64" fn uefi_main(image_handle: Handle, system_table: &'static Sys
         .unwrap();
 
     setup_for_kernel();
-    unsafe { page_table.switch_to::<IdentityMapping>(); }
+    unsafe {
+        page_table.switch_to::<IdentityMapping>();
+    }
     loop {}
 }
 

@@ -4,10 +4,10 @@
 
 use super::entry::{Entry, EntryFlags};
 use super::FrameAllocator;
-use core::marker::PhantomData;
-use core::ops::{Index, IndexMut};
 use crate::memory::kernel_map::P4_TABLE_ADDRESS;
 use crate::memory::VirtualAddress;
+use core::marker::PhantomData;
+use core::ops::{Index, IndexMut};
 
 /// This points to the **currently installed** P4, **if** it is correctly recursively mapped. This
 /// **does not** hold in the bootloader before we install our own tables.

@@ -1,11 +1,10 @@
 use super::Frame;
-use bitflags::bitflags;
 use crate::memory::PhysicalAddress;
+use bitflags::bitflags;
 
 pub struct Entry(u64);
 
-bitflags!
-{
+bitflags! {
     pub struct EntryFlags : u64
     {
         const PRESENT           = 1<<0;

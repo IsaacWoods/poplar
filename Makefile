@@ -23,16 +23,12 @@ prepare:
 	@mkdir -p $(BUILD_DIR)/fat/EFI/BOOT
 
 bootloader:
-	cd bootloader &&\
-	cargo xbuild --release --target uefi_x64.json &&\
-	cp target/uefi_x64/release/bootloader.efi $(BUILD_DIR)/fat/EFI/BOOT/BOOTX64.efi &&\
-	cd ..
+	cargo xbuild --release --target bootloader/uefi_x64.json --manifest-path bootloader/Cargo.toml
+	cp bootloader/target/uefi_x64/release/bootloader.efi $(BUILD_DIR)/fat/EFI/BOOT/BOOTX64.efi
 
 kernel:
-	cd kernel/$(ARCH) &&\
-	cargo xbuild --target=$(ARCH)-pebble-kernel.json &&\
-	ld -n --gc-sections -T linker.ld -o $(BUILD_DIR)/fat/kernel.elf ../target/$(ARCH)-pebble-kernel/debug/libx86_64.a &&\
-	cd ..
+	cargo xbuild --target=kernel/$(ARCH)/$(ARCH)-pebble-kernel.json --manifest-path kernel/$(ARCH)/Cargo.toml
+	ld -n --gc-sections -T kernel/$(ARCH)/linker.ld -o $(BUILD_DIR)/fat/kernel.elf kernel/target/$(ARCH)-pebble-kernel/debug/libx86_64.a
 
 clean:
 	cd bootloader && cargo clean
@@ -40,23 +36,18 @@ clean:
 	rm -rf build pebble.iso
 
 update:
-	cd kernel && \
-	cargo update && \
-	cd x86_64 && \
-	cargo update && \
-	cd ../..
+	cargo update --manifest-path bootloader/Cargo.toml
+	cargo update --manifest-path kernel/Cargo.toml
+	cargo update --manifest-path kernel/x86_64/Cargo.toml
+	cargo update --manifest-path x86_64/Cargo.toml
+	cargo update --manifest-path libmessage/Cargo.toml
 
 fmt:
-	cd kernel && \
-	cargo fmt && \
-	cd x86_64 && \
-	cargo fmt && \
-	cd ../heap_allocator && \
-	cargo fmt && \
-	cd ../..
-	cd libmessage && \
-	cargo fmt && \
-	cd ..
+	cd bootloader && cargo fmt
+	cd kernel && cargo fmt --all
+	cd x86_64 && cargo fmt
+	cd libmessage && cargo fmt
+	cd userboot && cargo fmt
 
 qemu: pebble.img
 	qemu-system-x86_64 \
