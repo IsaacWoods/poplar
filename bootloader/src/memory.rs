@@ -63,11 +63,12 @@ impl FrameAllocator for BootFrameAllocator {
         Ok(frame..(frame + n))
     }
 
-    fn free(&self, frame: Frame) {
-        panic!(
-            "Physical memory freed in bootloader: frame starting at {:#x}",
-            frame.start_address()
-        );
+    fn free(&self, _: Frame) {
+        /*
+         * NOTE: We should only free physical memory in the bootloader when we unmap the stack guard
+         * page. Because of the simplicity of our allocator, we can't do anything useful with the
+         * freed frame, so we just leak it.
+         */
     }
 }
 

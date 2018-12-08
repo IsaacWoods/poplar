@@ -91,7 +91,7 @@ pub extern "win64" fn uefi_main(image_handle: Handle, system_table: &'static Sys
     let mut page_table = create_page_table();
     let mut mapper = page_table.mapper();
 
-    let kernel_entry = match load_kernel(image_handle, &mut mapper, &allocator) {
+    let kernel_info = match load_kernel(image_handle, &mut mapper, &allocator) {
         Ok(entry_point) => entry_point,
         Err(err) => panic!("Failed to load kernel: {:?}", err),
     };
@@ -298,11 +298,19 @@ fn load_kernel(
      * allocated for it, and has been mapped into the page tables. However, we need to go back and
      * unmap the guard page, and extract the address of the top of the stack.
      */
-    // let guard_page_address = ...;
-    // TODO: unmap guard page & check guard_page_address is page-aligned
-    // let stack_top_address = ...;
-    // TODO
+    let guard_page_address = match elf.symbols().find(|symbol| symbol.name(&elf) == Some("_guard_page")) {
+        Some(symbol) => VirtualAddress::new(symbol.value).unwrap(),
+        None => panic!("Kernel does not have a '_guard_page' symbol!"),
+    };
 
+    assert!(guard_page_address.is_page_aligned(), "Guard page address is not page-aligned");
+    mapper.unmap(Page::contains(guard_page_address), allocator);
+
+    let stack_top = match elf.symbols().find(|symbol| symbol.name(&elf) == Some("_stack_top")) {
+        Some(symbol) => VirtualAddress::new(symbol.value).unwrap(),
+        None => panic!("Kernel does not have a '_stack_top' symbol"),
+    };
+    assert!(stack_top.is_page_aligned(), "Stack is not page aligned");
     /*
      * Big Scary Transmute™: we turn a virtual address into a function pointer which can be called
      * from Rust. This is safe if:
@@ -312,7 +320,7 @@ fn load_kernel(
      */
     Ok(KernelInfo {
         entry_point: unsafe { mem::transmute(elf.entry_point()) },
-        stack_top: VirtualAddress::new(0x0).unwrap(), // TODO
+        stack_top,
     })
 }
 
