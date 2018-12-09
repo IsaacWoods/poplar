@@ -32,6 +32,7 @@ use mer::{
 };
 use x86_64::boot::BootInfo;
 use x86_64::hw::registers::{read_control_reg, read_msr, write_control_reg, write_msr};
+use x86_64::hw::serial::SerialPort;
 use x86_64::memory::paging::entry::EntryFlags;
 use x86_64::memory::paging::table::IdentityMapping;
 use x86_64::memory::paging::{Frame, InactivePageTable, Mapper, Page, FRAME_SIZE};
@@ -39,6 +40,7 @@ use x86_64::memory::{PhysicalAddress, VirtualAddress};
 
 static mut SYSTEM_TABLE: *const SystemTable = 0 as *const _;
 static mut IMAGE_HANDLE: Handle = 0;
+static mut SERIAL_PORT: SerialPort = unsafe { SerialPort::new(x86_64::hw::serial::COM1) };
 
 /// Describes the loaded kernel image, including its entry point and where it expects the stack to
 /// be.
@@ -49,13 +51,18 @@ struct KernelInfo {
 
 #[no_mangle]
 pub extern "win64" fn uefi_main(image_handle: Handle, system_table: &'static SystemTable) -> ! {
-    /*
-     * The first thing we do is set the global references to the system table and image handle.
-     * Until we do this, their "safe" getters are not.
-     */
     unsafe {
+        /*
+         * The first thing we do is set the global references to the system table and image handle.
+         * Until we do this, their "safe" getters are not.
+         */
         SYSTEM_TABLE = system_table;
         IMAGE_HANDLE = image_handle;
+
+        /*
+         * Initialise the COM1 serial port for debug output.
+         */
+        SERIAL_PORT.initialise();
     }
 
     println!("Hello UEFI!");
@@ -111,8 +118,7 @@ pub extern "win64" fn uefi_main(image_handle: Handle, system_table: &'static Sys
 
     /*
      * We now terminate the boot services. If this is successful, we become responsible for the
-     * running of the system and may no longer make use of any boot services, including the console
-     * protocols.
+     * running of the system and may no longer make use of any boot services.
      */
     system_table
         .boot_services
@@ -427,7 +433,9 @@ pub fn panic(info: &PanicInfo) -> ! {
 
 macro print {
     ($($arg: tt)*) => {
-        (&*system_table().console_out).write_fmt(format_args!($($arg)*)).expect("Failed to write to console");
+        unsafe {
+            SERIAL_PORT.write_fmt(format_args!($($arg)*)).expect("Failed to write to COM1");
+        }
     }
 }
 
