@@ -1,39 +1,12 @@
-ENTRY(Start)
+ENTRY(kstart)
 OUTPUT_FORMAT(elf64-x86-64)
 
-KERNEL_LMA = 0x100000;
 KERNEL_VMA = 0xffffffff80000000;
 
 SECTIONS
 {
-    /*
-     * First, we physically-map a bootstrap section that will load the 64-bit code. This is required
-     * because we haven't enabled paging yet, and so code that uses virtual addresses won't work.
-     */
-    . = KERNEL_LMA;
-    _start = . + KERNEL_VMA;
-
-    /*
-     * This must appear first, because it contains the Multiboot header.
-     */
-    .bootstrap_data :
-    {
-        KEEP(*(.multiboot))
-        *(.bootstrap_data)
-        . = ALIGN(4K);
-    }
-
-    .bootstrap :
-    {
-        *(.bootstrap)
-        . = ALIGN(4K);
-    }
-
-    /*
-     * Then, we place everything else at proper virtual addresses
-     */
     . += KERNEL_VMA;
-    _higher_start = .;
+    _kernel_start = .;
 
     .rodata : AT(ADDR(.rodata) - KERNEL_VMA)
     {
@@ -57,6 +30,17 @@ SECTIONS
     {
         *(.bss .bss.*)
         . = ALIGN(4K);
+
+        /*
+         * We reserve a guard page that should be unmapped by the bootloader. This will cause a
+         * page-fault if accessed and so will detect a stack overflow.
+         */
+        _guard_page = .;
+        . += 4K;
+        _stack_bottom = .;
+        . += 16K;
+        _stack_top = .;
+        /* No need to add more alignment here - it will already be page-aligned */
     }
 
     .got : AT(ADDR(.got) - KERNEL_VMA)
@@ -78,7 +62,7 @@ SECTIONS
         . = ALIGN(4K);
     }
 
-    _end = .;
+    _kernel_end = .;
 
     /DISCARD/ :
     {

@@ -1,4 +1,3 @@
-use core::ptr;
 use core::{convert, ops, ptr::Unique};
 
 /// Logical boolean
@@ -19,49 +18,6 @@ impl convert::From<bool> for Bool {
 }
 
 pub type Char16 = u16;
-
-/// Pointer to EFI boot services memory
-///
-/// An BootMemory is a read-only pointer to something in EFI "boot services memory". According to the
-/// UEFI specification, this memory is owned by boot-time EFI drivers and services, but may be
-/// freely used/overwritten by the operating system after exiting boot services. As such, the
-/// pointer may be freely dereferenced in a pre-boot environment but not after.
-#[derive(Debug)]
-#[repr(C)]
-pub struct BootMemory<T>(Unique<T>);
-
-impl<T> BootMemory<T> {
-    /// Creates a null BootMemory pointer
-    ///
-    /// This method is primarily useful when dealing with foreign APIs that return pointers via out
-    /// parameters, where the caller needs to have a mutable pointer available but the referent of
-    /// that pointer is irrelevant since the API will overwrite the pointer.
-    ///
-    /// # Safety
-    ///
-    /// The caller is responsible for ensuring the pointer is set to something valid before it is
-    /// dereferenced. The `is_null` method may be helpful in such validation.
-    pub(crate) unsafe fn new() -> BootMemory<T> {
-        BootMemory(Unique::new_unchecked(ptr::null_mut()))
-    }
-
-    /// Determines whether this BootMemory is null
-    ///
-    /// This method is useful for validating that an BootMemory value has been set to some value. Of
-    /// course a non-null pointer may still refer to an invalid location, but this method can at
-    /// least show whether a foreign API successfully changed the value of an BootMemory to something
-    /// non-null.
-    pub(crate) fn is_null(&self) -> bool {
-        self.0.as_ptr().is_null()
-    }
-}
-
-impl<T> ops::Deref for BootMemory<T> {
-    type Target = T;
-    fn deref(&self) -> &T {
-        unsafe { self.0.as_ref() }
-    }
-}
 
 /// Pointer to EFI runtime memory
 ///

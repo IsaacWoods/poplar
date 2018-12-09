@@ -1,6 +1,6 @@
-use core::fmt;
 use crate::boot_services::{Event, Guid, Protocol};
 use crate::types::{Bool, Char16, RuntimeMemory, Status};
+use core::fmt;
 
 /// This protocol is used to obtain input from the ConsoleIn device
 // TODO: implement events and use wait_for_key

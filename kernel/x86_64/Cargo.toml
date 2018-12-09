@@ -22,12 +22,14 @@ xmas-elf                = "*"
 version                 = "*"
 default-features        = false
 
+[dependencies.x86_64]
+path = "../../x86_64"
+
 [dependencies.heap_allocator]
 path = "../heap_allocator"
 
 [dependencies.acpi]
 path = "../acpi"
-features = ["debug_parser"]
 
 [dependencies.kernel]
 path = ".."
@@ -35,6 +37,6 @@ path = ".."
 [dependencies.common]
 path = "../common"
 
-[dependencies.libmessage]
-path = "../../libmessage"
-features = ["kernel"]
+# [dependencies.libmessage]
+# path = "../../libmessage"
+# features = ["kernel"]

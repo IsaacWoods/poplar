@@ -1,7 +1,8 @@
 use super::{BootServices, Pool};
-use core::{mem, slice};
 use crate::memory::MemoryType;
-use crate::types::{BootMemory, Handle, Status};
+use crate::types::{Handle, Status};
+use bitflags::bitflags;
+use core::{mem, slice};
 
 /// Globally-unique identifier, used in UEFI to distinguish protocols
 #[derive(Clone, Copy, Debug, PartialEq)]
@@ -81,11 +82,11 @@ impl BootServices {
         agent_handle: Handle,
         controller_handle: Handle,
         attributes: OpenProtocolAttributes,
-    ) -> Result<BootMemory<T>, Status>
+    ) -> Result<&mut T, Status>
     where
         T: Protocol,
     {
-        let mut interface = unsafe { BootMemory::new() };
+        let mut interface = 0x0 as *mut _;
         (self._open_protocol)(
             handle,
             T::guid(),
@@ -96,7 +97,7 @@ impl BootServices {
         )
         .as_result()?;
 
-        if interface.is_null() {
+        if interface == 0x0 as *mut _ {
             Err(Status::NotFound)
         } else {
             Ok(unsafe { mem::transmute(interface) })
@@ -107,7 +108,7 @@ impl BootServices {
     pub fn close_protocol<T>(
         &self,
         handle: Handle,
-        _interface: BootMemory<T>,
+        _interface: &mut T,
         agent_handle: Handle,
         controller_handle: Handle,
     ) -> Result<(), Status>

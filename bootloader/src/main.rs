@@ -1,3 +1,5 @@
+#![no_std]
+#![no_main]
 #![feature(
     const_fn,
     lang_items,
@@ -5,13 +7,9 @@
     decl_macro,
     panic_info_message,
     asm,
-    never_type
+    never_type,
+    cell_update
 )]
-#![no_std]
-#![no_main]
-
-#[macro_use]
-extern crate bitflags;
 
 mod boot_services;
 mod memory;
@@ -20,74 +18,62 @@ mod runtime_services;
 mod system_table;
 mod types;
 
-use core::fmt::Write;
-use core::mem;
-use core::panic::PanicInfo;
-use core::slice;
 use crate::boot_services::{AllocateType, OpenProtocolAttributes, Pool, Protocol, SearchType};
 use crate::memory::{BootFrameAllocator, MemoryType};
 use crate::protocols::{FileAttributes, FileInfo, FileMode, FileSystemInfo, SimpleFileSystem};
 use crate::system_table::SystemTable;
 use crate::types::{Handle, Status};
-use x86_64::boot::BootInformation;
+use core::fmt::Write;
+use core::panic::PanicInfo;
+use core::slice;
+use mer::{
+    section::{SectionHeader, SectionType},
+    Elf,
+};
+use x86_64::boot::BootInfo;
+use x86_64::hw::registers::{read_control_reg, read_msr, write_control_reg, write_msr};
+use x86_64::hw::serial::SerialPort;
 use x86_64::memory::paging::entry::EntryFlags;
 use x86_64::memory::paging::table::IdentityMapping;
 use x86_64::memory::paging::{Frame, InactivePageTable, Mapper, Page, FRAME_SIZE};
 use x86_64::memory::{PhysicalAddress, VirtualAddress};
-use xmas_elf::{
-    sections::{ShType, SHF_ALLOC, SHF_EXECINSTR, SHF_WRITE},
-    ElfFile,
-};
 
 static mut SYSTEM_TABLE: *const SystemTable = 0 as *const _;
 static mut IMAGE_HANDLE: Handle = 0;
+static mut SERIAL_PORT: SerialPort = unsafe { SerialPort::new(x86_64::hw::serial::COM1) };
 
-/// Returns a reference to the `SystemTable`. This is safe to call after the global has been
-/// initialised, which we do straight after control is passed to us.
-pub fn system_table() -> &'static SystemTable {
-    unsafe { &*SYSTEM_TABLE }
-}
-
-pub fn image_handle() -> Handle {
-    unsafe { IMAGE_HANDLE }
-}
-
-macro print {
-    ($($arg: tt)*) => {
-        // TODO: for some reason, this still doesn't make the trait visible. Maybe an issue with
-        // this nightly?
-        // use core::fmt::Write;
-        (&*system_table().console_out).write_fmt(format_args!($($arg)*)).expect("Failed to write to console");
-    }
-}
-
-macro println {
-    ($fmt: expr) => {
-        print!(concat!($fmt, "\r\n"));
-    },
-
-    ($fmt: expr, $($arg: tt)*) => {
-        print!(concat!($fmt, "\r\n"), $($arg)*);
-    }
+/// Describes the loaded kernel image, including its entry point and where it expects the stack to
+/// be.
+struct KernelInfo {
+    entry_point: VirtualAddress,
+    stack_top: VirtualAddress,
 }
 
 #[no_mangle]
 pub extern "win64" fn uefi_main(image_handle: Handle, system_table: &'static SystemTable) -> ! {
-    /*
-     * The first thing we do is set the global references to the system table and image handle. Until we do this,
-     * their "safe" getters are not.
-     */
     unsafe {
+        /*
+         * The first thing we do is set the global references to the system table and image handle.
+         * Until we do this, their "safe" getters are not.
+         */
         SYSTEM_TABLE = system_table;
         IMAGE_HANDLE = image_handle;
+
+        /*
+         * Initialise the COM1 serial port for debug output.
+         */
+        SERIAL_PORT.initialise();
     }
 
-    println!("Hello UEFI!");
+    println!("┌─┐┌─┐┌┐ ┌┐ ┬  ┌─┐");
+    println!("├─┘├┤ ├┴┐├┴┐│  ├┤ ");
+    println!("┴  └─┘└─┘└─┘┴─┘└─┘");
 
+    let allocator = BootFrameAllocator::new(32);
     let mut page_table = create_page_table();
     let mut mapper = page_table.mapper();
 
-    let kernel_entry = match load_kernel(image_handle, &mut mapper) {
+    let kernel_info = match load_kernel(image_handle, &mut mapper, &allocator) {
         Ok(entry_point) => entry_point,
         Err(err) => panic!("Failed to load kernel: {:?}", err),
     };
@@ -98,15 +84,103 @@ pub extern "win64" fn uefi_main(image_handle: Handle, system_table: &'static Sys
     };
 
     /*
-     * We now terminate the boot services. If this is successful, we become responsible for the
-     * running of the system and may no longer make use of any boot services, including the console
-     * protocols.
+     * Identity-map the bootloader and UEFI runtime stuff into the kernel address space. This is
+     * needed so we don't page fault when we switch to the new page tables, and so we can still use
+     * runtime services.
+     *
+     * TODO: why do we need boot services code mapped after we've exited them??
      */
+    for entry in memory_map.iter() {
+        match entry.memory_type {
+            MemoryType::LoaderCode
+            | MemoryType::LoaderData
+            | MemoryType::BootServicesCode
+            | MemoryType::BootServicesData
+            | MemoryType::RuntimeServicesCode
+            | MemoryType::RuntimeServicesData => {
+                let virtual_start = VirtualAddress::new(u64::from(entry.physical_start)).unwrap();
+                let frames = Frame::contains(entry.physical_start)
+                    ..(Frame::contains(entry.physical_start) + entry.number_of_pages);
+                let pages = Page::contains(virtual_start)
+                    ..(Page::contains(virtual_start) + entry.number_of_pages);
+
+                for (frame, page) in frames.zip(pages) {
+                    mapper.map_to(
+                        page,
+                        frame,
+                        EntryFlags::PRESENT | EntryFlags::WRITABLE,
+                        &allocator,
+                    );
+                }
+            }
+
+            _ => {}
+        }
+    }
+
+    /*
+     * We now terminate the boot services. If this is successful, we become responsible for the
+     * running of the system and may no longer make use of any boot services.
+     */
+    println!("Exiting boot services");
     system_table
         .boot_services
         .exit_boot_services(image_handle, memory_map.key)
         .unwrap();
-    loop {}
+
+    /*
+     * We can now setup for kernel entry by switching to the new kernel page tables and enabling
+     * the features we want in the kernel.
+     */
+    setup_for_kernel();
+    println!("Switching to kernel page tables");
+    unsafe {
+        page_table.switch_to::<IdentityMapping>();
+    }
+
+    /*
+     * TODO: allocate a `BootInfo` somewhere and pass its address to the kernel in the correct way
+     * (we might have to change the entry point's ABI to do this safely).
+     */
+
+    /*
+     * Jump into the kernel!
+     *
+     * Because we change the stack pointer, we need to pre-load the kernel entry point into a
+     * register, as local variables will no longer be available. We also disable interrupts until
+     * the kernel has a chance to install its own IDT and configure the interrupt controller.
+     */
+    println!("Jumping into kernel\n\n");
+    unsafe {
+        asm!("cli
+              mov rsp, rax
+              jmp rbx"
+         :
+         : "{rax}"(kernel_info.stack_top), "{rbx}"(kernel_info.entry_point)
+         : "rax", "rbx", "rsp"
+         : "intel"
+        );
+    }
+    unreachable!();
+}
+
+/// Set up a common kernel environment. Some of this stuff will already be true for everything we'll
+/// successfully boot on realistically, but it doesn't hurt to explicitly set it up.
+fn setup_for_kernel() {
+    let mut cr4 = read_control_reg!(CR4);
+    cr4 |= 1 << 7; // Enable global pages
+    cr4 |= 1 << 5; // Enable PAE
+    cr4 |= 1 << 2; // Only allow use of the RDTSC instruction in ring 0
+    unsafe {
+        write_control_reg!(CR4, cr4);
+    }
+
+    let mut efer = read_msr!(x86_64::hw::registers::EFER);
+    efer |= 1 << 8; // Enable long mode
+    efer |= 1 << 11; // Enable use of the NX bit in the page tables
+    unsafe {
+        write_msr!(x86_64::hw::registers::EFER, efer);
+    }
 }
 
 fn create_page_table() -> InactivePageTable<IdentityMapping> {
@@ -139,22 +213,23 @@ fn create_page_table() -> InactivePageTable<IdentityMapping> {
 fn load_kernel(
     image_handle: Handle,
     mapper: &mut Mapper<IdentityMapping>,
-) -> Result<fn(&BootInformation) -> !, Status> {
+    allocator: &BootFrameAllocator,
+) -> Result<KernelInfo, Status> {
+    println!("Loading kernel image from boot volume");
     let file_data = match read_file("BOOT", "kernel.elf", image_handle) {
         Ok(data) => data,
         Err(err) => panic!("Failed to read kernel ELF from disk: {:?}", err),
     };
 
-    let elf = match ElfFile::new(&file_data) {
+    let elf = match Elf::new(&file_data) {
         Ok(elf) => elf,
-        Err(err) => panic!("Failed to parse kernel ELF: {}", err),
+        Err(err) => panic!("Failed to parse kernel ELF: {:?}", err),
     };
 
     // Work out how much space we need for the kernel and check it's a multiple of the page size
-    let kernel_size = elf.section_iter().fold(0, |kernel_size, section| {
-        // If the section should be allocated, include its size
-        if section.flags() & SHF_ALLOC != 0 {
-            kernel_size + section.size()
+    let kernel_size = elf.sections().fold(0, |kernel_size, section| {
+        if section.is_allocated() {
+            kernel_size + section.size
         } else {
             kernel_size
         }
@@ -178,10 +253,6 @@ fn load_kernel(
         Ok(()) => {}
         Err(err) => panic!("Failed to allocate physical memory for kernel: {:?}", err),
     }
-    println!(
-        "Allocated physical memory for kernel at {:?}, kernel_size = {:#x}",
-        kernel_physical_base, kernel_size
-    );
 
     // We now zero all the kernel memory
     unsafe {
@@ -201,89 +272,95 @@ fn load_kernel(
      */
     let mut physical_address = kernel_physical_base;
 
-    for section in elf.section_iter() {
+    for section in elf.sections() {
         // Skip sections that shouldn't be loaded or ones with no data
-        if section.flags() & SHF_ALLOC == 0 || section.size() == 0 {
+        if !section.is_allocated() || section.size == 0 {
             continue;
         }
 
         println!(
             "Loading section: '{}' from {:#x}-{:#x}",
-            section.get_name(&elf).unwrap(),
-            section.address(),
-            section.address() + section.size() - 1
+            section.name(&elf).unwrap(),
+            section.address,
+            section.address + section.size - 1
         );
 
-        match section.get_type() {
-            Ok(ShType::ProgBits) => {
-                // Map the section to its correct virtual address in the kernel page tables
-                map_section(
-                    mapper,
-                    physical_address,
-                    VirtualAddress::new(section.address()).unwrap(),
-                    section.size(),
-                    section.flags(),
-                );
+        map_section(mapper, physical_address, &section, allocator);
 
-                // Copy the section from the image into its new home
-                unsafe {
-                    slice::from_raw_parts_mut(
-                        u64::from(physical_address) as *mut u8,
-                        section.size() as usize,
-                    )
-                }
-                .copy_from_slice(section.raw_data(&elf));
-
-                physical_address = (physical_address + section.size()).unwrap();
+        /*
+         * For ProgBits sections, we need to copy the data from the image into the section. For
+         * NoBits sections, we can leave it as initialised 0s.
+         */
+        if let SectionType::ProgBits = section.section_type() {
+            unsafe {
+                slice::from_raw_parts_mut(
+                    u64::from(physical_address) as *mut u8,
+                    section.size as usize,
+                )
+                .copy_from_slice(section.data(&elf).unwrap());
             }
-
-            Ok(ShType::NoBits) => {
-                // Map the section into the kernel page tables
-                map_section(
-                    mapper,
-                    physical_address,
-                    VirtualAddress::new(section.address()).unwrap(),
-                    section.size(),
-                    section.flags(),
-                );
-
-                /*
-                 * For `NoBits` sections such as `.bss`, we need to map the pages into the kernel page
-                 * tables, but don't need to actually copy any data into memory, as its already zerod
-                 * from above.
-                 */
-                physical_address = (physical_address + section.size()).unwrap();
-            }
-
-            Ok(_) => (),
-            Err(err) => panic!("Failed to parse section header type: {}", err),
         }
+
+        physical_address = (physical_address + section.size).unwrap();
     }
 
-    // Big Scary Transmute™: we turn a virtual address into a function pointer which can be called
-    // from Rust. This is safe if:
-    //     * The kernel defines the entry point correctly
-    //     * We have loaded the kernel ELF correctly
-    //     * The correct virtual mappings are installed
-    Ok(unsafe { mem::transmute(elf.header.pt2.entry_point()) })
+    /*
+     * We now set up the kernel stack. As part of the `.bss` section, it has already had memory
+     * allocated for it, and has been mapped into the page tables. However, we need to go back and
+     * unmap the guard page, and extract the address of the top of the stack.
+     */
+    let guard_page_address = match elf
+        .symbols()
+        .find(|symbol| symbol.name(&elf) == Some("_guard_page"))
+    {
+        Some(symbol) => VirtualAddress::new(symbol.value).unwrap(),
+        None => panic!("Kernel does not have a '_guard_page' symbol!"),
+    };
+    assert!(
+        guard_page_address.is_page_aligned(),
+        "Guard page address is not page-aligned"
+    );
+    println!("Unmapping guard page");
+    mapper.unmap(Page::contains(guard_page_address), allocator);
+
+    let stack_top = match elf
+        .symbols()
+        .find(|symbol| symbol.name(&elf) == Some("_stack_top"))
+    {
+        Some(symbol) => VirtualAddress::new(symbol.value).unwrap(),
+        None => panic!("Kernel does not have a '_stack_top' symbol"),
+    };
+    assert!(stack_top.is_page_aligned(), "Stack is not page aligned");
+
+    /*
+     * Big Scary Transmute™: we turn a virtual address into a function pointer which can be called
+     * from Rust. This is safe if:
+     *     - The kernel defines the entry point correctly
+     *     - We have loaded the kernel ELF correctly
+     *     - The correct virtual mappings are installed
+     */
+    Ok(KernelInfo {
+        entry_point: VirtualAddress::new(elf.entry_point() as u64).unwrap(),
+        stack_top,
+    })
 }
 
 fn map_section(
     mapper: &mut Mapper<IdentityMapping>,
     physical_base: PhysicalAddress,
-    virtual_address: VirtualAddress,
-    section_size: u64,
-    elf_flags: u64,
+    section: &SectionHeader,
+    allocator: &BootFrameAllocator,
 ) {
+    let virtual_address = VirtualAddress::new(section.address).unwrap();
     /*
      * XXX: This is a tad hacky, but because the addresses should be page-aligned, the half-open
      * ranges `[physical_base, physical_base + size)` and `[virtual_address, virtual_address +
      * size)` gives us the correct frame and page ranges.
      */
     let frames =
-        Frame::contains(physical_base)..Frame::contains((physical_base + section_size).unwrap());
+        Frame::contains(physical_base)..Frame::contains((physical_base + section.size).unwrap());
     let pages =
-        Page::contains(virtual_address)..Page::contains((virtual_address + section_size).unwrap());
+        Page::contains(virtual_address)..Page::contains((virtual_address + section.size).unwrap());
     assert!(frames.clone().count() == pages.clone().count());
 
     /*
@@ -292,15 +369,15 @@ fn map_section(
      * contain executable instructions, mark it as `NO_EXECUTE`.
      */
     let mut flags = EntryFlags::PRESENT;
-    if elf_flags & SHF_WRITE != 0 {
+    if section.is_writable() {
         flags |= EntryFlags::WRITABLE;
     }
-    if elf_flags & SHF_EXECINSTR == 0 {
+    if !section.is_executable() {
         flags |= EntryFlags::NO_EXECUTE;
     }
 
     for (frame, page) in frames.zip(pages) {
-        mapper.map_to(page, frame, flags, &BootFrameAllocator);
+        mapper.map_to(page, frame, flags, allocator);
     }
 }
 
@@ -353,4 +430,32 @@ pub fn panic(info: &PanicInfo) -> ! {
         info.message().unwrap()
     );
     loop {}
+}
+
+macro print {
+    ($($arg: tt)*) => {
+        unsafe {
+            SERIAL_PORT.write_fmt(format_args!($($arg)*)).expect("Failed to write to COM1");
+        }
+    }
+}
+
+macro println {
+    ($fmt: expr) => {
+        print!(concat!($fmt, "\r\n"));
+    },
+
+    ($fmt: expr, $($arg: tt)*) => {
+        print!(concat!($fmt, "\r\n"), $($arg)*);
+    }
+}
+
+/// Returns a reference to the `SystemTable`. This is safe to call after the global has been
+/// initialised, which we do straight after control is passed to us.
+pub fn system_table() -> &'static SystemTable {
+    unsafe { &*SYSTEM_TABLE }
+}
+
+pub fn image_handle() -> Handle {
+    unsafe { IMAGE_HANDLE }
 }

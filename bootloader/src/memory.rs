@@ -1,45 +1,74 @@
-use core::ops::{Range, Index};
 use crate::boot_services::AllocateType;
 use crate::system_table;
+use core::cell::Cell;
+use core::ops::{Index, Range};
 use x86_64::memory::paging::{Frame, FrameAllocator, FRAME_SIZE};
 use x86_64::memory::{PhysicalAddress, VirtualAddress};
 
-pub struct BootFrameAllocator;
+/// `BootFrameAllocator` is the allocator we use in the bootloader to allocate memory for the
+/// kernel page tables. It pre-allocates a preset number of frames using the UEFI boot services,
+/// which allows us to map things into the page tables without worrying about invalidating the
+/// memory map by allocating for new entries.
+///
+/// We use `Cell` for interior mutability within the allocator. This is safe because the bootloader
+/// is single-threaded and non-reentrant.
+pub struct BootFrameAllocator {
+    /// This is the first frame that cannot be allocated by this allocator
+    end_frame: Frame,
 
-impl FrameAllocator for BootFrameAllocator {
-    fn allocate_n(&self, n: usize) -> Result<Range<Frame>, !> {
-        /*
-         * Allocate a frame using the UEFI memory boot services. This allocator is only used by the
-         * page tables code, so set the memory type to `PebblePageTables`.
-         */
-        let mut frame_start = PhysicalAddress::default();
+    /// This points to the next frame available for allocation. When `next_frame + 1 == end_frame`,
+    /// the allocator cannot allocate any more frames.
+    next_frame: Cell<Frame>,
+}
+
+impl BootFrameAllocator {
+    pub fn new(num_frames: u64) -> BootFrameAllocator {
+        let mut start_frame_address = PhysicalAddress::default();
         system_table()
             .boot_services
             .allocate_pages(
                 AllocateType::AllocateAnyPages,
                 MemoryType::PebblePageTables,
-                n,
-                &mut frame_start,
+                num_frames as usize,
+                &mut start_frame_address,
             )
             .unwrap();
 
-        // Zero it for sanity's sake
+        // Zero all the memory so the page tables start with everything unmapped
         unsafe {
             system_table().boot_services.set_mem(
-                u64::from(frame_start) as *mut _,
-                n * (FRAME_SIZE as usize),
+                u64::from(start_frame_address) as *mut _,
+                (num_frames * FRAME_SIZE) as usize,
                 0,
             );
         }
 
-        Ok(Frame::contains(frame_start)..Frame::contains(frame_start) + n as u64)
+        let start_frame = Frame::contains(start_frame_address);
+        BootFrameAllocator {
+            end_frame: start_frame + num_frames,
+            next_frame: Cell::new(start_frame),
+        }
+    }
+}
+
+impl FrameAllocator for BootFrameAllocator {
+    fn allocate_n(&self, n: u64) -> Result<Range<Frame>, !> {
+        if (self.next_frame.get() + n) > self.end_frame {
+            panic!("Bootloader frame allocator ran out of frames!");
+        }
+
+        let frame = self.next_frame.get();
+        self.next_frame.update(|frame| frame + n);
+
+        Ok(frame..(frame + n))
     }
 
-    fn free(&self, frame: Frame) {
-        panic!(
-            "Physical memory freed in bootloader: frame starting at {:#x}",
-            frame.start_address()
-        );
+    fn free(&self, _: Frame) {
+        /*
+         * NOTE: We should only free physical memory in the bootloader when we unmap the stack guard
+         * page. Because of the simplicity of our allocator, we can't do anything useful with the
+         * freed frame, so we just leak it.
+         */
     }
 }
 

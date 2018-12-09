@@ -1,8 +1,9 @@
-use core::{mem, ops::Drop, slice};
 use crate::boot_services::{utf16_to_str, Guid, Pool, Protocol};
 use crate::memory::MemoryType;
 use crate::system_table;
-use crate::types::{Bool, BootMemory, Char16, Status};
+use crate::types::{Bool, Char16, Status};
+use bitflags::bitflags;
+use core::{mem, ops::Drop, slice};
 
 /// Provides file based access to supported file systems
 #[repr(C)]
@@ -10,7 +11,7 @@ pub struct File {
     pub revision: u64,
     pub _open: extern "win64" fn(
         this: &File,
-        new_handle: &mut BootMemory<File>,
+        new_handle: &mut *mut File,
         file_name: *const Char16,
         open_mode: FileMode,
         attributes: FileAttributes,
@@ -38,14 +39,14 @@ impl File {
         file_name: &[Char16],
         open_mode: FileMode,
         attributes: FileAttributes,
-    ) -> Result<BootMemory<File>, Status> {
-        let mut file = unsafe { BootMemory::new() };
+    ) -> Result<&mut File, Status> {
+        let mut file = 0x0 as *mut _;
         (self._open)(self, &mut file, file_name.as_ptr(), open_mode, attributes).as_result()?;
 
-        if file.is_null() {
+        if file == 0x0 as *mut _ {
             Err(Status::NotFound)
         } else {
-            Ok(file)
+            Ok(unsafe { mem::transmute(file) })
         }
     }
 
@@ -188,20 +189,19 @@ static FILE_SYSTEM_INFO_GUID: Guid = Guid {
 #[repr(C)]
 pub struct SimpleFileSystem {
     pub revision: u64,
-    pub _open_volume:
-        extern "win64" fn(this: &SimpleFileSystem, root: &mut BootMemory<File>) -> Status,
+    pub _open_volume: extern "win64" fn(this: &SimpleFileSystem, root: &mut *mut File) -> Status,
 }
 
 impl SimpleFileSystem {
     /// Opens the root directory on a volume
-    pub fn open_volume(&self) -> Result<BootMemory<File>, Status> {
-        let mut file = unsafe { BootMemory::new() };
+    pub fn open_volume(&self) -> Result<&mut File, Status> {
+        let mut file = 0x0 as *mut _;
         (self._open_volume)(self, &mut file).as_result()?;
 
-        if file.is_null() {
+        if file == 0x0 as *mut _ {
             Err(Status::NotFound)
         } else {
-            Ok(file)
+            Ok(unsafe { mem::transmute(file) })
         }
     }
 }

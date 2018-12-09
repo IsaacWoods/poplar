@@ -1,7 +1,8 @@
 use super::PAGE_SIZE;
+use crate::memory::VirtualAddress;
 use bit_field::BitField;
 use core::iter::Step;
-use crate::memory::VirtualAddress;
+use core::ops::{Add, AddAssign};
 
 #[derive(Clone, Copy, Debug, PartialOrd, Ord, PartialEq, Eq)]
 pub struct Page {
@@ -34,6 +35,24 @@ impl Page {
 
     pub fn p1_index(&self) -> u16 {
         self.number.get_bits(0..9) as u16
+    }
+}
+
+impl Add<u64> for Page {
+    type Output = Page;
+
+    fn add(self, offset: u64) -> Self::Output {
+        assert!(VirtualAddress::new((self.number + offset) * PAGE_SIZE).is_some());
+        Page {
+            number: self.number + offset,
+        }
+    }
+}
+
+impl AddAssign<u64> for Page {
+    fn add_assign(&mut self, offset: u64) {
+        assert!(VirtualAddress::new((self.number + offset) * PAGE_SIZE).is_some());
+        self.number += offset;
     }
 }
 

@@ -3,7 +3,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Gitter chat](https://badges.gitter.im/gitterHQ/gitter.png)](https://gitter.im/pebble-os/Lobby)
 
-**Pebble is still very early in development**
+**Pebble is still very early in development, and is currently going through a major redesign.**
 
 Pebble is an operating system written in Rust, with a focus on safety and simplicity. It is designed to be simple to understand, extend, and develop for. Pebble does not aim for POSIX compliance.
 

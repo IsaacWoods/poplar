@@ -1,7 +1,7 @@
 use super::FRAME_SIZE;
+use crate::memory::PhysicalAddress;
 use core::iter::Step;
 use core::ops::{Add, AddAssign};
-use crate::memory::PhysicalAddress;
 
 #[derive(Clone, Copy, Debug, PartialOrd, Ord, PartialEq, Eq)]
 pub struct Frame {
