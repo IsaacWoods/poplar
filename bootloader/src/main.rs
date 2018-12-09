@@ -65,7 +65,9 @@ pub extern "win64" fn uefi_main(image_handle: Handle, system_table: &'static Sys
         SERIAL_PORT.initialise();
     }
 
-    println!("Hello UEFI!");
+    println!("┌─┐┌─┐┌┐ ┌┐ ┬  ┌─┐");
+    println!("├─┘├┤ ├┴┐├┴┐│  ├┤ ");
+    println!("┴  └─┘└─┘└─┘┴─┘└─┘");
 
     let allocator = BootFrameAllocator::new(32);
     let mut page_table = create_page_table();
@@ -120,6 +122,7 @@ pub extern "win64" fn uefi_main(image_handle: Handle, system_table: &'static Sys
      * We now terminate the boot services. If this is successful, we become responsible for the
      * running of the system and may no longer make use of any boot services.
      */
+    println!("Exiting boot services");
     system_table
         .boot_services
         .exit_boot_services(image_handle, memory_map.key)
@@ -130,6 +133,7 @@ pub extern "win64" fn uefi_main(image_handle: Handle, system_table: &'static Sys
      * the features we want in the kernel.
      */
     setup_for_kernel();
+    println!("Switching to kernel page tables");
     unsafe {
         page_table.switch_to::<IdentityMapping>();
     }
@@ -146,6 +150,7 @@ pub extern "win64" fn uefi_main(image_handle: Handle, system_table: &'static Sys
      * register, as local variables will no longer be available. We also disable interrupts until
      * the kernel has a chance to install its own IDT and configure the interrupt controller.
      */
+    println!("Jumping into kernel\n\n");
     unsafe {
         asm!("cli
               mov rsp, rax
@@ -210,7 +215,7 @@ fn load_kernel(
     mapper: &mut Mapper<IdentityMapping>,
     allocator: &BootFrameAllocator,
 ) -> Result<KernelInfo, Status> {
-    println!("Loading kernel");
+    println!("Loading kernel image from boot volume");
     let file_data = match read_file("BOOT", "kernel.elf", image_handle) {
         Ok(data) => data,
         Err(err) => panic!("Failed to read kernel ELF from disk: {:?}", err),
@@ -248,10 +253,6 @@ fn load_kernel(
         Ok(()) => {}
         Err(err) => panic!("Failed to allocate physical memory for kernel: {:?}", err),
     }
-    println!(
-        "Allocated physical memory for kernel at {:?}, kernel_size = {} bytes",
-        kernel_physical_base, kernel_size
-    );
 
     // We now zero all the kernel memory
     unsafe {
@@ -319,6 +320,7 @@ fn load_kernel(
         guard_page_address.is_page_aligned(),
         "Guard page address is not page-aligned"
     );
+    println!("Unmapping guard page");
     mapper.unmap(Page::contains(guard_page_address), allocator);
 
     let stack_top = match elf
@@ -337,7 +339,6 @@ fn load_kernel(
      *     - We have loaded the kernel ELF correctly
      *     - The correct virtual mappings are installed
      */
-    println!("Kernel entry point is {:#x}", elf.entry_point() as u64);
     Ok(KernelInfo {
         entry_point: VirtualAddress::new(elf.entry_point() as u64).unwrap(),
         stack_top,
