@@ -27,8 +27,8 @@ bootloader:
 	cp bootloader/target/uefi_x64/release/bootloader.efi $(BUILD_DIR)/fat/EFI/BOOT/BOOTX64.efi
 
 kernel:
-	cargo xbuild --target=kernel/$(ARCH)/$(ARCH)-pebble-kernel.json --manifest-path kernel/$(ARCH)/Cargo.toml
-	ld -n --gc-sections -T kernel/$(ARCH)/linker.ld -o $(BUILD_DIR)/fat/kernel.elf kernel/target/$(ARCH)-pebble-kernel/debug/libx86_64.a
+	cargo xbuild --target=kernel/src/$(ARCH)/$(ARCH)-kernel.json --manifest-path kernel/Cargo.toml --features $(ARCH)
+	ld --gc-sections -T kernel/src/$(ARCH)/link.ld -o $(BUILD_DIR)/fat/kernel.elf kernel/target/$(ARCH)-kernel/debug/libkernel.a
 
 clean:
 	cd bootloader && cargo clean
@@ -43,8 +43,9 @@ update:
 	cargo update --manifest-path libmessage/Cargo.toml
 
 fmt:
+	@# `cargo fmt` doesn't play nicely with conditional compilation, so we manually `rustfmt` the kernel
+	find kernel/src -type f -name "*.rs" -exec rustfmt {} +
 	cd bootloader && cargo fmt
-	cd kernel && cargo fmt --all
 	cd x86_64 && cargo fmt
 	cd libmessage && cargo fmt
 	cd userboot && cargo fmt
