@@ -82,6 +82,7 @@ pub extern "win64" fn uefi_main(image_handle: Handle, system_table: &'static Sys
     /*
      * Allocate physical memory for the kernel heap, and map it into the kernel page tables.
      */
+    println!("Allocating memory for kernel heap");
     assert!(kernel_map::HEAP_START.is_page_aligned());
     assert!((kernel_map::HEAP_END + 1).unwrap().is_page_aligned());
     let heap_size = (u64::from(kernel_map::HEAP_END) + 1) - u64::from(kernel_map::HEAP_START);
