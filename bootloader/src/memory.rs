@@ -25,13 +25,14 @@ impl BootFrameAllocator {
     pub fn new(num_frames: u64) -> BootFrameAllocator {
         let start_frame_address = match system_table()
             .boot_services
-            .allocate_frames(
-                MemoryType::PebblePageTables,
-                num_frames,
-            ) {
-                Ok(address) => address,
-                Err(err) => panic!("Failed to allocate memory for page frame allocator: {:?}", err),
-            };
+            .allocate_frames(MemoryType::PebblePageTables, num_frames)
+        {
+            Ok(address) => address,
+            Err(err) => panic!(
+                "Failed to allocate memory for page frame allocator: {:?}",
+                err
+            ),
+        };
 
         // Zero all the memory so the page tables start with everything unmapped
         unsafe {

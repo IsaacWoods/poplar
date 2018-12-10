@@ -33,6 +33,7 @@ use mer::{
 use x86_64::boot::BootInfo;
 use x86_64::hw::registers::{read_control_reg, read_msr, write_control_reg, write_msr};
 use x86_64::hw::serial::SerialPort;
+use x86_64::memory::kernel_map;
 use x86_64::memory::paging::entry::EntryFlags;
 use x86_64::memory::paging::table::IdentityMapping;
 use x86_64::memory::paging::{Frame, InactivePageTable, Mapper, Page, FRAME_SIZE};
@@ -78,6 +79,37 @@ pub extern "win64" fn uefi_main(image_handle: Handle, system_table: &'static Sys
         Err(err) => panic!("Failed to load kernel: {:?}", err),
     };
 
+    /*
+     * Allocate physical memory for the kernel heap, and map it into the kernel page tables.
+     */
+    assert!(kernel_map::HEAP_START.is_page_aligned());
+    assert!((kernel_map::HEAP_END + 1).unwrap().is_page_aligned());
+    let heap_size = (u64::from(kernel_map::HEAP_END) + 1) - u64::from(kernel_map::HEAP_START);
+    assert!(heap_size % FRAME_SIZE == 0);
+    let heap_physical_base = match system_table
+        .boot_services
+        .allocate_frames(MemoryType::PebbleKernelHeap, heap_size / FRAME_SIZE)
+    {
+        Ok(address) => address,
+        Err(err) => panic!("Failed to allocate memory for kernel heap: {:?}", err),
+    };
+
+    let heap_frames = Frame::contains(heap_physical_base)
+        ..=Frame::contains((heap_physical_base + heap_size).unwrap());
+    let heap_pages = Page::contains(kernel_map::HEAP_START)..=Page::contains(kernel_map::HEAP_END);
+    for (frame, page) in heap_frames.zip(heap_pages) {
+        mapper.map_to(
+            page,
+            frame,
+            EntryFlags::PRESENT | EntryFlags::WRITABLE | EntryFlags::NO_EXECUTE,
+            &allocator,
+        );
+    }
+
+    /*
+     * Get the final memory map before exiting boot services. We must not allocate between this
+     * call and the call to `ExitBootServices`.
+     */
     let memory_map = match system_table.boot_services.get_memory_map() {
         Ok(map) => map,
         Err(err) => panic!("Failed to get memory map: {:?}", err),
@@ -185,10 +217,10 @@ fn setup_for_kernel() {
 
 fn create_page_table() -> InactivePageTable<IdentityMapping> {
     // Allocate a frame for the P4
-    let address = match system_table().boot_services.allocate_frames(
-        MemoryType::PebblePageTables,
-        1,
-    ) {
+    let address = match system_table()
+        .boot_services
+        .allocate_frames(MemoryType::PebblePageTables, 1)
+    {
         Ok(address) => address,
         Err(err) => panic!(
             "Failed to allocate physical memory for page tables: {:?}",
@@ -240,10 +272,10 @@ fn load_kernel(
     }
 
     // Allocate physical memory for the kernel
-    let kernel_physical_base = match system_table().boot_services.allocate_frames(
-        MemoryType::PebbleKernelMemory,
-        kernel_size / FRAME_SIZE,
-    ) {
+    let kernel_physical_base = match system_table()
+        .boot_services
+        .allocate_frames(MemoryType::PebbleKernelMemory, kernel_size / FRAME_SIZE)
+    {
         Ok(address) => address,
         Err(err) => panic!("Failed to allocate physical memory for kernel: {:?}", err),
     };

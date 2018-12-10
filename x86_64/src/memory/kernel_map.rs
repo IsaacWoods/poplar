@@ -28,11 +28,11 @@ pub const P4_TABLE_ADDRESS: VirtualAddress = VirtualAddress::from_page_table_off
 pub const KERNEL_BASE: VirtualAddress =
     unsafe { VirtualAddress::new_unchecked(0xffff_ffff_8000_0000) };
 
-// /// This is the address of the start of the kernel heap.
+/// This is the address of the start of the kernel heap. The heap is 100 KiB.
 pub const HEAP_START: VirtualAddress =
     unsafe { VirtualAddress::new_unchecked(0xffff_ffff_c000_0000) };
 pub const HEAP_END: VirtualAddress =
-    unsafe { VirtualAddress::new_unchecked(0xffff_ffff_cfff_ffff) };
+    unsafe { VirtualAddress::new_unchecked(0xffff_ffff_c00_18fff) };
 
 /*
  * Following the heap are a bunch of random memory-mapped configuration spaces and whatnot.
