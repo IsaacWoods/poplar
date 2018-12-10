@@ -1,4 +1,4 @@
-ENTRY(kstart)
+ENTRY(kmain)
 OUTPUT_FORMAT(elf64-x86-64)
 
 KERNEL_VMA = 0xffffffff80000000;

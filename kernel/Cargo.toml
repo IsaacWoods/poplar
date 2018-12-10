@@ -1,34 +1,16 @@
-[workspace]
-members = [
-    "acpi",
-    "common",
-    "heap_allocator",
-    "x86_64",
-]
-
 [package]
 name = "kernel"
-version = "0.0.1"
+version = "0.1.0"
 authors = ["Isaac Woods"]
+edition = "2018"
+
+[lib]
+crate-type = ["staticlib"]
 
 [dependencies]
-volatile                = "*"
-spin                    = "*"
-bitflags                = "*"
-bit_field               = "*"
-
-[dependencies.serde]
-version = "1.0"
-default-features = false
-features = ["alloc"]
-
-[dependencies.log]
-version             = "*"
-default-features    = false
-
-[dependencies.heap_allocator]
-path = "heap_allocator"
-
-# [dependencies.libmessage]
-# path = "../libmessage"
-# features = ["kernel"]
+cfg-if = "0.1"
+bitflags = "1"
+bit_field = "0.9"
+log = { version = "0.4", default-features = false }
+spin = "0.4"
+x86_64 = { path = "../x86_64", optional = true }

@@ -1,3 +1,0 @@
-[submodule "kernel/acpi"]
-    path = kernel/acpi
-    url = https://github.com/IsaacWoods/acpi.git
