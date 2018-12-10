@@ -185,19 +185,16 @@ fn setup_for_kernel() {
 
 fn create_page_table() -> InactivePageTable<IdentityMapping> {
     // Allocate a frame for the P4
-    let mut address = PhysicalAddress::default();
-    match system_table().boot_services.allocate_pages(
-        AllocateType::AllocateAnyPages,
+    let address = match system_table().boot_services.allocate_frames(
         MemoryType::PebblePageTables,
         1,
-        &mut address,
     ) {
-        Ok(()) => {}
+        Ok(address) => address,
         Err(err) => panic!(
             "Failed to allocate physical memory for page tables: {:?}",
             err
         ),
-    }
+    };
 
     // Zero the P4 to mark every entry as non-present
     unsafe {
@@ -243,16 +240,13 @@ fn load_kernel(
     }
 
     // Allocate physical memory for the kernel
-    let mut kernel_physical_base = PhysicalAddress::default();
-    match system_table().boot_services.allocate_pages(
-        AllocateType::AllocateAnyPages,
+    let kernel_physical_base = match system_table().boot_services.allocate_frames(
         MemoryType::PebbleKernelMemory,
-        (kernel_size / FRAME_SIZE) as usize,
-        &mut kernel_physical_base,
+        kernel_size / FRAME_SIZE,
     ) {
-        Ok(()) => {}
+        Ok(address) => address,
         Err(err) => panic!("Failed to allocate physical memory for kernel: {:?}", err),
-    }
+    };
 
     // We now zero all the kernel memory
     unsafe {

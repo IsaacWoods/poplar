@@ -30,10 +30,10 @@ pub struct BootServices {
     pub _allocate_pages: extern "win64" fn(
         allocation_type: AllocateType,
         memory_type: MemoryType,
-        pages: usize,
+        pages: u64,
         memory: &mut PhysicalAddress,
     ) -> Status,
-    pub _free_pages: extern "win64" fn(memory: PhysicalAddress, pages: usize) -> Status,
+    pub _free_pages: extern "win64" fn(memory: PhysicalAddress, pages: u64) -> Status,
     pub _get_memory_map: extern "win64" fn(
         memory_map_size: &mut usize,
         memory_map: *mut MemoryDescriptor,

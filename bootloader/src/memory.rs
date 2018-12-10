@@ -23,16 +23,15 @@ pub struct BootFrameAllocator {
 
 impl BootFrameAllocator {
     pub fn new(num_frames: u64) -> BootFrameAllocator {
-        let mut start_frame_address = PhysicalAddress::default();
-        system_table()
+        let start_frame_address = match system_table()
             .boot_services
-            .allocate_pages(
-                AllocateType::AllocateAnyPages,
+            .allocate_frames(
                 MemoryType::PebblePageTables,
-                num_frames as usize,
-                &mut start_frame_address,
-            )
-            .unwrap();
+                num_frames,
+            ) {
+                Ok(address) => address,
+                Err(err) => panic!("Failed to allocate memory for page frame allocator: {:?}", err),
+            };
 
         // Zero all the memory so the page tables start with everything unmapped
         unsafe {
@@ -179,4 +178,5 @@ pub enum MemoryType {
     PebbleKernelMemory = 0x8000_0000,
     PebblePageTables = 0x8000_0001,
     PebbleBootInformation = 0x8000_0002,
+    PebbleKernelHeap = 0x8000_0003,
 }
