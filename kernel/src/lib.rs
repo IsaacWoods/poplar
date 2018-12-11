@@ -20,12 +20,16 @@ mod heap_allocator;
 use crate::heap_allocator::LockedHoleAllocator;
 use cfg_if::cfg_if;
 use core::panic::PanicInfo;
+use log::error;
+
 #[global_allocator]
 pub static ALLOCATOR: LockedHoleAllocator = LockedHoleAllocator::new_uninitialized();
 
 #[panic_handler]
 #[no_mangle]
-pub extern "C" fn panic(info: &PanicInfo) -> ! {
-    // TODO
-    loop {}
+fn panic(info: &PanicInfo) -> ! {
+    error!("KERNEL PANIC: {}", info);
+    loop {
+        // TODO: arch-independent cpu halt?
+    }
 }
