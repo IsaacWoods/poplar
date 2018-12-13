@@ -50,6 +50,11 @@ fmt:
 	cd libmessage && cargo fmt
 	cd userboot && cargo fmt
 
+doc:
+	CARGO_TARGET_DIR=./doc_target cargo doc --features $(ARCH) --manifest-path kernel/Cargo.toml --document-private-items
+	mv doc_target/doc doc
+	rm -r doc_target
+
 qemu: pebble.img
 	qemu-system-x86_64 \
 		-enable-kvm \

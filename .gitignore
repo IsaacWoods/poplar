@@ -9,3 +9,6 @@
 *.o
 *.bin
 *.elf
+
+/doc_target/
+/doc/
