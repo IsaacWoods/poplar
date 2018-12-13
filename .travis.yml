@@ -13,6 +13,7 @@ install:
 
 script:
   - make
+  - make doc
 
 branches:
   only:
@@ -22,3 +23,12 @@ branches:
 
 notifications:
   email: false
+
+deploy:
+  local-dir: docs
+  provider: pages
+  skip-cleanup: true
+  github-token: $GITHUB_TOKEN
+  keep-history: true
+  on:
+    branch: master
