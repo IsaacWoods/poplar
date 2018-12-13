@@ -21,7 +21,7 @@ pub trait FrameAllocator {
     }
 
     /// Allocate `n` contiguous `Frame`s, if possible.
-    fn allocate_n(&self, n: u64) -> Result<Range<Frame>, !>;
+    fn allocate_n(&self, n: usize) -> Result<Range<Frame>, !>;
 
     /// Free a previously-allocated frame, marking it available for allocation in the future.
     fn free(&self, frame: Frame);

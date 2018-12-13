@@ -29,7 +29,7 @@ impl Mapper<'static, RecursiveMapping> {
 impl<'a> Mapper<'a, IdentityMapping> {
     pub(super) unsafe fn new(p4_address: PhysicalAddress) -> Mapper<'a, IdentityMapping> {
         Mapper {
-            p4: &mut *(VirtualAddress::new_unchecked(u64::from(p4_address)).mut_ptr()),
+            p4: &mut *(VirtualAddress::new_unchecked(usize::from(p4_address)).mut_ptr()),
         }
     }
 }

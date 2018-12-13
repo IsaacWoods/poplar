@@ -6,14 +6,14 @@ use core::ops::{Add, AddAssign};
 
 #[derive(Clone, Copy, Debug, PartialOrd, Ord, PartialEq, Eq)]
 pub struct Page {
-    number: u64,
+    number: usize,
 }
 
 impl Page {
     /// Get the page that contains the given virtual address.
     pub fn contains(address: VirtualAddress) -> Page {
         Page {
-            number: u64::from(address) / PAGE_SIZE,
+            number: usize::from(address) / PAGE_SIZE,
         }
     }
 
@@ -38,10 +38,10 @@ impl Page {
     }
 }
 
-impl Add<u64> for Page {
+impl Add<usize> for Page {
     type Output = Page;
 
-    fn add(self, offset: u64) -> Self::Output {
+    fn add(self, offset: usize) -> Self::Output {
         assert!(VirtualAddress::new((self.number + offset) * PAGE_SIZE).is_some());
         Page {
             number: self.number + offset,
@@ -49,8 +49,8 @@ impl Add<u64> for Page {
     }
 }
 
-impl AddAssign<u64> for Page {
-    fn add_assign(&mut self, offset: u64) {
+impl AddAssign<usize> for Page {
+    fn add_assign(&mut self, offset: usize) {
         assert!(VirtualAddress::new((self.number + offset) * PAGE_SIZE).is_some());
         self.number += offset;
     }
@@ -85,7 +85,7 @@ impl Step for Page {
 
     fn add_usize(&self, n: usize) -> Option<Self> {
         Some(Page {
-            number: self.number.checked_add(n as u64)?,
+            number: self.number.checked_add(n as usize)?,
         })
     }
 }

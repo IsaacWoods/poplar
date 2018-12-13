@@ -18,7 +18,7 @@ impl BootServices {
     pub fn allocate_frames(
         &self,
         memory_type: MemoryType,
-        pages: u64,
+        pages: usize,
     ) -> Result<PhysicalAddress, Status> {
         let mut start_address = PhysicalAddress::default();
         match (self._allocate_pages)(
@@ -35,7 +35,7 @@ impl BootServices {
     }
 
     /// Frees memory pages
-    pub fn free_pages(&self, memory: PhysicalAddress, pages: u64) -> Result<(), Status> {
+    pub fn free_pages(&self, memory: PhysicalAddress, pages: usize) -> Result<(), Status> {
         (self._free_pages)(memory, pages).as_result().map(|_| ())
     }
 

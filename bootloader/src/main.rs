@@ -85,7 +85,7 @@ pub extern "win64" fn uefi_main(image_handle: Handle, system_table: &'static Sys
     println!("Allocating memory for kernel heap");
     assert!(kernel_map::HEAP_START.is_page_aligned());
     assert!((kernel_map::HEAP_END + 1).unwrap().is_page_aligned());
-    let heap_size = (u64::from(kernel_map::HEAP_END) + 1) - u64::from(kernel_map::HEAP_START);
+    let heap_size = (usize::from(kernel_map::HEAP_END) + 1) - usize::from(kernel_map::HEAP_START);
     assert!(heap_size % FRAME_SIZE == 0);
     let heap_physical_base = match system_table
         .boot_services
@@ -131,11 +131,11 @@ pub extern "win64" fn uefi_main(image_handle: Handle, system_table: &'static Sys
             | MemoryType::BootServicesData
             | MemoryType::RuntimeServicesCode
             | MemoryType::RuntimeServicesData => {
-                let virtual_start = VirtualAddress::new(u64::from(entry.physical_start)).unwrap();
+                let virtual_start = VirtualAddress::new(usize::from(entry.physical_start)).unwrap();
                 let frames = Frame::contains(entry.physical_start)
-                    ..(Frame::contains(entry.physical_start) + entry.number_of_pages);
+                    ..(Frame::contains(entry.physical_start) + entry.number_of_pages as usize);
                 let pages = Page::contains(virtual_start)
-                    ..(Page::contains(virtual_start) + entry.number_of_pages);
+                    ..(Page::contains(virtual_start) + entry.number_of_pages as usize);
 
                 for (frame, page) in frames.zip(pages) {
                     mapper.map_to(
@@ -233,7 +233,7 @@ fn create_page_table() -> InactivePageTable<IdentityMapping> {
     unsafe {
         system_table()
             .boot_services
-            .set_mem(u64::from(address) as *mut _, FRAME_SIZE as usize, 0);
+            .set_mem(usize::from(address) as *mut _, FRAME_SIZE as usize, 0);
     }
 
     InactivePageTable::new(Frame::contains(address))
@@ -263,7 +263,7 @@ fn load_kernel(
         } else {
             kernel_size
         }
-    });
+    }) as usize;
 
     if kernel_size % FRAME_SIZE != 0 {
         panic!(
@@ -284,7 +284,7 @@ fn load_kernel(
     // We now zero all the kernel memory
     unsafe {
         system_table().boot_services.set_mem(
-            u64::from(kernel_physical_base) as *mut _,
+            usize::from(kernel_physical_base) as *mut _,
             kernel_size as usize,
             0,
         );
@@ -321,14 +321,14 @@ fn load_kernel(
         if let SectionType::ProgBits = section.section_type() {
             unsafe {
                 slice::from_raw_parts_mut(
-                    u64::from(physical_address) as *mut u8,
+                    usize::from(physical_address) as *mut u8,
                     section.size as usize,
                 )
                 .copy_from_slice(section.data(&elf).unwrap());
             }
         }
 
-        physical_address = (physical_address + section.size).unwrap();
+        physical_address = (physical_address + section.size as usize).unwrap();
     }
 
     /*
@@ -340,7 +340,7 @@ fn load_kernel(
         .symbols()
         .find(|symbol| symbol.name(&elf) == Some("_guard_page"))
     {
-        Some(symbol) => VirtualAddress::new(symbol.value).unwrap(),
+        Some(symbol) => VirtualAddress::new(symbol.value as usize).unwrap(),
         None => panic!("Kernel does not have a '_guard_page' symbol!"),
     };
     assert!(
@@ -354,7 +354,7 @@ fn load_kernel(
         .symbols()
         .find(|symbol| symbol.name(&elf) == Some("_stack_top"))
     {
-        Some(symbol) => VirtualAddress::new(symbol.value).unwrap(),
+        Some(symbol) => VirtualAddress::new(symbol.value as usize).unwrap(),
         None => panic!("Kernel does not have a '_stack_top' symbol"),
     };
     assert!(stack_top.is_page_aligned(), "Stack is not page aligned");
@@ -367,7 +367,7 @@ fn load_kernel(
      *     - The correct virtual mappings are installed
      */
     Ok(KernelInfo {
-        entry_point: VirtualAddress::new(elf.entry_point() as u64).unwrap(),
+        entry_point: VirtualAddress::new(elf.entry_point()).unwrap(),
         stack_top,
     })
 }
@@ -378,16 +378,16 @@ fn map_section(
     section: &SectionHeader,
     allocator: &BootFrameAllocator,
 ) {
-    let virtual_address = VirtualAddress::new(section.address).unwrap();
+    let virtual_address = VirtualAddress::new(section.address as usize).unwrap();
     /*
      * XXX: This is a tad hacky, but because the addresses should be page-aligned, the half-open
      * ranges `[physical_base, physical_base + size)` and `[virtual_address, virtual_address +
      * size)` gives us the correct frame and page ranges.
      */
     let frames =
-        Frame::contains(physical_base)..Frame::contains((physical_base + section.size).unwrap());
+        Frame::contains(physical_base)..Frame::contains((physical_base + section.size as usize).unwrap());
     let pages =
-        Page::contains(virtual_address)..Page::contains((virtual_address + section.size).unwrap());
+        Page::contains(virtual_address)..Page::contains((virtual_address + section.size as usize).unwrap());
     assert!(frames.clone().count() == pages.clone().count());
 
     /*

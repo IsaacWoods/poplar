@@ -5,13 +5,13 @@ use core::ops::{Add, AddAssign};
 
 #[derive(Clone, Copy, Debug, PartialOrd, Ord, PartialEq, Eq)]
 pub struct Frame {
-    number: u64,
+    number: usize,
 }
 
 impl Frame {
     pub fn contains(address: PhysicalAddress) -> Frame {
         Frame {
-            number: u64::from(address) / FRAME_SIZE,
+            number: usize::from(address) / FRAME_SIZE,
         }
     }
 
@@ -20,10 +20,10 @@ impl Frame {
     }
 }
 
-impl Add<u64> for Frame {
+impl Add<usize> for Frame {
     type Output = Frame;
 
-    fn add(self, offset: u64) -> Self::Output {
+    fn add(self, offset: usize) -> Self::Output {
         assert!(PhysicalAddress::new((self.number + offset) * FRAME_SIZE).is_some());
         Frame {
             number: self.number + offset,
@@ -31,8 +31,8 @@ impl Add<u64> for Frame {
     }
 }
 
-impl AddAssign<u64> for Frame {
-    fn add_assign(&mut self, offset: u64) {
+impl AddAssign<usize> for Frame {
+    fn add_assign(&mut self, offset: usize) {
         assert!(PhysicalAddress::new((self.number + offset) * FRAME_SIZE).is_some());
         self.number += offset;
     }
@@ -67,7 +67,7 @@ impl Step for Frame {
 
     fn add_usize(&self, n: usize) -> Option<Self> {
         Some(Frame {
-            number: self.number.checked_add(n as u64)?,
+            number: self.number.checked_add(n as usize)?,
         })
     }
 }

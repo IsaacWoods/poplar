@@ -59,7 +59,7 @@ impl Entry {
              * Safe to unwrap because we check that the address is valid when we create the entry
              */
             Some(Frame::contains(
-                PhysicalAddress::new(self.0 & ADDRESS_MASK).unwrap(),
+                PhysicalAddress::new((self.0 & ADDRESS_MASK) as usize).unwrap(),
             ))
         } else {
             None
@@ -67,6 +67,6 @@ impl Entry {
     }
 
     pub fn set(&mut self, frame: Frame, flags: EntryFlags) {
-        self.0 = u64::from(frame.start_address()) | flags.bits();
+        self.0 = usize::from(frame.start_address()) as u64 | flags.bits();
     }
 }

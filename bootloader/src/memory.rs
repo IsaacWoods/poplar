@@ -22,7 +22,7 @@ pub struct BootFrameAllocator {
 }
 
 impl BootFrameAllocator {
-    pub fn new(num_frames: u64) -> BootFrameAllocator {
+    pub fn new(num_frames: usize) -> BootFrameAllocator {
         let start_frame_address = match system_table()
             .boot_services
             .allocate_frames(MemoryType::PebblePageTables, num_frames)
@@ -37,7 +37,7 @@ impl BootFrameAllocator {
         // Zero all the memory so the page tables start with everything unmapped
         unsafe {
             system_table().boot_services.set_mem(
-                u64::from(start_frame_address) as *mut _,
+                usize::from(start_frame_address) as *mut _,
                 (num_frames * FRAME_SIZE) as usize,
                 0,
             );
@@ -52,7 +52,7 @@ impl BootFrameAllocator {
 }
 
 impl FrameAllocator for BootFrameAllocator {
-    fn allocate_n(&self, n: u64) -> Result<Range<Frame>, !> {
+    fn allocate_n(&self, n: usize) -> Result<Range<Frame>, !> {
         if (self.next_frame.get() + n) > self.end_frame {
             panic!("Bootloader frame allocator ran out of frames!");
         }

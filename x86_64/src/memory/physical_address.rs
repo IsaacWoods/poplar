@@ -7,13 +7,13 @@ use core::ops::{Add, Sub};
 /// 2^52
 #[derive(Clone, Copy, Default)]
 #[repr(transparent)]
-pub struct PhysicalAddress(u64);
+pub struct PhysicalAddress(usize);
 
 impl PhysicalAddress {
     // TODO: make `const` when const match is supported
-    pub fn new(address: u64) -> Option<PhysicalAddress> {
+    pub fn new(address: usize) -> Option<PhysicalAddress> {
         // This constant has to exist because we can't use expressions in a range
-        const MAX_PHYSICAL_ADDRESS: u64 = (1 << 52) - 1;
+        const MAX_PHYSICAL_ADDRESS: usize = (1 << 52) - 1;
 
         match address {
             0..=MAX_PHYSICAL_ADDRESS => Some(PhysicalAddress(address)),
@@ -21,11 +21,11 @@ impl PhysicalAddress {
         }
     }
 
-    pub const fn new_unchecked(address: u64) -> PhysicalAddress {
+    pub const fn new_unchecked(address: usize) -> PhysicalAddress {
         PhysicalAddress(address)
     }
 
-    pub const fn offset_into_frame(&self) -> u64 {
+    pub const fn offset_into_frame(&self) -> usize {
         self.0 % FRAME_SIZE
     }
 
@@ -52,24 +52,24 @@ impl fmt::Debug for PhysicalAddress {
     }
 }
 
-impl From<PhysicalAddress> for u64 {
-    fn from(address: PhysicalAddress) -> u64 {
+impl From<PhysicalAddress> for usize {
+    fn from(address: PhysicalAddress) -> usize {
         address.0
     }
 }
 
-impl Add<u64> for PhysicalAddress {
+impl Add<usize> for PhysicalAddress {
     type Output = Option<PhysicalAddress>;
 
-    fn add(self, rhs: u64) -> Self::Output {
+    fn add(self, rhs: usize) -> Self::Output {
         PhysicalAddress::new(self.0 + rhs)
     }
 }
 
-impl Sub<u64> for PhysicalAddress {
+impl Sub<usize> for PhysicalAddress {
     type Output = Option<PhysicalAddress>;
 
-    fn sub(self, rhs: u64) -> Self::Output {
+    fn sub(self, rhs: usize) -> Self::Output {
         PhysicalAddress::new(self.0 - rhs)
     }
 }
