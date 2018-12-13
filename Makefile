@@ -51,8 +51,11 @@ fmt:
 	cd userboot && cargo fmt
 
 doc:
-	CARGO_TARGET_DIR=./doc_target cargo doc --features $(ARCH) --manifest-path kernel/Cargo.toml --document-private-items
-	mv doc_target/doc doc
+	CARGO_TARGET_DIR=./doc_target cargo doc \
+		--all-features \
+		--manifest-path kernel/Cargo.toml \
+		--document-private-items
+	mv doc_target/doc docs
 	rm -r doc_target
 
 qemu: pebble.img

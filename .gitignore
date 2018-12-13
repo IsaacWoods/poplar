@@ -11,4 +11,4 @@
 *.elf
 
 /doc_target/
-/doc/
+/docs/
