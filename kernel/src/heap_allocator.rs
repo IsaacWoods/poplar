@@ -178,7 +178,9 @@ fn split_hole(hole: HoleInfo, required_layout: Layout) -> Option<Allocation> {
          * We need to add front padding to correctly align the data
          * in the hole.
          */
-        let aligned_addr = (hole.addr + HoleList::get_min_size()).unwrap().align_up(required_align);
+        let aligned_addr = (hole.addr + HoleList::get_min_size())
+            .unwrap()
+            .align_up(required_align);
 
         (
             aligned_addr,

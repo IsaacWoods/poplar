@@ -19,18 +19,19 @@ mod system_table;
 mod types;
 
 use crate::boot_services::{AllocateType, OpenProtocolAttributes, Pool, Protocol, SearchType};
-use crate::memory::{BootFrameAllocator, MemoryType};
+use crate::memory::{BootFrameAllocator, MemoryMap, MemoryType};
 use crate::protocols::{FileAttributes, FileInfo, FileMode, FileSystemInfo, SimpleFileSystem};
 use crate::system_table::SystemTable;
 use crate::types::{Handle, Status};
 use core::fmt::Write;
+use core::mem;
 use core::panic::PanicInfo;
 use core::slice;
 use mer::{
     section::{SectionHeader, SectionType},
     Elf,
 };
-use x86_64::boot::BootInfo;
+use x86_64::boot::{BootInfo, MemoryEntry, MemoryType as BootInfoMemoryType};
 use x86_64::hw::registers::{read_control_reg, read_msr, write_control_reg, write_msr};
 use x86_64::hw::serial::SerialPort;
 use x86_64::memory::kernel_map;
@@ -82,30 +83,33 @@ pub extern "win64" fn uefi_main(image_handle: Handle, system_table: &'static Sys
     /*
      * Allocate physical memory for the kernel heap, and map it into the kernel page tables.
      */
-    println!("Allocating memory for kernel heap");
-    assert!(kernel_map::HEAP_START.is_page_aligned());
-    assert!((kernel_map::HEAP_END + 1).unwrap().is_page_aligned());
-    let heap_size = (usize::from(kernel_map::HEAP_END) + 1) - usize::from(kernel_map::HEAP_START);
-    assert!(heap_size % FRAME_SIZE == 0);
-    let heap_physical_base = match system_table
+    allocate_and_map_heap(&mut mapper, &allocator);
+
+    /*
+     * Allocate space for the `BootInfo`. We allocate a single frame for it, so make sure it'll
+     * fit.
+     */
+    assert!(mem::size_of::<BootInfo>() <= FRAME_SIZE);
+    let boot_info_address = match system_table
         .boot_services
-        .allocate_frames(MemoryType::PebbleKernelHeap, heap_size / FRAME_SIZE)
+        .allocate_frames(MemoryType::PebbleBootInformation, 1)
     {
         Ok(address) => address,
-        Err(err) => panic!("Failed to allocate memory for kernel heap: {:?}", err),
+        Err(err) => panic!("Failed to allocate memory for the boot info: {:?}", err),
     };
+    let boot_info = unsafe { &mut *(usize::from(boot_info_address) as *mut BootInfo) };
+    boot_info.magic = x86_64::boot::BOOT_INFO_MAGIC;
+    boot_info.num_memory_map_entries = 0;
 
-    let heap_frames = Frame::contains(heap_physical_base)
-        ..=Frame::contains((heap_physical_base + heap_size).unwrap());
-    let heap_pages = Page::contains(kernel_map::HEAP_START)..=Page::contains(kernel_map::HEAP_END);
-    for (frame, page) in heap_frames.zip(heap_pages) {
-        mapper.map_to(
-            page,
-            frame,
-            EntryFlags::PRESENT | EntryFlags::WRITABLE | EntryFlags::NO_EXECUTE,
-            &allocator,
-        );
-    }
+    /*
+     * Map the `BootInfo` into the kernel address space at the correct location.
+     */
+    mapper.map_to(
+        Page::contains(kernel_map::BOOT_INFO),
+        Frame::contains(boot_info_address),
+        EntryFlags::PRESENT | EntryFlags::NO_EXECUTE,
+        &allocator,
+    );
 
     /*
      * Get the final memory map before exiting boot services. We must not allocate between this
@@ -116,12 +120,13 @@ pub extern "win64" fn uefi_main(image_handle: Handle, system_table: &'static Sys
         Err(err) => panic!("Failed to get memory map: {:?}", err),
     };
 
+    construct_boot_info(boot_info, &memory_map);
+
     /*
-     * Identity-map the bootloader and UEFI runtime stuff into the kernel address space. This is
-     * needed so we don't page fault when we switch to the new page tables, and so we can still use
-     * runtime services.
+     * Identity map the bootloader code and data, and UEFI runtime services into the kernel
+     * address space. This is needed so we don't page-fault when we switch page tables.
      *
-     * TODO: why do we need boot services code mapped after we've exited them??
+     * TODO: why do we still need boot services code mapped after calling ExitBootServices?!
      */
     for entry in memory_map.iter() {
         match entry.memory_type {
@@ -231,12 +236,110 @@ fn create_page_table() -> InactivePageTable<IdentityMapping> {
 
     // Zero the P4 to mark every entry as non-present
     unsafe {
-        system_table()
-            .boot_services
-            .set_mem(usize::from(address) as *mut _, FRAME_SIZE as usize, 0);
+        system_table().boot_services.set_mem(
+            usize::from(address) as *mut _,
+            FRAME_SIZE as usize,
+            0,
+        );
     }
 
     InactivePageTable::new(Frame::contains(address))
+}
+
+fn allocate_and_map_heap(mapper: &mut Mapper<IdentityMapping>, allocator: &BootFrameAllocator) {
+    println!("Allocating memory for kernel heap");
+
+    assert!(kernel_map::HEAP_START.is_page_aligned());
+    assert!((kernel_map::HEAP_END + 1).unwrap().is_page_aligned());
+    let heap_size = (usize::from(kernel_map::HEAP_END) + 1) - usize::from(kernel_map::HEAP_START);
+    assert!(heap_size % FRAME_SIZE == 0);
+    let heap_physical_base = match system_table()
+        .boot_services
+        .allocate_frames(MemoryType::PebbleKernelHeap, heap_size / FRAME_SIZE)
+    {
+        Ok(address) => address,
+        Err(err) => panic!("Failed to allocate memory for kernel heap: {:?}", err),
+    };
+
+    let heap_frames = Frame::contains(heap_physical_base)
+        ..=Frame::contains((heap_physical_base + heap_size).unwrap());
+    let heap_pages = Page::contains(kernel_map::HEAP_START)..=Page::contains(kernel_map::HEAP_END);
+    for (frame, page) in heap_frames.zip(heap_pages) {
+        mapper.map_to(
+            page,
+            frame,
+            EntryFlags::PRESENT | EntryFlags::WRITABLE | EntryFlags::NO_EXECUTE,
+            allocator,
+        );
+    }
+}
+
+fn construct_boot_info(boot_info: &mut BootInfo, memory_map: &MemoryMap) {
+    println!("Constructing boot info to pass to kernel");
+
+    for entry in memory_map.iter() {
+        let memory_type = match entry.memory_type {
+            // Keep the UEFI runtime services stuff around - anything might be using them.
+            MemoryType::RuntimeServicesCode | MemoryType::RuntimeServicesData => {
+                BootInfoMemoryType::UefiServices
+            }
+
+            /*
+             * The bootloader and boot services code and data can be treated like conventional RAM
+             * once we're in the kernel.
+             */
+            MemoryType::LoaderCode
+            | MemoryType::LoaderData
+            | MemoryType::BootServicesCode
+            | MemoryType::BootServicesData
+            | MemoryType::ConventionalMemory => BootInfoMemoryType::Conventional,
+
+            /*
+             * This memory must not be used until we're done with the ACPI tables, and then can be
+             * used as conventional memory.
+             */
+            MemoryType::ACPIReclaimMemory => BootInfoMemoryType::AcpiReclaimable,
+
+            MemoryType::ACPIMemoryNVS | MemoryType::PersistentMemory => {
+                BootInfoMemoryType::SleepPreserve
+            }
+
+            MemoryType::PalCode => BootInfoMemoryType::NonVolatileSleepPreserve,
+
+            /*
+             * These types of memory should not be used by the OS, so we don't emit an entry for
+             * them.
+             */
+            MemoryType::ReservedMemoryType
+            | MemoryType::MemoryMappedIO
+            | MemoryType::MemoryMappedIOPortSpace
+            | MemoryType::UnusableMemory => continue,
+
+            /*
+             * These are the memory regions we're allocated for the kernel. We just forward them on
+             * in the kernel memory map entries.
+             */
+            MemoryType::PebbleKernelMemory => BootInfoMemoryType::KernelImage,
+            MemoryType::PebblePageTables => BootInfoMemoryType::KernelPageTables,
+            MemoryType::PebbleBootInformation => BootInfoMemoryType::BootInfo,
+            MemoryType::PebbleKernelHeap => BootInfoMemoryType::KernelHeap,
+
+            MemoryType::MaxMemoryType => panic!("Invalid memory type found in UEFI memory map!"),
+        };
+
+        let start_frame = Frame::contains(entry.physical_start);
+        let bootinfo_entry = MemoryEntry {
+            area: start_frame..(start_frame + entry.number_of_pages as usize),
+            memory_type,
+        };
+
+        if boot_info.num_memory_map_entries == x86_64::boot::MEMORY_MAP_NUM_ENTRIES {
+            panic!("Run out of space for memory map entries in the BootInfo!");
+        }
+
+        boot_info.memory_map[boot_info.num_memory_map_entries] = bootinfo_entry;
+        boot_info.num_memory_map_entries += 1;
+    }
 }
 
 /// Load the kernel's sections into memory and return the entry point
@@ -384,10 +487,10 @@ fn map_section(
      * ranges `[physical_base, physical_base + size)` and `[virtual_address, virtual_address +
      * size)` gives us the correct frame and page ranges.
      */
-    let frames =
-        Frame::contains(physical_base)..Frame::contains((physical_base + section.size as usize).unwrap());
-    let pages =
-        Page::contains(virtual_address)..Page::contains((virtual_address + section.size as usize).unwrap());
+    let frames = Frame::contains(physical_base)
+        ..Frame::contains((physical_base + section.size as usize).unwrap());
+    let pages = Page::contains(virtual_address)
+        ..Page::contains((virtual_address + section.size as usize).unwrap());
     assert!(frames.clone().count() == pages.clone().count());
 
     /*

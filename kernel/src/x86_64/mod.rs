@@ -10,7 +10,7 @@ use x86_64::memory::kernel_map;
 /// This is the entry point for the kernel on x86_64. It is called from the UEFI bootloader and
 /// initialises the system, then passes control into the common part of the kernel.
 #[no_mangle]
-pub extern "C" fn kmain(boot_info: &BootInfo) -> ! {
+pub fn kmain() -> ! {
     /*
      * Initialise the logger.
      */
@@ -26,6 +26,15 @@ pub extern "C" fn kmain(boot_info: &BootInfo) -> ! {
         crate::ALLOCATOR
             .lock()
             .init(kernel_map::HEAP_START, kernel_map::HEAP_END);
+    }
+
+    /*
+     * Retrieve the `BootInfo` passed to us from the bootloader and make sure it has the correct
+     * magic number.
+     */
+    let boot_info = unsafe { &mut *(kernel_map::BOOT_INFO.mut_ptr::<BootInfo>()) };
+    if boot_info.magic != x86_64::boot::BOOT_INFO_MAGIC {
+        panic!("Boot info magic number is not correct!");
     }
 
     loop {}

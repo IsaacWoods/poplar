@@ -35,7 +35,10 @@ pub const HEAP_END: VirtualAddress =
     unsafe { VirtualAddress::new_unchecked(0xffff_ffff_c00_18fff) };
 
 /*
- * Following the heap are a bunch of random memory-mapped configuration spaces and whatnot.
+ * From here, we place a bunch of hard-coded pages for various things, such as the `BootInfo`
+ * struct and memory-mapped configuration pages and stuff.
  */
-pub const LOCAL_APIC_CONFIG_PAGE: VirtualAddress =
+pub const BOOT_INFO: VirtualAddress =
     unsafe { VirtualAddress::new_unchecked(0xffff_ffff_d000_0000) };
+pub const LOCAL_APIC_CONFIG_PAGE: VirtualAddress =
+    unsafe { VirtualAddress::new_unchecked(0xffff_ffff_d000_1000) };
