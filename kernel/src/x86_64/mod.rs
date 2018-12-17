@@ -22,6 +22,7 @@ pub fn kmain() -> ! {
      * Initialise the heap allocator. After this, the kernel is free to use collections etc. that
      * can allocate on the heap through the global allocator.
      */
+    #[cfg(not(test))]
     unsafe {
         crate::ALLOCATOR
             .lock()

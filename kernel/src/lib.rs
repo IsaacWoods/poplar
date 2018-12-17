@@ -1,4 +1,4 @@
-#![no_std]
+#![cfg_attr(not(test), no_std)]
 #![feature(asm, decl_macro, allocator_api, const_fn, alloc, alloc_error_handler)]
 extern crate alloc;
 
@@ -22,9 +22,11 @@ use cfg_if::cfg_if;
 use core::panic::PanicInfo;
 use log::error;
 
+#[cfg(not(test))]
 #[global_allocator]
 pub static ALLOCATOR: LockedHoleAllocator = LockedHoleAllocator::new_uninitialized();
 
+#[cfg(not(test))]
 #[panic_handler]
 #[no_mangle]
 fn panic(info: &PanicInfo) -> ! {

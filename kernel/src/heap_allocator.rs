@@ -376,6 +376,7 @@ pub fn align_up(addr: usize, align: usize) -> usize {
     align_down(addr + align - 1, align)
 }
 
+#[cfg(not(test))]
 #[alloc_error_handler]
 fn handle_alloc_error(layout: Layout) -> ! {
     panic!("Alloc error: {:?}", layout);
