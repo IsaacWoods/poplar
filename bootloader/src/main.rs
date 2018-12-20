@@ -18,7 +18,7 @@ mod runtime_services;
 mod system_table;
 mod types;
 
-use crate::boot_services::{AllocateType, OpenProtocolAttributes, Pool, Protocol, SearchType};
+use crate::boot_services::{OpenProtocolAttributes, Pool, Protocol, SearchType};
 use crate::memory::{BootFrameAllocator, MemoryMap, MemoryType};
 use crate::protocols::{FileAttributes, FileInfo, FileMode, FileSystemInfo, SimpleFileSystem};
 use crate::system_table::SystemTable;

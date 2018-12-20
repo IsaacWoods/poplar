@@ -175,7 +175,7 @@ where
             );
 
             self.entries[index as usize].set(
-                allocator.allocate().unwrap(),
+                allocator.allocate(),
                 EntryFlags::default()
                     | EntryFlags::WRITABLE
                     | if user_accessible {

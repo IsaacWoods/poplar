@@ -1,4 +1,3 @@
-use crate::boot_services::AllocateType;
 use crate::system_table;
 use core::cell::Cell;
 use core::ops::{Index, Range};
@@ -52,7 +51,7 @@ impl BootFrameAllocator {
 }
 
 impl FrameAllocator for BootFrameAllocator {
-    fn allocate_n(&self, n: usize) -> Result<Range<Frame>, !> {
+    fn allocate_n(&self, n: usize) -> Range<Frame> {
         if (self.next_frame.get() + n) > self.end_frame {
             panic!("Bootloader frame allocator ran out of frames!");
         }
@@ -60,10 +59,10 @@ impl FrameAllocator for BootFrameAllocator {
         let frame = self.next_frame.get();
         self.next_frame.update(|frame| frame + n);
 
-        Ok(frame..(frame + n))
+        frame..(frame + n)
     }
 
-    fn free(&self, _: Frame) {
+    fn free_n(&self, _: Frame, _: usize) {
         /*
          * NOTE: We should only free physical memory in the bootloader when we unmap the stack guard
          * page. Because of the simplicity of our allocator, we can't do anything useful with the
