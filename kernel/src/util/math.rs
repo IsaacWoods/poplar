@@ -74,3 +74,22 @@ fn test_flooring_log2() {
     assert_eq!(flooring_log2(61), 5);
     assert_eq!(flooring_log2(4095), 11);
 }
+
+pub fn ceiling_log2(x: u64) -> u64 {
+    let x = if x.is_power_of_two() {
+        x
+    } else {
+        x.next_power_of_two()
+    };
+
+    // `x` will always be a power of two now, so log(2) == the number of trailing zeros
+    x.trailing_zeros() as u64
+}
+
+#[test]
+fn test_ceiling_log2() {
+    assert_eq!(ceiling_log2(1), 0);
+    assert_eq!(ceiling_log2(64), 6);
+    assert_eq!(ceiling_log2(61), 6);
+    assert_eq!(ceiling_log2(4095), 12);
+}
