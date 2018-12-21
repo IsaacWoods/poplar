@@ -29,7 +29,7 @@ impl Mapper<'static, RecursiveMapping> {
 impl<'a> Mapper<'a, IdentityMapping> {
     pub(super) unsafe fn new(p4_address: PhysicalAddress) -> Mapper<'a, IdentityMapping> {
         Mapper {
-            p4: &mut *(VirtualAddress::new_unchecked(u64::from(p4_address)).mut_ptr()),
+            p4: &mut *(VirtualAddress::new_unchecked(usize::from(p4_address)).mut_ptr()),
         }
     }
 }
@@ -62,7 +62,7 @@ where
     where
         A: FrameAllocator,
     {
-        self.map_to(page, allocator.allocate().unwrap(), flags, allocator);
+        self.map_to(page, allocator.allocate(), flags, allocator);
     }
 
     pub fn map_to<A>(&mut self, page: Page, frame: Frame, flags: EntryFlags, allocator: &A)
@@ -108,6 +108,6 @@ where
         tlb::invalidate_page(page.start_address());
 
         // TODO: should we care about freeing empty P1s, P2s and P3s?
-        allocator.free(frame);
+        allocator.free_n(frame, 1);
     }
 }

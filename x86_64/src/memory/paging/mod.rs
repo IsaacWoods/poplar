@@ -11,8 +11,8 @@ pub use self::mapper::Mapper;
 pub use self::page::Page;
 pub use core::ops::{Deref, DerefMut};
 
-pub const FRAME_SIZE: u64 = 0x1000;
-pub const PAGE_SIZE: u64 = 0x1000;
+pub const FRAME_SIZE: usize = 0x1000;
+pub const PAGE_SIZE: usize = 0x1000;
 
 use self::table::{IdentityMapping, RecursiveMapping, TableMapping};
 use super::PhysicalAddress;
@@ -66,13 +66,13 @@ impl InactivePageTable<IdentityMapping> {
     where
         N: TableMapping,
     {
-        let old_table_address = PhysicalAddress::new(read_control_reg!(cr3)).unwrap();
+        let old_table_address = PhysicalAddress::new(read_control_reg!(cr3) as usize).unwrap();
 
         unsafe {
             /*
              * NOTE: We don't need to flush the TLB here because it's cleared when CR3 changes.
              */
-            write_control_reg!(cr3, u64::from(self.p4_frame.start_address()));
+            write_control_reg!(cr3, usize::from(self.p4_frame.start_address()) as u64);
         }
 
         (
@@ -98,13 +98,13 @@ impl InactivePageTable<RecursiveMapping> {
     where
         N: TableMapping,
     {
-        let old_table_address = PhysicalAddress::new(read_control_reg!(cr3)).unwrap();
+        let old_table_address = PhysicalAddress::new(read_control_reg!(cr3) as usize).unwrap();
 
         unsafe {
             /*
              * NOTE: We don't need to flush the TLB here because it's cleared when CR3 changes.
              */
-            write_control_reg!(cr3, u64::from(self.p4_frame.start_address()));
+            write_control_reg!(cr3, usize::from(self.p4_frame.start_address()) as u64);
         }
 
         (

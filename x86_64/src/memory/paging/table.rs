@@ -86,7 +86,7 @@ impl TableMapping for IdentityMapping {
          */
         table[index]
             .pointed_frame()
-            .and_then(|frame| VirtualAddress::new(u64::from(frame.start_address())))
+            .and_then(|frame| VirtualAddress::new(usize::from(frame.start_address())))
     }
 }
 
@@ -107,9 +107,9 @@ impl TableMapping for RecursiveMapping {
              * XXX: This can make the address non-canonical when we shift the old address up into
              * the sign-extension bits, so we make sure to re-canonicalise it again.
              */
-            let table_address = table as *const _ as u64;
+            let table_address = table as *const _ as usize;
             Some(VirtualAddress::new_canonicalise(
-                (table_address << 9) | u64::from(index) << 12,
+                (table_address << 9) | usize::from(index) << 12,
             ))
         } else {
             None
@@ -175,7 +175,7 @@ where
             );
 
             self.entries[index as usize].set(
-                allocator.allocate().unwrap(),
+                allocator.allocate(),
                 EntryFlags::default()
                     | EntryFlags::WRITABLE
                     | if user_accessible {

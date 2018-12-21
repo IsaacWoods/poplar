@@ -13,6 +13,7 @@ install:
 
 script:
   - make
+  - cargo test --features arch_x86_64 --manifest-path kernel/Cargo.toml
   - make doc
 
 branches:

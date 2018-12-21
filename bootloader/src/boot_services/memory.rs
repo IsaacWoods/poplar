@@ -14,17 +14,24 @@ pub enum AllocateType {
 }
 
 impl BootServices {
-    /// Allocates memory pages from the system
-    pub fn allocate_pages(
+    /// Allocates memory frames from the system
+    pub fn allocate_frames(
         &self,
-        allocation_type: AllocateType,
         memory_type: MemoryType,
         pages: usize,
-        memory: &mut PhysicalAddress,
-    ) -> Result<(), Status> {
-        (self._allocate_pages)(allocation_type, memory_type, pages, memory)
-            .as_result()
-            .map(|_| ())
+    ) -> Result<PhysicalAddress, Status> {
+        let mut start_address = PhysicalAddress::default();
+        match (self._allocate_pages)(
+            AllocateType::AllocateAnyPages,
+            memory_type,
+            pages,
+            &mut start_address,
+        )
+        .as_result()
+        {
+            Ok(_) => Ok(start_address),
+            Err(err) => Err(err),
+        }
     }
 
     /// Frees memory pages

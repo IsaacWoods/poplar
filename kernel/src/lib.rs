@@ -1,5 +1,14 @@
-#![no_std]
-#![feature(asm)]
+#![cfg_attr(not(test), no_std)]
+#![feature(
+    asm,
+    decl_macro,
+    allocator_api,
+    const_fn,
+    alloc,
+    alloc_error_handler,
+    core_intrinsics
+)]
+extern crate alloc;
 
 /*
  * This selects the correct module to include depending on the architecture we're compiling the
@@ -7,7 +16,7 @@
  * code.
  */
 cfg_if! {
-    if #[cfg(feature = "x86_64")] {
+    if #[cfg(feature = "arch_x86_64")] {
         mod x86_64;
         pub use crate::x86_64::kmain;
     } else {
@@ -15,12 +24,24 @@ cfg_if! {
     }
 }
 
+mod heap_allocator;
+mod util;
+
+use crate::heap_allocator::LockedHoleAllocator;
 use cfg_if::cfg_if;
 use core::panic::PanicInfo;
+use log::error;
 
+#[cfg(not(test))]
+#[global_allocator]
+pub static ALLOCATOR: LockedHoleAllocator = LockedHoleAllocator::new_uninitialized();
+
+#[cfg(not(test))]
 #[panic_handler]
 #[no_mangle]
-pub extern "C" fn panic(info: &PanicInfo) -> ! {
-    // TODO
-    loop {}
+fn panic(info: &PanicInfo) -> ! {
+    error!("KERNEL PANIC: {}", info);
+    loop {
+        // TODO: arch-independent cpu halt?
+    }
 }

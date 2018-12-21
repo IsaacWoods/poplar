@@ -1,4 +1,3 @@
-use crate::boot_services::AllocateType;
 use crate::system_table;
 use core::cell::Cell;
 use core::ops::{Index, Range};
@@ -22,22 +21,22 @@ pub struct BootFrameAllocator {
 }
 
 impl BootFrameAllocator {
-    pub fn new(num_frames: u64) -> BootFrameAllocator {
-        let mut start_frame_address = PhysicalAddress::default();
-        system_table()
+    pub fn new(num_frames: usize) -> BootFrameAllocator {
+        let start_frame_address = match system_table()
             .boot_services
-            .allocate_pages(
-                AllocateType::AllocateAnyPages,
-                MemoryType::PebblePageTables,
-                num_frames as usize,
-                &mut start_frame_address,
-            )
-            .unwrap();
+            .allocate_frames(MemoryType::PebblePageTables, num_frames)
+        {
+            Ok(address) => address,
+            Err(err) => panic!(
+                "Failed to allocate memory for page frame allocator: {:?}",
+                err
+            ),
+        };
 
         // Zero all the memory so the page tables start with everything unmapped
         unsafe {
             system_table().boot_services.set_mem(
-                u64::from(start_frame_address) as *mut _,
+                usize::from(start_frame_address) as *mut _,
                 (num_frames * FRAME_SIZE) as usize,
                 0,
             );
@@ -52,7 +51,7 @@ impl BootFrameAllocator {
 }
 
 impl FrameAllocator for BootFrameAllocator {
-    fn allocate_n(&self, n: u64) -> Result<Range<Frame>, !> {
+    fn allocate_n(&self, n: usize) -> Range<Frame> {
         if (self.next_frame.get() + n) > self.end_frame {
             panic!("Bootloader frame allocator ran out of frames!");
         }
@@ -60,10 +59,10 @@ impl FrameAllocator for BootFrameAllocator {
         let frame = self.next_frame.get();
         self.next_frame.update(|frame| frame + n);
 
-        Ok(frame..(frame + n))
+        frame..(frame + n)
     }
 
-    fn free(&self, _: Frame) {
+    fn free_n(&self, _: Frame, _: usize) {
         /*
          * NOTE: We should only free physical memory in the bootloader when we unmap the stack guard
          * page. Because of the simplicity of our allocator, we can't do anything useful with the
@@ -179,4 +178,5 @@ pub enum MemoryType {
     PebbleKernelMemory = 0x8000_0000,
     PebblePageTables = 0x8000_0001,
     PebbleBootInformation = 0x8000_0002,
+    PebbleKernelHeap = 0x8000_0003,
 }
