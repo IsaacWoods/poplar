@@ -1,10 +1,12 @@
+//! TODO
+
 use crate::memory::paging::Frame;
 use core::ops::Range;
 
 pub const BOOT_INFO_MAGIC: u32 = 0xcafebabe;
 pub const MEMORY_MAP_NUM_ENTRIES: usize = 64;
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq)]
 pub enum MemoryType {
     /// Memory used by the UEFI services. Cannot be used by the OS.
     UefiServices,
@@ -40,6 +42,7 @@ pub enum MemoryType {
     BootInfo,
 }
 
+/// TODO
 #[derive(Debug)]
 #[repr(C)]
 pub struct MemoryEntry {
@@ -64,4 +67,10 @@ pub struct BootInfo {
     pub magic: u32,
     pub memory_map: [MemoryEntry; MEMORY_MAP_NUM_ENTRIES],
     pub num_memory_map_entries: usize,
+}
+
+impl BootInfo {
+    pub fn memory_entries(&self) -> &[MemoryEntry] {
+        &self.memory_map[0..self.num_memory_map_entries]
+    }
 }

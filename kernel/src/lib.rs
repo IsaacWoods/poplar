@@ -1,5 +1,13 @@
 #![cfg_attr(not(test), no_std)]
-#![feature(asm, decl_macro, allocator_api, const_fn, alloc, alloc_error_handler, core_intrinsics)]
+#![feature(
+    asm,
+    decl_macro,
+    allocator_api,
+    const_fn,
+    alloc,
+    alloc_error_handler,
+    core_intrinsics
+)]
 extern crate alloc;
 
 /*

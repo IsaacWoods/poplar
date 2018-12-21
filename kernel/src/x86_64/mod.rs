@@ -1,8 +1,10 @@
 //! This module defines the kernel entry-point on x86_64.
 
 mod logger;
+mod memory;
 
 use self::logger::KernelLogger;
+use self::memory::LockedMemoryController;
 use log::info;
 use x86_64::boot::BootInfo;
 use x86_64::memory::kernel_map;
@@ -37,6 +39,8 @@ pub fn kmain() -> ! {
     if boot_info.magic != x86_64::boot::BOOT_INFO_MAGIC {
         panic!("Boot info magic number is not correct!");
     }
+
+    let memory_controller = LockedMemoryController::new(boot_info);
 
     loop {}
 }
