@@ -40,6 +40,10 @@ use x86_64::memory::paging::table::IdentityMapping;
 use x86_64::memory::paging::{Frame, InactivePageTable, Mapper, Page, FRAME_SIZE};
 use x86_64::memory::{PhysicalAddress, VirtualAddress};
 
+/*
+ * It's only safe to have these `static mut`s because we know the bootloader will only have one
+ * thread of execution and is completely non-reentrant.
+ */
 static mut SYSTEM_TABLE: *const SystemTable = 0 as *const _;
 static mut IMAGE_HANDLE: Handle = 0;
 static mut SERIAL_PORT: SerialPort = unsafe { SerialPort::new(x86_64::hw::serial::COM1) };
@@ -51,6 +55,7 @@ struct KernelInfo {
     stack_top: VirtualAddress,
 }
 
+/// Entry point for the bootloader. This is called from the UEFI firmware.
 #[no_mangle]
 pub extern "win64" fn uefi_main(image_handle: Handle, system_table: &'static SystemTable) -> ! {
     unsafe {
@@ -90,13 +95,11 @@ pub extern "win64" fn uefi_main(image_handle: Handle, system_table: &'static Sys
      * fit.
      */
     assert!(mem::size_of::<BootInfo>() <= FRAME_SIZE);
-    let boot_info_address = match system_table
+    let boot_info_address = system_table
         .boot_services
         .allocate_frames(MemoryType::PebbleBootInformation, 1)
-    {
-        Ok(address) => address,
-        Err(err) => panic!("Failed to allocate memory for the boot info: {:?}", err),
-    };
+        .map_err(|err| panic!("Failed to allocate memory for the boot info: {:?}", err))
+        .unwrap();
     let boot_info = unsafe { &mut *(usize::from(boot_info_address) as *mut BootInfo) };
     boot_info.magic = x86_64::boot::BOOT_INFO_MAGIC;
     boot_info.num_memory_map_entries = 0;
@@ -115,10 +118,11 @@ pub extern "win64" fn uefi_main(image_handle: Handle, system_table: &'static Sys
      * Get the final memory map before exiting boot services. We must not allocate between this
      * call and the call to `ExitBootServices`.
      */
-    let memory_map = match system_table.boot_services.get_memory_map() {
-        Ok(map) => map,
-        Err(err) => panic!("Failed to get memory map: {:?}", err),
-    };
+    let memory_map = system_table
+        .boot_services
+        .get_memory_map()
+        .map_err(|err| panic!("Failed to get memory map: {:?}", err))
+        .unwrap();
 
     construct_boot_info(boot_info, &memory_map);
 
@@ -223,16 +227,16 @@ fn setup_for_kernel() {
 
 fn create_page_table() -> InactivePageTable<IdentityMapping> {
     // Allocate a frame for the P4
-    let address = match system_table()
+    let address = system_table()
         .boot_services
         .allocate_frames(MemoryType::PebblePageTables, 1)
-    {
-        Ok(address) => address,
-        Err(err) => panic!(
-            "Failed to allocate physical memory for page tables: {:?}",
-            err
-        ),
-    };
+        .map_err(|err| {
+            panic!(
+                "Failed to allocate physical memory for page tables: {:?}",
+                err
+            )
+        })
+        .unwrap();
 
     // Zero the P4 to mark every entry as non-present
     unsafe {
@@ -253,13 +257,11 @@ fn allocate_and_map_heap(mapper: &mut Mapper<IdentityMapping>, allocator: &BootF
     assert!((kernel_map::HEAP_END + 1).unwrap().is_page_aligned());
     let heap_size = (usize::from(kernel_map::HEAP_END) + 1) - usize::from(kernel_map::HEAP_START);
     assert!(heap_size % FRAME_SIZE == 0);
-    let heap_physical_base = match system_table()
+    let heap_physical_base = system_table()
         .boot_services
         .allocate_frames(MemoryType::PebbleKernelHeap, heap_size / FRAME_SIZE)
-    {
-        Ok(address) => address,
-        Err(err) => panic!("Failed to allocate memory for kernel heap: {:?}", err),
-    };
+        .map_err(|err| panic!("Failed to allocate memory for kernel heap: {:?}", err))
+        .unwrap();
 
     let heap_frames = Frame::contains(heap_physical_base)
         ..=Frame::contains((heap_physical_base + heap_size).unwrap());
@@ -349,15 +351,13 @@ fn load_kernel(
     allocator: &BootFrameAllocator,
 ) -> Result<KernelInfo, Status> {
     println!("Loading kernel image from boot volume");
-    let file_data = match read_file("BOOT", "kernel.elf", image_handle) {
-        Ok(data) => data,
-        Err(err) => panic!("Failed to read kernel ELF from disk: {:?}", err),
-    };
+    let file_data = read_file("BOOT", "kernel.elf", image_handle)
+        .map_err(|err| panic!("Failed to read kernel ELF from disk: {:?}", err))
+        .unwrap();
 
-    let elf = match Elf::new(&file_data) {
-        Ok(elf) => elf,
-        Err(err) => panic!("Failed to parse kernel ELF: {:?}", err),
-    };
+    let elf = Elf::new(&file_data)
+        .map_err(|err| panic!("Failed to parse kernel ELF: {:?}", err))
+        .unwrap();
 
     // Work out how much space we need for the kernel and check it's a multiple of the page size
     let kernel_size = elf.sections().fold(0, |kernel_size, section| {
@@ -376,13 +376,11 @@ fn load_kernel(
     }
 
     // Allocate physical memory for the kernel
-    let kernel_physical_base = match system_table()
+    let kernel_physical_base = system_table()
         .boot_services
         .allocate_frames(MemoryType::PebbleKernelMemory, kernel_size / FRAME_SIZE)
-    {
-        Ok(address) => address,
-        Err(err) => panic!("Failed to allocate physical memory for kernel: {:?}", err),
-    };
+        .map_err(|err| panic!("Failed to allocate physical memory for kernel: {:?}", err))
+        .unwrap();
 
     // We now zero all the kernel memory
     unsafe {
