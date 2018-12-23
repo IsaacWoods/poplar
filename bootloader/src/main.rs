@@ -22,7 +22,7 @@ use crate::boot_services::{OpenProtocolAttributes, Pool, Protocol, SearchType};
 use crate::memory::{BootFrameAllocator, MemoryMap, MemoryType};
 use crate::protocols::{FileAttributes, FileInfo, FileMode, FileSystemInfo, SimpleFileSystem};
 use crate::system_table::SystemTable;
-use crate::types::{Handle, Status};
+use crate::types::{Guid, Handle, Status};
 use core::fmt::Write;
 use core::mem;
 use core::panic::PanicInfo;
@@ -279,6 +279,10 @@ fn allocate_and_map_heap(mapper: &mut Mapper<IdentityMapping>, allocator: &BootF
 fn construct_boot_info(boot_info: &mut BootInfo, memory_map: &MemoryMap) {
     println!("Constructing boot info to pass to kernel");
 
+    /*
+     * First, we construct the memory map. This is used by the OS to initialise the physical memory
+     * manager, so it can allocate RAM to things that need it.
+     */
     for entry in memory_map.iter() {
         let memory_type = match entry.memory_type {
             // Keep the UEFI runtime services stuff around - anything might be using them.
@@ -341,6 +345,31 @@ fn construct_boot_info(boot_info: &mut BootInfo, memory_map: &MemoryMap) {
 
         boot_info.memory_map[boot_info.num_memory_map_entries] = bootinfo_entry;
         boot_info.num_memory_map_entries += 1;
+    }
+
+    /*
+     * Next, we locate the RSDP. The conventional searching method may not work on UEFI systems
+     * (because they're free to put the RSDP wherever they please), so we should try to find it in
+     * the configuration table first.
+     */
+    const RSDP_V1_GUID: Guid = Guid::new(
+        0xeb9d2d30,
+        0x2d88,
+        0x11d3,
+        [0x9a, 0x16, 0x00, 0x90, 0x27, 0x3f, 0xc1, 0x4d],
+    );
+    const RSDP_V2_GUID: Guid = Guid::new(
+        0x8868e871,
+        0xe4f1,
+        0x11d3,
+        [0xbc, 0x22, 0x00, 0x80, 0xc7, 0x3c, 0x88, 0x81],
+    );
+
+    for config_entry in system_table().config_table().iter() {
+        if config_entry.guid == RSDP_V1_GUID || config_entry.guid == RSDP_V2_GUID {
+            boot_info.rsdp_address = Some(PhysicalAddress::new(config_entry.address).unwrap());
+            break;
+        }
     }
 }
 

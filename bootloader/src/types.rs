@@ -125,7 +125,7 @@ pub struct Guid {
 }
 
 impl Guid {
-    pub fn new(a: u32, b: u16, c: u16, d: [u8; 8]) -> Guid {
+    pub const fn new(a: u32, b: u16, c: u16, d: [u8; 8]) -> Guid {
         Guid { a, b, c, d }
     }
 }

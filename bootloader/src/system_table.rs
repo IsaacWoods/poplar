@@ -30,8 +30,9 @@ impl SystemTable {
     }
 }
 
+#[derive(Debug)]
 #[repr(C)]
 pub struct ConfigTableEntry {
     pub guid: Guid,
-    pub address: *const (),
+    pub address: usize,
 }
