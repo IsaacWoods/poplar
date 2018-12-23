@@ -99,8 +99,7 @@ impl BuddyAllocator {
          */
         let buddy = BuddyAllocator::buddy_of(start_frame, order);
         if self.bins[order].remove(&buddy) {
-            let big_block = min(start_frame, buddy);
-            self.free_n(start_frame, 1 << (order + 1));
+            self.free_n(min(start_frame, buddy), 1 << (order + 1));
         } else {
             /*
              * The buddy isn't free, insert the block at this order.
