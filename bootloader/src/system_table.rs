@@ -2,9 +2,9 @@ use crate::{
     boot_services::BootServices,
     protocols::{SimpleTextInput, SimpleTextOutput},
     runtime_services::RuntimeServices,
-    types::Handle,
-    types::{RuntimeMemory, TableHeader},
+    types::{Guid, Handle, RuntimeMemory, TableHeader},
 };
+use core::slice;
 
 #[derive(Debug)]
 #[repr(C)]
@@ -20,6 +20,18 @@ pub struct SystemTable {
     pub console_error: RuntimeMemory<SimpleTextOutput>,
     pub runtime_services: RuntimeMemory<RuntimeServices>,
     pub boot_services: RuntimeMemory<BootServices>,
-    pub number_of_table_entries: usize,
-    pub configuration_table: usize, // TODO: abstract over this somehow
+    pub number_config_entries: usize,
+    pub configuration_table: *const ConfigTableEntry,
+}
+
+impl SystemTable {
+    pub fn config_table(&self) -> &[ConfigTableEntry] {
+        unsafe { slice::from_raw_parts(self.configuration_table, self.number_config_entries) }
+    }
+}
+
+#[repr(C)]
+pub struct ConfigTableEntry {
+    pub guid: Guid,
+    pub address: *const (),
 }

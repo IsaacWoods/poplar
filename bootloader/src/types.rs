@@ -1,4 +1,4 @@
-use core::{convert, ops, ptr::Unique};
+use core::{convert, fmt, ops, ptr::Unique};
 
 /// Logical boolean
 #[derive(Debug)]
@@ -113,4 +113,43 @@ pub struct TableHeader {
     pub header_size: u32,
     pub crc32: u32,
     pub reserved: u32,
+}
+
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+#[repr(C)]
+pub struct Guid {
+    a: u32,
+    b: u16,
+    c: u16,
+    d: [u8; 8],
+}
+
+impl Guid {
+    pub fn new(a: u32, b: u16, c: u16, d: [u8; 8]) -> Guid {
+        Guid { a, b, c, d }
+    }
+}
+
+impl fmt::Display for Guid {
+    fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
+        let d = {
+            let (low, high) = (u16::from(self.d[0]), u16::from(self.d[1]));
+
+            (low << 8) | high
+        };
+
+        // Reverse order of the bytes
+        let e = self.d[2..8].iter().enumerate().fold(0, |acc, (i, &elem)| {
+            acc | {
+                let shift = (5 - i) * 8;
+                u64::from(elem) << shift
+            }
+        });
+
+        write!(
+            fmt,
+            "{:08x}-{:04x}-{:04x}-{:04x}-{:012x}",
+            self.a, self.b, self.c, d, e
+        )
+    }
 }
