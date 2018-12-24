@@ -40,7 +40,11 @@ pub fn kmain() -> ! {
         panic!("Boot info magic number is not correct!");
     }
 
-    let memory_controller = LockedMemoryController::new(boot_info);
+    /*
+     * Initialise the physical memory manager. From this point, we can allocate physical memory
+     * freely.
+     */
+    let mut memory_controller = LockedMemoryController::new(boot_info);
 
     loop {}
 }

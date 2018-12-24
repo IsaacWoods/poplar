@@ -247,7 +247,10 @@ fn create_page_table() -> InactivePageTable<IdentityMapping> {
         );
     }
 
-    InactivePageTable::new(Frame::contains(address))
+    InactivePageTable::<IdentityMapping>::new_with_recursive_mapping(
+        Frame::contains(address),
+        kernel_map::RECURSIVE_ENTRY,
+    )
 }
 
 fn allocate_and_map_heap(mapper: &mut Mapper<IdentityMapping>, allocator: &BootFrameAllocator) {
@@ -436,10 +439,11 @@ fn load_kernel(
         }
 
         println!(
-            "Loading section: '{}' from {:#x}-{:#x}",
+            "Loading section: '{}' at {:#x}-{:#x} from physical address {:#x} onwards",
             section.name(&elf).unwrap(),
             section.address,
-            section.address + section.size - 1
+            section.address + section.size - 1,
+            physical_address
         );
 
         map_section(mapper, physical_address, &section, allocator);

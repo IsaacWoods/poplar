@@ -1,0 +1,3 @@
+[submodule "spin"]
+	path = spin
+	url = https://github.com/pebble-os/spin-rs

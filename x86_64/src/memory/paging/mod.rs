@@ -14,8 +14,9 @@ pub use core::ops::{Deref, DerefMut};
 pub const FRAME_SIZE: usize = 0x1000;
 pub const PAGE_SIZE: usize = 0x1000;
 
-use self::table::{IdentityMapping, RecursiveMapping, TableMapping};
-use super::PhysicalAddress;
+use self::entry::EntryFlags;
+use self::table::{IdentityMapping, Level4, RecursiveMapping, Table, TableMapping};
+use super::{PhysicalAddress, VirtualAddress};
 use crate::hw::registers::{read_control_reg, write_control_reg};
 use core::marker::PhantomData;
 
@@ -26,12 +27,6 @@ where
 {
     p4_frame: Frame,
     _mapping: PhantomData<M>,
-}
-
-impl InactivePageTable<IdentityMapping> {
-    pub fn mapper<'a>(&'a mut self) -> Mapper<'a, IdentityMapping> {
-        unsafe { Mapper::<IdentityMapping>::new(self.p4_frame.start_address()) }
-    }
 }
 
 impl<M> InactivePageTable<M>
@@ -51,6 +46,31 @@ where
 }
 
 impl InactivePageTable<IdentityMapping> {
+    /// Create a new set of page-tables that should be accessed using identity mapping, but which
+    /// also have the correct entries for recursive mapping. This means they can be created in a
+    /// context with an identity mapping, but when switched to, can correctly form an
+    /// `ActivePageTable<RecursiveMapping>`.
+    pub fn new_with_recursive_mapping(
+        frame: Frame,
+        recursive_entry: u16,
+    ) -> InactivePageTable<IdentityMapping> {
+        let table = InactivePageTable {
+            p4_frame: frame,
+            _mapping: PhantomData,
+        };
+
+        let p4: &mut Table<Level4, IdentityMapping> = unsafe {
+            &mut *(VirtualAddress::new_unchecked(usize::from(frame.start_address())).mut_ptr())
+        };
+        p4[recursive_entry].set(frame, EntryFlags::PRESENT | EntryFlags::WRITABLE);
+
+        table
+    }
+
+    pub fn mapper<'a>(&'a mut self) -> Mapper<'a, IdentityMapping> {
+        unsafe { Mapper::<IdentityMapping>::new(self.p4_frame.start_address()) }
+    }
+
     /// Switch to this set of page tables. This returns a tuple containing the new
     /// `ActivePageTable` (that this has become), and the previously-active set of tables as an
     /// `InactivePageTable`.
