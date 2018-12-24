@@ -23,8 +23,8 @@ prepare:
 	@mkdir -p $(BUILD_DIR)/fat/EFI/BOOT
 
 bootloader:
-	cargo xbuild --release --target bootloader/uefi_x64.json --manifest-path bootloader/Cargo.toml
-	cp bootloader/target/uefi_x64/release/bootloader.efi $(BUILD_DIR)/fat/EFI/BOOT/BOOTX64.efi
+	cargo xbuild --release --target x86_64-unknown-uefi --manifest-path bootloader/Cargo.toml
+	cp bootloader/target/x86_64-unknown-uefi/release/bootloader.efi $(BUILD_DIR)/fat/EFI/BOOT/BOOTX64.efi
 
 kernel:
 	cargo xbuild --target=kernel/src/$(ARCH)/$(ARCH)-kernel.json --manifest-path kernel/Cargo.toml --features arch_$(ARCH)

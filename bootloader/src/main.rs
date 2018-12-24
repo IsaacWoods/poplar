@@ -57,7 +57,7 @@ struct KernelInfo {
 
 /// Entry point for the bootloader. This is called from the UEFI firmware.
 #[no_mangle]
-pub extern "win64" fn uefi_main(image_handle: Handle, system_table: &'static SystemTable) -> ! {
+pub extern "win64" fn efi_main(image_handle: Handle, system_table: &'static SystemTable) -> ! {
     unsafe {
         /*
          * The first thing we do is set the global references to the system table and image handle.
