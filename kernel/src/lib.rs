@@ -6,7 +6,9 @@
     const_fn,
     alloc,
     alloc_error_handler,
-    core_intrinsics
+    core_intrinsics,
+    trait_alias,
+    type_ascription
 )]
 extern crate alloc;
 

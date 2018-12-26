@@ -38,7 +38,6 @@ clean:
 update:
 	cargo update --manifest-path bootloader/Cargo.toml
 	cargo update --manifest-path kernel/Cargo.toml
-	cargo update --manifest-path kernel/x86_64/Cargo.toml
 	cargo update --manifest-path x86_64/Cargo.toml
 	cargo update --manifest-path libmessage/Cargo.toml
 

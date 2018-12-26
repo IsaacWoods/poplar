@@ -1,6 +1,6 @@
 pub mod binary_pretty_print;
-pub mod math;
 pub mod bitmap;
+pub mod math;
 
 pub use self::binary_pretty_print::BinaryPrettyPrint;
 

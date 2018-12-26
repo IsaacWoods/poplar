@@ -9,7 +9,10 @@ pub trait BitmapStorage = PrimInt + BitField;
 /// individually-accessible bits.
 pub struct Bitmap<T: BitmapStorage>(T);
 
-impl<T> Bitmap<T> where T: BitmapStorage {
+impl<T> Bitmap<T>
+where
+    T: BitmapStorage,
+{
     pub fn new(initial: T) -> Bitmap<T> {
         Bitmap(initial)
     }
@@ -46,7 +49,7 @@ impl<T> Bitmap<T> where T: BitmapStorage {
 
 #[test]
 fn test_bitmap_alloc_n() {
-    assert_eq!(Bitmap(0b10001 : u16).alloc_n(3), Some(1));
-    assert_eq!(Bitmap(0b11_0000_1_000_111 : u16).alloc_n(4), Some(7));
-    assert_eq!(Bitmap(0b1111_1111 : u8).alloc_n(1), None);
+    assert_eq!(Bitmap(0b10001: u16).alloc_n(3), Some(1));
+    assert_eq!(Bitmap(0b11_0000_1_000_111: u16).alloc_n(4), Some(7));
+    assert_eq!(Bitmap(0b1111_1111: u8).alloc_n(1), None);
 }
