@@ -26,17 +26,25 @@ cfg_if! {
     }
 }
 
+mod arch;
 mod heap_allocator;
 mod util;
 
+use crate::arch::Architecture;
 use crate::heap_allocator::LockedHoleAllocator;
 use cfg_if::cfg_if;
 use core::panic::PanicInfo;
 use log::error;
+use log::info;
 
 #[cfg(not(test))]
 #[global_allocator]
 pub static ALLOCATOR: LockedHoleAllocator = LockedHoleAllocator::new_uninitialized();
+
+pub fn kernel_main(arch: impl Architecture) -> ! {
+    info!("kernel_main called");
+    loop {}
+}
 
 #[cfg(not(test))]
 #[panic_handler]
