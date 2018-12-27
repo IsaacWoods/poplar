@@ -6,6 +6,7 @@ pub mod physical;
 use self::physical::LockedPhysicalMemoryManager;
 use crate::util::bitmap::Bitmap;
 use alloc::collections::BTreeMap;
+use bit_field::BitField;
 use x86_64::memory::paging::entry::EntryFlags;
 use x86_64::memory::paging::table::RecursiveMapping;
 use x86_64::memory::paging::{ActivePageTable, Frame, Page, FRAME_SIZE};
@@ -81,8 +82,23 @@ impl PhysicalRegionMapper {
         mapping
     }
 
-    pub fn unmap_physical_region(&mut self, mapping: PhysicalMapping) {
-        // TODO
-        unimplemented!();
+    pub fn unmap_physical_region(
+        &mut self,
+        mapping: PhysicalMapping,
+        page_tables: &mut KernelPageTable,
+        frame_allocator: &LockedPhysicalMemoryManager,
+    ) {
+        for page in Page::contains(mapping.virtual_base)
+            ..Page::contains((mapping.virtual_base + mapping.size).unwrap())
+        {
+            // Unmap it from the virtual address space
+            page_tables.unmap(page, frame_allocator);
+
+            // Free it in the bitmap so the page can be used by a future physical mapping
+            self.virtual_area_bitmap.set_bit(
+                usize::from(page.start_address()) - usize::from(kernel_map::PHYSICAL_MAPPING_START),
+                false,
+            );
+        }
     }
 }
