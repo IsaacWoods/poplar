@@ -37,15 +37,16 @@ pub struct PhysicalRegionMapper {
     pub mappings: BTreeMap<PhysicalAddress, PhysicalMapping>,
 
     /// This tracks which of the pages in the area of virtual memory we map `PhysicalMapping`s into
-    /// is free (0 = free, 1 = used). There are 32 pages in the area, so we need 32 bits.
-    pub virtual_area_bitmap: Bitmap<u32>,
+    /// is free (where 0 = free, 1 = used). There are 32 pages in the area, so we need 32 bits.
+    /// The `crate::util::bitmap::Bitmap` trait makes it easy to use this as a bitmap.
+    pub virtual_area_bitmap: u32,
 }
 
 impl PhysicalRegionMapper {
     pub fn new() -> PhysicalRegionMapper {
         PhysicalRegionMapper {
             mappings: BTreeMap::new(),
-            virtual_area_bitmap: Bitmap::new(0),
+            virtual_area_bitmap: 0,
         }
     }
 
