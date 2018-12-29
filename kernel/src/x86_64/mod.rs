@@ -1,13 +1,17 @@
 //! This module defines the kernel entry-point on x86_64.
 
+mod acpi_handler;
 mod logger;
 mod memory;
 
+use self::acpi_handler::PebbleAcpiHandler;
 use self::logger::KernelLogger;
 use self::memory::physical::LockedPhysicalMemoryManager;
 use self::memory::{KernelPageTable, PhysicalRegionMapper};
 use crate::arch::Architecture;
+use acpi::Acpi;
 use log::info;
+use log::{error, trace, warn};
 use spin::Mutex;
 use x86_64::boot::BootInfo;
 use x86_64::memory::kernel_map;
@@ -26,15 +30,47 @@ pub struct Arch {
 impl Arch {
     pub fn new(boot_info: &BootInfo) -> Arch {
         /*
-         * We assume the bootloader has installed a valid set of recursively-mapped page tables for
-         * the kernel. This is extremely unsafe and very bad things will happen if this assumption
-         * is not true.
+         * Initialise the physical memory manager. From this point, we can allocate physical memory
+         * freely.
+         *
+         * XXX: We assume the bootloader has installed a valid set of recursively-mapped page tables
+         * for the kernel. This is extremely unsafe and very bad things will happen if this
+         * assumption is not true.
          */
-        Arch {
+        let mut arch = Arch {
             physical_memory_manager: LockedPhysicalMemoryManager::new(boot_info),
             kernel_page_table: Mutex::new(unsafe { ActivePageTable::<RecursiveMapping>::new() }),
             physical_region_mapper: Mutex::new(PhysicalRegionMapper::new()),
-        }
+        };
+
+        /*
+         * Parse the ACPI tables.
+         */
+        let acpi_info = match boot_info.rsdp_address {
+            Some(rsdp_address) => {
+                let mut acpi_handler = PebbleAcpiHandler::new(
+                    &arch.physical_region_mapper,
+                    &arch.kernel_page_table,
+                    &arch.physical_memory_manager,
+                );
+
+                match acpi::parse_rsdp(&mut acpi_handler, usize::from(rsdp_address)) {
+                    Ok(acpi_info) => Some(acpi_info),
+
+                    Err(err) => {
+                        error!("Failed to parse ACPI tables: {:?}", err);
+                        warn!(
+                            "Continuing. Some functionality may not work, or the kernel may panic!"
+                        );
+                        None
+                    }
+                }
+            }
+
+            None => None,
+        };
+
+        arch
     }
 }
 
@@ -71,12 +107,7 @@ pub fn kmain() -> ! {
         panic!("Boot info magic number is not correct!");
     }
 
-    /*
-     * Initialise the physical memory manager. From this point, we can allocate physical memory
-     * freely.
-     */
     let mut arch = Arch::new(boot_info);
-
 
     crate::kernel_main(arch);
 }

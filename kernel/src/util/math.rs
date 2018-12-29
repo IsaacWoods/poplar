@@ -93,3 +93,16 @@ fn test_ceiling_log2() {
     assert_eq!(ceiling_log2(61), 6);
     assert_eq!(ceiling_log2(4095), 12);
 }
+
+/// Divide `x` by `divide_by`, taking the ceiling if it does not divide evenly.
+pub fn ceiling_integer_divide(x: u64, divide_by: u64) -> u64 {
+    x / divide_by + if x % divide_by != 0 { 1 } else { 0 }
+}
+
+#[test]
+fn test_ceiling_integer_divide() {
+    assert_eq!(ceiling_integer_division(1, 1), 1);
+    assert_eq!(ceiling_integer_division(10, 5), 2);
+    assert_eq!(ceiling_integer_division(11, 5), 3);
+    assert_eq!(ceiling_integer_division(0, 5), 0);
+}

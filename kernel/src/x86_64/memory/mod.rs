@@ -7,9 +7,10 @@ use self::physical::LockedPhysicalMemoryManager;
 use crate::util::bitmap::Bitmap;
 use alloc::collections::BTreeMap;
 use bit_field::BitField;
+use log::info;
 use x86_64::memory::paging::entry::EntryFlags;
 use x86_64::memory::paging::table::RecursiveMapping;
-use x86_64::memory::paging::{ActivePageTable, Frame, Page, FRAME_SIZE};
+use x86_64::memory::paging::{ActivePageTable, Frame, Page, FRAME_SIZE, PAGE_SIZE};
 use x86_64::memory::{kernel_map, PhysicalAddress, VirtualAddress};
 
 /// Type alias to hide the concrete type of the kernel's page tables, as most users won't care
@@ -21,16 +22,16 @@ pub type KernelPageTable = ActivePageTable<RecursiveMapping>;
 /// `PhysicalMapping`s provide an easy way to map a given physical address to a virtual address in
 /// the kernel address space, if you don't care what address it ends up at. This is perfect for,
 /// for example, ACPI or the APIC driver.
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Debug)]
 pub struct PhysicalMapping {
     /// The address of the start of the mapping in the physical address space.
-    physical_base: PhysicalAddress,
+    pub physical_base: PhysicalAddress,
 
     /// The address of the start of the mapping in the virtual address space.
-    virtual_base: VirtualAddress,
+    pub virtual_base: VirtualAddress,
 
     /// Size, in bytes, of the mapping. Must be a multiple of the page size.
-    size: usize,
+    pub size: usize,
 }
 
 pub struct PhysicalRegionMapper {
@@ -96,7 +97,9 @@ impl PhysicalRegionMapper {
 
             // Free it in the bitmap so the page can be used by a future physical mapping
             self.virtual_area_bitmap.set_bit(
-                usize::from(page.start_address()) - usize::from(kernel_map::PHYSICAL_MAPPING_START),
+                (usize::from(page.start_address())
+                    - usize::from(kernel_map::PHYSICAL_MAPPING_START))
+                    / PAGE_SIZE,
                 false,
             );
         }
