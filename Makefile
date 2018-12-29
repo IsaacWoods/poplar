@@ -1,6 +1,8 @@
 export ARCH ?= x86_64
 export BUILD_DIR ?= $(abspath ./build)
 
+RUST_GDB_INSTALL_PATH ?= ~/bin/rust-gdb/bin
+
 .PHONY: prepare bootloader kernel clean qemu gdb update fmt
 
 pebble.img: prepare bootloader kernel
@@ -83,3 +85,16 @@ debug: pebble.img
 		-drive if=pflash,format=raw,file=bootloader/ovmf/OVMF_VARS.fd,readonly \
 		-drive format=raw,file=$<,if=ide \
 		-net none
+
+gdb: pebble.img
+	qemu-system-x86_64 \
+		-enable-kvm \
+		-no-reboot \
+		-no-shutdown \
+		-s \
+		-S \
+		-drive if=pflash,format=raw,file=bootloader/ovmf/OVMF_CODE.fd,readonly \
+		-drive if=pflash,format=raw,file=bootloader/ovmf/OVMF_VARS.fd,readonly \
+		-drive format=raw,file=$<,if=ide \
+		-net none \
+	& $(RUST_GDB_INSTALL_PATH)/rust-gdb -q "build/fat/kernel.elf" -ex "target remote :1234"
