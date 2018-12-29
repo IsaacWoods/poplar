@@ -45,6 +45,7 @@ fmt:
 	@# `cargo fmt` doesn't play nicely with conditional compilation, so we manually `rustfmt` the kernel
 	find kernel/src -type f -name "*.rs" -exec rustfmt {} +
 	cd bootloader && cargo fmt
+	cd acpi && cargo fmt
 	cd x86_64 && cargo fmt
 	cd libmessage && cargo fmt
 	cd userboot && cargo fmt
