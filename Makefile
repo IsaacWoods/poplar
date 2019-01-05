@@ -73,6 +73,18 @@ qemu: pebble.img
 		-drive format=raw,file=$<,if=ide \
 		-net none
 
+qemu-no-kvm: pebble.img
+	qemu-system-x86_64 \
+		-smp 2 \
+		-usb \
+		-device usb-ehci,id=ehci \
+		--no-reboot \
+		--no-shutdown \
+		-drive if=pflash,format=raw,file=bootloader/ovmf/OVMF_CODE.fd,readonly \
+		-drive if=pflash,format=raw,file=bootloader/ovmf/OVMF_VARS.fd,readonly \
+		-drive format=raw,file=$<,if=ide \
+		-net none
+
 debug: pebble.img
 	qemu-system-x86_64 \
 		-d int \
