@@ -7,3 +7,9 @@ edition = "2018"
 [dependencies]
 bitflags = "1"
 bit_field = "0.9"
+cfg-if = "0.1"
+log = "0.4"
+
+[features]
+# The kernel can allocate, so we gate off everything that depends on heap allocation from the bootloader
+kernel = []

@@ -1,8 +1,13 @@
 use super::tss::Tss;
+use super::DescriptorTablePointer;
 use crate::memory::VirtualAddress;
 use bit_field::BitField;
 use bitflags::bitflags;
+use core::pin::Pin;
 use core::mem;
+use core::ops::Deref;
+use alloc::boxed::Box;
+use log::trace;
 
 #[derive(Clone, Copy, PartialEq, Eq)]
 #[repr(u8)]
@@ -11,29 +16,6 @@ pub enum PrivilegeLevel {
     Ring1 = 1,
     Ring2 = 2,
     Ring3 = 3,
-}
-
-impl From<u8> for PrivilegeLevel {
-    fn from(value: u8) -> Self {
-        match value {
-            0 => PrivilegeLevel::Ring0,
-            1 => PrivilegeLevel::Ring1,
-            2 => PrivilegeLevel::Ring2,
-            3 => PrivilegeLevel::Ring3,
-            _ => panic!("Invalid privilege level used!"),
-        }
-    }
-}
-
-impl Into<u8> for PrivilegeLevel {
-    fn into(self) -> u8 {
-        match self {
-            PrivilegeLevel::Ring0 => 0,
-            PrivilegeLevel::Ring1 => 1,
-            PrivilegeLevel::Ring2 => 2,
-            PrivilegeLevel::Ring3 => 3,
-        }
-    }
 }
 
 /// An index into the GDT, specifying a particular segment. These are loaded into the segment
@@ -51,46 +33,43 @@ impl SegmentSelector {
     }
 }
 
-bitflags! {
-    pub struct DescriptorFlags : u64
-    {
-        /// Applicable only to data segments
-        const WRITABLE      = 1 << 41;
-        const CONFORMING    = 1 << 42;
-        const EXECUTABLE    = 1 << 43;
-        /// 0 => system segment, 1 => user segment
-        const USER_SEGMENT  = 1 << 44;
-        const PRESENT       = 1 << 47;
-        const LONG_MODE     = 1 << 53;
+const ACCESSED: u64 = 1<<40;
+const READABLE: u64 = 1<<41;
+const USER_SEGMENT: u64 = 1<<44;
+const PRESENT: u64 = 1<<47;
+const LONG_MODE: u64 = 1<<53;
+
+#[derive(Debug)]
+pub struct CodeSegment(u64);
+
+impl CodeSegment {
+    pub const fn new(ring: PrivilegeLevel) -> CodeSegment {
+        /*
+         * XXX: the Accessed and Readable bits of 64-bit code segments should be ignored, but my
+         * old-ish AMD #GPs if they're not set ¯\_(ツ)_/¯
+         */
+        CodeSegment(ACCESSED +
+                    READABLE +
+                    (1<<43) +
+                    USER_SEGMENT +
+                    PRESENT +
+                    LONG_MODE +
+                    ((ring as u64) << 45))
     }
 }
 
-/// Describes a GDT segment. TODO
-pub enum Segment {
-    User(u64),
-    System(u64, u64),
-}
+#[derive(Clone, Copy)]
+pub struct TssSegment(u64, u64);
 
-impl Segment {
-    pub fn new_code_segment(ring: PrivilegeLevel) -> Segment {
-        let flags = DescriptorFlags::USER_SEGMENT
-            | DescriptorFlags::PRESENT
-            | DescriptorFlags::EXECUTABLE
-            | DescriptorFlags::LONG_MODE;
-
-        Segment::User(flags.bits() | u64::from(ring.into(): u8) << 45)
+impl TssSegment {
+    pub const fn empty() -> TssSegment {
+        TssSegment(0, 0)
     }
 
-    pub fn new_data_segment(ring: PrivilegeLevel) -> Segment {
-        let flags =
-            DescriptorFlags::USER_SEGMENT | DescriptorFlags::PRESENT | DescriptorFlags::LONG_MODE;
-
-        Segment::User(flags.bits() | u64::from(ring.into(): u8) << 45)
-    }
-
-    pub fn new_tss_segment(tss: &'static Tss) -> Segment {
-        let tss_address = (tss as *const _) as u64;
-        let mut low = DescriptorFlags::PRESENT.bits();
+    pub fn new(tss: &Pin<Box<Tss>>) -> TssSegment {
+        // Get the address of the *underlying TSS*
+        let tss_address = (tss.deref() as *const _) as u64;
+        let mut low = PRESENT;
         let mut high = 0;
 
         // Base address
@@ -104,125 +83,98 @@ impl Segment {
         // Type (0b1001 = available 64-bit TSS)
         low.set_bits(40..44, 0b1001);
 
-        Segment::System(low, high)
+        TssSegment(low, high)
     }
 }
 
-pub const GDT_MAX_ENTRIES: usize = 16;
+pub const MAX_CPUS: usize = 8;
 
-/// A GDT that can be used in 64-bit mode. The structure of the GDT in Long Mode differs from that
-/// in x86 or 32-bit mode on x86_64.
-///
-/// This structure is created with a static number of entries, which can be dynamically added.
-/// Adding more than the maximum number will cause the kernel to panic. Note that the number of
-/// entries does not necessarily correspond to the number of segments described by the table;
-/// `SystemSegment`s will take two entries, and the first entry will always be the null segment.
-///
-/// The GDT must be loaded with the `load` method. After loading, adding more entries will not have
-/// effect, as the limit will be set to the end of the table upon loading, and so `load` must be
-/// called again.
+/// A GDT suitable for the kernel to use. It contains two code segments, one for Ring 0 and another
+/// for Ring 3. While data segments still exist on x86_64, they are useless, so we instead just
+/// load the selector for the null segment into the data segments.
 #[repr(C, packed)]
 pub struct Gdt {
-    table: [u64; GDT_MAX_ENTRIES],
-    next_free: usize,
+    null: u64,
+    kernel_code: CodeSegment,
+    user_code: CodeSegment,
+    tsss: [TssSegment; MAX_CPUS],
+
+    /// This field is not part of the actual GDT; we just use it to keep track of how many TSS
+    /// entries have been used
+    next_free_tss: usize,
 }
 
 impl Gdt {
-    /// Create an empty GDT, containing zero entries.
-    pub const fn empty() -> Gdt {
+    /// Create a `Gdt` with pre-populated code segments, and `MAX_CPUS` empty TSSs. The kernel
+    /// should populate a TSS for each processor it plans to bring up, then call the `load` method
+    /// to load the new GDT and switch to the new code and (null) data segments.
+    pub const fn new() -> Gdt {
         Gdt {
-            table: [0; GDT_MAX_ENTRIES],
-
-            /// The first segment of the GDT must always be the null segment. Therefore, we start at
-            /// index `1` in the table.
-            next_free: 1,
+            null: 0,
+            kernel_code: CodeSegment::new(PrivilegeLevel::Ring0),
+            user_code: CodeSegment::new(PrivilegeLevel::Ring3),
+            tsss: [TssSegment::empty(); MAX_CPUS],
+            next_free_tss: 0,
         }
     }
 
-    pub fn add_segment(&mut self, segment: Segment) -> SegmentSelector {
-        match segment {
-            Segment::User(entry) => {
-                // Make sure the segment will fit
-                if (self.next_free + 1) > GDT_MAX_ENTRIES {
-                    panic!("Tried to add an entry to the GDT, but it's full!");
-                }
+    /// Add a new TSS, if there's space for it. The first TSS added **must** be for the bootstrap
+    /// processor (the one that should be touching the GDT), then subsequent TSSs for the
+    /// application processors may be added.
+    ///
+    /// ### Panics
+    /// Panics if we have already added as many TSSs as this GDT can hold.
+    pub fn add_tss(&mut self, tss: TssSegment) -> SegmentSelector {
+        const OFFSET_TO_FIRST_TSS: usize = 0x18;
 
-                let index = self.next_free;
-                self.table[self.next_free] = entry;
-                self.next_free += 1;
-                SegmentSelector::new(index as u16, PrivilegeLevel::Ring0)
-            }
-
-            Segment::System(low, high) => {
-                // Make sure the segment will fit
-                if (self.next_free + 2) > GDT_MAX_ENTRIES {
-                    panic!("Tried to add an entry to the GDT, but it's full!");
-                }
-
-                let index = self.next_free;
-                self.table[self.next_free] = low;
-                self.table[self.next_free + 1] = high;
-                SegmentSelector::new(index as u16, PrivilegeLevel::Ring0)
-            }
+        if self.next_free_tss == MAX_CPUS {
+            panic!("Not enough space in the GDT for the number of TSSs we need!");
         }
+
+        let offset = OFFSET_TO_FIRST_TSS + self.next_free_tss * mem::size_of::<TssSegment>();
+        self.tsss[self.next_free_tss] = tss;
+        self.next_free_tss += 1;
+
+        SegmentSelector(offset as u16)
     }
 
-    /// TODO
-    pub unsafe fn load(
-        &'static self,
-        code_selector: SegmentSelector,
-        data_selector: SegmentSelector,
-        tss_selector: SegmentSelector,
-    ) {
-        #[repr(C, packed)]
-        pub struct GdtPointer {
-            /// `(base + limit)` is the maximum addressable byte of the GDT (so this is not the size)
-            limit: u16,
-
-            /// Virtual address of the start of the GDT
-            base: VirtualAddress,
+    /// Load the new GDT, switch to the new `kernel_code` code segment, clear DS, ES, FS, GS, and
+    /// SS to the null segment, and switch TR to the first TSS.
+    pub unsafe fn load(&'static self) {
+        if self.next_free_tss == 0 {
+            panic!("Tried to load kernel GDT before adding bootstrap TSS!");
         }
 
-        let gdt_ptr = GdtPointer {
-            limit: ((self.next_free - 1) * mem::size_of::<u64>() - 1) as u16,
-            base: VirtualAddress::new(self.table.as_ptr() as usize).unwrap(),
+        let gdt_ptr = DescriptorTablePointer {
+            limit: (((3 + MAX_CPUS) * mem::size_of::<u64>()) - 1) as u16,
+            base: VirtualAddress::new(self as *const _ as usize).unwrap(),
         };
 
-        // TODO: rewrite as one big asm!
-
-        // Load the GDT
-        asm!("lgdt [$0]"
-             :
-             : "r"(&gdt_ptr)
-             : "rax", "memory"
-             : "intel", "volatile");
-
-        // Load the new data segments
-        asm!("mov ds, ax
+        asm!("// Load the new GDT
+              lgdt [$0]
+             
+              // Clear DS, ES, FS, GS, and SS to the null segment
+              xor rax, rax
+              mov ds, ax
               mov es, ax
               mov fs, ax
-              mov gs, ax"
-             :
-             : "rax"(data_selector.0)
-             : "rax"
-             : "intel", "volatile");
-
-        // Load the new CS
-        asm!("push $0
+              mov gs, ax
+              mov ss, ax
+              
+              // Switch to the new code segment
+              push 0x08
               lea rax, [rip+0x3]
               push rax
               retfq
-              1:"
+              1:
+              
+              // Load the TSS
+              mov ax, 0x18
+              ltr ax"
              :
-             : "r"(code_selector.0)
-             : "rax", "memory"
-             : "intel", "volatile");
-
-        // Load the task register with the TSS selector
-        asm!("ltr $0"
-             :
-             : "r" (tss_selector.0)
-             :
-             : "intel", "volatile");
+             : "r"(&gdt_ptr)
+             : "rax"
+             : "intel"
+             );
     }
 }

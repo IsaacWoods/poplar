@@ -1,4 +1,6 @@
 use crate::memory::VirtualAddress;
+use core::pin::Pin;
+use alloc::boxed::Box;
 
 /// Hardware task switching isn't supported on x86_64, so the TSS is just used as a vestigal place
 /// to stick stuff. It's used to store kernel-level stacks that should be used if interrupts occur
@@ -16,8 +18,8 @@ pub struct Tss {
 }
 
 impl Tss {
-    pub const fn new() -> Tss {
-        Tss {
+    pub fn new() -> Pin<Box<Tss>> {
+        Pin::new(box Tss {
             _reserved_1: 0,
             privilege_stack_table: [unsafe { VirtualAddress::new_unchecked(0) }; 3],
             _reserved_2: 0,
@@ -25,7 +27,7 @@ impl Tss {
             _reserved_3: 0,
             _reserved_4: 0,
             iomap_base: 0,
-        }
+        })
     }
 
     pub fn set_kernel_stack(&mut self, address: VirtualAddress) {
