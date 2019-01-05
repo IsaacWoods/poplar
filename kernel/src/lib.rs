@@ -41,7 +41,7 @@ use log::info;
 #[global_allocator]
 pub static ALLOCATOR: LockedHoleAllocator = LockedHoleAllocator::new_uninitialized();
 
-pub fn kernel_main(arch: impl Architecture) -> ! {
+pub fn kernel_main(arch: &impl Architecture) -> ! {
     info!("kernel_main called");
     loop {}
 }

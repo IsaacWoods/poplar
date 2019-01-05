@@ -1,22 +1,33 @@
 //! This module defines the kernel entry-point on x86_64.
 
 mod acpi_handler;
+mod cpu;
 mod logger;
 mod memory;
 
 use self::acpi_handler::PebbleAcpiHandler;
+use self::cpu::Cpu;
 use self::logger::KernelLogger;
 use self::memory::physical::LockedPhysicalMemoryManager;
 use self::memory::{KernelPageTable, PhysicalRegionMapper};
 use crate::arch::Architecture;
-use acpi::Acpi;
+use acpi::{AmlNamespace, ProcessorState};
+use alloc::vec::Vec;
+use core::mem;
+use core::pin::Pin;
 use log::info;
 use log::{error, trace, warn};
 use spin::Mutex;
 use x86_64::boot::BootInfo;
+use x86_64::hw::gdt::{Gdt, TssSegment};
+use x86_64::hw::tss::Tss;
 use x86_64::memory::kernel_map;
 use x86_64::memory::paging::table::RecursiveMapping;
 use x86_64::memory::paging::ActivePageTable;
+
+/// The kernel GDT. This is not thread-safe, and so should only be altered by the bootstrap
+/// processor.
+static mut GDT: Gdt = Gdt::new();
 
 pub struct Arch {
     pub physical_memory_manager: LockedPhysicalMemoryManager,
@@ -27,50 +38,12 @@ pub struct Arch {
     pub physical_region_mapper: Mutex<PhysicalRegionMapper>,
 }
 
-impl Arch {
-    pub fn new(boot_info: &BootInfo) -> Arch {
-        /*
-         * Initialise the physical memory manager. From this point, we can allocate physical memory
-         * freely.
-         *
-         * XXX: We assume the bootloader has installed a valid set of recursively-mapped page tables
-         * for the kernel. This is extremely unsafe and very bad things will happen if this
-         * assumption is not true.
-         */
-        let mut arch = Arch {
-            physical_memory_manager: LockedPhysicalMemoryManager::new(boot_info),
-            kernel_page_table: Mutex::new(unsafe { ActivePageTable::<RecursiveMapping>::new() }),
-            physical_region_mapper: Mutex::new(PhysicalRegionMapper::new()),
-        };
-
-        /*
-         * Parse the ACPI tables.
-         */
-        let acpi_info = match boot_info.rsdp_address {
-            Some(rsdp_address) => {
-                let mut acpi_handler = PebbleAcpiHandler::new(
-                    &arch.physical_region_mapper,
-                    &arch.kernel_page_table,
-                    &arch.physical_memory_manager,
-                );
-
-                match acpi::parse_rsdp(&mut acpi_handler, usize::from(rsdp_address)) {
-                    Ok(acpi_info) => Some(acpi_info),
-
-                    Err(err) => {
-                        error!("Failed to parse ACPI tables: {:?}", err);
-                        warn!(
-                            "Continuing. Some functionality may not work, or the kernel may panic!"
-                        );
-                        None
-                    }
-                }
-            }
-
-            None => None,
-        };
-
-        arch
+/// `Arch` contains a bunch of things, like the GDT, that the hardware relies on actually being at
+/// the memory addresses we say they're at. We can stop them moving using `Unpin`, but can't stop
+/// them from being dropped, so we just panic if the architecture struct is dropped.
+impl Drop for Arch {
+    fn drop(&mut self) {
+        panic!("The `Arch` has been dropped. This should never happen!");
     }
 }
 
@@ -107,7 +80,114 @@ pub fn kmain() -> ! {
         panic!("Boot info magic number is not correct!");
     }
 
-    let mut arch = Arch::new(boot_info);
+    /*
+     * Initialise the physical memory manager. From this point, we can allocate physical memory
+     * freely.
+     *
+     * XXX: We assume the bootloader has installed a valid set of recursively-mapped page tables
+     * for the kernel. This is extremely unsafe and very bad things will happen if this
+     * assumption is not true.
+     */
+    let mut arch = Arch {
+        physical_memory_manager: LockedPhysicalMemoryManager::new(boot_info),
+        kernel_page_table: Mutex::new(unsafe { ActivePageTable::<RecursiveMapping>::new() }),
+        physical_region_mapper: Mutex::new(PhysicalRegionMapper::new()),
+        // gdt: Gdt::empty(),
+    };
 
-    crate::kernel_main(arch);
+    let mut acpi_handler = PebbleAcpiHandler::new(
+        &arch.physical_region_mapper,
+        &arch.kernel_page_table,
+        &arch.physical_memory_manager,
+    );
+
+    /*
+     * Parse the static ACPI tables.
+     */
+    let acpi_info = match boot_info.rsdp_address {
+        Some(rsdp_address) => {
+            match acpi::parse_rsdp(&mut acpi_handler, usize::from(rsdp_address)) {
+                Ok(acpi_info) => Some(acpi_info),
+
+                Err(err) => {
+                    error!("Failed to parse static ACPI tables: {:?}", err);
+                    warn!("Continuing. Some functionality may not work, or the kernel may panic!");
+                    None
+                }
+            }
+        }
+
+        None => None,
+    };
+
+    /*
+     * Register all the CPUs we can find.
+     */
+    let (boot_processor, application_processors) = match acpi_info {
+        Some(ref info) => {
+            assert!(
+                info.boot_processor().is_some()
+                    && info.boot_processor().unwrap().state == ProcessorState::Running
+            );
+            let tss = Tss::new();
+            let tss_selector = unsafe { GDT.add_tss(TssSegment::new(&tss)) };
+            let boot_processor = Cpu::from_acpi(&info.boot_processor().unwrap(), tss, tss_selector);
+
+            let mut application_processors = Vec::new();
+            for application_processor in info.application_processors() {
+                if application_processor.state == ProcessorState::Disabled {
+                    continue;
+                }
+
+                let tss = Tss::new();
+                let tss_selector = unsafe { GDT.add_tss(TssSegment::new(&tss)) };
+                application_processors.push(Cpu::from_acpi(
+                    &application_processor,
+                    tss,
+                    tss_selector,
+                ));
+            }
+
+            (boot_processor, application_processors)
+        }
+
+        None => {
+            /*
+             * We couldn't find the number of processors from the ACPI tables. Just create a TSS
+             * for this one.
+             */
+            let tss = Tss::new();
+            let tss_selector = unsafe { GDT.add_tss(TssSegment::new(&tss)) };
+            let cpu = Cpu {
+                processor_uid: 0,
+                local_apic_id: 0,
+                is_ap: false,
+                tss,
+                tss_selector,
+            };
+            (cpu, Vec::with_capacity(0))
+        }
+    };
+
+    unsafe {
+        GDT.load();
+    }
+
+    /*
+     * Parse the AML tables.
+     */
+    let aml_namespace = if acpi_info.is_some() {
+        match AmlNamespace::parse_aml_tables(&acpi_info.unwrap(), &mut acpi_handler) {
+            Ok(namespace) => Some(namespace),
+            Err(err) => {
+                error!("Failed to parse AML tables: {:?}", err);
+                warn!("Some functionality may not work, or the kernel may panic!");
+                None
+            }
+        }
+    } else {
+        None
+    };
+
+    crate::kernel_main(&arch)
 }
