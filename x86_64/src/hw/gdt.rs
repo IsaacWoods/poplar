@@ -2,12 +2,10 @@ use super::tss::Tss;
 use super::DescriptorTablePointer;
 use crate::memory::VirtualAddress;
 use bit_field::BitField;
-use bitflags::bitflags;
 use core::pin::Pin;
 use core::mem;
 use core::ops::Deref;
 use alloc::boxed::Box;
-use log::trace;
 
 #[derive(Clone, Copy, PartialEq, Eq)]
 #[repr(u8)]
@@ -87,6 +85,9 @@ impl TssSegment {
     }
 }
 
+pub const KERNEL_CODE_SELECTOR: SegmentSelector = SegmentSelector(0x8);
+pub const USER_CODE_SELECTOR: SegmentSelector = SegmentSelector(0x10);
+pub const BOOTSTRAP_TSS_SELECTOR: SegmentSelector = SegmentSelector(0x18);
 pub const MAX_CPUS: usize = 8;
 
 /// A GDT suitable for the kernel to use. It contains two code segments, one for Ring 0 and another

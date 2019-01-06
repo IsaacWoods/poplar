@@ -5,6 +5,7 @@ cfg_if! {
     if #[cfg(feature = "kernel")] {
         pub mod gdt;
         pub mod tss;
+        pub mod idt;
     }
 }
 
