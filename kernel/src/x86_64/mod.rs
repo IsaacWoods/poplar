@@ -2,6 +2,7 @@
 
 mod acpi_handler;
 mod cpu;
+mod interrupts;
 mod logger;
 mod memory;
 
@@ -13,10 +14,7 @@ use self::memory::{KernelPageTable, PhysicalRegionMapper};
 use crate::arch::Architecture;
 use acpi::{AmlNamespace, ProcessorState};
 use alloc::vec::Vec;
-use core::mem;
-use core::pin::Pin;
-use log::info;
-use log::{error, trace, warn};
+use log::{info, error, warn};
 use spin::Mutex;
 use x86_64::boot::BootInfo;
 use x86_64::hw::gdt::{Gdt, TssSegment};
@@ -172,6 +170,9 @@ pub fn kmain() -> ! {
     unsafe {
         GDT.load();
     }
+
+    interrupts::install_exception_handlers();
+    unsafe { interrupts::IDT.load(); }
 
     /*
      * Parse the AML tables.

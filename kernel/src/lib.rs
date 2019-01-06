@@ -8,7 +8,8 @@
     alloc_error_handler,
     core_intrinsics,
     trait_alias,
-    type_ascription
+    type_ascription,
+    naked_functions,
 )]
 extern crate alloc;
 
