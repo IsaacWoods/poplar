@@ -101,8 +101,8 @@ pub fn ceiling_integer_divide(x: u64, divide_by: u64) -> u64 {
 
 #[test]
 fn test_ceiling_integer_divide() {
-    assert_eq!(ceiling_integer_division(1, 1), 1);
-    assert_eq!(ceiling_integer_division(10, 5), 2);
-    assert_eq!(ceiling_integer_division(11, 5), 3);
-    assert_eq!(ceiling_integer_division(0, 5), 0);
+    assert_eq!(ceiling_integer_divide(1, 1), 1);
+    assert_eq!(ceiling_integer_divide(10, 5), 2);
+    assert_eq!(ceiling_integer_divide(11, 5), 3);
+    assert_eq!(ceiling_integer_divide(0, 5), 0);
 }
