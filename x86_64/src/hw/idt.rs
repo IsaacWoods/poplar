@@ -1,10 +1,10 @@
-use core::mem;
-use super::DescriptorTablePointer;
-use core::ops::{Index, IndexMut};
-use crate::hw::gdt::{SegmentSelector, PrivilegeLevel};
-use bit_field::BitField;
-use crate::memory::VirtualAddress;
 use super::registers::CpuFlags;
+use super::DescriptorTablePointer;
+use crate::hw::gdt::{PrivilegeLevel, SegmentSelector};
+use crate::memory::VirtualAddress;
+use bit_field::BitField;
+use core::mem;
+use core::ops::{Index, IndexMut};
 
 /// The type of a function that can be used as an interrupt handler. It's marked as diverging
 /// because we don't exactly 'return' from an interrupt. This should not be used directly to create
@@ -126,7 +126,7 @@ impl Idt {
     getter!(19, simd_exception);
     getter!(20, virtualization_exception);
     // XXX: 21 through 31 are reserved
-    
+
     pub fn load(&'static self) {
         let idt_ptr = DescriptorTablePointer {
             limit: mem::size_of::<Self>() as u16 - 1,
@@ -135,11 +135,11 @@ impl Idt {
 
         unsafe {
             asm!("lidt [$0]"
-                 :
-                 : "r"(&idt_ptr)
-                 : "memory"
-                 : "intel"
-                );
+             :
+             : "r"(&idt_ptr)
+             : "memory"
+             : "intel"
+            );
         }
     }
 }

@@ -1,11 +1,11 @@
 use super::tss::Tss;
 use super::DescriptorTablePointer;
 use crate::memory::VirtualAddress;
+use alloc::boxed::Box;
 use bit_field::BitField;
-use core::pin::Pin;
 use core::mem;
 use core::ops::Deref;
-use alloc::boxed::Box;
+use core::pin::Pin;
 
 #[derive(Clone, Copy, PartialEq, Eq)]
 #[repr(u8)]
@@ -31,11 +31,11 @@ impl SegmentSelector {
     }
 }
 
-const ACCESSED: u64 = 1<<40;
-const READABLE: u64 = 1<<41;
-const USER_SEGMENT: u64 = 1<<44;
-const PRESENT: u64 = 1<<47;
-const LONG_MODE: u64 = 1<<53;
+const ACCESSED: u64 = 1 << 40;
+const READABLE: u64 = 1 << 41;
+const USER_SEGMENT: u64 = 1 << 44;
+const PRESENT: u64 = 1 << 47;
+const LONG_MODE: u64 = 1 << 53;
 
 #[derive(Debug)]
 pub struct CodeSegment(u64);
@@ -46,13 +46,15 @@ impl CodeSegment {
          * XXX: the Accessed and Readable bits of 64-bit code segments should be ignored, but my
          * old-ish AMD #GPs if they're not set ¯\_(ツ)_/¯
          */
-        CodeSegment(ACCESSED +
-                    READABLE +
-                    (1<<43) +
-                    USER_SEGMENT +
-                    PRESENT +
-                    LONG_MODE +
-                    ((ring as u64) << 45))
+        CodeSegment(
+            ACCESSED
+                + READABLE
+                + (1 << 43)
+                + USER_SEGMENT
+                + PRESENT
+                + LONG_MODE
+                + ((ring as u64) << 45),
+        )
     }
 }
 
@@ -172,10 +174,10 @@ impl Gdt {
               // Load the TSS
               mov ax, 0x18
               ltr ax"
-             :
-             : "r"(&gdt_ptr)
-             : "rax"
-             : "intel"
-             );
+        :
+        : "r"(&gdt_ptr)
+        : "rax"
+        : "intel"
+        );
     }
 }

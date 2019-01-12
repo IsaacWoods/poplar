@@ -9,7 +9,7 @@
     core_intrinsics,
     trait_alias,
     type_ascription,
-    naked_functions,
+    naked_functions
 )]
 extern crate alloc;
 

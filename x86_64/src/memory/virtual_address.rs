@@ -62,8 +62,8 @@ impl VirtualAddress {
         self.0 as *mut T
     }
 
-    pub const fn offset(&self, offset: i64) -> VirtualAddress {
-        VirtualAddress(((self.0 as i64) + offset) as usize).canonicalise()
+    pub const fn offset(&self, offset: isize) -> VirtualAddress {
+        VirtualAddress(((self.0 as isize) + offset) as usize).canonicalise()
     }
 
     pub const fn is_page_aligned(&self) -> bool {
