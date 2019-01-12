@@ -47,3 +47,9 @@ pub const PHYSICAL_MAPPING_END: VirtualAddress =
  */
 pub const BOOT_INFO: VirtualAddress =
     unsafe { VirtualAddress::new_unchecked(0xffff_ffff_d000_0000) };
+
+/// The virtual address that the configuration page of the local APIC is mapped to. We don't manage
+/// this using a simple `PhysicalMapping` because we need to be able to access the local APIC from
+/// interrupt handlers, which can't easily access owned `PhysicalMapping`s.
+pub const LOCAL_APIC_CONFIG: VirtualAddress =
+    unsafe { VirtualAddress::new_unchecked(0xffff_ffff_d000_1000) };

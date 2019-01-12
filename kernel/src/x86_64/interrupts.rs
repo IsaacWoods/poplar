@@ -5,7 +5,10 @@ use log::{error, info};
 use x86_64::hw::gdt::KERNEL_CODE_SELECTOR;
 use x86_64::hw::i8259_pic::Pic;
 use x86_64::hw::idt::{Idt, InterruptStackFrame};
+use x86_64::hw::local_apic::LocalApic;
 use x86_64::hw::registers::read_control_reg;
+use x86_64::memory::paging::{entry::EntryFlags, Frame, Page};
+use x86_64::memory::{kernel_map, PhysicalAddress};
 /// This should only be accessed directly by the bootstrap processor.
 ///
 /// The IDT is laid out like so:
@@ -28,6 +31,7 @@ static mut IDT: Idt = Idt::empty();
  * full layout.
  */
 const LEGACY_PIC_VECTOR: u8 = 0x20;
+const APIC_SPURIOUS_VECTOR: u8 = 0xff;
 pub struct InterruptController {
 }
 
@@ -51,6 +55,30 @@ impl InterruptController {
                     let mut pic = unsafe { Pic::new() };
                     pic.remap_and_disable(LEGACY_PIC_VECTOR, LEGACY_PIC_VECTOR + 8);
                 }
+
+                /*
+                 * Map the local APIC's configuration space into the kernel address space.
+                 */
+                arch.kernel_page_table.lock().map_to(
+                    Page::contains(kernel_map::LOCAL_APIC_CONFIG),
+                    Frame::contains(PhysicalAddress::new(*local_apic_address as usize).unwrap()),
+                    EntryFlags::PRESENT
+                        | EntryFlags::WRITABLE
+                        | EntryFlags::NO_EXECUTE
+                        | EntryFlags::NO_CACHE,
+                    &arch.physical_memory_manager,
+                );
+
+                /*
+                 * Install a spurious interrupt handler and enable the local APIC.
+                 */
+                unsafe {
+                    IDT[APIC_SPURIOUS_VECTOR]
+                        .set_handler(wrap_handler!(spurious_handler), KERNEL_CODE_SELECTOR);
+                    LocalApic::enable(APIC_SPURIOUS_VECTOR);
+                }
+
+                // TODO: configure the local APIC timer
                 InterruptController {}
             }
 
@@ -160,6 +188,7 @@ extern "C" fn double_fault_handler(stack_frame: &InterruptStackFrame, error_code
     loop {}
 }
 
+extern "C" fn spurious_handler(_: &InterruptStackFrame) {}
 macro save_regs() {
     asm!("push rax
           push rcx

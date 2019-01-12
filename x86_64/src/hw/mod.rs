@@ -7,6 +7,7 @@ cfg_if! {
         pub mod tss;
         pub mod idt;
         pub mod i8259_pic;
+        pub mod local_apic;
     }
 }
 
