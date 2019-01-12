@@ -8,13 +8,14 @@ mod memory;
 
 use self::acpi_handler::PebbleAcpiHandler;
 use self::cpu::Cpu;
+use self::interrupts::InterruptController;
 use self::logger::KernelLogger;
 use self::memory::physical::LockedPhysicalMemoryManager;
 use self::memory::{KernelPageTable, PhysicalRegionMapper};
 use crate::arch::Architecture;
 use acpi::{AmlNamespace, ProcessorState};
 use alloc::vec::Vec;
-use log::{info, error, warn};
+use log::{error, info, warn};
 use spin::Mutex;
 use x86_64::boot::BootInfo;
 use x86_64::hw::gdt::{Gdt, TssSegment};
@@ -86,7 +87,7 @@ pub fn kmain() -> ! {
      * for the kernel. This is extremely unsafe and very bad things will happen if this
      * assumption is not true.
      */
-    let mut arch = Arch {
+    let arch = Arch {
         physical_memory_manager: LockedPhysicalMemoryManager::new(boot_info),
         kernel_page_table: Mutex::new(unsafe { ActivePageTable::<RecursiveMapping>::new() }),
         physical_region_mapper: Mutex::new(PhysicalRegionMapper::new()),
@@ -171,8 +172,14 @@ pub fn kmain() -> ! {
         GDT.load();
     }
 
-    interrupts::install_exception_handlers();
-    unsafe { interrupts::IDT.load(); }
+    // TODO: deal gracefully with a bad ACPI parse
+    let interrupt_controller = InterruptController::init(
+        &arch,
+        match acpi_info {
+            Some(ref info) => info.interrupt_model().as_ref().unwrap(),
+            None => unimplemented!(),
+        },
+    );
 
     /*
      * Parse the AML tables.

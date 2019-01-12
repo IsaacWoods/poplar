@@ -1,30 +1,87 @@
+use super::Arch;
+use crate::util::binary_pretty_print::BinaryPrettyPrint;
+use acpi::interrupt::InterruptModel;
+use log::{error, info};
 use x86_64::hw::gdt::KERNEL_CODE_SELECTOR;
+use x86_64::hw::i8259_pic::Pic;
 use x86_64::hw::idt::{Idt, InterruptStackFrame};
 use x86_64::hw::registers::read_control_reg;
-use crate::util::binary_pretty_print::BinaryPrettyPrint;
-use log::{info, error};
+/// This should only be accessed directly by the bootstrap processor.
+///
+/// The IDT is laid out like so:
+/// |------------------|-----------------------------|
+/// | Interrupt Vector |            Usage            |
+/// |------------------|-----------------------------|
+/// |       00-1F      | Intel Reserved (Exceptions) |
+/// |       20-2F      | i8259 PIC Interrupts        |
+/// |        30        | Local APIC timer            |
+/// |        ..        |                             |
+/// |       40-7f      | IOAPIC Interrupts           |
+/// |        80        | Yield from usermode         |
+/// |        ..        |                             |
+/// |        FF        | APIC spurious interrupt     |
+/// |------------------|-----------------------------|
+static mut IDT: Idt = Idt::empty();
 
-pub static mut IDT: Idt = Idt::empty();
+/*
+ * These constants define the IDT's layout. Refer to the documentation of the `IDT` static for the
+ * full layout.
+ */
+const LEGACY_PIC_VECTOR: u8 = 0x20;
+pub struct InterruptController {
+}
 
-pub fn install_exception_handlers() {
-    macro set_handler($name: ident, $handler: ident) {
+impl InterruptController {
+    pub fn init(arch: &Arch, interrupt_model: &InterruptModel) -> InterruptController {
+        Self::install_exception_handlers();
         unsafe {
-            IDT.$name().set_handler(wrap_handler!($handler), KERNEL_CODE_SELECTOR);
+            IDT.load();
+        }
+
+        match interrupt_model {
+            InterruptModel::Apic {
+                local_apic_address,
+                io_apics: acpi_io_apics,
+                ref local_apic_nmi_line,
+                ref interrupt_source_overrides,
+                ref nmi_sources,
+                also_has_legacy_pics,
+            } => {
+                if *also_has_legacy_pics {
+                    let mut pic = unsafe { Pic::new() };
+                    pic.remap_and_disable(LEGACY_PIC_VECTOR, LEGACY_PIC_VECTOR + 8);
+                }
+                InterruptController {}
+            }
+
+            _ => panic!("Unsupported interrupt model!"),
         }
     }
 
-    macro set_handler_with_error_code($name: ident, $handler: ident) {
-        unsafe {
-            IDT.$name().set_handler(wrap_handler_with_error_code!($handler), KERNEL_CODE_SELECTOR);
+    fn install_exception_handlers() {
+        macro set_handler($name: ident, $handler: ident) {
+            unsafe {
+                IDT.$name()
+                    .set_handler(wrap_handler!($handler), KERNEL_CODE_SELECTOR);
+            }
         }
-    }
 
-    set_handler!(nmi, nmi_handler);
-    set_handler!(breakpoint, breakpoint_handler);
-    set_handler!(invalid_opcode, invalid_opcode_handler);
-    set_handler_with_error_code!(general_protection_fault, general_protection_fault_handler);
-    set_handler_with_error_code!(page_fault, page_fault_handler);
-    set_handler_with_error_code!(double_fault, double_fault_handler);
+        macro set_handler_with_error_code($name: ident, $handler: ident) {
+            unsafe {
+                IDT.$name().set_handler(
+                    wrap_handler_with_error_code!($handler),
+                    KERNEL_CODE_SELECTOR,
+                );
+            }
+        }
+
+        set_handler!(nmi, nmi_handler);
+        set_handler!(breakpoint, breakpoint_handler);
+        set_handler!(invalid_opcode, invalid_opcode_handler);
+        set_handler_with_error_code!(general_protection_fault, general_protection_fault_handler);
+        set_handler_with_error_code!(page_fault, page_fault_handler);
+        set_handler_with_error_code!(double_fault, double_fault_handler);
+    }
 }
 
 extern "C" fn nmi_handler(_: &InterruptStackFrame) {
@@ -42,7 +99,10 @@ extern "C" fn invalid_opcode_handler(stack_frame: &InterruptStackFrame) {
 }
 
 extern "C" fn general_protection_fault_handler(stack_frame: &InterruptStackFrame, error_code: u64) {
-    error!("General protection fault (error code = {:#x}). Interrupt stack frame: ", error_code);
+    error!(
+        "General protection fault (error code = {:#x}). Interrupt stack frame: ",
+        error_code
+    );
     error!("{:#?}", stack_frame);
 
     loop {}
