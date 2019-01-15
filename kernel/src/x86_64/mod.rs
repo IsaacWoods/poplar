@@ -18,6 +18,7 @@ use alloc::vec::Vec;
 use log::{error, info, warn};
 use spin::Mutex;
 use x86_64::boot::BootInfo;
+use x86_64::hw::cpu::CpuInfo;
 use x86_64::hw::gdt::{Gdt, TssSegment};
 use x86_64::hw::tss::Tss;
 use x86_64::memory::kernel_map;
@@ -58,6 +59,12 @@ pub fn kmain() -> ! {
     log::set_logger(&KernelLogger).unwrap();
     log::set_max_level(log::LevelFilter::Trace);
     info!("The Pebble kernel is running");
+
+    let cpu_info = CpuInfo::new();
+    info!(
+        "We're running on an {:?} processor, model info = {:?}, microarch = {:?}",
+        cpu_info.vendor, cpu_info.model_info, cpu_info.microarch()
+    );
 
     /*
      * Initialise the heap allocator. After this, the kernel is free to use collections etc. that

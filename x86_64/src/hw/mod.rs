@@ -8,6 +8,7 @@ cfg_if! {
         pub mod idt;
         pub mod i8259_pic;
         pub mod local_apic;
+        pub mod cpu;
     }
 }
 

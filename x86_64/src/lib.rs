@@ -7,8 +7,7 @@
     const_fn,
     type_ascription,
     box_syntax,
-    arbitrary_self_types,
-    const_let
+    arbitrary_self_types
 )]
 #![cfg_attr(feature = "kernel", feature(alloc))]
 #![allow(unknown_lints)]
