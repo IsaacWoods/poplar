@@ -34,11 +34,22 @@ pub const HEAP_START: VirtualAddress =
 pub const HEAP_END: VirtualAddress =
     unsafe { VirtualAddress::new_unchecked(0xffff_ffff_c00_18fff) };
 
+/// This is the address of the start of the area in the kernel address space for random physical
+/// mappings. We reserve 32 frames.
+pub const PHYSICAL_MAPPING_START: VirtualAddress =
+    unsafe { VirtualAddress::new_unchecked(0xffff_ffff_c00_19000) };
+pub const PHYSICAL_MAPPING_END: VirtualAddress =
+    unsafe { VirtualAddress::new_unchecked(0xffff_ffff_c00_38000) };
+
 /*
  * From here, we place a bunch of hard-coded pages for various things, such as the `BootInfo`
  * struct and memory-mapped configuration pages and stuff.
  */
 pub const BOOT_INFO: VirtualAddress =
     unsafe { VirtualAddress::new_unchecked(0xffff_ffff_d000_0000) };
-pub const LOCAL_APIC_CONFIG_PAGE: VirtualAddress =
+
+/// The virtual address that the configuration page of the local APIC is mapped to. We don't manage
+/// this using a simple `PhysicalMapping` because we need to be able to access the local APIC from
+/// interrupt handlers, which can't easily access owned `PhysicalMapping`s.
+pub const LOCAL_APIC_CONFIG: VirtualAddress =
     unsafe { VirtualAddress::new_unchecked(0xffff_ffff_d000_1000) };

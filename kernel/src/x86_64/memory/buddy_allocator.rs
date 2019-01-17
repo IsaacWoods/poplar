@@ -16,7 +16,6 @@ use alloc::vec;
 use alloc::vec::Vec;
 use core::cmp::min;
 use core::ops::Range;
-use log::trace;
 use x86_64::memory::{paging::Frame, PhysicalAddress};
 
 pub struct BuddyAllocator {
@@ -52,13 +51,8 @@ impl BuddyAllocator {
                         - usize::from(block_start.start_address()) as u64,
                 ) as usize,
             );
-            trace!(
-                "Buddy allocator: adding block that starts at {:#x} of order {}",
-                block_start.start_address(),
-                order
-            );
             self.free_n(block_start, 1 << order);
-            block_start += (1 << order);
+            block_start += 1 << order;
         }
     }
 
@@ -76,11 +70,6 @@ impl BuddyAllocator {
     /// Free the given block (starting at `start` and of size `n` frames). `n` must be a
     /// power-of-2.
     pub fn free_n(&mut self, start_frame: Frame, n: usize) {
-        trace!(
-            "Freeing block starting at {:#x} with size {}",
-            start_frame.start_address(),
-            n
-        );
         assert!(n.is_power_of_two());
         let order = flooring_log2(n as u64) as usize;
 
@@ -99,8 +88,7 @@ impl BuddyAllocator {
          */
         let buddy = BuddyAllocator::buddy_of(start_frame, order);
         if self.bins[order].remove(&buddy) {
-            let big_block = min(start_frame, buddy);
-            self.free_n(start_frame, 1 << (order + 1));
+            self.free_n(min(start_frame, buddy), 1 << (order + 1));
         } else {
             /*
              * The buddy isn't free, insert the block at this order.

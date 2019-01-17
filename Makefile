@@ -1,6 +1,8 @@
 export ARCH ?= x86_64
 export BUILD_DIR ?= $(abspath ./build)
 
+RUST_GDB_INSTALL_PATH ?= ~/bin/rust-gdb/bin
+
 .PHONY: prepare bootloader kernel clean qemu gdb update fmt
 
 pebble.img: prepare bootloader kernel
@@ -23,8 +25,8 @@ prepare:
 	@mkdir -p $(BUILD_DIR)/fat/EFI/BOOT
 
 bootloader:
-	cargo xbuild --release --target bootloader/uefi_x64.json --manifest-path bootloader/Cargo.toml
-	cp bootloader/target/uefi_x64/release/bootloader.efi $(BUILD_DIR)/fat/EFI/BOOT/BOOTX64.efi
+	cargo xbuild --release --target x86_64-unknown-uefi --manifest-path bootloader/Cargo.toml
+	cp bootloader/target/x86_64-unknown-uefi/release/bootloader.efi $(BUILD_DIR)/fat/EFI/BOOT/BOOTX64.efi
 
 kernel:
 	cargo xbuild --target=kernel/src/$(ARCH)/$(ARCH)-kernel.json --manifest-path kernel/Cargo.toml --features arch_$(ARCH)
@@ -38,15 +40,15 @@ clean:
 update:
 	cargo update --manifest-path bootloader/Cargo.toml
 	cargo update --manifest-path kernel/Cargo.toml
-	cargo update --manifest-path kernel/x86_64/Cargo.toml
 	cargo update --manifest-path x86_64/Cargo.toml
 	cargo update --manifest-path libmessage/Cargo.toml
 
 fmt:
-	@# `cargo fmt` doesn't play nicely with conditional compilation, so we manually `rustfmt` the kernel
+	@# `cargo fmt` doesn't play nicely with conditional compilation, so we manually `rustfmt` things
 	find kernel/src -type f -name "*.rs" -exec rustfmt {} +
+	find x86_64/src -type f -name "*.rs" -exec rustfmt {} +
 	cd bootloader && cargo fmt
-	cd x86_64 && cargo fmt
+	cd acpi && cargo fmt
 	cd libmessage && cargo fmt
 	cd userboot && cargo fmt
 
@@ -61,6 +63,19 @@ doc:
 qemu: pebble.img
 	qemu-system-x86_64 \
 		-enable-kvm \
+		-cpu host,vmware-cpuid-freq,invtsc \
+		-smp 2 \
+		-usb \
+		-device usb-ehci,id=ehci \
+		--no-reboot \
+		--no-shutdown \
+		-drive if=pflash,format=raw,file=bootloader/ovmf/OVMF_CODE.fd,readonly \
+		-drive if=pflash,format=raw,file=bootloader/ovmf/OVMF_VARS.fd,readonly \
+		-drive format=raw,file=$<,if=ide \
+		-net none
+
+qemu-no-kvm: pebble.img
+	qemu-system-x86_64 \
 		-smp 2 \
 		-usb \
 		-device usb-ehci,id=ehci \
@@ -83,3 +98,17 @@ debug: pebble.img
 		-drive if=pflash,format=raw,file=bootloader/ovmf/OVMF_VARS.fd,readonly \
 		-drive format=raw,file=$<,if=ide \
 		-net none
+
+gdb: pebble.img
+	qemu-system-x86_64 \
+		-enable-kvm \
+		-cpu host,vmware-cpuid-freq,invtsc \
+		-no-reboot \
+		-no-shutdown \
+		-s \
+		-S \
+		-drive if=pflash,format=raw,file=bootloader/ovmf/OVMF_CODE.fd,readonly \
+		-drive if=pflash,format=raw,file=bootloader/ovmf/OVMF_VARS.fd,readonly \
+		-drive format=raw,file=$<,if=ide \
+		-net none \
+	& $(RUST_GDB_INSTALL_PATH)/rust-gdb -q "build/fat/kernel.elf" -ex "target remote :1234"

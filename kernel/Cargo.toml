@@ -11,11 +11,12 @@ crate-type = ["staticlib"]
 cfg-if = "0.1"
 bitflags = "1"
 bit_field = "0.9"
-num-traits = { version = "0.2", default-features = false }
-log = { version = "0.4", default-features = false }
 spin = "0.4"
-x86_64 = { path = "../x86_64", optional = true }
+log = { version = "0.4", default-features = false }
+x86_64 = { path = "../x86_64", features = ["kernel"], optional = true }
+acpi = { path = "../acpi", optional = true, features = ["debug_parser"] }
+num = { version = "0.2", default-features = false }
 
 [features]
-arch_x86_64 = ["x86_64"]
+arch_x86_64 = ["x86_64", "acpi"]
 tuning-fast_ctlz = []

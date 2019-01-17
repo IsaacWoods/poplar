@@ -10,5 +10,9 @@
 *.bin
 *.elf
 
+# These are built on CI and should never be committed
 /doc_target/
 /docs/
+
+# Temp
+/old_kernel/

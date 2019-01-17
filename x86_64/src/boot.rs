@@ -1,6 +1,7 @@
 //! TODO
 
 use crate::memory::paging::Frame;
+use crate::memory::PhysicalAddress;
 use core::ops::Range;
 
 pub const BOOT_INFO_MAGIC: u32 = 0xcafebabe;
@@ -67,6 +68,7 @@ pub struct BootInfo {
     pub magic: u32,
     pub memory_map: [MemoryEntry; MEMORY_MAP_NUM_ENTRIES],
     pub num_memory_map_entries: usize,
+    pub rsdp_address: Option<PhysicalAddress>,
 }
 
 impl BootInfo {
