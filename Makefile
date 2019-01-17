@@ -63,7 +63,7 @@ doc:
 qemu: pebble.img
 	qemu-system-x86_64 \
 		-enable-kvm \
-		-cpu host \
+		-cpu host,vmware-cpuid-freq,invtsc \
 		-smp 2 \
 		-usb \
 		-device usb-ehci,id=ehci \
@@ -102,7 +102,7 @@ debug: pebble.img
 gdb: pebble.img
 	qemu-system-x86_64 \
 		-enable-kvm \
-		-cpu host \
+		-cpu host,vmware-cpuid-freq,invtsc \
 		-no-reboot \
 		-no-shutdown \
 		-s \
