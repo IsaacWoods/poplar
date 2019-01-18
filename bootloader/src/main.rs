@@ -34,11 +34,10 @@ use mer::{
 use x86_64::boot::{BootInfo, MemoryEntry, MemoryType as BootInfoMemoryType};
 use x86_64::hw::registers::{read_control_reg, read_msr, write_control_reg, write_msr};
 use x86_64::hw::serial::SerialPort;
-use x86_64::memory::kernel_map;
 use x86_64::memory::paging::entry::EntryFlags;
 use x86_64::memory::paging::table::IdentityMapping;
-use x86_64::memory::paging::{Frame, InactivePageTable, Mapper, Page, FRAME_SIZE};
-use x86_64::memory::{PhysicalAddress, VirtualAddress};
+use x86_64::memory::paging::{Frame, FrameAllocator, InactivePageTable, Mapper, Page, FRAME_SIZE};
+use x86_64::memory::{kernel_map, PhysicalAddress, VirtualAddress};
 
 /*
  * It's only safe to have these `static mut`s because we know the bootloader will only have one
@@ -77,7 +76,10 @@ pub extern "win64" fn efi_main(image_handle: Handle, system_table: &'static Syst
     println!("┴  └─┘└─┘└─┘┴─┘└─┘");
 
     let allocator = BootFrameAllocator::new(32);
-    let mut page_table = create_page_table();
+    let mut page_table = InactivePageTable::<IdentityMapping>::new_with_recursive_mapping(
+        allocator.allocate(),
+        kernel_map::RECURSIVE_ENTRY,
+    );
     let mut mapper = page_table.mapper();
 
     let kernel_info = match load_kernel(image_handle, &mut mapper, &allocator) {
@@ -181,11 +183,6 @@ pub extern "win64" fn efi_main(image_handle: Handle, system_table: &'static Syst
     }
 
     /*
-     * TODO: allocate a `BootInfo` somewhere and pass its address to the kernel in the correct way
-     * (we might have to change the entry point's ABI to do this safely).
-     */
-
-    /*
      * Jump into the kernel!
      *
      * Because we change the stack pointer, we need to pre-load the kernel entry point into a
@@ -223,34 +220,6 @@ fn setup_for_kernel() {
     unsafe {
         write_msr!(x86_64::hw::registers::EFER, efer);
     }
-}
-
-fn create_page_table() -> InactivePageTable<IdentityMapping> {
-    // Allocate a frame for the P4
-    let address = system_table()
-        .boot_services
-        .allocate_frames(MemoryType::PebblePageTables, 1)
-        .map_err(|err| {
-            panic!(
-                "Failed to allocate physical memory for page tables: {:?}",
-                err
-            )
-        })
-        .unwrap();
-
-    // Zero the P4 to mark every entry as non-present
-    unsafe {
-        system_table().boot_services.set_mem(
-            usize::from(address) as *mut _,
-            FRAME_SIZE as usize,
-            0,
-        );
-    }
-
-    InactivePageTable::<IdentityMapping>::new_with_recursive_mapping(
-        Frame::contains(address),
-        kernel_map::RECURSIVE_ENTRY,
-    )
 }
 
 fn allocate_and_map_heap(mapper: &mut Mapper<IdentityMapping>, allocator: &BootFrameAllocator) {
