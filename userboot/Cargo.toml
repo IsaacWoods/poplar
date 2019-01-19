@@ -1,0 +1,14 @@
+[package]
+name = "userboot"
+version = "0.1.0"
+authors = ["Isaac Woods"]
+edition = "2018"
+
+[dependencies]
+
+[profile.dev]
+debug = false
+panic = "abort"
+
+[profile.release]
+panic = "abort"
