@@ -1,18 +1,10 @@
 use super::{BootServices, Pool};
-use crate::memory::MemoryType;
-use crate::types::{Handle, Status};
+use crate::{
+    memory::MemoryType,
+    types::{Guid, Handle, Status},
+};
 use bitflags::bitflags;
 use core::{mem, slice};
-
-/// Globally-unique identifier, used in UEFI to distinguish protocols
-#[derive(Clone, Copy, Debug, PartialEq)]
-#[repr(C)]
-pub struct Guid {
-    pub data_1: u32,
-    pub data_2: u16,
-    pub data_3: u16,
-    pub data_4: [u8; 8],
-}
 
 bitflags! {
     /// Mode in which to open the protocol interface
@@ -67,12 +59,7 @@ impl BootServices {
 
         // Return a slice over the contents
         let num_handles = buf_size / mem::size_of::<Handle>();
-        unsafe {
-            Ok(Pool::new_unchecked(slice::from_raw_parts_mut(
-                buf,
-                num_handles,
-            )))
-        }
+        unsafe { Ok(Pool::new_unchecked(slice::from_raw_parts_mut(buf, num_handles))) }
     }
 
     /// Opens the specified protocol on behalf of the calling agent

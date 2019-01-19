@@ -1,7 +1,6 @@
 use core::{
     cmp::PartialEq,
-    fmt,
-    fmt::{Debug, Display, Formatter, Pointer},
+    fmt::{self, Debug, Display, Formatter, Pointer},
     iter::Iterator,
     ops::{Deref, DerefMut, Drop},
     ptr::Unique,
@@ -18,9 +17,7 @@ where
 impl<T: ?Sized> Pool<T> {
     /// Creates a new `Pool` from a non-null pointer.
     pub(crate) unsafe fn new_unchecked(ptr: *mut T) -> Pool<T> {
-        Pool {
-            ptr: Unique::new_unchecked(ptr),
-        }
+        Pool { ptr: Unique::new_unchecked(ptr) }
     }
 }
 

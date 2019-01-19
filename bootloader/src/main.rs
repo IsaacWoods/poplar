@@ -18,26 +18,40 @@ mod runtime_services;
 mod system_table;
 mod types;
 
-use crate::boot_services::{OpenProtocolAttributes, Pool, Protocol, SearchType};
-use crate::memory::{BootFrameAllocator, MemoryMap, MemoryType};
-use crate::protocols::{FileAttributes, FileInfo, FileMode, FileSystemInfo, SimpleFileSystem};
-use crate::system_table::SystemTable;
-use crate::types::{Guid, Handle, Status};
-use core::fmt::Write;
-use core::mem;
-use core::panic::PanicInfo;
-use core::slice;
+use crate::{
+    boot_services::{OpenProtocolAttributes, Pool, Protocol, SearchType},
+    memory::{BootFrameAllocator, MemoryMap, MemoryType},
+    protocols::{FileAttributes, FileInfo, FileMode, FileSystemInfo, SimpleFileSystem},
+    system_table::SystemTable,
+    types::{Guid, Handle, Status},
+};
+use core::{fmt::Write, mem, panic::PanicInfo, slice};
 use mer::{
     section::{SectionHeader, SectionType},
     Elf,
 };
-use x86_64::boot::{BootInfo, MemoryEntry, MemoryType as BootInfoMemoryType};
-use x86_64::hw::registers::{read_control_reg, read_msr, write_control_reg, write_msr};
-use x86_64::hw::serial::SerialPort;
-use x86_64::memory::paging::entry::EntryFlags;
-use x86_64::memory::paging::table::IdentityMapping;
-use x86_64::memory::paging::{Frame, FrameAllocator, InactivePageTable, Mapper, Page, FRAME_SIZE};
-use x86_64::memory::{kernel_map, PhysicalAddress, VirtualAddress};
+use x86_64::{
+    boot::{BootInfo, MemoryEntry, MemoryType as BootInfoMemoryType},
+    hw::{
+        registers::{read_control_reg, read_msr, write_control_reg, write_msr},
+        serial::SerialPort,
+    },
+    memory::{
+        kernel_map,
+        paging::{
+            entry::EntryFlags,
+            table::IdentityMapping,
+            Frame,
+            FrameAllocator,
+            InactivePageTable,
+            Mapper,
+            Page,
+            FRAME_SIZE,
+        },
+        PhysicalAddress,
+        VirtualAddress,
+    },
+};
 
 /*
  * It's only safe to have these `static mut`s because we know the bootloader will only have one
@@ -59,8 +73,8 @@ struct KernelInfo {
 pub extern "win64" fn efi_main(image_handle: Handle, system_table: &'static SystemTable) -> ! {
     unsafe {
         /*
-         * The first thing we do is set the global references to the system table and image handle.
-         * Until we do this, their "safe" getters are not.
+         * The first thing we do is set the global references to the system table and image
+         * handle. Until we do this, their "safe" getters are not.
          */
         SYSTEM_TABLE = system_table;
         IMAGE_HANDLE = image_handle;
@@ -83,7 +97,7 @@ pub extern "win64" fn efi_main(image_handle: Handle, system_table: &'static Syst
     let mut mapper = page_table.mapper();
 
     let kernel_info = match load_kernel(image_handle, &mut mapper, &allocator) {
-        Ok(entry_point) => entry_point,
+        Ok(kernel_info) => kernel_info,
         Err(err) => panic!("Failed to load kernel: {:?}", err),
     };
 
@@ -167,10 +181,7 @@ pub extern "win64" fn efi_main(image_handle: Handle, system_table: &'static Syst
      * running of the system and may no longer make use of any boot services.
      */
     println!("Exiting boot services");
-    system_table
-        .boot_services
-        .exit_boot_services(image_handle, memory_map.key)
-        .unwrap();
+    system_table.boot_services.exit_boot_services(image_handle, memory_map.key).unwrap();
 
     /*
      * We can now setup for kernel entry by switching to the new kernel page tables and enabling
@@ -252,8 +263,8 @@ fn construct_boot_info(boot_info: &mut BootInfo, memory_map: &MemoryMap) {
     println!("Constructing boot info to pass to kernel");
 
     /*
-     * First, we construct the memory map. This is used by the OS to initialise the physical memory
-     * manager, so it can allocate RAM to things that need it.
+     * First, we construct the memory map. This is used by the OS to initialise the physical
+     * memory manager, so it can allocate RAM to things that need it.
      */
     for entry in memory_map.iter() {
         let memory_type = match entry.memory_type {
@@ -263,8 +274,8 @@ fn construct_boot_info(boot_info: &mut BootInfo, memory_map: &MemoryMap) {
             }
 
             /*
-             * The bootloader and boot services code and data can be treated like conventional RAM
-             * once we're in the kernel.
+             * The bootloader and boot services code and data can be treated like conventional
+             * RAM once we're in the kernel.
              */
             MemoryType::LoaderCode
             | MemoryType::LoaderData
@@ -273,8 +284,8 @@ fn construct_boot_info(boot_info: &mut BootInfo, memory_map: &MemoryMap) {
             | MemoryType::ConventionalMemory => BootInfoMemoryType::Conventional,
 
             /*
-             * This memory must not be used until we're done with the ACPI tables, and then can be
-             * used as conventional memory.
+             * This memory must not be used until we're done with the ACPI tables, and then can
+             * be used as conventional memory.
              */
             MemoryType::ACPIReclaimMemory => BootInfoMemoryType::AcpiReclaimable,
 
@@ -294,8 +305,8 @@ fn construct_boot_info(boot_info: &mut BootInfo, memory_map: &MemoryMap) {
             | MemoryType::UnusableMemory => continue,
 
             /*
-             * These are the memory regions we're allocated for the kernel. We just forward them on
-             * in the kernel memory map entries.
+             * These are the memory regions we're allocated for the kernel. We just forward them
+             * on in the kernel memory map entries.
              */
             MemoryType::PebbleKernelMemory => BootInfoMemoryType::KernelImage,
             MemoryType::PebblePageTables => BootInfoMemoryType::KernelPageTables,
@@ -321,21 +332,21 @@ fn construct_boot_info(boot_info: &mut BootInfo, memory_map: &MemoryMap) {
 
     /*
      * Next, we locate the RSDP. The conventional searching method may not work on UEFI systems
-     * (because they're free to put the RSDP wherever they please), so we should try to find it in
-     * the configuration table first.
+     * (because they're free to put the RSDP wherever they please), so we should try to find it
+     * in the configuration table first.
      */
-    const RSDP_V1_GUID: Guid = Guid::new(
-        0xeb9d2d30,
-        0x2d88,
-        0x11d3,
-        [0x9a, 0x16, 0x00, 0x90, 0x27, 0x3f, 0xc1, 0x4d],
-    );
-    const RSDP_V2_GUID: Guid = Guid::new(
-        0x8868e871,
-        0xe4f1,
-        0x11d3,
-        [0xbc, 0x22, 0x00, 0x80, 0xc7, 0x3c, 0x88, 0x81],
-    );
+    const RSDP_V1_GUID: Guid = Guid {
+        a: 0xeb9d2d30,
+        b: 0x2d88,
+        c: 0x11d3,
+        d: [0x9a, 0x16, 0x00, 0x90, 0x27, 0x3f, 0xc1, 0x4d],
+    };
+    const RSDP_V2_GUID: Guid = Guid {
+        a: 0x8868e871,
+        b: 0xe4f1,
+        c: 0x11d3,
+        d: [0xbc, 0x22, 0x00, 0x80, 0xc7, 0x3c, 0x88, 0x81],
+    };
 
     for config_entry in system_table().config_table().iter() {
         if config_entry.guid == RSDP_V1_GUID || config_entry.guid == RSDP_V2_GUID {
@@ -369,10 +380,7 @@ fn load_kernel(
     }) as usize;
 
     if kernel_size % FRAME_SIZE != 0 {
-        panic!(
-            "Kernel size is not a multiple of frame size: {:#x}!",
-            kernel_size
-        );
+        panic!("Kernel size is not a multiple of frame size: {:#x}!", kernel_size);
     }
 
     // Allocate physical memory for the kernel
@@ -392,11 +400,11 @@ fn load_kernel(
     }
 
     /*
-     * We now copy the sections from the ELF image into memory, after which we can free the kernel
-     * ELF. We use sections instead of segments (as are traditionally used when loading a program)
-     * because sections allow us to define permissions for pages much more accurately. When mapping
-     * by program headers, we often end up with an executable `.data`, or a writable `.rodata`,
-     * which is less safe.
+     * We now copy the sections from the ELF image into memory, after which we can free the
+     * kernel ELF. We use sections instead of segments (as are traditionally used when
+     * loading a program) because sections allow us to define permissions for pages much more
+     * accurately. When mapping by program headers, we often end up with an executable
+     * `.data`, or a writable `.rodata`, which is less safe.
      */
     let mut physical_address = kernel_physical_base;
 
@@ -435,36 +443,25 @@ fn load_kernel(
 
     /*
      * We now set up the kernel stack. As part of the `.bss` section, it has already had memory
-     * allocated for it, and has been mapped into the page tables. However, we need to go back and
-     * unmap the guard page, and extract the address of the top of the stack.
+     * allocated for it, and has been mapped into the page tables. However, we need to go back
+     * and unmap the guard page, and extract the address of the top of the stack.
      */
-    let guard_page_address = match elf
-        .symbols()
-        .find(|symbol| symbol.name(&elf) == Some("_guard_page"))
-    {
-        Some(symbol) => VirtualAddress::new(symbol.value as usize).unwrap(),
-        None => panic!("Kernel does not have a '_guard_page' symbol!"),
-    };
-    assert!(
-        guard_page_address.is_page_aligned(),
-        "Guard page address is not page-aligned"
-    );
+    let guard_page_address =
+        match elf.symbols().find(|symbol| symbol.name(&elf) == Some("_guard_page")) {
+            Some(symbol) => VirtualAddress::new(symbol.value as usize).unwrap(),
+            None => panic!("Kernel does not have a '_guard_page' symbol!"),
+        };
+    assert!(guard_page_address.is_page_aligned(), "Guard page address is not page-aligned");
     println!("Unmapping guard page");
     mapper.unmap(Page::contains(guard_page_address), allocator);
 
-    let stack_top = match elf
-        .symbols()
-        .find(|symbol| symbol.name(&elf) == Some("_stack_top"))
-    {
+    let stack_top = match elf.symbols().find(|symbol| symbol.name(&elf) == Some("_stack_top")) {
         Some(symbol) => VirtualAddress::new(symbol.value as usize).unwrap(),
         None => panic!("Kernel does not have a '_stack_top' symbol"),
     };
     assert!(stack_top.is_page_aligned(), "Stack is not page aligned");
 
-    Ok(KernelInfo {
-        entry_point: VirtualAddress::new(elf.entry_point()).unwrap(),
-        stack_top,
-    })
+    Ok(KernelInfo { entry_point: VirtualAddress::new(elf.entry_point()).unwrap(), stack_top })
 }
 
 fn map_section(
@@ -476,8 +473,8 @@ fn map_section(
     let virtual_address = VirtualAddress::new(section.address as usize).unwrap();
     /*
      * Because the addresses should be page-aligned, the half-open ranges `[physical_base,
-     * physical_base + size)` and `[virtual_address, virtual_address + size)` gives us the correct
-     * frame and page ranges.
+     * physical_base + size)` and `[virtual_address, virtual_address + size)` gives us the
+     * correct frame and page ranges.
      */
     let frames = Frame::contains(physical_base)
         ..Frame::contains((physical_base + section.size as usize).unwrap());
@@ -532,9 +529,7 @@ fn read_file(volume_label: &str, path: &str, image_handle: Handle) -> Result<Poo
     let file = volume_root.open(&path, FileMode::READ, FileAttributes::empty())?;
 
     let file_size = file.get_info::<FileInfo>()?.file_size as usize;
-    let mut file_buf = system_table()
-        .boot_services
-        .allocate_slice::<u8>(file_size)?;
+    let mut file_buf = system_table().boot_services.allocate_slice::<u8>(file_size)?;
 
     let _ = file.read(&mut file_buf)?;
     Ok(file_buf)

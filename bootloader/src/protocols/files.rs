@@ -1,7 +1,9 @@
-use crate::boot_services::{utf16_to_str, Guid, Pool, Protocol};
-use crate::memory::MemoryType;
-use crate::system_table;
-use crate::types::{Bool, Char16, Status};
+use crate::{
+    boot_services::{utf16_to_str, Pool, Protocol},
+    memory::MemoryType,
+    system_table,
+    types::{Bool, Char16, Guid, Status},
+};
 use bitflags::bitflags;
 use core::{mem, ops::Drop, slice};
 
@@ -53,9 +55,7 @@ impl File {
     /// Reads data from this file
     pub fn read(&self, buf: &mut [u8]) -> Result<usize, Status> {
         let mut len = buf.len();
-        (self._read)(self, &mut len, buf.as_mut_ptr())
-            .as_result()
-            .map(|_| len)
+        (self._read)(self, &mut len, buf.as_mut_ptr()).as_result().map(|_| len)
     }
 
     /// Returns information about a file
@@ -64,9 +64,7 @@ impl File {
         T: FileInformationType + Sized,
     {
         let mut buf_size = mem::size_of::<T>();
-        let buf = system_table()
-            .boot_services
-            .allocate_pool(MemoryType::LoaderData, buf_size)?;
+        let buf = system_table().boot_services.allocate_pool(MemoryType::LoaderData, buf_size)?;
         let res = (self._get_info)(self, T::guid(), &mut buf_size, buf);
         if res == Status::Success {
             // If the initial buffer happened to be large enough, return it
@@ -79,9 +77,7 @@ impl File {
 
         // Reallocate the buffer with the specified size
         system_table().boot_services.free_pool(buf)?;
-        let buf = system_table()
-            .boot_services
-            .allocate_pool(MemoryType::LoaderData, buf_size)?;
+        let buf = system_table().boot_services.allocate_pool(MemoryType::LoaderData, buf_size)?;
         (self._get_info)(self, T::guid(), &mut buf_size, buf)
             .as_result()
             .map(|_| unsafe { Pool::new_unchecked(buf as *mut T) })
@@ -172,17 +168,17 @@ impl FileInformationType for FileSystemInfo {
 }
 
 static FILE_INFO_GUID: Guid = Guid {
-    data_1: 0x09576e92,
-    data_2: 0x6d3f,
-    data_3: 0x11d2,
-    data_4: [0x8e, 0x39, 0x00, 0xa0, 0xc9, 0x69, 0x72, 0x3b],
+    a: 0x09576e92,
+    b: 0x6d3f,
+    c: 0x11d2,
+    d: [0x8e, 0x39, 0x00, 0xa0, 0xc9, 0x69, 0x72, 0x3b],
 };
 
 static FILE_SYSTEM_INFO_GUID: Guid = Guid {
-    data_1: 0x09576e93,
-    data_2: 0x6d3f,
-    data_3: 0x11d2,
-    data_4: [0x8e, 0x39, 0x00, 0xa0, 0xc9, 0x69, 0x72, 0x3b],
+    a: 0x09576e93,
+    b: 0x6d3f,
+    c: 0x11d2,
+    d: [0x8e, 0x39, 0x00, 0xa0, 0xc9, 0x69, 0x72, 0x3b],
 };
 
 /// Provides a minimal interface for file-type access to a device
@@ -213,8 +209,8 @@ impl Protocol for SimpleFileSystem {
 }
 
 static SIMPLE_FILE_SYSTEM_GUID: Guid = Guid {
-    data_1: 0x0964e5b22,
-    data_2: 0x6459,
-    data_3: 0x11d2,
-    data_4: [0x8e, 0x39, 0x00, 0xa0, 0xc9, 0x69, 0x72, 0x3b],
+    a: 0x0964e5b22,
+    b: 0x6459,
+    c: 0x11d2,
+    d: [0x8e, 0x39, 0x00, 0xa0, 0xc9, 0x69, 0x72, 0x3b],
 };

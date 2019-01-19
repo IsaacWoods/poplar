@@ -1,6 +1,8 @@
 use super::{BootServices, Pool};
-use crate::memory::{MemoryDescriptor, MemoryMap, MemoryType};
-use crate::types::Status;
+use crate::{
+    memory::{MemoryDescriptor, MemoryMap, MemoryType},
+    types::Status,
+};
 use core::{mem, slice};
 use x86_64::memory::PhysicalAddress;
 
@@ -75,9 +77,7 @@ impl BootServices {
 
     pub fn allocate_pool(&self, pool_type: MemoryType, size: usize) -> Result<*mut u8, Status> {
         let mut buffer: *mut u8 = 0 as *mut u8;
-        (self._allocate_pool)(pool_type, size, &mut buffer)
-            .as_result()
-            .map(|_| buffer)
+        (self._allocate_pool)(pool_type, size, &mut buffer).as_result().map(|_| buffer)
     }
 
     pub fn free_pool(&self, buffer: *mut u8) -> Result<(), Status> {
@@ -86,12 +86,7 @@ impl BootServices {
 
     pub fn allocate_slice<T>(&self, count: usize) -> Result<Pool<[T]>, Status> {
         let ptr = self.allocate_pool(MemoryType::LoaderData, count * mem::size_of::<T>())?;
-        unsafe {
-            Ok(Pool::new_unchecked(slice::from_raw_parts_mut(
-                ptr as *mut T,
-                count,
-            )))
-        }
+        unsafe { Ok(Pool::new_unchecked(slice::from_raw_parts_mut(ptr as *mut T, count))) }
     }
 
     /// Fills the buffer with the specified value

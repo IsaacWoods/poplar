@@ -53,15 +53,9 @@ impl BootServices {
         let notify_context = notify_context as *const T as *const ();
 
         let mut event = &Event(());
-        (self._create_event)(
-            event_type,
-            notify_tpl,
-            notify_function,
-            notify_context,
-            &mut event,
-        )
-        .as_result()
-        .map(|_| event)
+        (self._create_event)(event_type, notify_tpl, notify_function, notify_context, &mut event)
+            .as_result()
+            .map(|_| event)
     }
 
     pub fn close_event(&self, event: &Event) -> Result<(), Status> {
@@ -72,14 +66,12 @@ impl BootServices {
         (self._signal_event)(event).as_result().map(|_| ())
     }
 
-    pub fn wait_for_event(&self, events: &[&Event]) -> Result<usize, Status> {
+    pub fn wait_for_event_signalled(&self, events: &[&Event]) -> Result<usize, Status> {
         let mut index: usize = 0;
-        (self._wait_for_event)(events.len(), events.as_ptr(), &mut index)
-            .as_result()
-            .map(|_| index)
+        (self._wait_for_event)(events.len(), events.as_ptr(), &mut index).as_result().map(|_| index)
     }
 
-    pub fn check_event(&self, event: &Event) -> Result<(), Status> {
+    pub fn is_event_signalled(&self, event: &Event) -> Result<(), Status> {
         (self._check_event)(event).as_result().map(|_| ())
     }
 
@@ -89,9 +81,7 @@ impl BootServices {
         timer_type: TimerDelay,
         trigger_time: u64,
     ) -> Result<(), Status> {
-        (self._set_timer)(event, timer_type, trigger_time)
-            .as_result()
-            .map(|_| ())
+        (self._set_timer)(event, timer_type, trigger_time).as_result().map(|_| ())
     }
 
     pub fn raise_tpl(&self, new_tpl: TaskPriorityLevel) -> Result<(), Status> {

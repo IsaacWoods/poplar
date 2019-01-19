@@ -29,8 +29,6 @@ pub struct RuntimeServices {
 
 impl fmt::Debug for RuntimeServices {
     fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
-        fmt.debug_struct("RuntimeServices")
-            .field("hdr", &self.hdr)
-            .finish()
+        fmt.debug_struct("RuntimeServices").field("hdr", &self.hdr).finish()
     }
 }
