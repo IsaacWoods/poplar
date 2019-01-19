@@ -487,13 +487,9 @@ fn map_section(
      * section needs to be writable, mark the pages as writable. If the section does **not**
      * contain executable instructions, mark it as `NO_EXECUTE`.
      */
-    let mut flags = EntryFlags::PRESENT;
-    if section.is_writable() {
-        flags |= EntryFlags::WRITABLE;
-    }
-    if !section.is_executable() {
-        flags |= EntryFlags::NO_EXECUTE;
-    }
+    let flags = EntryFlags::PRESENT
+        | if section.is_writable() { EntryFlags::WRITABLE } else { EntryFlags::empty() }
+        | if !section.is_executable() { EntryFlags::NO_EXECUTE } else { EntryFlags::empty() };
 
     for (frame, page) in frames.zip(pages) {
         mapper.map_to(page, frame, flags, allocator);
