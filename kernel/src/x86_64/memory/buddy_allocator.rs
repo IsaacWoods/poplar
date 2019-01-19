@@ -11,11 +11,11 @@
 //! improved in the future
 
 use crate::util::math::{ceiling_log2, flooring_log2};
-use alloc::collections::BTreeSet;
-use alloc::vec;
-use alloc::vec::Vec;
-use core::cmp::min;
-use core::ops::Range;
+use alloc::{
+    collections::BTreeSet,
+    vec::{self, Vec},
+};
+use core::{cmp::min, ops::Range};
 use x86_64::memory::{paging::Frame, PhysicalAddress};
 
 pub struct BuddyAllocator {
@@ -30,16 +30,14 @@ pub struct BuddyAllocator {
 impl BuddyAllocator {
     /// Create a new `BuddyAllocator`, with a maximum block size of `2^max_order`.
     pub fn new(max_order: usize) -> BuddyAllocator {
-        BuddyAllocator {
-            bins: vec![BTreeSet::new(); max_order + 1],
-        }
+        BuddyAllocator { bins: vec![BTreeSet::new(); max_order + 1] }
     }
 
     /// Add a range of `Frame`s to this allocator, marking them free to allocate.
     pub fn add_range(&mut self, range: Range<Frame>) {
         /*
-         * Break the frame area into a set of blocks with power-of-2 sizes, and register each block
-         * as free to allocate.
+         * Break the frame area into a set of blocks with power-of-2 sizes, and register each
+         * block as free to allocate.
          */
         let mut block_start = range.start;
 
@@ -75,8 +73,8 @@ impl BuddyAllocator {
 
         if order == self.max_order() {
             /*
-             * Blocks of the maximum order can't be coalesced, because there isn't a bigger bin to
-             * put them into.
+             * Blocks of the maximum order can't be coalesced, because there isn't a bigger bin
+             * to put them into.
              */
             self.bins[order].insert(start_frame);
             return;

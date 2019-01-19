@@ -1,6 +1,6 @@
 /*
- * NOTE: This assumes that a byte is 8 bits long. I don't think I'll ever be insane enough to cater
- * for an architecture where this isn't true, so I'm gonna call this platform-independent.
+ * NOTE: This assumes that a byte is 8 bits long. I don't think I'll ever be insane enough to
+ * cater for an architecture where this isn't true, so I'm gonna call this platform-independent.
  */
 
 use core::{fmt, mem};
@@ -33,13 +33,7 @@ impl<T: fmt::Binary + PrimInt> fmt::Debug for BinaryPrettyPrint<T> {
 
         for i in 0..max_byte {
             let byte = max_byte - i;
-            write!(
-                f,
-                "{:>08b}({})-",
-                (self.0 >> (byte * 8)) & byte_mask,
-                byte * 8
-            )
-            .unwrap();
+            write!(f, "{:>08b}({})-", (self.0 >> (byte * 8)) & byte_mask, byte * 8).unwrap();
         }
         write!(f, "{:>08b}(0)", self.0 & byte_mask).unwrap();
 
@@ -50,12 +44,6 @@ impl<T: fmt::Binary + PrimInt> fmt::Debug for BinaryPrettyPrint<T> {
 #[test]
 fn test() {
     assert_eq!(format!("{}", BinaryPrettyPrint(0 as u8)), "00000000");
-    assert_eq!(
-        format!("{}", BinaryPrettyPrint(0 as u16)),
-        "00000000-00000000"
-    );
-    assert_eq!(
-        format!("{}", BinaryPrettyPrint(0 as u32)),
-        "00000000-00000000-00000000-00000000"
-    );
+    assert_eq!(format!("{}", BinaryPrettyPrint(0 as u16)), "00000000-00000000");
+    assert_eq!(format!("{}", BinaryPrettyPrint(0 as u32)), "00000000-00000000-00000000-00000000");
 }

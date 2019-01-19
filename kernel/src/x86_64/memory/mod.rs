@@ -8,10 +8,20 @@ use crate::util::bitmap::Bitmap;
 use alloc::collections::BTreeMap;
 use bit_field::BitField;
 use log::info;
-use x86_64::memory::paging::entry::EntryFlags;
-use x86_64::memory::paging::table::RecursiveMapping;
-use x86_64::memory::paging::{ActivePageTable, Frame, Page, FRAME_SIZE, PAGE_SIZE};
-use x86_64::memory::{kernel_map, PhysicalAddress, VirtualAddress};
+use x86_64::memory::{
+    kernel_map,
+    paging::{
+        entry::EntryFlags,
+        table::RecursiveMapping,
+        ActivePageTable,
+        Frame,
+        Page,
+        FRAME_SIZE,
+        PAGE_SIZE,
+    },
+    PhysicalAddress,
+    VirtualAddress,
+};
 
 /// Type alias to hide the concrete type of the kernel's page tables, as most users won't care
 /// about the specifics.
@@ -46,10 +56,7 @@ pub struct PhysicalRegionMapper {
 
 impl PhysicalRegionMapper {
     pub fn new() -> PhysicalRegionMapper {
-        PhysicalRegionMapper {
-            mappings: BTreeMap::new(),
-            virtual_area_bitmap: 0,
-        }
+        PhysicalRegionMapper { mappings: BTreeMap::new(), virtual_area_bitmap: 0 }
     }
 
     pub fn map_physical_region(

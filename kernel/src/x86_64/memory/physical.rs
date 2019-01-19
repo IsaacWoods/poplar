@@ -1,8 +1,10 @@
 use super::buddy_allocator::BuddyAllocator;
 use core::ops::Range;
 use spin::Mutex;
-use x86_64::boot::BootInfo;
-use x86_64::memory::paging::{Frame, FrameAllocator};
+use x86_64::{
+    boot::BootInfo,
+    memory::paging::{Frame, FrameAllocator},
+};
 
 const BUDDY_ALLOCATOR_MAX_ORDER: usize = 10;
 

@@ -6,24 +6,30 @@ mod interrupts;
 mod logger;
 mod memory;
 
-use self::acpi_handler::PebbleAcpiHandler;
-use self::cpu::Cpu;
-use self::interrupts::InterruptController;
-use self::logger::KernelLogger;
-use self::memory::physical::LockedPhysicalMemoryManager;
-use self::memory::{KernelPageTable, PhysicalRegionMapper};
+use self::{
+    acpi_handler::PebbleAcpiHandler,
+    cpu::Cpu,
+    interrupts::InterruptController,
+    logger::KernelLogger,
+    memory::{physical::LockedPhysicalMemoryManager, KernelPageTable, PhysicalRegionMapper},
+};
 use crate::arch::Architecture;
 use acpi::{AmlNamespace, ProcessorState};
 use alloc::vec::Vec;
 use log::{error, info, warn};
 use spin::Mutex;
-use x86_64::boot::BootInfo;
-use x86_64::hw::cpu::CpuInfo;
-use x86_64::hw::gdt::{Gdt, TssSegment};
-use x86_64::hw::tss::Tss;
-use x86_64::memory::kernel_map;
-use x86_64::memory::paging::table::RecursiveMapping;
-use x86_64::memory::paging::ActivePageTable;
+use x86_64::{
+    boot::BootInfo,
+    hw::{
+        cpu::CpuInfo,
+        gdt::{Gdt, TssSegment},
+        tss::Tss,
+    },
+    memory::{
+        kernel_map,
+        paging::{table::RecursiveMapping, ActivePageTable},
+    },
+};
 
 /// The kernel GDT. This is not thread-safe, and so should only be altered by the bootstrap
 /// processor.
@@ -63,7 +69,9 @@ pub fn kmain() -> ! {
     let cpu_info = CpuInfo::new();
     info!(
         "We're running on an {:?} processor, model info = {:?}, microarch = {:?}",
-        cpu_info.vendor, cpu_info.model_info, cpu_info.microarch()
+        cpu_info.vendor,
+        cpu_info.model_info,
+        cpu_info.microarch()
     );
 
     /*
@@ -72,9 +80,7 @@ pub fn kmain() -> ! {
      */
     #[cfg(not(test))]
     unsafe {
-        crate::ALLOCATOR
-            .lock()
-            .init(kernel_map::HEAP_START, kernel_map::HEAP_END);
+        crate::ALLOCATOR.lock().init(kernel_map::HEAP_START, kernel_map::HEAP_END);
     }
 
     /*
@@ -164,13 +170,7 @@ pub fn kmain() -> ! {
              */
             let tss = Tss::new();
             let tss_selector = unsafe { GDT.add_tss(TssSegment::new(&tss)) };
-            let cpu = Cpu {
-                processor_uid: 0,
-                local_apic_id: 0,
-                is_ap: false,
-                tss,
-                tss_selector,
-            };
+            let cpu = Cpu { processor_uid: 0, local_apic_id: 0, is_ap: false, tss, tss_selector };
             (cpu, Vec::with_capacity(0))
         }
     };

@@ -76,11 +76,7 @@ fn test_flooring_log2() {
 }
 
 pub fn ceiling_log2(x: u64) -> u64 {
-    let x = if x.is_power_of_two() {
-        x
-    } else {
-        x.next_power_of_two()
-    };
+    let x = if x.is_power_of_two() { x } else { x.next_power_of_two() };
 
     // `x` will always be a power of two now, so log(2) == the number of trailing zeros
     x.trailing_zeros() as u64

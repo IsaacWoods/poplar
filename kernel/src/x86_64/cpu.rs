@@ -1,7 +1,6 @@
 use alloc::boxed::Box;
 use core::pin::Pin;
-use x86_64::hw::gdt::SegmentSelector;
-use x86_64::hw::tss::Tss;
+use x86_64::hw::{gdt::SegmentSelector, tss::Tss};
 
 pub struct Cpu {
     pub processor_uid: u8,
