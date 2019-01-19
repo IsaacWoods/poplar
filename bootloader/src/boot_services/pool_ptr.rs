@@ -16,11 +16,7 @@ where
 }
 
 impl<T: ?Sized> Pool<T> {
-    /// Creates a new `Pool`
-    ///
-    /// # Safety
-    ///
-    /// `ptr` must be non-null
+    /// Creates a new `Pool` from a non-null pointer.
     pub(crate) unsafe fn new_unchecked(ptr: *mut T) -> Pool<T> {
         Pool {
             ptr: Unique::new_unchecked(ptr),

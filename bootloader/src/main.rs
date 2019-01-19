@@ -345,7 +345,6 @@ fn construct_boot_info(boot_info: &mut BootInfo, memory_map: &MemoryMap) {
     }
 }
 
-/// Load the kernel's sections into memory and return the entry point
 fn load_kernel(
     image_handle: Handle,
     mapper: &mut Mapper<IdentityMapping>,
@@ -462,13 +461,6 @@ fn load_kernel(
     };
     assert!(stack_top.is_page_aligned(), "Stack is not page aligned");
 
-    /*
-     * Big Scary Transmute™: we turn a virtual address into a function pointer which can be called
-     * from Rust. This is safe if:
-     *     - The kernel defines the entry point correctly
-     *     - We have loaded the kernel ELF correctly
-     *     - The correct virtual mappings are installed
-     */
     Ok(KernelInfo {
         entry_point: VirtualAddress::new(elf.entry_point()).unwrap(),
         stack_top,
@@ -483,9 +475,9 @@ fn map_section(
 ) {
     let virtual_address = VirtualAddress::new(section.address as usize).unwrap();
     /*
-     * XXX: This is a tad hacky, but because the addresses should be page-aligned, the half-open
-     * ranges `[physical_base, physical_base + size)` and `[virtual_address, virtual_address +
-     * size)` gives us the correct frame and page ranges.
+     * Because the addresses should be page-aligned, the half-open ranges `[physical_base,
+     * physical_base + size)` and `[virtual_address, virtual_address + size)` gives us the correct
+     * frame and page ranges.
      */
     let frames = Frame::contains(physical_base)
         ..Frame::contains((physical_base + section.size as usize).unwrap());

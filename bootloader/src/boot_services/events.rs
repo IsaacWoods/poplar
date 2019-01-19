@@ -9,7 +9,6 @@ pub struct Event(());
 unsafe impl Sync for Event {}
 
 bitflags! {
-    /// Specifies an Event's mode and attributes
     pub struct EventType: u32 {
         const TIMER = 0x8000_0000;
         const RUNTIME = 0x4000_0000;
@@ -20,7 +19,6 @@ bitflags! {
     }
 }
 
-/// Defines the type of a timer
 #[repr(C)]
 pub enum TimerDelay {
     Cancel,
@@ -38,7 +36,6 @@ pub enum TaskPriorityLevel {
 }
 
 impl BootServices {
-    /// Creates an event
     pub fn create_event<T>(
         &self,
         event_type: EventType,
@@ -67,17 +64,14 @@ impl BootServices {
         .map(|_| event)
     }
 
-    /// Closes the given event
     pub fn close_event(&self, event: &Event) -> Result<(), Status> {
         (self._close_event)(event).as_result().map(|_| ())
     }
 
-    /// Signals the given event
     pub fn signal_event(&self, event: &Event) -> Result<(), Status> {
         (self._signal_event)(event).as_result().map(|_| ())
     }
 
-    /// Stops execution until an event is signaled
     pub fn wait_for_event(&self, events: &[&Event]) -> Result<usize, Status> {
         let mut index: usize = 0;
         (self._wait_for_event)(events.len(), events.as_ptr(), &mut index)
@@ -85,12 +79,10 @@ impl BootServices {
             .map(|_| index)
     }
 
-    /// Checks whether an event is in the signaled state
     pub fn check_event(&self, event: &Event) -> Result<(), Status> {
         (self._check_event)(event).as_result().map(|_| ())
     }
 
-    /// Sets the type of timer and the trigger time for a timer event.
     pub fn set_timer(
         &self,
         event: &Event,
