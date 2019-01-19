@@ -1,7 +1,6 @@
 //! TODO
 
-use crate::memory::paging::Frame;
-use crate::memory::PhysicalAddress;
+use crate::memory::{paging::Frame, PhysicalAddress};
 use core::ops::Range;
 
 pub const BOOT_INFO_MAGIC: u32 = 0xcafebabe;

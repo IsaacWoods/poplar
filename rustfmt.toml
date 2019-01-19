@@ -1,0 +1,11 @@
+unstable_features = true
+edition = "2018"
+
+merge_imports = true
+imports_layout = "HorizontalVertical"
+use_field_init_shorthand = true
+use_try_shorthand = true
+format_doc_comments = true
+wrap_comments = true
+comment_width = 100
+use_small_heuristics = "max"

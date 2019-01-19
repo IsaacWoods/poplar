@@ -2,13 +2,20 @@ use super::Arch;
 use crate::util::binary_pretty_print::BinaryPrettyPrint;
 use acpi::interrupt::InterruptModel;
 use log::{error, info};
-use x86_64::hw::gdt::KERNEL_CODE_SELECTOR;
-use x86_64::hw::i8259_pic::Pic;
-use x86_64::hw::idt::{Idt, InterruptStackFrame};
-use x86_64::hw::local_apic::LocalApic;
-use x86_64::hw::registers::read_control_reg;
-use x86_64::memory::paging::{entry::EntryFlags, Frame, Page};
-use x86_64::memory::{kernel_map, PhysicalAddress};
+use x86_64::{
+    hw::{
+        gdt::KERNEL_CODE_SELECTOR,
+        i8259_pic::Pic,
+        idt::{Idt, InterruptStackFrame},
+        local_apic::LocalApic,
+        registers::read_control_reg,
+    },
+    memory::{
+        kernel_map,
+        paging::{entry::EntryFlags, Frame, Page},
+        PhysicalAddress,
+    },
+};
 /// This should only be accessed directly by the bootstrap processor.
 ///
 /// The IDT is laid out like so:
@@ -27,13 +34,12 @@ use x86_64::memory::{kernel_map, PhysicalAddress};
 static mut IDT: Idt = Idt::empty();
 
 /*
- * These constants define the IDT's layout. Refer to the documentation of the `IDT` static for the
- * full layout.
+ * These constants define the IDT's layout. Refer to the documentation of the `IDT` static for
+ * the full layout.
  */
 const LEGACY_PIC_VECTOR: u8 = 0x20;
 const APIC_SPURIOUS_VECTOR: u8 = 0xff;
-pub struct InterruptController {
-}
+pub struct InterruptController {}
 
 impl InterruptController {
     pub fn init(arch: &Arch, interrupt_model: &InterruptModel) -> InterruptController {
@@ -89,17 +95,14 @@ impl InterruptController {
     fn install_exception_handlers() {
         macro set_handler($name: ident, $handler: ident) {
             unsafe {
-                IDT.$name()
-                    .set_handler(wrap_handler!($handler), KERNEL_CODE_SELECTOR);
+                IDT.$name().set_handler(wrap_handler!($handler), KERNEL_CODE_SELECTOR);
             }
         }
 
         macro set_handler_with_error_code($name: ident, $handler: ident) {
             unsafe {
-                IDT.$name().set_handler(
-                    wrap_handler_with_error_code!($handler),
-                    KERNEL_CODE_SELECTOR,
-                );
+                IDT.$name()
+                    .set_handler(wrap_handler_with_error_code!($handler), KERNEL_CODE_SELECTOR);
             }
         }
 
@@ -127,10 +130,7 @@ extern "C" fn invalid_opcode_handler(stack_frame: &InterruptStackFrame) {
 }
 
 extern "C" fn general_protection_fault_handler(stack_frame: &InterruptStackFrame, error_code: u64) {
-    error!(
-        "General protection fault (error code = {:#x}). Interrupt stack frame: ",
-        error_code
-    );
+    error!("General protection fault (error code = {:#x}). Interrupt stack frame: ", error_code);
     error!("{:#?}", stack_frame);
 
     loop {}
@@ -140,10 +140,10 @@ extern "C" fn page_fault_handler(stack_frame: &InterruptStackFrame, error_code: 
     error!(
         "PAGE_FAULT: {} ({:#x})",
         match (
-            /* U/S (User/Supervisor )*/ (error_code >> 2) & 0b1,
-            /* I/D (Instruction/Data)*/ (error_code >> 4) & 0b1,
-            /* R/W (Read/Write      )*/ (error_code >> 1) & 0b1,
-            /*  P  (Present         )*/ (error_code >> 0) & 0b1
+            (error_code >> 2) & 0b1, // User / Supervisor
+            (error_code >> 4) & 0b1, // Instruction / Data
+            (error_code >> 1) & 0b1, // Read / Write
+            (error_code >> 0) & 0b1  // Present
         ) {
             // Page faults caused by the kernel
             (0, 0, 0, 0) => "Kernel read non-present page",
@@ -180,10 +180,7 @@ extern "C" fn page_fault_handler(stack_frame: &InterruptStackFrame, error_code: 
 }
 
 extern "C" fn double_fault_handler(stack_frame: &InterruptStackFrame, error_code: u64) {
-    error!(
-        "EXCEPTION: DOUBLE FAULT   (Error code: {})\n{:#?}",
-        error_code, stack_frame
-    );
+    error!("EXCEPTION: DOUBLE FAULT   (Error code: {})\n{:#?}", error_code, stack_frame);
 
     loop {}
 }

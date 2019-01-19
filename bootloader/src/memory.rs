@@ -1,8 +1,13 @@
 use crate::system_table;
-use core::cell::Cell;
-use core::ops::{Index, Range};
-use x86_64::memory::paging::{Frame, FrameAllocator, FRAME_SIZE};
-use x86_64::memory::{PhysicalAddress, VirtualAddress};
+use core::{
+    cell::Cell,
+    ops::{Index, Range},
+};
+use x86_64::memory::{
+    paging::{Frame, FrameAllocator, FRAME_SIZE},
+    PhysicalAddress,
+    VirtualAddress,
+};
 
 /// `BootFrameAllocator` is the allocator we use in the bootloader to allocate memory for the
 /// kernel page tables. It pre-allocates a preset number of frames using the UEFI boot services,
@@ -27,10 +32,7 @@ impl BootFrameAllocator {
             .allocate_frames(MemoryType::PebblePageTables, num_frames)
         {
             Ok(address) => address,
-            Err(err) => panic!(
-                "Failed to allocate memory for page frame allocator: {:?}",
-                err
-            ),
+            Err(err) => panic!("Failed to allocate memory for page frame allocator: {:?}", err),
         };
 
         // Zero all the memory so the page tables start with everything unmapped
@@ -64,9 +66,9 @@ impl FrameAllocator for BootFrameAllocator {
 
     fn free_n(&self, _: Frame, _: usize) {
         /*
-         * NOTE: We should only free physical memory in the bootloader when we unmap the stack guard
-         * page. Because of the simplicity of our allocator, we can't do anything useful with the
-         * freed frame, so we just leak it.
+         * NOTE: We should only free physical memory in the bootloader when we unmap the stack
+         * guard page. Because of the simplicity of our allocator, we can't do anything
+         * useful with the freed frame, so we just leak it.
          */
     }
 }
@@ -126,10 +128,7 @@ struct MemoryMapIter<'a> {
 
 impl<'a> MemoryMapIter<'a> {
     fn new(memory_map: &MemoryMap) -> MemoryMapIter {
-        MemoryMapIter {
-            cur_index: 0,
-            memory_map: memory_map,
-        }
+        MemoryMapIter { cur_index: 0, memory_map }
     }
 }
 
@@ -170,10 +169,7 @@ pub enum MemoryType {
 
     /*
      * Values between 0x8000_0000 and 0xffff_ffff are free to use by OS loaders for their own
-     * purposes. We use a few so the OS can locate itself and things like the page tables when we
-     * hand over control (this isn't how the OS *should* locate these structures [it should instead
-     * use the passed `BootInformation` struct], but these values identify the used regions in the
-     * memory map easily).
+     * purposes.
      */
     PebbleKernelMemory = 0x8000_0000,
     PebblePageTables = 0x8000_0001,

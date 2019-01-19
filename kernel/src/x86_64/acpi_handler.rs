@@ -1,14 +1,19 @@
 use super::memory::{
-    physical::LockedPhysicalMemoryManager, KernelPageTable, PhysicalMapping, PhysicalRegionMapper,
+    physical::LockedPhysicalMemoryManager,
+    KernelPageTable,
+    PhysicalMapping,
+    PhysicalRegionMapper,
 };
 use crate::util::math::ceiling_integer_divide;
 use acpi::{AcpiHandler, PhysicalMapping as AcpiPhysicalMapping};
 use core::ptr::NonNull;
 use log::info;
 use spin::Mutex;
-use x86_64::memory::paging::entry::EntryFlags;
-use x86_64::memory::paging::{Frame, FRAME_SIZE};
-use x86_64::memory::{PhysicalAddress, VirtualAddress};
+use x86_64::memory::{
+    paging::{entry::EntryFlags, Frame, FRAME_SIZE},
+    PhysicalAddress,
+    VirtualAddress,
+};
 
 pub struct PebbleAcpiHandler<'a> {
     physical_region_mapper: &'a Mutex<PhysicalRegionMapper>,
@@ -22,11 +27,7 @@ impl<'a> PebbleAcpiHandler<'a> {
         page_table: &'a Mutex<KernelPageTable>,
         frame_allocator: &'a LockedPhysicalMemoryManager,
     ) -> PebbleAcpiHandler<'a> {
-        PebbleAcpiHandler {
-            physical_region_mapper,
-            page_table,
-            frame_allocator,
-        }
+        PebbleAcpiHandler { physical_region_mapper, page_table, frame_allocator }
     }
 }
 

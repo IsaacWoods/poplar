@@ -5,17 +5,16 @@ pub mod mapper;
 pub mod page;
 pub mod table;
 
-pub use self::frame::Frame;
-pub use self::frame_allocator::FrameAllocator;
-pub use self::mapper::Mapper;
-pub use self::page::Page;
+pub use self::{frame::Frame, frame_allocator::FrameAllocator, mapper::Mapper, page::Page};
 pub use core::ops::{Deref, DerefMut};
 
 pub const FRAME_SIZE: usize = 0x1000;
 pub const PAGE_SIZE: usize = 0x1000;
 
-use self::entry::EntryFlags;
-use self::table::{IdentityMapping, Level4, RecursiveMapping, Table, TableMapping};
+use self::{
+    entry::EntryFlags,
+    table::{IdentityMapping, Level4, RecursiveMapping, Table, TableMapping},
+};
 use super::{PhysicalAddress, VirtualAddress};
 use crate::hw::registers::{read_control_reg, write_control_reg};
 use core::marker::PhantomData;
@@ -38,10 +37,7 @@ where
     /// the active set of page tables, which aren't available when we first create an
     /// `InactivePageTable` in the bootloader.
     pub fn new(frame: Frame) -> InactivePageTable<M> {
-        InactivePageTable {
-            p4_frame: frame,
-            _mapping: PhantomData,
-        }
+        InactivePageTable { p4_frame: frame, _mapping: PhantomData }
     }
 }
 
@@ -54,10 +50,7 @@ impl InactivePageTable<IdentityMapping> {
         frame: Frame,
         recursive_entry: u16,
     ) -> InactivePageTable<IdentityMapping> {
-        let table = InactivePageTable {
-            p4_frame: frame,
-            _mapping: PhantomData,
-        };
+        let table = InactivePageTable { p4_frame: frame, _mapping: PhantomData };
 
         let p4: &mut Table<Level4, IdentityMapping> = unsafe {
             &mut *(VirtualAddress::new_unchecked(usize::from(frame.start_address())).mut_ptr())
@@ -170,9 +163,7 @@ impl ActivePageTable<IdentityMapping> {
     /// identity-mapped virtual address space (such as in the UEFI bootloader), and should be used
     /// before we have a set of page tables that are recursively mapped.
     pub unsafe fn new(p4_address: PhysicalAddress) -> ActivePageTable<IdentityMapping> {
-        ActivePageTable {
-            mapper: Mapper::<IdentityMapping>::new(p4_address),
-        }
+        ActivePageTable { mapper: Mapper::<IdentityMapping>::new(p4_address) }
     }
 }
 
@@ -181,9 +172,7 @@ impl ActivePageTable<RecursiveMapping> {
     /// is unsafe because it assumes a valid set of page tables exist and are pointed to by `CR3`,
     /// and that they are correctly recursively mapped.
     pub unsafe fn new() -> ActivePageTable<RecursiveMapping> {
-        ActivePageTable {
-            mapper: Mapper::<RecursiveMapping>::new(),
-        }
+        ActivePageTable { mapper: Mapper::<RecursiveMapping>::new() }
     }
 
     /// Alter the mappings of a `InactivePageTable` by temporarily replacing the recursive entry

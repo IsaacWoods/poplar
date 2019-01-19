@@ -11,12 +11,13 @@
     type_ascription,
     naked_functions
 )]
+#[macro_use]
 extern crate alloc;
 
 /*
  * This selects the correct module to include depending on the architecture we're compiling the
- * kernel for. These architecture modules contain the kernel entry point and any platform-specific
- * code.
+ * kernel for. These architecture modules contain the kernel entry point and any
+ * platform-specific code.
  */
 cfg_if! {
     if #[cfg(feature = "arch_x86_64")] {
@@ -31,12 +32,10 @@ mod arch;
 mod heap_allocator;
 mod util;
 
-use crate::arch::Architecture;
-use crate::heap_allocator::LockedHoleAllocator;
+use crate::{arch::Architecture, heap_allocator::LockedHoleAllocator};
 use cfg_if::cfg_if;
 use core::panic::PanicInfo;
-use log::error;
-use log::info;
+use log::{error, info};
 
 #[cfg(not(test))]
 #[global_allocator]

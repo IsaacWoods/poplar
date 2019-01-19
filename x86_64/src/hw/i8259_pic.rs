@@ -22,9 +22,9 @@ impl Pic {
     pub fn remap_and_disable(&mut self, master_vector_offset: u8, slave_vector_offset: u8) {
         unsafe {
             /*
-             * 0x80 is a port used by POST. It shouldn't do anything, but it'll take long enough to
-             * execute writes to it that we should block for long enough for the PICs to actually do
-             * what we ask them to.
+             * 0x80 is a port used by POST. It shouldn't do anything, but it'll take long enough
+             * to execute writes to it that we should block for long enough for the
+             * PICs to actually do what we ask them to.
              */
             let mut wait_port: Port<u8> = Port::new(0x80);
             let mut wait = || wait_port.write(0);

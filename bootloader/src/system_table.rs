@@ -1,23 +1,25 @@
 use crate::{
     boot_services::BootServices,
-    protocols::{SimpleTextInput, SimpleTextOutput},
     runtime_services::RuntimeServices,
     types::{Guid, Handle, RuntimeMemory, TableHeader},
 };
 use core::slice;
 
+/// The UEFI system table describes the services the UEFI provides to the bootloader. We don't
+/// support the console services, because they can allocate at any point and so are difficult to
+/// use safely.
 #[derive(Debug)]
 #[repr(C)]
 pub struct SystemTable {
     pub hdr: TableHeader,
     pub firmware_vendor: RuntimeMemory<u16>,
     pub firmware_revision: u32,
-    pub console_in_handle: Handle,
-    pub console_in: RuntimeMemory<SimpleTextInput>,
-    pub console_out_handle: Handle,
-    pub console_out: RuntimeMemory<SimpleTextOutput>,
-    pub standard_error_handle: Handle,
-    pub console_error: RuntimeMemory<SimpleTextOutput>,
+    pub _console_in_handle: Handle,
+    pub _console_in: RuntimeMemory<()>,
+    pub _console_out_handle: Handle,
+    pub _console_out: RuntimeMemory<()>,
+    pub _standard_error_handle: Handle,
+    pub _console_error: RuntimeMemory<()>,
     pub runtime_services: RuntimeMemory<RuntimeServices>,
     pub boot_services: RuntimeMemory<BootServices>,
     pub number_config_entries: usize,

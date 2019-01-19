@@ -27,8 +27,8 @@ impl Default for EntryFlags {
 
 impl EntryFlags {
     /*
-     * True if the given set of flags is compatible with `self`. False if not compatible, or would
-     * create potential security vulnerability, such as:
+     * True if the given set of flags is compatible with `self`. False if not compatible, or
+     * would create potential security vulnerability, such as:
      *      * Allows execution as code when `self` prevents it
      *      * Is accessible in user-mode when `self` is not
      *      * Can be written to when `self` can't be
@@ -58,9 +58,7 @@ impl Entry {
             /*
              * Safe to unwrap because we check that the address is valid when we create the entry
              */
-            Some(Frame::contains(
-                PhysicalAddress::new((self.0 & ADDRESS_MASK) as usize).unwrap(),
-            ))
+            Some(Frame::contains(PhysicalAddress::new((self.0 & ADDRESS_MASK) as usize).unwrap()))
         } else {
             None
         }

@@ -42,11 +42,13 @@ impl LocalApic {
     // /// will signal on the specified vector.
     // TODO: maybe take a divisor directly here and time it in kernel::x86_64::interrupts::init
     // pub fn enable_timer(duration: usize, vector: u8) {
-    //     trace!("Timing local APIC bus frequency [freezing here suggests problem with PIT sleep]");
-    //     unsafe {
+    //     trace!("Timing local APIC bus frequency [freezing here suggests problem with PIT
+    // sleep]");     unsafe {
     //         /*
-    //          * Set divide value to 16 and initial counter value to -1. We use 16 because apparently
-    //          * some hardware has issues with other divide values (especially 1, which would be the
+    //          * Set divide value to 16 and initial counter value to -1. We use 16 because
+    //            apparently
+    //          * some hardware has issues with other divide values (especially 1, which would be
+    //            the
     //          * simplest otherwise). 16 seems to be the most supported.
     //          */
     //         Self::register(0x3e0).write(0x3);
@@ -62,7 +64,8 @@ impl LocalApic {
     //         trace!("Timing of local APIC bus frequency complete");
 
     //         /*
-    //          * Start the APIC timer in Periodic mode with a divide value of 16 again, to interrupt
+    //          * Start the APIC timer in Periodic mode with a divide value of 16 again, to
+    //            interrupt
     //          * every 10 ms on the given vector.
     //          */
     //         Self::register(0x320).write(u32::from(vector) | 0x20000);
@@ -73,9 +76,7 @@ impl LocalApic {
 
     pub unsafe fn register(offset: usize) -> LocalApicRegister {
         LocalApicRegister::new(
-            kernel_map::LOCAL_APIC_CONFIG
-                .offset(offset as isize)
-                .mut_ptr() as *mut u32,
+            kernel_map::LOCAL_APIC_CONFIG.offset(offset as isize).mut_ptr() as *mut u32
         )
     }
 

@@ -1,7 +1,9 @@
 use super::paging::FRAME_SIZE;
-use core::cmp::Ordering;
-use core::fmt;
-use core::ops::{Add, Sub};
+use core::{
+    cmp::Ordering,
+    fmt,
+    ops::{Add, Sub},
+};
 
 /// Represents an address in the physical memory space. A valid physical address is smaller than
 /// 2^52

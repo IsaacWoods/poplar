@@ -1,10 +1,11 @@
 use super::{BootServices, Pool};
-use crate::memory::{MemoryDescriptor, MemoryMap, MemoryType};
-use crate::types::Status;
+use crate::{
+    memory::{MemoryDescriptor, MemoryMap, MemoryType},
+    types::Status,
+};
 use core::{mem, slice};
 use x86_64::memory::PhysicalAddress;
 
-/// Type of memory allocation to perform
 #[repr(C)]
 pub enum AllocateType {
     AllocateAnyPages,
@@ -14,7 +15,6 @@ pub enum AllocateType {
 }
 
 impl BootServices {
-    /// Allocates memory frames from the system
     pub fn allocate_frames(
         &self,
         memory_type: MemoryType,
@@ -34,12 +34,10 @@ impl BootServices {
         }
     }
 
-    /// Frees memory pages
     pub fn free_pages(&self, memory: PhysicalAddress, pages: usize) -> Result<(), Status> {
         (self._free_pages)(memory, pages).as_result().map(|_| ())
     }
 
-    /// Returns the current memory map
     pub fn get_memory_map(&self) -> Result<MemoryMap, Status> {
         let mut map = MemoryMap {
             buffer: 0 as *mut MemoryDescriptor,
@@ -77,28 +75,18 @@ impl BootServices {
         .map(|_| map)
     }
 
-    /// Allocates pool memory
     pub fn allocate_pool(&self, pool_type: MemoryType, size: usize) -> Result<*mut u8, Status> {
         let mut buffer: *mut u8 = 0 as *mut u8;
-        (self._allocate_pool)(pool_type, size, &mut buffer)
-            .as_result()
-            .map(|_| buffer)
+        (self._allocate_pool)(pool_type, size, &mut buffer).as_result().map(|_| buffer)
     }
 
-    /// Returns pool memory to the system
     pub fn free_pool(&self, buffer: *mut u8) -> Result<(), Status> {
         (self._free_pool)(buffer).as_result().map(|_| ())
     }
 
-    /// Allocates a slice from pool memory
     pub fn allocate_slice<T>(&self, count: usize) -> Result<Pool<[T]>, Status> {
         let ptr = self.allocate_pool(MemoryType::LoaderData, count * mem::size_of::<T>())?;
-        unsafe {
-            Ok(Pool::new_unchecked(slice::from_raw_parts_mut(
-                ptr as *mut T,
-                count,
-            )))
-        }
+        unsafe { Ok(Pool::new_unchecked(slice::from_raw_parts_mut(ptr as *mut T, count))) }
     }
 
     /// Fills the buffer with the specified value
@@ -106,7 +94,7 @@ impl BootServices {
     /// # Safety
     ///
     /// This method is inherently unsafe, because it can modify the contents of any specified memory
-    /// location. The caller is responsible for
+    /// location.
     pub unsafe fn set_mem(&self, buffer: *mut u8, size: usize, value: u8) {
         (self._set_mem)(buffer, size, value);
     }

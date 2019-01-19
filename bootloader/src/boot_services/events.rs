@@ -9,7 +9,6 @@ pub struct Event(());
 unsafe impl Sync for Event {}
 
 bitflags! {
-    /// Specifies an Event's mode and attributes
     pub struct EventType: u32 {
         const TIMER = 0x8000_0000;
         const RUNTIME = 0x4000_0000;
@@ -20,7 +19,6 @@ bitflags! {
     }
 }
 
-/// Defines the type of a timer
 #[repr(C)]
 pub enum TimerDelay {
     Cancel,
@@ -38,7 +36,6 @@ pub enum TaskPriorityLevel {
 }
 
 impl BootServices {
-    /// Creates an event
     pub fn create_event<T>(
         &self,
         event_type: EventType,
@@ -56,50 +53,35 @@ impl BootServices {
         let notify_context = notify_context as *const T as *const ();
 
         let mut event = &Event(());
-        (self._create_event)(
-            event_type,
-            notify_tpl,
-            notify_function,
-            notify_context,
-            &mut event,
-        )
-        .as_result()
-        .map(|_| event)
+        (self._create_event)(event_type, notify_tpl, notify_function, notify_context, &mut event)
+            .as_result()
+            .map(|_| event)
     }
 
-    /// Closes the given event
     pub fn close_event(&self, event: &Event) -> Result<(), Status> {
         (self._close_event)(event).as_result().map(|_| ())
     }
 
-    /// Signals the given event
     pub fn signal_event(&self, event: &Event) -> Result<(), Status> {
         (self._signal_event)(event).as_result().map(|_| ())
     }
 
-    /// Stops execution until an event is signaled
-    pub fn wait_for_event(&self, events: &[&Event]) -> Result<usize, Status> {
+    pub fn wait_for_event_signalled(&self, events: &[&Event]) -> Result<usize, Status> {
         let mut index: usize = 0;
-        (self._wait_for_event)(events.len(), events.as_ptr(), &mut index)
-            .as_result()
-            .map(|_| index)
+        (self._wait_for_event)(events.len(), events.as_ptr(), &mut index).as_result().map(|_| index)
     }
 
-    /// Checks whether an event is in the signaled state
-    pub fn check_event(&self, event: &Event) -> Result<(), Status> {
+    pub fn is_event_signalled(&self, event: &Event) -> Result<(), Status> {
         (self._check_event)(event).as_result().map(|_| ())
     }
 
-    /// Sets the type of timer and the trigger time for a timer event.
     pub fn set_timer(
         &self,
         event: &Event,
         timer_type: TimerDelay,
         trigger_time: u64,
     ) -> Result<(), Status> {
-        (self._set_timer)(event, timer_type, trigger_time)
-            .as_result()
-            .map(|_| ())
+        (self._set_timer)(event, timer_type, trigger_time).as_result().map(|_| ())
     }
 
     pub fn raise_tpl(&self, new_tpl: TaskPriorityLevel) -> Result<(), Status> {

@@ -82,10 +82,7 @@ impl<T: PortSize> Port<T> {
     /// Create a new `Port` at the specified I/O address. Unsafe because writing to random IO ports
     /// is bad.
     pub const unsafe fn new(port: u16) -> Port<T> {
-        Port {
-            port,
-            phantom: PhantomData,
-        }
+        Port { port, phantom: PhantomData }
     }
 
     pub unsafe fn read(&self) -> T {

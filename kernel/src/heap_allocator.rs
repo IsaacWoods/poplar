@@ -1,7 +1,9 @@
-use core::alloc::{AllocErr, GlobalAlloc, Layout};
-use core::cmp::max;
-use core::mem::{self, size_of};
-use core::ops::Deref;
+use core::{
+    alloc::{AllocErr, GlobalAlloc, Layout},
+    cmp::max,
+    mem::{self, size_of},
+    ops::Deref,
+};
 use spin::Mutex;
 use x86_64::memory::VirtualAddress;
 
@@ -109,20 +111,9 @@ impl HoleList {
         assert!(size_of::<Hole>() == Self::get_min_size());
 
         let ptr = hole_addr.mut_ptr() as *mut Hole;
-        mem::replace(
-            &mut *ptr,
-            Hole {
-                size: hole_size,
-                next: None,
-            },
-        );
+        mem::replace(&mut *ptr, Hole { size: hole_size, next: None });
 
-        HoleList {
-            first: Hole {
-                size: 0,
-                next: Some(&mut *ptr),
-            },
-        }
+        HoleList { first: Hole { size: 0, next: Some(&mut *ptr) } }
     }
 
     /// Search for a big enough hole for the given `Layout` with its required alignment. This uses
@@ -178,9 +169,7 @@ fn split_hole(hole: HoleInfo, required_layout: Layout) -> Option<Allocation> {
          * We need to add front padding to correctly align the data
          * in the hole.
          */
-        let aligned_addr = (hole.addr + HoleList::get_min_size())
-            .unwrap()
-            .align_up(required_align);
+        let aligned_addr = (hole.addr + HoleList::get_min_size()).unwrap().align_up(required_align);
 
         (
             aligned_addr,
@@ -216,10 +205,7 @@ fn split_hole(hole: HoleInfo, required_layout: Layout) -> Option<Allocation> {
     };
 
     Some(Allocation {
-        info: HoleInfo {
-            addr: aligned_hole.addr,
-            size: required_size,
-        },
+        info: HoleInfo { addr: aligned_hole.addr, size: required_size },
         front_padding: front_pad,
         back_padding: back_pad,
     })
@@ -227,10 +213,8 @@ fn split_hole(hole: HoleInfo, required_layout: Layout) -> Option<Allocation> {
 
 fn allocate_first_fit(mut previous: &mut Hole, layout: Layout) -> Result<Allocation, AllocErr> {
     loop {
-        let allocation: Option<Allocation> = previous
-            .next
-            .as_mut()
-            .and_then(|current| split_hole(current.info(), layout.clone()));
+        let allocation: Option<Allocation> =
+            previous.next.as_mut().and_then(|current| split_hole(current.info(), layout.clone()));
 
         match allocation {
             Some(allocation) => {
@@ -329,7 +313,7 @@ fn free(mut hole: &mut Hole, addr: VirtualAddress, mut size: usize) {
                  *      After : ___XXX__FFFF__
                  */
                 let new_hole = Hole {
-                    size: size,
+                    size,
                     next: hole.next.take(), // Ref to Y (if it exists)
                 };
 
@@ -350,10 +334,7 @@ fn free(mut hole: &mut Hole, addr: VirtualAddress, mut size: usize) {
 /// Get the greatest x with the given alignment such that x <= the given address. The alignment
 /// must be a power of two.
 pub fn align_down(addr: usize, align: usize) -> usize {
-    assert!(
-        align == 0 || align.is_power_of_two(),
-        "Can only align to a power of two"
-    );
+    assert!(align == 0 || align.is_power_of_two(), "Can only align to a power of two");
 
     if align.is_power_of_two() {
         /*

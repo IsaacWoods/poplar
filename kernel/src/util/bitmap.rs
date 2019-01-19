@@ -26,9 +26,9 @@ where
         let mask = Self::from((Self::one() << n) - Self::one()).unwrap();
 
         /*
-         * For each bit before there are no longer `n` bits to the end, take the next `n` bits and
-         * and them with a mask of `n` ones. If the result is zero, all the bits in the slice must
-         * be 0 and so we've found a run of `n` zeros.
+         * For each bit before there are no longer `n` bits to the end, take the next `n` bits
+         * and and them with a mask of `n` ones. If the result is zero, all the bits in
+         * the slice must be 0 and so we've found a run of `n` zeros.
          */
         for i in 0..(num_bits - n) {
             if self.get_bits(i..(i + n)) & mask == Self::zero() {

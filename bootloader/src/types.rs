@@ -21,9 +21,9 @@ pub type Char16 = u16;
 
 /// Pointer to EFI runtime memory
 ///
-/// An RuntimeMemory is a read-only pointer to something in EFI "runtime memory". According to the UEFI
-/// specification, the operating system must never overwrite or deallocate runtime memory, so this
-/// pointer is always safe to dereference (assuming runtime memory is mapped).
+/// An RuntimeMemory is a read-only pointer to something in EFI "runtime memory". According to the
+/// UEFI specification, the operating system must never overwrite or deallocate runtime memory, so
+/// this pointer is always safe to dereference (assuming runtime memory is mapped).
 #[derive(Debug)]
 #[repr(C)]
 pub struct RuntimeMemory<T>(Unique<T>);
@@ -118,16 +118,10 @@ pub struct TableHeader {
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 #[repr(C)]
 pub struct Guid {
-    a: u32,
-    b: u16,
-    c: u16,
-    d: [u8; 8],
-}
-
-impl Guid {
-    pub const fn new(a: u32, b: u16, c: u16, d: [u8; 8]) -> Guid {
-        Guid { a, b, c, d }
-    }
+    pub a: u32,
+    pub b: u16,
+    pub c: u16,
+    pub d: [u8; 8],
 }
 
 impl fmt::Display for Guid {
@@ -146,10 +140,6 @@ impl fmt::Display for Guid {
             }
         });
 
-        write!(
-            fmt,
-            "{:08x}-{:04x}-{:04x}-{:04x}-{:012x}",
-            self.a, self.b, self.c, d, e
-        )
+        write!(fmt, "{:08x}-{:04x}-{:04x}-{:04x}-{:012x}", self.a, self.b, self.c, d, e)
     }
 }

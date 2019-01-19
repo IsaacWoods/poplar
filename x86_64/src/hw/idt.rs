@@ -1,10 +1,13 @@
-use super::registers::CpuFlags;
-use super::DescriptorTablePointer;
-use crate::hw::gdt::{PrivilegeLevel, SegmentSelector};
-use crate::memory::VirtualAddress;
+use super::{registers::CpuFlags, DescriptorTablePointer};
+use crate::{
+    hw::gdt::{PrivilegeLevel, SegmentSelector},
+    memory::VirtualAddress,
+};
 use bit_field::BitField;
-use core::mem;
-use core::ops::{Index, IndexMut};
+use core::{
+    mem,
+    ops::{Index, IndexMut},
+};
 
 /// The type of a function that can be used as an interrupt handler. It's marked as diverging
 /// because we don't exactly 'return' from an interrupt. This should not be used directly to create
@@ -20,9 +23,9 @@ pub struct IdtEntry {
     /// this vector is handled. This is normally set to the kernel's code segment.
     segment_selector: u16,
 
-    /// If this is not `0`, this is used as an index into the Interrupt Stack Table described in the
-    /// currently active TSS. When this vector is handled, the address in that index of the IST
-    /// will be loaded into `RSP`. This allows us to nicely handle kernel stack overflows.
+    /// If this is not `0`, this is used as an index into the Interrupt Stack Table described in
+    /// the currently active TSS. When this vector is handled, the address in that index of the
+    /// IST will be loaded into `RSP`. This allows us to nicely handle kernel stack overflows.
     ist_offset: u8,
 
     ///    7                           0
@@ -99,9 +102,7 @@ macro getter($entry: expr, $name: ident) {
 
 impl Idt {
     pub const fn empty() -> Idt {
-        Idt {
-            entries: [IdtEntry::missing(); 256],
-        }
+        Idt { entries: [IdtEntry::missing(); 256] }
     }
 
     getter!(0, divide_error);

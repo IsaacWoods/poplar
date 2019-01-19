@@ -1,7 +1,9 @@
 use super::paging::PAGE_SIZE;
-use core::cmp::Ordering;
-use core::fmt;
-use core::ops::{Add, Sub};
+use core::{
+    cmp::Ordering,
+    fmt,
+    ops::{Add, Sub},
+};
 
 /// Represents a canonical virtual address. To be canonical, the address must be in the ranges
 /// `0x0000_0000_0000_0000` to `0x0000_8000_0000_0000` or `0xffff_8000_0000_0000` to
@@ -14,8 +16,8 @@ impl VirtualAddress {
     /// Create a new `VirtualAddress` from the given address. If the given address is not a valid
     /// canonical address, this returns `None`.
     /*
-     * TODO: this should be made `const` when CTFE supports matches, then we should use it for all
-     * the constants that currently use `new_unchecked`
+     * TODO: this should be made `const` when CTFE supports matches, then we should use it for
+     * all the constants that currently use `new_unchecked`
      */
     pub fn new(address: usize) -> Option<VirtualAddress> {
         match address {
@@ -91,8 +93,8 @@ impl VirtualAddress {
              *   e.g. align         = 0b00001000
              *        align - 1     = 0b00000111
              *        !(align - 1)  = 0b11111000
-             *                               ^^^ Masks the address to the address below it with the
-             *                                   correct alignment
+             *                               ^^^ Masks the address to the address below it with
+             *                                   the correct alignment
              */
             VirtualAddress::new_canonicalise(self.0 & !(align - 1))
         }
