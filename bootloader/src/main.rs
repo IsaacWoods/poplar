@@ -19,9 +19,7 @@ mod system_table;
 mod types;
 
 use crate::{
-    boot_services::{OpenProtocolAttributes, Pool, Protocol, SearchType},
     memory::{BootFrameAllocator, MemoryMap, MemoryType},
-    protocols::{FileAttributes, FileInfo, FileMode, FileSystemInfo, SimpleFileSystem},
     system_table::SystemTable,
     types::{Guid, Handle, Status},
 };
@@ -362,7 +360,7 @@ fn load_kernel(
     allocator: &BootFrameAllocator,
 ) -> Result<KernelInfo, Status> {
     println!("Loading kernel image from boot volume");
-    let file_data = read_file("BOOT", "kernel.elf", image_handle)
+    let file_data = protocols::read_file("kernel.elf", image_handle)
         .map_err(|err| panic!("Failed to read kernel ELF from disk: {:?}", err))
         .unwrap();
 
@@ -451,7 +449,7 @@ fn load_kernel(
             Some(symbol) => VirtualAddress::new(symbol.value as usize).unwrap(),
             None => panic!("Kernel does not have a '_guard_page' symbol!"),
         };
-    assert!(guard_page_address.is_page_aligned(), "Guard page address is not page-aligned");
+    assert!(guard_page_address.is_page_aligned());
     println!("Unmapping guard page");
     mapper.unmap(Page::contains(guard_page_address), allocator);
 
@@ -494,41 +492,6 @@ fn map_section(
     for (frame, page) in frames.zip(pages) {
         mapper.map_to(page, frame, flags, allocator);
     }
-}
-
-fn read_file(volume_label: &str, path: &str, image_handle: Handle) -> Result<Pool<[u8]>, Status> {
-    let volume_root = system_table()
-        .boot_services
-        .locate_handle(SearchType::ByProtocol, Some(SimpleFileSystem::guid()), None)?
-        .iter()
-        .filter_map(|handle| {
-            system_table()
-                .boot_services
-                .open_protocol::<SimpleFileSystem>(
-                    *handle,
-                    image_handle,
-                    0,
-                    OpenProtocolAttributes::BY_HANDLE_PROTOCOL,
-                )
-                .and_then(|volume| volume.open_volume())
-                .ok()
-        })
-        .find(|root| {
-            root.get_info::<FileSystemInfo>()
-                .and_then(|info| info.volume_label())
-                .map(|label| label == volume_label)
-                .unwrap_or(false)
-        })
-        .ok_or(Status::NotFound)?;
-
-    let path = boot_services::str_to_utf16(path)?;
-    let file = volume_root.open(&path, FileMode::READ, FileAttributes::empty())?;
-
-    let file_size = file.get_info::<FileInfo>()?.file_size as usize;
-    let mut file_buf = system_table().boot_services.allocate_slice::<u8>(file_size)?;
-
-    let _ = file.read(&mut file_buf)?;
-    Ok(file_buf)
 }
 
 #[panic_handler]

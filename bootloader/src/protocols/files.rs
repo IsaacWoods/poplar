@@ -1,11 +1,51 @@
 use crate::{
-    boot_services::{utf16_to_str, Pool, Protocol},
+    boot_services::{self, utf16_to_str, OpenProtocolAttributes, Pool, Protocol, SearchType},
     memory::MemoryType,
     system_table,
-    types::{Bool, Char16, Guid, Status},
+    types::{Bool, Char16, Guid, Handle, Status},
 };
 use bitflags::bitflags;
 use core::{mem, ops::Drop, slice};
+
+/// The label of the boot volume (the FAT filesystem that the bootloader reads files from). Needs to
+/// match the volume label used when creating the FAT filesystem.
+const BOOT_VOLUME_LABEL: &str = "BOOT";
+
+/// Read a file from the `BOOT` volume using the UEFI file protocols.
+pub fn read_file(path: &str, image_handle: Handle) -> Result<Pool<[u8]>, Status> {
+    let volume_root = system_table()
+        .boot_services
+        .locate_handle(SearchType::ByProtocol, Some(SimpleFileSystem::guid()), None)?
+        .iter()
+        .filter_map(|handle| {
+            system_table()
+                .boot_services
+                .open_protocol::<SimpleFileSystem>(
+                    *handle,
+                    image_handle,
+                    0,
+                    OpenProtocolAttributes::BY_HANDLE_PROTOCOL,
+                )
+                .and_then(|volume| volume.open_volume())
+                .ok()
+        })
+        .find(|root| {
+            root.get_info::<FileSystemInfo>()
+                .and_then(|info| info.volume_label())
+                .map(|label| label == BOOT_VOLUME_LABEL)
+                .unwrap_or(false)
+        })
+        .ok_or(Status::NotFound)?;
+
+    let path = boot_services::str_to_utf16(path)?;
+    let file = volume_root.open(&path, FileMode::READ, FileAttributes::empty())?;
+
+    let file_size = file.get_info::<FileInfo>()?.file_size as usize;
+    let mut file_buf = system_table().boot_services.allocate_slice::<u8>(file_size)?;
+
+    file.read(&mut file_buf)?;
+    Ok(file_buf)
+}
 
 /// Provides file based access to supported file systems
 #[repr(C)]
