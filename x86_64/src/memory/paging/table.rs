@@ -2,12 +2,15 @@
 //! use the correct terminology for the levels of page tables (as they're confusing in the Intel
 //! manual etc.) and so call them P4, P3, P2 and P1 respectively.
 
-use super::entry::{Entry, EntryFlags};
-use super::FrameAllocator;
-use crate::memory::kernel_map::P4_TABLE_ADDRESS;
-use crate::memory::VirtualAddress;
-use core::marker::PhantomData;
-use core::ops::{Index, IndexMut};
+use super::{
+    entry::{Entry, EntryFlags},
+    FrameAllocator,
+};
+use crate::memory::{kernel_map::P4_TABLE_ADDRESS, VirtualAddress};
+use core::{
+    marker::PhantomData,
+    ops::{Index, IndexMut},
+};
 
 /// This points to the **currently installed** P4, **if** it is correctly recursively mapped. This
 /// **does not** hold in the bootloader before we install our own tables.
@@ -52,10 +55,11 @@ impl HierarchicalLevel for Level2 {
 /// easier by the identity mapping that UEFI gives us anyway, so we use it to our advantage.
 pub enum IdentityMapping {}
 
-/// This is a marker type that specifies that we are in an environment where the active P4 page table
-/// should always have a recursive entry - an entry that contains the physical address of the P4
-/// itself. This allows us to access the backing memory of the page tables through special virtual
-/// addresses that "loop" through the recursive P4 entry to access every level of the page tables.
+/// This is a marker type that specifies that we are in an environment where the active P4 page
+/// table should always have a recursive entry - an entry that contains the physical address of the
+/// P4 itself. This allows us to access the backing memory of the page tables through special
+/// virtual addresses that "loop" through the recursive P4 entry to access every level of the page
+/// tables.
 ///
 /// This mapping is used by the kernel, and should be safe from the point the initial kernel page
 /// tables are installed in the bootloader.
@@ -108,9 +112,7 @@ impl TableMapping for RecursiveMapping {
              * the sign-extension bits, so we make sure to re-canonicalise it again.
              */
             let table_address = table as *const _ as usize;
-            Some(VirtualAddress::new_canonicalise(
-                (table_address << 9) | usize::from(index) << 12,
-            ))
+            Some(VirtualAddress::new_canonicalise((table_address << 9) | usize::from(index) << 12))
         } else {
             None
         }
@@ -168,9 +170,7 @@ where
     {
         if self.next_table(index).is_none() {
             assert!(
-                !self.entries[index as usize]
-                    .flags()
-                    .contains(EntryFlags::HUGE_PAGE),
+                !self.entries[index as usize].flags().contains(EntryFlags::HUGE_PAGE),
                 "mapping code does not support huge pages"
             );
 

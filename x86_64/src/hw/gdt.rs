@@ -1,11 +1,8 @@
-use super::tss::Tss;
-use super::DescriptorTablePointer;
+use super::{tss::Tss, DescriptorTablePointer};
 use crate::memory::VirtualAddress;
 use alloc::boxed::Box;
 use bit_field::BitField;
-use core::mem;
-use core::ops::Deref;
-use core::pin::Pin;
+use core::{mem, ops::Deref, pin::Pin};
 
 #[derive(Clone, Copy, PartialEq, Eq)]
 #[repr(u8)]

@@ -1,8 +1,10 @@
 use super::PAGE_SIZE;
 use crate::memory::VirtualAddress;
 use bit_field::BitField;
-use core::iter::Step;
-use core::ops::{Add, AddAssign};
+use core::{
+    iter::Step,
+    ops::{Add, AddAssign},
+};
 
 #[derive(Clone, Copy, Debug, PartialOrd, Ord, PartialEq, Eq)]
 pub struct Page {
@@ -12,9 +14,7 @@ pub struct Page {
 impl Page {
     /// Get the page that contains the given virtual address.
     pub fn contains(address: VirtualAddress) -> Page {
-        Page {
-            number: usize::from(address) / PAGE_SIZE,
-        }
+        Page { number: usize::from(address) / PAGE_SIZE }
     }
 
     pub fn start_address(&self) -> VirtualAddress {
@@ -43,9 +43,7 @@ impl Add<usize> for Page {
 
     fn add(self, offset: usize) -> Self::Output {
         assert!(VirtualAddress::new((self.number + offset) * PAGE_SIZE).is_some());
-        Page {
-            number: self.number + offset,
-        }
+        Page { number: self.number + offset }
     }
 }
 
@@ -72,20 +70,14 @@ impl Step for Page {
     }
 
     fn add_one(&self) -> Self {
-        Page {
-            number: self.number + 1,
-        }
+        Page { number: self.number + 1 }
     }
 
     fn sub_one(&self) -> Self {
-        Page {
-            number: self.number - 1,
-        }
+        Page { number: self.number - 1 }
     }
 
     fn add_usize(&self, n: usize) -> Option<Self> {
-        Some(Page {
-            number: self.number.checked_add(n as usize)?,
-        })
+        Some(Page { number: self.number.checked_add(n as usize)? })
     }
 }

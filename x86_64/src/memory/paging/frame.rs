@@ -1,7 +1,9 @@
 use super::FRAME_SIZE;
 use crate::memory::PhysicalAddress;
-use core::iter::Step;
-use core::ops::{Add, AddAssign};
+use core::{
+    iter::Step,
+    ops::{Add, AddAssign},
+};
 
 #[derive(Clone, Copy, Debug, PartialOrd, Ord, PartialEq, Eq)]
 pub struct Frame {
@@ -10,9 +12,7 @@ pub struct Frame {
 
 impl Frame {
     pub fn contains(address: PhysicalAddress) -> Frame {
-        Frame {
-            number: usize::from(address) / FRAME_SIZE,
-        }
+        Frame { number: usize::from(address) / FRAME_SIZE }
     }
 
     pub fn start_address(&self) -> PhysicalAddress {
@@ -25,9 +25,7 @@ impl Add<usize> for Frame {
 
     fn add(self, offset: usize) -> Self::Output {
         assert!(PhysicalAddress::new((self.number + offset) * FRAME_SIZE).is_some());
-        Frame {
-            number: self.number + offset,
-        }
+        Frame { number: self.number + offset }
     }
 }
 
@@ -54,20 +52,14 @@ impl Step for Frame {
     }
 
     fn add_one(&self) -> Self {
-        Frame {
-            number: self.number + 1,
-        }
+        Frame { number: self.number + 1 }
     }
 
     fn sub_one(&self) -> Self {
-        Frame {
-            number: self.number - 1,
-        }
+        Frame { number: self.number - 1 }
     }
 
     fn add_usize(&self, n: usize) -> Option<Self> {
-        Some(Frame {
-            number: self.number.checked_add(n as usize)?,
-        })
+        Some(Frame { number: self.number.checked_add(n as usize)? })
     }
 }

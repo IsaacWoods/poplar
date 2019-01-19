@@ -1,9 +1,8 @@
 /// This module gets and decodes information about the CPU we're running on, using the `cpuid`
-/// instruction. If we're running under a hypervisor, we use the [Linux standard for interacting
-/// with hypervisors][linux-hypervisors].
+/// instruction. If we're running under a hypervisor, we use the [Linux standard for
+/// interacting with hypervisors][linux-hypervisors].
 ///
 /// [linux-hypervisors]: https://lwn.net/Articles/301888/
-
 use bit_field::BitField;
 use core::str;
 
@@ -50,15 +49,12 @@ impl CpuInfo {
                 }
             }
 
-
-            Vendor::Amd if self.model_info.family == 0xf => {
-                match self.model_info.extended_family {
-                    0x15 => Some(Microarch::Bulldozer),
-                    0x16 => Some(Microarch::Jaguar),
-                    0x17 => Some(Microarch::Zen),
-                    _ => None,
-                }
-            }
+            Vendor::Amd if self.model_info.family == 0xf => match self.model_info.extended_family {
+                0x15 => Some(Microarch::Bulldozer),
+                0x16 => Some(Microarch::Jaguar),
+                0x17 => Some(Microarch::Zen),
+                _ => None,
+            },
 
             Vendor::Intel => None,
             Vendor::Amd => None,
@@ -201,9 +197,7 @@ enum CpuidEntry {
 }
 
 fn decode_vendor(vendor_id: &CpuidResult) -> Vendor {
-    let vendor_repr = VendorRepr {
-        vendor_id: [vendor_id.b, vendor_id.d, vendor_id.c],
-    };
+    let vendor_repr = VendorRepr { vendor_id: [vendor_id.b, vendor_id.d, vendor_id.c] };
 
     match str::from_utf8(unsafe { &vendor_repr.vendor_name }) {
         Ok("GenuineIntel") => Vendor::Intel,
@@ -219,11 +213,8 @@ fn decode_model_info() -> ModelInfo {
     let model = cpuid.a.get_bits(4..8) as u8;
     let stepping = cpuid.a.get_bits(0..4) as u8;
 
-    let extended_family = if family == 0xf {
-        family + cpuid.a.get_bits(20..28) as u8
-    } else {
-        family
-    };
+    let extended_family =
+        if family == 0xf { family + cpuid.a.get_bits(20..28) as u8 } else { family };
 
     let extended_model = if family == 0xf || family == 0x6 {
         model + ((cpuid.a.get_bits(16..20) as u8) << 4)
@@ -231,21 +222,14 @@ fn decode_model_info() -> ModelInfo {
         model
     };
 
-    ModelInfo {
-        family,
-        model,
-        stepping,
-
-        extended_family,
-        extended_model,
-    }
+    ModelInfo { family, model, stepping, extended_family, extended_model }
 }
 
 fn decode_hypervisor_info() -> Option<HypervisorInfo> {
     /*
-     * First, we detect if we're running under a hypervisor at all. This is done by checking bit 31
-     * of ECX of the 0x1 cpuid leaf, which the hypervisor intercepts the access to and advertises
-     * its presence.
+     * First, we detect if we're running under a hypervisor at all. This is done by checking bit
+     * 31 of ECX of the 0x1 cpuid leaf, which the hypervisor intercepts the access to and
+     * advertises its presence.
      */
     if !cpuid(CpuidEntry::ProcessorTypeFamilyModel).c.get_bit(31) {
         return None;
@@ -258,7 +242,11 @@ fn decode_hypervisor_info() -> Option<HypervisorInfo> {
     let max_leaf = hypervisor_vendor_cpuid.a;
 
     let vendor_repr = VendorRepr {
-        vendor_id: [hypervisor_vendor_cpuid.b, hypervisor_vendor_cpuid.c, hypervisor_vendor_cpuid.d],
+        vendor_id: [
+            hypervisor_vendor_cpuid.b,
+            hypervisor_vendor_cpuid.c,
+            hypervisor_vendor_cpuid.d,
+        ],
     };
 
     let vendor = match str::from_utf8(unsafe { &vendor_repr.vendor_name }) {
@@ -269,7 +257,8 @@ fn decode_hypervisor_info() -> Option<HypervisorInfo> {
     /*
      * If cpuid has the hypervisor timing leaf, use the bus frequency of that.
      * NOTE: this is in kHz, so we convert to Hz
-     * NOTE: for this to exist under KVM, the `vmware-cpuid-freq` and `invtsc` cpu flags must be set.
+     * NOTE: for this to exist under KVM, the `vmware-cpuid-freq` and `invtsc` cpu flags must be
+     * set.
      */
     let apic_frequency = if max_leaf >= 0x4000_0010 {
         Some(cpuid(CpuidEntry::HypervisorFrequencies).b * 1000)
@@ -277,11 +266,7 @@ fn decode_hypervisor_info() -> Option<HypervisorInfo> {
         None
     };
 
-    Some(HypervisorInfo {
-        vendor,
-        max_leaf,
-        apic_frequency,
-    })
+    Some(HypervisorInfo { vendor, max_leaf, apic_frequency })
 }
 
 fn cpuid(entry: CpuidEntry) -> CpuidResult {

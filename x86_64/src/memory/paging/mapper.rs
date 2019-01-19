@@ -1,8 +1,14 @@
-use super::entry::EntryFlags;
-use super::table::{IdentityMapping, Level4, RecursiveMapping, Table, TableMapping};
-use super::{Frame, FrameAllocator, Page};
-use crate::hw::tlb;
-use crate::memory::{PhysicalAddress, VirtualAddress};
+use super::{
+    entry::EntryFlags,
+    table::{IdentityMapping, Level4, RecursiveMapping, Table, TableMapping},
+    Frame,
+    FrameAllocator,
+    Page,
+};
+use crate::{
+    hw::tlb,
+    memory::{PhysicalAddress, VirtualAddress},
+};
 
 /// A `Mapper` allows you to change the virtual to physical mappings in a set of page tables. It
 /// relies on the set of page tables it represents being accessible through the **current**
@@ -20,17 +26,13 @@ pub struct Mapper<'a, M: 'a + TableMapping> {
 
 impl Mapper<'static, RecursiveMapping> {
     pub(super) unsafe fn new() -> Mapper<'static, RecursiveMapping> {
-        Mapper {
-            p4: &mut *(super::table::P4),
-        }
+        Mapper { p4: &mut *(super::table::P4) }
     }
 }
 
 impl<'a> Mapper<'a, IdentityMapping> {
     pub(super) unsafe fn new(p4_address: PhysicalAddress) -> Mapper<'a, IdentityMapping> {
-        Mapper {
-            p4: &mut *(VirtualAddress::new_unchecked(usize::from(p4_address)).mut_ptr()),
-        }
+        Mapper { p4: &mut *(VirtualAddress::new_unchecked(usize::from(p4_address)).mut_ptr()) }
     }
 }
 
@@ -41,9 +43,7 @@ where
     /// Get the `PhysicalAddress` a given `VirtualAddress` is mapped to by these page tables, if
     /// it's mapped. If these page tables don't map it to any physical frame, this returns `None`.
     pub fn translate(&self, address: VirtualAddress) -> Option<PhysicalAddress> {
-        self.translate_page(Page::contains(address))?
-            .start_address()
-            + address.offset_into_page()
+        self.translate_page(Page::contains(address))?.start_address() + address.offset_into_page()
     }
 
     /// Get the physical `Frame` that a given virtual `Page` is mapped to, if it's mapped.
@@ -70,9 +70,9 @@ where
         A: FrameAllocator,
     {
         /*
-         * If the page should be accessible from userspace, all the parent paging structures need to
-         * be marked user-accessible too, or we'll still page-fault. This doesn't alter permissions
-         * for other pages in those structures.
+         * If the page should be accessible from userspace, all the parent paging structures need
+         * to be marked user-accessible too, or we'll still page-fault. This doesn't
+         * alter permissions for other pages in those structures.
          */
         let user_accessible = flags.contains(EntryFlags::USER_ACCESSIBLE);
         let p1 = self
