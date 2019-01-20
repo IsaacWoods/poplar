@@ -135,7 +135,7 @@ pub extern "win64" fn efi_main(image_handle: Handle, system_table: &'static Syst
         .map_err(|err| panic!("Failed to get memory map: {:?}", err))
         .unwrap();
 
-    construct_boot_info(boot_info, &memory_map, payload_info);
+    mem::replace(boot_info, construct_boot_info(&memory_map, payload_info));
 
     /*
      * Identity map the bootloader code and data, and UEFI runtime services into the kernel
@@ -254,8 +254,21 @@ fn allocate_and_map_heap(mapper: &mut Mapper<IdentityMapping>, allocator: &BootF
     }
 }
 
-fn construct_boot_info(boot_info: &mut BootInfo, memory_map: &MemoryMap, payload_info: PayloadInfo) {
+fn construct_boot_info(memory_map: &MemoryMap, payload_info: PayloadInfo) -> BootInfo {
+    use x86_64::boot::{BOOT_INFO_MAGIC, MEMORY_MAP_NUM_ENTRIES};
     println!("Constructing boot info to pass to kernel");
+
+    let mut boot_info = BootInfo {
+        magic: BOOT_INFO_MAGIC,
+        // TODO: we might be able to replace this with `Default::default()` when const generics
+        // land and they sort out the `impl T for [U; 1..=32]` mess
+        memory_map: unsafe {
+            mem::transmute([0u8; mem::size_of::<[MemoryEntry; MEMORY_MAP_NUM_ENTRIES]>()])
+        },
+        num_memory_map_entries: 0,
+        rsdp_address: None,
+        payload: payload_info,
+    };
 
     /*
      * First, we construct the memory map. This is used by the OS to initialise the physical
@@ -351,7 +364,7 @@ fn construct_boot_info(boot_info: &mut BootInfo, memory_map: &MemoryMap, payload
         }
     }
 
-    boot_info.payload = payload_info;
+    boot_info
 }
 
 struct ImageInfo<'a> {
@@ -465,13 +478,8 @@ fn load_kernel(
      * Load the kernel ELF and map it into the page tables.
      */
     let file_data = protocols::read_file(KERNEL_PATH, image_handle())?;
-    let image = load_image(
-        KERNEL_PATH,
-        &file_data,
-        MemoryType::PebbleKernelMemory,
-        mapper,
-        allocator
-    )?;
+    let image =
+        load_image(KERNEL_PATH, &file_data, MemoryType::PebbleKernelMemory, mapper, allocator)?;
 
     /*
      * We now set up the kernel stack. As part of the `.bss` section, it has already had memory
@@ -505,7 +513,13 @@ fn load_payload(allocator: &BootFrameAllocator) -> Result<PayloadInfo, Status> {
      */
     const PAYLOAD_PATH: &str = "payload.elf";
     let file_data = protocols::read_file(PAYLOAD_PATH, image_handle())?;
-    let image = load_image(PAYLOAD_PATH, &file_data, MemoryType::PebblePayloadMemory, &mut page_table.mapper(), allocator)?;
+    let image = load_image(
+        PAYLOAD_PATH,
+        &file_data,
+        MemoryType::PebblePayloadMemory,
+        &mut page_table.mapper(),
+        allocator,
+    )?;
 
     Ok(PayloadInfo {
         entry_point: VirtualAddress::new(image.elf.entry_point()).unwrap(),

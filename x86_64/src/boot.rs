@@ -1,12 +1,16 @@
 //! TODO
 
-use crate::memory::{paging::Frame, PhysicalAddress, VirtualAddress, paging::{InactivePageTable, table::IdentityMapping}};
+use crate::memory::{
+    paging::{table::IdentityMapping, Frame, InactivePageTable},
+    PhysicalAddress,
+    VirtualAddress,
+};
 use core::ops::Range;
 
 pub const BOOT_INFO_MAGIC: u32 = 0xcafebabe;
 pub const MEMORY_MAP_NUM_ENTRIES: usize = 64;
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum MemoryType {
     /// Memory used by the UEFI services. Cannot be used by the OS.
     UefiServices,
@@ -46,12 +50,21 @@ pub enum MemoryType {
     BootInfo,
 }
 
-/// TODO
 #[derive(Debug)]
 #[repr(C)]
 pub struct MemoryEntry {
     pub area: Range<Frame>,
     pub memory_type: MemoryType,
+}
+
+impl Default for MemoryEntry {
+    fn default() -> Self {
+        MemoryEntry {
+            area: Frame::contains(PhysicalAddress::new(0x0).unwrap())
+                ..(Frame::contains(PhysicalAddress::new(0x0).unwrap())),
+            memory_type: MemoryType::UefiServices,
+        }
+    }
 }
 
 #[repr(C)]
