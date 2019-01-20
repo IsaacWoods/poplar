@@ -29,7 +29,7 @@ use mer::{
     Elf,
 };
 use x86_64::{
-    boot::{BootInfo, MemoryEntry, MemoryType as BootInfoMemoryType},
+    boot::{BootInfo, MemoryEntry, MemoryType as BootInfoMemoryType, PayloadInfo},
     hw::{
         registers::{read_control_reg, read_msr, write_control_reg, write_msr},
         serial::SerialPort,
@@ -50,14 +50,6 @@ use x86_64::{
         VirtualAddress,
     },
 };
-
-/*
- * It's only safe to have these `static mut`s because we know the bootloader will only have one
- * thread of execution and is completely non-reentrant.
- */
-static mut SYSTEM_TABLE: *const SystemTable = 0 as *const _;
-static mut IMAGE_HANDLE: Handle = 0;
-static mut SERIAL_PORT: SerialPort = unsafe { SerialPort::new(x86_64::hw::serial::COM1) };
 
 /// Describes the loaded kernel image, including its entry point and where it expects the stack to
 /// be.
@@ -87,22 +79,27 @@ pub extern "win64" fn efi_main(image_handle: Handle, system_table: &'static Syst
     println!("├─┘├┤ ├┴┐├┴┐│  ├┤ ");
     println!("┴  └─┘└─┘└─┘┴─┘└─┘");
 
-    let allocator = BootFrameAllocator::new(32);
-    let mut page_table = InactivePageTable::<IdentityMapping>::new_with_recursive_mapping(
+    let allocator = BootFrameAllocator::new(64);
+    let mut kernel_page_table = InactivePageTable::<IdentityMapping>::new_with_recursive_mapping(
         allocator.allocate(),
         kernel_map::RECURSIVE_ENTRY,
     );
-    let mut mapper = page_table.mapper();
+    let mut kernel_mapper = kernel_page_table.mapper();
 
-    let kernel_info = match load_kernel(&mut mapper, &allocator) {
+    let kernel_info = match load_kernel(&mut kernel_mapper, &allocator) {
         Ok(kernel_info) => kernel_info,
         Err(err) => panic!("Failed to load kernel: {:?}", err),
+    };
+
+    let payload_info = match load_payload(&allocator) {
+        Ok(payload_info) => payload_info,
+        Err(err) => panic!("Failed to load payload: {:?}", err),
     };
 
     /*
      * Allocate physical memory for the kernel heap, and map it into the kernel page tables.
      */
-    allocate_and_map_heap(&mut mapper, &allocator);
+    allocate_and_map_heap(&mut kernel_mapper, &allocator);
 
     /*
      * Allocate space for the `BootInfo`. We allocate a single frame for it, so make sure it'll
@@ -121,7 +118,7 @@ pub extern "win64" fn efi_main(image_handle: Handle, system_table: &'static Syst
     /*
      * Map the `BootInfo` into the kernel address space at the correct location.
      */
-    mapper.map_to(
+    kernel_mapper.map_to(
         Page::contains(kernel_map::BOOT_INFO),
         Frame::contains(boot_info_address),
         EntryFlags::PRESENT | EntryFlags::NO_EXECUTE,
@@ -138,7 +135,7 @@ pub extern "win64" fn efi_main(image_handle: Handle, system_table: &'static Syst
         .map_err(|err| panic!("Failed to get memory map: {:?}", err))
         .unwrap();
 
-    construct_boot_info(boot_info, &memory_map);
+    construct_boot_info(boot_info, &memory_map, payload_info);
 
     /*
      * Identity map the bootloader code and data, and UEFI runtime services into the kernel
@@ -161,7 +158,7 @@ pub extern "win64" fn efi_main(image_handle: Handle, system_table: &'static Syst
                     ..(Page::contains(virtual_start) + entry.number_of_pages as usize);
 
                 for (frame, page) in frames.zip(pages) {
-                    mapper.map_to(
+                    kernel_mapper.map_to(
                         page,
                         frame,
                         EntryFlags::PRESENT | EntryFlags::WRITABLE,
@@ -188,7 +185,7 @@ pub extern "win64" fn efi_main(image_handle: Handle, system_table: &'static Syst
     setup_for_kernel();
     println!("Switching to kernel page tables");
     unsafe {
-        page_table.switch_to::<IdentityMapping>();
+        kernel_page_table.switch_to::<IdentityMapping>();
     }
 
     /*
@@ -257,7 +254,7 @@ fn allocate_and_map_heap(mapper: &mut Mapper<IdentityMapping>, allocator: &BootF
     }
 }
 
-fn construct_boot_info(boot_info: &mut BootInfo, memory_map: &MemoryMap) {
+fn construct_boot_info(boot_info: &mut BootInfo, memory_map: &MemoryMap, payload_info: PayloadInfo) {
     println!("Constructing boot info to pass to kernel");
 
     /*
@@ -310,6 +307,7 @@ fn construct_boot_info(boot_info: &mut BootInfo, memory_map: &MemoryMap) {
             MemoryType::PebblePageTables => BootInfoMemoryType::KernelPageTables,
             MemoryType::PebbleBootInformation => BootInfoMemoryType::BootInfo,
             MemoryType::PebbleKernelHeap => BootInfoMemoryType::KernelHeap,
+            MemoryType::PebblePayloadMemory => BootInfoMemoryType::PayloadImage,
 
             MemoryType::MaxMemoryType => panic!("Invalid memory type found in UEFI memory map!"),
         };
@@ -352,6 +350,8 @@ fn construct_boot_info(boot_info: &mut BootInfo, memory_map: &MemoryMap) {
             break;
         }
     }
+
+    boot_info.payload = payload_info;
 }
 
 struct ImageInfo<'a> {
@@ -360,8 +360,8 @@ struct ImageInfo<'a> {
 }
 
 /// Loads an ELF from the given path on the boot volume, allocates physical memory for it, and
-/// copies its sections into the new memory. Calls `f` for each section that space is allocated
-/// for, so the caller can e.g. map it into the virtual address space, if needed.
+/// copies its sections into the new memory. Also maps each allocated section into the given set of
+/// page tables.
 ///
 /// This borrows the file data, instead of reading the file itself, so that it can return the
 /// loaded `Elf` back to the caller.
@@ -369,7 +369,8 @@ fn load_image<'a>(
     path: &str,
     image_data: &'a [u8],
     memory_type: MemoryType,
-    mut f: impl FnMut(PhysicalAddress, &SectionHeader),
+    mapper: &mut Mapper<IdentityMapping>,
+    allocator: &BootFrameAllocator,
 ) -> Result<ImageInfo<'a>, Status> {
     let elf = Elf::new(&image_data)
         .map_err(|err| panic!("Failed to parse ELF({}): {:?}", path, err))
@@ -424,7 +425,7 @@ fn load_image<'a>(
         }
 
         println!(
-            "Loading section of image {}: '{}' at {:#x}-{:#x} at physical address {:#x}",
+            "Loading section of '{}': '{}' at {:#x}-{:#x} at physical address {:#x}",
             path,
             section.name(&elf).unwrap(),
             section.address,
@@ -432,7 +433,7 @@ fn load_image<'a>(
             section_physical_address,
         );
 
-        f(section_physical_address, &section);
+        map_section(mapper, section_physical_address, &section, allocator);
 
         /*
          * For `ProgBits` sections, we copy the data from the image into the section's new home.
@@ -468,7 +469,8 @@ fn load_kernel(
         KERNEL_PATH,
         &file_data,
         MemoryType::PebbleKernelMemory,
-        |section_base, section| map_section(mapper, section_base, section, allocator),
+        mapper,
+        allocator
     )?;
 
     /*
@@ -493,6 +495,22 @@ fn load_kernel(
     assert!(stack_top.is_page_aligned(), "Stack is not page aligned");
 
     Ok(KernelInfo { entry_point: VirtualAddress::new(image.elf.entry_point()).unwrap(), stack_top })
+}
+
+fn load_payload(allocator: &BootFrameAllocator) -> Result<PayloadInfo, Status> {
+    let mut page_table = InactivePageTable::<IdentityMapping>::new(allocator.allocate());
+
+    /*
+     * Load and map the ELF.
+     */
+    const PAYLOAD_PATH: &str = "payload.elf";
+    let file_data = protocols::read_file(PAYLOAD_PATH, image_handle())?;
+    let image = load_image(PAYLOAD_PATH, &file_data, MemoryType::PebblePayloadMemory, &mut page_table.mapper(), allocator)?;
+
+    Ok(PayloadInfo {
+        entry_point: VirtualAddress::new(image.elf.entry_point()).unwrap(),
+        page_table,
+    })
 }
 
 fn map_section(
@@ -568,3 +586,11 @@ pub fn system_table() -> &'static SystemTable {
 pub fn image_handle() -> Handle {
     unsafe { IMAGE_HANDLE }
 }
+
+/*
+ * It's only safe to have these `static mut`s because we know the bootloader will only have one
+ * thread of execution and is completely non-reentrant.
+ */
+static mut SYSTEM_TABLE: *const SystemTable = 0 as *const _;
+static mut IMAGE_HANDLE: Handle = 0;
+static mut SERIAL_PORT: SerialPort = unsafe { SerialPort::new(x86_64::hw::serial::COM1) };

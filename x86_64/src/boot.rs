@@ -1,6 +1,6 @@
 //! TODO
 
-use crate::memory::{paging::Frame, PhysicalAddress};
+use crate::memory::{paging::Frame, PhysicalAddress, VirtualAddress, paging::{InactivePageTable, table::IdentityMapping}};
 use core::ops::Range;
 
 pub const BOOT_INFO_MAGIC: u32 = 0xcafebabe;
@@ -28,9 +28,13 @@ pub enum MemoryType {
     /// will corrupt its own code or data.
     KernelImage,
 
+    /// Memory the bootloader has mapped the payload image into. The OS can only make use of this
+    /// memory after the payload is no longer needed.
+    PayloadImage,
+
     /// Memory the bootloader has used for the page tables containing the kernel's mapping. The OS
     /// should not use this memory, unless it has permanently switched to another set of page
-    /// tables.
+    /// tables. This also includes memory used for the payload's image.
     KernelPageTables,
 
     /// Memory the bootloader has mapped for use as the kernel heap. The OS should not use this
@@ -48,6 +52,12 @@ pub enum MemoryType {
 pub struct MemoryEntry {
     pub area: Range<Frame>,
     pub memory_type: MemoryType,
+}
+
+#[repr(C)]
+pub struct PayloadInfo {
+    pub entry_point: VirtualAddress,
+    pub page_table: InactivePageTable<IdentityMapping>,
 }
 
 /// This structure is placed in memory by the bootloader and a reference to it passed to the
@@ -68,6 +78,7 @@ pub struct BootInfo {
     pub memory_map: [MemoryEntry; MEMORY_MAP_NUM_ENTRIES],
     pub num_memory_map_entries: usize,
     pub rsdp_address: Option<PhysicalAddress>,
+    pub payload: PayloadInfo,
 }
 
 impl BootInfo {

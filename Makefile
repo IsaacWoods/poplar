@@ -34,6 +34,7 @@ kernel:
 
 userboot:
 	cargo xbuild --target=userboot/x86_64-pebble-userboot.json --manifest-path userboot/Cargo.toml
+	cp userboot/target/x86_64-pebble-userboot/debug/userboot $(BUILD_DIR)/fat/payload.elf
 
 clean:
 	cd bootloader && cargo clean
