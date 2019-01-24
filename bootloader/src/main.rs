@@ -86,7 +86,19 @@ pub extern "win64" fn efi_main(image_handle: Handle, system_table: &'static Syst
             kernel_map::RECURSIVE_ENTRY,
         )
     };
+    let kernel_p4_frame = kernel_page_table.p4_frame;
     let mut kernel_mapper = kernel_page_table.mapper();
+
+    /*
+     * We permanently map the kernel's P4 frame to a virtual address so the kernel can always
+     * access it without using the recursive mapping.
+     */
+    kernel_mapper.map_to(
+        Page::contains(kernel_map::KERNEL_P4_START),
+        kernel_p4_frame,
+        EntryFlags::PRESENT | EntryFlags::WRITABLE | EntryFlags::NO_EXECUTE,
+        &allocator,
+    );
 
     let kernel_info = match load_kernel(&mut kernel_mapper, &allocator) {
         Ok(kernel_info) => kernel_info,
