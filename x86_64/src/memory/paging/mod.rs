@@ -5,7 +5,12 @@ pub mod mapper;
 pub mod page;
 pub mod table;
 
-pub use self::{frame::Frame, frame_allocator::FrameAllocator, mapper::Mapper, page::Page};
+pub use self::{
+    frame::Frame,
+    frame_allocator::FrameAllocator,
+    mapper::Mapper,
+    page::Page,
+};
 pub use core::ops::{Deref, DerefMut};
 
 pub const FRAME_SIZE: usize = 0x1000;
@@ -13,10 +18,20 @@ pub const PAGE_SIZE: usize = 0x1000;
 
 use self::{
     entry::EntryFlags,
-    table::{IdentityMapping, Level4, RecursiveMapping, Table, TableMapping},
+    table::{
+        IdentityMapping,
+        Level4,
+        RecursiveMapping,
+        Table,
+        TableMapping,
+        KERNEL_P4_NON_RECURSIVE,
+    },
 };
 use super::{PhysicalAddress, VirtualAddress};
-use crate::hw::registers::{read_control_reg, write_control_reg};
+use crate::hw::{
+    registers::{read_control_reg, write_control_reg},
+    tlb,
+};
 use core::marker::PhantomData;
 
 /// Represents a set of page tables that are not currently mapped.
@@ -179,21 +194,54 @@ impl ActivePageTable<RecursiveMapping> {
     /// Alter the mappings of a `InactivePageTable` by temporarily replacing the recursive entry
     /// address of the active tables with the physical address of the inactive table's P4.
     ///
+    /// The `InactivePageTable` must also be recursively-mapped for this to work.
+    ///
     /// This calls the closure with a `Mapper` that targets the current set of active tables, but
     /// will actually modify the given `InactivePageTable`'s mappings. Because the inactive table
     /// isn't really mapped, you can't modify the *contents* of the mappings. To modify the
-    /// physical memory, you will either need to switch to the `InactivePageTable`, or map it into
-    /// the `ActivePageTable` temporarily.
+    /// physical memory, you will either need to switch to the `InactivePageTable`, or map the
+    /// memory you want to modify into the `ActivePageTable` temporarily.
     pub fn with<A, F>(
         &mut self,
         table: &mut InactivePageTable<RecursiveMapping>,
-        frame_allocator: &A,
+        allocator: &A,
         f: F,
     ) where
         A: FrameAllocator,
         F: FnOnce(&mut Mapper<RecursiveMapping>, &A),
     {
-        // TODO
-        unimplemented!();
+        use super::kernel_map::RECURSIVE_ENTRY;
+
+        /*
+         * Backup the kernel P4's physical address.
+         */
+        let kernel_p4_frame =
+            Frame::contains(PhysicalAddress::new(read_control_reg!(cr3) as usize).unwrap());
+
+        /*
+         * Overwrite recursive mapping, so it points to the inactive page table. Flush the TLB
+         * because it might contain stale mappings to the kernel's recursive entries.
+         */
+        self.p4[RECURSIVE_ENTRY].set(table.p4_frame, EntryFlags::PRESENT | EntryFlags::WRITABLE);
+        tlb::flush();
+
+        /*
+         * Execute the closure with the new recursive mapping.
+         *
+         * NOTE: We make sure to only give it `self` as a `&mut Mapper<RecursiveMapping>`,
+         * because if we gave it a `ActivePageTable`, it could call `with` again, which
+         * would not work.
+         */
+        f(self, allocator);
+
+        /*
+         * Restore the kernel's recursive mapping and flush the TLB again.
+         *
+         * NOTE: we make sure not to use `self.p4` here because that relies on the recursive
+         * mapping.
+         */
+        let kernel_p4 = unsafe { &mut *KERNEL_P4_NON_RECURSIVE };
+        kernel_p4[RECURSIVE_ENTRY].set(kernel_p4_frame, EntryFlags::PRESENT | EntryFlags::WRITABLE);
+        tlb::flush();
     }
 }
