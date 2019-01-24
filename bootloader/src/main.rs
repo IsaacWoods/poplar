@@ -80,10 +80,12 @@ pub extern "win64" fn efi_main(image_handle: Handle, system_table: &'static Syst
     println!("┴  └─┘└─┘└─┘┴─┘└─┘");
 
     let allocator = BootFrameAllocator::new(64);
-    let mut kernel_page_table = InactivePageTable::<IdentityMapping>::new_with_recursive_mapping(
-        allocator.allocate(),
-        kernel_map::RECURSIVE_ENTRY,
-    );
+    let mut kernel_page_table = unsafe {
+        InactivePageTable::<IdentityMapping>::new_with_recursive_mapping(
+            allocator.allocate(),
+            kernel_map::RECURSIVE_ENTRY,
+        )
+    };
     let mut kernel_mapper = kernel_page_table.mapper();
 
     let kernel_info = match load_kernel(&mut kernel_mapper, &allocator) {
@@ -506,7 +508,12 @@ fn load_kernel(
 }
 
 fn load_payload(allocator: &BootFrameAllocator) -> Result<PayloadInfo, Status> {
-    let mut page_table = InactivePageTable::<IdentityMapping>::new(allocator.allocate());
+    let mut page_table = unsafe {
+        InactivePageTable::<IdentityMapping>::new_with_recursive_mapping(
+            allocator.allocate(),
+            kernel_map::RECURSIVE_ENTRY,
+        )
+    };
 
     /*
      * Load and map the ELF.
@@ -523,7 +530,7 @@ fn load_payload(allocator: &BootFrameAllocator) -> Result<PayloadInfo, Status> {
 
     Ok(PayloadInfo {
         entry_point: VirtualAddress::new(image.elf.entry_point()).unwrap(),
-        page_table,
+        page_table_address: page_table.p4_frame.start_address(),
     })
 }
 

@@ -24,7 +24,7 @@ pub struct InactivePageTable<M>
 where
     M: TableMapping,
 {
-    p4_frame: Frame,
+    pub p4_frame: Frame,
     _mapping: PhantomData<M>,
 }
 
@@ -36,7 +36,15 @@ where
     /// physical memory. We don't zero the memory here because to do that we need to map it into
     /// the active set of page tables, which aren't available when we first create an
     /// `InactivePageTable` in the bootloader.
-    pub fn new(frame: Frame) -> InactivePageTable<M> {
+    ///
+    /// If you're absolutely sure the given `Frame` contains a valid P4 page table, you can also
+    /// use this to construct a page table. This is very unsafe as you need to make sure you're
+    /// correctly managing the backing physical memory, and that the pre-installed table has the
+    /// correct mapping (if `M` isn't `NoMapping`).
+    ///
+    /// Unsafe because we assume `frame` is a free, zeroed (or contains a valid P4 page table)
+    /// frame of physical memory.
+    pub unsafe fn new(frame: Frame) -> InactivePageTable<M> {
         InactivePageTable { p4_frame: frame, _mapping: PhantomData }
     }
 }
@@ -46,15 +54,16 @@ impl InactivePageTable<IdentityMapping> {
     /// also have the correct entries for recursive mapping. This means they can be created in a
     /// context with an identity mapping, but when switched to, can correctly form an
     /// `ActivePageTable<RecursiveMapping>`.
-    pub fn new_with_recursive_mapping(
+    ///
+    /// Unsafe because we assume that `frame` is a free, zeroed frame of physical memory.
+    pub unsafe fn new_with_recursive_mapping(
         frame: Frame,
         recursive_entry: u16,
     ) -> InactivePageTable<IdentityMapping> {
         let table = InactivePageTable { p4_frame: frame, _mapping: PhantomData };
 
-        let p4: &mut Table<Level4, IdentityMapping> = unsafe {
-            &mut *(VirtualAddress::new_unchecked(usize::from(frame.start_address())).mut_ptr())
-        };
+        let p4: &mut Table<Level4, IdentityMapping> =
+            &mut *(VirtualAddress::new_unchecked(usize::from(frame.start_address())).mut_ptr());
         p4[recursive_entry].set(frame, EntryFlags::PRESENT | EntryFlags::WRITABLE);
 
         table
@@ -81,12 +90,8 @@ impl InactivePageTable<IdentityMapping> {
     {
         let old_table_address = PhysicalAddress::new(read_control_reg!(cr3) as usize).unwrap();
 
-        unsafe {
-            /*
-             * NOTE: We don't need to flush the TLB here because it's cleared when CR3 changes.
-             */
-            write_control_reg!(cr3, usize::from(self.p4_frame.start_address()) as u64);
-        }
+        // NOTE: We don't need to flush the TLB here because it's cleared when CR3 changes
+        write_control_reg!(cr3, usize::from(self.p4_frame.start_address()) as u64);
 
         (
             ActivePageTable::<IdentityMapping>::new(self.p4_frame.start_address()),
@@ -113,12 +118,8 @@ impl InactivePageTable<RecursiveMapping> {
     {
         let old_table_address = PhysicalAddress::new(read_control_reg!(cr3) as usize).unwrap();
 
-        unsafe {
-            /*
-             * NOTE: We don't need to flush the TLB here because it's cleared when CR3 changes.
-             */
-            write_control_reg!(cr3, usize::from(self.p4_frame.start_address()) as u64);
-        }
+        // NOTE: We don't need to flush the TLB here because it's cleared when CR3 changes
+        write_control_reg!(cr3, usize::from(self.p4_frame.start_address()) as u64);
 
         (
             ActivePageTable::<RecursiveMapping>::new(),
