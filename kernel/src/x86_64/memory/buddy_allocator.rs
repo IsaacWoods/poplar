@@ -11,10 +11,7 @@
 //! improved in the future
 
 use crate::util::math::{ceiling_log2, flooring_log2};
-use alloc::{
-    collections::BTreeSet,
-    vec::{self, Vec},
-};
+use alloc::{collections::BTreeSet, vec::Vec};
 use core::{cmp::min, ops::Range};
 use x86_64::memory::{paging::Frame, PhysicalAddress};
 

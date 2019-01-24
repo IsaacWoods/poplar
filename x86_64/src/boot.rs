@@ -1,10 +1,6 @@
 //! TODO
 
-use crate::memory::{
-    paging::{table::IdentityMapping, Frame, InactivePageTable},
-    PhysicalAddress,
-    VirtualAddress,
-};
+use crate::memory::{paging::Frame, PhysicalAddress, VirtualAddress};
 use core::ops::Range;
 
 pub const BOOT_INFO_MAGIC: u32 = 0xcafebabe;
@@ -70,7 +66,10 @@ impl Default for MemoryEntry {
 #[repr(C)]
 pub struct PayloadInfo {
     pub entry_point: VirtualAddress,
-    pub page_table: InactivePageTable<IdentityMapping>,
+    /// The physical address of the P4 frame of the process' constructed page tables. This is
+    /// passed as an address so that the kernel can construct its own owned page table for the
+    /// process.
+    pub page_table_address: PhysicalAddress,
 }
 
 /// This structure is placed in memory by the bootloader and a reference to it passed to the
