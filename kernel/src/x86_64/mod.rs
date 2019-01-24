@@ -5,6 +5,7 @@ mod cpu;
 mod interrupts;
 mod logger;
 mod memory;
+mod process;
 
 use self::{
     acpi_handler::PebbleAcpiHandler,
@@ -12,6 +13,7 @@ use self::{
     interrupts::InterruptController,
     logger::KernelLogger,
     memory::{physical::LockedPhysicalMemoryManager, KernelPageTable, PhysicalRegionMapper},
+    process::Process,
 };
 use crate::arch::Architecture;
 use acpi::{AmlNamespace, ProcessorState};
@@ -208,5 +210,7 @@ pub fn kmain() -> ! {
             boot_info.payload.page_table_address,
         ))
     };
+    let process = Process::new(&arch, process_page_table, boot_info.payload.entry_point);
+
     crate::kernel_main(&arch)
 }

@@ -2,6 +2,7 @@
 
 mod buddy_allocator;
 pub mod physical;
+pub mod userspace_map;
 
 use self::physical::LockedPhysicalMemoryManager;
 use crate::util::bitmap::Bitmap;
