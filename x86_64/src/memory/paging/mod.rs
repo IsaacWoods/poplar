@@ -5,12 +5,7 @@ pub mod mapper;
 pub mod page;
 pub mod table;
 
-pub use self::{
-    frame::Frame,
-    frame_allocator::FrameAllocator,
-    mapper::Mapper,
-    page::Page,
-};
+pub use self::{frame::Frame, frame_allocator::FrameAllocator, mapper::Mapper, page::Page};
 pub use core::ops::{Deref, DerefMut};
 
 pub const FRAME_SIZE: usize = 0x1000;

@@ -136,7 +136,7 @@ pub fn kmain() -> ! {
     /*
      * Register all the CPUs we can find.
      */
-    let (boot_processor, application_processors) = match acpi_info {
+    let (mut boot_processor, application_processors) = match acpi_info {
         Some(ref info) => {
             assert!(
                 info.boot_processor().is_some()
@@ -210,7 +210,10 @@ pub fn kmain() -> ! {
             boot_info.payload.page_table_address,
         ))
     };
-    let process = Process::new(&arch, process_page_table, boot_info.payload.entry_point);
+    let mut process = Process::new(&arch, process_page_table, boot_info.payload.entry_point);
 
-    crate::kernel_main(&arch)
+    info!("Dropping to usermode");
+    process::drop_to_usermode(&mut boot_processor.tss, &mut process);
+
+    // crate::kernel_main(&arch)
 }
