@@ -398,6 +398,7 @@ fn load_image<'a>(
     memory_type: MemoryType,
     mapper: &mut Mapper<IdentityMapping>,
     allocator: &BootFrameAllocator,
+    user_accessible: bool,
 ) -> Result<ImageInfo<'a>, Status> {
     let elf = Elf::new(&image_data)
         .map_err(|err| panic!("Failed to parse ELF({}): {:?}", path, err))
@@ -460,7 +461,7 @@ fn load_image<'a>(
             section_physical_address,
         );
 
-        map_section(mapper, section_physical_address, &section, allocator);
+        map_section(mapper, section_physical_address, &section, allocator, user_accessible);
 
         /*
          * For `ProgBits` sections, we copy the data from the image into the section's new home.
@@ -492,8 +493,14 @@ fn load_kernel(
      * Load the kernel ELF and map it into the page tables.
      */
     let file_data = protocols::read_file(KERNEL_PATH, image_handle())?;
-    let image =
-        load_image(KERNEL_PATH, &file_data, MemoryType::PebbleKernelMemory, mapper, allocator)?;
+    let image = load_image(
+        KERNEL_PATH,
+        &file_data,
+        MemoryType::PebbleKernelMemory,
+        mapper,
+        allocator,
+        false,
+    )?;
 
     /*
      * We now set up the kernel stack. As part of the `.bss` section, it has already had memory
@@ -538,6 +545,7 @@ fn load_payload(allocator: &BootFrameAllocator) -> Result<PayloadInfo, Status> {
         MemoryType::PebblePayloadMemory,
         &mut page_table.mapper(),
         allocator,
+        true,
     )?;
 
     Ok(PayloadInfo {
@@ -551,6 +559,7 @@ fn map_section(
     physical_base: PhysicalAddress,
     section: &SectionHeader,
     allocator: &BootFrameAllocator,
+    user_accessible: bool,
 ) {
     let virtual_address = VirtualAddress::new(section.address as usize).unwrap();
     /*
@@ -571,7 +580,8 @@ fn map_section(
      */
     let flags = EntryFlags::PRESENT
         | if section.is_writable() { EntryFlags::WRITABLE } else { EntryFlags::empty() }
-        | if !section.is_executable() { EntryFlags::NO_EXECUTE } else { EntryFlags::empty() };
+        | if !section.is_executable() { EntryFlags::NO_EXECUTE } else { EntryFlags::empty() }
+        | if user_accessible { EntryFlags::USER_ACCESSIBLE } else { EntryFlags::empty() };
 
     for (frame, page) in frames.zip(pages) {
         mapper.map_to(page, frame, flags, allocator);
