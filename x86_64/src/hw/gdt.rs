@@ -30,6 +30,7 @@ impl SegmentSelector {
 
 const ACCESSED: u64 = 1 << 40;
 const READABLE: u64 = 1 << 41;
+const WRITABLE: u64 = 1 << 41;
 const USER_SEGMENT: u64 = 1 << 44;
 const PRESENT: u64 = 1 << 47;
 const LONG_MODE: u64 = 1 << 53;
@@ -52,6 +53,15 @@ impl CodeSegment {
                 + LONG_MODE
                 + ((ring as u64) << 45),
         )
+    }
+}
+
+#[derive(Debug)]
+pub struct DataSegment(u64);
+
+impl DataSegment {
+    pub const fn new(ring: PrivilegeLevel) -> DataSegment {
+        DataSegment(ACCESSED + WRITABLE + PRESENT + USER_SEGMENT + ((ring as u64) << 45))
     }
 }
 
@@ -84,9 +94,12 @@ impl TssSegment {
     }
 }
 
-pub const KERNEL_CODE_SELECTOR: SegmentSelector = SegmentSelector(0x8);
-pub const USER_CODE_SELECTOR: SegmentSelector = SegmentSelector(0x10);
-pub const BOOTSTRAP_TSS_SELECTOR: SegmentSelector = SegmentSelector(0x18);
+pub const KERNEL_CODE_SELECTOR: SegmentSelector = SegmentSelector::new(1, PrivilegeLevel::Ring0);
+pub const USER_CODE_SELECTOR: SegmentSelector = SegmentSelector::new(2, PrivilegeLevel::Ring3);
+pub const USER_DATA_SELECTOR: SegmentSelector = SegmentSelector::new(3, PrivilegeLevel::Ring3);
+pub const BOOTSTRAP_TSS_SELECTOR: SegmentSelector = SegmentSelector::new(4, PrivilegeLevel::Ring0);
+
+pub const NUM_STATIC_ENTRIES: usize = 4;
 pub const MAX_CPUS: usize = 8;
 
 /// A GDT suitable for the kernel to use. It contains two code segments, one for Ring 0 and another
@@ -97,6 +110,7 @@ pub struct Gdt {
     null: u64,
     kernel_code: CodeSegment,
     user_code: CodeSegment,
+    user_data: DataSegment,
     tsss: [TssSegment; MAX_CPUS],
 
     /// This field is not part of the actual GDT; we just use it to keep track of how many TSS
@@ -105,14 +119,15 @@ pub struct Gdt {
 }
 
 impl Gdt {
-    /// Create a `Gdt` with pre-populated code segments, and `MAX_CPUS` empty TSSs. The kernel
-    /// should populate a TSS for each processor it plans to bring up, then call the `load` method
-    /// to load the new GDT and switch to the new code and (null) data segments.
+    /// Create a `Gdt` with pre-populated code and data segments, and `MAX_CPUS` empty TSSs. The
+    /// kernel should populate a TSS for each processor it plans to bring up, then call the
+    /// `load` method to load the new GDT and switch to the new kernel code and data segments.
     pub const fn new() -> Gdt {
         Gdt {
             null: 0,
             kernel_code: CodeSegment::new(PrivilegeLevel::Ring0),
             user_code: CodeSegment::new(PrivilegeLevel::Ring3),
+            user_data: DataSegment::new(PrivilegeLevel::Ring3),
             tsss: [TssSegment::empty(); MAX_CPUS],
             next_free_tss: 0,
         }
@@ -146,7 +161,9 @@ impl Gdt {
         }
 
         let gdt_ptr = DescriptorTablePointer {
-            limit: (((3 + MAX_CPUS) * mem::size_of::<u64>()) - 1) as u16,
+            limit: (NUM_STATIC_ENTRIES * mem::size_of::<u64>()
+                + MAX_CPUS * mem::size_of::<TssSegment>()
+                - 1) as u16,
             base: VirtualAddress::new(self as *const _ as usize).unwrap(),
         };
 
@@ -162,17 +179,16 @@ impl Gdt {
               mov ss, ax
               
               // Switch to the new code segment
-              push 0x08
+              push rbx
               lea rax, [rip+0x3]
               push rax
               retfq
               1:
               
               // Load the TSS
-              mov ax, 0x18
-              ltr ax"
+              ltr cx"
         :
-        : "r"(&gdt_ptr)
+        : "r"(&gdt_ptr), "{rbx}"(KERNEL_CODE_SELECTOR), "{rcx}"(BOOTSTRAP_TSS_SELECTOR)
         : "rax"
         : "intel"
         );
