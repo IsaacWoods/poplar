@@ -3,9 +3,9 @@ export BUILD_DIR ?= $(abspath ./build)
 
 RUST_GDB_INSTALL_PATH ?= ~/bin/rust-gdb/bin
 
-.PHONY: prepare bootloader kernel clean qemu gdb update fmt
+.PHONY: prepare bootloader kernel userboot clean qemu gdb update fmt
 
-pebble.img: prepare bootloader kernel
+pebble.img: prepare bootloader kernel userboot
 	# Create a temporary image for the FAT partition
 	dd if=/dev/zero of=$(BUILD_DIR)/fat.img bs=1M count=64
 	mkfs.vfat -F 32 $(BUILD_DIR)/fat.img -n BOOT
@@ -31,6 +31,10 @@ bootloader:
 kernel:
 	cargo xbuild --target=kernel/src/$(ARCH)/$(ARCH)-kernel.json --manifest-path kernel/Cargo.toml --features arch_$(ARCH)
 	ld --gc-sections -T kernel/src/$(ARCH)/link.ld -o $(BUILD_DIR)/fat/kernel.elf kernel/target/$(ARCH)-kernel/debug/libkernel.a
+
+userboot:
+	cargo xbuild --target=userboot/x86_64-pebble-userboot.json --manifest-path userboot/Cargo.toml
+	cp userboot/target/x86_64-pebble-userboot/debug/userboot $(BUILD_DIR)/fat/payload.elf
 
 clean:
 	cd bootloader && cargo clean

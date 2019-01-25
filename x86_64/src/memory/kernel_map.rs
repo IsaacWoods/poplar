@@ -12,9 +12,12 @@ use super::VirtualAddress;
 /// userspace and kernel portions, which is less inconvienient than it being a hole.
 pub const RECURSIVE_ENTRY: u16 = 510;
 
+/// The kernel is mapped into the 511th entry of the P4.
+pub const KERNEL_P4_ENTRY: u16 = 511;
+
 /// This address can be used to access the **currently mapped** P4 table, assuming the correct entry
 /// is recursively mapped properly.
-pub const P4_TABLE_ADDRESS: VirtualAddress = VirtualAddress::from_page_table_offsets(
+pub const P4_TABLE_RECURSIVE_ADDRESS: VirtualAddress = VirtualAddress::from_page_table_offsets(
     RECURSIVE_ENTRY,
     RECURSIVE_ENTRY,
     RECURSIVE_ENTRY,
@@ -48,8 +51,15 @@ pub const PHYSICAL_MAPPING_END: VirtualAddress =
 pub const BOOT_INFO: VirtualAddress =
     unsafe { VirtualAddress::new_unchecked(0xffff_ffff_d000_0000) };
 
+/// This address can be used to access the kernel page table's P4 table **all the time**. It does
+/// not make use of the recursive mapping, so can be used when we're modifying another set of
+/// tables by installing them into the kernel's recursive entry. This mapping is set up by the
+/// bootloader.
+pub const KERNEL_P4_START: VirtualAddress =
+    unsafe { VirtualAddress::new_unchecked(0xffff_ffff_d000_1000) };
+
 /// The virtual address that the configuration page of the local APIC is mapped to. We don't manage
 /// this using a simple `PhysicalMapping` because we need to be able to access the local APIC from
 /// interrupt handlers, which can't easily access owned `PhysicalMapping`s.
 pub const LOCAL_APIC_CONFIG: VirtualAddress =
-    unsafe { VirtualAddress::new_unchecked(0xffff_ffff_d000_1000) };
+    unsafe { VirtualAddress::new_unchecked(0xffff_ffff_d000_2000) };

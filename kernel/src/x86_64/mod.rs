@@ -5,6 +5,7 @@ mod cpu;
 mod interrupts;
 mod logger;
 mod memory;
+mod process;
 
 use self::{
     acpi_handler::PebbleAcpiHandler,
@@ -12,6 +13,7 @@ use self::{
     interrupts::InterruptController,
     logger::KernelLogger,
     memory::{physical::LockedPhysicalMemoryManager, KernelPageTable, PhysicalRegionMapper},
+    process::Process,
 };
 use crate::arch::Architecture;
 use acpi::{AmlNamespace, ProcessorState};
@@ -27,7 +29,7 @@ use x86_64::{
     },
     memory::{
         kernel_map,
-        paging::{table::RecursiveMapping, ActivePageTable},
+        paging::{table::RecursiveMapping, ActivePageTable, Frame, InactivePageTable},
     },
 };
 
@@ -104,7 +106,6 @@ pub fn kmain() -> ! {
         physical_memory_manager: LockedPhysicalMemoryManager::new(boot_info),
         kernel_page_table: Mutex::new(unsafe { ActivePageTable::<RecursiveMapping>::new() }),
         physical_region_mapper: Mutex::new(PhysicalRegionMapper::new()),
-        // gdt: Gdt::empty(),
     };
 
     let mut acpi_handler = PebbleAcpiHandler::new(
@@ -135,7 +136,7 @@ pub fn kmain() -> ! {
     /*
      * Register all the CPUs we can find.
      */
-    let (boot_processor, application_processors) = match acpi_info {
+    let (mut boot_processor, application_processors) = match acpi_info {
         Some(ref info) => {
             assert!(
                 info.boot_processor().is_some()
@@ -204,5 +205,15 @@ pub fn kmain() -> ! {
         None
     };
 
-    crate::kernel_main(&arch)
+    let process_page_table = unsafe {
+        InactivePageTable::<RecursiveMapping>::new(Frame::contains(
+            boot_info.payload.page_table_address,
+        ))
+    };
+    let mut process = Process::new(&arch, process_page_table, boot_info.payload.entry_point);
+
+    info!("Dropping to usermode");
+    process::drop_to_usermode(&mut boot_processor.tss, &mut process);
+
+    // crate::kernel_main(&arch)
 }

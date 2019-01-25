@@ -9,6 +9,7 @@ use crate::{
     hw::tlb,
     memory::{PhysicalAddress, VirtualAddress},
 };
+use core::ops::Range;
 
 /// A `Mapper` allows you to change the virtual to physical mappings in a set of page tables. It
 /// relies on the set of page tables it represents being accessible through the **current**
@@ -21,7 +22,7 @@ use crate::{
 /// `Mapper` to create page tables as Pebble does, but may create problems if you try and interpret
 /// existing page tables (set up by the UEFI, for example) with `Mapper`.
 pub struct Mapper<'a, M: 'a + TableMapping> {
-    p4: &'a mut Table<Level4, M>,
+    pub p4: &'a mut Table<Level4, M>,
 }
 
 impl Mapper<'static, RecursiveMapping> {
@@ -63,6 +64,19 @@ where
         A: FrameAllocator,
     {
         self.map_to(page, allocator.allocate(), flags, allocator);
+    }
+
+    /// Given a range of `n` pages to map, allocates `n` frames using the given `FrameAllocator`,
+    /// and maps the pages to them.
+    pub fn map_range<A>(&mut self, pages: Range<Page>, flags: EntryFlags, allocator: &A)
+    where
+        A: FrameAllocator,
+    {
+        let frames = allocator.allocate_n(pages.clone().into_iter().count());
+
+        for (page, frame) in pages.zip(frames) {
+            self.map_to(page, frame, flags, allocator);
+        }
     }
 
     pub fn map_to<A>(&mut self, page: Page, frame: Frame, flags: EntryFlags, allocator: &A)

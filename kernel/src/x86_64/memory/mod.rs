@@ -2,12 +2,12 @@
 
 mod buddy_allocator;
 pub mod physical;
+pub mod userspace_map;
 
 use self::physical::LockedPhysicalMemoryManager;
 use crate::util::bitmap::Bitmap;
 use alloc::collections::BTreeMap;
 use bit_field::BitField;
-use log::info;
 use x86_64::memory::{
     kernel_map,
     paging::{

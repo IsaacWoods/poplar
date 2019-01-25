@@ -13,10 +13,20 @@ pub const PAGE_SIZE: usize = 0x1000;
 
 use self::{
     entry::EntryFlags,
-    table::{IdentityMapping, Level4, RecursiveMapping, Table, TableMapping},
+    table::{
+        IdentityMapping,
+        Level4,
+        RecursiveMapping,
+        Table,
+        TableMapping,
+        KERNEL_P4_NON_RECURSIVE,
+    },
 };
 use super::{PhysicalAddress, VirtualAddress};
-use crate::hw::registers::{read_control_reg, write_control_reg};
+use crate::hw::{
+    registers::{read_control_reg, write_control_reg},
+    tlb,
+};
 use core::marker::PhantomData;
 
 /// Represents a set of page tables that are not currently mapped.
@@ -24,7 +34,7 @@ pub struct InactivePageTable<M>
 where
     M: TableMapping,
 {
-    p4_frame: Frame,
+    pub p4_frame: Frame,
     _mapping: PhantomData<M>,
 }
 
@@ -36,7 +46,15 @@ where
     /// physical memory. We don't zero the memory here because to do that we need to map it into
     /// the active set of page tables, which aren't available when we first create an
     /// `InactivePageTable` in the bootloader.
-    pub fn new(frame: Frame) -> InactivePageTable<M> {
+    ///
+    /// If you're absolutely sure the given `Frame` contains a valid P4 page table, you can also
+    /// use this to construct a page table. This is very unsafe as you need to make sure you're
+    /// correctly managing the backing physical memory, and that the pre-installed table has the
+    /// correct mapping (if `M` isn't `NoMapping`).
+    ///
+    /// Unsafe because we assume `frame` is a free, zeroed (or contains a valid P4 page table)
+    /// frame of physical memory.
+    pub unsafe fn new(frame: Frame) -> InactivePageTable<M> {
         InactivePageTable { p4_frame: frame, _mapping: PhantomData }
     }
 }
@@ -46,15 +64,16 @@ impl InactivePageTable<IdentityMapping> {
     /// also have the correct entries for recursive mapping. This means they can be created in a
     /// context with an identity mapping, but when switched to, can correctly form an
     /// `ActivePageTable<RecursiveMapping>`.
-    pub fn new_with_recursive_mapping(
+    ///
+    /// Unsafe because we assume that `frame` is a free, zeroed frame of physical memory.
+    pub unsafe fn new_with_recursive_mapping(
         frame: Frame,
         recursive_entry: u16,
     ) -> InactivePageTable<IdentityMapping> {
         let table = InactivePageTable { p4_frame: frame, _mapping: PhantomData };
 
-        let p4: &mut Table<Level4, IdentityMapping> = unsafe {
-            &mut *(VirtualAddress::new_unchecked(usize::from(frame.start_address())).mut_ptr())
-        };
+        let p4: &mut Table<Level4, IdentityMapping> =
+            &mut *(VirtualAddress::new_unchecked(usize::from(frame.start_address())).mut_ptr());
         p4[recursive_entry].set(frame, EntryFlags::PRESENT | EntryFlags::WRITABLE);
 
         table
@@ -81,12 +100,8 @@ impl InactivePageTable<IdentityMapping> {
     {
         let old_table_address = PhysicalAddress::new(read_control_reg!(cr3) as usize).unwrap();
 
-        unsafe {
-            /*
-             * NOTE: We don't need to flush the TLB here because it's cleared when CR3 changes.
-             */
-            write_control_reg!(cr3, usize::from(self.p4_frame.start_address()) as u64);
-        }
+        // NOTE: We don't need to flush the TLB here because it's cleared when CR3 changes
+        write_control_reg!(cr3, usize::from(self.p4_frame.start_address()) as u64);
 
         (
             ActivePageTable::<IdentityMapping>::new(self.p4_frame.start_address()),
@@ -113,12 +128,8 @@ impl InactivePageTable<RecursiveMapping> {
     {
         let old_table_address = PhysicalAddress::new(read_control_reg!(cr3) as usize).unwrap();
 
-        unsafe {
-            /*
-             * NOTE: We don't need to flush the TLB here because it's cleared when CR3 changes.
-             */
-            write_control_reg!(cr3, usize::from(self.p4_frame.start_address()) as u64);
-        }
+        // NOTE: We don't need to flush the TLB here because it's cleared when CR3 changes
+        write_control_reg!(cr3, usize::from(self.p4_frame.start_address()) as u64);
 
         (
             ActivePageTable::<RecursiveMapping>::new(),
@@ -178,21 +189,54 @@ impl ActivePageTable<RecursiveMapping> {
     /// Alter the mappings of a `InactivePageTable` by temporarily replacing the recursive entry
     /// address of the active tables with the physical address of the inactive table's P4.
     ///
+    /// The `InactivePageTable` must also be recursively-mapped for this to work.
+    ///
     /// This calls the closure with a `Mapper` that targets the current set of active tables, but
     /// will actually modify the given `InactivePageTable`'s mappings. Because the inactive table
     /// isn't really mapped, you can't modify the *contents* of the mappings. To modify the
-    /// physical memory, you will either need to switch to the `InactivePageTable`, or map it into
-    /// the `ActivePageTable` temporarily.
+    /// physical memory, you will either need to switch to the `InactivePageTable`, or map the
+    /// memory you want to modify into the `ActivePageTable` temporarily.
     pub fn with<A, F>(
         &mut self,
         table: &mut InactivePageTable<RecursiveMapping>,
-        frame_allocator: &A,
+        allocator: &A,
         f: F,
     ) where
         A: FrameAllocator,
         F: FnOnce(&mut Mapper<RecursiveMapping>, &A),
     {
-        // TODO
-        unimplemented!();
+        use super::kernel_map::RECURSIVE_ENTRY;
+
+        /*
+         * Backup the kernel P4's physical address.
+         */
+        let kernel_p4_frame =
+            Frame::contains(PhysicalAddress::new(read_control_reg!(cr3) as usize).unwrap());
+
+        /*
+         * Overwrite recursive mapping, so it points to the inactive page table. Flush the TLB
+         * because it might contain stale mappings to the kernel's recursive entries.
+         */
+        self.p4[RECURSIVE_ENTRY].set(table.p4_frame, EntryFlags::PRESENT | EntryFlags::WRITABLE);
+        tlb::flush();
+
+        /*
+         * Execute the closure with the new recursive mapping.
+         *
+         * NOTE: We make sure to only give it `self` as a `&mut Mapper<RecursiveMapping>`,
+         * because if we gave it a `ActivePageTable`, it could call `with` again, which
+         * would not work.
+         */
+        f(self, allocator);
+
+        /*
+         * Restore the kernel's recursive mapping and flush the TLB again.
+         *
+         * NOTE: we make sure not to use `self.p4` here because that relies on the recursive
+         * mapping.
+         */
+        let kernel_p4 = unsafe { &mut *KERNEL_P4_NON_RECURSIVE };
+        kernel_p4[RECURSIVE_ENTRY].set(kernel_p4_frame, EntryFlags::PRESENT | EntryFlags::WRITABLE);
+        tlb::flush();
     }
 }

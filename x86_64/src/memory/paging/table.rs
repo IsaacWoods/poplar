@@ -6,7 +6,10 @@ use super::{
     entry::{Entry, EntryFlags},
     FrameAllocator,
 };
-use crate::memory::{kernel_map::P4_TABLE_ADDRESS, VirtualAddress};
+use crate::memory::{
+    kernel_map::{KERNEL_P4_START, P4_TABLE_RECURSIVE_ADDRESS},
+    VirtualAddress,
+};
 use core::{
     marker::PhantomData,
     ops::{Index, IndexMut},
@@ -14,7 +17,13 @@ use core::{
 
 /// This points to the **currently installed** P4, **if** it is correctly recursively mapped. This
 /// **does not** hold in the bootloader before we install our own tables.
-pub(super) const P4: *mut Table<Level4, RecursiveMapping> = P4_TABLE_ADDRESS.mut_ptr();
+pub(super) const P4: *mut Table<Level4, RecursiveMapping> = P4_TABLE_RECURSIVE_ADDRESS.mut_ptr();
+
+/// This points to the kernel's P4 without using its recursive mapping. It is mainly used, instead
+/// of `P4`, when we've put another set of page tables' address in the kernel's table's recursive
+/// entry, so we can modify those using the recursive mapping.
+pub(super) const KERNEL_P4_NON_RECURSIVE: *mut Table<Level4, RecursiveMapping> =
+    KERNEL_P4_START.mut_ptr();
 
 pub enum Level4 {}
 pub enum Level3 {}

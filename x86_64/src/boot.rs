@@ -1,12 +1,12 @@
 //! TODO
 
-use crate::memory::{paging::Frame, PhysicalAddress};
+use crate::memory::{paging::Frame, PhysicalAddress, VirtualAddress};
 use core::ops::Range;
 
 pub const BOOT_INFO_MAGIC: u32 = 0xcafebabe;
 pub const MEMORY_MAP_NUM_ENTRIES: usize = 64;
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum MemoryType {
     /// Memory used by the UEFI services. Cannot be used by the OS.
     UefiServices,
@@ -28,9 +28,13 @@ pub enum MemoryType {
     /// will corrupt its own code or data.
     KernelImage,
 
+    /// Memory the bootloader has mapped the payload image into. The OS can only make use of this
+    /// memory after the payload is no longer needed.
+    PayloadImage,
+
     /// Memory the bootloader has used for the page tables containing the kernel's mapping. The OS
     /// should not use this memory, unless it has permanently switched to another set of page
-    /// tables.
+    /// tables. This also includes memory used for the payload's image.
     KernelPageTables,
 
     /// Memory the bootloader has mapped for use as the kernel heap. The OS should not use this
@@ -42,12 +46,30 @@ pub enum MemoryType {
     BootInfo,
 }
 
-/// TODO
 #[derive(Debug)]
 #[repr(C)]
 pub struct MemoryEntry {
     pub area: Range<Frame>,
     pub memory_type: MemoryType,
+}
+
+impl Default for MemoryEntry {
+    fn default() -> Self {
+        MemoryEntry {
+            area: Frame::contains(PhysicalAddress::new(0x0).unwrap())
+                ..(Frame::contains(PhysicalAddress::new(0x0).unwrap())),
+            memory_type: MemoryType::UefiServices,
+        }
+    }
+}
+
+#[repr(C)]
+pub struct PayloadInfo {
+    pub entry_point: VirtualAddress,
+    /// The physical address of the P4 frame of the process' constructed page tables. This is
+    /// passed as an address so that the kernel can construct its own owned page table for the
+    /// process.
+    pub page_table_address: PhysicalAddress,
 }
 
 /// This structure is placed in memory by the bootloader and a reference to it passed to the
@@ -68,6 +90,7 @@ pub struct BootInfo {
     pub memory_map: [MemoryEntry; MEMORY_MAP_NUM_ENTRIES],
     pub num_memory_map_entries: usize,
     pub rsdp_address: Option<PhysicalAddress>,
+    pub payload: PayloadInfo,
 }
 
 impl BootInfo {
