@@ -12,7 +12,7 @@ x86_64 = { path = "../x86_64" }
 
 [profile.release]
 debug = true
-lto = true
+lto = "thin"
 
 [package.metadata.cargo-xbuild]
 memcpy = true
