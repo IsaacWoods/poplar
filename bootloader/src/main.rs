@@ -235,6 +235,7 @@ fn setup_for_kernel() {
     }
 
     let mut efer = read_msr!(x86_64::hw::registers::EFER);
+    efer |= 1 << 0; // Enable the syscall and sysret instructions
     efer |= 1 << 8; // Enable long mode
     efer |= 1 << 11; // Enable use of the NX bit in the page tables
     unsafe {
