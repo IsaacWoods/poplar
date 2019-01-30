@@ -95,11 +95,13 @@ impl TssSegment {
 }
 
 pub const KERNEL_CODE_SELECTOR: SegmentSelector = SegmentSelector::new(1, PrivilegeLevel::Ring0);
-pub const USER_CODE_SELECTOR: SegmentSelector = SegmentSelector::new(2, PrivilegeLevel::Ring3);
-pub const USER_DATA_SELECTOR: SegmentSelector = SegmentSelector::new(3, PrivilegeLevel::Ring3);
-pub const BOOTSTRAP_TSS_SELECTOR: SegmentSelector = SegmentSelector::new(4, PrivilegeLevel::Ring0);
+pub const KERNEL_DATA_SELECTOR: SegmentSelector = SegmentSelector::new(2, PrivilegeLevel::Ring0);
+pub const USER_CODE_SELECTOR: SegmentSelector = SegmentSelector::new(3, PrivilegeLevel::Ring3);
+pub const USER_DATA_SELECTOR: SegmentSelector = SegmentSelector::new(4, PrivilegeLevel::Ring3);
+pub const BOOTSTRAP_TSS_SELECTOR: SegmentSelector = SegmentSelector::new(5, PrivilegeLevel::Ring0);
 
-pub const NUM_STATIC_ENTRIES: usize = 4;
+// NOTE: this includes the null segment
+pub const NUM_STATIC_ENTRIES: usize = 6;
 pub const MAX_CPUS: usize = 8;
 
 /// A GDT suitable for the kernel to use. It contains two code segments, one for Ring 0 and another
@@ -109,6 +111,7 @@ pub const MAX_CPUS: usize = 8;
 pub struct Gdt {
     null: u64,
     kernel_code: CodeSegment,
+    kernel_data: DataSegment,
     user_code: CodeSegment,
     user_data: DataSegment,
     tsss: [TssSegment; MAX_CPUS],
@@ -126,6 +129,7 @@ impl Gdt {
         Gdt {
             null: 0,
             kernel_code: CodeSegment::new(PrivilegeLevel::Ring0),
+            kernel_data: DataSegment::new(PrivilegeLevel::Ring0),
             user_code: CodeSegment::new(PrivilegeLevel::Ring3),
             user_data: DataSegment::new(PrivilegeLevel::Ring3),
             tsss: [TssSegment::empty(); MAX_CPUS],
@@ -170,8 +174,7 @@ impl Gdt {
         asm!("// Load the new GDT
               lgdt [$0]
              
-              // Clear DS, ES, FS, GS, and SS to the null segment
-              xor rax, rax
+              // Load the new kernel data segment
               mov ds, ax
               mov es, ax
               mov fs, ax
@@ -188,7 +191,10 @@ impl Gdt {
               // Load the TSS
               ltr cx"
         :
-        : "r"(&gdt_ptr), "{rbx}"(KERNEL_CODE_SELECTOR), "{rcx}"(BOOTSTRAP_TSS_SELECTOR)
+        : "r"(&gdt_ptr),
+          "{rax}"(KERNEL_DATA_SELECTOR),
+          "{rbx}"(KERNEL_CODE_SELECTOR),
+          "{rcx}"(BOOTSTRAP_TSS_SELECTOR)
         : "rax"
         : "intel"
         );
