@@ -2,13 +2,14 @@ use super::Arch;
 use crate::util::binary_pretty_print::BinaryPrettyPrint;
 use acpi::interrupt::InterruptModel;
 use log::{error, info};
+use bit_field::BitField;
 use x86_64::{
     hw::{
         gdt::KERNEL_CODE_SELECTOR,
         i8259_pic::Pic,
         idt::{Idt, InterruptStackFrame},
         local_apic::LocalApic,
-        registers::read_control_reg,
+        registers::{read_control_reg, write_msr},
     },
     memory::{
         kernel_map,
@@ -16,6 +17,7 @@ use x86_64::{
         PhysicalAddress,
     },
 };
+
 /// This should only be accessed directly by the bootstrap processor.
 ///
 /// The IDT is laid out like so:
@@ -26,8 +28,7 @@ use x86_64::{
 /// |       20-2F      | i8259 PIC Interrupts        |
 /// |        30        | Local APIC timer            |
 /// |        ..        |                             |
-/// |       40-7f      | IOAPIC Interrupts           |
-/// |        80        | Yield from usermode         |
+/// |       40-??      | IOAPIC Interrupts           |
 /// |        ..        |                             |
 /// |        FF        | APIC spurious interrupt     |
 /// |------------------|-----------------------------|
@@ -39,11 +40,14 @@ static mut IDT: Idt = Idt::empty();
  */
 const LEGACY_PIC_VECTOR: u8 = 0x20;
 const APIC_SPURIOUS_VECTOR: u8 = 0xff;
+
 pub struct InterruptController {}
 
 impl InterruptController {
     pub fn init(arch: &Arch, interrupt_model: &InterruptModel) -> InterruptController {
+        Self::install_yield_handler();
         Self::install_exception_handlers();
+
         unsafe {
             IDT.load();
         }
@@ -112,6 +116,29 @@ impl InterruptController {
         set_handler_with_error_code!(general_protection_fault, general_protection_fault_handler);
         set_handler_with_error_code!(page_fault, page_fault_handler);
         set_handler_with_error_code!(double_fault, double_fault_handler);
+    }
+
+    fn install_yield_handler() {
+        /*
+         * On x86_64, processes can use the `syscall` instruction to yield from userspace back
+         * into the kernel, as this instruction will always be present on x86_64.
+         * TODO: wondering if we could use fs or gs for this (per-cpu scheduling info kinda)?
+         *
+         * Refer to the documentation comments of each MSR to understand what this code is doing.
+         */
+        use x86_64::hw::registers::{IA32_STAR, IA32_LSTAR, IA32_FMASK};
+        use x86_64::hw::gdt::{USER_CODE_SELECTOR};
+        use crate::x86_64::process::yield_handler;
+
+        let mut selectors = 0_u64;
+        selectors.set_bits(32..48, KERNEL_CODE_SELECTOR.0 as u64);
+        selectors.set_bits(48..64, USER_CODE_SELECTOR.0 as u64);
+
+        unsafe {
+            write_msr(IA32_STAR, selectors);
+            write_msr(IA32_LSTAR, wrap_syscall_handler!(yield_handler));
+            write_msr(IA32_FMASK, 0);
+        }
     }
 }
 
@@ -186,6 +213,7 @@ extern "C" fn double_fault_handler(stack_frame: &InterruptStackFrame, error_code
 }
 
 extern "C" fn spurious_handler(_: &InterruptStackFrame) {}
+
 macro save_regs() {
     asm!("push rax
           push rcx
@@ -289,5 +317,46 @@ macro wrap_handler_with_error_code($name: path) {
         }
 
         wrapper
+    }
+}
+
+macro wrap_syscall_handler($name: path) {
+    {
+        #[naked]
+        extern "C" fn wrapper() -> ! {
+            /*
+             * `syscall` puts the address of the instruction following it into rcx. We push it onto
+             * the userspace stack here to save it.
+             */
+            unsafe {
+                asm!("push rcx"
+                     :
+                     :
+                     :
+                     : "intel");
+            }
+
+            /*
+             * TODO: we probably need to do some more special stuff (e.g. switch to a kernel stack)
+             */
+
+            $name();
+
+            /*
+             * To return to the process, we pop the address of the next instruction off the
+             * userspace stack again, and `sysret`.
+             */
+            unsafe {
+                asm!("pop rcx
+                      sysretq"
+                     :
+                     :
+                     :
+                     : "intel");
+                core::intrinsics::unreachable();
+            }
+        }
+
+        wrapper as u64
     }
 }
