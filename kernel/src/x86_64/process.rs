@@ -123,7 +123,7 @@ impl Process {
 /// Drop to Ring 3, into a process. This is used for the initial transition from kernel to user
 /// mode after the CPU has been brought up.
 pub fn drop_to_usermode(tss: &mut Tss, process: &mut Process) -> ! {
-    use x86_64::hw::gdt::{USER_CODE_SELECTOR, USER_DATA_SELECTOR};
+    use x86_64::hw::gdt::{USER_CODE64_SELECTOR, USER_DATA_SELECTOR};
 
     unsafe {
         /*
@@ -192,7 +192,7 @@ pub fn drop_to_usermode(tss: &mut Tss, process: &mut Process) -> ! {
         : "{rax}"(USER_DATA_SELECTOR),
           "{rbx}"(process.threads[0].stack_pointer),
           "{rcx}"(1<<9 | 1<<2),
-          "{rdx}"(USER_CODE_SELECTOR),
+          "{rdx}"(USER_CODE64_SELECTOR),
           "{rsi}"(process.threads[0].instruction_pointer)
         : "rax", "rbx", "rcx", "rdx", "rsi", "rdi", "r8", "r9", "r10", "r11", "r12", "r13", "r14", "r15"
         : "intel"

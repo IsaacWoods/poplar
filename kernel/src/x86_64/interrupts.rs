@@ -127,12 +127,20 @@ impl InterruptController {
          * Refer to the documentation comments of each MSR to understand what this code is doing.
          */
         use x86_64::hw::registers::{IA32_STAR, IA32_LSTAR, IA32_FMASK};
-        use x86_64::hw::gdt::{USER_CODE_SELECTOR};
+        use x86_64::hw::gdt::{USER_COMPAT_CODE_SELECTOR};
         use crate::x86_64::process::yield_handler;
 
         let mut selectors = 0_u64;
         selectors.set_bits(32..48, KERNEL_CODE_SELECTOR.0 as u64);
-        selectors.set_bits(48..64, USER_CODE_SELECTOR.0 as u64);
+
+        /*
+         * NOTE: We put the selector for the Compatibility-mode code segment in here, because
+         * `sysret` expects the segments to be in this order:
+         *      STAR[48..64]        => 32-bit Code Segment
+         *      STAR[48..64] + 8    => Data Segment
+         *      STAR[48..64] + 16   => 64-bit Code Segment
+         */
+        selectors.set_bits(48..64, USER_COMPAT_CODE_SELECTOR.0 as u64);
 
         unsafe {
             write_msr(IA32_STAR, selectors);
