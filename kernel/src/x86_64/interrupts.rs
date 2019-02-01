@@ -1,8 +1,8 @@
 use super::Arch;
 use crate::util::binary_pretty_print::BinaryPrettyPrint;
 use acpi::interrupt::InterruptModel;
-use log::{error, info};
 use bit_field::BitField;
+use log::{error, info};
 use x86_64::{
     hw::{
         gdt::KERNEL_CODE_SELECTOR,
@@ -126,9 +126,11 @@ impl InterruptController {
          *
          * Refer to the documentation comments of each MSR to understand what this code is doing.
          */
-        use x86_64::hw::registers::{IA32_STAR, IA32_LSTAR, IA32_FMASK};
-        use x86_64::hw::gdt::{USER_COMPAT_CODE_SELECTOR};
         use crate::x86_64::process::yield_handler;
+        use x86_64::hw::{
+            gdt::USER_COMPAT_CODE_SELECTOR,
+            registers::{IA32_FMASK, IA32_LSTAR, IA32_STAR},
+        };
 
         let mut selectors = 0_u64;
         selectors.set_bits(32..48, KERNEL_CODE_SELECTOR.0 as u64);

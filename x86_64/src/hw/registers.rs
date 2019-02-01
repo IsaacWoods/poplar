@@ -102,11 +102,11 @@ pub fn read_msr(reg: u32) -> u64 {
     let (high, low): (u32, u32);
     unsafe {
         asm!("rdmsr"
-             : "={eax}"(low), "={edx}"(high)
-             : "{ecx}"(reg)
-             : "memory"
-             : "volatile"
-            );
+         : "={eax}"(low), "={edx}"(high)
+         : "{ecx}"(reg)
+         : "memory"
+         : "volatile"
+        );
     }
     ((high as u64) << 32 | (low as u64))
 }
@@ -117,9 +117,9 @@ pub unsafe fn write_msr(reg: u32, value: u64) {
     use bit_field::BitField;
 
     asm!("wrmsr"
-         :
-         : "{ecx}"(reg), "{eax}"(value as u32), "{edx}"(value.get_bits(32..64) as u32)
-         : "memory"
-         : "volatile"
-        );
+     :
+     : "{ecx}"(reg), "{eax}"(value as u32), "{edx}"(value.get_bits(32..64) as u32)
+     : "memory"
+     : "volatile"
+    );
 }

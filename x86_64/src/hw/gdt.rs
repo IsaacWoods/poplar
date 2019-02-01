@@ -96,7 +96,8 @@ impl TssSegment {
 
 pub const KERNEL_CODE_SELECTOR: SegmentSelector = SegmentSelector::new(1, PrivilegeLevel::Ring0);
 pub const KERNEL_DATA_SELECTOR: SegmentSelector = SegmentSelector::new(2, PrivilegeLevel::Ring0);
-pub const USER_COMPAT_CODE_SELECTOR: SegmentSelector = SegmentSelector::new(3, PrivilegeLevel::Ring3);
+pub const USER_COMPAT_CODE_SELECTOR: SegmentSelector =
+    SegmentSelector::new(3, PrivilegeLevel::Ring3);
 pub const USER_DATA_SELECTOR: SegmentSelector = SegmentSelector::new(4, PrivilegeLevel::Ring3);
 pub const USER_CODE64_SELECTOR: SegmentSelector = SegmentSelector::new(5, PrivilegeLevel::Ring3);
 pub const BOOTSTRAP_TSS_SELECTOR: SegmentSelector = SegmentSelector::new(6, PrivilegeLevel::Ring0);
