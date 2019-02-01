@@ -123,7 +123,7 @@ impl Process {
 /// Drop to Ring 3, into a process. This is used for the initial transition from kernel to user
 /// mode after the CPU has been brought up.
 pub fn drop_to_usermode(tss: &mut Tss, process: &mut Process) -> ! {
-    use x86_64::hw::gdt::{USER_CODE_SELECTOR, USER_DATA_SELECTOR};
+    use x86_64::hw::gdt::{USER_CODE64_SELECTOR, USER_DATA_SELECTOR};
 
     unsafe {
         /*
@@ -192,11 +192,20 @@ pub fn drop_to_usermode(tss: &mut Tss, process: &mut Process) -> ! {
         : "{rax}"(USER_DATA_SELECTOR),
           "{rbx}"(process.threads[0].stack_pointer),
           "{rcx}"(1<<9 | 1<<2),
-          "{rdx}"(USER_CODE_SELECTOR),
+          "{rdx}"(USER_CODE64_SELECTOR),
           "{rsi}"(process.threads[0].instruction_pointer)
         : "rax", "rbx", "rcx", "rdx", "rsi", "rdi", "r8", "r9", "r10", "r11", "r12", "r13", "r14", "r15"
         : "intel"
         );
         unreachable!();
     }
+}
+
+/// This is called when a task yields to the kernel (using `syscall`, on x86_64). Tasks yield when
+/// they have no work to do / are waiting on another process to respond to a message etc. The
+/// kernel should handle any messages the yielding task has sent, and then schedule another task.
+// TODO: think about how we're going to access stuff from here (very annoying). We need to be able
+// to dispatch messages etc. (ideally we kinda want to get access to the whole `Arch`).
+pub extern "C" fn yield_handler() {
+    info!("Task yielded!");
 }

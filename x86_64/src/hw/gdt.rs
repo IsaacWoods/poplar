@@ -95,22 +95,32 @@ impl TssSegment {
 }
 
 pub const KERNEL_CODE_SELECTOR: SegmentSelector = SegmentSelector::new(1, PrivilegeLevel::Ring0);
-pub const USER_CODE_SELECTOR: SegmentSelector = SegmentSelector::new(2, PrivilegeLevel::Ring3);
-pub const USER_DATA_SELECTOR: SegmentSelector = SegmentSelector::new(3, PrivilegeLevel::Ring3);
-pub const BOOTSTRAP_TSS_SELECTOR: SegmentSelector = SegmentSelector::new(4, PrivilegeLevel::Ring0);
+pub const KERNEL_DATA_SELECTOR: SegmentSelector = SegmentSelector::new(2, PrivilegeLevel::Ring0);
+pub const USER_COMPAT_CODE_SELECTOR: SegmentSelector =
+    SegmentSelector::new(3, PrivilegeLevel::Ring3);
+pub const USER_DATA_SELECTOR: SegmentSelector = SegmentSelector::new(4, PrivilegeLevel::Ring3);
+pub const USER_CODE64_SELECTOR: SegmentSelector = SegmentSelector::new(5, PrivilegeLevel::Ring3);
+pub const BOOTSTRAP_TSS_SELECTOR: SegmentSelector = SegmentSelector::new(6, PrivilegeLevel::Ring0);
 
-pub const NUM_STATIC_ENTRIES: usize = 4;
+// NOTE: this includes the null segment
+pub const NUM_STATIC_ENTRIES: usize = 7;
 pub const MAX_CPUS: usize = 8;
 
-/// A GDT suitable for the kernel to use. It contains two code segments, one for Ring 0 and another
-/// for Ring 3. While data segments still exist on x86_64, they are useless, so we instead just
-/// load the selector for the null segment into the data segments.
+/// A GDT suitable for the kernel to use. The order of the segments is important: `sysret` relies
+/// on the Ring-3 segments going in the order "32-bit Code Segment", "Data Segment", "64-bit Code
+/// Segment".
 #[repr(C, packed)]
 pub struct Gdt {
     null: u64,
     kernel_code: CodeSegment,
-    user_code: CodeSegment,
+    kernel_data: DataSegment,
+
+    /// This is a placeholder segment for returning to Ring 3 in Compatability Mode. We don't
+    /// support this so this is just set to a null segment.
+    user_compat_code: u64,
     user_data: DataSegment,
+    user_code64: CodeSegment,
+
     tsss: [TssSegment; MAX_CPUS],
 
     /// This field is not part of the actual GDT; we just use it to keep track of how many TSS
@@ -126,8 +136,10 @@ impl Gdt {
         Gdt {
             null: 0,
             kernel_code: CodeSegment::new(PrivilegeLevel::Ring0),
-            user_code: CodeSegment::new(PrivilegeLevel::Ring3),
+            kernel_data: DataSegment::new(PrivilegeLevel::Ring0),
+            user_compat_code: 0,
             user_data: DataSegment::new(PrivilegeLevel::Ring3),
+            user_code64: CodeSegment::new(PrivilegeLevel::Ring3),
             tsss: [TssSegment::empty(); MAX_CPUS],
             next_free_tss: 0,
         }
@@ -170,8 +182,7 @@ impl Gdt {
         asm!("// Load the new GDT
               lgdt [$0]
              
-              // Clear DS, ES, FS, GS, and SS to the null segment
-              xor rax, rax
+              // Load the new kernel data segment
               mov ds, ax
               mov es, ax
               mov fs, ax
@@ -188,7 +199,10 @@ impl Gdt {
               // Load the TSS
               ltr cx"
         :
-        : "r"(&gdt_ptr), "{rbx}"(KERNEL_CODE_SELECTOR), "{rcx}"(BOOTSTRAP_TSS_SELECTOR)
+        : "r"(&gdt_ptr),
+          "{rax}"(KERNEL_DATA_SELECTOR),
+          "{rbx}"(KERNEL_CODE_SELECTOR),
+          "{rcx}"(BOOTSTRAP_TSS_SELECTOR)
         : "rax"
         : "intel"
         );

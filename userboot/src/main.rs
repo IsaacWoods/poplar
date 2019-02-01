@@ -8,6 +8,8 @@ use core::panic::PanicInfo;
 pub extern "C" fn start() -> ! {
     unsafe {
         asm!("mov rax, 0xdeadbeef" :::: "intel");
+        asm!("syscall");
+        asm!("mov rax, 0xcafebabe" :::: "intel");
     }
     loop {}
 }

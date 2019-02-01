@@ -67,37 +67,59 @@ pub macro read_control_reg($reg: ident) {{
 /// is intended because writing to control registers can be kinda dangerous. The name of the control
 /// register should be passed as any of: `CR0`, `CR1`, `CR2`, `CR3`, `CR4`, `CR8`.
 pub macro write_control_reg($reg: ident, $value: expr) {
+    /*
+     * This will cause a type-check error if $value isn't a u64.
+     */
+    let value_u64: u64 = $value;
     asm!(concat!("mov $0, %", stringify!($reg))
          :
-         : "r"($value)
+         : "r"(value_u64)
          : "memory"
          : "volatile"
         );
 }
 
-pub const EFER: u32 = 0xC0000080;
+pub const EFER: u32 = 0xc0000080;
+
+/// Contains the Ring 0 and Ring 3 code-segment selectors loaded by `syscall` and `sysret`,
+/// respectively:
+/// * `syscall` loads bits 32-47 into CS (so this should be the Ring 0 code-segment)
+/// * `sysret` loads bits 48-63 into CS (so this should be the Ring 3 code-segment)
+///
+/// These instructions assume that the data-segment for each ring is directly after the
+/// code-segment.
+pub const IA32_STAR: u32 = 0xc0000081;
+
+/// Contains the virtual address of the handler to call upon `syscall`.
+pub const IA32_LSTAR: u32 = 0xc0000082;
+
+/// Upon `syscall`, the value of this MSR is used to mask `RFLAGS`. Specifically, if a bit is set
+/// in this MSR, that bit in RFLAGS is zerod.
+pub const IA32_FMASK: u32 = 0xc0000084;
 
 /// Read from a model-specific register.
-pub macro read_msr($reg: expr) {{
+pub fn read_msr(reg: u32) -> u64 {
     let (high, low): (u32, u32);
     unsafe {
         asm!("rdmsr"
-             : "={eax}"(low), "={edx}"(high)
-             : "{ecx}"($reg)
-             : "memory"
-             : "volatile"
-            );
-    }
-    ((high as u64) << 32 | (low as u64))
-}}
-
-/// Write to a model-specific register. This is unsafe, because writing to certain MSRs can
-/// compromise memory safety.
-pub macro write_msr($reg: expr, $value: expr) {
-    asm!("wrmsr"
-         :
-         : "{ecx}"($reg), "{eax}"(($value) as u32), "{edx}"((($value) >> 32) as u32)
+         : "={eax}"(low), "={edx}"(high)
+         : "{ecx}"(reg)
          : "memory"
          : "volatile"
         );
+    }
+    ((high as u64) << 32 | (low as u64))
+}
+
+/// Write to a model-specific register. This is unsafe, because writing to certain MSRs can
+/// compromise memory safety.
+pub unsafe fn write_msr(reg: u32, value: u64) {
+    use bit_field::BitField;
+
+    asm!("wrmsr"
+     :
+     : "{ecx}"(reg), "{eax}"(value as u32), "{edx}"(value.get_bits(32..64) as u32)
+     : "memory"
+     : "volatile"
+    );
 }
