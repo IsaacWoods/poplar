@@ -333,11 +333,13 @@ macro wrap_syscall_handler($name: path) {
         #[naked]
         extern "C" fn wrapper() -> ! {
             /*
-             * `syscall` puts the address of the instruction following it into rcx. We push it onto
-             * the userspace stack here to save it.
+             * `syscall` puts the address of the instruction following it into rcx, and RFLAGS into
+             * r11. We push them onto the userspace stack so we can restore them before doing a
+             * `sysret`.
              */
             unsafe {
-                asm!("push rcx"
+                asm!("push rcx
+                      push r11"
                      :
                      :
                      :
@@ -351,11 +353,12 @@ macro wrap_syscall_handler($name: path) {
             $name();
 
             /*
-             * To return to the process, we pop the address of the next instruction off the
-             * userspace stack again, and `sysret`.
+             * To return to the process, we pop RFLAGS and the address of the next instruction off
+             * the userspace stack again, and `sysret`.
              */
             unsafe {
-                asm!("pop rcx
+                asm!("pop r11
+                      pop rcx
                       sysretq"
                      :
                      :
