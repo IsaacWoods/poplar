@@ -9,7 +9,8 @@
     core_intrinsics,
     trait_alias,
     type_ascription,
-    naked_functions
+    naked_functions,
+    bind_by_move_pattern_guards
 )]
 #[macro_use]
 extern crate alloc;
@@ -30,6 +31,7 @@ cfg_if! {
 
 mod arch;
 mod heap_allocator;
+mod process_map;
 mod util;
 
 use crate::{arch::Architecture, heap_allocator::LockedHoleAllocator};

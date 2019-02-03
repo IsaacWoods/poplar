@@ -15,7 +15,10 @@ use self::{
     memory::{physical::LockedPhysicalMemoryManager, KernelPageTable, PhysicalRegionMapper},
     process::Process,
 };
-use crate::arch::Architecture;
+use crate::{
+    arch::Architecture,
+    process_map::{ProcessMap, INITIAL_PROCESS_CAPACITY},
+};
 use acpi::{AmlNamespace, ProcessorState};
 use alloc::vec::Vec;
 use log::{error, info, warn};
@@ -44,6 +47,8 @@ pub struct Arch {
     /// mapping, now we are in the higher-half without an identity mapping.
     pub kernel_page_table: Mutex<KernelPageTable>,
     pub physical_region_mapper: Mutex<PhysicalRegionMapper>,
+
+    pub process_map: Mutex<ProcessMap<Process>>,
 }
 
 /// `Arch` contains a bunch of things, like the GDT, that the hardware relies on actually being at
@@ -106,6 +111,7 @@ pub fn kmain() -> ! {
         physical_memory_manager: LockedPhysicalMemoryManager::new(boot_info),
         kernel_page_table: Mutex::new(unsafe { ActivePageTable::<RecursiveMapping>::new() }),
         physical_region_mapper: Mutex::new(PhysicalRegionMapper::new()),
+        process_map: Mutex::new(ProcessMap::new(INITIAL_PROCESS_CAPACITY)),
     };
 
     let mut acpi_handler = PebbleAcpiHandler::new(
@@ -211,9 +217,10 @@ pub fn kmain() -> ! {
         ))
     };
     let mut process = Process::new(&arch, process_page_table, boot_info.payload.entry_point);
+    let process_id = arch.process_map.lock().insert(process);
 
     info!("Dropping to usermode");
-    process::drop_to_usermode(&mut boot_processor.tss, &mut process);
+    process::drop_to_usermode(&arch, &mut boot_processor.tss, process_id);
 
     // crate::kernel_main(&arch)
 }
