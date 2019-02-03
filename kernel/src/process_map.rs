@@ -2,12 +2,15 @@ use alloc::vec::Vec;
 use core::mem;
 use libmessage::{Generation, Index, ProcessId};
 
+pub const INITIAL_PROCESS_CAPACITY: usize = 32;
+
 enum Entry<P> {
     Free { next_generation: Generation, next_free: Option<u16> },
     Occupied { generation: Generation, process: P },
 }
 
-/// `P` can be any type the architecture-specific code wants to associate each process with.
+/// `P` can be any type the architecture-specific code wants to associate each process with. The
+/// indexes into this map start at index `1`, as an index of `0` refers to the kernel.
 pub struct ProcessMap<P> {
     entries: Vec<Entry<P>>,
     free_list_head: Option<Index>,
@@ -25,6 +28,9 @@ impl<P> ProcessMap<P> {
         map
     }
 
+    /// Insert a new `P` into the map, assigning it a `ProcessId`. The map will not assign an ID
+    /// with an index of `0` (of any generation), because a ID with an index of `0` refers to the
+    /// kernel.
     pub fn insert(&mut self, process: P) -> ProcessId {
         match self.free_list_head {
             /*
@@ -52,7 +58,7 @@ impl<P> ProcessMap<P> {
                 self.entries[index] = Entry::Occupied { generation: next_generation, process };
                 self.free_list_head = next_free;
 
-                ProcessId { index: index as Index, generation: next_generation }
+                ProcessId { index: (index + 1) as Index, generation: next_generation }
             }
 
             Entry::Occupied { .. } => panic!("Process map free list is corrupted!"),
@@ -88,15 +94,13 @@ impl<P> ProcessMap<P> {
         self.free_list_head = Some(start as Index);
     }
 
-    pub fn get(&self, entry: ProcessId) -> Option<&P> {
-        match self.entries.get(entry.index as usize) {
+    pub fn get(&self, id: ProcessId) -> Option<&P> {
+        match self.entries.get((id.index - 1) as usize) {
             /*
              * Only "find" the entry if the generations are the same. If they're not, the
              * expected entry has been removed and replaced by another process!
              */
-            Some(Entry::Occupied { generation, ref process })
-                if *generation == entry.generation =>
-            {
+            Some(Entry::Occupied { generation, ref process }) if *generation == id.generation => {
                 Some(process)
             }
 
@@ -105,7 +109,7 @@ impl<P> ProcessMap<P> {
     }
 
     pub fn get_mut(&mut self, id: ProcessId) -> Option<&mut P> {
-        match self.entries.get_mut(id.index as usize) {
+        match self.entries.get_mut((id.index - 1) as usize) {
             /*
              * Only "find" the entry if the generations are the same. If they're not, the
              * expected entry has been removed and replaced by another process!
@@ -129,7 +133,7 @@ impl<P> ProcessMap<P> {
          * Work out the generation that the new free entry should have, if we do remove
          * whatever's there at the moment.
          */
-        let next_generation = match self.entries[id.index as usize] {
+        let next_generation = match self.entries[(id.index - 1) as usize] {
             Entry::Free { next_generation, .. } => next_generation,
             Entry::Occupied { generation, .. } => generation + 1,
         };
@@ -138,7 +142,7 @@ impl<P> ProcessMap<P> {
          * Remove the entry in advance so we own it.
          */
         let entry = mem::replace(
-            &mut self.entries[id.index as usize],
+            &mut self.entries[(id.index - 1) as usize],
             Entry::Free { next_generation, next_free: self.free_list_head },
         );
 
@@ -149,7 +153,7 @@ impl<P> ProcessMap<P> {
                  * free space, so we just need to mark this as the next free
                  * entry.
                  */
-                self.free_list_head = Some(id.index);
+                self.free_list_head = Some(id.index - 1);
                 Some(process)
             }
 
@@ -158,7 +162,7 @@ impl<P> ProcessMap<P> {
                  * Either the generation wasn't correct, or this entry isn't even occupied.
                  * Either way, put whatever was there before back.
                  */
-                self.entries[id.index as usize] = entry;
+                self.entries[(id.index - 1) as usize] = entry;
                 None
             }
         }
