@@ -16,6 +16,7 @@ log = { version = "0.4", default-features = false }
 x86_64 = { path = "../x86_64", features = ["kernel"], optional = true }
 acpi = { path = "../acpi", optional = true, features = ["debug_parser"] }
 num = { version = "0.2", default-features = false }
+libmessage = { path = "../libmessage" }
 
 [features]
 arch_x86_64 = ["x86_64", "acpi"]
