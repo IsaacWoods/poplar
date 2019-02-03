@@ -15,7 +15,9 @@ pub struct ProcessMap<P> {
 
 impl<P> ProcessMap<P> {
     pub fn new(initial_capacity: usize) -> ProcessMap<P> {
-        assert!(initial_capacity > 0);
+        if initial_capacity == 0 {
+            panic!("Can't create process map with size of zero!");
+        }
 
         let mut map =
             ProcessMap { entries: Vec::with_capacity(initial_capacity), free_list_head: None };
@@ -37,8 +39,9 @@ impl<P> ProcessMap<P> {
                 /*
                  * Double the number of elements we contain.
                  */
-                self.reserve(self.len());
-                self.insert_into(self.len(), process)
+                let current_len = self.len();
+                self.reserve(current_len);
+                self.insert_into(current_len, process)
             }
         }
     }
@@ -118,7 +121,7 @@ impl<P> ProcessMap<P> {
     }
 
     pub fn remove(&mut self, id: ProcessId) -> Option<P> {
-        if (id.index as usize) >= self.entries.len() {
+        if (id.index as usize) >= self.len() {
             return None;
         }
 
@@ -171,6 +174,12 @@ impl<P> ProcessMap<P> {
 }
 
 #[test]
+#[should_panic]
+fn no_empty_maps() {
+    let _: ProcessMap<usize> = ProcessMap::new(0);
+}
+
+#[test]
 fn can_get_values() {
     let mut map = ProcessMap::new(3);
     let thing_0 = map.insert(8);
@@ -193,4 +202,19 @@ fn access_old_generation() {
     assert_eq!(map.get(thing), None);
     assert_eq!(map.get(other_thing), Some(&84));
     assert_eq!(map.get(new_thing), Some(&13));
+}
+
+#[test]
+fn access_old_across_allocation() {
+    let mut map = ProcessMap::new(2);
+    let thing_0 = map.insert(8);
+    let thing_1 = map.insert(17);
+    // This next insert causes the backing `Vec` to expand
+    let thing_2 = map.insert(42);
+
+    map.remove(thing_1);
+
+    assert_eq!(map.get(thing_0), Some(&8));
+    assert_eq!(map.get(thing_1), None);
+    assert_eq!(map.get(thing_2), Some(&42));
 }
