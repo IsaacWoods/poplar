@@ -64,6 +64,9 @@ impl Process {
         let stack_bottom = USER_STACKS_START;
         let stack_top = (stack_bottom + INITIAL_STACK_SIZE).unwrap();
 
+        let send_buffer_address = SEND_BUFFERS_START;
+        let receive_buffer_address = RECEIVE_BUFFERS_START;
+
         arch.kernel_page_table.lock().with(
             &mut page_table,
             &arch.physical_memory_manager,
@@ -80,6 +83,26 @@ impl Process {
                  */
                 mapper.map_range(
                     Page::contains(stack_bottom)..Page::contains(stack_top),
+                    EntryFlags::PRESENT
+                        | EntryFlags::WRITABLE
+                        | EntryFlags::NO_EXECUTE
+                        | EntryFlags::USER_ACCESSIBLE,
+                    allocator,
+                );
+
+                /*
+                 * Map the main thread's Send and Receive buffers.
+                 */
+                mapper.map(
+                    Page::contains(send_buffer_address),
+                    EntryFlags::PRESENT
+                        | EntryFlags::WRITABLE
+                        | EntryFlags::NO_EXECUTE
+                        | EntryFlags::USER_ACCESSIBLE,
+                    allocator,
+                );
+                mapper.map(
+                    Page::contains(receive_buffer_address),
                     EntryFlags::PRESENT
                         | EntryFlags::WRITABLE
                         | EntryFlags::NO_EXECUTE

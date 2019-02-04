@@ -8,8 +8,10 @@ pub const KERNEL_SPACE_END: VirtualAddress =
 pub const INITIAL_STACK_SIZE: usize = PAGE_SIZE;
 
 pub const MEMORY_OBJECTS_START: VirtualAddress =
+    unsafe { VirtualAddress::new_unchecked(0x00000006_00000000) };
+pub const RECEIVE_BUFFERS_START: VirtualAddress =
     unsafe { VirtualAddress::new_unchecked(0x00000005_00000000) };
-pub const MESSAGE_BUFFERS_START: VirtualAddress =
+pub const SEND_BUFFERS_START: VirtualAddress =
     unsafe { VirtualAddress::new_unchecked(0x00000004_00000000) };
 pub const KERNEL_STACKS_START: VirtualAddress =
     unsafe { VirtualAddress::new_unchecked(0x00000003_00000000) };

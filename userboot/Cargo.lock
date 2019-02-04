@@ -1,4 +1,11 @@
 [[package]]
+name = "libmessage"
+version = "0.1.0"
+
+[[package]]
 name = "userboot"
 version = "0.1.0"
+dependencies = [
+ "libmessage 0.1.0",
+]
 
