@@ -247,7 +247,7 @@ fn allocate_and_map_heap(mapper: &mut Mapper<IdentityMapping>, allocator: &BootF
     println!("Allocating memory for kernel heap");
 
     assert!(kernel_map::HEAP_START.is_page_aligned());
-    assert!((kernel_map::HEAP_END + 1).unwrap().is_page_aligned());
+    assert!((kernel_map::HEAP_END + 1).is_page_aligned());
     let heap_size = (usize::from(kernel_map::HEAP_END) + 1) - usize::from(kernel_map::HEAP_START);
     assert!(heap_size % FRAME_SIZE == 0);
     let heap_physical_base = system_table()
@@ -570,8 +570,8 @@ fn map_section(
      */
     let frames =
         Frame::contains(physical_base)..Frame::contains(physical_base + section.size as usize);
-    let pages = Page::contains(virtual_address)
-        ..Page::contains((virtual_address + section.size as usize).unwrap());
+    let pages =
+        Page::contains(virtual_address)..Page::contains(virtual_address + section.size as usize);
     assert!(frames.clone().count() == pages.clone().count());
 
     /*

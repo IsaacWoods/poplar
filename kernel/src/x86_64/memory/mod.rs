@@ -97,7 +97,7 @@ impl PhysicalRegionMapper {
         frame_allocator: &LockedPhysicalMemoryManager,
     ) {
         for page in Page::contains(mapping.virtual_base)
-            ..Page::contains((mapping.virtual_base + mapping.size).unwrap())
+            ..Page::contains(mapping.virtual_base + mapping.size)
         {
             // Unmap it from the virtual address space
             page_tables.unmap(page, frame_allocator);

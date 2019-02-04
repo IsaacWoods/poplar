@@ -2,7 +2,7 @@ use super::paging::PAGE_SIZE;
 use core::{
     cmp::Ordering,
     fmt,
-    ops::{Add, Sub},
+    ops::{Add, AddAssign, Sub, SubAssign},
 };
 
 /// Represents a canonical virtual address. To be canonical, the address must be in the ranges
@@ -103,7 +103,7 @@ impl VirtualAddress {
     /// Get the smallest address `x` with the given alignment such that `x >= self`. The alignment
     /// must be `0` or a power of two.
     pub fn align_up(&self, align: usize) -> VirtualAddress {
-        (*self + (align - 1)).unwrap().align_down(align)
+        (*self + (align - 1)).align_down(align)
     }
 
     /// Addresses are always expected by the CPU to be canonical (bits 48 to 63 are the same as bit
@@ -153,19 +153,31 @@ impl<T> From<*mut T> for VirtualAddress {
     }
 }
 
+impl AddAssign<usize> for VirtualAddress {
+    fn add_assign(&mut self, rhs: usize) {
+        *self = *self + rhs;
+    }
+}
+
 impl Add<usize> for VirtualAddress {
-    type Output = Option<VirtualAddress>;
+    type Output = VirtualAddress;
 
     fn add(self, rhs: usize) -> Self::Output {
-        VirtualAddress::new(self.0 + rhs)
+        VirtualAddress::new_canonicalise(self.0 + rhs)
     }
 }
 
 impl Sub<usize> for VirtualAddress {
-    type Output = Option<VirtualAddress>;
+    type Output = VirtualAddress;
 
     fn sub(self, rhs: usize) -> Self::Output {
-        VirtualAddress::new(self.0 - rhs)
+        VirtualAddress::new_canonicalise(self.0 - rhs)
+    }
+}
+
+impl SubAssign<usize> for VirtualAddress {
+    fn sub_assign(&mut self, rhs: usize) {
+        *self = *self - rhs;
     }
 }
 

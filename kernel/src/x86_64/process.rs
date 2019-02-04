@@ -61,7 +61,7 @@ impl Process {
          * areas.
          */
         let stack_bottom = USER_STACKS_START;
-        let stack_top = (stack_bottom + INITIAL_STACK_SIZE).unwrap();
+        let stack_top = stack_bottom + INITIAL_STACK_SIZE;
 
         arch.kernel_page_table.lock().with(
             &mut page_table,

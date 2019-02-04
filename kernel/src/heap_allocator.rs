@@ -169,7 +169,7 @@ fn split_hole(hole: HoleInfo, required_layout: Layout) -> Option<Allocation> {
          * We need to add front padding to correctly align the data
          * in the hole.
          */
-        let aligned_addr = (hole.addr + HoleList::get_min_size()).unwrap().align_up(required_align);
+        let aligned_addr = (hole.addr + HoleList::get_min_size()).align_up(required_align);
 
         (
             aligned_addr,
@@ -199,7 +199,7 @@ fn split_hole(hole: HoleInfo, required_layout: Layout) -> Option<Allocation> {
          * use the extra space.
          */
         Some(HoleInfo {
-            addr: (aligned_hole.addr + required_size).unwrap(),
+            addr: aligned_hole.addr + required_size,
             size: aligned_hole.size - required_size,
         })
     };
@@ -250,14 +250,11 @@ fn free(mut hole: &mut Hole, addr: VirtualAddress, mut size: usize) {
         } else {
             VirtualAddress::new(hole as *mut _ as usize).unwrap()
         };
-        assert!(
-            (hole_addr + hole.size).unwrap() <= addr,
-            "Invalid deallocation (probable double free)"
-        );
+        assert!((hole_addr + hole.size) <= addr, "Invalid deallocation (probable double free)");
         let next_hole_info = hole.next.as_ref().map(|next| next.info());
 
         match next_hole_info {
-            Some(next) if hole_addr + hole.size == Some(addr) && addr + size == Some(next.addr) => {
+            Some(next) if (hole_addr + hole.size == addr) && (addr + size == next.addr) => {
                 /*
                  * The block exactly fills the gap between this hole and the next:
                  *      Before: ___XXX____YYYY___    (X=this hole, Y=next hole)
@@ -268,7 +265,7 @@ fn free(mut hole: &mut Hole, addr: VirtualAddress, mut size: usize) {
                 hole.next = hole.next.as_mut().unwrap().next.take(); // Remove Y
             }
 
-            _ if hole_addr + hole.size == Some(addr) => {
+            _ if hole_addr + hole.size == addr => {
                 /*
                  * The block is right behind this hole but there is used memory after it:
                  *      Before: ___XXX______YYYY___ (X=this hole, Y=next hole)
@@ -281,7 +278,7 @@ fn free(mut hole: &mut Hole, addr: VirtualAddress, mut size: usize) {
                 hole.size += size; // Merge F into X
             }
 
-            Some(next) if addr + size == Some(next.addr) => {
+            Some(next) if addr + size == next.addr => {
                 /*
                  * The block is right before the next hole but there is used memory before it:
                  *      Before: ___XXX______YYYY___
