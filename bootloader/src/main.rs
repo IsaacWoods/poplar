@@ -256,8 +256,8 @@ fn allocate_and_map_heap(mapper: &mut Mapper<IdentityMapping>, allocator: &BootF
         .map_err(|err| panic!("Failed to allocate memory for kernel heap: {:?}", err))
         .unwrap();
 
-    let heap_frames = Frame::contains(heap_physical_base)
-        ..=Frame::contains((heap_physical_base + heap_size).unwrap());
+    let heap_frames =
+        Frame::contains(heap_physical_base)..=Frame::contains(heap_physical_base + heap_size);
     let heap_pages = Page::contains(kernel_map::HEAP_START)..=Page::contains(kernel_map::HEAP_END);
     for (frame, page) in heap_frames.zip(heap_pages) {
         mapper.map_to(
@@ -478,7 +478,7 @@ fn load_image<'a>(
             }
         }
 
-        section_physical_address = (section_physical_address + section.size as usize).unwrap();
+        section_physical_address += section.size as usize;
     }
 
     Ok(ImageInfo { physical_base, elf })
@@ -568,8 +568,8 @@ fn map_section(
      * physical_base + size)` and `[virtual_address, virtual_address + size)` gives us the
      * correct frame and page ranges.
      */
-    let frames = Frame::contains(physical_base)
-        ..Frame::contains((physical_base + section.size as usize).unwrap());
+    let frames =
+        Frame::contains(physical_base)..Frame::contains(physical_base + section.size as usize);
     let pages = Page::contains(virtual_address)
         ..Page::contains((virtual_address + section.size as usize).unwrap());
     assert!(frames.clone().count() == pages.clone().count());

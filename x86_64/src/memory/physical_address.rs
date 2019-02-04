@@ -2,7 +2,7 @@ use super::paging::FRAME_SIZE;
 use core::{
     cmp::Ordering,
     fmt,
-    ops::{Add, Sub},
+    ops::{Add, AddAssign, Sub, SubAssign},
 };
 
 /// Represents an address in the physical memory space. A valid physical address is smaller than
@@ -61,18 +61,42 @@ impl From<PhysicalAddress> for usize {
 }
 
 impl Add<usize> for PhysicalAddress {
-    type Output = Option<PhysicalAddress>;
+    type Output = PhysicalAddress;
 
     fn add(self, rhs: usize) -> Self::Output {
-        PhysicalAddress::new(self.0 + rhs)
+        match PhysicalAddress::new(self.0 + rhs) {
+            Some(address) => address,
+            None => panic!(
+                "Physical address arithmetic led to invalid address: {:#x} + {:#x}",
+                self, rhs
+            ),
+        }
+    }
+}
+
+impl AddAssign<usize> for PhysicalAddress {
+    fn add_assign(&mut self, rhs: usize) {
+        *self = *self + rhs;
     }
 }
 
 impl Sub<usize> for PhysicalAddress {
-    type Output = Option<PhysicalAddress>;
+    type Output = PhysicalAddress;
 
     fn sub(self, rhs: usize) -> Self::Output {
-        PhysicalAddress::new(self.0 - rhs)
+        match PhysicalAddress::new(self.0 - rhs) {
+            Some(address) => address,
+            None => panic!(
+                "Physical address arithmetic led to invalid address: {:#x} - {:#x}",
+                self, rhs
+            ),
+        }
+    }
+}
+
+impl SubAssign<usize> for PhysicalAddress {
+    fn sub_assign(&mut self, rhs: usize) {
+        *self = *self - rhs;
     }
 }
 
