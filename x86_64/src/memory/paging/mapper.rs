@@ -44,7 +44,10 @@ where
     /// Get the `PhysicalAddress` a given `VirtualAddress` is mapped to by these page tables, if
     /// it's mapped. If these page tables don't map it to any physical frame, this returns `None`.
     pub fn translate(&self, address: VirtualAddress) -> Option<PhysicalAddress> {
-        self.translate_page(Page::contains(address))?.start_address() + address.offset_into_page()
+        Some(
+            self.translate_page(Page::contains(address))?.start_address()
+                + address.offset_into_page(),
+        )
     }
 
     /// Get the physical `Frame` that a given virtual `Page` is mapped to, if it's mapped.
