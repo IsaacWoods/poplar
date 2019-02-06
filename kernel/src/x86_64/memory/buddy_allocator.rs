@@ -39,13 +39,15 @@ impl BuddyAllocator {
         let mut block_start = range.start;
 
         while block_start < range.end {
+            /*
+             * Pick the largest order block that fits in the remaining area, but cap it at the
+             * largest order the allocator can manage.
+             */
             let order = min(
                 self.max_order(),
-                flooring_log2(
-                    usize::from(range.end.start_address()) as u64
-                        - usize::from(block_start.start_address()) as u64,
-                ) as usize,
+                flooring_log2((block_start..range.end).count() as u64) as usize,
             );
+
             self.free_n(block_start, 1 << order);
             block_start += 1 << order;
         }
@@ -73,6 +75,7 @@ impl BuddyAllocator {
              * Blocks of the maximum order can't be coalesced, because there isn't a bigger bin
              * to put them into.
              */
+            assert!(!self.bins[order].contains(&start_frame));
             self.bins[order].insert(start_frame);
             return;
         }
@@ -88,6 +91,7 @@ impl BuddyAllocator {
             /*
              * The buddy isn't free, insert the block at this order.
              */
+            assert!(!self.bins[order].contains(&start_frame));
             self.bins[order].insert(start_frame);
         }
     }
