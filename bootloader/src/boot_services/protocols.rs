@@ -87,7 +87,7 @@ impl BootServices {
         if interface == 0x0 as *mut _ {
             Err(Status::NotFound)
         } else {
-            Ok(unsafe { mem::transmute(interface) })
+            Ok(unsafe { &mut *(interface as *mut T) })
         }
     }
 

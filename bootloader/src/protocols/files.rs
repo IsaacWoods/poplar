@@ -88,7 +88,7 @@ impl File {
         if file == 0x0 as *mut _ {
             Err(Status::NotFound)
         } else {
-            Ok(unsafe { mem::transmute(file) })
+            Ok(unsafe { &mut *file })
         }
     }
 
@@ -237,7 +237,7 @@ impl SimpleFileSystem {
         if file == 0x0 as *mut _ {
             Err(Status::NotFound)
         } else {
-            Ok(unsafe { mem::transmute(file) })
+            Ok(unsafe { &mut *file })
         }
     }
 }
