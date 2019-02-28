@@ -8,7 +8,7 @@
   "os": "none",
   "executables": true,
   "linker-flavor": "ld",
-  "linker": "ld.lld",
+  "linker": "ld",
   "pre-link-args": { "ld": ["-Tlink.ld"] },
   "panic-strategy": "abort",
   "disable-redzone": true,
