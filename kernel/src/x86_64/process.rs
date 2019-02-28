@@ -235,12 +235,3 @@ pub fn drop_to_usermode(arch: &Arch, tss: &mut Tss, process_id: ProcessId) -> ! 
         unreachable!();
     }
 }
-
-/// This is called when a task yields to the kernel (using `syscall`, on x86_64). Tasks yield when
-/// they have no work to do / are waiting on another process to respond to a message etc. The
-/// kernel should handle any messages the yielding task has sent, and then schedule another task.
-// TODO: think about how we're going to access stuff from here (very annoying). We need to be able
-// to dispatch messages etc. (ideally we kinda want to get access to the whole `Arch`).
-pub extern "C" fn yield_handler() {
-    info!("Task yielded!");
-}

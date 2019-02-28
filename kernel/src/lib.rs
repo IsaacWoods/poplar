@@ -32,6 +32,7 @@ cfg_if! {
 mod arch;
 mod heap_allocator;
 mod process_map;
+mod syscall;
 mod util;
 
 use crate::{arch::Architecture, heap_allocator::LockedHoleAllocator};
