@@ -1,6 +1,6 @@
 use alloc::vec::Vec;
 use core::mem;
-use libmessage::{Generation, Index, ProcessId};
+use libpebble::{Generation, Index, ProcessId};
 
 pub const INITIAL_PROCESS_CAPACITY: usize = 32;
 

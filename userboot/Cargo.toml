@@ -5,7 +5,7 @@ authors = ["Isaac Woods"]
 edition = "2018"
 
 [dependencies]
-libmessage = { path = "../libmessage" }
+libpebble = { path = "../libpebble" }
 
 [profile.dev]
 debug = false
