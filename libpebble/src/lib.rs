@@ -1,4 +1,7 @@
 #![no_std]
+#![feature(asm)]
+
+pub mod syscall;
 
 pub type Index = u16;
 pub type Generation = u16;

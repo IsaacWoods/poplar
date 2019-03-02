@@ -1,3 +1,4 @@
+use libpebble::syscall;
 use log::info;
 
 /// This is the architecture-independent syscall handler. It should be called by the handler that
@@ -6,5 +7,17 @@ use log::info;
 /// depending on how many parameters the specific system call takes.
 pub fn handle_syscall(number: usize, a: usize, b: usize, c: usize, d: usize, e: usize) -> usize {
     info!("Syscall! number = {}, a = {}, b = {}, c = {}, d = {}, e = {}", number, a, b, c, d, e);
-    0
+
+    match number {
+        syscall::SYSCALL_YIELD => {
+            info!("Process yielded!");
+            // TODO: schedule another task or something
+            0
+        }
+
+        _ => {
+            // TODO: unsupported system call number
+            1
+        }
+    }
 }
