@@ -3,7 +3,7 @@ export BUILD_DIR ?= $(abspath ./build)
 
 RUST_GDB_INSTALL_PATH ?= ~/bin/rust-gdb/bin
 
-.PHONY: prepare bootloader kernel userboot clean qemu gdb update fmt
+.PHONY: prepare bootloader kernel userboot clean qemu gdb update fmt test
 
 pebble.img: prepare bootloader kernel userboot
 	# Create a temporary image for the FAT partition
@@ -55,6 +55,9 @@ fmt:
 	cd acpi && cargo fmt
 	cd libmessage && cargo fmt
 	cd userboot && cargo fmt
+
+test:
+	cargo test --all-features --manifest-path kernel/Cargo.toml
 
 doc:
 	CARGO_TARGET_DIR=./doc_target cargo doc \

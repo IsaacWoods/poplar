@@ -1,16 +1,8 @@
 [package]
 name = "libmessage"
 version = "0.1.0"
-authors = ["Isaac Woods <isaac@isaacwoods.tk>"]
+authors = ["Isaac Woods"]
+edition = "2018"
 
 [dependencies]
-serde_derive = "1.0"
-
-[dependencies.serde]
-version = "1.0"
-default-features = false
-features = []
-
-[features]
-default = []
-kernel = []
+serde = { version = "1.0", default-features = false, features = ["derive"] }

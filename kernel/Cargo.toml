@@ -14,8 +14,10 @@ bit_field = "0.9"
 spin = "0.4"
 log = { version = "0.4", default-features = false }
 x86_64 = { path = "../x86_64", features = ["kernel"], optional = true }
-acpi = { path = "../acpi", optional = true, features = ["debug_parser"] }
+# acpi = { path = "../acpi", optional = true, features = ["debug_parser"] }
+acpi = { path = "../acpi", optional = true }
 num = { version = "0.2", default-features = false }
+libpebble = { path = "../libpebble" }
 
 [features]
 arch_x86_64 = ["x86_64", "acpi"]

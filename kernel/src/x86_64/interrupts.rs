@@ -45,7 +45,7 @@ pub struct InterruptController {}
 
 impl InterruptController {
     pub fn init(arch: &Arch, interrupt_model: &InterruptModel) -> InterruptController {
-        Self::install_yield_handler();
+        Self::install_syscall_handler();
         Self::install_exception_handlers();
 
         unsafe {
@@ -118,15 +118,13 @@ impl InterruptController {
         set_handler_with_error_code!(double_fault, double_fault_handler);
     }
 
-    fn install_yield_handler() {
+    fn install_syscall_handler() {
         /*
-         * On x86_64, processes can use the `syscall` instruction to yield from userspace back
-         * into the kernel, as this instruction will always be present on x86_64.
-         * TODO: wondering if we could use fs or gs for this (per-cpu scheduling info kinda)?
+         * On x86_64, the `syscall` instruction will always be present, so we only support that
+         * for making system calls.
          *
          * Refer to the documentation comments of each MSR to understand what this code is doing.
          */
-        use crate::x86_64::process::yield_handler;
         use x86_64::hw::{
             gdt::USER_COMPAT_CODE_SELECTOR,
             registers::{IA32_FMASK, IA32_LSTAR, IA32_STAR},
@@ -146,9 +144,90 @@ impl InterruptController {
 
         unsafe {
             write_msr(IA32_STAR, selectors);
-            write_msr(IA32_LSTAR, wrap_syscall_handler!(yield_handler));
+            write_msr(IA32_LSTAR, syscall_handler as u64);
             write_msr(IA32_FMASK, 0);
         }
+    }
+}
+
+#[naked]
+extern "C" fn syscall_handler() -> ! {
+    /*
+     * TODO: we might want to switch to a kernel stack and stuff?
+     */
+
+    /*
+     * Save all the scratch registers onto the stack, **except `rax`**, because we put the return
+     * value of the system call into it anyways, so it doesn't need to be preserved.
+     *
+     * `syscall` puts the address of the instruction following it into `rcx`, and `rflags` into
+     * `r11`. Both of these are scratch registers under the System-V ABI, so they're saved and
+     * restored correctly when we preserve the scratch registers.
+     */
+    unsafe {
+        asm!("push rcx
+              push rdx
+              push rsi
+              push rdi
+              push r8
+              push r9
+              push r10
+              push r11"
+        :
+        :
+        :
+        : "intel"
+        );
+    }
+
+    /*
+     * Next, we extract the system call number and the potential parameters (depending on how
+     * many params the system call actually takes, some or all of these might actually just
+     * be random stuff from the userspace process - this is fine as long as our handling code
+     * is correct.
+     */
+    let (number, a, b, c, d, e) = unsafe {
+        let (number, a, b, c, d, e): (usize, usize, usize, usize, usize, usize);
+
+        asm!(""
+        : "={rax}"(number), "={rdi}"(a), "={rsi}"(b), "={rdx}"(c), "={r8}"(d), "={r9}"(e)
+        :
+        :
+        :
+        );
+
+        (number, a, b, c, d, e)
+    };
+
+    /*
+     * Call the architecture-independent handler.
+     */
+    let result = crate::syscall::handle_syscall(number, a, b, c, d, e);
+
+    /*
+     * - Put the result of the system call in `rax`.
+     * - Restore all the scratch registers we saved (including `rcx` and `r11` so we can
+     *   `sysret`).
+     * - Return to userspace!
+     */
+    unsafe {
+        asm!("pop r11
+              pop r10
+              pop r9
+              pop r8
+              pop rdi
+              pop rsi
+              pop rdx
+              pop rcx
+
+              sysretq"
+        :
+        : "{rax}"(result)
+        :
+        : "intel"
+        );
+
+        unreachable!();
     }
 }
 
@@ -224,6 +303,10 @@ extern "C" fn double_fault_handler(stack_frame: &InterruptStackFrame, error_code
 
 extern "C" fn spurious_handler(_: &InterruptStackFrame) {}
 
+/// Macro to save the scratch registers. In System-V, `rbx`, `rbp`, `r12`, `r13`, `r14`, and `r15`
+/// must be restored by the callee, so Rust automatically generates code to restore them, but for
+/// the rest we have to manually preserve them. Use `restore_regs` to restore the scratch registers
+/// before returning from the handler.
 macro save_regs() {
     asm!("push rax
           push rcx
@@ -241,6 +324,7 @@ macro save_regs() {
         );
 }
 
+/// Restore the saved scratch registers.
 macro restore_regs() {
     asm!("pop r11
           pop r10
@@ -284,7 +368,7 @@ macro wrap_handler($name: path) {
                      :
                      : "intel"
                      );
-                core::intrinsics::unreachable();
+                unreachable!();
             }
         }
 
@@ -322,54 +406,10 @@ macro wrap_handler_with_error_code($name: path) {
                      :
                      : "intel"
                     );
-                core::intrinsics::unreachable();
+                unreachable!();
             }
         }
 
         wrapper
-    }
-}
-
-macro wrap_syscall_handler($name: path) {
-    {
-        #[naked]
-        extern "C" fn wrapper() -> ! {
-            /*
-             * `syscall` puts the address of the instruction following it into rcx, and RFLAGS into
-             * r11. We push them onto the userspace stack so we can restore them before doing a
-             * `sysret`.
-             */
-            unsafe {
-                asm!("push rcx
-                      push r11"
-                     :
-                     :
-                     :
-                     : "intel");
-            }
-
-            /*
-             * TODO: we probably need to do some more special stuff (e.g. switch to a kernel stack)
-             */
-
-            $name();
-
-            /*
-             * To return to the process, we pop RFLAGS and the address of the next instruction off
-             * the userspace stack again, and `sysret`.
-             */
-            unsafe {
-                asm!("pop r11
-                      pop rcx
-                      sysretq"
-                     :
-                     :
-                     :
-                     : "intel");
-                core::intrinsics::unreachable();
-            }
-        }
-
-        wrapper as u64
     }
 }

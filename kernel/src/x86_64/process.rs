@@ -1,5 +1,6 @@
 use super::{memory::userspace_map::*, Arch};
 use alloc::vec::Vec;
+use libpebble::ProcessId;
 use log::info;
 use x86_64::{
     hw::tss::Tss,
@@ -63,6 +64,9 @@ impl Process {
         let stack_bottom = USER_STACKS_START;
         let stack_top = stack_bottom + INITIAL_STACK_SIZE;
 
+        let send_buffer_address = SEND_BUFFERS_START;
+        let receive_buffer_address = RECEIVE_BUFFERS_START;
+
         arch.kernel_page_table.lock().with(
             &mut page_table,
             &arch.physical_memory_manager,
@@ -79,6 +83,26 @@ impl Process {
                  */
                 mapper.map_range(
                     Page::contains(stack_bottom)..Page::contains(stack_top),
+                    EntryFlags::PRESENT
+                        | EntryFlags::WRITABLE
+                        | EntryFlags::NO_EXECUTE
+                        | EntryFlags::USER_ACCESSIBLE,
+                    allocator,
+                );
+
+                /*
+                 * Map the main thread's Send and Receive buffers.
+                 */
+                mapper.map(
+                    Page::contains(send_buffer_address),
+                    EntryFlags::PRESENT
+                        | EntryFlags::WRITABLE
+                        | EntryFlags::NO_EXECUTE
+                        | EntryFlags::USER_ACCESSIBLE,
+                    allocator,
+                );
+                mapper.map(
+                    Page::contains(receive_buffer_address),
                     EntryFlags::PRESENT
                         | EntryFlags::WRITABLE
                         | EntryFlags::NO_EXECUTE
@@ -122,7 +146,10 @@ impl Process {
 
 /// Drop to Ring 3, into a process. This is used for the initial transition from kernel to user
 /// mode after the CPU has been brought up.
-pub fn drop_to_usermode(tss: &mut Tss, process: &mut Process) -> ! {
+///
+/// ### Panics
+/// Panics if the supplied `ProcessId` does not belong to a valid process.
+pub fn drop_to_usermode(arch: &Arch, tss: &mut Tss, process_id: ProcessId) -> ! {
     use x86_64::hw::gdt::{USER_CODE64_SELECTOR, USER_DATA_SELECTOR};
 
     unsafe {
@@ -145,9 +172,17 @@ pub fn drop_to_usermode(tss: &mut Tss, process: &mut Process) -> ! {
         tss.set_kernel_stack(rsp);
 
         /*
-         * Switch to the process' address space.
+         * Switch to the process' address space, and extract the information we need from the
+         * process. We do this in advance to make sure we end the lock on `ProcessMap`.
+         * Otherwise, we'd keep it forever, because this function doesn't return.
          */
-        process.switch_to();
+        let (entry_point, stack_pointer) = {
+            let mut process_map = arch.process_map.lock();
+            let process = process_map.get_mut(process_id).unwrap();
+            process.switch_to();
+
+            (process.threads[0].instruction_pointer, process.threads[0].stack_pointer)
+        };
 
         /*
          * Jump into Ring 3 by constructing a fake interrupt frame, then returning from the
@@ -190,22 +225,13 @@ pub fn drop_to_usermode(tss: &mut Tss, process: &mut Process) -> ! {
               "
         :
         : "{rax}"(USER_DATA_SELECTOR),
-          "{rbx}"(process.threads[0].stack_pointer),
+          "{rbx}"(stack_pointer),
           "{rcx}"(1<<9 | 1<<2),
           "{rdx}"(USER_CODE64_SELECTOR),
-          "{rsi}"(process.threads[0].instruction_pointer)
+          "{rsi}"(entry_point)
         : "rax", "rbx", "rcx", "rdx", "rsi", "rdi", "r8", "r9", "r10", "r11", "r12", "r13", "r14", "r15"
         : "intel"
         );
         unreachable!();
     }
-}
-
-/// This is called when a task yields to the kernel (using `syscall`, on x86_64). Tasks yield when
-/// they have no work to do / are waiting on another process to respond to a message etc. The
-/// kernel should handle any messages the yielding task has sent, and then schedule another task.
-// TODO: think about how we're going to access stuff from here (very annoying). We need to be able
-// to dispatch messages etc. (ideally we kinda want to get access to the whole `Arch`).
-pub extern "C" fn yield_handler() {
-    info!("Task yielded!");
 }

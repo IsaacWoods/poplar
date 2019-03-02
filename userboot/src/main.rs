@@ -3,14 +3,11 @@
 #![feature(asm)]
 
 use core::panic::PanicInfo;
+use libpebble::syscall;
 
 #[no_mangle]
 pub extern "C" fn start() -> ! {
-    unsafe {
-        asm!("mov rax, 0xdeadbeef" :::: "intel");
-        asm!("syscall");
-        asm!("mov rax, 0xcafebabe" :::: "intel");
-    }
+    syscall::yield_to_kernel();
     loop {}
 }
 
