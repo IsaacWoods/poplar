@@ -1,45 +1,44 @@
+use super::KernelObject;
 use alloc::vec::Vec;
 use core::mem;
-use libpebble::{Generation, Index, ProcessId};
+use libpebble::object::{Generation, Index, KernelObjectId};
 
-pub const INITIAL_PROCESS_CAPACITY: usize = 32;
+pub const INITIAL_OBJECT_CAPACITY: usize = 32;
 
-enum Entry<P> {
+enum Entry {
     Free { next_generation: Generation, next_free: Option<u16> },
-    Occupied { generation: Generation, process: P },
+    Occupied { generation: Generation, object: KernelObject },
 }
 
-/// `P` can be any type the architecture-specific code wants to associate each process with. The
-/// indexes into this map start at index `1`, as an index of `0` refers to the kernel.
-pub struct ProcessMap<P> {
-    entries: Vec<Entry<P>>,
+/// Stores all the `KernelObject`s against their generational `KernelObjectId`s.
+pub struct ObjectMap {
+    entries: Vec<Entry>,
     free_list_head: Option<Index>,
 }
 
-impl<P> ProcessMap<P> {
-    pub fn new(initial_capacity: usize) -> ProcessMap<P> {
+impl ObjectMap {
+    pub fn new(initial_capacity: usize) -> ObjectMap {
         if initial_capacity == 0 {
-            panic!("Can't create process map with size of zero!");
+            panic!("Can't create object map with size of zero!");
         }
 
         let mut map =
-            ProcessMap { entries: Vec::with_capacity(initial_capacity), free_list_head: None };
+            ObjectMap { entries: Vec::with_capacity(initial_capacity), free_list_head: None };
         map.reserve(initial_capacity);
         map
     }
 
-    /// Insert a new `P` into the map, assigning it a `ProcessId`. The map will not assign an ID
-    /// with an index of `0` (of any generation), because a ID with an index of `0` refers to the
-    /// kernel.
-    pub fn insert(&mut self, process: P) -> ProcessId {
+    /// Insert a new object into the map, assigning it a `KernelObjectId`. The map will not assign
+    /// an ID with an index of `0`, because it is reserved as a null ID.
+    pub fn insert(&mut self, object: KernelObject) -> KernelObjectId {
         match self.free_list_head {
             /*
              * If we have a free entry in the current map, use that.
              */
-            Some(index) => self.insert_into(index as usize, process),
+            Some(index) => self.insert_into(index as usize, object),
 
             /*
-             * If there aren't any free entries in the current process-map, extend it.
+             * If there aren't any free entries in the current map, extend it.
              */
             None => {
                 /*
@@ -47,21 +46,21 @@ impl<P> ProcessMap<P> {
                  */
                 let current_len = self.len();
                 self.reserve(current_len);
-                self.insert_into(current_len, process)
+                self.insert_into(current_len, object)
             }
         }
     }
 
-    fn insert_into(&mut self, index: usize, process: P) -> ProcessId {
+    fn insert_into(&mut self, index: usize, object: KernelObject) -> KernelObjectId {
         match self.entries[index] {
             Entry::Free { next_generation, next_free } => {
-                self.entries[index] = Entry::Occupied { generation: next_generation, process };
+                self.entries[index] = Entry::Occupied { generation: next_generation, object };
                 self.free_list_head = next_free;
 
-                ProcessId { index: (index + 1) as Index, generation: next_generation }
+                KernelObjectId { index: (index + 1) as Index, generation: next_generation }
             }
 
-            Entry::Occupied { .. } => panic!("Process map free list is corrupted!"),
+            Entry::Occupied { .. } => panic!("Object-map free list is corrupted!"),
         }
     }
 
@@ -94,37 +93,37 @@ impl<P> ProcessMap<P> {
         self.free_list_head = Some(start as Index);
     }
 
-    pub fn get(&self, id: ProcessId) -> Option<&P> {
+    pub fn get(&self, id: KernelObjectId) -> Option<&KernelObject> {
         match self.entries.get((id.index - 1) as usize) {
             /*
              * Only "find" the entry if the generations are the same. If they're not, the
-             * expected entry has been removed and replaced by another process!
+             * expected entry has been removed and replaced by something else!
              */
-            Some(Entry::Occupied { generation, ref process }) if *generation == id.generation => {
-                Some(process)
+            Some(Entry::Occupied { generation, ref object }) if *generation == id.generation => {
+                Some(object)
             }
 
             _ => None,
         }
     }
 
-    pub fn get_mut(&mut self, id: ProcessId) -> Option<&mut P> {
+    pub fn get_mut(&mut self, id: KernelObjectId) -> Option<&mut KernelObject> {
         match self.entries.get_mut((id.index - 1) as usize) {
             /*
              * Only "find" the entry if the generations are the same. If they're not, the
-             * expected entry has been removed and replaced by another process!
+             * expected entry has been removed and replaced by something else!
              */
-            Some(Entry::Occupied { generation, ref mut process })
+            Some(Entry::Occupied { generation, ref mut object })
                 if *generation == id.generation =>
             {
-                Some(process)
+                Some(object)
             }
 
             _ => None,
         }
     }
 
-    pub fn remove(&mut self, id: ProcessId) -> Option<P> {
+    pub fn remove(&mut self, id: KernelObjectId) -> Option<KernelObject> {
         if (id.index as usize) >= self.len() {
             return None;
         }
@@ -147,14 +146,14 @@ impl<P> ProcessMap<P> {
         );
 
         match entry {
-            Entry::Occupied { generation, process } if generation == id.generation => {
+            Entry::Occupied { generation, object } if generation == id.generation => {
                 /*
                  * Found the correct entry. We've already replaced the entry with the correct,
                  * free space, so we just need to mark this as the next free
                  * entry.
                  */
                 self.free_list_head = Some(id.index - 1);
-                Some(process)
+                Some(object)
             }
 
             _ => {
@@ -168,7 +167,7 @@ impl<P> ProcessMap<P> {
         }
     }
 
-    pub fn contains(&self, id: ProcessId) -> bool {
+    pub fn contains(&self, id: KernelObjectId) -> bool {
         self.get(id).is_some()
     }
 
@@ -180,45 +179,45 @@ impl<P> ProcessMap<P> {
 #[test]
 #[should_panic]
 fn no_empty_maps() {
-    let _: ProcessMap<usize> = ProcessMap::new(0);
+    let _: ObjectMap = ObjectMap::new(0);
 }
 
 #[test]
 fn can_get_values() {
-    let mut map = ProcessMap::new(3);
-    let thing_0 = map.insert(8);
-    let thing_1 = map.insert(17);
-    let thing_2 = map.insert(42);
+    let mut map = ObjectMap::new(3);
+    let thing_0 = map.insert(KernelObject::Test(8));
+    let thing_1 = map.insert(KernelObject::Test(17));
+    let thing_2 = map.insert(KernelObject::Test(42));
 
-    assert_eq!(map.get(thing_0), Some(&8));
-    assert_eq!(map.get(thing_1), Some(&17));
-    assert_eq!(map.get(thing_2), Some(&42));
+    assert_eq!(map.get(thing_0), Some(&KernelObject::Test(8)));
+    assert_eq!(map.get(thing_1), Some(&KernelObject::Test(17)));
+    assert_eq!(map.get(thing_2), Some(&KernelObject::Test(42)));
 }
 
 #[test]
 fn access_old_generation() {
-    let mut map = ProcessMap::new(2);
-    let thing = map.insert(4);
-    let other_thing = map.insert(84);
+    let mut map = ObjectMap::new(2);
+    let thing = map.insert(KernelObject::Test(4));
+    let other_thing = map.insert(KernelObject::Test(84));
     map.remove(thing);
-    let new_thing = map.insert(13);
+    let new_thing = map.insert(KernelObject::Test(13));
 
     assert_eq!(map.get(thing), None);
-    assert_eq!(map.get(other_thing), Some(&84));
-    assert_eq!(map.get(new_thing), Some(&13));
+    assert_eq!(map.get(other_thing), Some(&KernelObject::Test(84)));
+    assert_eq!(map.get(new_thing), Some(&KernelObject::Test(13)));
 }
 
 #[test]
 fn access_old_across_allocation() {
-    let mut map = ProcessMap::new(2);
-    let thing_0 = map.insert(8);
-    let thing_1 = map.insert(17);
+    let mut map = ObjectMap::new(2);
+    let thing_0 = map.insert(KernelObject::Test(8));
+    let thing_1 = map.insert(KernelObject::Test(17));
     // This next insert causes the backing `Vec` to expand
-    let thing_2 = map.insert(42);
+    let thing_2 = map.insert(KernelObject::Test(42));
 
     map.remove(thing_1);
 
-    assert_eq!(map.get(thing_0), Some(&8));
+    assert_eq!(map.get(thing_0), Some(&KernelObject::Test(8)));
     assert_eq!(map.get(thing_1), None);
-    assert_eq!(map.get(thing_2), Some(&42));
+    assert_eq!(map.get(thing_2), Some(&KernelObject::Test(42)));
 }
