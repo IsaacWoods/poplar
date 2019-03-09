@@ -1,3 +1,6 @@
+//! This module probably looks rather sparse! Check the root of one of the architecture modules for
+//! an entry point.
+
 #![cfg_attr(not(test), no_std)]
 #![feature(
     asm,
@@ -43,11 +46,6 @@ use log::{error, info};
 #[cfg(not(test))]
 #[global_allocator]
 pub static ALLOCATOR: LockedHoleAllocator = LockedHoleAllocator::new_uninitialized();
-
-pub fn kernel_main(arch: &impl Architecture) -> ! {
-    info!("kernel_main called");
-    loop {}
-}
 
 #[cfg(not(test))]
 #[panic_handler]

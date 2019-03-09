@@ -222,5 +222,4 @@ pub fn kmain() -> ! {
     info!("Dropping to usermode");
     process::drop_to_usermode(&arch, &mut boot_processor.tss, process_id);
 
-    // crate::kernel_main(&arch)
 }
