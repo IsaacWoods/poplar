@@ -1,23 +1,27 @@
 use super::KernelObject;
+use crate::arch::Architecture;
 use alloc::vec::Vec;
 use core::mem;
 use libpebble::object::{Generation, Index, KernelObjectId};
 
 pub const INITIAL_OBJECT_CAPACITY: usize = 32;
 
-enum Entry {
+enum Entry<A: Architecture> {
     Free { next_generation: Generation, next_free: Option<u16> },
-    Occupied { generation: Generation, object: KernelObject },
+    Occupied { generation: Generation, object: KernelObject<A> },
 }
 
 /// Stores all the `KernelObject`s against their generational `KernelObjectId`s.
-pub struct ObjectMap {
-    entries: Vec<Entry>,
+pub struct ObjectMap<A: Architecture> {
+    entries: Vec<Entry<A>>,
     free_list_head: Option<Index>,
 }
 
-impl ObjectMap {
-    pub fn new(initial_capacity: usize) -> ObjectMap {
+impl<A> ObjectMap<A>
+where
+    A: Architecture,
+{
+    pub fn new(initial_capacity: usize) -> ObjectMap<A> {
         if initial_capacity == 0 {
             panic!("Can't create object map with size of zero!");
         }
@@ -30,7 +34,7 @@ impl ObjectMap {
 
     /// Insert a new object into the map, assigning it a `KernelObjectId`. The map will not assign
     /// an ID with an index of `0`, because it is reserved as a null ID.
-    pub fn insert(&mut self, object: KernelObject) -> KernelObjectId {
+    pub fn insert(&mut self, object: KernelObject<A>) -> KernelObjectId {
         match self.free_list_head {
             /*
              * If we have a free entry in the current map, use that.
@@ -51,7 +55,7 @@ impl ObjectMap {
         }
     }
 
-    fn insert_into(&mut self, index: usize, object: KernelObject) -> KernelObjectId {
+    fn insert_into(&mut self, index: usize, object: KernelObject<A>) -> KernelObjectId {
         match self.entries[index] {
             Entry::Free { next_generation, next_free } => {
                 self.entries[index] = Entry::Occupied { generation: next_generation, object };
@@ -93,7 +97,7 @@ impl ObjectMap {
         self.free_list_head = Some(start as Index);
     }
 
-    pub fn get(&self, id: KernelObjectId) -> Option<&KernelObject> {
+    pub fn get(&self, id: KernelObjectId) -> Option<&KernelObject<A>> {
         match self.entries.get((id.index - 1) as usize) {
             /*
              * Only "find" the entry if the generations are the same. If they're not, the
@@ -107,7 +111,7 @@ impl ObjectMap {
         }
     }
 
-    pub fn get_mut(&mut self, id: KernelObjectId) -> Option<&mut KernelObject> {
+    pub fn get_mut(&mut self, id: KernelObjectId) -> Option<&mut KernelObject<A>> {
         match self.entries.get_mut((id.index - 1) as usize) {
             /*
              * Only "find" the entry if the generations are the same. If they're not, the
@@ -123,7 +127,7 @@ impl ObjectMap {
         }
     }
 
-    pub fn remove(&mut self, id: KernelObjectId) -> Option<KernelObject> {
+    pub fn remove(&mut self, id: KernelObjectId) -> Option<KernelObject<A>> {
         if (id.index as usize) >= self.len() {
             return None;
         }
@@ -176,15 +180,25 @@ impl ObjectMap {
     }
 }
 
+#[cfg(test)]
+#[doc(hidden)]
+#[derive(PartialEq, Eq, Debug)]
+struct FakeArch;
+
+#[cfg(test)]
+impl crate::arch::Architecture for FakeArch {
+    type AddressSpace = ();
+}
+
 #[test]
 #[should_panic]
 fn no_empty_maps() {
-    let _: ObjectMap = ObjectMap::new(0);
+    let _: ObjectMap<FakeArch> = ObjectMap::new(0);
 }
 
 #[test]
 fn can_get_values() {
-    let mut map = ObjectMap::new(3);
+    let mut map = ObjectMap::<FakeArch>::new(3);
     let thing_0 = map.insert(KernelObject::Test(8));
     let thing_1 = map.insert(KernelObject::Test(17));
     let thing_2 = map.insert(KernelObject::Test(42));
@@ -196,7 +210,7 @@ fn can_get_values() {
 
 #[test]
 fn access_old_generation() {
-    let mut map = ObjectMap::new(2);
+    let mut map = ObjectMap::<FakeArch>::new(2);
     let thing = map.insert(KernelObject::Test(4));
     let other_thing = map.insert(KernelObject::Test(84));
     map.remove(thing);
@@ -209,7 +223,7 @@ fn access_old_generation() {
 
 #[test]
 fn access_old_across_allocation() {
-    let mut map = ObjectMap::new(2);
+    let mut map = ObjectMap::<FakeArch>::new(2);
     let thing_0 = map.insert(KernelObject::Test(8));
     let thing_1 = map.insert(KernelObject::Test(17));
     // This next insert causes the backing `Vec` to expand

@@ -1,6 +1,7 @@
 //! This module defines the kernel entry-point on x86_64.
 
 mod acpi_handler;
+mod address_space;
 mod cpu;
 mod interrupts;
 mod logger;
@@ -9,6 +10,7 @@ mod process;
 
 use self::{
     acpi_handler::PebbleAcpiHandler,
+    address_space::AddressSpace,
     cpu::Cpu,
     interrupts::InterruptController,
     logger::KernelLogger,
@@ -17,7 +19,7 @@ use self::{
 };
 use crate::{
     arch::Architecture,
-    process_map::{ProcessMap, INITIAL_PROCESS_CAPACITY},
+    object::{map::ObjectMap, KernelObject},
 };
 use acpi::{AmlNamespace, ProcessorState};
 use alloc::vec::Vec;
@@ -47,8 +49,7 @@ pub struct Arch {
     /// mapping, now we are in the higher-half without an identity mapping.
     pub kernel_page_table: Mutex<KernelPageTable>,
     pub physical_region_mapper: Mutex<PhysicalRegionMapper>,
-
-    pub process_map: Mutex<ProcessMap<Process>>,
+    pub object_map: Mutex<ObjectMap<Self>>,
 }
 
 /// `Arch` contains a bunch of things, like the GDT, that the hardware relies on actually being at
@@ -60,7 +61,9 @@ impl Drop for Arch {
     }
 }
 
-impl Architecture for Arch {}
+impl Architecture for Arch {
+    type AddressSpace = AddressSpace;
+}
 
 /// This is the entry point for the kernel on x86_64. It is called from the UEFI bootloader and
 /// initialises the system, then passes control into the common part of the kernel.
@@ -111,7 +114,7 @@ pub fn kmain() -> ! {
         physical_memory_manager: LockedPhysicalMemoryManager::new(boot_info),
         kernel_page_table: Mutex::new(unsafe { ActivePageTable::<RecursiveMapping>::new() }),
         physical_region_mapper: Mutex::new(PhysicalRegionMapper::new()),
-        process_map: Mutex::new(ProcessMap::new(INITIAL_PROCESS_CAPACITY)),
+        object_map: Mutex::new(ObjectMap::new(crate::object::map::INITIAL_OBJECT_CAPACITY)),
     };
 
     let mut acpi_handler = PebbleAcpiHandler::new(
@@ -211,15 +214,23 @@ pub fn kmain() -> ! {
         None
     };
 
-    let process_page_table = unsafe {
-        InactivePageTable::<RecursiveMapping>::new(Frame::contains(
-            boot_info.payload.page_table_address,
-        ))
-    };
-    let mut process = Process::new(&arch, process_page_table, boot_info.payload.entry_point);
-    let process_id = arch.process_map.lock().insert(process);
+    /*
+     * Extract userboot's page tables from where the bootloader constructed them, build it an
+     * `AddressSpace` and a `Task`, and drop into usermode!
+     */
+    let userboot_address_space =
+        KernelObject::AddressSpace(AddressSpace::from_page_table(unsafe {
+            InactivePageTable::<RecursiveMapping>::new(Frame::contains(
+                boot_info.payload.page_table_address,
+            ))
+        }));
+    let userboot_address_space_id = arch.object_map.lock().insert(userboot_address_space);
+    info!("Userboot address space id: {:?}", userboot_address_space_id);
+    // let mut process = Process::new(&arch, process_page_table, boot_info.payload.entry_point);
+    // let process_id = arch.process_map.lock().insert(process);
 
     info!("Dropping to usermode");
-    process::drop_to_usermode(&arch, &mut boot_processor.tss, process_id);
+    // process::drop_to_usermode(&arch, &mut boot_processor.tss, process_id);
 
+    loop {}
 }
