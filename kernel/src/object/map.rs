@@ -181,57 +181,71 @@ where
 }
 
 #[cfg(test)]
-#[doc(hidden)]
-#[derive(PartialEq, Eq, Debug)]
-struct FakeArch;
+mod test {
+    use super::ObjectMap;
+    use crate::{arch::test::FakeArch, object::KernelObject};
 
-#[cfg(test)]
-impl crate::arch::Architecture for FakeArch {
-    type AddressSpace = ();
-}
+    /*
+     * These macros are needed because not all the variants of `KernelObject` can implement `Eq`,
+     * so we can't just `assert_eq` the entries.
+     */
+    macro assert_none($entry: expr) {
+        match $entry {
+            None => (),
+            entry => panic!("Incorrect entry during ObjectMap testing: {:?}", entry),
+        }
+    }
 
-#[test]
-#[should_panic]
-fn no_empty_maps() {
-    let _: ObjectMap<FakeArch> = ObjectMap::new(0);
-}
+    macro assert_some($entry: expr, $expected_value: expr) {
+        match $entry {
+            Some(&KernelObject::Test(value)) => assert_eq!(value, $expected_value),
+            entry => panic!("Incorrect entry during ObjectMap testing: {:?}", entry),
+        }
+    }
 
-#[test]
-fn can_get_values() {
-    let mut map = ObjectMap::<FakeArch>::new(3);
-    let thing_0 = map.insert(KernelObject::Test(8));
-    let thing_1 = map.insert(KernelObject::Test(17));
-    let thing_2 = map.insert(KernelObject::Test(42));
+    #[test]
+    #[should_panic]
+    fn no_empty_maps() {
+        let _: ObjectMap<FakeArch> = ObjectMap::new(0);
+    }
 
-    assert_eq!(map.get(thing_0), Some(&KernelObject::Test(8)));
-    assert_eq!(map.get(thing_1), Some(&KernelObject::Test(17)));
-    assert_eq!(map.get(thing_2), Some(&KernelObject::Test(42)));
-}
+    #[test]
+    fn can_get_values() {
+        let mut map = ObjectMap::<FakeArch>::new(3);
+        let thing_0 = map.insert(KernelObject::Test(8));
+        let thing_1 = map.insert(KernelObject::Test(17));
+        let thing_2 = map.insert(KernelObject::Test(42));
 
-#[test]
-fn access_old_generation() {
-    let mut map = ObjectMap::<FakeArch>::new(2);
-    let thing = map.insert(KernelObject::Test(4));
-    let other_thing = map.insert(KernelObject::Test(84));
-    map.remove(thing);
-    let new_thing = map.insert(KernelObject::Test(13));
+        assert_some!(map.get(thing_0), 8);
+        assert_some!(map.get(thing_1), 17);
+        assert_some!(map.get(thing_2), 42);
+    }
 
-    assert_eq!(map.get(thing), None);
-    assert_eq!(map.get(other_thing), Some(&KernelObject::Test(84)));
-    assert_eq!(map.get(new_thing), Some(&KernelObject::Test(13)));
-}
+    #[test]
+    fn access_old_generation() {
+        let mut map = ObjectMap::<FakeArch>::new(2);
+        let thing = map.insert(KernelObject::Test(4));
+        let other_thing = map.insert(KernelObject::Test(84));
+        map.remove(thing);
+        let new_thing = map.insert(KernelObject::Test(13));
 
-#[test]
-fn access_old_across_allocation() {
-    let mut map = ObjectMap::<FakeArch>::new(2);
-    let thing_0 = map.insert(KernelObject::Test(8));
-    let thing_1 = map.insert(KernelObject::Test(17));
-    // This next insert causes the backing `Vec` to expand
-    let thing_2 = map.insert(KernelObject::Test(42));
+        assert_none!(map.get(thing));
+        assert_some!(map.get(other_thing), 84);
+        assert_some!(map.get(new_thing), 13);
+    }
 
-    map.remove(thing_1);
+    #[test]
+    fn access_old_across_allocation() {
+        let mut map = ObjectMap::<FakeArch>::new(2);
+        let thing_0 = map.insert(KernelObject::Test(8));
+        let thing_1 = map.insert(KernelObject::Test(17));
+        // This next insert causes the backing `Vec` to expand
+        let thing_2 = map.insert(KernelObject::Test(42));
 
-    assert_eq!(map.get(thing_0), Some(&KernelObject::Test(8)));
-    assert_eq!(map.get(thing_1), None);
-    assert_eq!(map.get(thing_2), Some(&KernelObject::Test(42)));
+        map.remove(thing_1);
+
+        assert_some!(map.get(thing_0), 8);
+        assert_none!(map.get(thing_1));
+        assert_some!(map.get(thing_2), 42);
+    }
 }

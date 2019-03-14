@@ -4,3 +4,17 @@
 pub trait Architecture {
     type AddressSpace;
 }
+
+/// To test some of the kernel's data structures and stuff, we need a type that implements
+/// `Architecture`. We define a fake arch, called `FakeArch` to do this.
+#[cfg(test)]
+pub mod test {
+    use super::Architecture;
+
+    #[derive(PartialEq, Eq, Debug)]
+    pub struct FakeArch;
+
+    impl Architecture for FakeArch {
+        type AddressSpace = ();
+    }
+}
