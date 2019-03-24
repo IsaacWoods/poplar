@@ -3,15 +3,35 @@ pub mod map;
 use crate::arch::Architecture;
 use alloc::sync::Arc;
 use spin::Mutex;
-#[derive(Debug)]
-pub enum KernelObject<A: Architecture> {
-    AddressSpace(A::AddressSpace),
 
-    /// This is a test entry that just allows us to store a number. It is used to test the data
-    /// structures that store and interact with kernel objects etc.
-    #[cfg(test)]
-    Test(usize),
+// TODO: when unhygenic macro items are implemented, we should just be able to do `enum
+// #KernelObject` and not have to pass a parameter like this
+macro kernel_object_table($kernel_object: ident, $([$name: ident, $method: ident]),*) {
+    #[derive(Debug)]
+    pub enum $kernel_object<A: Architecture> {
+        $(
+            $name(Arc<Mutex<A::$name>>),
+         )*
+
+        /// This is a test entry that just allows us to store a number. It is used to test the data
+        /// structures that store and interact with kernel objects etc.
+        #[cfg(test)]
+        Test(usize),
+    }
+
+    impl<A> KernelObject<A> where A: Architecture {
+        $(
+            pub fn $method(&self) -> &Arc<Mutex<A::$name>> {
+                match self {
+                    KernelObject::$name(ref object) => object,
+                    _ => panic!("Tried to coerce kernel object into incorrect type!"),
+                }
+            }
+         )*
+    }
 }
+
+kernel_object_table!(KernelObject, [AddressSpace, address_space]);
 
 /// Make sure that `KernelObject` doesn't get bigger without us thinking about it
 #[test]
