@@ -31,7 +31,7 @@ macro kernel_object_table($kernel_object: ident, $([$name: ident, $method: ident
     }
 }
 
-kernel_object_table!(KernelObject, [AddressSpace, address_space]);
+kernel_object_table!(KernelObject, [AddressSpace, address_space], [Task, task]);
 
 /// Make sure that `KernelObject` doesn't get bigger without us thinking about it
 #[test]

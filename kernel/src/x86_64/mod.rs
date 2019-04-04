@@ -7,6 +7,7 @@ mod interrupts;
 mod logger;
 mod memory;
 mod process;
+mod task;
 
 use self::{
     acpi_handler::PebbleAcpiHandler,
@@ -16,6 +17,7 @@ use self::{
     logger::KernelLogger,
     memory::{physical::LockedPhysicalMemoryManager, KernelPageTable, PhysicalRegionMapper},
     process::Process,
+    task::Task,
 };
 use crate::{
     arch::Architecture,
@@ -63,6 +65,7 @@ impl Drop for Arch {
 
 impl Architecture for Arch {
     type AddressSpace = AddressSpace;
+    type Task = Task;
 }
 
 /// This is the entry point for the kernel on x86_64. It is called from the UEFI bootloader and

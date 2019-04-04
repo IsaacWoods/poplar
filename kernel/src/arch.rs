@@ -3,6 +3,7 @@
 /// parts of the kernel.
 pub trait Architecture {
     type AddressSpace;
+    type Task;
 }
 
 /// To test some of the kernel's data structures and stuff, we need a type that implements
@@ -16,5 +17,6 @@ pub mod test {
 
     impl Architecture for FakeArch {
         type AddressSpace = ();
+        type Task = ();
     }
 }
