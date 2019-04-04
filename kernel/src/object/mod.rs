@@ -4,8 +4,8 @@ use crate::arch::Architecture;
 use spin::RwLock;
 
 // TODO: when unhygenic macro items are implemented, we should just be able to do `enum
-// #KernelObject` and not have to pass a parameter like this
-macro kernel_object_table($kernel_object: ident, $([$name: ident, $method: ident]),*) {
+// #KernelObject` and `#Test` and not have to pass parameters like this
+macro kernel_object_table($kernel_object: ident, $test: ident, $([$name: ident, $method: ident]),*) {
     #[derive(Debug)]
     pub enum $kernel_object<A: Architecture> {
         $(
@@ -15,7 +15,7 @@ macro kernel_object_table($kernel_object: ident, $([$name: ident, $method: ident
         /// This is a test entry that just allows us to store a number. It is used to test the data
         /// structures that store and interact with kernel objects etc.
         #[cfg(test)]
-        Test(usize),
+        $test(usize),
     }
 
     impl<A> KernelObject<A> where A: Architecture {
@@ -31,7 +31,7 @@ macro kernel_object_table($kernel_object: ident, $([$name: ident, $method: ident
     }
 }
 
-kernel_object_table!(KernelObject, [AddressSpace, address_space], [Task, task]);
+kernel_object_table!(KernelObject, Test, [AddressSpace, address_space], [Task, task]);
 
 /// Make sure that `KernelObject` doesn't get bigger without us thinking about it
 #[test]
