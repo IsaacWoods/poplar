@@ -26,7 +26,7 @@ use crate::{
 use acpi::{AmlNamespace, ProcessorState};
 use alloc::vec::Vec;
 use log::{error, info, warn};
-use spin::Mutex;
+use spin::{Mutex, RwLock};
 use x86_64::{
     boot::BootInfo,
     hw::{
@@ -51,7 +51,7 @@ pub struct Arch {
     /// mapping, now we are in the higher-half without an identity mapping.
     pub kernel_page_table: Mutex<KernelPageTable>,
     pub physical_region_mapper: Mutex<PhysicalRegionMapper>,
-    pub object_map: Mutex<ObjectMap<Self>>,
+    pub object_map: RwLock<ObjectMap<Self>>,
 }
 
 /// `Arch` contains a bunch of things, like the GDT, that the hardware relies on actually being at
@@ -117,7 +117,7 @@ pub fn kmain() -> ! {
         physical_memory_manager: LockedPhysicalMemoryManager::new(boot_info),
         kernel_page_table: Mutex::new(unsafe { ActivePageTable::<RecursiveMapping>::new() }),
         physical_region_mapper: Mutex::new(PhysicalRegionMapper::new()),
-        object_map: Mutex::new(ObjectMap::new(crate::object::map::INITIAL_OBJECT_CAPACITY)),
+        object_map: RwLock::new(ObjectMap::new(crate::object::map::INITIAL_OBJECT_CAPACITY)),
     };
 
     let mut acpi_handler = PebbleAcpiHandler::new(
@@ -217,23 +217,28 @@ pub fn kmain() -> ! {
         None
     };
 
+    drop_to_userboot(&arch, boot_info, &mut boot_processor.tss)
+}
+
+fn drop_to_userboot(arch: &Arch, boot_info: &BootInfo, tss: &mut Tss) -> ! {
     /*
      * Extract userboot's page tables from where the bootloader constructed them, build it an
      * `AddressSpace` and a `Task`, and drop into usermode!
      */
-    let userboot_address_space =
-        KernelObject::AddressSpace(AddressSpace::from_page_table(unsafe {
+    let address_space = arch.object_map.write().insert(KernelObject::AddressSpace(RwLock::new(
+        AddressSpace::from_page_table(&arch, unsafe {
             InactivePageTable::<RecursiveMapping>::new(Frame::contains(
                 boot_info.payload.page_table_address,
             ))
-        }));
-    let userboot_address_space_id = arch.object_map.lock().insert(userboot_address_space);
-    info!("Userboot address space id: {:?}", userboot_address_space_id);
-    // let mut process = Process::new(&arch, process_page_table, boot_info.payload.entry_point);
-    // let process_id = arch.process_map.lock().insert(process);
+        }),
+    )));
+    let task = KernelObject::Task(RwLock::new(Task::new(
+        &arch,
+        address_space,
+        boot_info.payload.entry_point,
+    )));
+    let task_id = arch.object_map.write().insert(task);
 
     info!("Dropping to usermode");
-    // process::drop_to_usermode(&arch, &mut boot_processor.tss, process_id);
-
-    loop {}
+    task::drop_to_usermode(arch, tss, task_id);
 }
