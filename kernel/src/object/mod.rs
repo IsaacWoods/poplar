@@ -1,8 +1,7 @@
 pub mod map;
 
 use crate::arch::Architecture;
-use alloc::sync::Arc;
-use spin::Mutex;
+use spin::RwLock;
 
 // TODO: when unhygenic macro items are implemented, we should just be able to do `enum
 // #KernelObject` and not have to pass a parameter like this
@@ -10,7 +9,7 @@ macro kernel_object_table($kernel_object: ident, $([$name: ident, $method: ident
     #[derive(Debug)]
     pub enum $kernel_object<A: Architecture> {
         $(
-            $name(Arc<Mutex<A::$name>>),
+            $name(RwLock<A::$name>),
          )*
 
         /// This is a test entry that just allows us to store a number. It is used to test the data
@@ -21,7 +20,8 @@ macro kernel_object_table($kernel_object: ident, $([$name: ident, $method: ident
 
     impl<A> KernelObject<A> where A: Architecture {
         $(
-            pub fn $method(&self) -> &Arc<Mutex<A::$name>> {
+            // TODO: should this actually just return an Option<...> instead?
+            pub fn $method(&self) -> &RwLock<A::$name> {
                 match self {
                     KernelObject::$name(ref object) => object,
                     _ => panic!("Tried to coerce kernel object into incorrect type!"),
