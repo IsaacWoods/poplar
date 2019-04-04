@@ -1,7 +1,6 @@
 use super::Arch;
 use crate::{util::bitmap::Bitmap, x86_64::memory::physical::LockedPhysicalMemoryManager};
 use core::mem;
-use log::info;
 use x86_64::memory::{
     kernel_map::KERNEL_P4_ENTRY,
     paging::{

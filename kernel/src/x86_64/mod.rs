@@ -6,7 +6,6 @@ mod cpu;
 mod interrupts;
 mod logger;
 mod memory;
-mod process;
 mod task;
 
 use self::{
@@ -16,7 +15,6 @@ use self::{
     interrupts::InterruptController,
     logger::KernelLogger,
     memory::{physical::LockedPhysicalMemoryManager, KernelPageTable, PhysicalRegionMapper},
-    process::Process,
     task::Task,
 };
 use crate::{

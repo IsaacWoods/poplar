@@ -38,10 +38,10 @@ mod object;
 mod syscall;
 mod util;
 
-use crate::{arch::Architecture, heap_allocator::LockedHoleAllocator};
+use crate::heap_allocator::LockedHoleAllocator;
 use cfg_if::cfg_if;
 use core::panic::PanicInfo;
-use log::{error, info};
+use log::error;
 
 #[cfg(not(test))]
 #[global_allocator]

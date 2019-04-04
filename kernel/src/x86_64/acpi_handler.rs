@@ -7,7 +7,6 @@ use super::memory::{
 use crate::util::math::ceiling_integer_divide;
 use acpi::{AcpiHandler, PhysicalMapping as AcpiPhysicalMapping};
 use core::ptr::NonNull;
-use log::info;
 use spin::Mutex;
 use x86_64::memory::{
     paging::{entry::EntryFlags, Frame, FRAME_SIZE},
