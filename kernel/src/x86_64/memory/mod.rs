@@ -69,7 +69,7 @@ impl PhysicalRegionMapper {
     ) -> PhysicalMapping {
         let virtual_region_start = self
             .virtual_area_bitmap
-            .alloc_n(number_of_frames)
+            .alloc(number_of_frames)
             .expect("Not enough space for physical mapping");
         let frames = start_frame..(start_frame + number_of_frames);
         let start_page =

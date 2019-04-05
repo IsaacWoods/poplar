@@ -196,14 +196,15 @@ impl ActivePageTable<RecursiveMapping> {
     /// isn't really mapped, you can't modify the *contents* of the mappings. To modify the
     /// physical memory, you will either need to switch to the `InactivePageTable`, or map the
     /// memory you want to modify into the `ActivePageTable` temporarily.
-    pub fn with<A, F>(
+    pub fn with<A, F, R>(
         &mut self,
         table: &mut InactivePageTable<RecursiveMapping>,
         allocator: &A,
         f: F,
-    ) where
+    ) -> R
+    where
         A: FrameAllocator,
-        F: FnOnce(&mut Mapper<RecursiveMapping>, &A),
+        F: FnOnce(&mut Mapper<RecursiveMapping>, &A) -> R,
     {
         use super::kernel_map::RECURSIVE_ENTRY;
 
@@ -227,7 +228,7 @@ impl ActivePageTable<RecursiveMapping> {
          * because if we gave it a `ActivePageTable`, it could call `with` again, which
          * would not work.
          */
-        f(self, allocator);
+        let result = f(self, allocator);
 
         /*
          * Restore the kernel's recursive mapping and flush the TLB again.
@@ -238,5 +239,7 @@ impl ActivePageTable<RecursiveMapping> {
         let kernel_p4 = unsafe { &mut *KERNEL_P4_NON_RECURSIVE };
         kernel_p4[RECURSIVE_ENTRY].set(kernel_p4_frame, EntryFlags::PRESENT | EntryFlags::WRITABLE);
         tlb::flush();
+
+        result
     }
 }
