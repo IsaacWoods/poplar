@@ -1,9 +1,9 @@
 use crate::{
     memory::{BootFrameAllocator, MemoryType},
-    println,
     types::Status,
 };
 use core::slice;
+use log::info;
 use mer::{
     section::{SectionHeader, SectionType},
     Elf,
@@ -85,7 +85,7 @@ pub fn load_image<'a>(
             continue;
         }
 
-        println!(
+        info!(
             "Loading section of '{}': '{}' at {:#x}-{:#x} at physical address {:#x}",
             path,
             section.name(&elf).unwrap(),

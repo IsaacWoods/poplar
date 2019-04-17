@@ -13,6 +13,7 @@
 
 mod boot_services;
 mod elf;
+mod logger;
 mod memory;
 mod protocols;
 mod runtime_services;
@@ -24,13 +25,11 @@ use crate::{
     system_table::SystemTable,
     types::{Guid, Handle, Status},
 };
-use core::{fmt::Write, mem, panic::PanicInfo};
+use core::{mem, panic::PanicInfo};
+use log::{error, trace};
 use x86_64::{
     boot::{BootInfo, MemoryEntry, MemoryType as BootInfoMemoryType, PayloadInfo},
-    hw::{
-        registers::{read_control_reg, read_msr, write_control_reg, write_msr},
-        serial::SerialPort,
-    },
+    hw::registers::{read_control_reg, read_msr, write_control_reg, write_msr},
     memory::{
         kernel_map,
         paging::{
@@ -65,16 +64,10 @@ pub extern "win64" fn efi_main(image_handle: Handle, system_table: &'static Syst
          */
         SYSTEM_TABLE = system_table;
         IMAGE_HANDLE = image_handle;
-
-        /*
-         * Initialise the COM1 serial port for debug output.
-         */
-        SERIAL_PORT.initialise();
     }
 
-    println!("┌─┐┌─┐┌┐ ┌┐ ┬  ┌─┐");
-    println!("├─┘├┤ ├┴┐├┴┐│  ├┤ ");
-    println!("┴  └─┘└─┘└─┘┴─┘└─┘");
+    logger::init();
+    trace!("Pebble bootloader started");
 
     let allocator = BootFrameAllocator::new(64);
     let mut kernel_page_table = unsafe {
@@ -186,7 +179,7 @@ pub extern "win64" fn efi_main(image_handle: Handle, system_table: &'static Syst
      * We now terminate the boot services. If this is successful, we become responsible for the
      * running of the system and may no longer make use of any boot services.
      */
-    println!("Exiting boot services");
+    trace!("Exiting boot services");
     system_table.boot_services.exit_boot_services(image_handle, memory_map.key).unwrap();
 
     /*
@@ -194,7 +187,7 @@ pub extern "win64" fn efi_main(image_handle: Handle, system_table: &'static Syst
      * the features we want in the kernel.
      */
     setup_for_kernel();
-    println!("Switching to kernel page tables");
+    trace!("Switching to kernel page tables");
     unsafe {
         kernel_page_table.switch_to::<IdentityMapping>();
     }
@@ -206,7 +199,7 @@ pub extern "win64" fn efi_main(image_handle: Handle, system_table: &'static Syst
      * register, as local variables will no longer be available. We also disable interrupts until
      * the kernel has a chance to install its own IDT and configure the interrupt controller.
      */
-    println!("Jumping into kernel\n\n");
+    trace!("Jumping into kernel\n\n");
     unsafe {
         asm!("cli
               mov rsp, rax
@@ -241,7 +234,7 @@ fn setup_for_kernel() {
 }
 
 fn allocate_and_map_heap(mapper: &mut Mapper<IdentityMapping>, allocator: &BootFrameAllocator) {
-    println!("Allocating memory for kernel heap");
+    trace!("Allocating memory for kernel heap");
 
     assert!(kernel_map::HEAP_START.is_page_aligned());
     assert!((kernel_map::HEAP_END + 1).is_page_aligned());
@@ -268,7 +261,7 @@ fn allocate_and_map_heap(mapper: &mut Mapper<IdentityMapping>, allocator: &BootF
 
 fn construct_boot_info(memory_map: &MemoryMap, payload_info: PayloadInfo) -> BootInfo {
     use x86_64::boot::{BOOT_INFO_MAGIC, MEMORY_MAP_NUM_ENTRIES};
-    println!("Constructing boot info to pass to kernel");
+    trace!("Constructing boot info to pass to kernel");
 
     let mut boot_info = BootInfo {
         magic: BOOT_INFO_MAGIC,
@@ -409,7 +402,7 @@ fn load_kernel(
             None => panic!("Kernel does not have a '_guard_page' symbol!"),
         };
     assert!(guard_page_address.is_page_aligned());
-    println!("Unmapping guard page");
+    trace!("Unmapping guard page");
     mapper.unmap(Page::contains(guard_page_address), allocator);
 
     let stack_top =
@@ -454,7 +447,7 @@ fn load_payload(allocator: &BootFrameAllocator) -> Result<PayloadInfo, Status> {
 #[no_mangle]
 pub fn panic(info: &PanicInfo) -> ! {
     let location = info.location().unwrap();
-    println!(
+    error!(
         "Panic in {}({}:{}): {}",
         location.file(),
         location.line(),
@@ -462,24 +455,6 @@ pub fn panic(info: &PanicInfo) -> ! {
         info.message().unwrap()
     );
     loop {}
-}
-
-macro print {
-    ($($arg: tt)*) => {
-        unsafe {
-            SERIAL_PORT.write_fmt(format_args!($($arg)*)).expect("Failed to write to COM1");
-        }
-    }
-}
-
-macro println {
-    ($fmt: expr) => {
-        print!(concat!($fmt, "\r\n"));
-    },
-
-    ($fmt: expr, $($arg: tt)*) => {
-        print!(concat!($fmt, "\r\n"), $($arg)*);
-    }
 }
 
 /// Returns a reference to the `SystemTable`. This is safe to call after the global has been
@@ -498,4 +473,3 @@ pub fn image_handle() -> Handle {
  */
 static mut SYSTEM_TABLE: *const SystemTable = 0 as *const _;
 static mut IMAGE_HANDLE: Handle = 0;
-static mut SERIAL_PORT: SerialPort = unsafe { SerialPort::new(x86_64::hw::serial::COM1) };

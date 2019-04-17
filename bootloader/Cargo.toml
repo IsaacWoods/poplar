@@ -9,6 +9,7 @@ fixedvec = "0.2"
 bitflags = "1"
 mer = "0.2"
 x86_64 = { path = "../x86_64" }
+log = "0.4"
 
 [profile.release]
 debug = true
