@@ -1,21 +1,4 @@
-use core::{convert, fmt, ops, ptr::Unique};
-
-/// Logical boolean
-#[derive(Debug)]
-#[repr(u8)]
-pub enum Bool {
-    False = 0,
-    True = 1,
-}
-
-impl convert::From<bool> for Bool {
-    fn from(b: bool) -> Self {
-        match b {
-            false => Bool::False,
-            true => Bool::True,
-        }
-    }
-}
+use core::{fmt, ops, ptr::Unique};
 
 pub type Char16 = u16;
 
