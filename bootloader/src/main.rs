@@ -109,18 +109,6 @@ pub extern "win64" fn efi_main(image_handle: Handle, system_table: &'static Syst
         .map_err(|err| panic!("Failed to allocate memory for the boot info: {:?}", err))
         .unwrap();
     let boot_info = unsafe { &mut *(usize::from(boot_info_address) as *mut BootInfo) };
-    boot_info.magic = x86_64::boot::BOOT_INFO_MAGIC;
-    boot_info.num_memory_map_entries = 0;
-
-    /*
-     * Map the `BootInfo` into the kernel address space at the correct location.
-     */
-    kernel_mapper.map_to(
-        Page::contains(kernel_map::BOOT_INFO),
-        Frame::contains(boot_info_address),
-        EntryFlags::PRESENT | EntryFlags::NO_EXECUTE,
-        &allocator,
-    );
 
     /*
      * Get the final memory map before exiting boot services. We must not allocate between this
@@ -132,7 +120,24 @@ pub extern "win64" fn efi_main(image_handle: Handle, system_table: &'static Syst
         .map_err(|err| panic!("Failed to get memory map: {:?}", err))
         .unwrap();
 
-    mem::replace(boot_info, construct_boot_info(&memory_map, payload_info));
+    /*
+     * We now terminate the boot services. If this is successful, we become responsible for the
+     * running of the system and may no longer make use of any boot services.
+     */
+    trace!("Exiting boot services");
+    system_table.boot_services.exit_boot_services(image_handle, memory_map.key).unwrap();
+
+    /*
+     * Now we have the final memory map, we can construct the `BootInfo` we'll pass to the
+     * kernel, and map it into the kernel address space in the correct place.
+     */
+    *boot_info = construct_boot_info(&memory_map, payload_info);
+    kernel_mapper.map_to(
+        Page::contains(kernel_map::BOOT_INFO),
+        Frame::contains(boot_info_address),
+        EntryFlags::PRESENT | EntryFlags::NO_EXECUTE,
+        &allocator,
+    );
 
     /*
      * Identity map the bootloader code and data, and UEFI runtime services into the kernel
@@ -167,13 +172,6 @@ pub extern "win64" fn efi_main(image_handle: Handle, system_table: &'static Syst
             _ => {}
         }
     }
-
-    /*
-     * We now terminate the boot services. If this is successful, we become responsible for the
-     * running of the system and may no longer make use of any boot services.
-     */
-    trace!("Exiting boot services");
-    system_table.boot_services.exit_boot_services(image_handle, memory_map.key).unwrap();
 
     kernel::jump_into_kernel(kernel_page_table, kernel_info);
 }
