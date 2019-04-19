@@ -13,6 +13,7 @@
 
 mod boot_services;
 mod elf;
+mod kernel;
 mod logger;
 mod memory;
 mod protocols;
@@ -29,7 +30,6 @@ use core::{mem, panic::PanicInfo};
 use log::{error, trace};
 use x86_64::{
     boot::{BootInfo, MemoryEntry, MemoryType as BootInfoMemoryType, PayloadInfo},
-    hw::registers::{read_control_reg, read_msr, write_control_reg, write_msr},
     memory::{
         kernel_map,
         paging::{
@@ -46,13 +46,6 @@ use x86_64::{
         VirtualAddress,
     },
 };
-
-/// Describes the loaded kernel image, including its entry point and where it expects the stack to
-/// be.
-struct KernelInfo {
-    entry_point: VirtualAddress,
-    stack_top: VirtualAddress,
-}
 
 /// Entry point for the bootloader. This is called from the UEFI firmware.
 #[no_mangle]
@@ -90,7 +83,7 @@ pub extern "win64" fn efi_main(image_handle: Handle, system_table: &'static Syst
         &allocator,
     );
 
-    let kernel_info = match load_kernel(&mut kernel_mapper, &allocator) {
+    let kernel_info = match kernel::load_kernel(&mut kernel_mapper, &allocator) {
         Ok(kernel_info) => kernel_info,
         Err(err) => panic!("Failed to load kernel: {:?}", err),
     };
@@ -182,55 +175,7 @@ pub extern "win64" fn efi_main(image_handle: Handle, system_table: &'static Syst
     trace!("Exiting boot services");
     system_table.boot_services.exit_boot_services(image_handle, memory_map.key).unwrap();
 
-    /*
-     * We can now setup for kernel entry by switching to the new kernel page tables and enabling
-     * the features we want in the kernel.
-     */
-    setup_for_kernel();
-    trace!("Switching to kernel page tables");
-    unsafe {
-        kernel_page_table.switch_to::<IdentityMapping>();
-    }
-
-    /*
-     * Jump into the kernel!
-     *
-     * Because we change the stack pointer, we need to pre-load the kernel entry point into a
-     * register, as local variables will no longer be available. We also disable interrupts until
-     * the kernel has a chance to install its own IDT and configure the interrupt controller.
-     */
-    trace!("Jumping into kernel\n\n");
-    unsafe {
-        asm!("cli
-              mov rsp, rax
-              jmp rbx"
-         :
-         : "{rax}"(kernel_info.stack_top), "{rbx}"(kernel_info.entry_point)
-         : "rax", "rbx", "rsp"
-         : "intel"
-        );
-    }
-    unreachable!();
-}
-
-/// Set up a common kernel environment. Some of this stuff will already be true for everything we'll
-/// successfully boot on realistically, but it doesn't hurt to explicitly set it up.
-fn setup_for_kernel() {
-    let mut cr4 = read_control_reg!(CR4);
-    cr4 |= 1 << 7; // Enable global pages
-    cr4 |= 1 << 5; // Enable PAE
-    cr4 |= 1 << 2; // Only allow use of the RDTSC instruction in ring 0
-    unsafe {
-        write_control_reg!(CR4, cr4);
-    }
-
-    let mut efer = read_msr(x86_64::hw::registers::EFER);
-    efer |= 1 << 0; // Enable the syscall and sysret instructions
-    efer |= 1 << 8; // Enable long mode
-    efer |= 1 << 11; // Enable use of the NX bit in the page tables
-    unsafe {
-        write_msr(x86_64::hw::registers::EFER, efer);
-    }
+    kernel::jump_into_kernel(kernel_page_table, kernel_info);
 }
 
 fn allocate_and_map_heap(mapper: &mut Mapper<IdentityMapping>, allocator: &BootFrameAllocator) {
@@ -370,49 +315,6 @@ fn construct_boot_info(memory_map: &MemoryMap, payload_info: PayloadInfo) -> Boo
     }
 
     boot_info
-}
-
-fn load_kernel(
-    mapper: &mut Mapper<IdentityMapping>,
-    allocator: &BootFrameAllocator,
-) -> Result<KernelInfo, Status> {
-    const KERNEL_PATH: &str = "kernel.elf";
-
-    /*
-     * Load the kernel ELF and map it into the page tables.
-     */
-    let file_data = protocols::read_file(KERNEL_PATH, image_handle())?;
-    let image = elf::load_image(
-        KERNEL_PATH,
-        &file_data,
-        MemoryType::PebbleKernelMemory,
-        mapper,
-        allocator,
-        false,
-    )?;
-
-    /*
-     * We now set up the kernel stack. As part of the `.bss` section, it has already had memory
-     * allocated for it, and has been mapped into the page tables. However, we need to go back
-     * and unmap the guard page, and extract the address of the top of the stack.
-     */
-    let guard_page_address =
-        match image.elf.symbols().find(|symbol| symbol.name(&image.elf) == Some("_guard_page")) {
-            Some(symbol) => VirtualAddress::new(symbol.value as usize).unwrap(),
-            None => panic!("Kernel does not have a '_guard_page' symbol!"),
-        };
-    assert!(guard_page_address.is_page_aligned());
-    trace!("Unmapping guard page");
-    mapper.unmap(Page::contains(guard_page_address), allocator);
-
-    let stack_top =
-        match image.elf.symbols().find(|symbol| symbol.name(&image.elf) == Some("_stack_top")) {
-            Some(symbol) => VirtualAddress::new(symbol.value as usize).unwrap(),
-            None => panic!("Kernel does not have a '_stack_top' symbol"),
-        };
-    assert!(stack_top.is_page_aligned(), "Stack is not page aligned");
-
-    Ok(KernelInfo { entry_point: VirtualAddress::new(image.elf.entry_point()).unwrap(), stack_top })
 }
 
 fn load_payload(allocator: &BootFrameAllocator) -> Result<PayloadInfo, Status> {
