@@ -2,7 +2,6 @@
 **/*.rs.bk
 
 /build/
-/ramdisk/
 /iso/
 *.img
 *.iso
@@ -13,6 +12,3 @@
 # These are built on CI and should never be committed
 /doc_target/
 /docs/
-
-# Temp
-/old_kernel/
