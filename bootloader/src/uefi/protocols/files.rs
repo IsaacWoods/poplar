@@ -1,8 +1,13 @@
 use crate::{
-    boot_services::{self, utf16_to_str, OpenProtocolAttributes, Pool, Protocol, SearchType},
     memory::MemoryType,
-    system_table,
-    types::{Char16, Guid, Handle, Status},
+    uefi::{
+        boot_services::{self, utf16_to_str, OpenProtocolAttributes, Pool, Protocol, SearchType},
+        system_table,
+        Char16,
+        Guid,
+        Handle,
+        Status,
+    },
 };
 use bitflags::bitflags;
 use core::{mem, ops::Drop, slice};

@@ -1,6 +1,6 @@
 use crate::{
     memory::{BootFrameAllocator, MemoryType},
-    types::Status,
+    uefi::Status,
 };
 use core::slice;
 use log::info;
@@ -59,14 +59,14 @@ pub fn load_image<'a>(
     /*
      * Allocate enough memory and zero it.
      */
-    let physical_base = crate::system_table()
+    let physical_base = crate::uefi::system_table()
         .boot_services
         .allocate_frames(memory_type, image_size / FRAME_SIZE)
         .map_err(|err| panic!("Failed to allocate memory for image({}): {:?}", path, err))
         .unwrap();
 
     unsafe {
-        crate::system_table().boot_services.set_mem(
+        crate::uefi::system_table().boot_services.set_mem(
             usize::from(physical_base) as *mut _,
             image_size as usize,
             0,

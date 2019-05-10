@@ -1,4 +1,4 @@
-use crate::types::{Char16, Status, TableHeader};
+use crate::uefi::{Char16, Status, TableHeader};
 use core::fmt;
 
 /// Contains pointers to all of the runtime services

@@ -1,7 +1,10 @@
-use crate::{
+use crate::uefi::{
     boot_services::BootServices,
     runtime_services::RuntimeServices,
-    types::{Guid, Handle, RuntimeMemory, TableHeader},
+    Guid,
+    Handle,
+    RuntimeMemory,
+    TableHeader,
 };
 use core::slice;
 

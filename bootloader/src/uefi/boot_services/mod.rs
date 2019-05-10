@@ -6,8 +6,7 @@ mod protocols;
 pub use self::{events::*, memory::*, pool_ptr::*, protocols::*};
 use crate::{
     memory::{MemoryDescriptor, MemoryType},
-    system_table,
-    types::{Char16, Guid, Handle, Status, TableHeader},
+    uefi::{Char16, Guid, Handle, Status, TableHeader},
 };
 use core::{
     char::{decode_utf16, REPLACEMENT_CHARACTER},
@@ -155,7 +154,9 @@ pub fn str_to_utf16(src: &str) -> Result<Pool<[Char16]>, Status> {
     // An extra 2 bytes for a null terminator
     buf_len += 2;
     let mut buf = unsafe {
-        let ptr = system_table().boot_services.allocate_pool(MemoryType::LoaderData, buf_len)?;
+        let ptr = crate::uefi::system_table()
+            .boot_services
+            .allocate_pool(MemoryType::LoaderData, buf_len)?;
         Pool::new_unchecked(slice::from_raw_parts_mut(ptr as *mut Char16, buf_len / 2))
     };
 
@@ -188,7 +189,9 @@ pub fn utf16_to_str(src: &[Char16]) -> Result<Pool<str>, Status> {
     // Allocate a buffer large enough to hold the string when converted into UTF-8 code units
     let buf_len: usize = chars.clone().map(|c| c.len_utf8()).sum();
     let buf: &mut [u8] = unsafe {
-        let ptr = system_table().boot_services.allocate_pool(MemoryType::LoaderData, buf_len)?;
+        let ptr = crate::uefi::system_table()
+            .boot_services
+            .allocate_pool(MemoryType::LoaderData, buf_len)?;
         slice::from_raw_parts_mut(ptr, buf_len)
     };
 

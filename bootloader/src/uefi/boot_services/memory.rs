@@ -1,7 +1,7 @@
 use super::{BootServices, Pool};
 use crate::{
     memory::{MemoryDescriptor, MemoryMap, MemoryType},
-    types::Status,
+    uefi::Status,
 };
 use core::{mem, slice};
 use x86_64::memory::PhysicalAddress;

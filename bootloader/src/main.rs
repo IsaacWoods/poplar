@@ -11,20 +11,15 @@
     cell_update
 )]
 
-mod boot_services;
 mod elf;
 mod kernel;
 mod logger;
 mod memory;
-mod protocols;
-mod runtime_services;
-mod system_table;
-mod types;
+mod uefi;
 
 use crate::{
     memory::{BootFrameAllocator, MemoryMap, MemoryType},
-    system_table::SystemTable,
-    types::{Guid, Handle, Status},
+    uefi::{system_table::SystemTable, Guid, Handle, Status},
 };
 use core::{mem, panic::PanicInfo};
 use log::{error, trace};
@@ -50,13 +45,11 @@ use x86_64::{
 /// Entry point for the bootloader. This is called from the UEFI firmware.
 #[no_mangle]
 pub extern "win64" fn efi_main(image_handle: Handle, system_table: &'static SystemTable) -> ! {
+    /*
+     * The first thing we must do is initialise the UEFI handles.
+     */
     unsafe {
-        /*
-         * The first thing we do is set the global references to the system table and image
-         * handle. Until we do this, their "safe" getters are not.
-         */
-        SYSTEM_TABLE = system_table;
-        IMAGE_HANDLE = image_handle;
+        uefi::init(system_table, image_handle);
     }
 
     logger::init();
@@ -183,7 +176,7 @@ fn allocate_and_map_heap(mapper: &mut Mapper<IdentityMapping>, allocator: &BootF
     assert!((kernel_map::HEAP_END + 1).is_page_aligned());
     let heap_size = (usize::from(kernel_map::HEAP_END) + 1) - usize::from(kernel_map::HEAP_START);
     assert!(heap_size % FRAME_SIZE == 0);
-    let heap_physical_base = system_table()
+    let heap_physical_base = uefi::system_table()
         .boot_services
         .allocate_frames(MemoryType::PebbleKernelHeap, heap_size / FRAME_SIZE)
         .map_err(|err| panic!("Failed to allocate memory for kernel heap: {:?}", err))
@@ -305,7 +298,7 @@ fn construct_boot_info(memory_map: &MemoryMap, payload_info: PayloadInfo) -> Boo
         d: [0xbc, 0x22, 0x00, 0x80, 0xc7, 0x3c, 0x88, 0x81],
     };
 
-    for config_entry in system_table().config_table().iter() {
+    for config_entry in uefi::system_table().config_table().iter() {
         if config_entry.guid == RSDP_V1_GUID || config_entry.guid == RSDP_V2_GUID {
             boot_info.rsdp_address = Some(PhysicalAddress::new(config_entry.address).unwrap());
             break;
@@ -327,7 +320,7 @@ fn load_payload(allocator: &BootFrameAllocator) -> Result<PayloadInfo, Status> {
      * Load and map the ELF.
      */
     const PAYLOAD_PATH: &str = "payload.elf";
-    let file_data = protocols::read_file(PAYLOAD_PATH, image_handle())?;
+    let file_data = uefi::protocols::read_file(PAYLOAD_PATH, uefi::image_handle())?;
     let image = elf::load_image(
         PAYLOAD_PATH,
         &file_data,
@@ -356,20 +349,3 @@ pub fn panic(info: &PanicInfo) -> ! {
     );
     loop {}
 }
-
-/// Returns a reference to the `SystemTable`. This is safe to call after the global has been
-/// initialised, which we do straight after control is passed to us.
-pub fn system_table() -> &'static SystemTable {
-    unsafe { &*SYSTEM_TABLE }
-}
-
-pub fn image_handle() -> Handle {
-    unsafe { IMAGE_HANDLE }
-}
-
-/*
- * It's only safe to have these `static mut`s because we know the bootloader will only have one
- * thread of execution and is completely non-reentrant.
- */
-static mut SYSTEM_TABLE: *const SystemTable = 0 as *const _;
-static mut IMAGE_HANDLE: Handle = 0;

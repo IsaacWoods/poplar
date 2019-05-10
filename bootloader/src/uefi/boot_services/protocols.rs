@@ -1,7 +1,7 @@
 use super::{BootServices, Pool};
 use crate::{
     memory::MemoryType,
-    types::{Guid, Handle, Status},
+    uefi::{Guid, Handle, Status},
 };
 use bitflags::bitflags;
 use core::{mem, slice};

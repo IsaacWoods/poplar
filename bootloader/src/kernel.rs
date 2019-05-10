@@ -1,6 +1,6 @@
 use crate::{
     memory::{BootFrameAllocator, MemoryType},
-    types::Status,
+    uefi::Status,
 };
 use log::trace;
 use x86_64::{
@@ -82,7 +82,7 @@ pub fn load_kernel(
     /*
      * Load the kernel ELF and map it into the page tables.
      */
-    let file_data = crate::protocols::read_file(KERNEL_PATH, crate::image_handle())?;
+    let file_data = crate::uefi::protocols::read_file(KERNEL_PATH, crate::uefi::image_handle())?;
     let image = crate::elf::load_image(
         KERNEL_PATH,
         &file_data,
