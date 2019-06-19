@@ -3,6 +3,18 @@ export BUILD_DIR ?= $(abspath ./build)
 
 RUST_GDB_INSTALL_PATH ?= ~/bin/rust-gdb/bin
 
+QEMU_COMMON_FLAGS = -cpu host,vmware-cpuid-freq,invtsc \
+					-machine q35 \
+					-smp 2 \
+					-usb \
+					-device usb-ehci,id=ehci,bus=pcie.0 \
+					--no-reboot \
+					--no-shutdown \
+					-drive if=pflash,format=raw,file=bootloader/ovmf/OVMF_CODE.fd,readonly \
+					-drive if=pflash,format=raw,file=bootloader/ovmf/OVMF_VARS.fd,readonly \
+					-drive if=ide,format=raw,file=$< \
+					-net none
+
 .PHONY: prepare bootloader kernel userboot clean qemu gdb update fmt test
 
 pebble.img: prepare bootloader kernel userboot
@@ -69,54 +81,21 @@ doc:
 
 qemu: pebble.img
 	qemu-system-x86_64 \
-		-enable-kvm \
-		-cpu host,vmware-cpuid-freq,invtsc \
-		-machine q35 \
-		-smp 2 \
-		-usb \
-		-device usb-ehci,id=ehci,bus=pcie.0 \
-		--no-reboot \
-		--no-shutdown \
-		-drive if=pflash,format=raw,file=bootloader/ovmf/OVMF_CODE.fd,readonly \
-		-drive if=pflash,format=raw,file=bootloader/ovmf/OVMF_VARS.fd,readonly \
-		-drive format=raw,file=$<,if=ide \
-		-net none
+		$(QEMU_COMMON_FLAGS) \
+		-enable-kvm
 
 qemu-no-kvm: pebble.img
-	qemu-system-x86_64 \
-		-smp 2 \
-		-usb \
-		-device usb-ehci,id=ehci \
-		--no-reboot \
-		--no-shutdown \
-		-drive if=pflash,format=raw,file=bootloader/ovmf/OVMF_CODE.fd,readonly \
-		-drive if=pflash,format=raw,file=bootloader/ovmf/OVMF_VARS.fd,readonly \
-		-drive format=raw,file=$<,if=ide \
-		-net none
+	qemu-system-x86_64 $(QEMU_COMMON_FLAGS)
 
 debug: pebble.img
 	qemu-system-x86_64 \
-		-d int \
-		-smp 2 \
-		-usb \
-		-device usb-ehci,id=ehci \
-		--no-reboot \
-		--no-shutdown \
-		-drive if=pflash,format=raw,file=bootloader/ovmf/OVMF_CODE.fd,readonly \
-		-drive if=pflash,format=raw,file=bootloader/ovmf/OVMF_VARS.fd,readonly \
-		-drive format=raw,file=$<,if=ide \
-		-net none
+		$(QEMU_COMMON_FLAGS) \
+		-d int
 
 gdb: pebble.img
 	qemu-system-x86_64 \
-		-enable-kvm \
-		-cpu host,vmware-cpuid-freq,invtsc \
-		-no-reboot \
-		-no-shutdown \
+		$(QEMU_COMMON_FLAGS) \
+		--enable-kvm \
 		-s \
 		-S \
-		-drive if=pflash,format=raw,file=bootloader/ovmf/OVMF_CODE.fd,readonly \
-		-drive if=pflash,format=raw,file=bootloader/ovmf/OVMF_VARS.fd,readonly \
-		-drive format=raw,file=$<,if=ide \
-		-net none \
 	& $(RUST_GDB_INSTALL_PATH)/rust-gdb -q "build/fat/kernel.elf" -ex "target remote :1234"
