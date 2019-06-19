@@ -71,9 +71,10 @@ qemu: pebble.img
 	qemu-system-x86_64 \
 		-enable-kvm \
 		-cpu host,vmware-cpuid-freq,invtsc \
+		-machine q35 \
 		-smp 2 \
 		-usb \
-		-device usb-ehci,id=ehci \
+		-device usb-ehci,id=ehci,bus=pcie.0 \
 		--no-reboot \
 		--no-shutdown \
 		-drive if=pflash,format=raw,file=bootloader/ovmf/OVMF_CODE.fd,readonly \
