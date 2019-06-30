@@ -23,7 +23,7 @@ use crate::{
 };
 use acpi::ProcessorState;
 use alloc::vec::Vec;
-use aml_parser::AmlNamespace;
+use aml_parser::AmlContext;
 use log::{error, info, warn};
 use spin::{Mutex, RwLock};
 use x86_64::{
@@ -209,7 +209,7 @@ pub fn kmain() -> ! {
      * Parse the DSDT.
      * XXX: This is temporary. In the future, this will be done in a user process.
      */
-    let mut aml_namespace = AmlNamespace::new();
+    let mut aml_context = AmlContext::new();
     if let Some(dsdt_info) = acpi_info.and_then(|info| info.dsdt) {
         use crate::util::math::ceiling_integer_divide;
         use x86_64::memory::{
@@ -230,7 +230,7 @@ pub fn kmain() -> ! {
 
         info!(
             "DSDT parse: {:?}",
-            aml_namespace.parse_table(unsafe {
+            aml_context.parse_table(unsafe {
                 core::slice::from_raw_parts(
                     (mapping.virtual_base + physical_address.offset_into_frame()).ptr(),
                     dsdt_info.length as usize,
