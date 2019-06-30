@@ -1,11 +1,13 @@
 #![no_std]
 
 pub mod header;
+pub mod program;
 pub mod section;
 pub mod symbol;
 
 use crate::{
     header::Header,
+    program::ProgramHeader,
     section::{SectionHeader, SectionType},
     symbol::Symbol,
 };
@@ -33,6 +35,7 @@ impl Elf<'_> {
         let mut elf = Elf { bytes, header, symbol_table: None };
 
         elf.sections().map(|section| section.validate()).collect::<Result<_, ElfError>>()?;
+        elf.segments().map(|segment| segment.validate()).collect::<Result<_, ElfError>>()?;
 
         // Cache the symbol table, if there is one
         elf.symbol_table =
@@ -62,6 +65,19 @@ impl Elf<'_> {
             &self.bytes[start..end],
             self.header.number_of_section_headers as u64,
             self.header.section_header_entry_size as u64,
+        )
+    }
+
+    pub fn segments(&self) -> EntryIter<ProgramHeader> {
+        let start = self.header.program_header_offset as usize;
+        let end = start
+            + self.header.program_header_entry_size as usize
+                * self.header.number_of_program_headers as usize;
+
+        EntryIter::new(
+            &self.bytes[start..end],
+            self.header.number_of_program_headers as u64,
+            self.header.program_header_entry_size as u64,
         )
     }
 
@@ -106,6 +122,11 @@ pub enum ElfError {
     SectionInvalidType,
     /// The `.symtab` section is not actually a symbol table.
     InvalidSymbolTable,
+
+    /*
+     * Errors that can be produced parsing program headers.
+     */
+    SegmentInvalidType,
 }
 
 pub struct EntryIter<'a, T: TryFromCtx<'a, scroll::Endian, Error = scroll::Error, Size = usize>> {
