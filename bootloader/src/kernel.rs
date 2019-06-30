@@ -83,7 +83,7 @@ pub fn load_kernel(
      * Load the kernel ELF and map it into the page tables.
      */
     let file_data = crate::uefi::protocols::read_file(KERNEL_PATH, crate::uefi::image_handle())?;
-    let image = crate::elf::load_image(
+    let elf = crate::elf::load_image(
         KERNEL_PATH,
         &file_data,
         MemoryType::PebbleKernelMemory,
@@ -98,7 +98,7 @@ pub fn load_kernel(
      * and unmap the guard page, and extract the address of the top of the stack.
      */
     let guard_page_address =
-        match image.elf.symbols().find(|symbol| symbol.name(&image.elf) == Some("_guard_page")) {
+        match elf.symbols().find(|symbol| symbol.name(&elf) == Some("_guard_page")) {
             Some(symbol) => VirtualAddress::new(symbol.value as usize).unwrap(),
             None => panic!("Kernel does not have a '_guard_page' symbol!"),
         };
@@ -106,12 +106,11 @@ pub fn load_kernel(
     trace!("Unmapping guard page");
     mapper.unmap(Page::contains(guard_page_address), allocator);
 
-    let stack_top =
-        match image.elf.symbols().find(|symbol| symbol.name(&image.elf) == Some("_stack_top")) {
-            Some(symbol) => VirtualAddress::new(symbol.value as usize).unwrap(),
-            None => panic!("Kernel does not have a '_stack_top' symbol"),
-        };
+    let stack_top = match elf.symbols().find(|symbol| symbol.name(&elf) == Some("_stack_top")) {
+        Some(symbol) => VirtualAddress::new(symbol.value as usize).unwrap(),
+        None => panic!("Kernel does not have a '_stack_top' symbol"),
+    };
     assert!(stack_top.is_page_aligned(), "Stack is not page aligned");
 
-    Ok(KernelInfo { entry_point: VirtualAddress::new(image.elf.entry_point()).unwrap(), stack_top })
+    Ok(KernelInfo { entry_point: VirtualAddress::new(elf.entry_point()).unwrap(), stack_top })
 }

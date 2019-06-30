@@ -321,7 +321,7 @@ fn load_payload(allocator: &BootFrameAllocator) -> Result<PayloadInfo, Status> {
      */
     const PAYLOAD_PATH: &str = "payload.elf";
     let file_data = uefi::protocols::read_file(PAYLOAD_PATH, uefi::image_handle())?;
-    let image = elf::load_image(
+    let elf = elf::load_image(
         PAYLOAD_PATH,
         &file_data,
         MemoryType::PebblePayloadMemory,
@@ -331,7 +331,7 @@ fn load_payload(allocator: &BootFrameAllocator) -> Result<PayloadInfo, Status> {
     )?;
 
     Ok(PayloadInfo {
-        entry_point: VirtualAddress::new(image.elf.entry_point()).unwrap(),
+        entry_point: VirtualAddress::new(elf.entry_point()).unwrap(),
         page_table_address: page_table.p4_frame.start_address(),
     })
 }

@@ -146,8 +146,7 @@ impl<'a> Iterator for MemoryMapIter<'a> {
     }
 }
 
-/// Type of memory
-#[derive(Debug)]
+#[derive(Clone, Copy, Debug)]
 #[repr(u32)]
 pub enum MemoryType {
     ReservedMemoryType,

@@ -2,10 +2,10 @@ use crate::{
     memory::{BootFrameAllocator, MemoryType},
     uefi::Status,
 };
-use core::slice;
+use core::{ptr, slice};
 use log::info;
 use mer::{
-    section::{SectionHeader, SectionType},
+    program::{ProgramHeader, SegmentType},
     Elf,
 };
 use x86_64::memory::{
@@ -13,11 +13,6 @@ use x86_64::memory::{
     PhysicalAddress,
     VirtualAddress,
 };
-
-pub struct ImageInfo<'a> {
-    pub physical_base: PhysicalAddress,
-    pub elf: Elf<'a>,
-}
 
 /// Loads an ELF from the given path on the boot volume, allocates physical memory for it, and
 /// copies its sections into the new memory. Also maps each allocated section into the given set of
@@ -32,118 +27,77 @@ pub fn load_image<'a>(
     mapper: &mut Mapper<IdentityMapping>,
     allocator: &BootFrameAllocator,
     user_accessible: bool,
-) -> Result<ImageInfo<'a>, Status> {
+) -> Result<Elf<'a>, Status> {
     let elf = Elf::new(&image_data)
         .map_err(|err| panic!("Failed to parse ELF({}): {:?}", path, err))
         .unwrap();
 
     /*
-     * Work out how much space we need and check it's a multiple of the page size.
+     * Load each segment into memory, after which we can free the ELF. We don't map the segments
+     * are the specified physical addresses, because they don't matter.
      */
-    let image_size =
-        elf.sections().fold(
-            0,
-            |size, section| {
-                if section.is_allocated() {
-                    size + section.size
-                } else {
-                    size
-                }
-            },
-        ) as usize;
+    for segment in elf.segments() {
+        if SegmentType::Load == segment.segment_type() {
+            info!(
+                "Mapping Load segment at virtual address {:#x} with flags: {:#b}",
+                segment.virtual_address, segment.flags
+            );
+            assert!((segment.mem_size as usize) % FRAME_SIZE == 0);
 
-    if image_size % FRAME_SIZE != 0 {
-        panic!("Image size is not a multiple of the frame size: {}", path);
-    }
+            let physical_address = crate::uefi::system_table()
+                .boot_services
+                .allocate_frames(memory_type, (segment.mem_size as usize) / FRAME_SIZE)
+                .map_err(|err| panic!("Failed to allocate memory for image({}): {:?}", path, err))
+                .unwrap();
 
-    /*
-     * Allocate enough memory and zero it.
-     */
-    let physical_base = crate::uefi::system_table()
-        .boot_services
-        .allocate_frames(memory_type, image_size / FRAME_SIZE)
-        .map_err(|err| panic!("Failed to allocate memory for image({}): {:?}", path, err))
-        .unwrap();
+            map_segment(&segment, physical_address, user_accessible, mapper, allocator);
 
-    unsafe {
-        crate::uefi::system_table().boot_services.set_mem(
-            usize::from(physical_base) as *mut _,
-            image_size as usize,
-            0,
-        );
-    }
-
-    /*
-     * Load the sections of the ELF into memory, after which we can free the ELF. We use sections
-     * instead of segments because it allows us to define permissions on a per-section basis.
-     */
-    let mut section_physical_address = physical_base;
-
-    for section in elf.sections() {
-        // Skip sections that shouln't be loaded or ones with no data
-        if !section.is_allocated() || section.size == 0 {
-            continue;
-        }
-
-        info!(
-            "Loading section of '{}': '{}' at {:#x}-{:#x} at physical address {:#x}",
-            path,
-            section.name(&elf).unwrap(),
-            section.address,
-            section.address + section.size - 1,
-            section_physical_address,
-        );
-
-        map_section(mapper, section_physical_address, &section, allocator, user_accessible);
-
-        /*
-         * For `ProgBits` sections, we copy the data from the image into the section's new home.
-         * For `NoBits` sections, we leave it zeroed.
-         */
-        if let SectionType::ProgBits = section.section_type() {
+            /*
+             * Copy `file_size` bytes from the image into the segment's new home. Note that
+             * `file_size` may be less than `mem_size`, but must never be greater than it.
+             */
+            assert!(segment.file_size <= segment.mem_size);
             unsafe {
                 slice::from_raw_parts_mut(
-                    usize::from(section_physical_address) as *mut u8,
-                    section.size as usize,
+                    usize::from(physical_address) as *mut u8,
+                    segment.file_size as usize,
                 )
-                .copy_from_slice(section.data(&elf).unwrap());
+                .copy_from_slice(segment.data(&elf));
+            }
+
+            /*
+             * Zero the remainder of the segment.
+             */
+            unsafe {
+                ptr::write_bytes(
+                    (usize::from(physical_address) + (segment.file_size as usize)) as *mut u8,
+                    0,
+                    (segment.mem_size - segment.file_size) as usize,
+                );
             }
         }
-
-        section_physical_address += section.size as usize;
     }
 
-    Ok(ImageInfo { physical_base, elf })
+    Ok(elf)
 }
 
-fn map_section(
-    mapper: &mut Mapper<IdentityMapping>,
-    physical_base: PhysicalAddress,
-    section: &SectionHeader,
-    allocator: &BootFrameAllocator,
+fn map_segment(
+    segment: &ProgramHeader,
+    physical_address: PhysicalAddress,
     user_accessible: bool,
+    mapper: &mut Mapper<IdentityMapping>,
+    allocator: &BootFrameAllocator,
 ) {
-    let virtual_address = VirtualAddress::new(section.address as usize).unwrap();
-    /*
-     * Because the addresses should be page-aligned, the half-open ranges `[physical_base,
-     * physical_base + size)` and `[virtual_address, virtual_address + size)` gives us the
-     * correct frame and page ranges.
-     */
-    let frames =
-        Frame::contains(physical_base)..Frame::contains(physical_base + section.size as usize);
-    let pages =
-        Page::contains(virtual_address)..Page::contains(virtual_address + section.size as usize);
-    assert!(frames.clone().count() == pages.clone().count());
-
-    /*
-     * Work out the most restrictive set of permissions this section can be mapped with. If the
-     * section needs to be writable, mark the pages as writable. If the section does **not**
-     * contain executable instructions, mark it as `NO_EXECUTE`.
-     */
+    let virtual_address = VirtualAddress::new(segment.virtual_address as usize).unwrap();
     let flags = EntryFlags::PRESENT
-        | if section.is_writable() { EntryFlags::WRITABLE } else { EntryFlags::empty() }
-        | if !section.is_executable() { EntryFlags::NO_EXECUTE } else { EntryFlags::empty() }
+        | if segment.is_writable() { EntryFlags::WRITABLE } else { EntryFlags::empty() }
+        | if !segment.is_executable() { EntryFlags::NO_EXECUTE } else { EntryFlags::empty() }
         | if user_accessible { EntryFlags::USER_ACCESSIBLE } else { EntryFlags::empty() };
+    let frames = Frame::contains(physical_address)
+        ..Frame::contains(physical_address + segment.mem_size as usize);
+    let pages = Page::contains(virtual_address)
+        ..Page::contains(virtual_address + segment.mem_size as usize);
+    assert!(frames.clone().count() == pages.clone().count());
 
     for (frame, page) in frames.zip(pages) {
         mapper.map_to(page, frame, flags, allocator);
