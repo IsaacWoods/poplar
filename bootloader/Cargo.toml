@@ -7,7 +7,7 @@ edition = "2018"
 [dependencies]
 fixedvec = "0.2"
 bitflags = "1"
-mer = "0.2"
+mer = { path = "../lib/mer" }
 x86_64 = { path = "../lib/x86_64" }
 log = "0.4"
 

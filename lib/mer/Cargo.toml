@@ -1,0 +1,14 @@
+[package]
+name = "mer"
+version = "0.2.0"
+authors = ["Isaac Woods"]
+edition = "2018"
+repository = "https://github.com/pebble-os/pebble/lib/mer"
+description = "Ergonomic ELF64 parser, designed for use within kernels"
+readme = "README.md"
+license = "MIT/Apache-2.0"
+
+[dependencies]
+scroll = { version = "0.9", default-features = false, features = ["derive"] }
+scroll_derive = "0.9"
+bit_field = "0.9"
