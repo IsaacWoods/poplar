@@ -3,30 +3,30 @@ OUTPUT_FORMAT(elf64-x86-64)
 
 KERNEL_VMA = 0xffffffff80000000;
 
+PHDRS {
+    text PT_LOAD;
+    rodata PT_LOAD;
+    data PT_LOAD;
+}
+
 SECTIONS
 {
-    . += KERNEL_VMA;
+    . = KERNEL_VMA;
     _kernel_start = .;
 
-    .rodata : AT(ADDR(.rodata) - KERNEL_VMA)
-    {
-        *(.rodata .rodata.*)
-        . = ALIGN(4K);
-    }
-
-    .text : AT(ADDR(.text) - KERNEL_VMA)
+    .text :
     {
         *(.text .text.*)
         . = ALIGN(4K);
-    }
+    } :text
 
-    .data : AT(ADDR(.data) - KERNEL_VMA)
+    .data :
     {
         *(.data .data.*)
         . = ALIGN(4K);
-    }
+    } :data
 
-    .bss : AT(ADDR(.bss) - KERNEL_VMA)
+    .bss :
     {
         *(.bss .bss.*)
         . = ALIGN(4K);
@@ -41,26 +41,13 @@ SECTIONS
         . += 64K;
         _stack_top = .;
         /* No need to add more alignment here - it will already be page-aligned */
-    }
+    } :data
 
-    .got : AT(ADDR(.got) - KERNEL_VMA)
+    .rodata :
     {
-        *(.got)
+        *(.rodata .rodata.*)
         . = ALIGN(4K);
-    }
-
-    .got.plt : AT(ADDR(.got.plt) - KERNEL_VMA)
-    {
-        *(.got.plt)
-        . = ALIGN(4K);
-    }
-
-    .data.rel.ro : AT(ADDR(.data.rel.ro) - KERNEL_VMA) ALIGN(4K)
-    {
-        *(.data.rel.ro.local*)
-        *(.data.rel.ro .data.rel.ro.*)
-        . = ALIGN(4K);
-    }
+    } :rodata
 
     _kernel_end = .;
 
