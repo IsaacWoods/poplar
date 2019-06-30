@@ -1,4 +1,4 @@
-use crate::system_table;
+use crate::uefi::system_table;
 use core::{
     cell::Cell,
     ops::{Index, Range},

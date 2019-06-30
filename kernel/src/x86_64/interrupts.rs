@@ -253,6 +253,8 @@ extern "C" fn general_protection_fault_handler(stack_frame: &InterruptStackFrame
 }
 
 extern "C" fn page_fault_handler(stack_frame: &InterruptStackFrame, error_code: u64) {
+    // TODO: use get_bit method on BitField instead and replace the patterns with exhaustive bool
+    // ones
     error!(
         "PAGE_FAULT: {} ({:#x})",
         match (

@@ -1,5 +1,4 @@
-use super::BootServices;
-use crate::types::Status;
+use super::{BootServices, Status};
 use bitflags::bitflags;
 use core::mem;
 

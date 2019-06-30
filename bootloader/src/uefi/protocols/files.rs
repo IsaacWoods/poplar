@@ -1,8 +1,13 @@
 use crate::{
-    boot_services::{self, utf16_to_str, OpenProtocolAttributes, Pool, Protocol, SearchType},
     memory::MemoryType,
-    system_table,
-    types::{Bool, Char16, Guid, Handle, Status},
+    uefi::{
+        boot_services::{self, utf16_to_str, OpenProtocolAttributes, Pool, Protocol, SearchType},
+        system_table,
+        Char16,
+        Guid,
+        Handle,
+        Status,
+    },
 };
 use bitflags::bitflags;
 use core::{mem, ops::Drop, slice};
@@ -182,7 +187,7 @@ impl FileInformationType for FileInfo {
 #[repr(C)]
 pub struct FileSystemInfo {
     _size: usize,
-    pub read_only: Bool,
+    pub read_only: bool,
     pub volume_size: u64,
     pub free_space: u64,
     pub block_size: u32,

@@ -21,8 +21,9 @@ use crate::{
     arch::Architecture,
     object::{map::ObjectMap, KernelObject},
 };
-use acpi::{AmlNamespace, ProcessorState};
+use acpi::ProcessorState;
 use alloc::vec::Vec;
+use aml_parser::AmlContext;
 use log::{error, info, warn};
 use spin::{Mutex, RwLock};
 use x86_64::{
@@ -134,7 +135,10 @@ pub fn kmain() -> ! {
 
                 Err(err) => {
                     error!("Failed to parse static ACPI tables: {:?}", err);
-                    warn!("Continuing. Some functionality may not work, or the kernel may panic!");
+                    warn!(
+                        "Continuing. Some functionality may not work, or the kernel may
+    panic!"
+                    );
                     None
                 }
             }
@@ -143,21 +147,23 @@ pub fn kmain() -> ! {
         None => None,
     };
 
+    info!("{:#?}", acpi_info);
+
     /*
      * Register all the CPUs we can find.
      */
     let (mut boot_processor, application_processors) = match acpi_info {
         Some(ref info) => {
             assert!(
-                info.boot_processor().is_some()
-                    && info.boot_processor().unwrap().state == ProcessorState::Running
+                info.boot_processor.is_some()
+                    && info.boot_processor.unwrap().state == ProcessorState::Running
             );
             let tss = Tss::new();
             let tss_selector = unsafe { GDT.add_tss(TssSegment::new(&tss)) };
-            let boot_processor = Cpu::from_acpi(&info.boot_processor().unwrap(), tss, tss_selector);
+            let boot_processor = Cpu::from_acpi(&info.boot_processor.unwrap(), tss, tss_selector);
 
             let mut application_processors = Vec::new();
-            for application_processor in info.application_processors() {
+            for application_processor in &info.application_processors {
                 if application_processor.state == ProcessorState::Disabled {
                     continue;
                 }
@@ -194,26 +200,44 @@ pub fn kmain() -> ! {
     let interrupt_controller = InterruptController::init(
         &arch,
         match acpi_info {
-            Some(ref info) => info.interrupt_model().as_ref().unwrap(),
+            Some(ref info) => info.interrupt_model.as_ref().unwrap(),
             None => unimplemented!(),
         },
     );
 
     /*
-     * Parse the AML tables.
+     * Parse the DSDT.
+     * XXX: This is temporary. In the future, this will be done in a user process.
      */
-    let aml_namespace = if acpi_info.is_some() {
-        match AmlNamespace::parse_aml_tables(&acpi_info.unwrap(), &mut acpi_handler) {
-            Ok(namespace) => Some(namespace),
-            Err(err) => {
-                error!("Failed to parse AML tables: {:?}", err);
-                warn!("Some functionality may not work, or the kernel may panic!");
-                None
-            }
-        }
-    } else {
-        None
-    };
+    let mut aml_context = AmlContext::new();
+    if let Some(dsdt_info) = acpi_info.and_then(|info| info.dsdt) {
+        use crate::util::math::ceiling_integer_divide;
+        use x86_64::memory::{
+            paging::{entry::EntryFlags, Frame},
+            PhysicalAddress,
+        };
+        let physical_address = PhysicalAddress::new(dsdt_info.address).unwrap();
+        let mapping = arch.physical_region_mapper.lock().map_physical_region(
+            Frame::contains(physical_address),
+            ceiling_integer_divide(
+                dsdt_info.length as u64,
+                x86_64::memory::paging::FRAME_SIZE as u64,
+            ) as usize,
+            EntryFlags::PRESENT | EntryFlags::NO_EXECUTE,
+            &mut *arch.kernel_page_table.lock(),
+            &arch.physical_memory_manager,
+        );
+
+        info!(
+            "DSDT parse: {:?}",
+            aml_context.parse_table(unsafe {
+                core::slice::from_raw_parts(
+                    (mapping.virtual_base + physical_address.offset_into_frame()).ptr(),
+                    dsdt_info.length as usize,
+                )
+            })
+        );
+    }
 
     drop_to_userboot(&arch, boot_info, &mut boot_processor.tss)
 }

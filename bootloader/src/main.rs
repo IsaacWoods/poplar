@@ -11,29 +11,20 @@
     cell_update
 )]
 
-mod boot_services;
+mod elf;
+mod kernel;
+mod logger;
 mod memory;
-mod protocols;
-mod runtime_services;
-mod system_table;
-mod types;
+mod uefi;
 
 use crate::{
     memory::{BootFrameAllocator, MemoryMap, MemoryType},
-    system_table::SystemTable,
-    types::{Guid, Handle, Status},
+    uefi::{system_table::SystemTable, Guid, Handle, Status},
 };
-use core::{fmt::Write, mem, panic::PanicInfo, slice};
-use mer::{
-    section::{SectionHeader, SectionType},
-    Elf,
-};
+use core::{mem, panic::PanicInfo};
+use log::{error, trace};
 use x86_64::{
     boot::{BootInfo, MemoryEntry, MemoryType as BootInfoMemoryType, PayloadInfo},
-    hw::{
-        registers::{read_control_reg, read_msr, write_control_reg, write_msr},
-        serial::SerialPort,
-    },
     memory::{
         kernel_map,
         paging::{
@@ -51,33 +42,18 @@ use x86_64::{
     },
 };
 
-/// Describes the loaded kernel image, including its entry point and where it expects the stack to
-/// be.
-struct KernelInfo {
-    entry_point: VirtualAddress,
-    stack_top: VirtualAddress,
-}
-
 /// Entry point for the bootloader. This is called from the UEFI firmware.
 #[no_mangle]
 pub extern "win64" fn efi_main(image_handle: Handle, system_table: &'static SystemTable) -> ! {
+    /*
+     * The first thing we must do is initialise the UEFI handles.
+     */
     unsafe {
-        /*
-         * The first thing we do is set the global references to the system table and image
-         * handle. Until we do this, their "safe" getters are not.
-         */
-        SYSTEM_TABLE = system_table;
-        IMAGE_HANDLE = image_handle;
-
-        /*
-         * Initialise the COM1 serial port for debug output.
-         */
-        SERIAL_PORT.initialise();
+        uefi::init(system_table, image_handle);
     }
 
-    println!("┌─┐┌─┐┌┐ ┌┐ ┬  ┌─┐");
-    println!("├─┘├┤ ├┴┐├┴┐│  ├┤ ");
-    println!("┴  └─┘└─┘└─┘┴─┘└─┘");
+    logger::init();
+    trace!("Pebble bootloader started");
 
     let allocator = BootFrameAllocator::new(64);
     let mut kernel_page_table = unsafe {
@@ -100,7 +76,7 @@ pub extern "win64" fn efi_main(image_handle: Handle, system_table: &'static Syst
         &allocator,
     );
 
-    let kernel_info = match load_kernel(&mut kernel_mapper, &allocator) {
+    let kernel_info = match kernel::load_kernel(&mut kernel_mapper, &allocator) {
         Ok(kernel_info) => kernel_info,
         Err(err) => panic!("Failed to load kernel: {:?}", err),
     };
@@ -126,18 +102,6 @@ pub extern "win64" fn efi_main(image_handle: Handle, system_table: &'static Syst
         .map_err(|err| panic!("Failed to allocate memory for the boot info: {:?}", err))
         .unwrap();
     let boot_info = unsafe { &mut *(usize::from(boot_info_address) as *mut BootInfo) };
-    boot_info.magic = x86_64::boot::BOOT_INFO_MAGIC;
-    boot_info.num_memory_map_entries = 0;
-
-    /*
-     * Map the `BootInfo` into the kernel address space at the correct location.
-     */
-    kernel_mapper.map_to(
-        Page::contains(kernel_map::BOOT_INFO),
-        Frame::contains(boot_info_address),
-        EntryFlags::PRESENT | EntryFlags::NO_EXECUTE,
-        &allocator,
-    );
 
     /*
      * Get the final memory map before exiting boot services. We must not allocate between this
@@ -149,7 +113,24 @@ pub extern "win64" fn efi_main(image_handle: Handle, system_table: &'static Syst
         .map_err(|err| panic!("Failed to get memory map: {:?}", err))
         .unwrap();
 
-    mem::replace(boot_info, construct_boot_info(&memory_map, payload_info));
+    /*
+     * We now terminate the boot services. If this is successful, we become responsible for the
+     * running of the system and may no longer make use of any boot services.
+     */
+    trace!("Exiting boot services");
+    system_table.boot_services.exit_boot_services(image_handle, memory_map.key).unwrap();
+
+    /*
+     * Now we have the final memory map, we can construct the `BootInfo` we'll pass to the
+     * kernel, and map it into the kernel address space in the correct place.
+     */
+    *boot_info = construct_boot_info(&memory_map, payload_info);
+    kernel_mapper.map_to(
+        Page::contains(kernel_map::BOOT_INFO),
+        Frame::contains(boot_info_address),
+        EntryFlags::PRESENT | EntryFlags::NO_EXECUTE,
+        &allocator,
+    );
 
     /*
      * Identity map the bootloader code and data, and UEFI runtime services into the kernel
@@ -185,72 +166,17 @@ pub extern "win64" fn efi_main(image_handle: Handle, system_table: &'static Syst
         }
     }
 
-    /*
-     * We now terminate the boot services. If this is successful, we become responsible for the
-     * running of the system and may no longer make use of any boot services.
-     */
-    println!("Exiting boot services");
-    system_table.boot_services.exit_boot_services(image_handle, memory_map.key).unwrap();
-
-    /*
-     * We can now setup for kernel entry by switching to the new kernel page tables and enabling
-     * the features we want in the kernel.
-     */
-    setup_for_kernel();
-    println!("Switching to kernel page tables");
-    unsafe {
-        kernel_page_table.switch_to::<IdentityMapping>();
-    }
-
-    /*
-     * Jump into the kernel!
-     *
-     * Because we change the stack pointer, we need to pre-load the kernel entry point into a
-     * register, as local variables will no longer be available. We also disable interrupts until
-     * the kernel has a chance to install its own IDT and configure the interrupt controller.
-     */
-    println!("Jumping into kernel\n\n");
-    unsafe {
-        asm!("cli
-              mov rsp, rax
-              jmp rbx"
-         :
-         : "{rax}"(kernel_info.stack_top), "{rbx}"(kernel_info.entry_point)
-         : "rax", "rbx", "rsp"
-         : "intel"
-        );
-    }
-    unreachable!();
-}
-
-/// Set up a common kernel environment. Some of this stuff will already be true for everything we'll
-/// successfully boot on realistically, but it doesn't hurt to explicitly set it up.
-fn setup_for_kernel() {
-    let mut cr4 = read_control_reg!(CR4);
-    cr4 |= 1 << 7; // Enable global pages
-    cr4 |= 1 << 5; // Enable PAE
-    cr4 |= 1 << 2; // Only allow use of the RDTSC instruction in ring 0
-    unsafe {
-        write_control_reg!(CR4, cr4);
-    }
-
-    let mut efer = read_msr(x86_64::hw::registers::EFER);
-    efer |= 1 << 0; // Enable the syscall and sysret instructions
-    efer |= 1 << 8; // Enable long mode
-    efer |= 1 << 11; // Enable use of the NX bit in the page tables
-    unsafe {
-        write_msr(x86_64::hw::registers::EFER, efer);
-    }
+    kernel::jump_into_kernel(kernel_page_table, kernel_info);
 }
 
 fn allocate_and_map_heap(mapper: &mut Mapper<IdentityMapping>, allocator: &BootFrameAllocator) {
-    println!("Allocating memory for kernel heap");
+    trace!("Allocating memory for kernel heap");
 
     assert!(kernel_map::HEAP_START.is_page_aligned());
     assert!((kernel_map::HEAP_END + 1).is_page_aligned());
     let heap_size = (usize::from(kernel_map::HEAP_END) + 1) - usize::from(kernel_map::HEAP_START);
     assert!(heap_size % FRAME_SIZE == 0);
-    let heap_physical_base = system_table()
+    let heap_physical_base = uefi::system_table()
         .boot_services
         .allocate_frames(MemoryType::PebbleKernelHeap, heap_size / FRAME_SIZE)
         .map_err(|err| panic!("Failed to allocate memory for kernel heap: {:?}", err))
@@ -271,7 +197,7 @@ fn allocate_and_map_heap(mapper: &mut Mapper<IdentityMapping>, allocator: &BootF
 
 fn construct_boot_info(memory_map: &MemoryMap, payload_info: PayloadInfo) -> BootInfo {
     use x86_64::boot::{BOOT_INFO_MAGIC, MEMORY_MAP_NUM_ENTRIES};
-    println!("Constructing boot info to pass to kernel");
+    trace!("Constructing boot info to pass to kernel");
 
     let mut boot_info = BootInfo {
         magic: BOOT_INFO_MAGIC,
@@ -372,7 +298,7 @@ fn construct_boot_info(memory_map: &MemoryMap, payload_info: PayloadInfo) -> Boo
         d: [0xbc, 0x22, 0x00, 0x80, 0xc7, 0x3c, 0x88, 0x81],
     };
 
-    for config_entry in system_table().config_table().iter() {
+    for config_entry in uefi::system_table().config_table().iter() {
         if config_entry.guid == RSDP_V1_GUID || config_entry.guid == RSDP_V2_GUID {
             boot_info.rsdp_address = Some(PhysicalAddress::new(config_entry.address).unwrap());
             break;
@@ -380,151 +306,6 @@ fn construct_boot_info(memory_map: &MemoryMap, payload_info: PayloadInfo) -> Boo
     }
 
     boot_info
-}
-
-struct ImageInfo<'a> {
-    pub physical_base: PhysicalAddress,
-    pub elf: Elf<'a>,
-}
-
-/// Loads an ELF from the given path on the boot volume, allocates physical memory for it, and
-/// copies its sections into the new memory. Also maps each allocated section into the given set of
-/// page tables.
-///
-/// This borrows the file data, instead of reading the file itself, so that it can return the
-/// loaded `Elf` back to the caller.
-fn load_image<'a>(
-    path: &str,
-    image_data: &'a [u8],
-    memory_type: MemoryType,
-    mapper: &mut Mapper<IdentityMapping>,
-    allocator: &BootFrameAllocator,
-    user_accessible: bool,
-) -> Result<ImageInfo<'a>, Status> {
-    let elf = Elf::new(&image_data)
-        .map_err(|err| panic!("Failed to parse ELF({}): {:?}", path, err))
-        .unwrap();
-
-    /*
-     * Work out how much space we need and check it's a multiple of the page size.
-     */
-    let image_size =
-        elf.sections().fold(
-            0,
-            |size, section| {
-                if section.is_allocated() {
-                    size + section.size
-                } else {
-                    size
-                }
-            },
-        ) as usize;
-
-    if image_size % FRAME_SIZE != 0 {
-        panic!("Image size is not a multiple of the frame size: {}", path);
-    }
-
-    /*
-     * Allocate enough memory and zero it.
-     */
-    let physical_base = system_table()
-        .boot_services
-        .allocate_frames(memory_type, image_size / FRAME_SIZE)
-        .map_err(|err| panic!("Failed to allocate memory for image({}): {:?}", path, err))
-        .unwrap();
-
-    unsafe {
-        system_table().boot_services.set_mem(
-            usize::from(physical_base) as *mut _,
-            image_size as usize,
-            0,
-        );
-    }
-
-    /*
-     * Load the sections of the ELF into memory, after which we can free the ELF. We use sections
-     * instead of segments because it allows us to define permissions on a per-section basis.
-     */
-    let mut section_physical_address = physical_base;
-
-    for section in elf.sections() {
-        // Skip sections that shouln't be loaded or ones with no data
-        if !section.is_allocated() || section.size == 0 {
-            continue;
-        }
-
-        println!(
-            "Loading section of '{}': '{}' at {:#x}-{:#x} at physical address {:#x}",
-            path,
-            section.name(&elf).unwrap(),
-            section.address,
-            section.address + section.size - 1,
-            section_physical_address,
-        );
-
-        map_section(mapper, section_physical_address, &section, allocator, user_accessible);
-
-        /*
-         * For `ProgBits` sections, we copy the data from the image into the section's new home.
-         * For `NoBits` sections, we leave it zeroed.
-         */
-        if let SectionType::ProgBits = section.section_type() {
-            unsafe {
-                slice::from_raw_parts_mut(
-                    usize::from(section_physical_address) as *mut u8,
-                    section.size as usize,
-                )
-                .copy_from_slice(section.data(&elf).unwrap());
-            }
-        }
-
-        section_physical_address += section.size as usize;
-    }
-
-    Ok(ImageInfo { physical_base, elf })
-}
-
-fn load_kernel(
-    mapper: &mut Mapper<IdentityMapping>,
-    allocator: &BootFrameAllocator,
-) -> Result<KernelInfo, Status> {
-    const KERNEL_PATH: &str = "kernel.elf";
-
-    /*
-     * Load the kernel ELF and map it into the page tables.
-     */
-    let file_data = protocols::read_file(KERNEL_PATH, image_handle())?;
-    let image = load_image(
-        KERNEL_PATH,
-        &file_data,
-        MemoryType::PebbleKernelMemory,
-        mapper,
-        allocator,
-        false,
-    )?;
-
-    /*
-     * We now set up the kernel stack. As part of the `.bss` section, it has already had memory
-     * allocated for it, and has been mapped into the page tables. However, we need to go back
-     * and unmap the guard page, and extract the address of the top of the stack.
-     */
-    let guard_page_address =
-        match image.elf.symbols().find(|symbol| symbol.name(&image.elf) == Some("_guard_page")) {
-            Some(symbol) => VirtualAddress::new(symbol.value as usize).unwrap(),
-            None => panic!("Kernel does not have a '_guard_page' symbol!"),
-        };
-    assert!(guard_page_address.is_page_aligned());
-    println!("Unmapping guard page");
-    mapper.unmap(Page::contains(guard_page_address), allocator);
-
-    let stack_top =
-        match image.elf.symbols().find(|symbol| symbol.name(&image.elf) == Some("_stack_top")) {
-            Some(symbol) => VirtualAddress::new(symbol.value as usize).unwrap(),
-            None => panic!("Kernel does not have a '_stack_top' symbol"),
-        };
-    assert!(stack_top.is_page_aligned(), "Stack is not page aligned");
-
-    Ok(KernelInfo { entry_point: VirtualAddress::new(image.elf.entry_point()).unwrap(), stack_top })
 }
 
 fn load_payload(allocator: &BootFrameAllocator) -> Result<PayloadInfo, Status> {
@@ -539,8 +320,8 @@ fn load_payload(allocator: &BootFrameAllocator) -> Result<PayloadInfo, Status> {
      * Load and map the ELF.
      */
     const PAYLOAD_PATH: &str = "payload.elf";
-    let file_data = protocols::read_file(PAYLOAD_PATH, image_handle())?;
-    let image = load_image(
+    let file_data = uefi::protocols::read_file(PAYLOAD_PATH, uefi::image_handle())?;
+    let image = elf::load_image(
         PAYLOAD_PATH,
         &file_data,
         MemoryType::PebblePayloadMemory,
@@ -555,45 +336,11 @@ fn load_payload(allocator: &BootFrameAllocator) -> Result<PayloadInfo, Status> {
     })
 }
 
-fn map_section(
-    mapper: &mut Mapper<IdentityMapping>,
-    physical_base: PhysicalAddress,
-    section: &SectionHeader,
-    allocator: &BootFrameAllocator,
-    user_accessible: bool,
-) {
-    let virtual_address = VirtualAddress::new(section.address as usize).unwrap();
-    /*
-     * Because the addresses should be page-aligned, the half-open ranges `[physical_base,
-     * physical_base + size)` and `[virtual_address, virtual_address + size)` gives us the
-     * correct frame and page ranges.
-     */
-    let frames =
-        Frame::contains(physical_base)..Frame::contains(physical_base + section.size as usize);
-    let pages =
-        Page::contains(virtual_address)..Page::contains(virtual_address + section.size as usize);
-    assert!(frames.clone().count() == pages.clone().count());
-
-    /*
-     * Work out the most restrictive set of permissions this section can be mapped with. If the
-     * section needs to be writable, mark the pages as writable. If the section does **not**
-     * contain executable instructions, mark it as `NO_EXECUTE`.
-     */
-    let flags = EntryFlags::PRESENT
-        | if section.is_writable() { EntryFlags::WRITABLE } else { EntryFlags::empty() }
-        | if !section.is_executable() { EntryFlags::NO_EXECUTE } else { EntryFlags::empty() }
-        | if user_accessible { EntryFlags::USER_ACCESSIBLE } else { EntryFlags::empty() };
-
-    for (frame, page) in frames.zip(pages) {
-        mapper.map_to(page, frame, flags, allocator);
-    }
-}
-
 #[panic_handler]
 #[no_mangle]
 pub fn panic(info: &PanicInfo) -> ! {
     let location = info.location().unwrap();
-    println!(
+    error!(
         "Panic in {}({}:{}): {}",
         location.file(),
         location.line(),
@@ -602,39 +349,3 @@ pub fn panic(info: &PanicInfo) -> ! {
     );
     loop {}
 }
-
-macro print {
-    ($($arg: tt)*) => {
-        unsafe {
-            SERIAL_PORT.write_fmt(format_args!($($arg)*)).expect("Failed to write to COM1");
-        }
-    }
-}
-
-macro println {
-    ($fmt: expr) => {
-        print!(concat!($fmt, "\r\n"));
-    },
-
-    ($fmt: expr, $($arg: tt)*) => {
-        print!(concat!($fmt, "\r\n"), $($arg)*);
-    }
-}
-
-/// Returns a reference to the `SystemTable`. This is safe to call after the global has been
-/// initialised, which we do straight after control is passed to us.
-pub fn system_table() -> &'static SystemTable {
-    unsafe { &*SYSTEM_TABLE }
-}
-
-pub fn image_handle() -> Handle {
-    unsafe { IMAGE_HANDLE }
-}
-
-/*
- * It's only safe to have these `static mut`s because we know the bootloader will only have one
- * thread of execution and is completely non-reentrant.
- */
-static mut SYSTEM_TABLE: *const SystemTable = 0 as *const _;
-static mut IMAGE_HANDLE: Handle = 0;
-static mut SERIAL_PORT: SerialPort = unsafe { SerialPort::new(x86_64::hw::serial::COM1) };

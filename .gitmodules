@@ -1,3 +1,3 @@
-[submodule "acpi"]
-	path = acpi
+[submodule "lib/acpi"]
+	path = lib/acpi
 	url = https://github.com/pebble-os/acpi

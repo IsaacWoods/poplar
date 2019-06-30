@@ -9,7 +9,6 @@
     box_syntax,
     arbitrary_self_types
 )]
-#![cfg_attr(feature = "kernel", feature(alloc))]
 #![allow(unknown_lints)]
 
 #[cfg(feature = "kernel")]

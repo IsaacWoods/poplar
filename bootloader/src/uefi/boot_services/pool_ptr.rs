@@ -49,7 +49,7 @@ impl<T: ?Sized + Display> Display for Pool<T> {
 
 impl<T: ?Sized> Drop for Pool<T> {
     fn drop(&mut self) {
-        crate::system_table()
+        crate::uefi::system_table()
             .boot_services
             .free_pool(self.ptr.as_ptr() as *mut u8)
             .expect("failed to deallocate Pool");
