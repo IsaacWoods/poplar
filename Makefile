@@ -76,6 +76,7 @@ doc:
 		--all-features \
 		--manifest-path kernel/Cargo.toml \
 		--document-private-items
+	mdbook build
 
 qemu: pebble.img
 	qemu-system-x86_64 \

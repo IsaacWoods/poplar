@@ -10,6 +10,7 @@ install:
   - sudo apt-get install mtools
   - rustup component add rust-src
   - cargo install cargo-xbuild
+  - cargo install mdbook
 
 script:
   - make
