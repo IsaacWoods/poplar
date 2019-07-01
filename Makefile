@@ -72,12 +72,10 @@ test:
 	cargo test --all-features --manifest-path kernel/Cargo.toml
 
 doc:
-	CARGO_TARGET_DIR=./doc_target cargo doc \
+	CARGO_TARGET_DIR=pages cargo doc \
 		--all-features \
 		--manifest-path kernel/Cargo.toml \
 		--document-private-items
-	mv doc_target/doc docs
-	rm -r doc_target
 
 qemu: pebble.img
 	qemu-system-x86_64 \

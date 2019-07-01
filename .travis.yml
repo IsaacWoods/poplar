@@ -26,7 +26,7 @@ notifications:
   email: false
 
 deploy:
-  local-dir: docs
+  local-dir: pages
   provider: pages
   skip-cleanup: true
   github-token: $GITHUB_TOKEN
