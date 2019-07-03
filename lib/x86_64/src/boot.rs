@@ -1,10 +1,12 @@
-//! TODO
-
-use crate::memory::{paging::Frame, PhysicalAddress, VirtualAddress};
+use crate::memory::{
+    paging::{entry::EntryFlags, Frame},
+    PhysicalAddress,
+    VirtualAddress,
+};
 use core::ops::Range;
 
 pub const BOOT_INFO_MAGIC: u32 = 0xcafebabe;
-pub const MEMORY_MAP_NUM_ENTRIES: usize = 64;
+pub const NUM_MEMORY_MAP_ENTRIES: usize = 64;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum MemoryType {
@@ -28,9 +30,6 @@ pub enum MemoryType {
     /// will corrupt its own code or data.
     KernelImage,
 
-    /// Memory the bootloader has mapped the payload image into. The OS can only make use of this
-    /// memory after the payload is no longer needed.
-    PayloadImage,
 
     /// Memory the bootloader has used for the page tables containing the kernel's mapping. The OS
     /// should not use this memory, unless it has permanently switched to another set of page
@@ -87,14 +86,23 @@ pub struct PayloadInfo {
 pub struct BootInfo {
     /// This should be set to `BOOT_INFO_MAGIC` by the bootloader.
     pub magic: u32,
-    pub memory_map: [MemoryEntry; MEMORY_MAP_NUM_ENTRIES],
+    pub memory_map: [MemoryEntry; NUM_MEMORY_MAP_ENTRIES],
     pub num_memory_map_entries: usize,
-    pub payload: PayloadInfo,
     pub rsdp_address: Option<PhysicalAddress>,
 }
 
 impl BootInfo {
     pub fn memory_entries(&self) -> &[MemoryEntry] {
         &self.memory_map[0..self.num_memory_map_entries]
+    }
+
+    /// This should only be called from the bootloader.
+    pub fn add_memory_map_entry(&mut self, entry: MemoryEntry) {
+        if self.num_memory_map_entries == NUM_MEMORY_MAP_ENTRIES {
+            panic!("Run out of space for memory map entries in the BootInfo!");
+        }
+
+        self.memory_map[self.num_memory_map_entries] = entry;
+        self.num_memory_map_entries += 1;
     }
 }

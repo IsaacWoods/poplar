@@ -37,7 +37,7 @@ pub fn load_image<'a>(
      * are the specified physical addresses, because they don't matter.
      */
     for segment in elf.segments() {
-        if SegmentType::Load == segment.segment_type() {
+        if segment.segment_type() == SegmentType::Load {
             info!(
                 "Mapping Load segment at virtual address {:#x} with flags: {:#b}",
                 segment.virtual_address, segment.flags

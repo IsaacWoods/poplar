@@ -19,12 +19,12 @@ mod uefi;
 
 use crate::{
     memory::{BootFrameAllocator, MemoryMap, MemoryType},
-    uefi::{system_table::SystemTable, Guid, Handle, Status},
+    uefi::{system_table::SystemTable, Guid, Handle},
 };
 use core::{mem, panic::PanicInfo};
 use log::{error, trace};
 use x86_64::{
-    boot::{BootInfo, MemoryEntry, MemoryType as BootInfoMemoryType, PayloadInfo},
+    boot::{BootInfo, MemoryEntry, MemoryType as BootInfoMemoryType},
     memory::{
         kernel_map,
         paging::{
@@ -76,32 +76,41 @@ pub extern "win64" fn efi_main(image_handle: Handle, system_table: &'static Syst
         &allocator,
     );
 
-    let kernel_info = match kernel::load_kernel(&mut kernel_mapper, &allocator) {
-        Ok(kernel_info) => kernel_info,
-        Err(err) => panic!("Failed to load kernel: {:?}", err),
-    };
+    /*
+     * Construct the initial `BootInfo`.
+     */
+    let boot_info = construct_boot_info(&mut kernel_mapper, &allocator);
 
-    let payload_info = match load_payload(&allocator) {
-        Ok(payload_info) => payload_info,
-        Err(err) => panic!("Failed to load payload: {:?}", err),
-    };
+    /*
+     * Read and parse bootcmd file.
+     */
+    let command_file_data =
+        uefi::protocols::read_file("bootcmd", uefi::image_handle()).expect("No bootcmd file");
+    let bootcmd = core::str::from_utf8(&command_file_data).expect("bootcmd is not valid UTF-8");
+
+    let mut kernel_info = None;
+    for cmd in bootcmd.lines() {
+        trace!("Bootcmd: {}", cmd);
+        let mut parts = cmd.split(' ');
+
+        match parts.next() {
+            Some("kernel") => {
+                let kernel_path = parts.next().expect("Expected path after 'kernel' command");
+                kernel_info =
+                    Some(match kernel::load_kernel(&kernel_path, &mut kernel_mapper, &allocator) {
+                        Ok(kernel_info) => kernel_info,
+                        Err(err) => panic!("Failed to load kernel: {:?}", err),
+                    });
+            }
+
+            part => panic!("Invalid bootcmd command: {:?}", part),
+        }
+    }
 
     /*
      * Allocate physical memory for the kernel heap, and map it into the kernel page tables.
      */
     allocate_and_map_heap(&mut kernel_mapper, &allocator);
-
-    /*
-     * Allocate space for the `BootInfo`. We allocate a single frame for it, so make sure it'll
-     * fit.
-     */
-    assert!(mem::size_of::<BootInfo>() <= FRAME_SIZE);
-    let boot_info_address = system_table
-        .boot_services
-        .allocate_frames(MemoryType::PebbleBootInformation, 1)
-        .map_err(|err| panic!("Failed to allocate memory for the boot info: {:?}", err))
-        .unwrap();
-    let boot_info = unsafe { &mut *(usize::from(boot_info_address) as *mut BootInfo) };
 
     /*
      * Get the final memory map before exiting boot services. We must not allocate between this
@@ -119,18 +128,7 @@ pub extern "win64" fn efi_main(image_handle: Handle, system_table: &'static Syst
      */
     trace!("Exiting boot services");
     system_table.boot_services.exit_boot_services(image_handle, memory_map.key).unwrap();
-
-    /*
-     * Now we have the final memory map, we can construct the `BootInfo` we'll pass to the
-     * kernel, and map it into the kernel address space in the correct place.
-     */
-    *boot_info = construct_boot_info(&memory_map, payload_info);
-    kernel_mapper.map_to(
-        Page::contains(kernel_map::BOOT_INFO),
-        Frame::contains(boot_info_address),
-        EntryFlags::PRESENT | EntryFlags::NO_EXECUTE,
-        &allocator,
-    );
+    add_memory_map_to_boot_info(boot_info, &memory_map);
 
     /*
      * Identity map the bootloader code and data, and UEFI runtime services into the kernel
@@ -166,7 +164,7 @@ pub extern "win64" fn efi_main(image_handle: Handle, system_table: &'static Syst
         }
     }
 
-    kernel::jump_into_kernel(kernel_page_table, kernel_info);
+    kernel::jump_into_kernel(kernel_page_table, kernel_info.expect("Failed to load a kernel"));
 }
 
 fn allocate_and_map_heap(mapper: &mut Mapper<IdentityMapping>, allocator: &BootFrameAllocator) {
@@ -195,26 +193,80 @@ fn allocate_and_map_heap(mapper: &mut Mapper<IdentityMapping>, allocator: &BootF
     }
 }
 
-fn construct_boot_info(memory_map: &MemoryMap, payload_info: PayloadInfo) -> BootInfo {
-    use x86_64::boot::{BOOT_INFO_MAGIC, MEMORY_MAP_NUM_ENTRIES};
-    trace!("Constructing boot info to pass to kernel");
+/// Allocates space and fills out static parts of the `BootInfo`. Passes back a mutable reference
+/// so we can fill more out as we load images, find the final memory map etc.
+fn construct_boot_info(
+    kernel_mapper: &mut Mapper<IdentityMapping>,
+    allocator: &BootFrameAllocator,
+) -> &'static mut BootInfo {
+    use x86_64::boot::{ImageInfo, BOOT_INFO_MAGIC, NUM_IMAGES, NUM_MEMORY_MAP_ENTRIES};
+    trace!("Constructing boot info");
 
-    let mut boot_info = BootInfo {
+    /*
+     * Locate the RSDP. The conventional searching method may not work on UEFI systems
+     * (because they're free to put the RSDP wherever they please), so we should try to find it
+     * in the configuration table first.
+     */
+    const RSDP_V1_GUID: Guid = Guid {
+        a: 0xeb9d2d30,
+        b: 0x2d88,
+        c: 0x11d3,
+        d: [0x9a, 0x16, 0x00, 0x90, 0x27, 0x3f, 0xc1, 0x4d],
+    };
+    const RSDP_V2_GUID: Guid = Guid {
+        a: 0x8868e871,
+        b: 0xe4f1,
+        c: 0x11d3,
+        d: [0xbc, 0x22, 0x00, 0x80, 0xc7, 0x3c, 0x88, 0x81],
+    };
+
+    let mut rsdp_address = None;
+    for config_entry in uefi::system_table().config_table().iter() {
+        if config_entry.guid == RSDP_V1_GUID || config_entry.guid == RSDP_V2_GUID {
+            rsdp_address = Some(PhysicalAddress::new(config_entry.address).unwrap());
+            break;
+        }
+    }
+
+    /*
+     * Allocate space for the `BootInfo`. We allocate a single frame for it, so make sure it'll
+     * fit.
+     */
+    assert!(mem::size_of::<BootInfo>() <= FRAME_SIZE);
+    let boot_info_address = uefi::system_table()
+        .boot_services
+        .allocate_frames(MemoryType::PebbleBootInformation, 1)
+        .map_err(|err| panic!("Failed to allocate memory for the boot info: {:?}", err))
+        .unwrap();
+    let boot_info = unsafe { &mut *(usize::from(boot_info_address) as *mut BootInfo) };
+
+    *boot_info = BootInfo {
         magic: BOOT_INFO_MAGIC,
         // TODO: we might be able to replace this with `Default::default()` when const generics
         // land and they sort out the `impl T for [U; 1..=32]` mess
         memory_map: unsafe {
-            mem::transmute([0u8; mem::size_of::<[MemoryEntry; MEMORY_MAP_NUM_ENTRIES]>()])
+            mem::transmute([0u8; mem::size_of::<[MemoryEntry; NUM_MEMORY_MAP_ENTRIES]>()])
         },
         num_memory_map_entries: 0,
-        rsdp_address: None,
-        payload: payload_info,
+        rsdp_address,
+        num_images: 0,
+        images: [ImageInfo::default(); NUM_IMAGES],
     };
 
     /*
-     * First, we construct the memory map. This is used by the OS to initialise the physical
-     * memory manager, so it can allocate RAM to things that need it.
+     * Map the boot info into the kernel address space at the correct virtual address.
      */
+    kernel_mapper.map_to(
+        Page::contains(kernel_map::BOOT_INFO),
+        Frame::contains(boot_info_address),
+        EntryFlags::PRESENT | EntryFlags::NO_EXECUTE,
+        allocator,
+    );
+
+    boot_info
+}
+
+fn add_memory_map_to_boot_info(boot_info: &mut BootInfo, memory_map: &MemoryMap) {
     for entry in memory_map.iter() {
         let memory_type = match entry.memory_type {
             // Keep the UEFI runtime services stuff around - anything might be using them.
@@ -261,79 +313,16 @@ fn construct_boot_info(memory_map: &MemoryMap, payload_info: PayloadInfo) -> Boo
             MemoryType::PebblePageTables => BootInfoMemoryType::KernelPageTables,
             MemoryType::PebbleBootInformation => BootInfoMemoryType::BootInfo,
             MemoryType::PebbleKernelHeap => BootInfoMemoryType::KernelHeap,
-            MemoryType::PebblePayloadMemory => BootInfoMemoryType::PayloadImage,
 
             MemoryType::MaxMemoryType => panic!("Invalid memory type found in UEFI memory map!"),
         };
 
         let start_frame = Frame::contains(entry.physical_start);
-        let bootinfo_entry = MemoryEntry {
+        boot_info.add_memory_map_entry(MemoryEntry {
             area: start_frame..(start_frame + entry.number_of_pages as usize),
             memory_type,
-        };
-
-        if boot_info.num_memory_map_entries == x86_64::boot::MEMORY_MAP_NUM_ENTRIES {
-            panic!("Run out of space for memory map entries in the BootInfo!");
-        }
-
-        boot_info.memory_map[boot_info.num_memory_map_entries] = bootinfo_entry;
-        boot_info.num_memory_map_entries += 1;
+        });
     }
-
-    /*
-     * Next, we locate the RSDP. The conventional searching method may not work on UEFI systems
-     * (because they're free to put the RSDP wherever they please), so we should try to find it
-     * in the configuration table first.
-     */
-    const RSDP_V1_GUID: Guid = Guid {
-        a: 0xeb9d2d30,
-        b: 0x2d88,
-        c: 0x11d3,
-        d: [0x9a, 0x16, 0x00, 0x90, 0x27, 0x3f, 0xc1, 0x4d],
-    };
-    const RSDP_V2_GUID: Guid = Guid {
-        a: 0x8868e871,
-        b: 0xe4f1,
-        c: 0x11d3,
-        d: [0xbc, 0x22, 0x00, 0x80, 0xc7, 0x3c, 0x88, 0x81],
-    };
-
-    for config_entry in uefi::system_table().config_table().iter() {
-        if config_entry.guid == RSDP_V1_GUID || config_entry.guid == RSDP_V2_GUID {
-            boot_info.rsdp_address = Some(PhysicalAddress::new(config_entry.address).unwrap());
-            break;
-        }
-    }
-
-    boot_info
-}
-
-fn load_payload(allocator: &BootFrameAllocator) -> Result<PayloadInfo, Status> {
-    let mut page_table = unsafe {
-        InactivePageTable::<IdentityMapping>::new_with_recursive_mapping(
-            allocator.allocate(),
-            kernel_map::RECURSIVE_ENTRY,
-        )
-    };
-
-    /*
-     * Load and map the ELF.
-     */
-    const PAYLOAD_PATH: &str = "payload.elf";
-    let file_data = uefi::protocols::read_file(PAYLOAD_PATH, uefi::image_handle())?;
-    let elf = elf::load_image(
-        PAYLOAD_PATH,
-        &file_data,
-        MemoryType::PebblePayloadMemory,
-        &mut page_table.mapper(),
-        allocator,
-        true,
-    )?;
-
-    Ok(PayloadInfo {
-        entry_point: VirtualAddress::new(elf.entry_point()).unwrap(),
-        page_table_address: page_table.p4_frame.start_address(),
-    })
 }
 
 #[panic_handler]

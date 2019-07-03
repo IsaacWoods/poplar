@@ -14,8 +14,8 @@ use x86_64::{
 /// Describes the loaded kernel image, including its entry point and where it expects the stack to
 /// be.
 pub struct KernelInfo {
-    entry_point: VirtualAddress,
-    stack_top: VirtualAddress,
+    pub entry_point: VirtualAddress,
+    pub stack_top: VirtualAddress,
 }
 
 pub fn jump_into_kernel(page_table: InactivePageTable<IdentityMapping>, info: KernelInfo) -> ! {
@@ -74,17 +74,16 @@ fn setup_for_kernel() {
 }
 
 pub fn load_kernel(
+    kernel_path: &str,
     mapper: &mut Mapper<IdentityMapping>,
     allocator: &BootFrameAllocator,
 ) -> Result<KernelInfo, Status> {
-    const KERNEL_PATH: &str = "kernel.elf";
-
     /*
      * Load the kernel ELF and map it into the page tables.
      */
-    let file_data = crate::uefi::protocols::read_file(KERNEL_PATH, crate::uefi::image_handle())?;
+    let file_data = crate::uefi::protocols::read_file(kernel_path, crate::uefi::image_handle())?;
     let elf = crate::elf::load_image(
-        KERNEL_PATH,
+        kernel_path,
         &file_data,
         MemoryType::PebbleKernelMemory,
         mapper,

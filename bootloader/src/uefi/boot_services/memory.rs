@@ -20,6 +20,7 @@ impl BootServices {
         memory_type: MemoryType,
         pages: usize,
     ) -> Result<PhysicalAddress, Status> {
+        assert!(pages != 0);
         let mut start_address = PhysicalAddress::default();
         match (self._allocate_pages)(
             AllocateType::AllocateAnyPages,
