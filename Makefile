@@ -6,6 +6,7 @@ RUST_GDB_INSTALL_PATH ?= ~/bin/rust-gdb/bin
 QEMU_COMMON_FLAGS = -cpu host,vmware-cpuid-freq,invtsc \
 					-machine q35 \
 					-smp 2 \
+					-m 512M \
 					-usb \
 					-device usb-ehci,id=ehci,bus=pcie.0 \
 					--no-reboot \
@@ -15,9 +16,9 @@ QEMU_COMMON_FLAGS = -cpu host,vmware-cpuid-freq,invtsc \
 					-drive if=ide,format=raw,file=$< \
 					-net none
 
-.PHONY: prepare bootloader kernel userboot clean qemu gdb update fmt test
+.PHONY: prepare bootloader kernel test_process clean qemu gdb update fmt test
 
-pebble.img: prepare bootloader kernel userboot
+pebble.img: prepare bootloader kernel test_process
 	# Create a temporary image for the FAT partition
 	dd if=/dev/zero of=$(BUILD_DIR)/fat.img bs=1M count=64
 	mkfs.vfat -F 32 $(BUILD_DIR)/fat.img -n BOOT
@@ -44,9 +45,9 @@ kernel:
 	cargo xbuild --target=kernel/src/$(ARCH)/$(ARCH)-kernel.json --manifest-path kernel/Cargo.toml --features arch_$(ARCH)
 	ld --gc-sections -T kernel/src/$(ARCH)/link.ld -o $(BUILD_DIR)/fat/kernel.elf kernel/target/$(ARCH)-kernel/debug/libkernel.a
 
-userboot:
-	cargo xbuild --target=userboot/x86_64-pebble-userboot.json --manifest-path userboot/Cargo.toml
-	cp userboot/target/x86_64-pebble-userboot/debug/userboot $(BUILD_DIR)/fat/payload.elf
+test_process:
+	cargo xbuild --target=test_process/x86_64-pebble-userspace.json --manifest-path test_process/Cargo.toml
+	cp test_process/target/x86_64-pebble-userspace/debug/test_process $(BUILD_DIR)/fat/test_process.elf
 
 clean:
 	cd bootloader && cargo clean

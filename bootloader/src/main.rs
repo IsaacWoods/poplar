@@ -12,6 +12,7 @@
 )]
 
 mod elf;
+mod image;
 mod kernel;
 mod logger;
 mod memory;
@@ -101,6 +102,15 @@ pub extern "win64" fn efi_main(image_handle: Handle, system_table: &'static Syst
                         Ok(kernel_info) => kernel_info,
                         Err(err) => panic!("Failed to load kernel: {:?}", err),
                     });
+            }
+
+            Some("image") => {
+                let image_path = parts.next().expect("Expected path after 'image' command");
+                let image = match image::load_image(image_path, true) {
+                    Ok(image) => image,
+                    Err(err) => panic!("Failed to load image({}): {:?}", image_path, err),
+                };
+                boot_info.add_image(image);
             }
 
             part => panic!("Invalid bootcmd command: {:?}", part),
@@ -313,6 +323,7 @@ fn add_memory_map_to_boot_info(boot_info: &mut BootInfo, memory_map: &MemoryMap)
             MemoryType::PebblePageTables => BootInfoMemoryType::KernelPageTables,
             MemoryType::PebbleBootInformation => BootInfoMemoryType::BootInfo,
             MemoryType::PebbleKernelHeap => BootInfoMemoryType::KernelHeap,
+            MemoryType::PebbleImageMemory => BootInfoMemoryType::LoadedImage,
 
             MemoryType::MaxMemoryType => panic!("Invalid memory type found in UEFI memory map!"),
         };

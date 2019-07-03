@@ -3,26 +3,32 @@ OUTPUT_FORMAT(elf64-x86-64)
 
 IMAGE_START = 0x10000;
 
+PHDRS {
+    text PT_LOAD;
+    rodata PT_LOAD;
+    data PT_LOAD;
+}
+
 SECTIONS {
     . = IMAGE_START;
 
-    .text : AT(ADDR(.text) - IMAGE_START) {
+    .text : {
         *(.text .text.*)
         . = ALIGN(4K);
-    }
+    } :text
 
-    .rodata : AT(ADDR(.rodata) - IMAGE_START) {
+    .rodata : {
         *(.rodata .rodata.*)
         . = ALIGN(4K);
-    }
+    } :rodata
 
-    .data : AT(ADDR(.data) - IMAGE_START) {
+    .data : {
         *(.data .data.*)
         . = ALIGN(4K);
-    }
+    } :data
 
-    .bss : AT(ADDR(.bss) - IMAGE_START) {
+    .bss : {
         *(.bss .bss.*)
         . = ALIGN(4K);
-    }
+    } :data
 }

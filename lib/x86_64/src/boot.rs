@@ -7,6 +7,10 @@ use core::ops::Range;
 
 pub const BOOT_INFO_MAGIC: u32 = 0xcafebabe;
 pub const NUM_MEMORY_MAP_ENTRIES: usize = 64;
+pub const NUM_IMAGES: usize = 16;
+/// Each initial image is expected to have a maximum of three segments: read-only, read+write,
+/// and read+execute.
+pub const NUM_SEGMENTS_PER_IMAGE: usize = 3;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum MemoryType {
@@ -30,6 +34,8 @@ pub enum MemoryType {
     /// will corrupt its own code or data.
     KernelImage,
 
+    /// Memory the bootloader has mapped images its been asked to load into.
+    LoadedImage,
 
     /// Memory the bootloader has used for the page tables containing the kernel's mapping. The OS
     /// should not use this memory, unless it has permanently switched to another set of page
@@ -62,13 +68,40 @@ impl Default for MemoryEntry {
     }
 }
 
+/// Describes a memory region that should be represented by the `MemoryObject` kernel object in the
+/// kernel.
+#[derive(Clone, Copy, Default)]
 #[repr(C)]
-pub struct PayloadInfo {
+pub struct MemoryObjectInfo {
+    pub physical_address: PhysicalAddress,
+    pub virtual_address: VirtualAddress,
+    pub permissions: EntryFlags,
+}
+
+/// An image loaded from the filesystem by the bootloader. The kernel should turn this information
+/// into the correct representation and treat this image like a normal task.
+#[derive(Clone, Copy, Default)]
+#[repr(C)]
+pub struct ImageInfo {
+    pub num_segments: usize,
+    pub segments: [MemoryObjectInfo; NUM_SEGMENTS_PER_IMAGE],
     pub entry_point: VirtualAddress,
-    /// The physical address of the P4 frame of the process' constructed page tables. This is
-    /// passed as an address so that the kernel can construct its own owned page table for the
-    /// process.
-    pub page_table_address: PhysicalAddress,
+}
+
+impl ImageInfo {
+    /// This should only be called from the bootloader.
+    pub fn add_segment(&mut self, segment: MemoryObjectInfo) {
+        if self.num_segments == NUM_SEGMENTS_PER_IMAGE {
+            panic!("Run out of space for segments in the ImageInfo!");
+        }
+
+        self.segments[self.num_segments] = segment;
+        self.num_segments += 1;
+    }
+
+    pub fn segments(&self) -> &[MemoryObjectInfo] {
+        &self.segments[0..self.num_segments]
+    }
 }
 
 /// This structure is placed in memory by the bootloader and a reference to it passed to the
@@ -89,6 +122,8 @@ pub struct BootInfo {
     pub memory_map: [MemoryEntry; NUM_MEMORY_MAP_ENTRIES],
     pub num_memory_map_entries: usize,
     pub rsdp_address: Option<PhysicalAddress>,
+    pub num_images: usize,
+    pub images: [ImageInfo; NUM_IMAGES],
 }
 
 impl BootInfo {
@@ -104,5 +139,19 @@ impl BootInfo {
 
         self.memory_map[self.num_memory_map_entries] = entry;
         self.num_memory_map_entries += 1;
+    }
+
+    pub fn images(&self) -> &[ImageInfo] {
+        &self.images[0..self.num_images]
+    }
+
+    /// This should only be called from the bootloader.
+    pub fn add_image(&mut self, image: ImageInfo) {
+        if self.num_images == NUM_IMAGES {
+            panic!("Run out of space for loaded images in the BootInfo!");
+        }
+
+        self.images[self.num_images] = image;
+        self.num_images += 1;
     }
 }

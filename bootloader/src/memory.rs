@@ -174,4 +174,5 @@ pub enum MemoryType {
     PebblePageTables = 0x8000_0001,
     PebbleBootInformation = 0x8000_0002,
     PebbleKernelHeap = 0x8000_0003,
+    PebbleImageMemory = 0x8000_0004,
 }
