@@ -33,10 +33,10 @@ pub fn load_image(path: &str, user_accessible: bool) -> Result<ImageInfo, Status
 fn load_segment(segment: &ProgramHeader, elf: &Elf, user_accessible: bool) -> MemoryObjectInfo {
     assert!((segment.mem_size as usize) % FRAME_SIZE == 0);
 
-    trace!("Loading segment of size {} bytes", segment.mem_size);
+    let num_frames = (segment.mem_size as usize) / FRAME_SIZE;
     let physical_address = crate::uefi::system_table()
         .boot_services
-        .allocate_frames(MemoryType::PebbleImageMemory, (segment.mem_size as usize) / FRAME_SIZE)
+        .allocate_frames(MemoryType::PebbleImageMemory, num_frames)
         .map_err(|err| panic!("Failed to allocate memory for segment: {:?}", err))
         .unwrap();
 
@@ -72,6 +72,7 @@ fn load_segment(segment: &ProgramHeader, elf: &Elf, user_accessible: bool) -> Me
     MemoryObjectInfo {
         physical_address,
         virtual_address: VirtualAddress::new(segment.virtual_address as usize).unwrap(),
+        num_pages: num_frames,
         permissions,
     }
 }
