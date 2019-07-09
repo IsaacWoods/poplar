@@ -75,14 +75,9 @@ impl LocalApic {
     // }
 
     pub unsafe fn register(offset: usize) -> LocalApicRegister {
-        // TODO: we no longer map the local APIC config space at a virtual address because it
-        // should be accessible somewhere in the whole physical mapping. We need to work out how to
-        // nicely access that though. (maybe some per-cpu info - we need to sort out how that's
-        // going to work anyway, might as well do it soon and do this bit properly).
-        unimplemented!()
-        // LocalApicRegister::new(
-        //     kernel_map::LOCAL_APIC_CONFIG.offset(offset as isize).mut_ptr() as *mut u32
-        // )
+        LocalApicRegister::new(
+            kernel_map::LOCAL_APIC_CONFIG.offset(offset as isize).mut_ptr() as *mut u32
+        )
     }
 
     /// Send an End Of Interrupt to the local APIC. This should be called by interrupt handlers

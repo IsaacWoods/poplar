@@ -1,114 +1,54 @@
 //! This module contains the physical memory manager Pebble uses on x86_64.
 
 mod buddy_allocator;
-pub mod physical;
 pub mod userspace_map;
 
-use self::physical::LockedPhysicalMemoryManager;
-use crate::util::bitmap::Bitmap;
-use alloc::collections::BTreeMap;
-use bit_field::BitField;
-use x86_64::memory::{
-    kernel_map,
-    paging::{
-        entry::EntryFlags,
-        table::RecursiveMapping,
-        ActivePageTable,
-        Frame,
-        Page,
-        FRAME_SIZE,
-        PAGE_SIZE,
-    },
-    PhysicalAddress,
-    VirtualAddress,
+use self::buddy_allocator::BuddyAllocator;
+use core::ops::Range;
+use spin::Mutex;
+use x86_64::{
+    boot::BootInfo,
+    memory::{Frame, FrameAllocator},
 };
 
-/// Type alias to hide the concrete type of the kernel's page tables, as most users won't care
-/// about the specifics.
-pub type KernelPageTable = ActivePageTable<RecursiveMapping>;
+const BUDDY_ALLOCATOR_MAX_ORDER: usize = 10;
 
-/// Sometimes the system needs to access specific areas of physical memory. For example,
-/// memory-mapped hardware or configuration tables are located at specific physical addresses.
-/// `PhysicalMapping`s provide an easy way to map a given physical address to a virtual address in
-/// the kernel address space, if you don't care what address it ends up at. This is perfect for,
-/// for example, ACPI or the APIC driver.
-#[derive(Clone, Copy, Debug)]
-pub struct PhysicalMapping {
-    /// The address of the start of the mapping in the physical address space.
-    pub physical_base: PhysicalAddress,
-
-    /// The address of the start of the mapping in the virtual address space.
-    pub virtual_base: VirtualAddress,
-
-    /// Size, in bytes, of the mapping. Must be a multiple of the page size.
-    pub size: usize,
+/// The main physical memory manager. It tracks all conventional physical memory and is used by the
+/// rest of the kernel to allocate physical memory.
+struct PhysicalMemoryManager {
+    /// A buddy allocator used to track all conventional memory. In the future, other allocators
+    /// may be used to manage a subset of memory, such as memory for DMA.
+    pub buddy_allocator: BuddyAllocator,
 }
 
-pub struct PhysicalRegionMapper {
-    /// This maps `PhysicalMapping`s to their starting `PhysicalAddress`s.
-    pub mappings: BTreeMap<PhysicalAddress, PhysicalMapping>,
+pub struct LockedPhysicalMemoryManager(Mutex<PhysicalMemoryManager>);
 
-    /// This tracks which of the pages in the area of virtual memory we map `PhysicalMapping`s into
-    /// is free (where 0 = free, 1 = used). There are 32 pages in the area, so we need 32 bits.
-    /// The `crate::util::bitmap::Bitmap` trait makes it easy to use this as a bitmap.
-    pub virtual_area_bitmap: u32,
+impl LockedPhysicalMemoryManager {
+    pub fn new(boot_info: &BootInfo) -> LockedPhysicalMemoryManager {
+        let mut buddy_allocator = BuddyAllocator::new(BUDDY_ALLOCATOR_MAX_ORDER);
+
+        for entry in boot_info.memory_entries() {
+            if entry.memory_type == x86_64::boot::MemoryType::Conventional {
+                buddy_allocator.add_range(entry.area.clone());
+            }
+        }
+
+        LockedPhysicalMemoryManager(Mutex::new(PhysicalMemoryManager { buddy_allocator }))
+    }
 }
 
-impl PhysicalRegionMapper {
-    pub fn new() -> PhysicalRegionMapper {
-        PhysicalRegionMapper { mappings: BTreeMap::new(), virtual_area_bitmap: 0 }
+impl FrameAllocator for LockedPhysicalMemoryManager {
+    fn allocate_n(&self, n: usize) -> Range<Frame> {
+        let start = self
+            .0
+            .lock()
+            .buddy_allocator
+            .allocate_n(n)
+            .expect("Failed to allocate physical memory");
+        start..(start + n)
     }
 
-    pub fn map_physical_region(
-        &mut self,
-        start_frame: Frame,
-        number_of_frames: usize,
-        flags: EntryFlags,
-        page_tables: &mut KernelPageTable,
-        frame_allocator: &LockedPhysicalMemoryManager,
-    ) -> PhysicalMapping {
-        let virtual_region_start = self
-            .virtual_area_bitmap
-            .alloc(number_of_frames)
-            .expect("Not enough space for physical mapping");
-        let frames = start_frame..(start_frame + number_of_frames);
-        let start_page =
-            Page::contains(kernel_map::PHYSICAL_MAPPING_START) + (virtual_region_start as usize);
-        let pages = start_page..(start_page + number_of_frames);
-
-        for (frame, page) in frames.zip(pages) {
-            page_tables.map_to(page, frame, EntryFlags::PRESENT | flags, frame_allocator);
-        }
-
-        let mapping = PhysicalMapping {
-            physical_base: start_frame.start_address(),
-            virtual_base: start_page.start_address(),
-            size: number_of_frames * FRAME_SIZE,
-        };
-
-        self.mappings.insert(start_frame.start_address(), mapping);
-        mapping
-    }
-
-    pub fn unmap_physical_region(
-        &mut self,
-        mapping: PhysicalMapping,
-        page_tables: &mut KernelPageTable,
-        frame_allocator: &LockedPhysicalMemoryManager,
-    ) {
-        for page in Page::contains(mapping.virtual_base)
-            ..Page::contains(mapping.virtual_base + mapping.size)
-        {
-            // Unmap it from the virtual address space
-            page_tables.unmap(page, frame_allocator);
-
-            // Free it in the bitmap so the page can be used by a future physical mapping
-            self.virtual_area_bitmap.set_bit(
-                (usize::from(page.start_address())
-                    - usize::from(kernel_map::PHYSICAL_MAPPING_START))
-                    / PAGE_SIZE,
-                false,
-            );
-        }
+    fn free_n(&self, start: Frame, n: usize) {
+        self.0.lock().buddy_allocator.free_n(start, n);
     }
 }

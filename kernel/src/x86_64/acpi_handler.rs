@@ -1,66 +1,25 @@
-use super::memory::{
-    physical::LockedPhysicalMemoryManager,
-    KernelPageTable,
-    PhysicalMapping,
-    PhysicalRegionMapper,
-};
-use crate::util::math::ceiling_integer_divide;
 use acpi::{AcpiHandler, PhysicalMapping as AcpiPhysicalMapping};
 use core::ptr::NonNull;
-use spin::Mutex;
-use x86_64::memory::{
-    paging::{entry::EntryFlags, Frame, FRAME_SIZE},
-    PhysicalAddress,
-    VirtualAddress,
-};
+use x86_64::memory::{kernel_map, PhysicalAddress};
 
-pub struct PebbleAcpiHandler<'a> {
-    physical_region_mapper: &'a Mutex<PhysicalRegionMapper>,
-    page_table: &'a Mutex<KernelPageTable>,
-    frame_allocator: &'a LockedPhysicalMemoryManager,
-}
+pub struct PebbleAcpiHandler;
 
-impl<'a> PebbleAcpiHandler<'a> {
-    pub fn new(
-        physical_region_mapper: &'a Mutex<PhysicalRegionMapper>,
-        page_table: &'a Mutex<KernelPageTable>,
-        frame_allocator: &'a LockedPhysicalMemoryManager,
-    ) -> PebbleAcpiHandler<'a> {
-        PebbleAcpiHandler { physical_region_mapper, page_table, frame_allocator }
-    }
-}
-
-impl<'a> AcpiHandler for PebbleAcpiHandler<'a> {
+impl AcpiHandler for PebbleAcpiHandler {
     fn map_physical_region<T>(
         &mut self,
         physical_address: usize,
         size: usize,
     ) -> AcpiPhysicalMapping<T> {
-        let mapping = self.physical_region_mapper.lock().map_physical_region(
-            Frame::contains(PhysicalAddress::new(physical_address).unwrap()),
-            ceiling_integer_divide(size as u64, FRAME_SIZE as u64) as usize,
-            EntryFlags::PRESENT | EntryFlags::NO_EXECUTE,
-            &mut *self.page_table.lock(),
-            self.frame_allocator,
-        );
+        let virtual_address =
+            kernel_map::physical_to_virtual(PhysicalAddress::new(physical_address).unwrap());
 
         AcpiPhysicalMapping {
-            physical_start: usize::from(mapping.physical_base),
-            virtual_start: NonNull::new(usize::from(mapping.virtual_base) as *mut _).unwrap(),
+            physical_start: usize::from(physical_address),
+            virtual_start: NonNull::new(virtual_address.mut_ptr()).unwrap(),
             region_length: size,
-            mapped_length: mapping.size,
+            mapped_length: size,
         }
     }
 
-    fn unmap_physical_region<T>(&mut self, region: AcpiPhysicalMapping<T>) {
-        self.physical_region_mapper.lock().unmap_physical_region(
-            PhysicalMapping {
-                physical_base: PhysicalAddress::new(region.physical_start).unwrap(),
-                virtual_base: VirtualAddress::new(region.virtual_start.as_ptr() as usize).unwrap(),
-                size: region.mapped_length,
-            },
-            &mut *self.page_table.lock(),
-            self.frame_allocator,
-        );
-    }
+    fn unmap_physical_region<T>(&mut self, _region: AcpiPhysicalMapping<T>) {}
 }

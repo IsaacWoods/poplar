@@ -11,11 +11,7 @@ use x86_64::{
         local_apic::LocalApic,
         registers::{read_control_reg, write_msr},
     },
-    memory::{
-        kernel_map,
-        paging::{entry::EntryFlags, Frame, Page},
-        PhysicalAddress,
-    },
+    memory::{kernel_map, EntryFlags, Frame, Page, PhysicalAddress},
 };
 
 /// This should only be accessed directly by the bootstrap processor.
@@ -69,15 +65,21 @@ impl InterruptController {
                 /*
                  * Map the local APIC's configuration space into the kernel address space.
                  */
-                arch.kernel_page_table.lock().map_to(
-                    Page::contains(kernel_map::LOCAL_APIC_CONFIG),
-                    Frame::contains(PhysicalAddress::new(*local_apic_address as usize).unwrap()),
-                    EntryFlags::PRESENT
-                        | EntryFlags::WRITABLE
-                        | EntryFlags::NO_EXECUTE
-                        | EntryFlags::NO_CACHE,
-                    &arch.physical_memory_manager,
-                );
+                arch.kernel_page_table
+                    .lock()
+                    .mapper(kernel_map::PHYSICAL_MAPPING_BASE)
+                    .map_to(
+                        Page::contains(kernel_map::LOCAL_APIC_CONFIG),
+                        Frame::contains(
+                            PhysicalAddress::new(*local_apic_address as usize).unwrap(),
+                        ),
+                        EntryFlags::PRESENT
+                            | EntryFlags::WRITABLE
+                            | EntryFlags::NO_EXECUTE
+                            | EntryFlags::NO_CACHE,
+                        &arch.physical_memory_manager,
+                    )
+                    .unwrap();
 
                 /*
                  * Install a spurious interrupt handler and enable the local APIC.

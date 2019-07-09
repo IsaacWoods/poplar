@@ -14,8 +14,7 @@ use self::{
     cpu::Cpu,
     interrupts::InterruptController,
     logger::KernelLogger,
-    memory::{physical::LockedPhysicalMemoryManager, KernelPageTable, PhysicalRegionMapper},
-    task::Task,
+    memory::LockedPhysicalMemoryManager,
 };
 use crate::{
     arch::Architecture,
@@ -31,12 +30,10 @@ use x86_64::{
     hw::{
         cpu::CpuInfo,
         gdt::{Gdt, TssSegment},
+        registers::read_control_reg,
         tss::Tss,
     },
-    memory::{
-        kernel_map,
-        paging::{table::RecursiveMapping, ActivePageTable, Frame, InactivePageTable},
-    },
+    memory::{kernel_map, Frame, Page, PageTable, PhysicalAddress, VirtualAddress},
 };
 
 /// The kernel GDT. This is not thread-safe, and so should only be altered by the bootstrap
@@ -45,11 +42,7 @@ static mut GDT: Gdt = Gdt::new();
 
 pub struct Arch {
     pub physical_memory_manager: LockedPhysicalMemoryManager,
-
-    /// This is the main set of page tables for the kernel. It is accessed through a recursive
-    /// mapping, now we are in the higher-half without an identity mapping.
-    pub kernel_page_table: Mutex<KernelPageTable>,
-    pub physical_region_mapper: Mutex<PhysicalRegionMapper>,
+    pub kernel_page_table: Mutex<PageTable>,
     pub object_map: RwLock<ObjectMap<Self>>,
 }
 
@@ -108,29 +101,27 @@ pub fn kmain() -> ! {
      * Initialise the physical memory manager. From this point, we can allocate physical memory
      * freely.
      *
-     * XXX: We assume the bootloader has installed a valid set of recursively-mapped page tables
-     * for the kernel. This is extremely unsafe and very bad things will happen if this
-     * assumption is not true.
+     * This assumes the bootloader has installed a valid set of page tables, including mapping
+     * the entirity of the physical memory at the start of the kernel's P4 entry. Strange
+     * things will happen if this assumption does not hold, so this is fairly unsafe.
      */
     let arch = Arch {
         physical_memory_manager: LockedPhysicalMemoryManager::new(boot_info),
-        kernel_page_table: Mutex::new(unsafe { ActivePageTable::<RecursiveMapping>::new() }),
-        physical_region_mapper: Mutex::new(PhysicalRegionMapper::new()),
+        kernel_page_table: Mutex::new(unsafe {
+            PageTable::from_frame(Frame::starts_with(
+                PhysicalAddress::new(read_control_reg!(cr3) as usize).unwrap(),
+            ))
+        }),
         object_map: RwLock::new(ObjectMap::new(crate::object::map::INITIAL_OBJECT_CAPACITY)),
     };
-
-    let mut acpi_handler = PebbleAcpiHandler::new(
-        &arch.physical_region_mapper,
-        &arch.kernel_page_table,
-        &arch.physical_memory_manager,
-    );
 
     /*
      * Parse the static ACPI tables.
      */
     let acpi_info = match boot_info.rsdp_address {
         Some(rsdp_address) => {
-            match acpi::parse_rsdp(&mut acpi_handler, usize::from(rsdp_address)) {
+            let mut handler = PebbleAcpiHandler;
+            match acpi::parse_rsdp(&mut handler, usize::from(rsdp_address)) {
                 Ok(acpi_info) => Some(acpi_info),
 
                 Err(err) => {
@@ -207,34 +198,15 @@ pub fn kmain() -> ! {
 
     /*
      * Parse the DSDT.
-     * XXX: This is temporary. In the future, this will be done in a user process.
      */
     let mut aml_context = AmlContext::new();
     if let Some(dsdt_info) = acpi_info.and_then(|info| info.dsdt) {
-        use crate::util::math::ceiling_integer_divide;
-        use x86_64::memory::{
-            paging::{entry::EntryFlags, Frame},
-            PhysicalAddress,
-        };
-        let physical_address = PhysicalAddress::new(dsdt_info.address).unwrap();
-        let mapping = arch.physical_region_mapper.lock().map_physical_region(
-            Frame::contains(physical_address),
-            ceiling_integer_divide(
-                dsdt_info.length as u64,
-                x86_64::memory::paging::FRAME_SIZE as u64,
-            ) as usize,
-            EntryFlags::PRESENT | EntryFlags::NO_EXECUTE,
-            &mut *arch.kernel_page_table.lock(),
-            &arch.physical_memory_manager,
-        );
-
+        let virtual_address =
+            kernel_map::physical_to_virtual(PhysicalAddress::new(dsdt_info.address).unwrap());
         info!(
             "DSDT parse: {:?}",
             aml_context.parse_table(unsafe {
-                core::slice::from_raw_parts(
-                    (mapping.virtual_base + physical_address.offset_into_frame()).ptr(),
-                    dsdt_info.length as usize,
-                )
+                core::slice::from_raw_parts(virtual_address.ptr(), dsdt_info.length as usize)
             })
         );
     }

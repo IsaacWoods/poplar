@@ -1,5 +1,4 @@
-use crate::util::math::MEBIBYTES_TO_BYTES;
-use x86_64::memory::{paging::PAGE_SIZE, VirtualAddress};
+use x86_64::memory::{FrameSize, Size4KiB, VirtualAddress, MEBIBYTES_TO_BYTES};
 
 pub const KERNEL_SPACE_START: VirtualAddress =
     unsafe { VirtualAddress::new_unchecked(0xffffffff_80000000) };
@@ -7,7 +6,7 @@ pub const KERNEL_SPACE_END: VirtualAddress =
     unsafe { VirtualAddress::new_unchecked(0xffffffff_ffffffff) };
 
 /// The initial size of a task's user and kernel stacks. Must be a multiple of the page size.
-pub const INITIAL_STACK_SIZE: usize = PAGE_SIZE;
+pub const INITIAL_STACK_SIZE: usize = Size4KiB::SIZE;
 /// Each task's usermode stack can be a maximum of 2MiB in size. This allows us to use a single
 /// large page to map an entire stack (NOTE: this is not yet implemented; the paging system
 /// currently only suppports 4KiB pages).

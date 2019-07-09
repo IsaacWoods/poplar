@@ -13,7 +13,7 @@
 use crate::util::math::{ceiling_log2, flooring_log2};
 use alloc::{collections::BTreeSet, vec::Vec};
 use core::{cmp::min, ops::Range};
-use x86_64::memory::{paging::Frame, PhysicalAddress};
+use x86_64::memory::{Frame, PhysicalAddress};
 
 pub struct BuddyAllocator {
     /// The bins of free blocks, where bin `i` contains blocks of size `2^i`. Uses `BTreeSet` to
@@ -132,10 +132,7 @@ impl BuddyAllocator {
     /// Finds the starting frame of the block that is the buddy of the block of order `order`,
     /// starting at `x`.
     fn buddy_of(x: Frame, order: usize) -> Frame {
-        // TODO: work out how this works and document it
-        Frame::contains(
-            PhysicalAddress::new(usize::from(x.start_address()) ^ (1 << order)).unwrap(),
-        )
+        Frame::contains(PhysicalAddress::new(usize::from(x.start_address) ^ (1 << order)).unwrap())
     }
 
     /// Get the order of the largest block this allocator can track.
