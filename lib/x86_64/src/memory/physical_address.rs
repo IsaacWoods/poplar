@@ -1,4 +1,4 @@
-use super::paging::FRAME_SIZE;
+use super::FrameSize;
 use core::{
     cmp::Ordering,
     fmt,
@@ -23,16 +23,39 @@ impl PhysicalAddress {
         }
     }
 
-    pub const fn new_unchecked(address: usize) -> PhysicalAddress {
+    pub const unsafe fn new_unchecked(address: usize) -> PhysicalAddress {
         PhysicalAddress(address)
     }
 
-    pub const fn offset_into_frame(&self) -> usize {
-        self.0 % FRAME_SIZE
+    pub const fn offset_into_frame<S: FrameSize>(&self) -> usize {
+        self.0 % S::SIZE
     }
 
-    pub const fn is_frame_aligned(&self) -> bool {
-        self.offset_into_frame() == 0
+    pub const fn is_frame_aligned<S: FrameSize>(&self) -> bool {
+        self.offset_into_frame::<S>() == 0
+    }
+
+    /// Get the greatest address less than or equal to this address with the given alignment.
+    /// `align` must be `0` or a power-of-two.
+    pub fn align_down(self, align: usize) -> PhysicalAddress {
+        if align.is_power_of_two() {
+            /*
+             * E.g.
+             *      align       =   0b00001000
+             *      align-1     =   0b00000111
+             *      !(align-1)  =   0b11111000
+             *                             ^^^ Masks the address to the value below it with the
+             *                                 correct alignment
+             */
+            PhysicalAddress(self.0 & !(align - 1))
+        } else {
+            assert!(align == 0);
+            self
+        }
+    }
+
+    pub fn align_up(self, align: usize) -> PhysicalAddress {
+        PhysicalAddress(self.0 + align - 1).align_down(align)
     }
 }
 

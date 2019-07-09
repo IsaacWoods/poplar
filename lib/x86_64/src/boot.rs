@@ -1,8 +1,4 @@
-use crate::memory::{
-    paging::{entry::EntryFlags, Frame},
-    PhysicalAddress,
-    VirtualAddress,
-};
+use crate::memory::{page_table::EntryFlags, Frame, PhysicalAddress, VirtualAddress};
 use core::ops::Range;
 
 pub const BOOT_INFO_MAGIC: u32 = 0xcafebabe;

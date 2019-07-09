@@ -1,4 +1,5 @@
-use super::paging::PAGE_SIZE;
+use super::FrameSize;
+use bit_field::BitField;
 use core::{
     cmp::Ordering,
     fmt,
@@ -40,20 +41,14 @@ impl VirtualAddress {
     }
 
     pub const fn from_page_table_offsets(
-        p4: u16,
-        p3: u16,
-        p2: u16,
-        p1: u16,
+        p4: usize,
+        p3: usize,
+        p2: usize,
+        p1: usize,
         offset: usize,
     ) -> VirtualAddress {
-        VirtualAddress(
-            ((p4 as usize) << 39)
-                | ((p3 as usize) << 30)
-                | ((p2 as usize) << 21)
-                | ((p1 as usize) << 12)
-                | ((offset as usize) << 0),
-        )
-        .canonicalise()
+        VirtualAddress((p4 << 39) | (p3 << 30) | (p2 << 21) | (p1 << 12) | (offset << 0))
+            .canonicalise()
     }
 
     pub const fn ptr<T>(self) -> *const T {
@@ -68,16 +63,16 @@ impl VirtualAddress {
         VirtualAddress(((self.0 as isize) + offset) as usize).canonicalise()
     }
 
-    pub const fn is_page_aligned(&self) -> bool {
-        self.0 % PAGE_SIZE == 0
+    pub const fn offset_into_page<S: FrameSize>(&self) -> usize {
+        self.0 % S::SIZE
+    }
+
+    pub const fn is_page_aligned<S: FrameSize>(&self) -> bool {
+        self.offset_into_page::<S>() == 0
     }
 
     pub const fn is_aligned_to(&self, alignment: usize) -> bool {
         self.0 % alignment == 0
-    }
-
-    pub const fn offset_into_page(&self) -> usize {
-        self.0 % PAGE_SIZE
     }
 
     /// Get the greatest address `x` with the given alignment such that `x <= self`. The alignment
@@ -114,6 +109,22 @@ impl VirtualAddress {
         const SIGN_EXTENSION: usize = 0o177777_000_000_000_000_0000;
 
         VirtualAddress((SIGN_EXTENSION * ((self.0 >> 47) & 0b1)) | (self.0 & ((1 << 48) - 1)))
+    }
+
+    pub fn p4_index(&self) -> usize {
+        self.0.get_bits(39..48)
+    }
+
+    pub fn p3_index(&self) -> usize {
+        self.0.get_bits(30..39)
+    }
+
+    pub fn p2_index(&self) -> usize {
+        self.0.get_bits(21..30)
+    }
+
+    pub fn p1_index(&self) -> usize {
+        self.0.get_bits(12..21)
     }
 }
 
@@ -198,5 +209,20 @@ impl PartialOrd<VirtualAddress> for VirtualAddress {
 impl Ord for VirtualAddress {
     fn cmp(&self, rhs: &VirtualAddress) -> Ordering {
         self.0.cmp(&rhs.0)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::memory::*;
+
+    #[test]
+    fn test_page_table_offsets() {
+        let start_of_kernel_space = VirtualAddress::from_page_table_offsets(511, 0, 0, 0, 0);
+        assert_eq!(start_of_kernel_space.p4_index(), 511);
+        assert_eq!(start_of_kernel_space.p3_index(), 0);
+        assert_eq!(start_of_kernel_space.p2_index(), 0);
+        assert_eq!(start_of_kernel_space.p1_index(), 0);
+        assert_eq!(start_of_kernel_space.offset_into_page::<Size4KiB>(), 0);
     }
 }

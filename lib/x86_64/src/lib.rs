@@ -11,6 +11,10 @@
 )]
 #![allow(unknown_lints)]
 
+#[cfg(test)]
+#[macro_use]
+extern crate std;
+
 #[cfg(feature = "kernel")]
 extern crate alloc;
 
