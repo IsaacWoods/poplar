@@ -9,8 +9,13 @@ use mer::{
     Elf,
 };
 use x86_64::memory::{
-    paging::{entry::EntryFlags, table::IdentityMapping, Frame, Mapper, Page, FRAME_SIZE},
+    EntryFlags,
+    Frame,
+    FrameSize,
+    Mapper,
+    Page,
     PhysicalAddress,
+    Size4KiB,
     VirtualAddress,
 };
 
@@ -24,7 +29,7 @@ pub fn load_image<'a>(
     path: &str,
     image_data: &'a [u8],
     memory_type: MemoryType,
-    mapper: &mut Mapper<IdentityMapping>,
+    mapper: &mut Mapper,
     allocator: &BootFrameAllocator,
     user_accessible: bool,
 ) -> Result<Elf<'a>, Status> {
@@ -42,11 +47,11 @@ pub fn load_image<'a>(
                 "Mapping Load segment at virtual address {:#x} with flags: {:#b}",
                 segment.virtual_address, segment.flags
             );
-            assert!((segment.mem_size as usize) % FRAME_SIZE == 0);
+            assert!((segment.mem_size as usize) % Size4KiB::SIZE == 0);
 
             let physical_address = crate::uefi::system_table()
                 .boot_services
-                .allocate_frames(memory_type, (segment.mem_size as usize) / FRAME_SIZE)
+                .allocate_frames(memory_type, (segment.mem_size as usize) / Size4KiB::SIZE)
                 .map_err(|err| panic!("Failed to allocate memory for image({}): {:?}", path, err))
                 .unwrap();
 
@@ -85,7 +90,7 @@ fn map_segment(
     segment: &ProgramHeader,
     physical_address: PhysicalAddress,
     user_accessible: bool,
-    mapper: &mut Mapper<IdentityMapping>,
+    mapper: &mut Mapper,
     allocator: &BootFrameAllocator,
 ) {
     let virtual_address = VirtualAddress::new(segment.virtual_address as usize).unwrap();
@@ -100,6 +105,6 @@ fn map_segment(
     assert!(frames.clone().count() == pages.clone().count());
 
     for (frame, page) in frames.zip(pages) {
-        mapper.map_to(page, frame, flags, allocator);
+        mapper.map_to(page, frame, flags, allocator).unwrap();
     }
 }

@@ -3,11 +3,7 @@ use core::{
     cell::Cell,
     ops::{Index, Range},
 };
-use x86_64::memory::{
-    paging::{Frame, FrameAllocator, FRAME_SIZE},
-    PhysicalAddress,
-    VirtualAddress,
-};
+use x86_64::memory::{Frame, FrameAllocator, FrameSize, PhysicalAddress, Size4KiB, VirtualAddress};
 
 /// `BootFrameAllocator` is the allocator we use in the bootloader to allocate memory for the
 /// kernel page tables. It pre-allocates a preset number of frames using the UEFI boot services,
@@ -39,7 +35,7 @@ impl BootFrameAllocator {
         unsafe {
             system_table().boot_services.set_mem(
                 usize::from(start_frame_address) as *mut _,
-                (num_frames * FRAME_SIZE) as usize,
+                num_frames * Size4KiB::SIZE,
                 0,
             );
         }

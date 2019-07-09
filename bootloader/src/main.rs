@@ -28,17 +28,16 @@ use x86_64::{
     boot::{BootInfo, MemoryEntry, MemoryType as BootInfoMemoryType},
     memory::{
         kernel_map,
-        paging::{
-            entry::EntryFlags,
-            table::IdentityMapping,
-            Frame,
-            FrameAllocator,
-            InactivePageTable,
-            Mapper,
-            Page,
-            FRAME_SIZE,
-        },
+        EntryFlags,
+        Frame,
+        FrameAllocator,
+        FrameSize,
+        Mapper,
+        Page,
+        PageTable,
         PhysicalAddress,
+        Size2MiB,
+        Size4KiB,
         VirtualAddress,
     },
 };
@@ -56,26 +55,15 @@ pub extern "win64" fn efi_main(image_handle: Handle, system_table: &'static Syst
     logger::init();
     trace!("Pebble bootloader started");
 
-    let allocator = BootFrameAllocator::new(64);
-    let mut kernel_page_table = unsafe {
-        InactivePageTable::<IdentityMapping>::new_with_recursive_mapping(
-            allocator.allocate(),
-            kernel_map::RECURSIVE_ENTRY,
-        )
-    };
-    let kernel_p4_frame = kernel_page_table.p4_frame;
-    let mut kernel_mapper = kernel_page_table.mapper();
-
     /*
-     * We permanently map the kernel's P4 frame to a virtual address so the kernel can always
-     * access it without using the recursive mapping.
+     * The UEFI installs a set of page tables that identity-maps the entirity of the physical
+     * memory.
      */
-    kernel_mapper.map_to(
-        Page::contains(kernel_map::KERNEL_P4_START),
-        kernel_p4_frame,
-        EntryFlags::PRESENT | EntryFlags::WRITABLE | EntryFlags::NO_EXECUTE,
-        &allocator,
-    );
+    const BOOTLOADER_PHYSICAL_BASE: VirtualAddress = unsafe { VirtualAddress::new_unchecked(0x0) };
+
+    let allocator = BootFrameAllocator::new(64);
+    let mut kernel_page_table = PageTable::new(allocator.allocate(), BOOTLOADER_PHYSICAL_BASE);
+    let mut kernel_mapper = kernel_page_table.mapper(BOOTLOADER_PHYSICAL_BASE);
 
     /*
      * Construct the initial `BootInfo`.
@@ -139,6 +127,7 @@ pub extern "win64" fn efi_main(image_handle: Handle, system_table: &'static Syst
     trace!("Exiting boot services");
     system_table.boot_services.exit_boot_services(image_handle, memory_map.key).unwrap();
     add_memory_map_to_boot_info(boot_info, &memory_map);
+    create_physical_mapping(&mut kernel_mapper, &allocator, &memory_map);
 
     /*
      * Identity map the bootloader code and data, and UEFI runtime services into the kernel
@@ -161,12 +150,9 @@ pub extern "win64" fn efi_main(image_handle: Handle, system_table: &'static Syst
                     ..(Page::contains(virtual_start) + entry.number_of_pages as usize);
 
                 for (frame, page) in frames.zip(pages) {
-                    kernel_mapper.map_to(
-                        page,
-                        frame,
-                        EntryFlags::PRESENT | EntryFlags::WRITABLE,
-                        &allocator,
-                    );
+                    kernel_mapper
+                        .map_to(page, frame, EntryFlags::PRESENT | EntryFlags::WRITABLE, &allocator)
+                        .unwrap();
                 }
             }
 
@@ -177,16 +163,16 @@ pub extern "win64" fn efi_main(image_handle: Handle, system_table: &'static Syst
     kernel::jump_into_kernel(kernel_page_table, kernel_info.expect("Failed to load a kernel"));
 }
 
-fn allocate_and_map_heap(mapper: &mut Mapper<IdentityMapping>, allocator: &BootFrameAllocator) {
+fn allocate_and_map_heap(mapper: &mut Mapper, allocator: &BootFrameAllocator) {
     trace!("Allocating memory for kernel heap");
 
-    assert!(kernel_map::HEAP_START.is_page_aligned());
-    assert!((kernel_map::HEAP_END + 1).is_page_aligned());
+    assert!(kernel_map::HEAP_START.is_page_aligned::<Size4KiB>());
+    assert!((kernel_map::HEAP_END + 1).is_page_aligned::<Size4KiB>());
     let heap_size = (usize::from(kernel_map::HEAP_END) + 1) - usize::from(kernel_map::HEAP_START);
-    assert!(heap_size % FRAME_SIZE == 0);
+    assert!(heap_size % Size4KiB::SIZE == 0);
     let heap_physical_base = uefi::system_table()
         .boot_services
-        .allocate_frames(MemoryType::PebbleKernelHeap, heap_size / FRAME_SIZE)
+        .allocate_frames(MemoryType::PebbleKernelHeap, heap_size / Size4KiB::SIZE)
         .map_err(|err| panic!("Failed to allocate memory for kernel heap: {:?}", err))
         .unwrap();
 
@@ -194,19 +180,21 @@ fn allocate_and_map_heap(mapper: &mut Mapper<IdentityMapping>, allocator: &BootF
         Frame::contains(heap_physical_base)..=Frame::contains(heap_physical_base + heap_size);
     let heap_pages = Page::contains(kernel_map::HEAP_START)..=Page::contains(kernel_map::HEAP_END);
     for (frame, page) in heap_frames.zip(heap_pages) {
-        mapper.map_to(
-            page,
-            frame,
-            EntryFlags::PRESENT | EntryFlags::WRITABLE | EntryFlags::NO_EXECUTE,
-            allocator,
-        );
+        mapper
+            .map_to(
+                page,
+                frame,
+                EntryFlags::PRESENT | EntryFlags::WRITABLE | EntryFlags::NO_EXECUTE,
+                allocator,
+            )
+            .unwrap();
     }
 }
 
 /// Allocates space and fills out static parts of the `BootInfo`. Passes back a mutable reference
 /// so we can fill more out as we load images, find the final memory map etc.
 fn construct_boot_info(
-    kernel_mapper: &mut Mapper<IdentityMapping>,
+    kernel_mapper: &mut Mapper,
     allocator: &BootFrameAllocator,
 ) -> &'static mut BootInfo {
     use x86_64::boot::{ImageInfo, BOOT_INFO_MAGIC, NUM_IMAGES, NUM_MEMORY_MAP_ENTRIES};
@@ -242,7 +230,7 @@ fn construct_boot_info(
      * Allocate space for the `BootInfo`. We allocate a single frame for it, so make sure it'll
      * fit.
      */
-    assert!(mem::size_of::<BootInfo>() <= FRAME_SIZE);
+    assert!(mem::size_of::<BootInfo>() <= Size4KiB::SIZE);
     let boot_info_address = uefi::system_table()
         .boot_services
         .allocate_frames(MemoryType::PebbleBootInformation, 1)
@@ -266,18 +254,21 @@ fn construct_boot_info(
     /*
      * Map the boot info into the kernel address space at the correct virtual address.
      */
-    kernel_mapper.map_to(
-        Page::contains(kernel_map::BOOT_INFO),
-        Frame::contains(boot_info_address),
-        EntryFlags::PRESENT | EntryFlags::NO_EXECUTE,
-        allocator,
-    );
+    kernel_mapper
+        .map_to(
+            Page::contains(kernel_map::BOOT_INFO),
+            Frame::contains(boot_info_address),
+            EntryFlags::PRESENT | EntryFlags::NO_EXECUTE,
+            allocator,
+        )
+        .unwrap();
 
     boot_info
 }
 
 fn add_memory_map_to_boot_info(boot_info: &mut BootInfo, memory_map: &MemoryMap) {
     for entry in memory_map.iter() {
+        log::info!("{:?}", entry);
         let memory_type = match entry.memory_type {
             // Keep the UEFI runtime services stuff around - anything might be using them.
             MemoryType::RuntimeServicesCode | MemoryType::RuntimeServicesData => {
@@ -333,6 +324,36 @@ fn add_memory_map_to_boot_info(boot_info: &mut BootInfo, memory_map: &MemoryMap)
             area: start_frame..(start_frame + entry.number_of_pages as usize),
             memory_type,
         });
+    }
+}
+
+fn create_physical_mapping(
+    mapper: &mut Mapper,
+    allocator: &BootFrameAllocator,
+    memory_map: &MemoryMap,
+) {
+    let max_physical_address = memory_map
+        .iter()
+        .map(|entry| entry.physical_start + (entry.number_of_pages as usize * Size4KiB::SIZE))
+        .max()
+        .unwrap();
+    trace!(
+        "Mapping physical memory up to physical address {:#x} into the kernel address space",
+        max_physical_address
+    );
+
+    // We use huge pages (2MiB) here to use less physical memory
+    let start_frame = Frame::<Size2MiB>::starts_with(PhysicalAddress::new(0).unwrap());
+    let end_frame = Frame::<Size2MiB>::contains(max_physical_address);
+    let start_page = Page::<Size2MiB>::starts_with(kernel_map::KERNEL_ADDRESS_SPACE_START);
+    let end_page = Page::<Size2MiB>::contains(
+        kernel_map::KERNEL_ADDRESS_SPACE_START + usize::from(max_physical_address),
+    );
+
+    for (frame, page) in (start_frame..end_frame).zip(start_page..end_page) {
+        mapper
+            .map_to_2MiB(page, frame, EntryFlags::WRITABLE | EntryFlags::NO_EXECUTE, allocator)
+            .unwrap();
     }
 }
 

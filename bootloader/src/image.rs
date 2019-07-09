@@ -1,16 +1,12 @@
 use crate::{memory::MemoryType, uefi::Status};
 use core::{ptr, slice};
-use log::trace;
 use mer::{
     program::{ProgramHeader, SegmentType},
     Elf,
 };
 use x86_64::{
     boot::{ImageInfo, MemoryObjectInfo},
-    memory::{
-        paging::{entry::EntryFlags, FRAME_SIZE},
-        VirtualAddress,
-    },
+    memory::{EntryFlags, FrameSize, Size4KiB, VirtualAddress},
 };
 
 pub fn load_image(path: &str, user_accessible: bool) -> Result<ImageInfo, Status> {
@@ -31,9 +27,9 @@ pub fn load_image(path: &str, user_accessible: bool) -> Result<ImageInfo, Status
 }
 
 fn load_segment(segment: &ProgramHeader, elf: &Elf, user_accessible: bool) -> MemoryObjectInfo {
-    assert!((segment.mem_size as usize) % FRAME_SIZE == 0);
+    assert!((segment.mem_size as usize) % Size4KiB::SIZE == 0);
 
-    let num_frames = (segment.mem_size as usize) / FRAME_SIZE;
+    let num_frames = (segment.mem_size as usize) / Size4KiB::SIZE;
     let physical_address = crate::uefi::system_table()
         .boot_services
         .allocate_frames(MemoryType::PebbleImageMemory, num_frames)

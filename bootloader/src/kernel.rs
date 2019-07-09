@@ -5,10 +5,7 @@ use crate::{
 use log::trace;
 use x86_64::{
     hw::registers::{read_control_reg, read_msr, write_control_reg, write_msr},
-    memory::{
-        paging::{table::IdentityMapping, InactivePageTable, Mapper, Page},
-        VirtualAddress,
-    },
+    memory::{Mapper, Page, PageTable, Size4KiB, VirtualAddress},
 };
 
 /// Describes the loaded kernel image, including its entry point and where it expects the stack to
@@ -18,14 +15,14 @@ pub struct KernelInfo {
     pub stack_top: VirtualAddress,
 }
 
-pub fn jump_into_kernel(page_table: InactivePageTable<IdentityMapping>, info: KernelInfo) -> ! {
+pub fn jump_into_kernel(page_table: PageTable, info: KernelInfo) -> ! {
     setup_for_kernel();
 
     unsafe {
         /*
          * Switch to the kernel's page tables.
          */
-        page_table.switch_to::<IdentityMapping>();
+        page_table.switch_to();
 
         /*
          * Because we change the stack pointer, we need to pre-load the kernel entry point into a
@@ -75,7 +72,7 @@ fn setup_for_kernel() {
 
 pub fn load_kernel(
     kernel_path: &str,
-    mapper: &mut Mapper<IdentityMapping>,
+    mapper: &mut Mapper,
     allocator: &BootFrameAllocator,
 ) -> Result<KernelInfo, Status> {
     /*
@@ -101,15 +98,15 @@ pub fn load_kernel(
             Some(symbol) => VirtualAddress::new(symbol.value as usize).unwrap(),
             None => panic!("Kernel does not have a '_guard_page' symbol!"),
         };
-    assert!(guard_page_address.is_page_aligned());
+    assert!(guard_page_address.is_page_aligned::<Size4KiB>());
     trace!("Unmapping guard page");
-    mapper.unmap(Page::contains(guard_page_address), allocator);
+    mapper.unmap(Page::contains(guard_page_address));
 
     let stack_top = match elf.symbols().find(|symbol| symbol.name(&elf) == Some("_stack_top")) {
         Some(symbol) => VirtualAddress::new(symbol.value as usize).unwrap(),
         None => panic!("Kernel does not have a '_stack_top' symbol"),
     };
-    assert!(stack_top.is_page_aligned(), "Stack is not page aligned");
+    assert!(stack_top.is_page_aligned::<Size4KiB>(), "Stack is not page aligned");
 
     Ok(KernelInfo { entry_point: VirtualAddress::new(elf.entry_point()).unwrap(), stack_top })
 }

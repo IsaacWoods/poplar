@@ -1,12 +1,5 @@
 use cfg_if::cfg_if;
 
-/// A constant such that `x * KIBIBYTES_TO_BYTES` is `x` KiB in bytes
-pub const KIBIBYTES_TO_BYTES: usize = 1024;
-/// A constant such that `x * MEBIBYTES_TO_BYTES` is `x` MiB in bytes
-pub const MEBIBYTES_TO_BYTES: usize = 1024 * KIBIBYTES_TO_BYTES;
-/// A constant such that `x * GIBIBYTES_TO_BYTES` is `x` GiB in bytes
-pub const GIBIBYTES_TO_BYTES: usize = 1024 * MEBIBYTES_TO_BYTES;
-
 cfg_if! {
     if #[cfg(feature = "tuning-fast_ctlz")] {
         /// Fast integer `log2` that floors to the lower power-of-2 if `x` is not a power-of-2. `x`
