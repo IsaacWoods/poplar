@@ -108,9 +108,10 @@ pub fn kmain() -> ! {
     let arch = Arch {
         physical_memory_manager: LockedPhysicalMemoryManager::new(boot_info),
         kernel_page_table: Mutex::new(unsafe {
-            PageTable::from_frame(Frame::starts_with(
-                PhysicalAddress::new(read_control_reg!(cr3) as usize).unwrap(),
-            ))
+            PageTable::from_frame(
+                Frame::starts_with(PhysicalAddress::new(read_control_reg!(cr3) as usize).unwrap()),
+                kernel_map::PHYSICAL_MAPPING_BASE,
+            )
         }),
         object_map: RwLock::new(ObjectMap::new(crate::object::map::INITIAL_OBJECT_CAPACITY)),
     };

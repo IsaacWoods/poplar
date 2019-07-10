@@ -63,7 +63,7 @@ pub extern "win64" fn efi_main(image_handle: Handle, system_table: &'static Syst
 
     let allocator = BootFrameAllocator::new(64);
     let mut kernel_page_table = PageTable::new(allocator.allocate(), BOOTLOADER_PHYSICAL_BASE);
-    let mut kernel_mapper = kernel_page_table.mapper(BOOTLOADER_PHYSICAL_BASE);
+    let mut kernel_mapper = kernel_page_table.mapper();
 
     /*
      * Construct the initial `BootInfo`.
@@ -268,7 +268,6 @@ fn construct_boot_info(
 
 fn add_memory_map_to_boot_info(boot_info: &mut BootInfo, memory_map: &MemoryMap) {
     for entry in memory_map.iter() {
-        log::info!("{:?}", entry);
         let memory_type = match entry.memory_type {
             // Keep the UEFI runtime services stuff around - anything might be using them.
             MemoryType::RuntimeServicesCode | MemoryType::RuntimeServicesData => {

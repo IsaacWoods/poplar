@@ -67,7 +67,7 @@ impl InterruptController {
                  */
                 arch.kernel_page_table
                     .lock()
-                    .mapper(kernel_map::PHYSICAL_MAPPING_BASE)
+                    .mapper()
                     .map_to(
                         Page::contains(kernel_map::LOCAL_APIC_CONFIG),
                         Frame::contains(

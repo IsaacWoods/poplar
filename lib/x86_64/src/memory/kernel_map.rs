@@ -21,7 +21,7 @@ pub fn physical_to_virtual(address: PhysicalAddress) -> VirtualAddress {
 }
 
 /// The kernel is mapped into the 511th entry of the P4.
-pub const KERNEL_P4_ENTRY: u16 = 511;
+pub const KERNEL_P4_ENTRY: usize = 511;
 
 pub const KERNEL_ADDRESS_SPACE_START: VirtualAddress =
     unsafe { VirtualAddress::new_unchecked(0xffff_ff80_0000_0000) };

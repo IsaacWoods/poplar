@@ -230,12 +230,20 @@ where
 
 pub struct PageTable {
     p4_frame: Frame,
+    /// The virtual address at which physical memory is mapped in the environment that these page
+    /// tables are being constructed in. This is **not** a property of the set of page tables being
+    /// mapped. For example, in the bootloader, we construct a set of page tables for the kernel
+    /// where physical memory is mapped in the top P4 entry, but `physical_base` is set to `0`
+    /// because the UEFI sets up an identity-mapping for the bootloader. The same set of page
+    /// tables would have a `physical_base` in the higher half in the kernel, after we switch to
+    /// the kernel's set of page tables.
+    physical_base: VirtualAddress,
 }
 
 impl PageTable {
     pub fn new(frame: Frame, physical_base: VirtualAddress) -> PageTable {
-        let mut table = PageTable { p4_frame: frame };
-        table.ref_to_p4(physical_base).zero();
+        let mut table = PageTable { p4_frame: frame, physical_base };
+        table.ref_to_p4().zero();
         table
     }
 
@@ -243,16 +251,16 @@ impl PageTable {
     /// it assumes that the frame contains a valid page table, and that no other `PageTable`s
     /// currently exist that use this same backing frame (as calling `mapper` on both could lead to
     /// two mutable references aliasing the same data to exist, which is UB).
-    pub unsafe fn from_frame(p4_frame: Frame) -> PageTable {
-        PageTable { p4_frame }
+    pub unsafe fn from_frame(p4_frame: Frame, physical_base: VirtualAddress) -> PageTable {
+        PageTable { p4_frame, physical_base }
     }
 
-    pub fn mapper<'a>(&'a mut self, physical_base: VirtualAddress) -> Mapper<'a> {
-        Mapper { physical_base, p4: self.ref_to_p4(physical_base) }
+    pub fn mapper<'a>(&'a mut self) -> Mapper<'a> {
+        Mapper { physical_base: self.physical_base, p4: self.ref_to_p4() }
     }
 
-    fn ref_to_p4(&mut self, physical_base: VirtualAddress) -> &mut Table<Level4> {
-        unsafe { &mut *((physical_base + usize::from(self.p4_frame.start_address)).mut_ptr()) }
+    fn ref_to_p4(&mut self) -> &mut Table<Level4> {
+        unsafe { &mut *((self.physical_base + usize::from(self.p4_frame.start_address)).mut_ptr()) }
     }
 
     pub fn switch_to(&self) {
@@ -263,13 +271,6 @@ impl PageTable {
 }
 
 pub struct Mapper<'a> {
-    /// The virtual address at which physical memory is mapped in the environment that these page
-    /// tables are being constructed in. This is **not** a property of the set of page tables being
-    /// mapped. For example, in the bootloader, we construct a set of page tables for the kernel
-    /// where physical memory is mapped in the top P4 entry, but `physical_base` is set to `0`
-    /// because the UEFI sets up an identity-mapping for the bootloader. The same set of page
-    /// tables would have a `physical_base` in the higher half in the kernel, after we switch to
-    /// the kernel's set of page tables.
     pub physical_base: VirtualAddress,
     pub p4: &'a mut Table<Level4>,
 }
