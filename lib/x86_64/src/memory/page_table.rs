@@ -62,8 +62,10 @@ impl Entry {
         self.0 = 0;
     }
 
+    /// Set an entry to a given address and set of flags. Cannot be used to set an entry as
+    /// not-present (use `set_unused` instead), because we automatically add the `PRESENT` flag.
     pub fn set(&mut self, address: PhysicalAddress, flags: EntryFlags) {
-        self.0 = (usize::from(address) as u64) | flags.bits();
+        self.0 = (usize::from(address) as u64) | (flags | EntryFlags::PRESENT).bits();
     }
 }
 
@@ -134,7 +136,7 @@ where
 {
     pub fn zero(&mut self) {
         for entry in self.entries.iter_mut() {
-            entry.set(PhysicalAddress::new(0).unwrap(), EntryFlags::empty());
+            entry.set_unused();
         }
     }
 }
@@ -145,11 +147,7 @@ where
 {
     /// Get a reference to the table at the given `index`, assuming the entirity of
     /// the physical address space is mapped from `physical_base`.
-    pub fn next_table(
-        &self,
-        index: usize,
-        physical_base: VirtualAddress,
-    ) -> Option<&Table<L::NextLevel>> {
+    pub fn next_table(&self, index: usize, physical_base: VirtualAddress) -> Option<&Table<L::NextLevel>> {
         self[index]
             .address()
             .map(|physical_address| physical_base + usize::from(physical_address))
@@ -281,6 +279,23 @@ impl<'a> Mapper<'a> {
         unimplemented!()
     }
 
+    /// Allocates a `Frame` using the given allocator, and maps the specified `Page` into it.
+    /// Useful for when you need to map a page into physical memory, but you don't care where.
+    /// Returns the allocated `Frame` so it can be freed when no longer needed by the caller.
+    pub fn map<A>(
+        &mut self,
+        page: Page<Size4KiB>,
+        flags: EntryFlags,
+        allocator: &A,
+    ) -> Result<Frame, MapError>
+    where
+        A: FrameAllocator,
+    {
+        let frame = allocator.allocate();
+        self.map_to(page, frame, flags, allocator)?;
+        Ok(frame)
+    }
+
     pub fn map_to<A>(
         &mut self,
         page: Page<Size4KiB>,
@@ -298,18 +313,8 @@ impl<'a> Mapper<'a> {
         let user_accessible = flags.contains(EntryFlags::USER_ACCESSIBLE);
         let p1 = self
             .p4
-            .next_table_create(
-                page.start_address.p4_index(),
-                user_accessible,
-                allocator,
-                self.physical_base,
-            )?
-            .next_table_create(
-                page.start_address.p3_index(),
-                user_accessible,
-                allocator,
-                self.physical_base,
-            )?
+            .next_table_create(page.start_address.p4_index(), user_accessible, allocator, self.physical_base)?
+            .next_table_create(page.start_address.p3_index(), user_accessible, allocator, self.physical_base)?
             .next_table_create(
                 page.start_address.p2_index(),
                 user_accessible,
@@ -347,12 +352,7 @@ impl<'a> Mapper<'a> {
         let user_accessible = flags.contains(EntryFlags::USER_ACCESSIBLE);
         let p2 = self
             .p4
-            .next_table_create(
-                page.start_address.p4_index(),
-                user_accessible,
-                allocator,
-                self.physical_base,
-            )?
+            .next_table_create(page.start_address.p4_index(), user_accessible, allocator, self.physical_base)?
             .next_table_create(
                 page.start_address.p3_index(),
                 user_accessible,
