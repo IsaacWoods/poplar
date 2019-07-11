@@ -7,5 +7,6 @@ use_field_init_shorthand = true
 use_try_shorthand = true
 format_doc_comments = true
 wrap_comments = true
-comment_width = 100
+max_width = 110
+comment_width = 110
 use_small_heuristics = "max"
