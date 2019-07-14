@@ -6,6 +6,7 @@ mod cpu;
 mod interrupts;
 mod logger;
 mod memory;
+mod per_cpu;
 mod task;
 
 use self::{
@@ -36,9 +37,7 @@ use x86_64::{
     memory::{kernel_map, Frame, Page, PageTable, PhysicalAddress, VirtualAddress},
 };
 
-/// The kernel GDT. This is not thread-safe, and so should only be altered by the bootstrap
-/// processor.
-static mut GDT: Gdt = Gdt::new();
+pub(self) static GDT: Mutex<Gdt> = Mutex::new(Gdt::new());
 
 pub struct Arch {
     pub physical_memory_manager: LockedPhysicalMemoryManager,
@@ -127,10 +126,7 @@ pub fn kmain() -> ! {
 
                 Err(err) => {
                     error!("Failed to parse static ACPI tables: {:?}", err);
-                    warn!(
-                        "Continuing. Some functionality may not work, or the kernel may
-    panic!"
-                    );
+                    warn!("Continuing. Some functionality may not work, or the kernel may panic!");
                     None
                 }
             }
@@ -144,49 +140,56 @@ pub fn kmain() -> ! {
     /*
      * Register all the CPUs we can find.
      */
-    let (mut boot_processor, application_processors) = match acpi_info {
-        Some(ref info) => {
-            assert!(
-                info.boot_processor.is_some()
-                    && info.boot_processor.unwrap().state == ProcessorState::Running
-            );
-            let tss = Tss::new();
-            let tss_selector = unsafe { GDT.add_tss(TssSegment::new(&tss)) };
-            let boot_processor = Cpu::from_acpi(&info.boot_processor.unwrap(), tss, tss_selector);
+    // let (mut boot_processor, application_processors) = match acpi_info {
+    //     Some(ref info) => {
+    //         assert!(
+    //             info.boot_processor.is_some()
+    //                 && info.boot_processor.unwrap().state == ProcessorState::Running
+    //         );
+    //         // TODO: Cpu shouldn't manage the TSS anymore - that should be the job of the per-cpu
+    //         // data
+    //         let tss = Tss::new();
+    //         let tss_selector = unsafe { GDT.lock().add_tss(TssSegment::new(&tss)) };
+    //         let boot_processor = Cpu::from_acpi(&info.boot_processor.unwrap(), tss, tss_selector);
 
-            let mut application_processors = Vec::new();
-            for application_processor in &info.application_processors {
-                if application_processor.state == ProcessorState::Disabled {
-                    continue;
-                }
+    //         let mut application_processors = Vec::new();
+    //         for application_processor in &info.application_processors {
+    //             if application_processor.state == ProcessorState::Disabled {
+    //                 continue;
+    //             }
 
-                let tss = Tss::new();
-                let tss_selector = unsafe { GDT.add_tss(TssSegment::new(&tss)) };
-                application_processors.push(Cpu::from_acpi(
-                    &application_processor,
-                    tss,
-                    tss_selector,
-                ));
-            }
+    //             let tss = Tss::new();
+    //             let tss_selector = unsafe { GDT.lock().add_tss(TssSegment::new(&tss)) };
+    //             application_processors.push(Cpu::from_acpi(&application_processor, tss, tss_selector));
+    //         }
 
-            (boot_processor, application_processors)
-        }
+    //         (boot_processor, application_processors)
+    //     }
 
-        None => {
-            /*
-             * We couldn't find the number of processors from the ACPI tables. Just create a TSS
-             * for this one.
-             */
-            let tss = Tss::new();
-            let tss_selector = unsafe { GDT.add_tss(TssSegment::new(&tss)) };
-            let cpu = Cpu { processor_uid: 0, local_apic_id: 0, is_ap: false, tss, tss_selector };
-            (cpu, Vec::with_capacity(0))
-        }
+    //     None => {
+    //         /*
+    //          * We couldn't find the number of processors from the ACPI tables. Just create a TSS
+    //          * for this one.
+    //          */
+    //         let tss = Tss::new();
+    //         let tss_selector = unsafe { GDT.lock().add_tss(TssSegment::new(Pin::new(&tss))) };
+    //         let cpu = Cpu { processor_uid: 0, local_apic_id: 0, is_ap: false, tss, tss_selector };
+    //         (cpu, Vec::with_capacity(0))
+    //     }
+    // };
     };
 
+    /*
+     * Create the per-cpu data, then load the GDT, then install the per-cpu data. This has to be
+     * done in this specific order because loading the GDT after setting GS_BASE will override it.
+     */
+    let (guarded_per_cpu, tss_selector) = per_cpu::GuardedPerCpu::new();
     unsafe {
-        GDT.load();
+        // TODO: having to lock it prevents `load` from taking a pinned reference, reference with
+        // 'static, which we should probably deal with.
+        GDT.lock().load(tss_selector);
     }
+    guarded_per_cpu.install();
 
     // TODO: deal gracefully with a bad ACPI parse
     let interrupt_controller = InterruptController::init(

@@ -72,7 +72,9 @@ pub fn drop_to_usermode(arch: &Arch, tss: &mut Tss, task_id: KernelObjectId) -> 
          : "rsp"
          : "intel"
         );
-        tss.set_kernel_stack(rsp);
+
+        // Safe because we don't move the TSS by changing the kernel stack
+        Pin::get_unchecked_mut(per_cpu::per_cpu_data_mut().get_tss_mut()).set_kernel_stack(rsp);
 
         /*
          * Switch to the address space the task resides in, and extract the information we need

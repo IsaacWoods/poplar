@@ -45,13 +45,7 @@ impl CodeSegment {
          * old-ish AMD #GPs if they're not set ¯\_(ツ)_/¯
          */
         CodeSegment(
-            ACCESSED
-                + READABLE
-                + (1 << 43)
-                + USER_SEGMENT
-                + PRESENT
-                + LONG_MODE
-                + ((ring as u64) << 45),
+            ACCESSED + READABLE + (1 << 43) + USER_SEGMENT + PRESENT + LONG_MODE + ((ring as u64) << 45),
         )
     }
 }
@@ -73,7 +67,7 @@ impl TssSegment {
         TssSegment(0, 0)
     }
 
-    pub fn new(tss: &Pin<Box<Tss>>) -> TssSegment {
+    pub fn new(tss: Pin<&Tss>) -> TssSegment {
         // Get the address of the *underlying TSS*
         let tss_address = (tss.deref() as *const _) as u64;
         let mut low = PRESENT;
@@ -96,14 +90,13 @@ impl TssSegment {
 
 pub const KERNEL_CODE_SELECTOR: SegmentSelector = SegmentSelector::new(1, PrivilegeLevel::Ring0);
 pub const KERNEL_DATA_SELECTOR: SegmentSelector = SegmentSelector::new(2, PrivilegeLevel::Ring0);
-pub const USER_COMPAT_CODE_SELECTOR: SegmentSelector =
-    SegmentSelector::new(3, PrivilegeLevel::Ring3);
+pub const USER_COMPAT_CODE_SELECTOR: SegmentSelector = SegmentSelector::new(3, PrivilegeLevel::Ring3);
 pub const USER_DATA_SELECTOR: SegmentSelector = SegmentSelector::new(4, PrivilegeLevel::Ring3);
 pub const USER_CODE64_SELECTOR: SegmentSelector = SegmentSelector::new(5, PrivilegeLevel::Ring3);
-pub const BOOTSTRAP_TSS_SELECTOR: SegmentSelector = SegmentSelector::new(6, PrivilegeLevel::Ring0);
 
-// NOTE: this includes the null segment
+// NOTE: these have to account for the null segment
 pub const NUM_STATIC_ENTRIES: usize = 7;
+pub const OFFSET_TO_FIRST_TSS: usize = 0x30;
 pub const MAX_CPUS: usize = 8;
 
 /// A GDT suitable for the kernel to use. The order of the segments is important: `sysret` relies
@@ -152,8 +145,6 @@ impl Gdt {
     /// ### Panics
     /// Panics if we have already added as many TSSs as this GDT can hold.
     pub fn add_tss(&mut self, tss: TssSegment) -> SegmentSelector {
-        const OFFSET_TO_FIRST_TSS: usize = 0x18;
-
         if self.next_free_tss == MAX_CPUS {
             panic!("Not enough space in the GDT for the number of TSSs we need!");
         }
@@ -167,15 +158,15 @@ impl Gdt {
 
     /// Load the new GDT, switch to the new `kernel_code` code segment, clear DS, ES, FS, GS, and
     /// SS to the null segment, and switch TR to the first TSS.
-    pub unsafe fn load(&'static self) {
+    // TODO: we should probably take a Pin or something to ensure it doesn't move
+    pub unsafe fn load(&self, tss_selector: SegmentSelector) {
         if self.next_free_tss == 0 {
             panic!("Tried to load kernel GDT before adding bootstrap TSS!");
         }
 
         let gdt_ptr = DescriptorTablePointer {
-            limit: (NUM_STATIC_ENTRIES * mem::size_of::<u64>()
-                + MAX_CPUS * mem::size_of::<TssSegment>()
-                - 1) as u16,
+            limit: (NUM_STATIC_ENTRIES * mem::size_of::<u64>() + MAX_CPUS * mem::size_of::<TssSegment>() - 1)
+                as u16,
             base: VirtualAddress::new(self as *const _ as usize).unwrap(),
         };
 
@@ -202,7 +193,7 @@ impl Gdt {
         : "r"(&gdt_ptr),
           "{rax}"(KERNEL_DATA_SELECTOR),
           "{rbx}"(KERNEL_CODE_SELECTOR),
-          "{rcx}"(BOOTSTRAP_TSS_SELECTOR)
+          "{rcx}"(tss_selector)
         : "rax"
         : "intel"
         );

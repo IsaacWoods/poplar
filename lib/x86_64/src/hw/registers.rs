@@ -79,7 +79,7 @@ pub macro write_control_reg($reg: ident, $value: expr) {
         );
 }
 
-pub const EFER: u32 = 0xc0000080;
+pub const EFER: u32 = 0xc000_0080;
 
 /// Contains the Ring 0 and Ring 3 code-segment selectors loaded by `syscall` and `sysret`,
 /// respectively:
@@ -88,14 +88,17 @@ pub const EFER: u32 = 0xc0000080;
 ///
 /// These instructions assume that the data-segment for each ring is directly after the
 /// code-segment.
-pub const IA32_STAR: u32 = 0xc0000081;
+pub const IA32_STAR: u32 = 0xc000_0081;
 
 /// Contains the virtual address of the handler to call upon `syscall`.
-pub const IA32_LSTAR: u32 = 0xc0000082;
+pub const IA32_LSTAR: u32 = 0xc000_0082;
 
 /// Upon `syscall`, the value of this MSR is used to mask `RFLAGS`. Specifically, if a bit is set
 /// in this MSR, that bit in RFLAGS is zerod.
-pub const IA32_FMASK: u32 = 0xc0000084;
+pub const IA32_FMASK: u32 = 0xc000_0084;
+
+/// A virtual address can be stored in this MSR, and acts as the base of the GS segment.
+pub const IA32_GS_BASE: u32 = 0xc000_0101;
 
 /// Read from a model-specific register.
 pub fn read_msr(reg: u32) -> u64 {
