@@ -1,86 +1,23 @@
-use super::Arch;
-use crate::{util::bitmap::Bitmap, x86_64::memory::physical::LockedPhysicalMemoryManager};
-use core::mem;
-use x86_64::memory::{
-    kernel_map::KERNEL_P4_ENTRY,
-    paging::{
-        entry::EntryFlags,
-        table::RecursiveMapping,
-        ActivePageTable,
-        FrameAllocator,
-        InactivePageTable,
-        Mapper,
-        Page,
-    },
-    VirtualAddress,
-};
+use super::{memory::userspace_map, Arch};
+use crate::{object::WrappedKernelObject, util::bitmap::Bitmap};
+use alloc::vec::Vec;
+use x86_64::memory::{kernel_map, EntryFlags, Frame, FrameAllocator, Page, PageTable, VirtualAddress};
 
-enum TableState {
-    /// An `AddressSpace` is put in the `Poisoned` state while we move it between real states
-    /// (which involves doing stuff that can cause a fault). This makes sure we can detect when
-    /// something went wrong when transistioning between states, and don't trust invalid address
-    /// spaces.
-    Poisoned,
-    NotActive(InactivePageTable<RecursiveMapping>),
-    Active(ActivePageTable<RecursiveMapping>),
+#[derive(PartialEq, Eq, Debug)]
+enum State {
+    NotActive,
+    Active,
 }
 
-/// Contains information about what is mapped in an `AddressSpace`. The methods on this type, given
-/// the `Mapper` from the table, alter the mappings of this address space.
-///
-/// Outside of `AddressSpace`, the only safe way to work with this struct is to get a reference to
-/// one from `AddressSpace::modify`, which makes sure the correct set of page tables are installed
-/// to be modified.
-#[derive(Clone)]
-pub struct AddressSpaceState {
+pub struct AddressSpace {
+    table: PageTable,
+    state: State,
     // TODO: at the moment, this only allows us to allocate 64 stacks. When const generics land,
     // implement Bitmap for [u64; N] and use one of those instead.
     /// Bitmap of allocated stacks in this address space. Each bit in this bitmap represents the
     /// corresponding stack slot for both the usermode and kernel stacks.
     stack_bitmap: u64,
-}
-
-impl AddressSpaceState {
-    pub fn add_stack<A>(
-        &mut self,
-        mapper: &mut Mapper<RecursiveMapping>,
-        allocator: &A,
-        size: usize,
-    ) -> Option<StackSet>
-    where
-        A: FrameAllocator,
-    {
-        use super::memory::userspace_map::*;
-
-        // Get a free stack slot. If there isn't one free, we can't allocate any more stacks.
-        let index = self.stack_bitmap.alloc(1)?;
-
-        /*
-         * Construct the addresses of the kernel and user stacks. We use `index + 1` because we
-         * want the top of the stack, so we add an extra stack's worth.
-         */
-        let kernel_stack_top = KERNEL_STACKS_START + (index + 1) * MAX_STACK_SIZE;
-        let user_stack_top = USER_STACKS_START + (index + 1) * MAX_STACK_SIZE;
-
-        // Map the stacks
-        mapper.map_range(
-            Page::contains(kernel_stack_top - size)..Page::contains(kernel_stack_top),
-            EntryFlags::PRESENT | EntryFlags::WRITABLE,
-            allocator,
-        );
-        mapper.map_range(
-            Page::contains(user_stack_top - size)..Page::contains(user_stack_top),
-            EntryFlags::PRESENT | EntryFlags::WRITABLE | EntryFlags::USER_ACCESSIBLE,
-            allocator,
-        );
-
-        Some(StackSet { kernel_stack_top, user_stack_top })
-    }
-}
-
-pub struct AddressSpace {
-    table: TableState,
-    state: AddressSpaceState,
+    memory_objects: Vec<WrappedKernelObject<Arch>>,
 }
 
 pub struct StackSet {
@@ -89,78 +26,68 @@ pub struct StackSet {
 }
 
 impl AddressSpace {
-    pub fn from_page_table(
-        arch: &Arch,
-        mut page_table: InactivePageTable<RecursiveMapping>,
-    ) -> AddressSpace {
+    pub fn new(arch: &Arch) -> AddressSpace {
+        let frame = arch.physical_memory_manager.allocate();
+        let mut table = PageTable::new(frame, kernel_map::PHYSICAL_MAPPING_BASE);
+
         /*
-         * Get the frame that backs the kernel's P3. This is safe to unwrap because we wouldn't
-         * be able to fetch these instructions if the kernel wasn't mapped.
+         * Install a copy of the kernel's P3 in each address space. This means the kernel is
+         * always mapped, so system calls and interrupts don't page-fault. It's always
+         * safe to unwrap the kernel address - if it wasn't there, we wouldn't be able to
+         * fetch these instructions.
          */
-        let kernel_p3_frame =
-            arch.kernel_page_table.lock().p4[KERNEL_P4_ENTRY].pointed_frame().unwrap();
+        let kernel_p3_address =
+            arch.kernel_page_table.lock().mapper().p4[kernel_map::KERNEL_P4_ENTRY].address().unwrap();
+        table.mapper().p4[kernel_map::KERNEL_P4_ENTRY].set(kernel_p3_address, EntryFlags::WRITABLE);
 
-        arch.kernel_page_table.lock().with(
-            &mut page_table,
-            &arch.physical_memory_manager,
-            |mapper, allocator| {
-                /*
-                 * We map the kernel into every address space by stealing the address of the
-                 * kernel's P3, and putting it into the address space's P4.
-                 */
-                mapper.p4[KERNEL_P4_ENTRY]
-                    .set(kernel_p3_frame, EntryFlags::PRESENT | EntryFlags::WRITABLE);
-            },
-        );
+        AddressSpace { table, state: State::NotActive, stack_bitmap: 0, memory_objects: Vec::new() }
+    }
 
-        AddressSpace {
-            table: TableState::NotActive(page_table),
-            state: AddressSpaceState { stack_bitmap: 0 },
+    pub fn map_memory_object(&mut self, arch: &Arch, memory_object: WrappedKernelObject<Arch>) {
+        let mut mapper = self.table.mapper();
+        let memory_obj_info = memory_object.object.memory_object().expect("Not a Memory Object").read();
+
+        let start_page = Page::starts_with(memory_obj_info.virtual_address);
+        let pages = start_page..(start_page + memory_obj_info.num_pages);
+
+        let start_frame = Frame::starts_with(memory_obj_info.physical_address);
+        let frames = start_frame..(start_frame + memory_obj_info.num_pages);
+
+        for (page, frame) in pages.zip(frames) {
+            mapper.map_to(page, frame, memory_obj_info.flags, &arch.physical_memory_manager).unwrap();
         }
     }
 
     pub fn switch_to(&mut self) {
-        self.table = match mem::replace(&mut self.table, TableState::Poisoned) {
-            TableState::NotActive(inactive_table) => {
-                /*
-                 * The currently active table will always have a `RecursiveMapping` because we'll
-                 * always be switching from either the kernel's or another `AddressSpace`'s
-                 * tables.
-                 */
-                TableState::Active(unsafe { inactive_table.switch_to::<RecursiveMapping>().0 })
-            }
-
-            TableState::Active(_) => panic!("Tried to switch to already-active address space!"),
-            TableState::Poisoned => panic!("Tried to switch to poisoned address space!"),
-        };
+        assert_eq!(self.state, State::NotActive, "Tried to switch to already-active address space!");
+        self.table.switch_to();
+        self.state = State::Active;
     }
 
-    pub fn modify<F, R>(&mut self, arch: &Arch, f: F) -> R
+    pub fn add_stack_set<A>(&mut self, size: usize, allocator: &A) -> Option<StackSet>
     where
-        F: FnOnce(
-            &mut Mapper<RecursiveMapping>,
-            &LockedPhysicalMemoryManager, // TODO: it makes me sad we have to hardcode this type
-            // &dyn FrameAllocator,
-            &mut AddressSpaceState,
-        ) -> R,
+        A: FrameAllocator,
     {
-        let mut state = self.state.clone();
-        let result = match self.table {
-            TableState::Active(ref mut page_table) => {
-                // TODO
-                unimplemented!();
-            }
+        // Get a free stack slot. If there isn't one, we can't allocate any more stacks on the AddressSpace.
+        let index = self.stack_bitmap.alloc(1)?;
 
-            TableState::NotActive(ref mut page_table) => arch.kernel_page_table.lock().with(
-                page_table,
-                &arch.physical_memory_manager,
-                |mapper, allocator| f(mapper, allocator, &mut state),
-            ),
+        /*
+         * Construct the addresses of the kernel and user stacks. We use `index + 1` because we
+         * want the top of the stack, so we add an extra stack's worth.
+         */
+        let kernel_stack_top =
+            userspace_map::KERNEL_STACKS_START + (index + 1) * userspace_map::MAX_STACK_SIZE;
+        let user_stack_top = userspace_map::USER_STACKS_START + (index + 1) * userspace_map::MAX_STACK_SIZE;
 
-            TableState::Poisoned => panic!("Tried to modify poisoned address space"),
-        };
-        self.state = state;
+        // Map the stacks
+        let mut mapper = self.table.mapper();
+        for page in Page::starts_with(kernel_stack_top - size)..Page::starts_with(kernel_stack_top) {
+            mapper.map(page, EntryFlags::WRITABLE, allocator).unwrap();
+        }
+        for page in Page::starts_with(user_stack_top - size)..Page::starts_with(user_stack_top) {
+            mapper.map(page, EntryFlags::WRITABLE | EntryFlags::USER_ACCESSIBLE, allocator).unwrap();
+        }
 
-        result
+        Some(StackSet { kernel_stack_top, user_stack_top })
     }
 }

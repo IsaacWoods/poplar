@@ -12,7 +12,8 @@
     trait_alias,
     type_ascription,
     naked_functions,
-    bind_by_move_pattern_guards
+    bind_by_move_pattern_guards,
+    box_syntax
 )]
 #[macro_use]
 extern crate alloc;
@@ -34,6 +35,7 @@ cfg_if! {
 mod arch;
 mod heap_allocator;
 mod object;
+mod scheduler;
 mod syscall;
 mod util;
 

@@ -1,6 +1,6 @@
 use super::KernelObject;
 use crate::arch::Architecture;
-use alloc::vec::Vec;
+use alloc::{sync::Arc, vec::Vec};
 use core::mem;
 use libpebble::object::{Generation, Index, KernelObjectId};
 
@@ -8,7 +8,7 @@ pub const INITIAL_OBJECT_CAPACITY: usize = 32;
 
 enum Entry<A: Architecture> {
     Free { next_generation: Generation, next_free: Option<u16> },
-    Occupied { generation: Generation, object: KernelObject<A> },
+    Occupied { generation: Generation, object: Arc<KernelObject<A>> },
 }
 
 /// Stores all the `KernelObject`s against their generational `KernelObjectId`s.
@@ -26,15 +26,14 @@ where
             panic!("Can't create object map with size of zero!");
         }
 
-        let mut map =
-            ObjectMap { entries: Vec::with_capacity(initial_capacity), free_list_head: None };
+        let mut map = ObjectMap { entries: Vec::with_capacity(initial_capacity), free_list_head: None };
         map.reserve(initial_capacity);
         map
     }
 
     /// Insert a new object into the map, assigning it a `KernelObjectId`. The map will not assign
     /// an ID with an index of `0`, because it is reserved as a null ID.
-    pub fn insert(&mut self, object: KernelObject<A>) -> KernelObjectId {
+    pub fn insert(&mut self, object: Arc<KernelObject<A>>) -> KernelObjectId {
         match self.free_list_head {
             /*
              * If we have a free entry in the current map, use that.
@@ -55,7 +54,7 @@ where
         }
     }
 
-    fn insert_into(&mut self, index: usize, object: KernelObject<A>) -> KernelObjectId {
+    fn insert_into(&mut self, index: usize, object: Arc<KernelObject<A>>) -> KernelObjectId {
         match self.entries[index] {
             Entry::Free { next_generation, next_free } => {
                 self.entries[index] = Entry::Occupied { generation: next_generation, object };
@@ -97,29 +96,25 @@ where
         self.free_list_head = Some(start as Index);
     }
 
-    pub fn get(&self, id: KernelObjectId) -> Option<&KernelObject<A>> {
+    pub fn get(&self, id: KernelObjectId) -> Option<&Arc<KernelObject<A>>> {
         match self.entries.get((id.index - 1) as usize) {
             /*
              * Only "find" the entry if the generations are the same. If they're not, the
              * expected entry has been removed and replaced by something else!
              */
-            Some(Entry::Occupied { generation, ref object }) if *generation == id.generation => {
-                Some(object)
-            }
+            Some(Entry::Occupied { generation, ref object }) if *generation == id.generation => Some(object),
 
             _ => None,
         }
     }
 
-    pub fn get_mut(&mut self, id: KernelObjectId) -> Option<&mut KernelObject<A>> {
+    pub fn get_mut(&mut self, id: KernelObjectId) -> Option<&mut Arc<KernelObject<A>>> {
         match self.entries.get_mut((id.index - 1) as usize) {
             /*
              * Only "find" the entry if the generations are the same. If they're not, the
              * expected entry has been removed and replaced by something else!
              */
-            Some(Entry::Occupied { generation, ref mut object })
-                if *generation == id.generation =>
-            {
+            Some(Entry::Occupied { generation, ref mut object }) if *generation == id.generation => {
                 Some(object)
             }
 
@@ -127,7 +122,7 @@ where
         }
     }
 
-    pub fn remove(&mut self, id: KernelObjectId) -> Option<KernelObject<A>> {
+    pub fn remove(&mut self, id: KernelObjectId) -> Option<Arc<KernelObject<A>>> {
         if (id.index as usize) >= self.len() {
             return None;
         }
@@ -184,6 +179,8 @@ where
 mod test {
     use super::ObjectMap;
     use crate::{arch::test::FakeArch, object::KernelObject};
+    use alloc::sync::Arc;
+    use core::ops::Deref;
 
     /*
      * These macros are needed because not all the variants of `KernelObject` can implement `Eq`,
@@ -196,9 +193,12 @@ mod test {
         }
     }
 
-    macro assert_some($entry: expr, $expected_value: expr) {
-        match $entry {
-            Some(&KernelObject::Test(value)) => assert_eq!(value, $expected_value),
+    fn assert_some(entry: Option<&Arc<KernelObject<FakeArch>>>, expected_value: usize) {
+        match entry {
+            Some(wrapped_object) => match wrapped_object.deref() {
+                KernelObject::Test(value) => assert_eq!(value, &expected_value),
+                entry => panic!("Incorrect entry during ObjectMap testing: {:?}", entry),
+            },
             entry => panic!("Incorrect entry during ObjectMap testing: {:?}", entry),
         }
     }
@@ -212,40 +212,40 @@ mod test {
     #[test]
     fn can_get_values() {
         let mut map = ObjectMap::<FakeArch>::new(3);
-        let thing_0 = map.insert(KernelObject::Test(8));
-        let thing_1 = map.insert(KernelObject::Test(17));
-        let thing_2 = map.insert(KernelObject::Test(42));
+        let thing_0 = KernelObject::Test(8).add_to_map(&mut map);
+        let thing_1 = KernelObject::Test(17).add_to_map(&mut map);
+        let thing_2 = KernelObject::Test(42).add_to_map(&mut map);
 
-        assert_some!(map.get(thing_0), 8);
-        assert_some!(map.get(thing_1), 17);
-        assert_some!(map.get(thing_2), 42);
+        assert_some(map.get(thing_0.id), 8);
+        assert_some(map.get(thing_1.id), 17);
+        assert_some(map.get(thing_2.id), 42);
     }
 
     #[test]
     fn access_old_generation() {
         let mut map = ObjectMap::<FakeArch>::new(2);
-        let thing = map.insert(KernelObject::Test(4));
-        let other_thing = map.insert(KernelObject::Test(84));
-        map.remove(thing);
-        let new_thing = map.insert(KernelObject::Test(13));
+        let thing = KernelObject::Test(4).add_to_map(&mut map);
+        let other_thing = KernelObject::Test(84).add_to_map(&mut map);
+        map.remove(thing.id);
+        let new_thing = KernelObject::Test(13).add_to_map(&mut map);
 
-        assert_none!(map.get(thing));
-        assert_some!(map.get(other_thing), 84);
-        assert_some!(map.get(new_thing), 13);
+        assert_none!(map.get(thing.id));
+        assert_some(map.get(other_thing.id), 84);
+        assert_some(map.get(new_thing.id), 13);
     }
 
     #[test]
     fn access_old_across_allocation() {
         let mut map = ObjectMap::<FakeArch>::new(2);
-        let thing_0 = map.insert(KernelObject::Test(8));
-        let thing_1 = map.insert(KernelObject::Test(17));
+        let thing_0 = KernelObject::Test(8).add_to_map(&mut map);
+        let thing_1 = KernelObject::Test(17).add_to_map(&mut map);
         // This next insert causes the backing `Vec` to expand
-        let thing_2 = map.insert(KernelObject::Test(42));
+        let thing_2 = KernelObject::Test(42).add_to_map(&mut map);
 
-        map.remove(thing_1);
+        map.remove(thing_1.id);
 
-        assert_some!(map.get(thing_0), 8);
-        assert_none!(map.get(thing_1));
-        assert_some!(map.get(thing_2), 42);
+        assert_some(map.get(thing_0.id), 8);
+        assert_none!(map.get(thing_1.id));
+        assert_some(map.get(thing_2.id), 42);
     }
 }

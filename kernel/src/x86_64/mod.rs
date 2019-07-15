@@ -6,6 +6,7 @@ mod cpu;
 mod interrupts;
 mod logger;
 mod memory;
+mod memory_object;
 mod per_cpu;
 mod task;
 
@@ -16,10 +17,13 @@ use self::{
     interrupts::InterruptController,
     logger::KernelLogger,
     memory::LockedPhysicalMemoryManager,
+    memory_object::MemoryObject,
+    task::Task,
 };
 use crate::{
     arch::Architecture,
-    object::{map::ObjectMap, KernelObject},
+    object::{map::ObjectMap, KernelObject, WrappedKernelObject},
+    scheduler::Scheduler,
 };
 use acpi::ProcessorState;
 use alloc::vec::Vec;
@@ -31,10 +35,10 @@ use x86_64::{
     hw::{
         cpu::CpuInfo,
         gdt::{Gdt, TssSegment},
-        registers::read_control_reg,
+        registers::{read_control_reg, read_msr, IA32_GS_BASE},
         tss::Tss,
     },
-    memory::{kernel_map, Frame, Page, PageTable, PhysicalAddress, VirtualAddress},
+    memory::{kernel_map, Frame, PageTable, PhysicalAddress},
 };
 
 pub(self) static GDT: Mutex<Gdt> = Mutex::new(Gdt::new());
@@ -43,6 +47,8 @@ pub struct Arch {
     pub physical_memory_manager: LockedPhysicalMemoryManager,
     pub kernel_page_table: Mutex<PageTable>,
     pub object_map: RwLock<ObjectMap<Self>>,
+    /* pub boot_processor: Mutex<Cpu>,
+     * pub application_processors: Mutex<Vec<Cpu>>, */
 }
 
 /// `Arch` contains a bunch of things, like the GDT, that the hardware relies on actually being at
@@ -57,6 +63,11 @@ impl Drop for Arch {
 impl Architecture for Arch {
     type AddressSpace = AddressSpace;
     type Task = Task;
+    type MemoryObject = MemoryObject;
+
+    fn drop_to_userspace(&self, task: WrappedKernelObject<Arch>) -> ! {
+        task::drop_to_usermode(self, task);
+    }
 }
 
 /// This is the entry point for the kernel on x86_64. It is called from the UEFI bootloader and
@@ -95,25 +106,6 @@ pub fn kmain() -> ! {
     if boot_info.magic != x86_64::boot::BOOT_INFO_MAGIC {
         panic!("Boot info magic number is not correct!");
     }
-
-    /*
-     * Initialise the physical memory manager. From this point, we can allocate physical memory
-     * freely.
-     *
-     * This assumes the bootloader has installed a valid set of page tables, including mapping
-     * the entirity of the physical memory at the start of the kernel's P4 entry. Strange
-     * things will happen if this assumption does not hold, so this is fairly unsafe.
-     */
-    let arch = Arch {
-        physical_memory_manager: LockedPhysicalMemoryManager::new(boot_info),
-        kernel_page_table: Mutex::new(unsafe {
-            PageTable::from_frame(
-                Frame::starts_with(PhysicalAddress::new(read_control_reg!(cr3) as usize).unwrap()),
-                kernel_map::PHYSICAL_MAPPING_BASE,
-            )
-        }),
-        object_map: RwLock::new(ObjectMap::new(crate::object::map::INITIAL_OBJECT_CAPACITY)),
-    };
 
     /*
      * Parse the static ACPI tables.
@@ -177,6 +169,26 @@ pub fn kmain() -> ! {
     //         (cpu, Vec::with_capacity(0))
     //     }
     // };
+
+    /*
+     * Initialise the physical memory manager. From this point, we can allocate physical memory
+     * freely.
+     *
+     * This assumes the bootloader has installed a valid set of page tables, including mapping
+     * the entirity of the physical memory at the start of the kernel's P4 entry. Strange
+     * things will happen if this assumption does not hold, so this is fairly unsafe.
+     */
+    let arch = Arch {
+        physical_memory_manager: LockedPhysicalMemoryManager::new(boot_info),
+        kernel_page_table: Mutex::new(unsafe {
+            PageTable::from_frame(
+                Frame::starts_with(PhysicalAddress::new(read_control_reg!(cr3) as usize).unwrap()),
+                kernel_map::PHYSICAL_MAPPING_BASE,
+            )
+        }),
+        object_map: RwLock::new(ObjectMap::new(crate::object::map::INITIAL_OBJECT_CAPACITY)),
+        /* boot_processor: Mutex::new(boot_processor),
+         * application_processors: Mutex::new(application_processors), */
     };
 
     /*
@@ -215,28 +227,35 @@ pub fn kmain() -> ! {
         );
     }
 
-    drop_to_userboot(&arch, boot_info, &mut boot_processor.tss)
-}
-
-fn drop_to_userboot(arch: &Arch, boot_info: &BootInfo, tss: &mut Tss) -> ! {
     /*
-     * Extract userboot's page tables from where the bootloader constructed them, build it an
-     * `AddressSpace` and a `Task`, and drop into usermode!
+     * Load all the images as initial tasks, and add them to the scheduler's ready list.
      */
-    let address_space = arch.object_map.write().insert(KernelObject::AddressSpace(RwLock::new(
-        AddressSpace::from_page_table(&arch, unsafe {
-            InactivePageTable::<RecursiveMapping>::new(Frame::contains(
-                boot_info.payload.page_table_address,
-            ))
-        }),
-    )));
-    let task = KernelObject::Task(RwLock::new(Task::new(
-        &arch,
-        address_space,
-        boot_info.payload.entry_point,
-    )));
-    let task_id = arch.object_map.write().insert(task);
+    let mut scheduler = Scheduler::<Arch>::new();
+    for image in boot_info.images() {
+        // Make an AddressSpace for the image
+        let address_space: WrappedKernelObject<Arch> =
+            KernelObject::AddressSpace(RwLock::new(box AddressSpace::new(&arch)))
+                .add_to_map(&mut arch.object_map.write());
+
+        // Make a MemoryObject for each segment and map it into the AddressSpace
+        for segment in image.segments() {
+            let memory_object = KernelObject::MemoryObject(RwLock::new(box MemoryObject::new(&segment)))
+                .add_to_map(&mut arch.object_map.write());
+            address_space
+                .object
+                .address_space()
+                .unwrap()
+                .write()
+                .map_memory_object(&arch, memory_object: WrappedKernelObject<Arch>);
+        }
+
+        // Create a Task for the image and add it to the scheduler's ready queue
+        let task =
+            KernelObject::Task(RwLock::new(box Task::new(&arch, address_space.clone(), image.entry_point)))
+                .add_to_map(&mut arch.object_map.write());
+        scheduler.add_task(task).unwrap();
+    }
 
     info!("Dropping to usermode");
-    task::drop_to_usermode(arch, tss, task_id);
+    scheduler.drop_to_userspace(&arch)
 }

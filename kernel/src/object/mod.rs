@@ -1,15 +1,33 @@
 pub mod map;
+pub mod task;
 
+use self::map::ObjectMap;
 use crate::arch::Architecture;
+use alloc::{boxed::Box, sync::Arc};
+use libpebble::KernelObjectId;
 use spin::RwLock;
 
+pub struct WrappedKernelObject<A: Architecture> {
+    pub id: KernelObjectId,
+    pub object: Arc<KernelObject<A>>,
+}
+
+impl<A> Clone for WrappedKernelObject<A>
+where
+    A: Architecture,
+{
+    fn clone(&self) -> Self {
+        WrappedKernelObject { id: self.id, object: self.object.clone() }
+    }
+}
+
 // TODO: when unhygenic macro items are implemented, we should just be able to do `enum
-// #KernelObject` and `#Test` and not have to pass parameters like this
-macro kernel_object_table($kernel_object: ident, $test: ident, $([$name: ident, $method: ident]),*) {
+// #KernelObject`, `#Test`, and `#wrap` and not have to pass parameters like this
+macro kernel_object_table($kernel_object: ident, $test: ident, $add_to_map: ident, $([$name: ident, $method: ident]),*) {
     #[derive(Debug)]
     pub enum $kernel_object<A: Architecture> {
         $(
-            $name(RwLock<A::$name>),
+            $name(RwLock<Box<A::$name>>),
          )*
 
         /// This is a test entry that just allows us to store a number. It is used to test the data
@@ -18,23 +36,35 @@ macro kernel_object_table($kernel_object: ident, $test: ident, $([$name: ident, 
         $test(usize),
     }
 
-    impl<A> KernelObject<A> where A: Architecture {
+    impl<A> $kernel_object<A> where A: Architecture {
+        pub fn $add_to_map(self, map: &mut ObjectMap<A>) -> WrappedKernelObject<A> {
+            let wrapped_object = Arc::new(self);
+            let id = map.insert(wrapped_object.clone());
+            WrappedKernelObject { id, object: wrapped_object, }
+        }
+
         $(
-            // TODO: should this actually just return an Option<...> instead?
-            pub fn $method(&self) -> &RwLock<A::$name> {
+            pub fn $method(&self) -> Option<&RwLock<Box<A::$name>>> {
                 match self {
-                    KernelObject::$name(ref object) => object,
-                    _ => panic!("Tried to coerce kernel object into incorrect type!"),
+                    KernelObject::$name(ref object) => Some(object),
+                    _ => None,
                 }
             }
          )*
     }
 }
 
-kernel_object_table!(KernelObject, Test, [AddressSpace, address_space], [Task, task]);
+kernel_object_table!(
+    KernelObject,
+    Test,
+    add_to_map,
+    [AddressSpace, address_space],
+    [MemoryObject, memory_object],
+    [Task, task]
+);
 
 /// Make sure that `KernelObject` doesn't get bigger without us thinking about it
 #[test]
 fn kernel_object_not_too_big() {
-    assert_eq!(core::mem::size_of::<KernelObject<crate::arch::test::FakeArch>>(), 16);
+    assert_eq!(core::mem::size_of::<KernelObject<crate::arch::test::FakeArch>>(), 24);
 }

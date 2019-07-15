@@ -1,13 +1,17 @@
-use super::memory::userspace_map;
-use crate::x86_64::Arch;
-use libpebble::object::KernelObjectId;
+use super::{memory::userspace_map, per_cpu, Arch};
+use crate::object::{
+    task::{CommonTask, TaskState},
+    WrappedKernelObject,
+};
+use core::pin::Pin;
 use x86_64::{hw::tss::Tss, memory::VirtualAddress};
 
 /// This is the representation of a task on x86_64. It's basically just keeps information about the
 /// current instruction pointer and the stack, as all other registers are preserved on the task
 /// stack when it's suspended.
 pub struct Task {
-    pub address_space: KernelObjectId,
+    pub address_space: WrappedKernelObject<Arch>,
+    pub state: TaskState,
 
     pub stack_top: VirtualAddress,
     pub stack_size: usize,
@@ -26,33 +30,39 @@ impl Task {
     // TODO: in the future, this should handle errors better than causing kernel panics because
     // this is likely to be called from userspace (through syscalls) - although we could push
     // validation of that to the syscall code
-    pub fn new(arch: &Arch, address_space: KernelObjectId, entry_point: VirtualAddress) -> Task {
-        let stacks = arch
-            .object_map
-            .read()
-            .get(address_space)
-            .expect("Invalid address space object ID")
+    pub fn new(arch: &Arch, address_space: WrappedKernelObject<Arch>, entry_point: VirtualAddress) -> Task {
+        let stack_set = address_space
+            .object
             .address_space()
+            .expect("Not an address space")
             .write()
-            .modify(arch, |mapper, allocator, state| {
-                let stacks = state
-                    .add_stack(mapper, allocator, userspace_map::INITIAL_STACK_SIZE)
-                    .expect("Failed to allocate stack for task");
-
-                stacks
-            });
+            .add_stack_set(userspace_map::INITIAL_STACK_SIZE, &arch.physical_memory_manager)
+            .expect("Failed to allocate stacks for task");
 
         Task {
             address_space,
-            stack_top: stacks.user_stack_top,
+            state: TaskState::Ready,
+            stack_top: stack_set.user_stack_top,
             stack_size: userspace_map::INITIAL_STACK_SIZE,
             instruction_pointer: entry_point,
-            stack_pointer: stacks.user_stack_top,
+            stack_pointer: stack_set.user_stack_top,
         }
     }
 }
 
-pub fn drop_to_usermode(arch: &Arch, tss: &mut Tss, task_id: KernelObjectId) -> ! {
+impl CommonTask for Task {
+    fn state(&self) -> TaskState {
+        self.state
+    }
+
+    fn switch_to(&mut self) {
+        assert_eq!(self.state, TaskState::Ready);
+        self.address_space.object.address_space().unwrap().write().switch_to();
+        self.state = TaskState::Running;
+    }
+}
+
+pub fn drop_to_usermode(arch: &Arch, task: WrappedKernelObject<Arch>) -> ! {
     use x86_64::hw::gdt::{USER_CODE64_SELECTOR, USER_DATA_SELECTOR};
 
     unsafe {
@@ -83,12 +93,9 @@ pub fn drop_to_usermode(arch: &Arch, tss: &mut Tss, task_id: KernelObjectId) -> 
          * dropped, because this function never returns.
          */
         let (entry_point, stack_pointer) = {
-            let object_map = arch.object_map.read();
-            let task = object_map.get(task_id).expect("Invalid task ID").task().read();
-            let address_space = object_map.get(task.address_space).unwrap().address_space();
-
-            address_space.write().switch_to();
-            (task.instruction_pointer, task.stack_pointer)
+            let task_object = task.object.task().expect("Not a task").write();
+            task_object.address_space.object.address_space().unwrap().write().switch_to();
+            (task_object.instruction_pointer, task_object.stack_pointer)
         };
 
         /*
