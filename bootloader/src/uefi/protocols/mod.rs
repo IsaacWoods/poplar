@@ -1,3 +1,4 @@
 mod files;
+mod gop;
 
-pub use self::files::*;
+pub use self::{files::*, gop::*};

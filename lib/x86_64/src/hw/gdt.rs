@@ -1,6 +1,5 @@
 use super::{tss::Tss, DescriptorTablePointer};
 use crate::memory::VirtualAddress;
-use alloc::boxed::Box;
 use bit_field::BitField;
 use core::{mem, ops::Deref, pin::Pin};
 

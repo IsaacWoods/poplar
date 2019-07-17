@@ -101,6 +101,32 @@ impl ImageInfo {
     }
 }
 
+#[derive(Clone, Copy, Debug)]
+#[repr(u8)]
+pub enum PixelFormat {
+    /// Each pixel is represented by 4 bytes, with the following layout:
+    /// |--------|--------|--------|--------|
+    /// | ------ | blue   | green  | red    |
+    /// |--------|--------|--------|--------|
+    RGB32,
+
+    /// Each pixel is represented by 4 bytes, with the following layout:
+    /// |--------|--------|--------|--------|
+    /// | ------ | red    | green  | blue   |
+    /// |--------|--------|--------|--------|
+    BGR32,
+}
+
+#[derive(Clone, Copy, Debug)]
+#[repr(C)]
+pub struct VideoInfo {
+    pub framebuffer_address: PhysicalAddress,
+    pub pixel_format: PixelFormat,
+    pub width: u32,
+    pub height: u32,
+    pub stride: u32,
+}
+
 /// This structure is placed in memory by the bootloader and a reference to it passed to the
 /// kernel. It allows the kernel to access information discovered by the bootloader, such as the
 /// graphics mode it switched to.
@@ -121,6 +147,7 @@ pub struct BootInfo {
     pub rsdp_address: Option<PhysicalAddress>,
     pub num_images: usize,
     pub images: [ImageInfo; NUM_IMAGES],
+    pub video_info: Option<VideoInfo>,
 }
 
 impl BootInfo {

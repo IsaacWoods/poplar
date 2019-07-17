@@ -197,8 +197,7 @@ pub struct FileSystemInfo {
 impl FileSystemInfo {
     pub fn volume_label(&self) -> Result<Pool<str>, Status> {
         let buf = unsafe {
-            let buf_size =
-                self._size - (mem::size_of::<FileSystemInfo>() - mem::size_of::<Char16>());
+            let buf_size = self._size - (mem::size_of::<FileSystemInfo>() - mem::size_of::<Char16>());
             slice::from_raw_parts(&(self._volume_label), buf_size)
         };
 
@@ -212,19 +211,11 @@ impl FileInformationType for FileSystemInfo {
     }
 }
 
-static FILE_INFO_GUID: Guid = Guid {
-    a: 0x09576e92,
-    b: 0x6d3f,
-    c: 0x11d2,
-    d: [0x8e, 0x39, 0x00, 0xa0, 0xc9, 0x69, 0x72, 0x3b],
-};
+static FILE_INFO_GUID: Guid =
+    Guid { a: 0x09576e92, b: 0x6d3f, c: 0x11d2, d: [0x8e, 0x39, 0x00, 0xa0, 0xc9, 0x69, 0x72, 0x3b] };
 
-static FILE_SYSTEM_INFO_GUID: Guid = Guid {
-    a: 0x09576e93,
-    b: 0x6d3f,
-    c: 0x11d2,
-    d: [0x8e, 0x39, 0x00, 0xa0, 0xc9, 0x69, 0x72, 0x3b],
-};
+static FILE_SYSTEM_INFO_GUID: Guid =
+    Guid { a: 0x09576e93, b: 0x6d3f, c: 0x11d2, d: [0x8e, 0x39, 0x00, 0xa0, 0xc9, 0x69, 0x72, 0x3b] };
 
 /// Provides a minimal interface for file-type access to a device
 #[repr(C)]
@@ -253,9 +244,5 @@ impl Protocol for SimpleFileSystem {
     }
 }
 
-static SIMPLE_FILE_SYSTEM_GUID: Guid = Guid {
-    a: 0x0964e5b22,
-    b: 0x6459,
-    c: 0x11d2,
-    d: [0x8e, 0x39, 0x00, 0xa0, 0xc9, 0x69, 0x72, 0x3b],
-};
+static SIMPLE_FILE_SYSTEM_GUID: Guid =
+    Guid { a: 0x0964e5b22, b: 0x6459, c: 0x11d2, d: [0x8e, 0x39, 0x00, 0xa0, 0xc9, 0x69, 0x72, 0x3b] };

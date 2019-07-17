@@ -1,15 +1,6 @@
 #![no_std]
 #![no_main]
-#![feature(
-    const_fn,
-    lang_items,
-    ptr_internals,
-    decl_macro,
-    panic_info_message,
-    asm,
-    never_type,
-    cell_update
-)]
+#![feature(const_fn, lang_items, ptr_internals, decl_macro, panic_info_message, asm, never_type, cell_update)]
 
 mod elf;
 mod image;
@@ -20,12 +11,25 @@ mod uefi;
 
 use crate::{
     memory::{BootFrameAllocator, MemoryMap, MemoryType},
-    uefi::{system_table::SystemTable, Guid, Handle},
+    uefi::{
+        boot_services::{OpenProtocolAttributes, Protocol, SearchType},
+        protocols::{GraphicsOutput, PixelFormat},
+        system_table::SystemTable,
+        Guid,
+        Handle,
+    },
 };
 use core::{mem, panic::PanicInfo};
-use log::{error, trace};
+use log::{error, trace, warn};
+use uefi::{image_handle, system_table};
 use x86_64::{
-    boot::{BootInfo, MemoryEntry, MemoryType as BootInfoMemoryType},
+    boot::{
+        BootInfo,
+        MemoryEntry,
+        MemoryType as BootInfoMemoryType,
+        PixelFormat as BootInfoPixelFormat,
+        VideoInfo,
+    },
     memory::{
         kernel_map,
         EntryFlags,
@@ -68,7 +72,7 @@ pub extern "win64" fn efi_main(image_handle: Handle, system_table: &'static Syst
     /*
      * Construct the initial `BootInfo`.
      */
-    let boot_info = construct_boot_info(&mut kernel_mapper, &allocator);
+    let mut boot_info = construct_boot_info(&mut kernel_mapper, &allocator);
 
     /*
      * Read and parse bootcmd file.
@@ -85,11 +89,10 @@ pub extern "win64" fn efi_main(image_handle: Handle, system_table: &'static Syst
         match parts.next() {
             Some("kernel") => {
                 let kernel_path = parts.next().expect("Expected path after 'kernel' command");
-                kernel_info =
-                    Some(match kernel::load_kernel(&kernel_path, &mut kernel_mapper, &allocator) {
-                        Ok(kernel_info) => kernel_info,
-                        Err(err) => panic!("Failed to load kernel: {:?}", err),
-                    });
+                kernel_info = Some(match kernel::load_kernel(&kernel_path, &mut kernel_mapper, &allocator) {
+                    Ok(kernel_info) => kernel_info,
+                    Err(err) => panic!("Failed to load kernel: {:?}", err),
+                });
             }
 
             Some("image") => {
@@ -99,6 +102,18 @@ pub extern "win64" fn efi_main(image_handle: Handle, system_table: &'static Syst
                     Err(err) => panic!("Failed to load image({}): {:?}", image_path, err),
                 };
                 boot_info.add_image(image);
+            }
+
+            Some("video_mode") => {
+                let desired_width = parts
+                    .next()
+                    .and_then(|x| str::parse::<u32>(x).ok())
+                    .expect("Expected integer for desired width after 'video_mode' command");
+                let desired_height = parts
+                    .next()
+                    .and_then(|x| str::parse::<u32>(x).ok())
+                    .expect("Expected integer for desired height after 'video_mode' command");
+                choose_and_switch_to_video_mode(&mut boot_info, desired_width, desired_height);
             }
 
             part => panic!("Invalid bootcmd command: {:?}", part),
@@ -176,8 +191,7 @@ fn allocate_and_map_heap(mapper: &mut Mapper, allocator: &BootFrameAllocator) {
         .map_err(|err| panic!("Failed to allocate memory for kernel heap: {:?}", err))
         .unwrap();
 
-    let heap_frames =
-        Frame::contains(heap_physical_base)..=Frame::contains(heap_physical_base + heap_size);
+    let heap_frames = Frame::contains(heap_physical_base)..=Frame::contains(heap_physical_base + heap_size);
     let heap_pages = Page::contains(kernel_map::HEAP_START)..=Page::contains(kernel_map::HEAP_END);
     for (frame, page) in heap_frames.zip(heap_pages) {
         mapper
@@ -193,10 +207,7 @@ fn allocate_and_map_heap(mapper: &mut Mapper, allocator: &BootFrameAllocator) {
 
 /// Allocates space and fills out static parts of the `BootInfo`. Passes back a mutable reference
 /// so we can fill more out as we load images, find the final memory map etc.
-fn construct_boot_info(
-    kernel_mapper: &mut Mapper,
-    allocator: &BootFrameAllocator,
-) -> &'static mut BootInfo {
+fn construct_boot_info(kernel_mapper: &mut Mapper, allocator: &BootFrameAllocator) -> &'static mut BootInfo {
     use x86_64::boot::{ImageInfo, BOOT_INFO_MAGIC, NUM_IMAGES, NUM_MEMORY_MAP_ENTRIES};
     trace!("Constructing boot info");
 
@@ -205,18 +216,10 @@ fn construct_boot_info(
      * (because they're free to put the RSDP wherever they please), so we should try to find it
      * in the configuration table first.
      */
-    const RSDP_V1_GUID: Guid = Guid {
-        a: 0xeb9d2d30,
-        b: 0x2d88,
-        c: 0x11d3,
-        d: [0x9a, 0x16, 0x00, 0x90, 0x27, 0x3f, 0xc1, 0x4d],
-    };
-    const RSDP_V2_GUID: Guid = Guid {
-        a: 0x8868e871,
-        b: 0xe4f1,
-        c: 0x11d3,
-        d: [0xbc, 0x22, 0x00, 0x80, 0xc7, 0x3c, 0x88, 0x81],
-    };
+    const RSDP_V1_GUID: Guid =
+        Guid { a: 0xeb9d2d30, b: 0x2d88, c: 0x11d3, d: [0x9a, 0x16, 0x00, 0x90, 0x27, 0x3f, 0xc1, 0x4d] };
+    const RSDP_V2_GUID: Guid =
+        Guid { a: 0x8868e871, b: 0xe4f1, c: 0x11d3, d: [0xbc, 0x22, 0x00, 0x80, 0xc7, 0x3c, 0x88, 0x81] };
 
     let mut rsdp_address = None;
     for config_entry in uefi::system_table().config_table().iter() {
@@ -242,13 +245,12 @@ fn construct_boot_info(
         magic: BOOT_INFO_MAGIC,
         // TODO: we might be able to replace this with `Default::default()` when const generics
         // land and they sort out the `impl T for [U; 1..=32]` mess
-        memory_map: unsafe {
-            mem::transmute([0u8; mem::size_of::<[MemoryEntry; NUM_MEMORY_MAP_ENTRIES]>()])
-        },
+        memory_map: unsafe { mem::transmute([0u8; mem::size_of::<[MemoryEntry; NUM_MEMORY_MAP_ENTRIES]>()]) },
         num_memory_map_entries: 0,
         rsdp_address,
         num_images: 0,
         images: [ImageInfo::default(); NUM_IMAGES],
+        video_info: None,
     };
 
     /*
@@ -264,6 +266,91 @@ fn construct_boot_info(
         .unwrap();
 
     boot_info
+}
+
+fn choose_and_switch_to_video_mode(boot_info: &mut BootInfo, desired_width: u32, desired_height: u32) {
+    /*
+     * First, we choose a suitable mode on any device that implements the Graphics Output Protocol.
+     */
+    let chosen_mode = system_table()
+        .boot_services
+        .locate_handle(SearchType::ByProtocol, Some(GraphicsOutput::guid()), None)
+        .unwrap()
+        .iter()
+        .map(|&protocol_handle| {
+            /*
+             * For each handle, we open the protocol and query it to find the modes it supports. We
+             * record the protocol handle that each mode comes from, so we know which handle to use
+             * if we choose that mode.
+             */
+            system_table()
+                .boot_services
+                .open_protocol::<GraphicsOutput>(
+                    protocol_handle,
+                    image_handle(),
+                    0,
+                    OpenProtocolAttributes::BY_HANDLE_PROTOCOL,
+                )
+                .unwrap()
+                .modes()
+                .map(move |(index, mode_info)| (protocol_handle, index, mode_info))
+        })
+        .flatten()
+        .find(|(_proto_handle, _index, mode_info)| {
+            /*
+             * We can now select the most suitable mode:
+             *      - We only want modes that we can create a linear framebuffer from, so we discard modes
+             *        that only support the `blt` function (we also don't support custom pixel formats,
+             *        just the normal 32-bit RGB and BGR modes)
+             *      - At the moment, we only choose modes that exactly match the user's given resolution;
+             *        we could relax this in the future and choose a close mode rather than giving up
+             *      - At the moment, we don't pay any attention to which handle is supplying the mode.
+             */
+            (mode_info.format == PixelFormat::RGB || mode_info.format == PixelFormat::BGR)
+                && mode_info.x_resolution == desired_width
+                && mode_info.y_resolution == desired_height
+        });
+
+    if let Some((protocol_handle, mode_index, mode_info)) = chosen_mode {
+        /*
+         * Switch to the chosen mode.
+         */
+        let protocol = system_table()
+            .boot_services
+            .open_protocol::<GraphicsOutput>(
+                protocol_handle,
+                image_handle(),
+                0,
+                OpenProtocolAttributes::BY_HANDLE_PROTOCOL,
+            )
+            .unwrap();
+        protocol.set_mode(mode_index).unwrap();
+        trace!(
+            "Switched to video mode with width {} and height {}",
+            mode_info.x_resolution,
+            mode_info.y_resolution
+        );
+
+        let pixel_format = match mode_info.format {
+            PixelFormat::RGB => BootInfoPixelFormat::RGB32,
+            PixelFormat::BGR => BootInfoPixelFormat::BGR32,
+            _ => panic!("Chosen mode has unsupported pixel format!"),
+        };
+
+        /*
+         * Record the required information about the video mode we've chosen in the BootInfo.
+         */
+        boot_info.video_info = Some(VideoInfo {
+            framebuffer_address: PhysicalAddress::new(protocol.mode_data().framebuffer_address as usize)
+                .unwrap(),
+            pixel_format,
+            width: mode_info.x_resolution,
+            height: mode_info.y_resolution,
+            stride: mode_info.stride,
+        });
+    } else {
+        warn!("Failed to find suitable video mode, but one was requested. Continuing, but there may not be any video output.");
+    }
 }
 
 fn add_memory_map_to_boot_info(boot_info: &mut BootInfo, memory_map: &MemoryMap) {
@@ -290,9 +377,7 @@ fn add_memory_map_to_boot_info(boot_info: &mut BootInfo, memory_map: &MemoryMap)
              */
             MemoryType::ACPIReclaimMemory => BootInfoMemoryType::AcpiReclaimable,
 
-            MemoryType::ACPIMemoryNVS | MemoryType::PersistentMemory => {
-                BootInfoMemoryType::SleepPreserve
-            }
+            MemoryType::ACPIMemoryNVS | MemoryType::PersistentMemory => BootInfoMemoryType::SleepPreserve,
 
             MemoryType::PalCode => BootInfoMemoryType::NonVolatileSleepPreserve,
 
@@ -326,11 +411,7 @@ fn add_memory_map_to_boot_info(boot_info: &mut BootInfo, memory_map: &MemoryMap)
     }
 }
 
-fn create_physical_mapping(
-    mapper: &mut Mapper,
-    allocator: &BootFrameAllocator,
-    memory_map: &MemoryMap,
-) {
+fn create_physical_mapping(mapper: &mut Mapper, allocator: &BootFrameAllocator, memory_map: &MemoryMap) {
     let max_physical_address = memory_map
         .iter()
         .map(|entry| entry.physical_start + (entry.number_of_pages as usize * Size4KiB::SIZE))
@@ -350,9 +431,7 @@ fn create_physical_mapping(
     );
 
     for (frame, page) in (start_frame..end_frame).zip(start_page..end_page) {
-        mapper
-            .map_to_2MiB(page, frame, EntryFlags::WRITABLE | EntryFlags::NO_EXECUTE, allocator)
-            .unwrap();
+        mapper.map_to_2MiB(page, frame, EntryFlags::WRITABLE | EntryFlags::NO_EXECUTE, allocator).unwrap();
     }
 }
 
