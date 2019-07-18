@@ -32,6 +32,7 @@ sections:
 | `0x20`        | `0x00`        | `u16` port number     | Yes - x86_64      | `CAP_X86_64_ACCESS_IO_PORT`                                           | Planned   |
 | `0x21`-`0x2f` |               |                       |                   | Reserved for future architectures                                     |           |
 | `0x30`        |               |                       | No                | `CAP_MAP_FRAMEBUFFER`                                                 | Planned   |
+| `0x31`        |               |                       | No                | `CAP_EARLY_LOGGING`                                                   | Planned   |
 
 ### `CAP_MAP_FRAMEBUFFER`
 If a video mode was chosen in the `bootcmd` and successfully switched to by the bootloader, the framebuffer of that
@@ -43,3 +44,8 @@ TODO: work out what should happen if a video mode is not picked, but a task with
 **NOTE:** while this capability seems quite innocuous, it is anything but. A rouge task that has this capability
 could in theory skim sensitive information, such as passwords or credit card details using the framebuffer, if
 this driver is in use.
+
+### `CAP_EARLY_LOGGING`
+This capability is owned by tasks that are started early in the boot process, before robust userspace logging is
+running. It is used to emit logging messages to the kernel log that help debug the early boot process, using the
+`early_log` system call.

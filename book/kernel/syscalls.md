@@ -12,11 +12,12 @@ attack surface of the kernel.
 Each system call has a unique number that is used to identify it. A system call can then take up to five parameters, each a maximum in size of the system's register width. It can return a single value, also
 the size of a register.
 
-### List of system calls
+### Overview of system calls
 
-| Number    | System call           | a         | b         | c         | d         | e         | Return value          | Description                                                                   |
-|-----------|-----------------------|-----------|-----------|-----------|-----------|-----------|-----------------------|-------------------------------------------------------------------------------|
-| `0`       | `yield`               | -         | -         | -         | -         | -         | -                     | Yield to the kernel.                                                          |
+| Number    | System call           | a                 | b                 | c                 | d                 | e                 | Return value          | Description                                               |
+|-----------|-----------------------|-------------------|-------------------|-------------------|-------------------|-------------------|-----------------------|-----------------------------------------------------------|
+| `0`       | `yield`               | -                 | -                 | -                 | -                 | -                 | -                     | Yield to the kernel.                                      |
+| `1`       | `early_log`           | length            | ptr to string     | -                 | -                 | -                 | success/error         | Log a message. Designed to be used from early processes.  |
 
 ### Making a system call on x86_64
 To make a system call on x86_64, populate these registers:
@@ -27,3 +28,19 @@ To make a system call on x86_64, populate these registers:
 
 You can then make the system call by executing `syscall`. Before the kernel returns to userspace, it will put the result of the system call (if there is one) in `rax`.
 If a system call takes less than five parameters, the unused parameter registers will be preserved across the system call.
+
+### `yield`
+Used by a task that can't do any work at the moment, allowing the kernel to schedule other tasks.
+
+### `early_log`
+Used by tasks that are started early in the boot process, before reliable userspace logging support is running. Output is
+logged to the same place as kernel logging.
+
+This system call should not be used from standard usermode tasks, and so requires the `CAP_EARLY_LOGGING` capability to use.
+The first parameter (`a`) is the length of the string in bytes, and the second (`b`) is a UTF-8 encoded string that is not
+null-terminated. The maximum length of the string is 1024 chars.
+
+Returns:
+ - `0` if the system call succeeded
+ - `1` if the string was too long
+ - `2` if the string was not valid UTF-8

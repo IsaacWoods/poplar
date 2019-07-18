@@ -5,22 +5,17 @@
 use core::panic::PanicInfo;
 use libpebble::syscall;
 
-// XXX: this doesn't do anything, just forces the image to generate a segment to put .data in
-static mut FOO: u8 = 7;
-
 #[no_mangle]
 pub extern "C" fn start() -> ! {
-    unsafe {
-        FOO = 11;
-    }
+    syscall::early_log("Hello, World!").unwrap();
     syscall::yield_to_kernel();
-    unsafe {
-        FOO = 46;
-    }
+    syscall::early_log("After yeild").unwrap();
     loop {}
 }
 
 #[panic_handler]
 pub fn handle_panic(_: &PanicInfo) -> ! {
+    // We ignore the result here because there's no point panicking in the panic handler
+    let _ = syscall::early_log("Test process panicked!");
     loop {}
 }
