@@ -2,9 +2,9 @@ use scroll::Pread;
 
 #[derive(Debug)]
 pub struct NoteEntry<'a> {
-    name: &'a [u8],
-    entry_type: u32,
-    desc: &'a [u8],
+    pub name: &'a [u8],
+    pub entry_type: u32,
+    pub desc: &'a [u8],
 }
 
 pub struct NoteIter<'a> {
