@@ -1,6 +1,6 @@
 [package]
 name = "mer"
-version = "0.2.0"
+version = "0.3.0"
 authors = ["Isaac Woods"]
 edition = "2018"
 repository = "https://github.com/pebble-os/pebble/lib/mer"
