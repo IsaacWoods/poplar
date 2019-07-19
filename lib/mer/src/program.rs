@@ -1,4 +1,4 @@
-use crate::{Elf, ElfError};
+use crate::{note::NoteIter, Elf, ElfError};
 use bit_field::BitField;
 use scroll_derive::Pread;
 
@@ -74,5 +74,15 @@ impl ProgramHeader {
 
     pub fn is_readable(&self) -> bool {
         self.flags.get_bit(2)
+    }
+
+    /// If this is a `PT_NOTE` segment, iterate the entries. Returns `None` if this isn't a note
+    /// segment.
+    pub fn iterate_note_entries<'a>(&self, elf: &'a Elf) -> Option<NoteIter<'a>> {
+        if self.segment_type() != SegmentType::Note {
+            return None;
+        }
+
+        Some(NoteIter::new(self.data(elf)))
     }
 }

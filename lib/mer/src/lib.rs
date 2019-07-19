@@ -1,6 +1,7 @@
 #![no_std]
 
 pub mod header;
+pub mod note;
 pub mod program;
 pub mod section;
 pub mod symbol;
@@ -38,18 +39,17 @@ impl Elf<'_> {
         elf.segments().map(|segment| segment.validate()).collect::<Result<_, ElfError>>()?;
 
         // Cache the symbol table, if there is one
-        elf.symbol_table =
-            match elf.sections().find(|section| section.name(&elf) == Some(".symtab")) {
-                Some(symbol_table) => {
-                    if symbol_table.section_type() != SectionType::SymTab {
-                        return Err(ElfError::InvalidSymbolTable);
-                    }
-
-                    Some(symbol_table)
+        elf.symbol_table = match elf.sections().find(|section| section.name(&elf) == Some(".symtab")) {
+            Some(symbol_table) => {
+                if symbol_table.section_type() != SectionType::SymTab {
+                    return Err(ElfError::InvalidSymbolTable);
                 }
 
-                None => None,
-            };
+                Some(symbol_table)
+            }
+
+            None => None,
+        };
 
         Ok(elf)
     }
@@ -58,8 +58,7 @@ impl Elf<'_> {
     pub fn sections(&self) -> EntryIter<SectionHeader> {
         let start = self.header.section_header_offset as usize;
         let end = start
-            + self.header.section_header_entry_size as usize
-                * self.header.number_of_section_headers as usize;
+            + self.header.section_header_entry_size as usize * self.header.number_of_section_headers as usize;
 
         EntryIter::new(
             &self.bytes[start..end],
@@ -71,8 +70,7 @@ impl Elf<'_> {
     pub fn segments(&self) -> EntryIter<ProgramHeader> {
         let start = self.header.program_header_offset as usize;
         let end = start
-            + self.header.program_header_entry_size as usize
-                * self.header.number_of_program_headers as usize;
+            + self.header.program_header_entry_size as usize * self.header.number_of_program_headers as usize;
 
         EntryIter::new(
             &self.bytes[start..end],
@@ -86,11 +84,9 @@ impl Elf<'_> {
             None => EntryIter::new(&[], 0, 0),
 
             Some(ref symbol_table) => match symbol_table.data(&self) {
-                Some(data) => EntryIter::new(
-                    data,
-                    symbol_table.size / symbol_table.entry_size,
-                    symbol_table.entry_size,
-                ),
+                Some(data) => {
+                    EntryIter::new(data, symbol_table.size / symbol_table.entry_size, symbol_table.entry_size)
+                }
                 None => EntryIter::new(&[], 0, 0),
             },
         }
