@@ -7,6 +7,7 @@ PHDRS {
     text PT_LOAD;
     rodata PT_LOAD;
     data PT_LOAD;
+    caps PT_NOTE;
 }
 
 SECTIONS {
@@ -31,4 +32,8 @@ SECTIONS {
         *(.bss .bss.*)
         . = ALIGN(4K);
     } :data
+
+    .caps : {
+        KEEP(*(.caps))
+    } :caps
 }

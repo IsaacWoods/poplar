@@ -7,6 +7,7 @@ pub const NUM_IMAGES: usize = 16;
 /// Each initial image is expected to have a maximum of three segments: read-only, read+write,
 /// and read+execute.
 pub const NUM_SEGMENTS_PER_IMAGE: usize = 3;
+pub const MAX_CAPABILITY_BYTES_PER_IMAGE: usize = 32;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum MemoryType {
@@ -83,6 +84,7 @@ pub struct ImageInfo {
     pub num_segments: usize,
     pub segments: [MemoryObjectInfo; NUM_SEGMENTS_PER_IMAGE],
     pub entry_point: VirtualAddress,
+    pub capability_stream: [u8; MAX_CAPABILITY_BYTES_PER_IMAGE],
 }
 
 impl ImageInfo {
