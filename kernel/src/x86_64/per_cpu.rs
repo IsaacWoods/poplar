@@ -1,6 +1,5 @@
 use alloc::boxed::Box;
 use core::{marker::PhantomPinned, mem, pin::Pin};
-use log::info;
 use x86_64::hw::{
     gdt::{SegmentSelector, TssSegment},
     registers::{write_msr, IA32_GS_BASE},

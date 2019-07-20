@@ -13,7 +13,6 @@ mod task;
 use self::{
     acpi_handler::PebbleAcpiHandler,
     address_space::AddressSpace,
-    cpu::Cpu,
     interrupts::InterruptController,
     logger::KernelLogger,
     memory::LockedPhysicalMemoryManager,
@@ -25,19 +24,12 @@ use crate::{
     object::{map::ObjectMap, KernelObject, WrappedKernelObject},
     scheduler::Scheduler,
 };
-use acpi::ProcessorState;
-use alloc::vec::Vec;
 use aml_parser::AmlContext;
 use log::{error, info, warn};
 use spin::{Mutex, RwLock};
 use x86_64::{
-    boot::BootInfo,
-    hw::{
-        cpu::CpuInfo,
-        gdt::{Gdt, TssSegment},
-        registers::{read_control_reg, read_msr, IA32_GS_BASE},
-        tss::Tss,
-    },
+    boot::{BootInfo, ImageInfo},
+    hw::{cpu::CpuInfo, gdt::Gdt, registers::read_control_reg},
     memory::{kernel_map, Frame, PageTable, PhysicalAddress},
 };
 
@@ -232,30 +224,35 @@ pub fn kmain() -> ! {
      */
     let mut scheduler = Scheduler::<Arch>::new();
     for image in boot_info.images() {
-        // Make an AddressSpace for the image
-        let address_space: WrappedKernelObject<Arch> =
-            KernelObject::AddressSpace(RwLock::new(box AddressSpace::new(&arch)))
-                .add_to_map(&mut arch.object_map.write());
-
-        // Make a MemoryObject for each segment and map it into the AddressSpace
-        for segment in image.segments() {
-            let memory_object = KernelObject::MemoryObject(RwLock::new(box MemoryObject::new(&segment)))
-                .add_to_map(&mut arch.object_map.write());
-            address_space
-                .object
-                .address_space()
-                .unwrap()
-                .write()
-                .map_memory_object(&arch, memory_object: WrappedKernelObject<Arch>);
-        }
-
-        // Create a Task for the image and add it to the scheduler's ready queue
-        let task =
-            KernelObject::Task(RwLock::new(box Task::new(&arch, address_space.clone(), image.entry_point)))
-                .add_to_map(&mut arch.object_map.write());
-        scheduler.add_task(task).unwrap();
+        load_task(&arch, &mut scheduler, image);
     }
 
     info!("Dropping to usermode");
     scheduler.drop_to_userspace(&arch)
+}
+
+fn load_task(arch: &Arch, scheduler: &mut Scheduler<Arch>, image: &ImageInfo) {
+    // Make an AddressSpace for the image
+    let address_space: WrappedKernelObject<Arch> =
+        KernelObject::AddressSpace(RwLock::new(box AddressSpace::new(&arch)))
+            .add_to_map(&mut arch.object_map.write());
+
+    // Make a MemoryObject for each segment and map it into the AddressSpace
+    for segment in image.segments() {
+        let memory_object = KernelObject::MemoryObject(RwLock::new(box MemoryObject::new(&segment)))
+            .add_to_map(&mut arch.object_map.write());
+        address_space
+            .object
+            .address_space()
+            .unwrap()
+            .write()
+            .map_memory_object(&arch, memory_object: WrappedKernelObject<Arch>);
+    }
+
+    // Create a Task for the image and add it to the scheduler's ready queue
+    let task = KernelObject::Task(RwLock::new(
+        box Task::from_image_info(&arch, address_space.clone(), image).unwrap(),
+    ))
+    .add_to_map(&mut arch.object_map.write());
+    scheduler.add_task(task).unwrap();
 }

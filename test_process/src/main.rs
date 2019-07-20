@@ -46,10 +46,10 @@ pub struct Capabilities<const N: usize> {
 
 #[used]
 #[link_section = ".caps"]
-pub static mut CAPS: Capabilities<8> = Capabilities {
+pub static mut CAPS: Capabilities<4> = Capabilities {
     name_size: 6,
-    desc_size: 5,
+    desc_size: 2,
     entry_type: 0,
     name: [b'P', b'E', b'B', b'B', b'L', b'E', b'\0', 0x00],
-    desc: [0x01, 0x02, 0x03, 0x04, 0x05, 0x00, 0x00, 0x00],
+    desc: [0x30, 0x31, 0x00, 0x00],
 };

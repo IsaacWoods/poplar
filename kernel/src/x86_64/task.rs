@@ -3,8 +3,23 @@ use crate::object::{
     task::{CommonTask, TaskState},
     WrappedKernelObject,
 };
+use alloc::vec::Vec;
 use core::pin::Pin;
-use x86_64::{hw::tss::Tss, memory::VirtualAddress};
+use libpebble::caps::Capability;
+use x86_64::{boot::ImageInfo, memory::VirtualAddress};
+
+#[derive(Debug)]
+pub enum TaskCreationError {
+    /// The kernel object that should be the AddressSpace that this task will live in is not
+    /// actually an AddressSpace
+    NotAnAddressSpace,
+
+    /// The AddressSpace has run out of stack slots
+    NotEnoughStackSlots,
+
+    /// The task image has an invalid capability encoding
+    InvalidCapabilityEncoding,
+}
 
 /// This is the representation of a task on x86_64. It's basically just keeps information about the
 /// current instruction pointer and the stack, as all other registers are preserved on the task
@@ -12,6 +27,7 @@ use x86_64::{hw::tss::Tss, memory::VirtualAddress};
 pub struct Task {
     pub address_space: WrappedKernelObject<Arch>,
     pub state: TaskState,
+    pub capabilities: Vec<Capability>,
 
     pub stack_top: VirtualAddress,
     pub stack_size: usize,
@@ -27,26 +43,28 @@ impl Task {
     /// ### Panics
     /// * If the given address space doesn't point to a valid `AddressSpace`
     /// * If the `AddressSpace` fails to create a new stack for the task
-    // TODO: in the future, this should handle errors better than causing kernel panics because
-    // this is likely to be called from userspace (through syscalls) - although we could push
-    // validation of that to the syscall code
-    pub fn new(arch: &Arch, address_space: WrappedKernelObject<Arch>, entry_point: VirtualAddress) -> Task {
+    pub fn from_image_info(
+        arch: &Arch,
+        address_space: WrappedKernelObject<Arch>,
+        image: &ImageInfo,
+    ) -> Result<Task, TaskCreationError> {
         let stack_set = address_space
             .object
             .address_space()
-            .expect("Not an address space")
+            .ok_or(TaskCreationError::NotAnAddressSpace)?
             .write()
             .add_stack_set(userspace_map::INITIAL_STACK_SIZE, &arch.physical_memory_manager)
-            .expect("Failed to allocate stacks for task");
+            .ok_or(TaskCreationError::NotEnoughStackSlots)?;
 
-        Task {
+        Ok(Task {
             address_space,
             state: TaskState::Ready,
+            capabilities: decode_capabilities(&image.capability_stream)?,
             stack_top: stack_set.user_stack_top,
             stack_size: userspace_map::INITIAL_STACK_SIZE,
-            instruction_pointer: entry_point,
+            instruction_pointer: image.entry_point,
             stack_pointer: stack_set.user_stack_top,
-        }
+        })
     }
 }
 
@@ -148,4 +166,38 @@ pub fn drop_to_usermode(arch: &Arch, task: WrappedKernelObject<Arch>) -> ! {
         );
         unreachable!();
     }
+}
+
+/// Decode a capability stream (as found in a task's image) into a set of capabilities as they're
+/// represented in the kernel. For the format that's being decoded here, refer to the
+/// `(3.1) Userspace/Capabilities` section of the Book.
+fn decode_capabilities(mut cap_stream: &[u8]) -> Result<Vec<Capability>, TaskCreationError> {
+    let mut caps = Vec::new();
+
+    // TODO: when decl_macro hygiene-opt-out is implemented, this should be converted to use it
+    macro_rules! one_byte_cap {
+        ($cap: path) => {{
+            caps.push($cap);
+            cap_stream = &cap_stream[1..];
+        }};
+    }
+
+    while cap_stream.len() > 0 {
+        match cap_stream[0] {
+            0x01 => one_byte_cap!(Capability::CreateAddressSpace),
+            0x02 => one_byte_cap!(Capability::CreateMemoryObject),
+            0x03 => one_byte_cap!(Capability::CreateTask),
+
+            0x30 => one_byte_cap!(Capability::MapFramebuffer),
+            0x31 => one_byte_cap!(Capability::EarlyLogging),
+
+            // We skip `0x00` as the first byte of a capability, as it is just used to pad the
+            // stream and so has no meaning
+            0x00 => cap_stream = &cap_stream[1..],
+
+            _ => return Err(TaskCreationError::InvalidCapabilityEncoding),
+        }
+    }
+
+    Ok(caps)
 }

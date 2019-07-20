@@ -25,16 +25,16 @@ sections:
 | First byte    | Next byte(s)  | Data                  | Arch specific?    | Description                                                           | Status    |
 |---------------|---------------|-----------------------|-------------------|-----------------------------------------------------------------------|-----------|
 | `0x00`        | -             | -                     | -                 | No meaning - used to pad descriptor to required length (see above)    | -         |
-| `0x01`        |               |                       | No                | `CAP_CREATE_ADDRESS_SPACE`                                            | Planned   |
-| `0x02`        |               |                       | No                | `CAP_CREATE_MEMORY_OBJECT`                                            | Planned   |
-| `0x03`        |               |                       | No                | `CAP_CREATE_TASK`                                                     | Planned   |
+| `0x01`        |               |                       | No                | `CreateAddressSpace`                                                  | Planned   |
+| `0x02`        |               |                       | No                | `CreateMemoryObject`                                                  | Planned   |
+| `0x03`        |               |                       | No                | `CreateTask`                                                          | Planned   |
 | `0x04`-`0x1f` |               |                       |                   | Reserved for future kernel objects                                    |           |
-| `0x20`        | `0x00`        | `u16` port number     | Yes - x86_64      | `CAP_X86_64_ACCESS_IO_PORT`                                           | Planned   |
+| `0x20`        | `0x00`        | `u16` port number     | Yes - x86_64      | `X86_64AccessIoPort`                                                  | Planned   |
 | `0x21`-`0x2f` |               |                       |                   | Reserved for future architectures                                     |           |
-| `0x30`        |               |                       | No                | `CAP_MAP_FRAMEBUFFER`                                                 | Planned   |
-| `0x31`        |               |                       | No                | `CAP_EARLY_LOGGING`                                                   | Planned   |
+| `0x30`        |               |                       | No                | `MapFramebuffer`                                                      | Planned   |
+| `0x31`        |               |                       | No                | `EarlyLogging`                                                        | Planned   |
 
-### `CAP_MAP_FRAMEBUFFER`
+### `MapFramebuffer`
 If a video mode was chosen in the `bootcmd` and successfully switched to by the bootloader, the framebuffer of that
 graphics device will be mapped into the task with this capability. Only one task, the backup framebuffer driver,
 should have this capability.
@@ -45,7 +45,7 @@ TODO: work out what should happen if a video mode is not picked, but a task with
 could in theory skim sensitive information, such as passwords or credit card details using the framebuffer, if
 this driver is in use.
 
-### `CAP_EARLY_LOGGING`
+### `EarlyLogging`
 This capability is owned by tasks that are started early in the boot process, before robust userspace logging is
 running. It is used to emit logging messages to the kernel log that help debug the early boot process, using the
 `early_log` system call.
