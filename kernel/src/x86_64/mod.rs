@@ -10,6 +10,9 @@ mod memory_object;
 mod per_cpu;
 mod task;
 
+// Export the common per-CPU data accessors, so they can be used from the rest of the kernel.
+pub use self::per_cpu::{common_per_cpu_data, common_per_cpu_data_mut};
+
 use self::{
     acpi_handler::PebbleAcpiHandler,
     address_space::AddressSpace,
@@ -23,6 +26,7 @@ use crate::{
     arch::Architecture,
     object::{map::ObjectMap, KernelObject, WrappedKernelObject},
     scheduler::Scheduler,
+    x86_64::per_cpu::per_cpu_data_mut,
 };
 use aml_parser::AmlContext;
 use log::{error, info, warn};
@@ -222,9 +226,10 @@ pub fn kmain() -> ! {
     /*
      * Load all the images as initial tasks, and add them to the scheduler's ready list.
      */
-    let mut scheduler = Scheduler::<Arch>::new();
+    use core::ops::DerefMut;
+    let mut scheduler = unsafe { per_cpu_data_mut() }.scheduler();
     for image in boot_info.images() {
-        load_task(&arch, &mut scheduler, image);
+        load_task(&arch, &mut scheduler.deref_mut(), image);
     }
 
     info!("Dropping to usermode");

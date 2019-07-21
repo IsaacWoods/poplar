@@ -43,7 +43,9 @@ where
     /// is run first (whether the userspace layers take advantage of this is up to them - it would
     /// be more reliable to not depend on one process starting first, but this is an option).
     pub fn drop_to_userspace(&mut self, arch: &A) -> ! {
+        assert!(self.running_task.is_none());
         let task = self.ready_queue.pop_front().expect("Tried to drop into userspace with no ready tasks!");
+        self.running_task = Some(task.clone());
         arch.drop_to_userspace(task)
     }
 }
