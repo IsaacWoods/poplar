@@ -22,17 +22,17 @@ complex / specific ones may need multiple bytes of prefix, and can also encode f
 This is an overview of all the capabilities the kernel supports. Complex capabilities are detailed in their own
 sections:
 
-| First byte    | Next byte(s)  | Data                  | Arch specific?    | Description                                                           | Status    |
-|---------------|---------------|-----------------------|-------------------|-----------------------------------------------------------------------|-----------|
-| `0x00`        | -             | -                     | -                 | No meaning - used to pad descriptor to required length (see above)    | -         |
-| `0x01`        |               |                       | No                | `CreateAddressSpace`                                                  | Planned   |
-| `0x02`        |               |                       | No                | `CreateMemoryObject`                                                  | Planned   |
-| `0x03`        |               |                       | No                | `CreateTask`                                                          | Planned   |
-| `0x04`-`0x1f` |               |                       |                   | Reserved for future kernel objects                                    |           |
-| `0x20`        | `0x00`        | `u16` port number     | Yes - x86_64      | `X86_64AccessIoPort`                                                  | Planned   |
-| `0x21`-`0x2f` |               |                       |                   | Reserved for future architectures                                     |           |
-| `0x30`        |               |                       | No                | `MapFramebuffer`                                                      | Planned   |
-| `0x31`        |               |                       | No                | `EarlyLogging`                                                        | Planned   |
+| First byte    | Next byte(s)  | Data                  | Arch specific?    | Description                                                           | Status        |
+|---------------|---------------|-----------------------|-------------------|-----------------------------------------------------------------------|---------------|
+| `0x00`        | -             | -                     | -                 | No meaning - used to pad descriptor to required length (see above)    | -             |
+| `0x01`        |               |                       | No                | `CreateAddressSpace`                                                  | Planned       |
+| `0x02`        |               |                       | No                | `CreateMemoryObject`                                                  | Planned       |
+| `0x03`        |               |                       | No                | `CreateTask`                                                          | Planned       |
+| `0x04`-`0x1f` |               |                       |                   | Reserved for future kernel objects                                    |               |
+| `0x20`        | `0x00`        | `u16` port number     | Yes - x86_64      | `X86_64AccessIoPort`                                                  | Planned       |
+| `0x21`-`0x2f` |               |                       |                   | Reserved for future architectures                                     |               |
+| `0x30`        |               |                       | No                | `MapFramebuffer`                                                      | Planned       |
+| `0x31`        |               |                       | No                | `EarlyLogging`                                                        | Implemented   |
 
 ### `MapFramebuffer`
 If a video mode was chosen in the `bootcmd` and successfully switched to by the bootloader, the framebuffer of that

@@ -1,4 +1,4 @@
-#[derive(Debug)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum Capability {
     /*
      * Capabilities related to kernel objects.

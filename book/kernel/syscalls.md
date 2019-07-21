@@ -36,7 +36,7 @@ Used by a task that can't do any work at the moment, allowing the kernel to sche
 Used by tasks that are started early in the boot process, before reliable userspace logging support is running. Output is
 logged to the same place as kernel logging.
 
-This system call should not be used from standard usermode tasks, and so requires the `CAP_EARLY_LOGGING` capability to use.
+This system call should not be used from standard usermode tasks, and so requires the `EarlyLogging` capability to use.
 The first parameter (`a`) is the length of the string in bytes, and the second (`b`) is a UTF-8 encoded string that is not
 null-terminated. The maximum length of the string is 1024 chars.
 
@@ -44,3 +44,4 @@ Returns:
  - `0` if the system call succeeded
  - `1` if the string was too long
  - `2` if the string was not valid UTF-8
+ - `3` if the task making the syscall doesn't have the `EarlyLogging` capability
