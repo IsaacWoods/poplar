@@ -6,9 +6,10 @@ use crate::{
     },
 };
 use alloc::collections::VecDeque;
+use core::fmt;
 
 pub struct Scheduler<A: Architecture> {
-    running_task: Option<WrappedKernelObject<A>>,
+    pub running_task: Option<WrappedKernelObject<A>>,
     /// List of Tasks ready to be scheduled. Every kernel object in this list must be a Task.
     /// Backed by a `VecDeque` so we can rotate objects in the queue efficiently.
     ready_queue: VecDeque<WrappedKernelObject<A>>,
@@ -51,4 +52,13 @@ where
 pub enum ScheduleError {
     /// Returned by `add_task` if you try to schedule a kernel object that is not a Task.
     KernelObjectNotATask,
+}
+
+impl<A> fmt::Debug for Scheduler<A>
+where
+    A: Architecture,
+{
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "Scheduler(running = {:?}, ready = {:?})", self.running_task, self.ready_queue)
+    }
 }

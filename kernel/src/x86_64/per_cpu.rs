@@ -1,3 +1,5 @@
+use super::Arch;
+use crate::{per_cpu::CommonPerCpu, scheduler::Scheduler};
 use alloc::boxed::Box;
 use core::{marker::PhantomPinned, mem, pin::Pin};
 use x86_64::hw::{
@@ -9,13 +11,18 @@ use x86_64::hw::{
 #[derive(Debug)]
 pub struct PerCpu {
     /// The first field of this structure must be a pointer to itself. This is because to access
-    /// the per-cpu info, we read from the segment at offset `0x0`, which is this pointer, and then
-    /// dereference that to access the whole structure.
+    /// the per-cpu info, we read from `gs:0x0`, which is this pointer, and then dereference that
+    /// to access the whole structure.
     _self_pointer: *const PerCpu,
+    /// This structure must be pinned in memory for two reasons:
+    ///     - the self pointer makes this structure self-referential.
+    ///     - we put the address of this structure in the `IA32_GS_BASE` MSR. If this structure moves, that
+    ///       memory address becomes invalid and accessing the per-cpu data no longer has defined behaviour.
+    _pin: PhantomPinned,
+
+    common: CommonPerCpu<Arch>,
     tss: Tss,
     tss_selector: Option<SegmentSelector>,
-    /// `PerCpu` must not move in memory because it's accessed using the GS segment base.
-    _pin: PhantomPinned,
 }
 
 impl PerCpu {
@@ -26,11 +33,35 @@ impl PerCpu {
     pub fn get_tss_mut<'a>(self: Pin<&'a mut Self>) -> Pin<&'a mut Tss> {
         unsafe { self.map_unchecked_mut(|per_cpu| &mut per_cpu.tss) }
     }
+
+    pub fn common<'a>(self: Pin<&'a Self>) -> Pin<&'a CommonPerCpu<Arch>> {
+        unsafe { self.map_unchecked(|per_cpu| &per_cpu.common) }
+    }
+
+    pub fn common_mut<'a>(self: Pin<&'a mut Self>) -> Pin<&'a mut CommonPerCpu<Arch>> {
+        unsafe { self.map_unchecked_mut(|per_cpu| &mut per_cpu.common) }
+    }
+
+    pub fn scheduler<'a>(self: Pin<&'a mut Self>) -> Pin<&'a mut Scheduler<Arch>> {
+        unsafe { self.map_unchecked_mut(|per_cpu| &mut per_cpu.common.scheduler) }
+    }
+}
+
+/// Access the common per-CPU data. This is exported from the x86_64 module so it can be used from
+/// the rest of the kernel.
+pub unsafe fn common_per_cpu_data<'a>() -> Pin<&'a CommonPerCpu<Arch>> {
+    per_cpu_data().common()
+}
+
+/// Get a mutable reference to the common per-CPU data. Exported from the x86_64 module so it can
+/// be used from the rest of the kernel.
+pub unsafe fn common_per_cpu_data_mut<'a>() -> Pin<&'a mut CommonPerCpu<Arch>> {
+    per_cpu_data_mut().common_mut()
 }
 
 /// Access the per-CPU data. Unsafe because this must not be called before the per-CPU data has
 /// been installed.
-pub unsafe fn per_cpu_data() -> Pin<&'static PerCpu> {
+pub unsafe fn per_cpu_data<'a>() -> Pin<&'a PerCpu> {
     let ptr: *const PerCpu;
     asm!("mov $0, gs:0x0"
         : "=r"(ptr)
@@ -48,7 +79,7 @@ pub unsafe fn per_cpu_data() -> Pin<&'static PerCpu> {
 /// method, you must disable them and re-enable them after this reference has been dropped).
 ///
 /// This is also unsafe because it must not be called before the per-CPU data has been installed.
-pub unsafe fn per_cpu_data_mut() -> Pin<&'static mut PerCpu> {
+pub unsafe fn per_cpu_data_mut<'a>() -> Pin<&'a mut PerCpu> {
     let ptr: *mut PerCpu;
     asm!("mov $0, gs:0x0"
         : "=r"(ptr)
@@ -74,9 +105,11 @@ impl GuardedPerCpu {
             // We haven't allocated space for the structure yet, so we don't know where it'll be.
             // We fill this in after it's been allocated.
             _self_pointer: 0x0 as *const PerCpu,
+            _pin: PhantomPinned,
+
+            common: CommonPerCpu::new(),
             tss,
             tss_selector: None,
-            _pin: PhantomPinned,
         });
 
         /*

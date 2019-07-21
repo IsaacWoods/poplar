@@ -4,6 +4,9 @@ use crate::object::{task::CommonTask, WrappedKernelObject};
 /// Provides a common interface to platform-specific operations for the architecture-independent
 /// parts of the kernel.
 pub trait Architecture: Sized {
+    /*
+     * Per-arch kernel object representations.
+     */
     type AddressSpace;
     type Task: CommonTask;
     type MemoryObject;

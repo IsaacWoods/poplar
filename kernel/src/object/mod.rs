@@ -4,12 +4,22 @@ pub mod task;
 use self::map::ObjectMap;
 use crate::arch::Architecture;
 use alloc::{boxed::Box, sync::Arc};
+use core::fmt;
 use libpebble::KernelObjectId;
 use spin::RwLock;
 
 pub struct WrappedKernelObject<A: Architecture> {
     pub id: KernelObjectId,
     pub object: Arc<KernelObject<A>>,
+}
+
+impl<A> fmt::Debug for WrappedKernelObject<A>
+where
+    A: Architecture,
+{
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "KernelObject(id = {:?})", self.id)
+    }
 }
 
 impl<A> Clone for WrappedKernelObject<A>

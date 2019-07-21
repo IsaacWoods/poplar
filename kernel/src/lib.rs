@@ -26,6 +26,7 @@ extern crate alloc;
 cfg_if! {
     if #[cfg(feature = "arch_x86_64")] {
         mod x86_64;
+        use crate::x86_64 as arch_impl;
         pub use crate::x86_64::kmain;
     } else {
         compile_error!("Tried to build kernel without specifying an architecture!");
@@ -35,6 +36,7 @@ cfg_if! {
 mod arch;
 mod heap_allocator;
 mod object;
+mod per_cpu;
 mod scheduler;
 mod syscall;
 mod util;
