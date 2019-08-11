@@ -20,13 +20,12 @@ use x86_64::{
 /// |------------------|-----------------------------|
 /// | Interrupt Vector |            Usage            |
 /// |------------------|-----------------------------|
-/// |       00-1F      | Intel Reserved (Exceptions) |
-/// |       20-2F      | i8259 PIC Interrupts        |
-/// |        30        | Local APIC timer            |
+/// |       00-1f      | Intel Reserved (Exceptions) |
+/// |       20-2f      | i8259 PIC Interrupts        |
+/// |       30-??      | IOAPIC Interrupts           |
 /// |        ..        |                             |
-/// |       40-??      | IOAPIC Interrupts           |
-/// |        ..        |                             |
-/// |        FF        | APIC spurious interrupt     |
+/// |        fe        | Local APIC timer
+/// |        ff        | APIC spurious interrupt     |
 /// |------------------|-----------------------------|
 static mut IDT: Idt = Idt::empty();
 
@@ -35,6 +34,8 @@ static mut IDT: Idt = Idt::empty();
  * the full layout.
  */
 const LEGACY_PIC_VECTOR: u8 = 0x20;
+const FREE_VECTORS_START: u8 = 0x30;
+const APIC_TIMER_VECTOR: u8 = 0xfe;
 const APIC_SPURIOUS_VECTOR: u8 = 0xff;
 
 pub struct InterruptController {}
@@ -70,9 +71,7 @@ impl InterruptController {
                     .mapper()
                     .map_to(
                         Page::contains(kernel_map::LOCAL_APIC_CONFIG),
-                        Frame::contains(
-                            PhysicalAddress::new(*local_apic_address as usize).unwrap(),
-                        ),
+                        Frame::contains(PhysicalAddress::new(*local_apic_address as usize).unwrap()),
                         EntryFlags::PRESENT
                             | EntryFlags::WRITABLE
                             | EntryFlags::NO_EXECUTE
@@ -82,15 +81,30 @@ impl InterruptController {
                     .unwrap();
 
                 /*
+                 * Install handlers for the spurious interrupt and local APIC timer, and then
+                 * enable the local APIC.
                  * Install a spurious interrupt handler and enable the local APIC.
                  */
                 unsafe {
+                    IDT[APIC_TIMER_VECTOR]
+                        .set_handler(wrap_handler!(local_apic_timer_handler), KERNEL_CODE_SELECTOR);
                     IDT[APIC_SPURIOUS_VECTOR]
                         .set_handler(wrap_handler!(spurious_handler), KERNEL_CODE_SELECTOR);
                     LocalApic::enable(APIC_SPURIOUS_VECTOR);
                 }
 
-                // TODO: configure the local APIC timer
+                /*
+                 * Configure the local APIC timer.
+                 *
+                 * TODO: currently, this relies upon being able to get the frequency from the
+                 * CpuInfo. We should probably build a backup to calibrate it using another timer.
+                 * TODO: the timer is currently hardcoded to tick every 5 seconds. We should make
+                 * this configurable from somewhere else.
+                 */
+                let apic_frequency =
+                    arch.cpu_info.apic_frequency().expect("Can't find frequency of APIC from cpuid");
+                LocalApic::enable_timer(5000, apic_frequency, APIC_TIMER_VECTOR);
+
                 InterruptController {}
             }
 
@@ -107,8 +121,7 @@ impl InterruptController {
 
         macro set_handler_with_error_code($name: ident, $handler: ident) {
             unsafe {
-                IDT.$name()
-                    .set_handler(wrap_handler_with_error_code!($handler), KERNEL_CODE_SELECTOR);
+                IDT.$name().set_handler(wrap_handler_with_error_code!($handler), KERNEL_CODE_SELECTOR);
             }
         }
 
@@ -149,6 +162,13 @@ impl InterruptController {
             write_msr(IA32_LSTAR, syscall_handler as u64);
             write_msr(IA32_FMASK, 0);
         }
+    }
+}
+
+extern "C" fn local_apic_timer_handler(_: &InterruptStackFrame) {
+    info!("Tick!");
+    unsafe {
+        LocalApic::send_eoi();
     }
 }
 
@@ -208,8 +228,7 @@ extern "C" fn syscall_handler() -> ! {
 
     /*
      * - Put the result of the system call in `rax`.
-     * - Restore all the scratch registers we saved (including `rcx` and `r11` so we can
-     *   `sysret`).
+     * - Restore all the scratch registers we saved (including `rcx` and `r11` so we can `sysret`).
      * - Return to userspace!
      */
     unsafe {
@@ -279,9 +298,7 @@ extern "C" fn page_fault_handler(stack_frame: &InterruptStackFrame, error_code: 
             (1, 0, 1, 0) => "User process wrote to non-present page",
             (1, 0, 1, 1) => "User process wrote to present page (probable access violation)",
             (1, 1, _, 0) => "User process fetched instruction from non-present page",
-            (1, 1, _, 1) => {
-                "User process fetched instruction from present page (probable access violation)"
-            }
+            (1, 1, _, 1) => "User process fetched instruction from present page (probable access violation)",
 
             (_, _, _, _) => {
                 panic!("INVALID PAGE-FAULT ERROR CODE");

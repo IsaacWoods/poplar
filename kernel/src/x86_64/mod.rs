@@ -40,6 +40,7 @@ use x86_64::{
 pub(self) static GDT: Mutex<Gdt> = Mutex::new(Gdt::new());
 
 pub struct Arch {
+    pub cpu_info: CpuInfo,
     pub physical_memory_manager: LockedPhysicalMemoryManager,
     pub kernel_page_table: Mutex<PageTable>,
     pub object_map: RwLock<ObjectMap<Self>>,
@@ -175,6 +176,7 @@ pub fn kmain() -> ! {
      * things will happen if this assumption does not hold, so this is fairly unsafe.
      */
     let arch = Arch {
+        cpu_info,
         physical_memory_manager: LockedPhysicalMemoryManager::new(boot_info),
         kernel_page_table: Mutex::new(unsafe {
             PageTable::from_frame(

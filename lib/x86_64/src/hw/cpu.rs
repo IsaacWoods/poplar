@@ -24,30 +24,23 @@ impl CpuInfo {
         let model_info = decode_model_info();
         let hypervisor_info = decode_hypervisor_info();
 
-        CpuInfo {
-            max_supported_standard_level: vendor_id_cpuid.a,
-            vendor,
-            model_info,
-            hypervisor_info,
-        }
+        CpuInfo { max_supported_standard_level: vendor_id_cpuid.a, vendor, model_info, hypervisor_info }
     }
 
     pub fn microarch(&self) -> Option<Microarch> {
         match self.vendor {
-            Vendor::Intel if self.model_info.family == 0x6 => {
-                match self.model_info.extended_model {
-                    0x1a | 0x1e | 0x1f | 0x2e => Some(Microarch::Nehalem),
-                    0x25 | 0x2c | 0x2f => Some(Microarch::Westmere),
-                    0x2a | 0x2d => Some(Microarch::SandyBridge),
-                    0x3a | 0x3e => Some(Microarch::IvyBridge),
-                    0x3c | 0x3f | 0x45 | 0x46 => Some(Microarch::Haswell),
-                    0x3d | 0x47 | 0x56 | 0x4f => Some(Microarch::Broadwell),
-                    0x4e | 0x5e | 0x55 => Some(Microarch::Skylake),
-                    0x8e | 0x9e => Some(Microarch::KabyLake),
+            Vendor::Intel if self.model_info.family == 0x6 => match self.model_info.extended_model {
+                0x1a | 0x1e | 0x1f | 0x2e => Some(Microarch::Nehalem),
+                0x25 | 0x2c | 0x2f => Some(Microarch::Westmere),
+                0x2a | 0x2d => Some(Microarch::SandyBridge),
+                0x3a | 0x3e => Some(Microarch::IvyBridge),
+                0x3c | 0x3f | 0x45 | 0x46 => Some(Microarch::Haswell),
+                0x3d | 0x47 | 0x56 | 0x4f => Some(Microarch::Broadwell),
+                0x4e | 0x5e | 0x55 => Some(Microarch::Skylake),
+                0x8e | 0x9e => Some(Microarch::KabyLake),
 
-                    _ => None,
-                }
-            }
+                _ => None,
+            },
 
             Vendor::Amd if self.model_info.family == 0xf => match self.model_info.extended_family {
                 0x15 => Some(Microarch::Bulldozer),
@@ -119,6 +112,7 @@ pub enum Microarch {
     CannonLake,
     WhiskeyLake,
     AmberLake,
+
     /*
      * AMD
      */
@@ -213,14 +207,10 @@ fn decode_model_info() -> ModelInfo {
     let model = cpuid.a.get_bits(4..8) as u8;
     let stepping = cpuid.a.get_bits(0..4) as u8;
 
-    let extended_family =
-        if family == 0xf { family + cpuid.a.get_bits(20..28) as u8 } else { family };
+    let extended_family = if family == 0xf { family + cpuid.a.get_bits(20..28) as u8 } else { family };
 
-    let extended_model = if family == 0xf || family == 0x6 {
-        model + ((cpuid.a.get_bits(16..20) as u8) << 4)
-    } else {
-        model
-    };
+    let extended_model =
+        if family == 0xf || family == 0x6 { model + ((cpuid.a.get_bits(16..20) as u8) << 4) } else { model };
 
     ModelInfo { family, model, stepping, extended_family, extended_model }
 }
@@ -242,11 +232,7 @@ fn decode_hypervisor_info() -> Option<HypervisorInfo> {
     let max_leaf = hypervisor_vendor_cpuid.a;
 
     let vendor_repr = VendorRepr {
-        vendor_id: [
-            hypervisor_vendor_cpuid.b,
-            hypervisor_vendor_cpuid.c,
-            hypervisor_vendor_cpuid.d,
-        ],
+        vendor_id: [hypervisor_vendor_cpuid.b, hypervisor_vendor_cpuid.c, hypervisor_vendor_cpuid.d],
     };
 
     let vendor = match str::from_utf8(unsafe { &vendor_repr.vendor_name }) {
@@ -260,11 +246,8 @@ fn decode_hypervisor_info() -> Option<HypervisorInfo> {
      * NOTE: for this to exist under KVM, the `vmware-cpuid-freq` and `invtsc` cpu flags must be
      * set.
      */
-    let apic_frequency = if max_leaf >= 0x4000_0010 {
-        Some(cpuid(CpuidEntry::HypervisorFrequencies).b * 1000)
-    } else {
-        None
-    };
+    let apic_frequency =
+        if max_leaf >= 0x4000_0010 { Some(cpuid(CpuidEntry::HypervisorFrequencies).b * 1000) } else { None };
 
     Some(HypervisorInfo { vendor, max_leaf, apic_frequency })
 }
