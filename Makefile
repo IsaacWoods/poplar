@@ -3,7 +3,7 @@ export BUILD_DIR ?= $(abspath ./build)
 
 RUST_GDB_INSTALL_PATH ?= ~/bin/rust-gdb/bin
 
-QEMU_COMMON_FLAGS = -cpu host,vmware-cpuid-freq,invtsc \
+QEMU_COMMON_FLAGS = -cpu max,vmware-cpuid-freq,invtsc \
 					-machine q35 \
 					-smp 2 \
 					-m 512M \
