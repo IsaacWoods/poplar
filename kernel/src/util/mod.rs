@@ -1,4 +1,4 @@
-pub mod binary_pretty_print;
+mod binary_pretty_print;
 pub mod bitmap;
 pub mod math;
 
