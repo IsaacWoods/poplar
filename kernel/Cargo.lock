@@ -2,7 +2,7 @@
 # It is not intended for manual editing.
 [[package]]
 name = "acpi"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "bit_field 0.9.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "log 0.4.6 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -10,8 +10,8 @@ dependencies = [
 ]
 
 [[package]]
-name = "aml_parser"
-version = "0.3.0"
+name = "aml"
+version = "0.4.0"
 dependencies = [
  "bit_field 0.9.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "log 0.4.6 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -36,8 +36,8 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 name = "kernel"
 version = "0.1.0"
 dependencies = [
- "acpi 0.3.0",
- "aml_parser 0.3.0",
+ "acpi 0.4.0",
+ "aml 0.4.0",
  "bit_field 0.9.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "bitflags 1.0.4 (registry+https://github.com/rust-lang/crates.io-index)",
  "cfg-if 0.1.6 (registry+https://github.com/rust-lang/crates.io-index)",

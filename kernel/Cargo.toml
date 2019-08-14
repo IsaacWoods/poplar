@@ -17,8 +17,9 @@ x86_64 = { path = "../lib/x86_64", features = ["kernel"], optional = true }
 num = { version = "0.2", default-features = false }
 libpebble = { path = "../lib/libpebble" }
 acpi = { path = "../lib/acpi/acpi", optional = true }
-aml_parser = { path = "../lib/acpi/aml_parser", optional = true }
+# aml = { path = "../lib/acpi/aml", optional = true, features = ["debug_parser", "debug_parser_verbose"]}
+aml = { path = "../lib/acpi/aml", optional = true }
 
 [features]
-arch_x86_64 = ["x86_64", "acpi", "aml_parser"]
+arch_x86_64 = ["x86_64", "acpi", "aml"]
 tuning-fast_ctlz = []
