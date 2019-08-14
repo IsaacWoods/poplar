@@ -16,10 +16,10 @@ QEMU_COMMON_FLAGS = -cpu max,vmware-cpuid-freq,invtsc \
 					-drive if=ide,format=raw,file=$< \
 					-net none
 
-.PHONY: prepare bootloader kernel test_process clean qemu gdb update fmt test
+.PHONY: prepare bootloader kernel test_process simple_fb clean qemu gdb update fmt test
 
-pebble.img: prepare bootloader kernel test_process
-	printf "kernel kernel.elf\nimage test_process.elf\nvideo_mode 800 600" > $(BUILD_DIR)/fat/bootcmd
+pebble.img: prepare bootloader kernel test_process simple_fb
+	printf "kernel kernel.elf\nimage test_process.elf\nimage simple_fb.elf\nvideo_mode 800 600" > $(BUILD_DIR)/fat/bootcmd
 	# Create a temporary image for the FAT partition
 	dd if=/dev/zero of=$(BUILD_DIR)/fat.img bs=1M count=64
 	mkfs.vfat -F 32 $(BUILD_DIR)/fat.img -n BOOT
@@ -49,6 +49,10 @@ kernel:
 test_process:
 	cargo xbuild --target=test_process/x86_64-pebble-userspace.json --manifest-path test_process/Cargo.toml
 	cp test_process/target/x86_64-pebble-userspace/debug/test_process $(BUILD_DIR)/fat/test_process.elf
+
+simple_fb:
+	cargo xbuild --target=drivers/x86_64-pebble-userspace.json --manifest-path drivers/simple_fb/Cargo.toml
+	cp drivers/simple_fb/target/x86_64-pebble-userspace/debug/simple_fb $(BUILD_DIR)/fat/simple_fb.elf
 
 clean:
 	cd bootloader && cargo clean

@@ -232,6 +232,7 @@ pub fn kmain() -> ! {
      */
     use core::ops::DerefMut;
     let mut scheduler = unsafe { per_cpu_data_mut() }.scheduler();
+    info!("Adding {} initial tasks to the ready queue", boot_info.num_images);
     for image in boot_info.images() {
         load_task(&arch, &mut scheduler.deref_mut(), image);
     }
