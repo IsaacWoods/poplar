@@ -29,11 +29,18 @@ pub struct Task {
     pub state: TaskState,
     pub capabilities: Vec<Capability>,
 
-    pub stack_top: VirtualAddress,
+    pub user_stack_top: VirtualAddress,
+    pub kernel_stack_top: VirtualAddress,
     pub stack_size: usize,
 
     pub instruction_pointer: VirtualAddress,
-    pub stack_pointer: VirtualAddress,
+
+    /*
+     * We only keep track of the kernel stack pointer. The user stack pointer is saved on the
+     * kernel stack when we enter the kernel through the `syscall` instruction, and restored before
+     * a `sysret`.
+     */
+    pub kernel_stack_pointer: VirtualAddress,
 }
 
 impl Task {
@@ -60,10 +67,11 @@ impl Task {
             address_space,
             state: TaskState::Ready,
             capabilities: decode_capabilities(&image.capability_stream)?,
-            stack_top: stack_set.user_stack_top,
+            user_stack_top: stack_set.user_stack_top,
+            kernel_stack_top: stack_set.kernel_stack_top,
             stack_size: userspace_map::INITIAL_STACK_SIZE,
             instruction_pointer: image.entry_point,
-            stack_pointer: stack_set.user_stack_top,
+            kernel_stack_pointer: stack_set.kernel_stack_top,
         })
     }
 }
@@ -80,6 +88,8 @@ impl CommonTask for Task {
     }
 }
 
+/// Drop into usermode into the given task. This permanently migrates from the kernel's initial
+/// stack (the one reserved in `.bss` and used during kernel initialization).
 pub fn drop_to_usermode(arch: &Arch, task: WrappedKernelObject<Arch>) -> ! {
     use x86_64::hw::gdt::{USER_CODE64_SELECTOR, USER_DATA_SELECTOR};
 
@@ -91,30 +101,27 @@ pub fn drop_to_usermode(arch: &Arch, task: WrappedKernelObject<Arch>) -> ! {
         asm!("cli");
 
         /*
-         * Save the current kernel stack pointer in the TSS.
-         */
-        let rsp: VirtualAddress;
-        asm!(""
-         : "={rsp}"(rsp)
-         :
-         : "rsp"
-         : "intel"
-        );
-
-        // Safe because we don't move the TSS by changing the kernel stack
-        Pin::get_unchecked_mut(per_cpu::per_cpu_data_mut().get_tss_mut()).set_kernel_stack(rsp);
-
-        /*
          * Switch to the address space the task resides in, and extract the information we need
          * to start executing the task. We do this in advance to make sure we end the
          * locks on everything - if we don't do this in its own scope, they'd never get
          * dropped, because this function never returns.
+         *
+         * We can just take the tops of each stack, because we can only drop to userspace once,
+         * before any tasks have executed anything, so nothing will be on their stacks.
          */
-        let (entry_point, stack_pointer) = {
-            let task_object = task.object.task().expect("Not a task").write();
+        let (entry_point, user_stack_top, kernel_stack_top) = {
+            let mut task_object = task.object.task().expect("Not a task").write();
             task_object.address_space.object.address_space().unwrap().write().switch_to();
-            (task_object.instruction_pointer, task_object.stack_pointer)
+            task_object.state = TaskState::Running;
+            (task_object.instruction_pointer, task_object.user_stack_top, task_object.kernel_stack_top)
         };
+
+        /*
+         * Set the kernel stack in the TSS to the task's kernel stack. This is safe because
+         * changing the kernel stack does not move the TSS.
+         */
+        Pin::get_unchecked_mut(per_cpu::per_cpu_data_mut().get_tss_mut()).set_kernel_stack(kernel_stack_top);
+        *Pin::get_unchecked_mut(per_cpu::per_cpu_data_mut().current_task_kernel_rsp_mut()) = kernel_stack_top;
 
         /*
          * Enter Ring 3 by constructing a fake interrupt frame, then returning from the
@@ -157,7 +164,7 @@ pub fn drop_to_usermode(arch: &Arch, task: WrappedKernelObject<Arch>) -> ! {
               "
         :
         : "{rax}"(USER_DATA_SELECTOR),
-          "{rbx}"(stack_pointer),
+          "{rbx}"(user_stack_top),
           "{rcx}"(1<<9 | 1<<2),
           "{rdx}"(USER_CODE64_SELECTOR),
           "{rsi}"(entry_point)

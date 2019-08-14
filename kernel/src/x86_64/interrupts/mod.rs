@@ -150,8 +150,8 @@ impl InterruptController {
         selectors.set_bits(32..48, KERNEL_CODE_SELECTOR.0 as u64);
 
         /*
-         * NOTE: We put the selector for the Compatibility-mode code segment in here, because
-         * `sysret` expects the segments to be in this order:
+         * We put the selector for the Compatibility-mode code segment in here, because `sysret` expects
+         * the segments to be in this order:
          *      STAR[48..64]        => 32-bit Code Segment
          *      STAR[48..64] + 8    => Data Segment
          *      STAR[48..64] + 16   => 64-bit Code Segment
@@ -176,29 +176,38 @@ extern "C" fn local_apic_timer_handler(_: &InterruptStackFrame) {
 #[naked]
 extern "C" fn syscall_handler() -> ! {
     /*
-     * TODO: we might want to switch to a kernel stack and stuff?
-     */
-
-    /*
-     * Save all the scratch registers onto the stack, **except `rax`**, because we put the return
-     * value of the system call into it anyways, so it doesn't need to be preserved.
+     * This is the code that is run when a task executes the `syscall` instruction. The `syscall`
+     * instruction:
+     *    - has put the `rip` to return to in `rcx`
+     *    - has put the `rflags` to return with in `r11`, masked with `IA32_FMASK`
+     *    - does not save `rsp`. It is our responsibility to deal with the stack(s).
      *
-     * `syscall` puts the address of the instruction following it into `rcx`, and `rflags` into
-     * `r11`. Both of these are scratch registers under the System-V ABI, so they're saved and
-     * restored correctly when we preserve the scratch registers.
+     * Because we are using the System-V ABI:
+     *    - `rbp`, `rbx`, `r12`, `r13`, `r14`, and `r15` must be preserved
+     *    - Other registers may be clobbered
+     *
+     * However:
+     *    - `rax`, `rdi`, `rsi`, `r8`, and `r9` may contain arguments that need to be passed to the handler
+     *    - `rax` must contain the result of the system call, if there is one, at the time of `sysret`
      */
     unsafe {
-        asm!("push rcx
-              push rdx
-              push rsi
-              push rdi
-              push r8
-              push r9
-              push r10
+        asm!("/*
+               * Firstly, we move to the task's kernel stack. `r10` shouldn't contain anything
+               * important at the moment, so we can use it for this.
+               */
+              mov r10, gs:0x8       // This accesses the `current_task_kernel_rsp` field of the per-cpu data
+              xchg r10, rsp
+              push r10              // Push the user stack pointer onto the task's kernel stack
+
+              /*
+               * `syscall` puts important stuff in `rcx` and `r11`. We save them here and restore
+               * them before calling `sysretq`.
+               */
+              push rcx
               push r11"
         :
         :
-        :
+        : "r10"
         : "intel"
         );
     }
@@ -229,28 +238,27 @@ extern "C" fn syscall_handler() -> ! {
 
     /*
      * - Put the result of the system call in `rax`.
-     * - Restore all the scratch registers we saved (including `rcx` and `r11` so we can `sysret`).
+     * - Restore the state needed for `sysretq`
+     * - Move back to the task's user stack.
      * - Return to userspace!
      */
     unsafe {
         asm!("pop r11
-              pop r10
-              pop r9
-              pop r8
-              pop rdi
-              pop rsi
-              pop rdx
               pop rcx
+
+              pop r10
+              xchg r10, rsp
+              mov gs:0x8, r10
 
               sysretq"
         :
         : "{rax}"(result)
-        :
+        : "r10"
         : "intel"
         );
-
-        unreachable!();
     }
+
+    unreachable!();
 }
 
 extern "C" fn spurious_handler(_: &InterruptStackFrame) {}

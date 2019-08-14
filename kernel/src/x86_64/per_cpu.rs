@@ -2,10 +2,13 @@ use super::Arch;
 use crate::{per_cpu::CommonPerCpu, scheduler::Scheduler};
 use alloc::boxed::Box;
 use core::{marker::PhantomPinned, mem, pin::Pin};
-use x86_64::hw::{
-    gdt::{SegmentSelector, TssSegment},
-    registers::{write_msr, IA32_GS_BASE},
-    tss::Tss,
+use x86_64::{
+    hw::{
+        gdt::{SegmentSelector, TssSegment},
+        registers::{write_msr, IA32_GS_BASE},
+        tss::Tss,
+    },
+    memory::VirtualAddress,
 };
 
 #[derive(Debug)]
@@ -20,6 +23,11 @@ pub struct PerCpu {
     ///       memory address becomes invalid and accessing the per-cpu data no longer has defined behaviour.
     _pin: PhantomPinned,
 
+    /// This holds the kernel `rsp` of the current task, and makes it efficient and easy to switch
+    /// to the kernel stack upon kernel entry using `syscall`. It **must** remain at a fixed offset
+    /// within this struct, because we refer to it manually with `gs:0x8`.
+    current_task_kernel_rsp: VirtualAddress,
+
     common: CommonPerCpu<Arch>,
     tss: Tss,
     tss_selector: Option<SegmentSelector>,
@@ -32,6 +40,10 @@ impl PerCpu {
 
     pub fn get_tss_mut<'a>(self: Pin<&'a mut Self>) -> Pin<&'a mut Tss> {
         unsafe { self.map_unchecked_mut(|per_cpu| &mut per_cpu.tss) }
+    }
+
+    pub fn current_task_kernel_rsp_mut<'a>(self: Pin<&'a mut Self>) -> Pin<&'a mut VirtualAddress> {
+        unsafe { self.map_unchecked_mut(|per_cpu| &mut per_cpu.current_task_kernel_rsp) }
     }
 
     pub fn common<'a>(self: Pin<&'a Self>) -> Pin<&'a CommonPerCpu<Arch>> {
@@ -106,6 +118,8 @@ impl GuardedPerCpu {
             // We fill this in after it's been allocated.
             _self_pointer: 0x0 as *const PerCpu,
             _pin: PhantomPinned,
+
+            current_task_kernel_rsp: VirtualAddress::new(0x0).unwrap(),
 
             common: CommonPerCpu::new(),
             tss,
