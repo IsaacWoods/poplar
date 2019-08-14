@@ -120,7 +120,7 @@ pub fn drop_to_usermode(arch: &Arch, task: WrappedKernelObject<Arch>) -> ! {
          * Set the kernel stack in the TSS to the task's kernel stack. This is safe because
          * changing the kernel stack does not move the TSS.
          */
-        Pin::get_unchecked_mut(per_cpu::per_cpu_data_mut().get_tss_mut()).set_kernel_stack(kernel_stack_top);
+        Pin::get_unchecked_mut(per_cpu::per_cpu_data_mut().tss_mut()).set_kernel_stack(kernel_stack_top);
         *Pin::get_unchecked_mut(per_cpu::per_cpu_data_mut().current_task_kernel_rsp_mut()) = kernel_stack_top;
 
         /*

@@ -34,11 +34,11 @@ pub struct PerCpu {
 }
 
 impl PerCpu {
-    pub fn get_tss<'a>(self: Pin<&'a Self>) -> Pin<&'a Tss> {
+    pub fn tss<'a>(self: Pin<&'a Self>) -> Pin<&'a Tss> {
         unsafe { self.map_unchecked(|per_cpu| &per_cpu.tss) }
     }
 
-    pub fn get_tss_mut<'a>(self: Pin<&'a mut Self>) -> Pin<&'a mut Tss> {
+    pub fn tss_mut<'a>(self: Pin<&'a mut Self>) -> Pin<&'a mut Tss> {
         unsafe { self.map_unchecked_mut(|per_cpu| &mut per_cpu.tss) }
     }
 
@@ -131,7 +131,7 @@ impl GuardedPerCpu {
          * `tss_selector` field. The use of `get_unchecked_mut` is safe here because changing the
          * selector cannot move the memory.
          */
-        let tss_selector = super::GDT.lock().add_tss(TssSegment::new(per_cpu.as_ref().get_tss()));
+        let tss_selector = super::GDT.lock().add_tss(TssSegment::new(per_cpu.as_ref().tss()));
         unsafe {
             Pin::get_unchecked_mut(Pin::as_mut(&mut per_cpu)).tss_selector = Some(tss_selector);
         }
