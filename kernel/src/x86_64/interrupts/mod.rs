@@ -3,6 +3,7 @@ mod exception;
 use super::Arch;
 use acpi::interrupt::InterruptModel;
 use bit_field::BitField;
+use core::time::Duration;
 use log::info;
 use x86_64::{
     hw::{
@@ -94,23 +95,22 @@ impl InterruptController {
                     LocalApic::enable(APIC_SPURIOUS_VECTOR);
                 }
 
-                /*
-                 * Configure the local APIC timer.
-                 *
-                 * TODO: currently, this relies upon being able to get the frequency from the
-                 * CpuInfo. We should probably build a backup to calibrate it using another timer.
-                 * TODO: the timer is currently hardcoded to tick every 5 seconds. We should make
-                 * this configurable from somewhere else.
-                 */
-                let apic_frequency =
-                    arch.cpu_info.apic_frequency().expect("Can't find frequency of APIC from cpuid");
-                LocalApic::enable_timer(5000, apic_frequency, APIC_TIMER_VECTOR);
-
                 InterruptController {}
             }
 
             _ => panic!("Unsupported interrupt model!"),
         }
+    }
+
+    /// Enable the per-CPU timer on the local APIC, so that it ticks every `period` ms. Cannot be
+    /// called before interrupt handlers are installed, because this borrows `self`.
+    pub fn enable_local_timer(&mut self, arch: &Arch, period: Duration) {
+        /*
+         * TODO: currently, this relies upon being able to get the frequency from the
+         * CpuInfo. We should probably build a backup to calibrate it using another timer.
+         */
+        let apic_frequency = arch.cpu_info.apic_frequency().expect("Can't find frequency of APIC from cpuid");
+        LocalApic::enable_timer(period.as_millis() as u32, apic_frequency, APIC_TIMER_VECTOR);
     }
 
     fn install_exception_handlers() {

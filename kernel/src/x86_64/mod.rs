@@ -29,6 +29,7 @@ use crate::{
     x86_64::per_cpu::per_cpu_data_mut,
 };
 use aml_parser::AmlContext;
+use core::time::Duration;
 use log::{error, info, warn};
 use spin::{Mutex, RwLock};
 use x86_64::{
@@ -202,13 +203,14 @@ pub fn kmain() -> ! {
     guarded_per_cpu.install();
 
     // TODO: deal gracefully with a bad ACPI parse
-    let interrupt_controller = InterruptController::init(
+    let mut interrupt_controller = InterruptController::init(
         &arch,
         match acpi_info {
             Some(ref info) => info.interrupt_model.as_ref().unwrap(),
             None => unimplemented!(),
         },
     );
+    interrupt_controller.enable_local_timer(&arch, Duration::from_secs(3));
 
     /*
      * Parse the DSDT.
