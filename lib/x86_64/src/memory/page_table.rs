@@ -275,8 +275,29 @@ pub struct Mapper<'a> {
 
 impl<'a> Mapper<'a> {
     pub fn translate(&self, address: VirtualAddress) -> TranslationResult {
-        // TODO
-        unimplemented!()
+        let p2 = match self
+            .p4
+            .next_table(address.p4_index(), self.physical_base)
+            .and_then(|p3| p3.next_table(address.p3_index(), self.physical_base))
+        {
+            Some(p2) => p2,
+            None => return TranslationResult::NotMapped,
+        };
+
+        let p2_entry = p2[address.p2_index()];
+        if p2_entry.flags().contains(EntryFlags::HUGE_PAGE) {
+            return TranslationResult::Frame2MiB(Frame::<Size2MiB>::starts_with(p2_entry.address().unwrap()));
+        }
+
+        let p1 = match p2.next_table(address.p2_index(), self.physical_base) {
+            Some(p1) => p1,
+            None => return TranslationResult::NotMapped,
+        };
+
+        match p1[address.p1_index()].address() {
+            Some(address) => TranslationResult::Frame4KiB(Frame::<Size4KiB>::starts_with(address)),
+            None => TranslationResult::NotMapped,
+        }
     }
 
     /// Allocates a `Frame` using the given allocator, and maps the specified `Page` into it.
@@ -389,6 +410,7 @@ impl<'a> Mapper<'a> {
     }
 }
 
+#[derive(Debug)]
 pub enum TranslationResult {
     Frame4KiB(Frame<Size4KiB>),
     Frame2MiB(Frame<Size2MiB>),
