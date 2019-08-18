@@ -16,7 +16,7 @@ where
     S: FrameSize,
 {
     pub fn starts_with(address: VirtualAddress) -> Page<S> {
-        assert!(usize::from(address) % S::SIZE == 0);
+        assert!(usize::from(address) % S::SIZE == 0, "Address is not at the start of a page");
         Page { start_address: address, _phantom: PhantomData }
     }
 
@@ -32,9 +32,7 @@ where
     type Output = Page<S>;
 
     fn add(self, num_pages: usize) -> Self::Output {
-        assert!(
-            VirtualAddress::new(usize::from(self.start_address) + num_pages * S::SIZE).is_some()
-        );
+        assert!(VirtualAddress::new(usize::from(self.start_address) + num_pages * S::SIZE).is_some());
         Page { start_address: self.start_address + num_pages * S::SIZE, _phantom: PhantomData }
     }
 }
@@ -44,9 +42,7 @@ where
     S: FrameSize,
 {
     fn add_assign(&mut self, num_pages: usize) {
-        assert!(
-            VirtualAddress::new(usize::from(self.start_address) + num_pages * S::SIZE).is_some()
-        );
+        assert!(VirtualAddress::new(usize::from(self.start_address) + num_pages * S::SIZE).is_some());
         self.start_address += num_pages * S::SIZE;
     }
 }
@@ -82,10 +78,8 @@ where
 
     fn add_usize(&self, n: usize) -> Option<Self> {
         Some(Page {
-            start_address: VirtualAddress::new(
-                usize::from(self.start_address).checked_add(n * S::SIZE)?,
-            )
-            .unwrap(),
+            start_address: VirtualAddress::new(usize::from(self.start_address).checked_add(n * S::SIZE)?)
+                .unwrap(),
             _phantom: PhantomData,
         })
     }

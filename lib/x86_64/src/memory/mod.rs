@@ -27,6 +27,10 @@ pub const GIBIBYTES_TO_BYTES: usize = 1024 * MEBIBYTES_TO_BYTES;
 pub trait FrameSize: Clone + Copy + PartialEq + Eq + PartialOrd + Ord {
     /// Frame size in bytes
     const SIZE: usize;
+
+    /// The log2 of the frame size (in bytes). This makes some maths involving frame and page
+    /// addresses more efficient.
+    const LOG2_SIZE: usize;
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Debug)]
@@ -34,6 +38,7 @@ pub enum Size4KiB {}
 
 impl FrameSize for Size4KiB {
     const SIZE: usize = 4 * KIBIBYTES_TO_BYTES;
+    const LOG2_SIZE: usize = 12;
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Debug)]
@@ -41,4 +46,5 @@ pub enum Size2MiB {}
 
 impl FrameSize for Size2MiB {
     const SIZE: usize = 2 * MEBIBYTES_TO_BYTES;
+    const LOG2_SIZE: usize = 21;
 }
