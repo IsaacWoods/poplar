@@ -8,5 +8,7 @@ pub enum TaskState {
 /// Allows the platform-independent parts of the kernel (e.g. scheduler) to work with Tasks.
 pub trait CommonTask {
     fn state(&self) -> TaskState;
+
+    fn name(&self) -> &str;
     fn switch_to(&mut self);
 }

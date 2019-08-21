@@ -5,20 +5,30 @@ use mer::{
     Elf,
 };
 use x86_64::{
-    boot::{ImageInfo, MemoryObjectInfo, MAX_CAPABILITY_BYTES_PER_IMAGE},
+    boot::{ImageInfo, MemoryObjectInfo, MAX_CAPABILITY_BYTES_PER_IMAGE, MAX_NAME_BYTES},
     memory::{EntryFlags, FrameSize, Size4KiB, VirtualAddress},
 };
 
 const CAPABILITY_OWNER_STR: &str = "PEBBLE";
 const CAPABILITY_ENTRY_TYPE: u32 = 0;
 
-pub fn load_image(path: &str, user_accessible: bool) -> Result<ImageInfo, Status> {
+pub fn load_image(path: &str, task_name: &str, user_accessible: bool) -> Result<ImageInfo, Status> {
     let file_data = crate::uefi::protocols::read_file(path, crate::uefi::image_handle())?;
     let elf = Elf::new(&file_data)
         .map_err(|err| panic!("Failed to load ELF for image {}: {:?}", path, err))
         .unwrap();
 
     let mut image = ImageInfo::default();
+
+    let name_bytes = task_name.as_bytes();
+    if name_bytes.len() > MAX_NAME_BYTES {
+        panic!("Initial task's name is too long: {}", task_name);
+    }
+    // This conversion is safe as long as MAX_NAME_BYTES is <=32, so we check that
+    assert!(MAX_NAME_BYTES <= 32);
+    image.name_length = name_bytes.len() as u8;
+    (&mut image.name[0..name_bytes.len()]).copy_from_slice(name_bytes);
+
     for segment in elf.segments() {
         match segment.segment_type() {
             SegmentType::Load if segment.mem_size > 0 => {

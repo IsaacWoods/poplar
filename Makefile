@@ -19,7 +19,7 @@ QEMU_COMMON_FLAGS = -cpu max,vmware-cpuid-freq,invtsc \
 .PHONY: prepare bootloader kernel test_process simple_fb clean qemu gdb update fmt test
 
 pebble.img: prepare bootloader kernel test_process simple_fb
-	printf "kernel kernel.elf\nimage test_process.elf\nimage simple_fb.elf\nvideo_mode 800 600" > $(BUILD_DIR)/fat/bootcmd
+	printf "kernel kernel.elf\nimage test_process.elf test_process\nimage simple_fb.elf simple_fb\nvideo_mode 800 600" > $(BUILD_DIR)/fat/bootcmd
 	# Create a temporary image for the FAT partition
 	dd if=/dev/zero of=$(BUILD_DIR)/fat.img bs=1M count=64
 	mkfs.vfat -F 32 $(BUILD_DIR)/fat.img -n BOOT

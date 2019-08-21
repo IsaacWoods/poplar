@@ -3,8 +3,8 @@ use crate::object::{
     task::{CommonTask, TaskState},
     WrappedKernelObject,
 };
-use alloc::vec::Vec;
-use core::pin::Pin;
+use alloc::{string::String, vec::Vec};
+use core::{pin::Pin, slice, str};
 use libpebble::caps::Capability;
 use x86_64::{boot::ImageInfo, memory::VirtualAddress};
 
@@ -19,12 +19,20 @@ pub enum TaskCreationError {
 
     /// The task image has an invalid capability encoding
     InvalidCapabilityEncoding,
+
+    /// Initial tasks (from images loaded by the bootloader) can only have names that can be
+    /// encoded in UTF-8 in 32 bytes. The name of this task is too long.
+    InitialNameTooLong,
+
+    /// The task's name is not valid UTF-8.
+    InvalidName,
 }
 
 /// This is the representation of a task on x86_64. It's basically just keeps information about the
 /// current instruction pointer and the stack, as all other registers are preserved on the task
 /// stack when it's suspended.
 pub struct Task {
+    pub name: String,
     pub address_space: WrappedKernelObject<Arch>,
     pub state: TaskState,
     pub capabilities: Vec<Capability>,
@@ -63,22 +71,38 @@ impl Task {
             .add_stack_set(userspace_map::INITIAL_STACK_SIZE, &arch.physical_memory_manager)
             .ok_or(TaskCreationError::NotEnoughStackSlots)?;
 
-        Ok(Task {
+        if image.name_length > 32 {
+            return Err(TaskCreationError::InitialNameTooLong);
+        }
+        let name = String::from(
+            str::from_utf8(&image.name[0..image.name_length as usize])
+                .map_err(|_| TaskCreationError::InvalidName)?,
+        );
+
+        let mut task = Task {
+            name,
             address_space,
             state: TaskState::Ready,
             capabilities: decode_capabilities(&image.capability_stream)?,
-            user_stack_top: stack_set.user_stack_top,
-            kernel_stack_top: stack_set.kernel_stack_top,
+            user_stack_top: stack_set.user_slot_top,
+            kernel_stack_top: stack_set.kernel_slot_top,
             stack_size: userspace_map::INITIAL_STACK_SIZE,
             instruction_pointer: image.entry_point,
-            kernel_stack_pointer: stack_set.kernel_stack_top,
-        })
+            kernel_stack_pointer: stack_set.kernel_slot_top,
+        };
+
+        Ok(task)
+    }
     }
 }
 
 impl CommonTask for Task {
     fn state(&self) -> TaskState {
         self.state
+    }
+
+    fn name(&self) -> &str {
+        &self.name
     }
 
     fn switch_to(&mut self) {

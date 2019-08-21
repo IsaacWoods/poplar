@@ -8,6 +8,9 @@ pub const NUM_IMAGES: usize = 16;
 /// and read+execute.
 pub const NUM_SEGMENTS_PER_IMAGE: usize = 3;
 pub const MAX_CAPABILITY_BYTES_PER_IMAGE: usize = 32;
+/// The maximum number of bytes that the task's name can be encoded as UTF-8 in. Must not be
+/// greater than 256.
+pub const MAX_NAME_BYTES: usize = 32;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum MemoryType {
@@ -81,6 +84,10 @@ pub struct MemoryObjectInfo {
 #[derive(Clone, Copy, Default)]
 #[repr(C)]
 pub struct ImageInfo {
+    /// The name of the name in bytes. Maximum of 32.
+    pub name_length: u8,
+    /// Name of the task that this image represents. Must be valid UTF-8 and a maximum of 32 bytes.
+    pub name: [u8; 32],
     pub num_segments: usize,
     pub segments: [MemoryObjectInfo; NUM_SEGMENTS_PER_IMAGE],
     pub entry_point: VirtualAddress,

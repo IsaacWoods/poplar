@@ -20,7 +20,7 @@ use crate::{
     },
 };
 use core::{mem, panic::PanicInfo};
-use log::{error, trace, warn};
+use log::{error, info, trace, warn};
 use uefi::{image_handle, system_table};
 use x86_64::{
     boot::{
@@ -89,6 +89,7 @@ pub extern "win64" fn efi_main(image_handle: Handle, system_table: &'static Syst
         match parts.next() {
             Some("kernel") => {
                 let kernel_path = parts.next().expect("Expected path after 'kernel' command");
+                info!("Loading kernel from '{}'", kernel_path);
                 kernel_info = Some(match kernel::load_kernel(&kernel_path, &mut kernel_mapper, &allocator) {
                     Ok(kernel_info) => kernel_info,
                     Err(err) => panic!("Failed to load kernel: {:?}", err),
@@ -97,7 +98,9 @@ pub extern "win64" fn efi_main(image_handle: Handle, system_table: &'static Syst
 
             Some("image") => {
                 let image_path = parts.next().expect("Expected path after 'image' command");
-                let image = match image::load_image(image_path, true) {
+                let task_name = parts.next().expect("Expected name after path in 'image' command");
+                info!("Image loaded by bootloader from '{}' for task called '{}'", image_path, task_name);
+                let image = match image::load_image(image_path, task_name, true) {
                     Ok(image) => image,
                     Err(err) => panic!("Failed to load image({}): {:?}", image_path, err),
                 };
@@ -113,6 +116,7 @@ pub extern "win64" fn efi_main(image_handle: Handle, system_table: &'static Syst
                     .next()
                     .and_then(|x| str::parse::<u32>(x).ok())
                     .expect("Expected integer for desired height after 'video_mode' command");
+                info!("Attempting to set video mode at {}x{}", desired_width, desired_height);
                 choose_and_switch_to_video_mode(&mut boot_info, desired_width, desired_height);
             }
 
@@ -230,13 +234,13 @@ fn construct_boot_info(kernel_mapper: &mut Mapper, allocator: &BootFrameAllocato
     }
 
     /*
-     * Allocate space for the `BootInfo`. We allocate a single frame for it, so make sure it'll
-     * fit.
+     * Allocate space for the `BootInfo`.
+     * TODO: we should probably calculate how many frames we need properly
      */
-    assert!(mem::size_of::<BootInfo>() <= Size4KiB::SIZE);
+    assert!(mem::size_of::<BootInfo>() <= Size4KiB::SIZE * 2);
     let boot_info_address = uefi::system_table()
         .boot_services
-        .allocate_frames(MemoryType::PebbleBootInformation, 1)
+        .allocate_frames(MemoryType::PebbleBootInformation, 2)
         .map_err(|err| panic!("Failed to allocate memory for the boot info: {:?}", err))
         .unwrap();
     let boot_info = unsafe { &mut *(usize::from(boot_info_address) as *mut BootInfo) };

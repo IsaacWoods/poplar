@@ -42,6 +42,10 @@ pub mod test {
             unimplemented!()
         }
 
+        fn name(&self) -> &str {
+            unimplemented!()
+        }
+
         fn switch_to(&mut self) {
             unimplemented!();
         }
