@@ -7,7 +7,7 @@
 //! would mark an area of `n` pages that are free to allocate) - the `alloc` method provides this
 //! functionality.
 
-use bit_field::BitField;
+use bit_field::{BitArray, BitField};
 use core::mem;
 use num::PrimInt;
 
@@ -41,10 +41,63 @@ where
     }
 }
 
+/// Like `Bitmap`, but for arrays. This is unfortunately needed due to conflicting implementations.
+pub trait BitmapArray: Sized {
+    /// Find `n` consecutive unset bits, set them and return the index of the first bit.
+    /// This is useful for memory managers using `Bitmap` to track free frames / pages.
+    fn alloc(&mut self, n: usize) -> Option<usize>;
+}
+
+impl<const N: usize> BitmapArray for [u8; N] {
+    fn alloc(&mut self, n: usize) -> Option<usize> {
+        let num_bits = 8 * N;
+        let mask = (1 << n) - 1;
+
+        for i in 0..(num_bits - n) {
+            if self.get_bits(i..(i + n)) & mask == 0 {
+                self.set_bits(i..(i + n), mask);
+                return Some(i);
+            }
+        }
+
+        None
+    }
+}
+
 #[test]
-fn test_bitmap_alloc() {
+fn test_bitmap() {
     assert_eq!((0b10001: u16).alloc(3), Some(1));
     assert_eq!((0b11_0000_1_000_111: u16).alloc(4), Some(7));
     assert_eq!((0b1111_1111: u8).alloc(1), None);
     assert_eq!((0b0110_1010: u8).alloc(2), None);
+}
+
+#[test]
+fn test_bitmap_array_simple() {
+    /*
+     * These might be a bit counterintuitive at first, because `BitArray` treats the array as a
+     * little-endian set of bytes, so the LSB of the first byte is bit 0.
+     */
+    assert_eq!([0xff, 0xff, 0xff, 0xff, 0xff].alloc(3), None);
+    assert_eq!([0xfe, 0xff, 0xff, 0xff].alloc(1), Some(0));
+    assert_eq!([0b1111_0001, 0xff, 0xff].alloc(3), Some(1));
+    assert_eq!([0b1111_1001, 0xff, 0xff].alloc(3), None);
+}
+
+#[test]
+fn test_bitmap_array_multiple() {
+    let mut bitmap = [0b1111_1100, 0xff, 0xff];
+
+    // Make the first allocation
+    let first = bitmap.alloc(1);
+    assert_eq!(first, Some(0));
+    assert_eq!(bitmap, [0b1111_1101, 0xff, 0xff]);
+
+    // Make a second allocation
+    let second = bitmap.alloc(1);
+    assert_eq!(second, Some(1));
+    assert_eq!(bitmap, [0b1111_1111, 0xff, 0xff]);
+
+    // Try to make a third allocation - it should fail
+    assert_eq!(bitmap.alloc(1), None);
 }
