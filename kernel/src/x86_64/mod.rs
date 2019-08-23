@@ -89,6 +89,7 @@ pub fn kmain() -> ! {
         cpu_info.model_info,
         cpu_info.microarch()
     );
+    check_support(&cpu_info);
 
     /*
      * Initialise the heap allocator. After this, the kernel is free to use collections etc. that
@@ -269,4 +270,21 @@ fn load_task(arch: &Arch, scheduler: &mut Scheduler<Arch>, image: &ImageInfo) {
     ))
     .add_to_map(&mut arch.object_map.write());
     scheduler.add_task(task).unwrap();
+}
+
+/// We rely on certain processor features to be present for simplicity and sanity-retention. This
+/// function checks that we support everything we need to, and enable features that need to be.
+fn check_support(cpu_info: &CpuInfo) {
+    use bit_field::BitField;
+    use x86_64::hw::registers::{read_control_reg, write_control_reg, CR4_XSAVE_ENABLE_BIT};
+
+    if !cpu_info.supported_features.xsave {
+        panic!("Processor does not support xsave instruction!");
+    }
+
+    let mut cr4 = read_control_reg!(CR4);
+    cr4.set_bit(CR4_XSAVE_ENABLE_BIT, true);
+    unsafe {
+        write_control_reg!(CR4, cr4);
+    }
 }

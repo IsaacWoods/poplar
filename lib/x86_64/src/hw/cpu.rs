@@ -6,11 +6,16 @@
 use bit_field::BitField;
 use core::str;
 
+pub struct SupportedFeatures {
+    pub xsave: bool,
+}
+
 /// Describes information we know about the system we're running on.
 pub struct CpuInfo {
     pub max_supported_standard_level: u32,
     pub vendor: Vendor,
     pub model_info: ModelInfo,
+    pub supported_features: SupportedFeatures,
 
     /// Information about the hypervisor we're running under, if we are. `None` if we're not
     /// running on virtualised hardware.
@@ -19,12 +24,20 @@ pub struct CpuInfo {
 
 impl CpuInfo {
     pub fn new() -> CpuInfo {
+        let processor_cpuid = cpuid(CpuidEntry::ProcessorInfo);
         let vendor_id_cpuid = cpuid(CpuidEntry::VendorId);
         let vendor = decode_vendor(&vendor_id_cpuid);
-        let model_info = decode_model_info();
+        let model_info = decode_model_info(processor_cpuid.a);
+        let supported_features = decode_supported_features(processor_cpuid.c, processor_cpuid.d);
         let hypervisor_info = decode_hypervisor_info();
 
-        CpuInfo { max_supported_standard_level: vendor_id_cpuid.a, vendor, model_info, hypervisor_info }
+        CpuInfo {
+            max_supported_standard_level: vendor_id_cpuid.a,
+            vendor,
+            model_info,
+            supported_features,
+            hypervisor_info,
+        }
     }
 
     pub fn microarch(&self) -> Option<Microarch> {
@@ -172,7 +185,30 @@ enum CpuidEntry {
     /// B,D,C = vendor ID string
     VendorId = 0x00,
 
-    ProcessorTypeFamilyModel = 0x01,
+    /// A = Type, Family, Model, Stepping
+    ///
+    /// B(bits 0-7) = Brand Index
+    /// B(bits 8-15) = CLFLUSH line size
+    /// B(bits 16-23) = max number of addressible IDs for logical processors in this package
+    /// B(bits 24-31) = initial APIC ID
+    ///
+    /// C = feature info (below are for individual bits. 1 = support)
+    ///     0 = SSE3
+    ///     19 = SSE4.1
+    ///     20 = SSE4.2
+    ///     21 = x2APIC
+    ///     26 = XSAVE
+    ///     28 = AVX
+    ///     30 = RDRAND
+    /// (this list only includes things we are currently interested in. Refer to
+    /// https://www.felixcloutier.com/x86/cpuid#fig-3-7 for a full list)
+    ///
+    /// D = feature info (below are for individual bits. 1 = support)
+    ///     0 = x87 FPU
+    ///     4 = RDTSC and CR4.TSC
+    ///     15 = CMOV
+    ///     19 = CLFLUSH
+    ProcessorInfo = 0x01,
 
     /// A = denominator
     /// B = numerator
@@ -200,19 +236,24 @@ fn decode_vendor(vendor_id: &CpuidResult) -> Vendor {
     }
 }
 
-fn decode_model_info() -> ModelInfo {
-    let cpuid = cpuid(CpuidEntry::ProcessorTypeFamilyModel);
+fn decode_model_info(model_info: u32) -> ModelInfo {
+    let family = model_info.get_bits(8..12) as u8;
+    let model = model_info.get_bits(4..8) as u8;
+    let stepping = model_info.get_bits(0..4) as u8;
 
-    let family = cpuid.a.get_bits(8..12) as u8;
-    let model = cpuid.a.get_bits(4..8) as u8;
-    let stepping = cpuid.a.get_bits(0..4) as u8;
+    let extended_family = if family == 0xf { family + model_info.get_bits(20..28) as u8 } else { family };
 
-    let extended_family = if family == 0xf { family + cpuid.a.get_bits(20..28) as u8 } else { family };
-
-    let extended_model =
-        if family == 0xf || family == 0x6 { model + ((cpuid.a.get_bits(16..20) as u8) << 4) } else { model };
+    let extended_model = if family == 0xf || family == 0x6 {
+        model + ((model_info.get_bits(16..20) as u8) << 4)
+    } else {
+        model
+    };
 
     ModelInfo { family, model, stepping, extended_family, extended_model }
+}
+
+fn decode_supported_features(processor_info_c: u32, processor_info_d: u32) -> SupportedFeatures {
+    SupportedFeatures { xsave: processor_info_c.get_bit(26) }
 }
 
 fn decode_hypervisor_info() -> Option<HypervisorInfo> {
@@ -221,7 +262,7 @@ fn decode_hypervisor_info() -> Option<HypervisorInfo> {
      * 31 of ECX of the 0x1 cpuid leaf, which the hypervisor intercepts the access to and
      * advertises its presence.
      */
-    if !cpuid(CpuidEntry::ProcessorTypeFamilyModel).c.get_bit(31) {
+    if !cpuid(CpuidEntry::ProcessorInfo).c.get_bit(31) {
         return None;
     }
 

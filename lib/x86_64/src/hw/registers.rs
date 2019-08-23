@@ -48,6 +48,12 @@ impl fmt::Debug for CpuFlags {
     }
 }
 
+/*
+ * Constants for bits in CR4.
+ * TODO: expand and use in bootloader
+ */
+pub const CR4_XSAVE_ENABLE_BIT: usize = 18;
+
 /// Read a control register. The name of the control register should be passed as any of: `CR0`,
 /// `CR1`, `CR2`, `CR3`, `CR4`, `CR8`.
 pub macro read_control_reg($reg: ident) {{
