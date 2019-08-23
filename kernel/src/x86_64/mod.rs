@@ -43,6 +43,9 @@ pub(self) static GDT: Mutex<Gdt> = Mutex::new(Gdt::new());
 pub struct Arch {
     pub cpu_info: CpuInfo,
     pub physical_memory_manager: LockedPhysicalMemoryManager,
+    /// Each bit in this bitmap corresponds to a slot for an address space worth of kernel stacks
+    /// in the kernel address space. We can have up 1024 address spaces, so need 128 bytes.
+    pub kernel_stack_bitmap: Mutex<[u8; 128]>,
     pub kernel_page_table: Mutex<PageTable>,
     pub object_map: RwLock<ObjectMap<Self>>,
     /* pub boot_processor: Mutex<Cpu>,
@@ -185,6 +188,7 @@ pub fn kmain() -> ! {
                 kernel_map::PHYSICAL_MAPPING_BASE,
             )
         }),
+        kernel_stack_bitmap: Mutex::new([0; 128]),
         object_map: RwLock::new(ObjectMap::new(crate::object::map::INITIAL_OBJECT_CAPACITY)),
         /* boot_processor: Mutex::new(boot_processor),
          * application_processors: Mutex::new(application_processors), */
