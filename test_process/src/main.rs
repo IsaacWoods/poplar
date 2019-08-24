@@ -7,10 +7,12 @@ use libpebble::syscall;
 
 #[no_mangle]
 pub extern "C" fn start() -> ! {
-    syscall::early_log("Hello, World!").unwrap();
+    syscall::early_log("Hello, World! From test process").unwrap();
     syscall::yield_to_kernel();
     syscall::early_log("After yeild").unwrap();
-    loop {}
+    loop {
+        syscall::yield_to_kernel();
+    }
 }
 
 #[panic_handler]
