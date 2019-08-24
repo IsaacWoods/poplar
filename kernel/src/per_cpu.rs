@@ -6,29 +6,23 @@ use core::fmt;
 /// that is installed as the actual per-cpu data structure. It should then be exposed by two
 /// functions, `common_per_cpu` and `common_per_cpu_mut`, from each arch module for the rest of the
 /// kernel to use.
-pub struct CommonPerCpu<A: Architecture> {
-    pub scheduler: Scheduler<A>,
+pub struct CommonPerCpu {
+    pub scheduler: Scheduler,
 }
 
-impl<A> CommonPerCpu<A>
-where
-    A: Architecture,
-{
-    pub fn new() -> CommonPerCpu<A> {
+impl CommonPerCpu {
+    pub fn new() -> CommonPerCpu {
         CommonPerCpu { scheduler: Scheduler::new() }
     }
 
     /// Helper method to get the currently running task. Panics if the kernel hasn't dropped into
     /// userspace yet.
-    pub fn running_task(&self) -> &WrappedKernelObject<A> {
+    pub fn running_task(&self) -> &WrappedKernelObject<crate::arch_impl::Arch> {
         self.scheduler.running_task.as_ref().unwrap()
     }
 }
 
-impl<A> fmt::Debug for CommonPerCpu<A>
-where
-    A: Architecture,
-{
+impl fmt::Debug for CommonPerCpu {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "CommonPerCpu(scheduler: {:?})", self.scheduler)
     }

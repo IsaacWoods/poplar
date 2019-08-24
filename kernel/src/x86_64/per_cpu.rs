@@ -1,4 +1,3 @@
-use super::Arch;
 use crate::{per_cpu::CommonPerCpu, scheduler::Scheduler};
 use alloc::boxed::Box;
 use core::{marker::PhantomPinned, mem, pin::Pin};
@@ -28,7 +27,7 @@ pub struct PerCpu {
     /// within this struct, because we refer to it manually with `gs:0x8`.
     current_task_kernel_rsp: VirtualAddress,
 
-    common: CommonPerCpu<Arch>,
+    common: CommonPerCpu,
     tss: Tss,
     tss_selector: Option<SegmentSelector>,
 }
@@ -42,32 +41,36 @@ impl PerCpu {
         unsafe { self.map_unchecked_mut(|per_cpu| &mut per_cpu.tss) }
     }
 
+    pub fn current_task_kernel_rsp<'a>(self: Pin<&'a Self>) -> Pin<&'a VirtualAddress> {
+        unsafe { self.map_unchecked(|per_cpu| &per_cpu.current_task_kernel_rsp) }
+    }
+
     pub fn current_task_kernel_rsp_mut<'a>(self: Pin<&'a mut Self>) -> Pin<&'a mut VirtualAddress> {
         unsafe { self.map_unchecked_mut(|per_cpu| &mut per_cpu.current_task_kernel_rsp) }
     }
 
-    pub fn common<'a>(self: Pin<&'a Self>) -> Pin<&'a CommonPerCpu<Arch>> {
+    pub fn common<'a>(self: Pin<&'a Self>) -> Pin<&'a CommonPerCpu> {
         unsafe { self.map_unchecked(|per_cpu| &per_cpu.common) }
     }
 
-    pub fn common_mut<'a>(self: Pin<&'a mut Self>) -> Pin<&'a mut CommonPerCpu<Arch>> {
+    pub fn common_mut<'a>(self: Pin<&'a mut Self>) -> Pin<&'a mut CommonPerCpu> {
         unsafe { self.map_unchecked_mut(|per_cpu| &mut per_cpu.common) }
     }
 
-    pub fn scheduler<'a>(self: Pin<&'a mut Self>) -> Pin<&'a mut Scheduler<Arch>> {
+    pub fn scheduler<'a>(self: Pin<&'a mut Self>) -> Pin<&'a mut Scheduler> {
         unsafe { self.map_unchecked_mut(|per_cpu| &mut per_cpu.common.scheduler) }
     }
 }
 
 /// Access the common per-CPU data. This is exported from the x86_64 module so it can be used from
 /// the rest of the kernel.
-pub unsafe fn common_per_cpu_data<'a>() -> Pin<&'a CommonPerCpu<Arch>> {
+pub unsafe fn common_per_cpu_data<'a>() -> Pin<&'a CommonPerCpu> {
     per_cpu_data().common()
 }
 
 /// Get a mutable reference to the common per-CPU data. Exported from the x86_64 module so it can
 /// be used from the rest of the kernel.
-pub unsafe fn common_per_cpu_data_mut<'a>() -> Pin<&'a mut CommonPerCpu<Arch>> {
+pub unsafe fn common_per_cpu_data_mut<'a>() -> Pin<&'a mut CommonPerCpu> {
     per_cpu_data_mut().common_mut()
 }
 

@@ -10,5 +10,4 @@ pub trait CommonTask {
     fn state(&self) -> TaskState;
 
     fn name(&self) -> &str;
-    fn switch_to(&mut self);
 }

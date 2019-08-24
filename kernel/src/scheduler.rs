@@ -8,22 +8,22 @@ use crate::{
 use alloc::collections::VecDeque;
 use core::fmt;
 
-pub struct Scheduler<A: Architecture> {
-    pub running_task: Option<WrappedKernelObject<A>>,
+pub struct Scheduler {
+    pub running_task: Option<WrappedKernelObject<crate::arch_impl::Arch>>,
     /// List of Tasks ready to be scheduled. Every kernel object in this list must be a Task.
     /// Backed by a `VecDeque` so we can rotate objects in the queue efficiently.
-    ready_queue: VecDeque<WrappedKernelObject<A>>,
+    ready_queue: VecDeque<WrappedKernelObject<crate::arch_impl::Arch>>,
 }
 
-impl<A> Scheduler<A>
-where
-    A: Architecture,
-{
-    pub fn new() -> Scheduler<A> {
+impl Scheduler {
+    pub fn new() -> Scheduler {
         Scheduler { running_task: None, ready_queue: VecDeque::new() }
     }
 
-    pub fn add_task(&mut self, task_object: WrappedKernelObject<A>) -> Result<(), ScheduleError> {
+    pub fn add_task(
+        &mut self,
+        task_object: WrappedKernelObject<crate::arch_impl::Arch>,
+    ) -> Result<(), ScheduleError> {
         let state = task_object.object.task().ok_or(ScheduleError::KernelObjectNotATask)?.read().state();
         match state {
             TaskState::Ready => self.ready_queue.push_back(task_object),
@@ -42,7 +42,7 @@ where
     /// By controlling which Task is added first, the ecosystem can be sure that the correct Task
     /// is run first (whether the userspace layers take advantage of this is up to them - it would
     /// be more reliable to not depend on one process starting first, but this is an option).
-    pub fn drop_to_userspace(&mut self, arch: &A) -> ! {
+    pub fn drop_to_userspace(&mut self, arch: &crate::arch_impl::Arch) -> ! {
         assert!(self.running_task.is_none());
         let task = self.ready_queue.pop_front().expect("Tried to drop into userspace with no ready tasks!");
         self.running_task = Some(task.clone());
@@ -56,10 +56,7 @@ pub enum ScheduleError {
     KernelObjectNotATask,
 }
 
-impl<A> fmt::Debug for Scheduler<A>
-where
-    A: Architecture,
-{
+impl fmt::Debug for Scheduler {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "Scheduler(running = {:?}, ready = {:?})", self.running_task, self.ready_queue)
     }
