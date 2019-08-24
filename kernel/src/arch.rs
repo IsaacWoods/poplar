@@ -17,6 +17,8 @@ pub trait Architecture: Sized {
     /// has to carefully manage the locks to make sure they're all released before we jump into
     /// userspace.
     fn drop_to_userspace(&self, task: WrappedKernelObject<Self>) -> !;
+
+    fn context_switch(&self, old: WrappedKernelObject<Self>, new: WrappedKernelObject<Self>);
 }
 
 /// To test some of the kernel's data structures and stuff, we need a type that implements
@@ -45,10 +47,6 @@ pub mod test {
         fn name(&self) -> &str {
             unimplemented!()
         }
-
-        fn switch_to(&mut self) {
-            unimplemented!();
-        }
     }
 
     impl Architecture for FakeArch {
@@ -62,6 +60,10 @@ pub mod test {
 
         fn drop_to_userspace(&self, _: WrappedKernelObject<Self>) -> ! {
             panic!("FakeArch can't drop into userspace")
+        }
+
+        fn context_switch(&self, _: WrappedKernelObject<Self>, _: WrappedKernelObject<Self>) {
+            unimplemented!()
         }
     }
 }

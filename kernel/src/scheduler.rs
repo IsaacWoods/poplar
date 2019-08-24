@@ -7,6 +7,7 @@ use crate::{
 };
 use alloc::collections::VecDeque;
 use core::fmt;
+use log::trace;
 
 pub struct Scheduler {
     pub running_task: Option<WrappedKernelObject<crate::arch_impl::Arch>>,
@@ -47,6 +48,41 @@ impl Scheduler {
         let task = self.ready_queue.pop_front().expect("Tried to drop into userspace with no ready tasks!");
         self.running_task = Some(task.clone());
         arch.drop_to_userspace(task)
+    }
+
+    /// Switch to the next scheduled task. This is called when a task yields, or when we pre-empt a
+    /// task that is hogging CPU time. If there is nothing to schedule, this is free to idle the
+    /// CPU (including managing power), or steal work from another scheduling unit.
+    pub fn switch_to_next(&mut self) {
+        assert!(self.running_task.is_some());
+
+        /*
+         * Select the next task to run.
+         * NOTE: in the future, this could be more complex, e.g. by taking priority into account.
+         */
+        if let Some(next_task) = self.ready_queue.pop_front() {
+            /*
+             * We're switching task! We sort out the internal scheduler state, and then ask the
+             * platform to perform the context switch for us!
+             * NOTE: This temporarily allows `running_task` to be `None`.
+             */
+            trace!("switching task: {}", next_task.object.task().unwrap().read().name());
+            let old_task = self.running_task.take().unwrap();
+            self.running_task = Some(next_task.clone());
+            self.ready_queue.push_back(old_task.clone());
+
+            /*
+             * On some platforms, this may not always return, and so we must not be holding any
+             * locks when we call this (this is why it takes the kernel objects directly).
+             */
+            crate::arch_impl::context_switch(old_task, next_task);
+        } else {
+            /*
+             * There aren't any schedulable tasks. For now, we just return to the current one (by
+             * doing nothing here).
+             */
+            trace!("No more schedulable tasks. Returning to current one!");
+        }
     }
 }
 

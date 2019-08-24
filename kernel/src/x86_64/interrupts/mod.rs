@@ -16,6 +16,11 @@ use x86_64::{
     memory::{kernel_map, EntryFlags, Frame, Page, PhysicalAddress},
 };
 
+global_asm!(include_str!("syscall.s"));
+extern "C" {
+    fn syscall_handler() -> !;
+}
+
 /// This should only be accessed directly by the bootstrap processor.
 ///
 /// The IDT is laid out like so:
@@ -171,94 +176,6 @@ extern "C" fn local_apic_timer_handler(_: &InterruptStackFrame) {
     unsafe {
         LocalApic::send_eoi();
     }
-}
-
-#[naked]
-extern "C" fn syscall_handler() -> ! {
-    /*
-     * This is the code that is run when a task executes the `syscall` instruction. The `syscall`
-     * instruction:
-     *    - has put the `rip` to return to in `rcx`
-     *    - has put the `rflags` to return with in `r11`, masked with `IA32_FMASK`
-     *    - does not save `rsp`. It is our responsibility to deal with the stack(s).
-     *
-     * Because we are using the System-V ABI:
-     *    - `rbp`, `rbx`, `r12`, `r13`, `r14`, and `r15` must be preserved
-     *    - Other registers may be clobbered
-     *
-     * However:
-     *    - `rax`, `rdi`, `rsi`, `r8`, and `r9` may contain arguments that need to be passed to the handler
-     *    - `rax` must contain the result of the system call, if there is one, at the time of `sysret`
-     */
-    unsafe {
-        asm!("/*
-               * Firstly, we move to the task's kernel stack. `r10` shouldn't contain anything
-               * important at the moment, so we can use it for this.
-               */
-              mov r10, gs:0x8       // This accesses the `current_task_kernel_rsp` field of the per-cpu data
-              xchg r10, rsp
-              push r10              // Push the user stack pointer onto the task's kernel stack
-
-              /*
-               * `syscall` puts important stuff in `rcx` and `r11`. We save them here and restore
-               * them before calling `sysretq`.
-               */
-              push rcx
-              push r11"
-        :
-        :
-        : "r10"
-        : "intel"
-        );
-    }
-
-    /*
-     * Next, we extract the system call number and the potential parameters (depending on how
-     * many params the system call actually takes, some or all of these might actually just
-     * be random stuff from the userspace process - this is fine as long as our handling code
-     * is correct.
-     */
-    let (number, a, b, c, d, e) = unsafe {
-        let (number, a, b, c, d, e): (usize, usize, usize, usize, usize, usize);
-
-        asm!(""
-        : "={rax}"(number), "={rdi}"(a), "={rsi}"(b), "={rdx}"(c), "={r8}"(d), "={r9}"(e)
-        :
-        :
-        :
-        );
-
-        (number, a, b, c, d, e)
-    };
-
-    /*
-     * Call the architecture-independent handler.
-     */
-    let result = crate::syscall::handle_syscall(number, a, b, c, d, e);
-
-    /*
-     * - Put the result of the system call in `rax`.
-     * - Restore the state needed for `sysretq`
-     * - Move back to the task's user stack.
-     * - Return to userspace!
-     */
-    unsafe {
-        asm!("pop r11
-              pop rcx
-
-              pop r10
-              xchg r10, rsp
-              mov gs:0x8, r10
-
-              sysretq"
-        :
-        : "{rax}"(result)
-        : "r10"
-        : "intel"
-        );
-    }
-
-    unreachable!();
 }
 
 extern "C" fn spurious_handler(_: &InterruptStackFrame) {}

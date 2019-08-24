@@ -4,6 +4,7 @@ use core::fmt;
 /// A wrapper for the `RFLAGS` register, providing a nice `Debug` implementation that details which
 /// flags are set and unset.
 #[derive(Clone, Copy)]
+#[repr(transparent)]
 pub struct CpuFlags(pub u64);
 
 impl CpuFlags {

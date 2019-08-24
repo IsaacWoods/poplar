@@ -10,8 +10,12 @@ mod memory_object;
 mod per_cpu;
 mod task;
 
-// Export the common per-CPU data accessors, so they can be used from the rest of the kernel.
-pub use self::per_cpu::{common_per_cpu_data, common_per_cpu_data_mut};
+// Export the items that every architecture module is expected to provide to the rest of the
+// kernel.
+pub use self::{
+    per_cpu::{common_per_cpu_data, common_per_cpu_data_mut},
+    task::context_switch,
+};
 
 use self::{
     acpi_handler::PebbleAcpiHandler,
@@ -67,7 +71,11 @@ impl Architecture for Arch {
     type MemoryObject = MemoryObject;
 
     fn drop_to_userspace(&self, task: WrappedKernelObject<Arch>) -> ! {
-        task::drop_to_usermode(self, task);
+        task::drop_to_usermode(task);
+    }
+
+    fn context_switch(&self, old: WrappedKernelObject<Arch>, new: WrappedKernelObject<Arch>) {
+        task::context_switch(old, new)
     }
 }
 
@@ -246,7 +254,7 @@ pub fn kmain() -> ! {
     scheduler.drop_to_userspace(&arch)
 }
 
-fn load_task(arch: &Arch, scheduler: &mut Scheduler<Arch>, image: &ImageInfo) {
+fn load_task(arch: &Arch, scheduler: &mut Scheduler, image: &ImageInfo) {
     // Make an AddressSpace for the image
     let address_space: WrappedKernelObject<Arch> =
         KernelObject::AddressSpace(RwLock::new(box AddressSpace::new(&arch)))

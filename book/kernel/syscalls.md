@@ -22,10 +22,12 @@ the size of a register.
 ### Making a system call on x86_64
 To make a system call on x86_64, populate these registers:
 
-| `rax`                 | `rdi` | `rsi` | `rdx` | `r8`  | `r9`  |
+| `rdi`                 | `rsi` | `rdx` | `r10` | `r8`  | `r9`  |
 |-----------------------|-------|-------|-------|-------|-------|
 | System call number    | `a`   | `b`   | `c`   | `d`   | `e`   |
 
+The only way in which these registers deviate from the x86_64 Sys-V ABI is that `c` is passed in `r10` instead
+of `rcx`. This is because `rcx` is used by the `syscall` instruction, and so is not free.
 You can then make the system call by executing `syscall`. Before the kernel returns to userspace, it will put the result of the system call (if there is one) in `rax`.
 If a system call takes less than five parameters, the unused parameter registers will be preserved across the system call.
 

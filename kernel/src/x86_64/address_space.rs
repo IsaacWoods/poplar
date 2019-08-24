@@ -4,7 +4,6 @@ use crate::{
     util::bitmap::{Bitmap, BitmapArray},
 };
 use alloc::vec::Vec;
-use log::info;
 use x86_64::memory::{kernel_map, EntryFlags, Frame, FrameAllocator, Page, PageTable, VirtualAddress};
 
 #[derive(PartialEq, Eq, Debug)]
@@ -90,6 +89,14 @@ impl AddressSpace {
         assert_eq!(self.state, State::NotActive, "Tried to switch to already-active address space!");
         self.table.switch_to();
         self.state = State::Active;
+    }
+
+    /// Tell the address space that we are switching to another address space, so it is no longer
+    /// the active address space
+    // TODO: do we even want to track this state?
+    pub fn switch_away_from(&mut self) {
+        assert_eq!(self.state, State::Active);
+        self.state = State::NotActive;
     }
 
     pub fn add_stack_set<A>(&mut self, size: usize, allocator: &A) -> Option<StackSet>

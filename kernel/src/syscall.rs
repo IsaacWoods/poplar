@@ -1,4 +1,4 @@
-use crate::arch_impl::common_per_cpu_data;
+use crate::arch_impl::{common_per_cpu_data, common_per_cpu_data_mut};
 use core::{slice, str};
 use libpebble::{caps::Capability, syscall};
 use log::{info, trace, warn};
@@ -7,16 +7,22 @@ use log::{info, trace, warn};
 /// receives the syscall (each architecture is free to do this however it wishes). The only
 /// parameter that is guaranteed to be valid is `number`; the meaning of the rest may be undefined
 /// depending on how many parameters the specific system call takes.
-pub fn handle_syscall(number: usize, a: usize, b: usize, c: usize, d: usize, e: usize) -> usize {
+///
+/// It is defined as using the C ABI, so an architecture can call it stably from assembly if it
+/// wants to.
+#[no_mangle]
+pub extern "C" fn rust_syscall_handler(
+    number: usize,
+    a: usize,
+    b: usize,
+    c: usize,
+    d: usize,
+    e: usize,
+) -> usize {
     info!("Syscall! number = {}, a = {}, b = {}, c = {}, d = {}, e = {}", number, a, b, c, d, e);
 
     match number {
-        syscall::SYSCALL_YIELD => {
-            info!("Process yielded!");
-            // TODO: schedule another task or something
-            0
-        }
-
+        syscall::SYSCALL_YIELD => yield_syscall(),
         syscall::SYSCALL_EARLY_LOG => {
             /*
              * a = length of string in bytes (must be <= 1024)
@@ -31,6 +37,20 @@ pub fn handle_syscall(number: usize, a: usize, b: usize, c: usize, d: usize, e: 
             1
         }
     }
+}
+
+fn yield_syscall() -> usize {
+    /*
+     * This is a fairly unique system call in that it can return into a different context than the
+     * one that called it. We ask the scheduler to move us to the next task, then return to the new
+     * userspace context.
+     */
+    info!("Process yielded!");
+    unsafe {
+        common_per_cpu_data_mut().scheduler.switch_to_next();
+    }
+
+    0
 }
 
 fn early_log(str_length: usize, str_address: usize) -> usize {
