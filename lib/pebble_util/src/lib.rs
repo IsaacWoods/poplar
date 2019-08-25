@@ -1,3 +1,6 @@
+#![no_std]
+#![feature(const_generics, decl_macro)]
+
 mod binary_pretty_print;
 pub mod bitmap;
 pub mod math;

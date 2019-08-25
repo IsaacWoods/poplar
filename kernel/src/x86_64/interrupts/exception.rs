@@ -2,8 +2,8 @@
 //! exceptions are handled and recovered from, while some are fatal errors and lead to kernel
 //! panics.
 
-use crate::util::BinaryPrettyPrint;
 use log::{error, info};
+use pebble_util::BinaryPrettyPrint;
 use x86_64::hw::{idt::InterruptStackFrame, registers::read_control_reg};
 
 pub extern "C" fn nmi_handler(_: &InterruptStackFrame) {

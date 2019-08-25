@@ -75,6 +75,50 @@ fn test_flooring_log2() {
     assert_eq!(flooring_log2(4095), 11);
 }
 
+pub fn align_down(value: usize, align: usize) -> usize {
+    assert!(align == 0 || align.is_power_of_two());
+
+    if align == 0 {
+        value
+    } else {
+        /*
+         * Alignment must be a power of two.
+         *
+         * E.g.
+         * align       =   0b00001000
+         * align-1     =   0b00000111
+         * !(align-1)  =   0b11111000
+         * ^^^ Masks the value to the one below it with the correct align
+         */
+        value & !(align - 1)
+    }
+}
+
+#[test]
+fn test_align_down() {
+    assert_eq!(align_down(17, 0), 17);
+    assert_eq!(align_down(17, 1), 17);
+    assert_eq!(align_down(9, 8), 8);
+    assert_eq!(align_down(19, 8), 16);
+    assert_eq!(align_down(1025, 16), 1024);
+}
+
+pub fn align_up(value: usize, align: usize) -> usize {
+    if align == 0 {
+        value
+    } else {
+        align_down(value + align - 1, align)
+    }
+}
+
+#[test]
+fn test_align_up() {
+    assert_eq!(align_up(17, 0), 17);
+    assert_eq!(align_up(43, 1), 43);
+    assert_eq!(align_up(9, 8), 16);
+    assert_eq!(align_up(1023, 16), 1024);
+}
+
 pub fn ceiling_log2(x: u64) -> u64 {
     let x = if x.is_power_of_two() { x } else { x.next_power_of_two() };
 

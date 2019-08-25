@@ -1,4 +1,4 @@
-use crate::{arch::Architecture, object::WrappedKernelObject, scheduler::Scheduler};
+use crate::{object::WrappedKernelObject, scheduler::Scheduler};
 use core::fmt;
 
 /// Per-cpu data that needs to be accessed from the arch-independent parts of the kernel. This

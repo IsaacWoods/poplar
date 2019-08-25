@@ -41,7 +41,6 @@ mod object;
 mod per_cpu;
 mod scheduler;
 mod syscall;
-mod util;
 
 use crate::heap_allocator::LockedHoleAllocator;
 use cfg_if::cfg_if;

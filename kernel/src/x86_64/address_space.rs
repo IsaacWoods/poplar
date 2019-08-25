@@ -1,9 +1,7 @@
 use super::{memory::userspace_map, Arch};
-use crate::{
-    object::WrappedKernelObject,
-    util::bitmap::{Bitmap, BitmapArray},
-};
+use crate::object::WrappedKernelObject;
 use alloc::vec::Vec;
+use pebble_util::bitmap::{Bitmap, BitmapArray};
 use x86_64::memory::{kernel_map, EntryFlags, Frame, FrameAllocator, Page, PageTable, VirtualAddress};
 
 #[derive(PartialEq, Eq, Debug)]

@@ -43,9 +43,9 @@
 //! served allocating a larger block of frames at a time, and using a slab allocator to make the
 //! individual allocations.
 
-use crate::util::math::{ceiling_log2, flooring_log2};
 use alloc::{collections::BTreeSet, vec::Vec};
 use core::{cmp::min, ops::Range};
+use pebble_util::math::{ceiling_log2, flooring_log2};
 use x86_64::memory::{Frame, FrameSize, PhysicalAddress, Size4KiB};
 
 // TODO: make this generic over the frame size - it should monomorphise and generate good code I

@@ -8,18 +8,17 @@ edition = "2018"
 crate-type = ["staticlib"]
 
 [dependencies]
+pebble_util = { path = "../lib/pebble_util" }
 cfg-if = "0.1"
 bitflags = "1"
 bit_field = "0.9"
 spin = "0.4"
 log = { version = "0.4", default-features = false }
 x86_64 = { path = "../lib/x86_64", features = ["kernel"], optional = true }
-num = { version = "0.2", default-features = false }
 libpebble = { path = "../lib/libpebble" }
 acpi = { path = "../lib/acpi/acpi", optional = true }
 # aml = { path = "../lib/acpi/aml", optional = true, features = ["debug_parser", "debug_parser_verbose"]}
 aml = { path = "../lib/acpi/aml", optional = true }
 
 [features]
-arch_x86_64 = ["x86_64", "acpi", "aml"]
-tuning-fast_ctlz = []
+arch_x86_64 = ["x86_64", "acpi", "aml", "pebble_util/tuning_fast_ctlz"]

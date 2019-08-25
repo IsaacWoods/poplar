@@ -4,6 +4,7 @@ use core::{
     mem::{self, size_of},
     ops::Deref,
 };
+use pebble_util::math::align_up;
 use spin::Mutex;
 use x86_64::memory::VirtualAddress;
 
@@ -17,11 +18,7 @@ impl HoleAllocator {
     /// Create a new, uninitialized `HoleAllocator`. Before heap allocations can be made, `init`
     /// must be called.
     pub const fn new_uninitialized() -> HoleAllocator {
-        HoleAllocator {
-            heap_bottom: unsafe { VirtualAddress::new_unchecked(0) },
-            heap_size: 0,
-            holes: None,
-        }
+        HoleAllocator { heap_bottom: unsafe { VirtualAddress::new_unchecked(0) }, heap_size: 0, holes: None }
     }
 
     /// Initialise the `HoleAllocator`. This should only be called once, and constructs the
@@ -52,10 +49,8 @@ impl Deref for LockedHoleAllocator {
 
 unsafe impl GlobalAlloc for LockedHoleAllocator {
     unsafe fn alloc(&self, layout: Layout) -> *mut u8 {
-        let size = align_up(
-            max(layout.size() as usize, HoleList::get_min_size()),
-            mem::align_of::<Hole>() as usize,
-        );
+        let size =
+            align_up(max(layout.size() as usize, HoleList::get_min_size()), mem::align_of::<Hole>() as usize);
         let layout = Layout::from_size_align(size as usize, layout.align()).unwrap();
 
         match self.0.lock().holes {
@@ -65,10 +60,8 @@ unsafe impl GlobalAlloc for LockedHoleAllocator {
     }
 
     unsafe fn dealloc(&self, ptr: *mut u8, layout: Layout) {
-        let size = align_up(
-            max(layout.size() as usize, HoleList::get_min_size()),
-            mem::align_of::<Hole>() as usize,
-        );
+        let size =
+            align_up(max(layout.size() as usize, HoleList::get_min_size()), mem::align_of::<Hole>() as usize);
         let layout = Layout::from_size_align(size as usize, layout.align()).unwrap();
 
         match self.0.lock().holes {
@@ -173,10 +166,7 @@ fn split_hole(hole: HoleInfo, required_layout: Layout) -> Option<Allocation> {
 
         (
             aligned_addr,
-            Some(HoleInfo {
-                addr: hole.addr,
-                size: usize::from(aligned_addr) - usize::from(hole.addr),
-            }),
+            Some(HoleInfo { addr: hole.addr, size: usize::from(aligned_addr) - usize::from(hole.addr) }),
         )
     };
 
@@ -198,10 +188,7 @@ fn split_hole(hole: HoleInfo, required_layout: Layout) -> Option<Allocation> {
          * The hole is too big for the allocation, so add some back padding to
          * use the extra space.
          */
-        Some(HoleInfo {
-            addr: aligned_hole.addr + required_size,
-            size: aligned_hole.size - required_size,
-        })
+        Some(HoleInfo { addr: aligned_hole.addr + required_size, size: aligned_hole.size - required_size })
     };
 
     Some(Allocation {
@@ -326,32 +313,6 @@ fn free(mut hole: &mut Hole, addr: VirtualAddress, mut size: usize) {
         }
         break;
     }
-}
-
-/// Get the greatest x with the given alignment such that x <= the given address. The alignment
-/// must be a power of two.
-pub fn align_down(addr: usize, align: usize) -> usize {
-    assert!(align == 0 || align.is_power_of_two(), "Can only align to a power of two");
-
-    if align.is_power_of_two() {
-        /*
-         * E.g.
-         *      align       =   0b00001000
-         *      align-1     =   0b00000111
-         *      !(align-1)  =   0b11111000
-         *                             ^^^ Masks the address to the value below it with the
-         *                                 correct alignment
-         */
-        addr & !(align - 1)
-    } else {
-        assert!(align == 0);
-        addr
-    }
-}
-
-/// Get the smallest x with the given alignment such that x >= the given address.
-pub fn align_up(addr: usize, align: usize) -> usize {
-    align_down(addr + align - 1, align)
 }
 
 #[cfg(not(test))]
