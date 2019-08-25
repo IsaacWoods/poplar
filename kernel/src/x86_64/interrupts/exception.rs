@@ -2,6 +2,7 @@
 //! exceptions are handled and recovered from, while some are fatal errors and lead to kernel
 //! panics.
 
+use bit_field::BitField;
 use log::{error, info};
 use pebble_util::BinaryPrettyPrint;
 use x86_64::hw::{idt::InterruptStackFrame, registers::read_control_reg};
@@ -28,34 +29,30 @@ pub extern "C" fn general_protection_fault_handler(stack_frame: &InterruptStackF
 }
 
 pub extern "C" fn page_fault_handler(stack_frame: &InterruptStackFrame, error_code: u64) {
-    // TODO: use get_bit method on BitField instead and replace the patterns with exhaustive bool
-    // ones
     error!(
         "PAGE_FAULT: {} ({:#x})",
         match (
-            (error_code >> 2) & 0b1, // User / Supervisor
-            (error_code >> 4) & 0b1, // Instruction / Data
-            (error_code >> 1) & 0b1, // Read / Write
-            (error_code >> 0) & 0b1  // Present
+            error_code.get_bit(2), // User / Supervisor
+            error_code.get_bit(4), // Instruction / Data
+            error_code.get_bit(1), // Read / Write
+            error_code.get_bit(0)  // Present
         ) {
             // Page faults caused by the kernel
-            (0, 0, 0, 0) => "Kernel read non-present page",
-            (0, 0, 0, 1) => "Kernel read present page",
-            (0, 0, 1, 0) => "Kernel wrote to non-present page",
-            (0, 0, 1, 1) => "Kernel wrote to present page",
-            (0, 1, _, 0) => "Kernel fetched instruction from non-present page",
-            (0, 1, _, 1) => "Kernel fetched instruction from present page",
+            (false, false, false, false) => "Kernel read non-present page",
+            (false, false, false, true) => "Kernel read present page",
+            (false, false, true, false) => "Kernel wrote to non-present page",
+            (false, false, true, true) => "Kernel wrote to present page",
+            (false, true, _, false) => "Kernel fetched instruction from non-present page",
+            (false, true, _, true) => "Kernel fetched instruction from present page",
 
             // Page faults caused by user processes
-            (1, 0, 0, 0) => "User process read non-present page",
-            (1, 0, 0, 1) => "User process read present page (probable access violation)",
-            (1, 0, 1, 0) => "User process wrote to non-present page",
-            (1, 0, 1, 1) => "User process wrote to present page (probable access violation)",
-            (1, 1, _, 0) => "User process fetched instruction from non-present page",
-            (1, 1, _, 1) => "User process fetched instruction from present page (probable access violation)",
-
-            (_, _, _, _) => {
-                panic!("INVALID PAGE-FAULT ERROR CODE");
+            (true, false, false, false) => "User process read non-present page",
+            (true, false, false, true) => "User process read present page (probable access violation)",
+            (true, false, true, false) => "User process wrote to non-present page",
+            (true, false, true, true) => "User process wrote to present page (probable access violation)",
+            (true, true, _, false) => "User process fetched instruction from non-present page",
+            (true, true, _, true) => {
+                "User process fetched instruction from present page (probable access violation)"
             }
         },
         read_control_reg!(cr2) // CR2 holds the address of the page that caused the #PF
