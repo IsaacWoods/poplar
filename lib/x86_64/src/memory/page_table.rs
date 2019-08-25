@@ -2,6 +2,7 @@ use super::{Frame, FrameAllocator, Page, PhysicalAddress, Size2MiB, Size4KiB, Vi
 use crate::hw::{registers::write_control_reg, tlb};
 use bitflags::bitflags;
 use core::{
+    fmt,
     marker::PhantomData,
     ops::{Index, IndexMut},
 };
@@ -30,8 +31,6 @@ impl Default for EntryFlags {
     }
 }
 
-// TODO: custom debug impl - points to something or not, if so address and flags in an easy to see
-// way (this should be extended to whole tables with nice easy printing)
 #[repr(transparent)]
 #[derive(Clone, Copy)]
 pub struct Entry(u64);
@@ -66,6 +65,20 @@ impl Entry {
     /// not-present (use `set_unused` instead), because we automatically add the `PRESENT` flag.
     pub fn set(&mut self, address: PhysicalAddress, flags: EntryFlags) {
         self.0 = (usize::from(address) as u64) | (flags | EntryFlags::PRESENT).bits();
+    }
+}
+
+impl fmt::Debug for Entry {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        if !self.flags().contains(EntryFlags::PRESENT) {
+            write!(f, "Not Present")
+        } else {
+            if self.flags().contains(EntryFlags::HUGE_PAGE) {
+                write!(f, "[HUGE] Address: {:#x}, flags: {:?}", self.address().unwrap(), self.flags())
+            } else {
+                write!(f, "Address: {:#x}, flags: {:?}", self.address().unwrap(), self.flags())
+            }
+        }
     }
 }
 

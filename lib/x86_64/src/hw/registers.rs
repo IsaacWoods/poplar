@@ -33,17 +33,17 @@ impl fmt::Debug for CpuFlags {
         write!(
             f,
             "[{}{}{}{}{}{}{}{}{}{}{}] {:#x}",
-            if self.0 & 0x0000_4000 > 0 { 'N' } else { '-' }, // Nested Task flag
-            ['0', '1', '2', '3'][(self.0 & 0x0000_3001 >> 12) as usize], // I/O privilege level
-            if self.0 & 0x0000_0800 > 0 { 'O' } else { '-' }, // Overflow flag
-            if self.0 & 0x0000_0400 > 0 { 'D' } else { '-' }, // Direction flag
-            if self.0 & 0x0000_0200 > 0 { 'I' } else { '-' }, // Interrupt flag
-            if self.0 & 0x0000_0100 > 0 { 'T' } else { '-' }, // Trap flag
-            if self.0 & 0x0000_0080 > 0 { 'S' } else { '-' }, // Sign flag
-            if self.0 & 0x0000_0040 > 0 { 'Z' } else { '-' }, // Zero flag
-            if self.0 & 0x0000_0010 > 0 { 'A' } else { '-' }, // Adjust flag
-            if self.0 & 0x0000_0004 > 0 { 'P' } else { '-' }, // Parity flag
-            if self.0 & 0x0000_0001 > 0 { 'C' } else { '-' }, // Carry flag
+            if self.0.get_bit(14) { 'N' } else { '-' }, // Nested Task flag
+            ['0', '1', '2', '3'][(self.0.get_bits(12..14)) as usize], // I/O privilege level
+            if self.0.get_bit(11) { 'O' } else { '-' }, // Overflow flag
+            if self.0.get_bit(10) { 'D' } else { '-' }, // Direction flag
+            if self.0.get_bit(9) { 'I' } else { '-' },  // Interrupt flag
+            if self.0.get_bit(8) { 'T' } else { '-' },  // Trap flag
+            if self.0.get_bit(7) { 'S' } else { '-' },  // Sign flag
+            if self.0.get_bit(6) { 'Z' } else { '-' },  // Zero flag
+            if self.0.get_bit(4) { 'A' } else { '-' },  // Adjust flag
+            if self.0.get_bit(2) { 'P' } else { '-' },  // Parity flag
+            if self.0.get_bit(0) { 'C' } else { '-' },  // Carry flag
             self.0
         )
     }
@@ -51,8 +51,11 @@ impl fmt::Debug for CpuFlags {
 
 /*
  * Constants for bits in CR4.
- * TODO: expand and use in bootloader
  */
+/// If this is set, `rdtsc` can only be used in Ring 0.
+pub const CR4_RESTRICT_RDTSC: usize = 2;
+pub const CR4_ENABLE_PAE: usize = 5;
+pub const CR4_ENABLE_GLOBAL_PAGES: usize = 7;
 pub const CR4_XSAVE_ENABLE_BIT: usize = 18;
 
 /// Read a control register. The name of the control register should be passed as any of: `CR0`,
@@ -87,6 +90,10 @@ pub macro write_control_reg($reg: ident, $value: expr) {
 }
 
 pub const EFER: u32 = 0xc000_0080;
+
+pub const EFER_ENABLE_SYSCALL: usize = 0;
+pub const EFER_ENABLE_LONG_MODE: usize = 8;
+pub const EFER_ENABLE_NX_BIT: usize = 11;
 
 /// Contains the Ring 0 and Ring 3 code-segment selectors loaded by `syscall` and `sysret`,
 /// respectively:
