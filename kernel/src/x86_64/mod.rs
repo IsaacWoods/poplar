@@ -32,7 +32,7 @@ use crate::{
     scheduler::Scheduler,
     x86_64::per_cpu::per_cpu_data_mut,
 };
-use aml_parser::AmlContext;
+use aml::AmlContext;
 use core::time::Duration;
 use log::{error, info, warn};
 use spin::{Mutex, RwLock};
