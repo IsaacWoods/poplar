@@ -1,4 +1,7 @@
-use crate::arch_impl::{common_per_cpu_data, common_per_cpu_data_mut};
+use crate::{
+    arch_impl::{common_per_cpu_data, common_per_cpu_data_mut},
+    object::task::CommonTask,
+};
 use core::{slice, str};
 use libpebble::{caps::Capability, syscall};
 use log::{info, trace, warn};
@@ -63,19 +66,11 @@ fn early_log(str_length: usize, str_address: usize) -> usize {
      *
      * TODO: check that b is a valid userspace pointer and that it's mapped to physical
      * memory
-     * TODO: log the process ID / name to help identify stuff
      */
+    let task = unsafe { common_per_cpu_data().running_task().object.task().unwrap().read() };
 
     // Check the current task has the `EarlyLogging` capability
-    if !unsafe { common_per_cpu_data() }
-        .running_task()
-        .object
-        .task()
-        .unwrap()
-        .read()
-        .capabilities
-        .contains(&Capability::EarlyLogging)
-    {
+    if !task.capabilities.contains(&Capability::EarlyLogging) {
         return 3;
     }
 
@@ -91,6 +86,6 @@ fn early_log(str_length: usize, str_address: usize) -> usize {
         Err(_) => return 2,
     };
 
-    trace!("Userspace task early log message: {}", message);
+    trace!("Early log message from {}: {}", task.name(), message);
     0
 }
