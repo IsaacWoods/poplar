@@ -15,7 +15,8 @@
     bind_by_move_pattern_guards,
     box_syntax,
     const_generics,
-    global_asm
+    global_asm,
+    pin_into_inner
 )]
 #[macro_use]
 extern crate alloc;

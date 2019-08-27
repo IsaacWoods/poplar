@@ -239,11 +239,10 @@ pub fn kmain() -> ! {
     /*
      * Load all the images as initial tasks, and add them to the scheduler's ready list.
      */
-    use core::ops::DerefMut;
-    let mut scheduler = unsafe { per_cpu_data_mut() }.scheduler();
+    let mut scheduler = &mut unsafe { per_cpu_data_mut() }.common_mut().scheduler;
     info!("Adding {} initial tasks to the ready queue", boot_info.num_images);
     for image in boot_info.images() {
-        load_task(&arch, &mut scheduler.deref_mut(), image);
+        load_task(&arch, scheduler, image);
     }
 
     info!("Dropping to usermode");
