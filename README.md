@@ -6,7 +6,7 @@
 **Pebble is still early in development.**
 
 Pebble is a microkernel and userspace written in Rust, with a focus on safety and simplicity. It is designed to be simple to understand, extend, and develop for. Pebble does not aim for POSIX compliance.
-The best way to learn about Pebble is to read [the book](https://pebble-os.github.io/book). [The website](https://pebble-os.github.io) also hosts other useful resources, such as `rustdoc`-generated
+The best way to learn about Pebble is to read [the book](https://pebble-os.github.io/pebble/book/). [The website](https://pebble-os.github.io) also hosts other useful resources, such as `rustdoc`-generated
 documentation of the components.
 
 ## Contributing
