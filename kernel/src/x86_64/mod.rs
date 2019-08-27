@@ -73,10 +73,6 @@ impl Architecture for Arch {
     fn drop_to_userspace(&self, task: WrappedKernelObject<Arch>) -> ! {
         task::drop_to_usermode(task);
     }
-
-    fn context_switch(&self, old: WrappedKernelObject<Arch>, new: WrappedKernelObject<Arch>) {
-        task::context_switch(old, new)
-    }
 }
 
 /// This is the entry point for the kernel on x86_64. It is called from the UEFI bootloader and
