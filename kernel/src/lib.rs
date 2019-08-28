@@ -43,14 +43,41 @@ mod per_cpu;
 mod scheduler;
 mod syscall;
 
-use crate::heap_allocator::LockedHoleAllocator;
+use crate::{heap_allocator::LockedHoleAllocator, object::map::ObjectMap};
+use alloc::{collections::BTreeMap, string::String};
 use cfg_if::cfg_if;
 use core::panic::PanicInfo;
+use libpebble::KernelObjectId;
 use log::error;
+use pebble_util::InitGuard;
+use spin::RwLock;
 
 #[cfg(not(test))]
 #[global_allocator]
 pub static ALLOCATOR: LockedHoleAllocator = LockedHoleAllocator::new_uninitialized();
+
+/// We need to make various bits of data accessible on a system-wide level (all the CPUs access the
+/// same data), including from system call and interrupt handlers. I haven't discovered a
+/// particularly elegant way of doing that in Rust yet, but this isn't totally awful.
+///
+/// This can be accessed from anywhere in the kernel, and from any CPU, and so access to each member
+/// must be controlled by a type such as `Mutex` or `RwLock`. This has lower lock contention than
+/// locking the entire structure.
+pub static COMMON: InitGuard<Common> = InitGuard::uninit();
+
+/// This is a collection of stuff we need to access from around the kernel, shared between all
+/// CPUs. This has the potential to end up as a bit of a "God struct", so we need to be careful.
+pub struct Common {
+    pub object_map: RwLock<ObjectMap<arch_impl::Arch>>,
+}
+
+impl Common {
+    pub fn new() -> Common {
+        Common {
+            object_map: RwLock::new(ObjectMap::new(crate::object::map::INITIAL_OBJECT_CAPACITY)),
+        }
+    }
+}
 
 #[cfg(not(test))]
 #[panic_handler]

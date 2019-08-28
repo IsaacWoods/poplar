@@ -1,4 +1,4 @@
-use crate::{per_cpu::CommonPerCpu, scheduler::Scheduler};
+use crate::per_cpu::CommonPerCpu;
 use alloc::boxed::Box;
 use core::{marker::PhantomPinned, mem, pin::Pin};
 use x86_64::{

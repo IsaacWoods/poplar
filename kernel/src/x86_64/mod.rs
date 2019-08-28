@@ -28,13 +28,14 @@ use self::{
 };
 use crate::{
     arch::Architecture,
-    object::{map::ObjectMap, KernelObject, WrappedKernelObject},
+    object::{KernelObject, WrappedKernelObject},
     scheduler::Scheduler,
     x86_64::per_cpu::per_cpu_data_mut,
 };
 use aml::AmlContext;
 use core::time::Duration;
 use log::{error, info, warn};
+use pebble_util::InitGuard;
 use spin::{Mutex, RwLock};
 use x86_64::{
     boot::{BootInfo, ImageInfo},
@@ -44,6 +45,8 @@ use x86_64::{
 
 pub(self) static GDT: Mutex<Gdt> = Mutex::new(Gdt::new());
 
+pub(self) static ARCH: InitGuard<Arch> = InitGuard::uninit();
+
 pub struct Arch {
     pub cpu_info: CpuInfo,
     pub physical_memory_manager: LockedPhysicalMemoryManager,
@@ -51,9 +54,6 @@ pub struct Arch {
     /// in the kernel address space. We can have up 1024 address spaces, so need 128 bytes.
     pub kernel_stack_bitmap: Mutex<[u8; 128]>,
     pub kernel_page_table: Mutex<PageTable>,
-    pub object_map: RwLock<ObjectMap<Self>>,
-    /* pub boot_processor: Mutex<Cpu>,
-     * pub application_processors: Mutex<Vec<Cpu>>, */
 }
 
 /// `Arch` contains a bunch of things, like the GDT, that the hardware relies on actually being at
@@ -177,14 +177,14 @@ pub fn kmain() -> ! {
     // };
 
     /*
-     * Initialise the physical memory manager. From this point, we can allocate physical memory
-     * freely.
+     * Set up the main kernel data structure, which also initializes the physical memory manager.
+     * From this point, we can freely allocate physical memory from any point in the kernel.
      *
-     * This assumes the bootloader has installed a valid set of page tables, including mapping
-     * the entirity of the physical memory at the start of the kernel's P4 entry. Strange
-     * things will happen if this assumption does not hold, so this is fairly unsafe.
+     * This assumes that the bootloader has correctly installed a set of page tables, including a
+     * full physical mapping in the correct location. Strange things will happen if this is not
+     * true, so this process is a tad unsafe.
      */
-    let arch = Arch {
+    ARCH.initialize(Arch {
         cpu_info,
         physical_memory_manager: LockedPhysicalMemoryManager::new(boot_info),
         kernel_page_table: Mutex::new(unsafe {
@@ -194,10 +194,12 @@ pub fn kmain() -> ! {
             )
         }),
         kernel_stack_bitmap: Mutex::new([0; 128]),
-        object_map: RwLock::new(ObjectMap::new(crate::object::map::INITIAL_OBJECT_CAPACITY)),
-        /* boot_processor: Mutex::new(boot_processor),
-         * application_processors: Mutex::new(application_processors), */
-    };
+    });
+
+    /*
+     * Initialize the common kernel data structures too.
+     */
+    crate::COMMON.initialize(crate::Common::new());
 
     /*
      * Create the per-cpu data, then load the GDT, then install the per-cpu data. This has to be
@@ -212,14 +214,15 @@ pub fn kmain() -> ! {
     guarded_per_cpu.install();
 
     // TODO: deal gracefully with a bad ACPI parse
+    // TODO: maybe don't take arch here and instead access it through COMMON
     let mut interrupt_controller = InterruptController::init(
-        &arch,
+        &ARCH.get(),
         match acpi_info {
             Some(ref info) => info.interrupt_model.as_ref().unwrap(),
             None => unimplemented!(),
         },
     );
-    interrupt_controller.enable_local_timer(&arch, Duration::from_secs(3));
+    interrupt_controller.enable_local_timer(&ARCH.get(), Duration::from_secs(3));
 
     /*
      * Parse the DSDT.
@@ -242,23 +245,24 @@ pub fn kmain() -> ! {
     let mut scheduler = &mut unsafe { per_cpu_data_mut() }.common_mut().scheduler;
     info!("Adding {} initial tasks to the ready queue", boot_info.num_images);
     for image in boot_info.images() {
-        load_task(&arch, scheduler, image);
+        load_task(&ARCH.get(), scheduler, image);
     }
 
     info!("Dropping to usermode");
-    scheduler.drop_to_userspace(&arch)
+    scheduler.drop_to_userspace(&ARCH.get())
 }
 
 fn load_task(arch: &Arch, scheduler: &mut Scheduler, image: &ImageInfo) {
+    let object_map = &mut crate::COMMON.get().object_map.write();
+
     // Make an AddressSpace for the image
     let address_space: WrappedKernelObject<Arch> =
-        KernelObject::AddressSpace(RwLock::new(box AddressSpace::new(&arch)))
-            .add_to_map(&mut arch.object_map.write());
+        KernelObject::AddressSpace(RwLock::new(box AddressSpace::new(&arch))).add_to_map(object_map);
 
     // Make a MemoryObject for each segment and map it into the AddressSpace
     for segment in image.segments() {
-        let memory_object = KernelObject::MemoryObject(RwLock::new(box MemoryObject::new(&segment)))
-            .add_to_map(&mut arch.object_map.write());
+        let memory_object =
+            KernelObject::MemoryObject(RwLock::new(box MemoryObject::new(&segment))).add_to_map(object_map);
         address_space
             .object
             .address_space()
@@ -271,7 +275,7 @@ fn load_task(arch: &Arch, scheduler: &mut Scheduler, image: &ImageInfo) {
     let task = KernelObject::Task(RwLock::new(
         box Task::from_image_info(&arch, address_space.clone(), image).unwrap(),
     ))
-    .add_to_map(&mut arch.object_map.write());
+    .add_to_map(object_map);
     scheduler.add_task(task).unwrap();
 }
 
