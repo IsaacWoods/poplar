@@ -14,10 +14,11 @@ the size of a register.
 
 ### Overview of system calls
 
-| Number    | System call           | a                 | b                 | c                 | d                 | e                 | Return value          | Description                                               |
-|-----------|-----------------------|-------------------|-------------------|-------------------|-------------------|-------------------|-----------------------|-----------------------------------------------------------|
-| `0`       | `yield`               | -                 | -                 | -                 | -                 | -                 | -                     | Yield to the kernel.                                      |
-| `1`       | `early_log`           | length            | ptr to string     | -                 | -                 | -                 | success/error         | Log a message. Designed to be used from early processes.  |
+| Number    | System call               | a                 | b                 | c                 | d                 | e                 | Return value          | Description                                               |
+|-----------|---------------------------|-------------------|-------------------|-------------------|-------------------|-------------------|-----------------------|-----------------------------------------------------------|
+| `0`       | `yield`                   | -                 | -                 | -                 | -                 | -                 | -                     | Yield to the kernel.                                      |
+| `1`       | `early_log`               | length of string  | ptr to string     | -                 | -                 | -                 | success / error       | Log a message. Designed to be used from early processes.  |
+| `2`       | `request_system_object`   | object id         | {depends on id}   | {depends on id}   | {depends on id}   | {depends on id}   | id of object + status | Request the id of a system kernel object.                 |
 
 ### Making a system call on x86_64
 To make a system call on x86_64, populate these registers:
@@ -47,3 +48,31 @@ Returns:
  - `1` if the string was too long
  - `2` if the string was not valid UTF-8
  - `3` if the task making the syscall doesn't have the `EarlyLogging` capability
+
+### `request_system_object`
+Used by tasks to request access to a "system" kernel object - usually one created by the kernel to provide
+some resource, such as the framebuffer, to userspace. Each object has a hardcoded id used to request it, and
+requires the requesting task to have a particular capability - if the task is permitted access to the object,
+the kernel returns the kernel object id of the object, and takes any steps needed for the requesting task to
+be able to access the object. Normal user tasks probably don't have any need for this system call - it is more
+aimed at device drivers and system management tasks.
+
+The first parameter, `a`, is always the id (not to be confused with the actual kernel object id, which is not
+hardcoded and therefore can change between boots) of the system object. The allowed values are:
+
+| `a`   | Object being requested                | Type              | `b`           | `c`           | `d`           | `e`           | Required capability       |
+|-------|---------------------------------------|-------------------|---------------|---------------|---------------|---------------|---------------------------|
+| `0`   | The backup framebuffer                | `MemoryObject`    | -             | -             | -             | -             | `AccessBackupFramebuffer` |
+
+TODO: id for accessing Pci config space where extra params are bus, device, function (+segment or whatever)
+numbers.
+
+Returns:
+ * Bits `0..16` contain the index of the requested object's ID, if the system call succeeded
+ * Bits `16..32` contain the generation of the requested object's ID, if the system call succeeded
+ * Bits `32..63` contain the status of the system call:
+    - `0` means the system call succeeded and bits `0..32` hold a valid kernel object id
+    - `1` means that the requested object is a valid system object, but does not exist
+    - `2` means that the id does not correspond to a valid system object
+    - `3` means that the requested object id is valid, but the task does not have the correct capabilities to
+      access it

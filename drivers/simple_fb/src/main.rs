@@ -7,22 +7,14 @@ use libpebble::syscall;
 
 #[no_mangle]
 pub extern "C" fn start() -> ! {
-    let mut a = 43;
-    syscall::early_log("Hello, World!").unwrap();
-    a += 3;
-    syscall::early_log("This is from the simple_fb driver").unwrap();
-    a += 2;
+    syscall::early_log("Simple framebuffer driver is running").unwrap();
 
-    if a == 48 {
-        syscall::early_log("Woooo it worked!!").unwrap();
-    } else {
-        syscall::early_log("Something went wrong :(").unwrap();
-    }
-
-    syscall::yield_to_kernel();
-    syscall::early_log("After yield!").unwrap();
-    syscall::yield_to_kernel();
-    syscall::early_log("Back again!").unwrap();
+    let framebuffer_id = match syscall::request_system_object(syscall::SystemObjectId::BackupFramebuffer) {
+        Ok(id) => id,
+        Err(err) => panic!("Failed to get ID of framebuffer memory object: {:?}", err),
+    };
+    // TODO: err I don't think we can do this yet. We need heap + allocator and stuff I guess
+    // syscall::early_log(format!("Framebuffer id: {:?}", framebuffer_id));
     loop {}
 }
 

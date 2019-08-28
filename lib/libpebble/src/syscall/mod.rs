@@ -7,8 +7,12 @@ cfg_if::cfg_if! {
     }
 }
 
+use crate::KernelObjectId;
+use bit_field::BitField;
+
 pub const SYSCALL_YIELD: usize = 0;
 pub const SYSCALL_EARLY_LOG: usize = 1;
+pub const SYSCALL_REQUEST_SYSTEM_OBJECT: usize = 2;
 
 pub fn yield_to_kernel() {
     unsafe {
@@ -22,5 +26,42 @@ pub fn early_log(message: &str) -> Result<(), ()> {
     } {
         0 => Ok(()),
         _ => Err(()),
+    }
+}
+
+#[derive(Clone, Copy, Debug)]
+pub enum SystemObjectId {
+    BackupFramebuffer = 0,
+}
+
+#[derive(Clone, Copy, Debug)]
+pub enum RequestSystemObjectError {
+    /// The requested object ID does point to a valid system object, but the kernel has not created
+    /// a corresponding object for it.
+    ObjectDoesNotExist,
+    /// The requested object ID does not correspond to a valid system object.
+    NotAValidId,
+    /// The requested object ID is valid, but the requesting task does not have the correct
+    /// capabilities to access it.
+    PermissionDenied,
+}
+
+pub fn request_system_object(id: SystemObjectId) -> Result<KernelObjectId, RequestSystemObjectError> {
+    let result = match id {
+        /*
+         * System objects that don't take any further parameters.
+         */
+        BackupFramebuffer => unsafe { raw::syscall1(SYSCALL_REQUEST_SYSTEM_OBJECT, id as usize) },
+    };
+
+    match result.get_bits(32..64) {
+        0 => Ok(KernelObjectId {
+            index: result.get_bits(0..16) as u16,
+            generation: result.get_bits(16..32) as u16,
+        }),
+        1 => Err(RequestSystemObjectError::ObjectDoesNotExist),
+        2 => Err(RequestSystemObjectError::NotAValidId),
+        3 => Err(RequestSystemObjectError::PermissionDenied),
+        _ => panic!("Syscall request_system_object returned unexpected status code"),
     }
 }

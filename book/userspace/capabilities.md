@@ -31,15 +31,14 @@ sections:
 | `0x04`-`0x1f` |               |                       |                   | Reserved for future kernel objects                                    |               |
 | `0x20`        | `0x00`        | `u16` port number     | Yes - x86_64      | `X86_64AccessIoPort`                                                  | Planned       |
 | `0x21`-`0x2f` |               |                       |                   | Reserved for future architectures                                     |               |
-| `0x30`        |               |                       | No                | `MapFramebuffer`                                                      | Planned       |
+| `0x30`        |               |                       | No                | `AccessBackupFramebuffer`                                             | Planned       |
 | `0x31`        |               |                       | No                | `EarlyLogging`                                                        | Implemented   |
 
-### `MapFramebuffer`
+### `AccessBackupFramebuffer`
 If a video mode was chosen in the `bootcmd` and successfully switched to by the bootloader, the framebuffer of that
-graphics device will be mapped into the task with this capability. Only one task, the backup framebuffer driver,
-should have this capability.
-
-TODO: work out what should happen if a video mode is not picked, but a task with this capability is still loaded.
+graphics device will be managed as a `MemoryObject` kernel object within the kernel. This capability allows a task,
+usually the backup framebuffer driver, to request access to that kernel object through the `request_system_object`
+syscall.
 
 **NOTE:** while this capability seems quite innocuous, it is anything but. A rouge task that has this capability
 could in theory skim sensitive information, such as passwords or credit card details using the framebuffer, if
