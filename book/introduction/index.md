@@ -1,9 +1,9 @@
 # Introduction
-Welcome to the Pebble Book, which serves as the main source of documentation for [Pebble OS](https://github.com/pebble-os).
+Welcome to the Pebble Book, which serves as the main source of documentation for [Pebble OS](https://github.com/pebble-os/pebble).
 The Book aims to be both a 10,000-meter overview of Pebble for the interested observer, and a definitive reference for the inner workings of the kernel and userspace. 
 
 Please note that this book (like the rest of the OS!) is still very early in development and not at all complete.
-If anything is unclear, please [file an issue](https://github.com/pebble-os/book/issues)!
+If anything is unclear, please [file an issue](https://github.com/pebble-os/pebble/issues)!
 
 **Some things documented in this book don't exist in Pebble yet. I use the book as in-progress documentation as I design stuff so I don't have to keep it all in my head.**
 
