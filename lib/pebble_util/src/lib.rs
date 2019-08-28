@@ -1,11 +1,12 @@
 #![no_std]
-#![feature(const_generics, decl_macro)]
+#![feature(const_generics, decl_macro, maybe_uninit_ref)]
 
 mod binary_pretty_print;
 pub mod bitmap;
+mod init_guard;
 pub mod math;
 
-pub use self::binary_pretty_print::BinaryPrettyPrint;
+pub use self::{binary_pretty_print::BinaryPrettyPrint, init_guard::InitGuard};
 
 /// This macro should be called at the beginning of functions that create logic errors if they are
 /// called more than once. Most commonly this is used for initialization functions.
