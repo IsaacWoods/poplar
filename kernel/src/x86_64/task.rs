@@ -305,7 +305,7 @@ fn decode_capabilities(mut cap_stream: &[u8]) -> Result<Vec<Capability>, TaskCre
             0x02 => one_byte_cap!(Capability::CreateMemoryObject),
             0x03 => one_byte_cap!(Capability::CreateTask),
 
-            0x30 => one_byte_cap!(Capability::MapFramebuffer),
+            0x30 => one_byte_cap!(Capability::AccessBackupFramebuffer),
             0x31 => one_byte_cap!(Capability::EarlyLogging),
 
             // We skip `0x00` as the first byte of a capability, as it is just used to pad the

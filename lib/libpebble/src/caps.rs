@@ -15,6 +15,6 @@ pub enum Capability {
     /*
      * Capabilities that are owned by drivers / support services.
      */
-    MapFramebuffer,
+    AccessBackupFramebuffer,
     EarlyLogging,
 }

@@ -240,6 +240,13 @@ pub fn kmain() -> ! {
     }
 
     /*
+     * Create the backup framebuffer if the bootloader switched to a graphics mode.
+     */
+    if let Some(ref video_info) = boot_info.video_info {
+        create_framebuffer(video_info);
+    }
+
+    /*
      * Load all the images as initial tasks, and add them to the scheduler's ready list.
      */
     let mut scheduler = &mut unsafe { per_cpu_data_mut() }.common_mut().scheduler;
@@ -252,6 +259,31 @@ pub fn kmain() -> ! {
     scheduler.drop_to_userspace(&ARCH.get())
 }
 
+fn create_framebuffer(video_info: &x86_64::boot::VideoInfo) {
+    use x86_64::memory::{EntryFlags, FrameSize, Size4KiB, VirtualAddress};
+
+    /*
+     * For now, we just put the framebuffer at the start of the region where we map MemoryObjects
+     * into userspace address spaces. We might run into issues with this in the future.
+     */
+    const VIRTUAL_ADDRESS: VirtualAddress = self::memory::userspace_map::MEMORY_OBJECTS_START;
+    /*
+     * We only support RGB32 and BGR32 pixel formats, so there will always be 4 bytes per pixel.
+     */
+    const BPP: u32 = 4;
+
+    let size_in_bytes = (video_info.stride * video_info.height * BPP) as usize;
+    let memory_object = KernelObject::MemoryObject(RwLock::new(box MemoryObject::new(
+        VIRTUAL_ADDRESS,
+        video_info.framebuffer_address,
+        size_in_bytes / Size4KiB::SIZE,
+        EntryFlags::PRESENT | EntryFlags::WRITABLE | EntryFlags::USER_ACCESSIBLE | EntryFlags::NO_CACHE,
+    )))
+    .add_to_map(&mut crate::COMMON.get().object_map.write());
+
+    *crate::COMMON.get().backup_framebuffer_object.lock() = Some(memory_object.id);
+}
+
 fn load_task(arch: &Arch, scheduler: &mut Scheduler, image: &ImageInfo) {
     let object_map = &mut crate::COMMON.get().object_map.write();
 
@@ -262,7 +294,8 @@ fn load_task(arch: &Arch, scheduler: &mut Scheduler, image: &ImageInfo) {
     // Make a MemoryObject for each segment and map it into the AddressSpace
     for segment in image.segments() {
         let memory_object =
-            KernelObject::MemoryObject(RwLock::new(box MemoryObject::new(&segment))).add_to_map(object_map);
+            KernelObject::MemoryObject(RwLock::new(box MemoryObject::from_boot_info(&segment)))
+                .add_to_map(object_map);
         address_space
             .object
             .address_space()
