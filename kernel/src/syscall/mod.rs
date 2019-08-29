@@ -2,6 +2,7 @@ use crate::{
     arch_impl::{common_per_cpu_data, common_per_cpu_data_mut},
     object::task::CommonTask,
 };
+use bit_field::BitField;
 use core::{slice, str};
 use libpebble::{caps::Capability, syscall};
 use log::{info, trace, warn};
