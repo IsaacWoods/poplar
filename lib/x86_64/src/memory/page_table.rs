@@ -4,7 +4,7 @@ use bitflags::bitflags;
 use core::{
     fmt,
     marker::PhantomData,
-    ops::{Index, IndexMut},
+    ops::{Index, IndexMut, Range},
 };
 
 /// All page tables has 512 entries.
@@ -404,6 +404,24 @@ impl<'a> Mapper<'a> {
         // instances when we e.g know we're going to change CR3 before accessing the new mappings.
         // This is fine for now though
         tlb::invalidate_page(page.start_address);
+        Ok(())
+    }
+
+    /// Map a range of pages to a range of frames, all with the same flags.
+    pub fn map_range_to<A>(
+        &mut self,
+        pages: Range<Page>,
+        frames: Range<Frame>,
+        flags: EntryFlags,
+        allocator: &A,
+    ) -> Result<(), MapError>
+    where
+        A: FrameAllocator,
+    {
+        for (page, frame) in pages.zip(frames) {
+            self.map_to(page, frame, flags, allocator)?;
+        }
+
         Ok(())
     }
 

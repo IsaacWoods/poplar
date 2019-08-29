@@ -72,7 +72,7 @@ pub extern "win64" fn efi_main(image_handle: Handle, system_table: &'static Syst
     /*
      * Construct the initial `BootInfo`.
      */
-    let mut boot_info = construct_boot_info(&mut kernel_mapper, &allocator);
+    let boot_info = construct_boot_info(&mut kernel_mapper, &allocator);
 
     /*
      * Read and parse bootcmd file.
@@ -117,7 +117,7 @@ pub extern "win64" fn efi_main(image_handle: Handle, system_table: &'static Syst
                     .and_then(|x| str::parse::<u32>(x).ok())
                     .expect("Expected integer for desired height after 'video_mode' command");
                 info!("Attempting to set video mode at {}x{}", desired_width, desired_height);
-                choose_and_switch_to_video_mode(&mut boot_info, desired_width, desired_height);
+                choose_and_switch_to_video_mode(boot_info, desired_width, desired_height);
             }
 
             part => panic!("Invalid bootcmd command: {:?}", part),
@@ -235,12 +235,11 @@ fn construct_boot_info(kernel_mapper: &mut Mapper, allocator: &BootFrameAllocato
 
     /*
      * Allocate space for the `BootInfo`.
-     * TODO: we should probably calculate how many frames we need properly
      */
-    assert!(mem::size_of::<BootInfo>() <= Size4KiB::SIZE * 2);
+    assert!(mem::size_of::<BootInfo>() <= Size4KiB::SIZE * kernel_map::BOOT_INFO_NUM_PAGES);
     let boot_info_address = uefi::system_table()
         .boot_services
-        .allocate_frames(MemoryType::PebbleBootInformation, 2)
+        .allocate_frames(MemoryType::PebbleBootInformation, kernel_map::BOOT_INFO_NUM_PAGES)
         .map_err(|err| panic!("Failed to allocate memory for the boot info: {:?}", err))
         .unwrap();
     let boot_info = unsafe { &mut *(usize::from(boot_info_address) as *mut BootInfo) };
@@ -260,13 +259,12 @@ fn construct_boot_info(kernel_mapper: &mut Mapper, allocator: &BootFrameAllocato
     /*
      * Map the boot info into the kernel address space at the correct virtual address.
      */
+    let frames = Frame::contains(boot_info_address)
+        ..Frame::contains(boot_info_address + Size4KiB::SIZE * kernel_map::BOOT_INFO_NUM_PAGES);
+    let pages = Page::contains(kernel_map::BOOT_INFO)
+        ..Page::contains(kernel_map::BOOT_INFO + Size4KiB::SIZE * kernel_map::BOOT_INFO_NUM_PAGES);
     kernel_mapper
-        .map_to(
-            Page::contains(kernel_map::BOOT_INFO),
-            Frame::contains(boot_info_address),
-            EntryFlags::PRESENT | EntryFlags::NO_EXECUTE,
-            allocator,
-        )
+        .map_range_to(pages, frames, EntryFlags::PRESENT | EntryFlags::NO_EXECUTE, allocator)
         .unwrap();
 
     boot_info

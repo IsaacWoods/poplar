@@ -62,9 +62,13 @@ pub const HEAP_END: VirtualAddress = unsafe { VirtualAddress::new_unchecked(0xff
 /*
  * From here, we place a bunch of hard-coded pages for various things.
  */
-pub const BOOT_INFO: VirtualAddress = unsafe { VirtualAddress::new_unchecked(0xffff_ffff_d000_0000) };
-
 /// While we could access the local APIC from the physical mapping, it's easier to just map it to a
 /// fixed virtual address, so we can always access its config space. This allows us to use
 /// `LocalApic` as a singleton, so we can easily access it from interrupt handlers.
-pub const LOCAL_APIC_CONFIG: VirtualAddress = unsafe { VirtualAddress::new_unchecked(0xffff_ffff_d000_1000) };
+pub const LOCAL_APIC_CONFIG: VirtualAddress = unsafe { VirtualAddress::new_unchecked(0xffff_ffff_d000_0000) };
+
+/// This is the number of 4KiB pages we need to allocate for the boot info. We also need to respect this
+/// in the virtual address space allocation.
+pub const BOOT_INFO_NUM_PAGES: usize = 2;
+pub const BOOT_INFO: VirtualAddress = unsafe { VirtualAddress::new_unchecked(0xffff_ffff_d000_1000) };
+// XXX: the next item must not start at 0xffff_ffff_d000_2000 - make sure to leave BOOT_INFO_NUM_PAGES pages

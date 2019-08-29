@@ -1,5 +1,5 @@
 use crate::memory::{page_table::EntryFlags, Frame, PhysicalAddress, VirtualAddress};
-use core::ops::Range;
+use core::{fmt, ops::Range};
 
 pub const BOOT_INFO_MAGIC: u32 = 0xcafebabe;
 pub const NUM_MEMORY_MAP_ENTRIES: usize = 64;
@@ -70,7 +70,7 @@ impl Default for MemoryEntry {
 
 /// Describes a memory region that should be represented by the `MemoryObject` kernel object in the
 /// kernel.
-#[derive(Clone, Copy, Default)]
+#[derive(Clone, Copy, Default, Debug)]
 #[repr(C)]
 pub struct MemoryObjectInfo {
     pub physical_address: PhysicalAddress,
@@ -81,7 +81,7 @@ pub struct MemoryObjectInfo {
 
 /// An image loaded from the filesystem by the bootloader. The kernel should turn this information
 /// into the correct representation and treat this image like a normal task.
-#[derive(Clone, Copy, Default)]
+#[derive(Clone, Copy, Default, Debug)]
 #[repr(C)]
 pub struct ImageInfo {
     /// The name of the name in bytes. Maximum of 32.
@@ -133,6 +133,7 @@ pub struct VideoInfo {
     pub pixel_format: PixelFormat,
     pub width: u32,
     pub height: u32,
+    /// How many pixels are in each scan-line. This can be greater than `width`.
     pub stride: u32,
 }
 
@@ -157,6 +158,24 @@ pub struct BootInfo {
     pub num_images: usize,
     pub images: [ImageInfo; NUM_IMAGES],
     pub video_info: Option<VideoInfo>,
+}
+
+impl fmt::Debug for BootInfo {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let mut foo = f.debug_struct("BootInfo");
+        foo.field("magic", &self.magic);
+        foo.field("num_memory_map_entries", &self.num_memory_map_entries);
+        for i in 0..self.num_memory_map_entries {
+            foo.field("memory_map_entry", &self.memory_map[i]);
+        }
+        foo.field("rsdp_address", &self.rsdp_address);
+        foo.field("num_images", &self.num_images);
+        for i in 0..self.num_images {
+            foo.field("image", &self.images[i]);
+        }
+        foo.field("video_info", &self.video_info);
+        foo.finish()
+    }
 }
 
 impl BootInfo {
