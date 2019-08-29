@@ -34,6 +34,15 @@ pub extern "C" fn rust_syscall_handler(
              */
             early_log(a, b)
         }
+        syscall::SYSCALL_REQUEST_SYSTEM_OBJECT => {
+            /*
+             * a = system object ID
+             *
+             * Depending on which system object is being requested, there may be additional
+             * parameters, so we pass them all.
+             */
+            request_system_object(a, b, c, d, e)
+        }
 
         _ => {
             // TODO: unsupported system call number, kill process or something?
@@ -89,4 +98,50 @@ fn early_log(str_length: usize, str_address: usize) -> usize {
 
     trace!("Early log message from {}: {}", task.name(), message);
     0
+}
+
+fn request_system_object(id: usize, b: usize, c: usize, d: usize, e: usize) -> usize {
+    /*
+     * These correspond to the `SystemObjectId` enum in `libpebble::syscall`
+     */
+    const BACKUP_FRAMEBUFFER: usize = 0;
+
+    const STATUS_SUCCESS: usize = 0;
+    const STATUS_OBJECT_DOES_NOT_EXIST: usize = 1;
+    const STATUS_INVALID_ID: usize = 2;
+    const STATUS_PERMISSION_DENIED: usize = 3;
+
+    let (object_id, status) = match id {
+        BACKUP_FRAMEBUFFER => {
+            // Check that the task has the correct capability
+            if unsafe { common_per_cpu_data() }
+                .running_task()
+                .object
+                .task()
+                .unwrap()
+                .read()
+                .capabilities
+                .contains(&Capability::AccessBackupFramebuffer)
+            {
+                // Return the id of the framebuffer, if it exists
+                match *crate::COMMON.get().backup_framebuffer_object.lock() {
+                    Some(id) => (Some(id), STATUS_SUCCESS),
+                    None => (None, STATUS_OBJECT_DOES_NOT_EXIST),
+                }
+            } else {
+                (None, STATUS_PERMISSION_DENIED)
+            }
+        }
+
+        _ => (None, STATUS_INVALID_ID),
+    };
+
+    // Create and return the final response
+    let mut response = 0;
+    if let Some(id) = object_id {
+        response.set_bits(0..16, id.index as usize);
+        response.set_bits(16..32, id.generation as usize);
+    }
+    response.set_bits(32..64, status);
+    response
 }
