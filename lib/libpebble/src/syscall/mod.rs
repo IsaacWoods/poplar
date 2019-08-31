@@ -62,13 +62,12 @@ pub fn request_system_object(id: SystemObjectId) -> Result<KernelObjectId, Reque
     };
 
     match result.get_bits(32..64) {
-        0 => Ok(KernelObjectId {
-            index: result.get_bits(0..16) as u16,
-            generation: result.get_bits(16..32) as u16,
-        }),
+        0 => Ok(KernelObjectId::from_syscall_repr(result)),
+
         1 => Err(RequestSystemObjectError::ObjectDoesNotExist),
         2 => Err(RequestSystemObjectError::NotAValidId),
         3 => Err(RequestSystemObjectError::PermissionDenied),
+
         _ => panic!("Syscall request_system_object returned unexpected status code"),
     }
 }

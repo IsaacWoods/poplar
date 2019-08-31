@@ -140,8 +140,7 @@ fn request_system_object(id: usize, b: usize, c: usize, d: usize, e: usize) -> u
     // Create and return the final response
     let mut response = 0;
     if let Some(id) = object_id {
-        response.set_bits(0..16, id.index as usize);
-        response.set_bits(16..32, id.generation as usize);
+        response.set_bits(0..32, id.to_syscall_repr());
     }
     response.set_bits(32..64, status);
     response
