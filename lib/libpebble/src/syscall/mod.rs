@@ -13,6 +13,7 @@ use bit_field::BitField;
 pub const SYSCALL_YIELD: usize = 0;
 pub const SYSCALL_EARLY_LOG: usize = 1;
 pub const SYSCALL_REQUEST_SYSTEM_OBJECT: usize = 2;
+pub const SYSCALL_MY_ADDRESS_SPACE: usize = 3;
 
 pub fn yield_to_kernel() {
     unsafe {
@@ -27,6 +28,10 @@ pub fn early_log(message: &str) -> Result<(), ()> {
         0 => Ok(()),
         _ => Err(()),
     }
+}
+
+pub fn my_address_space() -> KernelObjectId {
+    KernelObjectId::from_syscall_repr(unsafe { raw::syscall0(SYSCALL_MY_ADDRESS_SPACE) })
 }
 
 #[derive(Clone, Copy, Debug)]
@@ -51,7 +56,9 @@ pub fn request_system_object(id: SystemObjectId) -> Result<KernelObjectId, Reque
         /*
          * System objects that don't take any further parameters.
          */
-        BackupFramebuffer => unsafe { raw::syscall1(SYSCALL_REQUEST_SYSTEM_OBJECT, id as usize) },
+        SystemObjectId::BackupFramebuffer => unsafe {
+            raw::syscall1(SYSCALL_REQUEST_SYSTEM_OBJECT, id as usize)
+        },
     };
 
     match result.get_bits(32..64) {

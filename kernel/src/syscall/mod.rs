@@ -4,7 +4,7 @@ use crate::{
 };
 use bit_field::BitField;
 use core::{slice, str};
-use libpebble::{caps::Capability, syscall};
+use libpebble::{caps::Capability, syscall, KernelObjectId};
 use log::{info, trace, warn};
 
 /// This is the architecture-independent syscall handler. It should be called by the handler that
@@ -43,6 +43,7 @@ pub extern "C" fn rust_syscall_handler(
              */
             request_system_object(a, b, c, d, e)
         }
+        syscall::SYSCALL_MY_ADDRESS_SPACE => my_address_space(),
 
         _ => {
             // TODO: unsupported system call number, kill process or something?
@@ -144,4 +145,16 @@ fn request_system_object(id: usize, b: usize, c: usize, d: usize, e: usize) -> u
     }
     response.set_bits(32..64, status);
     response
+}
+
+fn my_address_space() -> usize {
+    unsafe { common_per_cpu_data() }
+        .running_task()
+        .object
+        .task()
+        .unwrap()
+        .read()
+        .address_space
+        .id
+        .to_syscall_repr()
 }

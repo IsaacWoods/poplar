@@ -19,6 +19,7 @@ the size of a register.
 | `0`       | `yield`                   | -                 | -                 | -                 | -                 | -                 | -                     | Yield to the kernel.                                      |
 | `1`       | `early_log`               | length of string  | ptr to string     | -                 | -                 | -                 | success / error       | Log a message. Designed to be used from early processes.  |
 | `2`       | `request_system_object`   | object id         | {depends on id}   | {depends on id}   | {depends on id}   | {depends on id}   | id of object + status | Request the id of a system kernel object.                 |
+| `3`       | `my_address_space`        | -                 | -                 | -                 | -                 | -                 | AddressSpace id       | Get the id of the calling task's AddressSpace.            |
 
 ### Making a system call on x86_64
 To make a system call on x86_64, populate these registers:
@@ -76,3 +77,8 @@ Returns:
     - `2` means that the id does not correspond to a valid system object
     - `3` means that the requested object id is valid, but the task does not have the correct capabilities to
       access it
+
+### `my_address_space`
+Get the ID of the AddressSpace kernel object that the calling task is running in. Tasks do not need a
+capability to use this system call, as they automatically have access to their own AddressSpaces, and more
+priviledged operations are protected by their own capabilities.

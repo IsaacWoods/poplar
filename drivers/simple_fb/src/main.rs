@@ -13,6 +13,9 @@ pub extern "C" fn start() -> ! {
         Ok(id) => id,
         Err(err) => panic!("Failed to get ID of framebuffer memory object: {:?}", err),
     };
+
+    let address_space_id = syscall::my_address_space();
+
     // TODO: err I don't think we can do this yet. We need heap + allocator and stuff I guess
     // syscall::early_log(format!("Framebuffer id: {:?}", framebuffer_id));
     loop {}
