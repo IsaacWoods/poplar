@@ -2,6 +2,7 @@ mod exception;
 
 use super::Arch;
 use acpi::interrupt::InterruptModel;
+use aml::{value::Args as AmlArgs, AmlName, AmlValue};
 use bit_field::BitField;
 use core::time::Duration;
 use log::info;
@@ -69,6 +70,17 @@ impl InterruptController {
                     let mut pic = unsafe { Pic::new() };
                     pic.remap_and_disable(LEGACY_PIC_VECTOR, LEGACY_PIC_VECTOR + 8);
                 }
+
+                /*
+                 * Tell ACPI that we intend to use the APICs instead of the legacy PIC.
+                 */
+                arch.aml_context
+                    .lock()
+                    .invoke_method(
+                        &AmlName::from_str("\\_PIC").unwrap(),
+                        AmlArgs { arg_0: Some(AmlValue::Integer(1)), ..Default::default() },
+                    )
+                    .expect("Failed to invoke \\_PIC method");
 
                 /*
                  * Map the local APIC's configuration space into the kernel address space.
