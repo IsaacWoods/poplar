@@ -276,7 +276,7 @@ fn create_framebuffer(video_info: &x86_64::boot::VideoInfo) {
     let memory_object = KernelObject::MemoryObject(RwLock::new(box MemoryObject::new(
         VIRTUAL_ADDRESS,
         video_info.framebuffer_address,
-        size_in_bytes / Size4KiB::SIZE,
+        pebble_util::math::align_up(size_in_bytes, Size4KiB::SIZE) / Size4KiB::SIZE,
         EntryFlags::PRESENT | EntryFlags::WRITABLE | EntryFlags::USER_ACCESSIBLE | EntryFlags::NO_CACHE,
     )))
     .add_to_map(&mut crate::COMMON.get().object_map.write());
