@@ -18,6 +18,30 @@ pub extern "C" fn start() -> ! {
 
     syscall::map_memory_object(framebuffer_id, address_space_id).unwrap();
 
+    /*
+     * TODO: we need a good way of getting the information about the framebuffer object we just
+     * mapped from the kernel, including:
+     *    - what virtual address it's mapped at
+     *    - width, height, stride
+     *    - pixel format
+     *
+     * Not sure how the best way to do that is. Maybe pass it back with the `request_system_object`
+     * method? For now, we just hardcode the correct values.
+     */
+    // Each pixel is a `u32` at the moment because we know the format is always either RGB32 or BGR32
+    const FRAMEBUFFER_PTR: *mut u32 = 0x00000006_00000000 as *mut u32;
+    const WIDTH: usize = 800;
+    const STRIDE: usize = 800;
+    const HEIGHT: usize = 600;
+
+    for y in 0..HEIGHT {
+        for x in 0..WIDTH {
+            unsafe {
+                *FRAMEBUFFER_PTR.offset((y * STRIDE + x) as isize) = 0xffff00ff;
+            }
+        }
+    }
+
     // TODO: err I don't think we can do this yet. We need heap + allocator and stuff I guess
     // syscall::early_log(format!("Framebuffer id: {:?}", framebuffer_id));
     loop {}
