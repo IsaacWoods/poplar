@@ -1,6 +1,7 @@
 use crate::{
     arch_impl::{common_per_cpu_data, common_per_cpu_data_mut},
     object::task::CommonTask,
+    COMMON,
 };
 use bit_field::BitField;
 use core::{slice, str};
@@ -27,23 +28,10 @@ pub extern "C" fn rust_syscall_handler(
 
     match number {
         syscall::SYSCALL_YIELD => yield_syscall(),
-        syscall::SYSCALL_EARLY_LOG => {
-            /*
-             * a = length of string in bytes (must be <= 1024)
-             * b = pointer to string in userspace
-             */
-            early_log(a, b)
-        }
-        syscall::SYSCALL_REQUEST_SYSTEM_OBJECT => {
-            /*
-             * a = system object ID
-             *
-             * Depending on which system object is being requested, there may be additional
-             * parameters, so we pass them all.
-             */
-            request_system_object(a, b, c, d, e)
-        }
+        syscall::SYSCALL_EARLY_LOG => early_log(a, b),
+        syscall::SYSCALL_REQUEST_SYSTEM_OBJECT => request_system_object(a, b, c, d, e),
         syscall::SYSCALL_MY_ADDRESS_SPACE => my_address_space(),
+        syscall::SYSCALL_MAP_MEMORY_OBJECT => map_memory_object(a, b),
 
         _ => {
             // TODO: unsupported system call number, kill process or something?
@@ -125,7 +113,7 @@ fn request_system_object(id: usize, b: usize, c: usize, d: usize, e: usize) -> u
                 .contains(&Capability::AccessBackupFramebuffer)
             {
                 // Return the id of the framebuffer, if it exists
-                match *crate::COMMON.get().backup_framebuffer_object.lock() {
+                match *COMMON.get().backup_framebuffer_object.lock() {
                     Some(id) => (Some(id), STATUS_SUCCESS),
                     None => (None, STATUS_OBJECT_DOES_NOT_EXIST),
                 }
@@ -156,4 +144,39 @@ fn my_address_space() -> usize {
         .address_space
         .id
         .to_syscall_repr()
+}
+
+fn map_memory_object(memory_object_id: usize, address_space_id: usize) -> usize {
+    /*
+     * TODO: enforce that the calling task must have access to the AddressSpace and MemoryObject
+     * for this to work (we need to build the owning / access system first).
+     */
+    const STATUS_SUCCESS: usize = 0;
+    const STATUS_ALREADY_OCCUPIED: usize = 1;
+    const STATUS_ACCESS_TO_MEMORY_OBJECT_DENIED: usize = 2;
+    const STATUS_ACCESS_TO_ADDRESS_SPACE_DENIED: usize = 3;
+    const STATUS_NOT_A_MEMORY_OBJECT: usize = 4;
+    const STATUS_NOT_AN_ADDRESS_SPACE: usize = 5;
+
+    let memory_object =
+        match COMMON.get().object_map.read().get(KernelObjectId::from_syscall_repr(memory_object_id)) {
+            Some(object) => object.clone(),
+            None => return STATUS_NOT_A_MEMORY_OBJECT,
+        };
+
+    // Check it's a MemoryObject
+    if memory_object.object.memory_object().is_none() {
+        return STATUS_NOT_A_MEMORY_OBJECT;
+    }
+
+    match COMMON.get().object_map.read().get(KernelObjectId::from_syscall_repr(address_space_id)) {
+        Some(address_space) => match address_space.object.address_space() {
+            Some(address_space) => {
+                address_space.write().map_memory_object(memory_object);
+                STATUS_SUCCESS
+            }
+            None => STATUS_NOT_AN_ADDRESS_SPACE,
+        },
+        None => STATUS_NOT_AN_ADDRESS_SPACE,
+    }
 }

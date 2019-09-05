@@ -20,6 +20,7 @@ the size of a register.
 | `1`       | `early_log`               | length of string  | ptr to string     | -                 | -                 | -                 | success / error       | Log a message. Designed to be used from early processes.  |
 | `2`       | `request_system_object`   | object id         | {depends on id}   | {depends on id}   | {depends on id}   | {depends on id}   | id of object + status | Request the id of a system kernel object.                 |
 | `3`       | `my_address_space`        | -                 | -                 | -                 | -                 | -                 | AddressSpace id       | Get the id of the calling task's AddressSpace.            |
+| `4`       | `map_memory_object`       | MemoryObject id   | AddressSpace id   | -                 | -                 | -                 | success / error       | Map a MemoryObject into an AddressSpace.                  |
 
 ### Making a system call on x86_64
 To make a system call on x86_64, populate these registers:
@@ -58,6 +59,9 @@ the kernel returns the kernel object id of the object, and takes any steps neede
 be able to access the object. Normal user tasks probably don't have any need for this system call - it is more
 aimed at device drivers and system management tasks.
 
+If this system call is successful, access is granted to the system object from the calling task. This means it
+can use the returned id in other system calls.
+
 The first parameter, `a`, is always the id (not to be confused with the actual kernel object id, which is not
 hardcoded and therefore can change between boots) of the system object. The allowed values are:
 
@@ -82,3 +86,20 @@ Returns:
 Get the ID of the AddressSpace kernel object that the calling task is running in. Tasks do not need a
 capability to use this system call, as they automatically have access to their own AddressSpaces, and more
 priviledged operations are protected by their own capabilities.
+
+### `map_memory_object`
+Map a MemoryObject into an AddressSpace. This requires the calling task to have access to the MemoryObject,
+and to the AddressSpace.
+
+The first parameter, `a`, is the kernel object ID of the MemoryObject. The second parameter, `b`, is the
+kernel object ID of the AddressSpace to map the MemoryObject into.
+
+Returns:
+ - `0` if the system call succeeded
+ - `1` if the portion of the AddressSpace that would be mapped is already occupied by another MemoryObject
+ - `2` if the calling task doesn't have access to the MemoryObject
+ - `3` if the calling task doesn't have access to the AddressSpace
+ - `4` if the ID for the MemoryObject does not point to a valid MemoryObject, or if the ID does not point to
+     any object
+ - `5` if the ID for the AddressSpace does not point to a valid AddressSpace, or if the ID does not point to
+     any object

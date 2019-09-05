@@ -301,7 +301,7 @@ fn load_task(arch: &Arch, scheduler: &mut Scheduler, image: &ImageInfo) {
             .address_space()
             .unwrap()
             .write()
-            .map_memory_object(&arch, memory_object: WrappedKernelObject<Arch>);
+            .map_memory_object(memory_object: WrappedKernelObject<Arch>);
     }
 
     // Create a Task for the image and add it to the scheduler's ready queue

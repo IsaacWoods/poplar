@@ -14,6 +14,7 @@ pub const SYSCALL_YIELD: usize = 0;
 pub const SYSCALL_EARLY_LOG: usize = 1;
 pub const SYSCALL_REQUEST_SYSTEM_OBJECT: usize = 2;
 pub const SYSCALL_MY_ADDRESS_SPACE: usize = 3;
+pub const SYSCALL_MAP_MEMORY_OBJECT: usize = 4;
 
 pub fn yield_to_kernel() {
     unsafe {
@@ -30,10 +31,6 @@ pub fn early_log(message: &str) -> Result<(), ()> {
     }
 }
 
-pub fn my_address_space() -> KernelObjectId {
-    KernelObjectId::from_syscall_repr(unsafe { raw::syscall0(SYSCALL_MY_ADDRESS_SPACE) })
-}
-
 #[derive(Clone, Copy, Debug)]
 pub enum SystemObjectId {
     BackupFramebuffer = 0,
@@ -48,7 +45,7 @@ pub enum RequestSystemObjectError {
     NotAValidId,
     /// The requested object ID is valid, but the requesting task does not have the correct
     /// capabilities to access it.
-    PermissionDenied,
+    AccessDenied,
 }
 
 pub fn request_system_object(id: SystemObjectId) -> Result<KernelObjectId, RequestSystemObjectError> {
@@ -66,8 +63,44 @@ pub fn request_system_object(id: SystemObjectId) -> Result<KernelObjectId, Reque
 
         1 => Err(RequestSystemObjectError::ObjectDoesNotExist),
         2 => Err(RequestSystemObjectError::NotAValidId),
-        3 => Err(RequestSystemObjectError::PermissionDenied),
+        3 => Err(RequestSystemObjectError::AccessDenied),
 
         _ => panic!("Syscall request_system_object returned unexpected status code"),
+    }
+}
+
+pub fn my_address_space() -> KernelObjectId {
+    KernelObjectId::from_syscall_repr(unsafe { raw::syscall0(SYSCALL_MY_ADDRESS_SPACE) })
+}
+
+#[derive(Clone, Copy, Debug)]
+pub enum MapMemoryObjectError {
+    /// The MemoryObject could not be mapped, because there is already a MemoryObject mapped into
+    /// the required range of virtual addresses.
+    AddressRangeNotFree,
+    AccessDeniedToMemoryObject,
+    AccessDeniedToAddressSpace,
+    NotAMemoryObject,
+    NotAnAddressSpace,
+}
+
+pub fn map_memory_object(
+    memory_object: KernelObjectId,
+    address_space: KernelObjectId,
+) -> Result<(), MapMemoryObjectError> {
+    match unsafe {
+        raw::syscall2(
+            SYSCALL_MAP_MEMORY_OBJECT,
+            memory_object.to_syscall_repr(),
+            address_space.to_syscall_repr(),
+        )
+    } {
+        0 => Ok(()),
+        1 => Err(MapMemoryObjectError::AddressRangeNotFree),
+        2 => Err(MapMemoryObjectError::AccessDeniedToMemoryObject),
+        3 => Err(MapMemoryObjectError::AccessDeniedToAddressSpace),
+        4 => Err(MapMemoryObjectError::NotAMemoryObject),
+        5 => Err(MapMemoryObjectError::NotAnAddressSpace),
+        _ => panic!("Syscall map_memory_object returned unexpected status code"),
     }
 }

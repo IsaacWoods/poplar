@@ -1,4 +1,4 @@
-use super::KernelObject;
+use super::{KernelObject, WrappedKernelObject};
 use crate::arch::Architecture;
 use alloc::{sync::Arc, vec::Vec};
 use core::mem;
@@ -96,26 +96,14 @@ where
         self.free_list_head = Some(start as Index);
     }
 
-    pub fn get(&self, id: KernelObjectId) -> Option<&Arc<KernelObject<A>>> {
+    pub fn get(&self, id: KernelObjectId) -> Option<WrappedKernelObject<A>> {
         match self.entries.get((id.index - 1) as usize) {
             /*
              * Only "find" the entry if the generations are the same. If they're not, the
              * expected entry has been removed and replaced by something else!
              */
-            Some(Entry::Occupied { generation, ref object }) if *generation == id.generation => Some(object),
-
-            _ => None,
-        }
-    }
-
-    pub fn get_mut(&mut self, id: KernelObjectId) -> Option<&mut Arc<KernelObject<A>>> {
-        match self.entries.get_mut((id.index - 1) as usize) {
-            /*
-             * Only "find" the entry if the generations are the same. If they're not, the
-             * expected entry has been removed and replaced by something else!
-             */
-            Some(Entry::Occupied { generation, ref mut object }) if *generation == id.generation => {
-                Some(object)
+            Some(Entry::Occupied { generation, object }) if *generation == id.generation => {
+                Some(WrappedKernelObject { id, object: object.clone() })
             }
 
             _ => None,

@@ -1,4 +1,4 @@
-use super::{memory::userspace_map, Arch};
+use super::{memory::userspace_map, Arch, ARCH};
 use crate::object::WrappedKernelObject;
 use alloc::vec::Vec;
 use pebble_util::bitmap::{Bitmap, BitmapArray};
@@ -68,19 +68,26 @@ impl AddressSpace {
         }
     }
 
-    pub fn map_memory_object(&mut self, arch: &Arch, memory_object: WrappedKernelObject<Arch>) {
-        let mut mapper = self.table.mapper();
-        let memory_obj_info = memory_object.object.memory_object().expect("Not a Memory Object").read();
+    // TODO: return a Result from here with success or failure
+    pub fn map_memory_object(&mut self, memory_object: WrappedKernelObject<Arch>) {
+        {
+            let mut mapper = self.table.mapper();
+            let memory_obj_info = memory_object.object.memory_object().expect("Not a Memory Object").read();
 
-        let start_page = Page::starts_with(memory_obj_info.virtual_address);
-        let pages = start_page..(start_page + memory_obj_info.num_pages);
+            let start_page = Page::starts_with(memory_obj_info.virtual_address);
+            let pages = start_page..(start_page + memory_obj_info.num_pages);
 
-        let start_frame = Frame::starts_with(memory_obj_info.physical_address);
-        let frames = start_frame..(start_frame + memory_obj_info.num_pages);
+            let start_frame = Frame::starts_with(memory_obj_info.physical_address);
+            let frames = start_frame..(start_frame + memory_obj_info.num_pages);
 
-        for (page, frame) in pages.zip(frames) {
-            mapper.map_to(page, frame, memory_obj_info.flags, &arch.physical_memory_manager).unwrap();
+            for (page, frame) in pages.zip(frames) {
+                mapper
+                    .map_to(page, frame, memory_obj_info.flags, &ARCH.get().physical_memory_manager)
+                    .unwrap();
+            }
         }
+
+        self.memory_objects.push(memory_object);
     }
 
     pub fn switch_to(&mut self) {

@@ -16,6 +16,8 @@ pub extern "C" fn start() -> ! {
 
     let address_space_id = syscall::my_address_space();
 
+    syscall::map_memory_object(framebuffer_id, address_space_id).unwrap();
+
     // TODO: err I don't think we can do this yet. We need heap + allocator and stuff I guess
     // syscall::early_log(format!("Framebuffer id: {:?}", framebuffer_id));
     loop {}
