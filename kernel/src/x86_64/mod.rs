@@ -32,6 +32,7 @@ use crate::{
     scheduler::Scheduler,
     x86_64::per_cpu::per_cpu_data_mut,
 };
+use acpi::Acpi;
 use aml::AmlContext;
 use core::time::Duration;
 use log::{error, info, warn};
@@ -49,6 +50,8 @@ pub(self) static ARCH: InitGuard<Arch> = InitGuard::uninit();
 
 pub struct Arch {
     pub cpu_info: CpuInfo,
+    pub acpi_info: Option<Acpi>,
+    pub aml_context: Mutex<AmlContext>,
     pub physical_memory_manager: LockedPhysicalMemoryManager,
     /// Each bit in this bitmap corresponds to a slot for an address space worth of kernel stacks
     /// in the kernel address space. We can have up 1024 address spaces, so need 128 bytes.
@@ -186,6 +189,8 @@ pub fn kmain() -> ! {
      */
     ARCH.initialize(Arch {
         cpu_info,
+        acpi_info,
+        aml_context: Mutex::new(AmlContext::new()),
         physical_memory_manager: LockedPhysicalMemoryManager::new(boot_info),
         kernel_page_table: Mutex::new(unsafe {
             PageTable::from_frame(
@@ -213,31 +218,24 @@ pub fn kmain() -> ! {
     }
     guarded_per_cpu.install();
 
-    // TODO: deal gracefully with a bad ACPI parse
-    // TODO: maybe don't take arch here and instead access it through COMMON
-    let mut interrupt_controller = InterruptController::init(
-        &ARCH.get(),
-        match acpi_info {
-            Some(ref info) => info.interrupt_model.as_ref().unwrap(),
-            None => unimplemented!(),
-        },
-    );
-    interrupt_controller.enable_local_timer(&ARCH.get(), Duration::from_secs(3));
-
     /*
      * Parse the DSDT.
      */
-    let mut aml_context = AmlContext::new();
-    if let Some(dsdt_info) = acpi_info.and_then(|info| info.dsdt) {
+    if let Some(dsdt_info) = ARCH.get().acpi_info.as_ref().and_then(|info| info.dsdt.as_ref()) {
         let virtual_address =
             kernel_map::physical_to_virtual(PhysicalAddress::new(dsdt_info.address).unwrap());
         info!(
             "DSDT parse: {:?}",
-            aml_context.parse_table(unsafe {
+            ARCH.get().aml_context.lock().parse_table(unsafe {
                 core::slice::from_raw_parts(virtual_address.ptr(), dsdt_info.length as usize)
             })
         );
+
+        // TODO: we should parse the SSDTs here. If we can't find the DSDT, should we even bother?
     }
+
+    let mut interrupt_controller = InterruptController::init(&ARCH.get());
+    interrupt_controller.enable_local_timer(&ARCH.get(), Duration::from_secs(3));
 
     /*
      * Create the backup framebuffer if the bootloader switched to a graphics mode.

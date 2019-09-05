@@ -48,7 +48,7 @@ const APIC_SPURIOUS_VECTOR: u8 = 0xff;
 pub struct InterruptController {}
 
 impl InterruptController {
-    pub fn init(arch: &Arch, interrupt_model: &InterruptModel) -> InterruptController {
+    pub fn init(arch: &Arch) -> InterruptController {
         Self::install_syscall_handler();
         Self::install_exception_handlers();
 
@@ -56,7 +56,7 @@ impl InterruptController {
             IDT.load();
         }
 
-        match interrupt_model {
+        match arch.acpi_info.as_ref().unwrap().interrupt_model.as_ref().unwrap() {
             InterruptModel::Apic {
                 local_apic_address,
                 io_apics: acpi_io_apics,
