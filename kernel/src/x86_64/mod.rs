@@ -139,47 +139,6 @@ pub fn kmain() -> ! {
     info!("{:#?}", acpi_info);
 
     /*
-     * Register all the CPUs we can find.
-     */
-    // let (mut boot_processor, application_processors) = match acpi_info {
-    //     Some(ref info) => {
-    //         assert!(
-    //             info.boot_processor.is_some()
-    //                 && info.boot_processor.unwrap().state == ProcessorState::Running
-    //         );
-    //         // TODO: Cpu shouldn't manage the TSS anymore - that should be the job of the per-cpu
-    //         // data
-    //         let tss = Tss::new();
-    //         let tss_selector = unsafe { GDT.lock().add_tss(TssSegment::new(&tss)) };
-    //         let boot_processor = Cpu::from_acpi(&info.boot_processor.unwrap(), tss, tss_selector);
-
-    //         let mut application_processors = Vec::new();
-    //         for application_processor in &info.application_processors {
-    //             if application_processor.state == ProcessorState::Disabled {
-    //                 continue;
-    //             }
-
-    //             let tss = Tss::new();
-    //             let tss_selector = unsafe { GDT.lock().add_tss(TssSegment::new(&tss)) };
-    //             application_processors.push(Cpu::from_acpi(&application_processor, tss, tss_selector));
-    //         }
-
-    //         (boot_processor, application_processors)
-    //     }
-
-    //     None => {
-    //         /*
-    //          * We couldn't find the number of processors from the ACPI tables. Just create a TSS
-    //          * for this one.
-    //          */
-    //         let tss = Tss::new();
-    //         let tss_selector = unsafe { GDT.lock().add_tss(TssSegment::new(Pin::new(&tss))) };
-    //         let cpu = Cpu { processor_uid: 0, local_apic_id: 0, is_ap: false, tss, tss_selector };
-    //         (cpu, Vec::with_capacity(0))
-    //     }
-    // };
-
-    /*
      * Set up the main kernel data structure, which also initializes the physical memory manager.
      * From this point, we can freely allocate physical memory from any point in the kernel.
      *
