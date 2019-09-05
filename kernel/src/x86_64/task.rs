@@ -1,6 +1,6 @@
 use super::{memory::userspace_map, per_cpu::per_cpu_data_mut, Arch};
 use crate::object::{
-    task::{CommonTask, TaskState},
+    common::{CommonTask, TaskState},
     WrappedKernelObject,
 };
 use alloc::{string::String, vec::Vec};

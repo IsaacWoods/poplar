@@ -1,5 +1,5 @@
+pub mod common;
 pub mod map;
-pub mod task;
 
 use self::map::ObjectMap;
 use crate::arch::Architecture;

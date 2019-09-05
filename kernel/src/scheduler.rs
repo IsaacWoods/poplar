@@ -1,7 +1,7 @@
 use crate::{
     arch::Architecture,
     object::{
-        task::{CommonTask, TaskState},
+        common::{CommonTask, TaskState},
         WrappedKernelObject,
     },
 };

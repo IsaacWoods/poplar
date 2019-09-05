@@ -1,8 +1,17 @@
 use super::{memory::userspace_map, Arch, ARCH};
-use crate::object::WrappedKernelObject;
+use crate::object::{common::MemoryObjectMappingError, WrappedKernelObject};
 use alloc::vec::Vec;
 use pebble_util::bitmap::{Bitmap, BitmapArray};
-use x86_64::memory::{kernel_map, EntryFlags, Frame, FrameAllocator, Page, PageTable, VirtualAddress};
+use x86_64::memory::{
+    kernel_map,
+    EntryFlags,
+    Frame,
+    FrameAllocator,
+    Page,
+    PageTable,
+    TranslationResult,
+    VirtualAddress,
+};
 
 #[derive(PartialEq, Eq, Debug)]
 enum State {
@@ -68,17 +77,29 @@ impl AddressSpace {
         }
     }
 
-    // TODO: return a Result from here with success or failure
-    pub fn map_memory_object(&mut self, memory_object: WrappedKernelObject<Arch>) {
+    pub fn map_memory_object(
+        &mut self,
+        memory_object: WrappedKernelObject<Arch>,
+    ) -> Result<(), MemoryObjectMappingError> {
         {
             let mut mapper = self.table.mapper();
-            let memory_obj_info = memory_object.object.memory_object().expect("Not a Memory Object").read();
+            let memory_obj_info = memory_object.object.memory_object().expect("Not a MemoryObject").read();
 
             let start_page = Page::starts_with(memory_obj_info.virtual_address);
             let pages = start_page..(start_page + memory_obj_info.num_pages);
 
             let start_frame = Frame::starts_with(memory_obj_info.physical_address);
             let frames = start_frame..(start_frame + memory_obj_info.num_pages);
+
+            /*
+             * Check that the entire range of pages we'll be mapping into is currently free.
+             */
+            for page in pages.clone() {
+                match mapper.translate(page.start_address) {
+                    TranslationResult::NotMapped => (),
+                    _ => return Err(MemoryObjectMappingError::SpaceAlreadyOccupied),
+                }
+            }
 
             for (page, frame) in pages.zip(frames) {
                 mapper
@@ -88,6 +109,7 @@ impl AddressSpace {
         }
 
         self.memory_objects.push(memory_object);
+        Ok(())
     }
 
     pub fn switch_to(&mut self) {

@@ -1,6 +1,6 @@
 use crate::{
     arch_impl::{common_per_cpu_data, common_per_cpu_data_mut},
-    object::task::CommonTask,
+    object::common::{CommonTask, MemoryObjectMappingError},
     COMMON,
 };
 use bit_field::BitField;
@@ -171,10 +171,10 @@ fn map_memory_object(memory_object_id: usize, address_space_id: usize) -> usize 
 
     match COMMON.get().object_map.read().get(KernelObjectId::from_syscall_repr(address_space_id)) {
         Some(address_space) => match address_space.object.address_space() {
-            Some(address_space) => {
-                address_space.write().map_memory_object(memory_object);
-                STATUS_SUCCESS
-            }
+            Some(address_space) => match address_space.write().map_memory_object(memory_object) {
+                Ok(()) => STATUS_SUCCESS,
+                Err(MemoryObjectMappingError::SpaceAlreadyOccupied) => STATUS_ALREADY_OCCUPIED,
+            },
             None => STATUS_NOT_AN_ADDRESS_SPACE,
         },
         None => STATUS_NOT_AN_ADDRESS_SPACE,

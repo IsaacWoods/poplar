@@ -10,7 +10,7 @@ pub use self::{
     frame::Frame,
     frame_allocator::FrameAllocator,
     page::Page,
-    page_table::{EntryFlags, Mapper, PageTable},
+    page_table::{EntryFlags, MapError, Mapper, PageTable, TranslationResult},
     physical_address::PhysicalAddress,
     virtual_address::VirtualAddress,
 };
