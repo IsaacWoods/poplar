@@ -162,10 +162,12 @@ pub struct HypervisorInfo {
 ///
 /// For example:
 ///
+/// ``` ignore
 ///       MSB         LSB
 /// EBX = 'u' 'n' 'e' 'G'
 /// EDX = 'I' 'e' 'n' 'i'
 /// ECX = 'l' 'e' 't' 'n'
+/// ```
 ///
 /// turns into "GenuineIntel".
 union VendorRepr {

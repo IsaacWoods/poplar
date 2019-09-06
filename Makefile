@@ -75,6 +75,8 @@ fmt:
 	cd userboot && cargo fmt
 
 test:
+	cargo test --all-features --manifest-path lib/pebble_util/Cargo.toml
+	cargo test --all-features --manifest-path lib/x86_64/Cargo.toml
 	cargo test --all-features --manifest-path kernel/Cargo.toml
 
 doc:

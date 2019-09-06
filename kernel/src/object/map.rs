@@ -166,7 +166,10 @@ where
 #[cfg(test)]
 mod test {
     use super::ObjectMap;
-    use crate::{arch::test::FakeArch, object::KernelObject};
+    use crate::{
+        arch::test::FakeArch,
+        object::{KernelObject, WrappedKernelObject},
+    };
     use alloc::sync::Arc;
     use core::ops::Deref;
 
@@ -181,10 +184,10 @@ mod test {
         }
     }
 
-    fn assert_some(entry: Option<&Arc<KernelObject<FakeArch>>>, expected_value: usize) {
+    fn assert_some(entry: Option<WrappedKernelObject<FakeArch>>, expected_value: usize) {
         match entry {
-            Some(wrapped_object) => match wrapped_object.deref() {
-                KernelObject::Test(value) => assert_eq!(value, &expected_value),
+            Some(wrapped_object) => match wrapped_object.object.deref() {
+                KernelObject::Test(value) => assert_eq!(*value, expected_value),
                 entry => panic!("Incorrect entry during ObjectMap testing: {:?}", entry),
             },
             entry => panic!("Incorrect entry during ObjectMap testing: {:?}", entry),

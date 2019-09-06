@@ -1,5 +1,9 @@
 #![no_std]
-#![feature(const_generics, decl_macro, maybe_uninit_ref)]
+#![feature(const_generics, decl_macro, maybe_uninit_ref, type_ascription)]
+
+#[cfg(test)]
+#[macro_use]
+extern crate std;
 
 mod binary_pretty_print;
 pub mod bitmap;

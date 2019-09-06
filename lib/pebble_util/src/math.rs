@@ -6,7 +6,7 @@ cfg_if! {
         /// must not be 0.
         ///
         /// ### Example
-        /// ```
+        /// ``` ignore
         /// assert_eq!(flooring_log2(1), 0);
         /// assert_eq!(flooring_log2(64), 6);
         /// assert_eq!(flooring_log2(61), 5);
@@ -27,7 +27,7 @@ cfg_if! {
         /// must not be 0.
         ///
         /// ### Example
-        /// ```
+        /// ``` ignore
         /// assert_eq!(flooring_log2(1), 0);
         /// assert_eq!(flooring_log2(64), 6);
         /// assert_eq!(flooring_log2(61), 5);
