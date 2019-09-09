@@ -16,7 +16,7 @@ QEMU_COMMON_FLAGS = -cpu max,vmware-cpuid-freq,invtsc \
 					-drive if=ide,format=raw,file=$< \
 					-net none
 
-.PHONY: prepare bootloader kernel test_process simple_fb clean qemu gdb update fmt test
+.PHONY: prepare bootloader kernel test_process simple_fb clean qemu gdb update fmt test site
 
 pebble.img: prepare bootloader kernel test_process simple_fb
 	printf "kernel kernel.elf\nimage test_process.elf test_process\nimage simple_fb.elf simple_fb\nvideo_mode 800 600" > $(BUILD_DIR)/fat/bootcmd
@@ -79,12 +79,17 @@ test:
 	cargo test --all-features --manifest-path lib/x86_64/Cargo.toml
 	cargo test --all-features --manifest-path kernel/Cargo.toml
 
-doc:
+# This is used by CI to generate the site to deploy. Probably not useful on its own
+site:
+	@# Generate rustdoc documentation
 	CARGO_TARGET_DIR=pages cargo doc \
 		--all-features \
 		--manifest-path kernel/Cargo.toml \
 		--document-private-items
+	@# Build the book
 	mdbook build
+	@# Move the static site into the correct place
+	mv site/* ./
 
 qemu: pebble.img
 	qemu-system-x86_64 \
