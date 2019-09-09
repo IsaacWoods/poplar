@@ -89,7 +89,7 @@ site:
 	@# Build the book
 	mdbook build
 	@# Move the static site into the correct place
-	mv site/* ./
+	mv site/* pages/
 
 qemu: pebble.img
 	qemu-system-x86_64 \
