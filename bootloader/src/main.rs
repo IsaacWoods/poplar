@@ -77,8 +77,7 @@ pub extern "win64" fn efi_main(image_handle: Handle, system_table: &'static Syst
     /*
      * Read and parse bootcmd file.
      */
-    let command_file_data =
-        uefi::protocols::read_file("bootcmd", uefi::image_handle()).expect("No bootcmd file");
+    let command_file_data = uefi::protocols::read_file("bootcmd", uefi::image_handle()).expect("No bootcmd file");
     let bootcmd = core::str::from_utf8(&command_file_data).expect("bootcmd is not valid UTF-8");
 
     let mut kernel_info = None;
@@ -130,9 +129,11 @@ pub extern "win64" fn efi_main(image_handle: Handle, system_table: &'static Syst
     allocate_and_map_heap(&mut kernel_mapper, &allocator);
 
     /*
-     * Get the final memory map before exiting boot services. We must not allocate between this
-     * call and the call to `ExitBootServices`.
+     * Get the final memory map before exiting boot services. We must not allocate between this call and the
+     * call to `ExitBootServices` (this also means we can't log anything to the console, as some UEFI
+     * implementations allocate when doing so).
      */
+    trace!("Getting final memory map and exiting boot services");
     let memory_map = system_table
         .boot_services
         .get_memory_map()
@@ -143,8 +144,14 @@ pub extern "win64" fn efi_main(image_handle: Handle, system_table: &'static Syst
      * We now terminate the boot services. If this is successful, we become responsible for the
      * running of the system and may no longer make use of any boot services.
      */
-    trace!("Exiting boot services");
     system_table.boot_services.exit_boot_services(image_handle, memory_map.key).unwrap();
+
+    /*
+     * The console services are not available after we exit Boot Services, so turn off logging to the console if
+     * we haven't already (we might already have if we've switched to a new video mode).
+     */
+    logger::LOGGER.lock().log_to_console = false;
+
     add_memory_map_to_boot_info(boot_info, &memory_map);
     create_physical_mapping(&mut kernel_mapper, &allocator, &memory_map);
 
@@ -199,12 +206,7 @@ fn allocate_and_map_heap(mapper: &mut Mapper, allocator: &BootFrameAllocator) {
     let heap_pages = Page::contains(kernel_map::HEAP_START)..=Page::contains(kernel_map::HEAP_END);
     for (frame, page) in heap_frames.zip(heap_pages) {
         mapper
-            .map_to(
-                page,
-                frame,
-                EntryFlags::PRESENT | EntryFlags::WRITABLE | EntryFlags::NO_EXECUTE,
-                allocator,
-            )
+            .map_to(page, frame, EntryFlags::PRESENT | EntryFlags::WRITABLE | EntryFlags::NO_EXECUTE, allocator)
             .unwrap();
     }
 }
@@ -263,9 +265,7 @@ fn construct_boot_info(kernel_mapper: &mut Mapper, allocator: &BootFrameAllocato
         ..Frame::contains(boot_info_address + Size4KiB::SIZE * kernel_map::BOOT_INFO_NUM_PAGES);
     let pages = Page::contains(kernel_map::BOOT_INFO)
         ..Page::contains(kernel_map::BOOT_INFO + Size4KiB::SIZE * kernel_map::BOOT_INFO_NUM_PAGES);
-    kernel_mapper
-        .map_range_to(pages, frames, EntryFlags::PRESENT | EntryFlags::NO_EXECUTE, allocator)
-        .unwrap();
+    kernel_mapper.map_range_to(pages, frames, EntryFlags::PRESENT | EntryFlags::NO_EXECUTE, allocator).unwrap();
 
     boot_info
 }
@@ -301,11 +301,11 @@ fn choose_and_switch_to_video_mode(boot_info: &mut BootInfo, desired_width: u32,
         .find(|(_proto_handle, _index, mode_info)| {
             /*
              * We can now select the most suitable mode:
-             *      - We only want modes that we can create a linear framebuffer from, so we discard modes
-             *        that only support the `blt` function (we also don't support custom pixel formats,
-             *        just the normal 32-bit RGB and BGR modes)
-             *      - At the moment, we only choose modes that exactly match the user's given resolution;
-             *        we could relax this in the future and choose a close mode rather than giving up
+             *      - We only want modes that we can create a linear framebuffer from, so we discard modes that
+             *        only support the `blt` function (we also don't support custom pixel formats, just the
+             *        normal 32-bit RGB and BGR modes)
+             *      - At the moment, we only choose modes that exactly match the user's given resolution; we
+             *        could relax this in the future and choose a close mode rather than giving up
              *      - At the moment, we don't pay any attention to which handle is supplying the mode.
              */
             (mode_info.format == PixelFormat::RGB || mode_info.format == PixelFormat::BGR)
@@ -343,8 +343,7 @@ fn choose_and_switch_to_video_mode(boot_info: &mut BootInfo, desired_width: u32,
          * Record the required information about the video mode we've chosen in the BootInfo.
          */
         boot_info.video_info = Some(VideoInfo {
-            framebuffer_address: PhysicalAddress::new(protocol.mode_data().framebuffer_address as usize)
-                .unwrap(),
+            framebuffer_address: PhysicalAddress::new(protocol.mode_data().framebuffer_address as usize).unwrap(),
             pixel_format,
             width: mode_info.x_resolution,
             height: mode_info.y_resolution,
@@ -359,9 +358,7 @@ fn add_memory_map_to_boot_info(boot_info: &mut BootInfo, memory_map: &MemoryMap)
     for entry in memory_map.iter() {
         let memory_type = match entry.memory_type {
             // Keep the UEFI runtime services stuff around - anything might be using them.
-            MemoryType::RuntimeServicesCode | MemoryType::RuntimeServicesData => {
-                BootInfoMemoryType::UefiServices
-            }
+            MemoryType::RuntimeServicesCode | MemoryType::RuntimeServicesData => BootInfoMemoryType::UefiServices,
 
             /*
              * The bootloader and boot services code and data can be treated like conventional
@@ -428,9 +425,8 @@ fn create_physical_mapping(mapper: &mut Mapper, allocator: &BootFrameAllocator, 
     let start_frame = Frame::<Size2MiB>::starts_with(PhysicalAddress::new(0).unwrap());
     let end_frame = Frame::<Size2MiB>::contains(max_physical_address);
     let start_page = Page::<Size2MiB>::starts_with(kernel_map::KERNEL_ADDRESS_SPACE_START);
-    let end_page = Page::<Size2MiB>::contains(
-        kernel_map::KERNEL_ADDRESS_SPACE_START + usize::from(max_physical_address),
-    );
+    let end_page =
+        Page::<Size2MiB>::contains(kernel_map::KERNEL_ADDRESS_SPACE_START + usize::from(max_physical_address));
 
     for (frame, page) in (start_frame..end_frame).zip(start_page..end_page) {
         mapper.map_to_2MiB(page, frame, EntryFlags::WRITABLE | EntryFlags::NO_EXECUTE, allocator).unwrap();
@@ -440,14 +436,14 @@ fn create_physical_mapping(mapper: &mut Mapper, allocator: &BootFrameAllocator, 
 #[panic_handler]
 #[no_mangle]
 pub fn panic(info: &PanicInfo) -> ! {
+    /*
+     * Write a message that we'll hopefully see on real hardware. Ignore the result because we're already
+     * panicking.
+     */
+    let _ = system_table().console_out.write_str("Bootloader has panicked!");
+
     let location = info.location().unwrap();
-    error!(
-        "Panic in {}({}:{}): {}",
-        location.file(),
-        location.line(),
-        location.column(),
-        info.message().unwrap()
-    );
+    error!("Panic in {}({}:{}): {}", location.file(), location.line(), location.column(), info.message().unwrap());
     loop {}
 }
 
