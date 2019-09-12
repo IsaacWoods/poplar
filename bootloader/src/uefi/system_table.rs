@@ -9,9 +9,6 @@ use crate::uefi::{
 };
 use core::slice;
 
-/// The UEFI system table describes the services the UEFI provides to the bootloader. We don't
-/// support the console services, because they can allocate at any point and so are difficult to
-/// use safely.
 // TODO: why do all of these use `RuntimeMemory` (even the boot-services-only stuff?)
 #[repr(C)]
 pub struct SystemTable {
