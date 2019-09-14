@@ -9,4 +9,4 @@ Pebble is a microkernel and userspace written in Rust. It is still early in deve
 * Processes communicate with each other through message passing facilitated by the kernel
 * Drivers live in userspace
 
-The best place to learn more about Pebble is [the book](https://pebble-os.github.io/book).
+The best place to learn more about Pebble is [the book](https://isaacwoods.github.io/pebble/book).

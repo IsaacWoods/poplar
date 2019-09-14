@@ -1,12 +1,12 @@
 # Pebble
-[![Build Status](https://travis-ci.org/pebble-os/pebble.svg?branch=master)](https://travis-ci.org/pebble-os/pebble)
+[![Build Status](https://travis-ci.org/IsaacWoods/pebble.svg?branch=master)](https://travis-ci.org/IsaacWoods/pebble)
 [![License: MPL-2.0](https://img.shields.io/badge/license-MPL--2.0-blue.svg)](https://opensource.org/licenses/MPL-2.0)
 [![Gitter chat](https://badges.gitter.im/gitterHQ/gitter.png)](https://gitter.im/pebble-os/Lobby)
 
 **Pebble is still early in development.**
 
 Pebble is a microkernel and userspace written in Rust, with a focus on safety and simplicity. It is designed to be simple to understand, extend, and develop for. Pebble does not aim for POSIX compliance.
-The best way to learn about Pebble is to read [the book](https://pebble-os.github.io/pebble/book/). [The website](https://pebble-os.github.io) also hosts other useful resources, such as `rustdoc`-generated
+The best way to learn about Pebble is to read [the book](https://isaacwoods.github.io/pebble/book/). [The website](https://isaacwoods.github.io/pebble) also hosts other useful resources, such as `rustdoc`-generated
 documentation of the components.
 
 ## Contributing
