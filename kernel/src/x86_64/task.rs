@@ -288,6 +288,7 @@ pub fn drop_to_usermode(task: WrappedKernelObject<Arch>) -> ! {
 /// Decode a capability stream (as found in a task's image) into a set of capabilities as they're
 /// represented in the kernel. For the format that's being decoded here, refer to the
 /// `(3.1) Userspace/Capabilities` section of the Book.
+// TODO: this shouldn't be here - decoding capabilities is arch-independent
 fn decode_capabilities(mut cap_stream: &[u8]) -> Result<Vec<Capability>, TaskCreationError> {
     let mut caps = Vec::new();
 
