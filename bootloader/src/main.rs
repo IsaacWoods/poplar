@@ -446,8 +446,3 @@ pub fn panic(info: &PanicInfo) -> ! {
     error!("Panic in {}({}:{}): {}", location.file(), location.line(), location.column(), info.message().unwrap());
     loop {}
 }
-
-/// This works around a linking issue with `compiler-builtins` (tracked at rust-lang/rust#62785)
-#[used]
-#[no_mangle]
-pub static _fltused: i32 = 0;
