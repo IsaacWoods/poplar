@@ -39,25 +39,23 @@ pub fn physical_to_virtual(address: PhysicalAddress) -> VirtualAddress {
 /// The kernel is mapped into the 511th entry of the P4.
 pub const KERNEL_P4_ENTRY: usize = 511;
 
-pub const KERNEL_ADDRESS_SPACE_START: VirtualAddress =
-    unsafe { VirtualAddress::new_unchecked(0xffff_ff80_0000_0000) };
+pub const KERNEL_ADDRESS_SPACE_START: VirtualAddress = VirtualAddress::new_canonicalise(0xffff_ff80_0000_0000);
 
 /// The base virtual address of the physical memory mapping. This is equal to
 /// `KERNEL_ADDRESS_SPACE_START` because we map the physical memory at the start of the kernel's P4
 /// entry.
 pub const PHYSICAL_MAPPING_BASE: VirtualAddress = KERNEL_ADDRESS_SPACE_START;
 
-pub const KERNEL_STACKS_BASE: VirtualAddress =
-    unsafe { VirtualAddress::new_unchecked(0xffff_ffdf_8000_0000) };
+pub const KERNEL_STACKS_BASE: VirtualAddress = VirtualAddress::new_canonicalise(0xffff_ffdf_8000_0000);
 
 /// This is the base of the kernel address space. It starts at -2GB. We don't know how much memory
 /// the kernel image will take up when loaded into memory, so we leave quite a lot of space until
 /// the next statically mapped thing.
-pub const KERNEL_BASE: VirtualAddress = unsafe { VirtualAddress::new_unchecked(0xffff_ffff_8000_0000) };
+pub const KERNEL_BASE: VirtualAddress = VirtualAddress::new_canonicalise(0xffff_ffff_8000_0000);
 
 /// The start of the heap. The heap is 200 KiB.
-pub const HEAP_START: VirtualAddress = unsafe { VirtualAddress::new_unchecked(0xffff_ffff_c00_00000) };
-pub const HEAP_END: VirtualAddress = unsafe { VirtualAddress::new_unchecked(0xffff_ffff_c00_31fff) };
+pub const HEAP_START: VirtualAddress = VirtualAddress::new_canonicalise(0xffff_ffff_c00_00000);
+pub const HEAP_END: VirtualAddress = VirtualAddress::new_canonicalise(0xffff_ffff_c00_31fff);
 
 /*
  * From here, we place a bunch of hard-coded pages for various things.
@@ -65,7 +63,7 @@ pub const HEAP_END: VirtualAddress = unsafe { VirtualAddress::new_unchecked(0xff
 /// While we could access the local APIC from the physical mapping, it's easier to just map it to a
 /// fixed virtual address, so we can always access its config space. This allows us to use
 /// `LocalApic` as a singleton, so we can easily access it from interrupt handlers.
-pub const LOCAL_APIC_CONFIG: VirtualAddress = unsafe { VirtualAddress::new_unchecked(0xffff_ffff_d000_0000) };
+pub const LOCAL_APIC_CONFIG: VirtualAddress = VirtualAddress::new_canonicalise(0xffff_ffff_d000_0000);
 
 /// This is the number of 4KiB pages we need to allocate for the boot info. We also need to respect this
 /// in the virtual address space allocation.
