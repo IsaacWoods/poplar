@@ -5,7 +5,7 @@ use acpi::interrupt::InterruptModel;
 use aml::{value::Args as AmlArgs, AmlName, AmlValue};
 use bit_field::BitField;
 use core::time::Duration;
-use log::info;
+use log::{info, warn};
 use x86_64::{
     hw::{
         gdt::KERNEL_CODE_SELECTOR,
@@ -67,8 +67,7 @@ impl InterruptController {
                 also_has_legacy_pics,
             } => {
                 if *also_has_legacy_pics {
-                    let mut pic = unsafe { Pic::new() };
-                    pic.remap_and_disable(LEGACY_PIC_VECTOR, LEGACY_PIC_VECTOR + 8);
+                    unsafe { Pic::new() }.remap_and_disable(LEGACY_PIC_VECTOR, LEGACY_PIC_VECTOR + 8);
                 }
 
                 /*
@@ -91,10 +90,7 @@ impl InterruptController {
                     .map_to(
                         Page::contains(kernel_map::LOCAL_APIC_CONFIG),
                         Frame::contains(PhysicalAddress::new(*local_apic_address as usize).unwrap()),
-                        EntryFlags::PRESENT
-                            | EntryFlags::WRITABLE
-                            | EntryFlags::NO_EXECUTE
-                            | EntryFlags::NO_CACHE,
+                        EntryFlags::PRESENT | EntryFlags::WRITABLE | EntryFlags::NO_EXECUTE | EntryFlags::NO_CACHE,
                         &arch.physical_memory_manager,
                     )
                     .unwrap();
@@ -107,8 +103,7 @@ impl InterruptController {
                 unsafe {
                     IDT[APIC_TIMER_VECTOR]
                         .set_handler(wrap_handler!(local_apic_timer_handler), KERNEL_CODE_SELECTOR);
-                    IDT[APIC_SPURIOUS_VECTOR]
-                        .set_handler(wrap_handler!(spurious_handler), KERNEL_CODE_SELECTOR);
+                    IDT[APIC_SPURIOUS_VECTOR].set_handler(wrap_handler!(spurious_handler), KERNEL_CODE_SELECTOR);
                     LocalApic::enable(APIC_SPURIOUS_VECTOR);
                 }
 
@@ -126,8 +121,12 @@ impl InterruptController {
          * TODO: currently, this relies upon being able to get the frequency from the
          * CpuInfo. We should probably build a backup to calibrate it using another timer.
          */
-        let apic_frequency = arch.cpu_info.apic_frequency().expect("Can't find frequency of APIC from cpuid");
-        LocalApic::enable_timer(period.as_millis() as u32, apic_frequency, APIC_TIMER_VECTOR);
+        match arch.cpu_info.apic_frequency() {
+            Some(apic_frequency) => {
+                LocalApic::enable_timer(period.as_millis() as u32, apic_frequency, APIC_TIMER_VECTOR)
+            }
+            None => warn!("Couldn't find frequency of APIC from cpuid. Local APIC timer not enabled!"),
+        }
     }
 
     fn install_exception_handlers() {
