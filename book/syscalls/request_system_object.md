@@ -16,7 +16,7 @@ depend on the object requested. The allowed values are:
 
 | `a`   | Object being requested                | Type              | `b`           | `c`           | `d`           | `e`           |
 |-------|---------------------------------------|-------------------|---------------|---------------|---------------|---------------|
-| `0`   | The backup framebuffer                | `MemoryObject`    | -             | -             | -             | -             |
+| `0`   | The backup framebuffer                | `MemoryObject`    | ptr to info   | -             | -             | -             |
 
 TODO: id for accessing Pci config space where extra params are bus, device, function (+segment or whatever)
 numbers.
@@ -35,3 +35,26 @@ numbers.
 | id    | Capability needed             |
 |-------|-------------------------------|
 | `0`   | `AccessBackupFramebuffer`     |
+
+### System object: backup framebuffer
+An ID of `0` corresponds to the backup framebuffer system object - a framebuffer created by the bootloader or
+kernel that can be used if there is not a more specialized graphics driver available (e.g. on x86_64, this uses the
+UEFI Graphics Output Protocol to create a basic linear framebuffer). The object is a `MemoryObject` that is meant
+to be mapped into the userspace driver and directly written to as video memory.
+
+A userspace address should be passed as `b`, which is used to pass information about the framebuffer back to
+userspace from the kernel. The memory must be user-accessible and writable. The format of the written structure is:
+``` rust
+#[repr(C)]
+struct FramebufferInfo {
+    /// The address of the start of the framebuffer
+    address: usize,
+
+    width: u16,
+    height: u16,
+    stride: u16,
+    /// 0 = RGB32
+    /// 1 = BGR32
+    pixel_format: u8,
+}
+```
