@@ -194,6 +194,10 @@ pub fn kmain() -> ! {
     let mut interrupt_controller = InterruptController::init(&ARCH.get());
     interrupt_controller.enable_local_timer(&ARCH.get(), Duration::from_secs(3));
 
+    // info!("----- Printing AML namespace -----");
+    // info!("{:#?}", ARCH.get().aml_context.lock().namespace);
+    // info!("----- Finished AML namespace -----");
+
     /*
      * Create the backup framebuffer if the bootloader switched to a graphics mode.
      */
