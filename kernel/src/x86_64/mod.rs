@@ -45,7 +45,6 @@ use x86_64::{
 };
 
 pub(self) static GDT: Mutex<Gdt> = Mutex::new(Gdt::new());
-
 pub(self) static ARCH: InitGuard<Arch> = InitGuard::uninit();
 
 pub struct Arch {
@@ -181,8 +180,7 @@ pub fn kmain() -> ! {
      * Parse the DSDT.
      */
     if let Some(dsdt_info) = ARCH.get().acpi_info.as_ref().and_then(|info| info.dsdt.as_ref()) {
-        let virtual_address =
-            kernel_map::physical_to_virtual(PhysicalAddress::new(dsdt_info.address).unwrap());
+        let virtual_address = kernel_map::physical_to_virtual(PhysicalAddress::new(dsdt_info.address).unwrap());
         info!(
             "DSDT parse: {:?}",
             ARCH.get().aml_context.lock().parse_table(unsafe {
@@ -195,6 +193,10 @@ pub fn kmain() -> ! {
 
     let mut interrupt_controller = InterruptController::init(&ARCH.get());
     interrupt_controller.enable_local_timer(&ARCH.get(), Duration::from_secs(3));
+
+    // info!("----- Printing AML namespace -----");
+    // info!("{:#?}", ARCH.get().aml_context.lock().namespace);
+    // info!("----- Finished AML namespace -----");
 
     /*
      * Create the backup framebuffer if the bootloader switched to a graphics mode.
@@ -238,7 +240,19 @@ fn create_framebuffer(video_info: &x86_64::boot::VideoInfo) {
     )))
     .add_to_map(&mut crate::COMMON.get().object_map.write());
 
-    *crate::COMMON.get().backup_framebuffer_object.lock() = Some(memory_object.id);
+    let info = libpebble::syscall::FramebufferSystemObjectInfo {
+        address: usize::from(VIRTUAL_ADDRESS),
+        width: video_info.width as u16,
+        stride: video_info.stride as u16,
+        height: video_info.height as u16,
+        pixel_format: match video_info.pixel_format {
+            // TODO: maybe define these constants in libpebble and use both here and in userspace
+            x86_64::boot::PixelFormat::RGB32 => 0,
+            x86_64::boot::PixelFormat::BGR32 => 1,
+        },
+    };
+
+    *crate::COMMON.get().backup_framebuffer.lock() = Some((memory_object.id, info));
 }
 
 fn load_task(arch: &Arch, scheduler: &mut Scheduler, image: &ImageInfo) {
@@ -250,9 +264,8 @@ fn load_task(arch: &Arch, scheduler: &mut Scheduler, image: &ImageInfo) {
 
     // Make a MemoryObject for each segment and map it into the AddressSpace
     for segment in image.segments() {
-        let memory_object =
-            KernelObject::MemoryObject(RwLock::new(box MemoryObject::from_boot_info(&segment)))
-                .add_to_map(object_map);
+        let memory_object = KernelObject::MemoryObject(RwLock::new(box MemoryObject::from_boot_info(&segment)))
+            .add_to_map(object_map);
         address_space
             .object
             .address_space()
@@ -263,10 +276,9 @@ fn load_task(arch: &Arch, scheduler: &mut Scheduler, image: &ImageInfo) {
     }
 
     // Create a Task for the image and add it to the scheduler's ready queue
-    let task = KernelObject::Task(RwLock::new(
-        box Task::from_image_info(&arch, address_space.clone(), image).unwrap(),
-    ))
-    .add_to_map(object_map);
+    let task =
+        KernelObject::Task(RwLock::new(box Task::from_image_info(&arch, address_space.clone(), image).unwrap()))
+            .add_to_map(object_map);
     scheduler.add_task(task).unwrap();
 }
 

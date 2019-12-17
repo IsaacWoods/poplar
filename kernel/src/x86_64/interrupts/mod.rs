@@ -2,10 +2,10 @@ mod exception;
 
 use super::Arch;
 use acpi::interrupt::InterruptModel;
-use aml::{value::Args as AmlArgs, AmlName, AmlValue};
+use aml::{pci_routing::PciRoutingTable, value::Args as AmlArgs, AmlName, AmlValue};
 use bit_field::BitField;
 use core::time::Duration;
-use log::info;
+use log::{info, warn};
 use x86_64::{
     hw::{
         gdt::KERNEL_CODE_SELECTOR,
@@ -58,17 +58,9 @@ impl InterruptController {
         }
 
         match arch.acpi_info.as_ref().unwrap().interrupt_model.as_ref().unwrap() {
-            InterruptModel::Apic {
-                local_apic_address,
-                io_apics: acpi_io_apics,
-                ref local_apic_nmi_line,
-                ref interrupt_source_overrides,
-                ref nmi_sources,
-                also_has_legacy_pics,
-            } => {
-                if *also_has_legacy_pics {
-                    let mut pic = unsafe { Pic::new() };
-                    pic.remap_and_disable(LEGACY_PIC_VECTOR, LEGACY_PIC_VECTOR + 8);
+            InterruptModel::Apic(info) => {
+                if info.also_has_legacy_pics {
+                    unsafe { Pic::new() }.remap_and_disable(LEGACY_PIC_VECTOR, LEGACY_PIC_VECTOR + 8);
                 }
 
                 /*
@@ -83,6 +75,16 @@ impl InterruptController {
                     .expect("Failed to invoke \\_PIC method");
 
                 /*
+                 * Get the PCI routing table.
+                 */
+                let prt = arch
+                    .aml_context
+                    .lock()
+                    .invoke_method(&AmlName::from_str("\\_SB.PCI0._PRT").unwrap(), AmlArgs::default())
+                    .expect("Failed to execute _PRT method");
+                let pci_routing = PciRoutingTable::from_prt(&prt).expect("Invalid PRT");
+
+                /*
                  * Map the local APIC's configuration space into the kernel address space.
                  */
                 arch.kernel_page_table
@@ -90,11 +92,8 @@ impl InterruptController {
                     .mapper()
                     .map_to(
                         Page::contains(kernel_map::LOCAL_APIC_CONFIG),
-                        Frame::contains(PhysicalAddress::new(*local_apic_address as usize).unwrap()),
-                        EntryFlags::PRESENT
-                            | EntryFlags::WRITABLE
-                            | EntryFlags::NO_EXECUTE
-                            | EntryFlags::NO_CACHE,
+                        Frame::contains(PhysicalAddress::new(info.local_apic_address as usize).unwrap()),
+                        EntryFlags::PRESENT | EntryFlags::WRITABLE | EntryFlags::NO_EXECUTE | EntryFlags::NO_CACHE,
                         &arch.physical_memory_manager,
                     )
                     .unwrap();
@@ -107,8 +106,7 @@ impl InterruptController {
                 unsafe {
                     IDT[APIC_TIMER_VECTOR]
                         .set_handler(wrap_handler!(local_apic_timer_handler), KERNEL_CODE_SELECTOR);
-                    IDT[APIC_SPURIOUS_VECTOR]
-                        .set_handler(wrap_handler!(spurious_handler), KERNEL_CODE_SELECTOR);
+                    IDT[APIC_SPURIOUS_VECTOR].set_handler(wrap_handler!(spurious_handler), KERNEL_CODE_SELECTOR);
                     LocalApic::enable(APIC_SPURIOUS_VECTOR);
                 }
 
@@ -126,8 +124,12 @@ impl InterruptController {
          * TODO: currently, this relies upon being able to get the frequency from the
          * CpuInfo. We should probably build a backup to calibrate it using another timer.
          */
-        let apic_frequency = arch.cpu_info.apic_frequency().expect("Can't find frequency of APIC from cpuid");
-        LocalApic::enable_timer(period.as_millis() as u32, apic_frequency, APIC_TIMER_VECTOR);
+        match arch.cpu_info.apic_frequency() {
+            Some(apic_frequency) => {
+                LocalApic::enable_timer(period.as_millis() as u32, apic_frequency, APIC_TIMER_VECTOR)
+            }
+            None => warn!("Couldn't find frequency of APIC from cpuid. Local APIC timer not enabled!"),
+        }
     }
 
     fn install_exception_handlers() {
