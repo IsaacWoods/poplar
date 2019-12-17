@@ -16,15 +16,8 @@ use log::{info, trace, warn};
 /// It is defined as using the C ABI, so an architecture can call it stably from assembly if it
 /// wants to.
 #[no_mangle]
-pub extern "C" fn rust_syscall_handler(
-    number: usize,
-    a: usize,
-    b: usize,
-    c: usize,
-    d: usize,
-    e: usize,
-) -> usize {
-    info!("Syscall! number = {}, a = {}, b = {}, c = {}, d = {}, e = {}", number, a, b, c, d, e);
+pub extern "C" fn rust_syscall_handler(number: usize, a: usize, b: usize, c: usize, d: usize, e: usize) -> usize {
+    // info!("Syscall! number = {}, a = {}, b = {}, c = {}, d = {}, e = {}", number, a, b, c, d, e);
 
     match number {
         syscall::SYSCALL_YIELD => yield_syscall(),
@@ -79,8 +72,7 @@ fn early_log(str_length: usize, str_address: usize) -> usize {
     }
 
     // Check the message is valid UTF-8
-    let message = match str::from_utf8(unsafe { slice::from_raw_parts(str_address as *const u8, str_length) })
-    {
+    let message = match str::from_utf8(unsafe { slice::from_raw_parts(str_address as *const u8, str_length) }) {
         Ok(message) => message,
         Err(_) => return 2,
     };
@@ -113,8 +105,22 @@ fn request_system_object(id: usize, b: usize, c: usize, d: usize, e: usize) -> u
                 .contains(&Capability::AccessBackupFramebuffer)
             {
                 // Return the id of the framebuffer, if it exists
-                match *COMMON.get().backup_framebuffer_object.lock() {
-                    Some(id) => (Some(id), STATUS_SUCCESS),
+                match *COMMON.get().backup_framebuffer.lock() {
+                    Some((id, info)) => {
+                        /*
+                         * `b` contains a userspace address that we write the framebuffer info back into.
+                         */
+                        unsafe {
+                            // TODO: at the moment, userspace can trivially crash the kernel by passing an address
+                            // in here that is either not mapped, or does not point into userspace (potentially
+                            // overwriting important kernel info). We should validate that the address passed is
+                            // both mapped and points into userspace.
+                            info!("Framebuffer info we're writing back: {:?}", info);
+                            *(b as *mut syscall::FramebufferSystemObjectInfo) = info;
+                        }
+
+                        (Some(id), STATUS_SUCCESS)
+                    }
                     None => (None, STATUS_OBJECT_DOES_NOT_EXIST),
                 }
             } else {

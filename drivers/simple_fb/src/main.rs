@@ -2,14 +2,18 @@
 #![no_main]
 #![feature(const_generics)]
 
-use core::panic::PanicInfo;
+use core::{mem::MaybeUninit, panic::PanicInfo};
 use libpebble::syscall;
 
 #[no_mangle]
 pub extern "C" fn start() -> ! {
     syscall::early_log("Simple framebuffer driver is running").unwrap();
 
-    let framebuffer_id = match syscall::request_system_object(syscall::SystemObjectId::BackupFramebuffer) {
+    let mut framebuffer_info: MaybeUninit<syscall::FramebufferSystemObjectInfo> = MaybeUninit::uninit();
+
+    let framebuffer_id = match syscall::request_system_object(syscall::SystemObjectId::BackupFramebuffer {
+        info_address: framebuffer_info.as_mut_ptr(),
+    }) {
         Ok(id) => id,
         Err(err) => panic!("Failed to get ID of framebuffer memory object: {:?}", err),
     };
@@ -18,22 +22,13 @@ pub extern "C" fn start() -> ! {
 
     syscall::map_memory_object(framebuffer_id, address_space_id).unwrap();
 
-    /*
-     * TODO: we need a good way of getting the information about the framebuffer object we just
-     * mapped from the kernel, including:
-     *    - what virtual address it's mapped at
-     *    - width, height, stride
-     *    - pixel format
-     *
-     * Not sure how the best way to do that is. Maybe pass it back with the `request_system_object`
-     * method? For now, we just hardcode the correct values.
-     */
     // Each pixel is a `u32` at the moment because we know the format is always either RGB32 or BGR32
-    const FRAMEBUFFER_PTR: *mut u32 = 0x00000006_00000000 as *mut u32;
-    const WIDTH: usize = 800;
-    const STRIDE: usize = 800;
-    const HEIGHT: usize = 600;
+    // const FRAMEBUFFER_PTR: *mut u32 = 0x00000006_00000000 as *mut u32;
+    // const WIDTH: usize = 800;
+    // const STRIDE: usize = 800;
+    // const HEIGHT: usize = 600;
 
+    let info: syscall::FramebufferSystemObjectInfo = unsafe { framebuffer_info.assume_init() };
     for y in 0..HEIGHT {
         for x in 0..WIDTH {
             unsafe {
@@ -42,8 +37,6 @@ pub extern "C" fn start() -> ! {
         }
     }
 
-    // TODO: err I don't think we can do this yet. We need heap + allocator and stuff I guess
-    // syscall::early_log(format!("Framebuffer id: {:?}", framebuffer_id));
     loop {}
 }
 

@@ -23,9 +23,7 @@ pub fn yield_to_kernel() {
 }
 
 pub fn early_log(message: &str) -> Result<(), ()> {
-    match unsafe {
-        raw::syscall2(SYSCALL_EARLY_LOG, message.len(), message as *const str as *const u8 as usize)
-    } {
+    match unsafe { raw::syscall2(SYSCALL_EARLY_LOG, message.len(), message as *const str as *const u8 as usize) } {
         0 => Ok(()),
         _ => Err(()),
     }
@@ -33,7 +31,7 @@ pub fn early_log(message: &str) -> Result<(), ()> {
 
 #[derive(Clone, Copy, Debug)]
 pub enum SystemObjectId {
-    BackupFramebuffer = 0,
+    BackupFramebuffer { info_address: *mut FramebufferSystemObjectInfo },
 }
 
 #[derive(Clone, Copy, Debug)]
@@ -48,13 +46,29 @@ pub enum RequestSystemObjectError {
     AccessDenied,
 }
 
+/// This is a type representing the information that the kernel will write into the address supplied by userspace
+/// when requesting the `BackupFramebuffer` system object.
+#[derive(Clone, Copy, Debug)]
+#[repr(C)]
+pub struct FramebufferSystemObjectInfo {
+    pub address: usize,
+
+    pub width: u16,
+    pub height: u16,
+    pub stride: u16,
+
+    /// The representation of pixels in the supplied framebuffer.
+    /// 0 = RGB32
+    /// 1 = BGR32
+    pub pixel_format: u8,
+}
+
 pub fn request_system_object(id: SystemObjectId) -> Result<KernelObjectId, RequestSystemObjectError> {
+    const BACKUP_FRAMEBUFFER_ID: usize = 0;
+
     let result = match id {
-        /*
-         * System objects that don't take any further parameters.
-         */
-        SystemObjectId::BackupFramebuffer => unsafe {
-            raw::syscall1(SYSCALL_REQUEST_SYSTEM_OBJECT, id as usize)
+        SystemObjectId::BackupFramebuffer { info_address } => unsafe {
+            raw::syscall2(SYSCALL_REQUEST_SYSTEM_OBJECT, BACKUP_FRAMEBUFFER_ID, info_address as usize)
         },
     };
 
@@ -89,11 +103,7 @@ pub fn map_memory_object(
     address_space: KernelObjectId,
 ) -> Result<(), MapMemoryObjectError> {
     match unsafe {
-        raw::syscall2(
-            SYSCALL_MAP_MEMORY_OBJECT,
-            memory_object.to_syscall_repr(),
-            address_space.to_syscall_repr(),
-        )
+        raw::syscall2(SYSCALL_MAP_MEMORY_OBJECT, memory_object.to_syscall_repr(), address_space.to_syscall_repr())
     } {
         0 => Ok(()),
         1 => Err(MapMemoryObjectError::AddressRangeNotFree),

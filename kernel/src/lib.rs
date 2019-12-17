@@ -71,14 +71,14 @@ pub struct Common {
     /// If the bootloader switched to a graphics mode that enables the use of a linear framebuffer,
     /// this kernel object will be a MemoryObject that maps the backing memory into a userspace
     /// driver. This is provided to userspace through the `request_system_object` system call.
-    pub backup_framebuffer_object: Mutex<Option<KernelObjectId>>,
+    pub backup_framebuffer: Mutex<Option<(KernelObjectId, libpebble::syscall::FramebufferSystemObjectInfo)>>,
 }
 
 impl Common {
     pub fn new() -> Common {
         Common {
             object_map: RwLock::new(ObjectMap::new(crate::object::map::INITIAL_OBJECT_CAPACITY)),
-            backup_framebuffer_object: Mutex::new(None),
+            backup_framebuffer: Mutex::new(None),
         }
     }
 }
