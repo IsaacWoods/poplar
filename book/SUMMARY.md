@@ -5,6 +5,7 @@
 - [The Kernel](./kernel/index.md)
     - [Bootcmd](./kernel/bootcmd.md)
     - [Booting (x86_64)](./kernel/booting_x86_64.md)
+    - [Kernel Objects](./kernel/kernel_objects.md)
     - [Kernel Object IDs](./kernel/object_ids.md)
     - [System calls](./kernel/syscalls.md)
 
