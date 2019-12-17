@@ -12,7 +12,7 @@ pub struct ConsoleOut {
 
 impl ConsoleOut {
     pub fn write_str(&self, s: &str) -> Result<(), ()> {
-        const BUFFER_SIZE: usize = 32;
+        const BUFFER_SIZE: usize = 128;
         // Add one to the buffer size to leave space for the null-terminator.
         let mut buffer = [0; BUFFER_SIZE + 1];
         let mut i = 0;
