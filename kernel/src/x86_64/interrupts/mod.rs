@@ -58,15 +58,8 @@ impl InterruptController {
         }
 
         match arch.acpi_info.as_ref().unwrap().interrupt_model.as_ref().unwrap() {
-            InterruptModel::Apic {
-                local_apic_address,
-                io_apics: acpi_io_apics,
-                ref local_apic_nmi_line,
-                ref interrupt_source_overrides,
-                ref nmi_sources,
-                also_has_legacy_pics,
-            } => {
-                if *also_has_legacy_pics {
+            InterruptModel::Apic(info) => {
+                if info.also_has_legacy_pics {
                     unsafe { Pic::new() }.remap_and_disable(LEGACY_PIC_VECTOR, LEGACY_PIC_VECTOR + 8);
                 }
 
@@ -89,7 +82,7 @@ impl InterruptController {
                     .mapper()
                     .map_to(
                         Page::contains(kernel_map::LOCAL_APIC_CONFIG),
-                        Frame::contains(PhysicalAddress::new(*local_apic_address as usize).unwrap()),
+                        Frame::contains(PhysicalAddress::new(info.local_apic_address as usize).unwrap()),
                         EntryFlags::PRESENT | EntryFlags::WRITABLE | EntryFlags::NO_EXECUTE | EntryFlags::NO_CACHE,
                         &arch.physical_memory_manager,
                     )
