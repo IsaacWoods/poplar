@@ -12,11 +12,9 @@
     trait_alias,
     type_ascription,
     naked_functions,
-    bind_by_move_pattern_guards,
     box_syntax,
     const_generics,
-    global_asm,
-    pin_into_inner
+    global_asm
 )]
 #[macro_use]
 extern crate alloc;
