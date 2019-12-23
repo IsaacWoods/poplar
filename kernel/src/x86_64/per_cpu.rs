@@ -18,8 +18,8 @@ pub struct PerCpu {
     _self_pointer: *const PerCpu,
     /// This structure must be pinned in memory for two reasons:
     ///     - the self pointer makes this structure self-referential.
-    ///     - we put the address of this structure in the `IA32_GS_BASE` MSR. If this structure moves, that
-    ///       memory address becomes invalid and accessing the per-cpu data no longer has defined behaviour.
+    ///     - we put the address of this structure in the `IA32_GS_BASE` MSR. If this structure moves, that memory
+    ///       address becomes invalid and accessing the per-cpu data no longer has defined behaviour.
     _pin: PhantomPinned,
 
     /// This holds the kernel `rsp` of the current task, and makes it efficient and easy to switch

@@ -43,9 +43,7 @@ impl CodeSegment {
          * XXX: the Accessed and Readable bits of 64-bit code segments should be ignored, but my
          * old-ish AMD #GPs if they're not set ¯\_(ツ)_/¯
          */
-        CodeSegment(
-            ACCESSED + READABLE + (1 << 43) + USER_SEGMENT + PRESENT + LONG_MODE + ((ring as u64) << 45),
-        )
+        CodeSegment(ACCESSED + READABLE + (1 << 43) + USER_SEGMENT + PRESENT + LONG_MODE + ((ring as u64) << 45))
     }
 }
 

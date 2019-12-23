@@ -32,9 +32,7 @@ where
     type Output = Frame<S>;
 
     fn add(self, num_pages: usize) -> Self::Output {
-        assert!(
-            PhysicalAddress::new(usize::from(self.start_address) + num_pages * S::SIZE).is_some()
-        );
+        assert!(PhysicalAddress::new(usize::from(self.start_address) + num_pages * S::SIZE).is_some());
         Frame { start_address: self.start_address + num_pages * S::SIZE, _phantom: PhantomData }
     }
 }
@@ -44,9 +42,7 @@ where
     S: FrameSize,
 {
     fn add_assign(&mut self, num_frames: usize) {
-        assert!(
-            PhysicalAddress::new(usize::from(self.start_address) + num_frames * S::SIZE).is_some()
-        );
+        assert!(PhysicalAddress::new(usize::from(self.start_address) + num_frames * S::SIZE).is_some());
         self.start_address += num_frames * S::SIZE;
     }
 }
@@ -56,8 +52,7 @@ where
     S: FrameSize,
 {
     fn steps_between(start: &Self, end: &Self) -> Option<usize> {
-        let address_difference =
-            usize::from(end.start_address).checked_sub(usize::from(start.start_address))?;
+        let address_difference = usize::from(end.start_address).checked_sub(usize::from(start.start_address))?;
         assert!(address_difference % S::SIZE == 0);
         Some(address_difference / S::SIZE)
     }
@@ -82,10 +77,8 @@ where
 
     fn add_usize(&self, n: usize) -> Option<Self> {
         Some(Frame {
-            start_address: PhysicalAddress::new(
-                usize::from(self.start_address).checked_add(n * S::SIZE)?,
-            )
-            .unwrap(),
+            start_address: PhysicalAddress::new(usize::from(self.start_address).checked_add(n * S::SIZE)?)
+                .unwrap(),
             _phantom: PhantomData,
         })
     }

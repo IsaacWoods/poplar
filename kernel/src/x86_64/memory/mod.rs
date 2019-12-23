@@ -39,12 +39,7 @@ impl LockedPhysicalMemoryManager {
 
 impl FrameAllocator for LockedPhysicalMemoryManager {
     fn allocate_n(&self, n: usize) -> Range<Frame> {
-        let start = self
-            .0
-            .lock()
-            .buddy_allocator
-            .allocate_n(n)
-            .expect("Failed to allocate physical memory");
+        let start = self.0.lock().buddy_allocator.allocate_n(n).expect("Failed to allocate physical memory");
         start..(start + n)
     }
 

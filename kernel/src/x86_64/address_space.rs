@@ -102,9 +102,7 @@ impl AddressSpace {
             }
 
             for (page, frame) in pages.zip(frames) {
-                mapper
-                    .map_to(page, frame, memory_obj_info.flags, &ARCH.get().physical_memory_manager)
-                    .unwrap();
+                mapper.map_to(page, frame, memory_obj_info.flags, &ARCH.get().physical_memory_manager).unwrap();
             }
         }
 

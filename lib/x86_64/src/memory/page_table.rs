@@ -316,12 +316,7 @@ impl<'a> Mapper<'a> {
     /// Allocates a `Frame` using the given allocator, and maps the specified `Page` into it.
     /// Useful for when you need to map a page into physical memory, but you don't care where.
     /// Returns the allocated `Frame` so it can be freed when no longer needed by the caller.
-    pub fn map<A>(
-        &mut self,
-        page: Page<Size4KiB>,
-        flags: EntryFlags,
-        allocator: &A,
-    ) -> Result<Frame, MapError>
+    pub fn map<A>(&mut self, page: Page<Size4KiB>, flags: EntryFlags, allocator: &A) -> Result<Frame, MapError>
     where
         A: FrameAllocator,
     {
@@ -349,12 +344,7 @@ impl<'a> Mapper<'a> {
             .p4
             .next_table_create(page.start_address.p4_index(), user_accessible, allocator, self.physical_base)?
             .next_table_create(page.start_address.p3_index(), user_accessible, allocator, self.physical_base)?
-            .next_table_create(
-                page.start_address.p2_index(),
-                user_accessible,
-                allocator,
-                self.physical_base,
-            )?;
+            .next_table_create(page.start_address.p2_index(), user_accessible, allocator, self.physical_base)?;
 
         if !p1[page.start_address.p1_index()].is_unused() {
             return Err(MapError::AlreadyMapped);
@@ -387,12 +377,7 @@ impl<'a> Mapper<'a> {
         let p2 = self
             .p4
             .next_table_create(page.start_address.p4_index(), user_accessible, allocator, self.physical_base)?
-            .next_table_create(
-                page.start_address.p3_index(),
-                user_accessible,
-                allocator,
-                self.physical_base,
-            )?;
+            .next_table_create(page.start_address.p3_index(), user_accessible, allocator, self.physical_base)?;
 
         if !p2[page.start_address.p2_index()].is_unused() {
             return Err(MapError::AlreadyMapped);

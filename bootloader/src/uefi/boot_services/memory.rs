@@ -15,20 +15,11 @@ pub enum AllocateType {
 }
 
 impl BootServices {
-    pub fn allocate_frames(
-        &self,
-        memory_type: MemoryType,
-        pages: usize,
-    ) -> Result<PhysicalAddress, Status> {
+    pub fn allocate_frames(&self, memory_type: MemoryType, pages: usize) -> Result<PhysicalAddress, Status> {
         assert!(pages != 0);
         let mut start_address = PhysicalAddress::default();
-        match (self._allocate_pages)(
-            AllocateType::AllocateAnyPages,
-            memory_type,
-            pages,
-            &mut start_address,
-        )
-        .as_result()
+        match (self._allocate_pages)(AllocateType::AllocateAnyPages, memory_type, pages, &mut start_address)
+            .as_result()
         {
             Ok(_) => Ok(start_address),
             Err(err) => Err(err),

@@ -245,11 +245,8 @@ fn decode_model_info(model_info: u32) -> ModelInfo {
 
     let extended_family = if family == 0xf { family + model_info.get_bits(20..28) as u8 } else { family };
 
-    let extended_model = if family == 0xf || family == 0x6 {
-        model + ((model_info.get_bits(16..20) as u8) << 4)
-    } else {
-        model
-    };
+    let extended_model =
+        if family == 0xf || family == 0x6 { model + ((model_info.get_bits(16..20) as u8) << 4) } else { model };
 
     ModelInfo { family, model, stepping, extended_family, extended_model }
 }

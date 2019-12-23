@@ -8,16 +8,7 @@ use mer::{
     program::{ProgramHeader, SegmentType},
     Elf,
 };
-use x86_64::memory::{
-    EntryFlags,
-    Frame,
-    FrameSize,
-    Mapper,
-    Page,
-    PhysicalAddress,
-    Size4KiB,
-    VirtualAddress,
-};
+use x86_64::memory::{EntryFlags, Frame, FrameSize, Mapper, Page, PhysicalAddress, Size4KiB, VirtualAddress};
 
 /// Loads an ELF from the given path on the boot volume, allocates physical memory for it, and
 /// copies its sections into the new memory. Also maps each allocated section into the given set of
@@ -33,9 +24,7 @@ pub fn load_image<'a>(
     allocator: &BootFrameAllocator,
     user_accessible: bool,
 ) -> Result<Elf<'a>, Status> {
-    let elf = Elf::new(&image_data)
-        .map_err(|err| panic!("Failed to parse ELF({}): {:?}", path, err))
-        .unwrap();
+    let elf = Elf::new(&image_data).map_err(|err| panic!("Failed to parse ELF({}): {:?}", path, err)).unwrap();
 
     /*
      * Load each segment into memory, after which we can free the ELF. We don't map the segments
@@ -63,11 +52,8 @@ pub fn load_image<'a>(
              */
             assert!(segment.file_size <= segment.mem_size);
             unsafe {
-                slice::from_raw_parts_mut(
-                    usize::from(physical_address) as *mut u8,
-                    segment.file_size as usize,
-                )
-                .copy_from_slice(segment.data(&elf));
+                slice::from_raw_parts_mut(usize::from(physical_address) as *mut u8, segment.file_size as usize)
+                    .copy_from_slice(segment.data(&elf));
             }
 
             /*
@@ -98,10 +84,8 @@ fn map_segment(
         | if segment.is_writable() { EntryFlags::WRITABLE } else { EntryFlags::empty() }
         | if !segment.is_executable() { EntryFlags::NO_EXECUTE } else { EntryFlags::empty() }
         | if user_accessible { EntryFlags::USER_ACCESSIBLE } else { EntryFlags::empty() };
-    let frames = Frame::contains(physical_address)
-        ..Frame::contains(physical_address + segment.mem_size as usize);
-    let pages = Page::contains(virtual_address)
-        ..Page::contains(virtual_address + segment.mem_size as usize);
+    let frames = Frame::contains(physical_address)..Frame::contains(physical_address + segment.mem_size as usize);
+    let pages = Page::contains(virtual_address)..Page::contains(virtual_address + segment.mem_size as usize);
     assert!(frames.clone().count() == pages.clone().count());
 
     for (frame, page) in frames.zip(pages) {

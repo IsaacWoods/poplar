@@ -173,10 +173,7 @@ fn split_hole(hole: HoleInfo, required_layout: Layout) -> Option<Allocation> {
     let aligned_hole = if aligned_addr + required_size > hole.addr + hole.size {
         return None; // Hole is too small
     } else {
-        HoleInfo {
-            addr: aligned_addr,
-            size: hole.size - (usize::from(aligned_addr) - usize::from(hole.addr)),
-        }
+        HoleInfo { addr: aligned_addr, size: hole.size - (usize::from(aligned_addr) - usize::from(hole.addr)) }
     };
 
     let back_pad = if aligned_hole.size == required_size {

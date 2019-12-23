@@ -14,9 +14,8 @@ const CAPABILITY_ENTRY_TYPE: u32 = 0;
 
 pub fn load_image(path: &str, task_name: &str, user_accessible: bool) -> Result<ImageInfo, Status> {
     let file_data = crate::uefi::protocols::read_file(path, crate::uefi::image_handle())?;
-    let elf = Elf::new(&file_data)
-        .map_err(|err| panic!("Failed to load ELF for image {}: {:?}", path, err))
-        .unwrap();
+    let elf =
+        Elf::new(&file_data).map_err(|err| panic!("Failed to load ELF for image {}: {:?}", path, err)).unwrap();
 
     let mut image = ImageInfo::default();
 

@@ -1,14 +1,5 @@
 #![no_std]
-#![feature(
-    asm,
-    decl_macro,
-    never_type,
-    step_trait,
-    const_fn,
-    type_ascription,
-    box_syntax,
-    arbitrary_self_types
-)]
+#![feature(asm, decl_macro, never_type, step_trait, const_fn, type_ascription, box_syntax, arbitrary_self_types)]
 #![allow(unknown_lints)]
 
 #[cfg(test)]

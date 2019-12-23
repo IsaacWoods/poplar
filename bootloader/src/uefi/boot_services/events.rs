@@ -47,8 +47,7 @@ impl BootServices {
     {
         // It's safe to cast notify_function to a different signature as long as the UEFI system
         // upholds its side of the spec and passes notify_context unmodified
-        let notify_function: extern "win64" fn(&Event, *const ()) =
-            unsafe { mem::transmute(notify_function) };
+        let notify_function: extern "win64" fn(&Event, *const ()) = unsafe { mem::transmute(notify_function) };
         let notify_context = notify_context as *const T as *const ();
 
         let mut event = &Event(());
@@ -74,12 +73,7 @@ impl BootServices {
         (self._check_event)(event).as_result().map(|_| ())
     }
 
-    pub fn set_timer(
-        &self,
-        event: &Event,
-        timer_type: TimerDelay,
-        trigger_time: u64,
-    ) -> Result<(), Status> {
+    pub fn set_timer(&self, event: &Event, timer_type: TimerDelay, trigger_time: u64) -> Result<(), Status> {
         (self._set_timer)(event, timer_type, trigger_time).as_result().map(|_| ())
     }
 

@@ -9,10 +9,8 @@ pub const INITIAL_STACK_SIZE: usize = 4 * Size4KiB::SIZE;
 /// out in the stack window.
 pub const MAX_STACK_SIZE: usize = 2 * MEBIBYTES_TO_BYTES;
 
-pub const MEMORY_OBJECTS_START: VirtualAddress =
-    unsafe { VirtualAddress::new_unchecked(0x00000006_00000000) };
-pub const RECEIVE_BUFFERS_START: VirtualAddress =
-    unsafe { VirtualAddress::new_unchecked(0x00000005_00000000) };
+pub const MEMORY_OBJECTS_START: VirtualAddress = unsafe { VirtualAddress::new_unchecked(0x00000006_00000000) };
+pub const RECEIVE_BUFFERS_START: VirtualAddress = unsafe { VirtualAddress::new_unchecked(0x00000005_00000000) };
 pub const SEND_BUFFERS_START: VirtualAddress = unsafe { VirtualAddress::new_unchecked(0x00000004_00000000) };
 pub const USER_STACKS_START: VirtualAddress = unsafe { VirtualAddress::new_unchecked(0x00000002_00000000) };
 pub const HEAP_START: VirtualAddress = unsafe { VirtualAddress::new_unchecked(0x00000001_00000000) };

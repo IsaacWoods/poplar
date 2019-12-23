@@ -54,11 +54,7 @@ impl IdtEntry {
         }
     }
 
-    pub fn set_handler(
-        &mut self,
-        handler: HandlerFunc,
-        code_selector: SegmentSelector,
-    ) -> &mut Self {
+    pub fn set_handler(&mut self, handler: HandlerFunc, code_selector: SegmentSelector) -> &mut Self {
         /*
          * Set the Present bit, and set the gate type to 0b1110
          */

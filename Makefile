@@ -62,17 +62,17 @@ clean:
 update:
 	cargo update --manifest-path bootloader/Cargo.toml
 	cargo update --manifest-path kernel/Cargo.toml
-	cargo update --manifest-path x86_64/Cargo.toml
-	cargo update --manifest-path libmessage/Cargo.toml
+	cargo update --manifest-path lib/libpebble/Cargo.toml
+	cargo update --manifest-path lib/mer/Cargo.toml
+	cargo update --manifest-path lib/pebble_util/Cargo.toml
+	cargo update --manifest-path lib/x86_64/Cargo.toml
 
 fmt:
 	@# `cargo fmt` doesn't play nicely with conditional compilation, so we manually `rustfmt` things
 	find kernel/src -type f -name "*.rs" -exec rustfmt {} +
-	find x86_64/src -type f -name "*.rs" -exec rustfmt {} +
+	find lib/x86_64/src -type f -name "*.rs" -exec rustfmt {} +
+	cd lib/libpebble && cargo fmt
 	cd bootloader && cargo fmt
-	cd acpi && cargo fmt
-	cd libmessage && cargo fmt
-	cd userboot && cargo fmt
 
 test:
 	cargo test --all-features --manifest-path lib/pebble_util/Cargo.toml

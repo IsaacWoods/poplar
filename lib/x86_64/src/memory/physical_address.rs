@@ -89,10 +89,7 @@ impl Add<usize> for PhysicalAddress {
     fn add(self, rhs: usize) -> Self::Output {
         match PhysicalAddress::new(self.0 + rhs) {
             Some(address) => address,
-            None => panic!(
-                "Physical address arithmetic led to invalid address: {:#x} + {:#x}",
-                self, rhs
-            ),
+            None => panic!("Physical address arithmetic led to invalid address: {:#x} + {:#x}", self, rhs),
         }
     }
 }
@@ -109,10 +106,7 @@ impl Sub<usize> for PhysicalAddress {
     fn sub(self, rhs: usize) -> Self::Output {
         match PhysicalAddress::new(self.0 - rhs) {
             Some(address) => address,
-            None => panic!(
-                "Physical address arithmetic led to invalid address: {:#x} - {:#x}",
-                self, rhs
-            ),
+            None => panic!("Physical address arithmetic led to invalid address: {:#x} - {:#x}", self, rhs),
         }
     }
 }

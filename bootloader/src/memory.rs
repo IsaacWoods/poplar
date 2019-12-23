@@ -23,13 +23,11 @@ pub struct BootFrameAllocator {
 
 impl BootFrameAllocator {
     pub fn new(num_frames: usize) -> BootFrameAllocator {
-        let start_frame_address = match system_table()
-            .boot_services
-            .allocate_frames(MemoryType::PebblePageTables, num_frames)
-        {
-            Ok(address) => address,
-            Err(err) => panic!("Failed to allocate memory for page frame allocator: {:?}", err),
-        };
+        let start_frame_address =
+            match system_table().boot_services.allocate_frames(MemoryType::PebblePageTables, num_frames) {
+                Ok(address) => address,
+                Err(err) => panic!("Failed to allocate memory for page frame allocator: {:?}", err),
+            };
 
         // Zero all the memory so the page tables start with everything unmapped
         unsafe {
@@ -41,10 +39,7 @@ impl BootFrameAllocator {
         }
 
         let start_frame = Frame::contains(start_frame_address);
-        BootFrameAllocator {
-            end_frame: start_frame + num_frames,
-            next_frame: Cell::new(start_frame),
-        }
+        BootFrameAllocator { end_frame: start_frame + num_frames, next_frame: Cell::new(start_frame) }
     }
 }
 

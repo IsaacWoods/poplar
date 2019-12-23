@@ -74,15 +74,8 @@ impl BootServices {
         T: Protocol,
     {
         let mut interface = 0x0 as *mut _;
-        (self._open_protocol)(
-            handle,
-            T::guid(),
-            &mut interface,
-            agent_handle,
-            controller_handle,
-            attributes,
-        )
-        .as_result()?;
+        (self._open_protocol)(handle, T::guid(), &mut interface, agent_handle, controller_handle, attributes)
+            .as_result()?;
 
         if interface == 0x0 as *mut _ {
             Err(Status::NotFound)
@@ -102,8 +95,6 @@ impl BootServices {
     where
         T: Protocol,
     {
-        (self._close_protocol)(handle, T::guid(), agent_handle, controller_handle)
-            .as_result()
-            .map(|_| ())
+        (self._close_protocol)(handle, T::guid(), agent_handle, controller_handle).as_result().map(|_| ())
     }
 }

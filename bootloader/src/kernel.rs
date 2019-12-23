@@ -80,14 +80,8 @@ pub fn load_kernel(
      * Load the kernel ELF and map it into the page tables.
      */
     let file_data = crate::uefi::protocols::read_file(kernel_path, crate::uefi::image_handle())?;
-    let elf = crate::elf::load_image(
-        kernel_path,
-        &file_data,
-        MemoryType::PebbleKernelMemory,
-        mapper,
-        allocator,
-        false,
-    )?;
+    let elf =
+        crate::elf::load_image(kernel_path, &file_data, MemoryType::PebbleKernelMemory, mapper, allocator, false)?;
 
     /*
      * We now set up the kernel stack. As part of the `.bss` section, it has already had memory

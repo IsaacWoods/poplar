@@ -40,8 +40,7 @@ pub struct BootServices {
         descriptor_size: &mut usize,
         descriptor_version: &mut u32,
     ) -> Status,
-    pub _allocate_pool:
-        extern "win64" fn(pool_type: MemoryType, size: usize, buffer: &mut *mut u8) -> Status,
+    pub _allocate_pool: extern "win64" fn(pool_type: MemoryType, size: usize, buffer: &mut *mut u8) -> Status,
     pub _free_pool: extern "win64" fn(buffer: *mut u8) -> Status,
 
     // Event & Timer Services
@@ -52,13 +51,9 @@ pub struct BootServices {
         notify_context: *const (),
         event: &mut &Event,
     ) -> Status,
-    pub _set_timer:
-        extern "win64" fn(event: &Event, timer_type: TimerDelay, trigger_time: u64) -> Status,
-    pub _wait_for_event: extern "win64" fn(
-        number_of_events: usize,
-        event: *const &Event,
-        index: &mut usize,
-    ) -> Status,
+    pub _set_timer: extern "win64" fn(event: &Event, timer_type: TimerDelay, trigger_time: u64) -> Status,
+    pub _wait_for_event:
+        extern "win64" fn(number_of_events: usize, event: *const &Event, index: &mut usize) -> Status,
     pub _signal_event: extern "win64" fn(event: &Event) -> Status,
     pub _close_event: extern "win64" fn(event: &Event) -> Status,
     pub _check_event: extern "win64" fn(event: &Event) -> Status,
@@ -154,9 +149,7 @@ pub fn str_to_utf16(src: &str) -> Result<Pool<[Char16]>, Status> {
     // An extra 2 bytes for a null terminator
     buf_len += 2;
     let mut buf = unsafe {
-        let ptr = crate::uefi::system_table()
-            .boot_services
-            .allocate_pool(MemoryType::LoaderData, buf_len)?;
+        let ptr = crate::uefi::system_table().boot_services.allocate_pool(MemoryType::LoaderData, buf_len)?;
         Pool::new_unchecked(slice::from_raw_parts_mut(ptr as *mut Char16, buf_len / 2))
     };
 
@@ -183,15 +176,13 @@ pub fn utf16_to_str(src: &[Char16]) -> Result<Pool<str>, Status> {
      * Create an iterator of Rust `char` over the UTF-16 slice, stopping when we encounter a null
      * code-unit.
      */
-    let chars = decode_utf16(src.iter().cloned().take_while(|c| *c != 0x0000))
-        .map(|r| r.unwrap_or(REPLACEMENT_CHARACTER));
+    let chars =
+        decode_utf16(src.iter().cloned().take_while(|c| *c != 0x0000)).map(|r| r.unwrap_or(REPLACEMENT_CHARACTER));
 
     // Allocate a buffer large enough to hold the string when converted into UTF-8 code units
     let buf_len: usize = chars.clone().map(|c| c.len_utf8()).sum();
     let buf: &mut [u8] = unsafe {
-        let ptr = crate::uefi::system_table()
-            .boot_services
-            .allocate_pool(MemoryType::LoaderData, buf_len)?;
+        let ptr = crate::uefi::system_table().boot_services.allocate_pool(MemoryType::LoaderData, buf_len)?;
         slice::from_raw_parts_mut(ptr, buf_len)
     };
 

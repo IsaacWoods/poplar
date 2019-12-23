@@ -5,13 +5,8 @@ use x86_64::memory::{kernel_map, PhysicalAddress};
 pub struct PebbleAcpiHandler;
 
 impl AcpiHandler for PebbleAcpiHandler {
-    fn map_physical_region<T>(
-        &mut self,
-        physical_address: usize,
-        size: usize,
-    ) -> AcpiPhysicalMapping<T> {
-        let virtual_address =
-            kernel_map::physical_to_virtual(PhysicalAddress::new(physical_address).unwrap());
+    fn map_physical_region<T>(&mut self, physical_address: usize, size: usize) -> AcpiPhysicalMapping<T> {
+        let virtual_address = kernel_map::physical_to_virtual(PhysicalAddress::new(physical_address).unwrap());
 
         AcpiPhysicalMapping {
             physical_start: usize::from(physical_address),

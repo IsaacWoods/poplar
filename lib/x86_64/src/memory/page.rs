@@ -52,8 +52,7 @@ where
     S: FrameSize,
 {
     fn steps_between(start: &Self, end: &Self) -> Option<usize> {
-        let address_difference =
-            usize::from(end.start_address).checked_sub(usize::from(start.start_address))?;
+        let address_difference = usize::from(end.start_address).checked_sub(usize::from(start.start_address))?;
         assert!(address_difference % S::SIZE == 0);
         Some(address_difference / S::SIZE)
     }
@@ -78,8 +77,7 @@ where
 
     fn add_usize(&self, n: usize) -> Option<Self> {
         Some(Page {
-            start_address: VirtualAddress::new(usize::from(self.start_address).checked_add(n * S::SIZE)?)
-                .unwrap(),
+            start_address: VirtualAddress::new(usize::from(self.start_address).checked_add(n * S::SIZE)?).unwrap(),
             _phantom: PhantomData,
         })
     }

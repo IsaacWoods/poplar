@@ -21,12 +21,7 @@ impl Log for KernelLogger {
 
         if self.enabled(record.metadata()) {
             COM1.lock()
-                .write_fmt(format_args!(
-                    "[{}][{}] {}\n",
-                    record.level(),
-                    record.target(),
-                    record.args()
-                ))
+                .write_fmt(format_args!("[{}][{}] {}\n", record.level(), record.target(), record.args()))
                 .unwrap();
         }
     }

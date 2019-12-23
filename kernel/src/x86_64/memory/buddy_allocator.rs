@@ -80,8 +80,7 @@ impl BuddyAllocator {
              * Pick the largest order block that fits in the remaining area, but cap it at the
              * largest order the allocator can manage.
              */
-            let order =
-                min(self.max_order(), flooring_log2((block_start..range.end).count() as u64) as usize);
+            let order = min(self.max_order(), flooring_log2((block_start..range.end).count() as u64) as usize);
 
             self.free_n(block_start, 1 << order);
             block_start += 1 << order;
@@ -175,8 +174,7 @@ impl BuddyAllocator {
          * block numbers.
          */
         Frame::contains(
-            PhysicalAddress::new(usize::from(x.start_address) ^ (1 << (order + Size4KiB::LOG2_SIZE)))
-                .unwrap(),
+            PhysicalAddress::new(usize::from(x.start_address) ^ (1 << (order + Size4KiB::LOG2_SIZE))).unwrap(),
         )
     }
 

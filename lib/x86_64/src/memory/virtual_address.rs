@@ -47,8 +47,7 @@ impl VirtualAddress {
         p1: usize,
         offset: usize,
     ) -> VirtualAddress {
-        VirtualAddress((p4 << 39) | (p3 << 30) | (p2 << 21) | (p1 << 12) | (offset << 0))
-            .canonicalise()
+        VirtualAddress((p4 << 39) | (p3 << 30) | (p2 << 21) | (p1 << 12) | (offset << 0)).canonicalise()
     }
 
     pub const fn ptr<T>(self) -> *const T {
