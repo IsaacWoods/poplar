@@ -1,12 +1,23 @@
 #![no_std]
 #![no_main]
-#![feature(const_fn, lang_items, ptr_internals, decl_macro, panic_info_message, asm, never_type, cell_update)]
+#![feature(
+    const_fn,
+    lang_items,
+    ptr_internals,
+    decl_macro,
+    panic_info_message,
+    asm,
+    never_type,
+    cell_update,
+    global_asm
+)]
 
 mod elf;
 mod image;
 mod kernel;
 mod logger;
 mod memory;
+mod probestack;
 mod uefi;
 
 use crate::{
