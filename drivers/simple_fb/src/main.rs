@@ -23,10 +23,10 @@ pub extern "C" fn start() -> ! {
     syscall::map_memory_object(framebuffer_id, address_space_id).unwrap();
 
     // Each pixel is a `u32` at the moment because we know the format is always either RGB32 or BGR32
-    // const FRAMEBUFFER_PTR: *mut u32 = 0x00000006_00000000 as *mut u32;
-    // const WIDTH: usize = 800;
-    // const STRIDE: usize = 800;
-    // const HEIGHT: usize = 600;
+    const FRAMEBUFFER_PTR: *mut u32 = 0x00000006_00000000 as *mut u32;
+    const WIDTH: usize = 800;
+    const STRIDE: usize = 800;
+    const HEIGHT: usize = 600;
 
     let info: syscall::FramebufferSystemObjectInfo = unsafe { framebuffer_info.assume_init() };
     for y in 0..HEIGHT {
