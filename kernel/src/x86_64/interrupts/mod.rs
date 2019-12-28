@@ -77,12 +77,11 @@ impl InterruptController {
                 /*
                  * Get the PCI routing table.
                  */
-                let prt = arch
-                    .aml_context
-                    .lock()
-                    .invoke_method(&AmlName::from_str("\\_SB.PCI0._PRT").unwrap(), AmlArgs::default())
-                    .expect("Failed to execute _PRT method");
-                let pci_routing = PciRoutingTable::from_prt(&prt).expect("Invalid PRT");
+                let pci_routing = PciRoutingTable::from_prt_path(
+                    &AmlName::from_str("\\_SB.PCI0._PRT").unwrap(),
+                    &mut arch.aml_context.lock(),
+                )
+                .expect("Failed to parse _PRT");
 
                 /*
                  * Map the local APIC's configuration space into the kernel address space.
