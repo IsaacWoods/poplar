@@ -9,30 +9,28 @@ use libpebble::syscall;
 pub extern "C" fn start() -> ! {
     syscall::early_log("Simple framebuffer driver is running").unwrap();
 
-    let mut framebuffer_info: MaybeUninit<syscall::FramebufferSystemObjectInfo> = MaybeUninit::uninit();
+    let (framebuffer_id, framebuffer_info) = {
+        let mut framebuffer_info: MaybeUninit<syscall::FramebufferSystemObjectInfo> = MaybeUninit::uninit();
 
-    let framebuffer_id = match syscall::request_system_object(syscall::SystemObjectId::BackupFramebuffer {
-        info_address: framebuffer_info.as_mut_ptr(),
-    }) {
-        Ok(id) => id,
-        Err(err) => panic!("Failed to get ID of framebuffer memory object: {:?}", err),
+        let framebuffer_id = match syscall::request_system_object(syscall::SystemObjectId::BackupFramebuffer {
+            info_address: framebuffer_info.as_mut_ptr(),
+        }) {
+            Ok(id) => id,
+            Err(err) => panic!("Failed to get ID of framebuffer memory object: {:?}", err),
+        };
+
+        (framebuffer_id, unsafe { framebuffer_info.assume_init() })
     };
 
     let address_space_id = syscall::my_address_space();
-
     syscall::map_memory_object(framebuffer_id, address_space_id).unwrap();
 
-    // Each pixel is a `u32` at the moment because we know the format is always either RGB32 or BGR32
-    const FRAMEBUFFER_PTR: *mut u32 = 0x00000006_00000000 as *mut u32;
-    const WIDTH: usize = 800;
-    const STRIDE: usize = 800;
-    const HEIGHT: usize = 600;
-
-    let info: syscall::FramebufferSystemObjectInfo = unsafe { framebuffer_info.assume_init() };
-    for y in 0..HEIGHT {
-        for x in 0..WIDTH {
+    for y in 0..(framebuffer_info.height as usize) {
+        for x in 0..(framebuffer_info.width as usize) {
             unsafe {
-                *FRAMEBUFFER_PTR.offset((y * STRIDE + x) as isize) = 0xffff00ff;
+                // Each pixel is a `u32` at the moment because we know the format is always either RGB32 or BGR32
+                *(framebuffer_info.address as *mut u32)
+                    .offset((y * (framebuffer_info.stride as usize) + x) as isize) = 0xffff00ff;
             }
         }
     }
