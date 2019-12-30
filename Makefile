@@ -1,6 +1,7 @@
 export ARCH ?= x86_64
 export BUILD_DIR ?= $(abspath ./build)
 
+IMAGE_NAME ?= pebble.img
 RUST_GDB_INSTALL_PATH ?= ~/bin/rust-gdb/bin
 
 QEMU_COMMON_FLAGS = -cpu max,vmware-cpuid-freq,invtsc \
@@ -12,13 +13,13 @@ QEMU_COMMON_FLAGS = -cpu max,vmware-cpuid-freq,invtsc \
 					--no-reboot \
 					--no-shutdown \
 					-drive if=pflash,format=raw,file=bootloader/ovmf/OVMF_CODE.fd,readonly \
-					-drive if=pflash,format=raw,file=bootloader/ovmf/OVMF_VARS.fd,readonly \
-					-drive if=ide,format=raw,file=$< \
+					-drive if=pflash,format=raw,file=bootloader/ovmf/OVMF_VARS.fd \
+					-drive if=ide,format=raw,file=$(IMAGE_NAME) \
 					-net none
 
-.PHONY: prepare bootloader kernel test_process simple_fb clean qemu gdb update fmt test site
+.PHONY: image prepare bootloader kernel test_process simple_fb clean qemu gdb update fmt test site
 
-pebble.img: prepare bootloader kernel test_process simple_fb
+image: prepare bootloader kernel test_process simple_fb
 	printf "kernel kernel.elf\nimage test_process.elf test_process\nimage simple_fb.elf simple_fb\nvideo_mode 800 600" > $(BUILD_DIR)/fat/bootcmd
 	# Create a temporary image for the FAT partition
 	dd if=/dev/zero of=$(BUILD_DIR)/fat.img bs=1M count=64
@@ -26,13 +27,13 @@ pebble.img: prepare bootloader kernel test_process simple_fb
 	# Copy the stuff into the FAT image
 	mcopy -i $(BUILD_DIR)/fat.img -s $(BUILD_DIR)/fat/* ::
 	# Create the real image
-	dd if=/dev/zero of=$@ bs=512 count=93750
+	dd if=/dev/zero of=$(IMAGE_NAME) bs=512 count=93750
 	# Create GPT headers and a single EFI partition
-	parted $@ -s -a minimal mklabel gpt
-	parted $@ -s -a minimal mkpart EFI FAT32 2048s 93716s
-	parted $@ -s -a minimal toggle 1 boot
+	parted $(IMAGE_NAME) -s -a minimal mklabel gpt
+	parted $(IMAGE_NAME) -s -a minimal mkpart EFI FAT32 2048s 93716s
+	parted $(IMAGE_NAME) -s -a minimal toggle 1 boot
 	# Copy the data from efi.img into the correct place
-	dd if=$(BUILD_DIR)/fat.img of=$@ bs=512 count=91669 seek=2048 conv=notrunc
+	dd if=$(BUILD_DIR)/fat.img of=$(IMAGE_NAME) bs=512 count=91669 seek=2048 conv=notrunc
 	rm $(BUILD_DIR)/fat.img
 
 prepare:
@@ -43,8 +44,7 @@ bootloader:
 	cp bootloader/target/x86_64-unknown-uefi/release/bootloader.efi $(BUILD_DIR)/fat/EFI/BOOT/BOOTX64.efi
 
 kernel:
-	cargo xbuild --target=kernel/src/$(ARCH)/$(ARCH)-kernel.json --manifest-path kernel/Cargo.toml --features arch_$(ARCH)
-	ld --gc-sections -T kernel/src/$(ARCH)/link.ld -o $(BUILD_DIR)/fat/kernel.elf kernel/target/$(ARCH)-kernel/debug/libkernel.a
+	make -C kernel
 
 test_process:
 	cargo xbuild --target=test_process/x86_64-pebble-userspace.json --manifest-path test_process/Cargo.toml
@@ -56,8 +56,9 @@ simple_fb:
 
 clean:
 	cd bootloader && cargo clean
-	cd kernel && cargo clean
-	rm -rf build pebble.iso
+	make -C kernel clean
+	rm -rf build
+	rm $(IMAGE_NAME)
 
 update:
 	cargo update --manifest-path bootloader/Cargo.toml
@@ -91,20 +92,20 @@ site:
 	@# Move the static site into the correct place
 	mv site/* pages/
 
-qemu: pebble.img
+qemu: image
 	qemu-system-x86_64 \
 		$(QEMU_COMMON_FLAGS) \
 		-enable-kvm
 
-qemu-no-kvm: pebble.img
+qemu-no-kvm: image
 	qemu-system-x86_64 $(QEMU_COMMON_FLAGS)
 
-debug: pebble.img
+debug: image
 	qemu-system-x86_64 \
 		$(QEMU_COMMON_FLAGS) \
 		-d int
 
-gdb: pebble.img
+gdb: image
 	qemu-system-x86_64 \
 		$(QEMU_COMMON_FLAGS) \
 		--enable-kvm \
