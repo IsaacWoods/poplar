@@ -1,11 +1,13 @@
 mod exception;
+mod pci;
 
 use super::Arch;
 use acpi::interrupt::InterruptModel;
-use aml::{pci_routing::PciRoutingTable, value::Args as AmlArgs, AmlName, AmlValue};
+use aml::{value::Args as AmlArgs, AmlName, AmlValue};
 use bit_field::BitField;
 use core::time::Duration;
 use log::{info, warn};
+use pci::PciResolver;
 use x86_64::{
     hw::{
         gdt::KERNEL_CODE_SELECTOR,
@@ -75,13 +77,13 @@ impl InterruptController {
                     .expect("Failed to invoke \\_PIC method");
 
                 /*
-                 * Get the PCI routing table.
+                 * Resolve all the PCI info.
+                 * XXX: not sure this is the right place to do this just yet.
                  */
-                let pci_routing = PciRoutingTable::from_prt_path(
-                    &AmlName::from_str("\\_SB.PCI0._PRT").unwrap(),
+                let pci_info = PciResolver::resolve(
+                    arch.acpi_info.as_ref().unwrap().pci_config_regions.as_ref().unwrap(),
                     &mut arch.aml_context.lock(),
-                )
-                .expect("Failed to parse _PRT");
+                );
 
                 /*
                  * Map the local APIC's configuration space into the kernel address space.
