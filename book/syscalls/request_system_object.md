@@ -22,14 +22,13 @@ TODO: id for accessing Pci config space where extra params are bus, device, func
 numbers.
 
 ### Returns
- * Bits `0..16` contain the index of the requested object's ID, if the system call succeeded
- * Bits `16..32` contain the generation of the requested object's ID, if the system call succeeded
- * Bits `32..63` contain the status of the system call:
-    - `0` means the system call succeeded and bits `0..32` hold a valid kernel object id
-    - `1` means that the requested object is a valid system object, but does not exist
-    - `2` means that the id does not correspond to a valid system object
-    - `3` means that the requested object id is valid, but the task does not have the correct capabilities to
-      access it
+This system call uses the standard way to fallibly return a `KernelObjectId` (detailed in the
+[page on syscalls](../kernel/syscalls.md)). The status codes used are:
+* `0` means that the system call was successful
+* `1` means that the requested ID is valid, but that the system object hasn't been created
+* `2` means that the ID does not correspond to a valid system object
+* `3` means that the requested object ID is valid, but that the task does not have the correct capability
+  to access it. This is returned even if the system object doesn't exist.
 
 ### Capabilities needed
 | id    | Capability needed             |
