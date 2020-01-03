@@ -1,5 +1,6 @@
 use super::{raw, result, SYSCALL_REQUEST_SYSTEM_OBJECT};
 use crate::KernelObjectId;
+use core::convert::TryFrom;
 
 pub const SYSTEM_OBJECT_BACKUP_FRAMEBUFFER_ID: usize = 0;
 
@@ -20,15 +21,15 @@ pub enum RequestSystemObjectError {
     AccessDenied,
 }
 
-// TODO: this shouldn't be able to fail. I guess this should be TryFrom (maybe with Error = ())?
-impl From<u32> for RequestSystemObjectError {
-    fn from(status: u32) -> Self {
+impl TryFrom<u32> for RequestSystemObjectError {
+    type Error = ();
+
+    fn try_from(status: u32) -> Result<Self, Self::Error> {
         match status {
-            0 => panic!("Tried to construct RequestSystemObjectError from successful status!"),
-            1 => RequestSystemObjectError::ObjectDoesNotExist,
-            2 => RequestSystemObjectError::NotAValidId,
-            3 => RequestSystemObjectError::AccessDenied,
-            _ => panic!("Tried to construct RequestSystemObjectError from invalid status!"),
+            1 => Ok(RequestSystemObjectError::ObjectDoesNotExist),
+            2 => Ok(RequestSystemObjectError::NotAValidId),
+            3 => Ok(RequestSystemObjectError::AccessDenied),
+            _ => Err(()),
         }
     }
 }
