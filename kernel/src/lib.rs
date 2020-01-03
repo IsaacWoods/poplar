@@ -44,7 +44,7 @@ mod syscall;
 use crate::{heap_allocator::LockedHoleAllocator, object::map::ObjectMap};
 use cfg_if::cfg_if;
 use core::panic::PanicInfo;
-use libpebble::KernelObjectId;
+use libpebble::{syscall::system_object::FramebufferSystemObjectInfo, KernelObjectId};
 use log::error;
 use pebble_util::InitGuard;
 use spin::{Mutex, RwLock};
@@ -66,10 +66,11 @@ pub static COMMON: InitGuard<Common> = InitGuard::uninit();
 /// CPUs. This has the potential to end up as a bit of a "God struct", so we need to be careful.
 pub struct Common {
     pub object_map: RwLock<ObjectMap<arch_impl::Arch>>,
+
     /// If the bootloader switched to a graphics mode that enables the use of a linear framebuffer,
     /// this kernel object will be a MemoryObject that maps the backing memory into a userspace
     /// driver. This is provided to userspace through the `request_system_object` system call.
-    pub backup_framebuffer: Mutex<Option<(KernelObjectId, libpebble::syscall::FramebufferSystemObjectInfo)>>,
+    pub backup_framebuffer: Mutex<Option<(KernelObjectId, FramebufferSystemObjectInfo)>>,
 }
 
 impl Common {

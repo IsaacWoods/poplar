@@ -240,7 +240,7 @@ fn create_framebuffer(video_info: &x86_64::boot::VideoInfo) {
     )))
     .add_to_map(&mut crate::COMMON.get().object_map.write());
 
-    let info = libpebble::syscall::FramebufferSystemObjectInfo {
+    let info = libpebble::syscall::system_object::FramebufferSystemObjectInfo {
         address: usize::from(VIRTUAL_ADDRESS),
         width: video_info.width as u16,
         stride: video_info.stride as u16,

@@ -3,9 +3,8 @@ use crate::{
     object::common::{CommonTask, MemoryObjectMappingError},
     COMMON,
 };
-use bit_field::BitField;
 use core::{slice, str};
-use libpebble::{caps::Capability, syscall, KernelObjectId};
+use libpebble::{caps::Capability, syscall, syscall::result::result_to_syscall_repr, KernelObjectId};
 use log::{info, trace, warn};
 
 /// This is the architecture-independent syscall handler. It should be called by the handler that
@@ -82,19 +81,14 @@ fn early_log(str_length: usize, str_address: usize) -> usize {
 }
 
 fn request_system_object(id: usize, b: usize, c: usize, d: usize, e: usize) -> usize {
-    /*
-     * These correspond to the `SystemObjectId` enum in `libpebble::syscall`
-     */
-    const BACKUP_FRAMEBUFFER: usize = 0;
+    use libpebble::syscall::system_object::*;
 
-    const STATUS_SUCCESS: usize = 0;
-    const STATUS_OBJECT_DOES_NOT_EXIST: usize = 1;
-    const STATUS_INVALID_ID: usize = 2;
-    const STATUS_PERMISSION_DENIED: usize = 3;
-
-    let (object_id, status) = match id {
-        BACKUP_FRAMEBUFFER => {
-            // Check that the task has the correct capability
+    result_to_syscall_repr(match id {
+        SYSTEM_OBJECT_BACKUP_FRAMEBUFFER_ID => {
+            /*
+             * Check that the task has the correct capability. It's important to do this first, so we don't leak
+             * the fact that a system object doesn't exist to an unprivileged task.
+             */
             if unsafe { common_per_cpu_data() }
                 .running_task()
                 .object
@@ -104,7 +98,6 @@ fn request_system_object(id: usize, b: usize, c: usize, d: usize, e: usize) -> u
                 .capabilities
                 .contains(&Capability::AccessBackupFramebuffer)
             {
-                // Return the id of the framebuffer, if it exists
                 match *COMMON.get().backup_framebuffer.lock() {
                     Some((id, info)) => {
                         /*
@@ -114,30 +107,21 @@ fn request_system_object(id: usize, b: usize, c: usize, d: usize, e: usize) -> u
                             // TODO: at the moment, userspace can trivially crash the kernel by passing an address
                             // in here that is either not mapped, or does not point into userspace (potentially
                             // overwriting important kernel info). We should validate that the address passed is
-                            // both mapped and points into userspace.
-                            info!("Framebuffer info we're writing back: {:?}", info);
-                            *(b as *mut syscall::FramebufferSystemObjectInfo) = info;
+                            // both mapped and points into userspace, and provide some helpers for doing so.
+                            *(b as *mut FramebufferSystemObjectInfo) = info;
                         }
 
-                        (Some(id), STATUS_SUCCESS)
+                        Ok(id)
                     }
-                    None => (None, STATUS_OBJECT_DOES_NOT_EXIST),
+                    None => Err(RequestSystemObjectError::ObjectDoesNotExist),
                 }
             } else {
-                (None, STATUS_PERMISSION_DENIED)
+                Err(RequestSystemObjectError::AccessDenied)
             }
         }
 
-        _ => (None, STATUS_INVALID_ID),
-    };
-
-    // Create and return the final response
-    let mut response = 0;
-    if let Some(id) = object_id {
-        response.set_bits(0..32, id.to_syscall_repr());
-    }
-    response.set_bits(32..64, status);
-    response
+        _ => Err(RequestSystemObjectError::NotAValidId),
+    })
 }
 
 fn my_address_space() -> usize {

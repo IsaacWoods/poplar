@@ -26,7 +26,7 @@ impl KernelObjectId {
 
     /// Convert this `KernelObjectId` to the form used in the system call interface. Should not be
     /// used from normal usercode (unless you're trying to make a raw system call).
-    pub fn to_syscall_repr(&self) -> usize {
+    pub fn to_syscall_repr(self) -> usize {
         let mut repr: usize = 0;
         repr.set_bits(0..16, self.index as usize);
         repr.set_bits(16..32, self.generation as usize);

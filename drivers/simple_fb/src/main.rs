@@ -3,16 +3,19 @@
 #![feature(const_generics)]
 
 use core::{mem::MaybeUninit, panic::PanicInfo};
-use libpebble::syscall;
+use libpebble::{
+    syscall,
+    syscall::system_object::{FramebufferSystemObjectInfo, SystemObjectId},
+};
 
 #[no_mangle]
 pub extern "C" fn start() -> ! {
     syscall::early_log("Simple framebuffer driver is running").unwrap();
 
     let (framebuffer_id, framebuffer_info) = {
-        let mut framebuffer_info: MaybeUninit<syscall::FramebufferSystemObjectInfo> = MaybeUninit::uninit();
+        let mut framebuffer_info: MaybeUninit<FramebufferSystemObjectInfo> = MaybeUninit::uninit();
 
-        let framebuffer_id = match syscall::request_system_object(syscall::SystemObjectId::BackupFramebuffer {
+        let framebuffer_id = match syscall::request_system_object(SystemObjectId::BackupFramebuffer {
             info_address: framebuffer_info.as_mut_ptr(),
         }) {
             Ok(id) => id,
@@ -39,9 +42,12 @@ pub extern "C" fn start() -> ! {
 }
 
 #[panic_handler]
-pub fn handle_panic(_: &PanicInfo) -> ! {
+pub fn handle_panic(info: &PanicInfo) -> ! {
     // We ignore the result here because there's no point panicking in the panic handler
     let _ = syscall::early_log("Test process panicked!");
+    if let Some(location) = info.location() {
+        let _ = syscall::early_log(location.file());
+    }
     loop {}
 }
 

@@ -1,3 +1,8 @@
+pub mod result;
+pub mod system_object;
+
+pub use system_object::request_system_object;
+
 cfg_if::cfg_if! {
     if #[cfg(target_arch = "x86_64")] {
         pub mod raw_x86_64;
@@ -8,7 +13,6 @@ cfg_if::cfg_if! {
 }
 
 use crate::KernelObjectId;
-use bit_field::BitField;
 
 pub const SYSCALL_YIELD: usize = 0;
 pub const SYSCALL_EARLY_LOG: usize = 1;
@@ -26,60 +30,6 @@ pub fn early_log(message: &str) -> Result<(), ()> {
     match unsafe { raw::syscall2(SYSCALL_EARLY_LOG, message.len(), message as *const str as *const u8 as usize) } {
         0 => Ok(()),
         _ => Err(()),
-    }
-}
-
-#[derive(Clone, Copy, Debug)]
-pub enum SystemObjectId {
-    BackupFramebuffer { info_address: *mut FramebufferSystemObjectInfo },
-}
-
-#[derive(Clone, Copy, Debug)]
-pub enum RequestSystemObjectError {
-    /// The requested object ID does point to a valid system object, but the kernel has not created
-    /// a corresponding object for it.
-    ObjectDoesNotExist,
-    /// The requested object ID does not correspond to a valid system object.
-    NotAValidId,
-    /// The requested object ID is valid, but the requesting task does not have the correct
-    /// capabilities to access it.
-    AccessDenied,
-}
-
-/// This is a type representing the information that the kernel will write into the address supplied by userspace
-/// when requesting the `BackupFramebuffer` system object.
-#[derive(Clone, Copy, Debug)]
-#[repr(C)]
-pub struct FramebufferSystemObjectInfo {
-    pub address: usize,
-
-    pub width: u16,
-    pub height: u16,
-    pub stride: u16,
-
-    /// The representation of pixels in the supplied framebuffer.
-    /// 0 = RGB32
-    /// 1 = BGR32
-    pub pixel_format: u8,
-}
-
-pub fn request_system_object(id: SystemObjectId) -> Result<KernelObjectId, RequestSystemObjectError> {
-    const BACKUP_FRAMEBUFFER_ID: usize = 0;
-
-    let result = match id {
-        SystemObjectId::BackupFramebuffer { info_address } => unsafe {
-            raw::syscall2(SYSCALL_REQUEST_SYSTEM_OBJECT, BACKUP_FRAMEBUFFER_ID, info_address as usize)
-        },
-    };
-
-    match result.get_bits(32..64) {
-        0 => Ok(KernelObjectId::from_syscall_repr(result)),
-
-        1 => Err(RequestSystemObjectError::ObjectDoesNotExist),
-        2 => Err(RequestSystemObjectError::NotAValidId),
-        3 => Err(RequestSystemObjectError::AccessDenied),
-
-        _ => panic!("Syscall request_system_object returned unexpected status code"),
     }
 }
 
