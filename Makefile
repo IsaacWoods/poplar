@@ -52,13 +52,14 @@ test_process:
 
 simple_fb:
 	cargo xbuild --target=drivers/x86_64-pebble-userspace.json --manifest-path drivers/simple_fb/Cargo.toml
-	cp drivers/simple_fb/target/x86_64-pebble-userspace/debug/simple_fb $(BUILD_DIR)/fat/simple_fb.elf
+	cp drivers/target/x86_64-pebble-userspace/debug/simple_fb $(BUILD_DIR)/fat/simple_fb.elf
 
 clean:
 	cd bootloader && cargo clean
+	cd drivers && cargo clean --all
 	make -C kernel clean
 	rm -rf build
-	rm $(IMAGE_NAME)
+	rm -f $(IMAGE_NAME)
 
 update:
 	cargo update --manifest-path bootloader/Cargo.toml

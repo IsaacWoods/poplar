@@ -9,7 +9,7 @@
   "executables": true,
   "linker-flavor": "ld",
   "linker": "ld",
-  "pre-link-args": { "ld": ["-T../link.ld"] },
+  "pre-link-args": { "ld": ["-Tlink.ld"] },
   "panic-strategy": "abort",
   "disable-redzone": true,
   "features": "-mmx,-sse,+soft-float"

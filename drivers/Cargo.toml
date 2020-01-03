@@ -1,0 +1,9 @@
+[workspace]
+members = ["simple_fb"]
+
+[profile.dev]
+debug = false
+panic = "abort"
+
+[profile.release]
+panic = "abort"
