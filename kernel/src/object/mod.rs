@@ -70,7 +70,8 @@ kernel_object_table!(
     add_to_map,
     [AddressSpace, address_space],
     [MemoryObject, memory_object],
-    [Task, task]
+    [Task, task],
+    [Mailbox, mailbox]
 );
 
 /// Make sure that `KernelObject` doesn't get bigger without us thinking about it

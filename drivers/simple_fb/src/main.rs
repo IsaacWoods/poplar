@@ -25,6 +25,8 @@ pub extern "C" fn start() -> ! {
         (framebuffer_id, unsafe { framebuffer_info.assume_init() })
     };
 
+    let mailbox_id = syscall::create_mailbox();
+
     let address_space_id = syscall::my_address_space();
     syscall::map_memory_object(framebuffer_id, address_space_id).unwrap();
 

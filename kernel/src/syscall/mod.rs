@@ -1,11 +1,18 @@
 use crate::{
     arch_impl::{common_per_cpu_data, common_per_cpu_data_mut},
+    mailbox::Mailbox,
     object::common::{CommonTask, MemoryObjectMappingError},
     COMMON,
 };
 use core::{slice, str};
-use libpebble::{caps::Capability, syscall, syscall::result::result_to_syscall_repr, KernelObjectId};
+use libpebble::{
+    caps::Capability,
+    syscall,
+    syscall::{mailbox::MailboxError, result::result_to_syscall_repr},
+    KernelObjectId,
+};
 use log::{info, trace, warn};
+use spin::RwLock;
 
 /// This is the architecture-independent syscall handler. It should be called by the handler that
 /// receives the syscall (each architecture is free to do this however it wishes). The only
@@ -24,6 +31,7 @@ pub extern "C" fn rust_syscall_handler(number: usize, a: usize, b: usize, c: usi
         syscall::SYSCALL_REQUEST_SYSTEM_OBJECT => request_system_object(a, b, c, d, e),
         syscall::SYSCALL_MY_ADDRESS_SPACE => my_address_space(),
         syscall::SYSCALL_MAP_MEMORY_OBJECT => map_memory_object(a, b),
+        syscall::SYSCALL_CREATE_MAILBOX => create_mailbox(),
 
         _ => {
             // TODO: unsupported system call number, kill process or something?
@@ -169,4 +177,10 @@ fn map_memory_object(memory_object_id: usize, address_space_id: usize) -> usize 
         },
         None => STATUS_NOT_AN_ADDRESS_SPACE,
     }
+}
+
+fn create_mailbox() -> usize {
+    let object_map = &mut crate::COMMON.get().object_map.write();
+    let mailbox = KernelObject::Mailbox(RwLock::new(box Mailbox::new())).add_to_map(object_map);
+    result_to_syscall_repr::<MailboxError>(Ok(mailbox.id))
 }

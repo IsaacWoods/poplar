@@ -1,3 +1,4 @@
+pub mod mailbox;
 pub mod result;
 pub mod system_object;
 
@@ -13,12 +14,14 @@ cfg_if::cfg_if! {
 }
 
 use crate::KernelObjectId;
+use result::result_from_syscall_repr;
 
 pub const SYSCALL_YIELD: usize = 0;
 pub const SYSCALL_EARLY_LOG: usize = 1;
 pub const SYSCALL_REQUEST_SYSTEM_OBJECT: usize = 2;
 pub const SYSCALL_MY_ADDRESS_SPACE: usize = 3;
 pub const SYSCALL_MAP_MEMORY_OBJECT: usize = 4;
+pub const SYSCALL_CREATE_MAILBOX: usize = 5;
 
 pub fn yield_to_kernel() {
     unsafe {

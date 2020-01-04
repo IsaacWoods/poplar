@@ -28,6 +28,7 @@ use self::{
 };
 use crate::{
     arch::Architecture,
+    mailbox::Mailbox,
     object::{KernelObject, WrappedKernelObject},
     scheduler::Scheduler,
     x86_64::per_cpu::per_cpu_data_mut,
@@ -71,6 +72,7 @@ impl Architecture for Arch {
     type AddressSpace = AddressSpace;
     type Task = Task;
     type MemoryObject = MemoryObject;
+    type Mailbox = Mailbox;
 
     fn drop_to_userspace(&self, task: WrappedKernelObject<Arch>) -> ! {
         task::drop_to_usermode(task);

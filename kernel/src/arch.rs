@@ -10,6 +10,7 @@ pub trait Architecture: Sized {
     type AddressSpace;
     type Task: CommonTask;
     type MemoryObject;
+    type Mailbox;
 
     /// Performs the initial kernel -> userspace transistion. Because this doesn't return, it can't
     /// be defined on any of the `KernelObject` types, because then we'd have to hold a lock that
@@ -55,6 +56,7 @@ pub mod test {
         type AddressSpace = [u8; 32];
         type Task = FakeTask;
         type MemoryObject = ();
+        type Mailbox = ();
 
         fn drop_to_userspace(&self, _: WrappedKernelObject<Self>) -> ! {
             panic!("FakeArch can't drop into userspace")
