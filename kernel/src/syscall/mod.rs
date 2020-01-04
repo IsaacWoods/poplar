@@ -1,7 +1,10 @@
 use crate::{
     arch_impl::{common_per_cpu_data, common_per_cpu_data_mut},
     mailbox::Mailbox,
-    object::common::{CommonTask, MemoryObjectMappingError},
+    object::{
+        common::{CommonTask, MemoryObjectMappingError, TaskBlock, TaskState},
+        KernelObject,
+    },
     COMMON,
 };
 use core::{slice, str};
@@ -49,7 +52,7 @@ fn yield_syscall() -> usize {
      */
     info!("Process yielded!");
     unsafe {
-        common_per_cpu_data_mut().scheduler.switch_to_next();
+        common_per_cpu_data_mut().scheduler.switch_to_next(TaskState::Ready);
     }
 
     0

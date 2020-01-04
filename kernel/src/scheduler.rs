@@ -5,8 +5,9 @@ use crate::{
         WrappedKernelObject,
     },
 };
-use alloc::collections::VecDeque;
+use alloc::{collections::VecDeque, vec::Vec};
 use core::fmt;
+use libpebble::KernelObjectId;
 use log::trace;
 
 pub struct Scheduler {
@@ -14,11 +15,12 @@ pub struct Scheduler {
     /// List of Tasks ready to be scheduled. Every kernel object in this list must be a Task.
     /// Backed by a `VecDeque` so we can rotate objects in the queue efficiently.
     ready_queue: VecDeque<WrappedKernelObject<crate::arch_impl::Arch>>,
+    blocked: Vec<WrappedKernelObject<crate::arch_impl::Arch>>,
 }
 
 impl Scheduler {
     pub fn new() -> Scheduler {
-        Scheduler { running_task: None, ready_queue: VecDeque::new() }
+        Scheduler { running_task: None, ready_queue: VecDeque::new(), blocked: Vec::new() }
     }
 
     pub fn add_task(
@@ -28,6 +30,7 @@ impl Scheduler {
         let state = task_object.object.task().ok_or(ScheduleError::KernelObjectNotATask)?.read().state();
         match state {
             TaskState::Ready => self.ready_queue.push_back(task_object),
+            TaskState::Blocked(_) => self.blocked.push(task_object),
             TaskState::Running => panic!("Tried to schedule task that's already running!"),
         }
 
@@ -53,7 +56,10 @@ impl Scheduler {
     /// Switch to the next scheduled task. This is called when a task yields, or when we pre-empt a
     /// task that is hogging CPU time. If there is nothing to schedule, this is free to idle the
     /// CPU (including managing power), or steal work from another scheduling unit.
-    pub fn switch_to_next(&mut self) {
+    ///
+    /// The task being switched away from is moved to state `new_state` (this allows you to block the current task.
+    /// If it's just being preempted or has yielded, use `TaskState::Ready`).
+    pub fn switch_to_next(&mut self, new_state: TaskState) {
         assert!(self.running_task.is_some());
 
         /*
@@ -69,13 +75,17 @@ impl Scheduler {
             trace!("switching task: {}", next_task.object.task().unwrap().read().name());
             let old_task = self.running_task.take().unwrap();
             self.running_task = Some(next_task.clone());
-            self.ready_queue.push_back(old_task.clone());
+            match new_state {
+                TaskState::Running => panic!("Tried to switch away from a task to state of Running!"),
+                TaskState::Ready => self.ready_queue.push_back(old_task.clone()),
+                TaskState::Blocked(_) => self.blocked.push(old_task.clone()),
+            }
 
             /*
              * On some platforms, this may not always return, and so we must not be holding any
              * locks when we call this (this is why it takes the kernel objects directly).
              */
-            crate::arch_impl::context_switch(old_task, next_task);
+            crate::arch_impl::context_switch(old_task, next_task, new_state);
         } else {
             /*
              * There aren't any schedulable tasks. For now, we just return to the current one (by

@@ -188,8 +188,8 @@ impl CommonTask for Task {
 /// Perform a context-switch between the currently running task, `old`, and a new task, `new`. This
 /// function is fairly fragile as it may not always return (in the case of the new task never
 /// having been run before, in which case this returns into the trampoline instead of back up the
-/// kernel callstack), and so we have to be very careful to drop any locks we hold before "returning"
-pub fn context_switch(old: WrappedKernelObject<Arch>, new: WrappedKernelObject<Arch>) {
+/// kernel callstack), and so we have to be very careful to drop any locks we hold before "returning".
+pub fn context_switch(old: WrappedKernelObject<Arch>, new: WrappedKernelObject<Arch>, new_state: TaskState) {
     /*
      * After this scope ends, all locks on the task objects must be dropped, as the call to
      * `do_context_switch` may not return, which means that stuff in the function scope is not
@@ -201,7 +201,7 @@ pub fn context_switch(old: WrappedKernelObject<Arch>, new: WrappedKernelObject<A
 
         assert_eq!(old_task.state, TaskState::Running);
         assert_eq!(new_task.state, TaskState::Ready);
-        old_task.state = TaskState::Ready;
+        old_task.state = new_state;
         new_task.state = TaskState::Running;
 
         // Switch to the new task's address space
