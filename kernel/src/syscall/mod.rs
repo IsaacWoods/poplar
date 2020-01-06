@@ -45,11 +45,6 @@ pub extern "C" fn rust_syscall_handler(number: usize, a: usize, b: usize, c: usi
 }
 
 fn yield_syscall() -> usize {
-    /*
-     * This is a fairly unique system call in that it can return into a different context than the
-     * one that called it. We ask the scheduler to move us to the next task, then return to the new
-     * userspace context.
-     */
     info!("Process yielded!");
     unsafe {
         common_per_cpu_data_mut().scheduler.switch_to_next(TaskState::Ready);
