@@ -25,8 +25,6 @@ pub extern "C" fn start() -> ! {
         (framebuffer_id, unsafe { framebuffer_info.assume_init() })
     };
 
-    let mailbox_id = syscall::create_mailbox();
-
     let address_space_id = syscall::my_address_space();
     syscall::map_memory_object(framebuffer_id, address_space_id).unwrap();
 
@@ -39,6 +37,10 @@ pub extern "C" fn start() -> ! {
             }
         }
     }
+
+    let mailbox_id = syscall::create_mailbox().unwrap();
+    let mail = syscall::wait_for_mail(mailbox_id).unwrap();
+    let mail2 = syscall::wait_for_mail(mailbox_id).unwrap();
 
     loop {}
 }

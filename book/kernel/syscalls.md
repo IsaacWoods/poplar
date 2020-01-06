@@ -18,6 +18,7 @@ a register.
 | `3`       | `my_address_space`        | Get the id of the calling task's AddressSpace.            |
 | `4`       | `map_memory_object`       | Map a MemoryObject into an AddressSpace.                  |
 | `5`       | `create_mailbox`          | Create a Mailbox kernel object.                           |
+| `6`       | `wait_for_mail`           | Block until the given Mailbox receives mail.              |
 
 ### Making a system call on x86_64
 To make a system call on x86_64, populate these registers:
