@@ -78,7 +78,10 @@ impl Scheduler {
             match new_state {
                 TaskState::Running => panic!("Tried to switch away from a task to state of Running!"),
                 TaskState::Ready => self.ready_queue.push_back(old_task.clone()),
-                TaskState::Blocked(_) => self.blocked.push(old_task.clone()),
+                TaskState::Blocked(_) => {
+                    trace!("Blocking task: {}", old_task.object.task().unwrap().read().name());
+                    self.blocked.push(old_task.clone());
+                }
             }
 
             /*
@@ -90,6 +93,7 @@ impl Scheduler {
             /*
              * There aren't any schedulable tasks. For now, we just return to the current one (by
              * doing nothing here).
+             * TODO: this should catch up on any kernel bookkeeping, then idle to minimise power use.
              */
             trace!("No more schedulable tasks. Returning to current one!");
         }
