@@ -14,7 +14,7 @@ cfg_if::cfg_if! {
 }
 
 use crate::KernelObjectId;
-use result::result_from_syscall_repr;
+use result::{define_error_type, result_from_syscall_repr, status_from_syscall_repr};
 
 pub const SYSCALL_YIELD: usize = 0;
 pub const SYSCALL_EARLY_LOG: usize = 1;
@@ -22,6 +22,7 @@ pub const SYSCALL_REQUEST_SYSTEM_OBJECT: usize = 2;
 pub const SYSCALL_MY_ADDRESS_SPACE: usize = 3;
 pub const SYSCALL_MAP_MEMORY_OBJECT: usize = 4;
 pub const SYSCALL_CREATE_MAILBOX: usize = 5;
+pub const SYSCALL_WAIT_FOR_MAIL: usize = 6;
 
 pub fn yield_to_kernel() {
     unsafe {
@@ -40,30 +41,19 @@ pub fn my_address_space() -> KernelObjectId {
     KernelObjectId::from_syscall_repr(unsafe { raw::syscall0(SYSCALL_MY_ADDRESS_SPACE) })
 }
 
-#[derive(Clone, Copy, Debug)]
-pub enum MapMemoryObjectError {
-    /// The MemoryObject could not be mapped, because there is already a MemoryObject mapped into
-    /// the required range of virtual addresses.
-    AddressRangeNotFree,
-    AccessDeniedToMemoryObject,
-    AccessDeniedToAddressSpace,
-    NotAMemoryObject,
-    NotAnAddressSpace,
-}
+define_error_type!(MemoryObjectMappingError {
+    AddressRangeNotFree => 1,
+    AccessDeniedToMemoryObject => 2,
+    AccessDeniedToAddressSpace => 3,
+    NotAMemoryObject => 4,
+    NotAnAddressSpace => 5,
+});
 
 pub fn map_memory_object(
     memory_object: KernelObjectId,
     address_space: KernelObjectId,
-) -> Result<(), MapMemoryObjectError> {
-    match unsafe {
+) -> Result<(), MemoryObjectMappingError> {
+    status_from_syscall_repr(unsafe {
         raw::syscall2(SYSCALL_MAP_MEMORY_OBJECT, memory_object.to_syscall_repr(), address_space.to_syscall_repr())
-    } {
-        0 => Ok(()),
-        1 => Err(MapMemoryObjectError::AddressRangeNotFree),
-        2 => Err(MapMemoryObjectError::AccessDeniedToMemoryObject),
-        3 => Err(MapMemoryObjectError::AccessDeniedToAddressSpace),
-        4 => Err(MapMemoryObjectError::NotAMemoryObject),
-        5 => Err(MapMemoryObjectError::NotAnAddressSpace),
-        _ => panic!("Syscall map_memory_object returned unexpected status code"),
-    }
+    })
 }

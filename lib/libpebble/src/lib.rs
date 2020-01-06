@@ -1,5 +1,5 @@
 #![no_std]
-#![feature(asm)]
+#![feature(asm, decl_macro)]
 
 pub mod caps;
 pub mod object;

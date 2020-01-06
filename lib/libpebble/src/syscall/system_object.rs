@@ -1,4 +1,4 @@
-use super::{raw, result, SYSCALL_REQUEST_SYSTEM_OBJECT};
+use super::{raw, result, result::define_error_type, SYSCALL_REQUEST_SYSTEM_OBJECT};
 use crate::KernelObjectId;
 use core::convert::TryFrom;
 
@@ -9,40 +9,18 @@ pub enum SystemObjectId {
     BackupFramebuffer { info_address: *mut FramebufferSystemObjectInfo },
 }
 
-#[derive(Clone, Copy, Debug)]
-pub enum RequestSystemObjectError {
+define_error_type!(RequestSystemObjectError {
     /// The requested object ID does point to a valid system object, but the kernel has not created
     /// a corresponding object for it.
-    ObjectDoesNotExist,
+    ObjectDoesNotExist => 1,
+
     /// The requested object ID does not correspond to a valid system object.
-    NotAValidId,
+    NotAValidId => 2,
+
     /// The requested object ID is valid, but the requesting task does not have the correct
     /// capabilities to access it.
-    AccessDenied,
-}
-
-impl TryFrom<u32> for RequestSystemObjectError {
-    type Error = ();
-
-    fn try_from(status: u32) -> Result<Self, Self::Error> {
-        match status {
-            1 => Ok(RequestSystemObjectError::ObjectDoesNotExist),
-            2 => Ok(RequestSystemObjectError::NotAValidId),
-            3 => Ok(RequestSystemObjectError::AccessDenied),
-            _ => Err(()),
-        }
-    }
-}
-
-impl Into<u32> for RequestSystemObjectError {
-    fn into(self) -> u32 {
-        match self {
-            RequestSystemObjectError::ObjectDoesNotExist => 1,
-            RequestSystemObjectError::NotAValidId => 2,
-            RequestSystemObjectError::AccessDenied => 3,
-        }
-    }
-}
+    AccessDenied => 3,
+});
 
 /// This is a type representing the information that the kernel will write into the address supplied by userspace
 /// when requesting the `BackupFramebuffer` system object.

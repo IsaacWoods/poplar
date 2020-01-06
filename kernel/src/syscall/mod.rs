@@ -2,7 +2,7 @@ use crate::{
     arch_impl::{common_per_cpu_data, common_per_cpu_data_mut},
     mailbox::Mailbox,
     object::{
-        common::{CommonTask, MemoryObjectMappingError, TaskBlock, TaskState},
+        common::{CommonTask, TaskBlock, TaskState},
         KernelObject,
     },
     COMMON,
@@ -11,7 +11,11 @@ use core::{slice, str};
 use libpebble::{
     caps::Capability,
     syscall,
-    syscall::{mailbox::MailboxError, result::result_to_syscall_repr},
+    syscall::{
+        mailbox::MailboxError,
+        result::{result_to_syscall_repr, status_to_syscall_repr},
+        MemoryObjectMappingError,
+    },
     KernelObjectId,
 };
 use log::{info, trace, warn};
@@ -33,7 +37,7 @@ pub extern "C" fn rust_syscall_handler(number: usize, a: usize, b: usize, c: usi
         syscall::SYSCALL_EARLY_LOG => early_log(a, b),
         syscall::SYSCALL_REQUEST_SYSTEM_OBJECT => request_system_object(a, b, c, d, e),
         syscall::SYSCALL_MY_ADDRESS_SPACE => my_address_space(),
-        syscall::SYSCALL_MAP_MEMORY_OBJECT => map_memory_object(a, b),
+        syscall::SYSCALL_MAP_MEMORY_OBJECT => status_to_syscall_repr(map_memory_object(a, b)),
         syscall::SYSCALL_CREATE_MAILBOX => create_mailbox(),
 
         _ => {
@@ -142,38 +146,28 @@ fn my_address_space() -> usize {
         .to_syscall_repr()
 }
 
-fn map_memory_object(memory_object_id: usize, address_space_id: usize) -> usize {
+fn map_memory_object(memory_object_id: usize, address_space_id: usize) -> Result<(), MemoryObjectMappingError> {
     /*
      * TODO: enforce that the calling task must have access to the AddressSpace and MemoryObject
      * for this to work (we need to build the owning / access system first).
      */
-    const STATUS_SUCCESS: usize = 0;
-    const STATUS_ALREADY_OCCUPIED: usize = 1;
-    const STATUS_ACCESS_TO_MEMORY_OBJECT_DENIED: usize = 2;
-    const STATUS_ACCESS_TO_ADDRESS_SPACE_DENIED: usize = 3;
-    const STATUS_NOT_A_MEMORY_OBJECT: usize = 4;
-    const STATUS_NOT_AN_ADDRESS_SPACE: usize = 5;
-
     let memory_object =
         match COMMON.get().object_map.read().get(KernelObjectId::from_syscall_repr(memory_object_id)) {
             Some(object) => object.clone(),
-            None => return STATUS_NOT_A_MEMORY_OBJECT,
+            None => return Err(MemoryObjectMappingError::NotAMemoryObject),
         };
 
     // Check it's a MemoryObject
     if memory_object.object.memory_object().is_none() {
-        return STATUS_NOT_A_MEMORY_OBJECT;
+        return Err(MemoryObjectMappingError::NotAMemoryObject);
     }
 
     match COMMON.get().object_map.read().get(KernelObjectId::from_syscall_repr(address_space_id)) {
         Some(address_space) => match address_space.object.address_space() {
-            Some(address_space) => match address_space.write().map_memory_object(memory_object) {
-                Ok(()) => STATUS_SUCCESS,
-                Err(MemoryObjectMappingError::SpaceAlreadyOccupied) => STATUS_ALREADY_OCCUPIED,
-            },
-            None => STATUS_NOT_AN_ADDRESS_SPACE,
+            Some(address_space) => address_space.write().map_memory_object(memory_object),
+            None => Err(MemoryObjectMappingError::NotAnAddressSpace),
         },
-        None => STATUS_NOT_AN_ADDRESS_SPACE,
+        None => Err(MemoryObjectMappingError::NotAnAddressSpace),
     }
 }
 

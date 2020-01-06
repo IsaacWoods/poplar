@@ -1,6 +1,7 @@
 use super::{memory::userspace_map, Arch, ARCH};
-use crate::object::{common::MemoryObjectMappingError, WrappedKernelObject};
+use crate::object::WrappedKernelObject;
 use alloc::vec::Vec;
+use libpebble::syscall::MemoryObjectMappingError;
 use pebble_util::bitmap::{Bitmap, BitmapArray};
 use x86_64::memory::{
     kernel_map,
@@ -97,7 +98,7 @@ impl AddressSpace {
             for page in pages.clone() {
                 match mapper.translate(page.start_address) {
                     TranslationResult::NotMapped => (),
-                    _ => return Err(MemoryObjectMappingError::SpaceAlreadyOccupied),
+                    _ => return Err(MemoryObjectMappingError::AddressRangeNotFree),
                 }
             }
 
