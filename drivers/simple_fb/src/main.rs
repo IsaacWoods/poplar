@@ -8,35 +8,63 @@ use libpebble::{
     syscall::system_object::{FramebufferSystemObjectInfo, SystemObjectId},
 };
 
+pub struct Framebuffer {
+    pointer: *mut u32,
+    width: usize,
+    height: usize,
+    stride: usize,
+}
+
+impl Framebuffer {
+    pub fn new() -> Framebuffer {
+        let (framebuffer_id, framebuffer_info) = {
+            let mut framebuffer_info: MaybeUninit<FramebufferSystemObjectInfo> = MaybeUninit::uninit();
+
+            let framebuffer_id = match syscall::request_system_object(SystemObjectId::BackupFramebuffer {
+                info_address: framebuffer_info.as_mut_ptr(),
+            }) {
+                Ok(id) => id,
+                Err(err) => panic!("Failed to get ID of framebuffer memory object: {:?}", err),
+            };
+
+            (framebuffer_id, unsafe { framebuffer_info.assume_init() })
+        };
+
+        let address_space_id = syscall::my_address_space();
+        syscall::map_memory_object(framebuffer_id, address_space_id).unwrap();
+
+        assert_eq!(framebuffer_info.pixel_format, 1);
+
+        Framebuffer {
+            pointer: framebuffer_info.address as *mut u32,
+            width: framebuffer_info.width as usize,
+            height: framebuffer_info.height as usize,
+            stride: framebuffer_info.stride as usize,
+        }
+    }
+
+    pub fn draw_rect(&self, start_x: usize, start_y: usize, width: usize, height: usize, color: u32) {
+        for y in start_y..(start_y + height) {
+            for x in start_x..(start_x + width) {
+                unsafe {
+                    *(self.pointer.offset((y * self.stride + x) as isize)) = color;
+                }
+            }
+        }
+    }
+
+    pub fn clear(&self, color: u32) {
+        self.draw_rect(0, 0, self.width, self.height, color);
+    }
+}
+
 #[no_mangle]
 pub extern "C" fn start() -> ! {
     syscall::early_log("Simple framebuffer driver is running").unwrap();
 
-    let (framebuffer_id, framebuffer_info) = {
-        let mut framebuffer_info: MaybeUninit<FramebufferSystemObjectInfo> = MaybeUninit::uninit();
-
-        let framebuffer_id = match syscall::request_system_object(SystemObjectId::BackupFramebuffer {
-            info_address: framebuffer_info.as_mut_ptr(),
-        }) {
-            Ok(id) => id,
-            Err(err) => panic!("Failed to get ID of framebuffer memory object: {:?}", err),
-        };
-
-        (framebuffer_id, unsafe { framebuffer_info.assume_init() })
-    };
-
-    let address_space_id = syscall::my_address_space();
-    syscall::map_memory_object(framebuffer_id, address_space_id).unwrap();
-
-    for y in 0..(framebuffer_info.height as usize) {
-        for x in 0..(framebuffer_info.width as usize) {
-            unsafe {
-                // Each pixel is a `u32` at the moment because we know the format is always either RGB32 or BGR32
-                *(framebuffer_info.address as *mut u32)
-                    .offset((y * (framebuffer_info.stride as usize) + x) as isize) = 0xffff00ff;
-            }
-        }
-    }
+    let framebuffer = Framebuffer::new();
+    framebuffer.clear(0xffff00ff);
+    framebuffer.draw_rect(100, 100, 300, 450, 0xffff0000);
 
     let mailbox_id = syscall::create_mailbox().unwrap();
     let mail = syscall::wait_for_mail(mailbox_id).unwrap();
