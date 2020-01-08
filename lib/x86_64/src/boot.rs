@@ -75,7 +75,8 @@ impl Default for MemoryEntry {
 pub struct MemoryObjectInfo {
     pub physical_address: PhysicalAddress,
     pub virtual_address: VirtualAddress,
-    pub num_pages: usize,
+    /// Size in bytes.
+    pub size: usize,
     pub permissions: EntryFlags,
 }
 

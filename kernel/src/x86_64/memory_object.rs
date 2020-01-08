@@ -6,9 +6,8 @@ use x86_64::{
 pub struct MemoryObject {
     pub virtual_address: VirtualAddress,
     pub physical_address: PhysicalAddress,
-    /// Number of 4KiB pages this memory object covers.
-    // TODO: should this be in bytes instead?
-    pub num_pages: usize,
+    /// Size of this MemoryObject in bytes.
+    pub size: usize,
     pub flags: EntryFlags,
 }
 
@@ -16,17 +15,17 @@ impl MemoryObject {
     pub fn new(
         virtual_address: VirtualAddress,
         physical_address: PhysicalAddress,
-        num_pages: usize,
+        size: usize,
         flags: EntryFlags,
     ) -> MemoryObject {
-        MemoryObject { virtual_address, physical_address, num_pages, flags }
+        MemoryObject { virtual_address, physical_address, size, flags }
     }
 
     pub fn from_boot_info(memory_object_info: &MemoryObjectInfo) -> MemoryObject {
         MemoryObject {
             virtual_address: memory_object_info.virtual_address,
             physical_address: memory_object_info.physical_address,
-            num_pages: memory_object_info.num_pages,
+            size: memory_object_info.size,
             flags: memory_object_info.permissions,
         }
     }

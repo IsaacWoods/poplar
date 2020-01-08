@@ -8,8 +8,10 @@ use x86_64::memory::{
     EntryFlags,
     Frame,
     FrameAllocator,
+    FrameSize,
     Page,
     PageTable,
+    Size4KiB,
     TranslationResult,
     VirtualAddress,
 };
@@ -87,10 +89,10 @@ impl AddressSpace {
             let memory_obj_info = memory_object.object.memory_object().expect("Not a MemoryObject").read();
 
             let start_page = Page::starts_with(memory_obj_info.virtual_address);
-            let pages = start_page..(start_page + memory_obj_info.num_pages);
+            let pages = start_page..(start_page + (memory_obj_info.size / Size4KiB::SIZE));
 
             let start_frame = Frame::starts_with(memory_obj_info.physical_address);
-            let frames = start_frame..(start_frame + memory_obj_info.num_pages);
+            let frames = start_frame..(start_frame + (memory_obj_info.size / Size4KiB::SIZE));
 
             /*
              * Check that the entire range of pages we'll be mapping into is currently free.

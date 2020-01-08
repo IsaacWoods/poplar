@@ -111,7 +111,7 @@ fn load_segment(segment: &ProgramHeader, elf: &Elf, user_accessible: bool) -> Me
     MemoryObjectInfo {
         physical_address,
         virtual_address: VirtualAddress::new(segment.virtual_address as usize).unwrap(),
-        num_pages: num_frames,
+        size: num_frames * Size4KiB::SIZE,
         permissions,
     }
 }
