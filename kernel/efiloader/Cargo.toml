@@ -1,0 +1,9 @@
+[package]
+name = "efiloader"
+version = "0.1.0"
+authors = ["Isaac Woods"]
+edition = "2018"
+
+[dependencies]
+log = "0.4"
+uefi = { version = "0.4", features = ["logger"] }
