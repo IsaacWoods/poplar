@@ -7,7 +7,6 @@ use crate::{
 };
 use alloc::{collections::VecDeque, vec::Vec};
 use core::fmt;
-use libpebble::KernelObjectId;
 use log::trace;
 
 pub struct Scheduler {

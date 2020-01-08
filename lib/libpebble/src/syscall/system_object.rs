@@ -1,6 +1,5 @@
 use super::{raw, result, result::define_error_type, SYSCALL_REQUEST_SYSTEM_OBJECT};
 use crate::KernelObjectId;
-use core::convert::TryFrom;
 
 pub const SYSTEM_OBJECT_BACKUP_FRAMEBUFFER_ID: usize = 0;
 

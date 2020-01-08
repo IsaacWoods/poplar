@@ -1,6 +1,5 @@
 use super::result::{define_error_type, result_from_syscall_repr, status_from_syscall_repr};
 use crate::KernelObjectId;
-use core::convert::TryFrom;
 
 pub type MailType = u16;
 

@@ -97,7 +97,10 @@ impl<'a> PciResolver<'a> {
             // TODO: check if the function is a PCI-to-PCI bridge, and if so, call check_bus on the secondary bus
             // number (from the bridge's config space)
 
-            info!("Found PCI device (bus={}, device={}, function={}): {:x?}", bus, device, function, config_space);
+            info!(
+                "Found PCI device (bus={}, device={}, function={}): (vendor = {:#x}, device = {:#x})",
+                bus, device, function, config_space.vendor_id, config_space.device_id
+            );
         }
     }
 }
