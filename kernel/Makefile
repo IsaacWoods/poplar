@@ -1,8 +1,12 @@
-.PHONY: kernel clean
+.PHONY: kernel_x86_64 efiloader clean
 
-kernel:
+kernel_x86_64: efiloader
 	cargo xbuild --target=$(ARCH)-kernel.json --features arch_$(ARCH)
 	ld --gc-sections -T src/$(ARCH)/link.ld -o $(BUILD_DIR)/fat/kernel.elf target/$(ARCH)-kernel/debug/libkernel.a
+
+efiloader:
+	cargo xbuild --target=x86_64-unknown-uefi --manifest-path efiloader/Cargo.toml
+	cp target/x86_64-unknown-uefi/debug/efiloader.efi $(BUILD_DIR)/fat/efiloader.efi
 
 clean:
 	cargo clean

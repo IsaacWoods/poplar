@@ -17,9 +17,10 @@ QEMU_COMMON_FLAGS = -cpu max,vmware-cpuid-freq,invtsc \
 					-drive if=ide,format=raw,file=$(IMAGE_NAME) \
 					-net none
 
-.PHONY: image prepare bootloader kernel test_process simple_fb clean qemu gdb update fmt test site
+.PHONY: image_x86_64 prepare kernel test_process simple_fb clean qemu gdb update fmt test site
+.DEFAULT_GOAL := image_$(ARCH)
 
-image: prepare bootloader kernel test_process simple_fb
+image_x86_64: prepare kernel test_process simple_fb
 	printf "kernel kernel.elf\nimage test_process.elf test_process\nimage simple_fb.elf simple_fb\nvideo_mode 800 600" > $(BUILD_DIR)/fat/bootcmd
 	# Create a temporary image for the FAT partition
 	dd if=/dev/zero of=$(BUILD_DIR)/fat.img bs=1M count=64
@@ -37,14 +38,10 @@ image: prepare bootloader kernel test_process simple_fb
 	rm $(BUILD_DIR)/fat.img
 
 prepare:
-	@mkdir -p $(BUILD_DIR)/fat/EFI/BOOT
-
-bootloader:
-	cargo xbuild --release --target x86_64-unknown-uefi --manifest-path bootloader/Cargo.toml
-	cp bootloader/target/x86_64-unknown-uefi/release/bootloader.efi $(BUILD_DIR)/fat/EFI/BOOT/BOOTX64.efi
+	@mkdir -p $(BUILD_DIR)/fat/
 
 kernel:
-	make -C kernel
+	make -C kernel kernel_$(ARCH)
 
 test_process:
 	cargo xbuild --target=test_process/x86_64-pebble-userspace.json --manifest-path test_process/Cargo.toml
@@ -93,20 +90,20 @@ site:
 	@# Move the static site into the correct place
 	mv site/* pages/
 
-qemu: image
+qemu: image_$(ARCH)
 	qemu-system-x86_64 \
 		$(QEMU_COMMON_FLAGS) \
 		-enable-kvm
 
-qemu-no-kvm: image
+qemu-no-kvm: image_$(ARCH)
 	qemu-system-x86_64 $(QEMU_COMMON_FLAGS)
 
-debug: image
+debug: image_$(ARCH)
 	qemu-system-x86_64 \
 		$(QEMU_COMMON_FLAGS) \
 		-d int
 
-gdb: image
+gdb: image_$(ARCH)
 	qemu-system-x86_64 \
 		$(QEMU_COMMON_FLAGS) \
 		--enable-kvm \
