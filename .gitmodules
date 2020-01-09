@@ -1,3 +1,6 @@
 [submodule "lib/acpi"]
 	path = lib/acpi
 	url = https://github.com/IsaacWoods/acpi
+[submodule "lib/uefi-rs"]
+	path = lib/uefi-rs
+	url = git@github.com:IsaacWoods/uefi-rs.git
