@@ -7,3 +7,4 @@ edition = "2018"
 [dependencies]
 log = "0.4"
 uefi = { path = "../../lib/uefi-rs", features = ["logger"] }
+boot_info = { path = "../boot_info" }

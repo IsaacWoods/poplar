@@ -24,4 +24,4 @@ aml = { path = "../lib/acpi/aml", optional = true }
 arch_x86_64 = ["x86_64", "acpi", "aml", "pebble_util/tuning_fast_ctlz"]
 
 [workspace]
-members = ["efiloader"]
+members = ["efiloader", "boot_info"]
