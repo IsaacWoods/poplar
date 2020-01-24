@@ -4,3 +4,6 @@
 [submodule "lib/uefi-rs"]
 	path = lib/uefi-rs
 	url = git@github.com:IsaacWoods/uefi-rs.git
+[submodule "lib/ucs2-rs"]
+	path = lib/ucs2-rs
+	url = git@github.com:IsaacWoods/ucs2-rs.git
