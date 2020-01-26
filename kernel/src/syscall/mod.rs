@@ -7,6 +7,7 @@ use crate::{
     },
     COMMON,
 };
+use bit_field::BitField;
 use core::{slice, str};
 use libpebble::{
     caps::Capability,
@@ -14,7 +15,7 @@ use libpebble::{
     syscall::{
         mailbox::MailboxError,
         result::{result_to_syscall_repr, status_to_syscall_repr},
-        MemoryObjectMappingError,
+        MemoryObjectError,
     },
     KernelObjectId,
 };
@@ -37,6 +38,7 @@ pub extern "C" fn rust_syscall_handler(number: usize, a: usize, b: usize, c: usi
         syscall::SYSCALL_EARLY_LOG => early_log(a, b),
         syscall::SYSCALL_REQUEST_SYSTEM_OBJECT => request_system_object(a, b, c, d, e),
         syscall::SYSCALL_MY_ADDRESS_SPACE => my_address_space(),
+        syscall::SYSCALL_CREATE_MEMORY_OBJECT => result_to_syscall_repr(create_memory_object(a, b, c)),
         syscall::SYSCALL_MAP_MEMORY_OBJECT => status_to_syscall_repr(map_memory_object(a, b)),
         syscall::SYSCALL_CREATE_MAILBOX => result_to_syscall_repr(create_mailbox()),
         syscall::SYSCALL_WAIT_FOR_MAIL => status_to_syscall_repr(wait_for_mail(a, b)),
@@ -147,7 +149,18 @@ fn my_address_space() -> usize {
         .to_syscall_repr()
 }
 
-fn map_memory_object(memory_object_id: usize, address_space_id: usize) -> Result<(), MemoryObjectMappingError> {
+fn create_memory_object(
+    virtual_address: usize,
+    size: usize,
+    flags: usize,
+) -> Result<KernelObjectId, MemoryObjectError> {
+    let writable = flags.get_bit(0);
+    let executable = flags.get_bit(1);
+
+    unimplemented!()
+}
+
+fn map_memory_object(memory_object_id: usize, address_space_id: usize) -> Result<(), MemoryObjectError> {
     /*
      * TODO: enforce that the calling task must have access to the AddressSpace and MemoryObject
      * for this to work (we need to build the owning / access system first).
@@ -155,20 +168,20 @@ fn map_memory_object(memory_object_id: usize, address_space_id: usize) -> Result
     let memory_object =
         match COMMON.get().object_map.read().get(KernelObjectId::from_syscall_repr(memory_object_id)) {
             Some(object) => object.clone(),
-            None => return Err(MemoryObjectMappingError::NotAMemoryObject),
+            None => return Err(MemoryObjectError::NotAMemoryObject),
         };
 
     // Check it's a MemoryObject
     if memory_object.object.memory_object().is_none() {
-        return Err(MemoryObjectMappingError::NotAMemoryObject);
+        return Err(MemoryObjectError::NotAMemoryObject);
     }
 
     match COMMON.get().object_map.read().get(KernelObjectId::from_syscall_repr(address_space_id)) {
         Some(address_space) => match address_space.object.address_space() {
             Some(address_space) => address_space.write().map_memory_object(memory_object),
-            None => Err(MemoryObjectMappingError::NotAnAddressSpace),
+            None => Err(MemoryObjectError::NotAnAddressSpace),
         },
-        None => Err(MemoryObjectMappingError::NotAnAddressSpace),
+        None => Err(MemoryObjectError::NotAnAddressSpace),
     }
 }
 
@@ -179,7 +192,7 @@ fn create_mailbox() -> Result<KernelObjectId, MailboxError> {
 }
 
 fn wait_for_mail(mailbox_id: usize, output_buffer_address: usize) -> Result<(), MailboxError> {
-    use libpebble::syscall::mailbox::{Mail, MailRepr};
+    use libpebble::syscall::mailbox::MailRepr;
     let mailbox_id = KernelObjectId::from_syscall_repr(mailbox_id);
 
     let mailbox = match COMMON.get().object_map.read().get(mailbox_id) {

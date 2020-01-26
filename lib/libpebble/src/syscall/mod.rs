@@ -15,15 +15,17 @@ cfg_if::cfg_if! {
 }
 
 use crate::KernelObjectId;
+use bit_field::BitField;
 use result::{define_error_type, result_from_syscall_repr, status_from_syscall_repr};
 
 pub const SYSCALL_YIELD: usize = 0;
 pub const SYSCALL_EARLY_LOG: usize = 1;
 pub const SYSCALL_REQUEST_SYSTEM_OBJECT: usize = 2;
 pub const SYSCALL_MY_ADDRESS_SPACE: usize = 3;
-pub const SYSCALL_MAP_MEMORY_OBJECT: usize = 4;
-pub const SYSCALL_CREATE_MAILBOX: usize = 5;
-pub const SYSCALL_WAIT_FOR_MAIL: usize = 6;
+pub const SYSCALL_CREATE_MEMORY_OBJECT: usize = 4;
+pub const SYSCALL_MAP_MEMORY_OBJECT: usize = 5;
+pub const SYSCALL_CREATE_MAILBOX: usize = 6;
+pub const SYSCALL_WAIT_FOR_MAIL: usize = 7;
 
 pub fn yield_to_kernel() {
     unsafe {
@@ -42,18 +44,43 @@ pub fn my_address_space() -> KernelObjectId {
     KernelObjectId::from_syscall_repr(unsafe { raw::syscall0(SYSCALL_MY_ADDRESS_SPACE) })
 }
 
-define_error_type!(MemoryObjectMappingError {
-    AddressRangeNotFree => 1,
-    AccessDeniedToMemoryObject => 2,
-    AccessDeniedToAddressSpace => 3,
-    NotAMemoryObject => 4,
-    NotAnAddressSpace => 5,
+define_error_type!(MemoryObjectError {
+    /*
+     * These errors are returned by `create_memory_object`.
+     */
+    InvalidVirtualAddress => 1,
+    InvalidFlags => 2,
+    InvalidSize => 3,
+
+    /*
+     * These errors are returned by `map_memory_object`.
+     */
+    AddressRangeNotFree => 4,
+    AccessDeniedToMemoryObject => 5,
+    AccessDeniedToAddressSpace => 6,
+    NotAMemoryObject => 7,
+    NotAnAddressSpace => 8,
 });
+
+/// Create a MemoryObject kernel object at the given virtual address, with the given size (in bytes). Returns the
+/// ID of the new MemoryObject, if the call was successful.
+pub fn create_memory_object(
+    virtual_address: usize,
+    size: usize,
+    writable: bool,
+    executable: bool,
+) -> Result<KernelObjectId, MemoryObjectError> {
+    let mut flags = 0usize;
+    flags.set_bit(0, writable);
+    flags.set_bit(1, executable);
+
+    result_from_syscall_repr(unsafe { raw::syscall3(SYSCALL_CREATE_MEMORY_OBJECT, virtual_address, size, flags) })
+}
 
 pub fn map_memory_object(
     memory_object: KernelObjectId,
     address_space: KernelObjectId,
-) -> Result<(), MemoryObjectMappingError> {
+) -> Result<(), MemoryObjectError> {
     status_from_syscall_repr(unsafe {
         raw::syscall2(SYSCALL_MAP_MEMORY_OBJECT, memory_object.to_syscall_repr(), address_space.to_syscall_repr())
     })

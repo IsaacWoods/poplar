@@ -1,7 +1,7 @@
 use super::{memory::userspace_map, Arch, ARCH};
 use crate::object::WrappedKernelObject;
 use alloc::vec::Vec;
-use libpebble::syscall::MemoryObjectMappingError;
+use libpebble::syscall::MemoryObjectError;
 use pebble_util::bitmap::{Bitmap, BitmapArray};
 use x86_64::memory::{
     kernel_map,
@@ -83,7 +83,7 @@ impl AddressSpace {
     pub fn map_memory_object(
         &mut self,
         memory_object: WrappedKernelObject<Arch>,
-    ) -> Result<(), MemoryObjectMappingError> {
+    ) -> Result<(), MemoryObjectError> {
         {
             let mut mapper = self.table.mapper();
             let memory_obj_info = memory_object.object.memory_object().expect("Not a MemoryObject").read();
@@ -100,7 +100,7 @@ impl AddressSpace {
             for page in pages.clone() {
                 match mapper.translate(page.start_address) {
                     TranslationResult::NotMapped => (),
-                    _ => return Err(MemoryObjectMappingError::AddressRangeNotFree),
+                    _ => return Err(MemoryObjectError::AddressRangeNotFree),
                 }
             }
 

@@ -16,9 +16,10 @@ a register.
 | `1`       | `early_log`               | Log a message. Designed to be used from early processes.  |
 | `2`       | `request_system_object`   | Request the id of a system kernel object.                 |
 | `3`       | `my_address_space`        | Get the id of the calling task's AddressSpace.            |
-| `4`       | `map_memory_object`       | Map a MemoryObject into an AddressSpace.                  |
-| `5`       | `create_mailbox`          | Create a Mailbox kernel object.                           |
-| `6`       | `wait_for_mail`           | Block until the given Mailbox receives mail.              |
+| `4`       | `create_memory_object`    | Create a MemoryObject kernel object.                      |
+| `5`       | `map_memory_object`       | Map a MemoryObject into an AddressSpace.                  |
+| `6`       | `create_mailbox`          | Create a Mailbox kernel object.                           |
+| `7`       | `wait_for_mail`           | Block until the given Mailbox receives mail.              |
 
 ### Making a system call on x86_64
 To make a system call on x86_64, populate these registers:
