@@ -46,6 +46,7 @@ pub fn jump_into_kernel(page_table: PageTable, info: KernelInfo) -> ! {
 
 /// Set up a common kernel environment. Some of this stuff will already be true for everything we'll
 /// successfully boot on realistically, but it doesn't hurt to explicitly set it up.
+// TODO: I think this should be done from the kernel in the x86_64 part
 fn setup_for_kernel() {
     let mut cr4 = read_control_reg!(CR4);
     cr4.set_bit(registers::CR4_ENABLE_GLOBAL_PAGES, true);
@@ -88,6 +89,8 @@ pub fn load_kernel(
      * allocated for it, and has been mapped into the page tables. However, we need to go back
      * and unmap the guard page, and extract the address of the top of the stack.
      */
+    // TODO: we can do this step for all images, and just check if it even has a `_guard_page` symbol. This will
+    // allow us to unify all the code for loading images into memory.
     let guard_page_address = match elf.symbols().find(|symbol| symbol.name(&elf) == Some("_guard_page")) {
         Some(symbol) => VirtualAddress::new(symbol.value as usize).unwrap(),
         None => panic!("Kernel does not have a '_guard_page' symbol!"),
