@@ -1,6 +1,7 @@
 use log::warn;
 
 pub struct CommandLine<'a> {
+    pub volume_label: Option<&'a str>,
     pub kernel_path: Option<&'a str>,
     pub graphics_mode: Option<GraphicsMode>,
 }
@@ -12,7 +13,7 @@ pub struct GraphicsMode {
 
 impl<'a> CommandLine<'a> {
     pub fn new(string: &'a str) -> CommandLine<'a> {
-        let mut command_line = CommandLine { kernel_path: None, graphics_mode: None };
+        let mut command_line = CommandLine { volume_label: None, kernel_path: None, graphics_mode: None };
 
         /*
          * The command line consists of a number of options, delimited by spaces. The first 'option' is the path
@@ -48,6 +49,10 @@ impl<'a> CommandLine<'a> {
             };
 
             match root {
+                "volume" => {
+                    command_line.volume_label =
+                        Some(value.expect("'volume' parameter must have a volume label as a value"));
+                }
                 "kernel" => {
                     command_line.kernel_path =
                         Some(value.expect("'kernel' parameter must have the path to the kernel image as a value"));

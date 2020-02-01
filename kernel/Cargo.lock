@@ -53,6 +53,7 @@ version = "0.1.0"
 dependencies = [
  "boot_info 0.1.0",
  "log 0.4.8 (registry+https://github.com/rust-lang/crates.io-index)",
+ "ucs2 0.3.1",
  "uefi 0.4.3",
 ]
 

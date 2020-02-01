@@ -7,7 +7,7 @@ mod image;
 
 use command_line::CommandLine;
 use core::{mem, panic::PanicInfo, slice};
-use log::info;
+use log::{error, info};
 use uefi::{
     prelude::*,
     proto::{loaded_image::LoadedImage, media::fs::SimpleFileSystem},
@@ -39,18 +39,23 @@ fn efi_main(image_handle: Handle, system_table: SystemTable<Boot>) -> Status {
     let load_options_str = loaded_image_protocol.load_options(&mut buffer).expect("Failed to load load options");
     let command_line = CommandLine::new(load_options_str);
 
-    let fs_handle = find_root_volume_handle(&system_table).unwrap();
+    // TODO: return upon error instead of panicking
+    let fs_handle = find_volume(&system_table, command_line.volume_label.expect("No volume label supplied"))
+        .expect("No disk with the given volume label");
 
     if let Some(kernel_path) = command_line.kernel_path {
         // TODO: load kernel
     } else {
-        panic!("No kernel path passed! What am I supposed to load?");
+        error!("No kernel path passed! What am I supposed to load?");
+        return Status::INVALID_PARAMETER;
     }
 
     Status::SUCCESS
 }
 
-fn find_root_volume_handle(system_table: &SystemTable<Boot>) -> Option<Handle> {
+fn find_volume(system_table: &SystemTable<Boot>, label: &str) -> Option<Handle> {
+    use uefi::proto::media::file::{File, FileSystemVolumeLabel};
+
     // Make an initial call to find how many handles we need to search
     let num_handles = system_table
         .boot_services()
@@ -58,7 +63,6 @@ fn find_root_volume_handle(system_table: &SystemTable<Boot>) -> Option<Handle> {
         .expect_success("Failed to get list of filesystems");
 
     // Allocate a pool of the needed size
-    info!("Allocating {} bytes of pool", mem::size_of::<Handle>() * num_handles);
     let pool_addr = system_table
         .boot_services()
         .allocate_pool(MemoryType::LOADER_DATA, mem::size_of::<Handle>() * num_handles)
@@ -72,14 +76,32 @@ fn find_root_volume_handle(system_table: &SystemTable<Boot>) -> Option<Handle> {
         .expect_success("Failed to get list of filesystems");
 
     for handle in handle_slice {
-        let proto = system_table
-            .boot_services()
-            .handle_protocol::<SimpleFileSystem>(*handle)
-            .expect_success("Failed to open SimpleFileSystem");
-        // TODO: match volume label (or find a better way to find a partition)
-        // proto.open_volume().expect_success("Failed to open volume").
+        let proto = unsafe {
+            &mut *system_table
+                .boot_services()
+                .handle_protocol::<SimpleFileSystem>(*handle)
+                .expect_success("Failed to open SimpleFileSystem")
+                .get()
+        };
+        let mut buffer = [0u8; 32];
+        let volume_label = proto
+            .open_volume()
+            .expect_success("Failed to open volume")
+            .get_info::<FileSystemVolumeLabel>(&mut buffer)
+            .expect_success("Failed to get volume label")
+            .volume_label();
+
+        let mut str_buffer = [0u8; 32];
+        let length = ucs2::decode(volume_label.to_u16_slice(), &mut str_buffer).unwrap();
+        let volume_label_str = core::str::from_utf8(&str_buffer[0..length]).unwrap();
+
+        if volume_label_str == label {
+            system_table.boot_services().free_pool(pool_addr).unwrap_success();
+            return Some(*handle);
+        }
     }
 
+    system_table.boot_services().free_pool(pool_addr).unwrap_success();
     None
 }
 
