@@ -49,24 +49,38 @@ pub struct MemoryMapEntry {
 
 /// This is one less than a power-of-two, because then it's aligned when placed after the length byte.
 pub const MAX_IMAGE_NAME_LENGTH: usize = 31;
+pub const MAX_IMAGE_LOADED_SEGMENTS: usize = 3;
 pub const MAX_CAPABILITY_STREAM_LENGTH: usize = 32;
 
 /// Describes an image loaded from the filesystem by the loader, as the kernel does not have the capabilities to do
 /// so. Images are expected to have three segments (`rodata` loaded as read-only, `data` loaded as read+write, and
 /// `text` loaded as read+execute).
+#[derive(Clone, Default, Debug)]
 #[repr(C)]
 pub struct LoadedImage {
     pub name_length: u8,
     /// The bytes of the image's name, encoded as UTF-8. Not null-terminated.
     pub name: [u8; MAX_IMAGE_NAME_LENGTH],
-    pub text: Segment,
-    pub data: Segment,
-    pub rodata: Segment,
+    pub num_segments: u8,
+    pub segments: [Segment; MAX_IMAGE_LOADED_SEGMENTS],
     /// The virtual address at which to start executing the image.
     pub entry_point: usize,
     pub capability_stream: [u8; MAX_CAPABILITY_STREAM_LENGTH],
 }
 
+impl LoadedImage {
+    pub fn add_segment(&mut self, segment: Segment) -> Result<(), ()> {
+        if self.num_segments as usize == MAX_IMAGE_LOADED_SEGMENTS {
+            return Err(());
+        }
+
+        self.segments[self.num_segments as usize] = segment;
+        self.num_segments += 1;
+        Ok(())
+    }
+}
+
+#[derive(Clone, Default, Debug)]
 #[repr(C)]
 pub struct Segment {
     pub physical_address: usize,
