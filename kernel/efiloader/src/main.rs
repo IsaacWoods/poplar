@@ -1,6 +1,6 @@
 #![no_std]
 #![no_main]
-#![feature(panic_info_message, abi_efiapi, cell_update)]
+#![feature(panic_info_message, abi_efiapi, cell_update, asm, never_type)]
 
 mod allocator;
 mod command_line;
@@ -16,7 +16,15 @@ use uefi::{
     proto::{loaded_image::LoadedImage, media::fs::SimpleFileSystem},
     table::boot::{AllocateType, MemoryType, SearchType},
 };
-use x86_64::memory::{FrameAllocator, FrameSize, PageTable, Size4KiB, VirtualAddress};
+use x86_64::memory::{
+    EntryFlags,
+    FrameAllocator,
+    FrameSize,
+    PageTable,
+    PhysicalAddress,
+    Size4KiB,
+    VirtualAddress,
+};
 
 /*
  * These are the custom UEFI memory types we use. They're all collected here so we can easily see which numbers
@@ -29,6 +37,16 @@ pub const MEMORY_MAP_MEMORY_TYPE: MemoryType = MemoryType::custom(0x70000003);
 
 #[entry]
 fn efi_main(image_handle: Handle, system_table: SystemTable<Boot>) -> Status {
+    match main(image_handle, system_table) {
+        Ok(_) => unreachable!(),
+        Err(err) => {
+            error!("Something went wrong!");
+            Status::LOAD_ERROR
+        }
+    }
+}
+
+fn main(image_handle: Handle, system_table: SystemTable<Boot>) -> Result<!, ()> {
     logger::init(system_table.stdout());
     info!("Hello, World!");
 
@@ -65,12 +83,12 @@ fn efi_main(image_handle: Handle, system_table: SystemTable<Boot>) -> Status {
             Ok(kernel_info) => kernel_info,
             Err(err) => {
                 error!("Failed to load kernel: {:?}", err);
-                return Status::LOAD_ERROR;
+                return Err(());
             }
         }
     } else {
         error!("No kernel path passed! What am I supposed to load?");
-        return Status::INVALID_PARAMETER;
+        return Err(());
     };
     info!("Loaded kernel!");
 
@@ -82,13 +100,63 @@ fn efi_main(image_handle: Handle, system_table: SystemTable<Boot>) -> Status {
         .boot_services()
         .allocate_pages(AllocateType::AnyPages, MEMORY_MAP_MEMORY_TYPE, pages_needed)
         .unwrap_success();
-    let memory_map = unsafe { slice::from_raw_parts_mut(memory_map_address as *mut u8, memory_map_size) };
+    let memory_map_buffer = unsafe { slice::from_raw_parts_mut(memory_map_address as *mut u8, memory_map_size) };
 
     logger::LOGGER.lock().disable_console_output(true);
-    let system_table =
-        system_table.exit_boot_services(image_handle, memory_map).expect_success("Failed to exit boot services");
+    let (system_table, memory_map) = system_table
+        .exit_boot_services(image_handle, memory_map_buffer)
+        .expect_success("Failed to exit boot services");
 
-    Status::SUCCESS
+    /*
+     * Identity-map current stuff into the page tables.
+     */
+    for entry in memory_map {
+        match entry.ty {
+            MemoryType::LOADER_CODE
+            | MemoryType::LOADER_DATA
+            | MemoryType::BOOT_SERVICES_CODE
+            | MemoryType::BOOT_SERVICES_DATA
+            | MemoryType::RUNTIME_SERVICES_CODE
+            | MemoryType::RUNTIME_SERVICES_DATA => {
+                // It doesn't appear to bother filling out a virtual address at all, so we use the physical
+                // address for both here
+                mapper
+                    .map_area_to(
+                        VirtualAddress::new(entry.phys_start as usize).unwrap(),
+                        PhysicalAddress::new(entry.phys_start as usize).unwrap(),
+                        entry.page_count as usize * Size4KiB::SIZE,
+                        EntryFlags::PRESENT | EntryFlags::WRITABLE,
+                        &allocator,
+                    )
+                    .unwrap();
+            }
+            _ => (),
+        }
+    }
+
+    /*
+     * Jump to the kernel!
+     */
+    unsafe {
+        info!("Switching to new page tables");
+        page_table.switch_to();
+
+        /*
+         * Because we change the stack pointer, we need to reload the entry point into a register, as local
+         * variables will no longer be available. We also disable interrupts until the kernel has a chance to
+         * install its own IDT and reenable them.
+         */
+        info!("Jumping into kernel!\n\n\n");
+        asm!("cli
+              mov rsp, rax
+              jmp rbx"
+             :
+             : "{rax}"(kernel_info.stack_top), "{rbx}"(kernel_info.entry_point)
+             : "rax", "rbx", "rsp"
+             : "intel"
+        );
+    }
+    unreachable!()
 }
 
 fn find_volume(system_table: &SystemTable<Boot>, label: &str) -> Option<Handle> {
