@@ -1,4 +1,4 @@
-use super::{Frame, FrameAllocator, Page, PhysicalAddress, Size2MiB, Size4KiB, VirtualAddress};
+use super::{Frame, FrameAllocator, FrameSize, Page, PhysicalAddress, Size2MiB, Size4KiB, VirtualAddress};
 use crate::hw::{registers::write_control_reg, tlb};
 use bitflags::bitflags;
 use core::{
@@ -408,6 +408,28 @@ impl<'a> Mapper<'a> {
         }
 
         Ok(())
+    }
+
+    /// Map `size` bytes at `virtual_start` to `physical_start` with the given set of flags. `size` must be a
+    /// multiple of the smallest frame size.
+    pub fn map_area_to<A>(
+        &mut self,
+        virtual_start: VirtualAddress,
+        physical_start: PhysicalAddress,
+        size: usize,
+        flags: EntryFlags,
+        allocator: &A,
+    ) -> Result<(), MapError>
+    where
+        A: FrameAllocator,
+    {
+        assert!(virtual_start.is_page_aligned::<Size4KiB>());
+        assert!(physical_start.is_frame_aligned::<Size4KiB>());
+        assert!(size % Size4KiB::SIZE == 0);
+
+        let pages = Page::starts_with(virtual_start)..Page::starts_with(virtual_start + size);
+        let frames = Frame::starts_with(physical_start)..Frame::starts_with(physical_start + size);
+        self.map_range_to(pages, frames, flags, allocator)
     }
 
     /// Unmap the given page, returning the `Frame` it was mapped to so the caller can choose to

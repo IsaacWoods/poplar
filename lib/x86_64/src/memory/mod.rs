@@ -31,6 +31,10 @@ pub trait FrameSize: Clone + Copy + PartialEq + Eq + PartialOrd + Ord {
     /// The log2 of the frame size (in bytes). This makes some maths involving frame and page
     /// addresses more efficient.
     const LOG2_SIZE: usize;
+
+    fn frames_needed(bytes: usize) -> usize {
+        (bytes / Self::SIZE) + if bytes % Self::SIZE > 0 { 1 } else { 0 }
+    }
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Debug)]
