@@ -1,23 +1,33 @@
 #![no_std]
 #![no_main]
-#![feature(panic_info_message, abi_efiapi)]
+#![feature(panic_info_message, abi_efiapi, cell_update)]
 
+mod allocator;
 mod command_line;
 mod image;
 
+use allocator::BootFrameAllocator;
 use command_line::CommandLine;
 use core::{mem, panic::PanicInfo, slice};
 use log::{error, info};
 use uefi::{
     prelude::*,
     proto::{loaded_image::LoadedImage, media::fs::SimpleFileSystem},
-    table::boot::{MemoryType, SearchType},
+    table::boot::{AllocateType, MemoryType, SearchType},
 };
+use x86_64::memory::{FrameAllocator, FrameSize, PageTable, Size4KiB, VirtualAddress};
 
-const COMMAND_LINE_MAX_LENGTH: usize = 256;
-
+// TODO: replace this with our own logger that also outputs to serial and only disables the console out at
+// exit_boot_services
 static mut LOGGER: Option<uefi::logger::Logger> = None;
 
+/*
+ * These are the custom UEFI memory types we use. They're all collected here so we can easily see which numbers
+ * we're using.
+ */
+pub const KERNEL_MEMORY_TYPE: MemoryType = MemoryType::custom(0x70000000);
+pub const IMAGE_MEMORY_TYPE: MemoryType = MemoryType::custom(0x70000001);
+pub const PAGE_TABLE_MEMORY_TYPE: MemoryType = MemoryType::custom(0x70000002);
 #[entry]
 fn efi_main(image_handle: Handle, system_table: SystemTable<Boot>) -> Status {
     unsafe {
@@ -35,16 +45,29 @@ fn efi_main(image_handle: Handle, system_table: SystemTable<Boot>) -> Status {
             .expect_success("Failed to open LoadedImage protocol")
             .get()
     };
+
+    const COMMAND_LINE_MAX_LENGTH: usize = 256;
     let mut buffer = [0u8; COMMAND_LINE_MAX_LENGTH];
+
     let load_options_str = loaded_image_protocol.load_options(&mut buffer).expect("Failed to load load options");
     let command_line = CommandLine::new(load_options_str);
 
+    // TODO: instead of finding the volume by label, we could just grab it from the LoadedImageProtocol (I think)
+    // and say they all have to be on the same volume?
     // TODO: return upon error instead of panicking
     let fs_handle = find_volume(&system_table, command_line.volume_label.expect("No volume label supplied"))
         .expect("No disk with the given volume label");
 
+    /*
+     * We create a set of page tables for the kernel. Because memory is identity-mapped in UEFI, we can act as
+     * if we've placed the physical mapping at 0x0.
+     */
+    let allocator = BootFrameAllocator::new(system_table.boot_services(), 64);
+    let mut page_table = PageTable::new(allocator.allocate(), VirtualAddress::new(0x0).unwrap());
+    let mut mapper = page_table.mapper();
+
     let kernel_info = if let Some(kernel_path) = command_line.kernel_path {
-        match image::load_image(system_table.boot_services(), fs_handle, kernel_path) {
+        match image::load_kernel(system_table.boot_services(), fs_handle, kernel_path, &mut mapper, &allocator) {
             Ok(kernel_info) => kernel_info,
             Err(err) => {
                 error!("Failed to load kernel: {:?}", err);
@@ -55,6 +78,7 @@ fn efi_main(image_handle: Handle, system_table: SystemTable<Boot>) -> Status {
         error!("No kernel path passed! What am I supposed to load?");
         return Status::INVALID_PARAMETER;
     };
+    info!("Loaded kernel!");
 
     Status::SUCCESS
 }

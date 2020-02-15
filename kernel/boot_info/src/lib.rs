@@ -6,13 +6,21 @@
 use core::ops::Range;
 
 #[repr(C)]
-pub struct BootInfo<'a> {
+pub struct BootInfo {
     /// Map of available memory that the kernel. This only includes ranges of memory that can be freely used at
     /// some point, and so memory used for e.g. UEFI runtime services are simply not included. The kernel must
     /// assume that memory not features in this map is not available for use.
-    pub memory_map: &'a [MemoryMapEntry],
-    pub loaded_images: &'a [LoadedImage],
+    pub memory_map: MemoryMap,
+    pub loaded_images: LoadedImages,
     pub video_mode: Option<VideoModeInfo>,
+}
+
+pub const MAX_MEMORY_MAP_ENTRIES: usize = 256;
+
+#[repr(C)]
+pub struct MemoryMap {
+    pub num_entries: u16,
+    pub entries: [MemoryMapEntry; MAX_MEMORY_MAP_ENTRIES],
 }
 
 #[repr(C)]
@@ -45,6 +53,14 @@ pub enum MemoryType {
 pub struct MemoryMapEntry {
     pub range: Range<usize>,
     pub memory_type: MemoryType,
+}
+
+pub const MAX_LOADED_IMAGES: usize = 256;
+
+#[repr(C)]
+pub struct LoadedImages {
+    pub num_images: u8,
+    pub images: [LoadedImage; MAX_LOADED_IMAGES],
 }
 
 /// This is one less than a power-of-two, because then it's aligned when placed after the length byte.
@@ -87,6 +103,8 @@ pub struct Segment {
     pub virtual_address: usize,
     /// In bytes.
     pub size: usize,
+    pub writable: bool,
+    pub executable: bool,
 }
 
 #[repr(C)]
