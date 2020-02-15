@@ -28,6 +28,8 @@ static mut LOGGER: Option<uefi::logger::Logger> = None;
 pub const KERNEL_MEMORY_TYPE: MemoryType = MemoryType::custom(0x70000000);
 pub const IMAGE_MEMORY_TYPE: MemoryType = MemoryType::custom(0x70000001);
 pub const PAGE_TABLE_MEMORY_TYPE: MemoryType = MemoryType::custom(0x70000002);
+pub const MEMORY_MAP_MEMORY_TYPE: MemoryType = MemoryType::custom(0x70000003);
+
 #[entry]
 fn efi_main(image_handle: Handle, system_table: SystemTable<Boot>) -> Status {
     unsafe {
@@ -79,6 +81,18 @@ fn efi_main(image_handle: Handle, system_table: SystemTable<Boot>) -> Status {
         return Status::INVALID_PARAMETER;
     };
     info!("Loaded kernel!");
+
+    let memory_map_size = system_table.boot_services().memory_map_size();
+    info!("Memory map is {} bytes long", memory_map_size);
+
+    let pages_needed = Size4KiB::frames_needed(memory_map_size);
+    let memory_map_address = system_table
+        .boot_services()
+        .allocate_pages(AllocateType::AnyPages, MEMORY_MAP_MEMORY_TYPE, pages_needed)
+        .unwrap_success();
+    let memory_map = unsafe { slice::from_raw_parts_mut(memory_map_address as *mut u8, memory_map_size) };
+    let system_table =
+        system_table.exit_boot_services(image_handle, memory_map).expect_success("Failed to exit boot services");
 
     Status::SUCCESS
 }
