@@ -5,6 +5,7 @@
 mod allocator;
 mod command_line;
 mod image;
+mod logger;
 
 use allocator::BootFrameAllocator;
 use command_line::CommandLine;
@@ -17,10 +18,6 @@ use uefi::{
 };
 use x86_64::memory::{FrameAllocator, FrameSize, PageTable, Size4KiB, VirtualAddress};
 
-// TODO: replace this with our own logger that also outputs to serial and only disables the console out at
-// exit_boot_services
-static mut LOGGER: Option<uefi::logger::Logger> = None;
-
 /*
  * These are the custom UEFI memory types we use. They're all collected here so we can easily see which numbers
  * we're using.
@@ -32,12 +29,7 @@ pub const MEMORY_MAP_MEMORY_TYPE: MemoryType = MemoryType::custom(0x70000003);
 
 #[entry]
 fn efi_main(image_handle: Handle, system_table: SystemTable<Boot>) -> Status {
-    unsafe {
-        LOGGER = Some(uefi::logger::Logger::new(system_table.stdout()));
-        log::set_logger(LOGGER.as_ref().unwrap()).unwrap();
-    }
-    log::set_max_level(log::LevelFilter::Info);
-
+    logger::init(system_table.stdout());
     info!("Hello, World!");
 
     let loaded_image_protocol = unsafe {
@@ -91,6 +83,8 @@ fn efi_main(image_handle: Handle, system_table: SystemTable<Boot>) -> Status {
         .allocate_pages(AllocateType::AnyPages, MEMORY_MAP_MEMORY_TYPE, pages_needed)
         .unwrap_success();
     let memory_map = unsafe { slice::from_raw_parts_mut(memory_map_address as *mut u8, memory_map_size) };
+
+    logger::LOGGER.lock().disable_console_output(true);
     let system_table =
         system_table.exit_boot_services(image_handle, memory_map).expect_success("Failed to exit boot services");
 
