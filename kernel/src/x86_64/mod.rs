@@ -97,6 +97,9 @@ pub fn kmain() -> ! {
         cpu_info.model_info,
         cpu_info.microarch()
     );
+    if let Some(ref hypervisor_info) = cpu_info.hypervisor_info {
+        info!("We're running under a hypervisor ({:?})", hypervisor_info.vendor);
+    }
     check_support(&cpu_info);
 
     /*

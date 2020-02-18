@@ -152,9 +152,9 @@ pub enum HypervisorVendor {
 
 #[derive(Debug)]
 pub struct HypervisorInfo {
-    vendor: HypervisorVendor,
-    max_leaf: u32,
-    apic_frequency: Option<u32>,
+    pub vendor: HypervisorVendor,
+    pub max_leaf: u32,
+    pub apic_frequency: Option<u32>,
 }
 
 /// This is used to reinterpret the bytes of the vendor strings that are spread across the three

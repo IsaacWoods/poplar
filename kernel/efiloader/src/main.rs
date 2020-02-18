@@ -102,6 +102,10 @@ fn main(image_handle: Handle, system_table: SystemTable<Boot>) -> Result<!, ()> 
         .unwrap_success();
     let memory_map_buffer = unsafe { slice::from_raw_parts_mut(memory_map_address as *mut u8, memory_map_size) };
 
+    /*
+     * After we've exited from the boot services, we are not able to use the ConsoleOut services, so we disable
+     * printing to them in the logger.
+     */
     logger::LOGGER.lock().disable_console_output(true);
     let (system_table, memory_map) = system_table
         .exit_boot_services(image_handle, memory_map_buffer)
