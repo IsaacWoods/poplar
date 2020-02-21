@@ -34,6 +34,7 @@ pub const KERNEL_MEMORY_TYPE: MemoryType = MemoryType::custom(0x80000000);
 pub const IMAGE_MEMORY_TYPE: MemoryType = MemoryType::custom(0x80000001);
 pub const PAGE_TABLE_MEMORY_TYPE: MemoryType = MemoryType::custom(0x80000002);
 pub const MEMORY_MAP_MEMORY_TYPE: MemoryType = MemoryType::custom(0x80000003);
+pub const BOOT_INFO_MEMORY_TYPE: MemoryType = MemoryType::custom(0x80000004);
 
 #[entry]
 fn efi_main(image_handle: Handle, system_table: SystemTable<Boot>) -> Status {
