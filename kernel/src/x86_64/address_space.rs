@@ -1,10 +1,10 @@
 use super::{memory::userspace_map, Arch, ARCH};
 use crate::object::WrappedKernelObject;
 use alloc::vec::Vec;
+use boot_info_x86_64::kernel_map;
 use libpebble::syscall::MemoryObjectError;
 use pebble_util::bitmap::{Bitmap, BitmapArray};
 use x86_64::memory::{
-    kernel_map,
     EntryFlags,
     Frame,
     FrameAllocator,

@@ -35,14 +35,14 @@ use crate::{
 };
 use acpi::Acpi;
 use aml::AmlContext;
+use boot_info_x86_64::{kernel_map, BootInfo, LoadedImage};
 use core::time::Duration;
 use log::{error, info, warn};
 use pebble_util::InitGuard;
 use spin::{Mutex, RwLock};
 use x86_64::{
-    boot::{BootInfo, ImageInfo},
     hw::{cpu::CpuInfo, gdt::Gdt, registers::read_control_reg},
-    memory::{kernel_map, Frame, PageTable, PhysicalAddress},
+    memory::{Frame, PageTable, PhysicalAddress},
 };
 
 pub(self) static GDT: Mutex<Gdt> = Mutex::new(Gdt::new());
@@ -82,7 +82,7 @@ impl Architecture for Arch {
 /// This is the entry point for the kernel on x86_64. It is called from the UEFI bootloader and
 /// initialises the system, then passes control into the common part of the kernel.
 #[no_mangle]
-pub fn kmain() -> ! {
+pub extern "C" fn kmain(boot_info_ptr: *const BootInfo) -> ! {
     /*
      * Initialise the logger.
      */

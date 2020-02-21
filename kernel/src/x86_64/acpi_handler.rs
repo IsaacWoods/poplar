@@ -1,6 +1,7 @@
 use acpi::{AcpiHandler, PhysicalMapping as AcpiPhysicalMapping};
+use boot_info_x86_64::kernel_map;
 use core::ptr::NonNull;
-use x86_64::memory::{kernel_map, PhysicalAddress};
+use x86_64::memory::PhysicalAddress;
 
 pub struct PebbleAcpiHandler;
 

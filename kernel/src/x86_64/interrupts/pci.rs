@@ -1,8 +1,9 @@
 use acpi::PciConfigRegions;
 use aml::{pci_routing::PciRoutingTable, AmlContext, AmlName};
 use bit_field::BitField;
+use boot_info_x86_64::kernel_map;
 use log::info;
-use x86_64::memory::{kernel_map, PhysicalAddress};
+use x86_64::memory::PhysicalAddress;
 
 #[derive(Clone, Copy, Debug)]
 #[repr(C)]

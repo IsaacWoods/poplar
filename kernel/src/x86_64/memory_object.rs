@@ -1,3 +1,4 @@
+use boot_info_x86_64::Segment;
 use x86_64::{
     boot::MemoryObjectInfo,
     memory::{EntryFlags, PhysicalAddress, VirtualAddress},
@@ -21,12 +22,16 @@ impl MemoryObject {
         MemoryObject { virtual_address, physical_address, size, flags }
     }
 
-    pub fn from_boot_info(memory_object_info: &MemoryObjectInfo) -> MemoryObject {
+    pub fn from_boot_info(memory_object_info: &Segment) -> MemoryObject {
+        let flags = EntryFlags::PRESENT
+            | if memory_object_info.writable { EntryFlags::WRITABLE } else { EntryFlags::empty() }
+            | if memory_object_info.executable { EntryFlags::empty() } else { EntryFlags::NO_EXECUTE };
+
         MemoryObject {
-            virtual_address: memory_object_info.virtual_address,
-            physical_address: memory_object_info.physical_address,
+            virtual_address: VirtualAddress::new(memory_object_info.virtual_address),
+            physical_address: PhysicalAddress::new(memory_object_info.physical_address).unwrap(),
             size: memory_object_info.size,
-            flags: memory_object_info.permissions,
+            flags,
         }
     }
 }

@@ -1,6 +1,5 @@
 pub mod frame;
 pub mod frame_allocator;
-pub mod kernel_map;
 pub mod page;
 pub mod page_table;
 pub mod physical_address;
