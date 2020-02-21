@@ -36,18 +36,27 @@ pub const PAGE_TABLE_MEMORY_TYPE: MemoryType = MemoryType::custom(0x80000002);
 pub const MEMORY_MAP_MEMORY_TYPE: MemoryType = MemoryType::custom(0x80000003);
 pub const BOOT_INFO_MEMORY_TYPE: MemoryType = MemoryType::custom(0x80000004);
 
+#[derive(Debug)]
+pub enum LoaderError {
+    NoKernelPath,
+    NoBootVolume,
+    BootVolumeDoesNotExist,
+    FailedToLoadKernel,
+    FilePathDoesNotExist,
+}
+
 #[entry]
 fn efi_main(image_handle: Handle, system_table: SystemTable<Boot>) -> Status {
     match main(image_handle, system_table) {
         Ok(_) => unreachable!(),
         Err(err) => {
-            error!("Something went wrong!");
+            error!("Something went wrong: {:?}", err);
             Status::LOAD_ERROR
         }
     }
 }
 
-fn main(image_handle: Handle, system_table: SystemTable<Boot>) -> Result<!, ()> {
+fn main(image_handle: Handle, system_table: SystemTable<Boot>) -> Result<!, LoaderError> {
     logger::init(system_table.stdout());
     info!("Hello, World!");
 
@@ -67,29 +76,28 @@ fn main(image_handle: Handle, system_table: SystemTable<Boot>) -> Result<!, ()> 
 
     // TODO: instead of finding the volume by label, we could just grab it from the LoadedImageProtocol (I think)
     // and say they all have to be on the same volume?
-    // TODO: return upon error instead of panicking
-    let fs_handle = find_volume(&system_table, command_line.volume_label.expect("No volume label supplied"))
-        .expect("No disk with the given volume label");
+    let fs_handle = find_volume(&system_table, command_line.volume_label?)?;
 
     /*
      * We create a set of page tables for the kernel. Because memory is identity-mapped in UEFI, we can act as
      * if we've placed the physical mapping at 0x0.
      */
     let allocator = BootFrameAllocator::new(system_table.boot_services(), 64);
-    let mut page_table = PageTable::new(allocator.allocate(), VirtualAddress::new(0x0).unwrap());
+    let mut page_table = PageTable::new(allocator.allocate(), VirtualAddress::new(0x0));
     let mut mapper = page_table.mapper();
 
-    let kernel_info = if let Some(kernel_path) = command_line.kernel_path {
-        match image::load_kernel(system_table.boot_services(), fs_handle, kernel_path, &mut mapper, &allocator) {
-            Ok(kernel_info) => kernel_info,
-            Err(err) => {
-                error!("Failed to load kernel: {:?}", err);
-                return Err(());
-            }
+    let kernel_info = match image::load_kernel(
+        system_table.boot_services(),
+        fs_handle,
+        command_line.kernel_path?,
+        &mut mapper,
+        &allocator,
+    ) {
+        Ok(kernel_info) => kernel_info,
+        Err(err) => {
+            error!("Failed to load kernel: {:?}", err);
+            return Err(LoaderError::FailedToLoadKernel);
         }
-    } else {
-        error!("No kernel path passed! What am I supposed to load?");
-        return Err(());
     };
     info!("Loaded kernel!");
 
@@ -164,7 +172,7 @@ fn main(image_handle: Handle, system_table: SystemTable<Boot>) -> Result<!, ()> 
     unreachable!()
 }
 
-fn find_volume(system_table: &SystemTable<Boot>, label: &str) -> Option<Handle> {
+fn find_volume(system_table: &SystemTable<Boot>, label: &str) -> Result<Handle, LoaderError> {
     use uefi::proto::media::file::{File, FileSystemVolumeLabel};
 
     // Make an initial call to find how many handles we need to search
@@ -213,12 +221,12 @@ fn find_volume(system_table: &SystemTable<Boot>, label: &str) -> Option<Handle> 
 
         if volume_label_str == label {
             system_table.boot_services().free_pool(pool_addr).unwrap_success();
-            return Some(handle);
+            return Ok(handle);
         }
     }
 
     system_table.boot_services().free_pool(pool_addr).unwrap_success();
-    None
+    Err(LoaderError::BootVolumeDoesNotExist)
 }
 
 #[panic_handler]

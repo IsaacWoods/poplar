@@ -1,4 +1,5 @@
-use boot_info::{LoadedImage, MAX_CAPABILITY_STREAM_LENGTH};
+use crate::LoaderError;
+use boot_info_x86_64::{kernel_map, LoadedImage, Segment, MAX_CAPABILITY_STREAM_LENGTH};
 use core::{ptr, slice, str};
 use mer::{
     program::{ProgramHeader, SegmentType},
@@ -13,17 +14,21 @@ use uefi::{
     table::boot::{AllocateType, BootServices, MemoryType},
     Handle,
 };
-use x86_64::memory::{EntryFlags, FrameAllocator, FrameSize, Mapper, PhysicalAddress, Size4KiB, VirtualAddress};
+use x86_64::memory::{
+    EntryFlags,
+    FrameAllocator,
+    FrameSize,
+    Mapper,
+    Page,
+    PhysicalAddress,
+    Size4KiB,
+    VirtualAddress,
+};
 
 pub struct KernelInfo {
     pub entry_point: usize,
     pub stack_top: usize,
-}
 
-#[derive(Debug)]
-pub enum ImageLoadError {
-    InvalidPath,
-    FailedToReadFile,
 }
 
 pub fn load_kernel<A>(
@@ -32,7 +37,7 @@ pub fn load_kernel<A>(
     path: &str,
     mapper: &mut Mapper,
     allocator: &A,
-) -> Result<KernelInfo, ImageLoadError>
+) -> Result<KernelInfo, LoaderError>
 where
     A: FrameAllocator,
 {
@@ -45,7 +50,7 @@ where
                 let segment = load_segment(boot_services, segment, crate::KERNEL_MEMORY_TYPE, &elf)?;
 
                 let physical_start = PhysicalAddress::new(segment.physical_address).unwrap();
-                let virtual_start = VirtualAddress::new(segment.virtual_address).unwrap();
+                let virtual_start = VirtualAddress::new(segment.virtual_address);
 
                 let mut flags = EntryFlags::empty();
                 if segment.writable {
@@ -79,7 +84,7 @@ pub fn load_image(
     boot_services: &BootServices,
     volume_handle: Handle,
     path: &str,
-) -> Result<LoadedImage, ImageLoadError> {
+) -> Result<LoadedImage, LoaderError> {
     let (elf, pool_addr) = load_elf(boot_services, volume_handle, path)?;
 
     let mut image_data = LoadedImage::default();
@@ -142,7 +147,7 @@ fn load_elf<'a>(
     boot_services: &BootServices,
     volume_handle: Handle,
     path: &str,
-) -> Result<(Elf<'a>, *mut u8), ImageLoadError> {
+) -> Result<(Elf<'a>, *mut u8), LoaderError> {
     let mut root_file_protocol = unsafe {
         &mut *boot_services
             .handle_protocol::<SimpleFileSystem>(volume_handle)
@@ -166,7 +171,7 @@ fn load_elf<'a>(
         FileType::Regular(mut regular_file) => {
             regular_file.read(file_data).expect_success("Failed to read image");
         }
-        FileType::Dir(_) => return Err(ImageLoadError::InvalidPath),
+        FileType::Dir(_) => return Err(LoaderError::FilePathDoesNotExist),
     }
 
     let elf = match Elf::new(file_data) {
@@ -182,7 +187,7 @@ fn load_segment(
     segment: ProgramHeader,
     memory_type: MemoryType,
     elf: &Elf,
-) -> Result<boot_info::Segment, ImageLoadError> {
+) -> Result<Segment, LoaderError> {
     assert!((segment.mem_size as usize) % Size4KiB::SIZE == 0);
 
     let num_frames = (segment.mem_size as usize) / Size4KiB::SIZE;
@@ -211,7 +216,7 @@ fn load_segment(
         );
     }
 
-    Ok(boot_info::Segment {
+    Ok(Segment {
         physical_address: physical_address as usize,
         virtual_address: segment.virtual_address as usize,
         size: num_frames * Size4KiB::SIZE,
