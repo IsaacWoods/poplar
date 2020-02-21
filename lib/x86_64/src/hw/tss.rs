@@ -26,9 +26,9 @@ impl Tss {
     pub fn new() -> Tss {
         Tss {
             _reserved_1: 0,
-            privilege_stack_table: [unsafe { VirtualAddress::new_unchecked(0) }; 3],
+            privilege_stack_table: [VirtualAddress::new(0x0); 3],
             _reserved_2: 0,
-            interrupt_stack_table: [unsafe { VirtualAddress::new_unchecked(0) }; 7],
+            interrupt_stack_table: [VirtualAddress::new(0x0); 7],
             _reserved_3: 0,
             _reserved_4: 0,
             iomap_base: 0,

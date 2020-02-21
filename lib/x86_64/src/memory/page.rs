@@ -32,8 +32,7 @@ where
     type Output = Page<S>;
 
     fn add(self, num_pages: usize) -> Self::Output {
-        assert!(VirtualAddress::new(usize::from(self.start_address) + num_pages * S::SIZE).is_some());
-        Page { start_address: self.start_address + num_pages * S::SIZE, _phantom: PhantomData }
+        Page::contains(self.start_address + num_pages * S::SIZE)
     }
 }
 
@@ -42,8 +41,7 @@ where
     S: FrameSize,
 {
     fn add_assign(&mut self, num_pages: usize) {
-        assert!(VirtualAddress::new(usize::from(self.start_address) + num_pages * S::SIZE).is_some());
-        self.start_address += num_pages * S::SIZE;
+        *self = *self + num_pages;
     }
 }
 
@@ -58,12 +56,12 @@ where
     }
 
     fn replace_one(&mut self) -> Self {
-        self.start_address = unsafe { VirtualAddress::new_unchecked(S::SIZE) };
+        self.start_address = VirtualAddress::new(S::SIZE);
         *self
     }
 
     fn replace_zero(&mut self) -> Self {
-        self.start_address = unsafe { VirtualAddress::new_unchecked(0x0) };
+        self.start_address = VirtualAddress::new(0x0);
         *self
     }
 
@@ -77,7 +75,7 @@ where
 
     fn add_usize(&self, n: usize) -> Option<Self> {
         Some(Page {
-            start_address: VirtualAddress::new(usize::from(self.start_address).checked_add(n * S::SIZE)?).unwrap(),
+            start_address: VirtualAddress::new(usize::from(self.start_address).checked_add(n * S::SIZE)?),
             _phantom: PhantomData,
         })
     }

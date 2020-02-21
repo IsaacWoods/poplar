@@ -118,7 +118,7 @@ impl GuardedPerCpu {
             _self_pointer: 0x0 as *const PerCpu,
             _pin: PhantomPinned,
 
-            current_task_kernel_rsp: VirtualAddress::new(0x0).unwrap(),
+            current_task_kernel_rsp: VirtualAddress::new(0x0),
 
             common: CommonPerCpu::new(),
             tss,

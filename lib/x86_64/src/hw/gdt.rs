@@ -164,7 +164,7 @@ impl Gdt {
         let gdt_ptr = DescriptorTablePointer {
             limit: (NUM_STATIC_ENTRIES * mem::size_of::<u64>() + MAX_CPUS * mem::size_of::<TssSegment>() - 1)
                 as u16,
-            base: VirtualAddress::new(self as *const _ as usize).unwrap(),
+            base: VirtualAddress::new(self as *const _ as usize),
         };
 
         asm!("// Load the new GDT

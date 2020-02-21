@@ -127,7 +127,7 @@ fn main(image_handle: Handle, system_table: SystemTable<Boot>) -> Result<!, ()> 
                 // address for both here
                 mapper
                     .map_area_to(
-                        VirtualAddress::new(entry.phys_start as usize).unwrap(),
+                        VirtualAddress::new(entry.phys_start as usize),
                         PhysicalAddress::new(entry.phys_start as usize).unwrap(),
                         entry.page_count as usize * Size4KiB::SIZE,
                         EntryFlags::PRESENT | EntryFlags::WRITABLE,

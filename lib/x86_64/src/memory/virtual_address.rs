@@ -14,29 +14,34 @@ use core::{
 pub struct VirtualAddress(usize);
 
 impl VirtualAddress {
-    /// Create a new `VirtualAddress` from the given address. If the given address is not a valid
-    /// canonical address, this returns `None`.
-    /*
-     * TODO: this should be made `const` when CTFE supports matches, then we should use it for
-     * all the constants that currently use `new_unchecked`
-     */
-    pub fn new(address: usize) -> Option<VirtualAddress> {
-        match address {
-            0x0000_0000_0000_0000..=0x0000_7fff_ffff_ffff => Some(VirtualAddress(address)),
-            0xffff_8000_0000_0000..=0xffff_ffff_ffff_ffff => Some(VirtualAddress(address)),
-            _ => None,
-        }
-    }
+    // /// Create a new `VirtualAddress` from the given address. If the given address is not a valid
+    // /// canonical address, this returns `None`.
+    // /*
+    //  * TODO: this should be made `const` when CTFE supports matches, then we should use it for
+    //  * all the constants that currently use `new_unchecked`
+    //  */
+    // pub fn new(address: usize) -> Option<VirtualAddress> {
+    //     match address {
+    //         0x0000_0000_0000_0000..=0x0000_7fff_ffff_ffff => Some(VirtualAddress(address)),
+    //         0xffff_8000_0000_0000..=0xffff_ffff_ffff_ffff => Some(VirtualAddress(address)),
+    //         _ => None,
+    //     }
+    // }
 
-    /// Create a new `VirtualAddress` from the given address, which is assumed to be canonical.
-    /// Unsafe because using a non-canonical address can cause General Protection faults.
-    pub const unsafe fn new_unchecked(address: usize) -> VirtualAddress {
-        VirtualAddress(address)
-    }
+    // /// Create a new `VirtualAddress` from the given address, which is assumed to be canonical.
+    // /// Unsafe because using a non-canonical address can cause General Protection faults.
+    // pub const unsafe fn new_unchecked(address: usize) -> VirtualAddress {
+    //     VirtualAddress(address)
+    // }
 
-    /// Create a new `VirtualAddress` from the given address, canonicalising it if it is not
-    /// already canonical, by the logic in the `VirtualAddress::canonicalise` method.
-    pub const fn new_canonicalise(address: usize) -> VirtualAddress {
+    // /// Create a new `VirtualAddress` from the given address, canonicalising it if it is not
+    // /// already canonical, by the logic in the `VirtualAddress::canonicalise` method.
+    // pub const fn new_canonicalise(address: usize) -> VirtualAddress {
+    //     VirtualAddress(address).canonicalise()
+    // }
+
+    /// Creates a `VirtualAddress` from a `usize`, canonicalising if needed.
+    pub const fn new(address: usize) -> VirtualAddress {
         VirtualAddress(address).canonicalise()
     }
 
@@ -90,7 +95,7 @@ impl VirtualAddress {
              *                               ^^^ Masks the address to the address below it with
              *                                   the correct alignment
              */
-            VirtualAddress::new_canonicalise(self.0 & !(align - 1))
+            VirtualAddress::new(self.0 & !(align - 1))
         }
     }
 
@@ -153,13 +158,13 @@ impl From<VirtualAddress> for usize {
 
 impl<T> From<*const T> for VirtualAddress {
     fn from(ptr: *const T) -> VirtualAddress {
-        VirtualAddress::new(ptr as usize).expect("Pointer is non-canonical!")
+        VirtualAddress::new(ptr as usize)
     }
 }
 
 impl<T> From<*mut T> for VirtualAddress {
     fn from(ptr: *mut T) -> VirtualAddress {
-        VirtualAddress::new(ptr as usize).expect("Pointer is non-canonical!")
+        VirtualAddress::new(ptr as usize)
     }
 }
 
@@ -173,7 +178,7 @@ impl Add<usize> for VirtualAddress {
     type Output = VirtualAddress;
 
     fn add(self, rhs: usize) -> Self::Output {
-        VirtualAddress::new_canonicalise(self.0 + rhs)
+        VirtualAddress::new(self.0 + rhs)
     }
 }
 
@@ -181,7 +186,7 @@ impl Sub<usize> for VirtualAddress {
     type Output = VirtualAddress;
 
     fn sub(self, rhs: usize) -> Self::Output {
-        VirtualAddress::new_canonicalise(self.0 - rhs)
+        VirtualAddress::new(self.0 - rhs)
     }
 }
 

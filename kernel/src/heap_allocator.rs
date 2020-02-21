@@ -18,7 +18,7 @@ impl HoleAllocator {
     /// Create a new, uninitialized `HoleAllocator`. Before heap allocations can be made, `init`
     /// must be called.
     pub const fn new_uninitialized() -> HoleAllocator {
-        HoleAllocator { heap_bottom: unsafe { VirtualAddress::new_unchecked(0) }, heap_size: 0, holes: None }
+        HoleAllocator { heap_bottom: VirtualAddress::new(0), heap_size: 0, holes: None }
     }
 
     /// Initialise the `HoleAllocator`. This should only be called once, and constructs the
@@ -86,7 +86,7 @@ impl Hole {
     fn info(&self) -> HoleInfo {
         HoleInfo {
             // Safe to unwrap because we know `self` points to a valid address
-            addr: VirtualAddress::new(self as *const _ as usize).unwrap(),
+            addr: VirtualAddress::new(self as *const _ as usize),
             size: self.size,
         }
     }
@@ -229,11 +229,8 @@ fn free(mut hole: &mut Hole, addr: VirtualAddress, mut size: usize) {
         /*
          * If the size is 0, it's the dummy hole, so just set the address to 0
          */
-        let hole_addr = if hole.size == 0 {
-            VirtualAddress::new(0).unwrap()
-        } else {
-            VirtualAddress::new(hole as *mut _ as usize).unwrap()
-        };
+        let hole_addr =
+            if hole.size == 0 { VirtualAddress::new(0) } else { VirtualAddress::new(hole as *mut _ as usize) };
         assert!((hole_addr + hole.size) <= addr, "Invalid deallocation (probable double free)");
         let next_hole_info = hole.next.as_ref().map(|next| next.info());
 
