@@ -3,10 +3,15 @@
 
 #![no_std]
 
+pub mod kernel_map;
+
 use core::ops::Range;
+
+pub const BOOT_INFO_MAGIC: u32 = 0xcafebabe;
 
 #[repr(C)]
 pub struct BootInfo {
+    pub magic: u32,
     /// Map of available memory that the kernel. This only includes ranges of memory that can be freely used at
     /// some point, and so memory used for e.g. UEFI runtime services are simply not included. The kernel must
     /// assume that memory not features in this map is not available for use.
@@ -15,14 +20,16 @@ pub struct BootInfo {
     pub video_mode: Option<VideoModeInfo>,
 }
 
-pub const MAX_MEMORY_MAP_ENTRIES: usize = 256;
+pub const MAX_MEMORY_MAP_ENTRIES: usize = 64;
 
+#[derive(Clone)]
 #[repr(C)]
 pub struct MemoryMap {
-    pub num_entries: u16,
+    pub num_entries: u8,
     pub entries: [MemoryMapEntry; MAX_MEMORY_MAP_ENTRIES],
 }
 
+#[derive(Clone, Copy, Debug)]
 #[repr(C)]
 pub enum MemoryType {
     /// Memory that can be used freely by the OS.
@@ -49,6 +56,7 @@ pub enum MemoryType {
     BootInfo,
 }
 
+#[derive(Clone, Debug)]
 #[repr(C)]
 pub struct MemoryMapEntry {
     pub range: Range<usize>,
@@ -93,6 +101,10 @@ impl LoadedImage {
         self.segments[self.num_segments as usize] = segment;
         self.num_segments += 1;
         Ok(())
+    }
+
+    pub fn segments(&self) -> &[Segment] {
+        &self.segments[0..(self.num_segments as usize)]
     }
 }
 

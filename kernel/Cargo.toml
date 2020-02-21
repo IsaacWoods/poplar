@@ -19,9 +19,10 @@ libpebble = { path = "../lib/libpebble" }
 acpi = { path = "../lib/acpi/acpi", optional = true }
 # aml = { path = "../lib/acpi/aml", optional = true, features = ["debug_parser", "debug_parser_verbose"]}
 aml = { path = "../lib/acpi/aml", optional = true }
+boot_info_x86_64 = { path = "boot_info_x86_64", optional = true }
 
 [features]
-arch_x86_64 = ["x86_64", "acpi", "aml", "pebble_util/tuning_fast_ctlz"]
+arch_x86_64 = ["x86_64", "acpi", "aml", "boot_info_x86_64", "pebble_util/tuning_fast_ctlz"]
 
 [workspace]
-members = ["efiloader", "boot_info"]
+members = ["efiloader", "boot_info_x86_64"]
