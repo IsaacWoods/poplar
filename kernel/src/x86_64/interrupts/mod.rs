@@ -5,9 +5,11 @@ use super::Arch;
 use acpi::interrupt::InterruptModel;
 use aml::{value::Args as AmlArgs, AmlName, AmlValue};
 use bit_field::BitField;
+use boot_info_x86_64::kernel_map;
 use core::time::Duration;
 use log::{info, warn};
 use pci::PciResolver;
+use pebble_util::InitGuard;
 use x86_64::{
     hw::{
         gdt::KERNEL_CODE_SELECTOR,
@@ -16,7 +18,7 @@ use x86_64::{
         local_apic::LocalApic,
         registers::write_msr,
     },
-    memory::{kernel_map, EntryFlags, Frame, Page, PhysicalAddress},
+    memory::{EntryFlags, Frame, Page, PhysicalAddress},
 };
 
 global_asm!(include_str!("syscall.s"));
@@ -38,6 +40,8 @@ extern "C" {
 /// |        ff        | APIC spurious interrupt     |
 /// |------------------|-----------------------------|
 static mut IDT: Idt = Idt::empty();
+
+static LOCAL_APIC: InitGuard<LocalApic> = InitGuard::uninit();
 
 /*
  * These constants define the IDT's layout. Refer to the documentation of the `IDT` static for
@@ -66,6 +70,17 @@ impl InterruptController {
                 }
 
                 /*
+                 * Initialise `LOCAL_APIC` to point at the right address.
+                 * TODO: we might need to map it separately or something so we can set custom flags on the
+                 * paging entry (do we need to set NO_CACHE on it?)
+                 */
+                LOCAL_APIC.initialize(unsafe {
+                    LocalApic::new(kernel_map::physical_to_virtual(
+                        PhysicalAddress::new(info.local_apic_address as usize).unwrap(),
+                    ))
+                });
+
+                /*
                  * Tell ACPI that we intend to use the APICs instead of the legacy PIC.
                  */
                 arch.aml_context
@@ -85,19 +100,19 @@ impl InterruptController {
                     &mut arch.aml_context.lock(),
                 );
 
-                /*
-                 * Map the local APIC's configuration space into the kernel address space.
-                 */
-                arch.kernel_page_table
-                    .lock()
-                    .mapper()
-                    .map_to(
-                        Page::contains(kernel_map::LOCAL_APIC_CONFIG),
-                        Frame::contains(PhysicalAddress::new(info.local_apic_address as usize).unwrap()),
-                        EntryFlags::PRESENT | EntryFlags::WRITABLE | EntryFlags::NO_EXECUTE | EntryFlags::NO_CACHE,
-                        &arch.physical_memory_manager,
-                    )
-                    .unwrap();
+                // /*
+                //  * Map the local APIC's configuration space into the kernel address space.
+                //  */
+                // arch.kernel_page_table
+                //     .lock()
+                //     .mapper()
+                //     .map_to(
+                //         Page::contains(kernel_map::LOCAL_APIC_CONFIG),
+                //         Frame::contains(PhysicalAddress::new(info.local_apic_address as usize).unwrap()),
+                //         EntryFlags::PRESENT | EntryFlags::WRITABLE | EntryFlags::NO_EXECUTE |
+                // EntryFlags::NO_CACHE,         &arch.physical_memory_manager,
+                //     )
+                //     .unwrap();
 
                 /*
                  * Install handlers for the spurious interrupt and local APIC timer, and then
@@ -108,7 +123,7 @@ impl InterruptController {
                     IDT[APIC_TIMER_VECTOR]
                         .set_handler(wrap_handler!(local_apic_timer_handler), KERNEL_CODE_SELECTOR);
                     IDT[APIC_SPURIOUS_VECTOR].set_handler(wrap_handler!(spurious_handler), KERNEL_CODE_SELECTOR);
-                    LocalApic::enable(APIC_SPURIOUS_VECTOR);
+                    LOCAL_APIC.get().enable(APIC_SPURIOUS_VECTOR);
                 }
 
                 InterruptController {}
@@ -127,7 +142,7 @@ impl InterruptController {
          */
         match arch.cpu_info.apic_frequency() {
             Some(apic_frequency) => {
-                LocalApic::enable_timer(period.as_millis() as u32, apic_frequency, APIC_TIMER_VECTOR)
+                LOCAL_APIC.get().enable_timer(period.as_millis() as u32, apic_frequency, APIC_TIMER_VECTOR);
             }
             None => warn!("Couldn't find frequency of APIC from cpuid. Local APIC timer not enabled!"),
         }
@@ -189,7 +204,7 @@ impl InterruptController {
 extern "C" fn local_apic_timer_handler(_: &InterruptStackFrame) {
     info!("Tick!");
     unsafe {
-        LocalApic::send_eoi();
+        LOCAL_APIC.get().send_eoi();
     }
 }
 
