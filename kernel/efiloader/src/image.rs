@@ -29,6 +29,10 @@ pub struct KernelInfo {
     pub entry_point: usize,
     pub stack_top: usize,
 
+    /// We load the kernel at the base of the kernel address space. We want to put other stuff after it, and so
+    /// need to know how much memory the loaded image has taken up. During loading, we calculate the address of
+    /// the next available page (this) to use.
+    pub next_safe_address: VirtualAddress,
 }
 
 pub fn load_kernel<A>(
@@ -44,13 +48,12 @@ where
     let (elf, pool_addr) = load_elf(boot_services, volume_handle, path)?;
     let entry_point = elf.entry_point();
 
+    let mut next_safe_address = kernel_map::KERNEL_BASE;
+
     for segment in elf.segments() {
         match segment.segment_type() {
             SegmentType::Load if segment.mem_size > 0 => {
                 let segment = load_segment(boot_services, segment, crate::KERNEL_MEMORY_TYPE, &elf)?;
-
-                let physical_start = PhysicalAddress::new(segment.physical_address).unwrap();
-                let virtual_start = VirtualAddress::new(segment.virtual_address);
 
                 let mut flags = EntryFlags::empty();
                 if segment.writable {
@@ -60,8 +63,18 @@ where
                     flags |= EntryFlags::NO_EXECUTE;
                 }
 
+                /*
+                 * If this segment loads past `next_safe_address`, update it.
+                 */
+                if (segment.virtual_address + segment.size) > next_safe_address {
+                    next_safe_address =
+                        (Page::<Size4KiB>::contains(segment.virtual_address + segment.size) + 1).start_address;
+                }
+
                 assert!(segment.size % Size4KiB::SIZE == 0);
-                mapper.map_area_to(virtual_start, physical_start, segment.size, flags, allocator).unwrap();
+                mapper
+                    .map_area_to(segment.virtual_address, segment.physical_address, segment.size, flags, allocator)
+                    .unwrap();
             }
 
             _ => (),
@@ -77,7 +90,7 @@ where
     // TODO: deal with stack
 
     boot_services.free_pool(pool_addr).unwrap_success();
-    Ok(KernelInfo { entry_point, stack_top })
+    Ok(KernelInfo { entry_point, stack_top, next_safe_address })
 }
 
 pub fn load_image(
@@ -88,7 +101,7 @@ pub fn load_image(
     let (elf, pool_addr) = load_elf(boot_services, volume_handle, path)?;
 
     let mut image_data = LoadedImage::default();
-    image_data.entry_point = elf.entry_point();
+    image_data.entry_point = VirtualAddress::new(elf.entry_point());
 
     for segment in elf.segments() {
         match segment.segment_type() {
@@ -217,8 +230,8 @@ fn load_segment(
     }
 
     Ok(Segment {
-        physical_address: physical_address as usize,
-        virtual_address: segment.virtual_address as usize,
+        physical_address: PhysicalAddress::new(physical_address as usize).unwrap(),
+        virtual_address: VirtualAddress::new(segment.virtual_address as usize),
         size: num_frames * Size4KiB::SIZE,
         writable: segment.is_writable(),
         executable: segment.is_executable(),

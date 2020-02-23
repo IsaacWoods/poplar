@@ -28,8 +28,8 @@ impl MemoryObject {
             | if memory_object_info.executable { EntryFlags::empty() } else { EntryFlags::NO_EXECUTE };
 
         MemoryObject {
-            virtual_address: VirtualAddress::new(memory_object_info.virtual_address),
-            physical_address: PhysicalAddress::new(memory_object_info.physical_address).unwrap(),
+            virtual_address: memory_object_info.virtual_address,
+            physical_address: memory_object_info.physical_address,
             size: memory_object_info.size,
             flags,
         }

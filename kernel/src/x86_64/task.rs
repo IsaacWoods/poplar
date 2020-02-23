@@ -91,10 +91,10 @@ impl Task {
     /// ### Panics
     /// * If the given address space doesn't point to a valid `AddressSpace`
     /// * If the `AddressSpace` fails to create a new stack for the task
-    pub fn from_image_info(
+    pub fn from_boot_info_image(
         arch: &Arch,
         address_space: WrappedKernelObject<Arch>,
-        image: &ImageInfo,
+        image: &boot_info_x86_64::LoadedImage,
     ) -> Result<Task, TaskCreationError> {
         let stack_set = address_space
             .object

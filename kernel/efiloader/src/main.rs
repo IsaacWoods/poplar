@@ -8,18 +8,21 @@ mod image;
 mod logger;
 
 use allocator::BootFrameAllocator;
+use boot_info_x86_64::BootInfo;
 use command_line::CommandLine;
 use core::{mem, panic::PanicInfo, slice};
 use log::{error, info};
 use uefi::{
     prelude::*,
     proto::{loaded_image::LoadedImage, media::fs::SimpleFileSystem},
-    table::boot::{AllocateType, MemoryType, SearchType},
+    table::boot::{AllocateType, MemoryMapIter, MemoryType, SearchType},
 };
 use x86_64::memory::{
     EntryFlags,
     FrameAllocator,
     FrameSize,
+    Mapper,
+    Page,
     PageTable,
     PhysicalAddress,
     Size4KiB,
@@ -86,20 +89,15 @@ fn main(image_handle: Handle, system_table: SystemTable<Boot>) -> Result<!, Load
     let mut page_table = PageTable::new(allocator.allocate(), VirtualAddress::new(0x0));
     let mut mapper = page_table.mapper();
 
-    let kernel_info = match image::load_kernel(
+    let kernel_info = image::load_kernel(
         system_table.boot_services(),
         fs_handle,
         command_line.kernel_path?,
         &mut mapper,
         &allocator,
-    ) {
-        Ok(kernel_info) => kernel_info,
-        Err(err) => {
-            error!("Failed to load kernel: {:?}", err);
-            return Err(LoaderError::FailedToLoadKernel);
-        }
-    };
-    info!("Loaded kernel!");
+    )?;
+    let mut next_safe_address = kernel_info.next_safe_address;
+    info!("Loaded kernel! Next safe address is {:#x}", next_safe_address);
 
     let memory_map_size = system_table.boot_services().memory_map_size();
     info!("Memory map is {} bytes long", memory_map_size);
@@ -112,18 +110,89 @@ fn main(image_handle: Handle, system_table: SystemTable<Boot>) -> Result<!, Load
     let memory_map_buffer = unsafe { slice::from_raw_parts_mut(memory_map_address as *mut u8, memory_map_size) };
 
     /*
+     * Construct boot info to pass to the kernel.
+     */
+    let boot_info_needed_frames = Size4KiB::frames_needed(mem::size_of::<BootInfo>());
+    let boot_info_physical_start = system_table
+        .boot_services()
+        .allocate_pages(AllocateType::AnyPages, BOOT_INFO_MEMORY_TYPE, boot_info_needed_frames)
+        .unwrap_success();
+    let identity_boot_info_ptr = VirtualAddress::new(boot_info_physical_start as usize).mut_ptr() as *mut BootInfo;
+    unsafe {
+        *identity_boot_info_ptr = BootInfo::default();
+    }
+    let boot_info = unsafe { &mut *identity_boot_info_ptr };
+    let boot_info_virtual_address = kernel_info.next_safe_address;
+    next_safe_address += boot_info_needed_frames * Size4KiB::SIZE;
+    mapper
+        .map_area_to(
+            boot_info_virtual_address,
+            PhysicalAddress::new(boot_info_physical_start as usize).unwrap(),
+            boot_info_needed_frames * Size4KiB::SIZE,
+            EntryFlags::PRESENT | EntryFlags::NO_EXECUTE,
+            &allocator,
+        )
+        .unwrap();
+    boot_info.magic = boot_info_x86_64::BOOT_INFO_MAGIC;
+
+    /*
      * After we've exited from the boot services, we are not able to use the ConsoleOut services, so we disable
      * printing to them in the logger.
      */
     logger::LOGGER.lock().disable_console_output(true);
-    let (system_table, memory_map) = system_table
+    let (_system_table, memory_map) = system_table
         .exit_boot_services(image_handle, memory_map_buffer)
         .expect_success("Failed to exit boot services");
+    process_memory_map(memory_map, boot_info, &mut mapper, &allocator)?;
 
     /*
-     * Identity-map current stuff into the page tables.
+     * Jump to the kernel!
      */
+    unsafe {
+        info!("Switching to new page tables");
+        /*
+         * We disable interrupts until the kernel has a chance to install its own IDT.
+         */
+        asm!("cli");
+        page_table.switch_to();
+
+        /*
+         * Because we change the stack pointer, we need to load the entry point into a register, as local
+         * variables will no longer be available.
+         */
+        info!("Jumping into kernel!\n\n\n");
+        asm!("mov rsp, rax
+              jmp rbx"
+             :
+             : "{rax}"(kernel_info.stack_top), "{rbx}"(kernel_info.entry_point), "{rdi}"(boot_info_virtual_address)
+             : "rax", "rbx", "rsp", "rdi"
+             : "intel"
+        );
+    }
+    unreachable!()
+}
+
+/// Process the final UEFI memory map when after we've exited boot services. We need to do two things with it:
+///     * We need to identity-map anything that UEFI expects to stay in the same place, including the loader image
+///       (the code that's currently running), and the UEFI runtime services. We also map the boot services, as
+///       many implementations don't actually stop using them after the call to `ExitBootServices` as they should.
+///     * We construct the memory map that will be passed to the kernel, which it uses to initialise its physical
+///       memory manager. This is added directly to the already-allocated boot info.
+fn process_memory_map<A>(
+    memory_map: MemoryMapIter<'_>,
+    boot_info: &mut BootInfo,
+    mapper: &mut Mapper,
+    allocator: &A,
+) -> Result<(), LoaderError>
+where
+    A: FrameAllocator,
+{
+    use boot_info_x86_64::{MemoryMapEntry, MemoryType as BootInfoMemoryType};
+
     for entry in memory_map {
+        /*
+         * Identity-map the entry in the kernel page tables, if needed.
+         */
         match entry.ty {
             MemoryType::LOADER_CODE
             | MemoryType::LOADER_DATA
@@ -131,45 +200,64 @@ fn main(image_handle: Handle, system_table: SystemTable<Boot>) -> Result<!, Load
             | MemoryType::BOOT_SERVICES_DATA
             | MemoryType::RUNTIME_SERVICES_CODE
             | MemoryType::RUNTIME_SERVICES_DATA => {
-                // It doesn't appear to bother filling out a virtual address at all, so we use the physical
-                // address for both here
+                info!("Identity mapping area: {:?}", entry);
+                /*
+                 * Implementations don't appear to fill out the `VirtualStart` field, so we use the physical
+                 * address for both (as we're identity-mapping anyway).
+                 */
                 mapper
                     .map_area_to(
                         VirtualAddress::new(entry.phys_start as usize),
                         PhysicalAddress::new(entry.phys_start as usize).unwrap(),
                         entry.page_count as usize * Size4KiB::SIZE,
                         EntryFlags::PRESENT | EntryFlags::WRITABLE,
-                        &allocator,
+                        allocator,
                     )
                     .unwrap();
             }
             _ => (),
         }
-    }
-
-    /*
-     * Jump to the kernel!
-     */
-    unsafe {
-        info!("Switching to new page tables");
-        page_table.switch_to();
 
         /*
-         * Because we change the stack pointer, we need to reload the entry point into a register, as local
-         * variables will no longer be available. We also disable interrupts until the kernel has a chance to
-         * install its own IDT and reenable them.
+         * Add the entry to the boot info memory map, if it can be used by the kernel. This memory map will only
+         * be processed after we've left the loader, so we can include memory currently used by the
+         * loader as free.
          */
-        info!("Jumping into kernel!\n\n\n");
-        asm!("cli
-              mov rsp, rax
-              jmp rbx"
-             :
-             : "{rax}"(kernel_info.stack_top), "{rbx}"(kernel_info.entry_point)
-             : "rax", "rbx", "rsp"
-             : "intel"
-        );
+        // TODO: move this to a decl_macro when hygiene-opt-out is implemented
+        macro_rules! add_entry {
+            ($type: expr) => {
+                boot_info
+                    .memory_map
+                    .add_entry(MemoryMapEntry {
+                        start: PhysicalAddress::new(entry.phys_start as usize).unwrap(),
+                        size: entry.page_count as usize * Size4KiB::SIZE,
+                        memory_type: $type,
+                    })
+                    .unwrap();
+            };
+        }
+        match entry.ty {
+            MemoryType::BOOT_SERVICES_CODE
+            | MemoryType::BOOT_SERVICES_DATA
+            | MemoryType::CONVENTIONAL
+            | MemoryType::LOADER_CODE
+            | MemoryType::LOADER_DATA
+            | MEMORY_MAP_MEMORY_TYPE => add_entry!(BootInfoMemoryType::Conventional),
+
+            MemoryType::ACPI_RECLAIM => add_entry!(BootInfoMemoryType::AcpiReclaimable),
+            IMAGE_MEMORY_TYPE => add_entry!(BootInfoMemoryType::LoadedImage),
+            PAGE_TABLE_MEMORY_TYPE => add_entry!(BootInfoMemoryType::KernelPageTables),
+            BOOT_INFO_MEMORY_TYPE => add_entry!(BootInfoMemoryType::BootInfo),
+            KERNEL_HEAP_MEMORY_TYPE => add_entry!(BootInfoMemoryType::KernelHeap),
+
+            // Other regions will never be useable by the kernel, so we don't bother including them
+            _ => (),
+        }
     }
-    unreachable!()
+
+    Ok(())
+}
+
 }
 
 fn find_volume(system_table: &SystemTable<Boot>, label: &str) -> Result<Handle, LoaderError> {

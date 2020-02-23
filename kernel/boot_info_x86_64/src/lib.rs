@@ -1,14 +1,13 @@
-//! This crate provides a platform-agnostic interface between the loader and the kernel, providing information such
-//! as the memory map and chosen video mode. Not all of this information will be passed on every architecture.
-
 #![no_std]
 
 pub mod kernel_map;
 
 use core::ops::Range;
+use x86_64::memory::{PhysicalAddress, VirtualAddress};
 
 pub const BOOT_INFO_MAGIC: u32 = 0xcafebabe;
 
+#[derive(Default)]
 #[repr(C)]
 pub struct BootInfo {
     pub magic: u32,
@@ -27,6 +26,28 @@ pub const MAX_MEMORY_MAP_ENTRIES: usize = 64;
 pub struct MemoryMap {
     pub num_entries: u8,
     pub entries: [MemoryMapEntry; MAX_MEMORY_MAP_ENTRIES],
+}
+
+impl MemoryMap {
+    pub fn add_entry(&mut self, entry: MemoryMapEntry) -> Result<(), ()> {
+        if (self.num_entries as usize) >= MAX_MEMORY_MAP_ENTRIES {
+            return Err(());
+        }
+
+        self.entries[self.num_entries as usize] = entry;
+        self.num_entries += 1;
+        Ok(())
+    }
+
+    pub fn entries(&self) -> &[MemoryMapEntry] {
+        &self.entries[0..(self.num_entries as usize)]
+    }
+}
+
+impl Default for MemoryMap {
+    fn default() -> Self {
+        MemoryMap { num_entries: 0, entries: [Default::default(); MAX_MEMORY_MAP_ENTRIES] }
+    }
 }
 
 #[derive(Clone, Copy, Debug)]
@@ -56,11 +77,28 @@ pub enum MemoryType {
     BootInfo,
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Copy, Debug)]
 #[repr(C)]
 pub struct MemoryMapEntry {
-    pub range: Range<usize>,
+    pub start: PhysicalAddress,
+    pub size: usize,
     pub memory_type: MemoryType,
+}
+
+impl MemoryMapEntry {
+    pub fn address_range(&self) -> Range<PhysicalAddress> {
+        self.start..(self.start + self.size)
+    }
+}
+
+impl Default for MemoryMapEntry {
+    fn default() -> Self {
+        MemoryMapEntry {
+            start: PhysicalAddress::new(0x0).unwrap(),
+            size: 0,
+            memory_type: MemoryType::Conventional,
+        }
+    }
 }
 
 pub const MAX_LOADED_IMAGES: usize = 256;
@@ -71,6 +109,12 @@ pub struct LoadedImages {
     pub images: [LoadedImage; MAX_LOADED_IMAGES],
 }
 
+impl Default for LoadedImages {
+    fn default() -> Self {
+        LoadedImages { num_images: 0, images: [Default::default(); MAX_LOADED_IMAGES] }
+    }
+}
+
 /// This is one less than a power-of-two, because then it's aligned when placed after the length byte.
 pub const MAX_IMAGE_NAME_LENGTH: usize = 31;
 pub const MAX_IMAGE_LOADED_SEGMENTS: usize = 3;
@@ -79,7 +123,7 @@ pub const MAX_CAPABILITY_STREAM_LENGTH: usize = 32;
 /// Describes an image loaded from the filesystem by the loader, as the kernel does not have the capabilities to do
 /// so. Images are expected to have three segments (`rodata` loaded as read-only, `data` loaded as read+write, and
 /// `text` loaded as read+execute).
-#[derive(Clone, Default, Debug)]
+#[derive(Clone, Copy, Default, Debug)]
 #[repr(C)]
 pub struct LoadedImage {
     pub name_length: u8,
@@ -88,7 +132,7 @@ pub struct LoadedImage {
     pub num_segments: u8,
     pub segments: [Segment; MAX_IMAGE_LOADED_SEGMENTS],
     /// The virtual address at which to start executing the image.
-    pub entry_point: usize,
+    pub entry_point: VirtualAddress,
     pub capability_stream: [u8; MAX_CAPABILITY_STREAM_LENGTH],
 }
 
@@ -108,20 +152,21 @@ impl LoadedImage {
     }
 }
 
-#[derive(Clone, Default, Debug)]
+#[derive(Clone, Copy, Default, Debug)]
 #[repr(C)]
 pub struct Segment {
-    pub physical_address: usize,
-    pub virtual_address: usize,
+    pub physical_address: PhysicalAddress,
+    pub virtual_address: VirtualAddress,
     /// In bytes.
     pub size: usize,
     pub writable: bool,
     pub executable: bool,
 }
 
+#[derive(Clone, Copy, Debug)]
 #[repr(C)]
 pub struct VideoModeInfo {
-    pub framebuffer_address: usize,
+    pub framebuffer_address: PhysicalAddress,
     pub pixel_format: PixelFormat,
     pub width: usize,
     pub height: usize,
@@ -129,6 +174,7 @@ pub struct VideoModeInfo {
     pub stride: usize,
 }
 
+#[derive(Clone, Copy, Debug)]
 #[repr(C)]
 pub enum PixelFormat {
     /// Each pixel is represented by 4 bytes, with the layout:

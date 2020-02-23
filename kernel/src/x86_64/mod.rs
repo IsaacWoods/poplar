@@ -79,16 +79,19 @@ impl Architecture for Arch {
     }
 }
 
-/// This is the entry point for the kernel on x86_64. It is called from the UEFI bootloader and
-/// initialises the system, then passes control into the common part of the kernel.
+/// This is the entry point for the kernel on x86_64. It is called from `efiloader`.
 #[no_mangle]
-pub extern "C" fn kmain(boot_info_ptr: *const BootInfo) -> ! {
+pub extern "C" fn kmain(boot_info: &BootInfo) -> ! {
     /*
      * Initialise the logger.
      */
     log::set_logger(&KernelLogger).unwrap();
     log::set_max_level(log::LevelFilter::Trace);
     info!("The Pebble kernel is running");
+
+    if boot_info.magic != boot_info_x86_64::BOOT_INFO_MAGIC {
+        panic!("Boot info magic is not correct!");
+    }
 
     let cpu_info = CpuInfo::new();
     info!(
@@ -260,7 +263,7 @@ fn create_framebuffer(video_info: &x86_64::boot::VideoInfo) {
     *crate::COMMON.get().backup_framebuffer.lock() = Some((memory_object.id, info));
 }
 
-fn load_task(arch: &Arch, scheduler: &mut Scheduler, image: &ImageInfo) {
+fn load_task(arch: &Arch, scheduler: &mut Scheduler, image: &LoadedImage) {
     let object_map = &mut crate::COMMON.get().object_map.write();
 
     // Make an AddressSpace for the image
@@ -281,9 +284,10 @@ fn load_task(arch: &Arch, scheduler: &mut Scheduler, image: &ImageInfo) {
     }
 
     // Create a Task for the image and add it to the scheduler's ready queue
-    let task =
-        KernelObject::Task(RwLock::new(box Task::from_image_info(&arch, address_space.clone(), image).unwrap()))
-            .add_to_map(object_map);
+    let task = KernelObject::Task(RwLock::new(
+        box Task::from_boot_info_image(&arch, address_space.clone(), image).unwrap(),
+    ))
+    .add_to_map(object_map);
     scheduler.add_task(task).unwrap();
 }
 
