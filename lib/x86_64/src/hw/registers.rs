@@ -125,7 +125,7 @@ pub fn read_msr(reg: u32) -> u64 {
          : "volatile"
         );
     }
-    ((high as u64) << 32 | (low as u64))
+    (high as u64) << 32 | (low as u64)
 }
 
 /// Write to a model-specific register. This is unsafe, because writing to certain MSRs can
