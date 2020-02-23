@@ -46,7 +46,7 @@ use x86_64::{
 };
 
 pub(self) static GDT: Mutex<Gdt> = Mutex::new(Gdt::new());
-pub(self) static ARCH: InitGuard<Arch> = InitGuard::uninit();
+pub static ARCH: InitGuard<Arch> = InitGuard::uninit();
 
 pub struct Arch {
     pub cpu_info: CpuInfo,
@@ -117,24 +117,24 @@ pub extern "C" fn kmain(boot_info: &BootInfo) -> ! {
     /*
      * Parse the static ACPI tables.
      */
-    let acpi_info = match boot_info.rsdp_address {
-        Some(rsdp_address) => {
-            let mut handler = PebbleAcpiHandler;
-            match acpi::parse_rsdp(&mut handler, usize::from(rsdp_address)) {
-                Ok(acpi_info) => Some(acpi_info),
+    // let acpi_info = match boot_info.rsdp_address {
+    //     Some(rsdp_address) => {
+    //         let mut handler = PebbleAcpiHandler;
+    //         match acpi::parse_rsdp(&mut handler, usize::from(rsdp_address)) {
+    //             Ok(acpi_info) => Some(acpi_info),
 
-                Err(err) => {
-                    error!("Failed to parse static ACPI tables: {:?}", err);
-                    warn!("Continuing. Some functionality may not work, or the kernel may panic!");
-                    None
-                }
-            }
-        }
+    //             Err(err) => {
+    //                 error!("Failed to parse static ACPI tables: {:?}", err);
+    //                 warn!("Continuing. Some functionality may not work, or the kernel may panic!");
+    //                 None
+    //             }
+    //         }
+    //     }
 
-        None => None,
-    };
+    //     None => None,
+    // };
 
-    info!("{:#?}", acpi_info);
+    // info!("{:#?}", acpi_info);
 
     /*
      * Set up the main kernel data structure, which also initializes the physical memory manager.
@@ -144,19 +144,19 @@ pub extern "C" fn kmain(boot_info: &BootInfo) -> ! {
      * full physical mapping in the correct location. Strange things will happen if this is not
      * true, so this process is a tad unsafe.
      */
-    ARCH.initialize(Arch {
-        cpu_info,
-        acpi_info,
-        aml_context: Mutex::new(AmlContext::new()),
-        physical_memory_manager: LockedPhysicalMemoryManager::new(boot_info),
-        kernel_page_table: Mutex::new(unsafe {
-            PageTable::from_frame(
-                Frame::starts_with(PhysicalAddress::new(read_control_reg!(cr3) as usize).unwrap()),
-                kernel_map::PHYSICAL_MAPPING_BASE,
-            )
-        }),
-        kernel_stack_bitmap: Mutex::new([0; 128]),
-    });
+    // ARCH.initialize(Arch {
+    //     cpu_info,
+    //     acpi_info,
+    //     aml_context: Mutex::new(AmlContext::new()),
+    //     physical_memory_manager: LockedPhysicalMemoryManager::new(boot_info),
+    //     kernel_page_table: Mutex::new(unsafe {
+    //         PageTable::from_frame(
+    //             Frame::starts_with(PhysicalAddress::new(read_control_reg!(cr3) as usize).unwrap()),
+    //             kernel_map::PHYSICAL_MAPPING_BASE,
+    //         )
+    //     }),
+    //     kernel_stack_bitmap: Mutex::new([0; 128]),
+    // });
 
     /*
      * Initialize the common kernel data structures too.
@@ -200,21 +200,22 @@ pub extern "C" fn kmain(boot_info: &BootInfo) -> ! {
     /*
      * Create the backup framebuffer if the bootloader switched to a graphics mode.
      */
-    if let Some(ref video_info) = boot_info.video_info {
-        create_framebuffer(video_info);
-    }
+    // if let Some(ref video_info) = boot_info.video_info {
+    //     create_framebuffer(video_info);
+    // }
 
     /*
      * Load all the images as initial tasks, and add them to the scheduler's ready list.
      */
-    let scheduler = &mut unsafe { per_cpu_data_mut() }.common_mut().scheduler;
-    info!("Adding {} initial tasks to the ready queue", boot_info.num_images);
-    for image in boot_info.images() {
-        load_task(&ARCH.get(), scheduler, image);
-    }
+    // let scheduler = &mut unsafe { per_cpu_data_mut() }.common_mut().scheduler;
+    // info!("Adding {} initial tasks to the ready queue", boot_info.num_images);
+    // for image in boot_info.images() {
+    //     load_task(&ARCH.get(), scheduler, image);
+    // }
 
     info!("Dropping to usermode");
-    scheduler.drop_to_userspace(&ARCH.get())
+    // scheduler.drop_to_userspace(&ARCH.get())
+    loop {}
 }
 
 fn create_framebuffer(video_info: &x86_64::boot::VideoInfo) {
