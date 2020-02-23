@@ -1,10 +1,15 @@
 use crate::LoaderError;
 use log::warn;
+use x86_64::memory::KIBIBYTES_TO_BYTES;
+
+const DEFAULT_KERNEL_HEAP_SIZE: usize = 200 * KIBIBYTES_TO_BYTES;
 
 pub struct CommandLine<'a> {
     pub volume_label: Result<&'a str, LoaderError>,
     pub kernel_path: Result<&'a str, LoaderError>,
     pub graphics_mode: Option<GraphicsMode>,
+    /// The size of the kernel heap that should be allocated, in bytes.
+    pub kernel_heap_size: usize,
 }
 
 pub struct GraphicsMode {
@@ -18,6 +23,7 @@ impl<'a> CommandLine<'a> {
             volume_label: Err(LoaderError::NoBootVolume),
             kernel_path: Err(LoaderError::NoKernelPath),
             graphics_mode: None,
+            kernel_heap_size: DEFAULT_KERNEL_HEAP_SIZE,
         };
 
         /*

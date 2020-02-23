@@ -17,6 +17,8 @@ pub struct BootInfo {
     pub memory_map: MemoryMap,
     pub loaded_images: LoadedImages,
     pub video_mode: Option<VideoModeInfo>,
+    pub heap_address: VirtualAddress,
+    pub heap_size: usize,
 }
 
 pub const MAX_MEMORY_MAP_ENTRIES: usize = 64;

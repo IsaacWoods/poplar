@@ -38,6 +38,7 @@ pub const IMAGE_MEMORY_TYPE: MemoryType = MemoryType::custom(0x80000001);
 pub const PAGE_TABLE_MEMORY_TYPE: MemoryType = MemoryType::custom(0x80000002);
 pub const MEMORY_MAP_MEMORY_TYPE: MemoryType = MemoryType::custom(0x80000003);
 pub const BOOT_INFO_MEMORY_TYPE: MemoryType = MemoryType::custom(0x80000004);
+pub const KERNEL_HEAP_MEMORY_TYPE: MemoryType = MemoryType::custom(0x80000005);
 
 #[derive(Debug)]
 pub enum LoaderError {
@@ -134,6 +135,18 @@ fn main(image_handle: Handle, system_table: SystemTable<Boot>) -> Result<!, Load
         )
         .unwrap();
     boot_info.magic = boot_info_x86_64::BOOT_INFO_MAGIC;
+
+    /*
+     * Allocate the kernel heap.
+     */
+    allocate_and_map_heap(
+        system_table.boot_services(),
+        boot_info,
+        &mut next_safe_address,
+        command_line.kernel_heap_size,
+        &mut mapper,
+        &allocator,
+    )?;
 
     /*
      * After we've exited from the boot services, we are not able to use the ConsoleOut services, so we disable
@@ -258,6 +271,40 @@ where
     Ok(())
 }
 
+/// Allocate and map the kernel heap. This takes the current next safe virtual address, uses it for the heap, and
+/// updates it.
+fn allocate_and_map_heap<A>(
+    boot_services: &BootServices,
+    boot_info: &mut BootInfo,
+    next_safe_address: &mut VirtualAddress,
+    heap_size: usize,
+    mapper: &mut Mapper,
+    allocator: &A,
+) -> Result<(), LoaderError>
+where
+    A: FrameAllocator,
+{
+    assert!(heap_size % Size4KiB::SIZE == 0);
+    let frames_needed = Size4KiB::frames_needed(heap_size);
+    let physical_start = boot_services
+        .allocate_pages(AllocateType::AnyPages, KERNEL_HEAP_MEMORY_TYPE, frames_needed)
+        .unwrap_success();
+
+    mapper
+        .map_area_to(
+            *next_safe_address,
+            PhysicalAddress::new(physical_start as usize).unwrap(),
+            heap_size,
+            EntryFlags::WRITABLE | EntryFlags::NO_EXECUTE,
+            allocator,
+        )
+        .unwrap();
+
+    boot_info.heap_address = *next_safe_address;
+    boot_info.heap_size = heap_size;
+
+    *next_safe_address = (Page::<Size4KiB>::contains(*next_safe_address + heap_size) + 1).start_address;
+    Ok(())
 }
 
 fn find_volume(system_table: &SystemTable<Boot>, label: &str) -> Result<Handle, LoaderError> {

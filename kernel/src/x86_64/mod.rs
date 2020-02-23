@@ -111,16 +111,7 @@ pub extern "C" fn kmain(boot_info: &BootInfo) -> ! {
      */
     #[cfg(not(test))]
     unsafe {
-        crate::ALLOCATOR.lock().init(kernel_map::HEAP_START, kernel_map::HEAP_END);
-    }
-
-    /*
-     * Retrieve the `BootInfo` passed to us from the bootloader and make sure it has the correct
-     * magic number.
-     */
-    let boot_info = unsafe { &mut *(kernel_map::BOOT_INFO.mut_ptr::<BootInfo>()) };
-    if boot_info.magic != x86_64::boot::BOOT_INFO_MAGIC {
-        panic!("Boot info magic number is not correct!");
+        crate::ALLOCATOR.lock().init(boot_info.heap_address, boot_info.heap_size);
     }
 
     /*

@@ -23,11 +23,11 @@ impl HoleAllocator {
 
     /// Initialise the `HoleAllocator`. This should only be called once, and constructs the
     /// `HoleList` from the address range.
-    pub unsafe fn init(&mut self, heap_bottom: VirtualAddress, heap_top: VirtualAddress) {
+    pub unsafe fn init(&mut self, heap_bottom: VirtualAddress, heap_size: usize) {
         assert!(self.holes.is_none());
         self.heap_bottom = heap_bottom;
-        self.heap_size = usize::from(heap_top) - usize::from(self.heap_bottom);
-        self.holes = Some(HoleList::new(self.heap_bottom, self.heap_size));
+        self.heap_size = heap_size;
+        self.holes = Some(HoleList::new(self.heap_bottom, heap_size));
     }
 }
 
