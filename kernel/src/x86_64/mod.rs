@@ -144,19 +144,19 @@ pub extern "C" fn kmain(boot_info: &BootInfo) -> ! {
      * full physical mapping in the correct location. Strange things will happen if this is not
      * true, so this process is a tad unsafe.
      */
-    // ARCH.initialize(Arch {
-    //     cpu_info,
-    //     acpi_info,
-    //     aml_context: Mutex::new(AmlContext::new()),
-    //     physical_memory_manager: LockedPhysicalMemoryManager::new(boot_info),
-    //     kernel_page_table: Mutex::new(unsafe {
-    //         PageTable::from_frame(
-    //             Frame::starts_with(PhysicalAddress::new(read_control_reg!(cr3) as usize).unwrap()),
-    //             kernel_map::PHYSICAL_MAPPING_BASE,
-    //         )
-    //     }),
-    //     kernel_stack_bitmap: Mutex::new([0; 128]),
-    // });
+    ARCH.initialize(Arch {
+        cpu_info,
+        acpi_info,
+        aml_context: Mutex::new(AmlContext::new()),
+        physical_memory_manager: LockedPhysicalMemoryManager::new(boot_info),
+        kernel_page_table: Mutex::new(unsafe {
+            PageTable::from_frame(
+                Frame::starts_with(PhysicalAddress::new(read_control_reg!(cr3) as usize).unwrap()),
+                kernel_map::PHYSICAL_MAPPING_BASE,
+            )
+        }),
+        kernel_stack_bitmap: Mutex::new([0; 128]),
+    });
 
     /*
      * Initialize the common kernel data structures too.

@@ -4,12 +4,10 @@ mod buddy_allocator;
 pub mod userspace_map;
 
 use self::buddy_allocator::BuddyAllocator;
+use boot_info_x86_64::BootInfo;
 use core::ops::Range;
-use spin::Mutex;
-use x86_64::{
-    boot::BootInfo,
-    memory::{Frame, FrameAllocator},
-};
+use spin::{Mutex, MutexGuard};
+use x86_64::memory::{Frame, FrameAllocator};
 
 const BUDDY_ALLOCATOR_MAX_ORDER: usize = 10;
 

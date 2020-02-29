@@ -86,7 +86,8 @@ fn main(image_handle: Handle, system_table: SystemTable<Boot>) -> Result<!, Load
      * We create a set of page tables for the kernel. Because memory is identity-mapped in UEFI, we can act as
      * if we've placed the physical mapping at 0x0.
      */
-    let allocator = BootFrameAllocator::new(system_table.boot_services(), 64);
+    // TODO: this should be moved back down to like 64 when we implement map_area_to correctly
+    let allocator = BootFrameAllocator::new(system_table.boot_services(), 4096);
     let mut page_table = PageTable::new(allocator.allocate(), VirtualAddress::new(0x0));
     let mut mapper = page_table.mapper();
 
@@ -197,12 +198,14 @@ fn main(image_handle: Handle, system_table: SystemTable<Boot>) -> Result<!, Load
     unreachable!()
 }
 
-/// Process the final UEFI memory map when after we've exited boot services. We need to do two things with it:
+/// Process the final UEFI memory map when after we've exited boot services. We need to do three things with it:
 ///     * We need to identity-map anything that UEFI expects to stay in the same place, including the loader image
 ///       (the code that's currently running), and the UEFI runtime services. We also map the boot services, as
 ///       many implementations don't actually stop using them after the call to `ExitBootServices` as they should.
 ///     * We construct the memory map that will be passed to the kernel, which it uses to initialise its physical
 ///       memory manager. This is added directly to the already-allocated boot info.
+///     * Construct the physical memory mapping - we map the entirity of physical memory into the kernel address
+///       space to make it easy for the kernel to access any address it needs to.
 fn process_memory_map<A>(
     memory_map: MemoryMapIter<'_>,
     boot_info: &mut BootInfo,
@@ -214,7 +217,21 @@ where
 {
     use boot_info_x86_64::{MemoryMapEntry, MemoryType as BootInfoMemoryType};
 
+    /*
+     * To know how much physical memory to map, we keep track of the largest physical address that appears in
+     * the memory map.
+     */
+    let mut max_physical_address = 0x0;
+
     for entry in memory_map {
+        /*
+         * If this is the largest physical address we've seen, update it.
+         */
+        max_physical_address = usize::max(
+            max_physical_address,
+            entry.phys_start as usize + entry.page_count as usize * Size4KiB::SIZE,
+        );
+
         /*
          * Identity-map the entry in the kernel page tables, if needed.
          */
@@ -279,6 +296,21 @@ where
             _ => (),
         }
     }
+
+    /*
+     * Construct the physical memory mapping. We find the maximum physical address that the memory map contains,
+     * and map that much physical memory.
+     */
+    info!("Constructing physical mapping from 0x0 to {:#x}", max_physical_address);
+    mapper
+        .map_area_to(
+            boot_info_x86_64::kernel_map::PHYSICAL_MAPPING_BASE,
+            PhysicalAddress::new(0x0).unwrap(),
+            max_physical_address,
+            EntryFlags::WRITABLE | EntryFlags::NO_EXECUTE,
+            allocator,
+        )
+        .unwrap();
 
     Ok(())
 }
