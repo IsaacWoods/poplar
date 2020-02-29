@@ -419,52 +419,60 @@ impl<'a> Mapper<'a> {
     where
         A: FrameAllocator,
     {
-        /*
-         * TODO: this will actually be a little bit harder than we thought - we need to split it into three
-         * areas in the general worst case:
-         *     - an area of 4KiB pages at the start up to a 2MiB boundary
-         *     - an area of 2MiB pages in the middle
-         *     - an area of 4KiB pages at the end to take it to the end
-         */
         assert!(virtual_start.is_page_aligned::<Size4KiB>());
         assert!(physical_start.is_frame_aligned::<Size4KiB>());
         assert!(size % Size4KiB::SIZE == 0);
 
         /*
-         * We consider two frame sizes - 2MiB and 4KiB. Firstly, we work out how much (if any) can be mapped
-         * with 2MiB frames.
+         * Firstly, if the entire mapping is smaller than 2MiB, we simply map the entire thing with 4KiB pages.
          */
-        // let size_of_huge_area = pebble_util::math::align_down(size, Size2MiB::SIZE);
-        // let remaining_bytes = size % Size2MiB::SIZE;
-        // assert!(remaining_bytes % Size4KiB::SIZE == 0);
+        if size < Size2MiB::SIZE {
+            let pages =
+                Page::<Size4KiB>::starts_with(virtual_start)..Page::<Size4KiB>::starts_with(virtual_start + size);
+            let frames = Frame::<Size4KiB>::starts_with(physical_start)
+                ..Frame::<Size4KiB>::starts_with(physical_start + size);
+            self.map_range_to(pages, frames, flags, allocator)
+        } else {
+            /*
+             * If it's larger, we split into three areas: a prefix, a middle, and a suffix. The prefix and
+             * suffix are not aligned to 2MiB boundaries, and so must be mapped with 4KiB pages. The
+             * middle is, and so can be mapped with larger 2MiB pages.
+             */
+            let virtual_prefix_start = virtual_start;
+            let virtual_middle_start = virtual_start.align_up(Size2MiB::SIZE);
+            let virtual_middle_end = (virtual_start + size).align_down(Size2MiB::SIZE);
+            let virtual_suffix_end = virtual_start + size;
 
-        /*
-         * Map the part we can with 2MiB frames.
-         */
-        // if size_of_huge_area > 0 {
-        //     log::info!("Mapping {} bytes using large pages", size_of_huge_area);
-        //     let pages = Page::<Size2MiB>::starts_with(virtual_start)
-        //         ..Page::<Size2MiB>::starts_with(virtual_start + size_of_huge_area);
-        //     let frames = Frame::<Size2MiB>::starts_with(physical_start)
-        //         ..Frame::<Size2MiB>::starts_with(physical_start + size_of_huge_area);
-        //     self.map_range_to(pages, frames, flags, allocator)?;
-        // }
+            let physical_prefix_start = physical_start;
+            let physical_middle_start =
+                physical_prefix_start + (usize::from(virtual_middle_start) - usize::from(virtual_prefix_start));
+            let physical_middle_end =
+                physical_prefix_start + (usize::from(virtual_middle_end) - usize::from(virtual_prefix_start));
+            let physical_suffix_end = physical_start + size;
 
-        /*
-         * And now the rest with 4KiB frames.
-         */
-        let size_of_huge_area = 0;
-        let remaining_bytes = size;
-        if remaining_bytes > 0 {
-            log::info!("Mapping {} remaining bytes using 4KiB pages", remaining_bytes);
-            let start_page = Page::<Size4KiB>::starts_with(virtual_start + size_of_huge_area);
-            let end_page = Page::<Size4KiB>::starts_with(start_page.start_address + remaining_bytes);
-            let start_frame = Frame::<Size4KiB>::starts_with(physical_start + size_of_huge_area);
-            let end_frame = Frame::<Size4KiB>::starts_with(start_frame.start_address + remaining_bytes);
-            self.map_range_to(start_page..end_page, start_frame..end_frame, flags, allocator)?;
+            // Map the prefix
+            let prefix_pages = Page::<Size4KiB>::starts_with(virtual_prefix_start)
+                ..Page::<Size4KiB>::starts_with(virtual_middle_start);
+            let prefix_frames = Frame::<Size4KiB>::starts_with(physical_prefix_start)
+                ..Frame::<Size4KiB>::starts_with(physical_middle_start);
+            self.map_range_to(prefix_pages, prefix_frames, flags, allocator)?;
+
+            // Map the middle
+            let middle_pages = Page::<Size2MiB>::starts_with(virtual_middle_start)
+                ..Page::<Size2MiB>::starts_with(virtual_middle_end);
+            let middle_frames = Frame::<Size2MiB>::starts_with(physical_middle_start)
+                ..Frame::<Size2MiB>::starts_with(physical_middle_end);
+            self.map_range_to(middle_pages, middle_frames, flags, allocator)?;
+
+            // Map the suffix
+            let suffix_pages = Page::<Size4KiB>::starts_with(virtual_middle_end)
+                ..Page::<Size4KiB>::starts_with(virtual_suffix_end);
+            let suffix_frames = Frame::<Size4KiB>::starts_with(physical_middle_end)
+                ..Frame::<Size4KiB>::starts_with(physical_suffix_end);
+            self.map_range_to(suffix_pages, suffix_frames, flags, allocator)?;
+
+            Ok(())
         }
-
-        Ok(())
     }
 
     /// Unmap the given page, returning the `Frame` it was mapped to so the caller can choose to

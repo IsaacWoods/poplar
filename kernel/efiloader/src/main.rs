@@ -86,8 +86,7 @@ fn main(image_handle: Handle, system_table: SystemTable<Boot>) -> Result<!, Load
      * We create a set of page tables for the kernel. Because memory is identity-mapped in UEFI, we can act as
      * if we've placed the physical mapping at 0x0.
      */
-    // TODO: this should be moved back down to like 64 when we implement map_area_to correctly
-    let allocator = BootFrameAllocator::new(system_table.boot_services(), 4096);
+    let allocator = BootFrameAllocator::new(system_table.boot_services(), 64);
     let mut page_table = PageTable::new(allocator.allocate(), VirtualAddress::new(0x0));
     let mut mapper = page_table.mapper();
 
@@ -99,15 +98,11 @@ fn main(image_handle: Handle, system_table: SystemTable<Boot>) -> Result<!, Load
         &allocator,
     )?;
     let mut next_safe_address = kernel_info.next_safe_address;
-    info!("Loaded kernel! Next safe address is {:#x}", next_safe_address);
 
     let memory_map_size = system_table.boot_services().memory_map_size();
-    info!("Memory map is {} bytes long", memory_map_size);
-
-    let pages_needed = Size4KiB::frames_needed(memory_map_size);
     let memory_map_address = system_table
         .boot_services()
-        .allocate_pages(AllocateType::AnyPages, MEMORY_MAP_MEMORY_TYPE, pages_needed)
+        .allocate_pages(AllocateType::AnyPages, MEMORY_MAP_MEMORY_TYPE, Size4KiB::frames_needed(memory_map_size))
         .unwrap_success();
     let memory_map_buffer = unsafe { slice::from_raw_parts_mut(memory_map_address as *mut u8, memory_map_size) };
 

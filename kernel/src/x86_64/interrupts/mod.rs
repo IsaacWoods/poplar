@@ -18,7 +18,7 @@ use x86_64::{
         local_apic::LocalApic,
         registers::write_msr,
     },
-    memory::{EntryFlags, Frame, Page, PhysicalAddress},
+    memory::PhysicalAddress,
 };
 
 global_asm!(include_str!("syscall.s"));
