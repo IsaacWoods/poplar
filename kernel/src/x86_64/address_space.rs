@@ -88,10 +88,10 @@ impl AddressSpace {
             let mut mapper = self.table.mapper();
             let memory_obj_info = memory_object.object.memory_object().expect("Not a MemoryObject").read();
 
-            let start_page = Page::starts_with(memory_obj_info.virtual_address);
+            let start_page = Page::<Size4KiB>::starts_with(memory_obj_info.virtual_address);
             let pages = start_page..(start_page + (memory_obj_info.size / Size4KiB::SIZE));
 
-            let start_frame = Frame::starts_with(memory_obj_info.physical_address);
+            let start_frame = Frame::<Size4KiB>::starts_with(memory_obj_info.physical_address);
             let frames = start_frame..(start_frame + (memory_obj_info.size / Size4KiB::SIZE));
 
             /*
@@ -104,6 +104,7 @@ impl AddressSpace {
                 }
             }
 
+            // TODO: move to map_area_to to use better mapping algorithm
             for (page, frame) in pages.zip(frames) {
                 mapper.map_to(page, frame, memory_obj_info.flags, &ARCH.get().physical_memory_manager).unwrap();
             }

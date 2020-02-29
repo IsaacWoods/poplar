@@ -3,7 +3,7 @@
 pub mod kernel_map;
 
 use core::ops::Range;
-use x86_64::memory::{PhysicalAddress, VirtualAddress};
+use x86_64::memory::{Frame, PhysicalAddress, VirtualAddress};
 
 pub const BOOT_INFO_MAGIC: u32 = 0xcafebabe;
 
@@ -55,7 +55,7 @@ impl Default for MemoryMap {
     }
 }
 
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
 #[repr(C)]
 pub enum MemoryType {
     /// Memory that can be used freely by the OS.
@@ -93,6 +93,10 @@ pub struct MemoryMapEntry {
 impl MemoryMapEntry {
     pub fn address_range(&self) -> Range<PhysicalAddress> {
         self.start..(self.start + self.size)
+    }
+
+    pub fn frame_range(&self) -> Range<Frame> {
+        Frame::starts_with(self.start)..Frame::starts_with(self.start + self.size)
     }
 }
 

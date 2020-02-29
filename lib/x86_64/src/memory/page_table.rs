@@ -325,66 +325,61 @@ impl<'a> Mapper<'a> {
         Ok(frame)
     }
 
-    pub fn map_to<A>(
+    pub fn map_to<A, S>(
         &mut self,
-        page: Page<Size4KiB>,
-        frame: Frame<Size4KiB>,
+        page: Page<S>,
+        frame: Frame<S>,
         flags: EntryFlags,
         allocator: &A,
     ) -> Result<(), MapError>
     where
         A: FrameAllocator,
+        S: FrameSize,
     {
         /*
          * If a page should be accessible from userspace, all the parent paging structures for
          * that page must also be marked user-accessible.
          */
         let user_accessible = flags.contains(EntryFlags::USER_ACCESSIBLE);
-        let p1 = self
-            .p4
-            .next_table_create(page.start_address.p4_index(), user_accessible, allocator, self.physical_base)?
-            .next_table_create(page.start_address.p3_index(), user_accessible, allocator, self.physical_base)?
-            .next_table_create(page.start_address.p2_index(), user_accessible, allocator, self.physical_base)?;
+        if S::SIZE == Size4KiB::SIZE {
+            let p1 = self
+                .p4
+                .next_table_create(page.start_address.p4_index(), user_accessible, allocator, self.physical_base)?
+                .next_table_create(page.start_address.p3_index(), user_accessible, allocator, self.physical_base)?
+                .next_table_create(
+                    page.start_address.p2_index(),
+                    user_accessible,
+                    allocator,
+                    self.physical_base,
+                )?;
 
-        if !p1[page.start_address.p1_index()].is_unused() {
-            return Err(MapError::AlreadyMapped);
+            if !p1[page.start_address.p1_index()].is_unused() {
+                return Err(MapError::AlreadyMapped);
+            }
+
+            p1[page.start_address.p1_index()].set(frame.start_address, flags | EntryFlags::default());
+        } else if S::SIZE == Size2MiB::SIZE {
+            let p2 = self
+                .p4
+                .next_table_create(page.start_address.p4_index(), user_accessible, allocator, self.physical_base)?
+                .next_table_create(
+                    page.start_address.p3_index(),
+                    user_accessible,
+                    allocator,
+                    self.physical_base,
+                )?;
+
+            if !p2[page.start_address.p2_index()].is_unused() {
+                return Err(MapError::AlreadyMapped);
+            }
+
+            p2[page.start_address.p2_index()]
+                .set(frame.start_address, flags | EntryFlags::HUGE_PAGE | EntryFlags::default());
+        } else {
+            // XXX: this needs to be implemented for any future implemented page sizes (e.g. 1GiB)
+            unimplemented!()
         }
 
-        p1[page.start_address.p1_index()].set(frame.start_address, flags | EntryFlags::default());
-        // TODO: we could return a marker that the TLB must be flushed to avoid doing it in certain
-        // instances when we e.g know we're going to change CR3 before accessing the new mappings.
-        // This is fine for now though
-        tlb::invalidate_page(page.start_address);
-        Ok(())
-    }
-
-    #[allow(non_snake_case)]
-    pub fn map_to_2MiB<A>(
-        &mut self,
-        page: Page<Size2MiB>,
-        frame: Frame<Size2MiB>,
-        flags: EntryFlags,
-        allocator: &A,
-    ) -> Result<(), MapError>
-    where
-        A: FrameAllocator,
-    {
-        /*
-         * If a page should be accessible from userspace, all the parent paging structures for
-         * that page must also be marked user-accessible.
-         */
-        let user_accessible = flags.contains(EntryFlags::USER_ACCESSIBLE);
-        let p2 = self
-            .p4
-            .next_table_create(page.start_address.p4_index(), user_accessible, allocator, self.physical_base)?
-            .next_table_create(page.start_address.p3_index(), user_accessible, allocator, self.physical_base)?;
-
-        if !p2[page.start_address.p2_index()].is_unused() {
-            return Err(MapError::AlreadyMapped);
-        }
-
-        p2[page.start_address.p2_index()]
-            .set(frame.start_address, flags | EntryFlags::HUGE_PAGE | EntryFlags::default());
         // TODO: we could return a marker that the TLB must be flushed to avoid doing it in certain
         // instances when we e.g know we're going to change CR3 before accessing the new mappings.
         // This is fine for now though
@@ -393,15 +388,16 @@ impl<'a> Mapper<'a> {
     }
 
     /// Map a range of pages to a range of frames, all with the same flags.
-    pub fn map_range_to<A>(
+    pub fn map_range_to<A, S>(
         &mut self,
-        pages: Range<Page>,
-        frames: Range<Frame>,
+        pages: Range<Page<S>>,
+        frames: Range<Frame<S>>,
         flags: EntryFlags,
         allocator: &A,
     ) -> Result<(), MapError>
     where
         A: FrameAllocator,
+        S: FrameSize,
     {
         for (page, frame) in pages.zip(frames) {
             self.map_to(page, frame, flags, allocator)?;
@@ -411,7 +407,7 @@ impl<'a> Mapper<'a> {
     }
 
     /// Map `size` bytes at `virtual_start` to `physical_start` with the given set of flags. `size` must be a
-    /// multiple of the smallest frame size.
+    /// multiple of the smallest frame size, but as much of it will be mapped with larger frames as possible.
     pub fn map_area_to<A>(
         &mut self,
         virtual_start: VirtualAddress,
@@ -423,13 +419,52 @@ impl<'a> Mapper<'a> {
     where
         A: FrameAllocator,
     {
+        /*
+         * TODO: this will actually be a little bit harder than we thought - we need to split it into three
+         * areas in the general worst case:
+         *     - an area of 4KiB pages at the start up to a 2MiB boundary
+         *     - an area of 2MiB pages in the middle
+         *     - an area of 4KiB pages at the end to take it to the end
+         */
         assert!(virtual_start.is_page_aligned::<Size4KiB>());
         assert!(physical_start.is_frame_aligned::<Size4KiB>());
         assert!(size % Size4KiB::SIZE == 0);
 
-        let pages = Page::starts_with(virtual_start)..Page::starts_with(virtual_start + size);
-        let frames = Frame::starts_with(physical_start)..Frame::starts_with(physical_start + size);
-        self.map_range_to(pages, frames, flags, allocator)
+        /*
+         * We consider two frame sizes - 2MiB and 4KiB. Firstly, we work out how much (if any) can be mapped
+         * with 2MiB frames.
+         */
+        // let size_of_huge_area = pebble_util::math::align_down(size, Size2MiB::SIZE);
+        // let remaining_bytes = size % Size2MiB::SIZE;
+        // assert!(remaining_bytes % Size4KiB::SIZE == 0);
+
+        /*
+         * Map the part we can with 2MiB frames.
+         */
+        // if size_of_huge_area > 0 {
+        //     log::info!("Mapping {} bytes using large pages", size_of_huge_area);
+        //     let pages = Page::<Size2MiB>::starts_with(virtual_start)
+        //         ..Page::<Size2MiB>::starts_with(virtual_start + size_of_huge_area);
+        //     let frames = Frame::<Size2MiB>::starts_with(physical_start)
+        //         ..Frame::<Size2MiB>::starts_with(physical_start + size_of_huge_area);
+        //     self.map_range_to(pages, frames, flags, allocator)?;
+        // }
+
+        /*
+         * And now the rest with 4KiB frames.
+         */
+        let size_of_huge_area = 0;
+        let remaining_bytes = size;
+        if remaining_bytes > 0 {
+            log::info!("Mapping {} remaining bytes using 4KiB pages", remaining_bytes);
+            let start_page = Page::<Size4KiB>::starts_with(virtual_start + size_of_huge_area);
+            let end_page = Page::<Size4KiB>::starts_with(start_page.start_address + remaining_bytes);
+            let start_frame = Frame::<Size4KiB>::starts_with(physical_start + size_of_huge_area);
+            let end_frame = Frame::<Size4KiB>::starts_with(start_frame.start_address + remaining_bytes);
+            self.map_range_to(start_page..end_page, start_frame..end_frame, flags, allocator)?;
+        }
+
+        Ok(())
     }
 
     /// Unmap the given page, returning the `Frame` it was mapped to so the caller can choose to

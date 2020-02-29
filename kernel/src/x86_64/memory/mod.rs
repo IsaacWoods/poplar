@@ -27,9 +27,9 @@ impl LockedPhysicalMemoryManager {
     pub fn new(boot_info: &BootInfo) -> LockedPhysicalMemoryManager {
         let mut buddy_allocator = BuddyAllocator::new(BUDDY_ALLOCATOR_MAX_ORDER);
 
-        for entry in boot_info.memory_entries() {
-            if entry.memory_type == x86_64::boot::MemoryType::Conventional {
-                buddy_allocator.add_range(entry.area.clone());
+        for entry in boot_info.memory_map.entries() {
+            if entry.memory_type == boot_info_x86_64::MemoryType::Conventional {
+                buddy_allocator.add_range(entry.frame_range());
             }
         }
 
