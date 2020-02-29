@@ -19,6 +19,9 @@ pub struct BootInfo {
     pub video_mode: Option<VideoModeInfo>,
     pub heap_address: VirtualAddress,
     pub heap_size: usize,
+
+    /// The physical address of the RSDP, the first ACPI table.
+    pub rsdp_address: Option<PhysicalAddress>,
 }
 
 pub const MAX_MEMORY_MAP_ENTRIES: usize = 64;

@@ -137,6 +137,18 @@ fn main(image_handle: Handle, system_table: SystemTable<Boot>) -> Result<!, Load
     boot_info.magic = boot_info_x86_64::BOOT_INFO_MAGIC;
 
     /*
+     * Find the RSDP address and add it to the boot info.
+     */
+    boot_info.rsdp_address = system_table.config_table().iter().find_map(|entry| {
+        use uefi::table::cfg::{ACPI2_GUID, ACPI_GUID};
+        if entry.guid == ACPI_GUID || entry.guid == ACPI2_GUID {
+            Some(PhysicalAddress::new(entry.address as usize).unwrap())
+        } else {
+            None
+        }
+    });
+
+    /*
      * Allocate the kernel heap.
      */
     allocate_and_map_heap(

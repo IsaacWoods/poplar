@@ -117,24 +117,24 @@ pub extern "C" fn kmain(boot_info: &BootInfo) -> ! {
     /*
      * Parse the static ACPI tables.
      */
-    // let acpi_info = match boot_info.rsdp_address {
-    //     Some(rsdp_address) => {
-    //         let mut handler = PebbleAcpiHandler;
-    //         match acpi::parse_rsdp(&mut handler, usize::from(rsdp_address)) {
-    //             Ok(acpi_info) => Some(acpi_info),
+    let acpi_info = match boot_info.rsdp_address {
+        Some(rsdp_address) => {
+            let mut handler = PebbleAcpiHandler;
+            match acpi::parse_rsdp(&mut handler, usize::from(rsdp_address)) {
+                Ok(acpi_info) => Some(acpi_info),
 
-    //             Err(err) => {
-    //                 error!("Failed to parse static ACPI tables: {:?}", err);
-    //                 warn!("Continuing. Some functionality may not work, or the kernel may panic!");
-    //                 None
-    //             }
-    //         }
-    //     }
+                Err(err) => {
+                    error!("Failed to parse static ACPI tables: {:?}", err);
+                    warn!("Continuing. Some functionality may not work, or the kernel may panic!");
+                    None
+                }
+            }
+        }
 
-    //     None => None,
-    // };
+        None => None,
+    };
 
-    // info!("{:#?}", acpi_info);
+    info!("{:#?}", acpi_info);
 
     /*
      * Set up the main kernel data structure, which also initializes the physical memory manager.
