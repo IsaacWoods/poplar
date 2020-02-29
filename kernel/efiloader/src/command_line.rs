@@ -3,6 +3,7 @@ use log::warn;
 use x86_64::memory::KIBIBYTES_TO_BYTES;
 
 const DEFAULT_KERNEL_HEAP_SIZE: usize = 200 * KIBIBYTES_TO_BYTES;
+const MAX_IMAGES: usize = 32;
 
 pub struct CommandLine<'a> {
     pub volume_label: Result<&'a str, LoaderError>,
@@ -10,6 +11,9 @@ pub struct CommandLine<'a> {
     pub graphics_mode: Option<GraphicsMode>,
     /// The size of the kernel heap that should be allocated, in bytes.
     pub kernel_heap_size: usize,
+    pub num_images: usize,
+    /// A list of the images we've been asked to load, in the form `(name, path)`
+    pub images: [Option<(&'a str, &'a str)>; MAX_IMAGES],
 }
 
 pub struct GraphicsMode {
@@ -24,6 +28,8 @@ impl<'a> CommandLine<'a> {
             kernel_path: Err(LoaderError::NoKernelPath),
             graphics_mode: None,
             kernel_heap_size: DEFAULT_KERNEL_HEAP_SIZE,
+            num_images: 0,
+            images: [None; MAX_IMAGES],
         };
 
         /*
@@ -103,10 +109,28 @@ impl<'a> CommandLine<'a> {
                     }
                     other => warn!("Unsupported graphics kernel command line option: '{}'. Ignoring.", other),
                 },
+                "image" => {
+                    let name = extra.expect("An image must have a name, supplied as 'image.your_name_here'");
+                    let path = value.expect("You've specified an image without a path!");
+                    command_line.add_image(name, path);
+                }
                 _ => warn!("Unsupported kernel command line option with root: '{}'. Ignoring.", root),
             }
         }
 
         command_line
+    }
+
+    pub fn images(&self) -> &[Option<(&'a str, &'a str)>] {
+        &self.images[0..self.num_images]
+    }
+
+    fn add_image(&mut self, name: &'a str, path: &'a str) {
+        if self.num_images >= MAX_IMAGES {
+            panic!("Too many images supplied to loader!");
+        }
+
+        self.images[self.num_images] = Some((name, path));
+        self.num_images += 1;
     }
 }

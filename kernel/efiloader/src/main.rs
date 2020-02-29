@@ -40,7 +40,7 @@ pub const MEMORY_MAP_MEMORY_TYPE: MemoryType = MemoryType::custom(0x80000003);
 pub const BOOT_INFO_MEMORY_TYPE: MemoryType = MemoryType::custom(0x80000004);
 pub const KERNEL_HEAP_MEMORY_TYPE: MemoryType = MemoryType::custom(0x80000005);
 
-#[derive(Debug)]
+#[derive(Clone, Copy, Debug)]
 pub enum LoaderError {
     NoKernelPath,
     NoBootVolume,
@@ -155,6 +155,18 @@ fn main(image_handle: Handle, system_table: SystemTable<Boot>) -> Result<!, Load
         &mut mapper,
         &allocator,
     )?;
+
+    /*
+     * Load all the images we've been asked to.
+     */
+    for image in command_line.images() {
+        let (name, path) = image.unwrap();
+        info!("Loading image called '{}' from path '{}'", name, path);
+        boot_info
+            .loaded_images
+            .add_image(image::load_image(system_table.boot_services(), fs_handle, path)?)
+            .unwrap();
+    }
 
     /*
      * After we've exited from the boot services, we are not able to use the ConsoleOut services, so we disable

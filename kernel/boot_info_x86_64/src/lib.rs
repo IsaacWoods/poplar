@@ -118,6 +118,22 @@ pub struct LoadedImages {
     pub images: [LoadedImage; MAX_LOADED_IMAGES],
 }
 
+impl LoadedImages {
+    pub fn images(&self) -> &[LoadedImage] {
+        &self.images[0..self.num_images as usize]
+    }
+
+    pub fn add_image(&mut self, image: LoadedImage) -> Result<(), ()> {
+        if self.num_images as usize >= MAX_LOADED_IMAGES {
+            return Err(());
+        }
+
+        self.images[self.num_images as usize] = image;
+        self.num_images += 1;
+        Ok(())
+    }
+}
+
 impl Default for LoadedImages {
     fn default() -> Self {
         LoadedImages { num_images: 0, images: [Default::default(); MAX_LOADED_IMAGES] }

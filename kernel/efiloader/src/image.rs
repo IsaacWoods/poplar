@@ -106,9 +106,7 @@ pub fn load_image(
     for segment in elf.segments() {
         match segment.segment_type() {
             SegmentType::Load if segment.mem_size > 0 => {
-                log::info!("Loading segment: {:?}", segment);
                 let segment = load_segment(boot_services, segment, crate::IMAGE_MEMORY_TYPE, &elf)?;
-
                 match image_data.add_segment(segment) {
                     Ok(()) => (),
                     Err(()) => panic!("Image at '{}' has too many load segments!", path),

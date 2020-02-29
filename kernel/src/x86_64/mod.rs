@@ -207,15 +207,14 @@ pub extern "C" fn kmain(boot_info: &BootInfo) -> ! {
     /*
      * Load all the images as initial tasks, and add them to the scheduler's ready list.
      */
-    // let scheduler = &mut unsafe { per_cpu_data_mut() }.common_mut().scheduler;
-    // info!("Adding {} initial tasks to the ready queue", boot_info.num_images);
-    // for image in boot_info.images() {
-    //     load_task(&ARCH.get(), scheduler, image);
-    // }
+    let scheduler = &mut unsafe { per_cpu_data_mut() }.common_mut().scheduler;
+    info!("Adding {} initial tasks to the ready queue", boot_info.loaded_images.num_images);
+    for image in boot_info.loaded_images.images() {
+        load_task(&ARCH.get(), scheduler, image);
+    }
 
     info!("Dropping to usermode");
-    // scheduler.drop_to_userspace(&ARCH.get())
-    loop {}
+    scheduler.drop_to_userspace(&ARCH.get())
 }
 
 fn create_framebuffer(video_info: &x86_64::boot::VideoInfo) {
