@@ -86,8 +86,13 @@ where
         None => panic!("Kernel does not have a '_stack_top' symbol!"),
     };
 
-    // TODO: unmap guard page
-    // TODO: deal with stack
+    // Unmap the stack guard page
+    let guard_page_address = match elf.symbols().find(|symbol| symbol.name(&elf) == Some("_guard_page")) {
+        Some(symbol) => VirtualAddress::new(symbol.value as usize),
+        None => panic!("Kernel does not have a '_guard_page' symbol!"),
+    };
+    assert!(guard_page_address.is_page_aligned::<Size4KiB>());
+    mapper.unmap(Page::starts_with(guard_page_address));
 
     boot_services.free_pool(pool_addr).unwrap_success();
     Ok(KernelInfo { entry_point, stack_top, next_safe_address })
