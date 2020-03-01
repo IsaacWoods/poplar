@@ -263,8 +263,9 @@ fn load_task(arch: &Arch, scheduler: &mut Scheduler, image: &LoadedImage) {
 
     // Make a MemoryObject for each segment and map it into the AddressSpace
     for segment in image.segments() {
-        let memory_object = KernelObject::MemoryObject(RwLock::new(box MemoryObject::from_boot_info(&segment)))
-            .add_to_map(object_map);
+        let memory_object =
+            KernelObject::MemoryObject(RwLock::new(box MemoryObject::from_boot_info(&segment, true)))
+                .add_to_map(object_map);
         address_space
             .object
             .address_space()

@@ -1,4 +1,4 @@
-use super::{memory::userspace_map, per_cpu::per_cpu_data_mut, Arch};
+use super::{address_space::TaskUserStack, memory::KernelStack, per_cpu::per_cpu_data_mut, Arch};
 use crate::object::{
     common::{CommonTask, TaskState},
     WrappedKernelObject,
@@ -6,7 +6,8 @@ use crate::object::{
 use alloc::{string::String, vec::Vec};
 use core::{mem, pin::Pin, str};
 use libpebble::caps::Capability;
-use x86_64::{boot::ImageInfo, memory::VirtualAddress};
+use log::info;
+use x86_64::memory::VirtualAddress;
 
 global_asm!(include_str!("task.s"));
 extern "C" {
@@ -72,9 +73,8 @@ pub struct Task {
     pub state: TaskState,
     pub capabilities: Vec<Capability>,
 
-    pub user_stack_top: VirtualAddress,
-    pub kernel_stack_top: VirtualAddress,
-    pub stack_size: usize,
+    pub user_stack: TaskUserStack,
+    pub kernel_stack: KernelStack,
 
     /*
      * We only keep track of the kernel stack pointer. The user stack pointer is saved on the
@@ -96,27 +96,33 @@ impl Task {
         address_space: WrappedKernelObject<Arch>,
         image: &boot_info_x86_64::LoadedImage,
     ) -> Result<Task, TaskCreationError> {
-        let stack_set = address_space
+        const KERNEL_STACK_INITIAL_SIZE: usize = 4 * x86_64::memory::KIBIBYTES_TO_BYTES;
+
+        let user_stack = address_space
             .object
             .address_space()
             .ok_or(TaskCreationError::NotAnAddressSpace)?
             .write()
-            .add_stack_set(userspace_map::INITIAL_STACK_SIZE, &arch.physical_memory_manager)
+            .add_stack(&arch.physical_memory_manager)
             .ok_or(TaskCreationError::NotEnoughStackSlots)?;
 
+        let kernel_stack = crate::x86_64::ARCH
+            .get()
+            .physical_memory_manager
+            .get_kernel_stack(KERNEL_STACK_INITIAL_SIZE)
+            .expect("We've run out of kernel stack slots!");
 
         let mut task = Task {
             name: String::from(image.name()),
             address_space,
             state: TaskState::Ready,
             capabilities: decode_capabilities(&image.capability_stream)?,
-            user_stack_top: stack_set.user_slot_top,
-            kernel_stack_top: stack_set.kernel_slot_top,
-            stack_size: userspace_map::INITIAL_STACK_SIZE,
-            kernel_stack_pointer: stack_set.kernel_slot_top,
+            user_stack,
+            kernel_stack,
+            kernel_stack_pointer: kernel_stack.top,
         };
 
-        task.initialize_kernel_stack(image.entry_point, stack_set.user_slot_top);
+        task.initialize_kernel_stack(image.entry_point, user_stack.top);
         Ok(task)
     }
 

@@ -15,13 +15,6 @@
 
 use x86_64::memory::{PhysicalAddress, VirtualAddress, MEBIBYTES_TO_BYTES};
 
-/*
- * There is an imposed maximum number of tasks because of the simple way we're allocating task kernel stacks.
- * This is currently 65536 with a task kernel stack size of 2MiB.
- */
-pub const STACK_SLOT_SIZE: usize = 2 * MEBIBYTES_TO_BYTES;
-pub const MAX_TASKS: usize = 65536;
-
 pub const KERNEL_P4_ENTRY: usize = 511;
 pub const KERNEL_ADDRESS_SPACE_START: VirtualAddress = VirtualAddress::new(0xffff_ff80_0000_0000);
 
@@ -38,6 +31,12 @@ pub fn physical_to_virtual(address: PhysicalAddress) -> VirtualAddress {
 }
 
 pub const KERNEL_STACKS_BASE: VirtualAddress = VirtualAddress::new(0xffff_ffdf_8000_0000);
+/*
+ * There is an imposed maximum number of tasks because of the simple way we're allocating task kernel stacks.
+ * This is currently 65536 with a task kernel stack size of 2MiB.
+ */
+pub const STACK_SLOT_SIZE: usize = 2 * MEBIBYTES_TO_BYTES;
+pub const MAX_TASKS: usize = 65536;
 
 /// The kernel starts at -2GiB. The kernel image is loaded directly at this address, and the following space until
 /// the top of memory is managed dynamically and contains the boot info structures, memory map, and kernel heap.

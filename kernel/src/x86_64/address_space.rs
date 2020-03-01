@@ -3,7 +3,7 @@ use crate::object::WrappedKernelObject;
 use alloc::vec::Vec;
 use boot_info_x86_64::kernel_map;
 use libpebble::syscall::MemoryObjectError;
-use pebble_util::bitmap::{Bitmap, BitmapArray};
+use pebble_util::bitmap::Bitmap;
 use x86_64::memory::{
     EntryFlags,
     Frame,
@@ -26,28 +26,19 @@ pub struct AddressSpace {
     pub table: PageTable,
     state: State,
     memory_objects: Vec<WrappedKernelObject<Arch>>,
-    /* TODO: we no longer allocate an area for each AddressSpace, so we need to rework how this works
-     * /// Bitmap of allocated stacks in this address space. Each bit in this bitmap represents the
-     * /// corresponding stack slot for both the usermode and kernel stacks. Each address space can
-     * /// contain 64 tasks, so a `u64` is the perfect size.
-     * stack_bitmap: u64,
-     * /// This is the area of the kernel address space that this address space is free to allocate
-     * /// for use as kernel stacks for tasks. It is up to the address space to manage mappings in
-     * /// this area of virtual memory. Its use is tracked by `stack_bitmap` in the same way as user
-     * /// stacks are in the userspace address space.
-     * kernel_stack_area_base: VirtualAddress, */
+
+    /// We allocate 64 'slots' for task usermode stacks (each of which is 2MiB in size). The task is free to use
+    /// less of this space, but can only grow their stack to 2MiB.
+    task_user_stack_bitmap: u64,
 }
 
-/// A pair of stacks - one for the kernel and one for userspace. Both addresses will start aligned
-/// to 16 bytes.
-pub struct StackSet {
-    pub kernel_slot_top: VirtualAddress,
-    pub kernel_slot_bottom: VirtualAddress,
-    pub kernel_stack_bottom: VirtualAddress,
-
-    pub user_slot_top: VirtualAddress,
-    pub user_slot_bottom: VirtualAddress,
-    pub user_stack_bottom: VirtualAddress,
+#[derive(Clone, Copy, Debug)]
+pub struct TaskUserStack {
+    pub top: VirtualAddress,
+    pub slot_bottom: VirtualAddress,
+    /// Initially, only a portion of the slot will be mapped with actual memory (to decrease memory usage). This
+    /// is the actual bottom of the stack until it's grown.
+    pub stack_bottom: VirtualAddress,
 }
 
 impl AddressSpace {
@@ -65,19 +56,7 @@ impl AddressSpace {
             arch.kernel_page_table.lock().mapper().p4[kernel_map::KERNEL_P4_ENTRY].address().unwrap();
         table.mapper().p4[kernel_map::KERNEL_P4_ENTRY].set(kernel_p3_address, EntryFlags::WRITABLE);
 
-        // let kernel_stack_slot = arch
-        //     .kernel_stack_bitmap
-        //     .lock()
-        //     .alloc(1)
-        //     .expect("Failed to allocate kernel stack slot for address space");
-
-        AddressSpace {
-            table,
-            state: State::NotActive,
-            memory_objects: Vec::new(),
-            /* stack_bitmap: 0,
-             * kernel_stack_area_base: kernel_map::kernel_stack_area_base(kernel_stack_slot), */
-        }
+        AddressSpace { table, state: State::NotActive, memory_objects: Vec::new(), task_user_stack_bitmap: 0 }
     }
 
     pub fn map_memory_object(
@@ -128,46 +107,21 @@ impl AddressSpace {
         self.state = State::NotActive;
     }
 
-    pub fn add_stack_set<A>(&mut self, size: usize, allocator: &A) -> Option<StackSet>
+    pub fn add_stack<A>(&mut self, allocator: &A) -> Option<TaskUserStack>
     where
         A: FrameAllocator,
     {
-        // TODO: atm, this is pretty inefficient in how it lays stacks out in memory (page wise). We
-        // should probably do something about that.
+        let index = self.task_user_stack_bitmap.alloc(1)?;
 
-        // TODO: we are reworking how this works. We need to decouple how we allocate user stacks and kernel stacks
-        // for tasks. We can keep how we allocate the user stack mostly the same, but we want to allocate kernel
-        // stacks out of a central pool for all tasks, as most address spaces will have like one or two tasks in,
-        // and so allocating a huge area for them is super inefficient
-        unimplemented!()
+        // TODO: uncouple this from kernel stack slot sizes
+        let slot_bottom = userspace_map::USER_STACKS_START + index * kernel_map::STACK_SLOT_SIZE;
+        let top = slot_bottom + kernel_map::STACK_SLOT_SIZE - 1;
+        let stack_bottom = top - userspace_map::INITIAL_STACK_SIZE;
 
-        // Get a free stack slot. If there isn't one, we can't allocate any more stacks on the AddressSpace.
-        // let index = self.stack_bitmap.alloc(1)?;
+        for page in Page::contains(stack_bottom)..=Page::contains(top) {
+            self.table.mapper().map(page, EntryFlags::WRITABLE | EntryFlags::USER_ACCESSIBLE, allocator).unwrap();
+        }
 
-        // let kernel_slot_bottom = self.kernel_stack_area_base + index * kernel_map::STACK_SLOT_SIZE;
-        // let kernel_slot_top = kernel_slot_bottom + kernel_map::STACK_SLOT_SIZE - 1;
-        // let kernel_stack_bottom = kernel_slot_top - userspace_map::INITIAL_STACK_SIZE;
-
-        // let user_slot_bottom = userspace_map::USER_STACKS_START + index * kernel_map::STACK_SLOT_SIZE;
-        // let user_slot_top = user_slot_bottom + kernel_map::STACK_SLOT_SIZE - 1;
-        // let user_stack_bottom = user_slot_top - userspace_map::INITIAL_STACK_SIZE;
-
-        // // Map the stacks
-        // let mut mapper = self.table.mapper();
-        // for page in Page::contains(kernel_stack_bottom)..=Page::contains(kernel_slot_top) {
-        //     mapper.map(page, EntryFlags::WRITABLE, allocator).unwrap();
-        // }
-        // for page in Page::contains(user_stack_bottom)..=Page::contains(user_slot_top) {
-        //     mapper.map(page, EntryFlags::WRITABLE | EntryFlags::USER_ACCESSIBLE, allocator).unwrap();
-        // }
-
-        // Some(StackSet {
-        //     kernel_slot_top,
-        //     kernel_slot_bottom,
-        //     kernel_stack_bottom,
-        //     user_slot_top,
-        //     user_slot_bottom,
-        //     user_stack_bottom,
-        // })
+        Some(TaskUserStack { top, slot_bottom, stack_bottom })
     }
 }
