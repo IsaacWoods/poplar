@@ -16,9 +16,10 @@ pub struct CommandLine<'a> {
     pub images: [Option<(&'a str, &'a str)>; MAX_IMAGES],
 }
 
+#[derive(Clone, Copy)]
 pub struct GraphicsMode {
-    pub width: Option<u32>,
-    pub height: Option<u32>,
+    pub width: Option<usize>,
+    pub height: Option<usize>,
 }
 
 impl<'a> CommandLine<'a> {

@@ -14,7 +14,7 @@ use core::{mem, panic::PanicInfo, slice};
 use log::{error, info};
 use uefi::{
     prelude::*,
-    proto::{loaded_image::LoadedImage, media::fs::SimpleFileSystem},
+    proto::{console::gop::GraphicsOutput, loaded_image::LoadedImage, media::fs::SimpleFileSystem},
     table::boot::{AllocateType, MemoryMapIter, MemoryType, SearchType},
 };
 use x86_64::memory::{
@@ -143,6 +143,11 @@ fn main(image_handle: Handle, system_table: SystemTable<Boot>) -> Result<!, Load
             None
         }
     });
+
+    /*
+     * Choose and switch to the desired graphics mode, if requested.
+     */
+    choose_graphics_mode(system_table.boot_services(), boot_info, &command_line)?;
 
     /*
      * Allocate the kernel heap.
@@ -355,6 +360,48 @@ where
     boot_info.heap_size = heap_size;
 
     *next_safe_address = (Page::<Size4KiB>::contains(*next_safe_address + heap_size) + 1).start_address;
+    Ok(())
+}
+
+fn choose_graphics_mode(
+    boot_services: &BootServices,
+    boot_info: &mut BootInfo,
+    command_line: &CommandLine,
+) -> Result<(), LoaderError> {
+    // Make an initial call to find how many handles we need to search
+    let num_handles = boot_services
+        .locate_handle(SearchType::from_proto::<GraphicsOutput>(), None)
+        .expect_success("Failed to get list of GOP devices");
+
+    // Allocate a pool of the needed size
+    let pool_addr = boot_services
+        .allocate_pool(MemoryType::LOADER_DATA, mem::size_of::<Handle>() * num_handles)
+        .expect_success("Failed to allocate pool for GOP handles");
+    let handle_slice: &mut [Handle] = unsafe { slice::from_raw_parts_mut(pool_addr as *mut Handle, num_handles) };
+
+    // Actually fetch the handles
+    boot_services
+        .locate_handle(SearchType::from_proto::<GraphicsOutput>(), Some(handle_slice))
+        .expect_success("Failed to get list of graphics output devices");
+
+    for &mut handle in handle_slice {
+        let proto = unsafe {
+            &mut *boot_services
+                .handle_protocol::<GraphicsOutput>(handle)
+                .expect_success("Failed to open GraphicsOutput")
+                .get()
+        };
+
+        for mode in proto.modes().map(|mode| mode.unwrap()) {
+            let (width, height) = mode.info().resolution();
+            if width == command_line.graphics_mode.unwrap().width.unwrap() as usize
+                && height == command_line.graphics_mode.unwrap().height.unwrap() as usize
+            {
+                info!("Found a suitable mode! {:?}", mode.info());
+            }
+        }
+    }
+
     Ok(())
 }
 
