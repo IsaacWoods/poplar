@@ -164,7 +164,7 @@ fn main(image_handle: Handle, system_table: SystemTable<Boot>) -> Result<!, Load
         info!("Loading image called '{}' from path '{}'", name, path);
         boot_info
             .loaded_images
-            .add_image(image::load_image(system_table.boot_services(), fs_handle, path)?)
+            .add_image(image::load_image(system_table.boot_services(), fs_handle, name, path)?)
             .unwrap();
     }
 

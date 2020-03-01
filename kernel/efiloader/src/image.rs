@@ -101,12 +101,20 @@ where
 pub fn load_image(
     boot_services: &BootServices,
     volume_handle: Handle,
+    name: &str,
     path: &str,
 ) -> Result<LoadedImage, LoaderError> {
     let (elf, pool_addr) = load_elf(boot_services, volume_handle, path)?;
 
     let mut image_data = LoadedImage::default();
     image_data.entry_point = VirtualAddress::new(elf.entry_point());
+
+    let name_bytes = name.as_bytes();
+    if name_bytes.len() > boot_info_x86_64::MAX_IMAGE_NAME_LENGTH {
+        panic!("Image's name is too long: '{}'!", name);
+    }
+    image_data.name_length = name_bytes.len() as u8;
+    (&mut image_data.name[0..name_bytes.len()]).copy_from_slice(name_bytes);
 
     for segment in elf.segments() {
         match segment.segment_type() {

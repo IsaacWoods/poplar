@@ -104,16 +104,9 @@ impl Task {
             .add_stack_set(userspace_map::INITIAL_STACK_SIZE, &arch.physical_memory_manager)
             .ok_or(TaskCreationError::NotEnoughStackSlots)?;
 
-        if image.name_length > 32 {
-            return Err(TaskCreationError::InitialNameTooLong);
-        }
-        let name = String::from(
-            str::from_utf8(&image.name[0..image.name_length as usize])
-                .map_err(|_| TaskCreationError::InvalidName)?,
-        );
 
         let mut task = Task {
-            name,
+            name: String::from(image.name()),
             address_space,
             state: TaskState::Ready,
             capabilities: decode_capabilities(&image.capability_stream)?,

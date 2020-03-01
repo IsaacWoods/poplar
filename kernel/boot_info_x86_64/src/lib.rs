@@ -172,6 +172,10 @@ impl LoadedImage {
         Ok(())
     }
 
+    pub fn name(&self) -> &str {
+        core::str::from_utf8(&self.name[0..(self.name_length as usize)]).unwrap()
+    }
+
     pub fn segments(&self) -> &[Segment] {
         &self.segments[0..(self.num_segments as usize)]
     }
