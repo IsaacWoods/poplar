@@ -103,7 +103,7 @@ pub extern "C" fn kmain(boot_info: &BootInfo) -> ! {
     if let Some(ref hypervisor_info) = cpu_info.hypervisor_info {
         info!("We're running under a hypervisor ({:?})", hypervisor_info.vendor);
     }
-    check_support(&cpu_info);
+    check_support_and_enable_features(&cpu_info);
 
     /*
      * Initialise the heap allocator. After this, the kernel is free to use collections etc. that
@@ -284,10 +284,21 @@ fn load_task(arch: &Arch, scheduler: &mut Scheduler, image: &LoadedImage) {
 }
 
 /// We rely on certain processor features to be present for simplicity and sanity-retention. This
-/// function checks that we support everything we need to, and enable features that need to be.
-fn check_support(cpu_info: &CpuInfo) {
+/// function checks that we support everything we need to, and enable features that we need.
+fn check_support_and_enable_features(cpu_info: &CpuInfo) {
     use bit_field::BitField;
-    use x86_64::hw::registers::{read_control_reg, write_control_reg, CR4_XSAVE_ENABLE_BIT};
+    use x86_64::hw::registers::{
+        read_control_reg,
+        read_msr,
+        write_control_reg,
+        write_msr,
+        CR4_ENABLE_GLOBAL_PAGES,
+        CR4_RESTRICT_RDTSC,
+        CR4_XSAVE_ENABLE_BIT,
+        EFER,
+        EFER_ENABLE_NX_BIT,
+        EFER_ENABLE_SYSCALL,
+    };
 
     if !cpu_info.supported_features.xsave {
         panic!("Processor does not support xsave instruction!");
@@ -295,7 +306,16 @@ fn check_support(cpu_info: &CpuInfo) {
 
     let mut cr4 = read_control_reg!(CR4);
     cr4.set_bit(CR4_XSAVE_ENABLE_BIT, true);
+    cr4.set_bit(CR4_ENABLE_GLOBAL_PAGES, true);
+    cr4.set_bit(CR4_RESTRICT_RDTSC, true);
     unsafe {
         write_control_reg!(CR4, cr4);
+    }
+
+    let mut efer = read_msr(EFER);
+    efer.set_bit(EFER_ENABLE_SYSCALL, true);
+    efer.set_bit(EFER_ENABLE_NX_BIT, true);
+    unsafe {
+        write_msr(EFER, efer);
     }
 }
