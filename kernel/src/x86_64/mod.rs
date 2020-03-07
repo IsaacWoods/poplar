@@ -200,9 +200,9 @@ pub extern "C" fn kmain(boot_info: &BootInfo) -> ! {
     /*
      * Create the backup framebuffer if the bootloader switched to a graphics mode.
      */
-    // if let Some(ref video_info) = boot_info.video_info {
-    //     create_framebuffer(video_info);
-    // }
+    if let Some(ref mode) = boot_info.video_mode {
+        create_framebuffer(mode);
+    }
 
     /*
      * Load all the images as initial tasks, and add them to the scheduler's ready list.
@@ -217,7 +217,8 @@ pub extern "C" fn kmain(boot_info: &BootInfo) -> ! {
     scheduler.drop_to_userspace(&ARCH.get())
 }
 
-fn create_framebuffer(video_info: &x86_64::boot::VideoInfo) {
+fn create_framebuffer(video_info: &boot_info_x86_64::VideoModeInfo) {
+    use boot_info_x86_64::PixelFormat;
     use x86_64::memory::{EntryFlags, FrameSize, Size4KiB, VirtualAddress};
 
     /*
@@ -228,9 +229,9 @@ fn create_framebuffer(video_info: &x86_64::boot::VideoInfo) {
     /*
      * We only support RGB32 and BGR32 pixel formats, so there will always be 4 bytes per pixel.
      */
-    const BPP: u32 = 4;
+    const BPP: usize = 4;
 
-    let size_in_bytes = (video_info.stride * video_info.height * BPP) as usize;
+    let size_in_bytes = video_info.stride * video_info.height * BPP;
     let memory_object = KernelObject::MemoryObject(RwLock::new(box MemoryObject::new(
         VIRTUAL_ADDRESS,
         video_info.framebuffer_address,
@@ -246,8 +247,8 @@ fn create_framebuffer(video_info: &x86_64::boot::VideoInfo) {
         height: video_info.height as u16,
         pixel_format: match video_info.pixel_format {
             // TODO: maybe define these constants in libpebble and use both here and in userspace
-            x86_64::boot::PixelFormat::RGB32 => 0,
-            x86_64::boot::PixelFormat::BGR32 => 1,
+            PixelFormat::RGB32 => 0,
+            PixelFormat::BGR32 => 1,
         },
     };
 

@@ -47,6 +47,7 @@ pub enum LoaderError {
     BootVolumeDoesNotExist,
     FailedToLoadKernel,
     FilePathDoesNotExist,
+    NoValidVideoMode,
 }
 
 #[entry]
@@ -368,6 +369,9 @@ fn choose_graphics_mode(
     boot_info: &mut BootInfo,
     command_line: &CommandLine,
 ) -> Result<(), LoaderError> {
+    use boot_info_x86_64::{PixelFormat, VideoModeInfo};
+    use uefi::proto::console::gop::PixelFormat as GopFormat;
+
     // Make an initial call to find how many handles we need to search
     let num_handles = boot_services
         .locate_handle(SearchType::from_proto::<GraphicsOutput>(), None)
@@ -392,17 +396,39 @@ fn choose_graphics_mode(
                 .get()
         };
 
-        for mode in proto.modes().map(|mode| mode.unwrap()) {
+        let chosen_mode = proto.modes().map(|mode| mode.unwrap()).find(|mode| {
             let (width, height) = mode.info().resolution();
-            if width == command_line.graphics_mode.unwrap().width.unwrap() as usize
+            let pixel_format = mode.info().pixel_format();
+            width == command_line.graphics_mode.unwrap().width.unwrap() as usize
                 && height == command_line.graphics_mode.unwrap().height.unwrap() as usize
-            {
-                info!("Found a suitable mode! {:?}", mode.info());
-            }
+                && (pixel_format == GopFormat::RGB || pixel_format == GopFormat::BGR)
+        });
+
+        if let Some(mode) = chosen_mode {
+            proto.set_mode(&mode).expect_success("Failed to switch to new video mode");
+
+            let framebuffer_address = PhysicalAddress::new(proto.frame_buffer().as_mut_ptr() as usize).unwrap();
+            let mode_info = mode.info();
+            let (width, height) = mode_info.resolution();
+            let pixel_format = match mode_info.pixel_format() {
+                GopFormat::RGB => PixelFormat::RGB32,
+                GopFormat::BGR => PixelFormat::BGR32,
+                _ => panic!("Invalid video mode chosen!"),
+            };
+
+            boot_info.video_mode = Some(VideoModeInfo {
+                framebuffer_address,
+                pixel_format,
+                width,
+                height,
+                stride: mode_info.stride(),
+            });
+            info!("Switched to video mode: {:?}", boot_info.video_mode);
+            return Ok(());
         }
     }
 
-    Ok(())
+    Err(LoaderError::NoValidVideoMode)
 }
 
 fn find_volume(system_table: &SystemTable<Boot>, label: &str) -> Result<Handle, LoaderError> {
