@@ -81,7 +81,7 @@ fn main(image_handle: Handle, system_table: SystemTable<Boot>) -> Result<!, Load
 
     // TODO: instead of finding the volume by label, we could just grab it from the LoadedImageProtocol (I think)
     // and say they all have to be on the same volume?
-    let fs_handle = find_volume(&system_table, command_line.volume_label?)?;
+    let fs_handle = find_volume(&system_table, command_line.volume_label)?;
 
     /*
      * We create a set of page tables for the kernel. Because memory is identity-mapped in UEFI, we can act as
