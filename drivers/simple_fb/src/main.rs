@@ -44,6 +44,9 @@ impl Framebuffer {
     }
 
     pub fn draw_rect(&self, start_x: usize, start_y: usize, width: usize, height: usize, color: u32) {
+        assert!((start_x + width) <= self.width);
+        assert!((start_y + height) <= self.height);
+
         for y in start_y..(start_y + height) {
             for x in start_x..(start_x + width) {
                 unsafe {
