@@ -12,8 +12,8 @@ QEMU_COMMON_FLAGS = -cpu max,vmware-cpuid-freq,invtsc \
 					-device usb-ehci,id=ehci,bus=pcie.0 \
 					--no-reboot \
 					--no-shutdown \
-					-drive if=pflash,format=raw,file=bootloader/ovmf/OVMF_CODE.fd,readonly \
-					-drive if=pflash,format=raw,file=bootloader/ovmf/OVMF_VARS.fd \
+					-drive if=pflash,format=raw,file=ovmf/OVMF_CODE.fd,readonly \
+					-drive if=pflash,format=raw,file=ovmf/OVMF_VARS.fd \
 					-drive if=ide,format=raw,file=$(IMAGE_NAME) \
 					-net none
 
@@ -21,7 +21,6 @@ QEMU_COMMON_FLAGS = -cpu max,vmware-cpuid-freq,invtsc \
 .DEFAULT_GOAL := image_$(ARCH)
 
 image_x86_64: prepare kernel test_process simple_fb
-	printf "kernel kernel.elf\nimage test_process.elf test_process\nimage simple_fb.elf simple_fb\nvideo_mode 800 600" > $(BUILD_DIR)/fat/bootcmd
 	# Create a temporary image for the FAT partition
 	dd if=/dev/zero of=$(BUILD_DIR)/fat.img bs=1M count=64
 	mkfs.vfat -F 32 $(BUILD_DIR)/fat.img -n BOOT
@@ -52,14 +51,12 @@ simple_fb:
 	cp drivers/target/x86_64-pebble-userspace/debug/simple_fb $(BUILD_DIR)/fat/simple_fb.elf
 
 clean:
-	cd bootloader && cargo clean
 	cd drivers && cargo clean --all
 	make -C kernel clean
 	rm -rf build
 	rm -f $(IMAGE_NAME)
 
 update:
-	cargo update --manifest-path bootloader/Cargo.toml
 	cargo update --manifest-path kernel/Cargo.toml
 	cargo update --manifest-path lib/libpebble/Cargo.toml
 	cargo update --manifest-path lib/mer/Cargo.toml

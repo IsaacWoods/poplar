@@ -6,7 +6,6 @@ use crate::object::{
 use alloc::{string::String, vec::Vec};
 use core::{mem, pin::Pin, str};
 use libpebble::caps::Capability;
-use log::info;
 use x86_64::memory::VirtualAddress;
 
 global_asm!(include_str!("task.s"));

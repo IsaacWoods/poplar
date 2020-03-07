@@ -1,8 +1,5 @@
 use boot_info_x86_64::Segment;
-use x86_64::{
-    boot::MemoryObjectInfo,
-    memory::{EntryFlags, PhysicalAddress, VirtualAddress},
-};
+use x86_64::memory::{EntryFlags, PhysicalAddress, VirtualAddress};
 
 pub struct MemoryObject {
     pub virtual_address: VirtualAddress,

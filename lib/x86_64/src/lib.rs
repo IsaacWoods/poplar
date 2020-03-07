@@ -9,6 +9,5 @@ extern crate std;
 #[cfg(feature = "kernel")]
 extern crate alloc;
 
-pub mod boot;
 pub mod hw;
 pub mod memory;

@@ -8,7 +8,7 @@ use boot_info_x86_64::{kernel_map, BootInfo};
 use core::ops::Range;
 use pebble_util::bitmap::BitmapArray;
 use spin::Mutex;
-use x86_64::memory::{EntryFlags, Frame, FrameAllocator, Mapper, Page, VirtualAddress};
+use x86_64::memory::{EntryFlags, Frame, FrameAllocator, Page, VirtualAddress};
 
 const BUDDY_ALLOCATOR_MAX_ORDER: usize = 10;
 
