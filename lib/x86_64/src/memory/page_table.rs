@@ -193,11 +193,8 @@ where
         /*
          * There's a special case here, where we want to create a new page table, but there's
          * already a huge-page there (e.g. we want to create a P1 table to map some 4KiB pages
-         * there, but it's already a 2MiB huge-page). We detect that here (at the moment, this
-         * panics, but it *maybe* should propagate instead. Not sure we want the handling code to
-         * have to deal with this case really though).
+         * there, but it's already a 2MiB huge-page).
          */
-
         if self.next_table(index, physical_base).is_none() {
             /*
              * This entry is empty, so we create a new page table, zero it, and return that.
@@ -222,7 +219,7 @@ where
                  * The entry is present, but is actually a huge page. It is **NOT** type-safe to
                  * call `next_table` on it. Instead, we return an error.
                  */
-                return Err(MapError::TriedToMapInHugePage);
+                return Err(MapError::AlreadyMappedHugePage);
             }
 
             // TODO: find a set of flags suitable for both the existing entries and the new ones.
@@ -505,5 +502,5 @@ pub enum MapError {
     /// Produced when we tried to create a new page table, but there was already a huge page there
     /// (e.g. we needed to create a new P1 table, but there was a 2MiB page entry in the P2 at that
     /// index).
-    TriedToMapInHugePage,
+    AlreadyMappedHugePage,
 }

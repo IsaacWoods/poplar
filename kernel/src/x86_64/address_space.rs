@@ -64,29 +64,23 @@ impl AddressSpace {
         memory_object: WrappedKernelObject<Arch>,
     ) -> Result<(), MemoryObjectError> {
         {
+            use x86_64::memory::MapError;
             let mut mapper = self.table.mapper();
             let memory_obj_info = memory_object.object.memory_object().expect("Not a MemoryObject").read();
 
-            let start_page = Page::<Size4KiB>::starts_with(memory_obj_info.virtual_address);
-            let pages = start_page..(start_page + (memory_obj_info.size / Size4KiB::SIZE));
-
-            let start_frame = Frame::<Size4KiB>::starts_with(memory_obj_info.physical_address);
-            let frames = start_frame..(start_frame + (memory_obj_info.size / Size4KiB::SIZE));
-
-            /*
-             * Check that the entire range of pages we'll be mapping into is currently free.
-             */
-            for page in pages.clone() {
-                match mapper.translate(page.start_address) {
-                    TranslationResult::NotMapped => (),
-                    _ => return Err(MemoryObjectError::AddressRangeNotFree),
-                }
-            }
-
-            // TODO: move to map_area_to to use better mapping algorithm
-            for (page, frame) in pages.zip(frames) {
-                mapper.map_to(page, frame, memory_obj_info.flags, &ARCH.get().physical_memory_manager).unwrap();
-            }
+            mapper
+                .map_area_to(
+                    memory_obj_info.virtual_address,
+                    memory_obj_info.physical_address,
+                    memory_obj_info.size,
+                    memory_obj_info.flags,
+                    &ARCH.get().physical_memory_manager,
+                )
+                .map_err(|err| match err {
+                    MapError::AlreadyMapped | MapError::AlreadyMappedHugePage => {
+                        MemoryObjectError::AddressRangeNotFree
+                    }
+                })?;
         }
 
         self.memory_objects.push(memory_object);
