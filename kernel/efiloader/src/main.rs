@@ -146,9 +146,11 @@ fn main(image_handle: Handle, system_table: SystemTable<Boot>) -> Result<!, Load
     });
 
     /*
-     * Choose and switch to the desired graphics mode, if requested.
+     * Switch to a suitable video mode and create a framebuffer, if the user requested us to.
      */
-    choose_graphics_mode(system_table.boot_services(), boot_info, &command_line)?;
+    if command_line.framebuffer.is_some() {
+        create_framebuffer(system_table.boot_services(), boot_info, &command_line)?;
+    }
 
     /*
      * Allocate the kernel heap.
@@ -364,7 +366,7 @@ where
     Ok(())
 }
 
-fn choose_graphics_mode(
+fn create_framebuffer(
     boot_services: &BootServices,
     boot_info: &mut BootInfo,
     command_line: &CommandLine,
@@ -399,8 +401,8 @@ fn choose_graphics_mode(
         let chosen_mode = proto.modes().map(|mode| mode.unwrap()).find(|mode| {
             let (width, height) = mode.info().resolution();
             let pixel_format = mode.info().pixel_format();
-            width == command_line.graphics_mode.unwrap().width.unwrap() as usize
-                && height == command_line.graphics_mode.unwrap().height.unwrap() as usize
+            width == command_line.framebuffer.unwrap().width.unwrap() as usize
+                && height == command_line.framebuffer.unwrap().height.unwrap() as usize
                 && (pixel_format == GopFormat::RGB || pixel_format == GopFormat::BGR)
         });
 

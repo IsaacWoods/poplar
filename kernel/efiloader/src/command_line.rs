@@ -9,7 +9,7 @@ const MAX_IMAGES: usize = 32;
 pub struct CommandLine<'a> {
     pub volume_label: &'a str,
     pub kernel_path: Result<&'a str, LoaderError>,
-    pub graphics_mode: Option<GraphicsMode>,
+    pub framebuffer: Option<Framebuffer>,
     /// The size of the kernel heap that should be allocated, in bytes.
     pub kernel_heap_size: usize,
     pub num_images: usize,
@@ -18,7 +18,7 @@ pub struct CommandLine<'a> {
 }
 
 #[derive(Clone, Copy)]
-pub struct GraphicsMode {
+pub struct Framebuffer {
     pub width: Option<usize>,
     pub height: Option<usize>,
 }
@@ -28,7 +28,7 @@ impl<'a> CommandLine<'a> {
         let mut command_line = CommandLine {
             volume_label: DEFAULT_VOLUME_LABEL,
             kernel_path: Err(LoaderError::NoKernelPath),
-            graphics_mode: None,
+            framebuffer: None,
             kernel_heap_size: DEFAULT_KERNEL_HEAP_SIZE,
             num_images: 0,
             images: [None; MAX_IMAGES],
@@ -76,40 +76,40 @@ impl<'a> CommandLine<'a> {
                     command_line.kernel_path =
                         Ok(value.expect("'kernel' parameter must have the path to the kernel image as a value"));
                 }
-                "graphics" => match extra.expect("'graphics' is not an option on its own") {
+                "fb" => match extra.expect("'fb' is not an option on its own") {
                     "width" => {
-                        if command_line.graphics_mode.is_none() {
-                            command_line.graphics_mode = Some(GraphicsMode {
+                        if command_line.framebuffer.is_none() {
+                            command_line.framebuffer = Some(Framebuffer {
                                 width: Some(
-                                    str::parse(value.expect("'graphics.width' has no value"))
-                                        .expect("Value of 'graphics.width' must be an integer"),
+                                    str::parse(value.expect("'fb.width' has no value"))
+                                        .expect("Value of 'fb.width' must be an integer"),
                                 ),
                                 height: None,
                             });
                         } else {
-                            command_line.graphics_mode.as_mut().unwrap().width = Some(
-                                str::parse(value.expect("'graphics.width' has no value"))
-                                    .expect("Value of 'graphics.width' must be an integer"),
+                            command_line.framebuffer.as_mut().unwrap().width = Some(
+                                str::parse(value.expect("'fb.width' has no value"))
+                                    .expect("Value of 'fb.width' must be an integer"),
                             );
                         }
                     }
                     "height" => {
-                        if command_line.graphics_mode.is_none() {
-                            command_line.graphics_mode = Some(GraphicsMode {
+                        if command_line.framebuffer.is_none() {
+                            command_line.framebuffer = Some(Framebuffer {
                                 width: None,
                                 height: Some(
-                                    str::parse(value.expect("'graphics.height' has no value"))
-                                        .expect("Value of 'graphics.height' must be an integer"),
+                                    str::parse(value.expect("'fb.height' has no value"))
+                                        .expect("Value of 'fb.height' must be an integer"),
                                 ),
                             });
                         } else {
-                            command_line.graphics_mode.as_mut().unwrap().height = Some(
-                                str::parse(value.expect("'graphics.height' has no value"))
-                                    .expect("Value of 'graphics.height' must be an integer"),
+                            command_line.framebuffer.as_mut().unwrap().height = Some(
+                                str::parse(value.expect("'fb.height' has no value"))
+                                    .expect("Value of 'fb.height' must be an integer"),
                             );
                         }
                     }
-                    other => warn!("Unsupported graphics kernel command line option: '{}'. Ignoring.", other),
+                    other => warn!("Unsupported framebuffer setting: '{}'. Ignoring.", other),
                 },
                 "image" => {
                     let name = extra.expect("An image must have a name, supplied as 'image.your_name_here'");
