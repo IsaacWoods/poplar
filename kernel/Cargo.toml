@@ -8,6 +8,7 @@ edition = "2018"
 crate-type = ["staticlib"]
 
 [dependencies]
+hal = { path = "hal" }
 pebble_util = { path = "../lib/pebble_util" }
 cfg-if = "0.1"
 bitflags = "1"
@@ -25,4 +26,4 @@ boot_info_x86_64 = { path = "boot_info_x86_64", optional = true }
 arch_x86_64 = ["x86_64", "acpi", "aml", "boot_info_x86_64", "pebble_util/tuning_fast_ctlz"]
 
 [workspace]
-members = ["efiloader", "boot_info_x86_64"]
+members = ["efiloader", "hal", "boot_info_x86_64"]
