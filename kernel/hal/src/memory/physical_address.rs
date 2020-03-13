@@ -29,6 +29,33 @@ impl PhysicalAddress {
             }
         }
     }
+
+    /// Align this address to the given alignment, moving downwards if this is not already aligned.
+    /// `align` must be `0` or a power-of-two.
+    pub fn align_down(self, align: usize) -> PhysicalAddress {
+        if align.is_power_of_two() {
+            /*
+             * E.g.
+             *      align       =   0b00001000
+             *      align-1     =   0b00000111
+             *      !(align-1)  =   0b11111000
+             *                             ^^^ Masks the address to the value below it with the
+             *                                 correct alignment
+             */
+            PhysicalAddress(self.0 & !(align - 1))
+        } else {
+            assert!(align == 0);
+            self
+        }
+    }
+
+    pub fn align_up(self, align: usize) -> PhysicalAddress {
+        PhysicalAddress(self.0 + align - 1).align_down(align)
+    }
+
+    pub fn is_aligned(self, align: usize) -> bool {
+        self.0 % align == 0
+    }
 }
 
 impl fmt::LowerHex for PhysicalAddress {

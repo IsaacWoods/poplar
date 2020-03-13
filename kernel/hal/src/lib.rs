@@ -1,4 +1,4 @@
 #![no_std]
-#![feature(const_if_match)]
+#![feature(const_if_match, decl_macro, step_trait)]
 
 pub mod memory;
