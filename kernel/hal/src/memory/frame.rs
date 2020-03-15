@@ -61,12 +61,12 @@ where
     }
 
     fn replace_one(&mut self) -> Self {
-        self.start = unsafe { PhysicalAddress::new(S::SIZE).unwrap() };
+        self.start = PhysicalAddress::new(S::SIZE).unwrap();
         *self
     }
 
     fn replace_zero(&mut self) -> Self {
-        self.start = unsafe { PhysicalAddress::new(0x0).unwrap() };
+        self.start = PhysicalAddress::new(0x0).unwrap();
         *self
     }
 
