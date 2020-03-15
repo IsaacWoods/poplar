@@ -7,15 +7,17 @@
 
 mod frame;
 mod page;
+mod page_table;
 mod physical_address;
 mod virtual_address;
 
 pub use frame::Frame;
 pub use page::Page;
+pub use page_table::{Flags, Mapper, MapperError};
 pub use physical_address::PhysicalAddress;
 pub use virtual_address::VirtualAddress;
 
-use core::fmt::Debug;
+use core::{fmt::Debug, ops::Range};
 
 /// Multiply by this to turn KiB into bytes
 pub const KIBIBYTES_TO_BYTES: usize = 1024;
@@ -24,8 +26,8 @@ pub const MEBIBYTES_TO_BYTES: usize = 1024 * KIBIBYTES_TO_BYTES;
 /// Multiply by this to turn GiB into bytes
 pub const GIBIBYTES_TO_BYTES: usize = 1024 * MEBIBYTES_TO_BYTES;
 
-/// This trait is implemented by a number of marker types, one for each size of frame and page. Not all sizes may
-/// be available on the target architecture.
+/// This trait is implemented by a number of marker types, one for each size of frame and page. Different size
+/// types are defined depending on the target architecture.
 pub trait FrameSize: Clone + Copy + PartialEq + Eq + PartialOrd + Ord + Debug {
     /// Frame size in bytes
     const SIZE: usize;
@@ -45,3 +47,29 @@ macro frame_size($name: ident, $size: expr, $condition: meta) {
 frame_size!(Size4KiB, 4 * KIBIBYTES_TO_BYTES, cfg(target_arch = "x86_64"));
 frame_size!(Size2MiB, 2 * MEBIBYTES_TO_BYTES, cfg(target_arch = "x86_64"));
 frame_size!(Size1GiB, 1 * GIBIBYTES_TO_BYTES, cfg(target_arch = "x86_64"));
+
+/// `FrameAllocator` is used to interact with a physical memory manager in a platform-independent way. Methods on
+/// `FrameAllocator` take `&self` and so are expected to use interior-mutability through a type such as `Mutex` to
+/// ensure safe access. This allows structures to store a reference to the allocator, and deallocate memory when
+/// they're dropped.
+///
+/// A `FrameAllocator` is defined for a specific `FrameSize`, but multiple implementations of `FrameAllocator`
+/// (each with a different frame size) can be used for allocators that aren't tied to a specific block size.
+pub trait FrameAllocator<S>: Copy
+where
+    S: FrameSize,
+{
+    /// Allocate a `Frame`.
+    ///
+    /// By default, this calls `allocate_n(1)`, but can be overridden if an allocator can provide a
+    /// more efficient method for allocating single frames.
+    fn allocate(&self) -> Frame<S> {
+        self.allocate_n(1).start
+    }
+
+    /// Allocate `n` contiguous `Frame`s.
+    fn allocate_n(&self, n: usize) -> Range<Frame<S>>;
+
+    /// Free `n` frames that were previously allocated by this allocator.
+    fn free_n(&self, start: Frame, n: usize);
+}
