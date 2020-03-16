@@ -45,8 +45,8 @@
 
 use alloc::{collections::BTreeSet, vec::Vec};
 use core::{cmp::min, ops::Range};
+use hal::memory::{Frame, FrameSize, PhysicalAddress, Size4KiB};
 use pebble_util::math::{ceiling_log2, flooring_log2};
-use x86_64::memory::{Frame, FrameSize, PhysicalAddress, Size4KiB};
 
 // TODO: make this generic over the frame size - it should monomorphise and generate good code I
 // think
@@ -166,16 +166,8 @@ impl BuddyAllocator {
     /// Finds the starting frame of the block that is the buddy of the block of order `order`,
     /// starting at `x`.
     fn buddy_of(x: Frame, order: usize) -> Frame {
-        /*
-         * TODO: describe what this does and how
-         *
-         * We add `LOG2_SIZE` to the order as more efficient version of `(address ^ (1 << order)) * SIZE`,
-         * because we're dealing with frame **addresses**, whereas the buddy algorithm works in
-         * block numbers.
-         */
-        Frame::contains(
-            PhysicalAddress::new(usize::from(x.start_address) ^ (1 << (order + Size4KiB::LOG2_SIZE))).unwrap(),
-        )
+        // TODO: describe what this does and how
+        Frame::contains(PhysicalAddress::new(usize::from(x.start) ^ ((1 << order) * Size4KiB::SIZE)).unwrap())
     }
 
     /// Get the order of the largest block this allocator can track.
@@ -188,7 +180,7 @@ impl BuddyAllocator {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use x86_64::memory::{Frame, PhysicalAddress};
+    use hal::memory::{Frame, PhysicalAddress};
 
     #[test]
     fn test_buddy_of() {

@@ -1,13 +1,11 @@
 use super::{registers::CpuFlags, DescriptorTablePointer};
-use crate::{
-    hw::gdt::{PrivilegeLevel, SegmentSelector},
-    memory::VirtualAddress,
-};
+use crate::hw::gdt::{PrivilegeLevel, SegmentSelector};
 use bit_field::BitField;
 use core::{
     mem,
     ops::{Index, IndexMut},
 };
+use hal::memory::VirtualAddress;
 
 /// The type of a function that can be used as an interrupt handler. It's marked as diverging
 /// because we don't exactly 'return' from an interrupt. This should not be used directly to create

@@ -1,13 +1,11 @@
 use crate::per_cpu::CommonPerCpu;
 use alloc::boxed::Box;
 use core::{marker::PhantomPinned, mem, pin::Pin};
-use x86_64::{
-    hw::{
-        gdt::{SegmentSelector, TssSegment},
-        registers::{write_msr, IA32_GS_BASE},
-        tss::Tss,
-    },
-    memory::VirtualAddress,
+use hal::memory::VirtualAddress;
+use hal_x86_64::hw::{
+    gdt::{SegmentSelector, TssSegment},
+    registers::{write_msr, IA32_GS_BASE},
+    tss::Tss,
 };
 
 #[derive(Debug)]

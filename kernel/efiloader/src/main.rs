@@ -12,23 +12,14 @@ use command_line::CommandLine;
 use core::{mem, panic::PanicInfo, slice};
 use hal::{
     boot_info::BootInfo,
+    memory::{Flags, FrameAllocator, FrameSize, Mapper, Page, PhysicalAddress, Size4KiB, VirtualAddress},
 };
+use hal_x86_64::paging::PageTable;
 use log::{error, info};
 use uefi::{
     prelude::*,
     proto::{console::gop::GraphicsOutput, loaded_image::LoadedImage, media::fs::SimpleFileSystem},
     table::boot::{AllocateType, MemoryMapIter, MemoryType, SearchType},
-};
-use x86_64::memory::{
-    EntryFlags,
-    FrameAllocator,
-    FrameSize,
-    Mapper,
-    Page,
-    PageTable,
-    PhysicalAddress,
-    Size4KiB,
-    VirtualAddress,
 };
 
 /*
@@ -125,11 +116,11 @@ fn main(image_handle: Handle, system_table: SystemTable<Boot>) -> Result<!, Load
     let boot_info_virtual_address = kernel_info.next_safe_address;
     next_safe_address += boot_info_needed_frames * Size4KiB::SIZE;
     mapper
-        .map_area_to(
+        .map_area(
             boot_info_virtual_address,
             PhysicalAddress::new(boot_info_physical_start as usize).unwrap(),
             boot_info_needed_frames * Size4KiB::SIZE,
-            EntryFlags::PRESENT | EntryFlags::NO_EXECUTE,
+            Flags { ..Default::default() },
             &allocator,
         )
         .unwrap();
@@ -223,14 +214,15 @@ fn main(image_handle: Handle, system_table: SystemTable<Boot>) -> Result<!, Load
 ///       memory manager. This is added directly to the already-allocated boot info.
 ///     * Construct the physical memory mapping - we map the entirity of physical memory into the kernel address
 ///       space to make it easy for the kernel to access any address it needs to.
-fn process_memory_map<A>(
+fn process_memory_map<A, M>(
     memory_map: MemoryMapIter<'_>,
     boot_info: &mut BootInfo,
-    mapper: &mut Mapper,
+    mapper: &mut M,
     allocator: &A,
 ) -> Result<(), LoaderError>
 where
-    A: FrameAllocator,
+    A: FrameAllocator<Size4KiB>,
+    M: Mapper<Size4KiB, A>,
 {
     use hal::boot_info::{MemoryMapEntry, MemoryType as BootInfoMemoryType};
 
@@ -265,11 +257,11 @@ where
                  * address for both (as we're identity-mapping anyway).
                  */
                 mapper
-                    .map_area_to(
+                    .map_area(
                         VirtualAddress::new(entry.phys_start as usize),
                         PhysicalAddress::new(entry.phys_start as usize).unwrap(),
                         entry.page_count as usize * Size4KiB::SIZE,
-                        EntryFlags::PRESENT | EntryFlags::WRITABLE,
+                        Flags { writable: true, executable: true, ..Default::default() },
                         allocator,
                     )
                     .unwrap();
@@ -320,11 +312,11 @@ where
      */
     info!("Constructing physical mapping from 0x0 to {:#x}", max_physical_address);
     mapper
-        .map_area_to(
+        .map_area(
             hal_x86_64::kernel_map::PHYSICAL_MAPPING_BASE,
             PhysicalAddress::new(0x0).unwrap(),
             max_physical_address,
-            EntryFlags::WRITABLE | EntryFlags::NO_EXECUTE,
+            Flags { writable: true, ..Default::default() },
             allocator,
         )
         .unwrap();
@@ -334,16 +326,17 @@ where
 
 /// Allocate and map the kernel heap. This takes the current next safe virtual address, uses it for the heap, and
 /// updates it.
-fn allocate_and_map_heap<A>(
+fn allocate_and_map_heap<A, M>(
     boot_services: &BootServices,
     boot_info: &mut BootInfo,
     next_safe_address: &mut VirtualAddress,
     heap_size: usize,
-    mapper: &mut Mapper,
+    mapper: &mut M,
     allocator: &A,
 ) -> Result<(), LoaderError>
 where
-    A: FrameAllocator,
+    A: FrameAllocator<Size4KiB>,
+    M: Mapper<Size4KiB, A>,
 {
     assert!(heap_size % Size4KiB::SIZE == 0);
     let frames_needed = Size4KiB::frames_needed(heap_size);
@@ -352,11 +345,11 @@ where
         .unwrap_success();
 
     mapper
-        .map_area_to(
+        .map_area(
             *next_safe_address,
             PhysicalAddress::new(physical_start as usize).unwrap(),
             heap_size,
-            EntryFlags::WRITABLE | EntryFlags::NO_EXECUTE,
+            Flags { writable: true, ..Default::default() },
             allocator,
         )
         .unwrap();
@@ -364,7 +357,7 @@ where
     boot_info.heap_address = *next_safe_address;
     boot_info.heap_size = heap_size;
 
-    *next_safe_address = (Page::<Size4KiB>::contains(*next_safe_address + heap_size) + 1).start_address;
+    *next_safe_address = (Page::<Size4KiB>::contains(*next_safe_address + heap_size) + 1).start;
     Ok(())
 }
 

@@ -1,10 +1,26 @@
-use super::{Frame, FrameAllocator, FrameSize, Page, PhysicalAddress, Size2MiB, Size4KiB, VirtualAddress};
-use crate::hw::{registers::write_control_reg, tlb};
+use crate::{
+    hw::{registers::write_control_reg, tlb},
+    VirtualAddressEx,
+};
 use bitflags::bitflags;
 use core::{
     fmt,
     marker::PhantomData,
-    ops::{Index, IndexMut, Range},
+    ops::{Index, IndexMut},
+};
+use hal::memory::{
+    Flags,
+    Frame,
+    FrameAllocator,
+    FrameSize,
+    Mapper,
+    MapperError,
+    Page,
+    PhysicalAddress,
+    Size1GiB,
+    Size2MiB,
+    Size4KiB,
+    VirtualAddress,
 };
 
 /// All page tables has 512 entries.
@@ -28,6 +44,15 @@ bitflags! {
 impl Default for EntryFlags {
     fn default() -> EntryFlags {
         EntryFlags::PRESENT
+    }
+}
+
+impl From<Flags> for EntryFlags {
+    fn from(flags: Flags) -> Self {
+        EntryFlags::PRESENT
+            | if flags.writable { EntryFlags::WRITABLE } else { EntryFlags::empty() }
+            | if !flags.executable { EntryFlags::NO_EXECUTE } else { EntryFlags::empty() }
+            | if flags.user_accessible { EntryFlags::USER_ACCESSIBLE } else { EntryFlags::empty() }
     }
 }
 
@@ -186,9 +211,9 @@ where
         user_accessible: bool,
         allocator: &A,
         physical_base: VirtualAddress,
-    ) -> Result<&mut Table<L::NextLevel>, MapError>
+    ) -> Result<&mut Table<L::NextLevel>, MapperError>
     where
-        A: FrameAllocator,
+        A: FrameAllocator<Size4KiB>,
     {
         /*
          * There's a special case here, where we want to create a new page table, but there's
@@ -202,7 +227,7 @@ where
             let flags = EntryFlags::default()
                 | EntryFlags::WRITABLE
                 | if user_accessible { EntryFlags::USER_ACCESSIBLE } else { EntryFlags::empty() };
-            self.entries[index].set(allocator.allocate().start_address, flags);
+            self.entries[index].set(allocator.allocate().start, flags);
 
             // Safe to unwrap because we just created the table there
             let table = self.next_table_mut(index, physical_base).unwrap();
@@ -219,7 +244,7 @@ where
                  * The entry is present, but is actually a huge page. It is **NOT** type-safe to
                  * call `next_table` on it. Instead, we return an error.
                  */
-                return Err(MapError::AlreadyMappedHugePage);
+                return Err(MapperError::AlreadyMapped);
             }
 
             // TODO: find a set of flags suitable for both the existing entries and the new ones.
@@ -251,7 +276,7 @@ pub struct PageTable {
 impl PageTable {
     pub fn new(frame: Frame, physical_base: VirtualAddress) -> PageTable {
         let mut table = PageTable { p4_frame: frame, physical_base };
-        table.ref_to_p4().zero();
+        table.p4().zero();
         table
     }
 
@@ -263,115 +288,79 @@ impl PageTable {
         PageTable { p4_frame, physical_base }
     }
 
-    pub fn mapper<'a>(&'a mut self) -> Mapper<'a> {
-        Mapper { physical_base: self.physical_base, p4: self.ref_to_p4() }
+    pub fn mapper<'a>(&'a mut self) -> MapperImpl<'a> {
+        // XXX: this is explicitely enumerated to avoid an error if more errors are added in the future
+        MapperImpl { physical_base: self.physical_base, p4: self.p4() }
     }
 
-    fn ref_to_p4(&mut self) -> &mut Table<Level4> {
-        unsafe { &mut *((self.physical_base + usize::from(self.p4_frame.start_address)).mut_ptr()) }
+    fn p4(&mut self) -> &mut Table<Level4> {
+        unsafe { &mut *((self.physical_base + usize::from(self.p4_frame.start)).mut_ptr()) }
     }
 
     pub fn switch_to(&self) {
         unsafe {
-            write_control_reg!(cr3, usize::from(self.p4_frame.start_address) as u64);
+            write_control_reg!(cr3, usize::from(self.p4_frame.start) as u64);
         }
     }
 }
 
-pub struct Mapper<'a> {
-    pub physical_base: VirtualAddress,
+pub struct MapperImpl<'a> {
+    physical_base: VirtualAddress,
     pub p4: &'a mut Table<Level4>,
 }
 
-impl<'a> Mapper<'a> {
-    pub fn translate(&self, address: VirtualAddress) -> TranslationResult {
-        let p2 = match self
+impl<'a, A> Mapper<Size4KiB, A> for MapperImpl<'a>
+where
+    A: FrameAllocator<Size4KiB>,
+{
+    fn translate(&self, address: VirtualAddress) -> Option<PhysicalAddress> {
+        let p2 = self
             .p4
             .next_table(address.p4_index(), self.physical_base)
-            .and_then(|p3| p3.next_table(address.p3_index(), self.physical_base))
-        {
-            Some(p2) => p2,
-            None => return TranslationResult::NotMapped,
-        };
+            .and_then(|p3| p3.next_table(address.p3_index(), self.physical_base))?;
 
         let p2_entry = p2[address.p2_index()];
         if p2_entry.flags().contains(EntryFlags::HUGE_PAGE) {
-            return TranslationResult::Frame2MiB(Frame::<Size2MiB>::starts_with(p2_entry.address().unwrap()));
+            return Some(p2_entry.address()? + (usize::from(address) % Size2MiB::SIZE));
         }
 
-        let p1 = match p2.next_table(address.p2_index(), self.physical_base) {
-            Some(p1) => p1,
-            None => return TranslationResult::NotMapped,
-        };
-
-        match p1[address.p1_index()].address() {
-            Some(address) => TranslationResult::Frame4KiB(Frame::<Size4KiB>::starts_with(address)),
-            None => TranslationResult::NotMapped,
-        }
+        let p1 = p2.next_table(address.p2_index(), self.physical_base)?;
+        Some(p1[address.p1_index()].address()? + (usize::from(address) % Size4KiB::SIZE))
     }
 
-    /// Allocates a `Frame` using the given allocator, and maps the specified `Page` into it.
-    /// Useful for when you need to map a page into physical memory, but you don't care where.
-    /// Returns the allocated `Frame` so it can be freed when no longer needed by the caller.
-    pub fn map<A>(&mut self, page: Page<Size4KiB>, flags: EntryFlags, allocator: &A) -> Result<Frame, MapError>
+    fn map<S>(&mut self, page: Page<S>, frame: Frame<S>, flags: Flags, allocator: &A) -> Result<(), MapperError>
     where
-        A: FrameAllocator,
-    {
-        let frame = allocator.allocate();
-        self.map_to(page, frame, flags, allocator)?;
-        Ok(frame)
-    }
-
-    pub fn map_to<A, S>(
-        &mut self,
-        page: Page<S>,
-        frame: Frame<S>,
-        flags: EntryFlags,
-        allocator: &A,
-    ) -> Result<(), MapError>
-    where
-        A: FrameAllocator,
         S: FrameSize,
     {
         /*
          * If a page should be accessible from userspace, all the parent paging structures for
          * that page must also be marked user-accessible.
          */
-        let user_accessible = flags.contains(EntryFlags::USER_ACCESSIBLE);
+        // TODO: I think we should just pass all the flags upwards and amalgamalte them in `Flags` itself.
+        let user_accessible = flags.user_accessible;
         if S::SIZE == Size4KiB::SIZE {
             let p1 = self
                 .p4
-                .next_table_create(page.start_address.p4_index(), user_accessible, allocator, self.physical_base)?
-                .next_table_create(page.start_address.p3_index(), user_accessible, allocator, self.physical_base)?
-                .next_table_create(
-                    page.start_address.p2_index(),
-                    user_accessible,
-                    allocator,
-                    self.physical_base,
-                )?;
+                .next_table_create(page.start.p4_index(), user_accessible, allocator, self.physical_base)?
+                .next_table_create(page.start.p3_index(), user_accessible, allocator, self.physical_base)?
+                .next_table_create(page.start.p2_index(), user_accessible, allocator, self.physical_base)?;
 
-            if !p1[page.start_address.p1_index()].is_unused() {
-                return Err(MapError::AlreadyMapped);
+            if !p1[page.start.p1_index()].is_unused() {
+                return Err(MapperError::AlreadyMapped);
             }
 
-            p1[page.start_address.p1_index()].set(frame.start_address, flags | EntryFlags::default());
+            p1[page.start.p1_index()].set(frame.start, EntryFlags::from(flags));
         } else if S::SIZE == Size2MiB::SIZE {
             let p2 = self
                 .p4
-                .next_table_create(page.start_address.p4_index(), user_accessible, allocator, self.physical_base)?
-                .next_table_create(
-                    page.start_address.p3_index(),
-                    user_accessible,
-                    allocator,
-                    self.physical_base,
-                )?;
+                .next_table_create(page.start.p4_index(), user_accessible, allocator, self.physical_base)?
+                .next_table_create(page.start.p3_index(), user_accessible, allocator, self.physical_base)?;
 
-            if !p2[page.start_address.p2_index()].is_unused() {
-                return Err(MapError::AlreadyMapped);
+            if !p2[page.start.p2_index()].is_unused() {
+                return Err(MapperError::AlreadyMapped);
             }
 
-            p2[page.start_address.p2_index()]
-                .set(frame.start_address, flags | EntryFlags::HUGE_PAGE | EntryFlags::default());
+            p2[page.start.p2_index()].set(frame.start, EntryFlags::from(flags) | EntryFlags::HUGE_PAGE);
         } else {
             // XXX: this needs to be implemented for any future implemented page sizes (e.g. 1GiB)
             unimplemented!()
@@ -380,44 +369,20 @@ impl<'a> Mapper<'a> {
         // TODO: we could return a marker that the TLB must be flushed to avoid doing it in certain
         // instances when we e.g know we're going to change CR3 before accessing the new mappings.
         // This is fine for now though
-        tlb::invalidate_page(page.start_address);
+        tlb::invalidate_page(page.start);
         Ok(())
     }
 
-    /// Map a range of pages to a range of frames, all with the same flags.
-    pub fn map_range_to<A, S>(
-        &mut self,
-        pages: Range<Page<S>>,
-        frames: Range<Frame<S>>,
-        flags: EntryFlags,
-        allocator: &A,
-    ) -> Result<(), MapError>
-    where
-        A: FrameAllocator,
-        S: FrameSize,
-    {
-        for (page, frame) in pages.zip(frames) {
-            self.map_to(page, frame, flags, allocator)?;
-        }
-
-        Ok(())
-    }
-
-    /// Map `size` bytes at `virtual_start` to `physical_start` with the given set of flags. `size` must be a
-    /// multiple of the smallest frame size, but as much of it will be mapped with larger frames as possible.
-    pub fn map_area_to<A>(
+    fn map_area(
         &mut self,
         virtual_start: VirtualAddress,
         physical_start: PhysicalAddress,
         size: usize,
-        flags: EntryFlags,
+        flags: Flags,
         allocator: &A,
-    ) -> Result<(), MapError>
-    where
-        A: FrameAllocator,
-    {
-        assert!(virtual_start.is_page_aligned::<Size4KiB>());
-        assert!(physical_start.is_frame_aligned::<Size4KiB>());
+    ) -> Result<(), MapperError> {
+        assert!(virtual_start.is_aligned(Size4KiB::SIZE));
+        assert!(physical_start.is_aligned(Size4KiB::SIZE));
         assert!(size % Size4KiB::SIZE == 0);
 
         /*
@@ -428,7 +393,7 @@ impl<'a> Mapper<'a> {
                 Page::<Size4KiB>::starts_with(virtual_start)..Page::<Size4KiB>::starts_with(virtual_start + size);
             let frames = Frame::<Size4KiB>::starts_with(physical_start)
                 ..Frame::<Size4KiB>::starts_with(physical_start + size);
-            self.map_range_to(pages, frames, flags, allocator)
+            self.map_range(pages, frames, flags, allocator)
         } else {
             /*
              * If it's larger, we split into three areas: a prefix, a middle, and a suffix. The prefix and
@@ -452,55 +417,47 @@ impl<'a> Mapper<'a> {
                 ..Page::<Size4KiB>::starts_with(virtual_middle_start);
             let prefix_frames = Frame::<Size4KiB>::starts_with(physical_prefix_start)
                 ..Frame::<Size4KiB>::starts_with(physical_middle_start);
-            self.map_range_to(prefix_pages, prefix_frames, flags, allocator)?;
+            self.map_range(prefix_pages, prefix_frames, flags, allocator)?;
 
             // Map the middle
             let middle_pages = Page::<Size2MiB>::starts_with(virtual_middle_start)
                 ..Page::<Size2MiB>::starts_with(virtual_middle_end);
             let middle_frames = Frame::<Size2MiB>::starts_with(physical_middle_start)
                 ..Frame::<Size2MiB>::starts_with(physical_middle_end);
-            self.map_range_to(middle_pages, middle_frames, flags, allocator)?;
+            self.map_range(middle_pages, middle_frames, flags, allocator)?;
 
             // Map the suffix
             let suffix_pages = Page::<Size4KiB>::starts_with(virtual_middle_end)
                 ..Page::<Size4KiB>::starts_with(virtual_suffix_end);
             let suffix_frames = Frame::<Size4KiB>::starts_with(physical_middle_end)
                 ..Frame::<Size4KiB>::starts_with(physical_suffix_end);
-            self.map_range_to(suffix_pages, suffix_frames, flags, allocator)?;
+            self.map_range(suffix_pages, suffix_frames, flags, allocator)?;
 
             Ok(())
         }
     }
 
-    /// Unmap the given page, returning the `Frame` it was mapped to so the caller can choose to
-    /// free it if needed. Returns `None` if the given page is not mapped.
-    pub fn unmap(&mut self, page: Page<Size4KiB>) -> Option<Frame<Size4KiB>> {
-        let p1 = self
-            .p4
-            .next_table_mut(page.start_address.p4_index(), self.physical_base)?
-            .next_table_mut(page.start_address.p3_index(), self.physical_base)?
-            .next_table_mut(page.start_address.p2_index(), self.physical_base)?;
-        let frame = Frame::starts_with(p1[page.start_address.p1_index()].address()?);
-        p1[page.start_address.p1_index()].set_unused();
-        tlb::invalidate_page(page.start_address);
+    fn unmap<S>(&mut self, page: Page<S>) -> Option<Frame<S>>
+    where
+        S: FrameSize,
+    {
+        match S::SIZE {
+            Size4KiB::SIZE => {
+                let p1 = self
+                    .p4
+                    .next_table_mut(page.start.p4_index(), self.physical_base)?
+                    .next_table_mut(page.start.p3_index(), self.physical_base)?
+                    .next_table_mut(page.start.p2_index(), self.physical_base)?;
+                let frame = Frame::starts_with(p1[page.start.p1_index()].address()?);
+                p1[page.start.p1_index()].set_unused();
+                tlb::invalidate_page(page.start);
 
-        Some(frame)
+                Some(frame)
+            }
+            Size2MiB::SIZE => unimplemented!(),
+            Size1GiB::SIZE => unimplemented!(),
+
+            _ => panic!("Unimplemented page size!"),
+        }
     }
-}
-
-#[derive(Debug)]
-pub enum TranslationResult {
-    Frame4KiB(Frame<Size4KiB>),
-    Frame2MiB(Frame<Size2MiB>),
-    NotMapped,
-}
-
-#[derive(Debug)]
-pub enum MapError {
-    AlreadyMapped,
-
-    /// Produced when we tried to create a new page table, but there was already a huge page there
-    /// (e.g. we needed to create a new P1 table, but there was a 2MiB page entry in the P2 at that
-    /// index).
-    AlreadyMappedHugePage,
 }

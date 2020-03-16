@@ -1,8 +1,8 @@
 use core::{fmt, ptr::NonNull};
+use hal_x86_64::hw::serial::SerialPort;
 use log::{LevelFilter, Log, Metadata, Record};
 use spin::Mutex;
 use uefi::proto::console::text::Output;
-use x86_64::hw::serial::SerialPort;
 
 pub static LOGGER: Mutex<Logger> = Mutex::new(Logger::new());
 
@@ -53,7 +53,7 @@ impl Logger {
              * device, so this defaults to not.
              */
             log_to_serial: false,
-            serial_port: unsafe { SerialPort::new(x86_64::hw::serial::COM1) },
+            serial_port: unsafe { SerialPort::new(hal_x86_64::hw::serial::COM1) },
             console_writer: None,
         }
     }

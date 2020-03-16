@@ -1,5 +1,5 @@
-use crate::memory::VirtualAddress;
 use core::ptr;
+use hal::memory::VirtualAddress;
 
 /// Represents a register in the local APIC's configuration area.
 pub struct LocalApicRegister {
@@ -100,7 +100,7 @@ impl LocalApic {
     }
 
     pub unsafe fn register(&self, offset: usize) -> LocalApicRegister {
-        LocalApicRegister::new(self.0.offset(offset as isize).mut_ptr() as *mut u32)
+        LocalApicRegister::new((self.0 + offset).mut_ptr() as *mut u32)
     }
 
     /// Send an End Of Interrupt to the local APIC. This should be called by interrupt handlers

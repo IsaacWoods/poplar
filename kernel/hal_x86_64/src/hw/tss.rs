@@ -1,5 +1,5 @@
-use crate::memory::VirtualAddress;
 use core::marker::PhantomPinned;
+use hal::memory::VirtualAddress;
 
 /// Hardware task switching isn't supported on x86_64, so the TSS is just used as a vestigal place
 /// to stick stuff. It's used to store kernel-level stacks that should be used if interrupts occur

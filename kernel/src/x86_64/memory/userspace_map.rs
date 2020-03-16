@@ -1,4 +1,4 @@
-use x86_64::memory::{FrameSize, Size4KiB, VirtualAddress, MEBIBYTES_TO_BYTES};
+use hal::memory::{FrameSize, Size4KiB, VirtualAddress, MEBIBYTES_TO_BYTES};
 
 pub const KERNEL_SPACE_START: VirtualAddress = VirtualAddress::new(0xffffffff_80000000);
 pub const KERNEL_SPACE_END: VirtualAddress = VirtualAddress::new(0xffffffff_ffffffff);

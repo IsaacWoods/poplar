@@ -3,9 +3,9 @@
 //! panics.
 
 use bit_field::BitField;
+use hal_x86_64::hw::{idt::InterruptStackFrame, registers::read_control_reg};
 use log::{error, info};
 use pebble_util::BinaryPrettyPrint;
-use x86_64::hw::{idt::InterruptStackFrame, registers::read_control_reg};
 
 pub extern "C" fn nmi_handler(_: &InterruptStackFrame) {
     info!("NMI occured!");

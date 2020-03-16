@@ -5,12 +5,9 @@ use super::Arch;
 use acpi::interrupt::InterruptModel;
 use aml::{value::Args as AmlArgs, AmlName, AmlValue};
 use bit_field::BitField;
-use boot_info_x86_64::kernel_map;
 use core::time::Duration;
-use log::{info, warn};
-use pci::PciResolver;
-use pebble_util::InitGuard;
-use x86_64::{
+use hal::memory::PhysicalAddress;
+use hal_x86_64::{
     hw::{
         gdt::KERNEL_CODE_SELECTOR,
         i8259_pic::Pic,
@@ -18,8 +15,11 @@ use x86_64::{
         local_apic::LocalApic,
         registers::write_msr,
     },
-    memory::PhysicalAddress,
+    kernel_map,
 };
+use log::{info, warn};
+use pci::PciResolver;
+use pebble_util::InitGuard;
 
 global_asm!(include_str!("syscall.s"));
 extern "C" {
@@ -176,7 +176,7 @@ impl InterruptController {
          *
          * Refer to the documentation comments of each MSR to understand what this code is doing.
          */
-        use x86_64::hw::{
+        use hal_x86_64::hw::{
             gdt::USER_COMPAT_CODE_SELECTOR,
             registers::{IA32_FMASK, IA32_LSTAR, IA32_STAR},
         };

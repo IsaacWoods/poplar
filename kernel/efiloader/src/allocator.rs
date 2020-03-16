@@ -1,9 +1,9 @@
 use core::{cell::Cell, ops::Range};
+use hal::memory::{Frame, FrameAllocator, FrameSize, PhysicalAddress, Size4KiB};
 use uefi::{
     prelude::*,
     table::boot::{AllocateType, BootServices},
 };
-use x86_64::memory::{Frame, FrameAllocator, FrameSize, PhysicalAddress, Size4KiB};
 
 /// `BootFrameAllocator` is the allocator we use in the bootloader to allocate memory for the
 /// kernel page tables. It pre-allocates a preset number of frames using the UEFI boot services,
@@ -37,7 +37,7 @@ impl BootFrameAllocator {
     }
 }
 
-impl FrameAllocator for BootFrameAllocator {
+impl FrameAllocator<Size4KiB> for BootFrameAllocator {
     fn allocate_n(&self, n: usize) -> Range<Frame> {
         if (self.next_frame.get() + n) > self.end_frame {
             panic!("Bootloader frame allocator ran out of frames!");

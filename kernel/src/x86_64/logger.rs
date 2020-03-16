@@ -1,11 +1,11 @@
+use hal_x86_64::hw::serial::SerialPort;
 use log::{Log, Metadata, Record};
 use spin::Mutex;
-use x86_64::hw::serial::SerialPort;
 
 /// The COM1 serial port, accessed through the UART 16550 controller found in many old platforms,
 /// and emulated by most emulators. There is no need to initialise it in the kernel, as the
 /// bootloader has already done that for us.
-static COM1: Mutex<SerialPort> = Mutex::new(unsafe { SerialPort::new(0x3f8) });
+static COM1: Mutex<SerialPort> = Mutex::new(unsafe { SerialPort::new(hal_x86_64::hw::serial::COM1) });
 
 /// This handles calls to the log macros throughout the kernel, and writes logging to the COM1
 /// serial port.

@@ -5,8 +5,8 @@ use crate::object::{
 };
 use alloc::{string::String, vec::Vec};
 use core::{mem, pin::Pin, str};
+use hal::memory::VirtualAddress;
 use libpebble::caps::Capability;
-use x86_64::memory::VirtualAddress;
 
 global_asm!(include_str!("task.s"));
 extern "C" {
@@ -93,9 +93,9 @@ impl Task {
     pub fn from_boot_info_image(
         arch: &Arch,
         address_space: WrappedKernelObject<Arch>,
-        image: &boot_info_x86_64::LoadedImage,
+        image: &hal::boot_info::LoadedImage,
     ) -> Result<Task, TaskCreationError> {
-        const KERNEL_STACK_INITIAL_SIZE: usize = 4 * x86_64::memory::KIBIBYTES_TO_BYTES;
+        const KERNEL_STACK_INITIAL_SIZE: usize = 4 * hal::memory::KIBIBYTES_TO_BYTES;
 
         let user_stack = address_space
             .object

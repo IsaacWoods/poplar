@@ -35,15 +35,19 @@ use crate::{
 };
 use acpi::Acpi;
 use aml::AmlContext;
-use boot_info_x86_64::{kernel_map, BootInfo, LoadedImage};
 use core::time::Duration;
+use hal::{
+    boot_info::{BootInfo, LoadedImage},
+    memory::{Frame, PhysicalAddress},
+};
+use hal_x86_64::{
+    hw::{cpu::CpuInfo, gdt::Gdt, registers::read_control_reg},
+    kernel_map,
+    paging::PageTable,
+};
 use log::{error, info, warn};
 use pebble_util::InitGuard;
 use spin::{Mutex, RwLock};
-use x86_64::{
-    hw::{cpu::CpuInfo, gdt::Gdt, registers::read_control_reg},
-    memory::{Frame, PageTable, PhysicalAddress},
-};
 
 pub(self) static GDT: Mutex<Gdt> = Mutex::new(Gdt::new());
 pub static ARCH: InitGuard<Arch> = InitGuard::uninit();
@@ -89,7 +93,7 @@ pub extern "C" fn kmain(boot_info: &BootInfo) -> ! {
     log::set_max_level(log::LevelFilter::Trace);
     info!("The Pebble kernel is running");
 
-    if boot_info.magic != boot_info_x86_64::BOOT_INFO_MAGIC {
+    if boot_info.magic != hal::boot_info::BOOT_INFO_MAGIC {
         panic!("Boot info magic is not correct!");
     }
 
@@ -217,9 +221,11 @@ pub extern "C" fn kmain(boot_info: &BootInfo) -> ! {
     scheduler.drop_to_userspace(&ARCH.get())
 }
 
-fn create_framebuffer(video_info: &boot_info_x86_64::VideoModeInfo) {
-    use boot_info_x86_64::PixelFormat;
-    use x86_64::memory::{EntryFlags, FrameSize, Size4KiB, VirtualAddress};
+fn create_framebuffer(video_info: &hal::boot_info::VideoModeInfo) {
+    use hal::{
+        boot_info::PixelFormat,
+        memory::{Flags, FrameSize, Size4KiB, VirtualAddress},
+    };
 
     /*
      * For now, we just put the framebuffer at the start of the region where we map MemoryObjects
@@ -236,7 +242,7 @@ fn create_framebuffer(video_info: &boot_info_x86_64::VideoModeInfo) {
         VIRTUAL_ADDRESS,
         video_info.framebuffer_address,
         pebble_util::math::align_up(size_in_bytes, Size4KiB::SIZE),
-        EntryFlags::PRESENT | EntryFlags::WRITABLE | EntryFlags::USER_ACCESSIBLE | EntryFlags::NO_CACHE,
+        Flags { writable: true, executable: false, user_accessible: true, cached: false },
     )))
     .add_to_map(&mut crate::COMMON.get().object_map.write());
 
@@ -288,7 +294,7 @@ fn load_task(arch: &Arch, scheduler: &mut Scheduler, image: &LoadedImage) {
 /// function checks that we support everything we need to, and enable features that we need.
 fn check_support_and_enable_features(cpu_info: &CpuInfo) {
     use bit_field::BitField;
-    use x86_64::hw::registers::{
+    use hal_x86_64::hw::registers::{
         read_control_reg,
         read_msr,
         write_control_reg,

@@ -4,9 +4,9 @@ use core::{
     mem::{self, size_of},
     ops::Deref,
 };
+use hal::memory::VirtualAddress;
 use pebble_util::math::align_up;
 use spin::Mutex;
-use x86_64::memory::VirtualAddress;
 
 pub struct HoleAllocator {
     heap_bottom: VirtualAddress,

@@ -4,11 +4,14 @@ mod buddy_allocator;
 pub mod userspace_map;
 
 use self::buddy_allocator::BuddyAllocator;
-use boot_info_x86_64::{kernel_map, BootInfo};
 use core::ops::Range;
+use hal::{
+    boot_info::BootInfo,
+    memory::{Flags, Frame, FrameAllocator, Mapper, Page, Size4KiB, VirtualAddress},
+};
+use hal_x86_64::kernel_map;
 use pebble_util::bitmap::BitmapArray;
 use spin::Mutex;
-use x86_64::memory::{EntryFlags, Frame, FrameAllocator, Page, VirtualAddress};
 
 const BUDDY_ALLOCATOR_MAX_ORDER: usize = 10;
 
@@ -38,7 +41,7 @@ impl LockedPhysicalMemoryManager {
         let mut buddy_allocator = BuddyAllocator::new(BUDDY_ALLOCATOR_MAX_ORDER);
 
         for entry in boot_info.memory_map.entries() {
-            if entry.memory_type == boot_info_x86_64::MemoryType::Conventional {
+            if entry.memory_type == hal::boot_info::MemoryType::Conventional {
                 buddy_allocator.add_range(entry.frame_range());
             }
         }
@@ -59,21 +62,21 @@ impl LockedPhysicalMemoryManager {
         let top = slot_bottom + kernel_map::STACK_SLOT_SIZE - 1;
         let stack_bottom = top - initial_size;
 
-        for page in Page::contains(stack_bottom)..=Page::contains(top) {
-            crate::x86_64::ARCH
-                .get()
-                .kernel_page_table
-                .lock()
-                .mapper()
-                .map(page, EntryFlags::WRITABLE, self)
-                .unwrap();
-        }
+        let pages = Page::contains(stack_bottom)..Page::contains(top + 1);
+        let frames = self.allocate_n(pages.clone().count());
+        crate::x86_64::ARCH
+            .get()
+            .kernel_page_table
+            .lock()
+            .mapper()
+            .map_range(pages, frames, Flags { writable: true, ..Default::default() }, self)
+            .unwrap();
 
         Some(KernelStack { index, top, slot_bottom, stack_bottom })
     }
 }
 
-impl FrameAllocator for LockedPhysicalMemoryManager {
+impl FrameAllocator<Size4KiB> for LockedPhysicalMemoryManager {
     fn allocate_n(&self, n: usize) -> Range<Frame> {
         let start = self.0.lock().buddy_allocator.allocate_n(n).expect("Failed to allocate physical memory");
         start..(start + n)

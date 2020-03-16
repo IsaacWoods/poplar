@@ -1,12 +1,14 @@
-use boot_info_x86_64::Segment;
-use x86_64::memory::{EntryFlags, PhysicalAddress, VirtualAddress};
+use hal::{
+    boot_info::Segment,
+    memory::{Flags, PhysicalAddress, VirtualAddress},
+};
 
 pub struct MemoryObject {
     pub virtual_address: VirtualAddress,
     pub physical_address: PhysicalAddress,
     /// Size of this MemoryObject in bytes.
     pub size: usize,
-    pub flags: EntryFlags,
+    pub flags: Flags,
 }
 
 impl MemoryObject {
@@ -14,22 +16,17 @@ impl MemoryObject {
         virtual_address: VirtualAddress,
         physical_address: PhysicalAddress,
         size: usize,
-        flags: EntryFlags,
+        flags: Flags,
     ) -> MemoryObject {
         MemoryObject { virtual_address, physical_address, size, flags }
     }
 
-    pub fn from_boot_info(memory_object_info: &Segment, user_accessible: bool) -> MemoryObject {
-        let flags = EntryFlags::PRESENT
-            | if memory_object_info.writable { EntryFlags::WRITABLE } else { EntryFlags::empty() }
-            | if memory_object_info.executable { EntryFlags::empty() } else { EntryFlags::NO_EXECUTE }
-            | if user_accessible { EntryFlags::USER_ACCESSIBLE } else { EntryFlags::empty() };
-
+    pub fn from_boot_info(segment: &Segment, user_accessible: bool) -> MemoryObject {
         MemoryObject {
-            virtual_address: memory_object_info.virtual_address,
-            physical_address: memory_object_info.physical_address,
-            size: memory_object_info.size,
-            flags,
+            virtual_address: segment.virtual_address,
+            physical_address: segment.physical_address,
+            size: segment.size,
+            flags: segment.flags,
         }
     }
 }

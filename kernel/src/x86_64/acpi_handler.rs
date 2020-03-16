@@ -1,15 +1,15 @@
-use acpi::{AcpiHandler, PhysicalMapping as AcpiPhysicalMapping};
-use boot_info_x86_64::kernel_map;
+use acpi::{AcpiHandler, PhysicalMapping};
 use core::ptr::NonNull;
-use x86_64::memory::PhysicalAddress;
+use hal::memory::PhysicalAddress;
+use hal_x86_64::kernel_map;
 
 pub struct PebbleAcpiHandler;
 
 impl AcpiHandler for PebbleAcpiHandler {
-    fn map_physical_region<T>(&mut self, physical_address: usize, size: usize) -> AcpiPhysicalMapping<T> {
+    fn map_physical_region<T>(&mut self, physical_address: usize, size: usize) -> PhysicalMapping<T> {
         let virtual_address = kernel_map::physical_to_virtual(PhysicalAddress::new(physical_address).unwrap());
 
-        AcpiPhysicalMapping {
+        PhysicalMapping {
             physical_start: usize::from(physical_address),
             virtual_start: NonNull::new(virtual_address.mut_ptr()).unwrap(),
             region_length: size,
@@ -17,5 +17,5 @@ impl AcpiHandler for PebbleAcpiHandler {
         }
     }
 
-    fn unmap_physical_region<T>(&mut self, _region: AcpiPhysicalMapping<T>) {}
+    fn unmap_physical_region<T>(&mut self, _region: PhysicalMapping<T>) {}
 }

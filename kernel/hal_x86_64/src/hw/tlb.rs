@@ -1,5 +1,5 @@
 use super::registers::{read_control_reg, write_control_reg};
-use crate::memory::VirtualAddress;
+use hal::memory::VirtualAddress;
 
 #[rustfmt::skip]
 pub fn invalidate_page(address: VirtualAddress) {

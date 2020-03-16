@@ -1,6 +1,6 @@
 use crate::LoaderError;
+use hal::memory::KIBIBYTES_TO_BYTES;
 use log::warn;
-use x86_64::memory::KIBIBYTES_TO_BYTES;
 
 const DEFAULT_VOLUME_LABEL: &'static str = "BOOT";
 const DEFAULT_KERNEL_HEAP_SIZE: usize = 200 * KIBIBYTES_TO_BYTES;

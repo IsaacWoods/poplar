@@ -1,0 +1,10 @@
+[package]
+name = "hal_x86_64"
+version = "0.1.0"
+authors = ["Isaac Woods"]
+edition = "2018"
+
+[dependencies]
+hal = { path = "../hal" }
+bitflags = "1"
+bit_field = "0.10"

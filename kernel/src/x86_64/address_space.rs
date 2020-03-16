@@ -1,20 +1,10 @@
 use super::{memory::userspace_map, Arch, ARCH};
 use crate::object::WrappedKernelObject;
 use alloc::vec::Vec;
-use boot_info_x86_64::kernel_map;
+use hal::memory::{Flags, FrameAllocator, Mapper, Page, Size4KiB, VirtualAddress};
+use hal_x86_64::{kernel_map, paging::PageTable};
 use libpebble::syscall::MemoryObjectError;
 use pebble_util::bitmap::Bitmap;
-use x86_64::memory::{
-    EntryFlags,
-    Frame,
-    FrameAllocator,
-    FrameSize,
-    Page,
-    PageTable,
-    Size4KiB,
-    TranslationResult,
-    VirtualAddress,
-};
 
 #[derive(PartialEq, Eq, Debug)]
 enum State {
@@ -54,7 +44,8 @@ impl AddressSpace {
          */
         let kernel_p3_address =
             arch.kernel_page_table.lock().mapper().p4[kernel_map::KERNEL_P4_ENTRY].address().unwrap();
-        table.mapper().p4[kernel_map::KERNEL_P4_ENTRY].set(kernel_p3_address, EntryFlags::WRITABLE);
+        table.mapper().p4[kernel_map::KERNEL_P4_ENTRY]
+            .set(kernel_p3_address, hal_x86_64::paging::EntryFlags::WRITABLE);
 
         AddressSpace { table, state: State::NotActive, memory_objects: Vec::new(), task_user_stack_bitmap: 0 }
     }
@@ -64,12 +55,12 @@ impl AddressSpace {
         memory_object: WrappedKernelObject<Arch>,
     ) -> Result<(), MemoryObjectError> {
         {
-            use x86_64::memory::MapError;
+            use hal::memory::MapperError;
             let mut mapper = self.table.mapper();
             let memory_obj_info = memory_object.object.memory_object().expect("Not a MemoryObject").read();
 
             mapper
-                .map_area_to(
+                .map_area(
                     memory_obj_info.virtual_address,
                     memory_obj_info.physical_address,
                     memory_obj_info.size,
@@ -77,9 +68,8 @@ impl AddressSpace {
                     &ARCH.get().physical_memory_manager,
                 )
                 .map_err(|err| match err {
-                    MapError::AlreadyMapped | MapError::AlreadyMappedHugePage => {
-                        MemoryObjectError::AddressRangeNotFree
-                    }
+                    // XXX: this is explicitely enumerated to avoid an error if more errors are added in the future
+                    MapperError::AlreadyMapped => MemoryObjectError::AddressRangeNotFree,
                 })?;
         }
 
@@ -103,7 +93,7 @@ impl AddressSpace {
 
     pub fn add_stack<A>(&mut self, allocator: &A) -> Option<TaskUserStack>
     where
-        A: FrameAllocator,
+        A: FrameAllocator<Size4KiB>,
     {
         let index = self.task_user_stack_bitmap.alloc(1)?;
 
@@ -113,7 +103,15 @@ impl AddressSpace {
         let stack_bottom = top - userspace_map::INITIAL_STACK_SIZE;
 
         for page in Page::contains(stack_bottom)..=Page::contains(top) {
-            self.table.mapper().map(page, EntryFlags::WRITABLE | EntryFlags::USER_ACCESSIBLE, allocator).unwrap();
+            self.table
+                .mapper()
+                .map(
+                    page,
+                    allocator.allocate(),
+                    Flags { writable: true, user_accessible: true, ..Default::default() },
+                    allocator,
+                )
+                .unwrap();
         }
 
         Some(TaskUserStack { top, slot_bottom, stack_bottom })

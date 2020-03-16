@@ -61,18 +61,15 @@ update:
 	cargo update --manifest-path lib/libpebble/Cargo.toml
 	cargo update --manifest-path lib/mer/Cargo.toml
 	cargo update --manifest-path lib/pebble_util/Cargo.toml
-	cargo update --manifest-path lib/x86_64/Cargo.toml
 
 fmt:
 	@# `cargo fmt` doesn't play nicely with conditional compilation, so we manually `rustfmt` things
 	find kernel/src -type f -name "*.rs" -exec rustfmt {} +
-	find lib/x86_64/src -type f -name "*.rs" -exec rustfmt {} +
 	cd lib/libpebble && cargo fmt
 	cd bootloader && cargo fmt
 
 test:
 	cargo test --all-features --manifest-path lib/pebble_util/Cargo.toml
-	cargo test --all-features --manifest-path lib/x86_64/Cargo.toml
 	cargo test --all-features --manifest-path kernel/Cargo.toml
 
 # This is used by CI to generate the site to deploy. Probably not useful on its own

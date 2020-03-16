@@ -1,7 +1,7 @@
 use super::{tss::Tss, DescriptorTablePointer};
-use crate::memory::VirtualAddress;
 use bit_field::BitField;
 use core::{mem, ops::Deref, pin::Pin};
+use hal::memory::VirtualAddress;
 
 #[derive(Clone, Copy, PartialEq, Eq)]
 #[repr(u8)]
