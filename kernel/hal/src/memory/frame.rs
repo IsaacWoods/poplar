@@ -10,7 +10,7 @@ pub struct Frame<S = Size4KiB>
 where
     S: FrameSize,
 {
-    start: PhysicalAddress,
+    pub start: PhysicalAddress,
     _phantom: PhantomData<S>,
 }
 

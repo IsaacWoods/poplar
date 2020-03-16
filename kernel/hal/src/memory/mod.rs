@@ -7,13 +7,13 @@
 
 mod frame;
 mod page;
-mod page_table;
+mod paging;
 mod physical_address;
 mod virtual_address;
 
 pub use frame::Frame;
 pub use page::Page;
-pub use page_table::{Flags, Mapper, MapperError};
+pub use paging::{Flags, Mapper, MapperError};
 pub use physical_address::PhysicalAddress;
 pub use virtual_address::VirtualAddress;
 
@@ -31,6 +31,10 @@ pub const GIBIBYTES_TO_BYTES: usize = 1024 * MEBIBYTES_TO_BYTES;
 pub trait FrameSize: Clone + Copy + PartialEq + Eq + PartialOrd + Ord + Debug {
     /// Frame size in bytes
     const SIZE: usize;
+
+    fn frames_needed(bytes: usize) -> usize {
+        (bytes / Self::SIZE) + if bytes % Self::SIZE > 0 { 1 } else { 0 }
+    }
 }
 
 macro frame_size($name: ident, $size: expr, $condition: meta) {
@@ -55,7 +59,7 @@ frame_size!(Size1GiB, 1 * GIBIBYTES_TO_BYTES, cfg(target_arch = "x86_64"));
 ///
 /// A `FrameAllocator` is defined for a specific `FrameSize`, but multiple implementations of `FrameAllocator`
 /// (each with a different frame size) can be used for allocators that aren't tied to a specific block size.
-pub trait FrameAllocator<S>: Copy
+pub trait FrameAllocator<S>
 where
     S: FrameSize,
 {

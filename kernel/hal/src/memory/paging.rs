@@ -1,15 +1,24 @@
 use super::{Frame, FrameAllocator, FrameSize, Page, PhysicalAddress, VirtualAddress};
 use core::ops::Range;
 
-#[derive(Clone, Copy, PartialEq, Eq)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub struct Flags {
-    writable: bool,
-    executable: bool,
-    user_accessible: bool,
+    pub writable: bool,
+    pub executable: bool,
+    pub user_accessible: bool,
+    pub cached: bool,
 }
 
+impl Default for Flags {
+    fn default() -> Self {
+        Flags { writable: false, executable: false, user_accessible: false, cached: true }
+    }
+}
+
+#[derive(Debug)]
 pub enum MapperError {
-    NotMapped,
+    /// The virtual memory that is being mapped is already mapped to another part of physical memory.
+    AlreadyMapped,
 }
 
 /// A `Mapper` allows the manipulation of a set of page-tables.
@@ -20,8 +29,9 @@ where
     TableSize: FrameSize,
     TableAllocator: FrameAllocator<TableSize>,
 {
-    /// Get the physical address that a given virtual address is mapped to, if it's mapped.
-    fn translate(&self, address: VirtualAddress) -> Result<PhysicalAddress, MapperError>;
+    /// Get the physical address that a given virtual address is mapped to, if it's mapped. Returns `None` if the
+    /// address is not mapped into physical memory.
+    fn translate(&self, address: VirtualAddress) -> Option<PhysicalAddress>;
 
     /// Map a `Page` to a `Frame` with the given flags.
     fn map<S>(
@@ -29,7 +39,7 @@ where
         page: Page<S>,
         frame: Frame<S>,
         flags: Flags,
-        allocator: TableAllocator,
+        allocator: &TableAllocator,
     ) -> Result<(), MapperError>
     where
         S: FrameSize;
@@ -40,7 +50,7 @@ where
         pages: Range<Page<S>>,
         frames: Range<Frame<S>>,
         flags: Flags,
-        allocator: TableAllocator,
+        allocator: &TableAllocator,
     ) -> Result<(), MapperError>
     where
         S: FrameSize,
@@ -60,6 +70,10 @@ where
         physical_start: PhysicalAddress,
         size: usize,
         flags: Flags,
-        allocator: TableAllocator,
+        allocator: &TableAllocator,
     ) -> Result<(), MapperError>;
+
+    fn unmap<S>(&mut self, page: Page<S>) -> Option<Frame<S>>
+    where
+        S: FrameSize;
 }
