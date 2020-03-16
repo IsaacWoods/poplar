@@ -1,9 +1,5 @@
-#![no_std]
-
-pub mod kernel_map;
-
+use crate::memory::{Flags, Frame, PhysicalAddress, VirtualAddress};
 use core::ops::Range;
-use x86_64::memory::{Frame, PhysicalAddress, VirtualAddress};
 
 pub const BOOT_INFO_MAGIC: u32 = 0xcafebabe;
 
@@ -188,8 +184,7 @@ pub struct Segment {
     pub virtual_address: VirtualAddress,
     /// In bytes.
     pub size: usize,
-    pub writable: bool,
-    pub executable: bool,
+    pub flags: Flags,
 }
 
 #[derive(Clone, Copy, Debug)]

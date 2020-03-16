@@ -1,6 +1,8 @@
 use crate::LoaderError;
-use boot_info_x86_64::{kernel_map, LoadedImage, Segment, MAX_CAPABILITY_STREAM_LENGTH};
 use core::{ptr, slice, str};
+use hal::{
+    boot_info::{LoadedImage, Segment, MAX_CAPABILITY_STREAM_LENGTH},
+};
 use mer::{
     program::{ProgramHeader, SegmentType},
     Elf,
@@ -53,15 +55,7 @@ where
     for segment in elf.segments() {
         match segment.segment_type() {
             SegmentType::Load if segment.mem_size > 0 => {
-                let segment = load_segment(boot_services, segment, crate::KERNEL_MEMORY_TYPE, &elf)?;
-
-                let mut flags = EntryFlags::empty();
-                if segment.writable {
-                    flags |= EntryFlags::WRITABLE;
-                }
-                if !segment.executable {
-                    flags |= EntryFlags::NO_EXECUTE;
-                }
+                let segment = load_segment(boot_services, segment, crate::KERNEL_MEMORY_TYPE, &elf, false)?;
 
                 /*
                  * If this segment loads past `next_safe_address`, update it.
@@ -110,7 +104,7 @@ pub fn load_image(
     image_data.entry_point = VirtualAddress::new(elf.entry_point());
 
     let name_bytes = name.as_bytes();
-    if name_bytes.len() > boot_info_x86_64::MAX_IMAGE_NAME_LENGTH {
+    if name_bytes.len() > hal::boot_info::MAX_IMAGE_NAME_LENGTH {
         panic!("Image's name is too long: '{}'!", name);
     }
     image_data.name_length = name_bytes.len() as u8;
@@ -119,7 +113,7 @@ pub fn load_image(
     for segment in elf.segments() {
         match segment.segment_type() {
             SegmentType::Load if segment.mem_size > 0 => {
-                let segment = load_segment(boot_services, segment, crate::IMAGE_MEMORY_TYPE, &elf)?;
+                let segment = load_segment(boot_services, segment, crate::IMAGE_MEMORY_TYPE, &elf, true)?;
                 match image_data.add_segment(segment) {
                     Ok(()) => (),
                     Err(()) => panic!("Image at '{}' has too many load segments!", path),
@@ -211,6 +205,7 @@ fn load_segment(
     segment: ProgramHeader,
     memory_type: MemoryType,
     elf: &Elf,
+    user_accessible: bool,
 ) -> Result<Segment, LoaderError> {
     assert!((segment.mem_size as usize) % Size4KiB::SIZE == 0);
 
@@ -244,7 +239,11 @@ fn load_segment(
         physical_address: PhysicalAddress::new(physical_address as usize).unwrap(),
         virtual_address: VirtualAddress::new(segment.virtual_address as usize),
         size: num_frames * Size4KiB::SIZE,
-        writable: segment.is_writable(),
-        executable: segment.is_executable(),
+        flags: Flags {
+            writable: segment.is_writable(),
+            executable: segment.is_executable(),
+            user_accessible,
+            ..Default::default()
+        },
     })
 }

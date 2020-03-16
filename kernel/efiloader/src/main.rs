@@ -8,9 +8,11 @@ mod image;
 mod logger;
 
 use allocator::BootFrameAllocator;
-use boot_info_x86_64::BootInfo;
 use command_line::CommandLine;
 use core::{mem, panic::PanicInfo, slice};
+use hal::{
+    boot_info::BootInfo,
+};
 use log::{error, info};
 use uefi::{
     prelude::*,
@@ -131,7 +133,7 @@ fn main(image_handle: Handle, system_table: SystemTable<Boot>) -> Result<!, Load
             &allocator,
         )
         .unwrap();
-    boot_info.magic = boot_info_x86_64::BOOT_INFO_MAGIC;
+    boot_info.magic = hal::boot_info::BOOT_INFO_MAGIC;
 
     /*
      * Find the RSDP address and add it to the boot info.
@@ -230,7 +232,7 @@ fn process_memory_map<A>(
 where
     A: FrameAllocator,
 {
-    use boot_info_x86_64::{MemoryMapEntry, MemoryType as BootInfoMemoryType};
+    use hal::boot_info::{MemoryMapEntry, MemoryType as BootInfoMemoryType};
 
     /*
      * To know how much physical memory to map, we keep track of the largest physical address that appears in
@@ -319,7 +321,7 @@ where
     info!("Constructing physical mapping from 0x0 to {:#x}", max_physical_address);
     mapper
         .map_area_to(
-            boot_info_x86_64::kernel_map::PHYSICAL_MAPPING_BASE,
+            hal_x86_64::kernel_map::PHYSICAL_MAPPING_BASE,
             PhysicalAddress::new(0x0).unwrap(),
             max_physical_address,
             EntryFlags::WRITABLE | EntryFlags::NO_EXECUTE,
@@ -371,7 +373,7 @@ fn create_framebuffer(
     boot_info: &mut BootInfo,
     command_line: &CommandLine,
 ) -> Result<(), LoaderError> {
-    use boot_info_x86_64::{PixelFormat, VideoModeInfo};
+    use hal::boot_info::{PixelFormat, VideoModeInfo};
     use uefi::proto::console::gop::PixelFormat as GopFormat;
 
     // Make an initial call to find how many handles we need to search
