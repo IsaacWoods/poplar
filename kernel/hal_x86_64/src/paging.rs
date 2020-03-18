@@ -274,9 +274,9 @@ pub struct PageTable {
 }
 
 impl PageTable {
-    pub fn new(frame: Frame, physical_base: VirtualAddress) -> PageTable {
-        let mut table = PageTable { p4_frame: frame, physical_base };
-        table.p4().zero();
+    pub fn new(p4_frame: Frame, physical_base: VirtualAddress) -> PageTable {
+        let mut table = PageTable { p4_frame, physical_base };
+        Self::p4_mut(&mut table.p4_frame, table.physical_base).zero();
         table
     }
 
@@ -288,13 +288,15 @@ impl PageTable {
         PageTable { p4_frame, physical_base }
     }
 
-    pub fn mapper<'a>(&'a mut self) -> MapperImpl<'a> {
-        // XXX: this is explicitely enumerated to avoid an error if more errors are added in the future
-        MapperImpl { physical_base: self.physical_base, p4: self.p4() }
+    fn p4(&self) -> &Table<Level4> {
+        unsafe { &*((self.physical_base + usize::from(self.p4_frame.start)).mut_ptr()) }
     }
 
-    fn p4(&mut self) -> &mut Table<Level4> {
-        unsafe { &mut *((self.physical_base + usize::from(self.p4_frame.start)).mut_ptr()) }
+    /// Get a mutable reference to the P4 table of this set of page tables. This can't take a `&mut self` like
+    /// you'd normally write this, because then we borrow the entire struct and so can't access `physical_base`
+    /// nicely. Instead, we mutably borrow the P4 frame to "represent" the borrow.
+    fn p4_mut(frame: &mut Frame, physical_base: VirtualAddress) -> &mut Table<Level4> {
+        unsafe { &mut *((physical_base + usize::from(frame.start)).mut_ptr()) }
     }
 
     pub fn switch_to(&self) {
@@ -304,18 +306,13 @@ impl PageTable {
     }
 }
 
-pub struct MapperImpl<'a> {
-    physical_base: VirtualAddress,
-    pub p4: &'a mut Table<Level4>,
-}
-
-impl<'a, A> Mapper<Size4KiB, A> for MapperImpl<'a>
+impl<A> Mapper<Size4KiB, A> for PageTable
 where
     A: FrameAllocator<Size4KiB>,
 {
     fn translate(&self, address: VirtualAddress) -> Option<PhysicalAddress> {
         let p2 = self
-            .p4
+            .p4()
             .next_table(address.p4_index(), self.physical_base)
             .and_then(|p3| p3.next_table(address.p3_index(), self.physical_base))?;
 
@@ -339,8 +336,7 @@ where
         // TODO: I think we should just pass all the flags upwards and amalgamalte them in `Flags` itself.
         let user_accessible = flags.user_accessible;
         if S::SIZE == Size4KiB::SIZE {
-            let p1 = self
-                .p4
+            let p1 = Self::p4_mut(&mut self.p4_frame, self.physical_base)
                 .next_table_create(page.start.p4_index(), user_accessible, allocator, self.physical_base)?
                 .next_table_create(page.start.p3_index(), user_accessible, allocator, self.physical_base)?
                 .next_table_create(page.start.p2_index(), user_accessible, allocator, self.physical_base)?;
@@ -351,8 +347,7 @@ where
 
             p1[page.start.p1_index()].set(frame.start, EntryFlags::from(flags));
         } else if S::SIZE == Size2MiB::SIZE {
-            let p2 = self
-                .p4
+            let p2 = Self::p4_mut(&mut self.p4_frame, self.physical_base)
                 .next_table_create(page.start.p4_index(), user_accessible, allocator, self.physical_base)?
                 .next_table_create(page.start.p3_index(), user_accessible, allocator, self.physical_base)?;
 
@@ -443,8 +438,7 @@ where
     {
         match S::SIZE {
             Size4KiB::SIZE => {
-                let p1 = self
-                    .p4
+                let p1 = Self::p4_mut(&mut self.p4_frame, self.physical_base)
                     .next_table_mut(page.start.p4_index(), self.physical_base)?
                     .next_table_mut(page.start.p3_index(), self.physical_base)?
                     .next_table_mut(page.start.p2_index(), self.physical_base)?;
