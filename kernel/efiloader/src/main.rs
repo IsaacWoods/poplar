@@ -82,13 +82,12 @@ fn main(image_handle: Handle, system_table: SystemTable<Boot>) -> Result<!, Load
      */
     let allocator = BootFrameAllocator::new(system_table.boot_services(), 64);
     let mut page_table = PageTable::new(allocator.allocate(), VirtualAddress::new(0x0));
-    let mut mapper = page_table.mapper();
 
     let kernel_info = image::load_kernel(
         system_table.boot_services(),
         fs_handle,
         command_line.kernel_path?,
-        &mut mapper,
+        &mut page_table,
         &allocator,
     )?;
     let mut next_safe_address = kernel_info.next_safe_address;
@@ -115,7 +114,7 @@ fn main(image_handle: Handle, system_table: SystemTable<Boot>) -> Result<!, Load
     let boot_info = unsafe { &mut *identity_boot_info_ptr };
     let boot_info_virtual_address = kernel_info.next_safe_address;
     next_safe_address += boot_info_needed_frames * Size4KiB::SIZE;
-    mapper
+    page_table
         .map_area(
             boot_info_virtual_address,
             PhysicalAddress::new(boot_info_physical_start as usize).unwrap(),
@@ -153,7 +152,7 @@ fn main(image_handle: Handle, system_table: SystemTable<Boot>) -> Result<!, Load
         boot_info,
         &mut next_safe_address,
         command_line.kernel_heap_size,
-        &mut mapper,
+        &mut page_table,
         &allocator,
     )?;
 
@@ -177,7 +176,7 @@ fn main(image_handle: Handle, system_table: SystemTable<Boot>) -> Result<!, Load
     let (_system_table, memory_map) = system_table
         .exit_boot_services(image_handle, memory_map_buffer)
         .expect_success("Failed to exit boot services");
-    process_memory_map(memory_map, boot_info, &mut mapper, &allocator)?;
+    process_memory_map(memory_map, boot_info, &mut page_table, &allocator)?;
 
     /*
      * Jump to the kernel!
