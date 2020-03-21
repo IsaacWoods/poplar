@@ -12,9 +12,9 @@ use command_line::CommandLine;
 use core::{mem, panic::PanicInfo, slice};
 use hal::{
     boot_info::BootInfo,
-    memory::{Flags, FrameAllocator, FrameSize, Mapper, Page, PhysicalAddress, Size4KiB, VirtualAddress},
+    memory::{Flags, FrameAllocator, FrameSize, Page, PageTable, PhysicalAddress, Size4KiB, VirtualAddress},
 };
-use hal_x86_64::paging::PageTable;
+use hal_x86_64::paging::PageTableImpl;
 use image::KernelInfo;
 use log::{error, info};
 use uefi::{
@@ -82,7 +82,7 @@ fn main(image_handle: Handle, system_table: SystemTable<Boot>) -> Result<!, Load
      * if we've placed the physical mapping at 0x0.
      */
     let allocator = BootFrameAllocator::new(system_table.boot_services(), 64);
-    let mut page_table = PageTable::new(allocator.allocate(), VirtualAddress::new(0x0));
+    let mut page_table = PageTableImpl::new(allocator.allocate(), VirtualAddress::new(0x0));
 
     let kernel_info = image::load_kernel(
         system_table.boot_services(),
@@ -182,9 +182,9 @@ fn main(image_handle: Handle, system_table: SystemTable<Boot>) -> Result<!, Load
     jump_to_kernel(page_table, kernel_info, boot_info_virtual_address)
 }
 
-fn jump_to_kernel<M>(page_table: M, kernel_info: KernelInfo, boot_info_virtual_address: VirtualAddress) -> !
+fn jump_to_kernel<P>(page_table: P, kernel_info: KernelInfo, boot_info_virtual_address: VirtualAddress) -> !
 where
-    M: Mapper<Size4KiB, BootFrameAllocator>,
+    P: PageTable<Size4KiB, BootFrameAllocator>,
 {
     unsafe {
         info!("Switching to new page tables");
@@ -218,15 +218,15 @@ where
 ///       memory manager. This is added directly to the already-allocated boot info.
 ///     * Construct the physical memory mapping - we map the entirity of physical memory into the kernel address
 ///       space to make it easy for the kernel to access any address it needs to.
-fn process_memory_map<A, M>(
+fn process_memory_map<A, P>(
     memory_map: MemoryMapIter<'_>,
     boot_info: &mut BootInfo,
-    mapper: &mut M,
+    mapper: &mut P,
     allocator: &A,
 ) -> Result<(), LoaderError>
 where
     A: FrameAllocator<Size4KiB>,
-    M: Mapper<Size4KiB, A>,
+    P: PageTable<Size4KiB, A>,
 {
     use hal::boot_info::{MemoryMapEntry, MemoryType as BootInfoMemoryType};
 
@@ -330,17 +330,17 @@ where
 
 /// Allocate and map the kernel heap. This takes the current next safe virtual address, uses it for the heap, and
 /// updates it.
-fn allocate_and_map_heap<A, M>(
+fn allocate_and_map_heap<A, P>(
     boot_services: &BootServices,
     boot_info: &mut BootInfo,
     next_safe_address: &mut VirtualAddress,
     heap_size: usize,
-    mapper: &mut M,
+    mapper: &mut P,
     allocator: &A,
 ) -> Result<(), LoaderError>
 where
     A: FrameAllocator<Size4KiB>,
-    M: Mapper<Size4KiB, A>,
+    P: PageTable<Size4KiB, A>,
 {
     assert!(heap_size % Size4KiB::SIZE == 0);
     let frames_needed = Size4KiB::frames_needed(heap_size);

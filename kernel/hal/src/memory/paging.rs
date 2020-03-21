@@ -16,15 +16,15 @@ impl Default for Flags {
 }
 
 #[derive(Debug)]
-pub enum MapperError {
+pub enum PagingError {
     /// The virtual memory that is being mapped is already mapped to another part of physical memory.
     AlreadyMapped,
 }
 
-/// A `Mapper` allows the manipulation of a set of page-tables.
+/// A `PageTable` allows the manipulation of a set of page-tables.
 // TODO: think about how we can do versatile unmapping (maybe return a `Map` type that is returned to unmap - this
 // could store information needed to unmap an artitrarily-mapped area).
-pub trait Mapper<TableSize, TableAllocator>: Sized
+pub trait PageTable<TableSize, TableAllocator>: Sized
 where
     TableSize: FrameSize,
     TableAllocator: FrameAllocator<TableSize>,
@@ -48,7 +48,7 @@ where
         frame: Frame<S>,
         flags: Flags,
         allocator: &TableAllocator,
-    ) -> Result<(), MapperError>
+    ) -> Result<(), PagingError>
     where
         S: FrameSize;
 
@@ -59,7 +59,7 @@ where
         frames: Range<Frame<S>>,
         flags: Flags,
         allocator: &TableAllocator,
-    ) -> Result<(), MapperError>
+    ) -> Result<(), PagingError>
     where
         S: FrameSize,
     {
@@ -79,7 +79,7 @@ where
         size: usize,
         flags: Flags,
         allocator: &TableAllocator,
-    ) -> Result<(), MapperError>;
+    ) -> Result<(), PagingError>;
 
     fn unmap<S>(&mut self, page: Page<S>) -> Option<Frame<S>>
     where

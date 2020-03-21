@@ -1,6 +1,6 @@
 use super::{alloc_kernel_object_id, memory_object::MemoryObject, KernelObject, KernelObjectId};
 use alloc::{sync::Arc, vec::Vec};
-use hal::{memory::Mapper, Hal};
+use hal::{memory::PageTable, Hal};
 use spin::Mutex;
 
 #[derive(PartialEq, Eq, Debug)]

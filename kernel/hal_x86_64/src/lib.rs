@@ -21,7 +21,7 @@ impl Hal for HalImpl {
     type TableAllocator = memory::LockedPhysicalMemoryManager;
     #[cfg(not(feature = "pmm"))]
     type TableAllocator = hal::memory::PlaceholderFrameAllocator;
-    type PageTable = paging::PageTable;
+    type PageTable = paging::PageTableImpl;
 
     unsafe fn disable_interrupts() {
         asm!("cli");
