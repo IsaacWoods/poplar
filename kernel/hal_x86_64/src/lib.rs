@@ -1,34 +1,33 @@
 #![no_std]
 #![feature(asm, decl_macro, const_fn)]
 
+#[cfg(feature = "pmm")]
+#[macro_use]
+extern crate alloc;
+
 pub mod hw;
 pub mod kernel_map;
+#[cfg(feature = "pmm")]
+pub mod memory;
 pub mod paging;
 
-use bit_field::BitField;
-use hal::memory::VirtualAddress;
+use hal::{memory::Size4KiB, Hal};
 
-pub trait VirtualAddressEx {
-    fn p4_index(self) -> usize;
-    fn p3_index(self) -> usize;
-    fn p2_index(self) -> usize;
-    fn p1_index(self) -> usize;
-}
+pub struct HalImpl;
 
-impl VirtualAddressEx for VirtualAddress {
-    fn p4_index(self) -> usize {
-        usize::from(self).get_bits(39..48)
+impl Hal for HalImpl {
+    type PageTableSize = Size4KiB;
+    #[cfg(feature = "pmm")]
+    type TableAllocator = memory::LockedPhysicalMemoryManager;
+    #[cfg(not(feature = "pmm"))]
+    type TableAllocator = hal::memory::PlaceholderFrameAllocator;
+    type PageTable = paging::PageTable;
+
+    unsafe fn disable_interrupts() {
+        asm!("cli");
     }
 
-    fn p3_index(self) -> usize {
-        usize::from(self).get_bits(30..39)
-    }
-
-    fn p2_index(self) -> usize {
-        usize::from(self).get_bits(21..30)
-    }
-
-    fn p1_index(self) -> usize {
-        usize::from(self).get_bits(12..21)
+    unsafe fn enable_interrupts() {
+        asm!("sti");
     }
 }

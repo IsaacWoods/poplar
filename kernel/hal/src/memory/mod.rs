@@ -77,3 +77,21 @@ where
     /// Free `n` frames that were previously allocated by this allocator.
     fn free_n(&self, start: Frame<S>, n: usize);
 }
+
+/// This can be used to fill out wherever you need a type that implements `FrameAllocator` in a context that
+/// doesn't actually support allocating physical memory. It is implemented for all defined `FrameSize`s on the
+/// target architecture.
+pub struct PlaceholderFrameAllocator;
+
+impl<S> FrameAllocator<S> for PlaceholderFrameAllocator
+where
+    S: FrameSize,
+{
+    fn allocate_n(&self, _: usize) -> Range<Frame<S>> {
+        panic!("Tried to allocate physical memory in a context that doesn't support it!")
+    }
+
+    fn free_n(&self, _: Frame<S>, _: usize) {
+        panic!("Tried to free physical memory in a context that doesn't support it!")
+    }
+}
