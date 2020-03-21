@@ -75,5 +75,5 @@ where
     fn allocate_n(&self, n: usize) -> Range<Frame<S>>;
 
     /// Free `n` frames that were previously allocated by this allocator.
-    fn free_n(&self, start: Frame, n: usize);
+    fn free_n(&self, start: Frame<S>, n: usize);
 }
