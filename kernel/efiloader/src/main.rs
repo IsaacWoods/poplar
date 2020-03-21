@@ -15,6 +15,7 @@ use hal::{
     memory::{Flags, FrameAllocator, FrameSize, Mapper, Page, PhysicalAddress, Size4KiB, VirtualAddress},
 };
 use hal_x86_64::paging::PageTable;
+use image::KernelInfo;
 use log::{error, info};
 use uefi::{
     prelude::*,
@@ -178,9 +179,13 @@ fn main(image_handle: Handle, system_table: SystemTable<Boot>) -> Result<!, Load
         .expect_success("Failed to exit boot services");
     process_memory_map(memory_map, boot_info, &mut page_table, &allocator)?;
 
-    /*
-     * Jump to the kernel!
-     */
+    jump_to_kernel(page_table, kernel_info, boot_info_virtual_address)
+}
+
+fn jump_to_kernel<M>(page_table: M, kernel_info: KernelInfo, boot_info_virtual_address: VirtualAddress) -> !
+where
+    M: Mapper<Size4KiB, BootFrameAllocator>,
+{
     unsafe {
         info!("Switching to new page tables");
         /*
