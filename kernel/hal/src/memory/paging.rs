@@ -34,6 +34,9 @@ where
     /// set of page tables.
     fn new_for_address_space(kernel_page_table: &Self, allocator: &TableAllocator) -> Self;
 
+    /// Install these page tables as the current set.
+    fn switch_to(&self);
+
     /// Get the physical address that a given virtual address is mapped to, if it's mapped. Returns `None` if the
     /// address is not mapped into physical memory.
     fn translate(&self, address: VirtualAddress) -> Option<PhysicalAddress>;

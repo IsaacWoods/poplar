@@ -296,12 +296,6 @@ impl PageTable {
     fn p4_mut(frame: &mut Frame, physical_base: VirtualAddress) -> &mut Table<Level4> {
         unsafe { &mut *((physical_base + usize::from(frame.start)).mut_ptr()) }
     }
-
-    pub fn switch_to(&self) {
-        unsafe {
-            write_control_reg!(cr3, usize::from(self.p4_frame.start) as u64);
-        }
-    }
 }
 
 impl<A> Mapper<Size4KiB, A> for PageTable
@@ -321,6 +315,12 @@ where
             .set(kernel_p3_address, EntryFlags::WRITABLE);
 
         page_table
+    }
+
+    fn switch_to(&self) {
+        unsafe {
+            write_control_reg!(cr3, usize::from(self.p4_frame.start) as u64);
+        }
     }
 
     fn translate(&self, address: VirtualAddress) -> Option<PhysicalAddress> {
