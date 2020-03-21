@@ -4,12 +4,12 @@
 pub mod boot_info;
 pub mod memory;
 
-use memory::{FrameAllocator, FrameSize, Mapper};
+use memory::{FrameAllocator, FrameSize, PageTable};
 
 pub trait Hal {
     type PageTableSize: FrameSize;
     type TableAllocator: FrameAllocator<Self::PageTableSize>;
-    type PageTable: Mapper<Self::PageTableSize, Self::TableAllocator>;
+    type PageTable: PageTable<Self::PageTableSize, Self::TableAllocator>;
 
     unsafe fn disable_interrupts();
     unsafe fn enable_interrupts();

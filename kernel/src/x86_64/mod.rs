@@ -43,7 +43,7 @@ use hal::{
 use hal_x86_64::{
     hw::{cpu::CpuInfo, gdt::Gdt, registers::read_control_reg},
     kernel_map,
-    paging::PageTable,
+    paging::PageTableImpl,
 };
 use log::{error, info, warn};
 use pebble_util::InitGuard;
@@ -60,7 +60,7 @@ pub struct Arch {
     /// Each bit in this bitmap corresponds to a slot for an address space worth of kernel stacks
     /// in the kernel address space. We can have up 1024 address spaces, so need 128 bytes.
     pub kernel_stack_bitmap: Mutex<[u8; 128]>,
-    pub kernel_page_table: Mutex<PageTable>,
+    pub kernel_page_table: Mutex<PageTableImpl>,
 }
 
 /// `Arch` contains a bunch of things, like the GDT, that the hardware relies on actually being at
@@ -154,7 +154,7 @@ pub extern "C" fn kmain(boot_info: &BootInfo) -> ! {
         aml_context: Mutex::new(AmlContext::new()),
         physical_memory_manager: LockedPhysicalMemoryManager::new(boot_info),
         kernel_page_table: Mutex::new(unsafe {
-            PageTable::from_frame(
+            PageTableImpl::from_frame(
                 Frame::starts_with(PhysicalAddress::new(read_control_reg!(cr3) as usize).unwrap()),
                 kernel_map::PHYSICAL_MAPPING_BASE,
             )

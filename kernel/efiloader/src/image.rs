@@ -2,7 +2,7 @@ use crate::LoaderError;
 use core::{ptr, slice, str};
 use hal::{
     boot_info::{LoadedImage, Segment, MAX_CAPABILITY_STREAM_LENGTH},
-    memory::{Flags, FrameAllocator, FrameSize, Mapper, Page, PhysicalAddress, Size4KiB, VirtualAddress},
+    memory::{Flags, FrameAllocator, FrameSize, Page, PageTable, PhysicalAddress, Size4KiB, VirtualAddress},
 };
 use hal_x86_64::kernel_map;
 use mer::{
@@ -29,16 +29,16 @@ pub struct KernelInfo {
     pub next_safe_address: VirtualAddress,
 }
 
-pub fn load_kernel<A, M>(
+pub fn load_kernel<A, P>(
     boot_services: &BootServices,
     volume_handle: Handle,
     path: &str,
-    mapper: &mut M,
+    page_table: &mut P,
     allocator: &A,
 ) -> Result<KernelInfo, LoaderError>
 where
     A: FrameAllocator<Size4KiB>,
-    M: Mapper<Size4KiB, A>,
+    P: PageTable<Size4KiB, A>,
 {
     let (elf, pool_addr) = load_elf(boot_services, volume_handle, path)?;
     let entry_point = elf.entry_point();
@@ -59,7 +59,7 @@ where
                 }
 
                 assert!(segment.size % Size4KiB::SIZE == 0);
-                mapper
+                page_table
                     .map_area(
                         segment.virtual_address,
                         segment.physical_address,
@@ -85,7 +85,7 @@ where
         None => panic!("Kernel does not have a '_guard_page' symbol!"),
     };
     assert!(guard_page_address.is_aligned(Size4KiB::SIZE));
-    mapper.unmap::<Size4KiB>(Page::starts_with(guard_page_address));
+    page_table.unmap::<Size4KiB>(Page::starts_with(guard_page_address));
 
     boot_services.free_pool(pool_addr).unwrap_success();
     Ok(KernelInfo { entry_point, stack_top, next_safe_address })

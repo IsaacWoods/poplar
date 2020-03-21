@@ -11,9 +11,9 @@ use hal::memory::{
     Frame,
     FrameAllocator,
     FrameSize,
-    Mapper,
-    MapperError,
     Page,
+    PageTable,
+    PagingError,
     PhysicalAddress,
     Size1GiB,
     Size2MiB,
@@ -209,7 +209,7 @@ where
         user_accessible: bool,
         allocator: &A,
         physical_base: VirtualAddress,
-    ) -> Result<&mut Table<L::NextLevel>, MapperError>
+    ) -> Result<&mut Table<L::NextLevel>, PagingError>
     where
         A: FrameAllocator<Size4KiB>,
     {
@@ -242,7 +242,7 @@ where
                  * The entry is present, but is actually a huge page. It is **NOT** type-safe to
                  * call `next_table` on it. Instead, we return an error.
                  */
-                return Err(MapperError::AlreadyMapped);
+                return Err(PagingError::AlreadyMapped);
             }
 
             // TODO: find a set of flags suitable for both the existing entries and the new ones.
@@ -259,7 +259,7 @@ where
     }
 }
 
-pub struct PageTable {
+pub struct PageTableImpl {
     p4_frame: Frame,
     /// The virtual address at which physical memory is mapped in the environment that these page
     /// tables are being constructed in. This is **not** a property of the set of page tables being
@@ -271,19 +271,19 @@ pub struct PageTable {
     physical_base: VirtualAddress,
 }
 
-impl PageTable {
-    pub fn new(p4_frame: Frame, physical_base: VirtualAddress) -> PageTable {
-        let mut table = PageTable { p4_frame, physical_base };
+impl PageTableImpl {
+    pub fn new(p4_frame: Frame, physical_base: VirtualAddress) -> PageTableImpl {
+        let mut table = PageTableImpl { p4_frame, physical_base };
         Self::p4_mut(&mut table.p4_frame, table.physical_base).zero();
         table
     }
 
-    /// Create a `PageTable` from a `Frame` that already contains a P4. This is very unsafe because
-    /// it assumes that the frame contains a valid page table, and that no other `PageTable`s
+    /// Create a `PageTableImpl` from a `Frame` that already contains a P4. This is very unsafe because
+    /// it assumes that the frame contains a valid page table, and that no other `PageTableImpl`s
     /// currently exist that use this same backing frame (as calling `mapper` on both could lead to
     /// two mutable references aliasing the same data to exist, which is UB).
-    pub unsafe fn from_frame(p4_frame: Frame, physical_base: VirtualAddress) -> PageTable {
-        PageTable { p4_frame, physical_base }
+    pub unsafe fn from_frame(p4_frame: Frame, physical_base: VirtualAddress) -> PageTableImpl {
+        PageTableImpl { p4_frame, physical_base }
     }
 
     fn p4(&self) -> &Table<Level4> {
@@ -298,12 +298,12 @@ impl PageTable {
     }
 }
 
-impl<A> Mapper<Size4KiB, A> for PageTable
+impl<A> PageTable<Size4KiB, A> for PageTableImpl
 where
     A: FrameAllocator<Size4KiB>,
 {
     fn new_for_address_space(kernel_page_table: &Self, allocator: &A) -> Self {
-        let mut page_table = PageTable::new(allocator.allocate(), crate::kernel_map::PHYSICAL_MAPPING_BASE);
+        let mut page_table = PageTableImpl::new(allocator.allocate(), crate::kernel_map::PHYSICAL_MAPPING_BASE);
 
         /*
          * Install the address of the kernel's P3 in every address space, so that the kernel is always mapped.
@@ -338,7 +338,7 @@ where
         Some(p1[address.p1_index()].address()? + (usize::from(address) % Size4KiB::SIZE))
     }
 
-    fn map<S>(&mut self, page: Page<S>, frame: Frame<S>, flags: Flags, allocator: &A) -> Result<(), MapperError>
+    fn map<S>(&mut self, page: Page<S>, frame: Frame<S>, flags: Flags, allocator: &A) -> Result<(), PagingError>
     where
         S: FrameSize,
     {
@@ -355,7 +355,7 @@ where
                 .next_table_create(page.start.p2_index(), user_accessible, allocator, self.physical_base)?;
 
             if !p1[page.start.p1_index()].is_unused() {
-                return Err(MapperError::AlreadyMapped);
+                return Err(PagingError::AlreadyMapped);
             }
 
             p1[page.start.p1_index()].set(frame.start, EntryFlags::from(flags));
@@ -365,7 +365,7 @@ where
                 .next_table_create(page.start.p3_index(), user_accessible, allocator, self.physical_base)?;
 
             if !p2[page.start.p2_index()].is_unused() {
-                return Err(MapperError::AlreadyMapped);
+                return Err(PagingError::AlreadyMapped);
             }
 
             p2[page.start.p2_index()].set(frame.start, EntryFlags::from(flags) | EntryFlags::HUGE_PAGE);
@@ -388,7 +388,7 @@ where
         size: usize,
         flags: Flags,
         allocator: &A,
-    ) -> Result<(), MapperError> {
+    ) -> Result<(), PagingError> {
         assert!(virtual_start.is_aligned(Size4KiB::SIZE));
         assert!(physical_start.is_aligned(Size4KiB::SIZE));
         assert!(size % Size4KiB::SIZE == 0);

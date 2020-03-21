@@ -7,7 +7,7 @@ use self::buddy_allocator::BuddyAllocator;
 use core::ops::Range;
 use hal::{
     boot_info::BootInfo,
-    memory::{Flags, Frame, FrameAllocator, Mapper, Page, Size4KiB, VirtualAddress},
+    memory::{Flags, Frame, FrameAllocator, Page, PageTable, Size4KiB, VirtualAddress},
 };
 use hal_x86_64::kernel_map;
 use pebble_util::bitmap::BitmapArray;
@@ -68,7 +68,6 @@ impl LockedPhysicalMemoryManager {
             .get()
             .kernel_page_table
             .lock()
-            .mapper()
             .map_range(pages, frames, Flags { writable: true, ..Default::default() }, self)
             .unwrap();
 
