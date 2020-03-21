@@ -8,3 +8,9 @@ edition = "2018"
 hal = { path = "../hal" }
 bitflags = "1"
 bit_field = "0.10"
+spin = "0.5"
+pebble_util = { path = "../../lib/pebble_util" }
+
+[features]
+default_features = []
+pmm = []
