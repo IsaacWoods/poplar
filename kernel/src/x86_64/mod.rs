@@ -1,37 +1,19 @@
 //! This module defines the kernel entry-point on x86_64.
 
 mod acpi_handler;
-mod address_space;
 mod cpu;
 mod interrupts;
 mod logger;
 mod memory;
-mod memory_object;
-mod per_cpu;
-mod task;
-
-// Export the items that every architecture module is expected to provide to the rest of the
-// kernel.
-pub use self::{
-    per_cpu::{common_per_cpu_data, common_per_cpu_data_mut},
-    task::context_switch,
-};
+// mod memory_object;
+// mod per_cpu;
+// mod task;
 
 use self::{
     acpi_handler::PebbleAcpiHandler,
-    address_space::AddressSpace,
     interrupts::InterruptController,
     logger::KernelLogger,
     memory::LockedPhysicalMemoryManager,
-    memory_object::MemoryObject,
-    task::Task,
-};
-use crate::{
-    arch::Architecture,
-    mailbox::Mailbox,
-    object::{KernelObject, WrappedKernelObject},
-    scheduler::Scheduler,
-    x86_64::per_cpu::per_cpu_data_mut,
 };
 use acpi::Acpi;
 use aml::AmlContext;
@@ -50,7 +32,6 @@ use pebble_util::InitGuard;
 use spin::{Mutex, RwLock};
 
 pub(self) static GDT: Mutex<Gdt> = Mutex::new(Gdt::new());
-pub static ARCH: InitGuard<Arch> = InitGuard::uninit();
 
 pub struct Arch {
     pub cpu_info: CpuInfo,
@@ -61,26 +42,6 @@ pub struct Arch {
     /// in the kernel address space. We can have up 1024 address spaces, so need 128 bytes.
     pub kernel_stack_bitmap: Mutex<[u8; 128]>,
     pub kernel_page_table: Mutex<PageTableImpl>,
-}
-
-/// `Arch` contains a bunch of things, like the GDT, that the hardware relies on actually being at
-/// the memory addresses we say they're at. We can stop them moving using `Unpin`, but can't stop
-/// them from being dropped, so we just panic if the architecture struct is dropped.
-impl Drop for Arch {
-    fn drop(&mut self) {
-        panic!("The `Arch` has been dropped. This should never happen!");
-    }
-}
-
-impl Architecture for Arch {
-    type AddressSpace = AddressSpace;
-    type Task = Task;
-    type MemoryObject = MemoryObject;
-    type Mailbox = Mailbox;
-
-    fn drop_to_userspace(&self, task: WrappedKernelObject<Arch>) -> ! {
-        task::drop_to_usermode(task);
-    }
 }
 
 /// This is the entry point for the kernel on x86_64. It is called from `efiloader`.
