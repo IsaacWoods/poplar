@@ -308,6 +308,21 @@ impl<A> Mapper<Size4KiB, A> for PageTable
 where
     A: FrameAllocator<Size4KiB>,
 {
+    fn new_for_address_space(kernel_page_table: &Self, allocator: &A) -> Self {
+        let mut page_table = PageTable::new(allocator.allocate(), crate::kernel_map::PHYSICAL_MAPPING_BASE);
+
+        /*
+         * Install the address of the kernel's P3 in every address space, so that the kernel is always mapped.
+         * It's safe to unwrap the kernel P3 address, as we wouldn't be able to fetch these instructions
+         * if it wasn't there.
+         */
+        let kernel_p3_address = kernel_page_table.p4()[crate::kernel_map::KERNEL_P4_ENTRY].address().unwrap();
+        Self::p4_mut(&mut page_table.p4_frame, page_table.physical_base)[crate::kernel_map::KERNEL_P4_ENTRY]
+            .set(kernel_p3_address, EntryFlags::WRITABLE);
+
+        page_table
+    }
+
     fn translate(&self, address: VirtualAddress) -> Option<PhysicalAddress> {
         let p2 = self
             .p4()

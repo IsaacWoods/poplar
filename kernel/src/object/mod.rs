@@ -1,81 +1,52 @@
-pub mod common;
-pub mod map;
+pub mod address_space;
 
-use self::map::ObjectMap;
-use crate::arch::Architecture;
-use alloc::{boxed::Box, sync::Arc};
-use core::fmt;
-use libpebble::KernelObjectId;
-use spin::RwLock;
+use core::sync::atomic::{AtomicU64, Ordering};
 
-pub struct WrappedKernelObject<A: Architecture> {
-    pub id: KernelObjectId,
-    pub object: Arc<KernelObject<A>>,
+/// Each kernel object is assigned a unique 64-bit ID, which is never reused. An ID of `0` is never allocated, and
+/// is used as a sentinel value.
+#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
+pub struct KernelObjectId(u64);
+
+/// A kernel object ID of `0` is reserved as a sentinel value that will never point to a real kernel object. It is
+/// used to mark things like the `owner` of a kernel object being the kernel itself.
+pub const SENTINEL_KERNEL_ID: KernelObjectId = KernelObjectId(0);
+
+/// The next available `KernelObjectId`. It is shared between all the CPUs, and so is incremented atomically.
+static KERNEL_OBJECT_ID_COUNTER: AtomicU64 = AtomicU64::new(1);
+
+pub fn alloc_kernel_object_id() -> KernelObjectId {
+    // TODO: I think this can be Ordering::Relaxed?
+    // TODO: this wraps, so we should manually detect when it wraps around and panic to prevent ID reuse
+    KernelObjectId(KERNEL_OBJECT_ID_COUNTER.fetch_add(1, Ordering::SeqCst))
 }
 
-impl<A> fmt::Debug for WrappedKernelObject<A>
-where
-    A: Architecture,
-{
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "KernelObject(id = {:?})", self.id)
-    }
+// TODO: we could use the `downcast` crate to downcast trait objects into their real types (I think)?
+/// This trait should be implemented by all types that implement kernel objects, and allows common code to
+/// be generic over all kernel objects. Kernel objects are generally handled as `Arc<T>` where `T` is the type
+/// implementing `KernelObject`, and so interior mutability should be used for data that needs to be mutable within
+/// the kernel object.
+pub trait KernelObject {
+    fn id(&self) -> KernelObjectId;
 }
 
-impl<A> Clone for WrappedKernelObject<A>
-where
-    A: Architecture,
-{
-    fn clone(&self) -> Self {
-        WrappedKernelObject { id: self.id, object: self.object.clone() }
-    }
-}
+// This doesn't really work because hygiene opt-out (needed for the fields) still isn't implemented :(
+// macro kernel_object {
+//     ($(#[$outer_meta:meta])*
+//     struct $name:ident {
+//         $($(#[$field_meta:meta])*$vis:vis $field:ident: $type:ty),*$(,)?
+//     }
+// ) => {
+//     $(#[$outer_meta])*
+//     pub struct $name {
+//         pub id: $crate::object::KernelObjectId,
+//         pub owner: $crate::object::KernelObjectId,
+//         $($(#[$field_meta])* $vis $field: $type),*
+//     }
 
-// TODO: when unhygenic macro items are implemented, we should just be able to do `enum
-// #KernelObject`, `#Test`, and `#wrap` and not have to pass parameters like this
-macro kernel_object_table($kernel_object: ident, $test: ident, $add_to_map: ident, $([$name: ident, $method: ident]),*) {
-    #[derive(Debug)]
-    pub enum $kernel_object<A: Architecture> {
-        $(
-            $name(RwLock<Box<A::$name>>),
-         )*
-
-        /// This is a test entry that just allows us to store a number. It is used to test the data
-        /// structures that store and interact with kernel objects etc.
-        #[cfg(test)]
-        $test(usize),
-    }
-
-    impl<A> $kernel_object<A> where A: Architecture {
-        pub fn $add_to_map(self, map: &mut ObjectMap<A>) -> WrappedKernelObject<A> {
-            let wrapped_object = Arc::new(self);
-            let id = map.insert(wrapped_object.clone());
-            WrappedKernelObject { id, object: wrapped_object, }
-        }
-
-        $(
-            pub fn $method(&self) -> Option<&RwLock<Box<A::$name>>> {
-                match self {
-                    KernelObject::$name(ref object) => Some(object),
-                    _ => None,
-                }
-            }
-         )*
-    }
-}
-
-kernel_object_table!(
-    KernelObject,
-    Test,
-    add_to_map,
-    [AddressSpace, address_space],
-    [MemoryObject, memory_object],
-    [Task, task],
-    [Mailbox, mailbox]
-);
-
-/// Make sure that `KernelObject` doesn't get bigger without us thinking about it
-#[test]
-fn kernel_object_not_too_big() {
-    assert_eq!(core::mem::size_of::<KernelObject<crate::arch::test::FakeArch>>(), 24);
-}
+//     impl $crate::object::KernelObject for $name {
+//         fn id(&self) -> $crate::object::KernelObjectId {
+//             self.id
+//         }
+//     }
+// }
+// }
