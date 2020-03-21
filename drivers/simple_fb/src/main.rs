@@ -4,6 +4,7 @@
 
 use core::{mem::MaybeUninit, panic::PanicInfo};
 use libpebble::{
+    caps::{CapabilitiesRepr, CAP_ACCESS_BACKUP_FRAMEBUFFER, CAP_EARLY_LOGGING, CAP_PADDING},
     syscall,
     syscall::system_object::{FramebufferSystemObjectInfo, SystemObjectId},
 };
@@ -99,10 +100,5 @@ pub struct Capabilities<const N: usize> {
 
 #[used]
 #[link_section = ".caps"]
-pub static mut CAPS: Capabilities<4> = Capabilities {
-    name_size: 6,
-    desc_size: 2,
-    entry_type: 0,
-    name: [b'P', b'E', b'B', b'B', b'L', b'E', b'\0', 0x00],
-    desc: [0x30, 0x31, 0x00, 0x00],
-};
+pub static mut CAPS: CapabilitiesRepr<4> =
+    CapabilitiesRepr::new([CAP_EARLY_LOGGING, CAP_ACCESS_BACKUP_FRAMEBUFFER, CAP_PADDING, CAP_PADDING]);
