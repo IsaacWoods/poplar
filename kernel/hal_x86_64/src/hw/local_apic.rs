@@ -22,11 +22,6 @@ impl LocalApicRegister {
     }
 }
 
-/// Methods on this type operate on the local APIC of the **current core**. Because we need to
-/// access it from interrupt handlers, this type does not borrow `self`, and the mapping for the
-/// local APIC's configuration space (mapped to the virtual address
-/// `kernel_map::LOCAL_APIC_CONFIG`) is managed by the `InterruptController`. None of the methods
-/// on this type are safe to use until that mapping has been constructed.
 pub struct LocalApic(VirtualAddress);
 
 impl LocalApic {
