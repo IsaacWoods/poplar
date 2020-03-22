@@ -14,7 +14,6 @@ use libpebble::{
     syscall,
     syscall::{
         result::{handle_to_syscall_repr, status_to_syscall_repr},
-        mailbox::MailboxError,
         MemoryObjectError,
     },
 };
@@ -182,54 +181,4 @@ fn map_memory_object(memory_object_id: usize, address_space_id: usize) -> Result
         },
         None => Err(MemoryObjectError::NotAnAddressSpace),
     }
-}
-
-fn create_mailbox() -> Result<KernelObjectId, MailboxError> {
-    let object_map = &mut crate::COMMON.get().object_map.write();
-    let mailbox = KernelObject::Mailbox(RwLock::new(box Mailbox::new())).add_to_map(object_map);
-    Ok(mailbox.id)
-}
-
-fn wait_for_mail(mailbox_id: usize, output_buffer_address: usize) -> Result<(), MailboxError> {
-    use libpebble::syscall::mailbox::MailRepr;
-    let mailbox_id = KernelObjectId::from_syscall_repr(mailbox_id);
-
-    let mailbox = match COMMON.get().object_map.read().get(mailbox_id) {
-        Some(mailbox) => mailbox.clone(),
-        None => return Err(MailboxError::NotAMailbox),
-    };
-
-    // Check it's actually a mailbox
-    if mailbox.object.mailbox().is_none() {
-        return Err(MailboxError::NotAMailbox);
-    }
-
-    /*
-     * If there's mail waiting to be handled, pass it back to userspace and return immediately.
-     */
-    if let Some(mail) = mailbox.object.mailbox().unwrap().write().get_next() {
-        info!("You've got mail! Mail: {:?}", mail);
-        // TODO: validate this address as a mapped, correctly-sized, writable virtual address
-        // in userspace (with a helper struct or something (I'm thinking UserAddress)?)
-        unsafe {
-            *(output_buffer_address as *mut MailRepr) = mail.to_syscall_repr();
-        }
-
-        return Ok(());
-    }
-
-    /*
-     * If there wasn't any mail waiting, ask the scheduler to block us until some mail arrives on this mailbox,
-     * then fill it in when this task is switched back to.
-     *
-     * TODO: as written, the scheduler might actually return to this task before any more mail is received if
-     * it's the only task in the queue (because atm we just return to the current one). In the future, we
-     * shouldn't do this so I don't think this needs to be changed.
-     */
-    unsafe {
-        common_per_cpu_data_mut().scheduler.switch_to_next(TaskState::Blocked(TaskBlock::WaitForMail(mailbox_id)));
-        *(output_buffer_address as *mut MailRepr) =
-            mailbox.object.mailbox().unwrap().write().get_next().unwrap().to_syscall_repr();
-    }
-    Ok(())
 }

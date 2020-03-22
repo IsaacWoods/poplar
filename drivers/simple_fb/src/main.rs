@@ -70,10 +70,6 @@ pub extern "C" fn start() -> ! {
     framebuffer.clear(0xffff00ff);
     framebuffer.draw_rect(100, 100, 300, 450, 0xffff0000);
 
-    let mailbox_id = syscall::create_mailbox().unwrap();
-    let mail = syscall::wait_for_mail(mailbox_id).unwrap();
-    let mail2 = syscall::wait_for_mail(mailbox_id).unwrap();
-
     loop {}
 }
 

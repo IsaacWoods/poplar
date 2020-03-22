@@ -20,7 +20,6 @@
 extern crate alloc;
 
 mod heap_allocator;
-mod mailbox;
 mod object;
 // mod per_cpu;
 // mod scheduler;

@@ -1,8 +1,6 @@
-pub mod mailbox;
 pub mod result;
 pub mod system_object;
 
-pub use mailbox::{create_mailbox, wait_for_mail};
 pub use system_object::request_system_object;
 
 cfg_if::cfg_if! {
