@@ -1,5 +1,5 @@
 use super::{raw, result, result::define_error_type, SYSCALL_REQUEST_SYSTEM_OBJECT};
-use crate::KernelObjectId;
+use crate::Handle;
 
 pub const SYSTEM_OBJECT_BACKUP_FRAMEBUFFER_ID: usize = 0;
 
@@ -38,7 +38,7 @@ pub struct FramebufferSystemObjectInfo {
     pub pixel_format: u8,
 }
 
-pub fn request_system_object(id: SystemObjectId) -> Result<KernelObjectId, RequestSystemObjectError> {
+pub fn request_system_object(id: SystemObjectId) -> Result<Handle, RequestSystemObjectError> {
     let result = match id {
         SystemObjectId::BackupFramebuffer { info_address } => unsafe {
             raw::syscall2(
@@ -49,5 +49,5 @@ pub fn request_system_object(id: SystemObjectId) -> Result<KernelObjectId, Reque
         },
     };
 
-    result::result_from_syscall_repr(result)
+    result::handle_from_syscall_repr(result)
 }

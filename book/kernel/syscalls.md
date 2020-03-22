@@ -14,12 +14,10 @@ a register.
 |-----------|---------------------------|-----------------------------------------------------------|
 | `0`       | `yield`                   | Yield to the kernel.                                      |
 | `1`       | `early_log`               | Log a message. Designed to be used from early processes.  |
-| `2`       | `request_system_object`   | Request the id of a system kernel object.                 |
-| `3`       | `my_address_space`        | Get the id of the calling task's AddressSpace.            |
+| `2`       | `request_system_object`   | Request a handle for a system kernel object.              |
+| `3`       | `my_address_space`        | Get a handle to the calling task's AddressSpace.          |
 | `4`       | `create_memory_object`    | Create a MemoryObject kernel object.                      |
 | `5`       | `map_memory_object`       | Map a MemoryObject into an AddressSpace.                  |
-| `6`       | `create_mailbox`          | Create a Mailbox kernel object.                           |
-| `7`       | `wait_for_mail`           | Block until the given Mailbox receives mail.              |
 
 ### Making a system call on x86_64
 To make a system call on x86_64, populate these registers:
@@ -34,12 +32,11 @@ You can then make the system call by executing `syscall`. Before the kernel retu
 result of the system call (if there is one) in `rax`. If a system call takes less than five parameters, the unused
 parameter registers will be preserved across the system call.
 
-### Returning kernel object IDs
-Often, system calls need to return something of the form of the Rust type `Result<KernelObjectId, SomeErrorType>`.
-
-There is a common pattern used to represent this in the single `usize`:
-* Bits `0..16` contain the index of the object's ID, if the call succeeded
-* Bits `16..32` contain the generation of the object's ID, if the call succeeded
-* Bits `32..64` contain the status:
-    - `0` means the system call succeeded, and bits `0..32` contain a valid object ID
-    - `>0` means that the system call failed. The meaning of the status is system-call dependent.
+### Return values
+Often, a system call needs to return a status, plus a number of handles. We use a common pattern to make this easier:
+* Bits `0..16` contain the status:
+    - `0` means that the system call succeeded, and the rest of the return value is valid
+    - `>0` means that the system call errored. The meaning of the value is system-call specific.
+* Bits `16..32` contain the 1st handle returned to userspace, if applicable
+* Bits `32..48` contain the 2nd handle returned to userspace, if applicable
+* Bits `48..64` contain the 3rd handle returned to userspace, if applicable

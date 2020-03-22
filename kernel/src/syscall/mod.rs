@@ -13,11 +13,10 @@ use libpebble::{
     caps::Capability,
     syscall,
     syscall::{
+        result::{handle_to_syscall_repr, status_to_syscall_repr},
         mailbox::MailboxError,
-        result::{result_to_syscall_repr, status_to_syscall_repr},
         MemoryObjectError,
     },
-    KernelObjectId,
 };
 use log::{info, trace, warn};
 use spin::RwLock;
