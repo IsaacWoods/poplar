@@ -30,7 +30,7 @@ use crate::heap_allocator::LockedHoleAllocator;
 use cfg_if::cfg_if;
 use core::panic::PanicInfo;
 use hal::boot_info::BootInfo;
-use libpebble::{syscall::system_object::FramebufferSystemObjectInfo, KernelObjectId};
+use libpebble::syscall::system_object::FramebufferSystemObjectInfo;
 use log::{error, info};
 
 cfg_if! {

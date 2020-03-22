@@ -14,9 +14,9 @@ cfg_if::cfg_if! {
     }
 }
 
-use crate::KernelObjectId;
+use crate::Handle;
 use bit_field::BitField;
-use result::{define_error_type, result_from_syscall_repr, status_from_syscall_repr};
+use result::{define_error_type, handle_from_syscall_repr, status_from_syscall_repr};
 
 pub const SYSCALL_YIELD: usize = 0;
 pub const SYSCALL_EARLY_LOG: usize = 1;
@@ -40,8 +40,8 @@ pub fn early_log(message: &str) -> Result<(), ()> {
     }
 }
 
-pub fn my_address_space() -> KernelObjectId {
-    KernelObjectId::from_syscall_repr(unsafe { raw::syscall0(SYSCALL_MY_ADDRESS_SPACE) })
+pub fn my_address_space() -> Handle {
+    Handle(unsafe { raw::syscall0(SYSCALL_MY_ADDRESS_SPACE) } as u16)
 }
 
 define_error_type!(MemoryObjectError {
@@ -69,19 +69,16 @@ pub fn create_memory_object(
     size: usize,
     writable: bool,
     executable: bool,
-) -> Result<KernelObjectId, MemoryObjectError> {
+) -> Result<Handle, MemoryObjectError> {
     let mut flags = 0usize;
     flags.set_bit(0, writable);
     flags.set_bit(1, executable);
 
-    result_from_syscall_repr(unsafe { raw::syscall3(SYSCALL_CREATE_MEMORY_OBJECT, virtual_address, size, flags) })
+    handle_from_syscall_repr(unsafe { raw::syscall3(SYSCALL_CREATE_MEMORY_OBJECT, virtual_address, size, flags) })
 }
 
-pub fn map_memory_object(
-    memory_object: KernelObjectId,
-    address_space: KernelObjectId,
-) -> Result<(), MemoryObjectError> {
+pub fn map_memory_object(memory_object: Handle, address_space: Handle) -> Result<(), MemoryObjectError> {
     status_from_syscall_repr(unsafe {
-        raw::syscall2(SYSCALL_MAP_MEMORY_OBJECT, memory_object.to_syscall_repr(), address_space.to_syscall_repr())
+        raw::syscall2(SYSCALL_MAP_MEMORY_OBJECT, memory_object.0 as usize, address_space.0 as usize)
     })
 }
