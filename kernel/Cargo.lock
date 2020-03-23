@@ -69,6 +69,7 @@ dependencies = [
  "bit_field 0.10.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "bitflags 1.2.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "hal 0.1.0",
+ "log 0.4.8 (registry+https://github.com/rust-lang/crates.io-index)",
  "pebble_util 0.1.0",
  "spin 0.5.2 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
