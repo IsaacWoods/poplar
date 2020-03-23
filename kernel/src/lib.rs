@@ -28,15 +28,13 @@ mod syscall;
 use crate::heap_allocator::LockedHoleAllocator;
 use cfg_if::cfg_if;
 use core::panic::PanicInfo;
-use hal::boot_info::BootInfo;
+use hal::{boot_info::BootInfo, Hal};
 use libpebble::syscall::system_object::FramebufferSystemObjectInfo;
 use log::{error, info};
 
 cfg_if! {
     if #[cfg(feature = "arch_x86_64")] {
         type HalImpl = hal_x86_64::HalImpl;
-
-        // TODO: method for constructing HAL impl
     } else {
         compile_error!("No architecture supplied, or target arch does not have a HAL implementation configured!");
     }
@@ -48,12 +46,7 @@ pub static ALLOCATOR: LockedHoleAllocator = LockedHoleAllocator::new_uninitializ
 
 #[no_mangle]
 pub extern "C" fn kmain(boot_info: &BootInfo) -> ! {
-    // TODO: common logger
-    /*
-     * Initialise the logger.
-     */
-    // log::set_logger(&KernelLogger).unwrap();
-    log::set_max_level(log::LevelFilter::Trace);
+    HalImpl::init_logger();
     info!("The Pebble kernel is running");
 
     if boot_info.magic != hal::boot_info::BOOT_INFO_MAGIC {
@@ -69,7 +62,9 @@ pub extern "C" fn kmain(boot_info: &BootInfo) -> ! {
         ALLOCATOR.lock().init(boot_info.heap_address, boot_info.heap_size);
     }
 
-    // TODO: initialise the HAL and start doing stuff
+    let hal = HalImpl::new(boot_info);
+
+    // TODO: start doing stuff
     loop {}
 }
 
