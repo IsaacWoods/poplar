@@ -22,7 +22,7 @@ acpi = { path = "../lib/acpi/acpi", optional = true }
 aml = { path = "../lib/acpi/aml", optional = true }
 
 [features]
-arch_x86_64 = ["hal_x86_64", "acpi", "aml", "pebble_util/tuning_fast_ctlz"]
+arch_x86_64 = ["hal_x86_64", "acpi", "aml"]
 
 [workspace]
 members = ["efiloader", "hal", "hal_x86_64"]

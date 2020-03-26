@@ -80,7 +80,7 @@ impl BuddyAllocator {
              * Pick the largest order block that fits in the remaining area, but cap it at the
              * largest order the allocator can manage.
              */
-            let order = min(self.max_order(), flooring_log2((block_start..range.end).count() as u64) as usize);
+            let order = min(self.max_order(), flooring_log2((block_start..range.end).count()));
 
             self.free_n(block_start, 1 << order);
             block_start += 1 << order;
@@ -94,7 +94,7 @@ impl BuddyAllocator {
          * Work out the size of block we need to fit `n` frames by rounding up to the next
          * power-of-2, then recursively try and allocate a block of that order.
          */
-        let block_order = ceiling_log2(n as u64);
+        let block_order = ceiling_log2(n);
         self.allocate_block(block_order as usize)
     }
 
@@ -102,7 +102,7 @@ impl BuddyAllocator {
     /// power-of-2.
     pub fn free_n(&mut self, start_frame: Frame, n: usize) {
         assert!(n.is_power_of_two());
-        let order = flooring_log2(n as u64) as usize;
+        let order = flooring_log2(n) as usize;
 
         if order == self.max_order() {
             /*
