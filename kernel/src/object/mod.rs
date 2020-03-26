@@ -1,5 +1,6 @@
 pub mod address_space;
 pub mod memory_object;
+pub mod task;
 
 use core::sync::atomic::{AtomicU64, Ordering};
 
