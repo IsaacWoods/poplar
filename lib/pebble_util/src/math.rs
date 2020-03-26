@@ -12,13 +12,14 @@ use core::mem;
 /// ```
 pub fn flooring_log2(x: usize) -> usize {
     assert!(x > 0);
+    const NUM_BITS: usize = mem::size_of::<usize>() * 8;
 
     /*
      * Count the number of leading zeros in the value, then subtract that from the total
      * number of bits in the type (64 for a `u64`). This gets the first bit set, which is
      * the largest power-of-2 component of the value.
      */
-    return (8 * mem::size_of::<usize>()) - (unsafe { core::intrinsics::ctlz(x) } + 1);
+    return NUM_BITS - core::intrinsics::ctlz(x) - 1;
 }
 
 #[test]
