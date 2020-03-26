@@ -1,5 +1,6 @@
-use core::mem;
+use alloc::vec::Vec;
 use hal::memory::VirtualAddress;
+use pebble_util::{bitmap::BitmapSlice, math::ceiling_integer_divide};
 
 pub struct SlabAllocator {
     bottom: VirtualAddress,
@@ -10,7 +11,7 @@ pub struct SlabAllocator {
 
 impl SlabAllocator {
     pub fn new(bottom: VirtualAddress, top: VirtualAddress, slab_size: usize) -> SlabAllocator {
-        let num_bytes_needed = ceiling_integer_divide(top - usize::from(bottom), slab_size) / 8;
+        let num_bytes_needed = ceiling_integer_divide(usize::from(top) - usize::from(bottom), slab_size) / 8;
         SlabAllocator { bottom, top, slab_size, bitmap: vec![0; num_bytes_needed] }
     }
 
