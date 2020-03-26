@@ -19,10 +19,6 @@ pub struct HalImpl;
 
 impl Hal for HalImpl {
     type PageTableSize = Size4KiB;
-    #[cfg(feature = "pmm")]
-    type TableAllocator = memory::LockedPhysicalMemoryManager;
-    #[cfg(not(feature = "pmm"))]
-    type TableAllocator = hal::memory::PlaceholderFrameAllocator;
     type PageTable = paging::PageTableImpl;
     type TaskHelper = task::TaskHelperImpl;
 
