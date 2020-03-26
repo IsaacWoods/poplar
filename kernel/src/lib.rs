@@ -21,6 +21,7 @@ extern crate alloc;
 
 mod heap_allocator;
 mod object;
+mod slab_allocator;
 // mod per_cpu;
 // mod scheduler;
 mod syscall;
