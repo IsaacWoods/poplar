@@ -1,5 +1,5 @@
 #![no_std]
-#![feature(asm, decl_macro, const_fn)]
+#![feature(asm, decl_macro, const_fn, global_asm)]
 
 #[cfg(feature = "pmm")]
 #[macro_use]
@@ -11,6 +11,7 @@ pub mod logger;
 #[cfg(feature = "pmm")]
 pub mod memory;
 pub mod paging;
+pub mod task;
 
 use hal::{boot_info::BootInfo, memory::Size4KiB, Hal};
 
@@ -23,6 +24,7 @@ impl Hal for HalImpl {
     #[cfg(not(feature = "pmm"))]
     type TableAllocator = hal::memory::PlaceholderFrameAllocator;
     type PageTable = paging::PageTableImpl;
+    type TaskHelper = task::TaskHelperImpl;
 
     fn new(boot_info: &BootInfo) -> Self {
         HalImpl
