@@ -298,11 +298,11 @@ impl PageTableImpl {
     }
 }
 
-impl<A> PageTable<Size4KiB, A> for PageTableImpl
-where
-    A: FrameAllocator<Size4KiB>,
-{
-    fn new_for_address_space(kernel_page_table: &Self, allocator: &A) -> Self {
+impl PageTable<Size4KiB> for PageTableImpl {
+    fn new_for_address_space<A>(kernel_page_table: &Self, allocator: &A) -> Self
+    where
+        A: FrameAllocator<Size4KiB>,
+    {
         let mut page_table = PageTableImpl::new(allocator.allocate(), crate::kernel_map::PHYSICAL_MAPPING_BASE);
 
         /*
@@ -338,8 +338,9 @@ where
         Some(p1[address.p1_index()].address()? + (usize::from(address) % Size4KiB::SIZE))
     }
 
-    fn map<S>(&mut self, page: Page<S>, frame: Frame<S>, flags: Flags, allocator: &A) -> Result<(), PagingError>
+    fn map<A, S>(&mut self, page: Page<S>, frame: Frame<S>, flags: Flags, allocator: &A) -> Result<(), PagingError>
     where
+        A: FrameAllocator<Size4KiB>,
         S: FrameSize,
     {
         /*
@@ -381,14 +382,17 @@ where
         Ok(())
     }
 
-    fn map_area(
+    fn map_area<A>(
         &mut self,
         virtual_start: VirtualAddress,
         physical_start: PhysicalAddress,
         size: usize,
         flags: Flags,
         allocator: &A,
-    ) -> Result<(), PagingError> {
+    ) -> Result<(), PagingError>
+    where
+        A: FrameAllocator<Size4KiB>,
+    {
         assert!(virtual_start.is_aligned(Size4KiB::SIZE));
         assert!(physical_start.is_aligned(Size4KiB::SIZE));
         assert!(size % Size4KiB::SIZE == 0);

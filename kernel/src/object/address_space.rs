@@ -2,7 +2,7 @@ use super::{alloc_kernel_object_id, memory_object::MemoryObject, task::TaskStack
 use crate::slab_allocator::SlabAllocator;
 use alloc::{sync::Arc, vec::Vec};
 use hal::{
-    memory::{PageTable, VirtualAddress, MEBIBYTES_TO_BYTES},
+    memory::{FrameAllocator, PageTable, VirtualAddress, MEBIBYTES_TO_BYTES},
     Hal,
 };
 use libpebble::syscall::MemoryObjectError;
@@ -36,11 +36,10 @@ impl<H> AddressSpace<H>
 where
     H: Hal,
 {
-    pub fn new(
-        owner: KernelObjectId,
-        kernel_page_table: &H::PageTable,
-        allocator: &H::TableAllocator,
-    ) -> AddressSpace<H> {
+    pub fn new<A>(owner: KernelObjectId, kernel_page_table: &H::PageTable, allocator: &A) -> AddressSpace<H>
+    where
+        A: FrameAllocator<H::PageTableSize>,
+    {
         AddressSpace {
             id: alloc_kernel_object_id(),
             owner,
@@ -55,11 +54,14 @@ where
         }
     }
 
-    pub fn map_memory_object(
+    pub fn map_memory_object<A>(
         &self,
         memory_object: Arc<MemoryObject>,
-        allocator: &H::TableAllocator,
-    ) -> Result<(), MemoryObjectError> {
+        allocator: &A,
+    ) -> Result<(), MemoryObjectError>
+    where
+        A: FrameAllocator<H::PageTableSize>,
+    {
         use hal::memory::PagingError;
 
         self.page_table
@@ -81,15 +83,17 @@ where
 
     /// Try to allocate a slot for a user stack, and map `initial_size` bytes of it. Returns `None` if no more user
     /// stacks can be allocated in this address space.
-    // TODO: feels gross allocating out of the TableAllocator - maybe rename it in the HAL?
-    pub fn alloc_user_stack(&self, initial_size: usize, allocator: &H::TableAllocator) -> Option<TaskStack> {
-        use hal::memory::{Flags, FrameAllocator, FrameSize, PageTable};
+    pub fn alloc_user_stack<A>(&self, initial_size: usize, allocator: &A) -> Option<TaskStack>
+    where
+        A: FrameAllocator<H::PageTableSize>,
+    {
+        use hal::memory::{Flags, FrameAllocator, FrameSize};
 
         let slot_bottom = self.user_stack_allocator.lock().alloc()?;
         let top = slot_bottom + USER_STACK_SLOT_SIZE - 1;
         let stack_bottom = top - initial_size + 1;
 
-        // TODO: nasty
+        // TODO: this is kinda nasty
         let physical_start = allocator.allocate_n(H::PageTableSize::frames_needed(initial_size)).start.start;
         self.page_table
             .lock()

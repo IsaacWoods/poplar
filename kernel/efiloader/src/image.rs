@@ -38,7 +38,7 @@ pub fn load_kernel<A, P>(
 ) -> Result<KernelInfo, LoaderError>
 where
     A: FrameAllocator<Size4KiB>,
-    P: PageTable<Size4KiB, A>,
+    P: PageTable<Size4KiB>,
 {
     let (elf, pool_addr) = load_elf(boot_services, volume_handle, path)?;
     let entry_point = elf.entry_point();

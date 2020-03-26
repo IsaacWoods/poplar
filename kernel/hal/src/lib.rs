@@ -5,12 +5,11 @@ pub mod boot_info;
 pub mod memory;
 
 use boot_info::BootInfo;
-use memory::{FrameAllocator, FrameSize, PageTable, VirtualAddress};
+use memory::{FrameSize, PageTable, VirtualAddress};
 
 pub trait Hal: Sized {
     type PageTableSize: FrameSize;
-    type TableAllocator: FrameAllocator<Self::PageTableSize>;
-    type PageTable: PageTable<Self::PageTableSize, Self::TableAllocator>;
+    type PageTable: PageTable<Self::PageTableSize>;
     type TaskHelper: TaskHelper;
 
     fn init_logger();
