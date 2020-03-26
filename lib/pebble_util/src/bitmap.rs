@@ -8,18 +8,20 @@
 //! functionality.
 
 use bit_field::{BitArray, BitField};
-use core::mem;
+use core::{fmt::Debug, mem};
 use num::PrimInt;
 
 pub trait Bitmap: Sized {
     /// Find `n` consecutive unset bits, set them and return the index of the first bit.
-    /// This is useful for memory managers using `Bitmap` to track free frames / pages.
     fn alloc(&mut self, n: usize) -> Option<usize>;
+
+    /// Free `n` previously allocated bits, starting at `index`.
+    fn free(&mut self, index: usize, n: usize);
 }
 
 impl<T> Bitmap for T
 where
-    T: PrimInt + BitField,
+    T: PrimInt + BitField + Debug,
 {
     fn alloc(&mut self, n: usize) -> Option<usize> {
         let num_bits = 8 * mem::size_of::<Self>();
@@ -39,18 +41,26 @@ where
 
         None
     }
+
+    fn free(&mut self, index: usize, n: usize) {
+        assert_eq!(self.get_bits(index..(index + n)), Self::from((Self::one() << n) - Self::one()).unwrap());
+        self.set_bits(index..(index + n), Self::zero());
+    }
 }
 
 /// Like `Bitmap`, but for arrays. This is unfortunately needed due to conflicting implementations.
-pub trait BitmapArray: Sized {
+pub trait BitmapSlice: Sized {
     /// Find `n` consecutive unset bits, set them and return the index of the first bit.
     /// This is useful for memory managers using `Bitmap` to track free frames / pages.
-    fn alloc(&mut self, n: usize) -> Option<usize>;
+    fn alloc(self, n: usize) -> Option<usize>;
+
+    /// Free `n` previously allocated bits, starting at `index`.
+    fn free(self, index: usize, n: usize);
 }
 
-impl<const N: usize> BitmapArray for [u8; N] {
-    fn alloc(&mut self, n: usize) -> Option<usize> {
-        let num_bits = 8 * N;
+impl BitmapSlice for &mut [u8] {
+    fn alloc(self, n: usize) -> Option<usize> {
+        let num_bits = 8 * self.len();
         let mask = (1 << n) - 1;
 
         for i in 0..(num_bits - n) {
@@ -61,6 +71,11 @@ impl<const N: usize> BitmapArray for [u8; N] {
         }
 
         None
+    }
+
+    fn free(self, index: usize, n: usize) {
+        assert_eq!(self.get_bits(index..(index + n)), (1 << n) - 1);
+        self.set_bits(index..(index + n), 0);
     }
 }
 
@@ -100,4 +115,31 @@ fn test_bitmap_array_multiple() {
 
     // Try to make a third allocation - it should fail
     assert_eq!(bitmap.alloc(1), None);
+}
+
+#[test]
+fn test_bitmap_free() {
+    let mut bitmap = [0b1000_1000, 0xff, 0xff];
+
+    // Make the first allocation
+    let first = bitmap.alloc(2);
+    assert_eq!(first, Some(0));
+    assert_eq!(bitmap, [0b1000_1011, 0xff, 0xff]);
+
+    // Make a second allocation
+    let second = bitmap.alloc(3);
+    assert_eq!(second, Some(4));
+    assert_eq!(bitmap, [0b1111_1011, 0xff, 0xff]);
+
+    // Make an allocation that doesn't fit
+    assert_eq!(bitmap.alloc(3), None);
+
+    // Free the first allocation
+    bitmap.free(first.unwrap(), 2);
+    assert_eq!(bitmap, [0b1111_1000, 0xff, 0xff]);
+
+    // Make another allocation that now fits
+    let third = bitmap.alloc(3);
+    assert_eq!(third, Some(0));
+    assert_eq!(bitmap, [0b1111_1111, 0xff, 0xff]);
 }
