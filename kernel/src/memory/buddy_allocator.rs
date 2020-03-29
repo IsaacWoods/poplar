@@ -1,5 +1,5 @@
-//! This module implements a buddy allocator, an efficient method for managing physical memory. In
-//! this allocator, memory is broken up into a number of blocks, each of which is a power-of-2 in
+//! This module implements a buddy allocator, an efficient scheme for managing physical memory. In
+//! this allocator, memory is broken up into a number of blocks, each of which is a power-of-2 frames in
 //! size. A block of size `2^^n` frames is said to be of order `n`:
 //!
 //!       16                               0       Order       Size of blocks
@@ -15,10 +15,10 @@
 //!        | | | | | | | | | | | | | | | | |       0           2^^0 = 1
 //!        |-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|
 //!
-//! The blocks at each order are arranged in pairs - each has a "buddy" where A's buddy is B and
-//! B's buddy is A. The address of a block's buddy can be efficiently calculated using XOR (see the
-//! `buddy_of` function). Blocks are stored in bins, where each bin contains blocks of a single
-//! order.
+//! The blocks in each order are arranged in pairs - each has a "buddy" where A's buddy is B and B's
+//! buddy is A. To find the address of a block's buddy, the bit corresponding to the order is simply
+//! flipped (and so is easily calculated with XOR - see the `buddy_of` method). Blocks are tracked in
+//! bins, where each bin contains blocks of a single order.
 //!
 //! When an allocation is requested, the allocator looks in the bin of the correct size. If a block
 //! is available, that block is removed from the bin and returned. If no blocks of the correct size
@@ -29,11 +29,10 @@
 //! found. If no block is found, an "out of memory" error is issued.
 //!
 //! When a block is "freed" (returned to the allocator so that it can be allocated again), the
-//! allocator checks to see if its "buddy" is also free. If it is, the two blocks of order `x` are
-//! merged into a single block of order `x + 1`. This process continues upwards recursively until a
-//! block's buddy is allocated (this can also occur before the first merging, and the freed block
-//! is immediately added to the bin for order `x`), at which point no further merging can happen
-//! and the block is added to the correct bin.
+//! allocator checks to see if its "buddy" is also free. If it's not, the block is just added to the
+//! bin corresponding to its order. However, if its buddy is also free, the two can be merged to form
+//! a block of an order one greater - this process happens recursively until the block's buddy is not
+//! free, at which point the block is added to the correct bin.
 //!
 //! Overall, the buddy allocator is an efficient allocator that has a much lower cost than other
 //! algorithms such as first-fit. It also helps reduce external fragmentation, but can suffer from
@@ -48,10 +47,15 @@ use core::{cmp::min, ops::Range};
 use hal::memory::{Frame, FrameSize, PhysicalAddress, Size4KiB};
 use pebble_util::math::{ceiling_log2, flooring_log2};
 
+/// The largest block stored by the buddy allocator is `2^MAX_ORDER`.
+const MAX_ORDER: usize = 10;
+
 // TODO: make this generic over the frame size - it should monomorphise and generate good code I
 // think
 // TODO: don't make the no. of bins dynamic - just set of constant and use an array (or at least
 // switch to const generics)
+// TODO: all of the architecture I think we want to support have 4KiB as the "base" frame size, but maybe we should
+// still let the HAL choose?
 pub struct BuddyAllocator {
     /// The bins of free blocks, where bin `i` contains blocks of size `2^i`. Uses `BTreeSet` to
     /// store the blocks in each bin, for efficient buddy location. The `Frame` stored for each
@@ -62,9 +66,8 @@ pub struct BuddyAllocator {
 }
 
 impl BuddyAllocator {
-    /// Create a new `BuddyAllocator`, with a maximum block size of `2^max_order`.
-    pub fn new(max_order: usize) -> BuddyAllocator {
-        BuddyAllocator { bins: vec![BTreeSet::new(); max_order + 1] }
+    pub fn new() -> BuddyAllocator {
+        BuddyAllocator { bins: vec![BTreeSet::new(); MAX_ORDER + 1] }
     }
 
     /// Add a range of `Frame`s to this allocator, marking them free to allocate.
@@ -166,7 +169,6 @@ impl BuddyAllocator {
     /// Finds the starting frame of the block that is the buddy of the block of order `order`,
     /// starting at `x`.
     fn buddy_of(x: Frame, order: usize) -> Frame {
-        // TODO: describe what this does and how
         Frame::contains(PhysicalAddress::new(usize::from(x.start) ^ ((1 << order) * Size4KiB::SIZE)).unwrap())
     }
 

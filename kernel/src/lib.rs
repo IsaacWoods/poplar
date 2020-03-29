@@ -20,6 +20,7 @@
 extern crate alloc;
 
 mod heap_allocator;
+mod memory;
 mod object;
 mod slab_allocator;
 // mod per_cpu;
@@ -32,6 +33,7 @@ use core::panic::PanicInfo;
 use hal::{boot_info::BootInfo, Hal};
 use libpebble::syscall::system_object::FramebufferSystemObjectInfo;
 use log::{error, info};
+use memory::LockedPhysicalMemoryManager;
 
 cfg_if! {
     if #[cfg(feature = "arch_x86_64")] {
@@ -62,6 +64,11 @@ pub extern "C" fn kmain(boot_info: &BootInfo) -> ! {
         #[cfg(not(test))]
         ALLOCATOR.lock().init(boot_info.heap_address, boot_info.heap_size);
     }
+
+    /*
+     * We can now initialise the physical memory manager.
+     */
+    let physical_memory_manager = LockedPhysicalMemoryManager::new(boot_info);
 
     let hal = HalImpl::new(boot_info);
 
