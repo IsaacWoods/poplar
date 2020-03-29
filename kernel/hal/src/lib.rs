@@ -5,12 +5,14 @@ pub mod boot_info;
 pub mod memory;
 
 use boot_info::BootInfo;
+use core::pin::Pin;
 use memory::{FrameSize, PageTable, VirtualAddress};
 
-pub trait Hal: Sized {
+pub trait Hal<T>: Sized {
     type PageTableSize: FrameSize;
     type PageTable: PageTable<Self::PageTableSize>;
     type TaskHelper: TaskHelper;
+    type PerCpu: PerCpu<T>;
 
     fn init_logger();
     /// Initialise the hardware platform. This is called early on, after initialisation of logging, and the
@@ -20,6 +22,14 @@ pub trait Hal: Sized {
 
     unsafe fn disable_interrupts();
     unsafe fn enable_interrupts();
+
+    /// Access the per-CPU data as a pinned, mutable reference. This does not take a reference to the HAL, because
+    /// it must be callable from contexts that don't have access to the HAL instance. It is unsafe because this
+    /// may, depending on HAL implementation behaviour, access uninitialized memory if the per-CPU data hasn't yet
+    /// been initialized, and also creates a mutable reference of whatever lifetime is requested. It is the
+    /// caller's responsibility to ensure only one mutable reference to the per-CPU data exists at any time (this
+    /// is easier than the general case, however, as you only need to think about the current CPU).
+    unsafe fn per_cpu<'a>() -> Pin<&'a mut Self::PerCpu>;
 }
 
 pub trait TaskHelper {
@@ -40,4 +50,9 @@ pub trait TaskHelper {
     /// Do the final part of a context switch: save all the state that needs to be to the current kernel stack,
     /// switch to a new kernel stack, and restore all the state from that stack.
     fn context_switch(current_kernel_stack: &mut VirtualAddress, new_kernel_stack: VirtualAddress);
+}
+
+pub trait PerCpu<T>: Sized {
+    fn kernel_data(self: Pin<&mut Self>) -> Pin<&mut T>;
+    fn set_kernel_stack_pointer(self: Pin<&mut Self>, stack_pointer: VirtualAddress);
 }

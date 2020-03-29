@@ -1,5 +1,5 @@
 use super::{alloc_kernel_object_id, memory_object::MemoryObject, task::TaskStack, KernelObject, KernelObjectId};
-use crate::slab_allocator::SlabAllocator;
+use crate::{per_cpu::PerCpu, slab_allocator::SlabAllocator};
 use alloc::{sync::Arc, vec::Vec};
 use hal::{
     memory::{FrameAllocator, PageTable, VirtualAddress, MEBIBYTES_TO_BYTES},
@@ -22,7 +22,7 @@ pub enum State {
 
 pub struct AddressSpace<H>
 where
-    H: Hal,
+    H: Hal<PerCpu>,
 {
     pub id: KernelObjectId,
     pub owner: KernelObjectId,
@@ -34,7 +34,7 @@ where
 
 impl<H> AddressSpace<H>
 where
-    H: Hal,
+    H: Hal<PerCpu>,
 {
     pub fn new<A>(owner: KernelObjectId, kernel_page_table: &H::PageTable, allocator: &A) -> AddressSpace<H>
     where
@@ -123,7 +123,7 @@ where
 
 impl<H> KernelObject for AddressSpace<H>
 where
-    H: Hal,
+    H: Hal<PerCpu>,
 {
     fn id(&self) -> KernelObjectId {
         self.id

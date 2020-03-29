@@ -41,7 +41,7 @@ cfg_if::cfg_if! {
             interrupt_controller: InterruptController,
         }
 
-impl Hal for HalImpl {
+        impl<T> Hal<T> for HalImpl {
             type PageTableSize = Size4KiB;
             type PageTable = paging::PageTableImpl;
             type TaskHelper = task::TaskHelperImpl;
