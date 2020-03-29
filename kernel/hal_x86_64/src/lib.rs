@@ -1,15 +1,9 @@
 #![no_std]
 #![feature(asm, decl_macro, const_fn, global_asm)]
 
-#[cfg(feature = "pmm")]
-#[macro_use]
-extern crate alloc;
-
 pub mod hw;
 pub mod kernel_map;
 pub mod logger;
-#[cfg(feature = "pmm")]
-pub mod memory;
 pub mod paging;
 pub mod task;
 
