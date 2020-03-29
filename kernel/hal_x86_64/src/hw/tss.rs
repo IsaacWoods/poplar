@@ -1,5 +1,6 @@
-use core::marker::PhantomPinned;
+use core::{marker::PhantomPinned, pin::Pin};
 use hal::memory::VirtualAddress;
+use pin_utils::unsafe_unpinned;
 
 /// Hardware task switching isn't supported on x86_64, so the TSS is just used as a vestigal place
 /// to stick stuff. It's used to store kernel-level stacks that should be used if interrupts occur
@@ -23,6 +24,9 @@ pub struct Tss {
 }
 
 impl Tss {
+    unsafe_unpinned!(privilege_stack_table: [VirtualAddress; 3]);
+    unsafe_unpinned!(interrupt_stack_table: [VirtualAddress; 7]);
+
     pub fn new() -> Tss {
         Tss {
             _reserved_1: 0,
@@ -36,7 +40,7 @@ impl Tss {
         }
     }
 
-    pub fn set_kernel_stack(&mut self, address: VirtualAddress) {
-        self.privilege_stack_table[0] = address;
+    pub fn set_kernel_stack(mut self: Pin<&mut Self>, address: VirtualAddress) {
+        self.as_mut().privilege_stack_table()[0] = address;
     }
 }
