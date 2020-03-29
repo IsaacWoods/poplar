@@ -13,7 +13,10 @@ pub trait Hal: Sized {
     type TaskHelper: TaskHelper;
 
     fn init_logger();
-    fn new(boot_info: &BootInfo) -> Self;
+    /// Initialise the hardware platform. This is called early on, after initialisation of logging, and the
+    /// physical and virtual memory managers. In this function, HAL implementations are expected to initialise all
+    /// hardware they can at this stage, and gather any information they need about the platform.
+    fn init(boot_info: &BootInfo) -> Self;
 
     unsafe fn disable_interrupts();
     unsafe fn enable_interrupts();
