@@ -9,7 +9,7 @@ crate-type = ["staticlib"]
 
 [dependencies]
 hal = { path = "hal" }
-hal_x86_64 = { path = "hal_x86_64", optional = true }
+hal_x86_64 = { path = "hal_x86_64", features = ["kernel"], optional = true }
 pebble_util = { path = "../lib/pebble_util" }
 cfg-if = "0.1"
 bitflags = "1"

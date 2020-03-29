@@ -66,8 +66,11 @@ dependencies = [
 name = "hal_x86_64"
 version = "0.1.0"
 dependencies = [
+ "acpi 0.7.0",
+ "aml 0.7.0",
  "bit_field 0.10.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "bitflags 1.2.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "cfg-if 0.1.6 (registry+https://github.com/rust-lang/crates.io-index)",
  "hal 0.1.0",
  "log 0.4.8 (registry+https://github.com/rust-lang/crates.io-index)",
  "pebble_util 0.1.0",
