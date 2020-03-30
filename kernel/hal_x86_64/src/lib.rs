@@ -14,6 +14,9 @@ pub mod task;
  */
 cfg_if::cfg_if! {
     if #[cfg(feature = "kernel")] {
+        #[macro_use]
+        extern crate alloc;
+
         mod acpi_handler;
         mod interrupts;
         mod per_cpu;
@@ -52,7 +55,7 @@ cfg_if::cfg_if! {
                 log::set_max_level(log::LevelFilter::Trace);
             }
 
-            fn init(boot_info: &BootInfo) -> Self {
+            fn init(boot_info: &BootInfo, per_cpu_data: T) -> Self {
                 let cpu_info = CpuInfo::new();
                 info!(
                     "We're running on an {:?} processor, model info = {:?}, microarch = {:?}",
@@ -102,7 +105,6 @@ cfg_if::cfg_if! {
                  * Parse the DSDT.
                  */
                 let mut aml_context = AmlContext::new();
-                // if let Some(dsdt_info) = acpi_info.as_ref().and_then(|info| info.dsdt.as_ref()) {
                 if let Some(ref dsdt_info) = acpi_info.as_ref().unwrap().dsdt {
                     let virtual_address =
                         kernel_map::physical_to_virtual(PhysicalAddress::new(dsdt_info.address).unwrap());
@@ -120,7 +122,15 @@ cfg_if::cfg_if! {
                     // info!("----- Finished AML namespace -----");
                 }
 
-                // TODO: construct the per-cpu info and TSS for this CPU, then create our own GDT.
+                /*
+                 * Create the per-CPU data (which adds a TSS to the GDT) for the BSP and install it for this CPU.
+                 */
+                // TODO: before, we installed the GDT then loaded the per-cpu address to IA32_GS_BASE. This might
+                // still be needed (so check that if this doesn't work)
+                let (bsp_per_cpu, bsp_tss_selector) = per_cpu::PerCpuImpl::<T>::new(per_cpu_data);
+                unsafe {
+                    hw::gdt::GDT.lock().load(bsp_tss_selector);
+                }
 
                 /*
                  * Initialise the interrupt controller, which enables interrupts, and start the per-cpu timer.

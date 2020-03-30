@@ -18,7 +18,7 @@ pub trait Hal<T>: Sized {
     /// Initialise the hardware platform. This is called early on, after initialisation of logging, and the
     /// physical and virtual memory managers. In this function, HAL implementations are expected to initialise all
     /// hardware they can at this stage, and gather any information they need about the platform.
-    fn init(boot_info: &BootInfo) -> Self;
+    fn init(boot_info: &BootInfo, per_cpu_data: T) -> Self;
 
     unsafe fn disable_interrupts();
     unsafe fn enable_interrupts();
