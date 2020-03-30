@@ -2,6 +2,9 @@ use super::{tss::Tss, DescriptorTablePointer};
 use bit_field::BitField;
 use core::{mem, ops::Deref, pin::Pin};
 use hal::memory::VirtualAddress;
+use spin::Mutex;
+
+pub static GDT: Mutex<Gdt> = Mutex::new(Gdt::new());
 
 #[derive(Clone, Copy, PartialEq, Eq)]
 #[repr(u8)]
@@ -115,6 +118,7 @@ pub struct Gdt {
 
     /// This field is not part of the actual GDT; we just use it to keep track of how many TSS
     /// entries have been used
+    // XXX: this shouldn't be included when calculating the limit!
     next_free_tss: usize,
 }
 
@@ -174,7 +178,7 @@ impl Gdt {
               mov ds, ax
               mov es, ax
               mov fs, ax
-              mov gs, ax
+              // XXX: we don't load GS because it would override our value in IA32_GS_BASE
               mov ss, ax
               
               // Switch to the new code segment

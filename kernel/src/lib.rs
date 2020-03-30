@@ -71,7 +71,7 @@ pub extern "C" fn kmain(boot_info: &BootInfo) -> ! {
      */
     let physical_memory_manager = LockedPhysicalMemoryManager::new(boot_info);
 
-    let hal = <HalImpl as Hal<PerCpu>>::init(boot_info);
+    let hal = <HalImpl as Hal<PerCpu>>::init(boot_info, PerCpu {});
 
     // TODO: start doing stuff
     loop {}
