@@ -20,6 +20,7 @@ cfg_if::cfg_if! {
         mod interrupts;
         mod per_cpu;
 
+        use core::marker::PhantomData;
         use acpi::Acpi;
         use acpi_handler::PebbleAcpiHandler;
         use aml::AmlContext;
@@ -35,15 +36,16 @@ cfg_if::cfg_if! {
         use paging::PageTableImpl;
         use core::pin::Pin;
 
-        pub struct HalImpl {
+        pub struct HalImpl<T> {
             cpu_info: CpuInfo,
             acpi_info: Option<Acpi>,
             aml_context: AmlContext,
             kernel_page_table: PageTableImpl,
             interrupt_controller: InterruptController,
+            _phantom: PhantomData<T>,
         }
 
-        impl<T> Hal<T> for HalImpl {
+        impl<T> Hal<T> for HalImpl<T> {
             type PageTableSize = Size4KiB;
             type PageTable = paging::PageTableImpl;
             type TaskHelper = task::TaskHelperImpl;
@@ -137,7 +139,7 @@ cfg_if::cfg_if! {
                 let mut interrupt_controller = InterruptController::init(acpi_info.as_ref().unwrap(), &mut aml_context);
                 interrupt_controller.enable_local_timer(&cpu_info, Duration::from_secs(3));
 
-                HalImpl { cpu_info, acpi_info, aml_context, kernel_page_table, interrupt_controller }
+                HalImpl { cpu_info, acpi_info, aml_context, kernel_page_table, interrupt_controller, _phantom: PhantomData }
             }
 
             unsafe fn disable_interrupts() {
