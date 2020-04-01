@@ -1,4 +1,5 @@
 use super::{alloc_kernel_object_id, KernelObject, KernelObjectId};
+use alloc::sync::Arc;
 use hal::{
     boot_info::Segment,
     memory::{Flags, PhysicalAddress, VirtualAddress},
@@ -21,19 +22,26 @@ impl MemoryObject {
         physical_address: PhysicalAddress,
         size: usize,
         flags: Flags,
-    ) -> MemoryObject {
-        MemoryObject { id: alloc_kernel_object_id(), owner, virtual_address, physical_address, size, flags }
+    ) -> Arc<MemoryObject> {
+        Arc::new(MemoryObject {
+            id: alloc_kernel_object_id(),
+            owner,
+            virtual_address,
+            physical_address,
+            size,
+            flags,
+        })
     }
 
-    pub fn from_boot_info(owner: KernelObjectId, segment: &Segment, user_accessible: bool) -> MemoryObject {
-        MemoryObject {
+    pub fn from_boot_info(owner: KernelObjectId, segment: &Segment, user_accessible: bool) -> Arc<MemoryObject> {
+        Arc::new(MemoryObject {
             id: alloc_kernel_object_id(),
             owner,
             virtual_address: segment.virtual_address,
             physical_address: segment.physical_address,
             size: segment.size,
             flags: segment.flags,
-        }
+        })
     }
 }
 

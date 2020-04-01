@@ -36,11 +36,11 @@ impl<H> AddressSpace<H>
 where
     H: Hal<KernelPerCpu>,
 {
-    pub fn new<A>(owner: KernelObjectId, kernel_page_table: &H::PageTable, allocator: &A) -> AddressSpace<H>
+    pub fn new<A>(owner: KernelObjectId, kernel_page_table: &H::PageTable, allocator: &A) -> Arc<AddressSpace<H>>
     where
         A: FrameAllocator<H::PageTableSize>,
     {
-        AddressSpace {
+        Arc::new(AddressSpace {
             id: alloc_kernel_object_id(),
             owner,
             state: Mutex::new(State::NotActive),
@@ -51,7 +51,7 @@ where
                 USER_STACK_TOP,
                 USER_STACK_SLOT_SIZE,
             )),
-        }
+        })
     }
 
     pub fn map_memory_object<A>(

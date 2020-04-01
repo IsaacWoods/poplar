@@ -1,4 +1,4 @@
-use super::{address_space::AddressSpace, KernelObjectId};
+use super::{address_space::AddressSpace, KernelObject, KernelObjectId};
 use crate::per_cpu::KernelPerCpu;
 use alloc::{string::String, sync::Arc, vec::Vec};
 use hal::{memory::VirtualAddress, Hal};
@@ -55,12 +55,22 @@ where
     H: Hal<KernelPerCpu>,
 {
     pub fn from_boot_info(
+        owner: KernelObjectId,
         address_space: Arc<AddressSpace<H>>,
         image: &hal::boot_info::LoadedImage,
-    ) -> Result<Task<H>, TaskCreationError> {
+    ) -> Result<Arc<Task<H>>, TaskCreationError> {
         // TODO: create user stack
         // TODO: create kernel stack
         todo!()
+    }
+}
+
+impl<H> KernelObject for Task<H>
+where
+    H: Hal<KernelPerCpu>,
+{
+    fn id(&self) -> KernelObjectId {
+        self.id
     }
 }
 
