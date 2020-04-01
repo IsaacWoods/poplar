@@ -58,7 +58,7 @@ impl<T> PerCpuImpl<T> {
 }
 
 impl<T> PerCpu<T> for PerCpuImpl<T> {
-    fn kernel_data(mut self: Pin<&mut Self>) -> Pin<&mut T> {
+    fn kernel_data(self: Pin<&mut Self>) -> Pin<&mut T> {
         // XXX: we have to do this manually (not with pin_utils) for some reason
         unsafe { self.map_unchecked_mut(|per_cpu| &mut per_cpu.kernel_data) }
     }

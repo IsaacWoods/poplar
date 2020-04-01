@@ -34,7 +34,7 @@ use hal::{boot_info::BootInfo, Hal};
 use libpebble::syscall::system_object::FramebufferSystemObjectInfo;
 use log::{error, info};
 use memory::LockedPhysicalMemoryManager;
-use per_cpu::PerCpu;
+use per_cpu::KernelPerCpu;
 
 cfg_if! {
     if #[cfg(feature = "arch_x86_64")] {
@@ -50,7 +50,7 @@ pub static ALLOCATOR: LockedHoleAllocator = LockedHoleAllocator::new_uninitializ
 
 #[no_mangle]
 pub extern "C" fn kmain(boot_info: &BootInfo) -> ! {
-    <HalImpl as Hal<PerCpu>>::init_logger();
+    <HalImpl as Hal<KernelPerCpu>>::init_logger();
     info!("The Pebble kernel is running");
 
     if boot_info.magic != hal::boot_info::BOOT_INFO_MAGIC {
@@ -71,7 +71,7 @@ pub extern "C" fn kmain(boot_info: &BootInfo) -> ! {
      */
     let physical_memory_manager = LockedPhysicalMemoryManager::new(boot_info);
 
-    let hal = <HalImpl as Hal<PerCpu>>::init(boot_info, PerCpu {});
+    let hal = <HalImpl as Hal<KernelPerCpu>>::init(boot_info, KernelPerCpu {});
 
     // TODO: start doing stuff
     loop {}

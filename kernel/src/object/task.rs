@@ -1,5 +1,5 @@
 use super::{address_space::AddressSpace, KernelObjectId};
-use crate::per_cpu::PerCpu;
+use crate::per_cpu::KernelPerCpu;
 use alloc::{string::String, sync::Arc, vec::Vec};
 use hal::{memory::VirtualAddress, Hal};
 use libpebble::caps::Capability;
@@ -37,14 +37,14 @@ pub struct TaskStack {
 
 pub struct Task<H>
 where
-    H: Hal<PerCpu>,
+    H: Hal<KernelPerCpu>,
 {
     id: KernelObjectId,
     // TODO: do tasks have owners?
     owner: KernelObjectId,
     pub name: String,
     pub address_space: Arc<AddressSpace<H>>,
-    pub status: Mutex<TaskState>,
+    pub state: Mutex<TaskState>,
     pub capabilities: Vec<Capability>,
     pub user_stack: Mutex<TaskStack>,
     pub kernel_stack: Mutex<TaskStack>,
@@ -52,7 +52,7 @@ where
 
 impl<H> Task<H>
 where
-    H: Hal<PerCpu>,
+    H: Hal<KernelPerCpu>,
 {
     pub fn from_boot_info(
         address_space: Arc<AddressSpace<H>>,
