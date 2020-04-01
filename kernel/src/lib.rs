@@ -111,7 +111,5 @@ pub extern "C" fn kmain(boot_info: &BootInfo) -> ! {
 #[no_mangle]
 fn panic(info: &PanicInfo) -> ! {
     error!("KERNEL PANIC: {}", info);
-    loop {
-        // TODO: arch-independent cpu halt?
-    }
+    <HalImpl as Hal<KernelPerCpu>>::cpu_halt()
 }
