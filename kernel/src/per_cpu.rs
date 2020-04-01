@@ -1,14 +1,14 @@
 // use crate::scheduler::Scheduler;
 use core::fmt;
 
-pub struct PerCpu {
+pub struct KernelPerCpu {
     // pub scheduler: Scheduler,
 }
 
-impl PerCpu {
-    pub fn new() -> PerCpu {
+impl KernelPerCpu {
+    pub fn new() -> KernelPerCpu {
         // PerCpu { scheduler: Scheduler::new() }
-        PerCpu {}
+        KernelPerCpu {}
     }
 
     // /// Helper method to get the currently running task. Panics if the kernel hasn't dropped into
@@ -18,9 +18,10 @@ impl PerCpu {
     // }
 }
 
-impl fmt::Debug for PerCpu {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        // write!(f, "PerCpu(scheduler: {:?})", self.scheduler)
-        Ok(())
-    }
-}
+// TODO: why doesn't this just derive Debug?
+// impl fmt::Debug for PerCpu {
+//     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+//         // write!(f, "PerCpu(scheduler: {:?})", self.scheduler)
+//         Ok(())
+//     }
+// }
