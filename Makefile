@@ -51,13 +51,14 @@ simple_fb:
 	cp drivers/target/x86_64-pebble-userspace/debug/simple_fb $(BUILD_DIR)/fat/simple_fb.elf
 
 clean:
-	cd drivers && cargo clean --all
+	cd drivers && cargo clean
 	make -C kernel clean
 	rm -rf build
 	rm -f $(IMAGE_NAME)
 
 update:
 	cargo update --manifest-path kernel/Cargo.toml
+	cargo update --manifest-path drivers/Cargo.toml
 	cargo update --manifest-path lib/libpebble/Cargo.toml
 	cargo update --manifest-path lib/mer/Cargo.toml
 	cargo update --manifest-path lib/pebble_util/Cargo.toml
