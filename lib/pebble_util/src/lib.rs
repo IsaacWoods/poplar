@@ -9,6 +9,8 @@ mod binary_pretty_print;
 pub mod bitmap;
 mod init_guard;
 pub mod math;
+#[macro_use]
+pub mod pin;
 
 pub use self::{binary_pretty_print::BinaryPrettyPrint, init_guard::InitGuard};
 
@@ -25,7 +27,7 @@ pub macro assert_first_call
     {{
         fn assert_first_call()
         {
-            use core::sync::atomic::{AtomicBool,
+            use $crate::core_reexport::sync::atomic::{AtomicBool,
                                      ATOMIC_BOOL_INIT,
                                      Ordering};
 
@@ -35,4 +37,14 @@ pub macro assert_first_call
         }
         assert_first_call();
     }}
+}
+
+/*
+ * This is used in macros to prevent weird issues if the using crate doesn't something weird like re-exports
+ * another crate as `core`.
+ */
+#[doc(hidden)]
+pub mod core_reexport {
+    #[doc(hidden)]
+    pub use core::*;
 }
