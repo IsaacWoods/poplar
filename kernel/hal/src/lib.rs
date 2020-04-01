@@ -22,6 +22,7 @@ pub trait Hal<T>: Sized {
 
     unsafe fn disable_interrupts();
     unsafe fn enable_interrupts();
+    fn cpu_halt() -> !;
 
     /// Access the per-CPU data as a pinned, mutable reference. This does not take a reference to the HAL, because
     /// it must be callable from contexts that don't have access to the HAL instance. It is unsafe because this

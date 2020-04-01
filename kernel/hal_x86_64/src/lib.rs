@@ -148,6 +148,14 @@ cfg_if::cfg_if! {
                 asm!("sti");
             }
 
+            fn cpu_halt() -> ! {
+                loop {
+                    unsafe {
+                        asm!("hlt");
+                    }
+                }
+            }
+
             unsafe fn per_cpu<'a>() -> Pin<&'a mut Self::PerCpu> {
                 todo!()
             }
