@@ -14,7 +14,6 @@ pub mod task;
  */
 cfg_if::cfg_if! {
     if #[cfg(feature = "kernel")] {
-        #[macro_use]
         extern crate alloc;
 
         mod acpi_handler;
