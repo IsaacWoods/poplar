@@ -14,7 +14,6 @@ pebble_util = { path = "../../lib/pebble_util" }
 log = { version = "0.4", default-features = false }
 acpi = { path = "../../lib/acpi/acpi", optional = true }
 aml = { path = "../../lib/acpi/aml", optional = true }
-pin-utils = "0.1.0-alpha.4"
 
 [features]
 default_features = []

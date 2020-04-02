@@ -1,6 +1,6 @@
 use core::{marker::PhantomPinned, pin::Pin};
 use hal::memory::VirtualAddress;
-use pin_utils::unsafe_unpinned;
+use pebble_util::unsafe_unpinned;
 
 /// Hardware task switching isn't supported on x86_64, so the TSS is just used as a vestigal place
 /// to stick stuff. It's used to store kernel-level stacks that should be used if interrupts occur

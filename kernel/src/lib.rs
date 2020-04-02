@@ -38,7 +38,7 @@ use per_cpu::KernelPerCpu;
 
 cfg_if! {
     if #[cfg(feature = "arch_x86_64")] {
-        type HalImpl = hal_x86_64::HalImpl;
+        type HalImpl = hal_x86_64::HalImpl<KernelPerCpu>;
     } else {
         compile_error!("No architecture supplied, or target arch does not have a HAL implementation configured!");
     }
