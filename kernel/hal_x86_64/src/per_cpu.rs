@@ -5,7 +5,7 @@ use crate::hw::{
 use alloc::boxed::Box;
 use core::{marker::PhantomPinned, mem, pin::Pin};
 use hal::{memory::VirtualAddress, PerCpu};
-use pin_utils::{unsafe_pinned, unsafe_unpinned};
+use pebble_util::{unsafe_pinned, unsafe_unpinned};
 
 /// Get a mutable reference to the per-CPU data of the running CPU. This is unsafe because it is the caller's
 /// responsibility to ensure that only one mutable reference to the per-CPU data exists at any one time. It is also
@@ -37,6 +37,7 @@ pub struct PerCpuImpl<T> {
 
 impl<T> PerCpuImpl<T> {
     unsafe_unpinned!(current_task_kernel_rsp: VirtualAddress);
+    unsafe_pinned!(pub kernel_data: T);
     unsafe_pinned!(tss: Tss);
 
     pub fn new(kernel_data: T) -> (Pin<Box<PerCpuImpl<T>>>, SegmentSelector) {
@@ -79,8 +80,7 @@ impl<T> PerCpuImpl<T> {
 
 impl<T> PerCpu<T> for PerCpuImpl<T> {
     fn kernel_data(self: Pin<&mut Self>) -> Pin<&mut T> {
-        // XXX: we have to do this manually (not with pin_utils) for some reason
-        unsafe { self.map_unchecked_mut(|per_cpu| &mut per_cpu.kernel_data) }
+        self.kernel_data()
     }
 
     fn set_kernel_stack_pointer(mut self: Pin<&mut Self>, stack_pointer: VirtualAddress) {
