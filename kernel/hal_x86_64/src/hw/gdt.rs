@@ -178,7 +178,7 @@ impl Gdt {
               mov ds, ax
               mov es, ax
               mov fs, ax
-              // XXX: we don't load GS because it would override our value in IA32_GS_BASE
+              mov gs, ax
               mov ss, ax
               
               // Switch to the new code segment
