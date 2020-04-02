@@ -1,5 +1,5 @@
 #![no_std]
-#![feature(asm, decl_macro, const_fn, global_asm, naked_functions)]
+#![feature(asm, decl_macro, const_fn, global_asm, naked_functions, type_ascription)]
 
 pub mod hw;
 pub mod kernel_map;
@@ -35,12 +35,15 @@ cfg_if::cfg_if! {
         use log::{error, info, warn};
         use paging::PageTableImpl;
         use core::pin::Pin;
+        use per_cpu::PerCpuImpl;
+        use alloc::boxed::Box;
 
         pub struct HalImpl<T> {
             cpu_info: CpuInfo,
             acpi_info: Option<Acpi>,
             aml_context: AmlContext,
             kernel_page_table: PageTableImpl,
+            bsp_percpu: Pin<Box<PerCpuImpl<T>>>,
             interrupt_controller: InterruptController,
             _phantom: PhantomData<T>,
         }
@@ -124,14 +127,16 @@ cfg_if::cfg_if! {
                 }
 
                 /*
-                 * Create the per-CPU data (which adds a TSS to the GDT) for the BSP and install it for this CPU.
+                 * Create the per-CPU data (which adds a TSS to the GDT) for the BSP, loads the GDT, then installs
+                 * the BSP's per-CPU data.
+                 * NOTE: Installing the GDT zeros the `gs` segment descriptor so it's important we do it before
+                 * installing the per-CPU data.
                  */
-                // TODO: before, we installed the GDT then loaded the per-cpu address to IA32_GS_BASE. This might
-                // still be needed (so check that if this doesn't work)
-                let (bsp_per_cpu, bsp_tss_selector) = per_cpu::PerCpuImpl::<T>::new(per_cpu_data);
+                let (mut bsp_percpu, bsp_tss_selector) = per_cpu::PerCpuImpl::<T>::new(per_cpu_data);
                 unsafe {
                     hw::gdt::GDT.lock().load(bsp_tss_selector);
                 }
+                bsp_percpu.as_mut().install();
 
                 /*
                  * Initialise the interrupt controller, which enables interrupts, and start the per-cpu timer.
@@ -139,7 +144,7 @@ cfg_if::cfg_if! {
                 let mut interrupt_controller = InterruptController::init(acpi_info.as_ref().unwrap(), &mut aml_context);
                 interrupt_controller.enable_local_timer(&cpu_info, Duration::from_secs(3));
 
-                HalImpl { cpu_info, acpi_info, aml_context, kernel_page_table, interrupt_controller, _phantom: PhantomData }
+                HalImpl { cpu_info, acpi_info, aml_context, kernel_page_table, bsp_percpu, interrupt_controller, _phantom: PhantomData }
             }
 
             unsafe fn disable_interrupts() {
@@ -159,7 +164,7 @@ cfg_if::cfg_if! {
             }
 
             unsafe fn per_cpu<'a>() -> Pin<&'a mut Self::PerCpu> {
-                todo!()
+                per_cpu::get_per_cpu_data()
             }
         }
 

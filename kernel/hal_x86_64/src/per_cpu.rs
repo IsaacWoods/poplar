@@ -7,6 +7,20 @@ use core::{marker::PhantomPinned, mem, pin::Pin};
 use hal::{memory::VirtualAddress, PerCpu};
 use pin_utils::{unsafe_pinned, unsafe_unpinned};
 
+/// Get a mutable reference to the per-CPU data of the running CPU. This is unsafe because it is the caller's
+/// responsibility to ensure that only one mutable reference to the per-CPU data exists at any one time. It is also
+/// unsafe to call this before the per-CPU data has been installed.
+pub unsafe fn get_per_cpu_data<'a, T>() -> Pin<&'a mut PerCpuImpl<T>> {
+    let mut ptr: usize;
+    asm!("mov $0, gs:0x0"
+        : "=r"(ptr)
+        :
+        :
+        : "intel", "volatile"
+    );
+    Pin::new_unchecked(&mut *(ptr as *mut PerCpuImpl<T>))
+}
+
 pub struct PerCpuImpl<T> {
     /// The first field of the per-cpu structure must be a pointer to itself. This is used to access the info by
     /// reading from `gs:0x0`. This means the structure must be pinned, as it is self-referential.
@@ -26,8 +40,6 @@ impl<T> PerCpuImpl<T> {
     unsafe_pinned!(tss: Tss);
 
     pub fn new(kernel_data: T) -> (Pin<Box<PerCpuImpl<T>>>, SegmentSelector) {
-        use crate::hw::registers::{write_msr, IA32_GS_BASE};
-
         let tss = Tss::new();
         let mut per_cpu = Box::pin(PerCpuImpl {
             _self_pointer: 0x0 as *const PerCpuImpl<T>,
@@ -38,6 +50,7 @@ impl<T> PerCpuImpl<T> {
 
             tss,
         });
+        let address = unsafe { mem::transmute(per_cpu.as_ref(): Pin<&PerCpuImpl<T>>): *const PerCpuImpl<T> };
 
         /*
          * Install the TSS into the GDT.
@@ -47,13 +60,20 @@ impl<T> PerCpuImpl<T> {
         /*
          * Fill out the self-pointer, and then install it into the MSR so we can access it using `gs`.
          */
-        let address: *const PerCpuImpl<T> = unsafe { mem::transmute(per_cpu.as_ref()) };
+        let address: *mut PerCpuImpl<T> = unsafe { mem::transmute(per_cpu.as_ref()) };
         unsafe {
-            Pin::get_unchecked_mut(Pin::as_mut(&mut per_cpu))._self_pointer = address;
-            write_msr(IA32_GS_BASE, address as usize as u64);
+            Pin::get_unchecked_mut(per_cpu.as_mut())._self_pointer = address;
         }
 
         (per_cpu, tss_selector)
+    }
+
+    pub fn install(self: Pin<&mut Self>) {
+        use crate::hw::registers::{write_msr, IA32_GS_BASE};
+
+        unsafe {
+            write_msr(IA32_GS_BASE, self.as_ref()._self_pointer as usize as u64);
+        }
     }
 }
 
@@ -66,5 +86,15 @@ impl<T> PerCpu<T> for PerCpuImpl<T> {
     fn set_kernel_stack_pointer(mut self: Pin<&mut Self>, stack_pointer: VirtualAddress) {
         *self.as_mut().current_task_kernel_rsp() = stack_pointer;
         self.as_mut().tss().set_kernel_stack(stack_pointer);
+    }
+}
+
+/*
+ * Accidently dropping the per-CPU data after it's been installed leads to some really weird behaviour that I've
+ * found difficult to debug in the past, so this guards against that.
+ */
+impl<T> Drop for PerCpuImpl<T> {
+    fn drop(&mut self) {
+        panic!("Per-CPU data should not be dropped!");
     }
 }
