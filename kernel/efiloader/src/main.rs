@@ -355,6 +355,11 @@ where
 
     boot_info.heap_address = *next_safe_address;
     boot_info.heap_size = heap_size;
+    info!(
+        "Mapping heap between {:#x} and {:#x}",
+        boot_info.heap_address,
+        boot_info.heap_address + boot_info.heap_size - 1
+    );
 
     *next_safe_address = (Page::<Size4KiB>::contains(*next_safe_address + heap_size) + 1).start;
     Ok(())
