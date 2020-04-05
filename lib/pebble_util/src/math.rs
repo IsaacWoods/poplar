@@ -30,6 +30,21 @@ fn test_flooring_log2() {
     assert_eq!(flooring_log2(4095), 11);
 }
 
+pub fn ceiling_log2(x: usize) -> usize {
+    let x = if x.is_power_of_two() { x } else { x.next_power_of_two() };
+
+    // `x` will always be a power of two now, so log(2) == the number of trailing zeros
+    x.trailing_zeros() as usize
+}
+
+#[test]
+fn test_ceiling_log2() {
+    assert_eq!(ceiling_log2(1), 0);
+    assert_eq!(ceiling_log2(64), 6);
+    assert_eq!(ceiling_log2(61), 6);
+    assert_eq!(ceiling_log2(4095), 12);
+}
+
 pub fn align_down(value: usize, align: usize) -> usize {
     assert!(align == 0 || align.is_power_of_two());
 
@@ -72,21 +87,6 @@ fn test_align_up() {
     assert_eq!(align_up(43, 1), 43);
     assert_eq!(align_up(9, 8), 16);
     assert_eq!(align_up(1023, 16), 1024);
-}
-
-pub fn ceiling_log2(x: usize) -> usize {
-    let x = if x.is_power_of_two() { x } else { x.next_power_of_two() };
-
-    // `x` will always be a power of two now, so log(2) == the number of trailing zeros
-    x.trailing_zeros() as usize
-}
-
-#[test]
-fn test_ceiling_log2() {
-    assert_eq!(ceiling_log2(1), 0);
-    assert_eq!(ceiling_log2(64), 6);
-    assert_eq!(ceiling_log2(61), 6);
-    assert_eq!(ceiling_log2(4095), 12);
 }
 
 /// Divide `x` by `divide_by`, taking the ceiling if it does not divide evenly.

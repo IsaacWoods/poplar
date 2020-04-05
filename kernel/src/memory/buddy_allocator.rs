@@ -45,24 +45,25 @@
 use alloc::{collections::BTreeSet, vec::Vec};
 use core::{cmp::min, ops::Range};
 use hal::memory::{Frame, FrameSize, PhysicalAddress, Size4KiB};
-use pebble_util::math::{ceiling_log2, flooring_log2};
+use pebble_util::math::{ceiling_integer_divide, ceiling_log2, flooring_log2};
 
 /// The largest block stored by the buddy allocator is `2^MAX_ORDER`.
 const MAX_ORDER: usize = 10;
 
-// TODO: make this generic over the frame size - it should monomorphise and generate good code I
-// think
+/// The "base" block size - the smallest block size this allocator tracks. This is chosen at the moment to be 4096
+/// bytes - the size of the smallest physical frame for all the architectures we wish to support at this point of
+/// time.
+const BASE_SIZE: usize = Size4KiB::SIZE;
+
 // TODO: don't make the no. of bins dynamic - just set of constant and use an array (or at least
 // switch to const generics)
-// TODO: all of the architecture I think we want to support have 4KiB as the "base" frame size, but maybe we should
-// still let the HAL choose?
 pub struct BuddyAllocator {
     /// The bins of free blocks, where bin `i` contains blocks of size `2^i`. Uses `BTreeSet` to
-    /// store the blocks in each bin, for efficient buddy location. The `Frame` stored for each
-    /// block is the first frame in that block - the end frame can be calculated from the start
-    /// frame and the order of the bin the block is in.
+    /// store the blocks in each bin, for efficient buddy location. Each block is stored as the physical address
+    /// of the start of the block. The actual frames can be constructed for each block using the start address and
+    /// the order of the block.
     // TODO: when generic constants are a thing, we might be able to use `[BTreeSet; N]` here.
-    bins: Vec<BTreeSet<Frame<Size4KiB>>>,
+    bins: Vec<BTreeSet<PhysicalAddress>>,
 }
 
 impl BuddyAllocator {
@@ -72,6 +73,9 @@ impl BuddyAllocator {
 
     /// Add a range of `Frame`s to this allocator, marking them free to allocate.
     pub fn add_range(&mut self, range: Range<Frame>) {
+        // XXX: if we ever change BASE_SIZE, this needs to be adjusted, so we assert here
+        assert_eq!(BASE_SIZE, Size4KiB::SIZE);
+
         /*
          * Break the frame area into a set of blocks with power-of-2 sizes, and register each
          * block as free to allocate.
@@ -83,64 +87,42 @@ impl BuddyAllocator {
              * Pick the largest order block that fits in the remaining area, but cap it at the
              * largest order the allocator can manage.
              */
-            let order = min(self.max_order(), flooring_log2((block_start..range.end).count()));
+            let num_frames = (block_start..range.end).count();
+            let order = min(MAX_ORDER, flooring_log2(num_frames));
 
-            self.free_n(block_start, 1 << order);
+            self.free_block(block_start.start, order);
             block_start += 1 << order;
         }
     }
 
-    /// Allocate (at least) `n` contiguous frames from this allocator. Returns `None` if this
-    /// allocator can't satisfy the allocation.
-    pub fn allocate_n(&mut self, n: usize) -> Option<Frame> {
+    /// Allocate (at least) `n` contiguous bytes from this allocator. Returns `None` if this
+    /// allocator can't satisfy the allocation. The requested number of bytes must be a power-of-two.
+    pub fn allocate_n(&mut self, num_bytes: usize) -> Option<PhysicalAddress> {
+        assert!(num_bytes.is_power_of_two());
+
         /*
-         * Work out the size of block we need to fit `n` frames by rounding up to the next
-         * power-of-2, then recursively try and allocate a block of that order.
+         * Find the minimum block order that will satisfy `num_bytes`.
          */
-        let block_order = ceiling_log2(n);
-        self.allocate_block(block_order as usize)
+        let order = ceiling_log2(ceiling_integer_divide(num_bytes, BASE_SIZE));
+        self.allocate_block(order)
     }
 
     /// Free the given block (starting at `start` and of size `n` frames). `n` must be a
     /// power-of-2.
-    pub fn free_n(&mut self, start_frame: Frame, n: usize) {
-        assert!(n.is_power_of_two());
-        let order = flooring_log2(n) as usize;
-
-        if order == self.max_order() {
-            /*
-             * Blocks of the maximum order can't be coalesced, because there isn't a bigger bin
-             * to put them into.
-             */
-            assert!(!self.bins[order].contains(&start_frame));
-            self.bins[order].insert(start_frame);
-            return;
-        }
-
-        /*
-         * Check if this block's buddy is also free. If it is, remove it and coalesce the blocks
-         * by recursively freeing at the order above this one.
-         */
-        let buddy = BuddyAllocator::buddy_of(start_frame, order);
-        if self.bins[order].remove(&buddy) {
-            self.free_n(min(start_frame, buddy), 1 << (order + 1));
-        } else {
-            /*
-             * The buddy isn't free, insert the block at this order.
-             */
-            assert!(!self.bins[order].contains(&start_frame));
-            self.bins[order].insert(start_frame);
-        }
+    pub fn free_n(&mut self, start: PhysicalAddress, num_bytes: usize) {
+        assert!(num_bytes.is_power_of_two());
+        let order = flooring_log2(num_bytes / BASE_SIZE);
+        self.free_block(start, order);
     }
 
     /// Tries to allocate a block of the given order. If no blocks of the correct size are
     /// available, tries to recursively split a larger block to form a block of the requested size.
-    fn allocate_block(&mut self, order: usize) -> Option<Frame> {
+    fn allocate_block(&mut self, order: usize) -> Option<PhysicalAddress> {
         /*
          * We've been asked for a block larger than the largest blocks we track, so we won't be
          * able to allocate a single block large enough.
          */
-        if order > self.max_order() {
+        if order > MAX_ORDER {
             return None;
         }
 
@@ -166,15 +148,37 @@ impl BuddyAllocator {
         }
     }
 
-    /// Finds the starting frame of the block that is the buddy of the block of order `order`,
-    /// starting at `x`.
-    fn buddy_of(x: Frame, order: usize) -> Frame {
-        Frame::contains(PhysicalAddress::new(usize::from(x.start) ^ ((1 << order) * Size4KiB::SIZE)).unwrap())
+    /// Free a block starting at `start` of order `order`.
+    fn free_block(&mut self, start: PhysicalAddress, order: usize) {
+        if order == MAX_ORDER {
+            /*
+             * Blocks of the maximum order can't be coalesced, because there isn't a bin to put them in, so we
+             * just add them to the largest bin.
+             */
+            assert!(!self.bins[order].contains(&start));
+            self.bins[order].insert(start);
+        } else {
+            /*
+             * Check if this block's buddy is also free. If it is, remove it from its bin and coalesce the
+             * blocks into one of the order above this one. We then recursively free that block.
+             */
+            let buddy = Self::buddy_of(start, order);
+            if self.bins[order].remove(&buddy) {
+                self.free_block(min(start, buddy), order + 1);
+            } else {
+                /*
+                 * The buddy isn't free, so just insert the block at this order.
+                 */
+                assert!(!self.bins[order].contains(&start));
+                self.bins[order].insert(start);
+            }
+        }
     }
 
-    /// Get the order of the largest block this allocator can track.
-    fn max_order(&self) -> usize {
-        self.bins.len() - 1
+    /// Finds the starting frame of the block that is the buddy of the block of order `order`, starting at
+    /// `block_start`.
+    fn buddy_of(block_start: PhysicalAddress, order: usize) -> PhysicalAddress {
+        PhysicalAddress::new(usize::from(block_start) ^ ((1 << order) * BASE_SIZE)).unwrap()
     }
 }
 
