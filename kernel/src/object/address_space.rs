@@ -1,5 +1,5 @@
 use super::{alloc_kernel_object_id, memory_object::MemoryObject, task::TaskStack, KernelObject, KernelObjectId};
-use crate::{per_cpu::KernelPerCpu, slab_allocator::SlabAllocator};
+use crate::{memory::PhysicalMemoryManager, per_cpu::KernelPerCpu, slab_allocator::SlabAllocator};
 use alloc::{sync::Arc, vec::Vec};
 use hal::{
     memory::{FrameAllocator, PageTable, VirtualAddress, MEBIBYTES_TO_BYTES},
@@ -83,18 +83,18 @@ where
 
     /// Try to allocate a slot for a user stack, and map `initial_size` bytes of it. Returns `None` if no more user
     /// stacks can be allocated in this address space.
-    pub fn alloc_user_stack<A>(&self, initial_size: usize, allocator: &A) -> Option<TaskStack>
-    where
-        A: FrameAllocator<H::PageTableSize>,
-    {
+    pub fn alloc_user_stack(
+        &self,
+        initial_size: usize,
+        allocator: &PhysicalMemoryManager<H>,
+    ) -> Option<TaskStack> {
         use hal::memory::{Flags, FrameSize};
 
         let slot_bottom = self.user_stack_allocator.lock().alloc()?;
         let top = slot_bottom + USER_STACK_SLOT_SIZE - 1;
         let stack_bottom = top - initial_size + 1;
 
-        // TODO: this is kinda nasty
-        let physical_start = allocator.allocate_n(H::PageTableSize::frames_needed(initial_size)).start.start;
+        let physical_start = allocator.alloc_bytes(initial_size);
         self.page_table
             .lock()
             .map_area(

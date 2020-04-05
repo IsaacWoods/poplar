@@ -163,6 +163,10 @@ cfg_if::cfg_if! {
                 }
             }
 
+            fn kernel_page_table(&mut self) -> &mut Self::PageTable {
+                &mut self.kernel_page_table
+            }
+
             unsafe fn per_cpu<'a>() -> Pin<&'a mut Self::PerCpu> {
                 per_cpu::get_per_cpu_data()
             }
