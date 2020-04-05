@@ -62,6 +62,12 @@ pub const CR4_XSAVE_ENABLE_BIT: usize = 18;
 /// `CR1`, `CR2`, `CR3`, `CR4`, `CR8`.
 pub macro read_control_reg($reg: ident) {{
     let result: u64;
+
+    /*
+     * If this macro is used inside an unsafe block, this causes a warning, which can be unexpected and is noisy,
+     * so we suppress it here.
+     */
+    #[allow(unused_unsafe)]
     unsafe {
         asm!(concat!("mov %", stringify!($reg), ", $0")
              : "=r"(result)

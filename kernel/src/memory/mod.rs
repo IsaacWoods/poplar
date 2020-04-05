@@ -1,6 +1,6 @@
 mod buddy_allocator;
 
-use crate::{object::task::TaskStack, per_cpu::KernelPerCpu};
+use crate::per_cpu::KernelPerCpu;
 use buddy_allocator::BuddyAllocator;
 use core::{marker::PhantomData, ops::Range};
 use hal::{

@@ -31,7 +31,7 @@ use cfg_if::cfg_if;
 use core::panic::PanicInfo;
 use hal::{
     boot_info::{BootInfo, LoadedImage},
-    memory::{FrameAllocator, VirtualAddress},
+    memory::VirtualAddress,
     Hal,
 };
 use heap_allocator::LockedHoleAllocator;
@@ -82,8 +82,7 @@ pub extern "C" fn kmain(boot_info: &BootInfo) -> ! {
      */
     let physical_memory_manager = PhysicalMemoryManager::<HalImpl>::new(boot_info);
 
-    let mut scheduler = Scheduler::new();
-    let mut hal = HalImpl::init(boot_info, KernelPerCpu { scheduler });
+    let mut hal = HalImpl::init(boot_info, KernelPerCpu { scheduler: Scheduler::new() });
 
     // TODO: this is x86_64 specific
     const KERNEL_STACKS_BOTTOM: VirtualAddress = VirtualAddress::new(0xffff_ffdf_8000_0000);
@@ -132,8 +131,8 @@ fn load_task(
     .expect("Failed to load initial task");
 
     for segment in image.segments() {
-        let memory_object = MemoryObject::from_boot_info(task.id(), segment, true);
-        address_space.map_memory_object(memory_object, allocator);
+        let memory_object = MemoryObject::from_boot_info(task.id(), segment);
+        address_space.map_memory_object(memory_object, allocator).unwrap();
     }
 
     scheduler.add_task(task).unwrap();

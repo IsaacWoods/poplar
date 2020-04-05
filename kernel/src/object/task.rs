@@ -1,10 +1,7 @@
 use super::{address_space::AddressSpace, alloc_kernel_object_id, KernelObject, KernelObjectId};
 use crate::{memory::PhysicalMemoryManager, per_cpu::KernelPerCpu, slab_allocator::SlabAllocator};
 use alloc::{string::String, sync::Arc, vec::Vec};
-use hal::{
-    memory::{FrameAllocator, VirtualAddress},
-    Hal,
-};
+use hal::{memory::VirtualAddress, Hal};
 use libpebble::caps::Capability;
 use spin::Mutex;
 
@@ -169,7 +166,7 @@ impl KernelStackAllocator {
     where
         H: Hal<KernelPerCpu>,
     {
-        use hal::memory::{Flags, FrameSize, PageTable};
+        use hal::memory::{Flags, PageTable};
 
         let slot_bottom = self.kernel_stack_slots.lock().alloc()?;
         let top = slot_bottom + self.slot_size - 1;
