@@ -23,18 +23,29 @@ mod heap_allocator;
 mod memory;
 mod object;
 mod per_cpu;
+mod scheduler;
 mod slab_allocator;
-// mod scheduler;
 mod syscall;
 
-use crate::heap_allocator::LockedHoleAllocator;
 use cfg_if::cfg_if;
 use core::panic::PanicInfo;
-use hal::{boot_info::BootInfo, Hal};
+use hal::{
+    boot_info::{BootInfo, LoadedImage},
+    memory::{FrameAllocator, VirtualAddress},
+    Hal,
+};
+use heap_allocator::LockedHoleAllocator;
 use libpebble::syscall::system_object::FramebufferSystemObjectInfo;
 use log::{error, info};
-use memory::LockedPhysicalMemoryManager;
+use memory::PhysicalMemoryManager;
+use object::{
+    address_space::AddressSpace,
+    memory_object::MemoryObject,
+    task::{KernelStackAllocator, Task},
+    KernelObject,
+};
 use per_cpu::KernelPerCpu;
+use scheduler::Scheduler;
 
 cfg_if! {
     if #[cfg(feature = "arch_x86_64")] {
@@ -50,7 +61,7 @@ pub static ALLOCATOR: LockedHoleAllocator = LockedHoleAllocator::new_uninitializ
 
 #[no_mangle]
 pub extern "C" fn kmain(boot_info: &BootInfo) -> ! {
-    <HalImpl as Hal<KernelPerCpu>>::init_logger();
+    HalImpl::init_logger();
     info!("The Pebble kernel is running");
 
     if boot_info.magic != hal::boot_info::BOOT_INFO_MAGIC {
@@ -71,7 +82,8 @@ pub extern "C" fn kmain(boot_info: &BootInfo) -> ! {
      */
     let physical_memory_manager = PhysicalMemoryManager::<HalImpl>::new(boot_info);
 
-    let hal = <HalImpl as Hal<KernelPerCpu>>::init(boot_info, KernelPerCpu {});
+    let mut scheduler = Scheduler::new();
+    let mut hal = HalImpl::init(boot_info, KernelPerCpu { scheduler });
 
     // TODO: start doing stuff
     loop {}

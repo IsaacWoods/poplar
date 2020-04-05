@@ -1,35 +1,35 @@
 use crate::{
-    arch::Architecture,
-    object::{
-        common::{CommonTask, TaskState},
-        WrappedKernelObject,
-    },
+    object::task::{Task, TaskState},
+    per_cpu::KernelPerCpu,
 };
-use alloc::{collections::VecDeque, vec::Vec};
-use core::fmt;
+use alloc::{collections::VecDeque, sync::Arc, vec::Vec};
+use hal::{memory::VirtualAddress, Hal, PerCpu, TaskHelper};
 use log::trace;
 
-pub struct Scheduler {
-    pub running_task: Option<WrappedKernelObject<crate::arch_impl::Arch>>,
+pub struct Scheduler<H>
+where
+    H: Hal<KernelPerCpu>,
+{
+    pub running_task: Option<Arc<Task<H>>>,
     /// List of Tasks ready to be scheduled. Every kernel object in this list must be a Task.
     /// Backed by a `VecDeque` so we can rotate objects in the queue efficiently.
-    ready_queue: VecDeque<WrappedKernelObject<crate::arch_impl::Arch>>,
-    blocked: Vec<WrappedKernelObject<crate::arch_impl::Arch>>,
+    ready_queue: VecDeque<Arc<Task<H>>>,
+    blocked_queue: Vec<Arc<Task<H>>>,
 }
 
-impl Scheduler {
-    pub fn new() -> Scheduler {
-        Scheduler { running_task: None, ready_queue: VecDeque::new(), blocked: Vec::new() }
+impl<H> Scheduler<H>
+where
+    H: Hal<KernelPerCpu>,
+{
+    pub fn new() -> Scheduler<H> {
+        Scheduler { running_task: None, ready_queue: VecDeque::new(), blocked_queue: Vec::new() }
     }
 
-    pub fn add_task(
-        &mut self,
-        task_object: WrappedKernelObject<crate::arch_impl::Arch>,
-    ) -> Result<(), ScheduleError> {
-        let state = task_object.object.task().ok_or(ScheduleError::KernelObjectNotATask)?.read().state();
-        match state {
-            TaskState::Ready => self.ready_queue.push_back(task_object),
-            TaskState::Blocked(_) => self.blocked.push(task_object),
+    pub fn add_task(&mut self, task: Arc<Task<H>>) -> Result<(), ScheduleError> {
+        let current_state = task.state.lock().clone();
+        match current_state {
+            TaskState::Ready => self.ready_queue.push_back(task),
+            TaskState::Blocked(_) => self.blocked_queue.push(task),
             TaskState::Running => panic!("Tried to schedule task that's already running!"),
         }
 
@@ -45,11 +45,19 @@ impl Scheduler {
     /// By controlling which Task is added first, the ecosystem can be sure that the correct Task
     /// is run first (whether the userspace layers take advantage of this is up to them - it would
     /// be more reliable to not depend on one process starting first, but this is an option).
-    pub fn drop_to_userspace(&mut self, arch: &crate::arch_impl::Arch) -> ! {
+    pub fn drop_to_userspace(&mut self) -> ! {
         assert!(self.running_task.is_none());
         let task = self.ready_queue.pop_front().expect("Tried to drop into userspace with no ready tasks!");
+        assert_eq!(*task.state.lock(), TaskState::Ready);
+
+        *task.state.lock() = TaskState::Running;
         self.running_task = Some(task.clone());
-        arch.drop_to_userspace(task)
+        task.address_space.switch_to();
+        let kernel_stack_pointer: VirtualAddress = *task.kernel_stack_pointer.lock();
+        unsafe {
+            H::per_cpu().set_kernel_stack_pointer(kernel_stack_pointer);
+            H::TaskHelper::drop_into_userspace(kernel_stack_pointer)
+        }
     }
 
     /// Switch to the next scheduled task. This is called when a task yields, or when we pre-empt a
@@ -71,15 +79,22 @@ impl Scheduler {
              * platform to perform the context switch for us!
              * NOTE: This temporarily allows `running_task` to be `None`.
              */
-            trace!("switching task: {}", next_task.object.task().unwrap().read().name());
+            trace!("Switching to task: {}", next_task.name);
             let old_task = self.running_task.take().unwrap();
+            assert_eq!(*old_task.state.lock(), TaskState::Running);
+            assert_eq!(*next_task.state.lock(), TaskState::Ready);
+
             self.running_task = Some(next_task.clone());
             match new_state {
                 TaskState::Running => panic!("Tried to switch away from a task to state of Running!"),
-                TaskState::Ready => self.ready_queue.push_back(old_task.clone()),
-                TaskState::Blocked(_) => {
-                    trace!("Blocking task: {}", old_task.object.task().unwrap().read().name());
-                    self.blocked.push(old_task.clone());
+                TaskState::Ready => {
+                    *old_task.state.lock() = TaskState::Ready;
+                    self.ready_queue.push_back(old_task.clone());
+                }
+                TaskState::Blocked(block) => {
+                    trace!("Blocking task: {}", old_task.name);
+                    *old_task.state.lock() = TaskState::Blocked(block);
+                    self.blocked_queue.push(old_task.clone());
                 }
             }
 
@@ -87,7 +102,12 @@ impl Scheduler {
              * On some platforms, this may not always return, and so we must not be holding any
              * locks when we call this (this is why it takes the kernel objects directly).
              */
-            crate::arch_impl::context_switch(old_task, next_task, new_state);
+            // TODO: this clearly used to faff with the state of the old task somehow - do it here instead
+            // crate::arch_impl::context_switch(old_task, next_task, new_state);
+            let new_kernel_stack = *self.running_task.as_ref().unwrap().kernel_stack_pointer.lock();
+            unsafe {
+                H::TaskHelper::context_switch(&mut old_task.kernel_stack_pointer.lock(), new_kernel_stack);
+            }
         } else {
             /*
              * There aren't any schedulable tasks. For now, we just return to the current one (by
@@ -100,13 +120,4 @@ impl Scheduler {
 }
 
 #[derive(Debug)]
-pub enum ScheduleError {
-    /// Returned by `add_task` if you try to schedule a kernel object that is not a Task.
-    KernelObjectNotATask,
-}
-
-impl fmt::Debug for Scheduler {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "Scheduler(running = {:?}, ready = {:?})", self.running_task, self.ready_queue)
-    }
-}
+pub enum ScheduleError {}
