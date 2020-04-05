@@ -85,38 +85,59 @@ pub extern "C" fn kmain(boot_info: &BootInfo) -> ! {
     let mut scheduler = Scheduler::new();
     let mut hal = HalImpl::init(boot_info, KernelPerCpu { scheduler });
 
-    // TODO: start doing stuff
-    loop {}
+    // TODO: this is x86_64 specific
+    const KERNEL_STACKS_BOTTOM: VirtualAddress = VirtualAddress::new(0xffff_ffdf_8000_0000);
+    const KERNEL_STACKS_TOP: VirtualAddress = VirtualAddress::new(0xffff_ffff_8000_0000);
+    let mut kernel_stack_allocator =
+        KernelStackAllocator::new(KERNEL_STACKS_BOTTOM, KERNEL_STACKS_TOP, 2 * hal::memory::MEBIBYTES_TO_BYTES);
+
+    /*
+     * Create kernel objects from loaded images and schedule them.
+     */
+    info!("Loading {} initial tasks to the ready queue", boot_info.loaded_images.num_images);
+    for image in boot_info.loaded_images.images() {
+        load_task(
+            unsafe { HalImpl::per_cpu() }.kernel_data().scheduler(),
+            image,
+            hal.kernel_page_table(),
+            &physical_memory_manager,
+            &mut kernel_stack_allocator,
+        );
+    }
+
+    /*
+     * Drop into userspace!
+     */
+    unsafe { HalImpl::per_cpu() }.kernel_data().scheduler().drop_to_userspace()
 }
 
-///// We need to make various bits of data accessible on a system-wide level (all the CPUs access the
-///// same data), including from system call and interrupt handlers. I haven't discovered a
-///// particularly elegant way of doing that in Rust yet, but this isn't totally awful.
-/////
-///// This can be accessed from anywhere in the kernel, and from any CPU, and so access to each member
-///// must be controlled by a type such as `Mutex` or `RwLock`. This has lower lock contention than
-///// locking the entire structure.
-//pub static COMMON: InitGuard<Common> = InitGuard::uninit();
+fn load_task(
+    scheduler: &mut Scheduler<HalImpl>,
+    image: &LoadedImage,
+    kernel_page_table: &mut <HalImpl as Hal<KernelPerCpu>>::PageTable,
+    allocator: &PhysicalMemoryManager<HalImpl>,
+    kernel_stack_allocator: &mut KernelStackAllocator,
+) {
+    use object::SENTINEL_KERNEL_ID;
 
-// /// This is a collection of stuff we need to access from around the kernel, shared between all
-// /// CPUs. This has the potential to end up as a bit of a "God struct", so we need to be careful.
-// pub struct Common {
-//     pub object_map: RwLock<ObjectMap<arch_impl::Arch>>,
+    let address_space = AddressSpace::new(SENTINEL_KERNEL_ID, kernel_page_table, allocator);
+    let task = Task::from_boot_info(
+        SENTINEL_KERNEL_ID,
+        address_space.clone(),
+        image,
+        allocator,
+        kernel_page_table,
+        kernel_stack_allocator,
+    )
+    .expect("Failed to load initial task");
 
-//     /// If the bootloader switched to a graphics mode that enables the use of a linear framebuffer,
-//     /// this kernel object will be a MemoryObject that maps the backing memory into a userspace
-//     /// driver. This is provided to userspace through the `request_system_object` system call.
-//     pub backup_framebuffer: Mutex<Option<(KernelObjectId, FramebufferSystemObjectInfo)>>,
-// }
+    for segment in image.segments() {
+        let memory_object = MemoryObject::from_boot_info(task.id(), segment, true);
+        address_space.map_memory_object(memory_object, allocator);
+    }
 
-// impl Common {
-//     pub fn new() -> Common {
-//         Common {
-//             object_map: RwLock::new(ObjectMap::new(crate::object::map::INITIAL_OBJECT_CAPACITY)),
-//             backup_framebuffer: Mutex::new(None),
-//         }
-//     }
-// }
+    scheduler.add_task(task).unwrap();
+}
 
 #[cfg(not(test))]
 #[panic_handler]
