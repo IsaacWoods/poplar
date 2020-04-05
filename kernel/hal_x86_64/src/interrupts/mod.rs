@@ -192,6 +192,8 @@ impl InterruptController {
         unsafe {
             write_msr(IA32_STAR, selectors);
             write_msr(IA32_LSTAR, syscall_handler as u64);
+            // TODO: set this up properly (e.g. disable interrupts until we switch stacks, set up DF and such to be
+            // as the kernel expects them)
             write_msr(IA32_FMASK, 0);
         }
     }

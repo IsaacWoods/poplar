@@ -5,7 +5,7 @@ use buddy_allocator::BuddyAllocator;
 use core::{marker::PhantomData, ops::Range};
 use hal::{
     boot_info::BootInfo,
-    memory::{Frame, FrameAllocator, FrameSize, PhysicalAddress, Size4KiB},
+    memory::{Frame, FrameAllocator, FrameSize, PhysicalAddress},
     Hal,
 };
 use spin::Mutex;
