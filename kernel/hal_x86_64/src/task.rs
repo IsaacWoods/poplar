@@ -5,6 +5,8 @@ global_asm!(include_str!("task.s"));
 extern "C" {
     fn task_entry_trampoline() -> !;
 
+    fn do_drop_to_usermode() -> !;
+
     /// Do the actual context switch: save the context of the old task on its kernel stack, switch
     /// to the new task's kernel stack, restore its context and return. The only non-trivial part
     /// of this is the returning - for tasks that have run before, we simply work our way back up
@@ -39,7 +41,7 @@ pub struct ContextSwitchFrame {
 pub struct TaskHelperImpl;
 
 impl TaskHelper for TaskHelperImpl {
-    fn initialize_kernel_stack(
+    unsafe fn initialize_kernel_stack(
         kernel_stack_top: &mut VirtualAddress,
         task_entry_point: VirtualAddress,
         user_stack_top: VirtualAddress,
@@ -85,9 +87,18 @@ impl TaskHelper for TaskHelperImpl {
         }
     }
 
-    fn context_switch(current_kernel_stack: &mut VirtualAddress, new_kernel_stack: VirtualAddress) {
+    unsafe fn context_switch(current_kernel_stack: &mut VirtualAddress, new_kernel_stack: VirtualAddress) {
         unsafe {
             do_context_switch(current_kernel_stack as *mut _, new_kernel_stack);
         }
+    }
+
+    unsafe fn drop_into_userspace(_kernel_stack_pointer: VirtualAddress) -> ! {
+        /*
+         * On x86_64, we use the context we install into the task's kernel stack to drop into usermode. We don't
+         * need the kernel stack pointer as it has already been installed into the per-cpu info, so we can just
+         * load it from there.
+         */
+        do_drop_to_usermode();
     }
 }

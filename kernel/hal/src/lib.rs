@@ -24,6 +24,8 @@ pub trait Hal<T>: Sized {
     unsafe fn enable_interrupts();
     fn cpu_halt() -> !;
 
+    fn kernel_page_table(&mut self) -> &mut Self::PageTable;
+
     /// Access the per-CPU data as a pinned, mutable reference. This does not take a reference to the HAL, because
     /// it must be callable from contexts that don't have access to the HAL instance. It is unsafe because this
     /// may, depending on HAL implementation behaviour, access uninitialized memory if the per-CPU data hasn't yet
@@ -42,7 +44,7 @@ pub trait TaskHelper {
     ///
     /// `kernel_stack_top` is the kernel stack that the new stack frames will be installed in, and must be mapped
     /// and writable when this is called. This method will update it as it puts stuff on the kernel stack.
-    fn initialize_kernel_stack(
+    unsafe fn initialize_kernel_stack(
         kernel_stack_top: &mut VirtualAddress,
         task_entry_point: VirtualAddress,
         user_stack_top: VirtualAddress,
@@ -50,7 +52,11 @@ pub trait TaskHelper {
 
     /// Do the final part of a context switch: save all the state that needs to be to the current kernel stack,
     /// switch to a new kernel stack, and restore all the state from that stack.
-    fn context_switch(current_kernel_stack: &mut VirtualAddress, new_kernel_stack: VirtualAddress);
+    unsafe fn context_switch(current_kernel_stack: &mut VirtualAddress, new_kernel_stack: VirtualAddress);
+
+    /// Do the actual drop into usermode. This assumes that the task's page tables have already been installed,
+    /// and that an initial frame has been put into the task's kernel stack that this will use to enter userspace.
+    unsafe fn drop_into_userspace(kernel_stack_pointer: VirtualAddress) -> !;
 }
 
 pub trait PerCpu<T>: Sized {
