@@ -69,7 +69,7 @@ pub extern "C" fn kmain(boot_info: &BootInfo) -> ! {
     /*
      * We can now initialise the physical memory manager.
      */
-    let physical_memory_manager = LockedPhysicalMemoryManager::new(boot_info);
+    let physical_memory_manager = PhysicalMemoryManager::<HalImpl>::new(boot_info);
 
     let hal = <HalImpl as Hal<KernelPerCpu>>::init(boot_info, KernelPerCpu {});
 

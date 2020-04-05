@@ -1,21 +1,25 @@
 mod buddy_allocator;
 
+use crate::{object::task::TaskStack, per_cpu::KernelPerCpu};
 use buddy_allocator::BuddyAllocator;
-use core::ops::Range;
+use core::{marker::PhantomData, ops::Range};
 use hal::{
     boot_info::BootInfo,
-    memory::{Frame, FrameAllocator, Size4KiB},
+    memory::{Frame, FrameAllocator, FrameSize, PhysicalAddress, Size4KiB},
+    Hal,
 };
 use spin::Mutex;
 
-struct PhysicalMemoryManager {
-    buddy_allocator: BuddyAllocator,
+pub struct PhysicalMemoryManager<H> {
+    buddy: Mutex<BuddyAllocator>,
+    _phantom: PhantomData<H>,
 }
 
-pub struct LockedPhysicalMemoryManager(Mutex<PhysicalMemoryManager>);
-
-impl LockedPhysicalMemoryManager {
-    pub fn new(boot_info: &BootInfo) -> LockedPhysicalMemoryManager {
+impl<H> PhysicalMemoryManager<H>
+where
+    H: Hal<KernelPerCpu>,
+{
+    pub fn new(boot_info: &BootInfo) -> PhysicalMemoryManager<H> {
         let mut buddy_allocator = BuddyAllocator::new();
 
         for entry in boot_info.memory_map.entries() {
@@ -24,17 +28,29 @@ impl LockedPhysicalMemoryManager {
             }
         }
 
-        LockedPhysicalMemoryManager(Mutex::new(PhysicalMemoryManager { buddy_allocator }))
+        PhysicalMemoryManager { buddy: Mutex::new(buddy_allocator), _phantom: PhantomData }
+    }
+
+    /// TODO: not sure this is the best interface to provide
+    pub fn alloc_bytes(&self, num_bytes: usize) -> PhysicalAddress {
+        /*
+         * For now, we always use the buddy allocator.
+         */
+        self.buddy.lock().allocate_n(num_bytes).expect("Failed to allocate physical memory!")
     }
 }
 
-impl FrameAllocator<Size4KiB> for LockedPhysicalMemoryManager {
-    fn allocate_n(&self, n: usize) -> Range<Frame<Size4KiB>> {
-        let start = self.0.lock().buddy_allocator.allocate_n(n).expect("Failed to allocate physical memory");
-        start..(start + n)
+impl<H, S> FrameAllocator<S> for PhysicalMemoryManager<H>
+where
+    H: Hal<KernelPerCpu>,
+    S: FrameSize,
+{
+    fn allocate_n(&self, n: usize) -> Range<Frame<S>> {
+        let start = self.buddy.lock().allocate_n(n * S::SIZE).expect("Failed to allocate physical memory!");
+        Frame::<S>::starts_with(start)..(Frame::<S>::starts_with(start) + n)
     }
 
-    fn free_n(&self, start: Frame, n: usize) {
-        self.0.lock().buddy_allocator.free_n(start, n);
+    fn free_n(&self, start: Frame<S>, num_frames: usize) {
+        self.buddy.lock().free_n(start.start, num_frames * S::SIZE);
     }
 }
