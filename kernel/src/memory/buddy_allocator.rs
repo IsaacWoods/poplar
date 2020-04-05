@@ -138,7 +138,7 @@ impl BuddyAllocator {
          */
         if let Some(block) = self.allocate_block(order + 1) {
             let second_half = BuddyAllocator::buddy_of(block, order);
-            self.free_n(second_half, 1 << order);
+            self.free_block(second_half, order);
             Some(block)
         } else {
             /*
