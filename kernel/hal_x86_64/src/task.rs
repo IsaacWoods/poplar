@@ -64,9 +64,7 @@ impl TaskHelper for TaskHelperImpl {
          * Start off with a zero return address to terminate backtraces at task entry.
          */
         *kernel_stack_top -= 8;
-        unsafe {
-            *(kernel_stack_top.mut_ptr() as *mut u64) = 0x0;
-        }
+        *(kernel_stack_top.mut_ptr() as *mut u64) = 0x0;
 
         /*
          * Next, we construct the context-switch frame that is used when a task is switched to for
@@ -74,23 +72,19 @@ impl TaskHelper for TaskHelperImpl {
          * kernel-space trampoline that enters userspace.
          */
         *kernel_stack_top -= mem::size_of::<ContextSwitchFrame>();
-        unsafe {
-            *(kernel_stack_top.mut_ptr() as *mut ContextSwitchFrame) = ContextSwitchFrame {
-                r15: usize::from(task_entry_point) as u64,
-                r14: INITIAL_RFLAGS,
-                r13: usize::from(user_stack_top) as u64,
-                r12: 0x0,
-                rbp: 0x0,
-                rbx: 0x0,
-                return_address: task_entry_trampoline as u64,
-            };
-        }
+        *(kernel_stack_top.mut_ptr() as *mut ContextSwitchFrame) = ContextSwitchFrame {
+            r15: usize::from(task_entry_point) as u64,
+            r14: INITIAL_RFLAGS,
+            r13: usize::from(user_stack_top) as u64,
+            r12: 0x0,
+            rbp: 0x0,
+            rbx: 0x0,
+            return_address: task_entry_trampoline as u64,
+        };
     }
 
     unsafe fn context_switch(current_kernel_stack: &mut VirtualAddress, new_kernel_stack: VirtualAddress) {
-        unsafe {
-            do_context_switch(current_kernel_stack as *mut _, new_kernel_stack);
-        }
+        do_context_switch(current_kernel_stack as *mut _, new_kernel_stack);
     }
 
     unsafe fn drop_into_userspace(_kernel_stack_pointer: VirtualAddress) -> ! {

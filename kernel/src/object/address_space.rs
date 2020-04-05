@@ -88,7 +88,7 @@ where
         initial_size: usize,
         allocator: &PhysicalMemoryManager<H>,
     ) -> Option<TaskStack> {
-        use hal::memory::{Flags, FrameSize};
+        use hal::memory::Flags;
 
         let slot_bottom = self.user_stack_allocator.lock().alloc()?;
         let top = slot_bottom + USER_STACK_SLOT_SIZE - 1;

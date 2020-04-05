@@ -33,7 +33,7 @@ impl MemoryObject {
         })
     }
 
-    pub fn from_boot_info(owner: KernelObjectId, segment: &Segment, user_accessible: bool) -> Arc<MemoryObject> {
+    pub fn from_boot_info(owner: KernelObjectId, segment: &Segment) -> Arc<MemoryObject> {
         Arc::new(MemoryObject {
             id: alloc_kernel_object_id(),
             owner,
