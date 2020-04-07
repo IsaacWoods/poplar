@@ -38,6 +38,7 @@ image_x86_64: prepare kernel test_process simple_fb
 
 prepare:
 	@mkdir -p $(BUILD_DIR)/fat/
+	cp ovmf/startup.nsh build/fat/startup.nsh
 
 kernel:
 	make -C kernel kernel_$(ARCH)
