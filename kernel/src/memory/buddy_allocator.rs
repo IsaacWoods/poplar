@@ -192,8 +192,8 @@ mod tests {
     fn test_buddy_of() {
         macro test($order: expr, $first: expr, $second: expr) {
             assert_eq!(
-                BuddyAllocator::buddy_of(Frame::starts_with(PhysicalAddress::new($first).unwrap()), $order),
-                Frame::starts_with(PhysicalAddress::new($second).unwrap())
+                BuddyAllocator::buddy_of(PhysicalAddress::new($first).unwrap(), $order),
+                PhysicalAddress::new($second).unwrap()
             );
         }
 
