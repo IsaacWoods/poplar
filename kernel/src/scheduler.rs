@@ -50,6 +50,8 @@ where
         let task = self.ready_queue.pop_front().expect("Tried to drop into userspace with no ready tasks!");
         assert_eq!(*task.state.lock(), TaskState::Ready);
 
+        trace!("Dropping into usermode into task: '{}'", task.name);
+
         *task.state.lock() = TaskState::Running;
         self.running_task = Some(task.clone());
         task.address_space.switch_to();
@@ -98,15 +100,14 @@ where
                 }
             }
 
-            /*
-             * On some platforms, this may not always return, and so we must not be holding any
-             * locks when we call this (this is why it takes the kernel objects directly).
-             */
-            // TODO: this clearly used to faff with the state of the old task somehow - do it here instead
-            // crate::arch_impl::context_switch(old_task, next_task, new_state);
+            old_task.address_space.switch_from();
+            next_task.address_space.switch_to();
+
+            let old_kernel_stack: *mut VirtualAddress = &mut *old_task.kernel_stack_pointer.lock() as *mut _;
             let new_kernel_stack = *self.running_task.as_ref().unwrap().kernel_stack_pointer.lock();
             unsafe {
-                H::TaskHelper::context_switch(&mut old_task.kernel_stack_pointer.lock(), new_kernel_stack);
+                H::per_cpu().set_kernel_stack_pointer(new_kernel_stack);
+                H::TaskHelper::context_switch(old_kernel_stack, new_kernel_stack);
             }
         } else {
             /*

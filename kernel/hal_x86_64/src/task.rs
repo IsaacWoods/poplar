@@ -83,8 +83,8 @@ impl TaskHelper for TaskHelperImpl {
         };
     }
 
-    unsafe fn context_switch(current_kernel_stack: &mut VirtualAddress, new_kernel_stack: VirtualAddress) {
-        do_context_switch(current_kernel_stack as *mut _, new_kernel_stack);
+    unsafe fn context_switch(current_kernel_stack: *mut VirtualAddress, new_kernel_stack: VirtualAddress) {
+        do_context_switch(current_kernel_stack, new_kernel_stack);
     }
 
     unsafe fn drop_into_userspace(_kernel_stack_pointer: VirtualAddress) -> ! {

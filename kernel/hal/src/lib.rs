@@ -52,7 +52,7 @@ pub trait TaskHelper {
 
     /// Do the final part of a context switch: save all the state that needs to be to the current kernel stack,
     /// switch to a new kernel stack, and restore all the state from that stack.
-    unsafe fn context_switch(current_kernel_stack: &mut VirtualAddress, new_kernel_stack: VirtualAddress);
+    unsafe fn context_switch(current_kernel_stack: *mut VirtualAddress, new_kernel_stack: VirtualAddress);
 
     /// Do the actual drop into usermode. This assumes that the task's page tables have already been installed,
     /// and that an initial frame has been put into the task's kernel stack that this will use to enter userspace.
