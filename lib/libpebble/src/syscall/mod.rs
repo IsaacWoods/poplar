@@ -31,11 +31,16 @@ pub fn yield_to_kernel() {
     }
 }
 
-pub fn early_log(message: &str) -> Result<(), ()> {
-    match unsafe { raw::syscall2(SYSCALL_EARLY_LOG, message.len(), message as *const str as *const u8 as usize) } {
-        0 => Ok(()),
-        _ => Err(()),
-    }
+define_error_type!(EarlyLogError {
+    MessageTooLong => 1,
+    MessageNotValidUtf8 => 2,
+    TaskDoesNotHaveCorrectCapability => 3,
+});
+
+pub fn early_log(message: &str) -> Result<(), EarlyLogError> {
+    status_from_syscall_repr(unsafe {
+        raw::syscall2(SYSCALL_EARLY_LOG, message.len(), message as *const str as *const u8 as usize)
+    })
 }
 
 pub fn my_address_space() -> Handle {

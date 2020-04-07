@@ -6,6 +6,7 @@ use libpebble::{
     syscall,
     syscall::{
         result::{handle_to_syscall_repr, status_to_syscall_repr},
+        EarlyLogError,
         MemoryObjectError,
     },
 };
@@ -24,7 +25,7 @@ pub extern "C" fn rust_syscall_handler(number: usize, a: usize, b: usize, c: usi
 
     match number {
         syscall::SYSCALL_YIELD => yield_syscall(),
-        syscall::SYSCALL_EARLY_LOG => early_log(a, b),
+        syscall::SYSCALL_EARLY_LOG => status_to_syscall_repr(early_log(a, b)),
         // TODO: I think we can replace this with a one-off syscall just for the framebuffer?
         // syscall::SYSCALL_REQUEST_SYSTEM_OBJECT => request_system_object(a, b, c, d, e),
         // syscall::SYSCALL_MY_ADDRESS_SPACE => my_address_space(),
@@ -44,38 +45,29 @@ fn yield_syscall() -> usize {
     0
 }
 
-fn early_log(str_length: usize, str_address: usize) -> usize {
+fn early_log(str_length: usize, str_address: usize) -> Result<(), EarlyLogError> {
     /*
-     * Returns:
-     * 0 => message was successfully logged
-     * 1 => message was too long
-     * 2 => string was not valid UTF-8
-     * 3 => task doesn't have `EarlyLogging` capability
-     *
      * TODO: check that b is a valid userspace pointer and that it's mapped to physical
      * memory
-     * TODO: move this to use the standard `Result`-returning pathway.
      */
     let task = unsafe { HalImpl::per_cpu() }.kernel_data().scheduler().running_task.as_ref().unwrap();
 
     // Check the current task has the `EarlyLogging` capability
     if !task.capabilities.contains(&Capability::EarlyLogging) {
-        return 3;
+        return Err(EarlyLogError::TaskDoesNotHaveCorrectCapability);
     }
 
     // Check if the message is too long
     if str_length > 1024 {
-        return 1;
+        return Err(EarlyLogError::MessageTooLong);
     }
 
     // Check the message is valid UTF-8
-    let message = match str::from_utf8(unsafe { slice::from_raw_parts(str_address as *const u8, str_length) }) {
-        Ok(message) => message,
-        Err(_) => return 2,
-    };
+    let message = str::from_utf8(unsafe { slice::from_raw_parts(str_address as *const u8, str_length) })
+        .map_err(|_| EarlyLogError::MessageNotValidUtf8)?;
 
     trace!("Early log message from {}: {}", task.name, message);
-    0
+    Ok(())
 }
 
 // fn request_system_object(id: usize, b: usize, c: usize, d: usize, e: usize) -> usize {
