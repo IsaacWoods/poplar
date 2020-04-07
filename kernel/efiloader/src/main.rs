@@ -92,13 +92,6 @@ fn main(image_handle: Handle, system_table: SystemTable<Boot>) -> Result<!, Load
     )?;
     let mut next_safe_address = kernel_info.next_safe_address;
 
-    let memory_map_size = system_table.boot_services().memory_map_size();
-    let memory_map_address = system_table
-        .boot_services()
-        .allocate_pages(AllocateType::AnyPages, MEMORY_MAP_MEMORY_TYPE, Size4KiB::frames_needed(memory_map_size))
-        .unwrap_success();
-    let memory_map_buffer = unsafe { slice::from_raw_parts_mut(memory_map_address as *mut u8, memory_map_size) };
-
     /*
      * Construct boot info to pass to the kernel.
      */
@@ -167,6 +160,31 @@ fn main(image_handle: Handle, system_table: SystemTable<Boot>) -> Result<!, Load
             .add_image(image::load_image(system_table.boot_services(), fs_handle, name, path)?)
             .unwrap();
     }
+
+    /*
+     * Allocate memory to hold the memory map. This does something pretty janky:
+     *      - Some implementations are super broken, so we ask them how much space they need for their memory
+     *        map, but they get it wrong. The most sensible reason for this is that by allocating the frames for
+     *        the memory map, you make the memory map bigger because it has to add an entry for the allocation
+     *        you've just made. Other implementations just seem to calculate it incorrectly.
+     *      - They then return `EFI_BUFFER_TOO_SMALL` when we ask for a memory map later
+     *      - So we round up to the next frame, since we can only allocate in 4KiB granularity anyway
+     *      - This doesn't waste any space on implementations that don't lie, and provides some headroom on ones
+     *        that do
+     */
+    let memory_map_size = system_table.boot_services().memory_map_size();
+    let memory_map_frames = Size4KiB::frames_needed(memory_map_size);
+    info!(
+        "Memory map will apparently be {} bytes. Allocating {}.",
+        memory_map_size,
+        memory_map_frames * Size4KiB::SIZE
+    );
+    let memory_map_address = system_table
+        .boot_services()
+        .allocate_pages(AllocateType::AnyPages, MEMORY_MAP_MEMORY_TYPE, memory_map_frames)
+        .unwrap_success();
+    let memory_map_buffer =
+        unsafe { slice::from_raw_parts_mut(memory_map_address as *mut u8, memory_map_frames * Size4KiB::SIZE) };
 
     /*
      * After we've exited from the boot services, we are not able to use the ConsoleOut services, so we disable
