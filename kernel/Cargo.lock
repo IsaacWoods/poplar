@@ -52,7 +52,7 @@ dependencies = [
  "mer 0.3.1",
  "spin 0.5.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "ucs2 0.3.1",
- "uefi 0.4.3",
+ "uefi 0.4.4",
 ]
 
 [[package]]
@@ -296,12 +296,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "ucs2"
+version = "0.3.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+dependencies = [
+ "bit_field 0.10.0 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
 name = "uefi"
-version = "0.4.3"
+version = "0.4.4"
 dependencies = [
  "bitflags 1.2.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "log 0.4.8 (registry+https://github.com/rust-lang/crates.io-index)",
- "ucs2 0.3.1",
+ "ucs2 0.3.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "uefi-macros 0.3.1 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
@@ -351,6 +359,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 "checksum spin 0.5.2 (registry+https://github.com/rust-lang/crates.io-index)" = "6e63cff320ae2c57904679ba7cb63280a3dc4613885beafb148ee7bf9aa9042d"
 "checksum syn 0.15.44 (registry+https://github.com/rust-lang/crates.io-index)" = "9ca4b3b69a77cbe1ffc9e198781b7acb0c7365a883670e8f1c1bc66fba79a5c5"
 "checksum syn 1.0.17 (registry+https://github.com/rust-lang/crates.io-index)" = "0df0eb663f387145cab623dea85b09c2c5b4b0aef44e945d928e682fce71bb03"
+"checksum ucs2 0.3.1 (registry+https://github.com/rust-lang/crates.io-index)" = "85061f4e43545a613c0da6b87725bf23f8da8613cf2473719c4f71a270c4ce8a"
 "checksum uefi-macros 0.3.1 (registry+https://github.com/rust-lang/crates.io-index)" = "c7d4a1b0215dc72e83d8d501b3275eb59477d3b595be8861abfb8ab110180955"
 "checksum unicode-xid 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)" = "fc72304796d0818e357ead4e000d19c9c174ab23dc11093ac919054d20a6a7fc"
 "checksum unicode-xid 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)" = "826e7639553986605ec5979c7dd957c7895e93eabed50ab2ffa7f6128a75097c"
