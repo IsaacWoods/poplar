@@ -41,6 +41,10 @@ impl CpuInfo {
     }
 
     pub fn microarch(&self) -> Option<Microarch> {
+        /*
+         * This information is strangely hard to come by, so this is by no way complete and does not include
+         * more recent microarchitectures :(
+         */
         match self.vendor {
             Vendor::Intel if self.model_info.family == 0x6 => match self.model_info.extended_model {
                 0x1a | 0x1e | 0x1f | 0x2e => Some(Microarch::Nehalem),
@@ -105,9 +109,8 @@ pub enum Vendor {
     Amd,
 }
 
-/// Intel and AMD microarchitectures we can expect processors we're running on to be. This does not
-/// include microarchs that do not support x86_64, or die shrinks (they're considered their parent
-/// microarch).
+/// Intel and AMD microarchitectures we can expect processors we're running on to be. This doesn't include Intel
+/// Atom microarchs.
 #[derive(Debug)]
 pub enum Microarch {
     /*
@@ -121,10 +124,6 @@ pub enum Microarch {
     Broadwell,
     Skylake,
     KabyLake,
-    CoffeeLake,
-    CannonLake,
-    WhiskeyLake,
-    AmberLake,
 
     /*
      * AMD
