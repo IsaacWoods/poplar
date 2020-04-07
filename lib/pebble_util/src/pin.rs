@@ -15,7 +15,7 @@
 /// - The struct must not be `#[repr(packed)]`.
 ///
 /// ```
-/// use pebble_util::pin::unsafe_pinned;
+/// use pebble_util::unsafe_pinned;
 /// use core::marker::Unpin;
 /// use core::pin::Pin;
 ///
@@ -62,7 +62,7 @@ macro_rules! unsafe_pinned {
 /// avoid consuming the `Pin`.
 ///
 /// ```
-/// use pebble_util::pin::unsafe_unpinned;
+/// use pebble_util::unsafe_unpinned;
 /// use core::pin::Pin;
 ///
 /// struct Bar;
