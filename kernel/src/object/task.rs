@@ -34,6 +34,7 @@ pub enum TaskCreationError {
 /// `slot_bottom` to `top`), but only a portion of it may initially be mapped into backing memory (contiguous from
 /// `stack_bottom` to `top`). A stack can be grown by allocating more backing memory and moving `stack_bottom` down
 /// towards `slot_bottom`.
+#[derive(Debug)]
 pub struct TaskStack {
     pub top: VirtualAddress,
     pub slot_bottom: VirtualAddress,
@@ -45,7 +46,6 @@ where
     H: Hal<KernelPerCpu>,
 {
     id: KernelObjectId,
-    // TODO: do tasks have owners?
     owner: KernelObjectId,
     pub name: String,
     pub address_space: Arc<AddressSpace<H>>,
@@ -73,9 +73,9 @@ where
 
         // TODO: better way of getting initial stack sizes
         let user_stack =
-            address_space.alloc_user_stack(0x1000, allocator).ok_or(TaskCreationError::AddressSpaceFull)?;
+            address_space.alloc_user_stack(0x4000, allocator).ok_or(TaskCreationError::AddressSpaceFull)?;
         let kernel_stack = kernel_stack_allocator
-            .alloc_kernel_task_stack(0x1000, allocator, kernel_page_table)
+            .alloc_kernel_task_stack(0x4000, allocator, kernel_page_table)
             .ok_or(TaskCreationError::NoKernelStackSlots)?;
 
         let mut kernel_stack_pointer = kernel_stack.top;
