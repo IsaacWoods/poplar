@@ -5,11 +5,12 @@ The Book aims to be both a 10,000-meter overview of Pebble for the interested ob
 Please note that this book (like the rest of the OS!) is still very early in development and not at all complete.
 If anything is unclear, please [file an issue](https://github.com/IsaacWoods/pebble/issues)!
 
-**Some things documented in this book don't exist in Pebble yet. I use the book as in-progress documentation as I design stuff so I don't have to keep it all in my head.**
+**This book is not always up to date, and needs to document a lot more to be very useful. If you have questions not covered by the book, please don't hesitate to contact me through other channels
+and I'll do my best to answer them. I aim to keep this book up to date, but I do not have enough time to make that a reality at the moment - sorry.**
 
 ### What is Pebble?
 At heart, Pebble is a microkernel written in the [Rust programming language](https://rust-lang.org).
-Pebble becomes an "OS" when it's combined with other packages such as display and window servers, filesystems and user applications.
+Pebble becomes an "OS" when it's combined with other packages such as drivers, filesystems and user applications.
 
 Pebble is designed to be a modern microkernel, supporting a minimal system call interface and first-class support for message-passing-based IPC between userspace processes. Versatile message-passing allows
 Pebble to move much more out of the kernel than traditionally possible. For example, the kernel has no concept of a filesystem or of files - instead, the VFS and all filesystems are implemented entirely in

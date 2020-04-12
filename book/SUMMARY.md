@@ -3,15 +3,13 @@
 - [Introduction](./introduction/index.md)
 
 - [The Kernel](./kernel/index.md)
-    - [Bootcmd](./kernel/bootcmd.md)
-    - [Booting (x86_64)](./kernel/booting_x86_64.md)
     - [Kernel Objects](./kernel/kernel_objects.md)
     - [System calls](./kernel/syscalls.md)
 
 - [Syscalls](./syscalls/index.md)
     - [`yield`](./syscalls/yield.md)
     - [`early_log`](./syscalls/early_log.md)
-    - [`request_system_object`](./syscalls/request_system_object.md)
+    - [`get_framebuffer`](./syscalls/get_framebuffer.md)
     - [`my_address_space`](./syscalls/my_address_space.md)
     - [`map_memory_object`](./syscalls/map_memory_object.md)
 
