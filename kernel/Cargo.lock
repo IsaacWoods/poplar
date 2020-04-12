@@ -81,8 +81,6 @@ dependencies = [
 name = "kernel"
 version = "0.1.0"
 dependencies = [
- "acpi 0.8.0",
- "aml 0.8.0",
  "bit_field 0.10.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "bitflags 1.2.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "cfg-if 0.1.10 (registry+https://github.com/rust-lang/crates.io-index)",

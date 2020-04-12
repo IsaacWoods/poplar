@@ -17,12 +17,9 @@ bit_field = "0.10"
 spin = "0.4"
 log = { version = "0.4", default-features = false }
 libpebble = { path = "../lib/libpebble" }
-acpi = { path = "../lib/acpi/acpi", optional = true }
-# aml = { path = "../lib/acpi/aml", optional = true, features = ["debug_parser", "debug_parser_verbose"]}
-aml = { path = "../lib/acpi/aml", optional = true }
 
 [features]
-arch_x86_64 = ["hal_x86_64", "acpi", "aml"]
+arch_x86_64 = ["hal_x86_64"]
 
 [workspace]
 members = ["efiloader", "hal", "hal_x86_64"]
