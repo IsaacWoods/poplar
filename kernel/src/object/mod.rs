@@ -3,6 +3,7 @@ pub mod memory_object;
 pub mod task;
 
 use core::sync::atomic::{AtomicU64, Ordering};
+use pebble_util::{downcast::DowncastSync, impl_downcast};
 
 /// Each kernel object is assigned a unique 64-bit ID, which is never reused. An ID of `0` is never allocated, and
 /// is used as a sentinel value.
@@ -27,9 +28,12 @@ pub fn alloc_kernel_object_id() -> KernelObjectId {
 /// be generic over all kernel objects. Kernel objects are generally handled as `Arc<T>` where `T` is the type
 /// implementing `KernelObject`, and so interior mutability should be used for data that needs to be mutable within
 /// the kernel object.
-pub trait KernelObject {
+pub trait KernelObject: DowncastSync {
     fn id(&self) -> KernelObjectId;
+    // fn owner(&self) -> KernelObjectId;
 }
+
+impl_downcast!(sync KernelObject);
 
 // This doesn't really work because hygiene opt-out (needed for the fields) still isn't implemented :(
 // macro kernel_object {

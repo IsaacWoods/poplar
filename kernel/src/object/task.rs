@@ -99,7 +99,7 @@ where
 
 impl<H> KernelObject for Task<H>
 where
-    H: Hal<KernelPerCpu>,
+    H: 'static + Hal<KernelPerCpu>,
 {
     fn id(&self) -> KernelObjectId {
         self.id

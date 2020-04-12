@@ -10,7 +10,7 @@ use memory::{FrameSize, PageTable, VirtualAddress};
 
 pub trait Hal<T>: Sized {
     type PageTableSize: FrameSize;
-    type PageTable: PageTable<Self::PageTableSize>;
+    type PageTable: PageTable<Self::PageTableSize> + Send;
     type TaskHelper: TaskHelper;
     type PerCpu: PerCpu<T>;
 
