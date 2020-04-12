@@ -18,9 +18,8 @@ pub const SENTINEL_KERNEL_ID: KernelObjectId = KernelObjectId(0);
 static KERNEL_OBJECT_ID_COUNTER: AtomicU64 = AtomicU64::new(1);
 
 pub fn alloc_kernel_object_id() -> KernelObjectId {
-    // TODO: I think this can be Ordering::Relaxed?
     // TODO: this wraps, so we should manually detect when it wraps around and panic to prevent ID reuse
-    KernelObjectId(KERNEL_OBJECT_ID_COUNTER.fetch_add(1, Ordering::SeqCst))
+    KernelObjectId(KERNEL_OBJECT_ID_COUNTER.fetch_add(1, Ordering::Relaxed))
 }
 
 // TODO: we could use the `downcast` crate to downcast trait objects into their real types (I think)?
