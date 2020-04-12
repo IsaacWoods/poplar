@@ -8,3 +8,6 @@ edition = "2018"
 cfg-if = "0.1"
 bit_field = "0.10"
 num = { version = "0.2", default-features = false }
+
+[features]
+has_alloc = []

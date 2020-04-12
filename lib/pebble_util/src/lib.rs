@@ -5,6 +5,22 @@
 #[macro_use]
 extern crate std;
 
+cfg_if::cfg_if! {
+    if #[cfg(feature = "has_alloc")] {
+        #[macro_use]
+        extern crate alloc;
+
+        #[doc(hidden)]
+        pub mod alloc_reexport {
+            #[doc(hidden)]
+            pub use ::alloc::*;
+        }
+
+        #[macro_use]
+        pub mod downcast;
+    }
+}
+
 mod binary_pretty_print;
 pub mod bitmap;
 mod init_guard;
@@ -40,8 +56,8 @@ pub macro assert_first_call
 }
 
 /*
- * This is used in macros to prevent weird issues if the using crate doesn't something weird like re-exports
- * another crate as `core`.
+ * These are used in macros to prevent weird issues if the using crate doesn't something weird like re-exports
+ * another crate as `core` or `alloc`.
  */
 #[doc(hidden)]
 pub mod core_reexport {
