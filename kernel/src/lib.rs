@@ -27,6 +27,7 @@ mod scheduler;
 mod slab_allocator;
 mod syscall;
 
+use alloc::sync::Arc;
 use cfg_if::cfg_if;
 use core::panic::PanicInfo;
 use hal::{
@@ -35,7 +36,6 @@ use hal::{
     Hal,
 };
 use heap_allocator::LockedHoleAllocator;
-use libpebble::syscall::system_object::FramebufferSystemObjectInfo;
 use log::{error, info};
 use memory::PhysicalMemoryManager;
 use object::{
@@ -61,6 +61,8 @@ cfg_if! {
 pub static ALLOCATOR: LockedHoleAllocator = LockedHoleAllocator::new_uninitialized();
 
 pub static PHYSICAL_MEMORY_MANAGER: InitGuard<PhysicalMemoryManager> = InitGuard::uninit();
+pub static FRAMEBUFFER: InitGuard<(libpebble::syscall::FramebufferInfo, Arc<MemoryObject>)> = InitGuard::uninit();
+
 #[no_mangle]
 pub extern "C" fn kmain(boot_info: &BootInfo) -> ! {
     HalImpl::init_logger();
@@ -89,8 +91,11 @@ pub extern "C" fn kmain(boot_info: &BootInfo) -> ! {
     // TODO: this is x86_64 specific
     const KERNEL_STACKS_BOTTOM: VirtualAddress = VirtualAddress::new(0xffff_ffdf_8000_0000);
     const KERNEL_STACKS_TOP: VirtualAddress = VirtualAddress::new(0xffff_ffff_8000_0000);
-    let mut kernel_stack_allocator =
-        KernelStackAllocator::new(KERNEL_STACKS_BOTTOM, KERNEL_STACKS_TOP, 2 * hal::memory::MEBIBYTES_TO_BYTES);
+    let mut kernel_stack_allocator = KernelStackAllocator::<HalImpl>::new(
+        KERNEL_STACKS_BOTTOM,
+        KERNEL_STACKS_TOP,
+        2 * hal::memory::MEBIBYTES_TO_BYTES,
+    );
 
     /*
      * Create kernel objects from loaded images and schedule them.
@@ -105,6 +110,9 @@ pub extern "C" fn kmain(boot_info: &BootInfo) -> ! {
             &mut kernel_stack_allocator,
         );
     }
+    if let Some(ref video_info) = boot_info.video_mode {
+        create_framebuffer(video_info);
+    }
 
     /*
      * Drop into userspace!
@@ -117,7 +125,7 @@ fn load_task(
     image: &LoadedImage,
     kernel_page_table: &mut <HalImpl as Hal<KernelPerCpu>>::PageTable,
     allocator: &PhysicalMemoryManager,
-    kernel_stack_allocator: &mut KernelStackAllocator,
+    kernel_stack_allocator: &mut KernelStackAllocator<HalImpl>,
 ) {
     use object::SENTINEL_KERNEL_ID;
 
@@ -138,6 +146,41 @@ fn load_task(
     }
 
     scheduler.add_task(task).unwrap();
+}
+
+fn create_framebuffer(video_info: &hal::boot_info::VideoModeInfo) {
+    use hal::{
+        boot_info::PixelFormat as BootPixelFormat,
+        memory::{Flags, FrameSize, Size4KiB, VirtualAddress},
+    };
+    use libpebble::syscall::{FramebufferInfo, PixelFormat};
+
+    // TODO: this is not the way to do it - remove the set virtual address when we've implemented the virtual range
+    // manager
+    const VIRTUAL_START: VirtualAddress = VirtualAddress::new(0x00000005_00000000);
+    // We only support RGB32 and BGR32 pixel formats so BPP will always be 4 for now.
+    const BPP: usize = 4;
+
+    let size_in_bytes = video_info.stride * video_info.height * BPP;
+    let memory_object = MemoryObject::new(
+        object::SENTINEL_KERNEL_ID,
+        VIRTUAL_START,
+        video_info.framebuffer_address,
+        pebble_util::math::align_up(size_in_bytes, Size4KiB::SIZE),
+        Flags { writable: true, user_accessible: true, cached: false, ..Default::default() },
+    );
+
+    let info = FramebufferInfo {
+        width: video_info.width as u16,
+        height: video_info.height as u16,
+        stride: video_info.stride as u16,
+        pixel_format: match video_info.pixel_format {
+            BootPixelFormat::RGB32 => PixelFormat::RGB32,
+            BootPixelFormat::BGR32 => PixelFormat::BGR32,
+        },
+    };
+
+    FRAMEBUFFER.initialize((info, memory_object));
 }
 
 #[cfg(not(test))]

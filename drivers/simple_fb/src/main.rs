@@ -4,9 +4,8 @@
 
 use core::{mem::MaybeUninit, panic::PanicInfo};
 use libpebble::{
-    caps::{CapabilitiesRepr, CAP_ACCESS_BACKUP_FRAMEBUFFER, CAP_EARLY_LOGGING, CAP_PADDING},
-    syscall,
-    syscall::system_object::{FramebufferSystemObjectInfo, SystemObjectId},
+    caps::{CapabilitiesRepr, CAP_EARLY_LOGGING, CAP_GET_FRAMEBUFFER, CAP_PADDING},
+    syscall::{self, FramebufferInfo, PixelFormat},
 };
 
 pub struct Framebuffer {
@@ -18,26 +17,24 @@ pub struct Framebuffer {
 
 impl Framebuffer {
     pub fn new() -> Framebuffer {
-        let (framebuffer_id, framebuffer_info) = {
-            let mut framebuffer_info: MaybeUninit<FramebufferSystemObjectInfo> = MaybeUninit::uninit();
+        let (framebuffer_handle, framebuffer_info) = {
+            let mut framebuffer_info: MaybeUninit<FramebufferInfo> = MaybeUninit::uninit();
 
-            let framebuffer_id = match syscall::request_system_object(SystemObjectId::BackupFramebuffer {
-                info_address: framebuffer_info.as_mut_ptr(),
-            }) {
-                Ok(id) => id,
-                Err(err) => panic!("Failed to get ID of framebuffer memory object: {:?}", err),
-            };
+            let framebuffer_handle = syscall::get_framebuffer(framebuffer_info.as_mut_ptr())
+                .expect("Failed to get handle to framebuffer!");
 
-            (framebuffer_id, unsafe { framebuffer_info.assume_init() })
+            (framebuffer_handle, unsafe { framebuffer_info.assume_init() })
         };
 
-        let address_space_id = syscall::my_address_space();
-        syscall::map_memory_object(framebuffer_id, address_space_id).unwrap();
+        let mut framebuffer_address: MaybeUninit<usize> = MaybeUninit::uninit();
+        syscall::map_memory_object(framebuffer_handle, libpebble::ZERO_HANDLE, framebuffer_address.as_mut_ptr())
+            .unwrap();
+        let framebuffer_address = unsafe { framebuffer_address.assume_init() };
 
-        assert_eq!(framebuffer_info.pixel_format, 1);
+        assert_eq!(framebuffer_info.pixel_format, PixelFormat::BGR32);
 
         Framebuffer {
-            pointer: framebuffer_info.address as *mut u32,
+            pointer: framebuffer_address as *mut u32,
             width: framebuffer_info.width as usize,
             height: framebuffer_info.height as usize,
             stride: framebuffer_info.stride as usize,
@@ -97,4 +94,4 @@ pub struct Capabilities<const N: usize> {
 #[used]
 #[link_section = ".caps"]
 pub static mut CAPS: CapabilitiesRepr<4> =
-    CapabilitiesRepr::new([CAP_EARLY_LOGGING, CAP_ACCESS_BACKUP_FRAMEBUFFER, CAP_PADDING, CAP_PADDING]);
+    CapabilitiesRepr::new([CAP_EARLY_LOGGING, CAP_GET_FRAMEBUFFER, CAP_PADDING, CAP_PADDING]);

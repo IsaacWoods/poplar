@@ -1,14 +1,22 @@
-use crate::{object::task::TaskState, HalImpl};
-use core::{slice, str};
-use hal::Hal;
+use crate::{
+    object::{address_space::AddressSpace, memory_object::MemoryObject, task::TaskState},
+    HalImpl,
+};
+use core::{convert::TryFrom, slice, str};
+use hal::{memory::VirtualAddress, Hal};
 use libpebble::{
     caps::Capability,
-    syscall,
     syscall::{
+        self,
         result::{handle_to_syscall_repr, status_to_syscall_repr},
+        CreateMemoryObjectError,
         EarlyLogError,
-        MemoryObjectError,
+        FramebufferInfo,
+        GetFramebufferError,
+        MapMemoryObjectError,
     },
+    Handle,
+    ZERO_HANDLE,
 };
 use log::{info, trace, warn};
 
@@ -26,11 +34,10 @@ pub extern "C" fn rust_syscall_handler(number: usize, a: usize, b: usize, c: usi
     match number {
         syscall::SYSCALL_YIELD => yield_syscall(),
         syscall::SYSCALL_EARLY_LOG => status_to_syscall_repr(early_log(a, b)),
-        // TODO: I think we can replace this with a one-off syscall just for the framebuffer?
-        // syscall::SYSCALL_REQUEST_SYSTEM_OBJECT => request_system_object(a, b, c, d, e),
-        // syscall::SYSCALL_MY_ADDRESS_SPACE => my_address_space(),
+        syscall::SYSCALL_GET_FRAMEBUFFER => handle_to_syscall_repr(get_framebuffer(a)),
         // syscall::SYSCALL_CREATE_MEMORY_OBJECT => result_to_syscall_repr(create_memory_object(a, b, c)),
-        // syscall::SYSCALL_MAP_MEMORY_OBJECT => status_to_syscall_repr(map_memory_object(a, b)),
+        syscall::SYSCALL_MAP_MEMORY_OBJECT => status_to_syscall_repr(map_memory_object(a, b, c)),
+
         _ => {
             // TODO: unsupported system call number, kill process or something?
             warn!("Process made system call with invalid syscall number: {}", number);
@@ -70,61 +77,26 @@ fn early_log(str_length: usize, str_address: usize) -> Result<(), EarlyLogError>
     Ok(())
 }
 
-// fn request_system_object(id: usize, b: usize, c: usize, d: usize, e: usize) -> usize {
-//     use libpebble::syscall::system_object::*;
+fn get_framebuffer(info_address: usize) -> Result<Handle, GetFramebufferError> {
+    let task = unsafe { HalImpl::per_cpu() }.kernel_data().scheduler().running_task.as_ref().unwrap();
 
-//     result_to_syscall_repr(match id {
-//         SYSTEM_OBJECT_BACKUP_FRAMEBUFFER_ID => {
-//             /*
-//              * Check that the task has the correct capability. It's important to do this first, so we don't leak
-//              * the fact that a system object doesn't exist to an unprivileged task.
-//              */
-//             if unsafe { common_per_cpu_data() }
-//                 .running_task()
-//                 .object
-//                 .task()
-//                 .unwrap()
-//                 .read()
-//                 .capabilities
-//                 .contains(&Capability::AccessBackupFramebuffer)
-//             {
-//                 match *COMMON.get().backup_framebuffer.lock() {
-//                     Some((id, info)) => {
-//                         /*
-//                          * `b` contains a userspace address that we write the framebuffer info back into.
-//                          */
-//                         unsafe {
-//                             // TODO: at the moment, userspace can trivially crash the kernel by passing an
-// address                             // in here that is either not mapped, or does not point into userspace
-// (potentially                             // overwriting important kernel info). We should validate that the
-// address passed is                             // both mapped and points into userspace, and provide some helpers
-// for doing so.                             *(b as *mut FramebufferSystemObjectInfo) = info;
-//                         }
+    /*
+     * Check that the task has the correct capability.
+     */
+    if !task.capabilities.contains(&Capability::GetFramebuffer) {
+        return Err(GetFramebufferError::AccessDenied);
+    }
 
-//                         Ok(id)
-//                     }
-//                     None => Err(RequestSystemObjectError::ObjectDoesNotExist),
-//                 }
-//             } else {
-//                 Err(RequestSystemObjectError::AccessDenied)
-//             }
-//         }
+    let (info, memory_object) = crate::FRAMEBUFFER.try_get().ok_or(GetFramebufferError::NoFramebufferCreated)?;
+    let handle = task.add_handle(memory_object.clone());
 
-//         _ => Err(RequestSystemObjectError::NotAValidId),
-//     })
-// }
+    // TODO: validate the info pointer before we do this
+    unsafe {
+        *(info_address as *mut FramebufferInfo) = *info;
+    }
 
-// fn my_address_space() -> usize {
-//     unsafe { common_per_cpu_data() }
-//         .running_task()
-//         .object
-//         .task()
-//         .unwrap()
-//         .read()
-//         .address_space
-//         .id
-//         .to_syscall_repr()
-// }
+    Ok(handle)
+}
 
 // fn create_memory_object(
 //     virtual_address: usize,
@@ -137,27 +109,50 @@ fn early_log(str_length: usize, str_address: usize) -> Result<(), EarlyLogError>
 //     unimplemented!()
 // }
 
-// fn map_memory_object(memory_object_id: usize, address_space_id: usize) -> Result<(), MemoryObjectError> {
-//     /*
-//      * TODO: enforce that the calling task must have access to the AddressSpace and MemoryObject
-//      * for this to work (we need to build the owning / access system first).
-//      */
-//     let memory_object =
-//         match COMMON.get().object_map.read().get(KernelObjectId::from_syscall_repr(memory_object_id)) {
-//             Some(object) => object.clone(),
-//             None => return Err(MemoryObjectError::NotAMemoryObject),
-//         };
+fn map_memory_object(
+    memory_object_handle: usize,
+    address_space_handle: usize,
+    address_pointer: usize,
+) -> Result<(), MapMemoryObjectError> {
+    let memory_object_handle =
+        Handle::try_from(memory_object_handle).map_err(|_| MapMemoryObjectError::InvalidHandle)?;
+    let address_space_handle =
+        Handle::try_from(address_space_handle).map_err(|_| MapMemoryObjectError::InvalidHandle)?;
 
-//     // Check it's a MemoryObject
-//     if memory_object.object.memory_object().is_none() {
-//         return Err(MemoryObjectError::NotAMemoryObject);
-//     }
+    let task = unsafe { HalImpl::per_cpu() }.kernel_data().scheduler().running_task.as_ref().unwrap();
 
-//     match COMMON.get().object_map.read().get(KernelObjectId::from_syscall_repr(address_space_id)) {
-//         Some(address_space) => match address_space.object.address_space() {
-//             Some(address_space) => address_space.write().map_memory_object(memory_object),
-//             None => Err(MemoryObjectError::NotAnAddressSpace),
-//         },
-//         None => Err(MemoryObjectError::NotAnAddressSpace),
-//     }
-// }
+    let memory_object = task
+        .handles
+        .read()
+        .get(&memory_object_handle)
+        .ok_or(MapMemoryObjectError::InvalidHandle)?
+        .clone()
+        .downcast_arc::<MemoryObject>()
+        .ok()
+        .ok_or(MapMemoryObjectError::NotAMemoryObject)?;
+
+    if address_space_handle == ZERO_HANDLE {
+        /*
+         * If the AddressSpace handle is the zero handle, we map the MemoryObject into the calling task's
+         * address space.
+         */
+        task.address_space.clone()
+    } else {
+        task.handles
+            .read()
+            .get(&memory_object_handle)
+            .ok_or(MapMemoryObjectError::InvalidHandle)?
+            .clone()
+            .downcast_arc::<AddressSpace<HalImpl>>()
+            .ok()
+            .ok_or(MapMemoryObjectError::NotAnAddressSpace)?
+    }
+    .map_memory_object(memory_object.clone(), &crate::PHYSICAL_MEMORY_MANAGER.get())?;
+
+    // TODO: validate the user pointer
+    unsafe {
+        *(address_pointer as *mut VirtualAddress) = memory_object.virtual_address;
+    }
+
+    Ok(())
+}

@@ -1,7 +1,7 @@
+pub mod get_framebuffer;
 pub mod result;
-pub mod system_object;
 
-pub use system_object::request_system_object;
+pub use get_framebuffer::{get_framebuffer, FramebufferInfo, GetFramebufferError, PixelFormat};
 
 cfg_if::cfg_if! {
     if #[cfg(target_arch = "x86_64")] {
@@ -18,12 +18,9 @@ use result::{define_error_type, handle_from_syscall_repr, status_from_syscall_re
 
 pub const SYSCALL_YIELD: usize = 0;
 pub const SYSCALL_EARLY_LOG: usize = 1;
-pub const SYSCALL_REQUEST_SYSTEM_OBJECT: usize = 2;
-pub const SYSCALL_MY_ADDRESS_SPACE: usize = 3;
-pub const SYSCALL_CREATE_MEMORY_OBJECT: usize = 4;
-pub const SYSCALL_MAP_MEMORY_OBJECT: usize = 5;
-pub const SYSCALL_CREATE_MAILBOX: usize = 6;
-pub const SYSCALL_WAIT_FOR_MAIL: usize = 7;
+pub const SYSCALL_GET_FRAMEBUFFER: usize = 2;
+pub const SYSCALL_CREATE_MEMORY_OBJECT: usize = 3;
+pub const SYSCALL_MAP_MEMORY_OBJECT: usize = 4;
 
 pub fn yield_to_kernel() {
     unsafe {
@@ -43,36 +40,20 @@ pub fn early_log(message: &str) -> Result<(), EarlyLogError> {
     })
 }
 
-pub fn my_address_space() -> Handle {
-    Handle(unsafe { raw::syscall0(SYSCALL_MY_ADDRESS_SPACE) } as u16)
-}
-
-define_error_type!(MemoryObjectError {
-    /*
-     * These errors are returned by `create_memory_object`.
-     */
+define_error_type!(CreateMemoryObjectError {
     InvalidVirtualAddress => 1,
     InvalidFlags => 2,
     InvalidSize => 3,
-
-    /*
-     * These errors are returned by `map_memory_object`.
-     */
-    AddressRangeNotFree => 4,
-    AccessDeniedToMemoryObject => 5,
-    AccessDeniedToAddressSpace => 6,
-    NotAMemoryObject => 7,
-    NotAnAddressSpace => 8,
 });
 
-/// Create a MemoryObject kernel object at the given virtual address, with the given size (in bytes). Returns the
-/// ID of the new MemoryObject, if the call was successful.
+/// Create a MemoryObject kernel object at the given virtual address, with the given size (in bytes). Returns a
+/// handle to the new MemoryObject, if the call was successful.
 pub fn create_memory_object(
     virtual_address: usize,
     size: usize,
     writable: bool,
     executable: bool,
-) -> Result<Handle, MemoryObjectError> {
+) -> Result<Handle, CreateMemoryObjectError> {
     let mut flags = 0usize;
     flags.set_bit(0, writable);
     flags.set_bit(1, executable);
@@ -80,8 +61,24 @@ pub fn create_memory_object(
     handle_from_syscall_repr(unsafe { raw::syscall3(SYSCALL_CREATE_MEMORY_OBJECT, virtual_address, size, flags) })
 }
 
-pub fn map_memory_object(memory_object: Handle, address_space: Handle) -> Result<(), MemoryObjectError> {
+define_error_type!(MapMemoryObjectError {
+    InvalidHandle => 1,
+    RegionAlreadyMapped => 2,
+    NotAMemoryObject => 3,
+    NotAnAddressSpace => 4,
+});
+
+pub fn map_memory_object(
+    memory_object: Handle,
+    address_space: Handle,
+    address_pointer: *mut usize,
+) -> Result<(), MapMemoryObjectError> {
     status_from_syscall_repr(unsafe {
-        raw::syscall2(SYSCALL_MAP_MEMORY_OBJECT, memory_object.0 as usize, address_space.0 as usize)
+        raw::syscall3(
+            SYSCALL_MAP_MEMORY_OBJECT,
+            memory_object.0 as usize,
+            address_space.0 as usize,
+            address_pointer as usize,
+        )
     })
 }

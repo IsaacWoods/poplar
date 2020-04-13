@@ -1,9 +1,13 @@
 use super::{address_space::AddressSpace, alloc_kernel_object_id, KernelObject, KernelObjectId};
 use crate::{memory::PhysicalMemoryManager, per_cpu::KernelPerCpu, slab_allocator::SlabAllocator};
-use alloc::{string::String, sync::Arc, vec::Vec};
+use alloc::{collections::BTreeMap, string::String, sync::Arc, vec::Vec};
+use core::{
+    marker::PhantomData,
+    sync::atomic::{AtomicU32, Ordering},
+};
 use hal::{memory::VirtualAddress, Hal};
-use libpebble::caps::Capability;
-use spin::Mutex;
+use libpebble::{caps::Capability, Handle};
+use spin::{Mutex, RwLock};
 
 #[derive(Clone, PartialEq, Eq, Debug)]
 pub enum TaskBlock {}
@@ -51,10 +55,13 @@ where
     pub address_space: Arc<AddressSpace<H>>,
     pub state: Mutex<TaskState>,
     pub capabilities: Vec<Capability>,
+
     pub user_stack: Mutex<TaskStack>,
     pub kernel_stack: Mutex<TaskStack>,
-
     pub kernel_stack_pointer: Mutex<VirtualAddress>,
+
+    pub handles: RwLock<BTreeMap<Handle, Arc<dyn KernelObject>>>,
+    next_handle: AtomicU32,
 }
 
 impl<H> Task<H>
@@ -65,9 +72,9 @@ where
         owner: KernelObjectId,
         address_space: Arc<AddressSpace<H>>,
         image: &hal::boot_info::LoadedImage,
-        allocator: &PhysicalMemoryManager<H>,
+        allocator: &PhysicalMemoryManager,
         kernel_page_table: &mut H::PageTable,
-        kernel_stack_allocator: &mut KernelStackAllocator,
+        kernel_stack_allocator: &mut KernelStackAllocator<H>,
     ) -> Result<Arc<Task<H>>, TaskCreationError> {
         use hal::TaskHelper;
 
@@ -93,7 +100,16 @@ where
             user_stack: Mutex::new(user_stack),
             kernel_stack: Mutex::new(kernel_stack),
             kernel_stack_pointer: Mutex::new(kernel_stack_pointer),
+            handles: RwLock::new(BTreeMap::new()),
+            // XXX: 0 is a special handle value, so start at 1
+            next_handle: AtomicU32::new(1),
         }))
+    }
+
+    pub fn add_handle(&self, object: Arc<dyn KernelObject>) -> Handle {
+        let handle = Handle(self.next_handle.fetch_add(1, Ordering::Relaxed));
+        self.handles.write().insert(handle, object);
+        handle
     }
 }
 
@@ -126,7 +142,7 @@ fn decode_capabilities(mut cap_stream: &[u8]) -> Result<Vec<Capability>, TaskCre
             0x02 => one_byte_cap!(Capability::CreateMemoryObject),
             0x03 => one_byte_cap!(Capability::CreateTask),
 
-            0x30 => one_byte_cap!(Capability::AccessBackupFramebuffer),
+            0x30 => one_byte_cap!(Capability::GetFramebuffer),
             0x31 => one_byte_cap!(Capability::EarlyLogging),
 
             // We skip `0x00` as the first byte of a capability, as it is just used to pad the
@@ -140,32 +156,37 @@ fn decode_capabilities(mut cap_stream: &[u8]) -> Result<Vec<Capability>, TaskCre
     Ok(caps)
 }
 
-pub struct KernelStackAllocator {
+pub struct KernelStackAllocator<H>
+where
+    H: Hal<KernelPerCpu>,
+{
     kernel_stack_slots: Mutex<SlabAllocator>,
     slot_size: usize,
+    _phantom: PhantomData<H>,
 }
 
-impl KernelStackAllocator {
+impl<H> KernelStackAllocator<H>
+where
+    H: Hal<KernelPerCpu>,
+{
     pub fn new(
         stacks_bottom: VirtualAddress,
         stacks_top: VirtualAddress,
         slot_size: usize,
-    ) -> KernelStackAllocator {
+    ) -> KernelStackAllocator<H> {
         KernelStackAllocator {
             kernel_stack_slots: Mutex::new(SlabAllocator::new(stacks_bottom, stacks_top, slot_size)),
             slot_size,
+            _phantom: PhantomData,
         }
     }
 
-    pub fn alloc_kernel_task_stack<H>(
+    pub fn alloc_kernel_task_stack(
         &self,
         initial_size: usize,
-        physical_memory_manager: &PhysicalMemoryManager<H>,
+        physical_memory_manager: &PhysicalMemoryManager,
         kernel_page_table: &mut H::PageTable,
-    ) -> Option<TaskStack>
-    where
-        H: Hal<KernelPerCpu>,
-    {
+    ) -> Option<TaskStack> {
         use hal::memory::{Flags, PageTable};
 
         let slot_bottom = self.kernel_stack_slots.lock().alloc()?;

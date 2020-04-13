@@ -15,7 +15,7 @@ pub enum Capability {
     /*
      * Capabilities that are owned by drivers / support services.
      */
-    AccessBackupFramebuffer,
+    GetFramebuffer,
     EarlyLogging,
 }
 
@@ -26,7 +26,7 @@ pub const CAP_CREATE_TASK: u8 = 0x03;
 
 pub const CAP_BASE_X86_64: u8 = 0x20;
 
-pub const CAP_ACCESS_BACKUP_FRAMEBUFFER: u8 = 0x30;
+pub const CAP_GET_FRAMEBUFFER: u8 = 0x30;
 pub const CAP_EARLY_LOGGING: u8 = 0x31;
 
 /// `N` must be a multiple of 4, and padded with zeros, so the whole descriptor is aligned to a
@@ -38,7 +38,7 @@ pub const CAP_EARLY_LOGGING: u8 = 0x31;
 /// #[used]
 /// #[link_section = ".caps"]
 /// pub static mut CAPS: CapabilitiesRepr<4> = CapabilitiesRepr::new([CAP_EARLY_LOGGING,
-/// CAP_ACCESS_BACKUP_FRAMEBUFFER, CAP_PADDING, CAP_PADDING]);
+/// CAP_GET_FRAMEBUFFER, CAP_PADDING, CAP_PADDING]);
 /// ```
 #[repr(C)]
 pub struct CapabilitiesRepr<const N: usize> {
