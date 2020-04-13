@@ -18,11 +18,22 @@
 task_entry_trampoline:
     mov gs:0x8, rsp     // Save the task's kernel stack
     mov rsp, r13
+    xor r13, r13
 
     mov rcx, r15
     xor r15, r15
     mov r11, r14
     xor r14, r14
+
+    // Zero all registers not zerod as part of the context load, to avoid leaking kernel data into userspace
+    // XXX: leave `rcx` and `r11` alone as they're needed for `sysret`
+    xor rax, rax
+    xor rdx, rdx
+    xor rsi, rsi
+    xor rdi, rdi
+    xor r8, r8
+    xor r9, r9
+    xor r10, r10
 
     sysretq
 
