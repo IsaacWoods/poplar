@@ -62,37 +62,9 @@ pub fn handle_from_syscall_repr<E>(result: usize) -> Result<Handle, E>
 where
     E: TryFrom<usize, Error = ()>,
 {
-    let status = result.get_bits(0..16);
+    let status = result.get_bits(0..32);
     if status == 0 {
-        Ok(Handle(result.get_bits(16..32) as u16))
-    } else {
-        Err(E::try_from(status).expect("System call returned invalid result status"))
-    }
-}
-
-pub fn handle2_from_syscall_repr<E>(result: usize) -> Result<(Handle, Handle), E>
-where
-    E: TryFrom<usize, Error = ()>,
-{
-    let status = result.get_bits(0..16);
-    if status == 0 {
-        Ok((Handle(result.get_bits(16..32) as u16), Handle(result.get_bits(32..48) as u16)))
-    } else {
-        Err(E::try_from(status).expect("System call returned invalid result status"))
-    }
-}
-
-pub fn handle3_from_syscall_repr<E>(result: usize) -> Result<(Handle, Handle, Handle), E>
-where
-    E: TryFrom<usize, Error = ()>,
-{
-    let status = result.get_bits(0..16);
-    if status == 0 {
-        Ok((
-            Handle(result.get_bits(16..32) as u16),
-            Handle(result.get_bits(32..48) as u16),
-            Handle(result.get_bits(48..64) as u16),
-        ))
+        Ok(Handle(result.get_bits(32..64) as u32))
     } else {
         Err(E::try_from(status).expect("System call returned invalid result status"))
     }
@@ -105,12 +77,12 @@ where
     match result {
         Ok(handle) => {
             let mut value = 0usize;
-            value.set_bits(16..32, handle.0 as usize);
+            value.set_bits(32..64, handle.0 as usize);
             value
         }
         Err(err) => {
             let mut value = 0usize;
-            value.set_bits(0..16, err.into());
+            value.set_bits(0..32, err.into());
             value
         }
     }
