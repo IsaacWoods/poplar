@@ -49,7 +49,7 @@ syscall_handler:
     call rust_syscall_handler
 
     // Zero registers trashed by the Rust code before we return to userspace
-    xor rdi, rdi
+    // We don't need to zero `rdi` because we're going to use it in a second
     xor rsi, rsi
     xor rdx, rdx
     xor r10, r10
@@ -61,11 +61,10 @@ syscall_handler:
     pop rcx
 
     // Move back to task's user stack, saving kernel stack back into per-cpu
-    mov gs:0x8, rsp
+    mov rdi, rsp
     pop rsp
-    /* pop r10 */
-    /* xchg r10, rsp */
-    /* mov gs:0x8, r10 */
+    mov gs:0x8, rdi
+    xor rdi, rdi
 
     // Return to userspace!
     sysretq
