@@ -30,10 +30,11 @@
  */
 .global syscall_handler
 syscall_handler:
-    // Firstly, we move to the task's kernel stack. `r10` doesn't contain anything important atm.
-    mov r10, gs:0x8    // This accesses the `current_task_kernel_rsp` field of the per-cpu data
-    xchg r10, rsp
-    push r10           // Push the user stack pointer onto the task's kernel stack so we can move back to it later
+    // Firstly, we move to the task's kernel stack. `rax` doesn't contain anything important atm.
+    // TODO: maybe store user rsp in per-cpu data to make this easier
+    mov rax, gs:0x8    // This accesses the `current_task_kernel_rsp` field of the per-cpu data
+    xchg rax, rsp
+    push rax           // Push the user stack pointer onto the task's kernel stack so we can move back to it later
 
     // The `syscall` instruction puts important stuff in `rcx` and `r11`, so we save them and restore them
     // before calling `sysretq`.
@@ -42,9 +43,9 @@ syscall_handler:
 
     // Move `c` into the right register. This is fine now because we've saved syscall's expected `rcx` on the
     // stack.
-    mov rcx, r11
+    mov rcx, r10
 
-    // Call the Rust handler
+    // Call the Rust handler. From this point, `rax` contains the return value, so musn't be trashed!
     call rust_syscall_handler
 
     // Zero registers trashed by the Rust code before we return to userspace
