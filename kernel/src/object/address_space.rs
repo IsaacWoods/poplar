@@ -5,7 +5,7 @@ use hal::{
     memory::{FrameAllocator, PageTable, VirtualAddress, MEBIBYTES_TO_BYTES},
     Hal,
 };
-use libpebble::syscall::MemoryObjectError;
+use libpebble::syscall::MapMemoryObjectError;
 use spin::Mutex;
 
 // TODO: we need some way of getting this from the platform I guess?
@@ -54,14 +54,11 @@ where
         })
     }
 
-    pub fn map_memory_object<A>(
+    pub fn map_memory_object(
         &self,
         memory_object: Arc<MemoryObject>,
-        allocator: &A,
-    ) -> Result<(), MemoryObjectError>
-    where
-        A: FrameAllocator<H::PageTableSize>,
-    {
+        allocator: &PhysicalMemoryManager,
+    ) -> Result<(), MapMemoryObjectError> {
         use hal::memory::PagingError;
 
         self.page_table
@@ -75,7 +72,7 @@ where
             )
             .map_err(|err| match err {
                 // XXX: these are explicity enumerated to avoid a bug if variants are added to `PagingError`.
-                PagingError::AlreadyMapped => MemoryObjectError::AddressRangeNotFree,
+                PagingError::AlreadyMapped => MapMemoryObjectError::RegionAlreadyMapped,
             })?;
         self.memory_objects.lock().push(memory_object);
         Ok(())
@@ -83,11 +80,7 @@ where
 
     /// Try to allocate a slot for a user stack, and map `initial_size` bytes of it. Returns `None` if no more user
     /// stacks can be allocated in this address space.
-    pub fn alloc_user_stack(
-        &self,
-        initial_size: usize,
-        allocator: &PhysicalMemoryManager<H>,
-    ) -> Option<TaskStack> {
+    pub fn alloc_user_stack(&self, initial_size: usize, allocator: &PhysicalMemoryManager) -> Option<TaskStack> {
         use hal::memory::Flags;
 
         let slot_bottom = self.user_stack_allocator.lock().alloc()?;

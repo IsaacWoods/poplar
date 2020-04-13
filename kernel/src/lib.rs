@@ -44,6 +44,7 @@ use object::{
     task::{KernelStackAllocator, Task},
     KernelObject,
 };
+use pebble_util::InitGuard;
 use per_cpu::KernelPerCpu;
 use scheduler::Scheduler;
 
@@ -59,6 +60,7 @@ cfg_if! {
 #[global_allocator]
 pub static ALLOCATOR: LockedHoleAllocator = LockedHoleAllocator::new_uninitialized();
 
+pub static PHYSICAL_MEMORY_MANAGER: InitGuard<PhysicalMemoryManager> = InitGuard::uninit();
 #[no_mangle]
 pub extern "C" fn kmain(boot_info: &BootInfo) -> ! {
     HalImpl::init_logger();
@@ -80,7 +82,7 @@ pub extern "C" fn kmain(boot_info: &BootInfo) -> ! {
     /*
      * We can now initialise the physical memory manager.
      */
-    let physical_memory_manager = PhysicalMemoryManager::<HalImpl>::new(boot_info);
+    PHYSICAL_MEMORY_MANAGER.initialize(PhysicalMemoryManager::new(boot_info));
 
     let mut hal = HalImpl::init(boot_info, KernelPerCpu { scheduler: Scheduler::new() });
 
@@ -99,7 +101,7 @@ pub extern "C" fn kmain(boot_info: &BootInfo) -> ! {
             unsafe { HalImpl::per_cpu() }.kernel_data().scheduler(),
             image,
             hal.kernel_page_table(),
-            &physical_memory_manager,
+            &PHYSICAL_MEMORY_MANAGER.get(),
             &mut kernel_stack_allocator,
         );
     }
@@ -114,7 +116,7 @@ fn load_task(
     scheduler: &mut Scheduler<HalImpl>,
     image: &LoadedImage,
     kernel_page_table: &mut <HalImpl as Hal<KernelPerCpu>>::PageTable,
-    allocator: &PhysicalMemoryManager<HalImpl>,
+    allocator: &PhysicalMemoryManager,
     kernel_stack_allocator: &mut KernelStackAllocator,
 ) {
     use object::SENTINEL_KERNEL_ID;

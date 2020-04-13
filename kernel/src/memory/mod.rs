@@ -10,16 +10,12 @@ use hal::{
 };
 use spin::Mutex;
 
-pub struct PhysicalMemoryManager<H> {
+pub struct PhysicalMemoryManager {
     buddy: Mutex<BuddyAllocator>,
-    _phantom: PhantomData<H>,
 }
 
-impl<H> PhysicalMemoryManager<H>
-where
-    H: Hal<KernelPerCpu>,
-{
-    pub fn new(boot_info: &BootInfo) -> PhysicalMemoryManager<H> {
+impl PhysicalMemoryManager {
+    pub fn new(boot_info: &BootInfo) -> PhysicalMemoryManager {
         let mut buddy_allocator = BuddyAllocator::new();
 
         for entry in boot_info.memory_map.entries() {
@@ -28,7 +24,7 @@ where
             }
         }
 
-        PhysicalMemoryManager { buddy: Mutex::new(buddy_allocator), _phantom: PhantomData }
+        PhysicalMemoryManager { buddy: Mutex::new(buddy_allocator) }
     }
 
     /// TODO: not sure this is the best interface to provide
@@ -40,9 +36,8 @@ where
     }
 }
 
-impl<H, S> FrameAllocator<S> for PhysicalMemoryManager<H>
+impl<S> FrameAllocator<S> for PhysicalMemoryManager
 where
-    H: Hal<KernelPerCpu>,
     S: FrameSize,
 {
     fn allocate_n(&self, n: usize) -> Range<Frame<S>> {
