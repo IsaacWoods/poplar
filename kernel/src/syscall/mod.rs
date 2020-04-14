@@ -3,13 +3,17 @@ use crate::{
         address_space::AddressSpace,
         memory_object::MemoryObject,
         task::{Task, TaskState},
+        KernelObject,
     },
     HalImpl,
 };
 use alloc::sync::Arc;
 use bit_field::BitField;
 use core::{convert::TryFrom, slice, str};
-use hal::{memory::VirtualAddress, Hal};
+use hal::{
+    memory::{Flags, VirtualAddress},
+    Hal,
+};
 use libpebble::{
     caps::Capability,
     syscall::{
@@ -107,14 +111,25 @@ fn create_memory_object(
     let writable = flags.get_bit(0);
     let executable = flags.get_bit(1);
 
-    unimplemented!()
+    // TODO: do something more sensible with this when we have a concept of physical memory "ownership"
+    let physical_start = crate::PHYSICAL_MEMORY_MANAGER.get().alloc_bytes(size);
+
+    let memory_object = MemoryObject::new(
+        task.id(),
+        VirtualAddress::new(virtual_address),
+        physical_start,
+        size,
+        Flags { writable, executable, user_accessible: true, ..Default::default() },
+    );
+
+    Ok(task.add_handle(memory_object))
 }
 
 fn map_memory_object(
     task: &Arc<Task<HalImpl>>,
     memory_object_handle: usize,
     address_space_handle: usize,
-    address_pointer: usize,
+    address_ptr: usize,
 ) -> Result<(), MapMemoryObjectError> {
     let memory_object_handle =
         Handle::try_from(memory_object_handle).map_err(|_| MapMemoryObjectError::InvalidHandle)?;
@@ -149,9 +164,15 @@ fn map_memory_object(
     }
     .map_memory_object(memory_object.clone(), &crate::PHYSICAL_MEMORY_MANAGER.get())?;
 
-    // TODO: validate the user pointer
-    unsafe {
-        *(address_pointer as *mut VirtualAddress) = memory_object.virtual_address;
+    /*
+     * An address pointer of `0` signals to the kernel that the caller does not need to know the virtual
+     * address, so don't bother writing it back.
+     */
+    if address_ptr != 0x0 {
+        // TODO: validate the user pointer
+        unsafe {
+            *(address_ptr as *mut VirtualAddress) = memory_object.virtual_address;
+        }
     }
 
     Ok(())
