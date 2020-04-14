@@ -6,3 +6,4 @@ edition = "2018"
 
 [dependencies]
 libpebble = { path = "../../lib/libpebble" }
+linked_list_allocator = "0.8"

@@ -1,12 +1,20 @@
 #![no_std]
 #![no_main]
-#![feature(const_generics)]
+#![feature(const_generics, alloc_error_handler)]
 
 use core::{mem::MaybeUninit, panic::PanicInfo};
+#[macro_use]
+extern crate alloc;
+
+use alloc::vec::Vec;
 use libpebble::{
     caps::{CapabilitiesRepr, CAP_EARLY_LOGGING, CAP_GET_FRAMEBUFFER, CAP_PADDING},
     syscall::{self, FramebufferInfo, PixelFormat},
 };
+use linked_list_allocator::LockedHeap;
+
+#[global_allocator]
+static ALLOCATOR: LockedHeap = LockedHeap::empty();
 
 pub struct Framebuffer {
     pointer: *mut u32,
@@ -63,6 +71,20 @@ impl Framebuffer {
 pub extern "C" fn start() -> ! {
     syscall::early_log("Simple framebuffer driver is running").unwrap();
 
+    // Create a heap
+    const HEAP_START: usize = 0x600000000;
+    const HEAP_SIZE: usize = 0x4000;
+    let heap_memory_object = syscall::create_memory_object(HEAP_START, HEAP_SIZE, true, false).unwrap();
+    syscall::map_memory_object(heap_memory_object, libpebble::ZERO_HANDLE, 0x0 as *mut usize).unwrap();
+    unsafe {
+        ALLOCATOR.lock().init(HEAP_START, HEAP_SIZE);
+    }
+
+    // Test the heap
+    let mut v = Vec::new();
+    v.push(11);
+    v.push(8);
+    v.push(7345);
     let framebuffer = Framebuffer::new();
     framebuffer.clear(0xffff00ff);
     framebuffer.draw_rect(100, 100, 300, 450, 0xffff0000);
@@ -78,6 +100,11 @@ pub fn handle_panic(info: &PanicInfo) -> ! {
         let _ = syscall::early_log(location.file());
     }
     loop {}
+}
+
+#[alloc_error_handler]
+fn alloc_error(layout: core::alloc::Layout) -> ! {
+    panic!("Alloc error: {:?}", layout);
 }
 
 /// `N` must be a multiple of 4, and padded with zeros, so the whole descriptor is aligned to a
