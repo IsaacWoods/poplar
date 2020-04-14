@@ -10,7 +10,6 @@
     - [`yield`](./syscalls/yield.md)
     - [`early_log`](./syscalls/early_log.md)
     - [`get_framebuffer`](./syscalls/get_framebuffer.md)
-    - [`my_address_space`](./syscalls/my_address_space.md)
     - [`map_memory_object`](./syscalls/map_memory_object.md)
 
 - [Userspace](./userspace/index.md)
