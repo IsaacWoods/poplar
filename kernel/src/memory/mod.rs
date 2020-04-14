@@ -1,12 +1,10 @@
 mod buddy_allocator;
 
-use crate::per_cpu::KernelPerCpu;
 use buddy_allocator::BuddyAllocator;
-use core::{marker::PhantomData, ops::Range};
+use core::ops::Range;
 use hal::{
     boot_info::BootInfo,
     memory::{Frame, FrameAllocator, FrameSize, PhysicalAddress},
-    Hal,
 };
 use spin::Mutex;
 

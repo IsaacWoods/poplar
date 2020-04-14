@@ -51,7 +51,6 @@ impl<T> PerCpuImpl<T> {
 
             tss,
         });
-        let address = unsafe { mem::transmute(per_cpu.as_ref(): Pin<&PerCpuImpl<T>>): *const PerCpuImpl<T> };
 
         /*
          * Install the TSS into the GDT.

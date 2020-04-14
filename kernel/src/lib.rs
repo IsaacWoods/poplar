@@ -1,6 +1,3 @@
-//! This module probably looks rather sparse! Check the root of one of the architecture modules for
-//! an entry point.
-
 #![cfg_attr(not(test), no_std)]
 #![feature(
     asm,
@@ -151,7 +148,7 @@ fn load_task(
 fn create_framebuffer(video_info: &hal::boot_info::VideoModeInfo) {
     use hal::{
         boot_info::PixelFormat as BootPixelFormat,
-        memory::{Flags, FrameSize, Size4KiB, VirtualAddress},
+        memory::{Flags, FrameSize, Size4KiB},
     };
     use libpebble::syscall::{FramebufferInfo, PixelFormat};
 

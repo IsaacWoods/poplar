@@ -1,7 +1,13 @@
 use crate::{
-    object::{address_space::AddressSpace, memory_object::MemoryObject, task::TaskState},
+    object::{
+        address_space::AddressSpace,
+        memory_object::MemoryObject,
+        task::{Task, TaskState},
+    },
     HalImpl,
 };
+use alloc::sync::Arc;
+use bit_field::BitField;
 use core::{convert::TryFrom, slice, str};
 use hal::{memory::VirtualAddress, Hal};
 use libpebble::{
@@ -30,13 +36,14 @@ use log::{info, trace, warn};
 #[no_mangle]
 pub extern "C" fn rust_syscall_handler(number: usize, a: usize, b: usize, c: usize, d: usize, e: usize) -> usize {
     info!("Syscall! number = {}, a = {}, b = {}, c = {}, d = {}, e = {}", number, a, b, c, d, e);
+    let task = unsafe { HalImpl::per_cpu() }.kernel_data().scheduler().running_task.as_ref().unwrap();
 
     match number {
         syscall::SYSCALL_YIELD => yield_syscall(),
-        syscall::SYSCALL_EARLY_LOG => status_to_syscall_repr(early_log(a, b)),
-        syscall::SYSCALL_GET_FRAMEBUFFER => handle_to_syscall_repr(get_framebuffer(a)),
-        // syscall::SYSCALL_CREATE_MEMORY_OBJECT => result_to_syscall_repr(create_memory_object(a, b, c)),
-        syscall::SYSCALL_MAP_MEMORY_OBJECT => status_to_syscall_repr(map_memory_object(a, b, c)),
+        syscall::SYSCALL_EARLY_LOG => status_to_syscall_repr(early_log(task, a, b)),
+        syscall::SYSCALL_GET_FRAMEBUFFER => handle_to_syscall_repr(get_framebuffer(task, a)),
+        syscall::SYSCALL_CREATE_MEMORY_OBJECT => handle_to_syscall_repr(create_memory_object(task, a, b, c)),
+        syscall::SYSCALL_MAP_MEMORY_OBJECT => status_to_syscall_repr(map_memory_object(task, a, b, c)),
 
         _ => {
             // TODO: unsupported system call number, kill process or something?
@@ -52,13 +59,7 @@ fn yield_syscall() -> usize {
     0
 }
 
-fn early_log(str_length: usize, str_address: usize) -> Result<(), EarlyLogError> {
-    /*
-     * TODO: check that b is a valid userspace pointer and that it's mapped to physical
-     * memory
-     */
-    let task = unsafe { HalImpl::per_cpu() }.kernel_data().scheduler().running_task.as_ref().unwrap();
-
+fn early_log(task: &Arc<Task<HalImpl>>, str_length: usize, str_address: usize) -> Result<(), EarlyLogError> {
     // Check the current task has the `EarlyLogging` capability
     if !task.capabilities.contains(&Capability::EarlyLogging) {
         return Err(EarlyLogError::TaskDoesNotHaveCorrectCapability);
@@ -70,6 +71,7 @@ fn early_log(str_length: usize, str_address: usize) -> Result<(), EarlyLogError>
     }
 
     // Check the message is valid UTF-8
+    // TODO: validate user pointer before creating slice from it
     let message = str::from_utf8(unsafe { slice::from_raw_parts(str_address as *const u8, str_length) })
         .map_err(|_| EarlyLogError::MessageNotValidUtf8)?;
 
@@ -77,9 +79,7 @@ fn early_log(str_length: usize, str_address: usize) -> Result<(), EarlyLogError>
     Ok(())
 }
 
-fn get_framebuffer(info_address: usize) -> Result<Handle, GetFramebufferError> {
-    let task = unsafe { HalImpl::per_cpu() }.kernel_data().scheduler().running_task.as_ref().unwrap();
-
+fn get_framebuffer(task: &Arc<Task<HalImpl>>, info_address: usize) -> Result<Handle, GetFramebufferError> {
     /*
      * Check that the task has the correct capability.
      */
@@ -98,18 +98,20 @@ fn get_framebuffer(info_address: usize) -> Result<Handle, GetFramebufferError> {
     Ok(handle)
 }
 
-// fn create_memory_object(
-//     virtual_address: usize,
-//     size: usize,
-//     flags: usize,
-// ) -> Result<KernelObjectId, MemoryObjectError> {
-//     let writable = flags.get_bit(0);
-//     let executable = flags.get_bit(1);
+fn create_memory_object(
+    task: &Arc<Task<HalImpl>>,
+    virtual_address: usize,
+    size: usize,
+    flags: usize,
+) -> Result<Handle, CreateMemoryObjectError> {
+    let writable = flags.get_bit(0);
+    let executable = flags.get_bit(1);
 
-//     unimplemented!()
-// }
+    unimplemented!()
+}
 
 fn map_memory_object(
+    task: &Arc<Task<HalImpl>>,
     memory_object_handle: usize,
     address_space_handle: usize,
     address_pointer: usize,
@@ -118,8 +120,6 @@ fn map_memory_object(
         Handle::try_from(memory_object_handle).map_err(|_| MapMemoryObjectError::InvalidHandle)?;
     let address_space_handle =
         Handle::try_from(address_space_handle).map_err(|_| MapMemoryObjectError::InvalidHandle)?;
-
-    let task = unsafe { HalImpl::per_cpu() }.kernel_data().scheduler().running_task.as_ref().unwrap();
 
     let memory_object = task
         .handles
