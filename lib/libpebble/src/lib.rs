@@ -4,6 +4,12 @@
 pub mod caps;
 pub mod syscall;
 
+#[cfg(feature = "can_alloc")]
+pub mod early_logger;
+
+#[cfg(feature = "can_alloc")]
+extern crate alloc;
+
 use core::{convert::TryFrom, num::TryFromIntError};
 
 /// A `Handle` is used to represent a task's access to a kernel object. It is allocated by the kernel and is unique

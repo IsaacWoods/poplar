@@ -2,16 +2,18 @@
 #![no_main]
 #![feature(const_generics, alloc_error_handler)]
 
-use core::{mem::MaybeUninit, panic::PanicInfo};
 #[macro_use]
 extern crate alloc;
 
 use alloc::vec::Vec;
+use core::{mem::MaybeUninit, panic::PanicInfo};
 use libpebble::{
     caps::{CapabilitiesRepr, CAP_EARLY_LOGGING, CAP_GET_FRAMEBUFFER, CAP_PADDING},
+    early_logger::EarlyLogger,
     syscall::{self, FramebufferInfo, PixelFormat},
 };
 use linked_list_allocator::LockedHeap;
+use log::info;
 
 #[global_allocator]
 static ALLOCATOR: LockedHeap = LockedHeap::empty();
@@ -69,6 +71,8 @@ impl Framebuffer {
 
 #[no_mangle]
 pub extern "C" fn start() -> ! {
+    log::set_logger(&EarlyLogger).unwrap();
+    log::set_max_level(log::LevelFilter::Trace);
     syscall::early_log("Simple framebuffer driver is running").unwrap();
 
     // Create a heap
@@ -85,6 +89,10 @@ pub extern "C" fn start() -> ! {
     v.push(11);
     v.push(8);
     v.push(7345);
+    for thing in v {
+        info!("There is a number in v: {}", thing);
+    }
+
     let framebuffer = Framebuffer::new();
     framebuffer.clear(0xffff00ff);
     framebuffer.draw_rect(100, 100, 300, 450, 0xffff0000);
