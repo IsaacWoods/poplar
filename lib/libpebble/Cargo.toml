@@ -8,6 +8,7 @@ edition = "2018"
 cfg-if = "0.1"
 bit_field = "0.10"
 log = { version = "0.4", optional = true }
+bitflags = "1"
 
 [features]
 can_alloc = ["log"]

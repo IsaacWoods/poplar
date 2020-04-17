@@ -31,3 +31,17 @@ impl TryFrom<usize> for Handle {
         Ok(Handle(u32::try_from(value)?))
     }
 }
+
+bitflags::bitflags! {
+    struct HandleRights: u32 {
+        /// Whether the handle's owner can use it to modify the kernel object it points to. What is means to
+        /// "modify" a kernel object differs depending on the type of the kernel object.
+        const MODIFY = 0b1;
+        /// Whether the handle can be duplicated.
+        const DUPLICATE = 0b10;
+        /// Whether the handle can be transferred over a `Channel`.
+        const TRANSFER = 0b100;
+        /// For `MemoryObject`s, whether the memory can be mapped into the handle owner's `AddressSpace`.
+        const MAP = 0x1000;
+    }
+}
