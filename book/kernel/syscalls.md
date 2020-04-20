@@ -17,6 +17,8 @@ a register.
 | `2`       | `get_framebuffer`         | Get the framebuffer that the kernel has created, if it has.     |
 | `3`       | `create_memory_object`    | Create a MemoryObject kernel object.                            |
 | `4`       | `map_memory_object`       | Map a MemoryObject into an AddressSpace.                        |
+| `5`       | `create_channel`          | Create a channel, returning handles to the two ends.            |
+| `6`       | `send_message`            | Send a message down a channel.                                  |
 
 ### Making a system call on x86_64
 To make a system call on x86_64, populate these registers:
