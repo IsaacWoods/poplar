@@ -5,7 +5,6 @@
 #[macro_use]
 extern crate alloc;
 
-use alloc::vec::Vec;
 use core::{mem::MaybeUninit, panic::PanicInfo};
 use libpebble::{
     caps::{CapabilitiesRepr, CAP_EARLY_LOGGING, CAP_GET_FRAMEBUFFER, CAP_PADDING},
@@ -55,6 +54,8 @@ impl Framebuffer {
         assert!((start_x + width) <= self.width);
         assert!((start_y + height) <= self.height);
 
+        syscall::send_message(libpebble::ZERO_HANDLE, &[0xff, 0x7f, 0xdf], &[]).unwrap();
+
         for y in start_y..(start_y + height) {
             for x in start_x..(start_x + width) {
                 unsafe {
@@ -71,11 +72,7 @@ impl Framebuffer {
 
 #[no_mangle]
 pub extern "C" fn start() -> ! {
-    log::set_logger(&EarlyLogger).unwrap();
-    log::set_max_level(log::LevelFilter::Trace);
-    syscall::early_log("Simple framebuffer driver is running").unwrap();
-
-    // Create a heap
+    // Initialise the heap
     const HEAP_START: usize = 0x600000000;
     const HEAP_SIZE: usize = 0x4000;
     let heap_memory_object = syscall::create_memory_object(HEAP_START, HEAP_SIZE, true, false).unwrap();
@@ -84,14 +81,9 @@ pub extern "C" fn start() -> ! {
         ALLOCATOR.lock().init(HEAP_START, HEAP_SIZE);
     }
 
-    // Test the heap
-    let mut v = Vec::new();
-    v.push(11);
-    v.push(8);
-    v.push(7345);
-    for thing in v {
-        info!("There is a number in v: {}", thing);
-    }
+    log::set_logger(&EarlyLogger).unwrap();
+    log::set_max_level(log::LevelFilter::Trace);
+    info!("Simple framebuffer driver is running!");
 
     let framebuffer = Framebuffer::new();
     framebuffer.clear(0xffff00ff);
@@ -102,11 +94,7 @@ pub extern "C" fn start() -> ! {
 
 #[panic_handler]
 pub fn handle_panic(info: &PanicInfo) -> ! {
-    // We ignore the result here because there's no point panicking in the panic handler
-    let _ = syscall::early_log("Test process panicked!");
-    if let Some(location) = info.location() {
-        let _ = syscall::early_log(location.file());
-    }
+    log::error!("PANIC: {:?}", info);
     loop {}
 }
 
