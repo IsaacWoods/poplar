@@ -43,5 +43,9 @@ bitflags::bitflags! {
         const TRANSFER = 0b100;
         /// For `MemoryObject`s, whether the memory can be mapped into the handle owner's `AddressSpace`.
         const MAP = 0x1000;
+        /// For `Channel` ends, whether the `send_message` system call can be used on this `Channel` end.
+        const SEND = 0x1_0000;
+        /// For `Channel` ends, whether the `receive_message` & co. system calls can be used on this `Channel` end.
+        const RECEIVE = 0x10_0000;
     }
 }

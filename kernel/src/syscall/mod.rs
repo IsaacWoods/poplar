@@ -24,6 +24,7 @@ use libpebble::{
         FramebufferInfo,
         GetFramebufferError,
         MapMemoryObjectError,
+        SendMessageError,
     },
     Handle,
     ZERO_HANDLE,
@@ -48,6 +49,8 @@ pub extern "C" fn rust_syscall_handler(number: usize, a: usize, b: usize, c: usi
         syscall::SYSCALL_GET_FRAMEBUFFER => handle_to_syscall_repr(get_framebuffer(task, a)),
         syscall::SYSCALL_CREATE_MEMORY_OBJECT => handle_to_syscall_repr(create_memory_object(task, a, b, c)),
         syscall::SYSCALL_MAP_MEMORY_OBJECT => status_to_syscall_repr(map_memory_object(task, a, b, c)),
+        syscall::SYSCALL_CREATE_CHANNEL => unimplemented!(),
+        syscall::SYSCALL_SEND_MESSAGE => status_to_syscall_repr(send_message(task, a, b, c, d, e)),
 
         _ => {
             // TODO: unsupported system call number, kill process or something?
@@ -175,5 +178,17 @@ fn map_memory_object(
         }
     }
 
+    Ok(())
+}
+
+fn send_message(
+    task: &Arc<Task<HalImpl>>,
+    channel_handle: usize,
+    byte_address: usize,
+    num_bytes: usize,
+    handles_address: usize,
+    num_handles: usize,
+) -> Result<(), SendMessageError> {
+    info!("Message: {:x?}", unsafe { core::slice::from_raw_parts(byte_address as *const u8, num_bytes) });
     Ok(())
 }

@@ -21,6 +21,8 @@ pub const SYSCALL_EARLY_LOG: usize = 1;
 pub const SYSCALL_GET_FRAMEBUFFER: usize = 2;
 pub const SYSCALL_CREATE_MEMORY_OBJECT: usize = 3;
 pub const SYSCALL_MAP_MEMORY_OBJECT: usize = 4;
+pub const SYSCALL_CREATE_CHANNEL: usize = 5;
+pub const SYSCALL_SEND_MESSAGE: usize = 6;
 
 pub fn yield_to_kernel() {
     unsafe {
@@ -79,6 +81,33 @@ pub fn map_memory_object(
             memory_object.0 as usize,
             address_space.0 as usize,
             address_pointer as usize,
+        )
+    })
+}
+
+pub const CHANNEL_MAX_NUM_BYTES: usize = 4096;
+pub const CHANNEL_MAX_NUM_HANDLES: usize = 4;
+
+define_error_type!(SendMessageError {
+    /// The `Channel` handle must have the `SEND` right to use the `send_message` system call.
+    ChannelCannotSend => 1,
+    /// Transferred handles must have the `TRANSFER` right.
+    CannotTransferHandle => 2,
+    BytesAddressInvalid => 3,
+    TooManyBytes => 4,
+    HandlesAddressInvalid => 5,
+    TooManyHandles => 6,
+});
+
+pub fn send_message(channel: Handle, bytes: &[u8], handles: &[Handle]) -> Result<(), SendMessageError> {
+    status_from_syscall_repr(unsafe {
+        raw::syscall5(
+            SYSCALL_SEND_MESSAGE,
+            channel.0 as usize,
+            bytes.as_ptr() as usize,
+            bytes.len(),
+            if handles.len() == 0 { 0x0 } else { handles.as_ptr() as usize },
+            handles.len(),
         )
     })
 }
