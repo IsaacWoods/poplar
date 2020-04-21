@@ -1,0 +1,10 @@
+[package]
+name = "tftp_serve"
+version = "0.1.0"
+authors = ["Isaac Woods"]
+edition = "2018"
+
+[dependencies]
+byteorder = "1"
+tokio = { version = "0.2", features = ["macros", "udp", "stream", "io-util", "fs"]}
+futures = "0.3"
