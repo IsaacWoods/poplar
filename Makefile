@@ -1,4 +1,4 @@
-export ARCH ?= x86_64
+export PLATFORM ?= x86_64
 export BUILD_DIR ?= $(abspath ./build)
 
 IMAGE_NAME ?= pebble.img
@@ -18,7 +18,7 @@ QEMU_COMMON_FLAGS = -cpu max,vmware-cpuid-freq,invtsc \
 					-net none
 
 .PHONY: image_x86_64 prepare kernel test_process simple_fb clean qemu gdb update fmt test site
-.DEFAULT_GOAL := image_$(ARCH)
+.DEFAULT_GOAL := image_$(PLATFORM)
 
 image_x86_64: prepare kernel test_process simple_fb
 	# Create a temporary image for the FAT partition
@@ -41,15 +41,15 @@ prepare:
 	cp ovmf/startup.nsh build/fat/startup.nsh
 
 kernel:
-	make -C kernel kernel_$(ARCH)
+	make -C kernel kernel_$(PLATFORM)
 
 test_process:
 	cargo xbuild --target=test_process/x86_64-pebble-userspace.json --manifest-path test_process/Cargo.toml
 	cp test_process/target/x86_64-pebble-userspace/debug/test_process $(BUILD_DIR)/fat/test_process.elf
 
 simple_fb:
-	cargo xbuild --target=drivers/x86_64-pebble-userspace.json --manifest-path drivers/simple_fb/Cargo.toml
-	cp drivers/target/x86_64-pebble-userspace/debug/simple_fb $(BUILD_DIR)/fat/simple_fb.elf
+	cargo xbuild --target=drivers/$(PLATFORM)-pebble-userspace.json --manifest-path drivers/simple_fb/Cargo.toml
+	cp drivers/target/$(PLATFORM)-pebble-userspace/debug/simple_fb $(BUILD_DIR)/fat/simple_fb.elf
 
 clean:
 	cd drivers && cargo clean
@@ -86,7 +86,7 @@ site:
 	@# Move the static site into the correct place
 	mv site/* pages/
 
-qemu: image_$(ARCH)
+qemu: image_$(PLATFORM)
 	qemu-system-x86_64 \
 		$(QEMU_COMMON_FLAGS) \
 		-enable-kvm

@@ -46,8 +46,10 @@ use per_cpu::KernelPerCpu;
 use scheduler::Scheduler;
 
 cfg_if! {
-    if #[cfg(feature = "arch_x86_64")] {
+    if #[cfg(feature = "platform_x86_64")] {
         type HalImpl = hal_x86_64::HalImpl<KernelPerCpu>;
+    } else if #[cfg(feature ="platform_rpi4")] {
+        type HalImpl = hal_arm64::HalImpl<KernelPerCpu>;
     } else {
         compile_error!("No architecture supplied, or target arch does not have a HAL implementation configured!");
     }

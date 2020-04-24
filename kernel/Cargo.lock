@@ -63,6 +63,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "hal_arm64"
+version = "0.1.0"
+
+[[package]]
 name = "hal_x86_64"
 version = "0.1.0"
 dependencies = [
@@ -85,6 +89,7 @@ dependencies = [
  "bitflags 1.2.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "cfg-if 0.1.10 (registry+https://github.com/rust-lang/crates.io-index)",
  "hal 0.1.0",
+ "hal_arm64 0.1.0",
  "hal_x86_64 0.1.0",
  "libpebble 0.2.0",
  "log 0.4.8 (registry+https://github.com/rust-lang/crates.io-index)",
