@@ -6,7 +6,7 @@ use hal::memory::PhysicalAddress;
 pub struct PebbleAcpiHandler;
 
 impl AcpiHandler for PebbleAcpiHandler {
-    fn map_physical_region<T>(&mut self, physical_address: usize, size: usize) -> PhysicalMapping<T> {
+    unsafe fn map_physical_region<T>(&mut self, physical_address: usize, size: usize) -> PhysicalMapping<T> {
         let virtual_address = kernel_map::physical_to_virtual(PhysicalAddress::new(physical_address).unwrap());
 
         PhysicalMapping {

@@ -2,7 +2,7 @@
 # It is not intended for manual editing.
 [[package]]
 name = "acpi"
-version = "0.8.0"
+version = "1.0.0"
 dependencies = [
  "bit_field 0.10.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "log 0.4.8 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -70,7 +70,7 @@ version = "0.1.0"
 name = "hal_x86_64"
 version = "0.1.0"
 dependencies = [
- "acpi 0.8.0",
+ "acpi 1.0.0",
  "aml 0.8.0",
  "bit_field 0.10.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "bitflags 1.2.1 (registry+https://github.com/rust-lang/crates.io-index)",

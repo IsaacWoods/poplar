@@ -90,7 +90,7 @@ cfg_if::cfg_if! {
                 let acpi_info = match boot_info.rsdp_address {
                     Some(rsdp_address) => {
                         let mut handler = PebbleAcpiHandler;
-                        match acpi::parse_rsdp(&mut handler, usize::from(rsdp_address)) {
+                        match unsafe { acpi::parse_rsdp(&mut handler, usize::from(rsdp_address)) } {
                             Ok(acpi_info) => Some(acpi_info),
 
                             Err(err) => {
@@ -131,6 +131,7 @@ cfg_if::cfg_if! {
                  * the BSP's per-CPU data.
                  * NOTE: Installing the GDT zeros the `gs` segment descriptor so it's important we do it before
                  * installing the per-CPU data.
+                 * TODO: create a TSS for each AP here so we can load the GDT all in one go.
                  */
                 let (mut bsp_percpu, bsp_tss_selector) = per_cpu::PerCpuImpl::<T>::new(per_cpu_data);
                 unsafe {
