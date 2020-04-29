@@ -1,0 +1,16 @@
+[package]
+name = "kernel_x86_64"
+version = "0.1.0"
+authors = ["Isaac Woods"]
+edition = "2018"
+
+[lib]
+crate-type = ["staticlib"]
+
+[dependencies]
+# kernel = { path = "../", features = ["platform_x86_64"] }
+kernel = { path = "../" }
+hal = { path = "../hal" }
+hal_x86_64 = { path = "../hal_x86_64" }
+spin = "0.5"
+log = "0.4"

@@ -25,7 +25,6 @@ mod slab_allocator;
 mod syscall;
 
 use alloc::sync::Arc;
-use cfg_if::cfg_if;
 use core::panic::PanicInfo;
 use hal::{
     boot_info::{BootInfo, LoadedImage},
@@ -45,15 +44,6 @@ use pebble_util::InitGuard;
 use per_cpu::KernelPerCpu;
 use scheduler::Scheduler;
 
-cfg_if! {
-    if #[cfg(feature = "platform_x86_64")] {
-        type HalImpl = hal_x86_64::HalImpl<KernelPerCpu>;
-    } else if #[cfg(feature ="platform_rpi4")] {
-        type HalImpl = hal_arm64::HalImpl<KernelPerCpu>;
-    } else {
-        compile_error!("No architecture supplied, or target arch does not have a HAL implementation configured!");
-    }
-}
 
 #[cfg(not(test))]
 #[global_allocator]

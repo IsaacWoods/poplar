@@ -4,13 +4,8 @@ version = "0.1.0"
 authors = ["Isaac Woods"]
 edition = "2018"
 
-[lib]
-crate-type = ["staticlib"]
-
 [dependencies]
 hal = { path = "hal" }
-hal_x86_64 = { path = "hal_x86_64", features = ["kernel"], optional = true }
-hal_arm64 = { path = "hal_arm64", optional = true }
 pebble_util = { path = "../lib/pebble_util", features = ["has_alloc"] }
 cfg-if = "0.1"
 bitflags = "1"
@@ -20,8 +15,6 @@ log = { version = "0.4", default-features = false }
 libpebble = { path = "../lib/libpebble" }
 
 [features]
-platform_x86_64 = ["hal_x86_64"]
-platform_rpi4 = ["hal_arm64"]
 
 [workspace]
-members = ["efiloader", "hal", "hal_x86_64", "hal_arm64"]
+members = ["efiloader", "hal", "hal_x86_64", "hal_arm64", "kernel_x86_64"]
