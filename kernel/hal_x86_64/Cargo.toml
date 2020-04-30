@@ -5,16 +5,12 @@ authors = ["Isaac Woods"]
 edition = "2018"
 
 [dependencies]
-cfg-if = "0.1"
 hal = { path = "../hal" }
 bitflags = "1"
 bit_field = "0.10"
 spin = "0.5"
 pebble_util = { path = "../../lib/pebble_util" }
 log = { version = "0.4", default-features = false }
-acpi = { path = "../../lib/acpi/acpi", optional = true }
-aml = { path = "../../lib/acpi/aml", optional = true }
 
 [features]
 default_features = []
-kernel = ["acpi", "aml"]
