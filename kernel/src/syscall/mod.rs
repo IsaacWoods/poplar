@@ -5,15 +5,13 @@ use crate::{
         task::{Task, TaskState},
         KernelObject,
     },
-    HalImpl,
+    per_cpu::PerCpu,
+    Platform,
 };
 use alloc::sync::Arc;
 use bit_field::BitField;
 use core::{convert::TryFrom, slice, str};
-use hal::{
-    memory::{Flags, VirtualAddress},
-    Hal,
-};
+use hal::memory::{Flags, VirtualAddress};
 use libpebble::{
     caps::Capability,
     syscall::{
@@ -38,13 +36,19 @@ use log::{info, trace, warn};
 ///
 /// It is defined as using the C ABI, so an architecture can call it stably from assembly if it
 /// wants to.
-#[no_mangle]
-pub extern "C" fn rust_syscall_handler(number: usize, a: usize, b: usize, c: usize, d: usize, e: usize) -> usize {
+// #[no_mangle]
+// pub extern "C" fn rust_syscall_handler(number: usize, a: usize, b: usize, c: usize, d: usize, e: usize) -> usize
+// {
+pub fn handle_syscall<P>(number: usize, a: usize, b: usize, c: usize, d: usize, e: usize) -> usize
+where
+    P: 'static + Platform,
+{
     info!("Syscall! number = {}, a = {}, b = {}, c = {}, d = {}, e = {}", number, a, b, c, d, e);
-    let task = unsafe { HalImpl::per_cpu() }.kernel_data().scheduler().running_task.as_ref().unwrap();
+    let task = unsafe { P::per_cpu() }.scheduler().running_task.as_ref().unwrap();
+    // let task = unsafe { HalImpl::per_cpu() }.kernel_data().scheduler().running_task.as_ref().unwrap();
 
     match number {
-        syscall::SYSCALL_YIELD => yield_syscall(),
+        syscall::SYSCALL_YIELD => yield_syscall::<P>(),
         syscall::SYSCALL_EARLY_LOG => status_to_syscall_repr(early_log(task, a, b)),
         syscall::SYSCALL_GET_FRAMEBUFFER => handle_to_syscall_repr(get_framebuffer(task, a)),
         syscall::SYSCALL_CREATE_MEMORY_OBJECT => handle_to_syscall_repr(create_memory_object(task, a, b, c)),
@@ -60,13 +64,19 @@ pub extern "C" fn rust_syscall_handler(number: usize, a: usize, b: usize, c: usi
     }
 }
 
-fn yield_syscall() -> usize {
+fn yield_syscall<P>() -> usize
+where
+    P: Platform,
+{
     info!("Process yielded!");
-    unsafe { HalImpl::per_cpu() }.kernel_data().scheduler().switch_to_next(TaskState::Ready);
+    unsafe { P::per_cpu() }.scheduler().switch_to_next(TaskState::Ready);
     0
 }
 
-fn early_log(task: &Arc<Task<HalImpl>>, str_length: usize, str_address: usize) -> Result<(), EarlyLogError> {
+fn early_log<P>(task: &Arc<Task<P>>, str_length: usize, str_address: usize) -> Result<(), EarlyLogError>
+where
+    P: Platform,
+{
     // Check the current task has the `EarlyLogging` capability
     if !task.capabilities.contains(&Capability::EarlyLogging) {
         return Err(EarlyLogError::TaskDoesNotHaveCorrectCapability);
@@ -86,7 +96,10 @@ fn early_log(task: &Arc<Task<HalImpl>>, str_length: usize, str_address: usize) -
     Ok(())
 }
 
-fn get_framebuffer(task: &Arc<Task<HalImpl>>, info_address: usize) -> Result<Handle, GetFramebufferError> {
+fn get_framebuffer<P>(task: &Arc<Task<P>>, info_address: usize) -> Result<Handle, GetFramebufferError>
+where
+    P: Platform,
+{
     /*
      * Check that the task has the correct capability.
      */
@@ -105,12 +118,15 @@ fn get_framebuffer(task: &Arc<Task<HalImpl>>, info_address: usize) -> Result<Han
     Ok(handle)
 }
 
-fn create_memory_object(
-    task: &Arc<Task<HalImpl>>,
+fn create_memory_object<P>(
+    task: &Arc<Task<P>>,
     virtual_address: usize,
     size: usize,
     flags: usize,
-) -> Result<Handle, CreateMemoryObjectError> {
+) -> Result<Handle, CreateMemoryObjectError>
+where
+    P: 'static + Platform,
+{
     let writable = flags.get_bit(0);
     let executable = flags.get_bit(1);
 
@@ -128,12 +144,15 @@ fn create_memory_object(
     Ok(task.add_handle(memory_object))
 }
 
-fn map_memory_object(
-    task: &Arc<Task<HalImpl>>,
+fn map_memory_object<'a, P>(
+    task: &Arc<Task<P>>,
     memory_object_handle: usize,
     address_space_handle: usize,
     address_ptr: usize,
-) -> Result<(), MapMemoryObjectError> {
+) -> Result<(), MapMemoryObjectError>
+where
+    P: 'a + Platform,
+{
     let memory_object_handle =
         Handle::try_from(memory_object_handle).map_err(|_| MapMemoryObjectError::InvalidHandle)?;
     let address_space_handle =
@@ -161,7 +180,7 @@ fn map_memory_object(
             .get(&memory_object_handle)
             .ok_or(MapMemoryObjectError::InvalidHandle)?
             .clone()
-            .downcast_arc::<AddressSpace<HalImpl>>()
+            .downcast_arc::<AddressSpace<P>>()
             .ok()
             .ok_or(MapMemoryObjectError::NotAnAddressSpace)?
     }
@@ -181,14 +200,17 @@ fn map_memory_object(
     Ok(())
 }
 
-fn send_message(
-    task: &Arc<Task<HalImpl>>,
+fn send_message<P>(
+    task: &Arc<Task<P>>,
     channel_handle: usize,
     byte_address: usize,
     num_bytes: usize,
     handles_address: usize,
     num_handles: usize,
-) -> Result<(), SendMessageError> {
+) -> Result<(), SendMessageError>
+where
+    P: Platform,
+{
     info!("Message: {:x?}", unsafe { core::slice::from_raw_parts(byte_address as *const u8, num_bytes) });
     Ok(())
 }

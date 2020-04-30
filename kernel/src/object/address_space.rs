@@ -1,10 +1,7 @@
 use super::{alloc_kernel_object_id, memory_object::MemoryObject, task::TaskStack, KernelObject, KernelObjectId};
-use crate::{memory::PhysicalMemoryManager, per_cpu::KernelPerCpu, slab_allocator::SlabAllocator};
+use crate::{memory::PhysicalMemoryManager, per_cpu::PerCpu, slab_allocator::SlabAllocator, Platform};
 use alloc::{sync::Arc, vec::Vec};
-use hal::{
-    memory::{FrameAllocator, PageTable, VirtualAddress, MEBIBYTES_TO_BYTES},
-    Hal,
-};
+use hal::memory::{FrameAllocator, PageTable, VirtualAddress, MEBIBYTES_TO_BYTES};
 use libpebble::syscall::MapMemoryObjectError;
 use spin::Mutex;
 
@@ -20,32 +17,32 @@ pub enum State {
     Active,
 }
 
-pub struct AddressSpace<H>
+pub struct AddressSpace<P>
 where
-    H: Hal<KernelPerCpu>,
+    P: Platform,
 {
     pub id: KernelObjectId,
     pub owner: KernelObjectId,
     pub state: Mutex<State>,
     pub memory_objects: Mutex<Vec<Arc<MemoryObject>>>,
-    page_table: Mutex<H::PageTable>,
+    page_table: Mutex<P::PageTable>,
     user_stack_allocator: Mutex<SlabAllocator>,
 }
 
-impl<H> AddressSpace<H>
+impl<P> AddressSpace<P>
 where
-    H: Hal<KernelPerCpu>,
+    P: Platform,
 {
-    pub fn new<A>(owner: KernelObjectId, kernel_page_table: &H::PageTable, allocator: &A) -> Arc<AddressSpace<H>>
+    pub fn new<A>(owner: KernelObjectId, kernel_page_table: &P::PageTable, allocator: &A) -> Arc<AddressSpace<P>>
     where
-        A: FrameAllocator<H::PageTableSize>,
+        A: FrameAllocator<P::PageTableSize>,
     {
         Arc::new(AddressSpace {
             id: alloc_kernel_object_id(),
             owner,
             state: Mutex::new(State::NotActive),
             memory_objects: Mutex::new(vec![]),
-            page_table: Mutex::new(H::PageTable::new_for_address_space(kernel_page_table, allocator)),
+            page_table: Mutex::new(P::PageTable::new_for_address_space(kernel_page_table, allocator)),
             user_stack_allocator: Mutex::new(SlabAllocator::new(
                 USER_STACK_BOTTOM,
                 USER_STACK_TOP,
@@ -114,9 +111,9 @@ where
     }
 }
 
-impl<H> KernelObject for AddressSpace<H>
+impl<'a, P> KernelObject for AddressSpace<P>
 where
-    H: 'static + Hal<KernelPerCpu>,
+    P: 'a + Platform,
 {
     fn id(&self) -> KernelObjectId {
         self.id

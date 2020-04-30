@@ -1,39 +1,38 @@
 use crate::{
     object::task::{Task, TaskState},
-    per_cpu::KernelPerCpu,
+    per_cpu::PerCpu,
+    Platform,
 };
 use alloc::{collections::VecDeque, sync::Arc, vec::Vec};
-use hal::{memory::VirtualAddress, Hal, PerCpu, TaskHelper};
+use hal::memory::VirtualAddress;
 use log::trace;
 
-pub struct Scheduler<H>
+pub struct Scheduler<P>
 where
-    H: Hal<KernelPerCpu>,
+    P: Platform,
 {
-    pub running_task: Option<Arc<Task<H>>>,
+    pub running_task: Option<Arc<Task<P>>>,
     /// List of Tasks ready to be scheduled. Every kernel object in this list must be a Task.
     /// Backed by a `VecDeque` so we can rotate objects in the queue efficiently.
-    ready_queue: VecDeque<Arc<Task<H>>>,
-    blocked_queue: Vec<Arc<Task<H>>>,
+    ready_queue: VecDeque<Arc<Task<P>>>,
+    blocked_queue: Vec<Arc<Task<P>>>,
 }
 
-impl<H> Scheduler<H>
+impl<P> Scheduler<P>
 where
-    H: Hal<KernelPerCpu>,
+    P: Platform,
 {
-    pub fn new() -> Scheduler<H> {
+    pub fn new() -> Scheduler<P> {
         Scheduler { running_task: None, ready_queue: VecDeque::new(), blocked_queue: Vec::new() }
     }
 
-    pub fn add_task(&mut self, task: Arc<Task<H>>) -> Result<(), ScheduleError> {
+    pub fn add_task(&mut self, task: Arc<Task<P>>) {
         let current_state = task.state.lock().clone();
         match current_state {
             TaskState::Ready => self.ready_queue.push_back(task),
             TaskState::Blocked(_) => self.blocked_queue.push(task),
             TaskState::Running => panic!("Tried to schedule task that's already running!"),
         }
-
-        Ok(())
     }
 
     /// Performs the first transistion from the kernel into userspace. On some platforms, this has
@@ -57,8 +56,8 @@ where
         task.address_space.switch_to();
         let kernel_stack_pointer: VirtualAddress = *task.kernel_stack_pointer.lock();
         unsafe {
-            H::per_cpu().set_kernel_stack_pointer(kernel_stack_pointer);
-            H::TaskHelper::drop_into_userspace(kernel_stack_pointer)
+            P::per_cpu().set_kernel_stack_pointer(kernel_stack_pointer);
+            P::drop_into_userspace(kernel_stack_pointer)
         }
     }
 
@@ -106,8 +105,8 @@ where
             let old_kernel_stack: *mut VirtualAddress = &mut *old_task.kernel_stack_pointer.lock() as *mut _;
             let new_kernel_stack = *self.running_task.as_ref().unwrap().kernel_stack_pointer.lock();
             unsafe {
-                H::per_cpu().set_kernel_stack_pointer(new_kernel_stack);
-                H::TaskHelper::context_switch(old_kernel_stack, new_kernel_stack);
+                P::per_cpu().set_kernel_stack_pointer(new_kernel_stack);
+                P::context_switch(old_kernel_stack, new_kernel_stack);
             }
         } else {
             /*
@@ -119,6 +118,3 @@ where
         }
     }
 }
-
-#[derive(Debug)]
-pub enum ScheduleError {}

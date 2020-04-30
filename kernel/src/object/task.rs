@@ -1,11 +1,11 @@
 use super::{address_space::AddressSpace, alloc_kernel_object_id, KernelObject, KernelObjectId};
-use crate::{memory::PhysicalMemoryManager, per_cpu::KernelPerCpu, slab_allocator::SlabAllocator};
+use crate::{memory::PhysicalMemoryManager, per_cpu::PerCpu, slab_allocator::SlabAllocator, Platform};
 use alloc::{collections::BTreeMap, string::String, sync::Arc, vec::Vec};
 use core::{
     marker::PhantomData,
     sync::atomic::{AtomicU32, Ordering},
 };
-use hal::{memory::VirtualAddress, Hal};
+use hal::memory::VirtualAddress;
 use libpebble::{caps::Capability, Handle};
 use spin::{Mutex, RwLock};
 
@@ -45,14 +45,14 @@ pub struct TaskStack {
     pub stack_bottom: VirtualAddress,
 }
 
-pub struct Task<H>
+pub struct Task<P>
 where
-    H: Hal<KernelPerCpu>,
+    P: Platform,
 {
     id: KernelObjectId,
     owner: KernelObjectId,
     pub name: String,
-    pub address_space: Arc<AddressSpace<H>>,
+    pub address_space: Arc<AddressSpace<P>>,
     pub state: Mutex<TaskState>,
     pub capabilities: Vec<Capability>,
 
@@ -64,20 +64,18 @@ where
     next_handle: AtomicU32,
 }
 
-impl<H> Task<H>
+impl<P> Task<P>
 where
-    H: Hal<KernelPerCpu>,
+    P: Platform,
 {
     pub fn from_boot_info(
         owner: KernelObjectId,
-        address_space: Arc<AddressSpace<H>>,
+        address_space: Arc<AddressSpace<P>>,
         image: &hal::boot_info::LoadedImage,
         allocator: &PhysicalMemoryManager,
-        kernel_page_table: &mut H::PageTable,
-        kernel_stack_allocator: &mut KernelStackAllocator<H>,
-    ) -> Result<Arc<Task<H>>, TaskCreationError> {
-        use hal::TaskHelper;
-
+        kernel_page_table: &mut P::PageTable,
+        kernel_stack_allocator: &mut KernelStackAllocator<P>,
+    ) -> Result<Arc<Task<P>>, TaskCreationError> {
         // TODO: better way of getting initial stack sizes
         let user_stack =
             address_space.alloc_user_stack(0x4000, allocator).ok_or(TaskCreationError::AddressSpaceFull)?;
@@ -87,7 +85,7 @@ where
 
         let mut kernel_stack_pointer = kernel_stack.top;
         unsafe {
-            H::TaskHelper::initialize_kernel_stack(&mut kernel_stack_pointer, image.entry_point, user_stack.top);
+            P::initialize_task_kernel_stack(&mut kernel_stack_pointer, image.entry_point, user_stack.top);
         }
 
         Ok(Arc::new(Task {
@@ -113,9 +111,9 @@ where
     }
 }
 
-impl<H> KernelObject for Task<H>
+impl<P> KernelObject for Task<P>
 where
-    H: 'static + Hal<KernelPerCpu>,
+    P: 'static + Platform,
 {
     fn id(&self) -> KernelObjectId {
         self.id
@@ -156,24 +154,24 @@ fn decode_capabilities(mut cap_stream: &[u8]) -> Result<Vec<Capability>, TaskCre
     Ok(caps)
 }
 
-pub struct KernelStackAllocator<H>
+pub struct KernelStackAllocator<P>
 where
-    H: Hal<KernelPerCpu>,
+    P: Platform,
 {
     kernel_stack_slots: Mutex<SlabAllocator>,
     slot_size: usize,
-    _phantom: PhantomData<H>,
+    _phantom: PhantomData<P>,
 }
 
-impl<H> KernelStackAllocator<H>
+impl<P> KernelStackAllocator<P>
 where
-    H: Hal<KernelPerCpu>,
+    P: Platform,
 {
     pub fn new(
         stacks_bottom: VirtualAddress,
         stacks_top: VirtualAddress,
         slot_size: usize,
-    ) -> KernelStackAllocator<H> {
+    ) -> KernelStackAllocator<P> {
         KernelStackAllocator {
             kernel_stack_slots: Mutex::new(SlabAllocator::new(stacks_bottom, stacks_top, slot_size)),
             slot_size,
@@ -185,7 +183,7 @@ where
         &self,
         initial_size: usize,
         physical_memory_manager: &PhysicalMemoryManager,
-        kernel_page_table: &mut H::PageTable,
+        kernel_page_table: &mut P::PageTable,
     ) -> Option<TaskStack> {
         use hal::memory::{Flags, PageTable};
 
