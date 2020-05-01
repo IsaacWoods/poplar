@@ -46,7 +46,7 @@ syscall_handler:
     mov rcx, r10
 
     // Call the Rust handler. From this point, `rax` contains the return value, so musn't be trashed!
-    call rust_syscall_handler
+    call rust_syscall_entry
 
     // Zero registers trashed by the Rust code before we return to userspace
     // We don't need to zero `rdi` because we're going to use it in a second

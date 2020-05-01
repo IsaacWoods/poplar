@@ -1,6 +1,5 @@
 #![cfg_attr(not(test), no_std)]
 #![feature(
-    asm,
     decl_macro,
     allocator_api,
     const_fn,
@@ -41,8 +40,6 @@ use object::{
 };
 use pebble_util::InitGuard;
 use per_cpu::PerCpu;
-// use per_cpu::KernelPerCpu;
-// use scheduler::Scheduler;
 
 #[cfg(not(test))]
 #[global_allocator]
@@ -51,12 +48,15 @@ pub static ALLOCATOR: LockedHoleAllocator = LockedHoleAllocator::new_uninitializ
 pub static PHYSICAL_MEMORY_MANAGER: InitGuard<PhysicalMemoryManager> = InitGuard::uninit();
 pub static FRAMEBUFFER: InitGuard<(libpebble::syscall::FramebufferInfo, Arc<MemoryObject>)> = InitGuard::uninit();
 
-pub trait Platform: Sized {
+pub trait Platform: Sized + 'static {
     type PageTableSize: FrameSize;
     type PageTable: PageTable<Self::PageTableSize> + Send;
     type PerCpu: PerCpu<Self>;
 
     fn kernel_page_table(&mut self) -> &mut Self::PageTable;
+
+    /// Get the per-CPU info for the current CPU. To make this safe, the per-CPU info must be installed before the
+    /// `Platform` implementation is created.
     fn per_cpu<'a>() -> Pin<&'a mut Self::PerCpu>;
 
     /// Often, the kernel stack of a task must be initialized to allow it to enter usermode for the first time.

@@ -28,7 +28,7 @@ extern "C" {
 
 #[no_mangle]
 extern "C" fn rust_syscall_entry(number: usize, a: usize, b: usize, c: usize, d: usize, e: usize) -> usize {
-    kernel::syscall::handle_syscall::<PlatformImpl>(number, a, b, c, d, e)
+    kernel::syscall::handle_syscall::<crate::PlatformImpl>(number, a, b, c, d, e)
 }
 
 /// This should only be accessed directly by the bootstrap processor.

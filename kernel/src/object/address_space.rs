@@ -111,9 +111,9 @@ where
     }
 }
 
-impl<'a, P> KernelObject for AddressSpace<P>
+impl<P> KernelObject for AddressSpace<P>
 where
-    P: 'a + Platform,
+    P: Platform,
 {
     fn id(&self) -> KernelObjectId {
         self.id

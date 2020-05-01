@@ -113,7 +113,7 @@ where
 
 impl<P> KernelObject for Task<P>
 where
-    P: 'static + Platform,
+    P: Platform,
 {
     fn id(&self) -> KernelObjectId {
         self.id

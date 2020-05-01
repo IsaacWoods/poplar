@@ -14,7 +14,5 @@ spin = "0.4"
 log = { version = "0.4", default-features = false }
 libpebble = { path = "../lib/libpebble" }
 
-[features]
-
 [workspace]
 members = ["efiloader", "hal", "hal_x86_64", "hal_arm64", "kernel_x86_64"]

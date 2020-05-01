@@ -33,19 +33,12 @@ use log::{info, trace, warn};
 /// receives the syscall (each architecture is free to do this however it wishes). The only
 /// parameter that is guaranteed to be valid is `number`; the meaning of the rest may be undefined
 /// depending on how many parameters the specific system call takes.
-///
-/// It is defined as using the C ABI, so an architecture can call it stably from assembly if it
-/// wants to.
-// #[no_mangle]
-// pub extern "C" fn rust_syscall_handler(number: usize, a: usize, b: usize, c: usize, d: usize, e: usize) -> usize
-// {
 pub fn handle_syscall<P>(number: usize, a: usize, b: usize, c: usize, d: usize, e: usize) -> usize
 where
-    P: 'static + Platform,
+    P: Platform,
 {
     info!("Syscall! number = {}, a = {}, b = {}, c = {}, d = {}, e = {}", number, a, b, c, d, e);
-    let task = unsafe { P::per_cpu() }.scheduler().running_task.as_ref().unwrap();
-    // let task = unsafe { HalImpl::per_cpu() }.kernel_data().scheduler().running_task.as_ref().unwrap();
+    let task = P::per_cpu().scheduler().get_mut().running_task.as_ref().unwrap();
 
     match number {
         syscall::SYSCALL_YIELD => yield_syscall::<P>(),
@@ -69,7 +62,7 @@ where
     P: Platform,
 {
     info!("Process yielded!");
-    unsafe { P::per_cpu() }.scheduler().switch_to_next(TaskState::Ready);
+    P::per_cpu().scheduler().switch_to_next(TaskState::Ready);
     0
 }
 
@@ -125,7 +118,7 @@ fn create_memory_object<P>(
     flags: usize,
 ) -> Result<Handle, CreateMemoryObjectError>
 where
-    P: 'static + Platform,
+    P: Platform,
 {
     let writable = flags.get_bit(0);
     let executable = flags.get_bit(1);
@@ -144,14 +137,14 @@ where
     Ok(task.add_handle(memory_object))
 }
 
-fn map_memory_object<'a, P>(
+fn map_memory_object<P>(
     task: &Arc<Task<P>>,
     memory_object_handle: usize,
     address_space_handle: usize,
     address_ptr: usize,
 ) -> Result<(), MapMemoryObjectError>
 where
-    P: 'a + Platform,
+    P: Platform,
 {
     let memory_object_handle =
         Handle::try_from(memory_object_handle).map_err(|_| MapMemoryObjectError::InvalidHandle)?;
