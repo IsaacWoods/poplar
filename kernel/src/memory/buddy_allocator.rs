@@ -1,7 +1,7 @@
 //! This module implements a buddy allocator, an efficient scheme for managing physical memory. In
 //! this allocator, memory is broken up into a number of blocks, each of which is a power-of-2 frames in
 //! size. A block of size `2^^n` frames is said to be of order `n`:
-//!
+//! ```ignore
 //!       16                               0       Order       Size of blocks
 //!        |-------------------------------|
 //!        |               8               |       4           2^^4 = 16
@@ -14,6 +14,7 @@
 //!        |-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|
 //!        | | | | | | | | | | | | | | | | |       0           2^^0 = 1
 //!        |-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|
+//! ```
 //!
 //! The blocks in each order are arranged in pairs - each has a "buddy" where A's buddy is B and B's
 //! buddy is A. To find the address of a block's buddy, the bit corresponding to the order is simply
