@@ -23,7 +23,7 @@ use hal_x86_64::{
     paging::PageTableImpl,
 };
 use interrupts::InterruptController;
-use kernel::{memory::PhysicalMemoryManager, scheduler::Scheduler, Platform};
+use kernel::{memory::PhysicalMemoryManager, object::task::KernelStackAllocator, scheduler::Scheduler, Platform};
 use log::{error, info, warn};
 
 pub struct PlatformImpl {
@@ -40,7 +40,7 @@ impl Platform for PlatformImpl {
     }
 
     fn per_cpu<'a>() -> Pin<&'a mut Self::PerCpu> {
-        unimplemented!()
+        unsafe { per_cpu::get_per_cpu_data() }
     }
 
     unsafe fn initialize_task_kernel_stack(
@@ -48,15 +48,15 @@ impl Platform for PlatformImpl {
         task_entry_point: VirtualAddress,
         user_stack_top: VirtualAddress,
     ) {
-        unimplemented!()
+        task::initialize_kernel_stack(kernel_stack_top, task_entry_point, user_stack_top);
     }
 
     unsafe fn context_switch(current_kernel_stack: *mut VirtualAddress, new_kernel_stack: VirtualAddress) {
-        unimplemented!()
+        task::context_switch(current_kernel_stack, new_kernel_stack)
     }
 
     unsafe fn drop_into_userspace(kernel_stack_pointer: VirtualAddress) -> ! {
-        unimplemented!()
+        task::drop_into_userspace(kernel_stack_pointer)
     }
 }
 
@@ -166,9 +166,38 @@ pub extern "C" fn kentry(boot_info: &BootInfo) -> ! {
     let mut interrupt_controller = InterruptController::init(acpi_info.as_ref().unwrap(), &mut aml_context);
     interrupt_controller.enable_local_timer(&cpu_info, Duration::from_secs(3));
 
-    let platform = PlatformImpl { kernel_page_table };
+    let mut platform = PlatformImpl { kernel_page_table };
 
-    loop {}
+    // TODO: do this better
+    const KERNEL_STACKS_BOTTOM: VirtualAddress = VirtualAddress::new(0xffff_ffdf_8000_0000);
+    const KERNEL_STACKS_TOP: VirtualAddress = VirtualAddress::new(0xffff_ffff_8000_0000);
+    let mut kernel_stack_allocator = KernelStackAllocator::<PlatformImpl>::new(
+        KERNEL_STACKS_BOTTOM,
+        KERNEL_STACKS_TOP,
+        2 * hal::memory::MEBIBYTES_TO_BYTES,
+    );
+
+    /*
+     * Create kernel objects from loaded images and schedule them.
+     */
+    info!("Loading {} initial tasks to the ready queue", boot_info.loaded_images.num_images);
+    for image in boot_info.loaded_images.images() {
+        kernel::load_task(
+            &mut PlatformImpl::per_cpu().scheduler(),
+            image,
+            platform.kernel_page_table(),
+            &kernel::PHYSICAL_MEMORY_MANAGER.get(),
+            &mut kernel_stack_allocator,
+        );
+    }
+    if let Some(ref video_info) = boot_info.video_mode {
+        kernel::create_framebuffer(video_info);
+    }
+
+    /*
+     * Drop into userspace!
+     */
+    PlatformImpl::per_cpu().scheduler().drop_to_userspace()
 }
 
 /// We rely on certain processor features to be present for simplicity and sanity-retention. This

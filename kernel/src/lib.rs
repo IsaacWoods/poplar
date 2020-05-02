@@ -17,7 +17,7 @@ extern crate alloc;
 
 mod heap_allocator;
 pub mod memory;
-mod object;
+pub mod object;
 pub mod per_cpu;
 pub mod scheduler;
 mod slab_allocator;
@@ -40,6 +40,7 @@ use object::{
 };
 use pebble_util::InitGuard;
 use per_cpu::PerCpu;
+use scheduler::Scheduler;
 
 #[cfg(not(test))]
 #[global_allocator]
@@ -139,65 +140,67 @@ pub trait Platform: Sized + 'static {
 //     unsafe { HalImpl::per_cpu() }.kernel_data().scheduler().drop_to_userspace()
 // }
 
-// fn load_task(
-//     scheduler: &mut Scheduler<HalImpl>,
-//     image: &LoadedImage,
-//     kernel_page_table: &mut <HalImpl as Hal<KernelPerCpu>>::PageTable,
-//     allocator: &PhysicalMemoryManager,
-//     kernel_stack_allocator: &mut KernelStackAllocator<HalImpl>,
-// ) {
-//     use object::SENTINEL_KERNEL_ID;
+pub fn load_task<P>(
+    scheduler: &mut Scheduler<P>,
+    image: &LoadedImage,
+    kernel_page_table: &mut P::PageTable,
+    allocator: &PhysicalMemoryManager,
+    kernel_stack_allocator: &mut KernelStackAllocator<P>,
+) where
+    P: Platform,
+{
+    use object::SENTINEL_KERNEL_ID;
 
-//     let address_space = AddressSpace::new(SENTINEL_KERNEL_ID, kernel_page_table, allocator);
-//     let task = Task::from_boot_info(
-//         SENTINEL_KERNEL_ID,
-//         address_space.clone(),
-//         image,
-//         allocator,
-//         kernel_page_table,
-//         kernel_stack_allocator,
-//     )
-//     .expect("Failed to load initial task");
+    let address_space = AddressSpace::new(SENTINEL_KERNEL_ID, kernel_page_table, allocator);
+    let task = Task::from_boot_info(
+        SENTINEL_KERNEL_ID,
+        address_space.clone(),
+        image,
+        allocator,
+        kernel_page_table,
+        kernel_stack_allocator,
+    )
+    .expect("Failed to load initial task");
 
-//     for segment in image.segments() {
-//         let memory_object = MemoryObject::from_boot_info(task.id(), segment);
-//         address_space.map_memory_object(memory_object, allocator).unwrap();
-//     }
+    for segment in image.segments() {
+        let memory_object = MemoryObject::from_boot_info(task.id(), segment);
+        address_space.map_memory_object(memory_object, allocator).unwrap();
+    }
 
-//     scheduler.add_task(task).unwrap();
-// }
+    scheduler.add_task(task);
+}
 
-// fn create_framebuffer(video_info: &hal::boot_info::VideoModeInfo) {
-//     use hal::{
-//         boot_info::PixelFormat as BootPixelFormat,
-//         memory::{Flags, FrameSize, Size4KiB},
-//     };
-//     use libpebble::syscall::{FramebufferInfo, PixelFormat};
+pub fn create_framebuffer(video_info: &hal::boot_info::VideoModeInfo) {
+    use hal::{
+        boot_info::PixelFormat as BootPixelFormat,
+        memory::{Flags, FrameSize, Size4KiB},
+    };
+    use libpebble::syscall::{FramebufferInfo, PixelFormat};
 
-//     // TODO: this is not the way to do it - remove the set virtual address when we've implemented the virtual
-// range     // manager
-//     const VIRTUAL_START: VirtualAddress = VirtualAddress::new(0x00000005_00000000);
-//     // We only support RGB32 and BGR32 pixel formats so BPP will always be 4 for now.
-//     const BPP: usize = 4;
+    // TODO: this is not the way to do it - remove the set virtual address when we've implemented the virtual range
+    // manager
+    const VIRTUAL_START: VirtualAddress = VirtualAddress::new(0x00000005_00000000);
+    // We only support RGB32 and BGR32 pixel formats so BPP will always be 4 for now.
+    const BPP: usize = 4;
 
-//     let size_in_bytes = video_info.stride * video_info.height * BPP;
-//     let memory_object = MemoryObject::new(
-//         object::SENTINEL_KERNEL_ID,
-//         VIRTUAL_START,
-//         video_info.framebuffer_address,
-//         pebble_util::math::align_up(size_in_bytes, Size4KiB::SIZE),
-//         Flags { writable: true, user_accessible: true, cached: false, ..Default::default() },
-//     );
+    let size_in_bytes = video_info.stride * video_info.height * BPP;
+    let memory_object = MemoryObject::new(
+        object::SENTINEL_KERNEL_ID,
+        VIRTUAL_START,
+        video_info.framebuffer_address,
+        pebble_util::math::align_up(size_in_bytes, Size4KiB::SIZE),
+        Flags { writable: true, user_accessible: true, cached: false, ..Default::default() },
+    );
 
-//     let info = FramebufferInfo {
-//         width: video_info.width as u16,
-//         height: video_info.height as u16,
-//         stride: video_info.stride as u16,
-//         pixel_format: match video_info.pixel_format {
-//             BootPixelFormat::RGB32 => PixelFormat::RGB32,
-//             BootPixelFormat::BGR32 => PixelFormat::BGR32,
-//         },
-//     };
+    let info = FramebufferInfo {
+        width: video_info.width as u16,
+        height: video_info.height as u16,
+        stride: video_info.stride as u16,
+        pixel_format: match video_info.pixel_format {
+            BootPixelFormat::RGB32 => PixelFormat::RGB32,
+            BootPixelFormat::BGR32 => PixelFormat::BGR32,
+        },
+    };
 
-//     FRAMEBUFFER.initialize((info, memory_object));
-// }
+    FRAMEBUFFER.initialize((info, memory_object));
+}
