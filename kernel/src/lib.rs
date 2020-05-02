@@ -26,11 +26,10 @@ pub mod syscall;
 use alloc::sync::Arc;
 use core::{panic::PanicInfo, pin::Pin};
 use hal::{
-    boot_info::{BootInfo, LoadedImage},
+    boot_info::LoadedImage,
     memory::{FrameSize, PageTable, VirtualAddress},
 };
 use heap_allocator::LockedHoleAllocator;
-use log::{error, info};
 use memory::PhysicalMemoryManager;
 use object::{
     address_space::AddressSpace,
@@ -173,7 +172,7 @@ pub fn load_task<P>(
 pub fn create_framebuffer(video_info: &hal::boot_info::VideoModeInfo) {
     use hal::{
         boot_info::PixelFormat as BootPixelFormat,
-        memory::{Flags, FrameSize, Size4KiB},
+        memory::{Flags, Size4KiB},
     };
     use libpebble::syscall::{FramebufferInfo, PixelFormat};
 

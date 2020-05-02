@@ -1,6 +1,6 @@
 #![no_std]
 #![no_main]
-#![feature(panic_info_message, abi_efiapi, cell_update, asm, never_type)]
+#![feature(panic_info_message, abi_efiapi, cell_update, llvm_asm, never_type)]
 
 mod allocator;
 mod command_line;
@@ -204,7 +204,7 @@ fn main(image_handle: Handle, system_table: SystemTable<Boot>) -> Result<!, Load
         /*
          * We disable interrupts until the kernel has a chance to install its own IDT.
          */
-        asm!("cli");
+        llvm_asm!("cli");
         page_table.switch_to();
 
         /*
@@ -212,7 +212,7 @@ fn main(image_handle: Handle, system_table: SystemTable<Boot>) -> Result<!, Load
          * variables will no longer be available.
          */
         info!("Jumping into kernel!\n\n\n");
-        asm!("mov rsp, rax
+        llvm_asm!("mov rsp, rax
               jmp rbx"
              :
              : "{rax}"(kernel_info.stack_top), "{rbx}"(kernel_info.entry_point), "{rdi}"(boot_info_virtual_address)

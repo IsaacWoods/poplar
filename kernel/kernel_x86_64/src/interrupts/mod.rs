@@ -218,7 +218,7 @@ extern "C" fn spurious_handler(_: &InterruptStackFrame) {}
 /// the rest we have to manually preserve them. Use `restore_regs` to restore the scratch registers
 /// before returning from the handler.
 macro save_regs() {
-    asm!("push rax
+    llvm_asm!("push rax
           push rcx
           push rdx
           push rsi
@@ -236,7 +236,7 @@ macro save_regs() {
 
 /// Restore the saved scratch registers.
 macro restore_regs() {
-    asm!("pop r11
+    llvm_asm!("pop r11
           pop r10
           pop r9
           pop r8
@@ -263,7 +263,7 @@ macro wrap_handler($name: path) {
                  * already be aligned correctly.
                  */
                 save_regs!();
-                asm!("mov rdi, rsp
+                llvm_asm!("mov rdi, rsp
                       add rdi, 0x48
                       call $0"
                     :
@@ -272,7 +272,7 @@ macro wrap_handler($name: path) {
                     : "intel"
                     );
                 restore_regs!();
-                asm!("iretq"
+                llvm_asm!("iretq"
                      :
                      :
                      :
@@ -297,7 +297,7 @@ macro wrap_handler_with_error_code($name: path) {
                  * 0x50 bytes, we need to manually align the stack.
                  */
                 save_regs!();
-                asm!("mov rsi, [rsp+0x48]   // Put the error code in RSI
+                llvm_asm!("mov rsi, [rsp+0x48]   // Put the error code in RSI
                       mov rdi, rsp
                       add rdi, 0x50
                       sub rsp, 8            // Align the stack pointer
@@ -309,7 +309,7 @@ macro wrap_handler_with_error_code($name: path) {
                      : "intel"
                     );
                 restore_regs!();
-                asm!("add rsp, 8            // Pop the error code
+                llvm_asm!("add rsp, 8            // Pop the error code
                       iretq"
                      :
                      :

@@ -1,7 +1,7 @@
 #[inline(never)]
 pub unsafe fn syscall0(number: usize) -> usize {
     let result: usize;
-    asm!("syscall"
+    llvm_asm!("syscall"
     : "={rax}"(result)
     : "{rdi}"(number)
     :
@@ -13,7 +13,7 @@ pub unsafe fn syscall0(number: usize) -> usize {
 #[inline(never)]
 pub unsafe fn syscall1(number: usize, a: usize) -> usize {
     let result: usize;
-    asm!("syscall"
+    llvm_asm!("syscall"
     : "={rax}"(result)
     : "{rdi}"(number), "{rsi}"(a)
     :
@@ -25,7 +25,7 @@ pub unsafe fn syscall1(number: usize, a: usize) -> usize {
 #[inline(never)]
 pub unsafe fn syscall2(number: usize, a: usize, b: usize) -> usize {
     let result: usize;
-    asm!("syscall"
+    llvm_asm!("syscall"
     : "={rax}"(result)
     : "{rdi}"(number), "{rsi}"(a), "{rdx}"(b)
     :
@@ -37,7 +37,7 @@ pub unsafe fn syscall2(number: usize, a: usize, b: usize) -> usize {
 #[inline(never)]
 pub unsafe fn syscall3(number: usize, a: usize, b: usize, c: usize) -> usize {
     let result: usize;
-    asm!("syscall"
+    llvm_asm!("syscall"
     : "={rax}"(result)
     : "{rdi}"(number), "{rsi}"(a), "{rdx}"(b), "{r10}"(c)
     :
@@ -49,7 +49,7 @@ pub unsafe fn syscall3(number: usize, a: usize, b: usize, c: usize) -> usize {
 #[inline(never)]
 pub unsafe fn syscall4(number: usize, a: usize, b: usize, c: usize, d: usize) -> usize {
     let result: usize;
-    asm!("syscall"
+    llvm_asm!("syscall"
     : "={rax}"(result)
     : "{rdi}"(number), "{rsi}"(a), "{rdx}"(b), "{r10}"(c), "{r8}"(d)
     :
@@ -61,7 +61,7 @@ pub unsafe fn syscall4(number: usize, a: usize, b: usize, c: usize, d: usize) ->
 #[inline(never)]
 pub unsafe fn syscall5(number: usize, a: usize, b: usize, c: usize, d: usize, e: usize) -> usize {
     let result: usize;
-    asm!("syscall"
+    llvm_asm!("syscall"
     : "={rax}"(result)
     : "{rdi}"(number), "{rsi}"(a), "{rdx}"(b), "{r10}"(c), "{r8}"(d), "{r9}"(e)
     :

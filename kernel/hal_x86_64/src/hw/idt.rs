@@ -129,7 +129,7 @@ impl Idt {
         };
 
         unsafe {
-            asm!("lidt [$0]"
+            llvm_asm!("lidt [$0]"
              :
              : "r"(&idt_ptr)
              : "memory"

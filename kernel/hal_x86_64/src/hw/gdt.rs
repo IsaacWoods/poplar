@@ -171,7 +171,7 @@ impl Gdt {
             base: VirtualAddress::new(self as *const _ as usize),
         };
 
-        asm!("// Load the new GDT
+        llvm_asm!("// Load the new GDT
               lgdt [$0]
              
               // Load the new kernel data segment

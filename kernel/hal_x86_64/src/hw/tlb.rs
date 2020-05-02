@@ -4,7 +4,7 @@ use hal::memory::VirtualAddress;
 #[rustfmt::skip]
 pub fn invalidate_page(address: VirtualAddress) {
     unsafe {
-        asm!("invlpg ($0)"
+        llvm_asm!("invlpg ($0)"
              :
              : "r"(address)
              : "memory"

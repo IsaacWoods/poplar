@@ -1,5 +1,5 @@
 #![no_std]
-#![feature(asm, global_asm, decl_macro, naked_functions)]
+#![feature(llvm_asm, global_asm, decl_macro, naked_functions)]
 
 #[macro_use]
 extern crate alloc;
@@ -243,7 +243,7 @@ fn panic(info: &PanicInfo) -> ! {
     error!("KERNEL PANIC: {}", info);
     loop {
         unsafe {
-            asm!("hlt");
+            llvm_asm!("hlt");
         }
     }
 }

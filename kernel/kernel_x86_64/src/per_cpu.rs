@@ -13,7 +13,7 @@ use pebble_util::{unsafe_pinned, unsafe_unpinned};
 /// unsafe to call this before the per-CPU data has been installed.
 pub unsafe fn get_per_cpu_data<'a>() -> Pin<&'a mut PerCpuImpl> {
     let mut ptr: usize;
-    asm!("mov $0, gs:0x0"
+    llvm_asm!("mov $0, gs:0x0"
         : "=r"(ptr)
         :
         :

@@ -295,7 +295,7 @@ fn cpuid(entry: CpuidEntry) -> CpuidResult {
     let (a, b, c, d): (u32, u32, u32, u32);
 
     unsafe {
-        asm!("cpuid"
+        llvm_asm!("cpuid"
          : "={eax}"(a), "={ebx}"(b), "={ecx}"(c), "={edx}"(d)
          : "{rax}"(entry as u64)
          : "eax", "ebx", "ecx", "edx"

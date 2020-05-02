@@ -12,7 +12,7 @@ impl CpuFlags {
     pub fn read() -> CpuFlags {
         let flags: u64;
         unsafe {
-            asm!("pushfq
+            llvm_asm!("pushfq
                   pop rax"
                  : "={rax}"(flags)
                  :
@@ -69,7 +69,7 @@ pub macro read_control_reg($reg: ident) {{
      */
     #[allow(unused_unsafe)]
     unsafe {
-        asm!(concat!("mov %", stringify!($reg), ", $0")
+        llvm_asm!(concat!("mov %", stringify!($reg), ", $0")
              : "=r"(result)
              :
              : "memory"
@@ -87,7 +87,7 @@ pub macro write_control_reg($reg: ident, $value: expr) {
      * This will cause a type-check error if $value isn't a u64.
      */
     let value_u64: u64 = $value;
-    asm!(concat!("mov $0, %", stringify!($reg))
+    llvm_asm!(concat!("mov $0, %", stringify!($reg))
          :
          : "r"(value_u64)
          : "memory"
@@ -124,7 +124,7 @@ pub const IA32_GS_BASE: u32 = 0xc000_0101;
 pub fn read_msr(reg: u32) -> u64 {
     let (high, low): (u32, u32);
     unsafe {
-        asm!("rdmsr"
+        llvm_asm!("rdmsr"
          : "={eax}"(low), "={edx}"(high)
          : "{ecx}"(reg)
          : "memory"
@@ -137,7 +137,7 @@ pub fn read_msr(reg: u32) -> u64 {
 /// Write to a model-specific register. This is unsafe, because writing to certain MSRs can
 /// compromise memory safety.
 pub unsafe fn write_msr(reg: u32, value: u64) {
-    asm!("wrmsr"
+    llvm_asm!("wrmsr"
      :
      : "{ecx}"(reg), "{eax}"(value as u32), "{edx}"(value.get_bits(32..64) as u32)
      : "memory"
