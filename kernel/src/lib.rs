@@ -82,63 +82,6 @@ pub trait Platform: Sized + 'static {
     unsafe fn drop_into_userspace(kernel_stack_pointer: VirtualAddress) -> !;
 }
 
-// #[no_mangle]
-// pub extern "C" fn kmain(boot_info: &BootInfo) -> ! {
-//     // HalImpl::init_logger();
-//     info!("The Pebble kernel is running");
-
-//     // if boot_info.magic != hal::boot_info::BOOT_INFO_MAGIC {
-//     //     panic!("Boot info magic is not correct!");
-//     // }
-
-//     /*
-//      * Initialise the heap allocator. After this, the kernel is free to use collections etc. that
-//      * can allocate on the heap through the global allocator.
-//      */
-//     unsafe {
-//         #[cfg(not(test))]
-//         ALLOCATOR.lock().init(boot_info.heap_address, boot_info.heap_size);
-//     }
-
-//     /*
-//      * We can now initialise the physical memory manager.
-//      */
-//     PHYSICAL_MEMORY_MANAGER.initialize(PhysicalMemoryManager::new(boot_info));
-
-//     let mut hal = HalImpl::init(boot_info, KernelPerCpu { scheduler: Scheduler::new() });
-
-//     // TODO: this is x86_64 specific
-//     const KERNEL_STACKS_BOTTOM: VirtualAddress = VirtualAddress::new(0xffff_ffdf_8000_0000);
-//     const KERNEL_STACKS_TOP: VirtualAddress = VirtualAddress::new(0xffff_ffff_8000_0000);
-//     let mut kernel_stack_allocator = KernelStackAllocator::<HalImpl>::new(
-//         KERNEL_STACKS_BOTTOM,
-//         KERNEL_STACKS_TOP,
-//         2 * hal::memory::MEBIBYTES_TO_BYTES,
-//     );
-
-//     /*
-//      * Create kernel objects from loaded images and schedule them.
-//      */
-//     info!("Loading {} initial tasks to the ready queue", boot_info.loaded_images.num_images);
-//     for image in boot_info.loaded_images.images() {
-//         load_task(
-//             unsafe { HalImpl::per_cpu() }.kernel_data().scheduler(),
-//             image,
-//             hal.kernel_page_table(),
-//             &PHYSICAL_MEMORY_MANAGER.get(),
-//             &mut kernel_stack_allocator,
-//         );
-//     }
-//     if let Some(ref video_info) = boot_info.video_mode {
-//         create_framebuffer(video_info);
-//     }
-
-//     /*
-//      * Drop into userspace!
-//      */
-//     unsafe { HalImpl::per_cpu() }.kernel_data().scheduler().drop_to_userspace()
-// }
-
 pub fn load_task<P>(
     scheduler: &mut Scheduler<P>,
     image: &LoadedImage,

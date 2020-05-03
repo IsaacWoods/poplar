@@ -93,17 +93,17 @@ pub extern "C" fn kentry(boot_info: &BootInfo) -> ! {
     check_support_and_enable_features(&cpu_info);
 
     /*
-    * Create our version of the kernel page table. This assumes that the loader has correctly
-      installed a
-    * set of page tables, including a full physical mapping at the correct location. Strange things
-    * will happen if this is not the case, so this is a tad unsafe.
-    */
+     * Create our version of the kernel page table. This assumes that the loader has correctly installed a
+     * set of page tables, including a full physical mapping at the correct location. Strange things will happen
+     * if this is not the case, so this is a tad unsafe.
+     */
     let kernel_page_table = unsafe {
         PageTableImpl::from_frame(
             Frame::starts_with(PhysicalAddress::new(read_control_reg!(cr3) as usize).unwrap()),
             kernel_map::PHYSICAL_MAPPING_BASE,
         )
     };
+
     /*
      * Parse the static ACPI tables.
      */
@@ -167,12 +167,9 @@ pub extern "C" fn kentry(boot_info: &BootInfo) -> ! {
 
     let mut platform = PlatformImpl { kernel_page_table };
 
-    // TODO: do this better
-    const KERNEL_STACKS_BOTTOM: VirtualAddress = VirtualAddress::new(0xffff_ffdf_8000_0000);
-    const KERNEL_STACKS_TOP: VirtualAddress = VirtualAddress::new(0xffff_ffff_8000_0000);
     let mut kernel_stack_allocator = KernelStackAllocator::<PlatformImpl>::new(
-        KERNEL_STACKS_BOTTOM,
-        KERNEL_STACKS_TOP,
+        kernel_map::KERNEL_STACKS_BASE,
+        kernel_map::KERNEL_STACKS_BASE + kernel_map::STACK_SLOT_SIZE * kernel_map::MAX_TASKS,
         2 * hal::memory::MEBIBYTES_TO_BYTES,
     );
 
