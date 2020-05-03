@@ -1,5 +1,5 @@
 use super::{alloc_kernel_object_id, memory_object::MemoryObject, task::TaskStack, KernelObject, KernelObjectId};
-use crate::{memory::PhysicalMemoryManager, per_cpu::PerCpu, slab_allocator::SlabAllocator, Platform};
+use crate::{memory::PhysicalMemoryManager, slab_allocator::SlabAllocator, Platform};
 use alloc::{sync::Arc, vec::Vec};
 use hal::memory::{FrameAllocator, PageTable, VirtualAddress, MEBIBYTES_TO_BYTES};
 use libpebble::syscall::MapMemoryObjectError;

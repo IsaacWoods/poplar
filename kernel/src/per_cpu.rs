@@ -1,7 +1,6 @@
 use crate::{scheduler::Scheduler, Platform};
 use core::pin::Pin;
 use hal::memory::VirtualAddress;
-use pebble_util::unsafe_unpinned;
 
 pub trait PerCpu<P>
 where

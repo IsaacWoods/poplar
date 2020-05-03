@@ -104,7 +104,7 @@ impl HoleList {
         assert!(size_of::<Hole>() == Self::get_min_size());
 
         let ptr = hole_addr.mut_ptr() as *mut Hole;
-        mem::replace(&mut *ptr, Hole { size: hole_size, next: None });
+        let _ = mem::replace(&mut *ptr, Hole { size: hole_size, next: None });
 
         HoleList { first: Hole { size: 0, next: Some(&mut *ptr) } }
     }

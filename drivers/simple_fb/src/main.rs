@@ -2,7 +2,6 @@
 #![no_main]
 #![feature(const_generics, alloc_error_handler)]
 
-#[macro_use]
 extern crate alloc;
 
 use core::{mem::MaybeUninit, panic::PanicInfo};

@@ -24,7 +24,7 @@ mod slab_allocator;
 pub mod syscall;
 
 use alloc::sync::Arc;
-use core::{panic::PanicInfo, pin::Pin};
+use core::pin::Pin;
 use hal::{
     boot_info::LoadedImage,
     memory::{FrameSize, PageTable, VirtualAddress},

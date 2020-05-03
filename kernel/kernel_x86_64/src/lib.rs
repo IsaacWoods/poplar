@@ -1,7 +1,6 @@
 #![no_std]
 #![feature(llvm_asm, global_asm, decl_macro, naked_functions)]
 
-#[macro_use]
 extern crate alloc;
 
 mod acpi_handler;

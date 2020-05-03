@@ -1,5 +1,5 @@
 use super::{address_space::AddressSpace, alloc_kernel_object_id, KernelObject, KernelObjectId};
-use crate::{memory::PhysicalMemoryManager, per_cpu::PerCpu, slab_allocator::SlabAllocator, Platform};
+use crate::{memory::PhysicalMemoryManager, slab_allocator::SlabAllocator, Platform};
 use alloc::{collections::BTreeMap, string::String, sync::Arc, vec::Vec};
 use core::{
     marker::PhantomData,
