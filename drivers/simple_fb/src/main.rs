@@ -4,7 +4,9 @@
 
 extern crate alloc;
 
+use bit_field::BitField;
 use core::{mem::MaybeUninit, panic::PanicInfo};
+use font8x8::UnicodeFonts;
 use libpebble::{
     caps::{CapabilitiesRepr, CAP_EARLY_LOGGING, CAP_GET_FRAMEBUFFER, CAP_PADDING},
     early_logger::EarlyLogger,
@@ -53,8 +55,6 @@ impl Framebuffer {
         assert!((start_x + width) <= self.width);
         assert!((start_y + height) <= self.height);
 
-        syscall::send_message(libpebble::ZERO_HANDLE, &[0xff, 0x7f, 0xdf], &[]).unwrap();
-
         for y in start_y..(start_y + height) {
             for x in start_x..(start_x + width) {
                 unsafe {
@@ -66,6 +66,26 @@ impl Framebuffer {
 
     pub fn clear(&self, color: u32) {
         self.draw_rect(0, 0, self.width, self.height, color);
+    }
+
+    pub fn draw_glyph(&self, key: char, x: usize, y: usize, color: u32) {
+        for (line, line_data) in font8x8::BASIC_FONTS.get(key).unwrap().iter().enumerate() {
+            // TODO: this is amazingly inefficient. We could replace with a lookup table and multiply by the color
+            // if this is too slow.
+            for bit in 0..8 {
+                if line_data.get_bit(bit) {
+                    unsafe {
+                        *(self.pointer.offset(((y + line) * self.stride + (x + bit)) as isize)) = color;
+                    }
+                }
+            }
+        }
+    }
+
+    pub fn draw_string(&self, string: &str, start_x: usize, start_y: usize, color: u32) {
+        for (index, c) in string.chars().enumerate() {
+            self.draw_glyph(c, start_x + (index * 8), start_y, color);
+        }
     }
 }
 
@@ -85,8 +105,14 @@ pub extern "C" fn start() -> ! {
     info!("Simple framebuffer driver is running!");
 
     let framebuffer = Framebuffer::new();
-    framebuffer.clear(0xffff00ff);
-    framebuffer.draw_rect(100, 100, 300, 450, 0xffff0000);
+    framebuffer.clear(0xffaaaaaa);
+    framebuffer.draw_rect(100, 100, 300, 450, 0xffcc0000);
+    framebuffer.draw_string(
+        "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
+        200,
+        400,
+        0xff000000,
+    );
 
     loop {}
 }
