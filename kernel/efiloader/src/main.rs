@@ -74,7 +74,7 @@ fn main(image_handle: Handle, system_table: SystemTable<Boot>) -> Result<!, Load
 
     // TODO: instead of finding the volume by label, we could just grab it from the LoadedImageProtocol (I think)
     // and say they all have to be on the same volume?
-    let fs_handle = find_volume(&system_table, command_line.volume_label)?;
+    let fs_handle = find_volume(system_table.boot_services(), command_line.volume_label)?;
 
     /*
      * We create a set of page tables for the kernel. Because memory is identity-mapped in UEFI, we can act as
@@ -451,24 +451,23 @@ fn create_framebuffer(
 }
 
 fn find_volume(system_table: &SystemTable<Boot>, label: &str) -> Result<Handle, LoaderError> {
+fn find_volume(boot_services: &BootServices, label: &str) -> Result<Handle, LoaderError> {
     use uefi::proto::media::file::{File, FileSystemVolumeLabel};
 
     // Make an initial call to find how many handles we need to search
-    let num_handles = system_table
-        .boot_services()
+    let num_handles = boot_services
         .locate_handle(SearchType::from_proto::<SimpleFileSystem>(), None)
         .expect_success("Failed to get list of filesystems");
 
     // Allocate a pool of the needed size
-    let pool_addr = system_table
-        .boot_services()
+    let pool_addr = boot_services
         .allocate_pool(MemoryType::LOADER_DATA, mem::size_of::<Handle>() * num_handles)
         .expect_success("Failed to allocate pool for filesystem handles");
     let handle_slice: &mut [Handle] = unsafe { slice::from_raw_parts_mut(pool_addr as *mut Handle, num_handles) };
 
     // Actually fetch the handles
-    system_table
-        .boot_services()
+
+    boot_services
         .locate_handle(SearchType::from_proto::<SimpleFileSystem>(), Some(handle_slice))
         .expect_success("Failed to get list of filesystems");
 
@@ -477,8 +476,7 @@ fn find_volume(system_table: &SystemTable<Boot>, label: &str) -> Result<Handle, 
     // like that. We could use a `Pool` type that manages the allocation and is automatically freed when dropped.
     for &mut handle in handle_slice {
         let proto = unsafe {
-            &mut *system_table
-                .boot_services()
+            &mut *boot_services
                 .handle_protocol::<SimpleFileSystem>(handle)
                 .expect_success("Failed to open SimpleFileSystem")
                 .get()
@@ -498,12 +496,12 @@ fn find_volume(system_table: &SystemTable<Boot>, label: &str) -> Result<Handle, 
         let volume_label_str = core::str::from_utf8(&str_buffer[0..length]).unwrap();
 
         if volume_label_str == label {
-            system_table.boot_services().free_pool(pool_addr).unwrap_success();
+            boot_services.free_pool(pool_addr).unwrap_success();
             return Ok(handle);
         }
     }
 
-    system_table.boot_services().free_pool(pool_addr).unwrap_success();
+    boot_services.free_pool(pool_addr).unwrap_success();
     Err(LoaderError::BootVolumeDoesNotExist)
 }
 
