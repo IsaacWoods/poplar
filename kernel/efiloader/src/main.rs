@@ -450,7 +450,6 @@ fn create_framebuffer(
     Err(LoaderError::NoValidVideoMode)
 }
 
-fn find_volume(system_table: &SystemTable<Boot>, label: &str) -> Result<Handle, LoaderError> {
 fn find_volume(boot_services: &BootServices, label: &str) -> Result<Handle, LoaderError> {
     use uefi::proto::media::file::{File, FileSystemVolumeLabel};
 
