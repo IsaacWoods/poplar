@@ -86,6 +86,7 @@ where
             assert_eq!(*next_task.state.lock(), TaskState::Ready);
 
             self.running_task = Some(next_task.clone());
+            *self.running_task.as_ref().unwrap().state.lock() = TaskState::Running;
             match new_state {
                 TaskState::Running => panic!("Tried to switch away from a task to state of Running!"),
                 TaskState::Ready => {
