@@ -119,24 +119,13 @@ pub extern "C" fn start() -> ! {
 
 #[panic_handler]
 pub fn handle_panic(info: &PanicInfo) -> ! {
-    log::error!("PANIC: {:?}", info);
+    log::error!("PANIC: {}", info);
     loop {}
 }
 
 #[alloc_error_handler]
 fn alloc_error(layout: core::alloc::Layout) -> ! {
     panic!("Alloc error: {:?}", layout);
-}
-
-/// `N` must be a multiple of 4, and padded with zeros, so the whole descriptor is aligned to a
-/// 4-byte boundary.
-#[repr(C)]
-pub struct Capabilities<const N: usize> {
-    name_size: u32,
-    desc_size: u32,
-    entry_type: u32,
-    name: [u8; 8],
-    desc: [u8; N],
 }
 
 #[used]

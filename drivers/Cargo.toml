@@ -1,5 +1,5 @@
 [workspace]
-members = ["simple_fb"]
+members = ["simple_fb", "echo"]
 
 [profile.dev]
 debug = false

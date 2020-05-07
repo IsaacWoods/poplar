@@ -17,10 +17,10 @@ QEMU_COMMON_FLAGS = -cpu max,vmware-cpuid-freq,invtsc \
 					-drive if=ide,format=raw,file=$(IMAGE_NAME) \
 					-net none
 
-.PHONY: image_x86_64 prepare kernel test_process simple_fb clean qemu gdb update fmt test site
+.PHONY: image_x86_64 prepare kernel test_process simple_fb clean qemu gdb update fmt test site echo
 .DEFAULT_GOAL := image_$(PLATFORM)
 
-image_x86_64: prepare kernel test_process simple_fb
+image_x86_64: prepare kernel test_process simple_fb echo
 	# Create a temporary image for the FAT partition
 	dd if=/dev/zero of=$(BUILD_DIR)/fat.img bs=1M count=64
 	mkfs.vfat -F 32 $(BUILD_DIR)/fat.img -n BOOT
@@ -50,6 +50,10 @@ test_process:
 simple_fb:
 	cargo xbuild --target=drivers/$(PLATFORM)-pebble-userspace.json --manifest-path drivers/simple_fb/Cargo.toml
 	cp drivers/target/$(PLATFORM)-pebble-userspace/debug/simple_fb $(BUILD_DIR)/fat/simple_fb.elf
+
+echo:
+	cargo xbuild --target=drivers/$(PLATFORM)-pebble-userspace.json --manifest-path drivers/echo/Cargo.toml
+	cp drivers/target/$(PLATFORM)-pebble-userspace/debug/echo $(BUILD_DIR)/fat/echo.elf
 
 clean:
 	cd drivers && cargo clean
