@@ -2,8 +2,6 @@ export PLATFORM ?= x86_64
 export BUILD_DIR ?= $(abspath ./build)
 
 IMAGE_NAME ?= pebble.img
-RUST_GDB_INSTALL_PATH ?= ~/bin/rust-gdb/bin
-
 QEMU_COMMON_FLAGS = -cpu max,vmware-cpuid-freq,invtsc \
 					-machine q35 \
 					-smp 2 \
@@ -109,4 +107,4 @@ gdb: image_$(PLATFORM)
 		--enable-kvm \
 		-s \
 		-S \
-	& $(RUST_GDB_INSTALL_PATH)/rust-gdb -q "build/fat/kernel.elf" -ex "target remote :1234"
+	& tools/rust_gdb -q "build/fat/kernel.elf" -ex "target remote :1234"
