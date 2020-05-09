@@ -54,8 +54,8 @@ where
         *task.state.lock() = TaskState::Running;
         self.running_task = Some(task.clone());
         task.address_space.switch_to();
-        let kernel_stack_pointer: VirtualAddress = *task.kernel_stack_pointer.lock();
         unsafe {
+            let kernel_stack_pointer = *task.kernel_stack_pointer.get();
             P::per_cpu().set_kernel_stack_pointer(kernel_stack_pointer);
             P::drop_into_userspace(kernel_stack_pointer)
         }
@@ -103,8 +103,8 @@ where
             old_task.address_space.switch_from();
             next_task.address_space.switch_to();
 
-            let old_kernel_stack: *mut VirtualAddress = &mut *old_task.kernel_stack_pointer.lock() as *mut _;
-            let new_kernel_stack = *self.running_task.as_ref().unwrap().kernel_stack_pointer.lock();
+            let old_kernel_stack: *mut VirtualAddress = old_task.kernel_stack_pointer.get();
+            let new_kernel_stack = unsafe { *self.running_task.as_ref().unwrap().kernel_stack_pointer.get() };
             unsafe {
                 P::per_cpu().set_kernel_stack_pointer(new_kernel_stack);
                 P::context_switch(old_kernel_stack, new_kernel_stack);

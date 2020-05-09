@@ -2,6 +2,7 @@ use super::{address_space::AddressSpace, alloc_kernel_object_id, KernelObject, K
 use crate::{memory::PhysicalMemoryManager, slab_allocator::SlabAllocator, Platform};
 use alloc::{collections::BTreeMap, string::String, sync::Arc, vec::Vec};
 use core::{
+    cell::UnsafeCell,
     marker::PhantomData,
     sync::atomic::{AtomicU32, Ordering},
 };
@@ -58,11 +59,19 @@ where
 
     pub user_stack: Mutex<TaskStack>,
     pub kernel_stack: Mutex<TaskStack>,
-    pub kernel_stack_pointer: Mutex<VirtualAddress>,
+    pub kernel_stack_pointer: UnsafeCell<VirtualAddress>,
 
     pub handles: RwLock<BTreeMap<Handle, Arc<dyn KernelObject>>>,
     next_handle: AtomicU32,
 }
+
+/*
+ * XXX: this is needed to make `Task` Sync because there's that UnsafeCell in there. We should actually have
+ * some sort of synchronization primitive that says "only this scheduler can access me" instead (I think) and
+ * then unsafe impl these traits on that instead.
+ */
+unsafe impl<P> Send for Task<P> where P: Platform {}
+unsafe impl<P> Sync for Task<P> where P: Platform {}
 
 impl<P> Task<P>
 where
@@ -97,7 +106,7 @@ where
             capabilities: decode_capabilities(&image.capability_stream)?,
             user_stack: Mutex::new(user_stack),
             kernel_stack: Mutex::new(kernel_stack),
-            kernel_stack_pointer: Mutex::new(kernel_stack_pointer),
+            kernel_stack_pointer: UnsafeCell::new(kernel_stack_pointer),
             handles: RwLock::new(BTreeMap::new()),
             // XXX: 0 is a special handle value, so start at 1
             next_handle: AtomicU32::new(1),
