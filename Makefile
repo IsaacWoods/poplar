@@ -95,15 +95,15 @@ qemu: image_$(PLATFORM)
 		$(QEMU_COMMON_FLAGS) \
 		-enable-kvm
 
-qemu-no-kvm: image_$(ARCH)
+qemu-no-kvm: image_$(PLATFORM)
 	qemu-system-x86_64 $(QEMU_COMMON_FLAGS)
 
-debug: image_$(ARCH)
+debug: image_$(PLATFORM)
 	qemu-system-x86_64 \
 		$(QEMU_COMMON_FLAGS) \
 		-d int
 
-gdb: image_$(ARCH)
+gdb: image_$(PLATFORM)
 	qemu-system-x86_64 \
 		$(QEMU_COMMON_FLAGS) \
 		--enable-kvm \
