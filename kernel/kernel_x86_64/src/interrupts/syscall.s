@@ -49,7 +49,7 @@ syscall_handler:
     call rust_syscall_entry
 
     // Zero registers trashed by the Rust code before we return to userspace
-    // We don't need to zero `rdi` because we're going to use it in a second
+    // We use rdi in a second so don't bother zeroing it here
     xor rsi, rsi
     xor rdx, rdx
     xor r10, r10
@@ -60,10 +60,9 @@ syscall_handler:
     pop r11
     pop rcx
 
-    // Move back to task's user stack, saving kernel stack back into per-cpu
-    mov rdi, rsp
-    pop rsp
-    mov gs:0x8, rdi
+    pop rdi             # Pop task's user stack into a register. This needs to be done before saving rsp.
+    mov gs:0x8, rsp     # Save task's kernel stack back into per-CPU info.
+    mov rsp, rdi        # Switch back to task's user stack.
     xor rdi, rdi
 
     // Return to userspace!
