@@ -41,7 +41,7 @@ pub struct ContextSwitchFrame {
 pub unsafe fn initialize_kernel_stack(
     kernel_stack_top: &mut VirtualAddress,
     task_entry_point: VirtualAddress,
-    user_stack_top: VirtualAddress,
+    mut user_stack_top: VirtualAddress,
 ) {
     // TODO: change this to use the CpuFlags type from our x86_64 crate to create these nicely
     /*
@@ -56,6 +56,7 @@ pub unsafe fn initialize_kernel_stack(
      */
     const REQUIRED_INITIAL_STACK_ALIGNMENT: usize = 16;
     *kernel_stack_top = kernel_stack_top.align_down(REQUIRED_INITIAL_STACK_ALIGNMENT);
+    user_stack_top = user_stack_top.align_down(REQUIRED_INITIAL_STACK_ALIGNMENT);
 
     /*
      * Start off with a zero return address to terminate backtraces at task entry.
