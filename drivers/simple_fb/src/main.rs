@@ -91,6 +91,7 @@ impl Framebuffer {
 
 #[no_mangle]
 pub extern "C" fn start() -> ! {
+    syscall::early_log("Hello from FB").unwrap();
     // Initialise the heap
     const HEAP_START: usize = 0x600000000;
     const HEAP_SIZE: usize = 0x4000;
@@ -114,7 +115,10 @@ pub extern "C" fn start() -> ! {
         0xff000000,
     );
 
-    loop {}
+    loop {
+        info!("Yielding from FB");
+        syscall::yield_to_kernel();
+    }
 }
 
 #[panic_handler]

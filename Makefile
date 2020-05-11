@@ -55,6 +55,7 @@ echo:
 
 clean:
 	cd drivers && cargo clean
+	cd test_process && cargo clean
 	make -C kernel clean
 	rm -rf build
 	rm -f $(IMAGE_NAME)

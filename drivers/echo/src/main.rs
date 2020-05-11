@@ -16,6 +16,7 @@ static ALLOCATOR: LockedHeap = LockedHeap::empty();
 
 #[no_mangle]
 pub extern "C" fn start() -> ! {
+    syscall::early_log("Hello, World!").unwrap();
     // Initialise the heap
     const HEAP_START: usize = 0x600000000;
     const HEAP_SIZE: usize = 0x4000;
@@ -30,6 +31,7 @@ pub extern "C" fn start() -> ! {
     info!("Echo running!");
 
     loop {
+        info!("Echo loop");
         syscall::yield_to_kernel();
     }
 }

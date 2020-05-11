@@ -11,9 +11,8 @@ use libpebble::{
 #[no_mangle]
 pub extern "C" fn start() -> ! {
     syscall::early_log("Hello, World! From test process").unwrap();
-    syscall::yield_to_kernel();
-    syscall::early_log("After yeild").unwrap();
     loop {
+        syscall::early_log("Yielding from test").unwrap();
         syscall::yield_to_kernel();
     }
 }
