@@ -206,7 +206,7 @@ where
                 stack_bottom,
                 physical_start,
                 initial_size,
-                Flags { writable: true, user_accessible: true, ..Default::default() },
+                Flags { writable: true, ..Default::default() },
                 physical_memory_manager,
             )
             .unwrap();
