@@ -50,9 +50,8 @@ where
         syscall::SYSCALL_SEND_MESSAGE => status_to_syscall_repr(send_message(task, a, b, c, d, e)),
 
         _ => {
-            // TODO: unsupported system call number, kill process or something?
             warn!("Process made system call with invalid syscall number: {}", number);
-            1
+            usize::MAX
         }
     }
 }

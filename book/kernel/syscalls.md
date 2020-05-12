@@ -34,9 +34,14 @@ result of the system call (if there is one) in `rax`. If a system call takes les
 parameter registers will be preserved across the system call.
 
 ### Return values
-Often, a system call will need to return a status, plus one or more handles. The first handle a system call needs to
-return (often the only handle returned) can be returned in the upper bits of the status value:
+Often, a system call will need to return a status, plus one or more handles. The first handle a system call needs
+to return (often the only handle returned) can be returned in the upper bits of the status value:
 * Bits `0..32` contain the status:
     - `0` means that the system call succeeded, and the rest of the return value is valid
     - `>0` means that the system call errored. The meaning of the value is system-call specific.
 * Bits `32..64` contain the value of the first returned handle, if applicable
+
+A return value of `0xffffffffffffffff` (the maximum value of `u64`) is reserved for when a system call is made with
+a number that does not correspond to a system call. This is defined as a normal error code (as opposed to, for
+example, terminating the task that tried to make the system call) to provide a mechanism for tasks to detect kernel
+support for a system call (so they can use a fallback method on older kernels, for example).
