@@ -19,9 +19,7 @@ The capabilities format is variable-length - simple capabilities can be encoded 
 complex / specific ones may need multiple bytes of prefix, and can also encode fixed-length data.
 
 ### Overview of capabilities
-This is an overview of all the capabilities the kernel supports. Complex capabilities are detailed in their own
-sections:
-
+This is an overview of all the capabilities the kernel supports:
 | First byte    | Next byte(s)  | Data                  | Arch specific?    | Description                                                           | Status        |
 |---------------|---------------|-----------------------|-------------------|-----------------------------------------------------------------------|---------------|
 | `0x00`        | -             | -                     | -                 | No meaning - used to pad descriptor to required length (see above)    | -             |
@@ -31,20 +29,7 @@ sections:
 | `0x04`-`0x1f` |               |                       |                   | Reserved for future kernel objects                                    |               |
 | `0x20`        | `0x00`        | `u16` port number     | Yes - x86_64      | `X86_64AccessIoPort`                                                  | Planned       |
 | `0x21`-`0x2f` |               |                       |                   | Reserved for future architectures                                     |               |
-| `0x30`        |               |                       | No                | `AccessBackupFramebuffer`                                             | Planned       |
+| `0x30`        |               |                       | No                | `GetFramebuffer`                                                      | Implemented   |
 | `0x31`        |               |                       | No                | `EarlyLogging`                                                        | Implemented   |
-
-### `AccessBackupFramebuffer`
-If a video mode was chosen in the `bootcmd` and successfully switched to by the bootloader, the framebuffer of that
-graphics device will be managed as a `MemoryObject` kernel object within the kernel. This capability allows a task,
-usually the backup framebuffer driver, to request access to that kernel object through the `request_system_object`
-syscall.
-
-**NOTE:** while this capability seems quite innocuous, it is anything but. A rouge task that has this capability
-could in theory skim sensitive information, such as passwords or credit card details using the framebuffer, if
-this driver is in use.
-
-### `EarlyLogging`
-This capability is owned by tasks that are started early in the boot process, before robust userspace logging is
-running. It is used to emit logging messages to the kernel log that help debug the early boot process, using the
-`early_log` system call.
+| `0x32`        |               |                       | No                | `ServiceProvider`                                                     | Implemented   |
+| `0x33`        |               |                       | No                | `ServiceUser`                                                         | Implemented   |
