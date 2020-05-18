@@ -11,7 +11,7 @@ configuration spaces) must be created by the kernel.
   - Bit `1`: set if the memory should be executable
 
 ### Returns
-Uses the standard representation to return a `Result<KernelObjectId, MemoryObjectError>` method. Error status
+Uses the standard representation to return a `Result<Handle, MemoryObjectError>` method. Error status
 codes are:
 - `1` if the given virtual address is invalid
 - `2` if the given set of flags are invalid
