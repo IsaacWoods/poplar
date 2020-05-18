@@ -3,6 +3,7 @@ mod validation;
 use crate::{
     object::{
         address_space::AddressSpace,
+        channel::ChannelEnd,
         memory_object::MemoryObject,
         task::{Task, TaskState},
         KernelObject,
@@ -10,7 +11,7 @@ use crate::{
     per_cpu::PerCpu,
     Platform,
 };
-use alloc::sync::Arc;
+use alloc::{collections::BTreeMap, string::String, sync::Arc};
 use bit_field::BitField;
 use core::{convert::TryFrom, slice, str};
 use hal::memory::{Flags, VirtualAddress};
@@ -24,12 +25,19 @@ use libpebble::{
         FramebufferInfo,
         GetFramebufferError,
         MapMemoryObjectError,
+        RegisterServiceError,
         SendMessageError,
+        SubscribeToServiceError,
     },
     Handle,
     ZERO_HANDLE,
 };
 use log::{info, trace, warn};
+use spin::Mutex;
+use validation::UserString;
+
+/// Maps the name of a service to the channel used to register new service users.
+static SERVICE_MAP: Mutex<BTreeMap<String, Arc<ChannelEnd>>> = Mutex::new(BTreeMap::new());
 
 /// This is the architecture-independent syscall handler. It should be called by the handler that
 /// receives the syscall (each architecture is free to do this however it wishes). The only
@@ -50,6 +58,10 @@ where
         syscall::SYSCALL_MAP_MEMORY_OBJECT => status_to_syscall_repr(map_memory_object(task, a, b, c)),
         syscall::SYSCALL_CREATE_CHANNEL => unimplemented!(),
         syscall::SYSCALL_SEND_MESSAGE => status_to_syscall_repr(send_message(task, a, b, c, d, e)),
+        syscall::SYSCALL_GET_MESSAGE => unimplemented!(),
+        syscall::SYSCALL_WAIT_FOR_MESSAGE => unimplemented!(),
+        syscall::SYSCALL_REGISTER_SERVICE => handle_to_syscall_repr(register_service(task, a, b)),
+        syscall::SYSCALL_SUBSCRIBE_TO_SERVICE => handle_to_syscall_repr(subscribe_to_service(task, a, b)),
 
         _ => {
             warn!("Process made system call with invalid syscall number: {}", number);
@@ -207,4 +219,72 @@ where
 {
     info!("Message: {:x?}", unsafe { core::slice::from_raw_parts(byte_address as *const u8, num_bytes) });
     Ok(())
+}
+
+fn register_service<P>(
+    task: &Arc<Task<P>>,
+    name_length: usize,
+    name_ptr: usize,
+) -> Result<Handle, RegisterServiceError>
+where
+    P: Platform,
+{
+    use libpebble::syscall::SERVICE_NAME_MAX_LENGTH;
+
+    // Check that the task has the `ServiceProvider` capability
+    if !task.capabilities.contains(&Capability::ServiceProvider) {
+        return Err(RegisterServiceError::TaskDoesNotHaveCorrectCapability);
+    }
+
+    // Check that the name is not too short or long
+    if name_length == 0 || name_length > SERVICE_NAME_MAX_LENGTH {
+        return Err(RegisterServiceError::NameLengthNotValid);
+    }
+
+    let service_name = UserString::new(name_length, name_ptr as *mut u8)
+        .validate()
+        .map_err(|()| RegisterServiceError::NamePointerNotValid)?;
+
+    info!("Task {} has registered a service called {}", task.name, service_name);
+    let channel = ChannelEnd::new_kernel_channel(task.id());
+    SERVICE_MAP.lock().insert(task.name.clone() + "." + service_name, channel.clone());
+
+    Ok(task.add_handle(channel))
+}
+
+fn subscribe_to_service<P>(
+    task: &Arc<Task<P>>,
+    name_length: usize,
+    name_ptr: usize,
+) -> Result<Handle, SubscribeToServiceError>
+where
+    P: Platform,
+{
+    use libpebble::syscall::SERVICE_NAME_MAX_LENGTH;
+
+    // Check that the task has the `ServiceUser` capability
+    if !task.capabilities.contains(&Capability::ServiceUser) {
+        return Err(SubscribeToServiceError::TaskDoesNotHaveCorrectCapability);
+    }
+
+    // Check that the name is not too short or long
+    if name_length == 0 || name_length > SERVICE_NAME_MAX_LENGTH {
+        return Err(SubscribeToServiceError::NameLengthNotValid);
+    }
+
+    let service_name = UserString::new(name_length, name_ptr as *mut u8)
+        .validate()
+        .map_err(|()| SubscribeToServiceError::NamePointerNotValid)?;
+
+    if let Some(register_channel) = SERVICE_MAP.lock().get(service_name) {
+        // Create new channel to allow the two tasks to communicate
+        let (provider_end, user_end) = ChannelEnd::new_channel(task.id());
+
+        // TODO: send a message down `register_channel` telling it about `provider_end`
+
+        // Return the user's end of the new channel to it
+        Ok(task.add_handle(user_end))
+    } else {
+        Err(SubscribeToServiceError::NoServiceWithThatName)
+    }
 }

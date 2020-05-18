@@ -17,6 +17,8 @@ pub enum Capability {
      */
     GetFramebuffer,
     EarlyLogging,
+    ServiceProvider,
+    ServiceUser,
 }
 
 pub const CAP_PADDING: u8 = 0x00;
@@ -28,6 +30,8 @@ pub const CAP_BASE_X86_64: u8 = 0x20;
 
 pub const CAP_GET_FRAMEBUFFER: u8 = 0x30;
 pub const CAP_EARLY_LOGGING: u8 = 0x31;
+pub const CAP_SERVICE_PROVIDER: u8 = 0x32;
+pub const CAP_SERVICE_USER: u8 = 0x33;
 
 /// `N` must be a multiple of 4, and padded with zeros, so the whole descriptor is aligned to a
 /// 4-byte boundary.

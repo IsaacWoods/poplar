@@ -9,7 +9,8 @@
     type_ascription,
     naked_functions,
     box_syntax,
-    const_generics
+    const_generics,
+    const_btree_new,
 )]
 #[macro_use]
 extern crate alloc;

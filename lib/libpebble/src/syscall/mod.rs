@@ -23,6 +23,10 @@ pub const SYSCALL_CREATE_MEMORY_OBJECT: usize = 3;
 pub const SYSCALL_MAP_MEMORY_OBJECT: usize = 4;
 pub const SYSCALL_CREATE_CHANNEL: usize = 5;
 pub const SYSCALL_SEND_MESSAGE: usize = 6;
+pub const SYSCALL_GET_MESSAGE: usize = 7;
+pub const SYSCALL_WAIT_FOR_MESSAGE: usize = 8;
+pub const SYSCALL_REGISTER_SERVICE: usize = 9;
+pub const SYSCALL_SUBSCRIBE_TO_SERVICE: usize = 10;
 
 pub fn yield_to_kernel() {
     unsafe {
@@ -109,5 +113,34 @@ pub fn send_message(channel: Handle, bytes: &[u8], handles: &[Handle]) -> Result
             if handles.len() == 0 { 0x0 } else { handles.as_ptr() as usize },
             handles.len(),
         )
+    })
+}
+
+pub const SERVICE_NAME_MAX_LENGTH: usize = 256;
+
+define_error_type!(RegisterServiceError {
+    TaskDoesNotHaveCorrectCapability => 1,
+    NamePointerNotValid => 2,
+    /// Name must be greater than `0` bytes, and not greater than `256` bytes.
+    NameLengthNotValid => 3,
+});
+
+pub fn register_service(name: &str) -> Result<Handle, RegisterServiceError> {
+    handle_from_syscall_repr(unsafe {
+        raw::syscall2(SYSCALL_REGISTER_SERVICE, name.len(), name.as_ptr() as usize)
+    })
+}
+
+define_error_type!(SubscribeToServiceError {
+    TaskDoesNotHaveCorrectCapability => 1,
+    NamePointerNotValid => 2,
+    /// Name must be greater than `0` bytes, and not greater than `256` bytes.
+    NameLengthNotValid => 3,
+    NoServiceWithThatName => 4,
+});
+
+pub fn subscribe_to_service(name: &str) -> Result<Handle, SubscribeToServiceError> {
+    handle_from_syscall_repr(unsafe {
+        raw::syscall2(SYSCALL_SUBSCRIBE_TO_SERVICE, name.len(), name.as_ptr() as usize)
     })
 }

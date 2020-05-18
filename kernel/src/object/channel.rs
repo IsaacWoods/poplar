@@ -9,7 +9,8 @@ pub struct ChannelEnd {
     pub id: KernelObjectId,
     pub owner: KernelObjectId,
     messages: Vec<Message>,
-    other_end: Weak<ChannelEnd>,
+    /// The other end of the channel. If this is `None`, the channel's messages come from the kernel.
+    other_end: Option<Weak<ChannelEnd>>,
 }
 
 impl ChannelEnd {
@@ -18,19 +19,25 @@ impl ChannelEnd {
             id: alloc_kernel_object_id(),
             owner,
             messages: Vec::new(),
-            other_end: Weak::default(),
+            other_end: Some(Weak::default()),
         });
 
         let end_b = Arc::new(ChannelEnd {
             id: alloc_kernel_object_id(),
             owner,
             messages: Vec::new(),
-            other_end: Arc::downgrade(&end_a),
+            other_end: Some(Arc::downgrade(&end_a)),
         });
 
-        Arc::get_mut(&mut end_a).unwrap().other_end = Arc::downgrade(&end_b);
+        unsafe {
+            Arc::get_mut_unchecked(&mut end_a).other_end = Some(Arc::downgrade(&end_b));
+        }
 
         (end_a, end_b)
+    }
+
+    pub fn new_kernel_channel(owner: KernelObjectId) -> Arc<ChannelEnd> {
+        Arc::new(ChannelEnd { id: alloc_kernel_object_id(), owner, messages: Vec::new(), other_end: None })
     }
 }
 
