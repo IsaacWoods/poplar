@@ -156,9 +156,169 @@ impl IndexMut<u8> for Idt {
 #[derive(Clone, Copy, Debug)]
 #[repr(C)]
 pub struct InterruptStackFrame {
+    pub r15: u64,
+    pub r14: u64,
+    pub r13: u64,
+    pub r12: u64,
+    pub r11: u64,
+    pub r10: u64,
+    pub r9: u64,
+    pub r8: u64,
+    pub rbp: u64,
+    pub rdi: u64,
+    pub rsi: u64,
+    pub rdx: u64,
+    pub rcx: u64,
+    pub rbx: u64,
+    pub rax: u64,
+
     pub instruction_pointer: VirtualAddress,
     pub code_segment: u64,
     pub cpu_flags: CpuFlags,
     pub stack_pointer: VirtualAddress,
     pub stack_segment: u64,
+}
+
+#[derive(Clone, Copy, Debug)]
+#[repr(C)]
+pub struct ExceptionWithErrorStackFrame {
+    pub r15: u64,
+    pub r14: u64,
+    pub r13: u64,
+    pub r12: u64,
+    pub r11: u64,
+    pub r10: u64,
+    pub r9: u64,
+    pub r8: u64,
+    pub rbp: u64,
+    pub rdi: u64,
+    pub rsi: u64,
+    pub rdx: u64,
+    pub rcx: u64,
+    pub rbx: u64,
+    pub rax: u64,
+
+    pub error_code: u64,
+    pub instruction_pointer: VirtualAddress,
+    pub code_segment: u64,
+    pub cpu_flags: CpuFlags,
+    pub stack_pointer: VirtualAddress,
+    pub stack_segment: u64,
+}
+
+/// Macro to save the registers. We only need to save the scratch registers (`rax`, `rcx`, `rdx`, `rdi`, `rsi`,
+/// `r8`, `r9`, and `r10`), as callee-saved registers will be saved by the Rust handler, but we save all of them so
+/// we can access them in the handler if we want to.
+///
+/// The order we save them is important because we rely on their layout on the stack in `InterruptStackFrame` and
+/// `ExceptionWithErrorStackFrame`
+#[allow(unused_macros)] // `rustc` says this is unused for some reason
+macro save_regs() {
+    llvm_asm!("push rax
+               push rbx
+               push rcx
+               push rdx
+               push rsi
+               push rdi
+               push rbp
+               push r8
+               push r9
+               push r10
+               push r11
+               push r12
+               push r13
+               push r14
+               push r15"
+        :
+        :
+        :
+        : "intel"
+        );
+}
+
+/// Restore the saved registers. Must be in the opposite order to `save_regs`.
+#[allow(unused_macros)] // `rustc` says this is unused for some reason
+macro restore_regs() {
+    llvm_asm!("pop r15
+               pop r14
+               pop r13
+               pop r12
+               pop r11
+               pop r10
+               pop r9
+               pop r8
+               pop rbp
+               pop rdi
+               pop rsi
+               pop rdx
+               pop rcx
+               pop rbx
+               pop rax"
+    :
+    :
+    :
+    : "intel"
+    );
+}
+
+pub macro wrap_handler($name: path) {
+    {
+        #[naked]
+        extern "C" fn wrapper() -> ! {
+            unsafe {
+                /*
+                 * Without an error code, a total of `0xa0` bytes are pushed onto the stack by both the CPU and us.
+                 * Because `rsp+8` must be divisible by 0x10, we must align the stack.
+                 */
+                save_regs!();
+                llvm_asm!("mov rdi, rsp
+                           sub rsp, 8
+                           call $0
+                           add rsp, 8"
+                :
+                : "i"($name as extern "C" fn(&InterruptStackFrame))
+                : "rdi"
+                : "intel"
+                );
+                restore_regs!();
+                llvm_asm!("iretq" : : : : "intel");
+                unreachable!();
+            }
+        }
+
+        wrapper
+    }
+}
+
+pub macro wrap_handler_with_error_code($name: path) {
+    {
+        #[naked]
+        extern "C" fn wrapper() -> ! {
+            unsafe {
+                save_regs!();
+                /*
+                 * With an error code, a total of `0xa8` bytes are pushed onto the stack, and so `rsp+8` is already
+                 * divisible by 0x10, so no additional alignment is needed.
+                 */
+                llvm_asm!("mov rdi, rsp
+                           call $0"
+                :
+                : "i"($name as extern "C" fn(&ExceptionWithErrorStackFrame))
+                : "rdi"
+                : "intel"
+                );
+                restore_regs!();
+                llvm_asm!("add rsp, 8 // Pop the error code
+                           iretq"
+                :
+                :
+                :
+                : "intel"
+                );
+                unreachable!();
+            }
+        }
+
+        wrapper
+    }
 }

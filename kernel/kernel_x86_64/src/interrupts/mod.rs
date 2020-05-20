@@ -11,13 +11,13 @@ use hal_x86_64::{
         cpu::CpuInfo,
         gdt::KERNEL_CODE_SELECTOR,
         i8259_pic::Pic,
-        idt::{Idt, InterruptStackFrame},
+        idt::{wrap_handler, wrap_handler_with_error_code, Idt, InterruptStackFrame},
         local_apic::LocalApic,
         registers::write_msr,
     },
     kernel_map,
 };
-use log::{info, warn};
+use log::warn;
 use pci::PciResolver;
 use pebble_util::InitGuard;
 
@@ -199,7 +199,7 @@ impl InterruptController {
             write_msr(IA32_LSTAR, syscall_handler as u64);
             // TODO: set this up properly (e.g. disable interrupts until we switch stacks, set up DF and such to be
             // as the kernel expects them)
-            write_msr(IA32_FMASK, 0);
+            write_msr(IA32_FMASK, 0x0);
         }
     }
 }
@@ -212,114 +212,3 @@ extern "C" fn local_apic_timer_handler(_: &InterruptStackFrame) {
 }
 
 extern "C" fn spurious_handler(_: &InterruptStackFrame) {}
-
-/// Macro to save the scratch registers. In System-V, `rbx`, `rbp`, `r12`, `r13`, `r14`, and `r15`
-/// must be restored by the callee, so Rust automatically generates code to restore them, but for
-/// the rest we have to manually preserve them. Use `restore_regs` to restore the scratch registers
-/// before returning from the handler.
-macro save_regs() {
-    llvm_asm!("push rax
-          push rcx
-          push rdx
-          push rsi
-          push rdi
-          push r8
-          push r9
-          push r10
-          push r11"
-        :
-        :
-        :
-        : "intel"
-        );
-}
-
-/// Restore the saved scratch registers.
-macro restore_regs() {
-    llvm_asm!("pop r11
-          pop r10
-          pop r9
-          pop r8
-          pop rdi
-          pop rsi
-          pop rdx
-          pop rcx
-          pop rax"
-        :
-        :
-        :
-        : "intel"
-        );
-}
-
-macro wrap_handler($name: path) {
-    {
-        #[naked]
-        extern "C" fn wrapper() -> ! {
-            unsafe {
-                /*
-                 * To calculate the address of the exception stack frame, we add 0x48 bytes (9
-                 * 64-bit registers). We don't need to manually align the stack, as it should
-                 * already be aligned correctly.
-                 */
-                save_regs!();
-                llvm_asm!("mov rdi, rsp
-                      add rdi, 0x48
-                      call $0"
-                    :
-                    : "i"($name as extern "C" fn(&InterruptStackFrame))
-                    : "rdi"
-                    : "intel"
-                    );
-                restore_regs!();
-                llvm_asm!("iretq"
-                     :
-                     :
-                     :
-                     : "intel"
-                     );
-                unreachable!();
-            }
-        }
-
-        wrapper
-    }
-}
-
-macro wrap_handler_with_error_code($name: path) {
-    {
-        #[naked]
-        extern "C" fn wrapper() -> ! {
-            unsafe {
-                /*
-                 * To calculate the address of the exception stack frame, we add 0x48 bytes (9
-                 * 64-bit registers), and then the two bytes of the error code. Because we skip
-                 * 0x50 bytes, we need to manually align the stack.
-                 */
-                save_regs!();
-                llvm_asm!("mov rsi, [rsp+0x48]   // Put the error code in RSI
-                      mov rdi, rsp
-                      add rdi, 0x50
-                      sub rsp, 8            // Align the stack pointer
-                      call $0
-                      add rsp, 8            // Restore the stack pointer"
-                     :
-                     : "i"($name as extern "C" fn(&InterruptStackFrame, _error_code: u64))
-                     : "rdi", "rsi"
-                     : "intel"
-                    );
-                restore_regs!();
-                llvm_asm!("add rsp, 8            // Pop the error code
-                      iretq"
-                     :
-                     :
-                     :
-                     : "intel"
-                    );
-                unreachable!();
-            }
-        }
-
-        wrapper
-    }
-}
