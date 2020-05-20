@@ -57,6 +57,7 @@ where
         unsafe {
             let kernel_stack_pointer = *task.kernel_stack_pointer.get();
             P::per_cpu().set_kernel_stack_pointer(kernel_stack_pointer);
+            P::per_cpu().set_user_stack_pointer(*task.user_stack_pointer.get());
             P::drop_into_userspace(kernel_stack_pointer)
         }
     }
@@ -105,8 +106,10 @@ where
 
             let old_kernel_stack: *mut VirtualAddress = old_task.kernel_stack_pointer.get();
             let new_kernel_stack = unsafe { *self.running_task.as_ref().unwrap().kernel_stack_pointer.get() };
+            let new_user_stack = unsafe { *self.running_task.as_ref().unwrap().user_stack_pointer.get() };
             unsafe {
                 P::per_cpu().set_kernel_stack_pointer(new_kernel_stack);
+                P::per_cpu().set_user_stack_pointer(new_user_stack);
                 P::context_switch(old_kernel_stack, new_kernel_stack);
             }
         } else {

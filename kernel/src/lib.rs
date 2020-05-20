@@ -70,7 +70,7 @@ pub trait Platform: Sized + 'static {
     unsafe fn initialize_task_kernel_stack(
         kernel_stack_top: &mut VirtualAddress,
         task_entry_point: VirtualAddress,
-        user_stack_top: VirtualAddress,
+        user_stack_top: &mut VirtualAddress,
     );
 
     /// Do the final part of a context switch: save all the state that needs to be to the current kernel stack,

@@ -30,11 +30,10 @@
  */
 .global syscall_handler
 syscall_handler:
-    // Firstly, we move to the task's kernel stack. `rax` doesn't contain anything important atm.
-    // TODO: maybe store user rsp in per-cpu data to make this easier
-    mov rax, gs:0x8    // This accesses the `current_task_kernel_rsp` field of the per-cpu data
-    xchg rax, rsp
-    push rax           // Push the user stack pointer onto the task's kernel stack so we can move back to it later
+    // Save the task's user rsp in the per-cpu data
+    mov gs:0x10, rsp
+    // Move to the task's kernel stack
+    mov rsp, gs:0x8
 
     // The `syscall` instruction puts important stuff in `rcx` and `r11`, so we save them and restore them
     // before calling `sysretq`.
@@ -60,10 +59,9 @@ syscall_handler:
     pop r11
     pop rcx
 
-    pop rdi             # Pop task's user stack into a register. This needs to be done before saving rsp.
-    mov gs:0x8, rsp     # Save task's kernel stack back into per-CPU info.
-    mov rsp, rdi        # Switch back to task's user stack.
-    xor rdi, rdi
+    // Save the kernel's stack back into per-cpu data
+    mov gs:0x8, rsp
+    // Move back to the task's user stack
+    mov rsp, gs:0x10
 
-    // Return to userspace!
     sysretq

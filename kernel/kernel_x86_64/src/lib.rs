@@ -45,7 +45,7 @@ impl Platform for PlatformImpl {
     unsafe fn initialize_task_kernel_stack(
         kernel_stack_top: &mut VirtualAddress,
         task_entry_point: VirtualAddress,
-        user_stack_top: VirtualAddress,
+        user_stack_top: &mut VirtualAddress,
     ) {
         task::initialize_kernel_stack(kernel_stack_top, task_entry_point, user_stack_top);
     }

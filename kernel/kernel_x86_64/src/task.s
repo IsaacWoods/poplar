@@ -12,13 +12,12 @@
  *     - `r15` is moved into `rcx`
  *     - `r14` is moved into `r11`
  *
- * We also need to switch to the task's user stack, which is expected to be in `r13`.
+ * We also need to switch to the task's user stack, which we access through the per-CPU data.
  */
 .global task_entry_trampoline
 task_entry_trampoline:
     mov gs:0x8, rsp     // Save the task's kernel stack
-    mov rsp, r13
-    xor r13, r13
+    mov rsp, gs:0x10
 
     mov rcx, r15
     xor r15, r15
@@ -47,7 +46,8 @@ do_drop_to_usermode:
     // Switch to the task's kernel stack
     mov rsp, gs:0x8
 
-    // Pop the context-saved registers
+    // Pop the context-saved registers. We pop `r14` into `r11` and `r15` into `rcx` because that's where we want
+    // them for the `sysretq` anyways.
     pop rcx
     pop r11
     pop r13
@@ -55,11 +55,12 @@ do_drop_to_usermode:
     pop rbp
     pop rbx
 
-    // The user rsp is now in r13
-    mov rsp, r13
+    // Switch to the task's user stack
+    mov rsp, gs:0x10
 
     // Zero all registers that weren't zerod as part of the context load, except rcx and r11, as they're needed by
-    // `sysret`
+    // `sysret`. We also zero `r14` and `r15`, which would normally be loaded from the saved context but weren't
+    // because we use them to populate `r11` and `rcx` instead.
     xor rax, rax
     xor rdx, rdx
     xor rsi, rsi
@@ -67,6 +68,8 @@ do_drop_to_usermode:
     xor r8, r8
     xor r9, r9
     xor r10, r10
+    xor r14, r14
+    xor r15, r15
 
     // Leap of faith!
     sysretq

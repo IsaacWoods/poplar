@@ -60,6 +60,7 @@ where
     pub user_stack: Mutex<TaskStack>,
     pub kernel_stack: Mutex<TaskStack>,
     pub kernel_stack_pointer: UnsafeCell<VirtualAddress>,
+    pub user_stack_pointer: UnsafeCell<VirtualAddress>,
 
     pub handles: RwLock<BTreeMap<Handle, Arc<dyn KernelObject>>>,
     next_handle: AtomicU32,
@@ -93,8 +94,9 @@ where
             .ok_or(TaskCreationError::NoKernelStackSlots)?;
 
         let mut kernel_stack_pointer = kernel_stack.top;
+        let mut user_stack_pointer = user_stack.top;
         unsafe {
-            P::initialize_task_kernel_stack(&mut kernel_stack_pointer, image.entry_point, user_stack.top);
+            P::initialize_task_kernel_stack(&mut kernel_stack_pointer, image.entry_point, &mut user_stack_pointer);
         }
 
         Ok(Arc::new(Task {
@@ -107,6 +109,7 @@ where
             user_stack: Mutex::new(user_stack),
             kernel_stack: Mutex::new(kernel_stack),
             kernel_stack_pointer: UnsafeCell::new(kernel_stack_pointer),
+            user_stack_pointer: UnsafeCell::new(user_stack_pointer),
             handles: RwLock::new(BTreeMap::new()),
             // XXX: 0 is a special handle value, so start at 1
             next_handle: AtomicU32::new(1),

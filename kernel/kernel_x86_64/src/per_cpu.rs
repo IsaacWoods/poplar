@@ -31,6 +31,9 @@ pub struct PerCpuImpl {
     /// The next field must then be the current task's kernel stack pointer. We access this manually from assembly
     /// with `gs:0x8`, so it must remain at a fixed offset within this struct.
     current_task_kernel_rsp: VirtualAddress,
+    /// This field must remain at `gs:0x10`, and so cannot be moved.
+    current_task_user_rsp: VirtualAddress,
+
     tss: Tss,
 
     scheduler: Scheduler<crate::PlatformImpl>,
@@ -38,6 +41,7 @@ pub struct PerCpuImpl {
 
 impl PerCpuImpl {
     unsafe_unpinned!(current_task_kernel_rsp: VirtualAddress);
+    unsafe_unpinned!(current_task_user_rsp: VirtualAddress);
     unsafe_pinned!(tss: Tss);
     unsafe_pinned!(pub scheduler: Scheduler<crate::PlatformImpl>);
 
@@ -48,6 +52,7 @@ impl PerCpuImpl {
             _pin: PhantomPinned,
 
             current_task_kernel_rsp: VirtualAddress::new(0x0),
+            current_task_user_rsp: VirtualAddress::new(0x0),
             tss,
 
             scheduler,
@@ -87,6 +92,10 @@ impl PerCpu<crate::PlatformImpl> for PerCpuImpl {
     fn set_kernel_stack_pointer(mut self: Pin<&mut Self>, stack_pointer: VirtualAddress) {
         *self.as_mut().current_task_kernel_rsp() = stack_pointer;
         self.as_mut().tss().set_kernel_stack(stack_pointer);
+    }
+
+    fn set_user_stack_pointer(mut self: Pin<&mut Self>, stack_pointer: VirtualAddress) {
+        *self.as_mut().current_task_user_rsp() = stack_pointer;
     }
 }
 
