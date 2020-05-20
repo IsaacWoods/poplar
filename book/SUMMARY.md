@@ -5,6 +5,7 @@
 - [The Kernel](./kernel/index.md)
     - [Kernel Objects](./kernel/kernel_objects.md)
     - [System calls](./kernel/syscalls.md)
+    - [Debugging the kernel](./kernel/debugging.md)
 
 - [Syscalls](./syscalls/index.md)
     - [`yield`](./syscalls/yield.md)
