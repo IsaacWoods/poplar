@@ -2,6 +2,7 @@ export PLATFORM ?= x86_64
 export BUILD_DIR ?= $(abspath ./build)
 
 IMAGE_NAME ?= pebble.img
+QEMU_DIR ?=
 QEMU_COMMON_FLAGS = -cpu max,vmware-cpuid-freq,invtsc \
 					-machine q35 \
 					-smp 2 \
@@ -90,20 +91,20 @@ site:
 	mv site/* pages/
 
 qemu: image_$(PLATFORM)
-	qemu-system-x86_64 \
+	$(QEMU_DIR)qemu-system-x86_64 \
 		$(QEMU_COMMON_FLAGS) \
 		-enable-kvm
 
 qemu-no-kvm: image_$(PLATFORM)
-	qemu-system-x86_64 $(QEMU_COMMON_FLAGS)
+	$(QEMU_DIR)qemu-system-x86_64 $(QEMU_COMMON_FLAGS)
 
 debug: image_$(PLATFORM)
-	qemu-system-x86_64 \
+	$(QEMU_DIR)qemu-system-x86_64 \
 		$(QEMU_COMMON_FLAGS) \
 		-d int
 
 gdb: image_$(PLATFORM)
-	qemu-system-x86_64 \
+	$(QEMU_DIR)qemu-system-x86_64 \
 		$(QEMU_COMMON_FLAGS) \
 		--enable-kvm \
 		-s \
