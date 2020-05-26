@@ -1,0 +1,10 @@
+[package]
+name = "ptah"
+version = "0.0.0"
+authors = ["Isaac Woods"]
+edition = "2018"
+description = "A serde data format for efficient message passing"
+license = "MIT OR Apache-2.0"
+
+[dependencies]
+serde = { version = "1", default-features = false }
