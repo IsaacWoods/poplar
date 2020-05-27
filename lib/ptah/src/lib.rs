@@ -3,13 +3,22 @@
 extern crate alloc;
 
 // mod de;
-// mod ser;
+mod ser;
 
 // pub use de::Deserializer;
-// pub use ser::Serializer;
+pub use ser::Serializer;
 
 use alloc::string::{String, ToString};
 use core::fmt;
+
+/*
+ * These are constants that are used in the wire format.
+ * TODO: if this stuff grows much more, they can probably get their own module
+ */
+pub(crate) const MARKER_FALSE: u8 = 0x0;
+pub(crate) const MARKER_TRUE: u8 = 0x1;
+pub(crate) const MARKER_NONE: u8 = 0x0;
+pub(crate) const MARKER_SOME: u8 = 0x1;
 
 #[derive(Clone, PartialEq, Eq, Debug)]
 pub enum Error {
