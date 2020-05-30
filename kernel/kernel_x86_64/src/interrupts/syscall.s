@@ -48,8 +48,8 @@ syscall_handler:
     call rust_syscall_entry
 
     // Zero registers trashed by the Rust code before we return to userspace
-    // We use rdi in a second so don't bother zeroing it here
     xor rsi, rsi
+    xor rdi, rdi
     xor rdx, rdx
     xor r10, r10
     xor r8, r8

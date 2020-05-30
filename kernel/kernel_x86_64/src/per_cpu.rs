@@ -94,6 +94,10 @@ impl PerCpu<crate::PlatformImpl> for PerCpuImpl {
         self.as_mut().tss().set_kernel_stack(stack_pointer);
     }
 
+    fn get_user_stack_pointer(mut self: Pin<&mut Self>) -> VirtualAddress {
+        *self.as_mut().current_task_user_rsp()
+    }
+
     fn set_user_stack_pointer(mut self: Pin<&mut Self>, stack_pointer: VirtualAddress) {
         *self.as_mut().current_task_user_rsp() = stack_pointer;
     }
