@@ -1,5 +1,5 @@
 use bit_field::BitField;
-use core::fmt;
+use core::{fmt, ops::Range};
 
 /// A wrapper for the `RFLAGS` register, providing a nice `Debug` implementation that details which
 /// flags are set and unset.
@@ -8,6 +8,30 @@ use core::fmt;
 pub struct CpuFlags(pub u64);
 
 impl CpuFlags {
+    pub const CARRY_FLAG: u64 = 0;
+    pub const PARITY_FLAG: u64 = 2;
+    pub const ADJUST_FLAG: u64 = 4;
+    pub const ZERO_FLAG: u64 = 6;
+    pub const SIGN_FLAG: u64 = 7;
+    pub const TRAP_FLAG: u64 = 8;
+    pub const INTERRUPT_ENABLE_FLAG: u64 = 9;
+    pub const DIRECTION_FLAG: u64 = 10;
+    pub const OVERFLOW_FLAG: u64 = 11;
+    pub const IO_PRIVILEGE: Range<usize> = 12..14;
+    pub const NESTED_TASK_FLAG: u64 = 14;
+    pub const RESUME_FLAG: u64 = 16;
+    pub const VIRTUAL_8086_FLAG: u64 = 17;
+    pub const ALIGNMENT_CHECK_FLAG: u64 = 18;
+    pub const VIRTUAL_INTERRUPT_FLAG: u64 = 19;
+    pub const VIRTUAL_INTERRUPT_PENDING_FLAG: u64 = 20;
+    pub const CPUID_FLAG: u64 = 21;
+
+    /// This is a mask to select all of the 'status' bits out of the flags (the Carry, Parity, Adjust, Zero, Sign,
+    /// Trap, Interrupt Enable, Direction, and Overflow flags)
+    pub const STATUS_MASK: u64 = 0b110011010101;
+    /// This is a mask to select the I/O privilege bits out of the flags
+    pub const IO_PRIVILEGE_MASK: u64 = 0x3000;
+
     /// Read the contents of `RFLAGS`, creating a `CpuFlags`.
     pub fn read() -> CpuFlags {
         let flags: u64;
@@ -24,7 +48,7 @@ impl CpuFlags {
     }
 
     pub fn interrupts_enabled(&self) -> bool {
-        self.0.get_bit(9)
+        self.0.get_bit(Self::INTERRUPT_ENABLE_FLAG as usize)
     }
 }
 
@@ -32,18 +56,24 @@ impl fmt::Debug for CpuFlags {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(
             f,
-            "[{}{}{}{}{}{}{}{}{}{}{}] {:#x}",
-            if self.0.get_bit(14) { 'N' } else { '-' }, // Nested Task flag
-            ['0', '1', '2', '3'][(self.0.get_bits(12..14)) as usize], // I/O privilege level
-            if self.0.get_bit(11) { 'O' } else { '-' }, // Overflow flag
-            if self.0.get_bit(10) { 'D' } else { '-' }, // Direction flag
-            if self.0.get_bit(9) { 'I' } else { '-' },  // Interrupt flag
-            if self.0.get_bit(8) { 'T' } else { '-' },  // Trap flag
-            if self.0.get_bit(7) { 'S' } else { '-' },  // Sign flag
-            if self.0.get_bit(6) { 'Z' } else { '-' },  // Zero flag
-            if self.0.get_bit(4) { 'A' } else { '-' },  // Adjust flag
-            if self.0.get_bit(2) { 'P' } else { '-' },  // Parity flag
-            if self.0.get_bit(0) { 'C' } else { '-' },  // Carry flag
+            "[({})({})({})({}){}{}{}{}{}{}{}{}{}{}{}{}{}] {:#x}",
+            if self.0.get_bit(Self::CPUID_FLAG as usize) { "ID" } else { "-" },
+            if self.0.get_bit(Self::VIRTUAL_INTERRUPT_PENDING_FLAG as usize) { "VIP" } else { "-" },
+            if self.0.get_bit(Self::VIRTUAL_INTERRUPT_FLAG as usize) { "VIF" } else { "-" },
+            if self.0.get_bit(Self::ALIGNMENT_CHECK_FLAG as usize) { "AC" } else { "-" },
+            if self.0.get_bit(Self::VIRTUAL_8086_FLAG as usize) { 'V' } else { '-' },
+            if self.0.get_bit(Self::RESUME_FLAG as usize) { 'R' } else { '-' },
+            if self.0.get_bit(Self::NESTED_TASK_FLAG as usize) { 'N' } else { '-' },
+            ['0', '1', '2', '3'][self.0.get_bits(Self::IO_PRIVILEGE) as usize],
+            if self.0.get_bit(Self::OVERFLOW_FLAG as usize) { 'O' } else { '-' },
+            if self.0.get_bit(Self::DIRECTION_FLAG as usize) { 'D' } else { '-' },
+            if self.0.get_bit(Self::INTERRUPT_ENABLE_FLAG as usize) { 'I' } else { '-' },
+            if self.0.get_bit(Self::TRAP_FLAG as usize) { 'T' } else { '-' },
+            if self.0.get_bit(Self::SIGN_FLAG as usize) { 'S' } else { '-' },
+            if self.0.get_bit(Self::ZERO_FLAG as usize) { 'Z' } else { '-' },
+            if self.0.get_bit(Self::ADJUST_FLAG as usize) { 'A' } else { '-' },
+            if self.0.get_bit(Self::PARITY_FLAG as usize) { 'P' } else { '-' },
+            if self.0.get_bit(Self::CARRY_FLAG as usize) { 'C' } else { '-' },
             self.0
         )
     }
