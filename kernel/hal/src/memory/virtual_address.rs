@@ -78,6 +78,14 @@ impl VirtualAddress {
     pub fn is_aligned(self, align: usize) -> bool {
         self.0 % align == 0
     }
+
+    pub fn checked_add(self, rhs: usize) -> Option<Self> {
+        Some(VirtualAddress::new(self.0.checked_add(rhs)?))
+    }
+
+    pub fn checked_sub(self, rhs: usize) -> Option<Self> {
+        Some(VirtualAddress::new(self.0.checked_sub(rhs)?))
+    }
 }
 
 impl fmt::LowerHex for VirtualAddress {

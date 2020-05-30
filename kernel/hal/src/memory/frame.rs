@@ -50,7 +50,7 @@ where
     }
 }
 
-impl<S> Step for Frame<S>
+unsafe impl<S> Step for Frame<S>
 where
     S: FrameSize,
 {
@@ -60,28 +60,11 @@ where
         Some(address_difference / S::SIZE)
     }
 
-    fn replace_one(&mut self) -> Self {
-        self.start = PhysicalAddress::new(S::SIZE).unwrap();
-        *self
+    fn forward_checked(start: Self, count: usize) -> Option<Self> {
+        Some(Frame { start: start.start.checked_add(S::SIZE.checked_mul(count)?)?, _phantom: PhantomData })
     }
 
-    fn replace_zero(&mut self) -> Self {
-        self.start = PhysicalAddress::new(0x0).unwrap();
-        *self
-    }
-
-    fn add_one(&self) -> Self {
-        Frame { start: self.start + S::SIZE, _phantom: PhantomData }
-    }
-
-    fn sub_one(&self) -> Self {
-        Frame { start: self.start - S::SIZE, _phantom: PhantomData }
-    }
-
-    fn add_usize(&self, n: usize) -> Option<Self> {
-        Some(Frame {
-            start: PhysicalAddress::new(usize::from(self.start).checked_add(n * S::SIZE)?).unwrap(),
-            _phantom: PhantomData,
-        })
+    fn backward_checked(start: Self, count: usize) -> Option<Self> {
+        Some(Frame { start: start.start.checked_sub(S::SIZE.checked_mul(count)?)?, _phantom: PhantomData })
     }
 }
