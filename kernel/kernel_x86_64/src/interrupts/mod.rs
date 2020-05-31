@@ -241,7 +241,6 @@ impl InterruptController {
 }
 
 extern "C" fn local_apic_timer_handler(_: &InterruptStackFrame) {
-    info!("Tick!");
     unsafe {
         LOCAL_APIC.get().send_eoi();
     }
