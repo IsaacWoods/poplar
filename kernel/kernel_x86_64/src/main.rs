@@ -1,5 +1,6 @@
 #![no_std]
-#![feature(llvm_asm, global_asm, decl_macro, naked_functions)]
+#![no_main]
+#![feature(asm, llvm_asm, global_asm, decl_macro, naked_functions)]
 
 extern crate alloc;
 
@@ -140,9 +141,9 @@ pub extern "C" fn kentry(boot_info: &BootInfo) -> ! {
 
         // TODO: we should parse the SSDTs here. Only bother if we've managed to parse the DSDT.
 
-        // info!("----- Printing AML namespace -----");
-        // info!("{:#?}", aml_context.namespace);
-        // info!("----- Finished AML namespace -----");
+        info!("----- Printing AML namespace -----");
+        info!("{:#?}", aml_context.namespace);
+        info!("----- Finished AML namespace -----");
     }
 
     /*
@@ -163,7 +164,7 @@ pub extern "C" fn kentry(boot_info: &BootInfo) -> ! {
      * Initialise the interrupt controller, which enables interrupts, and start the per-cpu timer.
      */
     let mut interrupt_controller = InterruptController::init(acpi_info.as_ref().unwrap(), &mut aml_context);
-    interrupt_controller.enable_local_timer(&cpu_info, Duration::from_secs(3));
+    // interrupt_controller.enable_local_timer(&cpu_info, Duration::from_secs(3));
 
     let mut platform = PlatformImpl { kernel_page_table };
 
@@ -172,6 +173,11 @@ pub extern "C" fn kentry(boot_info: &BootInfo) -> ! {
         kernel_map::KERNEL_STACKS_BASE + kernel_map::STACK_SLOT_SIZE * kernel_map::MAX_TASKS,
         2 * hal::memory::MEBIBYTES_TO_BYTES,
     );
+
+    info!("Testing breakpoint handler");
+    unsafe {
+        interrupts::test_breakpoint();
+    }
 
     /*
      * Create kernel objects from loaded images and schedule them.
