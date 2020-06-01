@@ -174,11 +174,6 @@ pub extern "C" fn kentry(boot_info: &BootInfo) -> ! {
         2 * hal::memory::MEBIBYTES_TO_BYTES,
     );
 
-    info!("Testing breakpoint handler");
-    unsafe {
-        interrupts::test_breakpoint();
-    }
-
     /*
      * Create kernel objects from loaded images and schedule them.
      */
