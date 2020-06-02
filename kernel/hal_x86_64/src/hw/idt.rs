@@ -208,48 +208,46 @@ pub struct ExceptionWithErrorStackFrame {
 /// The order we save them is important because we rely on their layout on the stack in `InterruptStackFrame` and
 /// `ExceptionWithErrorStackFrame`
 #[allow(unused_macros)] // `rustc` says this is unused for some reason
-#[rustfmt::skip] // `rustfmt` does dumb stuff to the macro
 macro save_regs() {
-    asm!("
-        push rax
-        push rbx
-        push rcx
-        push rdx
-        push rsi
-        push rdi
-        push rbp
-        push r8
-        push r9
-        push r10
-        push r11
-        push r12
-        push r13
-        push r14
-        push r15
-    ");
+    asm!(
+        "push rax
+         push rbx
+         push rcx
+         push rdx
+         push rsi
+         push rdi
+         push rbp
+         push r8
+         push r9
+         push r10
+         push r11
+         push r12
+         push r13
+         push r14
+         push r15"
+    );
 }
 
 /// Restore the saved registers. Must be in the opposite order to `save_regs`.
 #[allow(unused_macros)] // `rustc` says this is unused for some reason
-#[rustfmt::skip]
 macro restore_regs() {
-    asm!("
-        pop r15
-        pop r14
-        pop r13
-        pop r12
-        pop r11
-        pop r10
-        pop r9
-        pop r8
-        pop rbp
-        pop rdi
-        pop rsi
-        pop rdx
-        pop rcx
-        pop rbx
-        pop rax
-    ");
+    asm!(
+        "pop r15
+         pop r14
+         pop r13
+         pop r12
+         pop r11
+         pop r10
+         pop r9
+         pop r8
+         pop rbp
+         pop rdi
+         pop rsi
+         pop rdx
+         pop rcx
+         pop rbx
+         pop rax"
+    );
 }
 
 pub macro wrap_handler($name: path) {
@@ -262,12 +260,13 @@ pub macro wrap_handler($name: path) {
                  * Because `rsp+8` must be divisible by 0x10, we must align the stack.
                  */
                 save_regs!();
-                asm!("
-                    mov rdi, rsp
-                    sub rsp, 8
-                    call {}
-                    add rsp, 8
-                ", sym $name, out("rdi") _);
+                asm!("mov rdi, rsp
+                      sub rsp, 8
+                      call {}
+                      add rsp, 8",
+                    sym $name,
+                    out("rdi") _
+                );
                 restore_regs!();
                 asm!("iretq");
                 unreachable!();
@@ -288,15 +287,14 @@ pub macro wrap_handler_with_error_code($name: path) {
                  * With an error code, a total of `0xa8` bytes are pushed onto the stack, and so `rsp+8` is already
                  * divisible by 0x10, so no additional alignment is needed.
                  */
-                asm!("
-                    mov rdi, rsp
-                    call {}
-                ", sym $name, out("rdi") _);
+                asm!("mov rdi, rsp
+                      call {}",
+                    sym $name,
+                    out("rdi") _
+                );
                 restore_regs!();
-                asm!("
-                    add rsp, 8
-                    iretq
-                ");
+                asm!("add rsp, 8
+                      iretq");
                 unreachable!();
             }
         }

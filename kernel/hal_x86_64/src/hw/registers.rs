@@ -36,11 +36,10 @@ impl CpuFlags {
     pub fn read() -> CpuFlags {
         let flags: u64;
         unsafe {
-            asm!("
-                pushfq
-                pop {}
-            ",
-            out(reg) flags);
+            asm!("pushfq
+                  pop {}",
+                out(reg) flags
+            );
         }
 
         CpuFlags(flags)
@@ -146,9 +145,9 @@ pub fn read_msr(reg: u32) -> u64 {
     let (high, low): (u32, u32);
     unsafe {
         asm!("rdmsr",
-             in("ecx") reg,
-             out("eax") low,
-             out("edx") high
+            in("ecx") reg,
+            out("eax") low,
+            out("edx") high
         );
     }
     (high as u64) << 32 | (low as u64)
@@ -158,8 +157,8 @@ pub fn read_msr(reg: u32) -> u64 {
 /// compromise memory safety.
 pub unsafe fn write_msr(reg: u32, value: u64) {
     asm!("wrmsr",
-         in("ecx") reg,
-         in("eax") value.get_bits(0..32) as u32,
-         in("edx") value.get_bits(32..64) as u32
+        in("ecx") reg,
+        in("eax") value.get_bits(0..32) as u32,
+        in("edx") value.get_bits(32..64) as u32
     );
 }
