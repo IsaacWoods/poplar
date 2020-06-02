@@ -23,7 +23,7 @@ SECTIONS
     .data :
     {
         *(.data .data.*)
-        . = ALIGN(4K);
+        /* We don't need to align to 4K here because it's done by .bss below */
     } :data
 
     .bss :
@@ -46,6 +46,12 @@ SECTIONS
     .rodata :
     {
         *(.rodata .rodata.*)
+        /* We don't need to align to 4K here because the rodata segment is aligned by .got below */
+    } :rodata
+
+    .got :
+    {
+        *(.got)
         . = ALIGN(4K);
     } :rodata
 
