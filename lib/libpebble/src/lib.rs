@@ -1,5 +1,5 @@
 #![no_std]
-#![feature(llvm_asm, decl_macro, const_generics)]
+#![feature(asm, decl_macro, const_generics)]
 
 pub mod caps;
 pub mod syscall;
