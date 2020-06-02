@@ -3,6 +3,7 @@
 - [Introduction](./introduction/index.md)
 
 - [The Kernel](./kernel/index.md)
+    - [Platforms](./kernel/platforms.md)
     - [Kernel Objects](./kernel/kernel_objects.md)
     - [System calls](./kernel/syscalls.md)
     - [Debugging the kernel](./kernel/debugging.md)
