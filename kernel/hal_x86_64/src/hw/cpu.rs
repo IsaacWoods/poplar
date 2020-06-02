@@ -292,16 +292,16 @@ fn decode_hypervisor_info() -> Option<HypervisorInfo> {
 }
 
 fn cpuid(entry: CpuidEntry) -> CpuidResult {
-    let (a, b, c, d): (u32, u32, u32, u32);
+    let (a, b, c, d): (u64, u32, u32, u32);
 
     unsafe {
-        llvm_asm!("cpuid"
-         : "={eax}"(a), "={ebx}"(b), "={ecx}"(c), "={edx}"(d)
-         : "{rax}"(entry as u64)
-         : "eax", "ebx", "ecx", "edx"
-         : "intel"
+        asm!("cpuid",
+             inlateout("rax") (entry as u64) => a,
+             out("ebx") b,
+             out("ecx") c,
+             out("edx") d
         );
     }
 
-    CpuidResult { a, b, c, d }
+    CpuidResult { a: a as u32, b, c, d }
 }

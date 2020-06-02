@@ -36,12 +36,11 @@ impl CpuFlags {
     pub fn read() -> CpuFlags {
         let flags: u64;
         unsafe {
-            llvm_asm!("pushfq
-                  pop rax"
-                 : "={rax}"(flags)
-                 :
-                 : "rax"
-                 : "intel", "volatile");
+            asm!("
+                pushfq
+                pop {}
+            ",
+            out(reg) flags);
         }
 
         CpuFlags(flags)
@@ -99,12 +98,7 @@ pub macro read_control_reg($reg: ident) {{
      */
     #[allow(unused_unsafe)]
     unsafe {
-        llvm_asm!(concat!("mov %", stringify!($reg), ", $0")
-             : "=r"(result)
-             :
-             : "memory"
-             : "volatile"
-            );
+        asm!(concat!("mov {}, ", stringify!($reg)), out(reg) result);
     }
     result
 }}
@@ -117,12 +111,9 @@ pub macro write_control_reg($reg: ident, $value: expr) {
      * This will cause a type-check error if $value isn't a u64.
      */
     let value_u64: u64 = $value;
-    llvm_asm!(concat!("mov $0, %", stringify!($reg))
-         :
-         : "r"(value_u64)
-         : "memory"
-         : "volatile"
-        );
+    asm!(concat!("mov ", stringify!($reg), ", {}"),
+        in(reg) value_u64
+    );
 }
 
 pub const EFER: u32 = 0xc000_0080;
@@ -154,11 +145,10 @@ pub const IA32_GS_BASE: u32 = 0xc000_0101;
 pub fn read_msr(reg: u32) -> u64 {
     let (high, low): (u32, u32);
     unsafe {
-        llvm_asm!("rdmsr"
-         : "={eax}"(low), "={edx}"(high)
-         : "{ecx}"(reg)
-         : "memory"
-         : "volatile"
+        asm!("rdmsr",
+             in("ecx") reg,
+             out("eax") low,
+             out("edx") high
         );
     }
     (high as u64) << 32 | (low as u64)
@@ -167,10 +157,9 @@ pub fn read_msr(reg: u32) -> u64 {
 /// Write to a model-specific register. This is unsafe, because writing to certain MSRs can
 /// compromise memory safety.
 pub unsafe fn write_msr(reg: u32, value: u64) {
-    llvm_asm!("wrmsr"
-     :
-     : "{ecx}"(reg), "{eax}"(value as u32), "{edx}"(value.get_bits(32..64) as u32)
-     : "memory"
-     : "volatile"
+    asm!("wrmsr",
+         in("ecx") reg,
+         in("eax") value.get_bits(0..32) as u32,
+         in("edx") value.get_bits(32..64) as u32
     );
 }

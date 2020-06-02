@@ -10,65 +10,36 @@ pub trait PortSize {
 impl PortSize for u8 {
     unsafe fn port_read(port: u16) -> u8 {
         let result: u8;
-        llvm_asm!("in al, dx"
-         : "={al}"(result)
-         : "{dx}"(port)
-         :
-         : "volatile", "intel"
-        );
+        asm!("in al, dx", in("dx") port, out("al") result);
         result
     }
 
     unsafe fn port_write(port: u16, value: u8) {
-        llvm_asm!("out dx, al"
-             :
-             : "{dx}"(port), "{al}"(value)
-             :
-             : "volatile", "intel");
+        asm!("out dx, al", in("dx") port, in("al") value);
     }
 }
 
 impl PortSize for u16 {
     unsafe fn port_read(port: u16) -> u16 {
         let result: u16;
-        llvm_asm!("in ax, dx"
-         : "={ax}"(result)
-         : "{dx}"(port)
-         :
-         : "volatile", "intel"
-        );
+        asm!("in ax, dx", in("dx") port, out("ax") result);
         result
     }
 
     unsafe fn port_write(port: u16, value: u16) {
-        llvm_asm!("out dx, ax"
-         :
-         : "{dx}"(port), "{ax}"(value)
-         :
-         : "volatile", "intel"
-        );
+        asm!("out dx, ax", in("dx") port, in("ax") value);
     }
 }
 
 impl PortSize for u32 {
     unsafe fn port_read(port: u16) -> u32 {
         let result: u32;
-        llvm_asm!("in eax, dx"
-         : "={eax}"(result)
-         : "{dx}"(port)
-         :
-         : "volatile", "intel"
-        );
+        asm!("in eax, dx", in("dx") port, out("eax") result);
         result
     }
 
     unsafe fn port_write(port: u16, value: u32) {
-        llvm_asm!("out dx, eax"
-         :
-         : "{dx}"(port), "{eax}"(value)
-         :
-         : "volatile", "intel"
-        );
+        asm!("out dx, eax", in("dx") port, in("eax") value);
     }
 }
 

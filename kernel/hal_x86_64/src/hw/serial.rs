@@ -69,7 +69,7 @@ impl SerialPort {
     pub unsafe fn read(&self) -> u8 {
         while (self.line_status_register.read() & 1) == 0 {
             // XXX: Required to stop loop from being optimized away
-            llvm_asm!("" :::: "volatile");
+            asm!("");
         }
 
         self.data_register.read()
@@ -77,7 +77,7 @@ impl SerialPort {
 
     pub unsafe fn write(&mut self, value: u8) {
         while (self.line_status_register.read() & 0x20) == 0 {
-            llvm_asm!("" :::: "volatile");
+            asm!("");
         }
 
         self.data_register.write(value);

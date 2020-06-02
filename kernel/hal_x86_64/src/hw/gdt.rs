@@ -171,32 +171,29 @@ impl Gdt {
             base: VirtualAddress::new(self as *const _ as usize),
         };
 
-        llvm_asm!("// Load the new GDT
-              lgdt [$0]
-             
-              // Load the new kernel data segment
-              mov ds, ax
-              mov es, ax
-              mov fs, ax
-              mov gs, ax
-              mov ss, ax
-              
-              // Switch to the new code segment
-              push rbx
-              lea rax, [rip+0x3]
-              push rax
-              retfq
-              1:
-              
-              // Load the TSS
-              ltr cx"
-        :
-        : "r"(&gdt_ptr),
-          "{rax}"(KERNEL_DATA_SELECTOR),
-          "{rbx}"(KERNEL_CODE_SELECTOR),
-          "{rcx}"(tss_selector)
-        : "rax"
-        : "intel"
-        );
+        asm!("
+            // Load the new GDT
+            lgdt [{}]
+
+            // Load the new kernel data segment
+            mov ds, ax
+            mov es, ax
+            mov fs, ax
+            mov gs, ax
+            mov ss, ax
+
+            // Switch to the new code segment
+            push rbx
+            lea rax, [rip+0x3]
+            push rax
+            retfq
+
+            // Load the TSS
+            ltr cx
+        ",
+        in(reg) &gdt_ptr,
+        inlateout("ax") KERNEL_DATA_SELECTOR.0 => _,
+        in("rbx") KERNEL_CODE_SELECTOR.0,
+        in("cx") tss_selector.0);
     }
 }
