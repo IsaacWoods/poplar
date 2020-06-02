@@ -1,6 +1,6 @@
 #![no_std]
 #![no_main]
-#![feature(llvm_asm, global_asm)]
+#![feature(asm, global_asm)]
 
 global_asm!(include_str!("start.s"));
 
@@ -32,7 +32,7 @@ pub fn kmain() -> ! {
 fn panic(_info: &PanicInfo) -> ! {
     loop {
         unsafe {
-            llvm_asm!("wfe");
+            asm!("wfe");
         }
     }
 }
