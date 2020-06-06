@@ -20,8 +20,8 @@ use uefi::{
 };
 
 pub struct KernelInfo {
-    pub entry_point: usize,
-    pub stack_top: usize,
+    pub entry_point: VirtualAddress,
+    pub stack_top: VirtualAddress,
 
     /// We load the kernel at the base of the kernel address space. We want to put other stuff after it, and so
     /// need to know how much memory the loaded image has taken up. During loading, we calculate the address of
@@ -41,7 +41,7 @@ where
     P: PageTable<Size4KiB>,
 {
     let (elf, pool_addr) = load_elf(boot_services, volume_handle, path)?;
-    let entry_point = elf.entry_point();
+    let entry_point = VirtualAddress::new(elf.entry_point());
 
     let mut next_safe_address = kernel_map::KERNEL_BASE;
 
@@ -75,7 +75,7 @@ where
     }
 
     let stack_top = match elf.symbols().find(|symbol| symbol.name(&elf) == Some("_stack_top")) {
-        Some(symbol) => symbol.value as usize,
+        Some(symbol) => VirtualAddress::new(symbol.value as usize),
         None => panic!("Kernel does not have a '_stack_top' symbol!"),
     };
 

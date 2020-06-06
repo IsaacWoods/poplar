@@ -208,13 +208,20 @@ fn main(image_handle: Handle, system_table: SystemTable<Boot>) -> Result<!, Load
         page_table.switch_to();
 
         /*
+         * We switch to the new kernel stack, making sure to align it down by 8, so that `rsp-8` will be aligned
+         * to 16.
+         *
          * Because we change the stack pointer, we need to load the entry point into a register, as local
          * variables will no longer be available.
+         *
+         * We zero `rbp`, so when the kernel creates its first stack frame, it'll terminate at the kernel entry
+         * point.
          */
         info!("Jumping into kernel!\n\n\n");
-        asm!("mov rsp, rax
+        asm!("xor rbp, rbp
+              mov rsp, rax
               jmp rbx",
-            in("rax") usize::from(kernel_info.stack_top),
+            in("rax") usize::from(kernel_info.stack_top.align_down(8)),
             in("rbx") usize::from(kernel_info.entry_point),
             in("rdi") usize::from(boot_info_virtual_address),
         );
