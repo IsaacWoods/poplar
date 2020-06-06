@@ -10,6 +10,7 @@
   "linker-flavor": "ld",
   "linker": "ld",
   "pre-link-args": { "ld": ["-Tlink.ld"] },
+  "eliminate-frame-pointer": false,
   "panic-strategy": "abort",
   "disable-redzone": true,
   "features": "-mmx,-sse,+soft-float"
