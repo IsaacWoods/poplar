@@ -1,4 +1,4 @@
-.PHONY: kernel_x86_64 efiloader kernel_rpi4 clean
+.PHONY: kernel_x86_64 efiloader kernel_rpi4 test clean
 
 kernel_x86_64: efiloader
 	cargo xbuild --target=kernel_x86_64/x86_64-kernel.json --manifest-path kernel_x86_64/Cargo.toml
@@ -10,6 +10,12 @@ efiloader:
 
 kernel_rpi4:
 	RUSTFLAGS="-Ctarget-cpu=cortex-a72" cargo xbuild --target=kernel_rpi4/rpi4-kernel.json --manifest-path kernel_rpi4/Cargo.toml
+
+test:
+	cargo test --all-features
+	cargo test --all-features --manifest-path hal/Cargo.toml
+	cargo test --all-features --manifest-path hal_x86_64/Cargo.toml
+	cargo test --all-features --manifest-path hal_arm64/Cargo.toml
 
 clean:
 	cargo clean

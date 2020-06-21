@@ -76,7 +76,7 @@ fmt:
 
 test:
 	cargo test --all-features --manifest-path lib/pebble_util/Cargo.toml
-	cargo test --all-features --manifest-path kernel/Cargo.toml
+	make -C kernel test
 
 # This is used by CI to generate the site to deploy. Probably not useful on its own
 site:
