@@ -13,7 +13,7 @@
 //! This leaves us 382GiB for the physical memory map, which should be sufficient for any system I can imagine us
 //! running on (famous last words).
 
-use hal::memory::{PhysicalAddress, VirtualAddress, MEBIBYTES_TO_BYTES};
+use hal::memory::{mebibytes, Bytes, PhysicalAddress, VirtualAddress};
 
 pub const KERNEL_P4_ENTRY: usize = 511;
 pub const KERNEL_ADDRESS_SPACE_START: VirtualAddress = VirtualAddress::new(0xffff_ff80_0000_0000);
@@ -35,7 +35,7 @@ pub const KERNEL_STACKS_BASE: VirtualAddress = VirtualAddress::new(0xffff_ffdf_8
  * There is an imposed maximum number of tasks because of the simple way we're allocating task kernel stacks.
  * This is currently 65536 with a task kernel stack size of 2MiB.
  */
-pub const STACK_SLOT_SIZE: usize = 2 * MEBIBYTES_TO_BYTES;
+pub const STACK_SLOT_SIZE: Bytes = mebibytes(2);
 pub const MAX_TASKS: usize = 65536;
 
 /// The kernel starts at -2GiB. The kernel image is loaded directly at this address, and the following space until

@@ -1,17 +1,17 @@
 use crate::LoaderError;
-use hal::memory::KIBIBYTES_TO_BYTES;
+use hal::memory::{kibibytes, Bytes};
 use log::warn;
 
 const DEFAULT_VOLUME_LABEL: &'static str = "BOOT";
-const DEFAULT_KERNEL_HEAP_SIZE: usize = 200 * KIBIBYTES_TO_BYTES;
+const DEFAULT_KERNEL_HEAP_SIZE: Bytes = kibibytes(200);
 const MAX_IMAGES: usize = 32;
 
 pub struct CommandLine<'a> {
     pub volume_label: &'a str,
     pub kernel_path: Result<&'a str, LoaderError>,
     pub framebuffer: Option<Framebuffer>,
-    /// The size of the kernel heap that should be allocated, in bytes.
-    pub kernel_heap_size: usize,
+    /// The size of the kernel heap that should be allocated
+    pub kernel_heap_size: Bytes,
     pub num_images: usize,
     /// A list of the images we've been asked to load, in the form `(name, path)`
     pub images: [Option<(&'a str, &'a str)>; MAX_IMAGES],

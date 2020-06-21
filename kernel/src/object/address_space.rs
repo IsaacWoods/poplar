@@ -1,7 +1,7 @@
 use super::{alloc_kernel_object_id, memory_object::MemoryObject, task::TaskStack, KernelObject, KernelObjectId};
 use crate::{memory::PhysicalMemoryManager, slab_allocator::SlabAllocator, Platform};
 use alloc::{sync::Arc, vec::Vec};
-use hal::memory::{FrameAllocator, PageTable, VirtualAddress, MEBIBYTES_TO_BYTES};
+use hal::memory::{mebibytes, Bytes, FrameAllocator, PageTable, VirtualAddress};
 use libpebble::syscall::MapMemoryObjectError;
 use spin::Mutex;
 
@@ -9,7 +9,7 @@ use spin::Mutex;
 // TODO: we've basically made these up
 const USER_STACK_BOTTOM: VirtualAddress = VirtualAddress::new(0x00000002_00000000);
 const USER_STACK_TOP: VirtualAddress = VirtualAddress::new(0x00000003_ffffffff);
-const USER_STACK_SLOT_SIZE: usize = 2 * MEBIBYTES_TO_BYTES;
+const USER_STACK_SLOT_SIZE: Bytes = mebibytes(2);
 
 #[derive(PartialEq, Eq, Debug)]
 pub enum State {

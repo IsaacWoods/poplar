@@ -19,20 +19,36 @@ pub use virtual_address::VirtualAddress;
 
 use core::{fmt::Debug, ops::Range};
 
-/// Multiply by this to turn KiB into bytes
-pub const KIBIBYTES_TO_BYTES: usize = 1024;
-/// Multiply by this to turn MiB into bytes
-pub const MEBIBYTES_TO_BYTES: usize = 1024 * KIBIBYTES_TO_BYTES;
-/// Multiply by this to turn GiB into bytes
-pub const GIBIBYTES_TO_BYTES: usize = 1024 * MEBIBYTES_TO_BYTES;
+pub type Bytes = usize;
+pub type Kibibytes = usize;
+pub type Mebibytes = usize;
+pub type Gibibytes = usize;
+
+pub const fn kibibytes(kibibytes: Kibibytes) -> Bytes {
+    kibibytes * 1024
+}
+
+pub const fn mebibytes(mebibytes: Mebibytes) -> Bytes {
+    kibibytes(mebibytes * 1024)
+}
+
+pub const fn gibibytes(gibibytes: Gibibytes) -> Bytes {
+    mebibytes(gibibytes * 1024)
+}
+
+// /// Multiply by this to turn KiB into bytes
+// pub const KIBIBYTES_TO_BYTES: usize = 1024;
+// /// Multiply by this to turn MiB into bytes
+// pub const MEBIBYTES_TO_BYTES: usize = 1024 * KIBIBYTES_TO_BYTES;
+// /// Multiply by this to turn GiB into bytes
+// pub const GIBIBYTES_TO_BYTES: usize = 1024 * MEBIBYTES_TO_BYTES;
 
 /// This trait is implemented by a number of marker types, one for each size of frame and page. Different size
 /// types are defined depending on the target architecture.
 pub trait FrameSize: Clone + Copy + PartialEq + Eq + PartialOrd + Ord + Debug {
-    /// Frame size in bytes
-    const SIZE: usize;
+    const SIZE: Bytes;
 
-    fn frames_needed(bytes: usize) -> usize {
+    fn frames_needed(bytes: Bytes) -> Bytes {
         (bytes / Self::SIZE) + if bytes % Self::SIZE > 0 { 1 } else { 0 }
     }
 }
@@ -44,13 +60,13 @@ macro frame_size($name: ident, $size: expr, $condition: meta) {
 
     #[$condition]
     impl FrameSize for $name {
-        const SIZE: usize = $size;
+        const SIZE: Bytes = $size;
     }
 }
 
-frame_size!(Size4KiB, 4 * KIBIBYTES_TO_BYTES, cfg(target_arch = "x86_64"));
-frame_size!(Size2MiB, 2 * MEBIBYTES_TO_BYTES, cfg(target_arch = "x86_64"));
-frame_size!(Size1GiB, 1 * GIBIBYTES_TO_BYTES, cfg(target_arch = "x86_64"));
+frame_size!(Size4KiB, kibibytes(4), cfg(target_arch = "x86_64"));
+frame_size!(Size2MiB, mebibytes(2), cfg(target_arch = "x86_64"));
+frame_size!(Size1GiB, gibibytes(1), cfg(target_arch = "x86_64"));
 
 /// `FrameAllocator` is used to interact with a physical memory manager in a platform-independent way. Methods on
 /// `FrameAllocator` take `&self` and so are expected to use interior-mutability through a type such as `Mutex` to

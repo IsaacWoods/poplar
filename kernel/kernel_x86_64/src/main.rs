@@ -171,7 +171,7 @@ pub extern "C" fn kentry(boot_info: &BootInfo) -> ! {
     let mut kernel_stack_allocator = KernelStackAllocator::<PlatformImpl>::new(
         kernel_map::KERNEL_STACKS_BASE,
         kernel_map::KERNEL_STACKS_BASE + kernel_map::STACK_SLOT_SIZE * kernel_map::MAX_TASKS,
-        2 * hal::memory::MEBIBYTES_TO_BYTES,
+        hal::memory::mebibytes(2),
     );
 
     /*
