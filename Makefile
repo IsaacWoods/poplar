@@ -7,13 +7,15 @@ QEMU_COMMON_FLAGS = -cpu max,vmware-cpuid-freq,invtsc \
 					-machine q35 \
 					-smp 2 \
 					-m 512M \
-					-usb \
+					-device isa-debug-exit,iobase=0xf4,iosize=0x04 \
 					-device usb-ehci,id=ehci,bus=pcie.0 \
 					--no-reboot \
 					--no-shutdown \
 					-drive if=pflash,format=raw,file=ovmf/OVMF_CODE.fd,readonly \
 					-drive if=pflash,format=raw,file=ovmf/OVMF_VARS.fd \
 					-drive if=ide,format=raw,file=$(IMAGE_NAME) \
+					-serial stdio \
+					-usb \
 					-net none
 
 .PHONY: image_x86_64 prepare kernel test_process simple_fb clean qemu gdb update fmt test site echo
