@@ -1,6 +1,13 @@
 use super::{Frame, FrameAllocator, FrameSize, Page, PhysicalAddress, VirtualAddress};
-use core::ops::Range;
+use core::ops::{self, Range};
 
+/// Defines the permissions for a region of memory. Used both for abstract regions of memory (e.g. entries in a
+/// memory map) and as a architecture-common representation of paging structures.
+///
+/// The `Add` implementation "coalesces" two sets of `Flags`, giving a set of `Flags` that has the permissions of
+/// both of the sets. For example, if one region is writable and the other is not, the coalesced flags will be
+/// writable. By default, a region is considered to be cached, so coalesced flags will only be cached if both input
+/// regions can safely be cached.
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub struct Flags {
     pub writable: bool,
@@ -12,6 +19,20 @@ pub struct Flags {
 impl Default for Flags {
     fn default() -> Self {
         Flags { writable: false, executable: false, user_accessible: false, cached: true }
+    }
+}
+
+impl ops::Add for Flags {
+    type Output = Self;
+
+    fn add(self, other: Self) -> Self::Output {
+        Flags {
+            writable: self.writable || other.writable,
+            executable: self.executable || other.executable,
+            user_accessible: self.user_accessible || other.user_accessible,
+            // If either of the regions should not be cached, we can't cache any of it
+            cached: self.cached && other.cached,
+        }
     }
 }
 
@@ -89,4 +110,30 @@ where
     fn unmap<S>(&mut self, page: Page<S>) -> Option<Frame<S>>
     where
         S: FrameSize;
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_flag_coalescing() {
+        assert_eq!(Flags::default() + Flags::default(), Flags::default());
+        assert_eq!(
+            Flags::default() + Flags { writable: false, executable: true, user_accessible: true, cached: true },
+            Flags { writable: false, executable: true, user_accessible: true, cached: true }
+        );
+        assert_eq!(
+            Flags::default() + Flags { writable: true, executable: true, user_accessible: true, cached: true },
+            Flags { writable: true, executable: true, user_accessible: true, cached: true }
+        );
+        assert_eq!(
+            Flags::default() + Flags { cached: false, ..Default::default() },
+            Flags { cached: false, ..Default::default() }
+        );
+        assert_eq!(
+            Flags { cached: false, ..Default::default() } + Flags { cached: false, ..Default::default() },
+            Flags { cached: false, ..Default::default() }
+        );
+    }
 }
