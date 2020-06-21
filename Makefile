@@ -1,5 +1,7 @@
 export PLATFORM ?= x86_64
 export BUILD_DIR ?= $(abspath ./build)
+# In the future, this should just be features we can enable, but this is easier in makefile
+export KERNEL_FLAGS ?=
 
 IMAGE_NAME ?= pebble.img
 QEMU_DIR ?=
