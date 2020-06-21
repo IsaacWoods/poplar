@@ -4,9 +4,6 @@ use core::{
     ops::{Add, AddAssign, Sub, SubAssign},
 };
 
-// TODO: can we use extension traits to supply platform-specific functionality (e.g. constructing an address from
-// page table indices, or getting the page table indices from a given address
-
 /// Represents a virtual address. On architectures that have extra requirements for canonical virtual addresses
 /// (e.g. x86_64 requiring correct sign-extension in high bits), these requirements are always enforced.
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Default)]
@@ -50,7 +47,7 @@ impl VirtualAddress {
         }
     }
 
-    /// Align this address to the given alignment, moving downwards if this is not already aligned.  `align` must
+    /// Align this address to the given alignment, moving downwards if this is not already aligned. `align` must
     /// be `0` or a power-of-two.
     pub fn align_down(self, align: usize) -> VirtualAddress {
         if align.is_power_of_two() {
@@ -124,17 +121,18 @@ impl<T> From<*mut T> for VirtualAddress {
     }
 }
 
-impl AddAssign<usize> for VirtualAddress {
-    fn add_assign(&mut self, rhs: usize) {
-        *self = *self + rhs;
-    }
-}
-
 impl Add<usize> for VirtualAddress {
     type Output = VirtualAddress;
 
     fn add(self, rhs: usize) -> Self::Output {
         VirtualAddress::new(self.0 + rhs)
+    }
+}
+
+impl AddAssign<usize> for VirtualAddress {
+    fn add_assign(&mut self, rhs: usize) {
+        // XXX: this ensures correctness as it goes through the `Add` implementation
+        *self = *self + rhs;
     }
 }
 
@@ -148,6 +146,7 @@ impl Sub<usize> for VirtualAddress {
 
 impl SubAssign<usize> for VirtualAddress {
     fn sub_assign(&mut self, rhs: usize) {
+        // XXX: this ensures correctness as it goes through the `Sub` implementation
         *self = *self - rhs;
     }
 }

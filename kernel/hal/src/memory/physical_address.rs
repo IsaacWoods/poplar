@@ -5,7 +5,7 @@ use core::{
 };
 
 /// Represents a physical address. If the target architecture has any requirements for valid physical addresses,
-/// they must always be observed by values of this type.
+/// they are always enforced.
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Default)]
 #[repr(transparent)]
 pub struct PhysicalAddress(usize);
@@ -13,7 +13,8 @@ pub struct PhysicalAddress(usize);
 impl PhysicalAddress {
     cfg_if! {
         if #[cfg(target_arch = "x86_64")] {
-            /// On x86_64, physical addresses must be less than 2^52.
+            /// Construct a new `PhysicalAddress`. On x86_64, physical addresses must be less than 2^52; if this is
+            /// not the case, this will return `None`.
             pub const fn new(address: usize) -> Option<PhysicalAddress> {
                 const MAX_PHYSICAL_ADDRESS: usize = (1 << 52) - 1;
                 match address {
@@ -103,6 +104,7 @@ impl Add<usize> for PhysicalAddress {
 
 impl AddAssign<usize> for PhysicalAddress {
     fn add_assign(&mut self, rhs: usize) {
+        // XXX: this ensures correctness as it goes through the `Add` implementation
         *self = *self + rhs;
     }
 }
@@ -120,6 +122,7 @@ impl Sub<usize> for PhysicalAddress {
 
 impl SubAssign<usize> for PhysicalAddress {
     fn sub_assign(&mut self, rhs: usize) {
+        // XXX: this ensures correctness as it goes through the `Sub` implementation
         *self = *self - rhs;
     }
 }
