@@ -235,9 +235,18 @@ fn check_support_and_enable_features(cpu_info: &CpuInfo) {
 
 #[cfg(not(test))]
 #[panic_handler]
-// #[no_mangle]
 fn panic(info: &PanicInfo) -> ! {
     error!("KERNEL PANIC: {}", info);
+
+    /*
+     * If the `qemu_exit` feature is set, we use the debug port to exit.
+     */
+    #[cfg(feature = "qemu_exit")]
+    {
+        use hal_x86_64::hw::qemu::{ExitCode, ExitPort};
+        unsafe { ExitPort::new() }.exit(ExitCode::Failed)
+    }
+
     loop {
         unsafe {
             asm!("hlt");

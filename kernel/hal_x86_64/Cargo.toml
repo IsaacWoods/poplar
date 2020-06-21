@@ -14,3 +14,4 @@ log = { version = "0.4", default-features = false }
 
 [features]
 default_features = []
+qemu = []

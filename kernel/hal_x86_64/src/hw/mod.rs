@@ -10,6 +10,9 @@ pub mod serial;
 pub mod tlb;
 pub mod tss;
 
+#[cfg(feature = "qemu")]
+pub mod qemu;
+
 use hal::memory::VirtualAddress;
 
 #[repr(C, packed)]

@@ -49,7 +49,10 @@ pub struct Port<T: PortSize> {
     phantom: PhantomData<T>,
 }
 
-impl<T: PortSize> Port<T> {
+impl<T> Port<T>
+where
+    T: PortSize,
+{
     /// Create a new `Port` at the specified I/O address. Unsafe because writing to random IO ports
     /// is bad.
     pub const unsafe fn new(port: u16) -> Port<T> {
