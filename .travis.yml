@@ -8,6 +8,7 @@ git:
 
 install:
   - sudo apt-get install mtools
+  - sudo apt-get install qemu
   - rustup component add rust-src
   - cargo install cargo-xbuild
   - cargo install mdbook
@@ -16,6 +17,7 @@ script:
   - make
   - make test
   - make site
+  - KERNEL_FLAGS='--features qemu_exit' make qemu-no-kvm
 
 branches:
   only:
