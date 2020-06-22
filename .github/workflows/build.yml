@@ -37,3 +37,6 @@ jobs:
       
     - name: Run tests
       run: make test
+
+    - name: Emulate
+      run: KERNEL_FLAGS='--features qemu_exit' make qemu-no-kvm
