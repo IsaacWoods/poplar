@@ -33,10 +33,12 @@ jobs:
         cargo install cargo-xbuild
         
     - name: Build
-      run: make
+      run: KERNEL_FLAGS='--features qemu_exit' make
       
     - name: Run tests
       run: make test
 
     - name: Emulate
-      run: KERNEL_FLAGS='--features qemu_exit' make qemu-no-kvm
+      run: |
+        qemu-system-x86_64 --version
+        KERNEL_FLAGS='--features qemu_exit' QEMU_EXTRA_FLAGS='-display none' make qemu-no-kvm

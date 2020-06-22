@@ -19,6 +19,8 @@ QEMU_COMMON_FLAGS = -cpu max,vmware-cpuid-freq,invtsc \
 					-serial stdio \
 					-usb \
 					-net none
+# This can be used to pass extra flags to QEMU
+QEMU_EXTRA_FLAGS ?=
 
 .PHONY: image_x86_64 prepare kernel test_process simple_fb clean qemu gdb update fmt test site echo
 .DEFAULT_GOAL := image_$(PLATFORM)
@@ -97,19 +99,22 @@ site:
 qemu: image_$(PLATFORM)
 	$(QEMU_DIR)qemu-system-x86_64 \
 		$(QEMU_COMMON_FLAGS) \
+		$(QEMU_EXTRA_FLAGS) \
 		-enable-kvm
 
 qemu-no-kvm: image_$(PLATFORM)
-	$(QEMU_DIR)qemu-system-x86_64 $(QEMU_COMMON_FLAGS)
+	$(QEMU_DIR)qemu-system-x86_64 $(QEMU_COMMON_FLAGS) $(QEMU_EXTRA_FLAGS)
 
 debug: image_$(PLATFORM)
 	$(QEMU_DIR)qemu-system-x86_64 \
 		$(QEMU_COMMON_FLAGS) \
+		$(QEMU_EXTRA_FLAGS) \
 		-d int
 
 gdb: image_$(PLATFORM)
 	$(QEMU_DIR)qemu-system-x86_64 \
 		$(QEMU_COMMON_FLAGS) \
+		$(QEMU_EXTRA_FLAGS) \
 		--enable-kvm \
 		-s \
 		-S \
