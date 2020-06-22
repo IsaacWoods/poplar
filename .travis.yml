@@ -17,6 +17,8 @@ script:
   - make
   - make test
   - make site
+  - qemu-system-x86_64 --version
+  - qemu-system-x86_64 -cpu ?
   - KERNEL_FLAGS='--features qemu_exit' make qemu-no-kvm
 
 branches:
