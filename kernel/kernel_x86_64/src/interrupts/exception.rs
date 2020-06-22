@@ -20,15 +20,13 @@ pub extern "C" fn breakpoint_handler(stack_frame: &InterruptStackFrame) {
 
 pub extern "C" fn invalid_opcode_handler(stack_frame: &InterruptStackFrame) {
     error!("INVALID OPCODE AT: {:#x}", stack_frame.instruction_pointer);
-
-    loop {}
+    panic!("Unrecoverable fault");
 }
 
 pub extern "C" fn general_protection_fault_handler(stack_frame: &ExceptionWithErrorStackFrame) {
     error!("General protection fault (error code = {:#x}). Interrupt stack frame: ", stack_frame.error_code);
     error!("{:#x?}", stack_frame);
-
-    loop {}
+    panic!("Unrecoverable fault");
 }
 
 pub extern "C" fn page_fault_handler(stack_frame: &ExceptionWithErrorStackFrame) {
@@ -67,11 +65,14 @@ pub extern "C" fn page_fault_handler(stack_frame: &ExceptionWithErrorStackFrame)
     /*
      * Page-faults can be recovered from and so are faults, but we never will so just give up.
      */
-    loop {}
+    /*
+     * In the future, page faults can be used for demand paging and so are recoverable. At the moment, they're
+     * always bad, so we panic here.
+     */
+    panic!("Unrecoverable fault");
 }
 
 pub extern "C" fn double_fault_handler(stack_frame: &ExceptionWithErrorStackFrame) {
     error!("EXCEPTION: DOUBLE FAULT   (Error code: {})\n{:#?}", stack_frame.error_code, stack_frame);
-
-    loop {}
+    panic!("Unrecoverable fault");
 }
