@@ -56,6 +56,23 @@ const MAX_ORDER: usize = 10;
 /// time.
 const BASE_SIZE: usize = Size4KiB::SIZE;
 
+/*
+ * TODO: the big testing bonanza:
+ *    - provide `check_bins` etc. testing methods cfg'd for testing
+ *    - test adding ranges works correctly (splitting included)
+ *    - test failure to allocate
+ *    - test allocation
+ *    - test coalescing and breaking of blocks
+ *
+ *    possible way of testing complete allocation:
+ *        - allocate n frames, with variety of ranges requiring splitting and stuff
+ *        - create a BTreeSet or whatever that contains all the 4KiB frames expected out of that range
+ *        - allocate 4KiB frames out until we fail to allocate
+ *        - remove the frames from the BTreeSet, checking we don't remove one that shouldn't be removed
+ *        - when we fail to allocate, check that all the bins, as well as the BTreeSet of expected frames, is
+ *          empty
+ */
+
 pub struct BuddyAllocator {
     /// The bins of free blocks, where bin `i` contains blocks of size `2^i`. Uses `BTreeSet` to
     /// store the blocks in each bin, for efficient buddy location. Each block is stored as the physical address
