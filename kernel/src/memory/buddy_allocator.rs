@@ -43,7 +43,7 @@
 //! served allocating a larger block of frames at a time, and using a slab allocator to make the
 //! individual allocations.
 
-use alloc::{collections::BTreeSet, vec::Vec};
+use alloc::collections::BTreeSet;
 use core::{cmp::min, ops::Range};
 use hal::memory::{Frame, FrameSize, PhysicalAddress, Size4KiB};
 use pebble_util::math::{ceiling_integer_divide, ceiling_log2, flooring_log2};
@@ -56,20 +56,18 @@ const MAX_ORDER: usize = 10;
 /// time.
 const BASE_SIZE: usize = Size4KiB::SIZE;
 
-// TODO: don't make the no. of bins dynamic - just set of constant and use an array (or at least
-// switch to const generics)
 pub struct BuddyAllocator {
     /// The bins of free blocks, where bin `i` contains blocks of size `2^i`. Uses `BTreeSet` to
     /// store the blocks in each bin, for efficient buddy location. Each block is stored as the physical address
     /// of the start of the block. The actual frames can be constructed for each block using the start address and
     /// the order of the block.
-    // TODO: when generic constants are a thing, we might be able to use `[BTreeSet; N]` here.
-    bins: Vec<BTreeSet<PhysicalAddress>>,
+    bins: [BTreeSet<PhysicalAddress>; MAX_ORDER + 1],
 }
 
 impl BuddyAllocator {
     pub fn new() -> BuddyAllocator {
-        BuddyAllocator { bins: vec![BTreeSet::new(); MAX_ORDER + 1] }
+        // The `Default` implementation for `BTreeSet` is an empty set, so this works nicely
+        BuddyAllocator { bins: Default::default() }
     }
 
     /// Add a range of `Frame`s to this allocator, marking them free to allocate.
