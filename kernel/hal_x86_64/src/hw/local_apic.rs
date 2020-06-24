@@ -57,7 +57,7 @@ impl LocalApic {
          * divider of 1, which would be the simplest.
          */
         unsafe {
-            self.register(0x3e0).write(0x3); // Step 1: Set the divider to 3
+            self.register(0x3e0).write(0x3); // Step 1: Set the divider to 16
             self.register(0x320).write(u32::from(vector) | 0x20000); // Step 2: enable the timer
             self.register(0x380).write(ticks); // Step 3: Set the initial count
         }
