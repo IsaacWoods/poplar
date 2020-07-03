@@ -512,10 +512,11 @@ fn find_volume(boot_services: &BootServices, label: &str) -> Result<Handle, Load
 
 #[panic_handler]
 fn panic_handler(info: &PanicInfo) -> ! {
-    if let Some(location) = info.location() {
-        error!("Panic in {} at ({}:{})", location.file(), location.line(), location.column());
-        if let Some(message) = info.message() {
-            error!("Panic message: {}", message);
+    if let Some(message) = info.message() {
+        if let Some(location) = info.location() {
+            error!("Panic message: {} ({} - {}:{})", message, location.file(), location.line(), location.column());
+        } else {
+            error!("Panic message: {} (no location info)", message);
         }
     }
     loop {}
