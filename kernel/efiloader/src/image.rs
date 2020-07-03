@@ -58,7 +58,7 @@ where
                         (Page::<Size4KiB>::contains(segment.virtual_address + segment.size) + 1).start;
                 }
 
-                assert!(segment.size % Size4KiB::SIZE == 0);
+                assert!(segment.size % Size4KiB::SIZE == 0, "Segment is not page-aligned");
                 page_table
                     .map_area(
                         segment.virtual_address,
@@ -84,7 +84,7 @@ where
         Some(symbol) => VirtualAddress::new(symbol.value as usize),
         None => panic!("Kernel does not have a '_guard_page' symbol!"),
     };
-    assert!(guard_page_address.is_aligned(Size4KiB::SIZE));
+    assert!(guard_page_address.is_aligned(Size4KiB::SIZE), "Guard page address is not page aligned");
     page_table.unmap::<Size4KiB>(Page::starts_with(guard_page_address));
 
     boot_services.free_pool(pool_addr).unwrap_success();
@@ -206,7 +206,7 @@ fn load_segment(
     elf: &Elf,
     user_accessible: bool,
 ) -> Result<Segment, LoaderError> {
-    assert!((segment.mem_size as usize) % Size4KiB::SIZE == 0);
+    assert!((segment.mem_size as usize) % Size4KiB::SIZE == 0, "LOAD segment is not page aligned");
 
     let num_frames = (segment.mem_size as usize) / Size4KiB::SIZE;
     let physical_address = boot_services
@@ -217,7 +217,7 @@ fn load_segment(
      * Copy `file_size` bytes from the image into the segment's new home. Note that
      * `file_size` may be less than `mem_size`, but must never be greater than it.
      */
-    assert!(segment.file_size <= segment.mem_size);
+    assert!(segment.file_size <= segment.mem_size, "Segment's mem size is greater than it's file size???");
     unsafe {
         slice::from_raw_parts_mut(physical_address as usize as *mut u8, segment.file_size as usize)
             .copy_from_slice(segment.data(&elf));

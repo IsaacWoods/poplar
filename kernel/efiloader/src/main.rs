@@ -361,7 +361,7 @@ where
     A: FrameAllocator<Size4KiB>,
     P: PageTable<Size4KiB>,
 {
-    assert!(heap_size % Size4KiB::SIZE == 0);
+    assert!(heap_size % Size4KiB::SIZE == 0, "Heap will not be page aligned");
     let frames_needed = Size4KiB::frames_needed(heap_size);
     let physical_start = boot_services
         .allocate_pages(AllocateType::AnyPages, KERNEL_HEAP_MEMORY_TYPE, frames_needed)
