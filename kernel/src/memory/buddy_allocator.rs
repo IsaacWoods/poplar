@@ -50,6 +50,7 @@ use pebble_util::math::{ceiling_integer_divide, ceiling_log2, flooring_log2};
 
 /// The largest block stored by the buddy allocator is `2^MAX_ORDER`.
 const MAX_ORDER: usize = 10;
+const NUM_BINS: usize = MAX_ORDER + 1;
 
 /// The "base" block size - the smallest block size this allocator tracks. This is chosen at the moment to be 4096
 /// bytes - the size of the smallest physical frame for all the architectures we wish to support at this point of
@@ -58,8 +59,6 @@ const BASE_SIZE: usize = Size4KiB::SIZE;
 
 /*
  * TODO: the big testing bonanza:
- *    - provide `check_bins` etc. testing methods cfg'd for testing
- *    - test adding ranges works correctly (splitting included)
  *    - test failure to allocate
  *    - test allocation
  *    - test coalescing and breaking of blocks
@@ -78,7 +77,7 @@ pub struct BuddyAllocator {
     /// store the blocks in each bin, for efficient buddy location. Each block is stored as the physical address
     /// of the start of the block. The actual frames can be constructed for each block using the start address and
     /// the order of the block.
-    bins: [BTreeSet<PhysicalAddress>; MAX_ORDER + 1],
+    bins: [BTreeSet<PhysicalAddress>; NUM_BINS],
 }
 
 impl BuddyAllocator {
@@ -168,8 +167,8 @@ impl BuddyAllocator {
     fn free_block(&mut self, start: PhysicalAddress, order: usize) {
         if order == MAX_ORDER {
             /*
-             * Blocks of the maximum order can't be coalesced, because there isn't a bin to put them in, so we
-             * just add them to the largest bin.
+             * Blocks of the maximum order can't be coalesced, because there isn't a bin to put the result in,
+             * so we just add them to the largest bin.
              */
             assert!(!self.bins[order].contains(&start));
             self.bins[order].insert(start);
@@ -202,7 +201,8 @@ impl BuddyAllocator {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use hal::memory::{Frame, PhysicalAddress};
+    use alloc::vec::Vec;
+    use hal::memory::{Frame, PhysicalAddress, Size4KiB};
 
     #[test]
     fn test_buddy_of() {
@@ -232,5 +232,150 @@ mod tests {
         test!(4, 0x10000, 0x0);
         test!(4, 0x160000, 0x170000);
         test!(4, 0x170000, 0x160000);
+    }
+
+    struct Block {
+        order: usize,
+        address: PhysicalAddress,
+    }
+
+    impl Block {
+        /// Construct a `Block`. Takes the address as a `usize` for ease of test writing, panics here if it's not
+        /// valid.
+        fn new(order: usize, address: usize) -> Block {
+            Block { order, address: PhysicalAddress::new(address).unwrap() }
+        }
+    }
+
+    /// Helper to check the content of a `BuddyAllocator`'s bins.
+    fn check_bins(mut allocator: BuddyAllocator, expected_blocks: Vec<Block>) {
+        /*
+         * First, try to remove all the expected blocks from the correct bins. Panic if a block isn't there.
+         */
+        for block in expected_blocks {
+            if !allocator.bins[block.order].remove(&block.address) {
+                panic!("Allocator does not have block of order {} starting at {:#x}", block.order, block.address);
+            }
+        }
+
+        /*
+         * Next, assert that all the bins are empty.
+         */
+        for i in 0..NUM_BINS {
+            if !allocator.bins[i].is_empty() {
+                panic!("Bin of order {} is not empty", i);
+            }
+        }
+    }
+
+    /// Helper to construct a frame range. Takes the address as a `usize` for ease of test writing - panics here if
+    /// it's not valid.
+    fn n_frames_at(start: usize, n: usize) -> Range<Frame> {
+        Frame::starts_with(PhysicalAddress::new(start).unwrap())
+            ..Frame::starts_with(PhysicalAddress::new(start + n * Size4KiB::SIZE).unwrap())
+    }
+
+    #[test]
+    fn test_single_frame_binning() {
+        let mut allocator = BuddyAllocator::new();
+        allocator.add_range(n_frames_at(0x0, 1));
+        allocator.add_range(n_frames_at(0x2000, 1));
+        allocator.add_range(n_frames_at(0x16000, 1));
+        allocator.add_range(n_frames_at(0xf480000, 1));
+        check_bins(
+            allocator,
+            vec![Block::new(0, 0x0), Block::new(0, 0x2000), Block::new(0, 0x16000), Block::new(0, 0xf480000)],
+        );
+    }
+
+    #[test]
+    fn test_bigger_block_binning() {
+        let mut allocator = BuddyAllocator::new();
+        allocator.add_range(n_frames_at(0x2000, 1));
+        allocator.add_range(n_frames_at(0x6000, 4));
+        allocator.add_range(n_frames_at(0x10000, 64));
+        check_bins(allocator, vec![Block::new(0, 0x2000), Block::new(2, 0x6000), Block::new(6, 0x10000)]);
+    }
+
+    /// Test the splitting of weird-sized ranges into blocks.
+    #[test]
+    fn test_complex_range_binning() {
+        /*
+         * Split 3 frames into an order-1 block and an order-0 block.
+         */
+        let mut allocator = BuddyAllocator::new();
+        allocator.add_range(n_frames_at(0x0, 3));
+        check_bins(allocator, vec![Block::new(1, 0x0), Block::new(0, 0x2000)]);
+
+        /*
+         * Split 523 frames into 4 blocks of orders: 9, then 3, then 1, then 0.
+         */
+        let mut allocator = BuddyAllocator::new();
+        allocator.add_range(n_frames_at(0x40000, 523));
+        check_bins(
+            allocator,
+            vec![
+                Block::new(9, 0x40000),
+                Block::new(3, 0x240000),
+                Block::new(1, 0x248000),
+                Block::new(0, 0x24a000),
+            ],
+        );
+    }
+
+    #[test]
+    fn test_block_coalescing() {
+        /*
+         * Test the coalescing of two order-0 blocks into a single order-1 block, with a neighbour that can't
+         * be.
+         */
+        let mut allocator = BuddyAllocator::new();
+        allocator.add_range(n_frames_at(0x1000, 1));
+        allocator.add_range(n_frames_at(0x3000, 1));
+        allocator.add_range(n_frames_at(0x2000, 1));
+        check_bins(allocator, vec![Block::new(0, 0x1000), Block::new(1, 0x2000)]);
+
+        /*
+         * Start with four order-0 blocks that can be coalesced into a single order-2 block.
+         */
+        let mut allocator = BuddyAllocator::new();
+        allocator.add_range(n_frames_at(0x0, 1));
+        allocator.add_range(n_frames_at(0x2000, 1));
+        allocator.add_range(n_frames_at(0x3000, 1));
+        allocator.add_range(n_frames_at(0x1000, 1));
+        check_bins(allocator, vec![Block::new(2, 0x0)]);
+
+        /*
+         * Add 1024 single frames, which should be coalesced into a single order-10 block.
+         */
+        let mut allocator = BuddyAllocator::new();
+        for i in 0..1024 {
+            allocator.add_range(n_frames_at(i * Size4KiB::SIZE, 1));
+        }
+        check_bins(allocator, vec![Block::new(10, 0x0)]);
+    }
+
+    #[test]
+    fn test_empty_allocator() {
+        let mut allocator = BuddyAllocator::new();
+        assert_eq!(allocator.allocate_n(0x1000), None);
+        assert_eq!(allocator.allocate_block(0), None);
+        assert_eq!(allocator.allocate_block(MAX_ORDER), None);
+    }
+
+    #[test]
+    fn test_block_larger_than_max_order() {
+        /*
+         * Currently, if we try and allocate a block greater than the current maximum block size, we return
+         * `None` even if we could service the request overall.
+         */
+        let mut allocator = BuddyAllocator::new();
+        allocator.add_range(n_frames_at(0x0, 4096)); // Allocate 4 blocks of the maximum order (currently 10)
+        assert_eq!(allocator.allocate_block(12), None);
+
+        /*
+         * Currently, `allocate_n` can only allocate contiguous bytes, but this could be relaxed in the future.
+         */
+        assert_eq!(allocator.allocate_n(2048 * Size4KiB::SIZE), None);
     }
 }
