@@ -1,0 +1,1 @@
+initSidebarItems({"struct":[["UserPointer",""],["UserSlice","Represents a slice of `T`s in userspace."],["UserString",""]]});

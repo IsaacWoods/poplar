@@ -1,0 +1,512 @@
+<!DOCTYPE HTML>
+<html lang="en" class="sidebar-visible no-js light">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Pebble OS</title>
+        
+        <meta name="robots" content="noindex" />
+        
+        
+
+
+        <!-- Custom HTML head -->
+        
+
+
+        <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff" />
+
+        <link rel="icon" href="favicon.svg">
+        <link rel="shortcut icon" href="favicon.png">
+        <link rel="stylesheet" href="css/variables.css">
+        <link rel="stylesheet" href="css/general.css">
+        <link rel="stylesheet" href="css/chrome.css">
+        <link rel="stylesheet" href="css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="FontAwesome/css/font-awesome.css">
+        
+        <link rel="stylesheet" href="fonts/fonts.css">
+        
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" href="highlight.css">
+        <link rel="stylesheet" href="tomorrow-night.css">
+        <link rel="stylesheet" href="ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+        
+
+        
+    </head>
+    <body>
+        <!-- Provide site root to javascript -->
+        <script type="text/javascript">
+            var path_to_root = "";
+            var default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "navy" : "light";
+        </script>
+
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script type="text/javascript">
+            try {
+                var theme = localStorage.getItem('mdbook-theme');
+                var sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script type="text/javascript">
+            var theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            var html = document.querySelector('html');
+            html.classList.remove('no-js')
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add('js');
+        </script>
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script type="text/javascript">
+            var html = document.querySelector('html');
+            var sidebar = 'hidden';
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            }
+            html.classList.remove('sidebar-visible');
+            html.classList.add("sidebar-" + sidebar);
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <div class="sidebar-scrollbox">
+                <ol class="chapter"><li class="chapter-item expanded "><a href="introduction/index.html"><strong aria-hidden="true">1.</strong> Introduction</a></li><li class="chapter-item expanded "><a href="kernel/index.html"><strong aria-hidden="true">2.</strong> The Kernel</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="kernel/platforms.html"><strong aria-hidden="true">2.1.</strong> Platforms</a></li><li class="chapter-item expanded "><a href="kernel/kernel_objects.html"><strong aria-hidden="true">2.2.</strong> Kernel Objects</a></li><li class="chapter-item expanded "><a href="kernel/syscalls.html"><strong aria-hidden="true">2.3.</strong> System calls</a></li><li class="chapter-item expanded "><a href="kernel/debugging.html"><strong aria-hidden="true">2.4.</strong> Debugging the kernel</a></li></ol></li><li class="chapter-item expanded "><a href="syscalls/index.html"><strong aria-hidden="true">3.</strong> Syscalls</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="syscalls/yield.html"><strong aria-hidden="true">3.1.</strong> yield</a></li><li class="chapter-item expanded "><a href="syscalls/early_log.html"><strong aria-hidden="true">3.2.</strong> early_log</a></li><li class="chapter-item expanded "><a href="syscalls/get_framebuffer.html"><strong aria-hidden="true">3.3.</strong> get_framebuffer</a></li><li class="chapter-item expanded "><a href="syscalls/map_memory_object.html"><strong aria-hidden="true">3.4.</strong> map_memory_object</a></li></ol></li><li class="chapter-item expanded "><a href="userspace/index.html"><strong aria-hidden="true">4.</strong> Userspace</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="userspace/capabilities.html"><strong aria-hidden="true">4.1.</strong> Capabilities</a></li><li class="chapter-item expanded "><a href="userspace/memory_map_x86_64.html"><strong aria-hidden="true">4.2.</strong> Memory map (x86_64)</a></li></ol></li><li class="chapter-item expanded "><a href="message_passing/index.html"><strong aria-hidden="true">5.</strong> Message Passing</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="message_passing/fmt.html"><strong aria-hidden="true">5.1.</strong> Message Format</a></li></ol></li></ol>
+            </div>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle"></div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky bordered">
+                    <div class="left-buttons">
+                        <button id="sidebar-toggle" class="icon-button" type="button" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </button>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light (default)</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        
+                        <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                        
+                    </div>
+
+                    <h1 class="menu-title">Pebble OS</h1>
+
+                    <div class="right-buttons">
+                        <a href="print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                        
+                    </div>
+                </div>
+
+                
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <input type="search" name="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+                
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script type="text/javascript">
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1><a class="header" href="#introduction" id="introduction">Introduction</a></h1>
+<p>Welcome to the Pebble Book, which serves as the main source of documentation for <a href="https://github.com/IsaacWoods/pebble">Pebble OS</a>.
+The Book aims to be both a 10,000-meter overview of Pebble for the interested observer, and a definitive reference for the inner workings of the kernel and userspace. </p>
+<p>Please note that this book (like the rest of the OS!) is still very early in development and not at all complete.
+If anything is unclear, please <a href="https://github.com/IsaacWoods/pebble/issues">file an issue</a>!</p>
+<p><strong>This book is not always up to date, and needs to document a lot more to be very useful. If you have questions not covered by the book, please don't hesitate to contact me through other channels
+and I'll do my best to answer them. I aim to keep this book up to date, but I do not have enough time to make that a reality at the moment - sorry.</strong></p>
+<h3><a class="header" href="#what-is-pebble" id="what-is-pebble">What is Pebble?</a></h3>
+<p>At heart, Pebble is a microkernel written in the <a href="https://rust-lang.org">Rust programming language</a>.
+Pebble becomes an &quot;OS&quot; when it's combined with other packages such as drivers, filesystems and user applications.</p>
+<p>Pebble is designed to be a modern microkernel, supporting a minimal system call interface and first-class support for message-passing-based IPC between userspace processes. Versatile message-passing allows
+Pebble to move much more out of the kernel than traditionally possible. For example, the kernel has no concept of a filesystem or of files - instead, the VFS and all filesystems are implemented entirely in
+userspace, and files are read and written to by passing messages.</p>
+<h3><a class="header" href="#why-rust" id="why-rust">Why Rust?</a></h3>
+<p>While Pebble's design is in theory language-agnostic, the implementation is very tied to Rust. Rust is a systems programming language with a rich type system and a novel ownership model that guarantees
+memory and thread safety <strong>in safe code</strong>. This qualification is important, as Pebble uses a lot of <code>unsafe</code> code out of necessity - it's important to understand that the use of Rust does not in any way
+mean that Pebble is automatically bug-free.</p>
+<p>However, Rust makes you think a lot more about how to make your programs safe, which is exactly the sort of code we want to be writing for a kernel. This focus on safety, as well as good ergonomics features
+and performance, makes Rust perfect for OS-level code.</p>
+<h3><a class="header" href="#the-pebble-kernel" id="the-pebble-kernel">The Pebble Kernel</a></h3>
+<p>TODO</p>
+<h1><a class="header" href="#platforms" id="platforms">Platforms</a></h1>
+<p>A platform is a build target for the kernel. In some cases, there is only one platform for an entire architecture because the hardware is relatively standardized (e.g. x86_64). Other times, hardware is different enough between 
+platforms that it's easier to treat them as different targets (e.g. a headless ARM server that boots using UEFI, versus a Raspberry Pi).</p>
+<h3><a class="header" href="#platform-x86_64" id="platform-x86_64">Platform: <code>x86_64</code></a></h3>
+<p>The vast majority of x86_64 hardware is pretty similar, and so is treated as a single platform. It uses the <code>hal_x86_64</code> HAL. We assume that the platform:</p>
+<ul>
+<li>Boots using UEFI</li>
+<li>Supports the APIC</li>
+<li>Supports the <code>xsave</code> instruction</li>
+</ul>
+<h3><a class="header" href="#platform-rpi4" id="platform-rpi4">Platform: <code>rpi4</code></a></h3>
+<p>The Raspberry Pi 4. It uses the <code>hal_arm64</code> HAL.</p>
+<h1><a class="header" href="#kernel-objects" id="kernel-objects">Kernel Objects</a></h1>
+<p>Kernel Objects are how Pebble represents resources that can be interacted with from userspace. They are all
+allocated a unique ID.</p>
+<h3><a class="header" href="#handles" id="handles">Handles</a></h3>
+<p>Handles are used to refer to kernel objects from userspace, and are allocated to a single Task.
+A handle of value <code>0</code> acts as a sentinel value that can be used for special meanings. From userspace, handles
+must be treated as opaque, 32-bit integers.</p>
+<h1><a class="header" href="#system-calls" id="system-calls">System calls</a></h1>
+<p>Userspace code can interact with the kernel through system calls. Pebble's system call interface is based around
+'kernel objects', and so many of the system calls are to create, destroy, or modify the state of various types of
+kernel object. Because of Pebble's microkernel design, many traditional system calls (e.g. <code>open</code>) are not present,
+their functionality instead being provided by userspace.</p>
+<p>Each system call has a unique number that is used to identify it. A system call can then take up to five
+parameters, each a maximum in size of the system's register width. It can return a single value, also the size of
+a register.</p>
+<h3><a class="header" href="#overview-of-system-calls" id="overview-of-system-calls">Overview of system calls</a></h3>
+<table><thead><tr><th>Number</th><th>System call</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>0</code></td><td><code>yield</code></td><td>Yield to the kernel.</td></tr>
+<tr><td><code>1</code></td><td><code>early_log</code></td><td>Log a message. Designed to be used from early processes.</td></tr>
+<tr><td><code>2</code></td><td><code>get_framebuffer</code></td><td>Get the framebuffer that the kernel has created, if it has.</td></tr>
+<tr><td><code>3</code></td><td><code>create_memory_object</code></td><td>Create a MemoryObject kernel object.</td></tr>
+<tr><td><code>4</code></td><td><code>map_memory_object</code></td><td>Map a MemoryObject into an AddressSpace.</td></tr>
+<tr><td><code>5</code></td><td><code>create_channel</code></td><td>Create a channel, returning handles to the two ends.</td></tr>
+<tr><td><code>6</code></td><td><code>send_message</code></td><td>Send a message down a channel.</td></tr>
+<tr><td><code>7</code></td><td><code>get_message</code></td><td>Receive the next message, if there is one.</td></tr>
+<tr><td><code>8</code></td><td><code>wait_for_message</code></td><td>Yield to the kernel until a message arrives on the given channel.</td></tr>
+<tr><td><code>9</code></td><td><code>register_service</code></td><td>Register yourself as a service.</td></tr>
+<tr><td><code>10</code></td><td><code>subscribe_to_service</code></td><td>Create a channel to a particular service provider.</td></tr>
+</tbody></table>
+<h3><a class="header" href="#making-a-system-call-on-x86_64" id="making-a-system-call-on-x86_64">Making a system call on x86_64</a></h3>
+<p>To make a system call on x86_64, populate these registers:</p>
+<table><thead><tr><th><code>rdi</code></th><th><code>rsi</code></th><th><code>rdx</code></th><th><code>r10</code></th><th><code>r8</code></th><th><code>r9</code></th></tr></thead><tbody>
+<tr><td>System call number</td><td><code>a</code></td><td><code>b</code></td><td><code>c</code></td><td><code>d</code></td><td><code>e</code></td></tr>
+</tbody></table>
+<p>The only way in which these registers deviate from the x86_64 Sys-V ABI is that <code>c</code> is passed in <code>r10</code> instead
+of <code>rcx</code>. This is because <code>rcx</code> is used by the <code>syscall</code> instruction, and so is not free.
+You can then make the system call by executing <code>syscall</code>. Before the kernel returns to userspace, it will put the
+result of the system call (if there is one) in <code>rax</code>. If a system call takes less than five parameters, the unused
+parameter registers will be preserved across the system call.</p>
+<h3><a class="header" href="#return-values" id="return-values">Return values</a></h3>
+<p>Often, a system call will need to return a status, plus one or more handles. The first handle a system call needs
+to return (often the only handle returned) can be returned in the upper bits of the status value:</p>
+<ul>
+<li>Bits <code>0..32</code> contain the status:
+<ul>
+<li><code>0</code> means that the system call succeeded, and the rest of the return value is valid</li>
+<li><code>&gt;0</code> means that the system call errored. The meaning of the value is system-call specific.</li>
+</ul>
+</li>
+<li>Bits <code>32..64</code> contain the value of the first returned handle, if applicable</li>
+</ul>
+<p>A return value of <code>0xffffffffffffffff</code> (the maximum value of <code>u64</code>) is reserved for when a system call is made with
+a number that does not correspond to a system call. This is defined as a normal error code (as opposed to, for
+example, terminating the task that tried to make the system call) to provide a mechanism for tasks to detect kernel
+support for a system call (so they can use a fallback method on older kernels, for example).</p>
+<h1><a class="header" href="#debugging-the-kernel" id="debugging-the-kernel">Debugging the kernel</a></h1>
+<p>Kernels can be difficult to debug - this page tries to collect useful techniques for debugging kernels in general,
+and also any Pebble specific things that might be useful.</p>
+<h3><a class="header" href="#using-gdb" id="using-gdb">Using GDB</a></h3>
+<p>QEMU can communicate with GDB using the remote target protocol. Running <code>make gdb</code> will start QEMU in remote
+debugging mode, and then start a version of GDB connected to the QEMU instance, with the kernel ELF preloaded and
+Rust plugins installed.</p>
+<p>A few tips for using GDB specific/helpful for kernel debugging:</p>
+<ul>
+<li>QEMU will not run any code (even the firmware) until you run <code>continue</code> in GDB. This allows you to place
+breakpoints before any code runs.</li>
+<li>By default, the <code>make gdb</code> recipe will use KVM acceleration. This means that software breakpoints (created by
+<code>break</code>) will not work. Use hardware-assisted breakpoints (created with <code>hbreak</code>) instead.</li>
+<li>To step through assembly, you must use <code>si</code> instead of <code>s</code></li>
+<li>Use <code>tui enable</code> to move to the TUI, and then <code>layout regs</code> to show both general registers and source</li>
+</ul>
+<h3><a class="header" href="#emulate-with-a-custom-build-of-qemu" id="emulate-with-a-custom-build-of-qemu">Emulate with a custom build of QEMU</a></h3>
+<p>For particularly tricky issues, it can sometimes be useful to insert <code>printf</code>s in QEMU and see if they trigger
+when emulating Pebble. The <code>Makefile</code> makes this easy - run something like:</p>
+<pre><code>QEMU_DIR='~/qemu/build/x86_64-softmmu/' make qemu-no-kvm
+</code></pre>
+<p>where the location pointed to by <code>QEMU_DIR</code> is the build destination of the correct QEMU executable. A lot of the
+time, the <code>printf</code>s you've inserted will only trigger with TCG, so it's usually best to use <code>qemu-no-kvm</code>.</p>
+<h3><a class="header" href="#pebble-specific-the-breakpoint-exception" id="pebble-specific-the-breakpoint-exception">Pebble specific: the breakpoint exception</a></h3>
+<p>The breakpoint exception is useful for inspecting the contents of registers at specific points, such as in sections
+of assembly (where it's inconvenient to call into Rust, or to use a debugger because getting <code>global_asm!</code> to play
+nicely with GDB is a pain).</p>
+<p>Simply use the <code>int3</code> instruction:</p>
+<pre><code>...
+
+mov rsp, [gs:0x10]
+int3  // Is my user stack pointer correct?
+sysretq
+</code></pre>
+<h1><a class="header" href="#yield" id="yield"><code>yield</code></a></h1>
+<p>Used by a task that can't do any work at the moment, allowing the kernel to schedule other tasks.</p>
+<h3><a class="header" href="#parameters" id="parameters">Parameters</a></h3>
+<p>None.</p>
+<h3><a class="header" href="#returns" id="returns">Returns</a></h3>
+<p>Always <code>0</code>.</p>
+<h3><a class="header" href="#capabilities-needed" id="capabilities-needed">Capabilities needed</a></h3>
+<p>None.</p>
+<h3><a class="header" href="#early_log" id="early_log"><code>early_log</code></a></h3>
+<p>Used by tasks that are started early in the boot process, before reliable userspace logging support is running.
+Output is logged to the same place as kernel logging.</p>
+<h3><a class="header" href="#parameters-1" id="parameters-1">Parameters</a></h3>
+<ul>
+<li><code>a</code> - the length of the string to log in bytes. Maximum length is 1024 bytes.</li>
+<li><code>b</code> - a usermode pointer to the start of the UTF-8 encoded string.</li>
+</ul>
+<h3><a class="header" href="#returns-1" id="returns-1">Returns</a></h3>
+<ul>
+<li><code>0</code> if the system call succeeded</li>
+<li><code>1</code> if the string was too long</li>
+<li><code>2</code> if the string was not valid UTF-8</li>
+<li><code>3</code> if the task making the syscall doesn't have the <code>EarlyLogging</code> capability</li>
+</ul>
+<h3><a class="header" href="#capabilities-needed-1" id="capabilities-needed-1">Capabilities needed</a></h3>
+<p>The <code>EarlyLogging</code> capability is needed to make this system call.</p>
+<h1><a class="header" href="#get_framebuffer" id="get_framebuffer"><code>get_framebuffer</code></a></h1>
+<p>On many architectures, the bootloader or kernel can create a naive framebuffer using a platform-specific method.
+This framebuffer can be used to render from userspace, if a better hardware driver is not available on the
+platform.</p>
+<p>Tasks need the <code>GetKernelFramebuffer</code> capability to use this system call.</p>
+<h3><a class="header" href="#parameters-2" id="parameters-2">Parameters</a></h3>
+<ul>
+<li><code>a</code> should contain a mapped, writable, user-space address, to which information about the framebuffer will
+be written.</li>
+</ul>
+<h3><a class="header" href="#returns-2" id="returns-2">Returns</a></h3>
+<p>This system call returns three things:</p>
+<ul>
+<li>A status code</li>
+<li>A handle to a <code>MemoryObject</code> containing the framebuffer, if successful</li>
+<li>Information about the framebuffer, if successful, written into the address in <code>a</code></li>
+</ul>
+<p>The status codes used are:</p>
+<ul>
+<li><code>0</code> means that the system call was successful</li>
+<li><code>1</code> means that the calling task does not have the correct capability</li>
+<li><code>2</code> means that <code>a</code> does not contain a valid address for the kernel to write to</li>
+<li><code>3</code> means that the kernel did not create the framebuffer</li>
+</ul>
+<p>The information written back to the address in <code>a</code> has the following structure:</p>
+<pre><pre class="playground"><code class="language-rust">
+<span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>#[repr(C)]
+struct FramebufferInfo {
+    width: u16,
+    height: u16,
+    stride: u16,
+    /// 0 = RGB32
+    /// 1 = BGR32
+    pixel_format: u8,
+}
+<span class="boring">}
+</span></code></pre></pre>
+<h1><a class="header" href="#map_memory_object" id="map_memory_object"><code>map_memory_object</code></a></h1>
+<p>Map a MemoryObject into an AddressSpace.</p>
+<h3><a class="header" href="#parameters-3" id="parameters-3">Parameters</a></h3>
+<p><code>a</code> - a handle to the MemoryObject.
+<code>b</code> - a handle to the AddressSpace. The zero handle indicates to map the memory object into the task's AddressSpace.
+<code>c</code> - a pointer to which the kernel will write the virtual address at which the MemoryObject was mapped. Ignored if null.</p>
+<h3><a class="header" href="#returns-3" id="returns-3">Returns</a></h3>
+<ul>
+<li><code>0</code> if the system call succeeded</li>
+<li><code>1</code> if either of the passed handles are invalid</li>
+<li><code>2</code> if the portion of the AddressSpace that would be mapped is already occupied by another MemoryObject</li>
+<li><code>3</code> if the supplied MemoryObject handle does not point to a MemoryHandle</li>
+<li><code>4</code> if the supplied AddressSpace handle does not point to an AddressSpace</li>
+</ul>
+<h3><a class="header" href="#capabilities-needed-2" id="capabilities-needed-2">Capabilities needed</a></h3>
+<p>None (this may change in the future).</p>
+<h1><a class="header" href="#capabilities" id="capabilities">Capabilities</a></h1>
+<p>Capabilities describe what a task is allowed to do, and are encoded in its image. This allows users to audit the
+permissions of the tasks they run at a much higher granularity than user-based permissions, and also allow us to
+move parts of the kernel into discrete userspace tasks by creating specialised capabilities to allow access to
+sensitive resources (such as the raw framebuffer) to only select tasks.</p>
+<h3><a class="header" href="#encoding-capabilities-in-the-elf-image" id="encoding-capabilities-in-the-elf-image">Encoding capabilities in the ELF image</a></h3>
+<p>Capabilities are encoded in an entry of a <code>PT_NOTE</code> segment of the ELF image of a task. This entry will have an
+owner (sometimes referred to in documentation as the 'name') of <code>PEBBLE</code> and a type of <code>0</code>. The descriptor will be
+an encoding of the capabilities as described by the 'Format' section. The descriptor must be padded such that the
+next descriptor is 4-byte aligned, and so a value of <code>0x00</code> is reserved to be used as padding.</p>
+<p>Initial images (tasks loaded by the bootloader before filesystem drivers are working) are limited to a capabilities
+encoding of 32 bytes (given the variable-length encoding, this does not equate to a fixed maximum number of
+capabilities).</p>
+<h3><a class="header" href="#format" id="format">Format</a></h3>
+<p>The capabilities format is variable-length - simple capabilities can be encoded as a single byte, while more
+complex / specific ones may need multiple bytes of prefix, and can also encode fixed-length data.</p>
+<h3><a class="header" href="#overview-of-capabilities" id="overview-of-capabilities">Overview of capabilities</a></h3>
+<p>This is an overview of all the capabilities the kernel supports:
+| First byte    | Next byte(s)  | Data                  | Arch specific?    | Description                                                           | Status        |
+|---------------|---------------|-----------------------|-------------------|-----------------------------------------------------------------------|---------------|
+| <code>0x00</code>        | -             | -                     | -                 | No meaning - used to pad descriptor to required length (see above)    | -             |
+| <code>0x01</code>        |               |                       | No                | <code>CreateAddressSpace</code>                                                  | Planned       |
+| <code>0x02</code>        |               |                       | No                | <code>CreateMemoryObject</code>                                                  | Planned       |
+| <code>0x03</code>        |               |                       | No                | <code>CreateTask</code>                                                          | Planned       |
+| <code>0x04</code>-<code>0x1f</code> |               |                       |                   | Reserved for future kernel objects                                    |               |
+| <code>0x20</code>        | <code>0x00</code>        | <code>u16</code> port number     | Yes - x86_64      | <code>X86_64AccessIoPort</code>                                                  | Planned       |
+| <code>0x21</code>-<code>0x2f</code> |               |                       |                   | Reserved for future architectures                                     |               |
+| <code>0x30</code>        |               |                       | No                | <code>GetFramebuffer</code>                                                      | Implemented   |
+| <code>0x31</code>        |               |                       | No                | <code>EarlyLogging</code>                                                        | Implemented   |
+| <code>0x32</code>        |               |                       | No                | <code>ServiceProvider</code>                                                     | Implemented   |
+| <code>0x33</code>        |               |                       | No                | <code>ServiceUser</code>                                                         | Implemented   |</p>
+<h1><a class="header" href="#userspace-memory-map-x86_64" id="userspace-memory-map-x86_64">Userspace memory map (x86_64)</a></h1>
+<p>x86_64 features an enormous 256TB virtual address space, most of which is available to userspace processes under Pebble. For this reason, things are spread throughout the virtual address space to make it
+easy to identify what a virtual address points to.</p>
+<h3><a class="header" href="#userspace-stacks" id="userspace-stacks">Userspace stacks</a></h3>
+<p>Within the virtual address space, the userspace stacks are allocated a 4GB range. Each task has a maximum stack size of 2MB, which puts a limit of 2048 tasks per address space.</p>
+<h1><a class="header" href="#message-passing" id="message-passing">Message Passing</a></h1>
+<p>Pebble has a kernel object called a <code>Channel</code> for providing first-class message passing support to userspace.
+Channels move packets, called &quot;messages&quot;, which contain a stream of bytes, and optionally one or more handles that
+are transferred from the sending task to the receiving task.</p>
+<p>While Channels can move arbitrary bytes, most of Pebble will use a common set of tools to exchange data over
+channels, including a wire format that is suitable for many types of structured data.</p>
+<h1><a class="header" href="#message-format" id="message-format">Message Format</a></h1>
+<p>Rust's type system can't be used over process boundaries, and so we need another way to encode and decode messages reliably. The soundness of this is incredible important - message passing is Pebble's
+largest attack surface, and so the kernel must be able to correctly parse all malformed messaged without violating safety. We also want to make it as easy as possible for developers to build programs that
+can send and receive messages.</p>
+<p>Every message starts with a header, with the format (the meaning of the <code>ProcessId</code> depends on whether the message is in the Send or Receive buffer):</p>
+<pre><code>*----------------------------------* 0x00
+| Sender / Recepient (ProcessId)   |
+*----------------------------------* 0x02
+| Payload length (u16)             |
+*----------------------------------* 0x04
+</code></pre>
+<p>This header is followed by the message's payload, which can represent any type that can be serialized and deserialized by <code>serde</code>. This encoding needs to be compact, but also must be verifiable to be the
+correct type of message. Pebble uses a custom encoding format, heavily inspired by <a href="https://github.com/TyOverby/bincode">BinCode</a> and <a href="https://github.com/msgpack/msgpack/blob/master/spec.md">MessagePack</a>.
+By effectively having a tiny type system that closely resembles the Serde data model, we can sanity-check that the types we're deserializing into will make at least some sense.</p>
+<h3><a class="header" href="#encoding-types" id="encoding-types">Encoding types</a></h3>
+<p>To handle any type that can be serialized and deserialized using <code>serde</code>, we need to be able to handle the 29 types of the Serde Data Model. While lots of these types are specifically tagged, some are
+encoded transparently for simplicity and compactness (specifically <code>Newtype Struct</code> and <code>Newtype Variant</code>). All multi-byte structures are little-endian. <code>Struct</code>s and <code>Tuple</code>s are simply encoded by encoding
+each of their fields in order.</p>
+<p>TODO XXX: I don't think this is fully good yet. We should think about how long structures are actually going to be (e.g. how long should a string actually be able to be?), and decide if the extra compactness is worth it for e.g. missing out an extra 1 byte of length info...</p>
+<table><thead><tr><th>First byte</th><th>Number of following bytes</th><th>Format</th><th>Description</th></tr></thead><tbody>
+<tr><td>0x00</td><td>0</td><td></td><td><code>Unit</code>, <code>Unit Struct</code>, <code>Unit Variant</code></td></tr>
+<tr><td>0x01</td><td>0</td><td></td><td><code>bool</code> - False</td></tr>
+<tr><td>0x02</td><td>0</td><td></td><td><code>bool</code> - True</td></tr>
+<tr><td>0x03</td><td>0</td><td></td><td><code>None</code></td></tr>
+<tr><td>0x04</td><td><code>n</code></td><td>XX(<code>n</code>)</td><td><code>Some(T)</code> (this marks the <code>Some</code>. The <code>T</code> is then encoded after this byte)</td></tr>
+<tr><td>0x05</td><td>1</td><td>CC</td><td><code>char</code> - UTF-8 code point that requires 1 byte to encode</td></tr>
+<tr><td>0x06</td><td>2</td><td>CC-CC</td><td><code>char</code> - UTF-8 code point that requires 2 byte to encode</td></tr>
+<tr><td>0x07</td><td>3</td><td>CC-CC-CC</td><td><code>char</code> - UTF-8 code point that requires 3 byte to encode</td></tr>
+<tr><td>0x08</td><td>4</td><td>CC-CC-CC-CC</td><td><code>char</code> - UTF-8 code point that requires 4 byte to encode</td></tr>
+<tr><td>0x10</td><td>1</td><td>XX</td><td><code>u8</code></td></tr>
+<tr><td>0x11</td><td>2</td><td>XX-XX</td><td><code>u16</code></td></tr>
+<tr><td>0x12</td><td>4</td><td>XX-XX-XX-XX</td><td><code>u32</code></td></tr>
+<tr><td>0x13</td><td>8</td><td>XX-XX-XX-XX-XX-XX-XX-XX</td><td><code>u64</code></td></tr>
+<tr><td>0x14</td><td>16</td><td>XX(16)</td><td><code>u128</code></td></tr>
+<tr><td>0x20</td><td>1</td><td>ZZ</td><td><code>i8</code></td></tr>
+<tr><td>0x21</td><td>2</td><td>ZZ-ZZ</td><td><code>i16</code></td></tr>
+<tr><td>0x22</td><td>4</td><td>ZZ-ZZ-ZZ-ZZ</td><td><code>i32</code></td></tr>
+<tr><td>0x23</td><td>8</td><td>ZZ-ZZ-ZZ-ZZ-ZZ-ZZ-ZZ-ZZ</td><td><code>i64</code></td></tr>
+<tr><td>0x24</td><td>16</td><td>ZZ(16)</td><td><code>i128</code></td></tr>
+<tr><td>0x30</td><td>4</td><td>FF-FF-FF-FF</td><td><code>f32</code></td></tr>
+<tr><td>0x31</td><td>8</td><td>FF-FF-FF-FF-FF-FF-FF-FF</td><td><code>f64</code></td></tr>
+<tr><td>0x40-0x4F</td><td>(1-16){<code>n</code>} + <code>n</code> of data</td><td>NN(<code>first</code> - 0x3F)-CC(<code>n</code>)</td><td><code>String</code></td></tr>
+<tr><td>0x50-0x5F</td><td>(1-16){<code>n</code>} + <code>n</code> of data</td><td>NN(<code>first</code> - 0x4F)-XX(<code>n</code>)</td><td><code>Byte Array</code></td></tr>
+<tr><td>0x60</td><td>4{<code>n</code>} + <code>n</code> of data</td><td>NN-NN-NN-NN-XX(<code>n</code>)</td><td><code>Seq</code></td></tr>
+</tbody></table>
+<h4><a class="header" href="#strings" id="strings">Strings</a></h4>
+<p>Strings are encoded as UTF-8 byte arrays without null terminators. The first byte defines how many bytes are used to encode the length of the string, where <code>0x40</code> means 1 byte is used and <code>0x4F</code> means 16
+bytes are used (this is <code>x</code>). The following <code>x</code> bytes are used to encode the number of bytes used to encode the string (<code>n</code>). Following this are <code>n</code> bytes of UTF-8 string data.</p>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                        
+
+                        
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                
+
+                
+            </nav>
+
+        </div>
+
+        
+
+        
+
+        
+
+        
+        <script type="text/javascript">
+            window.playground_copyable = true;
+        </script>
+        
+
+        
+
+        
+        <script src="elasticlunr.min.js" type="text/javascript" charset="utf-8"></script>
+        <script src="mark.min.js" type="text/javascript" charset="utf-8"></script>
+        <script src="searcher.js" type="text/javascript" charset="utf-8"></script>
+        
+
+        <script src="clipboard.min.js" type="text/javascript" charset="utf-8"></script>
+        <script src="highlight.js" type="text/javascript" charset="utf-8"></script>
+        <script src="book.js" type="text/javascript" charset="utf-8"></script>
+
+        <!-- Custom JS scripts -->
+        
+
+        
+        
+        <script type="text/javascript">
+        window.addEventListener('load', function() {
+            window.setTimeout(window.print, 100);
+        });
+        </script>
+        
+        
+
+    </body>
+</html>

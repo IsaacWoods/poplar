@@ -1,0 +1,30 @@
+---
+---
+
+body {
+    background: white;
+    font: 18px/1.4 Helvetica;
+    color: #4e5054;
+}
+
+div.header {
+    display: inline-block;
+    vertical-align: middle;
+    padding-top: 20px;
+    padding-bottom: 30px;
+}
+
+nav {
+    display: inline-block;
+}
+
+nav a {
+    color: black;
+    text-decoration: none;
+    border: 3px solid;
+    padding: 5px 5px 5px 5px;
+}
+
+nav a:hover {
+    text-decoration: underline;
+}

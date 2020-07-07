@@ -1,0 +1,1 @@
+initSidebarItems({"enum":[["GetFramebufferError",""],["PixelFormat","Describes how the supplied framebuffer represents pixels."]],"fn":[["get_framebuffer",""]],"struct":[["FramebufferInfo",""]]});
