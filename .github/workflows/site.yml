@@ -1,0 +1,41 @@
+name: Deploy site
+
+on:
+  push:
+    branches: [ master ]
+
+jobs:
+  build_and_deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        submodules: 'recursive'
+
+    - name: Install Rust
+      uses: actions-rs/toolchain@v1
+      with:
+        toolchain: nightly
+        default: true
+        profile: minimal
+
+    - name: Install dependencies
+      run: |
+        cargo install mdbook
+
+    - name: Generate rustdoc documentation
+      run: |
+        CARGO_TARGET_DIR=pages cargo doc \
+          --all-features \
+          --manifest-path kernel/Cargo.toml \
+          --document-private-items
+        mdbook build
+        mv site/* pages/
+
+    - name: Deploy to Github Pages
+      uses: JamesIves/github-pages-deploy-action@releases/v3
+      with:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        BRANCH: gh-pages
+        FOLDER: pages
