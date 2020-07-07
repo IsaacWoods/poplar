@@ -22,7 +22,7 @@ QEMU_COMMON_FLAGS = -cpu max,vmware-cpuid-freq,invtsc \
 # This can be used to pass extra flags to QEMU
 QEMU_EXTRA_FLAGS ?=
 
-.PHONY: image_x86_64 prepare kernel test_process simple_fb clean qemu gdb update fmt test site echo
+.PHONY: image_x86_64 prepare kernel test_process simple_fb clean qemu gdb update fmt test echo
 .DEFAULT_GOAL := image_$(PLATFORM)
 
 image_x86_64: prepare kernel test_process simple_fb echo
@@ -83,18 +83,6 @@ fmt:
 test:
 	cargo test --all-features --manifest-path lib/pebble_util/Cargo.toml
 	make -C kernel test
-
-# This is used by CI to generate the site to deploy. Probably not useful on its own
-site:
-	@# Generate rustdoc documentation
-	CARGO_TARGET_DIR=pages cargo doc \
-		--all-features \
-		--manifest-path kernel/Cargo.toml \
-		--document-private-items
-	@# Build the book
-	mdbook build
-	@# Move the static site into the correct place
-	mv site/* pages/
 
 qemu: image_$(PLATFORM)
 	$(QEMU_DIR)qemu-system-x86_64 \

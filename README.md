@@ -1,5 +1,4 @@
 # Pebble
-[![Build Status](https://travis-ci.org/IsaacWoods/pebble.svg?branch=master)](https://travis-ci.org/IsaacWoods/pebble)
 [![License: MPL-2.0](https://img.shields.io/badge/license-MPL--2.0-blue.svg)](https://opensource.org/licenses/MPL-2.0)
 [![Gitter chat](https://badges.gitter.im/gitterHQ/gitter.png)](https://gitter.im/pebble-os/Lobby)
 
