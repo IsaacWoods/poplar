@@ -55,6 +55,22 @@
 <span id="55">55</span>
 <span id="56">56</span>
 <span id="57">57</span>
+<span id="58">58</span>
+<span id="59">59</span>
+<span id="60">60</span>
+<span id="61">61</span>
+<span id="62">62</span>
+<span id="63">63</span>
+<span id="64">64</span>
+<span id="65">65</span>
+<span id="66">66</span>
+<span id="67">67</span>
+<span id="68">68</span>
+<span id="69">69</span>
+<span id="70">70</span>
+<span id="71">71</span>
+<span id="72">72</span>
+<span id="73">73</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="doccomment">//! This module contains functions that help us validate the inputs to system calls that try to</span>
 <span class="doccomment">//! make sure userspace can&#39;t crash or exploit the kernel in any way. For example, if we take an</span>
@@ -62,25 +78,41 @@
 <span class="doccomment">//! that userspace could ordinarily access itself (otherwise, we could leak information to a</span>
 <span class="doccomment">//! userspace task that it shouldn&#39;t be able to access).</span>
 
-<span class="kw">use</span> <span class="ident">core</span>::{<span class="ident">marker</span>::<span class="ident">PhantomData</span>, <span class="ident">slice</span>, <span class="ident">str</span>};
+<span class="kw">use</span> <span class="ident">core</span>::{<span class="ident">marker</span>::<span class="ident">PhantomData</span>, <span class="ident">ptr</span>, <span class="ident">slice</span>, <span class="ident">str</span>};
 
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">UserPointer</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span>(<span class="kw-2">*</span><span class="kw-2">mut</span> <span class="ident">T</span>);
+<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">UserPointer</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> {
+    <span class="ident">ptr</span>: <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="ident">T</span>,
+    <span class="ident">can_write</span>: <span class="ident">bool</span>,
+}
 
 <span class="kw">impl</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> <span class="ident">UserPointer</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">ptr</span>: <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="ident">T</span>, <span class="ident">needs_write</span>: <span class="ident">bool</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">UserPointer</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> {
+        <span class="comment">// TODO: validate that this is a valid pointer:</span>
+        <span class="comment">//  - the address is canonical</span>
+        <span class="comment">//  - the address is in user-space</span>
+        <span class="comment">//  - the address is actually mapped</span>
+        <span class="comment">//  - if we&#39;re writing, that the mapping is writable</span>
+        <span class="ident">UserPointer</span> { <span class="ident">ptr</span>, <span class="ident">can_write</span>: <span class="ident">needs_write</span> }
+    }
+
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">read</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">T</span>, ()<span class="op">&gt;</span> {
-        <span class="macro">unimplemented</span><span class="macro">!</span>()
+        <span class="prelude-val">Ok</span>(<span class="kw">unsafe</span> { <span class="ident">ptr</span>::<span class="ident">read_volatile</span>(<span class="self">self</span>.<span class="ident">ptr</span>) })
     }
 
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">write</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">value</span>: <span class="ident">T</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), ()<span class="op">&gt;</span> {
-        <span class="macro">unimplemented</span><span class="macro">!</span>()
-    }
+        <span class="kw">if</span> <span class="op">!</span><span class="self">self</span>.<span class="ident">can_write</span> {
+            <span class="kw">return</span> <span class="prelude-val">Err</span>(());
+        }
 
-    <span class="kw">fn</span> <span class="ident">validate_access</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">needs_write</span>: <span class="ident">bool</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">bool</span> {
-        <span class="comment">// TODO: make sure:</span>
-        <span class="comment">//   - this is actually a user-space address, and we aren&#39;t reading from / writing to a part of the kernel</span>
-        <span class="comment">//   - it&#39;s actually mapped (we aren&#39;t going to page fault)</span>
-        <span class="comment">//   - if we&#39;re writing, that it&#39;s a writable address</span>
-        <span class="macro">unimplemented</span><span class="macro">!</span>()
+        <span class="comment">/*
+         * This has two subtleties:
+         *    - Using `write_volatile` instead of `write` makes sure the compiler doesn&#39;t think it can elide the
+         *      write, as the data is read and written to from both the kernel and userspace.
+         *    - Using `ptr::write_volatile(x, ...)` instead of `*x = ...` makes sure we don&#39;t attempt to drop
+         *      the existing value, which could read uninitialized memory.
+         */</span>
+        <span class="kw">unsafe</span> { <span class="ident">ptr</span>::<span class="ident">write_volatile</span>(<span class="self">self</span>.<span class="ident">ptr</span>, <span class="ident">value</span>) }
+        <span class="prelude-val">Ok</span>(())
     }
 }
 
