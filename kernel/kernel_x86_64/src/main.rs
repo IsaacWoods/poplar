@@ -129,7 +129,8 @@ pub extern "C" fn kentry(boot_info: &BootInfo) -> ! {
     /*
      * Parse the DSDT.
      */
-    let mut aml_context = AmlContext::new();
+    // TODO: if we're on ACPI 1.0 - pass true as legacy mode.
+    let mut aml_context = AmlContext::new(false, aml::DebugVerbosity::Scopes);
     if let Some(ref dsdt_info) = acpi_info.as_ref().unwrap().dsdt {
         let virtual_address = kernel_map::physical_to_virtual(PhysicalAddress::new(dsdt_info.address).unwrap());
         info!(
