@@ -5,7 +5,7 @@ use core::{fmt, ops::Range};
 /// flags are set and unset.
 #[derive(Clone, Copy)]
 #[repr(transparent)]
-pub struct CpuFlags(pub u64);
+pub struct CpuFlags(u64);
 
 impl CpuFlags {
     pub const CARRY_FLAG: u64 = 0;
@@ -45,8 +45,30 @@ impl CpuFlags {
         CpuFlags(flags)
     }
 
+    /// Create a new `CpuFlags`, with all the bits in `flags` set, then all the reserved bits set to their correct
+    /// value.
+    /// Note: this does not set `RFLAGS`!
+    pub const fn new(flags: u64) -> CpuFlags {
+        let mut result = flags;
+        result |= 0b1000000000101010;
+        result &= 0b11_1111_1111_1111_1111_1111;
+        // TODO: this is equivalent to the above, but we need const fn in traits first
+        // result.set_bit(1, true);
+        // result.set_bit(3, false);
+        // result.set_bit(5, false);
+        // result.set_bit(15, false);
+        // result.set_bits(22..64, 0);
+        CpuFlags(result)
+    }
+
     pub fn interrupts_enabled(&self) -> bool {
         self.0.get_bit(Self::INTERRUPT_ENABLE_FLAG as usize)
+    }
+}
+
+impl From<CpuFlags> for u64 {
+    fn from(flags: CpuFlags) -> Self {
+        flags.0
     }
 }
 

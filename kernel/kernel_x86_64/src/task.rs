@@ -1,5 +1,6 @@
 use core::mem;
 use hal::memory::VirtualAddress;
+use hal_x86_64::hw::registers::CpuFlags;
 
 global_asm!(include_str!("task.s"));
 extern "C" {
@@ -43,12 +44,12 @@ pub unsafe fn initialize_kernel_stack(
     task_entry_point: VirtualAddress,
     user_stack_top: &mut VirtualAddress,
 ) {
-    // TODO: change this to use the CpuFlags type from our x86_64 crate to create these nicely
     /*
-     * These are the set of flags we enter the task for the first time with. We just allow
-     * interrupts, and leave everything else at their defaults.
+     * These are the set of flags we enter the task for the first time with. We allow, set the parity flag to
+     * even, and leave everything else unset.
      */
-    const INITIAL_RFLAGS: u64 = (1 << 9) | (1 << 2);
+    const INITIAL_RFLAGS: CpuFlags =
+        CpuFlags::new((1 << CpuFlags::INTERRUPT_ENABLE_FLAG) | (1 << CpuFlags::PARITY_FLAG));
 
     /*
      * Firstly, we need to make sure the top of the stack is 16-byte aligned, according to the
@@ -72,7 +73,7 @@ pub unsafe fn initialize_kernel_stack(
     *kernel_stack_top -= mem::size_of::<ContextSwitchFrame>();
     *(kernel_stack_top.mut_ptr() as *mut ContextSwitchFrame) = ContextSwitchFrame {
         r15: usize::from(task_entry_point) as u64,
-        r14: INITIAL_RFLAGS,
+        r14: INITIAL_RFLAGS.into(),
         r13: 0x0,
         r12: 0x0,
         rbp: 0x0,
