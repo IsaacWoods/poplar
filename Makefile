@@ -18,7 +18,8 @@ QEMU_COMMON_FLAGS = -cpu max,vmware-cpuid-freq,invtsc \
 					-drive if=ide,format=raw,file=$(IMAGE_NAME) \
 					-serial stdio \
 					-usb \
-					-net none
+					-net none \
+					-display none
 # This can be used to pass extra flags to QEMU
 QEMU_EXTRA_FLAGS ?=
 
