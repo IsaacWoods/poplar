@@ -58,6 +58,8 @@ where
                         (Page::<Size4KiB>::contains(segment.virtual_address + segment.size) + 1).start;
                 }
 
+                assert!(segment.virtual_address.is_aligned(Size4KiB::SIZE));
+                assert!(segment.physical_address.is_aligned(Size4KiB::SIZE));
                 assert!(segment.size % Size4KiB::SIZE == 0, "Segment is not page-aligned");
                 page_table
                     .map_area(
