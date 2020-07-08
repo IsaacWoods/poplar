@@ -72,6 +72,7 @@ define_error_type!(MapMemoryObjectError {
     RegionAlreadyMapped => 2,
     NotAMemoryObject => 3,
     NotAnAddressSpace => 4,
+    AddressPointerInvalid => 5,
 });
 
 pub fn map_memory_object(

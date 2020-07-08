@@ -34,7 +34,7 @@ use libpebble::{
 };
 use log::{info, trace, warn};
 use spin::Mutex;
-use validation::UserString;
+use validation::{UserPointer, UserString};
 
 /// Maps the name of a service to the channel used to register new service users.
 static SERVICE_MAP: Mutex<BTreeMap<String, Arc<ChannelEnd>>> = Mutex::new(BTreeMap::new());
@@ -197,10 +197,10 @@ where
      * address, so don't bother writing it back.
      */
     if address_ptr != 0x0 {
-        // TODO: validate the user pointer
-        unsafe {
-            *(address_ptr as *mut VirtualAddress) = memory_object.virtual_address;
-        }
+        let mut address_ptr = UserPointer::new(address_ptr as *mut VirtualAddress, true);
+        address_ptr
+            .write(memory_object.virtual_address)
+            .map_err(|()| MapMemoryObjectError::AddressPointerInvalid)?;
     }
 
     Ok(())

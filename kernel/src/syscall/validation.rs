@@ -4,25 +4,41 @@
 //! that userspace could ordinarily access itself (otherwise, we could leak information to a
 //! userspace task that it shouldn't be able to access).
 
-use core::{marker::PhantomData, slice, str};
+use core::{marker::PhantomData, ptr, slice, str};
 
-pub struct UserPointer<T>(*mut T);
+pub struct UserPointer<T> {
+    ptr: *mut T,
+    can_write: bool,
+}
 
 impl<T> UserPointer<T> {
+    pub fn new(ptr: *mut T, needs_write: bool) -> UserPointer<T> {
+        // TODO: validate that this is a valid pointer:
+        //  - the address is canonical
+        //  - the address is in user-space
+        //  - the address is actually mapped
+        //  - if we're writing, that the mapping is writable
+        UserPointer { ptr, can_write: needs_write }
+    }
+
     pub fn read(&self) -> Result<T, ()> {
-        unimplemented!()
+        Ok(unsafe { ptr::read_volatile(self.ptr) })
     }
 
     pub fn write(&mut self, value: T) -> Result<(), ()> {
-        unimplemented!()
-    }
+        if !self.can_write {
+            return Err(());
+        }
 
-    fn validate_access(&self, needs_write: bool) -> bool {
-        // TODO: make sure:
-        //   - this is actually a user-space address, and we aren't reading from / writing to a part of the kernel
-        //   - it's actually mapped (we aren't going to page fault)
-        //   - if we're writing, that it's a writable address
-        unimplemented!()
+        /*
+         * This has two subtleties:
+         *    - Using `write_volatile` instead of `write` makes sure the compiler doesn't think it can elide the
+         *      write, as the data is read and written to from both the kernel and userspace.
+         *    - Using `ptr::write_volatile(x, ...)` instead of `*x = ...` makes sure we don't attempt to drop
+         *      the existing value, which could read uninitialized memory.
+         */
+        unsafe { ptr::write_volatile(self.ptr, value) }
+        Ok(())
     }
 }
 
