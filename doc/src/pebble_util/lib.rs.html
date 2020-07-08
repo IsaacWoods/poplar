@@ -63,7 +63,6 @@
 <span id="63">63</span>
 <span id="64">64</span>
 <span id="65">65</span>
-<span id="66">66</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="attribute">#![<span class="ident">no_std</span>]</span>
 <span class="attribute">#![<span class="ident">feature</span>(<span class="ident">const_generics</span>, <span class="ident">decl_macro</span>, <span class="ident">maybe_uninit_ref</span>, <span class="ident">type_ascription</span>, <span class="ident">core_intrinsics</span>)]</span>
@@ -74,7 +73,6 @@
 
 <span class="ident">cfg_if</span>::<span class="macro">cfg_if</span><span class="macro">!</span> {
     <span class="kw">if</span> <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;has_alloc&quot;</span>)]</span> {
-        <span class="attribute">#[<span class="ident">cfg_attr</span>(<span class="ident">not</span>(<span class="ident">test</span>), <span class="ident">macro_use</span>)]</span>
         <span class="kw">extern</span> <span class="kw">crate</span> <span class="ident">alloc</span>;
 
         <span class="attribute">#[<span class="ident">doc</span>(<span class="ident">hidden</span>)]</span>
