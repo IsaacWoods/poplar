@@ -36,13 +36,6 @@ pub const fn gibibytes(gibibytes: Gibibytes) -> Bytes {
     mebibytes(gibibytes * 1024)
 }
 
-// /// Multiply by this to turn KiB into bytes
-// pub const KIBIBYTES_TO_BYTES: usize = 1024;
-// /// Multiply by this to turn MiB into bytes
-// pub const MEBIBYTES_TO_BYTES: usize = 1024 * KIBIBYTES_TO_BYTES;
-// /// Multiply by this to turn GiB into bytes
-// pub const GIBIBYTES_TO_BYTES: usize = 1024 * MEBIBYTES_TO_BYTES;
-
 /// This trait is implemented by a number of marker types, one for each size of frame and page. Different size
 /// types are defined depending on the target architecture.
 pub trait FrameSize: Clone + Copy + PartialEq + Eq + PartialOrd + Ord + Debug {

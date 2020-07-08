@@ -12,7 +12,7 @@ mod task;
 
 use acpi_handler::PebbleAcpiHandler;
 use aml::AmlContext;
-use core::{panic::PanicInfo, pin::Pin, time::Duration};
+use core::{panic::PanicInfo, pin::Pin};
 use hal::{
     boot_info::BootInfo,
     memory::{Frame, PhysicalAddress, VirtualAddress},

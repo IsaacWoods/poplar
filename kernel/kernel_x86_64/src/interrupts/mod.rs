@@ -79,6 +79,7 @@ impl InterruptController {
                  * TODO: we might need to map it separately or something so we can set custom flags on the
                  * paging entry (do we need to set NO_CACHE on it?)
                  */
+                // TODO: change the region to be NO_CACHE
                 LOCAL_APIC.initialize(unsafe {
                     LocalApic::new(kernel_map::physical_to_virtual(
                         PhysicalAddress::new(info.local_apic_address as usize).unwrap(),
@@ -100,20 +101,6 @@ impl InterruptController {
                  * XXX: not sure this is the right place to do this just yet.
                  */
                 let pci_info = PciResolver::resolve(acpi_info.pci_config_regions.as_ref().unwrap(), aml_context);
-
-                // /*
-                //  * Map the local APIC's configuration space into the kernel address space.
-                //  */
-                // arch.kernel_page_table
-                //     .lock()
-                //     .mapper()
-                //     .map_to(
-                //         Page::contains(kernel_map::LOCAL_APIC_CONFIG),
-                //         Frame::contains(PhysicalAddress::new(info.local_apic_address as usize).unwrap()),
-                //         EntryFlags::PRESENT | EntryFlags::WRITABLE | EntryFlags::NO_EXECUTE |
-                // EntryFlags::NO_CACHE,         &arch.physical_memory_manager,
-                //     )
-                //     .unwrap();
 
                 /*
                  * Install handlers for the spurious interrupt and local APIC timer, and then

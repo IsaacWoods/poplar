@@ -7,7 +7,6 @@ extern crate std;
 
 cfg_if::cfg_if! {
     if #[cfg(feature = "has_alloc")] {
-        #[cfg_attr(not(test), macro_use)]
         extern crate alloc;
 
         #[doc(hidden)]
