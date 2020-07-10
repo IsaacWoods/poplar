@@ -49,10 +49,9 @@ pub trait PageTable<TableSize>: Sized
 where
     TableSize: FrameSize,
 {
-    /// Construct a new set of page tables that are suitable for an `AddressSpace` kernel object - one that can
-    /// hold userspace tasks. This generally needs the kernel mapped into it somehow, so we pass in the kernel's
-    /// set of page tables.
-    fn new_for_address_space<A>(kernel_page_table: &Self, allocator: &A) -> Self
+    /// Constructs a new set of page tables, but with the kernel mapped into it. This is generally useful for
+    /// constructing page tables for userspace.
+    fn new_with_kernel_mapped<A>(kernel_page_table: &Self, allocator: &A) -> Self
     where
         A: FrameAllocator<TableSize>;
 

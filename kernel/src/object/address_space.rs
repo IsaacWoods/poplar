@@ -42,7 +42,7 @@ where
             owner,
             state: Mutex::new(State::NotActive),
             memory_objects: Mutex::new(vec![]),
-            page_table: Mutex::new(P::PageTable::new_for_address_space(kernel_page_table, allocator)),
+            page_table: Mutex::new(P::PageTable::new_with_kernel_mapped(kernel_page_table, allocator)),
             user_stack_allocator: Mutex::new(SlabAllocator::new(
                 USER_STACK_BOTTOM,
                 USER_STACK_TOP,

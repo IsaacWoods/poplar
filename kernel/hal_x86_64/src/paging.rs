@@ -299,7 +299,7 @@ impl PageTableImpl {
 }
 
 impl PageTable<Size4KiB> for PageTableImpl {
-    fn new_for_address_space<A>(kernel_page_table: &Self, allocator: &A) -> Self
+    fn new_with_kernel_mapped<A>(kernel_page_table: &Self, allocator: &A) -> Self
     where
         A: FrameAllocator<Size4KiB>,
     {
