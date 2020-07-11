@@ -21,9 +21,6 @@ use hal::memory::{
     VirtualAddress,
 };
 
-/// All page tables has 512 entries.
-const ENTRY_COUNT: usize = 512;
-
 bitflags! {
     pub struct EntryFlags : u64 {
         const PRESENT           = 1 << 0;
@@ -49,7 +46,7 @@ impl From<Flags> for EntryFlags {
     fn from(flags: Flags) -> Self {
         EntryFlags::PRESENT
             | if flags.writable { EntryFlags::WRITABLE } else { EntryFlags::empty() }
-            | if !flags.executable { EntryFlags::NO_EXECUTE } else { EntryFlags::empty() }
+            | if flags.executable { EntryFlags::empty() } else { EntryFlags::NO_EXECUTE }
             | if flags.user_accessible { EntryFlags::USER_ACCESSIBLE } else { EntryFlags::empty() }
     }
 }
@@ -80,8 +77,13 @@ impl Entry {
         }
     }
 
-    pub fn set_unused(&mut self) {
-        self.0 = 0;
+    /// Set an entry to have a particular mapping. Passing `None` will set this entry as not-present, whereas
+    /// passing `Some` with a physical address and set of flags will populate an entry.
+    pub fn set(&mut self, entry: Option<(PhysicalAddress, EntryFlags)>) {
+        self.0 = match entry {
+            Some((address, flags)) => (usize::from(address) as u64) | (flags | EntryFlags::PRESENT).bits(),
+            None => 0,
+        };
     }
 
     /// Set an entry to a given address and set of flags. Cannot be used to set an entry as
@@ -132,7 +134,12 @@ impl HierarchicalLevel for Level2 {
     type NextLevel = Level1;
 }
 
-pub struct Table<L: TableLevel> {
+const ENTRY_COUNT: usize = 512;
+
+pub struct Table<L>
+where
+    L: TableLevel,
+{
     entries: [Entry; ENTRY_COUNT],
     _phantom: PhantomData<L>,
 }
@@ -172,7 +179,7 @@ where
 {
     pub fn zero(&mut self) {
         for entry in self.entries.iter_mut() {
-            entry.set_unused();
+            entry.set(None);
         }
     }
 }
@@ -225,7 +232,7 @@ where
             let flags = EntryFlags::default()
                 | EntryFlags::WRITABLE
                 | if user_accessible { EntryFlags::USER_ACCESSIBLE } else { EntryFlags::empty() };
-            self.entries[index].set(allocator.allocate().start, flags);
+            self.entries[index].set(Some((allocator.allocate().start, flags)));
 
             // Safe to unwrap because we just created the table there
             let table = self.next_table_mut(index, physical_base).unwrap();
@@ -312,7 +319,7 @@ impl PageTable<Size4KiB> for PageTableImpl {
          */
         let kernel_p3_address = kernel_page_table.p4()[crate::kernel_map::KERNEL_P4_ENTRY].address().unwrap();
         Self::p4_mut(&mut page_table.p4_frame, page_table.physical_base)[crate::kernel_map::KERNEL_P4_ENTRY]
-            .set(kernel_p3_address, EntryFlags::WRITABLE);
+            .set(Some((kernel_p3_address, EntryFlags::WRITABLE)));
 
         page_table
     }
@@ -359,7 +366,7 @@ impl PageTable<Size4KiB> for PageTableImpl {
                 return Err(PagingError::AlreadyMapped);
             }
 
-            p1[page.start.p1_index()].set(frame.start, EntryFlags::from(flags));
+            p1[page.start.p1_index()].set(Some((frame.start, EntryFlags::from(flags))));
         } else if S::SIZE == Size2MiB::SIZE {
             let p2 = Self::p4_mut(&mut self.p4_frame, self.physical_base)
                 .next_table_create(page.start.p4_index(), user_accessible, allocator, self.physical_base)?
@@ -369,7 +376,7 @@ impl PageTable<Size4KiB> for PageTableImpl {
                 return Err(PagingError::AlreadyMapped);
             }
 
-            p2[page.start.p2_index()].set(frame.start, EntryFlags::from(flags) | EntryFlags::HUGE_PAGE);
+            p2[page.start.p2_index()].set(Some((frame.start, EntryFlags::from(flags) | EntryFlags::HUGE_PAGE)));
         } else {
             // XXX: this needs to be implemented for any future implemented page sizes (e.g. 1GiB)
             unimplemented!()
@@ -460,7 +467,7 @@ impl PageTable<Size4KiB> for PageTableImpl {
                     .next_table_mut(page.start.p3_index(), self.physical_base)?
                     .next_table_mut(page.start.p2_index(), self.physical_base)?;
                 let frame = Frame::starts_with(p1[page.start.p1_index()].address()?);
-                p1[page.start.p1_index()].set_unused();
+                p1[page.start.p1_index()].set(None);
                 tlb::invalidate_page(page.start);
 
                 Some(frame)

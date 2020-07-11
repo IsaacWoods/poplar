@@ -13,7 +13,7 @@ pub struct PhysicalAddress(usize);
 impl PhysicalAddress {
     cfg_if! {
         if #[cfg(target_arch = "x86_64")] {
-            /// Construct a new `PhysicalAddress`. On x86_64, physical addresses must be less than 2^52; if this is
+            /// Construct a new `PhysicalAddress`. On x86_64, physical addresses must be less than `2^52`; if this is
             /// not the case, this will return `None`.
             pub const fn new(address: usize) -> Option<PhysicalAddress> {
                 const MAX_PHYSICAL_ADDRESS: usize = (1 << 52) - 1;
