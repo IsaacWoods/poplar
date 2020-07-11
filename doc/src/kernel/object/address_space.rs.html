@@ -164,7 +164,7 @@
             <span class="ident">owner</span>,
             <span class="ident">state</span>: <span class="ident">Mutex</span>::<span class="ident">new</span>(<span class="ident">State</span>::<span class="ident">NotActive</span>),
             <span class="ident">memory_objects</span>: <span class="ident">Mutex</span>::<span class="ident">new</span>(<span class="macro">vec</span><span class="macro">!</span>[]),
-            <span class="ident">page_table</span>: <span class="ident">Mutex</span>::<span class="ident">new</span>(<span class="ident">P</span>::<span class="ident">PageTable</span>::<span class="ident">new_for_address_space</span>(<span class="ident">kernel_page_table</span>, <span class="ident">allocator</span>)),
+            <span class="ident">page_table</span>: <span class="ident">Mutex</span>::<span class="ident">new</span>(<span class="ident">P</span>::<span class="ident">PageTable</span>::<span class="ident">new_with_kernel_mapped</span>(<span class="ident">kernel_page_table</span>, <span class="ident">allocator</span>)),
             <span class="ident">user_stack_allocator</span>: <span class="ident">Mutex</span>::<span class="ident">new</span>(<span class="ident">SlabAllocator</span>::<span class="ident">new</span>(
                 <span class="ident">USER_STACK_BOTTOM</span>,
                 <span class="ident">USER_STACK_TOP</span>,

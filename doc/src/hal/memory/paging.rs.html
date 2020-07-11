@@ -136,7 +136,6 @@
 <span id="136">136</span>
 <span id="137">137</span>
 <span id="138">138</span>
-<span id="139">139</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="kw">use</span> <span class="kw">super</span>::{<span class="ident">Frame</span>, <span class="ident">FrameAllocator</span>, <span class="ident">FrameSize</span>, <span class="ident">Page</span>, <span class="ident">PhysicalAddress</span>, <span class="ident">VirtualAddress</span>};
 <span class="kw">use</span> <span class="ident">core</span>::<span class="ident">ops</span>::{<span class="self">self</span>, <span class="ident">Range</span>};
@@ -189,10 +188,9 @@
 <span class="kw">where</span>
     <span class="ident">TableSize</span>: <span class="ident">FrameSize</span>,
 {
-    <span class="doccomment">/// Construct a new set of page tables that are suitable for an `AddressSpace` kernel object - one that can</span>
-    <span class="doccomment">/// hold userspace tasks. This generally needs the kernel mapped into it somehow, so we pass in the kernel&#39;s</span>
-    <span class="doccomment">/// set of page tables.</span>
-    <span class="kw">fn</span> <span class="ident">new_for_address_space</span><span class="op">&lt;</span><span class="ident">A</span><span class="op">&gt;</span>(<span class="ident">kernel_page_table</span>: <span class="kw-2">&amp;</span><span class="self">Self</span>, <span class="ident">allocator</span>: <span class="kw-2">&amp;</span><span class="ident">A</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span>
+    <span class="doccomment">/// Constructs a new set of page tables, but with the kernel mapped into it. This is generally useful for</span>
+    <span class="doccomment">/// constructing page tables for userspace.</span>
+    <span class="kw">fn</span> <span class="ident">new_with_kernel_mapped</span><span class="op">&lt;</span><span class="ident">A</span><span class="op">&gt;</span>(<span class="ident">kernel_page_table</span>: <span class="kw-2">&amp;</span><span class="self">Self</span>, <span class="ident">allocator</span>: <span class="kw-2">&amp;</span><span class="ident">A</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span>
     <span class="kw">where</span>
         <span class="ident">A</span>: <span class="ident">FrameAllocator</span><span class="op">&lt;</span><span class="ident">TableSize</span><span class="op">&gt;</span>;
 

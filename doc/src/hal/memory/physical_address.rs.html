@@ -142,7 +142,7 @@
 <span class="kw">impl</span> <span class="ident">PhysicalAddress</span> {
     <span class="macro">cfg_if</span><span class="macro">!</span> {
         <span class="kw">if</span> <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;x86_64&quot;</span>)]</span> {
-            <span class="doccomment">/// Construct a new `PhysicalAddress`. On x86_64, physical addresses must be less than 2^52; if this is</span>
+            <span class="doccomment">/// Construct a new `PhysicalAddress`. On x86_64, physical addresses must be less than `2^52`; if this is</span>
             <span class="doccomment">/// not the case, this will return `None`.</span>
             <span class="kw">pub</span> <span class="kw">const</span> <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">address</span>: <span class="ident">usize</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">PhysicalAddress</span><span class="op">&gt;</span> {
                 <span class="kw">const</span> <span class="ident">MAX_PHYSICAL_ADDRESS</span>: <span class="ident">usize</span> <span class="op">=</span> (<span class="number">1</span> <span class="op">&lt;</span><span class="op">&lt;</span> <span class="number">52</span>) <span class="op">-</span> <span class="number">1</span>;
