@@ -33,6 +33,12 @@ bitflags! {
         const HUGE_PAGE         = 1 << 7;
         const GLOBAL            = 1 << 8;
         const NO_EXECUTE        = 1 << 63;
+
+        /// This is the set of flags used for all non-terminal page tables (e.g. the ones that contain other page tables,
+        /// not actual page mappings). It is the most permissive set of flags, preventing us from having to make sure
+        /// parent page tables have the correct permissions for a terminal mapping. The actual permissions are therefore
+        /// always simply determined by just the flags of the entry in the terminal page table.
+        const NON_TERMINAL_FLAGS = Self::PRESENT.bits | Self::WRITABLE.bits | Self::USER_ACCESSIBLE.bits;
     }
 }
 
@@ -52,6 +58,8 @@ impl From<Flags> for EntryFlags {
     }
 }
 
+/// Represents an entry within a page table of any level. Contains a physical address to the next level (or to the
+/// physical memory region), and some flags.
 #[repr(transparent)]
 #[derive(Clone, Copy)]
 pub struct Entry(u64);
@@ -85,12 +93,6 @@ impl Entry {
             Some((address, flags)) => (usize::from(address) as u64) | (flags | EntryFlags::PRESENT).bits(),
             None => 0,
         };
-    }
-
-    /// Set an entry to a given address and set of flags. Cannot be used to set an entry as
-    /// not-present (use `set_unused` instead), because we automatically add the `PRESENT` flag.
-    pub fn set(&mut self, address: PhysicalAddress, flags: EntryFlags) {
-        self.0 = (usize::from(address) as u64) | (flags | EntryFlags::PRESENT).bits();
     }
 }
 
@@ -214,54 +216,32 @@ where
     pub fn next_table_create<A>(
         &mut self,
         index: usize,
-        user_accessible: bool,
         allocator: &A,
         physical_base: VirtualAddress,
     ) -> Result<&mut Table<L::NextLevel>, PagingError>
     where
         A: FrameAllocator<Size4KiB>,
     {
-        /*
-         * There's a special case here, where we want to create a new page table, but there's
-         * already a huge-page there (e.g. we want to create a P1 table to map some 4KiB pages
-         * there, but it's already a 2MiB huge-page).
-         */
         if self.next_table(index, physical_base).is_none() {
             /*
              * This entry is empty, so we create a new page table, zero it, and return that.
              */
-            let flags = EntryFlags::default()
-                | EntryFlags::WRITABLE
-                | if user_accessible { EntryFlags::USER_ACCESSIBLE } else { EntryFlags::empty() };
-            self.entries[index].set(Some((allocator.allocate().start, flags)));
-
-            // Safe to unwrap because we just created the table there
+            self.entries[index].set(Some((allocator.allocate().start, EntryFlags::NON_TERMINAL_FLAGS)));
             let table = self.next_table_mut(index, physical_base).unwrap();
             table.zero();
             Ok(table)
         } else {
             /*
-             * A table already exists in the entry. This is actually the more difficult case - we
-             * need to make sure the flags are suitable for both the existing sub-tables, and the
-             * new ones, and also check it's not a huge-page.
+             * This entry already exists, so we don't need to create another one. However, we do need to detect a
+             * special case here: when we're seeing if we need to create a parent table in order to map into lower
+             * tables (e.g. creating a P2 to create a P1 for 4KiB mappings), there might already be a huge page
+             * mapped into the parent table. If this occurs, we error because the whole region has already been
+             * mapped.
              */
             if self[index].flags().contains(EntryFlags::HUGE_PAGE) {
-                /*
-                 * The entry is present, but is actually a huge page. It is **NOT** type-safe to
-                 * call `next_table` on it. Instead, we return an error.
-                 */
                 return Err(PagingError::AlreadyMapped);
             }
 
-            // TODO: find a set of flags suitable for both the existing entries and the new ones.
-            // This needs a bit of thought: (e.g. NO_EXECUTE + NOT(NO_EXECUTE) => NOT(NO_EXECUTE)
-            // but WRITABLE + NOT(WRITABLE) => WRITABLE so we basically need custom handling for
-            // each flag). For the moment, we just return the table.
-            //
-            // NOTE: it's safe to alter the mappings for the parent structures, even if that makes
-            // them more permissive than existing entries, because the final permissions are a
-            // combination of the permissions of the parent tables and the final page. The parent
-            // tables therefore need to be as permissive as any of the child tables.
             Ok(self.next_table_mut(index, physical_base).unwrap())
         }
     }
@@ -351,17 +331,11 @@ impl PageTable<Size4KiB> for PageTableImpl {
         A: FrameAllocator<Size4KiB>,
         S: FrameSize,
     {
-        /*
-         * If a page should be accessible from userspace, all the parent paging structures for
-         * that page must also be marked user-accessible.
-         */
-        // TODO: I think we should just pass all the flags upwards and amalgamalte them in `Flags` itself.
-        let user_accessible = flags.user_accessible;
         if S::SIZE == Size4KiB::SIZE {
             let p1 = Self::p4_mut(&mut self.p4_frame, self.physical_base)
-                .next_table_create(page.start.p4_index(), user_accessible, allocator, self.physical_base)?
-                .next_table_create(page.start.p3_index(), user_accessible, allocator, self.physical_base)?
-                .next_table_create(page.start.p2_index(), user_accessible, allocator, self.physical_base)?;
+                .next_table_create(page.start.p4_index(), allocator, self.physical_base)?
+                .next_table_create(page.start.p3_index(), allocator, self.physical_base)?
+                .next_table_create(page.start.p2_index(), allocator, self.physical_base)?;
 
             if !p1[page.start.p1_index()].is_unused() {
                 return Err(PagingError::AlreadyMapped);
@@ -370,8 +344,8 @@ impl PageTable<Size4KiB> for PageTableImpl {
             p1[page.start.p1_index()].set(Some((frame.start, EntryFlags::from(flags))));
         } else if S::SIZE == Size2MiB::SIZE {
             let p2 = Self::p4_mut(&mut self.p4_frame, self.physical_base)
-                .next_table_create(page.start.p4_index(), user_accessible, allocator, self.physical_base)?
-                .next_table_create(page.start.p3_index(), user_accessible, allocator, self.physical_base)?;
+                .next_table_create(page.start.p4_index(), allocator, self.physical_base)?
+                .next_table_create(page.start.p3_index(), allocator, self.physical_base)?;
 
             if !p2[page.start.p2_index()].is_unused() {
                 return Err(PagingError::AlreadyMapped);
