@@ -48,6 +48,7 @@ impl From<Flags> for EntryFlags {
             | if flags.writable { EntryFlags::WRITABLE } else { EntryFlags::empty() }
             | if flags.executable { EntryFlags::empty() } else { EntryFlags::NO_EXECUTE }
             | if flags.user_accessible { EntryFlags::USER_ACCESSIBLE } else { EntryFlags::empty() }
+            | if flags.cached { EntryFlags::empty() } else { EntryFlags::NO_CACHE }
     }
 }
 
