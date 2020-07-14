@@ -326,10 +326,10 @@ impl PageTable<Size4KiB> for PageTableImpl {
         Some(p1[address.p1_index()].address()? + (usize::from(address) % Size4KiB::SIZE))
     }
 
-    fn map<A, S>(&mut self, page: Page<S>, frame: Frame<S>, flags: Flags, allocator: &A) -> Result<(), PagingError>
+    fn map<S, A>(&mut self, page: Page<S>, frame: Frame<S>, flags: Flags, allocator: &A) -> Result<(), PagingError>
     where
-        A: FrameAllocator<Size4KiB>,
         S: FrameSize,
+        A: FrameAllocator<Size4KiB>,
     {
         if S::SIZE == Size4KiB::SIZE {
             let p1 = Self::p4_mut(&mut self.p4_frame, self.physical_base)
@@ -353,8 +353,17 @@ impl PageTable<Size4KiB> for PageTableImpl {
 
             p2[page.start.p2_index()].set(Some((frame.start, EntryFlags::from(flags) | EntryFlags::HUGE_PAGE)));
         } else {
-            // XXX: this needs to be implemented for any future implemented page sizes (e.g. 1GiB)
-            unimplemented!()
+            let p3 = Self::p4_mut(&mut self.p4_frame, self.physical_base).next_table_create(
+                page.start.p4_index(),
+                allocator,
+                self.physical_base,
+            )?;
+
+            if !p3[page.start.p3_index()].is_unused() {
+                return Err(PagingError::AlreadyMapped);
+            }
+
+            p3[page.start.p3_index()].set(Some((frame.start, EntryFlags::from(flags) | EntryFlags::HUGE_PAGE)));
         }
 
         // TODO: we could return a marker that the TLB must be flushed to avoid doing it in certain
@@ -364,6 +373,7 @@ impl PageTable<Size4KiB> for PageTableImpl {
         Ok(())
     }
 
+    #[allow(non_snake_case)]
     fn map_area<A>(
         &mut self,
         virtual_start: VirtualAddress,
@@ -375,60 +385,99 @@ impl PageTable<Size4KiB> for PageTableImpl {
     where
         A: FrameAllocator<Size4KiB>,
     {
+        use hal::memory::split_region;
+
         assert!(virtual_start.is_aligned(Size4KiB::SIZE));
         assert!(physical_start.is_aligned(Size4KiB::SIZE));
         assert!(size % Size4KiB::SIZE == 0);
 
+        let offset_physical = |virtual_address| {
+            PhysicalAddress::new(
+                usize::from(virtual_address) - usize::from(virtual_start) + usize::from(physical_start),
+            )
+            .unwrap()
+        };
+
         /*
-         * Firstly, if the entire mapping is smaller than 2MiB, we simply map the entire thing with 4KiB pages.
+         * First, we extract a range that we can map with 1GiB pages, if there is one.
          */
-        if size < Size2MiB::SIZE {
-            let pages =
-                Page::<Size4KiB>::starts_with(virtual_start)..Page::<Size4KiB>::starts_with(virtual_start + size);
-            let frames = Frame::<Size4KiB>::starts_with(physical_start)
-                ..Frame::<Size4KiB>::starts_with(physical_start + size);
-            self.map_range(pages, frames, flags, allocator)
-        } else {
+        let (head, aligned_1GiB, tail) = split_region::<Size1GiB>(virtual_start..(virtual_start + size));
+        aligned_1GiB.map_or(Ok(()), |region| {
+            let pages = Page::starts_with(region.start)..Page::starts_with(region.end);
+            let frames =
+                Frame::starts_with(offset_physical(region.start))..Frame::starts_with(offset_physical(region.end));
+            self.map_range::<Size1GiB, A>(pages, frames, flags, allocator)
+        })?;
+
+        /*
+         * Next, if there is a head or a tail, we split those into 2MiB areas, and then map the rest of it (if
+         * there is any left) with 4KiB pages.
+         */
+        head.map_or(Ok(()), |region| {
+            let (head_4KiB, aligned_2MiB, tail_4KiB) = split_region::<Size2MiB>(region.start..region.end);
+
             /*
-             * If it's larger, we split into three areas: a prefix, a middle, and a suffix. The prefix and
-             * suffix are not aligned to 2MiB boundaries, and so must be mapped with 4KiB pages. The
-             * middle is, and so can be mapped with larger 2MiB pages.
+             * Map the 2MiB area, if it exists.
              */
-            let virtual_prefix_start = virtual_start;
-            let virtual_middle_start = virtual_start.align_up(Size2MiB::SIZE);
-            let virtual_middle_end = (virtual_start + size).align_down(Size2MiB::SIZE);
-            let virtual_suffix_end = virtual_start + size;
+            aligned_2MiB.map_or(Ok(()), |region| {
+                let pages = Page::starts_with(region.start)..Page::starts_with(region.end);
+                let frames = Frame::starts_with(offset_physical(region.start))
+                    ..Frame::starts_with(offset_physical(region.end));
+                self.map_range::<Size2MiB, A>(pages, frames, flags, allocator)
+            })?;
 
-            let physical_prefix_start = physical_start;
-            let physical_middle_start =
-                physical_prefix_start + (usize::from(virtual_middle_start) - usize::from(virtual_prefix_start));
-            let physical_middle_end =
-                physical_prefix_start + (usize::from(virtual_middle_end) - usize::from(virtual_prefix_start));
-            let physical_suffix_end = physical_start + size;
-
-            // Map the prefix
-            let prefix_pages = Page::<Size4KiB>::starts_with(virtual_prefix_start)
-                ..Page::<Size4KiB>::starts_with(virtual_middle_start);
-            let prefix_frames = Frame::<Size4KiB>::starts_with(physical_prefix_start)
-                ..Frame::<Size4KiB>::starts_with(physical_middle_start);
-            self.map_range(prefix_pages, prefix_frames, flags, allocator)?;
-
-            // Map the middle
-            let middle_pages = Page::<Size2MiB>::starts_with(virtual_middle_start)
-                ..Page::<Size2MiB>::starts_with(virtual_middle_end);
-            let middle_frames = Frame::<Size2MiB>::starts_with(physical_middle_start)
-                ..Frame::<Size2MiB>::starts_with(physical_middle_end);
-            self.map_range(middle_pages, middle_frames, flags, allocator)?;
-
-            // Map the suffix
-            let suffix_pages = Page::<Size4KiB>::starts_with(virtual_middle_end)
-                ..Page::<Size4KiB>::starts_with(virtual_suffix_end);
-            let suffix_frames = Frame::<Size4KiB>::starts_with(physical_middle_end)
-                ..Frame::<Size4KiB>::starts_with(physical_suffix_end);
-            self.map_range(suffix_pages, suffix_frames, flags, allocator)?;
+            /*
+             * Map the head and tail regions with 4KiB, if they exist.
+             */
+            head_4KiB.map_or(Ok(()), |region| {
+                let pages = Page::starts_with(region.start)..Page::starts_with(region.end);
+                let frames = Frame::starts_with(offset_physical(region.start))
+                    ..Frame::starts_with(offset_physical(region.end));
+                self.map_range::<Size4KiB, A>(pages, frames, flags, allocator)
+            })?;
+            tail_4KiB.map_or(Ok(()), |region| {
+                let pages = Page::starts_with(region.start)..Page::starts_with(region.end);
+                let frames = Frame::starts_with(offset_physical(region.start))
+                    ..Frame::starts_with(offset_physical(region.end));
+                self.map_range::<Size4KiB, A>(pages, frames, flags, allocator)
+            })?;
 
             Ok(())
-        }
+        })?;
+        // TODO: this is identical to the code above - can we do a `for_each` or something?
+        tail.map_or(Ok(()), |region| {
+            let (head_4KiB, aligned_2MiB, tail_4KiB) = split_region::<Size2MiB>(region.start..region.end);
+
+            /*
+             * Map the 2MiB area, if it exists.
+             */
+            aligned_2MiB.map_or(Ok(()), |region| {
+                let pages = Page::starts_with(region.start)..Page::starts_with(region.end);
+                let frames = Frame::starts_with(offset_physical(region.start))
+                    ..Frame::starts_with(offset_physical(region.end));
+                self.map_range::<Size2MiB, A>(pages, frames, flags, allocator)
+            })?;
+
+            /*
+             * Map the head and tail regions with 4KiB, if they exist.
+             */
+            head_4KiB.map_or(Ok(()), |region| {
+                let pages = Page::starts_with(region.start)..Page::starts_with(region.end);
+                let frames = Frame::starts_with(offset_physical(region.start))
+                    ..Frame::starts_with(offset_physical(region.end));
+                self.map_range::<Size4KiB, A>(pages, frames, flags, allocator)
+            })?;
+            tail_4KiB.map_or(Ok(()), |region| {
+                let pages = Page::starts_with(region.start)..Page::starts_with(region.end);
+                let frames = Frame::starts_with(offset_physical(region.start))
+                    ..Frame::starts_with(offset_physical(region.end));
+                self.map_range::<Size4KiB, A>(pages, frames, flags, allocator)
+            })?;
+
+            Ok(())
+        })?;
+
+        Ok(())
     }
 
     fn unmap<S>(&mut self, page: Page<S>) -> Option<Frame<S>>
