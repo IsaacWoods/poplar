@@ -68,6 +68,11 @@
 <span id="68">68</span>
 <span id="69">69</span>
 <span id="70">70</span>
+<span id="71">71</span>
+<span id="72">72</span>
+<span id="73">73</span>
+<span id="74">74</span>
+<span id="75">75</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="kw">use</span> <span class="kw">super</span>::{<span class="ident">FrameSize</span>, <span class="ident">PhysicalAddress</span>, <span class="ident">Size4KiB</span>};
 <span class="kw">use</span> <span class="ident">core</span>::{
@@ -90,7 +95,12 @@
     <span class="ident">S</span>: <span class="ident">FrameSize</span>,
 {
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">starts_with</span>(<span class="ident">address</span>: <span class="ident">PhysicalAddress</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">Frame</span><span class="op">&lt;</span><span class="ident">S</span><span class="op">&gt;</span> {
-        <span class="macro">assert</span><span class="macro">!</span>(<span class="ident">address</span>.<span class="ident">is_aligned</span>(<span class="ident">S</span>::<span class="ident">SIZE</span>), <span class="string">&quot;Tried to create frame starting at invalid address&quot;</span>);
+        <span class="macro">assert</span><span class="macro">!</span>(
+            <span class="ident">address</span>.<span class="ident">is_aligned</span>(<span class="ident">S</span>::<span class="ident">SIZE</span>),
+            <span class="string">&quot;Tried to create frame of size {:#x} starting at invalid address: {:#x}&quot;</span>,
+            <span class="ident">S</span>::<span class="ident">SIZE</span>,
+            <span class="ident">address</span>,
+        );
         <span class="ident">Frame</span> { <span class="ident">start</span>: <span class="ident">address</span>, <span class="ident">_phantom</span>: <span class="ident">PhantomData</span> }
     }
 
