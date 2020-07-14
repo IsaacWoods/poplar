@@ -19,7 +19,12 @@ where
     S: FrameSize,
 {
     pub fn starts_with(address: PhysicalAddress) -> Frame<S> {
-        assert!(address.is_aligned(S::SIZE), "Tried to create frame starting at invalid address");
+        assert!(
+            address.is_aligned(S::SIZE),
+            "Tried to create frame of size {:#x} starting at invalid address: {:#x}",
+            S::SIZE,
+            address,
+        );
         Frame { start: address, _phantom: PhantomData }
     }
 
