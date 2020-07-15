@@ -70,6 +70,8 @@ pub extern "C" fn kentry(boot_info: &BootInfo) -> ! {
         panic!("Boot info magic is not correct!");
     }
 
+    InterruptController::install_exception_handlers();
+
     /*
      * Initialise the heap allocator. After this, the kernel is free to use collections etc. that
      * can allocate on the heap through the global allocator.

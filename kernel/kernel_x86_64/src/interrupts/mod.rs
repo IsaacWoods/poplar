@@ -41,7 +41,7 @@ extern "C" fn rust_syscall_entry(number: usize, a: usize, b: usize, c: usize, d:
 /// |       20-2f      | i8259 PIC Interrupts        |
 /// |       30-??      | IOAPIC Interrupts           |
 /// |        ..        |                             |
-/// |        fe        | Local APIC timer
+/// |        fe        | Local APIC timer            |
 /// |        ff        | APIC spurious interrupt     |
 /// |------------------|-----------------------------|
 static mut IDT: Idt = Idt::empty();
@@ -60,13 +60,29 @@ const APIC_SPURIOUS_VECTOR: u8 = 0xff;
 pub struct InterruptController {}
 
 impl InterruptController {
-    pub fn init(acpi_info: &Acpi, aml_context: &mut AmlContext) -> InterruptController {
-        Self::install_syscall_handler();
-        Self::install_exception_handlers();
-
+    /// Install handlers for exceptions, and load the IDT. This is done early in initialization to catch issues
+    /// like page faults and kernel stack overflows nicely.
+    pub fn install_exception_handlers() {
         unsafe {
+            IDT.nmi().set_handler(wrap_handler!(exception::nmi_handler), KERNEL_CODE_SELECTOR);
+            IDT.breakpoint().set_handler(wrap_handler!(exception::breakpoint_handler), KERNEL_CODE_SELECTOR);
+            IDT.invalid_opcode().set_handler(wrap_handler!(exception::nmi_handler), KERNEL_CODE_SELECTOR);
+            IDT.general_protection_fault().set_handler(
+                wrap_handler_with_error_code!(exception::general_protection_fault_handler),
+                KERNEL_CODE_SELECTOR,
+            );
+            IDT.page_fault()
+                .set_handler(wrap_handler_with_error_code!(exception::page_fault_handler), KERNEL_CODE_SELECTOR);
+            IDT.double_fault()
+                .set_handler(wrap_handler_with_error_code!(exception::double_fault_handler), KERNEL_CODE_SELECTOR);
+
             IDT.load();
         }
+    }
+
+    pub fn init(acpi_info: &Acpi, aml_context: &mut AmlContext) -> InterruptController {
+        Self::install_syscall_handler();
+
 
         match acpi_info.interrupt_model.as_ref().unwrap() {
             InterruptModel::Apic(info) => {
@@ -134,27 +150,6 @@ impl InterruptController {
             }
             None => warn!("Couldn't find frequency of APIC from cpuid. Local APIC timer not enabled!"),
         }
-    }
-
-    fn install_exception_handlers() {
-        macro set_handler($name: ident, $handler: path) {
-            unsafe {
-                IDT.$name().set_handler(wrap_handler!($handler), KERNEL_CODE_SELECTOR);
-            }
-        }
-
-        macro set_handler_with_error_code($name: ident, $handler: path) {
-            unsafe {
-                IDT.$name().set_handler(wrap_handler_with_error_code!($handler), KERNEL_CODE_SELECTOR);
-            }
-        }
-
-        set_handler!(nmi, exception::nmi_handler);
-        set_handler!(breakpoint, exception::breakpoint_handler);
-        set_handler!(invalid_opcode, exception::invalid_opcode_handler);
-        set_handler_with_error_code!(general_protection_fault, exception::general_protection_fault_handler);
-        set_handler_with_error_code!(page_fault, exception::page_fault_handler);
-        set_handler_with_error_code!(double_fault, exception::double_fault_handler);
     }
 
     /// We use the `syscall` instruction to make system calls, as it's always present on supported systems. We need
