@@ -45,7 +45,7 @@ impl IdtEntry {
             address_0_15: 0,
             segment_selector: 0,
             ist_offset: 0,
-            flags: 0b0000_1110,
+            flags: 0b0_00_0_1110,
             address_16_31: 0,
             address_32_63: 0,
             _reserved: 0,
@@ -54,7 +54,7 @@ impl IdtEntry {
 
     pub fn set_handler(&mut self, handler: HandlerFunc, code_selector: SegmentSelector) -> &mut Self {
         /*
-         * Set the Present bit, and set the gate type to 0b1110
+         * Set the Present bit, and set the gate type to an Interrupt Gate.
          */
         let mut flags: u8 = 0;
         flags.set_bits(0..4, 0b1110);
@@ -64,9 +64,9 @@ impl IdtEntry {
         self.segment_selector = code_selector.table_offset();
 
         let address = handler as u64;
-        self.address_0_15 = address as u16;
-        self.address_16_31 = (address >> 16) as u16;
-        self.address_32_63 = (address >> 32) as u32;
+        self.address_0_15 = address.get_bits(0..16) as u16;
+        self.address_16_31 = address.get_bits(16..32) as u16;
+        self.address_32_63 = address.get_bits(32..64) as u32;
 
         self
     }
