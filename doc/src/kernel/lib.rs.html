@@ -141,12 +141,6 @@
 <span id="141">141</span>
 <span id="142">142</span>
 <span id="143">143</span>
-<span id="144">144</span>
-<span id="145">145</span>
-<span id="146">146</span>
-<span id="147">147</span>
-<span id="148">148</span>
-<span id="149">149</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="attribute">#![<span class="ident">no_std</span>]</span>
 <span class="attribute">#![<span class="ident">feature</span>(
@@ -171,7 +165,6 @@
 <span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">object</span>;
 <span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">per_cpu</span>;
 <span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">scheduler</span>;
-<span class="kw">mod</span> <span class="ident">slab_allocator</span>;
 <span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">syscall</span>;
 
 <span class="kw">use</span> <span class="ident">alloc</span>::<span class="ident">sync</span>::<span class="ident">Arc</span>;
@@ -181,13 +174,8 @@
     <span class="ident">memory</span>::{<span class="ident">FrameSize</span>, <span class="ident">PageTable</span>, <span class="ident">VirtualAddress</span>},
 };
 <span class="kw">use</span> <span class="ident">heap_allocator</span>::<span class="ident">LockedHoleAllocator</span>;
-<span class="kw">use</span> <span class="ident">memory</span>::<span class="ident">PhysicalMemoryManager</span>;
-<span class="kw">use</span> <span class="ident">object</span>::{
-    <span class="ident">address_space</span>::<span class="ident">AddressSpace</span>,
-    <span class="ident">memory_object</span>::<span class="ident">MemoryObject</span>,
-    <span class="ident">task</span>::{<span class="ident">KernelStackAllocator</span>, <span class="ident">Task</span>},
-    <span class="ident">KernelObject</span>,
-};
+<span class="kw">use</span> <span class="ident">memory</span>::{<span class="ident">KernelStackAllocator</span>, <span class="ident">PhysicalMemoryManager</span>};
+<span class="kw">use</span> <span class="ident">object</span>::{<span class="ident">address_space</span>::<span class="ident">AddressSpace</span>, <span class="ident">memory_object</span>::<span class="ident">MemoryObject</span>, <span class="ident">task</span>::<span class="ident">Task</span>, <span class="ident">KernelObject</span>};
 <span class="kw">use</span> <span class="ident">pebble_util</span>::<span class="ident">InitGuard</span>;
 <span class="kw">use</span> <span class="ident">per_cpu</span>::<span class="ident">PerCpu</span>;
 <span class="kw">use</span> <span class="ident">scheduler</span>::<span class="ident">Scheduler</span>;
@@ -204,11 +192,11 @@
     <span class="kw">type</span> <span class="ident">PageTable</span>: <span class="ident">PageTable</span><span class="op">&lt;</span><span class="self">Self</span>::<span class="ident">PageTableSize</span><span class="op">&gt;</span> <span class="op">+</span> <span class="ident">Send</span>;
     <span class="kw">type</span> <span class="ident">PerCpu</span>: <span class="ident">PerCpu</span><span class="op">&lt;</span><span class="self">Self</span><span class="op">&gt;</span>;
 
-    <span class="kw">fn</span> <span class="ident">kernel_page_table</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">Self</span>::<span class="ident">PageTable</span>;
+    <span class="kw">fn</span> <span class="ident">kernel_page_table</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>) <span class="op">-&gt;</span> <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">Self</span>::<span class="ident">PageTable</span>;
 
     <span class="doccomment">/// Get the per-CPU info for the current CPU. To make this safe, the per-CPU info must be installed before the</span>
     <span class="doccomment">/// `Platform` implementation is created.</span>
-    <span class="kw">fn</span> <span class="ident">per_cpu</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="ident">Pin</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="kw-2">mut</span> <span class="self">Self</span>::<span class="ident">PerCpu</span><span class="op">&gt;</span>;
+    <span class="kw">fn</span> <span class="ident">per_cpu</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>() <span class="op">-&gt;</span> <span class="ident">Pin</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="kw-2">mut</span> <span class="self">Self</span>::<span class="ident">PerCpu</span><span class="op">&gt;</span>;
 
     <span class="doccomment">/// Often, the kernel stack of a task must be initialized to allow it to enter usermode for the first time.</span>
     <span class="doccomment">/// What is required for this is architecture-dependent, and so this is offloaded to the `TaskHelper`.</span>
@@ -230,7 +218,7 @@
 
     <span class="doccomment">/// Do the actual drop into usermode. This assumes that the task&#39;s page tables have already been installed,</span>
     <span class="doccomment">/// and that an initial frame has been put into the task&#39;s kernel stack that this will use to enter userspace.</span>
-    <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">drop_into_userspace</span>(<span class="ident">kernel_stack_pointer</span>: <span class="ident">VirtualAddress</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="op">!</span>;
+    <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">drop_into_userspace</span>(<span class="ident">kernel_stack_pointer</span>: <span class="ident">VirtualAddress</span>) <span class="op">-&gt;</span> <span class="op">!</span>;
 }
 
 <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">load_task</span><span class="op">&lt;</span><span class="ident">P</span><span class="op">&gt;</span>(
@@ -290,8 +278,8 @@
         <span class="ident">height</span>: <span class="ident">video_info</span>.<span class="ident">height</span> <span class="kw">as</span> <span class="ident">u16</span>,
         <span class="ident">stride</span>: <span class="ident">video_info</span>.<span class="ident">stride</span> <span class="kw">as</span> <span class="ident">u16</span>,
         <span class="ident">pixel_format</span>: <span class="kw">match</span> <span class="ident">video_info</span>.<span class="ident">pixel_format</span> {
-            <span class="ident">BootPixelFormat</span>::<span class="ident">RGB32</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">PixelFormat</span>::<span class="ident">RGB32</span>,
-            <span class="ident">BootPixelFormat</span>::<span class="ident">BGR32</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">PixelFormat</span>::<span class="ident">BGR32</span>,
+            <span class="ident">BootPixelFormat</span>::<span class="ident">RGB32</span> <span class="op">=&gt;</span> <span class="ident">PixelFormat</span>::<span class="ident">RGB32</span>,
+            <span class="ident">BootPixelFormat</span>::<span class="ident">BGR32</span> <span class="op">=&gt;</span> <span class="ident">PixelFormat</span>::<span class="ident">BGR32</span>,
         },
     };
 

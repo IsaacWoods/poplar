@@ -121,7 +121,7 @@
 }
 
 <span class="kw">impl</span><span class="op">&lt;</span><span class="kw">const</span> <span class="ident">N</span>: <span class="ident">usize</span><span class="op">&gt;</span> <span class="ident">CapabilitiesRepr</span><span class="op">&lt;</span>{ <span class="ident">N</span> }<span class="op">&gt;</span> {
-    <span class="kw">pub</span> <span class="kw">const</span> <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">caps</span>: [<span class="ident">u8</span>; <span class="ident">N</span>]) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">CapabilitiesRepr</span><span class="op">&lt;</span>{ <span class="ident">N</span> }<span class="op">&gt;</span> {
+    <span class="kw">pub</span> <span class="kw">const</span> <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">caps</span>: [<span class="ident">u8</span>; <span class="ident">N</span>]) <span class="op">-&gt;</span> <span class="ident">CapabilitiesRepr</span><span class="op">&lt;</span>{ <span class="ident">N</span> }<span class="op">&gt;</span> {
         <span class="ident">CapabilitiesRepr</span> {
             <span class="ident">name_size</span>: <span class="number">6</span>,
             <span class="ident">desc_size</span>: <span class="ident">N</span> <span class="kw">as</span> <span class="ident">u32</span>,

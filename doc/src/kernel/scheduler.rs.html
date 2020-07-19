@@ -137,27 +137,27 @@
 <span class="kw">where</span>
     <span class="ident">P</span>: <span class="ident">Platform</span>,
 {
-    <span class="kw">pub</span> <span class="ident">running_task</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">Task</span><span class="op">&lt;</span><span class="ident">P</span><span class="op">&gt;</span><span class="op">&gt;</span><span class="op">&gt;</span>,
+    <span class="kw">pub</span> <span class="ident">running_task</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">Task</span><span class="op">&lt;</span><span class="ident">P</span><span class="op">&gt;&gt;</span><span class="op">&gt;</span>,
     <span class="doccomment">/// List of Tasks ready to be scheduled. Every kernel object in this list must be a Task.</span>
     <span class="doccomment">/// Backed by a `VecDeque` so we can rotate objects in the queue efficiently.</span>
-    <span class="ident">ready_queue</span>: <span class="ident">VecDeque</span><span class="op">&lt;</span><span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">Task</span><span class="op">&lt;</span><span class="ident">P</span><span class="op">&gt;</span><span class="op">&gt;</span><span class="op">&gt;</span>,
-    <span class="ident">blocked_queue</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">Task</span><span class="op">&lt;</span><span class="ident">P</span><span class="op">&gt;</span><span class="op">&gt;</span><span class="op">&gt;</span>,
+    <span class="ident">ready_queue</span>: <span class="ident">VecDeque</span><span class="op">&lt;</span><span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">Task</span><span class="op">&lt;</span><span class="ident">P</span><span class="op">&gt;&gt;</span><span class="op">&gt;</span>,
+    <span class="ident">blocked_queue</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">Task</span><span class="op">&lt;</span><span class="ident">P</span><span class="op">&gt;&gt;</span><span class="op">&gt;</span>,
 }
 
 <span class="kw">impl</span><span class="op">&lt;</span><span class="ident">P</span><span class="op">&gt;</span> <span class="ident">Scheduler</span><span class="op">&lt;</span><span class="ident">P</span><span class="op">&gt;</span>
 <span class="kw">where</span>
     <span class="ident">P</span>: <span class="ident">Platform</span>,
 {
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="ident">Scheduler</span><span class="op">&lt;</span><span class="ident">P</span><span class="op">&gt;</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>() <span class="op">-&gt;</span> <span class="ident">Scheduler</span><span class="op">&lt;</span><span class="ident">P</span><span class="op">&gt;</span> {
         <span class="ident">Scheduler</span> { <span class="ident">running_task</span>: <span class="prelude-val">None</span>, <span class="ident">ready_queue</span>: <span class="ident">VecDeque</span>::<span class="ident">new</span>(), <span class="ident">blocked_queue</span>: <span class="ident">Vec</span>::<span class="ident">new</span>() }
     }
 
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">add_task</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">task</span>: <span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">Task</span><span class="op">&lt;</span><span class="ident">P</span><span class="op">&gt;</span><span class="op">&gt;</span>) {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">add_task</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">task</span>: <span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">Task</span><span class="op">&lt;</span><span class="ident">P</span><span class="op">&gt;&gt;</span>) {
         <span class="kw">let</span> <span class="ident">current_state</span> <span class="op">=</span> <span class="ident">task</span>.<span class="ident">state</span>.<span class="ident">lock</span>().<span class="ident">clone</span>();
         <span class="kw">match</span> <span class="ident">current_state</span> {
-            <span class="ident">TaskState</span>::<span class="ident">Ready</span> <span class="op">=</span><span class="op">&gt;</span> <span class="self">self</span>.<span class="ident">ready_queue</span>.<span class="ident">push_back</span>(<span class="ident">task</span>),
-            <span class="ident">TaskState</span>::<span class="ident">Blocked</span>(<span class="kw">_</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="self">self</span>.<span class="ident">blocked_queue</span>.<span class="ident">push</span>(<span class="ident">task</span>),
-            <span class="ident">TaskState</span>::<span class="ident">Running</span> <span class="op">=</span><span class="op">&gt;</span> <span class="macro">panic</span><span class="macro">!</span>(<span class="string">&quot;Tried to schedule task that&#39;s already running!&quot;</span>),
+            <span class="ident">TaskState</span>::<span class="ident">Ready</span> <span class="op">=&gt;</span> <span class="self">self</span>.<span class="ident">ready_queue</span>.<span class="ident">push_back</span>(<span class="ident">task</span>),
+            <span class="ident">TaskState</span>::<span class="ident">Blocked</span>(<span class="kw">_</span>) <span class="op">=&gt;</span> <span class="self">self</span>.<span class="ident">blocked_queue</span>.<span class="ident">push</span>(<span class="ident">task</span>),
+            <span class="ident">TaskState</span>::<span class="ident">Running</span> <span class="op">=&gt;</span> <span class="macro">panic</span><span class="macro">!</span>(<span class="string">&quot;Tried to schedule task that&#39;s already running!&quot;</span>),
         }
     }
 
@@ -170,7 +170,7 @@
     <span class="doccomment">/// By controlling which Task is added first, the ecosystem can be sure that the correct Task</span>
     <span class="doccomment">/// is run first (whether the userspace layers take advantage of this is up to them - it would</span>
     <span class="doccomment">/// be more reliable to not depend on one process starting first, but this is an option).</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">drop_to_userspace</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="op">!</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">drop_to_userspace</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>) <span class="op">-&gt;</span> <span class="op">!</span> {
         <span class="macro">assert</span><span class="macro">!</span>(<span class="self">self</span>.<span class="ident">running_task</span>.<span class="ident">is_none</span>());
         <span class="kw">let</span> <span class="ident">task</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">ready_queue</span>.<span class="ident">pop_front</span>().<span class="ident">expect</span>(<span class="string">&quot;Tried to drop into userspace with no ready tasks!&quot;</span>);
         <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="kw-2">*</span><span class="ident">task</span>.<span class="ident">state</span>.<span class="ident">lock</span>(), <span class="ident">TaskState</span>::<span class="ident">Ready</span>);
@@ -215,12 +215,12 @@
             <span class="self">self</span>.<span class="ident">running_task</span> <span class="op">=</span> <span class="prelude-val">Some</span>(<span class="ident">next_task</span>.<span class="ident">clone</span>());
             <span class="kw-2">*</span><span class="self">self</span>.<span class="ident">running_task</span>.<span class="ident">as_ref</span>().<span class="ident">unwrap</span>().<span class="ident">state</span>.<span class="ident">lock</span>() <span class="op">=</span> <span class="ident">TaskState</span>::<span class="ident">Running</span>;
             <span class="kw">match</span> <span class="ident">new_state</span> {
-                <span class="ident">TaskState</span>::<span class="ident">Running</span> <span class="op">=</span><span class="op">&gt;</span> <span class="macro">panic</span><span class="macro">!</span>(<span class="string">&quot;Tried to switch away from a task to state of Running!&quot;</span>),
-                <span class="ident">TaskState</span>::<span class="ident">Ready</span> <span class="op">=</span><span class="op">&gt;</span> {
+                <span class="ident">TaskState</span>::<span class="ident">Running</span> <span class="op">=&gt;</span> <span class="macro">panic</span><span class="macro">!</span>(<span class="string">&quot;Tried to switch away from a task to state of Running!&quot;</span>),
+                <span class="ident">TaskState</span>::<span class="ident">Ready</span> <span class="op">=&gt;</span> {
                     <span class="kw-2">*</span><span class="ident">old_task</span>.<span class="ident">state</span>.<span class="ident">lock</span>() <span class="op">=</span> <span class="ident">TaskState</span>::<span class="ident">Ready</span>;
                     <span class="self">self</span>.<span class="ident">ready_queue</span>.<span class="ident">push_back</span>(<span class="ident">old_task</span>.<span class="ident">clone</span>());
                 }
-                <span class="ident">TaskState</span>::<span class="ident">Blocked</span>(<span class="ident">block</span>) <span class="op">=</span><span class="op">&gt;</span> {
+                <span class="ident">TaskState</span>::<span class="ident">Blocked</span>(<span class="ident">block</span>) <span class="op">=&gt;</span> {
                     <span class="macro">trace</span><span class="macro">!</span>(<span class="string">&quot;Blocking task: {}&quot;</span>, <span class="ident">old_task</span>.<span class="ident">name</span>);
                     <span class="kw-2">*</span><span class="ident">old_task</span>.<span class="ident">state</span>.<span class="ident">lock</span>() <span class="op">=</span> <span class="ident">TaskState</span>::<span class="ident">Blocked</span>(<span class="ident">block</span>);
                     <span class="self">self</span>.<span class="ident">blocked_queue</span>.<span class="ident">push</span>(<span class="ident">old_task</span>.<span class="ident">clone</span>());

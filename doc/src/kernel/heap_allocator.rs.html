@@ -334,7 +334,7 @@
 <span class="kw">impl</span> <span class="ident">HoleAllocator</span> {
     <span class="doccomment">/// Create a new, uninitialized `HoleAllocator`. Before heap allocations can be made, `init`</span>
     <span class="doccomment">/// must be called.</span>
-    <span class="kw">pub</span> <span class="kw">const</span> <span class="kw">fn</span> <span class="ident">new_uninitialized</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="ident">HoleAllocator</span> {
+    <span class="kw">pub</span> <span class="kw">const</span> <span class="kw">fn</span> <span class="ident">new_uninitialized</span>() <span class="op">-&gt;</span> <span class="ident">HoleAllocator</span> {
         <span class="ident">HoleAllocator</span> { <span class="ident">heap_bottom</span>: <span class="ident">VirtualAddress</span>::<span class="ident">new</span>(<span class="number">0</span>), <span class="ident">heap_size</span>: <span class="number">0</span>, <span class="ident">holes</span>: <span class="prelude-val">None</span> }
     }
 
@@ -351,7 +351,7 @@
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">LockedHoleAllocator</span>(<span class="ident">Mutex</span><span class="op">&lt;</span><span class="ident">HoleAllocator</span><span class="op">&gt;</span>);
 
 <span class="kw">impl</span> <span class="ident">LockedHoleAllocator</span> {
-    <span class="kw">pub</span> <span class="kw">const</span> <span class="kw">fn</span> <span class="ident">new_uninitialized</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="ident">LockedHoleAllocator</span> {
+    <span class="kw">pub</span> <span class="kw">const</span> <span class="kw">fn</span> <span class="ident">new_uninitialized</span>() <span class="op">-&gt;</span> <span class="ident">LockedHoleAllocator</span> {
         <span class="ident">LockedHoleAllocator</span>(<span class="ident">Mutex</span>::<span class="ident">new</span>(<span class="ident">HoleAllocator</span>::<span class="ident">new_uninitialized</span>()))
     }
 }
@@ -359,20 +359,20 @@
 <span class="kw">impl</span> <span class="ident">Deref</span> <span class="kw">for</span> <span class="ident">LockedHoleAllocator</span> {
     <span class="kw">type</span> <span class="ident">Target</span> <span class="op">=</span> <span class="ident">Mutex</span><span class="op">&lt;</span><span class="ident">HoleAllocator</span><span class="op">&gt;</span>;
 
-    <span class="kw">fn</span> <span class="ident">deref</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="ident">Mutex</span><span class="op">&lt;</span><span class="ident">HoleAllocator</span><span class="op">&gt;</span> {
+    <span class="kw">fn</span> <span class="ident">deref</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-&gt;</span> <span class="kw-2">&amp;</span><span class="ident">Mutex</span><span class="op">&lt;</span><span class="ident">HoleAllocator</span><span class="op">&gt;</span> {
         <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="number">0</span>
     }
 }
 
 <span class="kw">unsafe</span> <span class="kw">impl</span> <span class="ident">GlobalAlloc</span> <span class="kw">for</span> <span class="ident">LockedHoleAllocator</span> {
-    <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">alloc</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">layout</span>: <span class="ident">Layout</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="ident">u8</span> {
+    <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">alloc</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">layout</span>: <span class="ident">Layout</span>) <span class="op">-&gt;</span> <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="ident">u8</span> {
         <span class="kw">let</span> <span class="ident">size</span> <span class="op">=</span>
             <span class="ident">align_up</span>(<span class="ident">max</span>(<span class="ident">layout</span>.<span class="ident">size</span>() <span class="kw">as</span> <span class="ident">usize</span>, <span class="ident">HoleList</span>::<span class="ident">get_min_size</span>()), <span class="ident">mem</span>::<span class="ident">align_of</span>::<span class="op">&lt;</span><span class="ident">Hole</span><span class="op">&gt;</span>() <span class="kw">as</span> <span class="ident">usize</span>);
         <span class="kw">let</span> <span class="ident">layout</span> <span class="op">=</span> <span class="ident">Layout</span>::<span class="ident">from_size_align</span>(<span class="ident">size</span> <span class="kw">as</span> <span class="ident">usize</span>, <span class="ident">layout</span>.<span class="ident">align</span>()).<span class="ident">unwrap</span>();
 
         <span class="kw">match</span> <span class="self">self</span>.<span class="number">0</span>.<span class="ident">lock</span>().<span class="ident">holes</span> {
-            <span class="prelude-val">Some</span>(<span class="kw-2">ref</span> <span class="kw-2">mut</span> <span class="ident">holes</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">holes</span>.<span class="ident">allocate_first_fit</span>(<span class="ident">layout</span>).<span class="ident">unwrap_or</span>(<span class="number">0x0</span> <span class="kw">as</span> <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="ident">u8</span>),
-            <span class="prelude-val">None</span> <span class="op">=</span><span class="op">&gt;</span> <span class="macro">panic</span><span class="macro">!</span>(<span class="string">&quot;Tried to allocate on the heap before initializing allocator!&quot;</span>),
+            <span class="prelude-val">Some</span>(<span class="kw-2">ref</span> <span class="kw-2">mut</span> <span class="ident">holes</span>) <span class="op">=&gt;</span> <span class="ident">holes</span>.<span class="ident">allocate_first_fit</span>(<span class="ident">layout</span>).<span class="ident">unwrap_or</span>(<span class="number">0x0</span> <span class="kw">as</span> <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="ident">u8</span>),
+            <span class="prelude-val">None</span> <span class="op">=&gt;</span> <span class="macro">panic</span><span class="macro">!</span>(<span class="string">&quot;Tried to allocate on the heap before initializing allocator!&quot;</span>),
         }
     }
 
@@ -382,8 +382,8 @@
         <span class="kw">let</span> <span class="ident">layout</span> <span class="op">=</span> <span class="ident">Layout</span>::<span class="ident">from_size_align</span>(<span class="ident">size</span> <span class="kw">as</span> <span class="ident">usize</span>, <span class="ident">layout</span>.<span class="ident">align</span>()).<span class="ident">unwrap</span>();
 
         <span class="kw">match</span> <span class="self">self</span>.<span class="number">0</span>.<span class="ident">lock</span>().<span class="ident">holes</span> {
-            <span class="prelude-val">Some</span>(<span class="kw-2">ref</span> <span class="kw-2">mut</span> <span class="ident">holes</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">holes</span>.<span class="ident">free</span>(<span class="ident">ptr</span>, <span class="ident">layout</span>),
-            <span class="prelude-val">None</span> <span class="op">=</span><span class="op">&gt;</span> <span class="macro">panic</span><span class="macro">!</span>(<span class="string">&quot;Tried to allocate on the heap before initializing allocator!&quot;</span>),
+            <span class="prelude-val">Some</span>(<span class="kw-2">ref</span> <span class="kw-2">mut</span> <span class="ident">holes</span>) <span class="op">=&gt;</span> <span class="ident">holes</span>.<span class="ident">free</span>(<span class="ident">ptr</span>, <span class="ident">layout</span>),
+            <span class="prelude-val">None</span> <span class="op">=&gt;</span> <span class="macro">panic</span><span class="macro">!</span>(<span class="string">&quot;Tried to allocate on the heap before initializing allocator!&quot;</span>),
         }
     }
 }
@@ -400,7 +400,7 @@
 }
 
 <span class="kw">impl</span> <span class="ident">Hole</span> {
-    <span class="kw">fn</span> <span class="ident">info</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">HoleInfo</span> {
+    <span class="kw">fn</span> <span class="ident">info</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-&gt;</span> <span class="ident">HoleInfo</span> {
         <span class="ident">HoleInfo</span> {
             <span class="comment">// Safe to unwrap because we know `self` points to a valid address</span>
             <span class="ident">addr</span>: <span class="ident">VirtualAddress</span>::<span class="ident">new</span>(<span class="self">self</span> <span class="kw">as</span> <span class="kw-2">*</span><span class="kw">const</span> <span class="kw">_</span> <span class="kw">as</span> <span class="ident">usize</span>),
@@ -417,8 +417,8 @@
     <span class="doccomment">/// Create a new `HoleList` that contains the given hole. Unsafe because it is undefined</span>
     <span class="doccomment">/// bahaviour if the address passes is invalid or if [hole_addr, hole_addr+size) is used</span>
     <span class="doccomment">/// somewhere.</span>
-    <span class="kw">pub</span> <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">hole_addr</span>: <span class="ident">VirtualAddress</span>, <span class="ident">hole_size</span>: <span class="ident">usize</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">HoleList</span> {
-        <span class="macro">assert</span><span class="macro">!</span>(<span class="ident">size_of</span>::<span class="op">&lt;</span><span class="ident">Hole</span><span class="op">&gt;</span>() <span class="op">=</span><span class="op">=</span> <span class="self">Self</span>::<span class="ident">get_min_size</span>());
+    <span class="kw">pub</span> <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">hole_addr</span>: <span class="ident">VirtualAddress</span>, <span class="ident">hole_size</span>: <span class="ident">usize</span>) <span class="op">-&gt;</span> <span class="ident">HoleList</span> {
+        <span class="macro">assert</span><span class="macro">!</span>(<span class="ident">size_of</span>::<span class="op">&lt;</span><span class="ident">Hole</span><span class="op">&gt;</span>() <span class="op">==</span> <span class="self">Self</span>::<span class="ident">get_min_size</span>());
 
         <span class="kw">let</span> <span class="ident">ptr</span> <span class="op">=</span> <span class="ident">hole_addr</span>.<span class="ident">mut_ptr</span>() <span class="kw">as</span> <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="ident">Hole</span>;
         <span class="kw">let</span> <span class="kw">_</span> <span class="op">=</span> <span class="ident">mem</span>::<span class="ident">replace</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="kw-2">*</span><span class="ident">ptr</span>, <span class="ident">Hole</span> { <span class="ident">size</span>: <span class="ident">hole_size</span>, <span class="ident">next</span>: <span class="prelude-val">None</span> });
@@ -428,8 +428,8 @@
 
     <span class="doccomment">/// Search for a big enough hole for the given `Layout` with its required alignment. This uses</span>
     <span class="doccomment">/// the first-fit strategy, and so is O(n)</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">allocate_first_fit</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">layout</span>: <span class="ident">Layout</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="kw-2">*</span><span class="kw-2">mut</span> <span class="ident">u8</span>, <span class="ident">AllocErr</span><span class="op">&gt;</span> {
-        <span class="macro">assert</span><span class="macro">!</span>(<span class="ident">layout</span>.<span class="ident">size</span>() <span class="op">&gt;</span><span class="op">=</span> <span class="self">Self</span>::<span class="ident">get_min_size</span>());
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">allocate_first_fit</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">layout</span>: <span class="ident">Layout</span>) <span class="op">-&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="kw-2">*</span><span class="kw-2">mut</span> <span class="ident">u8</span>, <span class="ident">AllocErr</span><span class="op">&gt;</span> {
+        <span class="macro">assert</span><span class="macro">!</span>(<span class="ident">layout</span>.<span class="ident">size</span>() <span class="op">&gt;=</span> <span class="self">Self</span>::<span class="ident">get_min_size</span>());
 
         <span class="ident">allocate_first_fit</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>.<span class="ident">first</span>, <span class="ident">layout</span>).<span class="ident">map</span>(<span class="op">|</span><span class="ident">allocation</span><span class="op">|</span> {
             <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">padding</span>) <span class="op">=</span> <span class="ident">allocation</span>.<span class="ident">front_padding</span> {
@@ -452,7 +452,7 @@
         <span class="ident">free</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>.<span class="ident">first</span>, <span class="ident">VirtualAddress</span>::<span class="ident">from</span>(<span class="ident">ptr</span>), <span class="ident">layout</span>.<span class="ident">size</span>());
     }
 
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">get_min_size</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="ident">usize</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">get_min_size</span>() <span class="op">-&gt;</span> <span class="ident">usize</span> {
         (<span class="ident">size_of</span>::<span class="op">&lt;</span><span class="ident">VirtualAddress</span><span class="op">&gt;</span>() <span class="op">+</span> <span class="ident">size_of</span>::<span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span>()) <span class="kw">as</span> <span class="ident">usize</span>
     }
 }
@@ -468,11 +468,11 @@
 <span class="doccomment">/// layout with the required alignment.</span>
 <span class="doccomment">///     - Front padding occurs when the required alignment is higher than that of the hole.</span>
 <span class="doccomment">///     - Back padding occurs when the layout&#39;s size is smaller than the hole.</span>
-<span class="kw">fn</span> <span class="ident">split_hole</span>(<span class="ident">hole</span>: <span class="ident">HoleInfo</span>, <span class="ident">required_layout</span>: <span class="ident">Layout</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Allocation</span><span class="op">&gt;</span> {
+<span class="kw">fn</span> <span class="ident">split_hole</span>(<span class="ident">hole</span>: <span class="ident">HoleInfo</span>, <span class="ident">required_layout</span>: <span class="ident">Layout</span>) <span class="op">-&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Allocation</span><span class="op">&gt;</span> {
     <span class="kw">let</span> <span class="ident">required_size</span> <span class="op">=</span> <span class="ident">required_layout</span>.<span class="ident">size</span>();
     <span class="kw">let</span> <span class="ident">required_align</span> <span class="op">=</span> <span class="ident">required_layout</span>.<span class="ident">align</span>();
 
-    <span class="kw">let</span> (<span class="ident">aligned_addr</span>, <span class="ident">front_pad</span>) <span class="op">=</span> <span class="kw">if</span> <span class="ident">hole</span>.<span class="ident">addr</span> <span class="op">=</span><span class="op">=</span> <span class="ident">hole</span>.<span class="ident">addr</span>.<span class="ident">align_up</span>(<span class="ident">required_align</span>) {
+    <span class="kw">let</span> (<span class="ident">aligned_addr</span>, <span class="ident">front_pad</span>) <span class="op">=</span> <span class="kw">if</span> <span class="ident">hole</span>.<span class="ident">addr</span> <span class="op">==</span> <span class="ident">hole</span>.<span class="ident">addr</span>.<span class="ident">align_up</span>(<span class="ident">required_align</span>) {
         (<span class="ident">hole</span>.<span class="ident">addr</span>, <span class="prelude-val">None</span>) <span class="comment">// Hole already has correct alignment</span>
     } <span class="kw">else</span> {
         <span class="comment">/*
@@ -493,7 +493,7 @@
         <span class="ident">HoleInfo</span> { <span class="ident">addr</span>: <span class="ident">aligned_addr</span>, <span class="ident">size</span>: <span class="ident">hole</span>.<span class="ident">size</span> <span class="op">-</span> (<span class="ident">usize</span>::<span class="ident">from</span>(<span class="ident">aligned_addr</span>) <span class="op">-</span> <span class="ident">usize</span>::<span class="ident">from</span>(<span class="ident">hole</span>.<span class="ident">addr</span>)) }
     };
 
-    <span class="kw">let</span> <span class="ident">back_pad</span> <span class="op">=</span> <span class="kw">if</span> <span class="ident">aligned_hole</span>.<span class="ident">size</span> <span class="op">=</span><span class="op">=</span> <span class="ident">required_size</span> {
+    <span class="kw">let</span> <span class="ident">back_pad</span> <span class="op">=</span> <span class="kw">if</span> <span class="ident">aligned_hole</span>.<span class="ident">size</span> <span class="op">==</span> <span class="ident">required_size</span> {
         <span class="prelude-val">None</span> <span class="comment">// Exactly the right size, don&#39;t add back padding</span>
     } <span class="kw">else</span> <span class="kw">if</span> (<span class="ident">aligned_hole</span>.<span class="ident">size</span> <span class="op">-</span> <span class="ident">required_size</span>) <span class="op">&lt;</span> <span class="ident">HoleList</span>::<span class="ident">get_min_size</span>() {
         <span class="kw">return</span> <span class="prelude-val">None</span>; <span class="comment">// We can&#39;t use this hole; it would leave a too small new one</span>
@@ -512,25 +512,25 @@
     })
 }
 
-<span class="kw">fn</span> <span class="ident">allocate_first_fit</span>(<span class="kw-2">mut</span> <span class="ident">previous</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">Hole</span>, <span class="ident">layout</span>: <span class="ident">Layout</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Allocation</span>, <span class="ident">AllocErr</span><span class="op">&gt;</span> {
+<span class="kw">fn</span> <span class="ident">allocate_first_fit</span>(<span class="kw-2">mut</span> <span class="ident">previous</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">Hole</span>, <span class="ident">layout</span>: <span class="ident">Layout</span>) <span class="op">-&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Allocation</span>, <span class="ident">AllocErr</span><span class="op">&gt;</span> {
     <span class="kw">loop</span> {
         <span class="kw">let</span> <span class="ident">allocation</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Allocation</span><span class="op">&gt;</span> <span class="op">=</span>
             <span class="ident">previous</span>.<span class="ident">next</span>.<span class="ident">as_mut</span>().<span class="ident">and_then</span>(<span class="op">|</span><span class="ident">current</span><span class="op">|</span> <span class="ident">split_hole</span>(<span class="ident">current</span>.<span class="ident">info</span>(), <span class="ident">layout</span>.<span class="ident">clone</span>()));
 
         <span class="kw">match</span> <span class="ident">allocation</span> {
-            <span class="prelude-val">Some</span>(<span class="ident">allocation</span>) <span class="op">=</span><span class="op">&gt;</span> {
+            <span class="prelude-val">Some</span>(<span class="ident">allocation</span>) <span class="op">=&gt;</span> {
                 <span class="comment">// Remove the allocated hole from the list</span>
                 <span class="ident">previous</span>.<span class="ident">next</span> <span class="op">=</span> <span class="ident">previous</span>.<span class="ident">next</span>.<span class="ident">as_mut</span>().<span class="ident">unwrap</span>().<span class="ident">next</span>.<span class="ident">take</span>();
                 <span class="kw">return</span> <span class="prelude-val">Ok</span>(<span class="ident">allocation</span>);
             }
 
-            <span class="prelude-val">None</span> <span class="kw">if</span> <span class="ident">previous</span>.<span class="ident">next</span>.<span class="ident">is_some</span>() <span class="op">=</span><span class="op">&gt;</span> {
+            <span class="prelude-val">None</span> <span class="kw">if</span> <span class="ident">previous</span>.<span class="ident">next</span>.<span class="ident">is_some</span>() <span class="op">=&gt;</span> {
                 <span class="comment">// Try the next hole</span>
                 <span class="comment">// XXX: `{x}` forces the reference `x` to move instead of be reborrowed</span>
                 <span class="ident">previous</span> <span class="op">=</span> { <span class="ident">previous</span> }.<span class="ident">next</span>.<span class="ident">as_mut</span>().<span class="ident">unwrap</span>();
             }
 
-            <span class="prelude-val">None</span> <span class="op">=</span><span class="op">&gt;</span> {
+            <span class="prelude-val">None</span> <span class="op">=&gt;</span> {
                 <span class="comment">// This is the last hole, so no hole is big enough for this allocation :(</span>
                 <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">AllocErr</span> {});
             }
@@ -541,29 +541,29 @@
 <span class="doccomment">/// Walk the list, starting at `hole` and free the allocation given by `(addr,size)`</span>
 <span class="kw">fn</span> <span class="ident">free</span>(<span class="kw-2">mut</span> <span class="ident">hole</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">Hole</span>, <span class="ident">addr</span>: <span class="ident">VirtualAddress</span>, <span class="kw-2">mut</span> <span class="ident">size</span>: <span class="ident">usize</span>) {
     <span class="kw">loop</span> {
-        <span class="macro">assert</span><span class="macro">!</span>(<span class="ident">size</span> <span class="op">&gt;</span><span class="op">=</span> <span class="ident">HoleList</span>::<span class="ident">get_min_size</span>());
+        <span class="macro">assert</span><span class="macro">!</span>(<span class="ident">size</span> <span class="op">&gt;=</span> <span class="ident">HoleList</span>::<span class="ident">get_min_size</span>());
 
         <span class="comment">/*
          * If the size is 0, it&#39;s the dummy hole, so just set the address to 0
          */</span>
         <span class="kw">let</span> <span class="ident">hole_addr</span> <span class="op">=</span>
-            <span class="kw">if</span> <span class="ident">hole</span>.<span class="ident">size</span> <span class="op">=</span><span class="op">=</span> <span class="number">0</span> { <span class="ident">VirtualAddress</span>::<span class="ident">new</span>(<span class="number">0</span>) } <span class="kw">else</span> { <span class="ident">VirtualAddress</span>::<span class="ident">new</span>(<span class="ident">hole</span> <span class="kw">as</span> <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="kw">_</span> <span class="kw">as</span> <span class="ident">usize</span>) };
-        <span class="macro">assert</span><span class="macro">!</span>((<span class="ident">hole_addr</span> <span class="op">+</span> <span class="ident">hole</span>.<span class="ident">size</span>) <span class="op">&lt;</span><span class="op">=</span> <span class="ident">addr</span>, <span class="string">&quot;Invalid deallocation (probable double free)&quot;</span>);
+            <span class="kw">if</span> <span class="ident">hole</span>.<span class="ident">size</span> <span class="op">==</span> <span class="number">0</span> { <span class="ident">VirtualAddress</span>::<span class="ident">new</span>(<span class="number">0</span>) } <span class="kw">else</span> { <span class="ident">VirtualAddress</span>::<span class="ident">new</span>(<span class="ident">hole</span> <span class="kw">as</span> <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="kw">_</span> <span class="kw">as</span> <span class="ident">usize</span>) };
+        <span class="macro">assert</span><span class="macro">!</span>((<span class="ident">hole_addr</span> <span class="op">+</span> <span class="ident">hole</span>.<span class="ident">size</span>) <span class="op">&lt;=</span> <span class="ident">addr</span>, <span class="string">&quot;Invalid deallocation (probable double free)&quot;</span>);
         <span class="kw">let</span> <span class="ident">next_hole_info</span> <span class="op">=</span> <span class="ident">hole</span>.<span class="ident">next</span>.<span class="ident">as_ref</span>().<span class="ident">map</span>(<span class="op">|</span><span class="ident">next</span><span class="op">|</span> <span class="ident">next</span>.<span class="ident">info</span>());
 
         <span class="kw">match</span> <span class="ident">next_hole_info</span> {
-            <span class="prelude-val">Some</span>(<span class="ident">next</span>) <span class="kw">if</span> (<span class="ident">hole_addr</span> <span class="op">+</span> <span class="ident">hole</span>.<span class="ident">size</span> <span class="op">=</span><span class="op">=</span> <span class="ident">addr</span>) <span class="kw-2">&amp;</span><span class="op">&amp;</span> (<span class="ident">addr</span> <span class="op">+</span> <span class="ident">size</span> <span class="op">=</span><span class="op">=</span> <span class="ident">next</span>.<span class="ident">addr</span>) <span class="op">=</span><span class="op">&gt;</span> {
+            <span class="prelude-val">Some</span>(<span class="ident">next</span>) <span class="kw">if</span> (<span class="ident">hole_addr</span> <span class="op">+</span> <span class="ident">hole</span>.<span class="ident">size</span> <span class="op">==</span> <span class="ident">addr</span>) <span class="op">&amp;&amp;</span> (<span class="ident">addr</span> <span class="op">+</span> <span class="ident">size</span> <span class="op">==</span> <span class="ident">next</span>.<span class="ident">addr</span>) <span class="op">=&gt;</span> {
                 <span class="comment">/*
                  * The block exactly fills the gap between this hole and the next:
                  *      Before: ___XXX____YYYY___    (X=this hole, Y=next hole)
                  *      After : ___XXXFFFFYYYY___    (F=freed block)
                  */</span>
-                <span class="ident">hole</span>.<span class="ident">size</span> <span class="op">+</span><span class="op">=</span> <span class="ident">size</span>; <span class="comment">// Merge F into X</span>
-                <span class="ident">hole</span>.<span class="ident">size</span> <span class="op">+</span><span class="op">=</span> <span class="ident">next</span>.<span class="ident">size</span>; <span class="comment">// Merge Y into X</span>
+                <span class="ident">hole</span>.<span class="ident">size</span> <span class="op">+=</span> <span class="ident">size</span>; <span class="comment">// Merge F into X</span>
+                <span class="ident">hole</span>.<span class="ident">size</span> <span class="op">+=</span> <span class="ident">next</span>.<span class="ident">size</span>; <span class="comment">// Merge Y into X</span>
                 <span class="ident">hole</span>.<span class="ident">next</span> <span class="op">=</span> <span class="ident">hole</span>.<span class="ident">next</span>.<span class="ident">as_mut</span>().<span class="ident">unwrap</span>().<span class="ident">next</span>.<span class="ident">take</span>(); <span class="comment">// Remove Y</span>
             }
 
-            <span class="kw">_</span> <span class="kw">if</span> <span class="ident">hole_addr</span> <span class="op">+</span> <span class="ident">hole</span>.<span class="ident">size</span> <span class="op">=</span><span class="op">=</span> <span class="ident">addr</span> <span class="op">=</span><span class="op">&gt;</span> {
+            <span class="kw">_</span> <span class="kw">if</span> <span class="ident">hole_addr</span> <span class="op">+</span> <span class="ident">hole</span>.<span class="ident">size</span> <span class="op">==</span> <span class="ident">addr</span> <span class="op">=&gt;</span> {
                 <span class="comment">/*
                  * The block is right behind this hole but there is used memory after it:
                  *      Before: ___XXX______YYYY___ (X=this hole, Y=next hole)
@@ -573,21 +573,21 @@
                  *      Before: ___XXX_____________
                  *      After : ___XXXFFFF_________
                  */</span>
-                <span class="ident">hole</span>.<span class="ident">size</span> <span class="op">+</span><span class="op">=</span> <span class="ident">size</span>; <span class="comment">// Merge F into X</span>
+                <span class="ident">hole</span>.<span class="ident">size</span> <span class="op">+=</span> <span class="ident">size</span>; <span class="comment">// Merge F into X</span>
             }
 
-            <span class="prelude-val">Some</span>(<span class="ident">next</span>) <span class="kw">if</span> <span class="ident">addr</span> <span class="op">+</span> <span class="ident">size</span> <span class="op">=</span><span class="op">=</span> <span class="ident">next</span>.<span class="ident">addr</span> <span class="op">=</span><span class="op">&gt;</span> {
+            <span class="prelude-val">Some</span>(<span class="ident">next</span>) <span class="kw">if</span> <span class="ident">addr</span> <span class="op">+</span> <span class="ident">size</span> <span class="op">==</span> <span class="ident">next</span>.<span class="ident">addr</span> <span class="op">=&gt;</span> {
                 <span class="comment">/*
                  * The block is right before the next hole but there is used memory before it:
                  *      Before: ___XXX______YYYY___
                  *      After : ___XXX__FFFFYYYY___
                  */</span>
                 <span class="ident">hole</span>.<span class="ident">next</span> <span class="op">=</span> <span class="ident">hole</span>.<span class="ident">next</span>.<span class="ident">as_mut</span>().<span class="ident">unwrap</span>().<span class="ident">next</span>.<span class="ident">take</span>(); <span class="comment">// Remove Y</span>
-                <span class="ident">size</span> <span class="op">+</span><span class="op">=</span> <span class="ident">next</span>.<span class="ident">size</span>; <span class="comment">// Free the merged F/Y block</span>
+                <span class="ident">size</span> <span class="op">+=</span> <span class="ident">next</span>.<span class="ident">size</span>; <span class="comment">// Free the merged F/Y block</span>
                 <span class="kw">continue</span>;
             }
 
-            <span class="prelude-val">Some</span>(<span class="ident">next</span>) <span class="kw">if</span> <span class="ident">next</span>.<span class="ident">addr</span> <span class="op">&lt;</span><span class="op">=</span> <span class="ident">addr</span> <span class="op">=</span><span class="op">&gt;</span> {
+            <span class="prelude-val">Some</span>(<span class="ident">next</span>) <span class="kw">if</span> <span class="ident">next</span>.<span class="ident">addr</span> <span class="op">&lt;=</span> <span class="ident">addr</span> <span class="op">=&gt;</span> {
                 <span class="comment">/*
                  * The block is behind the next hole, so delegate it to the next hole
                  *      Before: ___XXX___YYYY________
@@ -597,7 +597,7 @@
                 <span class="kw">continue</span>;
             }
 
-            <span class="kw">_</span> <span class="op">=</span><span class="op">&gt;</span> {
+            <span class="kw">_</span> <span class="op">=&gt;</span> {
                 <span class="comment">/*
                  * The block is between this and the next hole:
                  *      Before: ___XXX________YYYY___
@@ -628,7 +628,7 @@
 
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">not</span>(<span class="ident">test</span>))]</span>
 <span class="attribute">#[<span class="ident">alloc_error_handler</span>]</span>
-<span class="kw">fn</span> <span class="ident">handle_alloc_error</span>(<span class="ident">layout</span>: <span class="ident">Layout</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="op">!</span> {
+<span class="kw">fn</span> <span class="ident">handle_alloc_error</span>(<span class="ident">layout</span>: <span class="ident">Layout</span>) <span class="op">-&gt;</span> <span class="op">!</span> {
     <span class="macro">panic</span><span class="macro">!</span>(<span class="string">&quot;Alloc error: {:?}&quot;</span>, <span class="ident">layout</span>);
 }
 </pre></div>

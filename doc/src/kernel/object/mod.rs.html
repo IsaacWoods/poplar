@@ -76,7 +76,7 @@
 <span class="doccomment">/// The next available `KernelObjectId`. It is shared between all the CPUs, and so is incremented atomically.</span>
 <span class="kw">static</span> <span class="ident">KERNEL_OBJECT_ID_COUNTER</span>: <span class="ident">AtomicU64</span> <span class="op">=</span> <span class="ident">AtomicU64</span>::<span class="ident">new</span>(<span class="number">1</span>);
 
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">alloc_kernel_object_id</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="ident">KernelObjectId</span> {
+<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">alloc_kernel_object_id</span>() <span class="op">-&gt;</span> <span class="ident">KernelObjectId</span> {
     <span class="comment">// TODO: this wraps, so we should manually detect when it wraps around and panic to prevent ID reuse</span>
     <span class="ident">KernelObjectId</span>(<span class="ident">KERNEL_OBJECT_ID_COUNTER</span>.<span class="ident">fetch_add</span>(<span class="number">1</span>, <span class="ident">Ordering</span>::<span class="ident">Relaxed</span>))
 }
@@ -86,7 +86,7 @@
 <span class="doccomment">/// implementing `KernelObject`, and so interior mutability should be used for data that needs to be mutable within</span>
 <span class="doccomment">/// the kernel object.</span>
 <span class="kw">pub</span> <span class="kw">trait</span> <span class="ident">KernelObject</span>: <span class="ident">DowncastSync</span> {
-    <span class="kw">fn</span> <span class="ident">id</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">KernelObjectId</span>;
+    <span class="kw">fn</span> <span class="ident">id</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-&gt;</span> <span class="ident">KernelObjectId</span>;
     <span class="comment">// fn owner(&amp;self) -&gt; KernelObjectId;</span>
 }
 

@@ -463,7 +463,7 @@
 }
 
 <span class="kw">impl</span> <span class="ident">BuddyAllocator</span> {
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="ident">BuddyAllocator</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>() <span class="op">-&gt;</span> <span class="ident">BuddyAllocator</span> {
         <span class="comment">// The `Default` implementation for `BTreeSet` is an empty set, so this works nicely</span>
         <span class="ident">BuddyAllocator</span> { <span class="ident">bins</span>: <span class="ident">Default</span>::<span class="ident">default</span>() }
     }
@@ -488,13 +488,13 @@
             <span class="kw">let</span> <span class="ident">order</span> <span class="op">=</span> <span class="ident">min</span>(<span class="ident">MAX_ORDER</span>, <span class="ident">flooring_log2</span>(<span class="ident">num_frames</span>));
 
             <span class="self">self</span>.<span class="ident">free_block</span>(<span class="ident">block_start</span>.<span class="ident">start</span>, <span class="ident">order</span>);
-            <span class="ident">block_start</span> <span class="op">+</span><span class="op">=</span> <span class="number">1</span> <span class="op">&lt;</span><span class="op">&lt;</span> <span class="ident">order</span>;
+            <span class="ident">block_start</span> <span class="op">+=</span> <span class="number">1</span> <span class="op">&lt;&lt;</span> <span class="ident">order</span>;
         }
     }
 
     <span class="doccomment">/// Allocate (at least) `n` contiguous bytes from this allocator. Returns `None` if this</span>
     <span class="doccomment">/// allocator can&#39;t satisfy the allocation. The requested number of bytes must be a power-of-two.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">allocate_n</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">num_bytes</span>: <span class="ident">usize</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">PhysicalAddress</span><span class="op">&gt;</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">allocate_n</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">num_bytes</span>: <span class="ident">usize</span>) <span class="op">-&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">PhysicalAddress</span><span class="op">&gt;</span> {
         <span class="macro">assert</span><span class="macro">!</span>(<span class="ident">num_bytes</span>.<span class="ident">is_power_of_two</span>());
 
         <span class="comment">/*
@@ -514,7 +514,7 @@
 
     <span class="doccomment">/// Tries to allocate a block of the given order. If no blocks of the correct size are</span>
     <span class="doccomment">/// available, tries to recursively split a larger block to form a block of the requested size.</span>
-    <span class="kw">fn</span> <span class="ident">allocate_block</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">order</span>: <span class="ident">usize</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">PhysicalAddress</span><span class="op">&gt;</span> {
+    <span class="kw">fn</span> <span class="ident">allocate_block</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">order</span>: <span class="ident">usize</span>) <span class="op">-&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">PhysicalAddress</span><span class="op">&gt;</span> {
         <span class="comment">/*
          * We&#39;ve been asked for a block larger than the largest blocks we track, so we won&#39;t be
          * able to allocate a single block large enough.
@@ -547,7 +547,7 @@
 
     <span class="doccomment">/// Free a block starting at `start` of order `order`.</span>
     <span class="kw">fn</span> <span class="ident">free_block</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">start</span>: <span class="ident">PhysicalAddress</span>, <span class="ident">order</span>: <span class="ident">usize</span>) {
-        <span class="kw">if</span> <span class="ident">order</span> <span class="op">=</span><span class="op">=</span> <span class="ident">MAX_ORDER</span> {
+        <span class="kw">if</span> <span class="ident">order</span> <span class="op">==</span> <span class="ident">MAX_ORDER</span> {
             <span class="comment">/*
              * Blocks of the maximum order can&#39;t be coalesced, because there isn&#39;t a bin to put the result in,
              * so we just add them to the largest bin.
@@ -574,8 +574,8 @@
 
     <span class="doccomment">/// Finds the starting frame of the block that is the buddy of the block of order `order`, starting at</span>
     <span class="doccomment">/// `block_start`.</span>
-    <span class="kw">fn</span> <span class="ident">buddy_of</span>(<span class="ident">block_start</span>: <span class="ident">PhysicalAddress</span>, <span class="ident">order</span>: <span class="ident">usize</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">PhysicalAddress</span> {
-        <span class="ident">PhysicalAddress</span>::<span class="ident">new</span>(<span class="ident">usize</span>::<span class="ident">from</span>(<span class="ident">block_start</span>) <span class="op">^</span> ((<span class="number">1</span> <span class="op">&lt;</span><span class="op">&lt;</span> <span class="ident">order</span>) <span class="op">*</span> <span class="ident">BASE_SIZE</span>)).<span class="ident">unwrap</span>()
+    <span class="kw">fn</span> <span class="ident">buddy_of</span>(<span class="ident">block_start</span>: <span class="ident">PhysicalAddress</span>, <span class="ident">order</span>: <span class="ident">usize</span>) <span class="op">-&gt;</span> <span class="ident">PhysicalAddress</span> {
+        <span class="ident">PhysicalAddress</span>::<span class="ident">new</span>(<span class="ident">usize</span>::<span class="ident">from</span>(<span class="ident">block_start</span>) <span class="op">^</span> ((<span class="number">1</span> <span class="op">&lt;&lt;</span> <span class="ident">order</span>) <span class="op">*</span> <span class="ident">BASE_SIZE</span>)).<span class="ident">unwrap</span>()
     }
 }
 
@@ -624,7 +624,7 @@
     <span class="kw">impl</span> <span class="ident">Block</span> {
         <span class="doccomment">/// Construct a `Block`. Takes the address as a `usize` for ease of test writing, panics here if it&#39;s not</span>
         <span class="doccomment">/// valid.</span>
-        <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">order</span>: <span class="ident">usize</span>, <span class="ident">address</span>: <span class="ident">usize</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">Block</span> {
+        <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">order</span>: <span class="ident">usize</span>, <span class="ident">address</span>: <span class="ident">usize</span>) <span class="op">-&gt;</span> <span class="ident">Block</span> {
             <span class="ident">Block</span> { <span class="ident">order</span>, <span class="ident">address</span>: <span class="ident">PhysicalAddress</span>::<span class="ident">new</span>(<span class="ident">address</span>).<span class="ident">unwrap</span>() }
         }
     }
@@ -652,7 +652,7 @@
 
     <span class="doccomment">/// Helper to construct a frame range. Takes the address as a `usize` for ease of test writing - panics here if</span>
     <span class="doccomment">/// it&#39;s not valid.</span>
-    <span class="kw">fn</span> <span class="ident">n_frames_at</span>(<span class="ident">start</span>: <span class="ident">usize</span>, <span class="ident">n</span>: <span class="ident">usize</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">Range</span><span class="op">&lt;</span><span class="ident">Frame</span><span class="op">&gt;</span> {
+    <span class="kw">fn</span> <span class="ident">n_frames_at</span>(<span class="ident">start</span>: <span class="ident">usize</span>, <span class="ident">n</span>: <span class="ident">usize</span>) <span class="op">-&gt;</span> <span class="ident">Range</span><span class="op">&lt;</span><span class="ident">Frame</span><span class="op">&gt;</span> {
         <span class="ident">Frame</span>::<span class="ident">starts_with</span>(<span class="ident">PhysicalAddress</span>::<span class="ident">new</span>(<span class="ident">start</span>).<span class="ident">unwrap</span>())
             ..<span class="ident">Frame</span>::<span class="ident">starts_with</span>(<span class="ident">PhysicalAddress</span>::<span class="ident">new</span>(<span class="ident">start</span> <span class="op">+</span> <span class="ident">n</span> <span class="op">*</span> <span class="ident">Size4KiB</span>::<span class="ident">SIZE</span>).<span class="ident">unwrap</span>())
     }

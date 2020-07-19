@@ -113,15 +113,15 @@
 <span class="kw">pub</span> <span class="kw">type</span> <span class="ident">Mebibytes</span> <span class="op">=</span> <span class="ident">usize</span>;
 <span class="kw">pub</span> <span class="kw">type</span> <span class="ident">Gibibytes</span> <span class="op">=</span> <span class="ident">usize</span>;
 
-<span class="kw">pub</span> <span class="kw">const</span> <span class="kw">fn</span> <span class="ident">kibibytes</span>(<span class="ident">kibibytes</span>: <span class="ident">Kibibytes</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">Bytes</span> {
+<span class="kw">pub</span> <span class="kw">const</span> <span class="kw">fn</span> <span class="ident">kibibytes</span>(<span class="ident">kibibytes</span>: <span class="ident">Kibibytes</span>) <span class="op">-&gt;</span> <span class="ident">Bytes</span> {
     <span class="ident">kibibytes</span> <span class="op">*</span> <span class="number">1024</span>
 }
 
-<span class="kw">pub</span> <span class="kw">const</span> <span class="kw">fn</span> <span class="ident">mebibytes</span>(<span class="ident">mebibytes</span>: <span class="ident">Mebibytes</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">Bytes</span> {
+<span class="kw">pub</span> <span class="kw">const</span> <span class="kw">fn</span> <span class="ident">mebibytes</span>(<span class="ident">mebibytes</span>: <span class="ident">Mebibytes</span>) <span class="op">-&gt;</span> <span class="ident">Bytes</span> {
     <span class="ident">kibibytes</span>(<span class="ident">mebibytes</span> <span class="op">*</span> <span class="number">1024</span>)
 }
 
-<span class="kw">pub</span> <span class="kw">const</span> <span class="kw">fn</span> <span class="ident">gibibytes</span>(<span class="ident">gibibytes</span>: <span class="ident">Gibibytes</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">Bytes</span> {
+<span class="kw">pub</span> <span class="kw">const</span> <span class="kw">fn</span> <span class="ident">gibibytes</span>(<span class="ident">gibibytes</span>: <span class="ident">Gibibytes</span>) <span class="op">-&gt;</span> <span class="ident">Bytes</span> {
     <span class="ident">mebibytes</span>(<span class="ident">gibibytes</span> <span class="op">*</span> <span class="number">1024</span>)
 }
 
@@ -130,7 +130,7 @@
 <span class="kw">pub</span> <span class="kw">trait</span> <span class="ident">FrameSize</span>: <span class="ident">Clone</span> <span class="op">+</span> <span class="ident">Copy</span> <span class="op">+</span> <span class="ident">PartialEq</span> <span class="op">+</span> <span class="ident">Eq</span> <span class="op">+</span> <span class="ident">PartialOrd</span> <span class="op">+</span> <span class="ident">Ord</span> <span class="op">+</span> <span class="ident">Debug</span> {
     <span class="kw">const</span> <span class="ident">SIZE</span>: <span class="ident">Bytes</span>;
 
-    <span class="kw">fn</span> <span class="ident">frames_needed</span>(<span class="ident">bytes</span>: <span class="ident">Bytes</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">Bytes</span> {
+    <span class="kw">fn</span> <span class="ident">frames_needed</span>(<span class="ident">bytes</span>: <span class="ident">Bytes</span>) <span class="op">-&gt;</span> <span class="ident">Bytes</span> {
         (<span class="ident">bytes</span> <span class="op">/</span> <span class="self">Self</span>::<span class="ident">SIZE</span>) <span class="op">+</span> <span class="kw">if</span> <span class="ident">bytes</span> <span class="op">%</span> <span class="self">Self</span>::<span class="ident">SIZE</span> <span class="op">&gt;</span> <span class="number">0</span> { <span class="number">1</span> } <span class="kw">else</span> { <span class="number">0</span> }
     }
 }
@@ -165,12 +165,12 @@
     <span class="doccomment">///</span>
     <span class="doccomment">/// By default, this calls `allocate_n(1)`, but can be overridden if an allocator can provide a</span>
     <span class="doccomment">/// more efficient method for allocating single frames.</span>
-    <span class="kw">fn</span> <span class="ident">allocate</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">Frame</span><span class="op">&lt;</span><span class="ident">S</span><span class="op">&gt;</span> {
+    <span class="kw">fn</span> <span class="ident">allocate</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-&gt;</span> <span class="ident">Frame</span><span class="op">&lt;</span><span class="ident">S</span><span class="op">&gt;</span> {
         <span class="self">self</span>.<span class="ident">allocate_n</span>(<span class="number">1</span>).<span class="ident">start</span>
     }
 
     <span class="doccomment">/// Allocate `n` contiguous `Frame`s.</span>
-    <span class="kw">fn</span> <span class="ident">allocate_n</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">n</span>: <span class="ident">usize</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">Range</span><span class="op">&lt;</span><span class="ident">Frame</span><span class="op">&lt;</span><span class="ident">S</span><span class="op">&gt;</span><span class="op">&gt;</span>;
+    <span class="kw">fn</span> <span class="ident">allocate_n</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">n</span>: <span class="ident">usize</span>) <span class="op">-&gt;</span> <span class="ident">Range</span><span class="op">&lt;</span><span class="ident">Frame</span><span class="op">&lt;</span><span class="ident">S</span><span class="op">&gt;&gt;</span>;
 
     <span class="doccomment">/// Free `n` frames that were previously allocated by this allocator.</span>
     <span class="kw">fn</span> <span class="ident">free_n</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">start</span>: <span class="ident">Frame</span><span class="op">&lt;</span><span class="ident">S</span><span class="op">&gt;</span>, <span class="ident">n</span>: <span class="ident">usize</span>);

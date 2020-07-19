@@ -46,13 +46,13 @@
 
 <span class="macro">define_error_type</span><span class="macro">!</span>(<span class="ident">GetFramebufferError</span> {
     <span class="doccomment">/// The calling task does not have the correct capability to access the framebuffer.</span>
-    <span class="ident">AccessDenied</span> <span class="op">=</span><span class="op">&gt;</span> <span class="number">1</span>,
+    <span class="ident">AccessDenied</span> <span class="op">=&gt;</span> <span class="number">1</span>,
 
     <span class="doccomment">/// The address passed in `a` to write the info struct into was invalid.</span>
-    <span class="ident">InfoAddressIsInvalid</span> <span class="op">=</span><span class="op">&gt;</span> <span class="number">2</span>,
+    <span class="ident">InfoAddressIsInvalid</span> <span class="op">=&gt;</span> <span class="number">2</span>,
 
     <span class="doccomment">/// The kernel did not create a framebuffer.</span>
-    <span class="ident">NoFramebufferCreated</span> <span class="op">=</span><span class="op">&gt;</span> <span class="number">3</span>,
+    <span class="ident">NoFramebufferCreated</span> <span class="op">=&gt;</span> <span class="number">3</span>,
 });
 
 <span class="doccomment">/// Describes how the supplied framebuffer represents pixels.</span>
@@ -72,7 +72,7 @@
     <span class="kw">pub</span> <span class="ident">pixel_format</span>: <span class="ident">PixelFormat</span>,
 }
 
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">get_framebuffer</span>(<span class="ident">info</span>: <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="ident">FramebufferInfo</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Handle</span>, <span class="ident">GetFramebufferError</span><span class="op">&gt;</span> {
+<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">get_framebuffer</span>(<span class="ident">info</span>: <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="ident">FramebufferInfo</span>) <span class="op">-&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Handle</span>, <span class="ident">GetFramebufferError</span><span class="op">&gt;</span> {
     <span class="ident">handle_from_syscall_repr</span>(<span class="kw">unsafe</span> { <span class="ident">raw</span>::<span class="ident">syscall1</span>(<span class="ident">SYSCALL_GET_FRAMEBUFFER</span>, <span class="ident">info</span> <span class="kw">as</span> <span class="ident">usize</span>) })
 }
 </pre></div>
