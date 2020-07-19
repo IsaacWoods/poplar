@@ -23,7 +23,11 @@ use hal_x86_64::{
     paging::PageTableImpl,
 };
 use interrupts::InterruptController;
-use kernel::{memory::PhysicalMemoryManager, object::task::KernelStackAllocator, scheduler::Scheduler, Platform};
+use kernel::{
+    memory::{KernelStackAllocator, PhysicalMemoryManager},
+    scheduler::Scheduler,
+    Platform,
+};
 use log::{error, info, warn};
 
 pub struct PlatformImpl {

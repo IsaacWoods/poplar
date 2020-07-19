@@ -1,5 +1,8 @@
-use super::{alloc_kernel_object_id, memory_object::MemoryObject, task::TaskStack, KernelObject, KernelObjectId};
-use crate::{memory::PhysicalMemoryManager, slab_allocator::SlabAllocator, Platform};
+use super::{alloc_kernel_object_id, memory_object::MemoryObject, KernelObject, KernelObjectId};
+use crate::{
+    memory::{PhysicalMemoryManager, SlabAllocator, Stack},
+    Platform,
+};
 use alloc::{sync::Arc, vec::Vec};
 use hal::memory::{mebibytes, Bytes, FrameAllocator, PageTable, VirtualAddress};
 use libpebble::syscall::MapMemoryObjectError;
@@ -77,7 +80,7 @@ where
 
     /// Try to allocate a slot for a user stack, and map `initial_size` bytes of it. Returns `None` if no more user
     /// stacks can be allocated in this address space.
-    pub fn alloc_user_stack(&self, initial_size: usize, allocator: &PhysicalMemoryManager) -> Option<TaskStack> {
+    pub fn alloc_user_stack(&self, initial_size: usize, allocator: &PhysicalMemoryManager) -> Option<Stack> {
         use hal::memory::Flags;
 
         let slot_bottom = self.user_stack_allocator.lock().alloc()?;
@@ -96,7 +99,7 @@ where
             )
             .unwrap();
 
-        Some(TaskStack { top, slot_bottom, stack_bottom })
+        Some(Stack { top, slot_bottom, stack_bottom })
     }
 
     pub fn switch_to(&self) {

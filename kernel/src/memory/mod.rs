@@ -1,10 +1,15 @@
 mod buddy_allocator;
+mod kernel_stack_allocator;
+mod slab_allocator;
+
+pub use kernel_stack_allocator::KernelStackAllocator;
+pub use slab_allocator::SlabAllocator;
 
 use buddy_allocator::BuddyAllocator;
 use core::ops::Range;
 use hal::{
     boot_info::BootInfo,
-    memory::{Frame, FrameAllocator, FrameSize, PhysicalAddress},
+    memory::{Frame, FrameAllocator, FrameSize, PhysicalAddress, VirtualAddress},
 };
 use spin::Mutex;
 
@@ -46,4 +51,14 @@ where
     fn free_n(&self, start: Frame<S>, num_frames: usize) {
         self.buddy.lock().free_n(start.start, num_frames * S::SIZE);
     }
+}
+
+/// Represents a stack, either in kernel-space or user-space. Stacks are allocated in "slots" of fixed size, but
+/// only a subset of the slot may be mapped initially (to reduce physical memory usage). Stacks can't grow above
+/// the size of their slot.
+#[derive(Clone, Debug)]
+pub struct Stack {
+    pub top: VirtualAddress,
+    pub slot_bottom: VirtualAddress,
+    pub stack_bottom: VirtualAddress,
 }

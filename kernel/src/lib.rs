@@ -21,7 +21,6 @@ pub mod memory;
 pub mod object;
 pub mod per_cpu;
 pub mod scheduler;
-mod slab_allocator;
 pub mod syscall;
 
 use alloc::sync::Arc;
@@ -31,13 +30,8 @@ use hal::{
     memory::{FrameSize, PageTable, VirtualAddress},
 };
 use heap_allocator::LockedHoleAllocator;
-use memory::PhysicalMemoryManager;
-use object::{
-    address_space::AddressSpace,
-    memory_object::MemoryObject,
-    task::{KernelStackAllocator, Task},
-    KernelObject,
-};
+use memory::{KernelStackAllocator, PhysicalMemoryManager};
+use object::{address_space::AddressSpace, memory_object::MemoryObject, task::Task, KernelObject};
 use pebble_util::InitGuard;
 use per_cpu::PerCpu;
 use scheduler::Scheduler;

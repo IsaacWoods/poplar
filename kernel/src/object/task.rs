@@ -1,9 +1,11 @@
 use super::{address_space::AddressSpace, alloc_kernel_object_id, KernelObject, KernelObjectId};
-use crate::{memory::PhysicalMemoryManager, slab_allocator::SlabAllocator, Platform};
+use crate::{
+    memory::{KernelStackAllocator, PhysicalMemoryManager, Stack},
+    Platform,
+};
 use alloc::{collections::BTreeMap, string::String, sync::Arc, vec::Vec};
 use core::{
     cell::UnsafeCell,
-    marker::PhantomData,
     sync::atomic::{AtomicU32, Ordering},
 };
 use hal::memory::VirtualAddress;
@@ -35,17 +37,6 @@ pub enum TaskCreationError {
     NoKernelStackSlots,
 }
 
-/// Represents the layout of a task's usermode or kernelmode stack. A slot is allocated (contiguous from
-/// `slot_bottom` to `top`), but only a portion of it may initially be mapped into backing memory (contiguous from
-/// `stack_bottom` to `top`). A stack can be grown by allocating more backing memory and moving `stack_bottom` down
-/// towards `slot_bottom`.
-#[derive(Debug)]
-pub struct TaskStack {
-    pub top: VirtualAddress,
-    pub slot_bottom: VirtualAddress,
-    pub stack_bottom: VirtualAddress,
-}
-
 pub struct Task<P>
 where
     P: Platform,
@@ -57,8 +48,8 @@ where
     pub state: Mutex<TaskState>,
     pub capabilities: Vec<Capability>,
 
-    pub user_stack: Mutex<TaskStack>,
-    pub kernel_stack: Mutex<TaskStack>,
+    pub user_stack: Mutex<Stack>,
+    pub kernel_stack: Mutex<Stack>,
     pub kernel_stack_pointer: UnsafeCell<VirtualAddress>,
     pub user_stack_pointer: UnsafeCell<VirtualAddress>,
 
@@ -90,7 +81,7 @@ where
         let user_stack =
             address_space.alloc_user_stack(0x4000, allocator).ok_or(TaskCreationError::AddressSpaceFull)?;
         let kernel_stack = kernel_stack_allocator
-            .alloc_kernel_task_stack(0x4000, allocator, kernel_page_table)
+            .alloc_kernel_stack(0x4000, allocator, kernel_page_table)
             .ok_or(TaskCreationError::NoKernelStackSlots)?;
 
         let mut kernel_stack_pointer = kernel_stack.top;
@@ -164,56 +155,4 @@ fn decode_capabilities(mut cap_stream: &[u8]) -> Result<Vec<Capability>, TaskCre
     }
 
     Ok(caps)
-}
-
-pub struct KernelStackAllocator<P>
-where
-    P: Platform,
-{
-    kernel_stack_slots: Mutex<SlabAllocator>,
-    slot_size: usize,
-    _phantom: PhantomData<P>,
-}
-
-impl<P> KernelStackAllocator<P>
-where
-    P: Platform,
-{
-    pub fn new(
-        stacks_bottom: VirtualAddress,
-        stacks_top: VirtualAddress,
-        slot_size: usize,
-    ) -> KernelStackAllocator<P> {
-        KernelStackAllocator {
-            kernel_stack_slots: Mutex::new(SlabAllocator::new(stacks_bottom, stacks_top, slot_size)),
-            slot_size,
-            _phantom: PhantomData,
-        }
-    }
-
-    pub fn alloc_kernel_task_stack(
-        &self,
-        initial_size: usize,
-        physical_memory_manager: &PhysicalMemoryManager,
-        kernel_page_table: &mut P::PageTable,
-    ) -> Option<TaskStack> {
-        use hal::memory::{Flags, PageTable};
-
-        let slot_bottom = self.kernel_stack_slots.lock().alloc()?;
-        let top = slot_bottom + self.slot_size - 1;
-        let stack_bottom = top - initial_size + 1;
-
-        let physical_start = physical_memory_manager.alloc_bytes(initial_size);
-        kernel_page_table
-            .map_area(
-                stack_bottom,
-                physical_start,
-                initial_size,
-                Flags { writable: true, ..Default::default() },
-                physical_memory_manager,
-            )
-            .unwrap();
-
-        Some(TaskStack { top, slot_bottom, stack_bottom })
-    }
 }
