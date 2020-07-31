@@ -9,8 +9,10 @@ mod interrupts;
 mod logger;
 mod per_cpu;
 mod task;
+mod topo;
 
 use acpi_handler::PebbleAcpiHandler;
+use alloc::boxed::Box;
 use aml::AmlContext;
 use core::{panic::PanicInfo, pin::Pin};
 use hal::{
@@ -25,13 +27,14 @@ use hal_x86_64::{
 use interrupts::InterruptController;
 use kernel::{
     memory::{KernelStackAllocator, PhysicalMemoryManager},
-    scheduler::Scheduler,
     Platform,
 };
-use log::{error, info, warn};
+use log::{error, info};
+use topo::Topology;
 
 pub struct PlatformImpl {
     kernel_page_table: PageTableImpl,
+    topology: Topology,
 }
 
 impl Platform for PlatformImpl {
@@ -74,30 +77,15 @@ pub extern "C" fn kentry(boot_info: &BootInfo) -> ! {
         panic!("Boot info magic is not correct!");
     }
 
-    InterruptController::install_exception_handlers();
-
     /*
      * Initialise the heap allocator. After this, the kernel is free to use collections etc. that
      * can allocate on the heap through the global allocator.
      */
     unsafe {
-        #[cfg(not(test))]
         kernel::ALLOCATOR.lock().init(boot_info.heap_address, boot_info.heap_size);
     }
 
     kernel::PHYSICAL_MEMORY_MANAGER.initialize(PhysicalMemoryManager::new(boot_info));
-
-    let cpu_info = CpuInfo::new();
-    info!(
-        "We're running on an {:?} processor, model info = {:?}, microarch = {:?}",
-        cpu_info.vendor,
-        cpu_info.model_info,
-        cpu_info.microarch()
-    );
-    if let Some(ref hypervisor_info) = cpu_info.hypervisor_info {
-        info!("We're running under a hypervisor ({:?})", hypervisor_info.vendor);
-    }
-    check_support_and_enable_features(&cpu_info);
 
     /*
      * Create our version of the kernel page table. This assumes that the loader has correctly installed a
@@ -111,33 +99,59 @@ pub extern "C" fn kentry(boot_info: &BootInfo) -> ! {
         )
     };
 
+    let mut kernel_stack_allocator = KernelStackAllocator::<PlatformImpl>::new(
+        kernel_map::KERNEL_STACKS_BASE,
+        kernel_map::KERNEL_STACKS_BASE + kernel_map::STACK_SLOT_SIZE * kernel_map::MAX_TASKS,
+        hal::memory::mebibytes(2),
+    );
+
+    /*
+     * Install the exception handlers. Where we do this is a compromise between as-early-as-possible (we don't
+     * catch exceptions properly before this), and having enough infrastructure to install nice handlers (e.g. with
+     * IST entries etc.). This seems like a good point to do it.
+     */
+    InterruptController::install_exception_handlers();
+
+    /*
+     * Gather information about the CPU we're running on and make sure it supports everything we need.
+     */
+    let cpu_info = CpuInfo::new();
+    info!(
+        "We're running on an {:?} processor, model info = {:?}, microarch = {:?}",
+        cpu_info.vendor,
+        cpu_info.model_info,
+        cpu_info.microarch()
+    );
+    if let Some(ref hypervisor_info) = cpu_info.hypervisor_info {
+        info!("We're running under a hypervisor ({:?})", hypervisor_info.vendor);
+    }
+    check_support_and_enable_features(&cpu_info);
+
     /*
      * Parse the static ACPI tables.
      */
-    let acpi_info = match boot_info.rsdp_address {
-        Some(rsdp_address) => {
-            let mut handler = PebbleAcpiHandler;
-            match unsafe { acpi::parse_rsdp(&mut handler, usize::from(rsdp_address)) } {
-                Ok(acpi_info) => Some(acpi_info),
-
-                Err(err) => {
-                    error!("Failed to parse static ACPI tables: {:?}", err);
-                    warn!("Continuing. Some functionality may not work, or the kernel may panic!");
-                    None
-                }
-            }
-        }
-
-        None => None,
-    };
+    if boot_info.rsdp_address.is_none() {
+        panic!("Bootloader did not pass RSDP address. Booting without ACPI is not supported.");
+    }
+    let acpi_info =
+        match unsafe { acpi::parse_rsdp(&mut PebbleAcpiHandler, usize::from(boot_info.rsdp_address.unwrap())) } {
+            Ok(acpi_info) => acpi_info,
+            Err(err) => panic!("Failed to parse static ACPI tables: {:?}", err),
+        };
     info!("{:#?}", acpi_info);
+
+    /*
+     * Create the topology, which also creates a TSS and per-CPU data for each processor, and loads them for the
+     * boot processor.
+     */
+    let topology = topo::build_topology(&acpi_info);
 
     /*
      * Parse the DSDT.
      */
     // TODO: if we're on ACPI 1.0 - pass true as legacy mode.
     let mut aml_context = AmlContext::new(false, aml::DebugVerbosity::Scopes);
-    if let Some(ref dsdt_info) = acpi_info.as_ref().unwrap().dsdt {
+    if let Some(ref dsdt_info) = acpi_info.dsdt {
         let virtual_address = kernel_map::physical_to_virtual(PhysicalAddress::new(dsdt_info.address).unwrap());
         info!(
             "DSDT parse: {:?}",
@@ -153,33 +167,14 @@ pub extern "C" fn kentry(boot_info: &BootInfo) -> ! {
         info!("----- Finished AML namespace -----");
     }
 
-    /*
-    * Create the per-CPU data (which adds a TSS to the GDT) for the BSP, loads the GDT, then
-      installs
-    * the BSP's per-CPU data.
-    * NOTE: Installing the GDT zeros the `gs` segment descriptor so it's important we do it before
-    * installing the per-CPU data.
-    * TODO: create a TSS for each AP here so we can load the GDT all in one go.
-    */
-    let (mut bsp_percpu, bsp_tss_selector) = per_cpu::PerCpuImpl::new(Scheduler::new());
-    unsafe {
-        hal_x86_64::hw::gdt::GDT.lock().load(bsp_tss_selector);
-    }
-    bsp_percpu.as_mut().install();
 
     /*
      * Initialise the interrupt controller, which enables interrupts, and start the per-cpu timer.
      */
-    let mut interrupt_controller = InterruptController::init(acpi_info.as_ref().unwrap(), &mut aml_context);
+    let mut interrupt_controller = InterruptController::init(&acpi_info, &mut aml_context);
     // interrupt_controller.enable_local_timer(&cpu_info, Duration::from_secs(3));
 
-    let mut platform = PlatformImpl { kernel_page_table };
-
-    let mut kernel_stack_allocator = KernelStackAllocator::<PlatformImpl>::new(
-        kernel_map::KERNEL_STACKS_BASE,
-        kernel_map::KERNEL_STACKS_BASE + kernel_map::STACK_SLOT_SIZE * kernel_map::MAX_TASKS,
-        hal::memory::mebibytes(2),
-    );
+    let mut platform = PlatformImpl { kernel_page_table, topology };
 
     /*
      * Create kernel objects from loaded images and schedule them.
