@@ -95,7 +95,7 @@ pub const USER_DATA_SELECTOR: SegmentSelector = SegmentSelector::new(4, Privileg
 pub const USER_CODE64_SELECTOR: SegmentSelector = SegmentSelector::new(5, PrivilegeLevel::Ring3);
 
 // NOTE: these have to account for the null segment
-pub const NUM_STATIC_ENTRIES: usize = 7;
+pub const NUM_STATIC_ENTRIES: usize = 6;
 pub const OFFSET_TO_FIRST_TSS: usize = 0x30;
 pub const MAX_CPUS: usize = 8;
 
@@ -166,8 +166,8 @@ impl Gdt {
         }
 
         let gdt_ptr = DescriptorTablePointer {
-            limit: (NUM_STATIC_ENTRIES * mem::size_of::<u64>() + MAX_CPUS * mem::size_of::<TssSegment>() - 1)
-                as u16,
+            limit: (NUM_STATIC_ENTRIES * mem::size_of::<u64>() + self.next_free_tss * mem::size_of::<TssSegment>()
+                - 1) as u16,
             base: VirtualAddress::new(self as *const _ as usize),
         };
 
