@@ -113,21 +113,6 @@ pub extern "C" fn kentry(boot_info: &BootInfo) -> ! {
     InterruptController::install_exception_handlers();
 
     /*
-     * Gather information about the CPU we're running on and make sure it supports everything we need.
-     */
-    let cpu_info = CpuInfo::new();
-    info!(
-        "We're running on an {:?} processor, model info = {:?}, microarch = {:?}",
-        cpu_info.vendor,
-        cpu_info.model_info,
-        cpu_info.microarch()
-    );
-    if let Some(ref hypervisor_info) = cpu_info.hypervisor_info {
-        info!("We're running under a hypervisor ({:?})", hypervisor_info.vendor);
-    }
-    check_support_and_enable_features(&cpu_info);
-
-    /*
      * Parse the static ACPI tables.
      */
     if boot_info.rsdp_address.is_none() {
@@ -197,42 +182,6 @@ pub extern "C" fn kentry(boot_info: &BootInfo) -> ! {
      * Drop into userspace!
      */
     PlatformImpl::per_cpu().scheduler().drop_to_userspace()
-}
-
-/// We rely on certain processor features to be present for simplicity and sanity-retention. This
-/// function checks that we support everything we need to, and enable features that we need.
-fn check_support_and_enable_features(cpu_info: &CpuInfo) {
-    use bit_field::BitField;
-    use hal_x86_64::hw::registers::{
-        read_msr,
-        write_control_reg,
-        write_msr,
-        CR4_ENABLE_GLOBAL_PAGES,
-        CR4_RESTRICT_RDTSC,
-        CR4_XSAVE_ENABLE_BIT,
-        EFER,
-        EFER_ENABLE_NX_BIT,
-        EFER_ENABLE_SYSCALL,
-    };
-
-    if !cpu_info.supported_features.xsave {
-        panic!("Processor does not support xsave instruction!");
-    }
-
-    let mut cr4 = read_control_reg!(CR4);
-    cr4.set_bit(CR4_XSAVE_ENABLE_BIT, true);
-    cr4.set_bit(CR4_ENABLE_GLOBAL_PAGES, true);
-    cr4.set_bit(CR4_RESTRICT_RDTSC, true);
-    unsafe {
-        write_control_reg!(CR4, cr4);
-    }
-
-    let mut efer = read_msr(EFER);
-    efer.set_bit(EFER_ENABLE_SYSCALL, true);
-    efer.set_bit(EFER_ENABLE_NX_BIT, true);
-    unsafe {
-        write_msr(EFER, efer);
-    }
 }
 
 #[cfg(not(test))]

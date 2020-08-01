@@ -2,9 +2,9 @@ use crate::per_cpu::PerCpuImpl;
 use acpi::{Acpi, ProcessorState};
 use alloc::{boxed::Box, vec::Vec};
 use core::{fmt, pin::Pin};
-use hal_x86_64::hw::gdt::SegmentSelector;
+use hal_x86_64::hw::{cpu::CpuInfo, gdt::SegmentSelector};
 use kernel::scheduler::Scheduler;
-use log::warn;
+use log::{info, warn};
 
 pub type CpuId = u32;
 
@@ -29,13 +29,27 @@ impl fmt::Debug for Cpu {
     }
 }
 
-#[derive(Debug)]
 pub struct Topology {
+    cpu_info: CpuInfo,
     boot_cpu: Cpu,
     application_cpus: Vec<Cpu>,
 }
 
 pub fn build_topology(acpi_info: &Acpi) -> Topology {
+    /*
+     * Gather information about the CPU we're running on and make sure it supports everything we need.
+     */
+    let cpu_info = CpuInfo::new();
+    info!(
+        "We're running on an {:?} processor. The microarchitecture is: {:?}",
+        cpu_info.vendor,
+        cpu_info.microarch()
+    );
+    if let Some(ref hypervisor_info) = cpu_info.hypervisor_info {
+        info!("We're running under a hypervisor: {:?}", hypervisor_info.vendor);
+    }
+    check_support_and_enable_features(&cpu_info);
+
     let mut boot_cpu = {
         let boot_processor = acpi_info.boot_processor.expect("ACPI didn't find boot processor info!");
         assert_eq!(boot_processor.state, ProcessorState::Running);
@@ -69,7 +83,8 @@ pub fn build_topology(acpi_info: &Acpi) -> Topology {
                 panic!("Application processor is already running; how have you managed that?")
             }
         })
-        .collect();
+        .collect::<Vec<_>>();
+    info!("Located {} application processors to attempt bring-up on", application_cpus.len());
 
     /*
      * This code runs on the boot processor, so we can load the GDT with the boot processor's TSS and the boot
@@ -81,5 +96,42 @@ pub fn build_topology(acpi_info: &Acpi) -> Topology {
     }
     boot_cpu.per_cpu.as_mut().install();
 
-    Topology { boot_cpu, application_cpus }
+    Topology { cpu_info, boot_cpu, application_cpus }
+}
+
+/// We rely on certain processor features to be present for simplicity and sanity-retention. This
+/// function checks that we support everything we need to, and enable features that we need.
+fn check_support_and_enable_features(cpu_info: &CpuInfo) {
+    use bit_field::BitField;
+    use hal_x86_64::hw::registers::{
+        read_control_reg,
+        read_msr,
+        write_control_reg,
+        write_msr,
+        CR4_ENABLE_GLOBAL_PAGES,
+        CR4_RESTRICT_RDTSC,
+        CR4_XSAVE_ENABLE_BIT,
+        EFER,
+        EFER_ENABLE_NX_BIT,
+        EFER_ENABLE_SYSCALL,
+    };
+
+    if !cpu_info.supported_features.xsave {
+        panic!("Processor does not support xsave instruction!");
+    }
+
+    let mut cr4 = read_control_reg!(CR4);
+    cr4.set_bit(CR4_XSAVE_ENABLE_BIT, true);
+    cr4.set_bit(CR4_ENABLE_GLOBAL_PAGES, true);
+    cr4.set_bit(CR4_RESTRICT_RDTSC, true);
+    unsafe {
+        write_control_reg!(CR4, cr4);
+    }
+
+    let mut efer = read_msr(EFER);
+    efer.set_bit(EFER_ENABLE_SYSCALL, true);
+    efer.set_bit(EFER_ENABLE_NX_BIT, true);
+    unsafe {
+        write_msr(EFER, efer);
+    }
 }
