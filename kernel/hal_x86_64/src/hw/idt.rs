@@ -24,7 +24,7 @@ pub struct IdtEntry {
     /// If this is not `0`, this is used as an index into the Interrupt Stack Table described in
     /// the currently active TSS. When this vector is handled, the address in that index of the
     /// IST will be loaded into `RSP`. This allows us to nicely handle kernel stack overflows.
-    ist_offset: u8,
+    ist_index: u8,
 
     ///    7                           0
     ///  +---+---+---+---+---+---+---+---+
@@ -44,7 +44,7 @@ impl IdtEntry {
         IdtEntry {
             address_0_15: 0,
             segment_selector: 0,
-            ist_offset: 0,
+            ist_index: 0,
             flags: 0b0_00_0_1110,
             address_16_31: 0,
             address_32_63: 0,
@@ -71,8 +71,8 @@ impl IdtEntry {
         self
     }
 
-    pub fn set_ist_handler(&mut self, stack_offset: u8) -> &mut Self {
-        self.ist_offset = stack_offset;
+    pub fn set_ist_index(&mut self, stack_index: u8) -> &mut Self {
+        self.ist_index = stack_index;
         self
     }
 
