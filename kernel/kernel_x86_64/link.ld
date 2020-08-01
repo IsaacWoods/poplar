@@ -5,7 +5,7 @@ KERNEL_VMA = 0xffffffff80000000;
 
 PHDRS {
     text PT_LOAD;
-    rodata PT_LOAD;
+    rodata PT_LOAD FLAGS(4);
     data PT_LOAD;
 }
 
