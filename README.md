@@ -12,7 +12,6 @@ about Pebble is to read [the book](https://isaacwoods.github.io/pebble/book/).
 ## Building and running
 To build Pebble, you will need a few things (this assumes you are running a Linux of some type):
 - A nightly Rust compiler
-- `cargo-xbuild` (install with `cargo install cargo-xbuild`)
 - The `rust-src` component (install with `rustup component add rust-src`)
 - Mtools
 - A working QEMU installation (providing `qemu-system-x86_64`)

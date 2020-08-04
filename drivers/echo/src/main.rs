@@ -2,6 +2,8 @@
 #![no_main]
 #![feature(const_generics, alloc_error_handler)]
 
+extern crate rlibc;
+
 use core::panic::PanicInfo;
 use libpebble::{
     caps::{CapabilitiesRepr, CAP_EARLY_LOGGING, CAP_PADDING},

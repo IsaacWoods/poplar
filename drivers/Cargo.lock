@@ -25,6 +25,7 @@ dependencies = [
  "libpebble",
  "linked_list_allocator",
  "log",
+ "rlibc",
 ]
 
 [[package]]
@@ -71,6 +72,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "rlibc"
+version = "1.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "fc874b127765f014d792f16763a81245ab80500e2ad921ed4ee9e82481ee08fe"
+
+[[package]]
 name = "scopeguard"
 version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -85,6 +92,7 @@ dependencies = [
  "libpebble",
  "linked_list_allocator",
  "log",
+ "rlibc",
 ]
 
 [[package]]

@@ -50,11 +50,11 @@ kernel:
 	make -C kernel kernel_$(PLATFORM)
 
 simple_fb:
-	cargo xbuild --target=drivers/$(PLATFORM)-pebble-userspace.json --manifest-path drivers/simple_fb/Cargo.toml
+	cargo build -Z build-std=core,alloc --target=drivers/$(PLATFORM)-pebble-userspace.json --manifest-path drivers/simple_fb/Cargo.toml
 	cp drivers/target/$(PLATFORM)-pebble-userspace/debug/simple_fb $(BUILD_DIR)/fat/simple_fb.elf
 
 echo:
-	cargo xbuild --target=drivers/$(PLATFORM)-pebble-userspace.json --manifest-path drivers/echo/Cargo.toml
+	cargo build -Z build-std=core,alloc --target=drivers/$(PLATFORM)-pebble-userspace.json --manifest-path drivers/echo/Cargo.toml
 	cp drivers/target/$(PLATFORM)-pebble-userspace/debug/echo $(BUILD_DIR)/fat/echo.elf
 
 clean:

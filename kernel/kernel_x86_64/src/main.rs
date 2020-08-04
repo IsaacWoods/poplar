@@ -3,6 +3,7 @@
 #![feature(asm, global_asm, decl_macro, naked_functions)]
 
 extern crate alloc;
+extern crate rlibc;
 
 mod acpi_handler;
 mod interrupts;

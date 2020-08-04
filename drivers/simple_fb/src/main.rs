@@ -3,6 +3,7 @@
 #![feature(const_generics, alloc_error_handler)]
 
 extern crate alloc;
+extern crate rlibc;
 
 use bit_field::BitField;
 use core::{mem::MaybeUninit, panic::PanicInfo};
