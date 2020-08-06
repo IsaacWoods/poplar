@@ -21,7 +21,7 @@ use log::{error, info};
 use uefi::{
     prelude::*,
     proto::{console::gop::GraphicsOutput, loaded_image::LoadedImage, media::fs::SimpleFileSystem},
-    table::boot::{AllocateType, MemoryMapIter, MemoryType, SearchType},
+    table::boot::{AllocateType, MemoryDescriptor, MemoryType, SearchType},
 };
 
 /*
@@ -239,8 +239,8 @@ fn main(image_handle: Handle, system_table: SystemTable<Boot>) -> Result<!, Load
 ///       memory manager. This is added directly to the already-allocated boot info.
 ///     * Construct the physical memory mapping - we map the entirity of physical memory into the kernel address
 ///       space to make it easy for the kernel to access any address it needs to.
-fn process_memory_map<A, P>(
-    memory_map: MemoryMapIter<'_>,
+fn process_memory_map<'a, A, P>(
+    memory_map: impl Iterator<Item = &'a MemoryDescriptor>,
     boot_info: &mut BootInfo,
     mapper: &mut P,
     allocator: &A,
