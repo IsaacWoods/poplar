@@ -88,7 +88,7 @@ fn main(image_handle: Handle, system_table: SystemTable<Boot>) -> Result<!, Load
     let kernel_info = image::load_kernel(
         system_table.boot_services(),
         fs_handle,
-        command_line.kernel_path?,
+        command_line.kernel_path,
         &mut page_table,
         &allocator,
     )?;

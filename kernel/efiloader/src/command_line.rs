@@ -1,14 +1,17 @@
 use crate::LoaderError;
 use hal::memory::{kibibytes, Bytes};
-use log::warn;
+use log::{info, warn};
 
 const DEFAULT_VOLUME_LABEL: &'static str = "BOOT";
-const DEFAULT_KERNEL_HEAP_SIZE: Bytes = kibibytes(200);
+const DEFAULT_KERNEL_PATH: &'static str = "kernel.elf";
+const DEFAULT_KERNEL_HEAP_SIZE: Bytes = kibibytes(800);
+// TODO: this can move to not specifying width and height when the mode-chooser is more advanced
+const DEFAULT_FRAMEBUFFER: Option<Framebuffer> = Some(Framebuffer { width: Some(800), height: Some(600) });
 const MAX_IMAGES: usize = 32;
 
 pub struct CommandLine<'a> {
     pub volume_label: &'a str,
-    pub kernel_path: Result<&'a str, LoaderError>,
+    pub kernel_path: &'a str,
     pub framebuffer: Option<Framebuffer>,
     /// The size of the kernel heap that should be allocated
     pub kernel_heap_size: Bytes,
@@ -25,10 +28,11 @@ pub struct Framebuffer {
 
 impl<'a> CommandLine<'a> {
     pub fn new(string: &'a str) -> CommandLine<'a> {
+        info!("Booted with command line: '{}'", string);
         let mut command_line = CommandLine {
             volume_label: DEFAULT_VOLUME_LABEL,
-            kernel_path: Err(LoaderError::NoKernelPath),
-            framebuffer: None,
+            kernel_path: DEFAULT_KERNEL_PATH,
+            framebuffer: DEFAULT_FRAMEBUFFER,
             kernel_heap_size: DEFAULT_KERNEL_HEAP_SIZE,
             num_images: 0,
             images: [None; MAX_IMAGES],
@@ -74,7 +78,7 @@ impl<'a> CommandLine<'a> {
                 }
                 "kernel" => {
                     command_line.kernel_path =
-                        Ok(value.expect("'kernel' parameter must have the path to the kernel image as a value"));
+                        value.expect("'kernel' parameter must have the path to the kernel image as a value");
                 }
                 "fb" => match extra.expect("'fb' is not an option on its own") {
                     "width" => {
