@@ -20,7 +20,7 @@ use hal_x86_64::paging::PageTableImpl;
 use log::{error, info};
 use uefi::{
     prelude::*,
-    proto::{console::gop::GraphicsOutput, loaded_image::LoadedImage, media::fs::SimpleFileSystem},
+    proto::{console::gop::GraphicsOutput, loaded_image::LoadedImage},
     table::boot::{AllocateType, MemoryDescriptor, MemoryType, SearchType},
 };
 
@@ -74,10 +74,6 @@ fn main(image_handle: Handle, system_table: SystemTable<Boot>) -> Result<!, Load
     let load_options_str = loaded_image_protocol.load_options(&mut buffer).expect("Failed to load load options");
     let command_line = CommandLine::new(load_options_str);
 
-    // TODO: instead of finding the volume by label, we could just grab it from the LoadedImageProtocol (I think)
-    // and say they all have to be on the same volume?
-    let fs_handle = find_volume(system_table.boot_services(), command_line.volume_label)?;
-
     /*
      * We create a set of page tables for the kernel. Because memory is identity-mapped in UEFI, we can act as
      * if we've placed the physical mapping at 0x0.
@@ -87,7 +83,7 @@ fn main(image_handle: Handle, system_table: SystemTable<Boot>) -> Result<!, Load
 
     let kernel_info = image::load_kernel(
         system_table.boot_services(),
-        fs_handle,
+        loaded_image_protocol.device(),
         command_line.kernel_path,
         &mut page_table,
         &allocator,
@@ -159,7 +155,12 @@ fn main(image_handle: Handle, system_table: SystemTable<Boot>) -> Result<!, Load
         info!("Loading image called '{}' from path '{}'", name, path);
         boot_info
             .loaded_images
-            .add_image(image::load_image(system_table.boot_services(), fs_handle, name, path)?)
+            .add_image(image::load_image(
+                system_table.boot_services(),
+                loaded_image_protocol.device(),
+                name,
+                path,
+            )?)
             .unwrap();
     }
 
@@ -456,60 +457,6 @@ fn create_framebuffer(
     }
 
     Err(LoaderError::NoValidVideoMode)
-}
-
-fn find_volume(boot_services: &BootServices, label: &str) -> Result<Handle, LoaderError> {
-    use uefi::proto::media::file::{File, FileSystemVolumeLabel};
-
-    // Make an initial call to find how many handles we need to search
-    let num_handles = boot_services
-        .locate_handle(SearchType::from_proto::<SimpleFileSystem>(), None)
-        .expect_success("Failed to get list of filesystems");
-
-    // Allocate a pool of the needed size
-    let pool_addr = boot_services
-        .allocate_pool(MemoryType::LOADER_DATA, mem::size_of::<Handle>() * num_handles)
-        .expect_success("Failed to allocate pool for filesystem handles");
-    let handle_slice: &mut [Handle] = unsafe { slice::from_raw_parts_mut(pool_addr as *mut Handle, num_handles) };
-
-    // Actually fetch the handles
-
-    boot_services
-        .locate_handle(SearchType::from_proto::<SimpleFileSystem>(), Some(handle_slice))
-        .expect_success("Failed to get list of filesystems");
-
-    // TODO: the `&mut` here is load-bearing, because we free the pool, and so need to copy the handle for if we
-    // want to return it, otherwise it disappears out from under us. This should probably be rewritten to not work
-    // like that. We could use a `Pool` type that manages the allocation and is automatically freed when dropped.
-    for &mut handle in handle_slice {
-        let proto = unsafe {
-            &mut *boot_services
-                .handle_protocol::<SimpleFileSystem>(handle)
-                .expect_success("Failed to open SimpleFileSystem")
-                .get()
-        };
-        let mut buffer = [0u8; 32];
-        let volume_label = proto
-            .open_volume()
-            .expect_success("Failed to open volume")
-            .get_info::<FileSystemVolumeLabel>(&mut buffer)
-            .expect_success("Failed to get volume label")
-            // TODO: maybe change uefi to take a buffer here and return a &str (allows us to remove dependency on
-            // ucs2 here for one)
-            .volume_label();
-
-        let mut str_buffer = [0u8; 32];
-        let length = ucs2::decode(volume_label.to_u16_slice(), &mut str_buffer).unwrap();
-        let volume_label_str = core::str::from_utf8(&str_buffer[0..length]).unwrap();
-
-        if volume_label_str == label {
-            boot_services.free_pool(pool_addr).unwrap_success();
-            return Ok(handle);
-        }
-    }
-
-    boot_services.free_pool(pool_addr).unwrap_success();
-    Err(LoaderError::BootVolumeDoesNotExist)
 }
 
 #[panic_handler]
