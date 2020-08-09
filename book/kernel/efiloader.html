@@ -3,7 +3,7 @@
     <head>
         <!-- Book generated using mdBook -->
         <meta charset="UTF-8">
-        <title>map_memory_object - Pebble OS</title>
+        <title>Efiloader - Pebble OS</title>
         
         
 
@@ -89,7 +89,7 @@
 
         <nav id="sidebar" class="sidebar" aria-label="Table of contents">
             <div class="sidebar-scrollbox">
-                <ol class="chapter"><li class="chapter-item expanded "><a href="../introduction/index.html"><strong aria-hidden="true">1.</strong> Introduction</a></li><li class="chapter-item expanded "><a href="../kernel/index.html"><strong aria-hidden="true">2.</strong> The Kernel</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../kernel/platforms.html"><strong aria-hidden="true">2.1.</strong> Platforms</a></li><li class="chapter-item expanded "><a href="../kernel/efiloader.html"><strong aria-hidden="true">2.2.</strong> Efiloader</a></li><li class="chapter-item expanded "><a href="../kernel/kernel_objects.html"><strong aria-hidden="true">2.3.</strong> Kernel Objects</a></li><li class="chapter-item expanded "><a href="../kernel/syscalls.html"><strong aria-hidden="true">2.4.</strong> System calls</a></li><li class="chapter-item expanded "><a href="../kernel/debugging.html"><strong aria-hidden="true">2.5.</strong> Debugging the kernel</a></li></ol></li><li class="chapter-item expanded "><a href="../syscalls/index.html"><strong aria-hidden="true">3.</strong> Syscalls</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../syscalls/yield.html"><strong aria-hidden="true">3.1.</strong> yield</a></li><li class="chapter-item expanded "><a href="../syscalls/early_log.html"><strong aria-hidden="true">3.2.</strong> early_log</a></li><li class="chapter-item expanded "><a href="../syscalls/get_framebuffer.html"><strong aria-hidden="true">3.3.</strong> get_framebuffer</a></li><li class="chapter-item expanded "><a href="../syscalls/map_memory_object.html" class="active"><strong aria-hidden="true">3.4.</strong> map_memory_object</a></li></ol></li><li class="chapter-item expanded "><a href="../userspace/index.html"><strong aria-hidden="true">4.</strong> Userspace</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../userspace/capabilities.html"><strong aria-hidden="true">4.1.</strong> Capabilities</a></li><li class="chapter-item expanded "><a href="../userspace/memory_map_x86_64.html"><strong aria-hidden="true">4.2.</strong> Memory map (x86_64)</a></li></ol></li><li class="chapter-item expanded "><a href="../message_passing/index.html"><strong aria-hidden="true">5.</strong> Message Passing</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../message_passing/fmt.html"><strong aria-hidden="true">5.1.</strong> Message Format</a></li></ol></li></ol>
+                <ol class="chapter"><li class="chapter-item expanded "><a href="../introduction/index.html"><strong aria-hidden="true">1.</strong> Introduction</a></li><li class="chapter-item expanded "><a href="../kernel/index.html"><strong aria-hidden="true">2.</strong> The Kernel</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../kernel/platforms.html"><strong aria-hidden="true">2.1.</strong> Platforms</a></li><li class="chapter-item expanded "><a href="../kernel/efiloader.html" class="active"><strong aria-hidden="true">2.2.</strong> Efiloader</a></li><li class="chapter-item expanded "><a href="../kernel/kernel_objects.html"><strong aria-hidden="true">2.3.</strong> Kernel Objects</a></li><li class="chapter-item expanded "><a href="../kernel/syscalls.html"><strong aria-hidden="true">2.4.</strong> System calls</a></li><li class="chapter-item expanded "><a href="../kernel/debugging.html"><strong aria-hidden="true">2.5.</strong> Debugging the kernel</a></li></ol></li><li class="chapter-item expanded "><a href="../syscalls/index.html"><strong aria-hidden="true">3.</strong> Syscalls</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../syscalls/yield.html"><strong aria-hidden="true">3.1.</strong> yield</a></li><li class="chapter-item expanded "><a href="../syscalls/early_log.html"><strong aria-hidden="true">3.2.</strong> early_log</a></li><li class="chapter-item expanded "><a href="../syscalls/get_framebuffer.html"><strong aria-hidden="true">3.3.</strong> get_framebuffer</a></li><li class="chapter-item expanded "><a href="../syscalls/map_memory_object.html"><strong aria-hidden="true">3.4.</strong> map_memory_object</a></li></ol></li><li class="chapter-item expanded "><a href="../userspace/index.html"><strong aria-hidden="true">4.</strong> Userspace</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../userspace/capabilities.html"><strong aria-hidden="true">4.1.</strong> Capabilities</a></li><li class="chapter-item expanded "><a href="../userspace/memory_map_x86_64.html"><strong aria-hidden="true">4.2.</strong> Memory map (x86_64)</a></li></ol></li><li class="chapter-item expanded "><a href="../message_passing/index.html"><strong aria-hidden="true">5.</strong> Message Passing</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../message_passing/fmt.html"><strong aria-hidden="true">5.1.</strong> Message Format</a></li></ol></li></ol>
             </div>
             <div id="sidebar-resize-handle" class="sidebar-resize-handle"></div>
         </nav>
@@ -155,36 +155,46 @@
 
                 <div id="content" class="content">
                     <main>
-                        <h1><a class="header" href="#map_memory_object" id="map_memory_object"><code>map_memory_object</code></a></h1>
-<p>Map a MemoryObject into an AddressSpace.</p>
-<h3><a class="header" href="#parameters" id="parameters">Parameters</a></h3>
-<p><code>a</code> - a handle to the MemoryObject.
-<code>b</code> - a handle to the AddressSpace. The zero handle indicates to map the memory object into the task's AddressSpace.
-<code>c</code> - a pointer to which the kernel will write the virtual address at which the MemoryObject was mapped. Ignored if null.</p>
-<h3><a class="header" href="#returns" id="returns">Returns</a></h3>
+                        <h1><a class="header" href="#efiloader" id="efiloader">Efiloader</a></h1>
+<p><code>efiloader</code> is the bootloader for Pebble on x86_64. It utilities UEFI boot-services to load the kernel and any
+extra images needed into memory, allocate memory for the heap, configure a basic framebuffer, and enter the kernel.</p>
+<h3><a class="header" href="#description-of-booting-process" id="description-of-booting-process">Description of booting process</a></h3>
+<p>A rough order of the steps that <code>efiloader</code> performs is:</p>
 <ul>
-<li><code>0</code> if the system call succeeded</li>
-<li><code>1</code> if either of the passed handles are invalid</li>
-<li><code>2</code> if the portion of the AddressSpace that would be mapped is already occupied by another MemoryObject</li>
-<li><code>3</code> if the supplied MemoryObject handle does not point to a MemoryHandle</li>
-<li><code>4</code> if the supplied AddressSpace handle does not point to an AddressSpace</li>
-<li><code>5</code> if the pointer to write the virtual address back to is invalid</li>
+<li>Parses a set of load options passed to the loader, allowing the user to instruct it on how to load the kernel</li>
+<li>Finds the physical address of the RSDP, so the kernel can find the ACPI tables</li>
+<li>Creates a basic framebuffer using the UEFI GOP (Graphics Output Protocol), if requested</li>
+<li>Allocate and map a heap for the kernel to use</li>
+<li>Load any additional images needed from the filesystem</li>
+<li>Constructs some &quot;boot info&quot;, including a map of physical memory, telling the kernel about the hardware</li>
+<li>Jumps into the kernel</li>
 </ul>
-<h3><a class="header" href="#capabilities-needed" id="capabilities-needed">Capabilities needed</a></h3>
-<p>None (this may change in the future).</p>
+<h3><a class="header" href="#load-options" id="load-options">Load options</a></h3>
+<p>A series of load options may be supplied to <code>efiloader</code> to tell it how Pebble should be booted. These options
+consist of a string of space separated key-value pairs, of the form <code>a.dot.separated.key=value</code>. Supported keys,
+plus descriptions of their values, are:</p>
+<table><thead><tr><th>Key</th><th>Example value</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>kernel</code></td><td><code>kernel.elf</code></td><td>The path within the ESP that the kernel should be loaded from.</td></tr>
+<tr><td><code>fb.none</code></td><td>No value</td><td>Specify that a GOP framebuffer should not be created.</td></tr>
+<tr><td><code>fb.width</code></td><td><code>1920</code></td><td>Specify that a GOP framebuffer should be created, and its width.</td></tr>
+<tr><td><code>fb.height</code></td><td><code>1080</code></td><td>Specify that a GOP framebuffer should be created, and its height.</td></tr>
+<tr><td><code>image.{name}</code></td><td><code>my_task.elf</code></td><td>Specifies a path that an additional image should be loaded from. The key is the name that is passed in the boot info.</td></tr>
+</tbody></table>
+<p>If no load options are supplied, a kernel will be loaded from <code>\kernel.elf</code>, no additional images will be loaded,
+and a GOP framebuffer with a width of <code>800</code> and a height of <code>600</code> will be created. </p>
 
                     </main>
 
                     <nav class="nav-wrapper" aria-label="Page navigation">
                         <!-- Mobile navigation buttons -->
                         
-                            <a rel="prev" href="../syscalls/get_framebuffer.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                            <a rel="prev" href="../kernel/platforms.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                                 <i class="fa fa-angle-left"></i>
                             </a>
                         
 
                         
-                            <a rel="next" href="../userspace/index.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                            <a rel="next" href="../kernel/kernel_objects.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                                 <i class="fa fa-angle-right"></i>
                             </a>
                         
@@ -196,13 +206,13 @@
 
             <nav class="nav-wide-wrapper" aria-label="Page navigation">
                 
-                    <a rel="prev" href="../syscalls/get_framebuffer.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                    <a rel="prev" href="../kernel/platforms.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                         <i class="fa fa-angle-left"></i>
                     </a>
                 
 
                 
-                    <a rel="next" href="../userspace/index.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                    <a rel="next" href="../kernel/kernel_objects.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                         <i class="fa fa-angle-right"></i>
                     </a>
                 
