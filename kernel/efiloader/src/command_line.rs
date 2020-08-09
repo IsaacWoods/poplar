@@ -74,6 +74,9 @@ impl<'a> CommandLine<'a> {
                         value.expect("'kernel' parameter must have the path to the kernel image as a value");
                 }
                 "fb" => match extra.expect("'fb' is not an option on its own") {
+                    "none" => {
+                        command_line.framebuffer = None;
+                    }
                     "width" => {
                         if command_line.framebuffer.is_none() {
                             command_line.framebuffer = Some(Framebuffer {
