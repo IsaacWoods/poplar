@@ -4,6 +4,7 @@
 
 - [The Kernel](./kernel/index.md)
     - [Platforms](./kernel/platforms.md)
+    - [Efiloader](./kernel/efiloader.md)
     - [Kernel Objects](./kernel/kernel_objects.md)
     - [System calls](./kernel/syscalls.md)
     - [Debugging the kernel](./kernel/debugging.md)
