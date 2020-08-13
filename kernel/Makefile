@@ -6,7 +6,7 @@ kernel_x86_64: efiloader
 
 efiloader:
 	cargo build -Z build-std=core --target=x86_64-unknown-uefi --manifest-path efiloader/Cargo.toml
-	cp target/x86_64-unknown-uefi/debug/efiloader.efi $(BUILD_DIR)/fat/efiloader.efi
+	cp target/x86_64-unknown-uefi/debug/efiloader.efi $(BUILD_DIR)/fat/efi/boot/bootx64.efi
 
 kernel_rpi4:
 	RUSTFLAGS="-Ctarget-cpu=cortex-a72" cargo xbuild --target=kernel_rpi4/rpi4-kernel.json --manifest-path kernel_rpi4/Cargo.toml $(KERNEL_FLAGS)

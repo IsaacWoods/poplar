@@ -4,6 +4,7 @@ export BUILD_DIR ?= $(abspath ./build)
 export KERNEL_FLAGS ?=
 
 IMAGE_NAME ?= pebble.img
+DISK_NAME ?= /dev/sdc
 QEMU_DIR ?=
 QEMU_COMMON_FLAGS = -cpu max,vmware-cpuid-freq,invtsc \
 					-machine q35 \
@@ -26,6 +27,21 @@ QEMU_EXTRA_FLAGS ?=
 .PHONY: image_x86_64 prepare kernel simple_fb clean qemu gdb update fmt test echo
 .DEFAULT_GOAL := image_$(PLATFORM)
 
+# This is a temporary target to write to a real disk
+image_disk: prepare kernel simple_fb echo
+	# Create a temporary image for the FAT partition
+	dd if=/dev/zero of=$(BUILD_DIR)/fat.img bs=1M count=64
+	mkfs.vfat -F 32 $(BUILD_DIR)/fat.img -n BOOT
+	# Copy the stuff into the FAT image
+	mcopy -i $(BUILD_DIR)/fat.img -s $(BUILD_DIR)/fat/* ::
+	# Create GPT headers and a single EFI partition
+	sudo parted $(DISK_NAME) -s -a minimal mklabel gpt
+	sudo parted $(DISK_NAME) -s -a minimal mkpart EFI FAT32 2048s 93716s
+	sudo parted $(DISK_NAME) -s -a minimal toggle 1 boot
+	# Copy the data from efi.img into the correct place
+	sudo dd if=$(BUILD_DIR)/fat.img of=$(DISK_NAME) bs=512 count=91669 seek=2048 conv=notrunc
+	rm $(BUILD_DIR)/fat.img
+
 image_x86_64: prepare kernel simple_fb echo
 	# Create a temporary image for the FAT partition
 	dd if=/dev/zero of=$(BUILD_DIR)/fat.img bs=1M count=64
@@ -43,8 +59,7 @@ image_x86_64: prepare kernel simple_fb echo
 	rm $(BUILD_DIR)/fat.img
 
 prepare:
-	@mkdir -p $(BUILD_DIR)/fat/
-	cp ovmf/startup.nsh build/fat/startup.nsh
+	mkdir -p $(BUILD_DIR)/fat/efi/boot/
 
 kernel:
 	make -C kernel kernel_$(PLATFORM)
