@@ -35,6 +35,14 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "44226c40489fb1d602344a1d8f1b544570c3435e396dda1eda7b5ef010d8f1be"
 
 [[package]]
+name = "gfxconsole"
+version = "0.1.0"
+dependencies = [
+ "bit_field",
+ "font8x8",
+]
+
+[[package]]
 name = "libpebble"
 version = "0.2.0"
 dependencies = [
@@ -87,8 +95,7 @@ checksum = "d29ab0c6d3fc0ee92fe66e2d99f700eab17a8d57d1c1d3b748380fb20baa78cd"
 name = "simple_fb"
 version = "0.1.0"
 dependencies = [
- "bit_field",
- "font8x8",
+ "gfxconsole",
  "libpebble",
  "linked_list_allocator",
  "log",

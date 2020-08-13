@@ -1,0 +1,9 @@
+[package]
+name = "gfxconsole"
+version = "0.1.0"
+authors = ["Isaac Woods"]
+edition = "2018"
+
+[dependencies]
+bit_field = "0.10"
+font8x8 = { version = "0.2", default-features = false, features = ["unicode"] }

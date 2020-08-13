@@ -78,6 +78,19 @@ pub extern "C" fn kentry(boot_info: &BootInfo) -> ! {
         panic!("Boot info magic is not correct!");
     }
 
+    use gfxconsole::{Format, Framebuffer, Pixel, Rgb32};
+    let framebuffer = Framebuffer {
+        ptr: hal_x86_64::kernel_map::physical_to_virtual(
+            boot_info.video_mode.as_ref().unwrap().framebuffer_address,
+        )
+        .mut_ptr() as *mut Pixel<Rgb32>,
+        width: boot_info.video_mode.as_ref().unwrap().width,
+        height: boot_info.video_mode.as_ref().unwrap().height,
+        stride: boot_info.video_mode.as_ref().unwrap().stride,
+    };
+    framebuffer.clear(Rgb32::pixel(0xffff00ff));
+    framebuffer.draw_string("Hello from the kernel", 100, 100, Rgb32::pixel(0xff0000ff));
+
     /*
      * Initialise the heap allocator. After this, the kernel is free to use collections etc. that
      * can allocate on the heap through the global allocator.

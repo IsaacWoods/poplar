@@ -9,5 +9,4 @@ rlibc = "1"
 libpebble = { path = "../../lib/libpebble", features = ["can_alloc"] }
 linked_list_allocator = "0.8"
 log = "0.4"
-font8x8 = { version = "0.2", default-features = false, features = ["unicode"] }
-bit_field = "0.10"
+gfxconsole = { path = "../../lib/gfxconsole" }
