@@ -198,7 +198,7 @@ pub struct VideoModeInfo {
     pub stride: usize,
 }
 
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
 #[repr(C)]
 pub enum PixelFormat {
     /// Each pixel is represented by 4 bytes, with the layout:

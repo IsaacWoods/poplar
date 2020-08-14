@@ -6,22 +6,41 @@ use font8x8::UnicodeFonts;
 
 pub trait Format: Clone + Copy {
     fn pixel(color: u32) -> Pixel<Self>;
+    fn from_components(r: u8, g: u8, b: u8, a: u8) -> Pixel<Self>;
 }
 
-/// Represents a pixel format where each pixel is of the form `0xAARRGGBB`.
+/// Represents a pixel format where each pixel is of the form `0xAABBGGRR`.
 #[derive(Clone, Copy)]
 pub enum Rgb32 {}
 impl Format for Rgb32 {
     fn pixel(color: u32) -> Pixel<Self> {
         Pixel(color, PhantomData)
     }
+
+    fn from_components(r: u8, g: u8, b: u8, a: u8) -> Pixel<Self> {
+        let mut color = 0;
+        color.set_bits(0..8, r as u32);
+        color.set_bits(8..16, g as u32);
+        color.set_bits(16..24, b as u32);
+        color.set_bits(24..32, a as u32);
+        Pixel(color, PhantomData)
+    }
 }
 
-/// Represents a pixel format where each pixel is of the form `0xAABBGGRR`.
+/// Represents a pixel format where each pixel is of the form `0xAARRGGBB`.
 #[derive(Clone, Copy)]
 pub enum Bgr32 {}
 impl Format for Bgr32 {
     fn pixel(color: u32) -> Pixel<Self> {
+        Pixel(color, PhantomData)
+    }
+
+    fn from_components(r: u8, g: u8, b: u8, a: u8) -> Pixel<Self> {
+        let mut color = 0;
+        color.set_bits(0..8, b as u32);
+        color.set_bits(8..16, g as u32);
+        color.set_bits(16..24, r as u32);
+        color.set_bits(24..32, a as u32);
         Pixel(color, PhantomData)
     }
 }
