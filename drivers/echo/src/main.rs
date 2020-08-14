@@ -6,7 +6,7 @@ extern crate rlibc;
 
 use core::panic::PanicInfo;
 use libpebble::{
-    caps::{CapabilitiesRepr, CAP_EARLY_LOGGING, CAP_PADDING},
+    caps::{CapabilitiesRepr, CAP_EARLY_LOGGING, CAP_PADDING, CAP_SERVICE_PROVIDER},
     early_logger::EarlyLogger,
     syscall,
 };
@@ -52,4 +52,4 @@ fn alloc_error(layout: core::alloc::Layout) -> ! {
 #[used]
 #[link_section = ".caps"]
 pub static mut CAPS: CapabilitiesRepr<4> =
-    CapabilitiesRepr::new([CAP_EARLY_LOGGING, CAP_PADDING, CAP_PADDING, CAP_PADDING]);
+    CapabilitiesRepr::new([CAP_EARLY_LOGGING, CAP_SERVICE_PROVIDER, CAP_PADDING, CAP_PADDING]);
