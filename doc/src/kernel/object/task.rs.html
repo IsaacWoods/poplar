@@ -157,6 +157,8 @@
 <span id="156">156</span>
 <span id="157">157</span>
 <span id="158">158</span>
+<span id="159">159</span>
+<span id="160">160</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="kw">use</span> <span class="kw">super</span>::{<span class="ident">address_space</span>::<span class="ident">AddressSpace</span>, <span class="ident">alloc_kernel_object_id</span>, <span class="ident">KernelObject</span>, <span class="ident">KernelObjectId</span>};
 <span class="kw">use</span> <span class="kw">crate</span>::{
@@ -305,6 +307,8 @@
 
             <span class="number">0x30</span> <span class="op">=&gt;</span> <span class="macro">one_byte_cap</span><span class="macro">!</span>(<span class="ident">Capability</span>::<span class="ident">GetFramebuffer</span>),
             <span class="number">0x31</span> <span class="op">=&gt;</span> <span class="macro">one_byte_cap</span><span class="macro">!</span>(<span class="ident">Capability</span>::<span class="ident">EarlyLogging</span>),
+            <span class="number">0x32</span> <span class="op">=&gt;</span> <span class="macro">one_byte_cap</span><span class="macro">!</span>(<span class="ident">Capability</span>::<span class="ident">ServiceProvider</span>),
+            <span class="number">0x33</span> <span class="op">=&gt;</span> <span class="macro">one_byte_cap</span><span class="macro">!</span>(<span class="ident">Capability</span>::<span class="ident">ServiceUser</span>),
 
             <span class="comment">// We skip `0x00` as the first byte of a capability, as it is just used to pad the</span>
             <span class="comment">// stream and so has no meaning</span>
