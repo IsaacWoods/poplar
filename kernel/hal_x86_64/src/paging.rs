@@ -353,6 +353,8 @@ impl PageTable<Size4KiB> for PageTableImpl {
 
             p2[page.start.p2_index()].set(Some((frame.start, EntryFlags::from(flags) | EntryFlags::HUGE_PAGE)));
         } else {
+            assert_eq!(S::SIZE, Size1GiB::SIZE);
+
             let p3 = Self::p4_mut(&mut self.p4_frame, self.physical_base).next_table_create(
                 page.start.p4_index(),
                 allocator,
@@ -385,98 +387,71 @@ impl PageTable<Size4KiB> for PageTableImpl {
     where
         A: FrameAllocator<Size4KiB>,
     {
-        use hal::memory::split_region;
+        use pebble_util::math::align_down;
 
         assert!(virtual_start.is_aligned(Size4KiB::SIZE));
         assert!(physical_start.is_aligned(Size4KiB::SIZE));
         assert!(size % Size4KiB::SIZE == 0);
 
-        let offset_physical = |virtual_address| {
-            PhysicalAddress::new(
-                usize::from(virtual_address) - usize::from(virtual_start) + usize::from(physical_start),
+        /*
+         * TODO: if we detect that there is a fundamental alignement issue between the physical and virtual
+         * addresses, or if the region is smaller than 2MiB, just map the thing with 4KiB pages.
+         */
+        let mut cursor = virtual_start;
+        while cursor < (virtual_start + size) {
+            let cursor_physical = PhysicalAddress::new(
+                usize::from(physical_start) + usize::from(cursor) - usize::from(virtual_start),
             )
-            .unwrap()
-        };
+            .unwrap();
+            let bytes_left = size - (usize::from(cursor) - usize::from(virtual_start));
 
-        /*
-         * First, we extract a range that we can map with 1GiB pages, if there is one.
-         */
-        let (head, aligned_1GiB, tail) = split_region::<Size1GiB>(virtual_start..(virtual_start + size));
-        aligned_1GiB.map_or(Ok(()), |region| {
-            let pages = Page::starts_with(region.start)..Page::starts_with(region.end);
-            let frames =
-                Frame::starts_with(offset_physical(region.start))..Frame::starts_with(offset_physical(region.end));
-            self.map_range::<Size1GiB, A>(pages, frames, flags, allocator)
-        })?;
+            if cursor.is_aligned(Size1GiB::SIZE)
+                && cursor_physical.is_aligned(Size1GiB::SIZE)
+                && bytes_left >= Size1GiB::SIZE
+            {
+                /*
+                 * We can fit at least 1GiB page in, and both virtual and physical cursors have the correct
+                 * alignment. Map as much as we can with 1GiB pages.
+                 */
+                let bytes_to_map = align_down(bytes_left, Size1GiB::SIZE);
+                let pages = Page::starts_with(cursor)..Page::starts_with(cursor + bytes_to_map);
+                let frames =
+                    Frame::starts_with(cursor_physical)..Frame::starts_with(cursor_physical + bytes_to_map);
+                self.map_range::<Size1GiB, A>(pages, frames, flags, allocator)?;
+                cursor += bytes_to_map;
+            } else if cursor.is_aligned(Size2MiB::SIZE)
+                && cursor_physical.is_aligned(Size2MiB::SIZE)
+                && bytes_left >= Size2MiB::SIZE
+            {
+                /*
+                 * We couldn't use a 1GiB page, but we can use 2MiB pages! Map as much as we can.
+                 */
+                let bytes_to_map = align_down(bytes_left, Size2MiB::SIZE);
+                let pages = Page::starts_with(cursor)..Page::starts_with(cursor + bytes_to_map);
+                let frames =
+                    Frame::starts_with(cursor_physical)..Frame::starts_with(cursor_physical + bytes_to_map);
+                self.map_range::<Size2MiB, A>(pages, frames, flags, allocator)?;
+                cursor += bytes_to_map;
+            } else {
+                /*
+                 * We can't use any larger pages, but we might be able to further in, if the data becomes more
+                 * aligned. See if there's enough left to align it to the next 2MiB boundary.
+                 */
+                let next_boundary = cursor.align_up(Size2MiB::SIZE);
+                let bytes_to_map = if (usize::from(next_boundary) - usize::from(virtual_start)) <= bytes_left {
+                    size - (usize::from(next_boundary) - usize::from(virtual_start))
+                } else {
+                    bytes_left
+                };
+                let pages = Page::starts_with(cursor)..Page::starts_with(cursor + bytes_to_map);
+                let frames =
+                    Frame::starts_with(cursor_physical)..Frame::starts_with(cursor_physical + bytes_to_map);
+                self.map_range::<Size4KiB, A>(pages, frames, flags, allocator)?;
+                cursor += bytes_to_map;
+            }
+        }
 
-        /*
-         * Next, if there is a head or a tail, we split those into 2MiB areas, and then map the rest of it (if
-         * there is any left) with 4KiB pages.
-         */
-        head.map_or(Ok(()), |region| {
-            let (head_4KiB, aligned_2MiB, tail_4KiB) = split_region::<Size2MiB>(region.start..region.end);
-
-            /*
-             * Map the 2MiB area, if it exists.
-             */
-            aligned_2MiB.map_or(Ok(()), |region| {
-                let pages = Page::starts_with(region.start)..Page::starts_with(region.end);
-                let frames = Frame::starts_with(offset_physical(region.start))
-                    ..Frame::starts_with(offset_physical(region.end));
-                self.map_range::<Size2MiB, A>(pages, frames, flags, allocator)
-            })?;
-
-            /*
-             * Map the head and tail regions with 4KiB, if they exist.
-             */
-            head_4KiB.map_or(Ok(()), |region| {
-                let pages = Page::starts_with(region.start)..Page::starts_with(region.end);
-                let frames = Frame::starts_with(offset_physical(region.start))
-                    ..Frame::starts_with(offset_physical(region.end));
-                self.map_range::<Size4KiB, A>(pages, frames, flags, allocator)
-            })?;
-            tail_4KiB.map_or(Ok(()), |region| {
-                let pages = Page::starts_with(region.start)..Page::starts_with(region.end);
-                let frames = Frame::starts_with(offset_physical(region.start))
-                    ..Frame::starts_with(offset_physical(region.end));
-                self.map_range::<Size4KiB, A>(pages, frames, flags, allocator)
-            })?;
-
-            Ok(())
-        })?;
-        // TODO: this is identical to the code above - can we do a `for_each` or something?
-        tail.map_or(Ok(()), |region| {
-            let (head_4KiB, aligned_2MiB, tail_4KiB) = split_region::<Size2MiB>(region.start..region.end);
-
-            /*
-             * Map the 2MiB area, if it exists.
-             */
-            aligned_2MiB.map_or(Ok(()), |region| {
-                let pages = Page::starts_with(region.start)..Page::starts_with(region.end);
-                let frames = Frame::starts_with(offset_physical(region.start))
-                    ..Frame::starts_with(offset_physical(region.end));
-                self.map_range::<Size2MiB, A>(pages, frames, flags, allocator)
-            })?;
-
-            /*
-             * Map the head and tail regions with 4KiB, if they exist.
-             */
-            head_4KiB.map_or(Ok(()), |region| {
-                let pages = Page::starts_with(region.start)..Page::starts_with(region.end);
-                let frames = Frame::starts_with(offset_physical(region.start))
-                    ..Frame::starts_with(offset_physical(region.end));
-                self.map_range::<Size4KiB, A>(pages, frames, flags, allocator)
-            })?;
-            tail_4KiB.map_or(Ok(()), |region| {
-                let pages = Page::starts_with(region.start)..Page::starts_with(region.end);
-                let frames = Frame::starts_with(offset_physical(region.start))
-                    ..Frame::starts_with(offset_physical(region.end));
-                self.map_range::<Size4KiB, A>(pages, frames, flags, allocator)
-            })?;
-
-            Ok(())
-        })?;
-
+        assert_eq!(cursor, virtual_start + size);
         Ok(())
     }
 

@@ -111,29 +111,6 @@ where
         S: FrameSize;
 }
 
-/// Split an address range into three ranges - one that is aligned to the given `FrameSize`, and a range either
-/// side of it that is not. This is useful for splitting an arbitrary region into a part that can be mapped with
-/// larger frames, and parts that can not.
-pub fn split_region<S>(
-    range: Range<VirtualAddress>,
-) -> (Option<Range<VirtualAddress>>, Option<Range<VirtualAddress>>, Option<Range<VirtualAddress>>)
-where
-    S: FrameSize,
-{
-    let aligned_start = range.start.align_up(S::SIZE);
-    let aligned_end = range.end.align_down(S::SIZE);
-
-    if aligned_start <= range.end && aligned_end >= range.start {
-        (
-            if aligned_start == range.start { None } else { Some(range.start..aligned_start) },
-            if aligned_start == aligned_end { None } else { Some(aligned_start..aligned_end) },
-            if aligned_end == range.end { None } else { Some(aligned_end..range.end) },
-        )
-    } else {
-        (Some(range.start..range.end), None, None)
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -157,57 +134,6 @@ mod tests {
         assert_eq!(
             Flags { cached: false, ..Default::default() } + Flags { cached: false, ..Default::default() },
             Flags { cached: false, ..Default::default() }
-        );
-    }
-
-    #[test]
-    fn test_split_region() {
-        /*
-         * Test "splitting" a bunch of 4KiB pages.
-         */
-        assert_eq!(
-            split_region::<Size4KiB>(VirtualAddress::new(0x6000)..VirtualAddress::new(0xa4000)),
-            (None, Some(VirtualAddress::new(0x6000)..VirtualAddress::new(0xa4000)), None)
-        );
-
-        /*
-         * Split a large region into a 2MiB-aligned section with a tail.
-         */
-        assert_eq!(
-            split_region::<Size2MiB>(VirtualAddress::new(0x0)..VirtualAddress::new(0x400000 + 0xf000)),
-            (
-                None,
-                Some(VirtualAddress::new(0x0)..VirtualAddress::new(0x400000)),
-                Some(VirtualAddress::new(0x400000)..VirtualAddress::new(0x40f000))
-            )
-        );
-
-        /*
-         * Split a large region into a 2MiB-aligned section with both a head and a tail.
-         */
-        assert_eq!(
-            split_region::<Size2MiB>(
-                VirtualAddress::new(0x200000 - 0x4000)..VirtualAddress::new(0x800000 + 0x13000)
-            ),
-            (
-                Some(VirtualAddress::new(0x1fc000)..VirtualAddress::new(0x200000)),
-                Some(VirtualAddress::new(0x200000)..VirtualAddress::new(0x800000)),
-                Some(VirtualAddress::new(0x800000)..VirtualAddress::new(0x813000))
-            )
-        );
-
-        /*
-         * Split a region of more than 1GiB with both a head and tail.
-         */
-        assert_eq!(
-            split_region::<Size1GiB>(
-                VirtualAddress::new(0x40000000 - 0x435000)..VirtualAddress::new(0x100000000 + 0x6000)
-            ),
-            (
-                Some(VirtualAddress::new(0x3fbcb000)..VirtualAddress::new(0x40000000)),
-                Some(VirtualAddress::new(0x40000000)..VirtualAddress::new(0x100000000)),
-                Some(VirtualAddress::new(0x100000000)..VirtualAddress::new(0x100006000))
-            )
         );
     }
 }

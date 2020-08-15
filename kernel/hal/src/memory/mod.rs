@@ -13,7 +13,7 @@ mod virtual_address;
 
 pub use frame::Frame;
 pub use page::Page;
-pub use paging::{split_region, Flags, PageTable, PagingError};
+pub use paging::{Flags, PageTable, PagingError};
 pub use physical_address::PhysicalAddress;
 pub use virtual_address::VirtualAddress;
 
