@@ -471,7 +471,7 @@
          * If the AddressSpace handle is the zero handle, we map the MemoryObject into the calling task&#39;s
          * address space.
          */</span>
-        <span class="ident">task</span>.<span class="ident">address_space</span>.<span class="ident">clone</span>()
+        <span class="ident">task</span>.<span class="ident">address_space</span>.<span class="ident">map_memory_object</span>(<span class="ident">memory_object</span>.<span class="ident">clone</span>(), <span class="kw-2">&amp;</span><span class="kw">crate</span>::<span class="ident">PHYSICAL_MEMORY_MANAGER</span>.<span class="ident">get</span>())<span class="question-mark">?</span>;
     } <span class="kw">else</span> {
         <span class="ident">task</span>.<span class="ident">handles</span>
             .<span class="ident">read</span>()
@@ -481,8 +481,8 @@
             .<span class="ident">downcast_arc</span>::<span class="op">&lt;</span><span class="ident">AddressSpace</span><span class="op">&lt;</span><span class="ident">P</span><span class="op">&gt;&gt;</span>()
             .<span class="ident">ok</span>()
             .<span class="ident">ok_or</span>(<span class="ident">MapMemoryObjectError</span>::<span class="ident">NotAnAddressSpace</span>)<span class="question-mark">?</span>
+            .<span class="ident">map_memory_object</span>(<span class="ident">memory_object</span>.<span class="ident">clone</span>(), <span class="kw-2">&amp;</span><span class="kw">crate</span>::<span class="ident">PHYSICAL_MEMORY_MANAGER</span>.<span class="ident">get</span>())<span class="question-mark">?</span>;
     }
-    .<span class="ident">map_memory_object</span>(<span class="ident">memory_object</span>.<span class="ident">clone</span>(), <span class="kw-2">&amp;</span><span class="kw">crate</span>::<span class="ident">PHYSICAL_MEMORY_MANAGER</span>.<span class="ident">get</span>())<span class="question-mark">?</span>;
 
     <span class="comment">/*
      * An address pointer of `0` signals to the kernel that the caller does not need to know the virtual
