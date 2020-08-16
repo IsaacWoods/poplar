@@ -425,6 +425,9 @@ impl PageTable<Size4KiB> for PageTableImpl {
             {
                 /*
                  * We couldn't use a 1GiB page, but we can use 2MiB pages! Map as much as we can.
+                 *
+                 * TODO: we could do a similar thing to below to check if we can use 1GiB pages further in, but
+                 * it's probably unlikely enough that it's not really worth it.
                  */
                 let bytes_to_map = align_down(bytes_left, Size2MiB::SIZE);
                 let pages = Page::starts_with(cursor)..Page::starts_with(cursor + bytes_to_map);
@@ -435,11 +438,13 @@ impl PageTable<Size4KiB> for PageTableImpl {
             } else {
                 /*
                  * We can't use any larger pages, but we might be able to further in, if the data becomes more
-                 * aligned. See if there's enough left to align it to the next 2MiB boundary.
+                 * aligned. If the next 2MiB-aligned address is still inside the range, stop there to have another
+                 * go.
+                 * NOTE: `cursor` might be 2MiB-aligned at this location, so we start from the next address so we don't get stuck here.
                  */
-                let next_boundary = cursor.align_up(Size2MiB::SIZE);
-                let bytes_to_map = if (usize::from(next_boundary) - usize::from(virtual_start)) <= bytes_left {
-                    size - (usize::from(next_boundary) - usize::from(virtual_start))
+                let next_boundary = (cursor + 1).align_up(Size2MiB::SIZE);
+                let bytes_to_map = if next_boundary <= (virtual_start + size) {
+                    bytes_left - (usize::from(virtual_start) + size - usize::from(next_boundary))
                 } else {
                     bytes_left
                 };
