@@ -66,7 +66,8 @@ impl InterruptController {
         unsafe {
             IDT.nmi().set_handler(wrap_handler!(exception::nmi_handler), KERNEL_CODE_SELECTOR);
             IDT.breakpoint().set_handler(wrap_handler!(exception::breakpoint_handler), KERNEL_CODE_SELECTOR);
-            IDT.invalid_opcode().set_handler(wrap_handler!(exception::nmi_handler), KERNEL_CODE_SELECTOR);
+            IDT.invalid_opcode()
+                .set_handler(wrap_handler!(exception::invalid_opcode_handler), KERNEL_CODE_SELECTOR);
             IDT.general_protection_fault().set_handler(
                 wrap_handler_with_error_code!(exception::general_protection_fault_handler),
                 KERNEL_CODE_SELECTOR,
