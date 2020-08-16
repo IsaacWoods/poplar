@@ -179,7 +179,7 @@ where
          * If the AddressSpace handle is the zero handle, we map the MemoryObject into the calling task's
          * address space.
          */
-        task.address_space.clone()
+        task.address_space.map_memory_object(memory_object.clone(), &crate::PHYSICAL_MEMORY_MANAGER.get())?;
     } else {
         task.handles
             .read()
@@ -189,8 +189,8 @@ where
             .downcast_arc::<AddressSpace<P>>()
             .ok()
             .ok_or(MapMemoryObjectError::NotAnAddressSpace)?
+            .map_memory_object(memory_object.clone(), &crate::PHYSICAL_MEMORY_MANAGER.get())?;
     }
-    .map_memory_object(memory_object.clone(), &crate::PHYSICAL_MEMORY_MANAGER.get())?;
 
     /*
      * An address pointer of `0` signals to the kernel that the caller does not need to know the virtual
