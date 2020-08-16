@@ -102,8 +102,19 @@
 <span id="101">101</span>
 <span id="102">102</span>
 <span id="103">103</span>
+<span id="104">104</span>
+<span id="105">105</span>
+<span id="106">106</span>
+<span id="107">107</span>
+<span id="108">108</span>
+<span id="109">109</span>
+<span id="110">110</span>
+<span id="111">111</span>
+<span id="112">112</span>
+<span id="113">113</span>
+<span id="114">114</span>
 </pre><div class="example-wrap"><pre class="rust ">
-<span class="kw">use</span> <span class="ident">core</span>::<span class="ident">mem</span>;
+<span class="kw">use</span> <span class="ident">core</span>::{<span class="ident">mem</span>, <span class="ident">ops</span>};
 
 <span class="doccomment">/// Fast integer `log2` that floors to the lower power-of-2 if `x` is not a power-of-2. `x`</span>
 <span class="doccomment">/// must not be 0.</span>
@@ -205,6 +216,17 @@
     <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">ceiling_integer_divide</span>(<span class="number">10</span>, <span class="number">5</span>), <span class="number">2</span>);
     <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">ceiling_integer_divide</span>(<span class="number">11</span>, <span class="number">5</span>), <span class="number">3</span>);
     <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">ceiling_integer_divide</span>(<span class="number">0</span>, <span class="number">5</span>), <span class="number">0</span>);
+}
+
+<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">abs_difference</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span>(<span class="ident">a</span>: <span class="ident">T</span>, <span class="ident">b</span>: <span class="ident">T</span>) <span class="op">-&gt;</span> <span class="ident">T</span>
+<span class="kw">where</span>
+    <span class="ident">T</span>: <span class="ident">Ord</span> <span class="op">+</span> <span class="ident">ops</span>::<span class="ident">Sub</span><span class="op">&lt;</span><span class="ident">Output</span> <span class="op">=</span> <span class="ident">T</span><span class="op">&gt;</span>,
+{
+    <span class="kw">if</span> <span class="ident">a</span> <span class="op">&gt;</span> <span class="ident">b</span> {
+        <span class="ident">a</span> <span class="op">-</span> <span class="ident">b</span>
+    } <span class="kw">else</span> {
+        <span class="ident">b</span> <span class="op">-</span> <span class="ident">a</span>
+    }
 }
 </pre></div>
 </section><section id="search" class="content hidden"></section><section class="footer"></section><script>window.rootPath = "../../";window.currentCrate = "pebble_util";</script><script src="../../main.js"></script><script src="../../source-script.js"></script><script src="../../source-files.js"></script><script defer src="../../search-index.js"></script></body></html>
