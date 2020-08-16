@@ -1,4 +1,4 @@
-use core::mem;
+use core::{mem, ops};
 
 /// Fast integer `log2` that floors to the lower power-of-2 if `x` is not a power-of-2. `x`
 /// must not be 0.
@@ -100,4 +100,15 @@ fn test_ceiling_integer_divide() {
     assert_eq!(ceiling_integer_divide(10, 5), 2);
     assert_eq!(ceiling_integer_divide(11, 5), 3);
     assert_eq!(ceiling_integer_divide(0, 5), 0);
+}
+
+pub fn abs_difference<T>(a: T, b: T) -> T
+where
+    T: Ord + ops::Sub<Output = T>,
+{
+    if a > b {
+        a - b
+    } else {
+        b - a
+    }
 }

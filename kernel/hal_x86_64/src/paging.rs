@@ -387,16 +387,25 @@ impl PageTable<Size4KiB> for PageTableImpl {
     where
         A: FrameAllocator<Size4KiB>,
     {
-        use pebble_util::math::align_down;
+        use pebble_util::math::{abs_difference, align_down};
 
         assert!(virtual_start.is_aligned(Size4KiB::SIZE));
         assert!(physical_start.is_aligned(Size4KiB::SIZE));
         assert!(size % Size4KiB::SIZE == 0);
 
         /*
-         * TODO: if we detect that there is a fundamental alignement issue between the physical and virtual
-         * addresses, or if the region is smaller than 2MiB, just map the thing with 4KiB pages.
+         * If the area is smaller than a single 2MiB page, or if the alignment of the physical and virtual regions
+         * means we'll never be able to use larger pages, just map the whole area with 4KiB pages.
          */
+        let align_mismatch =
+            abs_difference(usize::from(physical_start), usize::from(virtual_start)) % Size2MiB::SIZE != 0;
+        if size < Size2MiB::SIZE || align_mismatch {
+            log::trace!("Just mapping with 4KiB pages");
+            let pages = Page::starts_with(virtual_start)..Page::starts_with(virtual_start + size);
+            let frames = Frame::starts_with(physical_start)..Frame::starts_with(physical_start + size);
+            return self.map_range::<Size4KiB, A>(pages, frames, flags, allocator);
+        }
+
         let mut cursor = virtual_start;
         while cursor < (virtual_start + size) {
             let cursor_physical = PhysicalAddress::new(
