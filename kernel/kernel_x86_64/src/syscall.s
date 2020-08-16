@@ -9,11 +9,11 @@
  *    - has put the `rip` to return to in `rcx`
  *    - has put the `rflags` to return with in `r11`, masked with `IA32_FMASK`
  *    - does not save `rsp`. It is our responsibility to deal with the stack(s).
- * 
+ *
  * Because we are using the System-V ABI:
  *    - `rbp`, `rbx`, `r12`, `r13`, `r14`, and `r15` must be preserved
  *    - Other registers may be clobbered
- * 
+ *
  * Values of registers for syscall instructions.
  *     rdi = number
  *     rsi = a

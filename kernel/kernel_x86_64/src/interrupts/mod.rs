@@ -3,7 +3,6 @@ mod pci;
 
 use acpi::{interrupt::InterruptModel, Acpi};
 use aml::{value::Args as AmlArgs, AmlContext, AmlName, AmlValue};
-use bit_field::BitField;
 use core::time::Duration;
 use hal::memory::PhysicalAddress;
 use hal_x86_64::{
@@ -13,23 +12,12 @@ use hal_x86_64::{
         i8259_pic::Pic,
         idt::{wrap_handler, wrap_handler_with_error_code, Idt, InterruptStackFrame},
         local_apic::LocalApic,
-        registers::write_msr,
     },
     kernel_map,
 };
 use log::warn;
 use pci::PciResolver;
 use pebble_util::InitGuard;
-
-global_asm!(include_str!("syscall.s"));
-extern "C" {
-    fn syscall_handler() -> !;
-}
-
-#[no_mangle]
-extern "C" fn rust_syscall_entry(number: usize, a: usize, b: usize, c: usize, d: usize, e: usize) -> usize {
-    kernel::syscall::handle_syscall::<crate::PlatformImpl>(number, a, b, c, d, e)
-}
 
 /// This should only be accessed directly by the bootstrap processor.
 ///
@@ -82,9 +70,6 @@ impl InterruptController {
     }
 
     pub fn init(acpi_info: &Acpi, aml_context: &mut AmlContext) -> InterruptController {
-        Self::install_syscall_handler();
-
-
         match acpi_info.interrupt_model.as_ref().unwrap() {
             InterruptModel::Apic(info) => {
                 if info.also_has_legacy_pics {
@@ -150,75 +135,6 @@ impl InterruptController {
                 LOCAL_APIC.get().enable_timer(period.as_millis() as u32, apic_frequency, APIC_TIMER_VECTOR);
             }
             None => warn!("Couldn't find frequency of APIC from cpuid. Local APIC timer not enabled!"),
-        }
-    }
-
-    /// We use the `syscall` instruction to make system calls, as it's always present on supported systems. We need
-    /// to set a few MSRs to configure how the `syscall` instruction works:
-    ///     - `IA32_LSTAR` contains the address that `syscall` jumps to
-    ///     - `IA32_STAR` contains the segment selectors that `syscall` and `sysret` use. These are not validated
-    ///       against the actual contents of the GDT so these must be correct.
-    ///     - `IA32_FMASK` contains a mask used to set the kernels `rflags`
-    ///
-    /// To understand the values we set these MSRs to, it helps to look at a (simplified) version of the operation
-    /// of `syscall`:
-    /// ```
-    ///     rcx <- rip
-    ///     rip <- IA32_LSTAR
-    ///     r11 <- rflags
-    ///     rflags <- rflags AND NOT(IA32_FMASK)
-    ///
-    ///     cs.selector <- IA32_STAR[47:32] AND 0xfffc          (the AND forces the RPL to 0)
-    ///     cs.base <- 0                                        (note that for speed, the selector is not actually
-    ///     cs.limit <- 0xfffff                                  loaded from the GDT, but hardcoded)
-    ///     cs.type <- 11;
-    ///     (some other fields of the selector, see Intel manual for details)
-    ///
-    ///     cpl <- 0
-    ///
-    ///     ss.selector <- IA32_STAR[47:32] + 8
-    ///     ss.base <- 0
-    ///     ss.limit <- 0xfffff
-    ///     ss.type <- 3
-    ///     (some other fields of the selector)
-    /// ```
-    fn install_syscall_handler() {
-        use hal_x86_64::hw::{
-            gdt::USER_COMPAT_CODE_SELECTOR,
-            registers::{CpuFlags, IA32_FMASK, IA32_LSTAR, IA32_STAR},
-        };
-
-        let mut selectors = 0_u64;
-        selectors.set_bits(32..48, KERNEL_CODE_SELECTOR.0 as u64);
-
-        /*
-         * We put the selector for the Compatibility-mode code segment in here, because `sysret` expects
-         * the segments to be in this order:
-         *      STAR[48..64]        => 32-bit Code Segment
-         *      STAR[48..64] + 8    => Data Segment
-         *      STAR[48..64] + 16   => 64-bit Code Segment
-         */
-        selectors.set_bits(48..64, USER_COMPAT_CODE_SELECTOR.0 as u64);
-
-        /*
-         * Upon `syscall`, `rflags` is moved into `r11`, and then the bits set in this mask are cleared. We
-         * clear some stuff so the kernel runs in a sensible environment, regardless of what usermode is
-         * doing.
-         *
-         * Importantly, we disable interrupts because they're not safe until we've stopped messing about with
-         * stacks.
-         */
-        let flags_mask = CpuFlags::STATUS_MASK
-            | CpuFlags::TRAP_FLAG
-            | CpuFlags::INTERRUPT_ENABLE_FLAG
-            | CpuFlags::IO_PRIVILEGE_MASK
-            | CpuFlags::NESTED_TASK_FLAG
-            | CpuFlags::ALIGNMENT_CHECK_FLAG;
-
-        unsafe {
-            write_msr(IA32_STAR, selectors);
-            write_msr(IA32_LSTAR, syscall_handler as u64);
-            write_msr(IA32_FMASK, flags_mask);
         }
     }
 }
