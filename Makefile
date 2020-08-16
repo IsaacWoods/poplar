@@ -17,10 +17,8 @@ QEMU_COMMON_FLAGS = -cpu max,vmware-cpuid-freq,invtsc \
 					-drive if=pflash,format=raw,file=ovmf/OVMF_CODE.fd,readonly \
 					-drive if=pflash,format=raw,file=ovmf/OVMF_VARS.fd \
 					-drive if=ide,format=raw,file=$(IMAGE_NAME) \
-					-serial stdio \
 					-usb \
-					-net none \
-					-display none
+					-net none
 # This can be used to pass extra flags to QEMU
 QEMU_EXTRA_FLAGS ?=
 
@@ -99,10 +97,16 @@ qemu: image_$(PLATFORM)
 	$(QEMU_DIR)qemu-system-x86_64 \
 		$(QEMU_COMMON_FLAGS) \
 		$(QEMU_EXTRA_FLAGS) \
-		-enable-kvm
+		-enable-kvm \
+		-serial stdio \
+		-display none
 
 qemu-no-kvm: image_$(PLATFORM)
-	$(QEMU_DIR)qemu-system-x86_64 $(QEMU_COMMON_FLAGS) $(QEMU_EXTRA_FLAGS)
+	$(QEMU_DIR)qemu-system-x86_64 \
+		$(QEMU_COMMON_FLAGS) \
+		$(QEMU_EXTRA_FLAGS) \
+		-serial stdio \
+		-display none
 
 debug: image_$(PLATFORM)
 	$(QEMU_DIR)qemu-system-x86_64 \
