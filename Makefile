@@ -14,8 +14,8 @@ QEMU_COMMON_FLAGS = -cpu max,vmware-cpuid-freq,invtsc \
 					-device usb-ehci,id=ehci,bus=pcie.0 \
 					--no-reboot \
 					--no-shutdown \
-					-drive if=pflash,format=raw,file=ovmf/OVMF_CODE.fd,readonly \
-					-drive if=pflash,format=raw,file=ovmf/OVMF_VARS.fd \
+					-drive if=pflash,format=raw,file=bundled/ovmf/OVMF_CODE.fd,readonly \
+					-drive if=pflash,format=raw,file=bundled/ovmf/OVMF_VARS.fd \
 					-drive if=ide,format=raw,file=$(IMAGE_NAME) \
 					-usb \
 					-net none
