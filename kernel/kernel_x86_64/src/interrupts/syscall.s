@@ -24,9 +24,6 @@
  * This is only different from the Sys-V ABI in that `c` is in `r10` and not `rcx` (because `rcx` is being
  * used by syscall). To call into the Rust function (as long as it is using the C ABI), we only need to
  * move that one parameter.
- * 
- * TODO: I think this leaks some kernel addresses to userspace (such as the task's kernel stack
- * address!). We should probably zero some registers.
  */
 .global syscall_handler
 syscall_handler:
