@@ -12,7 +12,7 @@ mod per_cpu;
 mod task;
 mod topo;
 
-use acpi_handler::PebbleAcpiHandler;
+use acpi_handler::{AmlHandler, PebbleAcpiHandler};
 use alloc::boxed::Box;
 use aml::AmlContext;
 use core::{panic::PanicInfo, pin::Pin};
@@ -20,11 +20,7 @@ use hal::{
     boot_info::BootInfo,
     memory::{Frame, PhysicalAddress, VirtualAddress},
 };
-use hal_x86_64::{
-    hw::{cpu::CpuInfo, registers::read_control_reg},
-    kernel_map,
-    paging::PageTableImpl,
-};
+use hal_x86_64::{hw::registers::read_control_reg, kernel_map, paging::PageTableImpl};
 use interrupts::InterruptController;
 use kernel::{
     memory::{KernelStackAllocator, PhysicalMemoryManager},
@@ -150,7 +146,7 @@ pub extern "C" fn kentry(boot_info: &BootInfo) -> ! {
      * Parse the DSDT.
      */
     // TODO: if we're on ACPI 1.0 - pass true as legacy mode.
-    let mut aml_context = AmlContext::new(false, aml::DebugVerbosity::Scopes);
+    let mut aml_context = AmlContext::new(Box::new(AmlHandler), false, aml::DebugVerbosity::None);
     if let Some(ref dsdt_info) = acpi_info.dsdt {
         let virtual_address = kernel_map::physical_to_virtual(PhysicalAddress::new(dsdt_info.address).unwrap());
         info!(
