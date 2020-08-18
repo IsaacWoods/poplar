@@ -30,7 +30,6 @@ jobs:
       run: |
         sudo apt-get install mtools
         sudo apt-get install qemu
-        cargo install cargo-xbuild
         
     - name: Build
       run: KERNEL_FLAGS='--features qemu_exit' make
