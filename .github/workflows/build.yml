@@ -41,4 +41,3 @@ jobs:
       run: |
         qemu-system-x86_64 --version
         KERNEL_FLAGS='--features qemu_exit' QEMU_EXTRA_FLAGS='-display none' make qemu-no-kvm
-      timeout-minutes: 60
