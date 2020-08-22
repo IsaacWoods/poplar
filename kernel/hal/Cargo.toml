@@ -7,3 +7,4 @@ edition = "2018"
 [dependencies]
 cfg-if = "0.1"
 log = "0.4"
+bit_field = "0.10"
