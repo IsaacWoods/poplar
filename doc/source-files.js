@@ -2,7 +2,7 @@ var N = null;var sourcesIndex = {};
 sourcesIndex["bit_field"] = {"name":"","files":["lib.rs"]};
 sourcesIndex["bitflags"] = {"name":"","files":["lib.rs"]};
 sourcesIndex["cfg_if"] = {"name":"","files":["lib.rs"]};
-sourcesIndex["hal"] = {"name":"","dirs":[{"name":"memory","files":["frame.rs","mod.rs","page.rs","paging.rs","physical_address.rs","virtual_address.rs"]}],"files":["boot_info.rs","lib.rs"]};
+sourcesIndex["hal"] = {"name":"","dirs":[{"name":"memory","files":["frame.rs","mod.rs","page.rs","paging.rs","physical_address.rs","virtual_address.rs"]}],"files":["boot_info.rs","lib.rs","pci.rs"]};
 sourcesIndex["kernel"] = {"name":"","dirs":[{"name":"memory","files":["buddy_allocator.rs","kernel_stack_allocator.rs","mod.rs","slab_allocator.rs"]},{"name":"object","files":["address_space.rs","channel.rs","memory_object.rs","mod.rs","task.rs"]},{"name":"syscall","files":["mod.rs","validation.rs"]}],"files":["heap_allocator.rs","lib.rs","per_cpu.rs","scheduler.rs"]};
 sourcesIndex["libpebble"] = {"name":"","dirs":[{"name":"syscall","files":["get_framebuffer.rs","mod.rs","raw_x86_64.rs","result.rs"]}],"files":["caps.rs","lib.rs"]};
 sourcesIndex["log"] = {"name":"","files":["lib.rs","macros.rs"]};
