@@ -8,6 +8,7 @@ extern crate rlibc;
 mod acpi_handler;
 mod interrupts;
 mod logger;
+mod pci;
 mod per_cpu;
 mod task;
 mod topo;
@@ -27,6 +28,7 @@ use kernel::{
     Platform,
 };
 use log::{error, info};
+use pci::PciResolver;
 use topo::Topology;
 
 pub struct PlatformImpl {
@@ -163,6 +165,11 @@ pub extern "C" fn kentry(boot_info: &BootInfo) -> ! {
         info!("----- Finished AML namespace -----");
     }
 
+    /*
+     * Resolve all the PCI info.
+     * XXX: not sure this is the right place to do this just yet.
+     */
+    let pci_info = PciResolver::resolve(acpi_info.pci_config_regions.as_ref().unwrap(), aml_context);
 
     /*
      * Initialise the interrupt controller, which enables interrupts, and start the per-cpu timer.

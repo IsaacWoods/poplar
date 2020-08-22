@@ -1,5 +1,4 @@
 mod exception;
-mod pci;
 
 use acpi::{interrupt::InterruptModel, Acpi};
 use aml::{value::Args as AmlArgs, AmlContext, AmlName, AmlValue};
@@ -16,7 +15,6 @@ use hal_x86_64::{
     kernel_map,
 };
 use log::warn;
-use pci::PciResolver;
 use pebble_util::InitGuard;
 
 /// This should only be accessed directly by the bootstrap processor.
@@ -97,12 +95,6 @@ impl InterruptController {
                         AmlArgs { arg_0: Some(AmlValue::Integer(1)), ..Default::default() },
                     )
                     .expect("Failed to invoke \\_PIC method");
-
-                /*
-                 * Resolve all the PCI info.
-                 * XXX: not sure this is the right place to do this just yet.
-                 */
-                let pci_info = PciResolver::resolve(acpi_info.pci_config_regions.as_ref().unwrap(), aml_context);
 
                 /*
                  * Install handlers for the spurious interrupt and local APIC timer, and then
