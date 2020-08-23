@@ -143,13 +143,14 @@ pub extern "C" fn kentry(boot_info: &BootInfo) -> ! {
      * boot processor.
      */
     let topology = topo::build_topology(&acpi_info);
-    let pci_access = pci::EcamAccess::new(acpi_info.pci_config_regions.as_ref().unwrap());
+    let pci_access = pci::EcamAccess::new(acpi_info.pci_config_regions.clone().unwrap());
 
     /*
      * Parse the DSDT.
      */
     // TODO: if we're on ACPI 1.0 - pass true as legacy mode.
-    let mut aml_context = AmlContext::new(Box::new(AmlHandler), false, aml::DebugVerbosity::None);
+    let mut aml_context =
+        AmlContext::new(Box::new(AmlHandler::new(pci_access.clone())), false, aml::DebugVerbosity::None);
     if let Some(ref dsdt_info) = acpi_info.dsdt {
         let virtual_address = kernel_map::physical_to_virtual(PhysicalAddress::new(dsdt_info.address).unwrap());
         info!(
