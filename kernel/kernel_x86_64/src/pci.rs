@@ -1,15 +1,23 @@
 use acpi::PciConfigRegions;
+use alloc::collections::BTreeMap;
 use aml::{pci_routing::PciRoutingTable, AmlContext, AmlName};
-use bit_field::BitField;
 use core::ptr;
 use hal::{
     memory::PhysicalAddress,
-    pci::{ConfigRegionAccess, PciAddress, PciHeader},
+    pci::{ConfigRegionAccess, DeviceId, PciAddress, PciHeader, VendorId},
 };
 use hal_x86_64::kernel_map;
 use log::info;
 
-pub struct PciInfo {}
+// TODO: this could probably live in `kernel`
+pub struct PciDevice {
+    pub vendor_id: VendorId,
+    pub device_id: DeviceId,
+}
+
+pub struct PciInfo {
+    pub devices: BTreeMap<PciAddress, PciDevice>,
+}
 
 pub struct PciResolver<'a> {
     pci_info: PciInfo,
@@ -76,13 +84,13 @@ impl<'a> PciResolver<'a> {
         resolver.pci_info
     }
 
-    fn check_bus(&self, bus: u8) {
+    fn check_bus(&mut self, bus: u8) {
         for device in 0..32 {
             self.check_device(bus, device);
         }
     }
 
-    fn check_device(&self, bus: u8, device: u8) {
+    fn check_device(&mut self, bus: u8, device: u8) {
         let address = PciAddress { segment: 0, bus, device, function: 0 };
         if self.function_exists(address) {
             self.check_function(bus, device, 0);
@@ -99,7 +107,7 @@ impl<'a> PciResolver<'a> {
         }
     }
 
-    fn check_function(&self, bus: u8, device: u8, function: u8) {
+    fn check_function(&mut self, bus: u8, device: u8, function: u8) {
         let address = PciAddress { segment: 0, bus, device, function };
         if self.function_exists(address) {
             let header = PciHeader::new(address);
@@ -116,6 +124,8 @@ impl<'a> PciResolver<'a> {
                 "Found PCI device (bus={}, device={}, function={}): (vendor = {:#x}, device = {:#x})",
                 bus, device, function, vendor_id, device_id
             );
+
+            self.info.devices.insert(address, PciDevice { vendor_id, device_id });
         }
     }
 }
