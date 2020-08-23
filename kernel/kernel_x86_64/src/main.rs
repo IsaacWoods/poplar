@@ -143,6 +143,7 @@ pub extern "C" fn kentry(boot_info: &BootInfo) -> ! {
      * boot processor.
      */
     let topology = topo::build_topology(&acpi_info);
+    let pci_access = pci::EcamAccess::new(acpi_info.pci_config_regions.as_ref().unwrap());
 
     /*
      * Parse the DSDT.
@@ -169,7 +170,7 @@ pub extern "C" fn kentry(boot_info: &BootInfo) -> ! {
      * Resolve all the PCI info.
      * XXX: not sure this is the right place to do this just yet.
      */
-    let pci_info = PciResolver::resolve(acpi_info.pci_config_regions.as_ref().unwrap(), aml_context);
+    let pci_info = PciResolver::resolve(pci_access);
 
     /*
      * Initialise the interrupt controller, which enables interrupts, and start the per-cpu timer.
