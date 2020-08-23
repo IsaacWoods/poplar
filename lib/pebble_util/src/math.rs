@@ -1,4 +1,30 @@
 use core::{mem, ops};
+use num_traits::PrimInt;
+
+// TODO: feels like something like this should exist in `num_traits` or something, but if it does I couldn't find
+// it
+pub trait PowerOfTwoable {
+    fn is_power_of_two(self) -> bool;
+    fn next_power_of_two(self) -> Self;
+}
+
+macro impl_power_of_twoable($type:ty) {
+    impl PowerOfTwoable for $type {
+        fn is_power_of_two(self) -> bool {
+            self.is_power_of_two()
+        }
+
+        fn next_power_of_two(self) -> Self {
+            self.next_power_of_two()
+        }
+    }
+}
+
+impl_power_of_twoable!(u8);
+impl_power_of_twoable!(u16);
+impl_power_of_twoable!(u32);
+impl_power_of_twoable!(u64);
+impl_power_of_twoable!(usize);
 
 /// Fast integer `log2` that floors to the lower power-of-2 if `x` is not a power-of-2. `x`
 /// must not be 0.
@@ -45,10 +71,10 @@ fn test_ceiling_log2() {
     assert_eq!(ceiling_log2(4095), 12);
 }
 
-pub fn align_down(value: usize, align: usize) -> usize {
-    assert!(align == 0 || align.is_power_of_two());
+pub fn align_down<T: PrimInt + PowerOfTwoable>(value: T, align: T) -> T {
+    assert!(align == T::zero() || align.is_power_of_two());
 
-    if align == 0 {
+    if align == T::zero() {
         value
     } else {
         /*
@@ -60,7 +86,7 @@ pub fn align_down(value: usize, align: usize) -> usize {
          * !(align-1)  =   0b11111000
          * ^^^ Masks the value to the one below it with the correct align
          */
-        value & !(align - 1)
+        value & !(align - T::one())
     }
 }
 
@@ -73,11 +99,11 @@ fn test_align_down() {
     assert_eq!(align_down(1025, 16), 1024);
 }
 
-pub fn align_up(value: usize, align: usize) -> usize {
-    if align == 0 {
+pub fn align_up<T: PrimInt + PowerOfTwoable>(value: T, align: T) -> T {
+    if align == T::zero() {
         value
     } else {
-        align_down(value + align - 1, align)
+        align_down(value + align - T::one(), align)
     }
 }
 
