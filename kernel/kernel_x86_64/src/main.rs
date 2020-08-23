@@ -202,6 +202,7 @@ pub extern "C" fn kentry(boot_info: &BootInfo) -> ! {
     /*
      * Drop into userspace!
      */
+    info!("Dropping into usermode");
     PlatformImpl::per_cpu().scheduler().drop_to_userspace()
 }
 
