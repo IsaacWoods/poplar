@@ -20,15 +20,15 @@ pub struct PciInfo {
 }
 
 #[derive(Clone)]
-pub struct EcamAccess<'a>(&'a PciConfigRegions);
+pub struct EcamAccess(PciConfigRegions);
 
-impl<'a> EcamAccess<'a> {
-    pub fn new(regions: &'a PciConfigRegions) -> EcamAccess<'a> {
+impl EcamAccess {
+    pub fn new(regions: PciConfigRegions) -> EcamAccess {
         EcamAccess(regions)
     }
 }
 
-impl<'a> ConfigRegionAccess for EcamAccess<'a> {
+impl ConfigRegionAccess for EcamAccess {
     fn function_exists(&self, address: PciAddress) -> bool {
         self.0.physical_address(address.segment, address.bus, address.device, address.function).is_some()
     }
