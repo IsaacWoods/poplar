@@ -174,6 +174,12 @@ pub extern "C" fn kentry(boot_info: &BootInfo) -> ! {
     let pci_info = PciResolver::resolve(pci_access);
 
     /*
+     * Initialize devices defined in AML.
+     * TODO: We should probably call `_REG` on all the op-regions we allow access to at this point before this.
+     */
+    aml_context.initialize_objects().expect("Failed to initialize AML objects");
+
+    /*
      * Initialise the interrupt controller, which enables interrupts, and start the per-cpu timer.
      */
     let mut interrupt_controller = InterruptController::init(&acpi_info, &mut aml_context);
