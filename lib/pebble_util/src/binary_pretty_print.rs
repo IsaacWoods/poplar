@@ -4,7 +4,7 @@
  */
 
 use core::{fmt, mem};
-use num::PrimInt;
+use num_traits::PrimInt;
 
 /// Values can be wrapped in this type when they're printed to display them as easy-to-read binary
 /// numbers. `Display` is implemented to print the value in the form `00000000-00000000`, while

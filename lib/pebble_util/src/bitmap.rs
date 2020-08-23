@@ -9,7 +9,7 @@
 
 use bit_field::{BitArray, BitField};
 use core::{fmt::Debug, mem};
-use num::PrimInt;
+use num_traits::PrimInt;
 
 pub trait Bitmap: Sized {
     /// Find `n` consecutive unset bits, set them and return the index of the first bit.
