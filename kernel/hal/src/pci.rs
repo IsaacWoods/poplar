@@ -4,7 +4,7 @@ use core::marker::PhantomData;
 pub type VendorId = u16;
 pub type DeviceId = u16;
 
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Debug)]
 pub struct PciAddress {
     pub segment: u16,
     pub bus: u8,
