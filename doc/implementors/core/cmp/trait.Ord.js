@@ -3,5 +3,4 @@ implementors["hal"] = [{"text":"impl&lt;S:&nbsp;Ord&gt; Ord for Frame&lt;S&gt; <
 implementors["kernel"] = [{"text":"impl Ord for KernelObjectId","synthetic":false,"types":[]}];
 implementors["libpebble"] = [{"text":"impl Ord for Handle","synthetic":false,"types":[]}];
 implementors["log"] = [{"text":"impl Ord for Level","synthetic":false,"types":[]},{"text":"impl Ord for LevelFilter","synthetic":false,"types":[]},{"text":"impl&lt;'a&gt; Ord for Metadata&lt;'a&gt;","synthetic":false,"types":[]},{"text":"impl&lt;'a&gt; Ord for MetadataBuilder&lt;'a&gt;","synthetic":false,"types":[]}];
-implementors["num_rational"] = [{"text":"impl&lt;T:&nbsp;Clone + Integer&gt; Ord for Ratio&lt;T&gt;","synthetic":false,"types":[]}];
 if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()

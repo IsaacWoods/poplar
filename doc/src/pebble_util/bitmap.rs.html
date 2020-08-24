@@ -156,7 +156,7 @@
 
 <span class="kw">use</span> <span class="ident">bit_field</span>::{<span class="ident">BitArray</span>, <span class="ident">BitField</span>};
 <span class="kw">use</span> <span class="ident">core</span>::{<span class="ident">fmt</span>::<span class="ident">Debug</span>, <span class="ident">mem</span>};
-<span class="kw">use</span> <span class="ident">num</span>::<span class="ident">PrimInt</span>;
+<span class="kw">use</span> <span class="ident">num_traits</span>::<span class="ident">PrimInt</span>;
 
 <span class="kw">pub</span> <span class="kw">trait</span> <span class="ident">Bitmap</span>: <span class="ident">Sized</span> {
     <span class="doccomment">/// Find `n` consecutive unset bits, set them and return the index of the first bit.</span>

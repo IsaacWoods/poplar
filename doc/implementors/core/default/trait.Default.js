@@ -1,5 +1,4 @@
 (function() {var implementors = {};
 implementors["hal"] = [{"text":"impl Default for BootInfo","synthetic":false,"types":[]},{"text":"impl Default for MemoryMap","synthetic":false,"types":[]},{"text":"impl Default for MemoryMapEntry","synthetic":false,"types":[]},{"text":"impl Default for LoadedImages","synthetic":false,"types":[]},{"text":"impl Default for LoadedImage","synthetic":false,"types":[]},{"text":"impl Default for Segment","synthetic":false,"types":[]},{"text":"impl Default for Flags","synthetic":false,"types":[]},{"text":"impl Default for PhysicalAddress","synthetic":false,"types":[]},{"text":"impl Default for VirtualAddress","synthetic":false,"types":[]}];
-implementors["num_complex"] = [{"text":"impl&lt;T:&nbsp;Default&gt; Default for Complex&lt;T&gt;","synthetic":false,"types":[]}];
 implementors["spin"] = [{"text":"impl&lt;T:&nbsp;?Sized + Default&gt; Default for Mutex&lt;T&gt;","synthetic":false,"types":[]},{"text":"impl&lt;T:&nbsp;?Sized + Default&gt; Default for RwLock&lt;T&gt;","synthetic":false,"types":[]}];
 if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()
