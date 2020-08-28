@@ -60,13 +60,13 @@ pub extern "C" fn start() -> ! {
     info!("Simple framebuffer driver is running!");
 
     let framebuffer = make_framebuffer();
-    framebuffer.clear(Bgr32::pixel(0xffaaaaaa));
-    framebuffer.draw_rect(100, 100, 300, 450, Bgr32::pixel(0xffcc0000));
+    framebuffer.clear(Bgr32::pixel(0xaa, 0xaa, 0xaa, 0xff));
+    framebuffer.draw_rect(100, 100, 300, 450, Bgr32::pixel(0xcc, 0x00, 0x00, 0xff));
     framebuffer.draw_string(
         "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
         200,
         400,
-        Bgr32::pixel(0xff000000),
+        Bgr32::pixel(0x00, 0x00, 0x00, 0xff),
     );
 
     loop {

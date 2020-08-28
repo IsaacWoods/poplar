@@ -87,8 +87,8 @@ pub extern "C" fn kentry(boot_info: &BootInfo) -> ! {
         height: boot_info.video_mode.as_ref().unwrap().height,
         stride: boot_info.video_mode.as_ref().unwrap().stride,
     };
-    framebuffer.clear(Bgr32::from_components(0xff, 0, 0, 0xff));
-    framebuffer.draw_string("Hello from the kernel", 100, 100, Bgr32::from_components(0, 0, 0xff, 0xff));
+    framebuffer.clear(Bgr32::pixel(0xff, 0, 0, 0xff));
+    framebuffer.draw_string("Hello from the kernel", 100, 100, Bgr32::pixel(0, 0, 0xff, 0xff));
 
     /*
      * Initialise the heap allocator. After this, the kernel is free to use collections etc. that
