@@ -47,8 +47,13 @@ pub enum LoaderError {
 
 #[entry]
 fn efi_main(image_handle: Handle, system_table: SystemTable<Boot>) -> Status {
+    /*
+     * This is the UEFI entry point, which simply wraps the real entry point, `main`, so that is can return a more
+     * ergonomic `Result<!, LoaderError>`, instead of a UEFI `Status`. `main` is diverging, so we can be sure the
+     * happy path here is unreachable.
+     */
     match main(image_handle, system_table) {
-        Ok(_) => unreachable!(),
+        Ok(_) => unsafe { core::hint::unreachable_unchecked() },
         Err(err) => {
             error!("Something went wrong: {:?}", err);
             Status::LOAD_ERROR
