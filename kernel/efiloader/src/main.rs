@@ -106,27 +106,39 @@ fn main(image_handle: Handle, system_table: SystemTable<Boot>) -> Result<!, Load
     /*
      * Construct boot info to pass to the kernel.
      */
-    let boot_info_needed_frames = Size4KiB::frames_needed(mem::size_of::<BootInfo>());
-    let boot_info_physical_start = system_table
-        .boot_services()
-        .allocate_pages(AllocateType::AnyPages, BOOT_INFO_MEMORY_TYPE, boot_info_needed_frames)
-        .unwrap_success();
-    let identity_boot_info_ptr = VirtualAddress::new(boot_info_physical_start as usize).mut_ptr() as *mut BootInfo;
-    unsafe {
-        *identity_boot_info_ptr = BootInfo::default();
-    }
-    let boot_info = unsafe { &mut *identity_boot_info_ptr };
-    let boot_info_virtual_address = kernel_info.next_safe_address;
-    next_safe_address += boot_info_needed_frames * Size4KiB::SIZE;
-    page_table
-        .map_area(
-            boot_info_virtual_address,
-            PhysicalAddress::new(boot_info_physical_start as usize).unwrap(),
-            boot_info_needed_frames * Size4KiB::SIZE,
-            Flags { ..Default::default() },
-            &allocator,
-        )
-        .unwrap();
+    let (boot_info_kernel_address, boot_info) = {
+        /*
+         * First, allocate physical memory to store the boot info in. We can access it directly during construction
+         * due to the identity mapping.
+         */
+        let boot_info_needed_frames = Size4KiB::frames_needed(mem::size_of::<BootInfo>());
+        let boot_info_physical_start = system_table
+            .boot_services()
+            .allocate_pages(AllocateType::AnyPages, BOOT_INFO_MEMORY_TYPE, boot_info_needed_frames)
+            .unwrap_success();
+        let identity_boot_info_ptr =
+            VirtualAddress::new(boot_info_physical_start as usize).mut_ptr() as *mut BootInfo;
+        unsafe {
+            *identity_boot_info_ptr = BootInfo::default();
+        }
+
+        /*
+         * But we need to map it into the kernel's part of the address space for when we switch to the new set of
+         * page tables. Choose the next free address and map it there.
+         */
+        let boot_info_virtual_address = kernel_info.next_safe_address;
+        next_safe_address += boot_info_needed_frames * Size4KiB::SIZE;
+        page_table
+            .map_area(
+                boot_info_virtual_address,
+                PhysicalAddress::new(boot_info_physical_start as usize).unwrap(),
+                boot_info_needed_frames * Size4KiB::SIZE,
+                Flags { ..Default::default() },
+                &allocator,
+            )
+            .unwrap();
+        (boot_info_virtual_address, unsafe { &mut *identity_boot_info_ptr })
+    };
     boot_info.magic = hal::boot_info::BOOT_INFO_MAGIC;
     boot_info.video_mode = video_mode;
 
@@ -233,7 +245,7 @@ fn main(image_handle: Handle, system_table: SystemTable<Boot>) -> Result<!, Load
               jmp rbx",
             in("rax") usize::from(kernel_info.stack_top.align_down(8)),
             in("rbx") usize::from(kernel_info.entry_point),
-            in("rdi") usize::from(boot_info_virtual_address),
+            in("rdi") usize::from(boot_info_kernel_address),
         );
     }
     unreachable!()
