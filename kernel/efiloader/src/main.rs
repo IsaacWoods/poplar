@@ -13,7 +13,7 @@ use allocator::BootFrameAllocator;
 use command_line::CommandLine;
 use core::{mem, panic::PanicInfo, slice};
 use hal::{
-    boot_info::BootInfo,
+    boot_info::{BootInfo, VideoModeInfo},
     memory::{Flags, FrameAllocator, FrameSize, Page, PageTable, PhysicalAddress, Size4KiB, VirtualAddress},
 };
 use hal_x86_64::paging::PageTableImpl;
@@ -80,6 +80,14 @@ fn main(image_handle: Handle, system_table: SystemTable<Boot>) -> Result<!, Load
     let command_line = CommandLine::new(load_options_str);
 
     /*
+     * Switch to a suitable video mode and create a framebuffer, if the user requested us to.
+     */
+    let video_mode = match command_line.framebuffer {
+        Some(framebuffer_info) => Some(create_framebuffer(system_table.boot_services(), framebuffer_info)?),
+        None => None,
+    };
+
+    /*
      * We create a set of page tables for the kernel. Because memory is identity-mapped in UEFI, we can act as
      * if we've placed the physical mapping at 0x0.
      */
@@ -120,6 +128,7 @@ fn main(image_handle: Handle, system_table: SystemTable<Boot>) -> Result<!, Load
         )
         .unwrap();
     boot_info.magic = hal::boot_info::BOOT_INFO_MAGIC;
+    boot_info.video_mode = video_mode;
 
     /*
      * Find the RSDP address and add it to the boot info.
@@ -132,13 +141,6 @@ fn main(image_handle: Handle, system_table: SystemTable<Boot>) -> Result<!, Load
             None
         }
     });
-
-    /*
-     * Switch to a suitable video mode and create a framebuffer, if the user requested us to.
-     */
-    if command_line.framebuffer.is_some() {
-        create_framebuffer(system_table.boot_services(), boot_info, &command_line)?;
-    }
 
     /*
      * Allocate the kernel heap.
@@ -399,10 +401,9 @@ where
 
 fn create_framebuffer(
     boot_services: &BootServices,
-    boot_info: &mut BootInfo,
-    command_line: &CommandLine,
-) -> Result<(), LoaderError> {
-    use hal::boot_info::{PixelFormat, VideoModeInfo};
+    framebuffer_info: command_line::Framebuffer,
+) -> Result<VideoModeInfo, LoaderError> {
+    use hal::boot_info::PixelFormat;
     use uefi::proto::console::gop::PixelFormat as GopFormat;
 
     // Make an initial call to find how many handles we need to search
@@ -432,8 +433,13 @@ fn create_framebuffer(
         let chosen_mode = proto.modes().map(|mode| mode.unwrap()).find(|mode| {
             let (width, height) = mode.info().resolution();
             let pixel_format = mode.info().pixel_format();
-            width == command_line.framebuffer.unwrap().width.unwrap() as usize
-                && height == command_line.framebuffer.unwrap().height.unwrap() as usize
+
+            /*
+             * TODO: we currently assume that the command line provides both a width and a height. In the future,
+             * it would be better to just apply the filters the user actually cares about
+             */
+            width == framebuffer_info.width.unwrap()
+                && height == framebuffer_info.height.unwrap()
                 && (pixel_format == GopFormat::RGB || pixel_format == GopFormat::BGR)
         });
 
@@ -449,15 +455,11 @@ fn create_framebuffer(
                 _ => panic!("Invalid video mode chosen!"),
             };
 
-            boot_info.video_mode = Some(VideoModeInfo {
-                framebuffer_address,
-                pixel_format,
-                width,
-                height,
-                stride: mode_info.stride(),
-            });
-            info!("Switched to video mode: {:?}", boot_info.video_mode);
-            return Ok(());
+            let mode_info =
+                VideoModeInfo { framebuffer_address, pixel_format, width, height, stride: mode_info.stride() };
+            info!("Switched to video mode: {:?}", mode_info);
+
+            return Ok(mode_info);
         }
     }
 
