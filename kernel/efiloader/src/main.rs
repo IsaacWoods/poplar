@@ -81,10 +81,16 @@ fn main(image_handle: Handle, system_table: SystemTable<Boot>) -> Result<!, Load
     let command_line = CommandLine::new(load_options_str);
 
     /*
-     * Switch to a suitable video mode and create a framebuffer, if the user requested us to.
+     * Switch to a suitable video mode and create a framebuffer, if the user requested us to. If we do switch video
+     * mode, we won't be able to see the console output from UEFI any more, so switch to a logger that renders it
+     * to the new framebuffer.
      */
     let video_mode = match command_line.framebuffer {
-        Some(framebuffer_info) => Some(create_framebuffer(system_table.boot_services(), framebuffer_info)?),
+        Some(framebuffer_info) => {
+            let mode_info = create_framebuffer(system_table.boot_services(), framebuffer_info)?;
+            Logger::switch_to_gfx(&mode_info);
+            Some(mode_info)
+        }
         None => None,
     };
 
@@ -222,13 +228,18 @@ fn main(image_handle: Handle, system_table: SystemTable<Boot>) -> Result<!, Load
 
     /*
      * Jump into the kernel!
+     * NOTE: we can't access the GOP framebuffer after we switch page tables, so stop using it now.
      */
+    info!("Preparing to jump into kernel. Control of GOP framebuffer relinquished.");
+    trace!("Logging will only be passed on serial port");
+    Logger::switch_to_serial();
+
     unsafe {
-        info!("Switching to new page tables");
         /*
          * We disable interrupts until the kernel has a chance to install its own IDT.
          */
         asm!("cli");
+        info!("Switching to new page tables");
         page_table.switch_to();
 
         /*
