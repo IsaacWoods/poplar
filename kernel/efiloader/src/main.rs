@@ -17,7 +17,8 @@ use hal::{
     memory::{Flags, FrameAllocator, FrameSize, Page, PageTable, PhysicalAddress, Size4KiB, VirtualAddress},
 };
 use hal_x86_64::paging::PageTableImpl;
-use log::{error, info};
+use log::{error, info, trace};
+use logger::Logger;
 use uefi::{
     prelude::*,
     proto::{console::gop::GraphicsOutput, loaded_image::LoadedImage},
@@ -62,7 +63,7 @@ fn efi_main(image_handle: Handle, system_table: SystemTable<Boot>) -> Status {
 }
 
 fn main(image_handle: Handle, system_table: SystemTable<Boot>) -> Result<!, LoaderError> {
-    logger::init(system_table.stdout());
+    Logger::init_console(system_table.stdout());
     info!("Hello, World!");
 
     let loaded_image_protocol = unsafe {
@@ -209,10 +210,11 @@ fn main(image_handle: Handle, system_table: SystemTable<Boot>) -> Result<!, Load
         unsafe { slice::from_raw_parts_mut(memory_map_address as *mut u8, memory_map_frames * Size4KiB::SIZE) };
 
     /*
-     * After we've exited from the boot services, we are not able to use the ConsoleOut services, so we disable
-     * printing to them in the logger.
+     * After we've exited from the boot services, we are not able to use the ConsoleOut services, so we switch to
+     * logging to the serial port.
      */
-    logger::LOGGER.lock().disable_console_output(true);
+    Logger::switch_to_serial();
+     */
     let (_system_table, memory_map) = system_table
         .exit_boot_services(image_handle, memory_map_buffer)
         .expect_success("Failed to exit boot services");
