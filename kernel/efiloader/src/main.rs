@@ -342,7 +342,7 @@ where
                         size: entry.page_count as usize * Size4KiB::SIZE,
                         memory_type: $type,
                     })
-                    .unwrap();
+                    .expect("Run out of memory entry slots in boot info");
             };
         }
         match entry.ty {
