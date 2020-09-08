@@ -117,7 +117,9 @@ where
     let (info, memory_object) = crate::FRAMEBUFFER.try_get().ok_or(GetFramebufferError::NoFramebufferCreated)?;
     let handle = task.add_handle(memory_object.clone());
 
-    UserPointer::new(info_address as *mut FramebufferInfo, true).write(*info);
+    UserPointer::new(info_address as *mut FramebufferInfo, true)
+        .write(*info)
+        .map_err(|()| GetFramebufferError::InfoAddressIsInvalid)?;
 
     Ok(handle)
 }
