@@ -13,7 +13,7 @@ use crate::{
 };
 use alloc::{collections::BTreeMap, string::String, sync::Arc};
 use bit_field::BitField;
-use core::{convert::TryFrom, slice, str};
+use core::convert::TryFrom;
 use hal::memory::{Flags, VirtualAddress};
 use libpebble::{
     caps::Capability,
@@ -241,7 +241,7 @@ where
         return Err(RegisterServiceError::NameLengthNotValid);
     }
 
-    let service_name = UserString::new(name_length, name_ptr as *mut u8)
+    let service_name = UserString::new(name_ptr as *mut u8, name_length)
         .validate()
         .map_err(|()| RegisterServiceError::NamePointerNotValid)?;
 
@@ -272,7 +272,7 @@ where
         return Err(SubscribeToServiceError::NameLengthNotValid);
     }
 
-    let service_name = UserString::new(name_length, name_ptr as *mut u8)
+    let service_name = UserString::new(name_ptr as *mut u8, name_length)
         .validate()
         .map_err(|()| SubscribeToServiceError::NamePointerNotValid)?;
 

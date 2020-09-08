@@ -44,14 +44,14 @@ impl<T> UserPointer<T> {
 
 /// Represents a slice of `T`s in userspace.
 pub struct UserSlice<'a, T> {
-    length: usize,
     ptr: *mut T,
+    length: usize,
     _phantom: PhantomData<&'a ()>,
 }
 
 impl<'a, T> UserSlice<'a, T> {
-    pub fn new(length: usize, ptr: *mut T) -> UserSlice<'a, T> {
-        UserSlice { length, ptr, _phantom: PhantomData }
+    pub fn new(ptr: *mut T, length: usize) -> UserSlice<'a, T> {
+        UserSlice { ptr, length, _phantom: PhantomData }
     }
 
     pub fn validate_read(&self) -> Result<&'a [T], ()> {
@@ -63,8 +63,8 @@ impl<'a, T> UserSlice<'a, T> {
 pub struct UserString<'a>(UserSlice<'a, u8>);
 
 impl<'a> UserString<'a> {
-    pub fn new(length: usize, ptr: *mut u8) -> UserString<'a> {
-        UserString(UserSlice::new(length, ptr))
+    pub fn new(ptr: *mut u8, length: usize) -> UserString<'a> {
+        UserString(UserSlice::new(ptr, length))
     }
 
     pub fn validate(&self) -> Result<&'a str, ()> {
