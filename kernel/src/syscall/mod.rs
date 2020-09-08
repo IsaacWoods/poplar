@@ -35,7 +35,7 @@ use libpebble::{
 };
 use log::{info, trace, warn};
 use spin::Mutex;
-use validation::{UserPointer, UserString};
+use validation::{UserPointer, UserSlice, UserString};
 
 /// Maps the name of a service to the channel used to register new service users.
 static SERVICE_MAP: Mutex<BTreeMap<String, Arc<ChannelEnd>>> = Mutex::new(BTreeMap::new());
@@ -215,8 +215,52 @@ fn send_message<P>(
 where
     P: Platform,
 {
-    info!("Message: {:x?}", unsafe { core::slice::from_raw_parts(byte_address as *const u8, num_bytes) });
-    Ok(())
+    use crate::object::channel::Message;
+    use libpebble::syscall::{CHANNEL_MAX_NUM_BYTES, CHANNEL_MAX_NUM_HANDLES};
+
+    if num_bytes > CHANNEL_MAX_NUM_BYTES {
+        return Err(SendMessageError::TooManyBytes);
+    }
+    if num_handles > CHANNEL_MAX_NUM_HANDLES {
+        return Err(SendMessageError::TooManyHandles);
+    }
+
+    let channel_handle = Handle::try_from(channel_handle).map_err(|_| SendMessageError::InvalidChannelHandle)?;
+    let bytes = if num_bytes == 0 {
+        &[]
+    } else {
+        UserSlice::new(byte_address as *mut u8, num_bytes)
+            .validate_read()
+            .map_err(|()| SendMessageError::BytesAddressInvalid)?
+    };
+    let handles = if num_handles == 0 {
+        &[]
+    } else {
+        UserSlice::new(handles_address as *mut Handle, num_handles)
+            .validate_read()
+            .map_err(|()| SendMessageError::HandlesAddressInvalid)?
+    };
+    let handle_objects = {
+        let mut arr = [None; CHANNEL_MAX_NUM_HANDLES];
+        for (i, handle) in handles.iter().enumerate() {
+            arr[i] = match task.handles.read().get(handle) {
+                Some(object) => Some(object.clone()),
+                None => return Err(SendMessageError::InvalidTransferredHandle),
+            };
+        }
+        arr
+    };
+    trace!("Message sent down channel: {:x?} ({} handles transferred)", bytes, handles.len());
+
+    task.handles
+        .read()
+        .get(&channel_handle)
+        .ok_or(SendMessageError::InvalidChannelHandle)?
+        .clone()
+        .downcast_arc::<ChannelEnd>()
+        .ok()
+        .ok_or(SendMessageError::NotAChannel)?
+        .send(Message { bytes: bytes.to_vec(), handle_objects })
 }
 
 fn get_message<P>(

@@ -94,14 +94,21 @@ pub const CHANNEL_MAX_NUM_BYTES: usize = 4096;
 pub const CHANNEL_MAX_NUM_HANDLES: usize = 4;
 
 define_error_type!(SendMessageError {
+    /// The `Channel` handle is invalid.
+    InvalidChannelHandle => 1,
+    /// The `Channel` handle isn't a `Channel`.
+    NotAChannel => 2,
     /// The `Channel` handle must have the `SEND` right to use the `send_message` system call.
-    ChannelCannotSend => 1,
+    ChannelCannotSend => 3,
+    /// A handle to be transferred is invalid.
+    InvalidTransferredHandle => 4,
     /// Transferred handles must have the `TRANSFER` right.
-    CannotTransferHandle => 2,
-    BytesAddressInvalid => 3,
-    TooManyBytes => 4,
-    HandlesAddressInvalid => 5,
-    TooManyHandles => 6,
+    CannotTransferHandle => 5,
+    BytesAddressInvalid => 6,
+    TooManyBytes => 7,
+    HandlesAddressInvalid => 8,
+    TooManyHandles => 9,
+    OtherEndDisconnected => 10,
 });
 
 pub fn send_message(channel: Handle, bytes: &[u8], handles: &[Handle]) -> Result<(), SendMessageError> {
