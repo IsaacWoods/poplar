@@ -14,6 +14,10 @@
     - [`early_log`](./syscalls/early_log.md)
     - [`get_framebuffer`](./syscalls/get_framebuffer.md)
     - [`map_memory_object`](./syscalls/map_memory_object.md)
+    - [`create_channel`](./syscalls/create_channel.md)
+    - [`send_message`](./syscalls/send_message.md)
+    - [`register_service`](./syscalls/register_service.md)
+    - [`subscribe_to_service`](./syscalls/subscribe_to_service.md)
 
 - [Userspace](./userspace/index.md)
     - [Capabilities](./userspace/capabilities.md)
