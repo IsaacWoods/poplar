@@ -94,8 +94,8 @@ where
     }
 
     // Check the message is valid UTF-8
-    // TODO: validate user pointer before creating slice from it
-    let message = str::from_utf8(unsafe { slice::from_raw_parts(str_address as *const u8, str_length) })
+    let message = UserString::new(str_address as *mut u8, str_length)
+        .validate()
         .map_err(|_| EarlyLogError::MessageNotValidUtf8)?;
 
     trace!("Early log message from {}: {}", task.name, message);
@@ -116,10 +116,7 @@ where
     let (info, memory_object) = crate::FRAMEBUFFER.try_get().ok_or(GetFramebufferError::NoFramebufferCreated)?;
     let handle = task.add_handle(memory_object.clone());
 
-    // TODO: validate the info pointer before we do this
-    unsafe {
-        *(info_address as *mut FramebufferInfo) = *info;
-    }
+    UserPointer::new(info_address as *mut FramebufferInfo, true).write(*info);
 
     Ok(handle)
 }
