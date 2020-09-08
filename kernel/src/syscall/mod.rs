@@ -19,11 +19,12 @@ use libpebble::{
     caps::Capability,
     syscall::{
         self,
-        result::{handle_to_syscall_repr, status_to_syscall_repr},
+        result::{handle_to_syscall_repr, status_to_syscall_repr, status_with_payload_to_syscall_repr},
         CreateMemoryObjectError,
         EarlyLogError,
         FramebufferInfo,
         GetFramebufferError,
+        GetMessageError,
         MapMemoryObjectError,
         RegisterServiceError,
         SendMessageError,
@@ -58,7 +59,7 @@ where
         syscall::SYSCALL_MAP_MEMORY_OBJECT => status_to_syscall_repr(map_memory_object(task, a, b, c)),
         syscall::SYSCALL_CREATE_CHANNEL => unimplemented!(),
         syscall::SYSCALL_SEND_MESSAGE => status_to_syscall_repr(send_message(task, a, b, c, d, e)),
-        syscall::SYSCALL_GET_MESSAGE => unimplemented!(),
+        syscall::SYSCALL_GET_MESSAGE => status_with_payload_to_syscall_repr(get_message(task, a, b, c, d, e)),
         syscall::SYSCALL_WAIT_FOR_MESSAGE => unimplemented!(),
         syscall::SYSCALL_REGISTER_SERVICE => handle_to_syscall_repr(register_service(task, a, b)),
         syscall::SYSCALL_SUBSCRIBE_TO_SERVICE => handle_to_syscall_repr(subscribe_to_service(task, a, b)),
@@ -216,6 +217,20 @@ where
 {
     info!("Message: {:x?}", unsafe { core::slice::from_raw_parts(byte_address as *const u8, num_bytes) });
     Ok(())
+}
+
+fn get_message<P>(
+    task: &Arc<Task<P>>,
+    channel_handle: usize,
+    bytes_address: usize,
+    bytes_len: usize,
+    handles_address: usize,
+    handles_len: usize,
+) -> Result<usize, GetMessageError>
+where
+    P: Platform,
+{
+    Err(GetMessageError::NoMessage)
 }
 
 fn register_service<P>(

@@ -58,6 +58,18 @@ where
     }
 }
 
+/// Convert a `Result` that carries a custom status on success. It is the producer's responsibility that the
+/// success status can be differentiated from an error, if needed.
+pub fn status_with_payload_to_syscall_repr<E>(result: Result<usize, E>) -> usize
+where
+    E: Into<usize>,
+{
+    match result {
+        Ok(status) => status,
+        Err(err) => err.into(),
+    }
+}
+
 pub fn handle_from_syscall_repr<E>(result: usize) -> Result<Handle, E>
 where
     E: TryFrom<usize, Error = ()>,

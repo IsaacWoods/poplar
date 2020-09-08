@@ -16,6 +16,7 @@
     - [`map_memory_object`](./syscalls/map_memory_object.md)
     - [`create_channel`](./syscalls/create_channel.md)
     - [`send_message`](./syscalls/send_message.md)
+    - [`get_message`](./syscalls/get_message.md)
     - [`register_service`](./syscalls/register_service.md)
     - [`subscribe_to_service`](./syscalls/subscribe_to_service.md)
 

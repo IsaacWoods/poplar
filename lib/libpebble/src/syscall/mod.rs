@@ -117,6 +117,37 @@ pub fn send_message(channel: Handle, bytes: &[u8], handles: &[Handle]) -> Result
     })
 }
 
+define_error_type!(GetMessageError {
+    NoMessage => 1,
+    BytesAddressInvalid => 2,
+    BytesBufferTooSmall => 3,
+    HandlesAddressInvalid => 4,
+    HandlesBufferTooSmall => 5,
+});
+
+pub fn get_message<'b, 'h>(
+    channel: Handle,
+    byte_buffer: &'b mut [u8],
+    handle_buffer: &'h mut [Handle],
+) -> Result<(&'b mut [u8], &'h mut [Handle]), GetMessageError> {
+    let result = unsafe {
+        raw::syscall5(
+            SYSCALL_GET_MESSAGE,
+            channel.0 as usize,
+            byte_buffer.as_ptr() as usize,
+            byte_buffer.len(),
+            if handle_buffer.len() == 0 { 0x0 } else { handle_buffer.as_ptr() as usize },
+            handle_buffer.len(),
+        )
+    };
+    status_from_syscall_repr(result)?;
+
+    let valid_bytes_len = result.get_bits(16..32);
+    let valid_handles_len = result.get_bits(32..48);
+
+    Ok((&mut byte_buffer[0..valid_bytes_len], &mut handle_buffer[0..valid_handles_len]))
+}
+
 pub const SERVICE_NAME_MAX_LENGTH: usize = 256;
 
 define_error_type!(RegisterServiceError {
