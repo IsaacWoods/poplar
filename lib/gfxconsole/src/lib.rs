@@ -4,7 +4,7 @@ pub mod fb;
 
 pub use fb::{Bgr32, Format, Framebuffer, Pixel, Rgb32};
 
-use core::{fmt, slice};
+use core::fmt;
 
 type Cell = usize;
 
