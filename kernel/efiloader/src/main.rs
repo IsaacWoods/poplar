@@ -217,9 +217,11 @@ fn main(image_handle: Handle, system_table: SystemTable<Boot>) -> Result<!, Load
 
     /*
      * After we've exited from the boot services, we are not able to use the ConsoleOut services, so we switch to
-     * logging to the serial port.
+     * logging to the serial port. If we've already moved to a GOP-based logger, stick with that.
      */
-    Logger::switch_to_serial();
+    if video_mode.is_none() {
+        Logger::switch_to_serial();
+    }
      */
     let (_system_table, memory_map) = system_table
         .exit_boot_services(image_handle, memory_map_buffer)
