@@ -125,11 +125,13 @@ pub fn send_message(channel: Handle, bytes: &[u8], handles: &[Handle]) -> Result
 }
 
 define_error_type!(GetMessageError {
-    NoMessage => 1,
-    BytesAddressInvalid => 2,
-    BytesBufferTooSmall => 3,
-    HandlesAddressInvalid => 4,
-    HandlesBufferTooSmall => 5,
+    InvalidChannelHandle => 1,
+    NotAChannel => 2,
+    NoMessage => 3,
+    BytesAddressInvalid => 4,
+    BytesBufferTooSmall => 5,
+    HandlesAddressInvalid => 6,
+    HandlesBufferTooSmall => 7,
 });
 
 pub fn get_message<'b, 'h>(
@@ -147,7 +149,7 @@ pub fn get_message<'b, 'h>(
             handle_buffer.len(),
         )
     };
-    status_from_syscall_repr(result)?;
+    status_from_syscall_repr(result.get_bits(0..16))?;
 
     let valid_bytes_len = result.get_bits(16..32);
     let valid_handles_len = result.get_bits(32..48);

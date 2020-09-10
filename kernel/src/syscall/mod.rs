@@ -3,7 +3,7 @@ mod validation;
 use crate::{
     object::{
         address_space::AddressSpace,
-        channel::ChannelEnd,
+        channel::{ChannelEnd, Message},
         memory_object::MemoryObject,
         task::{Task, TaskState},
         KernelObject,
@@ -29,6 +29,7 @@ use libpebble::{
         RegisterServiceError,
         SendMessageError,
         SubscribeToServiceError,
+        CHANNEL_MAX_NUM_HANDLES,
     },
     Handle,
     ZERO_HANDLE,
@@ -217,8 +218,7 @@ fn send_message<P>(
 where
     P: Platform,
 {
-    use crate::object::channel::Message;
-    use libpebble::syscall::{CHANNEL_MAX_NUM_BYTES, CHANNEL_MAX_NUM_HANDLES};
+    use libpebble::syscall::CHANNEL_MAX_NUM_BYTES;
 
     if num_bytes > CHANNEL_MAX_NUM_BYTES {
         return Err(SendMessageError::TooManyBytes);
@@ -281,7 +281,47 @@ fn get_message<P>(
 where
     P: Platform,
 {
-    Err(GetMessageError::NoMessage)
+    let channel_handle = Handle::try_from(channel_handle).map_err(|_| GetMessageError::InvalidChannelHandle)?;
+
+    let channel = task
+        .handles
+        .read()
+        .get(&channel_handle)
+        .ok_or(GetMessageError::InvalidChannelHandle)?
+        .clone()
+        .downcast_arc::<ChannelEnd>()
+        .ok()
+        .ok_or(GetMessageError::NotAChannel)?;
+
+    channel.receive(|message| {
+        let num_handles = message.num_handles();
+
+        if message.bytes.len() > bytes_len {
+            return Err((message, GetMessageError::BytesBufferTooSmall));
+        }
+        if num_handles > handles_len {
+            return Err((message, GetMessageError::HandlesBufferTooSmall));
+        }
+
+        let byte_buffer = match UserSlice::new(bytes_address as *mut u8, message.bytes.len()).validate_write() {
+            Ok(buffer) => buffer,
+            Err(()) => return Err((message, GetMessageError::BytesAddressInvalid)),
+        };
+        let handles_buffer = match UserSlice::new(handles_address as *mut Handle, num_handles).validate_write() {
+            Ok(buffer) => buffer,
+            Err(()) => return Err((message, GetMessageError::HandlesAddressInvalid)),
+        };
+
+        byte_buffer.copy_from_slice(&message.bytes);
+        for i in 0..num_handles {
+            handles_buffer[i] = task.add_handle(message.handle_objects[i].as_ref().unwrap().clone());
+        }
+
+        let mut status = 0;
+        status.set_bits(16..32, message.bytes.len());
+        status.set_bits(32..48, num_handles);
+        Ok(status)
+    })
 }
 
 fn register_service<P>(

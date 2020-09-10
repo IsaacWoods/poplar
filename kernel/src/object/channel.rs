@@ -4,12 +4,13 @@ use alloc::{
     vec::Vec,
 };
 use libpebble::syscall::{GetMessageError, SendMessageError, CHANNEL_MAX_NUM_HANDLES};
+use log::warn;
 use spin::Mutex;
 
 pub struct ChannelEnd {
     pub id: KernelObjectId,
     pub owner: KernelObjectId,
-    messages: Mutex<Vec<Message>>,
+    pub messages: Mutex<Vec<Message>>,
     /// The other end of the channel. If this is `None`, the channel's messages come from the kernel.
     other_end: Option<Weak<ChannelEnd>>,
 }
@@ -59,7 +60,27 @@ impl ChannelEnd {
                 None => Err(SendMessageError::OtherEndDisconnected),
             }
         } else {
+            warn!("Discarding message sent down kernel channel");
             Ok(())
+        }
+    }
+
+    /// Try to "receive" a message from this `ChannelEnd`, potentially removing it from the queue. Note that this
+    /// keeps a lock over the message queue while the passed function is called - if the handling of the message
+    /// fails (for example, the buffer to put it into is too small), the passed function can return it with
+    /// `Err((message, some_error))`, and the message will be placed back into the queue (preserving message
+    /// order), and the error will be returned.
+    pub fn receive<F, R>(&self, f: F) -> Result<R, GetMessageError>
+    where
+        F: FnOnce(Message) -> Result<R, (Message, GetMessageError)>,
+    {
+        let mut message_queue = self.messages.lock();
+        match f(message_queue.pop().ok_or(GetMessageError::NoMessage)?) {
+            Ok(value) => Ok(value),
+            Err((message, err)) => {
+                message_queue.push(message);
+                Err(err)
+            }
         }
     }
 }
@@ -72,5 +93,14 @@ impl KernelObject for ChannelEnd {
 
 pub struct Message {
     pub bytes: Vec<u8>,
+    /// The actual objects extracted from the handles transferred by a message. When a task receives this message,
+    /// these objects are added to that task, and the new handles are put into the message. The non-`None` entries
+    /// of this array must be contiguous - there cannot be a `None` entry before more non-`None` entries.
     pub handle_objects: [Option<Arc<dyn KernelObject>>; CHANNEL_MAX_NUM_HANDLES],
+}
+
+impl Message {
+    pub fn num_handles(&self) -> usize {
+        self.handle_objects.iter().fold(0, |n, ref handle| if handle.is_some() { n + 1 } else { n })
+    }
 }
