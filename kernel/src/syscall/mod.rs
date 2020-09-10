@@ -383,7 +383,13 @@ where
         // Create new channel to allow the two tasks to communicate
         let (provider_end, user_end) = ChannelEnd::new_channel(task.id());
 
-        // TODO: send a message down `register_channel` telling it about `provider_end`
+        /*
+         * Send a message down `register_channel` to tell it about its new service user, transferring the
+         * provider's half of the created service channel.
+         */
+        let mut handle_objects = [None; CHANNEL_MAX_NUM_HANDLES];
+        handle_objects[0] = Some(provider_end as Arc<dyn KernelObject>);
+        register_channel.messages.lock().push(Message { bytes: [].to_vec(), handle_objects });
 
         // Return the user's end of the new channel to it
         Ok(task.add_handle(user_end))
