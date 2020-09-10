@@ -11,7 +11,8 @@
     box_syntax,
     const_generics,
     const_btree_new,
-    get_mut_unchecked
+    get_mut_unchecked,
+    const_in_array_repeat_expressions
 )]
 #[macro_use]
 extern crate alloc;
