@@ -74,7 +74,7 @@ where
          * Select the next task to run.
          * NOTE: in the future, this could be more complex, e.g. by taking priority into account.
          */
-        if let Some(next_task) = self.ready_queue.pop_front() {
+        if let Some(next_task) = self.choose_next() {
             /*
              * We're switching task! We sort out the internal scheduler state, and then ask the
              * platform to perform the context switch for us!
@@ -120,5 +120,9 @@ where
              */
             trace!("No more schedulable tasks. Returning to current one!");
         }
+    }
+
+    fn choose_next(&mut self) -> Option<Arc<Task<P>>> {
+        self.ready_queue.pop_front()
     }
 }
