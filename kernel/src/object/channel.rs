@@ -1,5 +1,6 @@
 use super::{alloc_kernel_object_id, KernelObject, KernelObjectId};
 use alloc::{
+    collections::VecDeque,
     sync::{Arc, Weak},
     vec::Vec,
 };
@@ -10,7 +11,7 @@ use spin::Mutex;
 pub struct ChannelEnd {
     pub id: KernelObjectId,
     pub owner: KernelObjectId,
-    pub messages: Mutex<Vec<Message>>,
+    messages: Mutex<VecDeque<Message>>,
     /// The other end of the channel. If this is `None`, the channel's messages come from the kernel.
     other_end: Option<Weak<ChannelEnd>>,
 }
@@ -20,14 +21,14 @@ impl ChannelEnd {
         let mut end_a = Arc::new(ChannelEnd {
             id: alloc_kernel_object_id(),
             owner,
-            messages: Mutex::new(Vec::new()),
+            messages: Mutex::new(VecDeque::new()),
             other_end: Some(Weak::default()),
         });
 
         let end_b = Arc::new(ChannelEnd {
             id: alloc_kernel_object_id(),
             owner,
-            messages: Mutex::new(Vec::new()),
+            messages: Mutex::new(VecDeque::new()),
             other_end: Some(Arc::downgrade(&end_a)),
         });
 
@@ -43,9 +44,15 @@ impl ChannelEnd {
         Arc::new(ChannelEnd {
             id: alloc_kernel_object_id(),
             owner,
-            messages: Mutex::new(Vec::new()),
+            messages: Mutex::new(VecDeque::new()),
             other_end: None,
         })
+    }
+
+    /// Add a message *to* this `ChannelEnd`. Use `send` if you want to send a message *through* this
+    /// `ChannelEnd` (i.e. to the other end of the Channel).
+    pub fn add_message(&self, message: Message) {
+        self.messages.lock().push_back(message);
     }
 
     /// Send a message through this `ChannelEnd`, to be received by the other end. If this is a kernel channel, the
@@ -54,7 +61,7 @@ impl ChannelEnd {
         if let Some(ref other_end) = self.other_end {
             match other_end.upgrade() {
                 Some(other_end) => {
-                    other_end.messages.lock().push(message);
+                    other_end.add_message(message);
                     Ok(())
                 }
                 None => Err(SendMessageError::OtherEndDisconnected),
@@ -75,10 +82,10 @@ impl ChannelEnd {
         F: FnOnce(Message) -> Result<R, (Message, GetMessageError)>,
     {
         let mut message_queue = self.messages.lock();
-        match f(message_queue.pop().ok_or(GetMessageError::NoMessage)?) {
+        match f(message_queue.pop_front().ok_or(GetMessageError::NoMessage)?) {
             Ok(value) => Ok(value),
             Err((message, err)) => {
-                message_queue.push(message);
+                message_queue.push_front(message);
                 Err(err)
             }
         }

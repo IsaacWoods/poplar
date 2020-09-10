@@ -395,7 +395,7 @@ where
          */
         let mut handle_objects = [None; CHANNEL_MAX_NUM_HANDLES];
         handle_objects[0] = Some(provider_end as Arc<dyn KernelObject>);
-        register_channel.messages.lock().push(Message { bytes: [].to_vec(), handle_objects });
+        register_channel.add_message(Message { bytes: [].to_vec(), handle_objects });
 
         // Return the user's end of the new channel to it
         Ok(task.add_handle(user_end))
