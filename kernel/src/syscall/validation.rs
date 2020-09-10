@@ -16,7 +16,8 @@ impl<T> UserPointer<T> {
         // TODO: validate that this is a valid pointer:
         //  - the address is canonical
         //  - the address is in user-space
-        //  - the address is actually mapped
+        //  - the address is actually mapped for a size of `T`
+        //  - the address is correctly aligned for `T`
         //  - if we're writing, that the mapping is writable
         UserPointer { ptr, can_write: needs_write }
     }
