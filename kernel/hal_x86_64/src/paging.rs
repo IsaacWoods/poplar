@@ -400,7 +400,6 @@ impl PageTable<Size4KiB> for PageTableImpl {
         let align_mismatch =
             abs_difference(usize::from(physical_start), usize::from(virtual_start)) % Size2MiB::SIZE != 0;
         if size < Size2MiB::SIZE || align_mismatch {
-            log::trace!("Just mapping with 4KiB pages");
             let pages = Page::starts_with(virtual_start)..Page::starts_with(virtual_start + size);
             let frames = Frame::starts_with(physical_start)..Frame::starts_with(physical_start + size);
             return self.map_range::<Size4KiB, A>(pages, frames, flags, allocator);
