@@ -51,7 +51,7 @@ pub extern "C" fn start() -> ! {
                 match syscall::get_message(*subscriber, &mut bytes, &mut []) {
                     Ok((bytes, _handles)) => {
                         info!("Echoing message: {:x?}", bytes);
-                        syscall::send_message(*subscriber, bytes, &[]);
+                        syscall::send_message(*subscriber, bytes, &[]).unwrap();
                     }
                     Err(GetMessageError::NoMessage) => break,
                     Err(err) => panic!("Error while echoing message: {:?}", err),
