@@ -59,6 +59,12 @@ pub extern "C" fn start() -> ! {
     log::set_max_level(log::LevelFilter::Trace);
     info!("Simple framebuffer driver is running!");
 
+    /*
+     * Test out the service stuff. We want the echo service.
+     */
+    let echo_channel = syscall::subscribe_to_service("echo.echo").expect("Failed to subscribe to echo service :(");
+    syscall::send_message(echo_channel, &[0xff, 0x00, 0xff, 0xaa], &[]).unwrap();
+
     let framebuffer = make_framebuffer();
     framebuffer.clear(Bgr32::pixel(0xaa, 0xaa, 0xaa, 0xff));
     framebuffer.draw_rect(100, 100, 300, 450, Bgr32::pixel(0xcc, 0x00, 0x00, 0xff));

@@ -9,6 +9,7 @@ use libpebble::{
     caps::{CapabilitiesRepr, CAP_EARLY_LOGGING, CAP_PADDING, CAP_SERVICE_PROVIDER},
     early_logger::EarlyLogger,
     syscall,
+    syscall::GetMessageError,
 };
 use linked_list_allocator::LockedHeap;
 use log::info;
@@ -32,9 +33,19 @@ pub extern "C" fn start() -> ! {
     log::set_max_level(log::LevelFilter::Trace);
     info!("Echo running!");
 
+    let echo_service_channel = syscall::register_service("echo").unwrap();
     loop {
-        info!("Echo loop");
         syscall::yield_to_kernel();
+
+        let mut bytes = [0u8; 256];
+        let mut handles = [libpebble::ZERO_HANDLE; 4];
+        match syscall::get_message(echo_service_channel, &mut bytes, &mut handles) {
+            Ok((bytes, handles)) => {
+                info!("Got message: {:#x?} (with {} handles)!", bytes, handles.len());
+            }
+            Err(GetMessageError::NoMessage) => info!("No messages yet :("),
+            Err(err) => panic!("Error getting message: {:?}", err),
+        }
     }
 }
 
