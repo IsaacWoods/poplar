@@ -116,7 +116,7 @@ pub fn send_message(channel: Handle, bytes: &[u8], handles: &[Handle]) -> Result
         raw::syscall5(
             SYSCALL_SEND_MESSAGE,
             channel.0 as usize,
-            bytes.as_ptr() as usize,
+            if bytes.len() == 0 { 0x0 } else { bytes.as_ptr() as usize },
             bytes.len(),
             if handles.len() == 0 { 0x0 } else { handles.as_ptr() as usize },
             handles.len(),
@@ -143,7 +143,7 @@ pub fn get_message<'b, 'h>(
         raw::syscall5(
             SYSCALL_GET_MESSAGE,
             channel.0 as usize,
-            byte_buffer.as_ptr() as usize,
+            if byte_buffer.len() == 0 { 0x0 } else { byte_buffer.as_ptr() as usize },
             byte_buffer.len(),
             if handle_buffer.len() == 0 { 0x0 } else { handle_buffer.as_ptr() as usize },
             handle_buffer.len(),

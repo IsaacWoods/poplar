@@ -303,18 +303,24 @@ where
             return Err((message, GetMessageError::HandlesBufferTooSmall));
         }
 
-        let byte_buffer = match UserSlice::new(bytes_address as *mut u8, message.bytes.len()).validate_write() {
-            Ok(buffer) => buffer,
-            Err(()) => return Err((message, GetMessageError::BytesAddressInvalid)),
-        };
-        let handles_buffer = match UserSlice::new(handles_address as *mut Handle, num_handles).validate_write() {
-            Ok(buffer) => buffer,
-            Err(()) => return Err((message, GetMessageError::HandlesAddressInvalid)),
-        };
+        if bytes_len > 0 && bytes_address != 0x0 {
+            let byte_buffer = match UserSlice::new(bytes_address as *mut u8, message.bytes.len()).validate_write()
+            {
+                Ok(buffer) => buffer,
+                Err(()) => return Err((message, GetMessageError::BytesAddressInvalid)),
+            };
+            byte_buffer.copy_from_slice(&message.bytes);
+        }
 
-        byte_buffer.copy_from_slice(&message.bytes);
-        for i in 0..num_handles {
-            handles_buffer[i] = task.add_handle(message.handle_objects[i].as_ref().unwrap().clone());
+        if handles_len > 0 && handles_address != 0x0 {
+            let handles_buffer = match UserSlice::new(handles_address as *mut Handle, num_handles).validate_write()
+            {
+                Ok(buffer) => buffer,
+                Err(()) => return Err((message, GetMessageError::HandlesAddressInvalid)),
+            };
+            for i in 0..num_handles {
+                handles_buffer[i] = task.add_handle(message.handle_objects[i].as_ref().unwrap().clone());
+            }
         }
 
         let mut status = 0;
