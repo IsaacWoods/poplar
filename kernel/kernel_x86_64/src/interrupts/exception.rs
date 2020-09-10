@@ -16,6 +16,26 @@ pub extern "C" fn nmi_handler(_: &InterruptStackFrame) {
 
 pub extern "C" fn breakpoint_handler(stack_frame: &InterruptStackFrame) {
     info!("BREAKPOINT: {:#x?}", stack_frame);
+
+    /*
+     * TEMP: Do a stacktrace.
+     */
+    let mut rbp = stack_frame.rbp as usize;
+    info!("Starting stacktrace. First frame is at: {:#x}", rbp);
+    if rbp != 0 {
+        for i in 0..16 {
+            let next_rbp = unsafe { *(rbp as *const usize) };
+            let return_address = unsafe { *((rbp + 8) as *const usize) };
+
+            info!("     {}: return address: {:#x}. next frame is at: {:#x}", i, return_address, next_rbp);
+
+            if next_rbp == 0x0 {
+                break;
+            } else {
+                rbp = next_rbp;
+            }
+        }
+    }
 }
 
 pub extern "C" fn invalid_opcode_handler(stack_frame: &InterruptStackFrame) {
