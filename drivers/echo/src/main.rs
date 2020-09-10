@@ -2,8 +2,10 @@
 #![no_main]
 #![feature(const_generics, alloc_error_handler)]
 
+extern crate alloc;
 extern crate rlibc;
 
+use alloc::vec::Vec;
 use core::panic::PanicInfo;
 use libpebble::{
     caps::{CapabilitiesRepr, CAP_EARLY_LOGGING, CAP_PADDING, CAP_SERVICE_PROVIDER},
@@ -34,14 +36,35 @@ pub extern "C" fn start() -> ! {
     info!("Echo running!");
 
     let echo_service_channel = syscall::register_service("echo").unwrap();
+    let mut subscribers = Vec::new();
+
     loop {
         syscall::yield_to_kernel();
+
+        /*
+         * Check if any of our subscribers have sent us any messages, and if they have, echo them back.
+         * NOTE: we don't support handles.
+         */
+        for subscriber in subscribers.iter() {
+            let mut bytes = [0u8; 256];
+            loop {
+                match syscall::get_message(*subscriber, &mut bytes, &mut []) {
+                    Ok((bytes, _handles)) => {
+                        info!("Echoing message: {:x?}", bytes);
+                        syscall::send_message(*subscriber, bytes, &[]);
+                    }
+                    Err(GetMessageError::NoMessage) => break,
+                    Err(err) => panic!("Error while echoing message: {:?}", err),
+                }
+            }
+        }
 
         let mut bytes = [0u8; 256];
         let mut handles = [libpebble::ZERO_HANDLE; 4];
         match syscall::get_message(echo_service_channel, &mut bytes, &mut handles) {
             Ok((bytes, handles)) => {
-                info!("Got message: {:#x?} (with {} handles)!", bytes, handles.len());
+                info!("Task subscribed to our service!");
+                subscribers.push(handles[0]);
             }
             Err(GetMessageError::NoMessage) => info!("No messages yet :("),
             Err(err) => panic!("Error getting message: {:?}", err),

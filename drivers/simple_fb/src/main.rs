@@ -64,6 +64,23 @@ pub extern "C" fn start() -> ! {
      */
     let echo_channel = syscall::subscribe_to_service("echo.echo").expect("Failed to subscribe to echo service :(");
     syscall::send_message(echo_channel, &[0xff, 0x00, 0xff, 0xaa], &[]).unwrap();
+    syscall::send_message(echo_channel, &[0x69, 0x69, 0x69], &[]).unwrap();
+    let mut messages_received = 0;
+    loop {
+        let mut bytes = [0u8; 256];
+        match syscall::get_message(echo_channel, &mut bytes, &mut []) {
+            Ok((bytes, _handles)) => {
+                info!("Echo sent message back: {:x?}", bytes);
+                messages_received += 1;
+
+                if messages_received == 2 {
+                    break;
+                }
+            }
+            Err(syscall::GetMessageError::NoMessage) => syscall::yield_to_kernel(),
+            Err(err) => panic!("Error getting message from echo: {:?}", err),
+        }
+    }
 
     let framebuffer = make_framebuffer();
     framebuffer.clear(Bgr32::pixel(0xaa, 0xaa, 0xaa, 0xff));
