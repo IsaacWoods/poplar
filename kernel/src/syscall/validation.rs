@@ -58,6 +58,14 @@ impl<'a, T> UserSlice<'a, T> {
         // TODO: validate access is valid
         Ok(unsafe { slice::from_raw_parts(self.ptr, self.length) })
     }
+
+    /// Validate this slice for a write, BUT DOES NOT ACTUALLY WRITE ANYTHING INTO IT. You must write into the
+    /// returned mutable reference, generally using either `copy_from_slice` if `T: Copy`, or `clone_from_slice`
+    /// otherwise.
+    pub fn validate_write(&mut self) -> Result<&'a mut [T], ()> {
+        // TODO: validate access is valid
+        Ok(unsafe { slice::from_raw_parts_mut(self.ptr, self.length) })
+    }
 }
 
 pub struct UserString<'a>(UserSlice<'a, u8>);
