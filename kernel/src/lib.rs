@@ -75,7 +75,7 @@ pub trait Platform: Sized + 'static {
 
     /// Do the actual drop into usermode. This assumes that the task's page tables have already been installed,
     /// and that an initial frame has been put into the task's kernel stack that this will use to enter userspace.
-    unsafe fn drop_into_userspace(kernel_stack_pointer: VirtualAddress) -> !;
+    unsafe fn drop_into_userspace() -> !;
 }
 
 pub fn load_task<P>(

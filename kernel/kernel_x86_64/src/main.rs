@@ -61,8 +61,8 @@ impl Platform for PlatformImpl {
         task::context_switch(current_kernel_stack, new_kernel_stack)
     }
 
-    unsafe fn drop_into_userspace(kernel_stack_pointer: VirtualAddress) -> ! {
-        task::drop_into_userspace(kernel_stack_pointer)
+    unsafe fn drop_into_userspace() -> ! {
+        task::drop_into_userspace()
     }
 }
 

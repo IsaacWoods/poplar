@@ -55,10 +55,9 @@ where
         self.running_task = Some(task.clone());
         task.address_space.switch_to();
         unsafe {
-            let kernel_stack_pointer = *task.kernel_stack_pointer.get();
-            P::per_cpu().set_kernel_stack_pointer(kernel_stack_pointer);
+            P::per_cpu().set_kernel_stack_pointer(*task.kernel_stack_pointer.get());
             P::per_cpu().set_user_stack_pointer(*task.user_stack_pointer.get());
-            P::drop_into_userspace(kernel_stack_pointer)
+            P::drop_into_userspace()
         }
     }
 

@@ -98,7 +98,7 @@ pub unsafe fn context_switch(current_kernel_stack: *mut VirtualAddress, new_kern
     do_context_switch(current_kernel_stack, new_kernel_stack);
 }
 
-pub unsafe fn drop_into_userspace(_kernel_stack_pointer: VirtualAddress) -> ! {
+pub unsafe fn drop_into_userspace() -> ! {
     /*
      * On x86_64, we use the context we install into the task's kernel stack to drop into usermode. We don't
      * need the kernel stack pointer as it has already been installed into the per-cpu info, so we can just
