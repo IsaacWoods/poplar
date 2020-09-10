@@ -249,6 +249,11 @@ where
                 Some(object) => Some(object.clone()),
                 None => return Err(SendMessageError::InvalidTransferredHandle),
             };
+
+            /*
+             * We're transferring the handle's object, so we remove the handle to it from the sending task.
+             */
+            task.handles.write().remove(&handle);
         }
         arr
     };
