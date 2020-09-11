@@ -1,11 +1,12 @@
 #![no_std]
+#![feature(const_generics, assoc_char_funcs)]
 
 extern crate alloc;
 
-// mod de;
+mod de;
 mod ser;
 
-// pub use de::Deserializer;
+pub use de::Deserializer;
 pub use ser::Serializer;
 
 use alloc::string::{String, ToString};
@@ -22,6 +23,16 @@ pub(crate) const MARKER_SOME: u8 = 0x1;
 
 #[derive(Clone, PartialEq, Eq, Debug)]
 pub enum Error {
+    EndOfStream,
+    TrailingBytes,
+
+    ExpectedBool,
+    ExpectedUtf8Str,
+    InvalidOptionMarker(u8),
+    InvalidChar,
+
+    DeserializeAnyNotSupported,
+
     Custom(String),
 }
 
@@ -53,6 +64,6 @@ type Result<T> = core::result::Result<T, Error>;
 
 // XXX: in the future, we'll be able to implement Writer for a "slice" of a message buffer shared between a task
 // and the kernel
-trait Writer {
+pub trait Writer {
     fn write(&mut self, buf: &[u8]) -> Result<()>;
 }

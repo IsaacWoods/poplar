@@ -13,6 +13,7 @@ bit_field = "0.10"
 spin = "0.4"
 log = { version = "0.4", default-features = false }
 libpebble = { path = "../lib/libpebble" }
+ptah = { path = "../lib/ptah" }
 
 [workspace]
 members = ["efiloader", "hal", "hal_x86_64", "hal_arm64", "kernel_x86_64", "kernel_rpi4"]
