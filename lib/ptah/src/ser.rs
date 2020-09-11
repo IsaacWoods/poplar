@@ -75,11 +75,11 @@ where
     }
 
     fn serialize_f32(self, value: f32) -> Result<Self::Ok> {
-        self.writer.write(&mem::transmute::<f32, [u8; 4]>(value))
+        self.writer.write(&value.to_le_bytes())
     }
 
     fn serialize_f64(self, value: f64) -> Result<Self::Ok> {
-        self.writer.write(&mem::transmute::<f64, [u8; 8]>(value))
+        self.writer.write(&value.to_le_bytes())
     }
 
     fn serialize_char(self, value: char) -> Result<Self::Ok> {
