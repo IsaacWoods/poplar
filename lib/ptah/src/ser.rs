@@ -8,17 +8,6 @@ where
     pub(crate) writer: W,
 }
 
-pub fn to_wire<'w, T, W>(value: &T, writer: &'w mut W) -> Result<()>
-where
-    T: Serialize,
-    W: Writer,
-{
-    let mut serializer = Serializer { writer };
-
-    value.serialize(&mut serializer)?;
-    Ok(())
-}
-
 impl<'a, W> ser::Serializer for &'a mut Serializer<W>
 where
     W: Writer,

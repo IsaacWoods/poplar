@@ -1,31 +1,24 @@
 use crate::{Error, Result};
 use alloc::string::ToString;
-use serde::{
-    de::{self, DeserializeSeed, EnumAccess, IntoDeserializer, MapAccess, SeqAccess, VariantAccess, Visitor},
-    Deserialize,
 use core::{convert::TryInto, str};
+use serde::de::{
+    self,
+    DeserializeSeed,
+    EnumAccess,
+    IntoDeserializer,
+    MapAccess,
+    SeqAccess,
+    VariantAccess,
+    Visitor,
 };
 
 pub struct Deserializer<'de> {
-    input: &'de [u8],
+    pub(crate) input: &'de [u8],
 }
 
 impl<'de> Deserializer<'de> {
     pub fn from_wire(input: &'de [u8]) -> Self {
         Deserializer { input }
-    }
-}
-
-pub fn from_wire<'a, T>(serialized: &'a [u8]) -> Result<T>
-where
-    T: Deserialize<'a>,
-{
-    let mut deserializer = Deserializer::from_wire(serialized);
-    let value = T::deserialize(&mut deserializer)?;
-    if deserializer.input.is_empty() {
-        Ok(value)
-    } else {
-        Err(Error::TrailingBytes)
     }
 }
 
