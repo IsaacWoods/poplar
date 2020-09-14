@@ -267,13 +267,60 @@ impl<'de, 'a> de::Deserializer<'de> for &'a mut Deserializer<'de> {
     fn deserialize_enum<V>(
         self,
         _name: &'static str,
-        variants: &'static [&'static str],
+        _variants: &'static [&'static str],
         visitor: V,
     ) -> Result<V::Value>
     where
         V: Visitor<'de>,
     {
-        todo!()
+        struct EnumAccess<'de, 'b> {
+            deserializer: &'b mut Deserializer<'de>,
+        }
+        impl<'de, 'b> serde::de::EnumAccess<'de> for EnumAccess<'de, 'b> {
+            type Error = Error;
+            type Variant = Self;
+
+            fn variant_seed<V>(self, seed: V) -> Result<(V::Value, Self::Variant)>
+            where
+                V: DeserializeSeed<'de>,
+            {
+                let index = u32::from_le_bytes(self.deserializer.take::<4>()?);
+                let value = seed.deserialize(index.into_deserializer());
+                Ok((value?, self))
+            }
+        }
+        impl<'de, 'b> serde::de::VariantAccess<'de> for EnumAccess<'de, 'b> {
+            type Error = Error;
+
+            fn unit_variant(self) -> Result<()> {
+                Ok(())
+            }
+
+            fn newtype_variant_seed<T>(self, seed: T) -> Result<T::Value>
+            where
+                T: DeserializeSeed<'de>,
+            {
+                DeserializeSeed::deserialize(seed, self.deserializer)
+            }
+
+            fn tuple_variant<V>(self, len: usize, visitor: V) -> Result<V::Value>
+            where
+                V: Visitor<'de>,
+            {
+                use serde::Deserializer;
+                self.deserializer.deserialize_tuple(len, visitor)
+            }
+
+            fn struct_variant<V>(self, fields: &'static [&'static str], visitor: V) -> Result<V::Value>
+            where
+                V: Visitor<'de>,
+            {
+                use serde::Deserializer;
+                self.deserializer.deserialize_tuple(fields.len(), visitor)
+            }
+        }
+
+        visitor.visit_enum(EnumAccess { deserializer: self })
     }
 
     fn deserialize_identifier<V>(self, _visitor: V) -> Result<V::Value>
