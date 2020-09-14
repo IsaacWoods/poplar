@@ -1,11 +1,11 @@
 use crate::{Error, Result, Writer};
 use serde::{ser, Serialize};
 
-pub struct Serializer<'w, W>
+pub struct Serializer<W>
 where
     W: Writer,
 {
-    writer: &'w mut W,
+    pub(crate) writer: W,
 }
 
 pub fn to_wire<'w, T, W>(value: &T, writer: &'w mut W) -> Result<()>
@@ -19,7 +19,7 @@ where
     Ok(())
 }
 
-impl<'a, 'w, W> ser::Serializer for &'a mut Serializer<'w, W>
+impl<'a, W> ser::Serializer for &'a mut Serializer<W>
 where
     W: Writer,
 {
@@ -202,7 +202,7 @@ where
     }
 }
 
-impl<'a, 'w, W> ser::SerializeSeq for &'a mut Serializer<'w, W>
+impl<'a, W> ser::SerializeSeq for &'a mut Serializer<W>
 where
     W: Writer,
 {
@@ -221,7 +221,7 @@ where
     }
 }
 
-impl<'a, 'w, W> ser::SerializeTuple for &'a mut Serializer<'w, W>
+impl<'a, W> ser::SerializeTuple for &'a mut Serializer<W>
 where
     W: Writer,
 {
@@ -240,7 +240,7 @@ where
     }
 }
 
-impl<'a, 'w, W> ser::SerializeTupleStruct for &'a mut Serializer<'w, W>
+impl<'a, W> ser::SerializeTupleStruct for &'a mut Serializer<W>
 where
     W: Writer,
 {
@@ -259,7 +259,7 @@ where
     }
 }
 
-impl<'a, 'w, W> ser::SerializeTupleVariant for &'a mut Serializer<'w, W>
+impl<'a, W> ser::SerializeTupleVariant for &'a mut Serializer<W>
 where
     W: Writer,
 {
@@ -278,7 +278,7 @@ where
     }
 }
 
-impl<'a, 'w, W> ser::SerializeMap for &'a mut Serializer<'w, W>
+impl<'a, W> ser::SerializeMap for &'a mut Serializer<W>
 where
     W: Writer,
 {
@@ -304,7 +304,7 @@ where
     }
 }
 
-impl<'a, 'w, W> ser::SerializeStruct for &'a mut Serializer<'w, W>
+impl<'a, W> ser::SerializeStruct for &'a mut Serializer<W>
 where
     W: Writer,
 {
@@ -323,7 +323,7 @@ where
     }
 }
 
-impl<'a, 'w, W> ser::SerializeStructVariant for &'a mut Serializer<'w, W>
+impl<'a, W> ser::SerializeStructVariant for &'a mut Serializer<W>
 where
     W: Writer,
 {
