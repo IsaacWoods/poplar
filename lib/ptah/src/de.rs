@@ -41,35 +41,21 @@ impl<'de, 'a> de::Deserializer<'de> for &'a mut Deserializer<'de> {
     where
         V: Visitor<'de>,
     {
-        visitor.visit_i16(i16::from_le_bytes([self.take_byte()?, self.take_byte()?]))
+        visitor.visit_i16(i16::from_le_bytes(self.take::<2>()?))
     }
 
     fn deserialize_i32<V>(self, visitor: V) -> Result<V::Value>
     where
         V: Visitor<'de>,
     {
-        visitor.visit_i32(i32::from_le_bytes([
-            self.take_byte()?,
-            self.take_byte()?,
-            self.take_byte()?,
-            self.take_byte()?,
-        ]))
+        visitor.visit_i32(i32::from_le_bytes(self.take::<4>()?))
     }
 
     fn deserialize_i64<V>(self, visitor: V) -> Result<V::Value>
     where
         V: Visitor<'de>,
     {
-        visitor.visit_i64(i64::from_le_bytes([
-            self.take_byte()?,
-            self.take_byte()?,
-            self.take_byte()?,
-            self.take_byte()?,
-            self.take_byte()?,
-            self.take_byte()?,
-            self.take_byte()?,
-            self.take_byte()?,
-        ]))
+        visitor.visit_i64(i64::from_le_bytes(self.take::<8>()?))
     }
 
     fn deserialize_u8<V>(self, visitor: V) -> Result<V::Value>
