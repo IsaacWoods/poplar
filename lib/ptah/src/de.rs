@@ -1,16 +1,7 @@
 use crate::{Error, Result};
 use alloc::string::ToString;
 use core::{convert::TryInto, str};
-use serde::de::{
-    self,
-    DeserializeSeed,
-    EnumAccess,
-    IntoDeserializer,
-    MapAccess,
-    SeqAccess,
-    VariantAccess,
-    Visitor,
-};
+use serde::de::{self, DeserializeSeed, IntoDeserializer, Visitor};
 
 pub struct Deserializer<'de> {
     pub(crate) input: &'de [u8],
@@ -249,7 +240,41 @@ impl<'de, 'a> de::Deserializer<'de> for &'a mut Deserializer<'de> {
     where
         V: Visitor<'de>,
     {
-        todo!()
+        struct MapAccess<'de, 'b> {
+            deserializer: &'b mut Deserializer<'de>,
+            length: usize,
+        }
+        impl<'de, 'b> serde::de::MapAccess<'de> for MapAccess<'de, 'b> {
+            type Error = Error;
+
+            fn next_key_seed<K>(&mut self, seed: K) -> Result<Option<K::Value>>
+            where
+                K: DeserializeSeed<'de>,
+            {
+                if self.length > 0 {
+                    let key = seed.deserialize(&mut *self.deserializer)?;
+                    self.length -= 1;
+
+                    Ok(Some(key))
+                } else {
+                    Ok(None)
+                }
+            }
+
+            fn next_value_seed<V>(&mut self, seed: V) -> Result<V::Value>
+            where
+                V: DeserializeSeed<'de>,
+            {
+                seed.deserialize(&mut *self.deserializer)
+            }
+
+            fn size_hint(&self) -> Option<usize> {
+                Some(self.length)
+            }
+        }
+
+        let length = u64::from_le_bytes(self.take::<8>()?) as usize;
+        visitor.visit_map(MapAccess { deserializer: self, length })
     }
 
     fn deserialize_struct<V>(
