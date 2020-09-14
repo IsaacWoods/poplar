@@ -1,5 +1,4 @@
 use crate::{Error, Result, Writer};
-use core::mem;
 use serde::{ser, Serialize};
 
 pub struct Serializer<'w, W>
