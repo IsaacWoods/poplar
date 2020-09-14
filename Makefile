@@ -91,6 +91,7 @@ fmt:
 
 test:
 	cargo test --all-features --manifest-path lib/pebble_util/Cargo.toml
+	cargo test --manifest-path lib/ptah/Cargo.toml
 	make -C kernel test
 
 qemu: image_$(PLATFORM)

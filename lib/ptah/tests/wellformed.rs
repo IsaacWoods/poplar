@@ -2,13 +2,13 @@
 
 use ptah::CursorWriter;
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
-use std::fmt::Debug;
+use std::{collections::BTreeMap, fmt::Debug};
 
 const BUFFER_SIZE: usize = 128;
 
 fn test_value<T>(value: T)
 where
-    T: Serialize + DeserializeOwned + PartialEq + Debug,
+    T: Serialize + DeserializeOwned + PartialEq + Debug + 'static,
 {
     /*
      * The stdout output will only actually be printed if a test fails, so we print some stuff that might be useful
@@ -57,7 +57,20 @@ fn strings() {
 }
 
 #[test]
-fn test_simple_structs() {
+fn bools() {
+    test_value(false);
+    test_value(true);
+}
+
+#[test]
+fn arrays() {
+    test_value([0xff]);
+    test_value([5, 4, 7, 7, 2]);
+    test_value([3u8; 32]);
+}
+
+#[test]
+fn simple_structs() {
     #[derive(Clone, Copy, PartialEq, Debug, Serialize, Deserialize)]
     struct Foo {
         a: u8,
@@ -82,7 +95,7 @@ fn test_simple_structs() {
 }
 
 #[test]
-fn test_nested_structs() {
+fn nested_structs() {
     #[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize)]
     struct Egg {
         foo: String,
@@ -106,7 +119,7 @@ fn test_nested_structs() {
 }
 
 #[test]
-fn test_newtype_struct() {
+fn newtype_struct() {
     #[derive(Clone, Copy, PartialEq, Eq, Debug, Serialize, Deserialize)]
     #[repr(transparent)]
     struct Foo(u16);
@@ -115,7 +128,7 @@ fn test_newtype_struct() {
 }
 
 #[test]
-fn test_tuple_struct() {
+fn tuple_struct() {
     #[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize)]
     struct Foo(u8, String, ());
 
@@ -123,18 +136,18 @@ fn test_tuple_struct() {
 }
 
 #[test]
-fn test_unit() {
+fn unit() {
     test_value(());
 }
 
 #[test]
-fn test_tuples() {
+fn tuples() {
     test_value((11,));
     test_value((0.0f32, 73, "Foo".to_string(), -6));
 }
 
 #[test]
-fn test_options() {
+fn options() {
     test_value(None: Option<usize>);
     test_value(Some(6));
     test_value(Some("Hello, World!".to_string()));
@@ -149,7 +162,7 @@ fn test_options() {
 }
 
 #[test]
-fn test_enums() {
+fn enums() {
     #[derive(Clone, Copy, PartialEq, Eq, Debug, Serialize, Deserialize)]
     enum Foo {
         A,
@@ -170,4 +183,21 @@ fn test_enums() {
 
     test_value(Bar::None);
     test_value(Bar::Some(vec![654, 9]));
+}
+
+#[test]
+fn maps() {
+    /*
+     * Because we enable the `alloc` feature of serde but not the `std` feature (so it's no_std compatible), we
+     * can't use `HashMap` here.
+     */
+    let mut map = BTreeMap::new();
+    map.insert("one".to_string(), 1);
+    map.insert("two".to_string(), 2);
+    map.insert("three".to_string(), 3);
+    map.insert("four".to_string(), 4);
+    map.insert("seventy-four".to_string(), 74);
+    map.insert("eight-hundred-and-six".to_string(), 806);
+
+    test_value(map);
 }
