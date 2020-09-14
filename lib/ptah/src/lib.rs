@@ -13,6 +13,20 @@ use alloc::string::{String, ToString};
 use core::fmt;
 use serde::{Deserialize, Serialize};
 
+/// It can sometimes be useful to know the size of a value in its serialized form (e.g. to reserve space for it in
+/// a ring buffer). This calculates the number of bytes taken to serialize some `value` of `T` into Ptah's wire
+/// format. Note that this size is for the specific `value`, and may differ between values of `T`.
+pub fn serialized_size<T>(value: &T) -> Result<usize>
+where
+    T: Serialize,
+{
+    let mut size = 0;
+    let mut serializer = Serializer { writer: SizeCalculator { size: &mut size } };
+
+    value.serialize(&mut serializer)?;
+    Ok(size)
+}
+
 pub fn to_wire<'w, T, W>(value: &T, writer: W) -> Result<()>
 where
     T: Serialize,
@@ -52,6 +66,7 @@ type Result<T> = core::result::Result<T, Error>;
 pub enum Error {
     EndOfStream,
     TrailingBytes,
+    WriterFull,
 
     ExpectedBool,
     ExpectedUtf8Str,
@@ -87,8 +102,50 @@ impl fmt::Display for Error {
     }
 }
 
-// XXX: in the future, we'll be able to implement Writer for a "slice" of a message buffer shared between a task
-// and the kernel
+/// A `Writer` represents a consumer of the bytes produced by serializing a message. In cases where you can
+/// create a slice to put the bytes in, `CursorWriter` can be used. Custom `Writer`s are useful for more niche
+/// uses, such as sending the serialized bytes over a serial port.
 pub trait Writer {
     fn write(&mut self, buf: &[u8]) -> Result<()>;
+}
+
+/// This is a `Writer` that can be used to serialize a value into a pre-allocated byte buffer.
+pub struct CursorWriter<'a> {
+    buffer: &'a mut [u8],
+    position: usize,
+}
+
+impl<'a> CursorWriter<'a> {
+    pub fn new(buffer: &'a mut [u8]) -> CursorWriter<'a> {
+        CursorWriter { buffer, position: 0 }
+    }
+}
+
+impl<'a> Writer for CursorWriter<'a> {
+    fn write(&mut self, buf: &[u8]) -> Result<()> {
+        /*
+         * Detect if the write will overflow the buffer.
+         */
+        if (self.position + buf.len()) > self.buffer.len() {
+            return Err(Error::WriterFull);
+        }
+
+        self.buffer[self.position..(self.position + buf.len())].copy_from_slice(buf);
+        self.position += buf.len();
+        Ok(())
+    }
+}
+
+/// This is a writer that can be used to calculate the size of a serialized value. It doesn't actually write the
+/// serialized bytes anywhere - it simply tracks how are produced. Because the `Serializer` takes the `Writer` by
+/// value, this stores a reference back to the size, so it can be accessed after serialization is complete.
+struct SizeCalculator<'a> {
+    size: &'a mut usize,
+}
+
+impl<'a> Writer for SizeCalculator<'a> {
+    fn write(&mut self, buf: &[u8]) -> Result<()> {
+        *self.size += buf.len();
+        Ok(())
+    }
 }
