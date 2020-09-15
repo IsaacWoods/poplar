@@ -61,7 +61,7 @@ impl<T> InitGuard<T> {
              * Here, we create a reference to the data within the `MaybeUninit`. This causes UB if
              * the data isn't really initialized.
              */
-            STATE_INITIALIZED => unsafe { (*self.data.get()).get_ref() },
+            STATE_INITIALIZED => unsafe { (*self.data.get()).assume_init_ref() },
             STATE_UNINIT | STATE_INITIALIZING => panic!("InitGuard has not been initialized!"),
             _ => panic!("InitGuard has invalid state"),
         }
@@ -75,7 +75,7 @@ impl<T> InitGuard<T> {
              * Here, we create a reference to the data within the `MaybeUninit`. This causes UB if
              * the data isn't really initialized.
              */
-            STATE_INITIALIZED => Some(unsafe { (*self.data.get()).get_ref() }),
+            STATE_INITIALIZED => Some(unsafe { (*self.data.get()).assume_init_ref() }),
             STATE_UNINIT | STATE_INITIALIZING => None,
             _ => panic!("InitGuard has invalid state"),
         }
