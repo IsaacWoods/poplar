@@ -20,7 +20,7 @@ pub struct BootInfo {
     pub rsdp_address: Option<PhysicalAddress>,
 }
 
-pub const MAX_MEMORY_MAP_ENTRIES: usize = 128;
+pub const MAX_MEMORY_MAP_ENTRIES: usize = 256;
 
 #[derive(Clone)]
 #[repr(C)]
