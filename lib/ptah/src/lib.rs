@@ -9,7 +9,10 @@ mod ser;
 pub use de::Deserializer;
 pub use ser::Serializer;
 
-use alloc::string::{String, ToString};
+use alloc::{
+    string::{String, ToString},
+    vec::Vec,
+};
 use core::fmt;
 use serde::{Deserialize, Serialize};
 
@@ -132,6 +135,13 @@ impl<'a> Writer for CursorWriter<'a> {
 
         self.buffer[self.position..(self.position + buf.len())].copy_from_slice(buf);
         self.position += buf.len();
+        Ok(())
+    }
+}
+
+impl<'a> Writer for &'a mut Vec<u8> {
+    fn write(&mut self, buf: &[u8]) -> Result<()> {
+        self.extend_from_slice(buf);
         Ok(())
     }
 }
