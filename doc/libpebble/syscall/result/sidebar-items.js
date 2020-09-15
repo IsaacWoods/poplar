@@ -1,1 +1,1 @@
-initSidebarItems({"fn":[["handle_from_syscall_repr",""],["handle_to_syscall_repr",""],["status_from_syscall_repr",""],["status_to_syscall_repr",""]]});
+initSidebarItems({"fn":[["handle_from_syscall_repr",""],["handle_to_syscall_repr",""],["status_from_syscall_repr",""],["status_to_syscall_repr",""],["status_with_payload_to_syscall_repr","Convert a `Result` that carries a custom status on success. It is the producer's responsibility that the success status can be differentiated from an error, if needed."]]});

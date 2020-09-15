@@ -1,1 +1,1 @@
-initSidebarItems({"struct":[["PciAddress",""],["PciHeader","Every PCI configuration region starts with a header made up of two parts:    - a predefined region that identify the function (bytes `0x00..0x10`)    - a device-dependent region that depends on the Header Type field"]],"trait":[["ConfigRegionAccess",""]],"type":[["DeviceId",""],["VendorId",""]]});
+initSidebarItems({"struct":[["PciAddress",""],["PciHeader","Every PCI configuration region starts with a header made up of two parts:"]],"trait":[["ConfigRegionAccess",""]],"type":[["DeviceId",""],["VendorId",""]]});

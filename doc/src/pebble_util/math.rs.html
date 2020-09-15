@@ -146,17 +146,17 @@
 <span class="comment">// TODO: feels like something like this should exist in `num_traits` or something, but if it does I couldn&#39;t find</span>
 <span class="comment">// it</span>
 <span class="kw">pub</span> <span class="kw">trait</span> <span class="ident">PowerOfTwoable</span> {
-    <span class="kw">fn</span> <span class="ident">is_power_of_two</span>(<span class="self">self</span>) <span class="op">-&gt;</span> <span class="ident">bool</span>;
-    <span class="kw">fn</span> <span class="ident">next_power_of_two</span>(<span class="self">self</span>) <span class="op">-&gt;</span> <span class="self">Self</span>;
+    <span class="kw">fn</span> <span class="ident">is_power_of_two</span>(<span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">bool</span>;
+    <span class="kw">fn</span> <span class="ident">next_power_of_two</span>(<span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span>;
 }
 
 <span class="kw">macro</span> <span class="ident">impl_power_of_twoable</span>(<span class="macro-nonterminal">$</span><span class="kw">type</span>:<span class="macro-nonterminal">ty</span>) {
     <span class="kw">impl</span> <span class="ident">PowerOfTwoable</span> <span class="kw">for</span> <span class="macro-nonterminal">$</span><span class="kw">type</span> {
-        <span class="kw">fn</span> <span class="macro-nonterminal">is_power_of_two</span>(<span class="self">self</span>) <span class="op">-&gt;</span> <span class="ident">bool</span> {
+        <span class="kw">fn</span> <span class="macro-nonterminal">is_power_of_two</span>(<span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">bool</span> {
             <span class="self">self</span>.<span class="ident">is_power_of_two</span>()
         }
 
-        <span class="kw">fn</span> <span class="ident">next_power_of_two</span>(<span class="self">self</span>) <span class="op">-&gt;</span> <span class="self">Self</span> {
+        <span class="kw">fn</span> <span class="ident">next_power_of_two</span>(<span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
             <span class="self">self</span>.<span class="ident">next_power_of_two</span>()
         }
     }
@@ -178,7 +178,7 @@
 <span class="doccomment">/// assert_eq!(flooring_log2(61), 5);</span>
 <span class="doccomment">/// assert_eq!(flooring_log2(4095), 11);</span>
 <span class="doccomment">/// ```</span>
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">flooring_log2</span>(<span class="ident">x</span>: <span class="ident">usize</span>) <span class="op">-&gt;</span> <span class="ident">usize</span> {
+<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">flooring_log2</span>(<span class="ident">x</span>: <span class="ident">usize</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">usize</span> {
     <span class="macro">assert</span><span class="macro">!</span>(<span class="ident">x</span> <span class="op">&gt;</span> <span class="number">0</span>);
     <span class="kw">const</span> <span class="ident">NUM_BITS</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="ident">mem</span>::<span class="ident">size_of</span>::<span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span>() <span class="op">*</span> <span class="number">8</span>;
 
@@ -198,7 +198,7 @@
     <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">flooring_log2</span>(<span class="number">4095</span>), <span class="number">11</span>);
 }
 
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">ceiling_log2</span>(<span class="ident">x</span>: <span class="ident">usize</span>) <span class="op">-&gt;</span> <span class="ident">usize</span> {
+<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">ceiling_log2</span>(<span class="ident">x</span>: <span class="ident">usize</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">usize</span> {
     <span class="kw">let</span> <span class="ident">x</span> <span class="op">=</span> <span class="kw">if</span> <span class="ident">x</span>.<span class="ident">is_power_of_two</span>() { <span class="ident">x</span> } <span class="kw">else</span> { <span class="ident">x</span>.<span class="ident">next_power_of_two</span>() };
 
     <span class="comment">// `x` will always be a power of two now, so log(2) == the number of trailing zeros</span>
@@ -213,10 +213,10 @@
     <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">ceiling_log2</span>(<span class="number">4095</span>), <span class="number">12</span>);
 }
 
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">align_down</span><span class="op">&lt;</span><span class="ident">T</span>: <span class="ident">PrimInt</span> <span class="op">+</span> <span class="ident">PowerOfTwoable</span><span class="op">&gt;</span>(<span class="ident">value</span>: <span class="ident">T</span>, <span class="ident">align</span>: <span class="ident">T</span>) <span class="op">-&gt;</span> <span class="ident">T</span> {
-    <span class="macro">assert</span><span class="macro">!</span>(<span class="ident">align</span> <span class="op">==</span> <span class="ident">T</span>::<span class="ident">zero</span>() <span class="op">||</span> <span class="ident">align</span>.<span class="ident">is_power_of_two</span>());
+<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">align_down</span><span class="op">&lt;</span><span class="ident">T</span>: <span class="ident">PrimInt</span> <span class="op">+</span> <span class="ident">PowerOfTwoable</span><span class="op">&gt;</span>(<span class="ident">value</span>: <span class="ident">T</span>, <span class="ident">align</span>: <span class="ident">T</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">T</span> {
+    <span class="macro">assert</span><span class="macro">!</span>(<span class="ident">align</span> <span class="op">=</span><span class="op">=</span> <span class="ident">T</span>::<span class="ident">zero</span>() <span class="op">|</span><span class="op">|</span> <span class="ident">align</span>.<span class="ident">is_power_of_two</span>());
 
-    <span class="kw">if</span> <span class="ident">align</span> <span class="op">==</span> <span class="ident">T</span>::<span class="ident">zero</span>() {
+    <span class="kw">if</span> <span class="ident">align</span> <span class="op">=</span><span class="op">=</span> <span class="ident">T</span>::<span class="ident">zero</span>() {
         <span class="ident">value</span>
     } <span class="kw">else</span> {
         <span class="comment">/*
@@ -241,8 +241,8 @@
     <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">align_down</span>(<span class="number">1025</span>, <span class="number">16</span>), <span class="number">1024</span>);
 }
 
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">align_up</span><span class="op">&lt;</span><span class="ident">T</span>: <span class="ident">PrimInt</span> <span class="op">+</span> <span class="ident">PowerOfTwoable</span><span class="op">&gt;</span>(<span class="ident">value</span>: <span class="ident">T</span>, <span class="ident">align</span>: <span class="ident">T</span>) <span class="op">-&gt;</span> <span class="ident">T</span> {
-    <span class="kw">if</span> <span class="ident">align</span> <span class="op">==</span> <span class="ident">T</span>::<span class="ident">zero</span>() {
+<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">align_up</span><span class="op">&lt;</span><span class="ident">T</span>: <span class="ident">PrimInt</span> <span class="op">+</span> <span class="ident">PowerOfTwoable</span><span class="op">&gt;</span>(<span class="ident">value</span>: <span class="ident">T</span>, <span class="ident">align</span>: <span class="ident">T</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">T</span> {
+    <span class="kw">if</span> <span class="ident">align</span> <span class="op">=</span><span class="op">=</span> <span class="ident">T</span>::<span class="ident">zero</span>() {
         <span class="ident">value</span>
     } <span class="kw">else</span> {
         <span class="ident">align_down</span>(<span class="ident">value</span> <span class="op">+</span> <span class="ident">align</span> <span class="op">-</span> <span class="ident">T</span>::<span class="ident">one</span>(), <span class="ident">align</span>)
@@ -258,8 +258,8 @@
 }
 
 <span class="doccomment">/// Divide `x` by `divide_by`, taking the ceiling if it does not divide evenly.</span>
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">ceiling_integer_divide</span>(<span class="ident">x</span>: <span class="ident">usize</span>, <span class="ident">divide_by</span>: <span class="ident">usize</span>) <span class="op">-&gt;</span> <span class="ident">usize</span> {
-    <span class="ident">x</span> <span class="op">/</span> <span class="ident">divide_by</span> <span class="op">+</span> <span class="kw">if</span> <span class="ident">x</span> <span class="op">%</span> <span class="ident">divide_by</span> <span class="op">!=</span> <span class="number">0</span> { <span class="number">1</span> } <span class="kw">else</span> { <span class="number">0</span> }
+<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">ceiling_integer_divide</span>(<span class="ident">x</span>: <span class="ident">usize</span>, <span class="ident">divide_by</span>: <span class="ident">usize</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">usize</span> {
+    <span class="ident">x</span> <span class="op">/</span> <span class="ident">divide_by</span> <span class="op">+</span> <span class="kw">if</span> <span class="ident">x</span> <span class="op">%</span> <span class="ident">divide_by</span> <span class="op">!</span><span class="op">=</span> <span class="number">0</span> { <span class="number">1</span> } <span class="kw">else</span> { <span class="number">0</span> }
 }
 
 <span class="attribute">#[<span class="ident">test</span>]</span>
@@ -270,7 +270,7 @@
     <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">ceiling_integer_divide</span>(<span class="number">0</span>, <span class="number">5</span>), <span class="number">0</span>);
 }
 
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">abs_difference</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span>(<span class="ident">a</span>: <span class="ident">T</span>, <span class="ident">b</span>: <span class="ident">T</span>) <span class="op">-&gt;</span> <span class="ident">T</span>
+<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">abs_difference</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span>(<span class="ident">a</span>: <span class="ident">T</span>, <span class="ident">b</span>: <span class="ident">T</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">T</span>
 <span class="kw">where</span>
     <span class="ident">T</span>: <span class="ident">Ord</span> <span class="op">+</span> <span class="ident">ops</span>::<span class="ident">Sub</span><span class="op">&lt;</span><span class="ident">Output</span> <span class="op">=</span> <span class="ident">T</span><span class="op">&gt;</span>,
 {

@@ -130,8 +130,8 @@
 }
 
 <span class="kw">pub</span> <span class="kw">trait</span> <span class="ident">ConfigRegionAccess</span> {
-    <span class="kw">fn</span> <span class="ident">function_exists</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">address</span>: <span class="ident">PciAddress</span>) <span class="op">-&gt;</span> <span class="ident">bool</span>;
-    <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">read</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">address</span>: <span class="ident">PciAddress</span>, <span class="ident">offset</span>: <span class="ident">u16</span>) <span class="op">-&gt;</span> <span class="ident">u32</span>;
+    <span class="kw">fn</span> <span class="ident">function_exists</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">address</span>: <span class="ident">PciAddress</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">bool</span>;
+    <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">read</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">address</span>: <span class="ident">PciAddress</span>, <span class="ident">offset</span>: <span class="ident">u16</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">u32</span>;
     <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">write</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">address</span>: <span class="ident">PciAddress</span>, <span class="ident">offset</span>: <span class="ident">u16</span>, <span class="ident">value</span>: <span class="ident">u32</span>);
 }
 
@@ -206,16 +206,16 @@
 <span class="kw">where</span>
     <span class="ident">A</span>: <span class="ident">ConfigRegionAccess</span>,
 {
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">address</span>: <span class="ident">PciAddress</span>) <span class="op">-&gt;</span> <span class="ident">PciHeader</span><span class="op">&lt;</span><span class="ident">A</span><span class="op">&gt;</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">address</span>: <span class="ident">PciAddress</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">PciHeader</span><span class="op">&lt;</span><span class="ident">A</span><span class="op">&gt;</span> {
         <span class="ident">PciHeader</span>(<span class="ident">address</span>, <span class="ident">PhantomData</span>)
     }
 
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">id</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">access</span>: <span class="kw-2">&amp;</span><span class="ident">A</span>) <span class="op">-&gt;</span> (<span class="ident">VendorId</span>, <span class="ident">DeviceId</span>) {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">id</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">access</span>: <span class="kw-2">&amp;</span><span class="ident">A</span>) <span class="op">-</span><span class="op">&gt;</span> (<span class="ident">VendorId</span>, <span class="ident">DeviceId</span>) {
         <span class="kw">let</span> <span class="ident">id</span> <span class="op">=</span> <span class="kw">unsafe</span> { <span class="ident">access</span>.<span class="ident">read</span>(<span class="self">self</span>.<span class="number">0</span>, <span class="number">0x00</span>) };
         (<span class="ident">id</span>.<span class="ident">get_bits</span>(<span class="number">0</span>..<span class="number">16</span>) <span class="kw">as</span> <span class="ident">u16</span>, <span class="ident">id</span>.<span class="ident">get_bits</span>(<span class="number">16</span>..<span class="number">32</span>) <span class="kw">as</span> <span class="ident">u16</span>)
     }
 
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">header_type</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">access</span>: <span class="kw-2">&amp;</span><span class="ident">A</span>) <span class="op">-&gt;</span> <span class="ident">u8</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">header_type</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">access</span>: <span class="kw-2">&amp;</span><span class="ident">A</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">u8</span> {
         <span class="comment">/*
          * Read bits 0..=6 of the Header Type. Bit 7 dictates whether the device has multiple functions and so
          * isn&#39;t read here.
@@ -223,7 +223,7 @@
         <span class="kw">unsafe</span> { <span class="ident">access</span>.<span class="ident">read</span>(<span class="self">self</span>.<span class="number">0</span>, <span class="number">0x0c</span>) }.<span class="ident">get_bits</span>(<span class="number">16</span>..<span class="number">23</span>) <span class="kw">as</span> <span class="ident">u8</span>
     }
 
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">has_multiple_functions</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">access</span>: <span class="kw-2">&amp;</span><span class="ident">A</span>) <span class="op">-&gt;</span> <span class="ident">bool</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">has_multiple_functions</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">access</span>: <span class="kw-2">&amp;</span><span class="ident">A</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">bool</span> {
         <span class="comment">/*
          * Reads bit 7 of the Header Type, which is 1 if the device has multiple functions.
          */</span>

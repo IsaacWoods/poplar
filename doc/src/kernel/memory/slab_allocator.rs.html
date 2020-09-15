@@ -41,13 +41,13 @@
 }
 
 <span class="kw">impl</span> <span class="ident">SlabAllocator</span> {
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">bottom</span>: <span class="ident">VirtualAddress</span>, <span class="ident">top</span>: <span class="ident">VirtualAddress</span>, <span class="ident">slab_size</span>: <span class="ident">usize</span>) <span class="op">-&gt;</span> <span class="ident">SlabAllocator</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">bottom</span>: <span class="ident">VirtualAddress</span>, <span class="ident">top</span>: <span class="ident">VirtualAddress</span>, <span class="ident">slab_size</span>: <span class="ident">usize</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">SlabAllocator</span> {
         <span class="kw">let</span> <span class="ident">num_bytes_needed</span> <span class="op">=</span> <span class="ident">ceiling_integer_divide</span>(<span class="ident">usize</span>::<span class="ident">from</span>(<span class="ident">top</span>) <span class="op">-</span> <span class="ident">usize</span>::<span class="ident">from</span>(<span class="ident">bottom</span>), <span class="ident">slab_size</span>) <span class="op">/</span> <span class="number">8</span>;
         <span class="ident">SlabAllocator</span> { <span class="ident">bottom</span>, <span class="ident">top</span>, <span class="ident">slab_size</span>, <span class="ident">bitmap</span>: <span class="macro">vec</span><span class="macro">!</span>[<span class="number">0</span>; <span class="ident">num_bytes_needed</span>] }
     }
 
     <span class="doccomment">/// Try to allocate a slab out of the allocator. Returns `None` if no slabs are available.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">alloc</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>) <span class="op">-&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">VirtualAddress</span><span class="op">&gt;</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">alloc</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">VirtualAddress</span><span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="ident">index</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">bitmap</span>.<span class="ident">alloc</span>(<span class="number">1</span>)<span class="question-mark">?</span>;
         <span class="prelude-val">Some</span>(<span class="self">self</span>.<span class="ident">bottom</span> <span class="op">+</span> <span class="ident">index</span> <span class="op">*</span> <span class="self">self</span>.<span class="ident">slab_size</span>)
     }

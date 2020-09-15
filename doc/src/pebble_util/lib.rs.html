@@ -100,12 +100,12 @@
 <span class="doccomment">/// called more than once. Most commonly this is used for initialization functions.</span>
 <span class="kw">pub</span> <span class="kw">macro</span> <span class="ident">assert_first_call</span>
 {
-    () <span class="op">=&gt;</span>
+    () <span class="op">=</span><span class="op">&gt;</span>
     {
         <span class="macro">assert_first_call</span><span class="macro">!</span>(<span class="string">&quot;ASSERTION FAILED: function has already been called&quot;</span>);
     },
 
-    ($(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">arg</span>:<span class="ident">tt</span>)<span class="op">+</span>) <span class="op">=&gt;</span>
+    ($(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">arg</span>:<span class="ident">tt</span>)<span class="op">+</span>) <span class="op">=</span><span class="op">&gt;</span>
     {{
         <span class="kw">fn</span> <span class="ident">assert_first_call</span>()
         {

@@ -206,7 +206,7 @@
     <span class="ident">id</span>: <span class="ident">KernelObjectId</span>,
     <span class="ident">owner</span>: <span class="ident">KernelObjectId</span>,
     <span class="kw">pub</span> <span class="ident">name</span>: <span class="ident">String</span>,
-    <span class="kw">pub</span> <span class="ident">address_space</span>: <span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">AddressSpace</span><span class="op">&lt;</span><span class="ident">P</span><span class="op">&gt;&gt;</span>,
+    <span class="kw">pub</span> <span class="ident">address_space</span>: <span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">AddressSpace</span><span class="op">&lt;</span><span class="ident">P</span><span class="op">&gt;</span><span class="op">&gt;</span>,
     <span class="kw">pub</span> <span class="ident">state</span>: <span class="ident">Mutex</span><span class="op">&lt;</span><span class="ident">TaskState</span><span class="op">&gt;</span>,
     <span class="kw">pub</span> <span class="ident">capabilities</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">Capability</span><span class="op">&gt;</span>,
 
@@ -215,7 +215,7 @@
     <span class="kw">pub</span> <span class="ident">kernel_stack_pointer</span>: <span class="ident">UnsafeCell</span><span class="op">&lt;</span><span class="ident">VirtualAddress</span><span class="op">&gt;</span>,
     <span class="kw">pub</span> <span class="ident">user_stack_pointer</span>: <span class="ident">UnsafeCell</span><span class="op">&lt;</span><span class="ident">VirtualAddress</span><span class="op">&gt;</span>,
 
-    <span class="kw">pub</span> <span class="ident">handles</span>: <span class="ident">RwLock</span><span class="op">&lt;</span><span class="ident">BTreeMap</span><span class="op">&lt;</span><span class="ident">Handle</span>, <span class="ident">Arc</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">KernelObject</span><span class="op">&gt;&gt;</span><span class="op">&gt;</span>,
+    <span class="kw">pub</span> <span class="ident">handles</span>: <span class="ident">RwLock</span><span class="op">&lt;</span><span class="ident">BTreeMap</span><span class="op">&lt;</span><span class="ident">Handle</span>, <span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">dyn</span> <span class="ident">KernelObject</span><span class="op">&gt;</span><span class="op">&gt;</span><span class="op">&gt;</span>,
     <span class="ident">next_handle</span>: <span class="ident">AtomicU32</span>,
 }
 
@@ -233,12 +233,12 @@
 {
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">from_boot_info</span>(
         <span class="ident">owner</span>: <span class="ident">KernelObjectId</span>,
-        <span class="ident">address_space</span>: <span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">AddressSpace</span><span class="op">&lt;</span><span class="ident">P</span><span class="op">&gt;&gt;</span>,
+        <span class="ident">address_space</span>: <span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">AddressSpace</span><span class="op">&lt;</span><span class="ident">P</span><span class="op">&gt;</span><span class="op">&gt;</span>,
         <span class="ident">image</span>: <span class="kw-2">&amp;</span><span class="ident">hal</span>::<span class="ident">boot_info</span>::<span class="ident">LoadedImage</span>,
         <span class="ident">allocator</span>: <span class="kw-2">&amp;</span><span class="ident">PhysicalMemoryManager</span>,
         <span class="ident">kernel_page_table</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">P</span>::<span class="ident">PageTable</span>,
         <span class="ident">kernel_stack_allocator</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">KernelStackAllocator</span><span class="op">&lt;</span><span class="ident">P</span><span class="op">&gt;</span>,
-    ) <span class="op">-&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">Task</span><span class="op">&lt;</span><span class="ident">P</span><span class="op">&gt;&gt;</span>, <span class="ident">TaskCreationError</span><span class="op">&gt;</span> {
+    ) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">Task</span><span class="op">&lt;</span><span class="ident">P</span><span class="op">&gt;</span><span class="op">&gt;</span>, <span class="ident">TaskCreationError</span><span class="op">&gt;</span> {
         <span class="comment">// TODO: better way of getting initial stack sizes</span>
         <span class="kw">let</span> <span class="ident">user_stack</span> <span class="op">=</span>
             <span class="ident">address_space</span>.<span class="ident">alloc_user_stack</span>(<span class="number">0x4000</span>, <span class="ident">allocator</span>).<span class="ident">ok_or</span>(<span class="ident">TaskCreationError</span>::<span class="ident">AddressSpaceFull</span>)<span class="question-mark">?</span>;
@@ -269,7 +269,7 @@
         }))
     }
 
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">add_handle</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">object</span>: <span class="ident">Arc</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">KernelObject</span><span class="op">&gt;</span>) <span class="op">-&gt;</span> <span class="ident">Handle</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">add_handle</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">object</span>: <span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">dyn</span> <span class="ident">KernelObject</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">Handle</span> {
         <span class="kw">let</span> <span class="ident">handle</span> <span class="op">=</span> <span class="ident">Handle</span>(<span class="self">self</span>.<span class="ident">next_handle</span>.<span class="ident">fetch_add</span>(<span class="number">1</span>, <span class="ident">Ordering</span>::<span class="ident">Relaxed</span>));
         <span class="self">self</span>.<span class="ident">handles</span>.<span class="ident">write</span>().<span class="ident">insert</span>(<span class="ident">handle</span>, <span class="ident">object</span>);
         <span class="ident">handle</span>
@@ -280,7 +280,7 @@
 <span class="kw">where</span>
     <span class="ident">P</span>: <span class="ident">Platform</span>,
 {
-    <span class="kw">fn</span> <span class="ident">id</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-&gt;</span> <span class="ident">KernelObjectId</span> {
+    <span class="kw">fn</span> <span class="ident">id</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">KernelObjectId</span> {
         <span class="self">self</span>.<span class="ident">id</span>
     }
 }
@@ -288,12 +288,12 @@
 <span class="doccomment">/// Decode a capability stream (as found in a task&#39;s image) into a set of capabilities as they&#39;re</span>
 <span class="doccomment">/// represented in the kernel. For the format that&#39;s being decoded here, refer to the</span>
 <span class="doccomment">/// `(3.1) Userspace/Capabilities` section of the Book.</span>
-<span class="kw">fn</span> <span class="ident">decode_capabilities</span>(<span class="kw-2">mut</span> <span class="ident">cap_stream</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>]) <span class="op">-&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">Capability</span><span class="op">&gt;</span>, <span class="ident">TaskCreationError</span><span class="op">&gt;</span> {
+<span class="kw">fn</span> <span class="ident">decode_capabilities</span>(<span class="kw-2">mut</span> <span class="ident">cap_stream</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>]) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">Capability</span><span class="op">&gt;</span>, <span class="ident">TaskCreationError</span><span class="op">&gt;</span> {
     <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">caps</span> <span class="op">=</span> <span class="ident">Vec</span>::<span class="ident">new</span>();
 
     <span class="comment">// TODO: when decl_macro hygiene-opt-out is implemented, this should be converted to use it</span>
     <span class="macro">macro_rules</span><span class="macro">!</span> <span class="ident">one_byte_cap</span> {
-        (<span class="macro-nonterminal">$</span><span class="macro-nonterminal">cap</span>: <span class="ident">path</span>) <span class="op">=&gt;</span> {{
+        (<span class="macro-nonterminal">$</span><span class="macro-nonterminal">cap</span>: <span class="ident">path</span>) <span class="op">=</span><span class="op">&gt;</span> {{
             <span class="ident">caps</span>.<span class="ident">push</span>(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">cap</span>);
             <span class="ident">cap_stream</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="ident">cap_stream</span>[<span class="number">1</span>..];
         }};
@@ -301,20 +301,20 @@
 
     <span class="kw">while</span> <span class="ident">cap_stream</span>.<span class="ident">len</span>() <span class="op">&gt;</span> <span class="number">0</span> {
         <span class="kw">match</span> <span class="ident">cap_stream</span>[<span class="number">0</span>] {
-            <span class="number">0x01</span> <span class="op">=&gt;</span> <span class="macro">one_byte_cap</span><span class="macro">!</span>(<span class="ident">Capability</span>::<span class="ident">CreateAddressSpace</span>),
-            <span class="number">0x02</span> <span class="op">=&gt;</span> <span class="macro">one_byte_cap</span><span class="macro">!</span>(<span class="ident">Capability</span>::<span class="ident">CreateMemoryObject</span>),
-            <span class="number">0x03</span> <span class="op">=&gt;</span> <span class="macro">one_byte_cap</span><span class="macro">!</span>(<span class="ident">Capability</span>::<span class="ident">CreateTask</span>),
+            <span class="number">0x01</span> <span class="op">=</span><span class="op">&gt;</span> <span class="macro">one_byte_cap</span><span class="macro">!</span>(<span class="ident">Capability</span>::<span class="ident">CreateAddressSpace</span>),
+            <span class="number">0x02</span> <span class="op">=</span><span class="op">&gt;</span> <span class="macro">one_byte_cap</span><span class="macro">!</span>(<span class="ident">Capability</span>::<span class="ident">CreateMemoryObject</span>),
+            <span class="number">0x03</span> <span class="op">=</span><span class="op">&gt;</span> <span class="macro">one_byte_cap</span><span class="macro">!</span>(<span class="ident">Capability</span>::<span class="ident">CreateTask</span>),
 
-            <span class="number">0x30</span> <span class="op">=&gt;</span> <span class="macro">one_byte_cap</span><span class="macro">!</span>(<span class="ident">Capability</span>::<span class="ident">GetFramebuffer</span>),
-            <span class="number">0x31</span> <span class="op">=&gt;</span> <span class="macro">one_byte_cap</span><span class="macro">!</span>(<span class="ident">Capability</span>::<span class="ident">EarlyLogging</span>),
-            <span class="number">0x32</span> <span class="op">=&gt;</span> <span class="macro">one_byte_cap</span><span class="macro">!</span>(<span class="ident">Capability</span>::<span class="ident">ServiceProvider</span>),
-            <span class="number">0x33</span> <span class="op">=&gt;</span> <span class="macro">one_byte_cap</span><span class="macro">!</span>(<span class="ident">Capability</span>::<span class="ident">ServiceUser</span>),
+            <span class="number">0x30</span> <span class="op">=</span><span class="op">&gt;</span> <span class="macro">one_byte_cap</span><span class="macro">!</span>(<span class="ident">Capability</span>::<span class="ident">GetFramebuffer</span>),
+            <span class="number">0x31</span> <span class="op">=</span><span class="op">&gt;</span> <span class="macro">one_byte_cap</span><span class="macro">!</span>(<span class="ident">Capability</span>::<span class="ident">EarlyLogging</span>),
+            <span class="number">0x32</span> <span class="op">=</span><span class="op">&gt;</span> <span class="macro">one_byte_cap</span><span class="macro">!</span>(<span class="ident">Capability</span>::<span class="ident">ServiceProvider</span>),
+            <span class="number">0x33</span> <span class="op">=</span><span class="op">&gt;</span> <span class="macro">one_byte_cap</span><span class="macro">!</span>(<span class="ident">Capability</span>::<span class="ident">ServiceUser</span>),
 
             <span class="comment">// We skip `0x00` as the first byte of a capability, as it is just used to pad the</span>
             <span class="comment">// stream and so has no meaning</span>
-            <span class="number">0x00</span> <span class="op">=&gt;</span> <span class="ident">cap_stream</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="ident">cap_stream</span>[<span class="number">1</span>..],
+            <span class="number">0x00</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">cap_stream</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="ident">cap_stream</span>[<span class="number">1</span>..],
 
-            <span class="kw">_</span> <span class="op">=&gt;</span> <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">TaskCreationError</span>::<span class="ident">InvalidCapabilityEncoding</span>),
+            <span class="kw">_</span> <span class="op">=</span><span class="op">&gt;</span> <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">TaskCreationError</span>::<span class="ident">InvalidCapabilityEncoding</span>),
         }
     }
 

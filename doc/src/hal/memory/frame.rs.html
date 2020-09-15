@@ -95,7 +95,7 @@
 <span class="kw">where</span>
     <span class="ident">S</span>: <span class="ident">FrameSize</span>,
 {
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">starts_with</span>(<span class="ident">address</span>: <span class="ident">PhysicalAddress</span>) <span class="op">-&gt;</span> <span class="ident">Frame</span><span class="op">&lt;</span><span class="ident">S</span><span class="op">&gt;</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">starts_with</span>(<span class="ident">address</span>: <span class="ident">PhysicalAddress</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">Frame</span><span class="op">&lt;</span><span class="ident">S</span><span class="op">&gt;</span> {
         <span class="macro">assert</span><span class="macro">!</span>(
             <span class="ident">address</span>.<span class="ident">is_aligned</span>(<span class="ident">S</span>::<span class="ident">SIZE</span>),
             <span class="string">&quot;Tried to create frame of size {:#x} starting at invalid address: {:#x}&quot;</span>,
@@ -105,7 +105,7 @@
         <span class="ident">Frame</span> { <span class="ident">start</span>: <span class="ident">address</span>, <span class="ident">_phantom</span>: <span class="ident">PhantomData</span> }
     }
 
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">contains</span>(<span class="ident">address</span>: <span class="ident">PhysicalAddress</span>) <span class="op">-&gt;</span> <span class="ident">Frame</span><span class="op">&lt;</span><span class="ident">S</span><span class="op">&gt;</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">contains</span>(<span class="ident">address</span>: <span class="ident">PhysicalAddress</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">Frame</span><span class="op">&lt;</span><span class="ident">S</span><span class="op">&gt;</span> {
         <span class="ident">Frame</span> { <span class="ident">start</span>: <span class="ident">address</span>.<span class="ident">align_down</span>(<span class="ident">S</span>::<span class="ident">SIZE</span>), <span class="ident">_phantom</span>: <span class="ident">PhantomData</span> }
     }
 }
@@ -116,7 +116,7 @@
 {
     <span class="kw">type</span> <span class="ident">Output</span> <span class="op">=</span> <span class="ident">Frame</span><span class="op">&lt;</span><span class="ident">S</span><span class="op">&gt;</span>;
 
-    <span class="kw">fn</span> <span class="ident">add</span>(<span class="self">self</span>, <span class="ident">num_frames</span>: <span class="ident">usize</span>) <span class="op">-&gt;</span> <span class="self">Self</span>::<span class="ident">Output</span> {
+    <span class="kw">fn</span> <span class="ident">add</span>(<span class="self">self</span>, <span class="ident">num_frames</span>: <span class="ident">usize</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span>::<span class="ident">Output</span> {
         <span class="macro">assert</span><span class="macro">!</span>(<span class="ident">PhysicalAddress</span>::<span class="ident">new</span>(<span class="ident">usize</span>::<span class="ident">from</span>(<span class="self">self</span>.<span class="ident">start</span>) <span class="op">+</span> <span class="ident">num_frames</span> <span class="op">*</span> <span class="ident">S</span>::<span class="ident">SIZE</span>).<span class="ident">is_some</span>());
         <span class="ident">Frame</span> { <span class="ident">start</span>: <span class="self">self</span>.<span class="ident">start</span> <span class="op">+</span> <span class="ident">num_frames</span> <span class="op">*</span> <span class="ident">S</span>::<span class="ident">SIZE</span>, <span class="ident">_phantom</span>: <span class="ident">PhantomData</span> }
     }
@@ -128,7 +128,7 @@
 {
     <span class="kw">fn</span> <span class="ident">add_assign</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">num_frames</span>: <span class="ident">usize</span>) {
         <span class="macro">assert</span><span class="macro">!</span>(<span class="ident">PhysicalAddress</span>::<span class="ident">new</span>(<span class="ident">usize</span>::<span class="ident">from</span>(<span class="self">self</span>.<span class="ident">start</span>) <span class="op">+</span> <span class="ident">num_frames</span> <span class="op">*</span> <span class="ident">S</span>::<span class="ident">SIZE</span>).<span class="ident">is_some</span>());
-        <span class="self">self</span>.<span class="ident">start</span> <span class="op">+=</span> <span class="ident">num_frames</span> <span class="op">*</span> <span class="ident">S</span>::<span class="ident">SIZE</span>;
+        <span class="self">self</span>.<span class="ident">start</span> <span class="op">+</span><span class="op">=</span> <span class="ident">num_frames</span> <span class="op">*</span> <span class="ident">S</span>::<span class="ident">SIZE</span>;
     }
 }
 
@@ -136,17 +136,17 @@
 <span class="kw">where</span>
     <span class="ident">S</span>: <span class="ident">FrameSize</span>,
 {
-    <span class="kw">fn</span> <span class="ident">steps_between</span>(<span class="ident">start</span>: <span class="kw-2">&amp;</span><span class="self">Self</span>, <span class="ident">end</span>: <span class="kw-2">&amp;</span><span class="self">Self</span>) <span class="op">-&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span> {
+    <span class="kw">fn</span> <span class="ident">steps_between</span>(<span class="ident">start</span>: <span class="kw-2">&amp;</span><span class="self">Self</span>, <span class="ident">end</span>: <span class="kw-2">&amp;</span><span class="self">Self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="ident">address_difference</span> <span class="op">=</span> <span class="ident">usize</span>::<span class="ident">from</span>(<span class="ident">end</span>.<span class="ident">start</span>).<span class="ident">checked_sub</span>(<span class="ident">usize</span>::<span class="ident">from</span>(<span class="ident">start</span>.<span class="ident">start</span>))<span class="question-mark">?</span>;
-        <span class="macro">assert</span><span class="macro">!</span>(<span class="ident">address_difference</span> <span class="op">%</span> <span class="ident">S</span>::<span class="ident">SIZE</span> <span class="op">==</span> <span class="number">0</span>);
+        <span class="macro">assert</span><span class="macro">!</span>(<span class="ident">address_difference</span> <span class="op">%</span> <span class="ident">S</span>::<span class="ident">SIZE</span> <span class="op">=</span><span class="op">=</span> <span class="number">0</span>);
         <span class="prelude-val">Some</span>(<span class="ident">address_difference</span> <span class="op">/</span> <span class="ident">S</span>::<span class="ident">SIZE</span>)
     }
 
-    <span class="kw">fn</span> <span class="ident">forward_checked</span>(<span class="ident">start</span>: <span class="self">Self</span>, <span class="ident">count</span>: <span class="ident">usize</span>) <span class="op">-&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="self">Self</span><span class="op">&gt;</span> {
+    <span class="kw">fn</span> <span class="ident">forward_checked</span>(<span class="ident">start</span>: <span class="self">Self</span>, <span class="ident">count</span>: <span class="ident">usize</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="self">Self</span><span class="op">&gt;</span> {
         <span class="prelude-val">Some</span>(<span class="ident">Frame</span> { <span class="ident">start</span>: <span class="ident">start</span>.<span class="ident">start</span>.<span class="ident">checked_add</span>(<span class="ident">S</span>::<span class="ident">SIZE</span>.<span class="ident">checked_mul</span>(<span class="ident">count</span>)<span class="question-mark">?</span>)<span class="question-mark">?</span>, <span class="ident">_phantom</span>: <span class="ident">PhantomData</span> })
     }
 
-    <span class="kw">fn</span> <span class="ident">backward_checked</span>(<span class="ident">start</span>: <span class="self">Self</span>, <span class="ident">count</span>: <span class="ident">usize</span>) <span class="op">-&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="self">Self</span><span class="op">&gt;</span> {
+    <span class="kw">fn</span> <span class="ident">backward_checked</span>(<span class="ident">start</span>: <span class="self">Self</span>, <span class="ident">count</span>: <span class="ident">usize</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="self">Self</span><span class="op">&gt;</span> {
         <span class="prelude-val">Some</span>(<span class="ident">Frame</span> { <span class="ident">start</span>: <span class="ident">start</span>.<span class="ident">start</span>.<span class="ident">checked_sub</span>(<span class="ident">S</span>::<span class="ident">SIZE</span>.<span class="ident">checked_mul</span>(<span class="ident">count</span>)<span class="question-mark">?</span>)<span class="question-mark">?</span>, <span class="ident">_phantom</span>: <span class="ident">PhantomData</span> })
     }
 }

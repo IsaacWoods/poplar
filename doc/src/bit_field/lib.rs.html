@@ -404,7 +404,7 @@
     <span class="doccomment">/// ## Panics</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// This method will panic if the bit index is out of bounds of the bit field.</span>
-    <span class="kw">fn</span> <span class="ident">get_bit</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">bit</span>: <span class="ident">usize</span>) <span class="op">-&gt;</span> <span class="ident">bool</span>;
+    <span class="kw">fn</span> <span class="ident">get_bit</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">bit</span>: <span class="ident">usize</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">bool</span>;
 
     <span class="doccomment">/// Obtains the range of bits specified by `range`; note that index 0 is the least significant</span>
     <span class="doccomment">/// bit, while index `length() - 1` is the most significant bit.</span>
@@ -424,7 +424,7 @@
     <span class="doccomment">///</span>
     <span class="doccomment">/// This method will panic if the start or end indexes of the range are out of bounds of the</span>
     <span class="doccomment">/// bit field.</span>
-    <span class="kw">fn</span> <span class="ident">get_bits</span><span class="op">&lt;</span><span class="ident">T</span>: <span class="ident">RangeBounds</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;&gt;</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">range</span>: <span class="ident">T</span>) <span class="op">-&gt;</span> <span class="self">Self</span>;
+    <span class="kw">fn</span> <span class="ident">get_bits</span><span class="op">&lt;</span><span class="ident">T</span>: <span class="ident">RangeBounds</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">range</span>: <span class="ident">T</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span>;
 
     <span class="doccomment">/// Sets the bit at the index `bit` to the value `value` (where true means a value of &#39;1&#39; and</span>
     <span class="doccomment">/// false means a value of &#39;0&#39;); note that index 0 is the least significant bit, while index</span>
@@ -448,7 +448,7 @@
     <span class="doccomment">/// ## Panics</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// This method will panic if the bit index is out of the bounds of the bit field.</span>
-    <span class="kw">fn</span> <span class="ident">set_bit</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">bit</span>: <span class="ident">usize</span>, <span class="ident">value</span>: <span class="ident">bool</span>) <span class="op">-&gt;</span> <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">Self</span>;
+    <span class="kw">fn</span> <span class="ident">set_bit</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">bit</span>: <span class="ident">usize</span>, <span class="ident">value</span>: <span class="ident">bool</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">Self</span>;
 
     <span class="doccomment">/// Sets the range of bits defined by the range `range` to the lower bits of `value`; to be</span>
     <span class="doccomment">/// specific, if the range is N bits long, the N lower bits of `value` will be used; if any of</span>
@@ -473,7 +473,7 @@
     <span class="doccomment">///</span>
     <span class="doccomment">/// This method will panic if the range is out of bounds of the bit field, or if there are `1`s</span>
     <span class="doccomment">/// not in the lower N bits of `value`.</span>
-    <span class="kw">fn</span> <span class="ident">set_bits</span><span class="op">&lt;</span><span class="ident">T</span>: <span class="ident">RangeBounds</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;&gt;</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">range</span>: <span class="ident">T</span>, <span class="ident">value</span>: <span class="self">Self</span>) <span class="op">-&gt;</span> <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">Self</span>;
+    <span class="kw">fn</span> <span class="ident">set_bits</span><span class="op">&lt;</span><span class="ident">T</span>: <span class="ident">RangeBounds</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">range</span>: <span class="ident">T</span>, <span class="ident">value</span>: <span class="self">Self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">Self</span>;
 }
 
 <span class="kw">pub</span> <span class="kw">trait</span> <span class="ident">BitArray</span><span class="op">&lt;</span><span class="ident">T</span>: <span class="ident">BitField</span><span class="op">&gt;</span> {
@@ -485,7 +485,7 @@
     <span class="doccomment">/// assert_eq!([0u8, 4u8, 8u8].bit_length(), 24);</span>
     <span class="doccomment">/// assert_eq!([0u32, 5u32].bit_length(), 64);</span>
     <span class="doccomment">/// ```</span>
-    <span class="kw">fn</span> <span class="ident">bit_length</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-&gt;</span> <span class="ident">usize</span>;
+    <span class="kw">fn</span> <span class="ident">bit_length</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">usize</span>;
 
     <span class="doccomment">/// Obtains the bit at the index `bit`; note that index 0 is the least significant bit, while</span>
     <span class="doccomment">/// index `length() - 1` is the most significant bit.</span>
@@ -502,7 +502,7 @@
     <span class="doccomment">/// ## Panics</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// This method will panic if the bit index is out of bounds of the bit array.</span>
-    <span class="kw">fn</span> <span class="ident">get_bit</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">bit</span>: <span class="ident">usize</span>) <span class="op">-&gt;</span> <span class="ident">bool</span>;
+    <span class="kw">fn</span> <span class="ident">get_bit</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">bit</span>: <span class="ident">usize</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">bool</span>;
 
     <span class="doccomment">/// Obtains the range of bits specified by `range`; note that index 0 is the least significant</span>
     <span class="doccomment">/// bit, while index `length() - 1` is the most significant bit.</span>
@@ -523,7 +523,7 @@
     <span class="doccomment">///</span>
     <span class="doccomment">/// This method will panic if the start or end indexes of the range are out of bounds of the</span>
     <span class="doccomment">/// bit array, or if the range can&#39;t be contained by the bit field T.</span>
-    <span class="kw">fn</span> <span class="ident">get_bits</span><span class="op">&lt;</span><span class="ident">U</span>: <span class="ident">RangeBounds</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;&gt;</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">range</span>: <span class="ident">U</span>) <span class="op">-&gt;</span> <span class="ident">T</span>;
+    <span class="kw">fn</span> <span class="ident">get_bits</span><span class="op">&lt;</span><span class="ident">U</span>: <span class="ident">RangeBounds</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">range</span>: <span class="ident">U</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">T</span>;
 
     <span class="doccomment">/// Sets the bit at the index `bit` to the value `value` (where true means a value of &#39;1&#39; and</span>
     <span class="doccomment">/// false means a value of &#39;0&#39;); note that index 0 is the least significant bit, while index</span>
@@ -570,67 +570,67 @@
     <span class="doccomment">/// This method will panic if the range is out of bounds of the bit array,</span>
     <span class="doccomment">/// if the range can&#39;t be contained by the bit field T, or if there are `1`s</span>
     <span class="doccomment">/// not in the lower N bits of `value`.</span>
-    <span class="kw">fn</span> <span class="ident">set_bits</span><span class="op">&lt;</span><span class="ident">U</span>: <span class="ident">RangeBounds</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;&gt;</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">range</span>: <span class="ident">U</span>, <span class="ident">value</span>: <span class="ident">T</span>);
+    <span class="kw">fn</span> <span class="ident">set_bits</span><span class="op">&lt;</span><span class="ident">U</span>: <span class="ident">RangeBounds</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">range</span>: <span class="ident">U</span>, <span class="ident">value</span>: <span class="ident">T</span>);
 }
 
 <span class="doccomment">/// An internal macro used for implementing BitField on the standard integral types.</span>
 <span class="macro">macro_rules</span><span class="macro">!</span> <span class="ident">bitfield_numeric_impl</span> {
-    ($(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">t</span>:<span class="ident">ty</span>)<span class="kw-2">*</span>) <span class="op">=&gt;</span> ($(
+    ($(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">t</span>:<span class="ident">ty</span>)<span class="kw-2">*</span>) <span class="op">=</span><span class="op">&gt;</span> ($(
         <span class="kw">impl</span> <span class="ident">BitField</span> <span class="kw">for</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">t</span> {
             <span class="kw">const</span> <span class="ident">BIT_LENGTH</span>: <span class="ident">usize</span> <span class="op">=</span> ::<span class="ident">core</span>::<span class="ident">mem</span>::<span class="ident">size_of</span>::<span class="op">&lt;</span><span class="self">Self</span><span class="op">&gt;</span>() <span class="kw">as</span> <span class="ident">usize</span> <span class="op">*</span> <span class="number">8</span>;
 
             <span class="attribute">#[<span class="ident">inline</span>]</span>
-            <span class="kw">fn</span> <span class="ident">get_bit</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">bit</span>: <span class="ident">usize</span>) <span class="op">-&gt;</span> <span class="ident">bool</span> {
+            <span class="kw">fn</span> <span class="ident">get_bit</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">bit</span>: <span class="ident">usize</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">bool</span> {
                 <span class="macro">assert</span><span class="macro">!</span>(<span class="ident">bit</span> <span class="op">&lt;</span> <span class="self">Self</span>::<span class="ident">BIT_LENGTH</span>);
 
-                (<span class="kw-2">*</span><span class="self">self</span> <span class="op">&amp;</span> (<span class="number">1</span> <span class="op">&lt;&lt;</span> <span class="ident">bit</span>)) <span class="op">!=</span> <span class="number">0</span>
+                (<span class="kw-2">*</span><span class="self">self</span> <span class="op">&amp;</span> (<span class="number">1</span> <span class="op">&lt;</span><span class="op">&lt;</span> <span class="ident">bit</span>)) <span class="op">!</span><span class="op">=</span> <span class="number">0</span>
             }
 
             <span class="attribute">#[<span class="ident">inline</span>]</span>
-            <span class="kw">fn</span> <span class="ident">get_bits</span><span class="op">&lt;</span><span class="ident">T</span>: <span class="ident">RangeBounds</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;&gt;</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">range</span>: <span class="ident">T</span>) <span class="op">-&gt;</span> <span class="self">Self</span> {
+            <span class="kw">fn</span> <span class="ident">get_bits</span><span class="op">&lt;</span><span class="ident">T</span>: <span class="ident">RangeBounds</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">range</span>: <span class="ident">T</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
                 <span class="kw">let</span> <span class="ident">range</span> <span class="op">=</span> <span class="ident">to_regular_range</span>(<span class="kw-2">&amp;</span><span class="ident">range</span>, <span class="self">Self</span>::<span class="ident">BIT_LENGTH</span>);
 
                 <span class="macro">assert</span><span class="macro">!</span>(<span class="ident">range</span>.<span class="ident">start</span> <span class="op">&lt;</span> <span class="self">Self</span>::<span class="ident">BIT_LENGTH</span>);
-                <span class="macro">assert</span><span class="macro">!</span>(<span class="ident">range</span>.<span class="ident">end</span> <span class="op">&lt;=</span> <span class="self">Self</span>::<span class="ident">BIT_LENGTH</span>);
+                <span class="macro">assert</span><span class="macro">!</span>(<span class="ident">range</span>.<span class="ident">end</span> <span class="op">&lt;</span><span class="op">=</span> <span class="self">Self</span>::<span class="ident">BIT_LENGTH</span>);
                 <span class="macro">assert</span><span class="macro">!</span>(<span class="ident">range</span>.<span class="ident">start</span> <span class="op">&lt;</span> <span class="ident">range</span>.<span class="ident">end</span>);
 
                 <span class="comment">// shift away high bits</span>
-                <span class="kw">let</span> <span class="ident">bits</span> <span class="op">=</span> <span class="kw-2">*</span><span class="self">self</span> <span class="op">&lt;&lt;</span> (<span class="self">Self</span>::<span class="ident">BIT_LENGTH</span> <span class="op">-</span> <span class="ident">range</span>.<span class="ident">end</span>) <span class="op">&gt;&gt;</span> (<span class="self">Self</span>::<span class="ident">BIT_LENGTH</span> <span class="op">-</span> <span class="ident">range</span>.<span class="ident">end</span>);
+                <span class="kw">let</span> <span class="ident">bits</span> <span class="op">=</span> <span class="kw-2">*</span><span class="self">self</span> <span class="op">&lt;</span><span class="op">&lt;</span> (<span class="self">Self</span>::<span class="ident">BIT_LENGTH</span> <span class="op">-</span> <span class="ident">range</span>.<span class="ident">end</span>) <span class="op">&gt;</span><span class="op">&gt;</span> (<span class="self">Self</span>::<span class="ident">BIT_LENGTH</span> <span class="op">-</span> <span class="ident">range</span>.<span class="ident">end</span>);
 
                 <span class="comment">// shift away low bits</span>
-                <span class="ident">bits</span> <span class="op">&gt;&gt;</span> <span class="ident">range</span>.<span class="ident">start</span>
+                <span class="ident">bits</span> <span class="op">&gt;</span><span class="op">&gt;</span> <span class="ident">range</span>.<span class="ident">start</span>
             }
 
             <span class="attribute">#[<span class="ident">inline</span>]</span>
-            <span class="kw">fn</span> <span class="ident">set_bit</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">bit</span>: <span class="ident">usize</span>, <span class="ident">value</span>: <span class="ident">bool</span>) <span class="op">-&gt;</span> <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">Self</span> {
+            <span class="kw">fn</span> <span class="ident">set_bit</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">bit</span>: <span class="ident">usize</span>, <span class="ident">value</span>: <span class="ident">bool</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">Self</span> {
                 <span class="macro">assert</span><span class="macro">!</span>(<span class="ident">bit</span> <span class="op">&lt;</span> <span class="self">Self</span>::<span class="ident">BIT_LENGTH</span>);
 
                 <span class="kw">if</span> <span class="ident">value</span> {
-                    <span class="kw-2">*</span><span class="self">self</span> <span class="op">|=</span> <span class="number">1</span> <span class="op">&lt;&lt;</span> <span class="ident">bit</span>;
+                    <span class="kw-2">*</span><span class="self">self</span> <span class="op">|</span><span class="op">=</span> <span class="number">1</span> <span class="op">&lt;</span><span class="op">&lt;</span> <span class="ident">bit</span>;
                 } <span class="kw">else</span> {
-                    <span class="kw-2">*</span><span class="self">self</span> <span class="op">&amp;=</span> <span class="op">!</span>(<span class="number">1</span> <span class="op">&lt;&lt;</span> <span class="ident">bit</span>);
+                    <span class="kw-2">*</span><span class="self">self</span> <span class="op">&amp;=</span> <span class="op">!</span>(<span class="number">1</span> <span class="op">&lt;</span><span class="op">&lt;</span> <span class="ident">bit</span>);
                 }
 
                 <span class="self">self</span>
             }
 
             <span class="attribute">#[<span class="ident">inline</span>]</span>
-            <span class="kw">fn</span> <span class="ident">set_bits</span><span class="op">&lt;</span><span class="ident">T</span>: <span class="ident">RangeBounds</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;&gt;</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">range</span>: <span class="ident">T</span>, <span class="ident">value</span>: <span class="self">Self</span>) <span class="op">-&gt;</span> <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">Self</span> {
+            <span class="kw">fn</span> <span class="ident">set_bits</span><span class="op">&lt;</span><span class="ident">T</span>: <span class="ident">RangeBounds</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">range</span>: <span class="ident">T</span>, <span class="ident">value</span>: <span class="self">Self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">Self</span> {
                 <span class="kw">let</span> <span class="ident">range</span> <span class="op">=</span> <span class="ident">to_regular_range</span>(<span class="kw-2">&amp;</span><span class="ident">range</span>, <span class="self">Self</span>::<span class="ident">BIT_LENGTH</span>);
 
                 <span class="macro">assert</span><span class="macro">!</span>(<span class="ident">range</span>.<span class="ident">start</span> <span class="op">&lt;</span> <span class="self">Self</span>::<span class="ident">BIT_LENGTH</span>);
-                <span class="macro">assert</span><span class="macro">!</span>(<span class="ident">range</span>.<span class="ident">end</span> <span class="op">&lt;=</span> <span class="self">Self</span>::<span class="ident">BIT_LENGTH</span>);
+                <span class="macro">assert</span><span class="macro">!</span>(<span class="ident">range</span>.<span class="ident">end</span> <span class="op">&lt;</span><span class="op">=</span> <span class="self">Self</span>::<span class="ident">BIT_LENGTH</span>);
                 <span class="macro">assert</span><span class="macro">!</span>(<span class="ident">range</span>.<span class="ident">start</span> <span class="op">&lt;</span> <span class="ident">range</span>.<span class="ident">end</span>);
-                <span class="macro">assert</span><span class="macro">!</span>(<span class="ident">value</span> <span class="op">&lt;&lt;</span> (<span class="self">Self</span>::<span class="ident">BIT_LENGTH</span> <span class="op">-</span> (<span class="ident">range</span>.<span class="ident">end</span> <span class="op">-</span> <span class="ident">range</span>.<span class="ident">start</span>)) <span class="op">&gt;&gt;</span>
-                        (<span class="self">Self</span>::<span class="ident">BIT_LENGTH</span> <span class="op">-</span> (<span class="ident">range</span>.<span class="ident">end</span> <span class="op">-</span> <span class="ident">range</span>.<span class="ident">start</span>)) <span class="op">==</span> <span class="ident">value</span>,
+                <span class="macro">assert</span><span class="macro">!</span>(<span class="ident">value</span> <span class="op">&lt;</span><span class="op">&lt;</span> (<span class="self">Self</span>::<span class="ident">BIT_LENGTH</span> <span class="op">-</span> (<span class="ident">range</span>.<span class="ident">end</span> <span class="op">-</span> <span class="ident">range</span>.<span class="ident">start</span>)) <span class="op">&gt;</span><span class="op">&gt;</span>
+                        (<span class="self">Self</span>::<span class="ident">BIT_LENGTH</span> <span class="op">-</span> (<span class="ident">range</span>.<span class="ident">end</span> <span class="op">-</span> <span class="ident">range</span>.<span class="ident">start</span>)) <span class="op">=</span><span class="op">=</span> <span class="ident">value</span>,
                         <span class="string">&quot;value does not fit into bit range&quot;</span>);
 
-                <span class="kw">let</span> <span class="ident">bitmask</span>: <span class="self">Self</span> <span class="op">=</span> <span class="op">!</span>(<span class="op">!</span><span class="number">0</span> <span class="op">&lt;&lt;</span> (<span class="self">Self</span>::<span class="ident">BIT_LENGTH</span> <span class="op">-</span> <span class="ident">range</span>.<span class="ident">end</span>) <span class="op">&gt;&gt;</span>
-                                    (<span class="self">Self</span>::<span class="ident">BIT_LENGTH</span> <span class="op">-</span> <span class="ident">range</span>.<span class="ident">end</span>) <span class="op">&gt;&gt;</span>
-                                    <span class="ident">range</span>.<span class="ident">start</span> <span class="op">&lt;&lt;</span> <span class="ident">range</span>.<span class="ident">start</span>);
+                <span class="kw">let</span> <span class="ident">bitmask</span>: <span class="self">Self</span> <span class="op">=</span> <span class="op">!</span>(<span class="op">!</span><span class="number">0</span> <span class="op">&lt;</span><span class="op">&lt;</span> (<span class="self">Self</span>::<span class="ident">BIT_LENGTH</span> <span class="op">-</span> <span class="ident">range</span>.<span class="ident">end</span>) <span class="op">&gt;</span><span class="op">&gt;</span>
+                                    (<span class="self">Self</span>::<span class="ident">BIT_LENGTH</span> <span class="op">-</span> <span class="ident">range</span>.<span class="ident">end</span>) <span class="op">&gt;</span><span class="op">&gt;</span>
+                                    <span class="ident">range</span>.<span class="ident">start</span> <span class="op">&lt;</span><span class="op">&lt;</span> <span class="ident">range</span>.<span class="ident">start</span>);
 
                 <span class="comment">// set bits</span>
-                <span class="kw-2">*</span><span class="self">self</span> <span class="op">=</span> (<span class="kw-2">*</span><span class="self">self</span> <span class="op">&amp;</span> <span class="ident">bitmask</span>) <span class="op">|</span> (<span class="ident">value</span> <span class="op">&lt;&lt;</span> <span class="ident">range</span>.<span class="ident">start</span>);
+                <span class="kw-2">*</span><span class="self">self</span> <span class="op">=</span> (<span class="kw-2">*</span><span class="self">self</span> <span class="op">&amp;</span> <span class="ident">bitmask</span>) <span class="op">|</span> (<span class="ident">value</span> <span class="op">&lt;</span><span class="op">&lt;</span> <span class="ident">range</span>.<span class="ident">start</span>);
 
                 <span class="self">self</span>
             }
@@ -642,22 +642,22 @@
 
 <span class="kw">impl</span><span class="op">&lt;</span><span class="ident">T</span>: <span class="ident">BitField</span><span class="op">&gt;</span> <span class="ident">BitArray</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> <span class="kw">for</span> [<span class="ident">T</span>] {
     <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">fn</span> <span class="ident">bit_length</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-&gt;</span> <span class="ident">usize</span> {
+    <span class="kw">fn</span> <span class="ident">bit_length</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">usize</span> {
         <span class="self">self</span>.<span class="ident">len</span>() <span class="op">*</span> <span class="ident">T</span>::<span class="ident">BIT_LENGTH</span>
     }
 
     <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">fn</span> <span class="ident">get_bit</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">bit</span>: <span class="ident">usize</span>) <span class="op">-&gt;</span> <span class="ident">bool</span> {
+    <span class="kw">fn</span> <span class="ident">get_bit</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">bit</span>: <span class="ident">usize</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">bool</span> {
         <span class="kw">let</span> <span class="ident">slice_index</span> <span class="op">=</span> <span class="ident">bit</span> <span class="op">/</span> <span class="ident">T</span>::<span class="ident">BIT_LENGTH</span>;
         <span class="kw">let</span> <span class="ident">bit_index</span> <span class="op">=</span> <span class="ident">bit</span> <span class="op">%</span> <span class="ident">T</span>::<span class="ident">BIT_LENGTH</span>;
         <span class="self">self</span>[<span class="ident">slice_index</span>].<span class="ident">get_bit</span>(<span class="ident">bit_index</span>)
     }
 
     <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">fn</span> <span class="ident">get_bits</span><span class="op">&lt;</span><span class="ident">U</span>: <span class="ident">RangeBounds</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;&gt;</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">range</span>: <span class="ident">U</span>) <span class="op">-&gt;</span> <span class="ident">T</span> {
+    <span class="kw">fn</span> <span class="ident">get_bits</span><span class="op">&lt;</span><span class="ident">U</span>: <span class="ident">RangeBounds</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">range</span>: <span class="ident">U</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">T</span> {
         <span class="kw">let</span> <span class="ident">range</span> <span class="op">=</span> <span class="ident">to_regular_range</span>(<span class="kw-2">&amp;</span><span class="ident">range</span>, <span class="self">self</span>.<span class="ident">bit_length</span>());
 
-        <span class="macro">assert</span><span class="macro">!</span>(<span class="ident">range</span>.<span class="ident">len</span>() <span class="op">&lt;=</span> <span class="ident">T</span>::<span class="ident">BIT_LENGTH</span>);
+        <span class="macro">assert</span><span class="macro">!</span>(<span class="ident">range</span>.<span class="ident">len</span>() <span class="op">&lt;</span><span class="op">=</span> <span class="ident">T</span>::<span class="ident">BIT_LENGTH</span>);
 
         <span class="kw">let</span> <span class="ident">slice_start</span> <span class="op">=</span> <span class="ident">range</span>.<span class="ident">start</span> <span class="op">/</span> <span class="ident">T</span>::<span class="ident">BIT_LENGTH</span>;
         <span class="kw">let</span> <span class="ident">slice_end</span> <span class="op">=</span> <span class="ident">range</span>.<span class="ident">end</span> <span class="op">/</span> <span class="ident">T</span>::<span class="ident">BIT_LENGTH</span>;
@@ -665,11 +665,11 @@
         <span class="kw">let</span> <span class="ident">bit_end</span> <span class="op">=</span> <span class="ident">range</span>.<span class="ident">end</span> <span class="op">%</span> <span class="ident">T</span>::<span class="ident">BIT_LENGTH</span>;
         <span class="kw">let</span> <span class="ident">len</span> <span class="op">=</span> <span class="ident">range</span>.<span class="ident">len</span>();
 
-        <span class="macro">assert</span><span class="macro">!</span>(<span class="ident">slice_end</span> <span class="op">-</span> <span class="ident">slice_start</span> <span class="op">&lt;=</span> <span class="number">1</span>);
+        <span class="macro">assert</span><span class="macro">!</span>(<span class="ident">slice_end</span> <span class="op">-</span> <span class="ident">slice_start</span> <span class="op">&lt;</span><span class="op">=</span> <span class="number">1</span>);
 
-        <span class="kw">if</span> <span class="ident">slice_start</span> <span class="op">==</span> <span class="ident">slice_end</span> {
+        <span class="kw">if</span> <span class="ident">slice_start</span> <span class="op">=</span><span class="op">=</span> <span class="ident">slice_end</span> {
             <span class="self">self</span>[<span class="ident">slice_start</span>].<span class="ident">get_bits</span>(<span class="ident">bit_start</span>..<span class="ident">bit_end</span>)
-        } <span class="kw">else</span> <span class="kw">if</span> <span class="ident">bit_end</span> <span class="op">==</span> <span class="number">0</span> {
+        } <span class="kw">else</span> <span class="kw">if</span> <span class="ident">bit_end</span> <span class="op">=</span><span class="op">=</span> <span class="number">0</span> {
             <span class="self">self</span>[<span class="ident">slice_start</span>].<span class="ident">get_bits</span>(<span class="ident">bit_start</span>..<span class="ident">T</span>::<span class="ident">BIT_LENGTH</span>)
         } <span class="kw">else</span> {
             <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">ret</span> <span class="op">=</span> <span class="self">self</span>[<span class="ident">slice_start</span>].<span class="ident">get_bits</span>(<span class="ident">bit_start</span>..<span class="ident">T</span>::<span class="ident">BIT_LENGTH</span>);
@@ -689,21 +689,21 @@
     }
 
     <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">fn</span> <span class="ident">set_bits</span><span class="op">&lt;</span><span class="ident">U</span>: <span class="ident">RangeBounds</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;&gt;</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">range</span>: <span class="ident">U</span>, <span class="ident">value</span>: <span class="ident">T</span>) {
+    <span class="kw">fn</span> <span class="ident">set_bits</span><span class="op">&lt;</span><span class="ident">U</span>: <span class="ident">RangeBounds</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">range</span>: <span class="ident">U</span>, <span class="ident">value</span>: <span class="ident">T</span>) {
         <span class="kw">let</span> <span class="ident">range</span> <span class="op">=</span> <span class="ident">to_regular_range</span>(<span class="kw-2">&amp;</span><span class="ident">range</span>, <span class="self">self</span>.<span class="ident">bit_length</span>());
 
-        <span class="macro">assert</span><span class="macro">!</span>(<span class="ident">range</span>.<span class="ident">len</span>() <span class="op">&lt;=</span> <span class="ident">T</span>::<span class="ident">BIT_LENGTH</span>);
+        <span class="macro">assert</span><span class="macro">!</span>(<span class="ident">range</span>.<span class="ident">len</span>() <span class="op">&lt;</span><span class="op">=</span> <span class="ident">T</span>::<span class="ident">BIT_LENGTH</span>);
 
         <span class="kw">let</span> <span class="ident">slice_start</span> <span class="op">=</span> <span class="ident">range</span>.<span class="ident">start</span> <span class="op">/</span> <span class="ident">T</span>::<span class="ident">BIT_LENGTH</span>;
         <span class="kw">let</span> <span class="ident">slice_end</span> <span class="op">=</span> <span class="ident">range</span>.<span class="ident">end</span> <span class="op">/</span> <span class="ident">T</span>::<span class="ident">BIT_LENGTH</span>;
         <span class="kw">let</span> <span class="ident">bit_start</span> <span class="op">=</span> <span class="ident">range</span>.<span class="ident">start</span> <span class="op">%</span> <span class="ident">T</span>::<span class="ident">BIT_LENGTH</span>;
         <span class="kw">let</span> <span class="ident">bit_end</span> <span class="op">=</span> <span class="ident">range</span>.<span class="ident">end</span> <span class="op">%</span> <span class="ident">T</span>::<span class="ident">BIT_LENGTH</span>;
 
-        <span class="macro">assert</span><span class="macro">!</span>(<span class="ident">slice_end</span> <span class="op">-</span> <span class="ident">slice_start</span> <span class="op">&lt;=</span> <span class="number">1</span>);
+        <span class="macro">assert</span><span class="macro">!</span>(<span class="ident">slice_end</span> <span class="op">-</span> <span class="ident">slice_start</span> <span class="op">&lt;</span><span class="op">=</span> <span class="number">1</span>);
 
-        <span class="kw">if</span> <span class="ident">slice_start</span> <span class="op">==</span> <span class="ident">slice_end</span> {
+        <span class="kw">if</span> <span class="ident">slice_start</span> <span class="op">=</span><span class="op">=</span> <span class="ident">slice_end</span> {
             <span class="self">self</span>[<span class="ident">slice_start</span>].<span class="ident">set_bits</span>(<span class="ident">bit_start</span>..<span class="ident">bit_end</span>, <span class="ident">value</span>);
-        } <span class="kw">else</span> <span class="kw">if</span> <span class="ident">bit_end</span> <span class="op">==</span> <span class="number">0</span> {
+        } <span class="kw">else</span> <span class="kw">if</span> <span class="ident">bit_end</span> <span class="op">=</span><span class="op">=</span> <span class="number">0</span> {
             <span class="self">self</span>[<span class="ident">slice_start</span>].<span class="ident">set_bits</span>(<span class="ident">bit_start</span>..<span class="ident">T</span>::<span class="ident">BIT_LENGTH</span>, <span class="ident">value</span>);
         } <span class="kw">else</span> {
             <span class="self">self</span>[<span class="ident">slice_start</span>].<span class="ident">set_bits</span>(
@@ -718,16 +718,16 @@
     }
 }
 
-<span class="kw">fn</span> <span class="ident">to_regular_range</span><span class="op">&lt;</span><span class="ident">T</span>: <span class="ident">RangeBounds</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;&gt;</span>(<span class="ident">generic_rage</span>: <span class="kw-2">&amp;</span><span class="ident">T</span>, <span class="ident">bit_length</span>: <span class="ident">usize</span>) <span class="op">-&gt;</span> <span class="ident">Range</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span> {
+<span class="kw">fn</span> <span class="ident">to_regular_range</span><span class="op">&lt;</span><span class="ident">T</span>: <span class="ident">RangeBounds</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span><span class="op">&gt;</span>(<span class="ident">generic_rage</span>: <span class="kw-2">&amp;</span><span class="ident">T</span>, <span class="ident">bit_length</span>: <span class="ident">usize</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">Range</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span> {
     <span class="kw">let</span> <span class="ident">start</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">generic_rage</span>.<span class="ident">start_bound</span>() {
-        <span class="ident">Bound</span>::<span class="ident">Excluded</span>(<span class="kw-2">&amp;</span><span class="ident">value</span>) <span class="op">=&gt;</span> <span class="ident">value</span> <span class="op">+</span> <span class="number">1</span>,
-        <span class="ident">Bound</span>::<span class="ident">Included</span>(<span class="kw-2">&amp;</span><span class="ident">value</span>) <span class="op">=&gt;</span> <span class="ident">value</span>,
-        <span class="ident">Bound</span>::<span class="ident">Unbounded</span> <span class="op">=&gt;</span> <span class="number">0</span>,
+        <span class="ident">Bound</span>::<span class="ident">Excluded</span>(<span class="kw-2">&amp;</span><span class="ident">value</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">value</span> <span class="op">+</span> <span class="number">1</span>,
+        <span class="ident">Bound</span>::<span class="ident">Included</span>(<span class="kw-2">&amp;</span><span class="ident">value</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">value</span>,
+        <span class="ident">Bound</span>::<span class="ident">Unbounded</span> <span class="op">=</span><span class="op">&gt;</span> <span class="number">0</span>,
     };
     <span class="kw">let</span> <span class="ident">end</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">generic_rage</span>.<span class="ident">end_bound</span>() {
-        <span class="ident">Bound</span>::<span class="ident">Excluded</span>(<span class="kw-2">&amp;</span><span class="ident">value</span>) <span class="op">=&gt;</span> <span class="ident">value</span>,
-        <span class="ident">Bound</span>::<span class="ident">Included</span>(<span class="kw-2">&amp;</span><span class="ident">value</span>) <span class="op">=&gt;</span> <span class="ident">value</span> <span class="op">+</span> <span class="number">1</span>,
-        <span class="ident">Bound</span>::<span class="ident">Unbounded</span> <span class="op">=&gt;</span> <span class="ident">bit_length</span>,
+        <span class="ident">Bound</span>::<span class="ident">Excluded</span>(<span class="kw-2">&amp;</span><span class="ident">value</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">value</span>,
+        <span class="ident">Bound</span>::<span class="ident">Included</span>(<span class="kw-2">&amp;</span><span class="ident">value</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">value</span> <span class="op">+</span> <span class="number">1</span>,
+        <span class="ident">Bound</span>::<span class="ident">Unbounded</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">bit_length</span>,
     };
 
     <span class="ident">start</span>..<span class="ident">end</span>

@@ -1,1 +1,0 @@
-initSidebarItems({"struct":[["ParseRatioError",""],["Ratio","Represents the ratio between two numbers."]],"type":[["Rational","Alias for a `Ratio` of machine-sized integers."],["Rational32","Alias for a `Ratio` of 32-bit-sized integers."],["Rational64","Alias for a `Ratio` of 64-bit-sized integers."]]});
