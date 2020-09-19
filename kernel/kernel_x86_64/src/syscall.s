@@ -32,6 +32,9 @@ syscall_handler:
     // Move to the task's kernel stack
     mov rsp, gs:0x8
 
+    // We're now on the kernel stack, so interrupts are okay now
+    sti
+
     // The `syscall` instruction puts important stuff in `rcx` and `r11`, so we save them and restore them
     // before calling `sysretq`.
     push rcx
@@ -55,6 +58,9 @@ syscall_handler:
     // Restore state needed for `sysretq`
     pop r11
     pop rcx
+
+    // Disable interrupts again while we mess around with the stacks
+    cli
 
     // Save the kernel's stack back into per-cpu data
     mov gs:0x8, rsp
