@@ -13,6 +13,7 @@ mod per_cpu;
 mod task;
 mod topo;
 
+use acpi::{AcpiTables, PciConfigRegions};
 use acpi_handler::{AmlHandler, PebbleAcpiHandler};
 use alloc::boxed::Box;
 use aml::AmlContext;
@@ -131,19 +132,19 @@ pub extern "C" fn kentry(boot_info: &BootInfo) -> ! {
     if boot_info.rsdp_address.is_none() {
         panic!("Bootloader did not pass RSDP address. Booting without ACPI is not supported.");
     }
-    let acpi_info =
-        match unsafe { acpi::parse_rsdp(&mut PebbleAcpiHandler, usize::from(boot_info.rsdp_address.unwrap())) } {
-            Ok(acpi_info) => acpi_info,
-            Err(err) => panic!("Failed to parse static ACPI tables: {:?}", err),
+    let acpi_tables =
+        match unsafe { AcpiTables::from_rsdp(PebbleAcpiHandler, usize::from(boot_info.rsdp_address.unwrap())) } {
+            Ok(acpi_tables) => acpi_tables,
+            Err(err) => panic!("Failed to discover ACPI tables: {:?}", err),
         };
-    info!("{:#?}", acpi_info);
+    let acpi_platform_info = acpi_tables.platform_info().unwrap();
 
     /*
      * Create the topology, which also creates a TSS and per-CPU data for each processor, and loads them for the
      * boot processor.
      */
-    let topology = topo::build_topology(&acpi_info);
-    let pci_access = pci::EcamAccess::new(acpi_info.pci_config_regions.clone().unwrap());
+    let topology = topo::build_topology(&acpi_platform_info);
+    let pci_access = pci::EcamAccess::new(PciConfigRegions::new(&acpi_tables).unwrap());
 
     /*
      * Parse the DSDT.
@@ -151,20 +152,19 @@ pub extern "C" fn kentry(boot_info: &BootInfo) -> ! {
     // TODO: if we're on ACPI 1.0 - pass true as legacy mode.
     let mut aml_context =
         AmlContext::new(Box::new(AmlHandler::new(pci_access.clone())), false, aml::DebugVerbosity::None);
-    if let Some(ref dsdt_info) = acpi_info.dsdt {
-        let virtual_address = kernel_map::physical_to_virtual(PhysicalAddress::new(dsdt_info.address).unwrap());
+    if let Some(ref dsdt) = acpi_tables.dsdt {
+        let virtual_address = kernel_map::physical_to_virtual(PhysicalAddress::new(dsdt.address).unwrap());
         info!(
             "DSDT parse: {:?}",
-            aml_context.parse_table(unsafe {
-                core::slice::from_raw_parts(virtual_address.ptr(), dsdt_info.length as usize)
-            })
+            aml_context
+                .parse_table(unsafe { core::slice::from_raw_parts(virtual_address.ptr(), dsdt.length as usize) })
         );
 
         // TODO: we should parse the SSDTs here. Only bother if we've managed to parse the DSDT.
 
-        info!("----- Printing AML namespace -----");
-        info!("{:#?}", aml_context.namespace);
-        info!("----- Finished AML namespace -----");
+        // info!("----- Printing AML namespace -----");
+        // info!("{:#?}", aml_context.namespace);
+        // info!("----- Finished AML namespace -----");
     }
 
     /*
@@ -182,7 +182,8 @@ pub extern "C" fn kentry(boot_info: &BootInfo) -> ! {
     /*
      * Initialise the interrupt controller, which enables interrupts, and start the per-cpu timer.
      */
-    let mut interrupt_controller = InterruptController::init(&acpi_info, &mut aml_context);
+    let mut interrupt_controller =
+        InterruptController::init(&acpi_platform_info.interrupt_model, &mut aml_context);
     // interrupt_controller.enable_local_timer(&cpu_info, Duration::from_secs(3));
 
     task::install_syscall_handler();

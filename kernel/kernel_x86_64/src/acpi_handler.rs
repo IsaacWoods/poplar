@@ -10,10 +10,11 @@ use hal_x86_64::hw::port::Port;
 use log::debug;
 use pebble_util::math::align_down;
 
+#[derive(Clone)]
 pub struct PebbleAcpiHandler;
 
 impl AcpiHandler for PebbleAcpiHandler {
-    unsafe fn map_physical_region<T>(&mut self, physical_address: usize, size: usize) -> PhysicalMapping<T> {
+    unsafe fn map_physical_region<T>(&self, physical_address: usize, size: usize) -> PhysicalMapping<Self, T> {
         let virtual_address = kernel_map::physical_to_virtual(PhysicalAddress::new(physical_address).unwrap());
 
         PhysicalMapping {
@@ -21,10 +22,13 @@ impl AcpiHandler for PebbleAcpiHandler {
             virtual_start: NonNull::new(virtual_address.mut_ptr()).unwrap(),
             region_length: size,
             mapped_length: size,
+            handler: PebbleAcpiHandler,
         }
     }
 
-    fn unmap_physical_region<T>(&mut self, _region: PhysicalMapping<T>) {}
+    fn unmap_physical_region<T>(&self, _region: &PhysicalMapping<Self, T>) {
+        log::info!("Unmapping from ACPI: {:#x}, {}", _region.physical_start, _region.mapped_length);
+    }
 }
 
 pub struct AmlHandler<A>

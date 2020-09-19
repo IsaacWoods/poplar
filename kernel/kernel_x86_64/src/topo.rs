@@ -1,5 +1,5 @@
-use crate::per_cpu::PerCpuImpl;
-use acpi::{Acpi, ProcessorState};
+use crate::{acpi_handler::PebbleAcpiHandler, per_cpu::PerCpuImpl};
+use acpi::platform::ProcessorState;
 use alloc::{boxed::Box, vec::Vec};
 use core::{fmt, pin::Pin};
 use hal_x86_64::hw::{cpu::CpuInfo, gdt::SegmentSelector};
@@ -30,12 +30,12 @@ impl fmt::Debug for Cpu {
 }
 
 pub struct Topology {
-    cpu_info: CpuInfo,
-    boot_cpu: Cpu,
-    application_cpus: Vec<Cpu>,
+    pub cpu_info: CpuInfo,
+    pub boot_cpu: Cpu,
+    pub application_cpus: Vec<Cpu>,
 }
 
-pub fn build_topology(acpi_info: &Acpi) -> Topology {
+pub fn build_topology(acpi_platform_info: &acpi::PlatformInfo) -> Topology {
     /*
      * Gather information about the CPU we're running on and make sure it supports everything we need.
      */
@@ -50,11 +50,11 @@ pub fn build_topology(acpi_info: &Acpi) -> Topology {
     }
     check_support_and_enable_features(&cpu_info);
 
+    let processor_info = acpi_platform_info.processor_info.as_ref().unwrap();
     let mut boot_cpu = {
-        let boot_processor = acpi_info.boot_processor.expect("ACPI didn't find boot processor info!");
-        assert_eq!(boot_processor.state, ProcessorState::Running);
-        assert!(!boot_processor.is_ap);
-        Cpu::new(0, acpi_info.boot_processor.unwrap().local_apic_id)
+        assert_eq!(processor_info.boot_processor.state, ProcessorState::Running);
+        assert!(!processor_info.boot_processor.is_ap);
+        Cpu::new(0, processor_info.boot_processor.local_apic_id)
     };
 
     /*
@@ -62,7 +62,7 @@ pub fn build_topology(acpi_info: &Acpi) -> Topology {
      * processors appear in the MADT, which is the order that they should be brought up in.
      */
     let mut id = 1;
-    let application_cpus = acpi_info
+    let application_cpus = processor_info
         .application_processors
         .iter()
         .filter_map(|processor| match processor.state {

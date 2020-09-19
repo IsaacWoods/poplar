@@ -1,6 +1,6 @@
 mod exception;
 
-use acpi::{interrupt::InterruptModel, Acpi};
+use acpi::InterruptModel;
 use aml::{value::Args as AmlArgs, AmlContext, AmlName, AmlValue};
 use core::time::Duration;
 use hal::memory::PhysicalAddress;
@@ -67,8 +67,8 @@ impl InterruptController {
         }
     }
 
-    pub fn init(acpi_info: &Acpi, aml_context: &mut AmlContext) -> InterruptController {
-        match acpi_info.interrupt_model.as_ref().unwrap() {
+    pub fn init(interrupt_model: &InterruptModel, aml_context: &mut AmlContext) -> InterruptController {
+        match interrupt_model {
             InterruptModel::Apic(info) => {
                 if info.also_has_legacy_pics {
                     unsafe { Pic::new() }.remap_and_disable(LEGACY_PIC_VECTOR, LEGACY_PIC_VECTOR + 8);
