@@ -20,6 +20,7 @@ complex / specific ones may need multiple bytes of prefix, and can also encode f
 
 ### Overview of capabilities
 This is an overview of all the capabilities the kernel supports:
+
 | First byte    | Next byte(s)  | Data                  | Arch specific?    | Description                                                           |
 |---------------|---------------|-----------------------|-------------------|-----------------------------------------------------------------------|
 | `0x00`        | -             | -                     | -                 | No meaning - used to pad descriptor to required length (see above)    |
