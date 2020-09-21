@@ -10,19 +10,20 @@ a register.
 
 ### Overview of system calls
 
-| Number    | System call               | Description                                                         |
-|-----------|---------------------------|---------------------------------------------------------------------|
-| `0`       | `yield`                   | Yield to the kernel.                                                |
-| `1`       | `early_log`               | Log a message. Designed to be used from early processes.            |
-| `2`       | `get_framebuffer`         | Get the framebuffer that the kernel has created, if it has.         |
-| `3`       | `create_memory_object`    | Create a MemoryObject kernel object.                                |
-| `4`       | `map_memory_object`       | Map a MemoryObject into an AddressSpace.                            |
-| `5`       | `create_channel`          | Create a channel, returning handles to the two ends.                |
-| `6`       | `send_message`            | Send a message down a channel.                                      |
-| `7`       | `get_message`             | Receive the next message, if there is one.                          |
-| `8`       | `wait_for_message`        | Yield to the kernel until a message arrives on the given channel.   |
-| `9`       | `register_service`        | Register yourself as a service.                                     |
-| `10`      | `subscribe_to_service`    | Create a channel to a particular service provider.                  |
+| Number    | System call               | Description                                                           |
+|-----------|---------------------------|-----------------------------------------------------------------------|
+| `0`       | `yield`                   | Yield to the kernel.                                                  |
+| `1`       | `early_log`               | Log a message. Designed to be used from early processes.              |
+| `2`       | `get_framebuffer`         | Get the framebuffer that the kernel has created, if it has.           |
+| `3`       | `create_memory_object`    | Create a MemoryObject kernel object.                                  |
+| `4`       | `map_memory_object`       | Map a MemoryObject into an AddressSpace.                              |
+| `5`       | `create_channel`          | Create a channel, returning handles to the two ends.                  |
+| `6`       | `send_message`            | Send a message down a channel.                                        |
+| `7`       | `get_message`             | Receive the next message, if there is one.                            |
+| `8`       | `wait_for_message`        | Yield to the kernel until a message arrives on the given channel.     |
+| `9`       | `register_service`        | Register yourself as a service.                                       |
+| `10`      | `subscribe_to_service`    | Create a channel to a particular service provider.                    |
+| `11`      | `pci_get_info`            | Get information about the PCI devices on the platform.                |
 
 ### Making a system call on x86_64
 To make a system call on x86_64, populate these registers:

@@ -3,8 +3,6 @@ On many architectures, the bootloader or kernel can create a naive framebuffer u
 This framebuffer can be used to render from userspace, if a better hardware driver is not available on the
 platform.
 
-Tasks need the `GetKernelFramebuffer` capability to use this system call.
-
 ### Parameters
 - `a` should contain a mapped, writable, user-space address, to which information about the framebuffer will
   be written.
@@ -33,3 +31,6 @@ struct FramebufferInfo {
     pixel_format: u8,
 }
 ```
+
+### Capabilities needed
+Tasks need the `GetKernelFramebuffer` capability to use this system call.
