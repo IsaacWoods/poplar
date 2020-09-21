@@ -186,8 +186,11 @@
 <span id="185">185</span>
 <span id="186">186</span>
 <span id="187">187</span>
+<span id="188">188</span>
+<span id="189">189</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">get_framebuffer</span>;
+<span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">pci</span>;
 <span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">result</span>;
 
 <span class="kw">pub</span> <span class="kw">use</span> <span class="ident">get_framebuffer</span>::{<span class="ident">get_framebuffer</span>, <span class="ident">FramebufferInfo</span>, <span class="ident">GetFramebufferError</span>, <span class="ident">PixelFormat</span>};
@@ -216,6 +219,7 @@
 <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">SYSCALL_WAIT_FOR_MESSAGE</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="number">8</span>;
 <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">SYSCALL_REGISTER_SERVICE</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="number">9</span>;
 <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">SYSCALL_SUBSCRIBE_TO_SERVICE</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="number">10</span>;
+<span class="kw">pub</span> <span class="kw">const</span> <span class="ident">SYSCALL_PCI_GET_INFO</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="number">11</span>;
 
 <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">yield_to_kernel</span>() {
     <span class="kw">unsafe</span> {

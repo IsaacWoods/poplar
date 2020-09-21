@@ -1,0 +1,1 @@
+initSidebarItems({"enum":[["PciGetInfoError",""]],"fn":[["pci_get_info",""]],"struct":[["PciAddress","PCIe supports 65536 buses, each with 32 slots, each with 8 possible functions. We cram this into a `u32`:"],["PciDeviceInfo",""]]});

@@ -44,6 +44,8 @@
 <span id="43">43</span>
 <span id="44">44</span>
 <span id="45">45</span>
+<span id="46">46</span>
+<span id="47">47</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Copy</span>, <span class="ident">PartialEq</span>, <span class="ident">Eq</span>, <span class="ident">Debug</span>)]</span>
 <span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">Capability</span> {
@@ -51,6 +53,7 @@
     <span class="ident">EarlyLogging</span>,
     <span class="ident">ServiceProvider</span>,
     <span class="ident">ServiceUser</span>,
+    <span class="ident">PciBusDriver</span>,
 }
 
 <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">CAP_PADDING</span>: <span class="ident">u8</span> <span class="op">=</span> <span class="number">0x00</span>;
@@ -58,6 +61,7 @@
 <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">CAP_EARLY_LOGGING</span>: <span class="ident">u8</span> <span class="op">=</span> <span class="number">0x02</span>;
 <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">CAP_SERVICE_PROVIDER</span>: <span class="ident">u8</span> <span class="op">=</span> <span class="number">0x03</span>;
 <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">CAP_SERVICE_USER</span>: <span class="ident">u8</span> <span class="op">=</span> <span class="number">0x04</span>;
+<span class="kw">pub</span> <span class="kw">const</span> <span class="ident">CAP_PCI_BUS_DRIVER</span>: <span class="ident">u8</span> <span class="op">=</span> <span class="number">0x05</span>;
 
 <span class="doccomment">/// `N` must be a multiple of 4, and padded with zeros, so the whole descriptor is aligned to a</span>
 <span class="doccomment">/// 4-byte boundary.</span>
