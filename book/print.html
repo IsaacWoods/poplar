@@ -543,15 +543,15 @@ capabilities).</p>
 <p>The capabilities format is variable-length - simple capabilities can be encoded as a single byte, while more
 complex / specific ones may need multiple bytes of prefix, and can also encode fixed-length data.</p>
 <h3><a class="header" href="#overview-of-capabilities" id="overview-of-capabilities">Overview of capabilities</a></h3>
-<p>This is an overview of all the capabilities the kernel supports:
-| First byte    | Next byte(s)  | Data                  | Arch specific?    | Description                                                           |
-|---------------|---------------|-----------------------|-------------------|-----------------------------------------------------------------------|
-| <code>0x00</code>        | -             | -                     | -                 | No meaning - used to pad descriptor to required length (see above)    |
-| <code>0x01</code>        |               |                       | No                | <code>GetFramebuffer</code>                                                      |
-| <code>0x02</code>        |               |                       | No                | <code>EarlyLogging</code>                                                        |
-| <code>0x03</code>        |               |                       | No                | <code>ServiceProvider</code>                                                     |
-| <code>0x04</code>        |               |                       | No                | <code>ServiceUser</code>                                                         |
-| <code>0x05</code>        | -             | -                     | No                | <code>PciBusDriver</code>                                                        |</p>
+<p>This is an overview of all the capabilities the kernel supports:</p>
+<table><thead><tr><th>First byte</th><th>Next byte(s)</th><th>Data</th><th>Arch specific?</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>0x00</code></td><td>-</td><td>-</td><td>-</td><td>No meaning - used to pad descriptor to required length (see above)</td></tr>
+<tr><td><code>0x01</code></td><td></td><td></td><td>No</td><td><code>GetFramebuffer</code></td></tr>
+<tr><td><code>0x02</code></td><td></td><td></td><td>No</td><td><code>EarlyLogging</code></td></tr>
+<tr><td><code>0x03</code></td><td></td><td></td><td>No</td><td><code>ServiceProvider</code></td></tr>
+<tr><td><code>0x04</code></td><td></td><td></td><td>No</td><td><code>ServiceUser</code></td></tr>
+<tr><td><code>0x05</code></td><td>-</td><td>-</td><td>No</td><td><code>PciBusDriver</code></td></tr>
+</tbody></table>
 <h1><a class="header" href="#userspace-memory-map-x86_64" id="userspace-memory-map-x86_64">Userspace memory map (x86_64)</a></h1>
 <p>x86_64 features an enormous 256TB virtual address space, most of which is available to userspace processes under Pebble. For this reason, things are spread throughout the virtual address space to make it
 easy to identify what a virtual address points to.</p>
