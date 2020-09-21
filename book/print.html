@@ -249,6 +249,7 @@ a register.</p>
 <tr><td><code>8</code></td><td><code>wait_for_message</code></td><td>Yield to the kernel until a message arrives on the given channel.</td></tr>
 <tr><td><code>9</code></td><td><code>register_service</code></td><td>Register yourself as a service.</td></tr>
 <tr><td><code>10</code></td><td><code>subscribe_to_service</code></td><td>Create a channel to a particular service provider.</td></tr>
+<tr><td><code>11</code></td><td><code>pci_get_info</code></td><td>Get information about the PCI devices on the platform.</td></tr>
 </tbody></table>
 <h3><a class="header" href="#making-a-system-call-on-x86_64" id="making-a-system-call-on-x86_64">Making a system call on x86_64</a></h3>
 <p>To make a system call on x86_64, populate these registers:</p>
@@ -339,7 +340,6 @@ Output is logged to the same place as kernel logging.</p>
 <p>On many architectures, the bootloader or kernel can create a naive framebuffer using a platform-specific method.
 This framebuffer can be used to render from userspace, if a better hardware driver is not available on the
 platform.</p>
-<p>Tasks need the <code>GetKernelFramebuffer</code> capability to use this system call.</p>
 <h3><a class="header" href="#parameters-2" id="parameters-2">Parameters</a></h3>
 <ul>
 <li><code>a</code> should contain a mapped, writable, user-space address, to which information about the framebuffer will
@@ -374,6 +374,8 @@ struct FramebufferInfo {
 }
 <span class="boring">}
 </span></code></pre></pre>
+<h3><a class="header" href="#capabilities-needed-2" id="capabilities-needed-2">Capabilities needed</a></h3>
+<p>Tasks need the <code>GetKernelFramebuffer</code> capability to use this system call.</p>
 <h1><a class="header" href="#map_memory_object" id="map_memory_object"><code>map_memory_object</code></a></h1>
 <p>Map a MemoryObject into an AddressSpace.</p>
 <h3><a class="header" href="#parameters-3" id="parameters-3">Parameters</a></h3>
@@ -389,7 +391,7 @@ struct FramebufferInfo {
 <li><code>4</code> if the supplied AddressSpace handle does not point to an AddressSpace</li>
 <li><code>5</code> if the pointer to write the virtual address back to is invalid</li>
 </ul>
-<h3><a class="header" href="#capabilities-needed-2" id="capabilities-needed-2">Capabilities needed</a></h3>
+<h3><a class="header" href="#capabilities-needed-3" id="capabilities-needed-3">Capabilities needed</a></h3>
 <p>None (this may change in the future).</p>
 <h1><a class="header" href="#create_channel" id="create_channel"><code>create_channel</code></a></h1>
 <p>Create a <code>Channel</code> kernel object. Channels are slightly odd kernel objects in that they must be referred to in
@@ -405,7 +407,7 @@ codes are:</p>
 </ul>
 <p>TODO: if we ditch the ability to return an error (i.e. by making this infallible, or by saying that a null handle
 denotes an error but not which one), we could return both handles in the status.</p>
-<h3><a class="header" href="#capabilities-needed-3" id="capabilities-needed-3">Capabilities needed</a></h3>
+<h3><a class="header" href="#capabilities-needed-4" id="capabilities-needed-4">Capabilities needed</a></h3>
 <p>None.</p>
 <h1><a class="header" href="#send_message" id="send_message"><code>send_message</code></a></h1>
 <p>Send a message, consisting of a number of bytes and optionally a number of handles, down a <code>Channel</code>.
@@ -432,7 +434,7 @@ All the handles are removed from the sending <code>Task</code> and added to the 
 <li><code>9</code> if the handles array is too large</li>
 <li><code>10</code> if the other end of the <code>Channel</code> has been disconnected</li>
 </ul>
-<h3><a class="header" href="#capabilities-needed-4" id="capabilities-needed-4">Capabilities needed</a></h3>
+<h3><a class="header" href="#capabilities-needed-5" id="capabilities-needed-5">Capabilities needed</a></h3>
 <p>None.</p>
 <h1><a class="header" href="#get_message" id="get_message"><code>get_message</code></a></h1>
 <p>Receive a message from a <code>Channel</code>, if one is waiting to be received.</p>
@@ -463,7 +465,7 @@ remaining bytes have not been written by the kernel.</li>
 <li>Bits <code>32..48</code> contain the length of the valid handles buffer (in handles). If the passed buffer was larger than
 this, the remaining bytes have not been written by the kernel.</li>
 </ul>
-<h3><a class="header" href="#capabilities-needed-5" id="capabilities-needed-5">Capabilities needed</a></h3>
+<h3><a class="header" href="#capabilities-needed-6" id="capabilities-needed-6">Capabilities needed</a></h3>
 <p>None.</p>
 <h1><a class="header" href="#register_service" id="register_service"><code>register_service</code></a></h1>
 <p>Register yourself as the provider of a service. The name of the service will be <code>{task_name}.{service_name}</code>. This 
@@ -482,7 +484,7 @@ subscribe to a service.</p>
 <li><code>3</code> if the name is too long, or <code>0</code></li>
 </ul>
 <p>The returned handle is to a <code>Channel</code> that is used to serve channel subscriptions.</p>
-<h3><a class="header" href="#capabilities-needed-6" id="capabilities-needed-6">Capabilities needed</a></h3>
+<h3><a class="header" href="#capabilities-needed-7" id="capabilities-needed-7">Capabilities needed</a></h3>
 <p>The <code>ServiceProvider</code> capability is needed to make this system call.</p>
 <h1><a class="header" href="#subscribe_to_service" id="subscribe_to_service"><code>subscribe_to_service</code></a></h1>
 <p>Subscribe to a registered service by name. This will deliver a notification to the task that registered the
@@ -503,7 +505,7 @@ subscribe to a service.</p>
 </ul>
 <p>The returned handle is to one end of a <code>Channel</code>, the other end of which has been given to the task that supplies
 the service.</p>
-<h3><a class="header" href="#capabilities-needed-7" id="capabilities-needed-7">Capabilities needed</a></h3>
+<h3><a class="header" href="#capabilities-needed-8" id="capabilities-needed-8">Capabilities needed</a></h3>
 <p>The <code>ServiceUser</code> capability is needed to make this system call.</p>
 <h1><a class="header" href="#capabilities" id="capabilities">Capabilities</a></h1>
 <p>Capabilities describe what a task is allowed to do, and are encoded in its image. This allows users to audit the
@@ -523,19 +525,13 @@ capabilities).</p>
 complex / specific ones may need multiple bytes of prefix, and can also encode fixed-length data.</p>
 <h3><a class="header" href="#overview-of-capabilities" id="overview-of-capabilities">Overview of capabilities</a></h3>
 <p>This is an overview of all the capabilities the kernel supports:
-| First byte    | Next byte(s)  | Data                  | Arch specific?    | Description                                                           | Status        |
-|---------------|---------------|-----------------------|-------------------|-----------------------------------------------------------------------|---------------|
-| <code>0x00</code>        | -             | -                     | -                 | No meaning - used to pad descriptor to required length (see above)    | -             |
-| <code>0x01</code>        |               |                       | No                | <code>CreateAddressSpace</code>                                                  | Planned       |
-| <code>0x02</code>        |               |                       | No                | <code>CreateMemoryObject</code>                                                  | Planned       |
-| <code>0x03</code>        |               |                       | No                | <code>CreateTask</code>                                                          | Planned       |
-| <code>0x04</code>-<code>0x1f</code> |               |                       |                   | Reserved for future kernel objects                                    |               |
-| <code>0x20</code>        | <code>0x00</code>        | <code>u16</code> port number     | Yes - x86_64      | <code>X86_64AccessIoPort</code>                                                  | Planned       |
-| <code>0x21</code>-<code>0x2f</code> |               |                       |                   | Reserved for future architectures                                     |               |
-| <code>0x30</code>        |               |                       | No                | <code>GetFramebuffer</code>                                                      | Implemented   |
-| <code>0x31</code>        |               |                       | No                | <code>EarlyLogging</code>                                                        | Implemented   |
-| <code>0x32</code>        |               |                       | No                | <code>ServiceProvider</code>                                                     | Implemented   |
-| <code>0x33</code>        |               |                       | No                | <code>ServiceUser</code>                                                         | Implemented   |</p>
+| First byte    | Next byte(s)  | Data                  | Arch specific?    | Description                                                           |
+|---------------|---------------|-----------------------|-------------------|-----------------------------------------------------------------------|
+| <code>0x00</code>        | -             | -                     | -                 | No meaning - used to pad descriptor to required length (see above)    |
+| <code>0x01</code>        |               |                       | No                | <code>GetFramebuffer</code>                                                      |
+| <code>0x02</code>        |               |                       | No                | <code>EarlyLogging</code>                                                        |
+| <code>0x03</code>        |               |                       | No                | <code>ServiceProvider</code>                                                     |
+| <code>0x04</code>        |               |                       | No                | <code>ServiceUser</code>                                                         |</p>
 <h1><a class="header" href="#userspace-memory-map-x86_64" id="userspace-memory-map-x86_64">Userspace memory map (x86_64)</a></h1>
 <p>x86_64 features an enormous 256TB virtual address space, most of which is available to userspace processes under Pebble. For this reason, things are spread throughout the virtual address space to make it
 easy to identify what a virtual address points to.</p>

@@ -177,19 +177,13 @@ capabilities).</p>
 complex / specific ones may need multiple bytes of prefix, and can also encode fixed-length data.</p>
 <h3><a class="header" href="#overview-of-capabilities" id="overview-of-capabilities">Overview of capabilities</a></h3>
 <p>This is an overview of all the capabilities the kernel supports:
-| First byte    | Next byte(s)  | Data                  | Arch specific?    | Description                                                           | Status        |
-|---------------|---------------|-----------------------|-------------------|-----------------------------------------------------------------------|---------------|
-| <code>0x00</code>        | -             | -                     | -                 | No meaning - used to pad descriptor to required length (see above)    | -             |
-| <code>0x01</code>        |               |                       | No                | <code>CreateAddressSpace</code>                                                  | Planned       |
-| <code>0x02</code>        |               |                       | No                | <code>CreateMemoryObject</code>                                                  | Planned       |
-| <code>0x03</code>        |               |                       | No                | <code>CreateTask</code>                                                          | Planned       |
-| <code>0x04</code>-<code>0x1f</code> |               |                       |                   | Reserved for future kernel objects                                    |               |
-| <code>0x20</code>        | <code>0x00</code>        | <code>u16</code> port number     | Yes - x86_64      | <code>X86_64AccessIoPort</code>                                                  | Planned       |
-| <code>0x21</code>-<code>0x2f</code> |               |                       |                   | Reserved for future architectures                                     |               |
-| <code>0x30</code>        |               |                       | No                | <code>GetFramebuffer</code>                                                      | Implemented   |
-| <code>0x31</code>        |               |                       | No                | <code>EarlyLogging</code>                                                        | Implemented   |
-| <code>0x32</code>        |               |                       | No                | <code>ServiceProvider</code>                                                     | Implemented   |
-| <code>0x33</code>        |               |                       | No                | <code>ServiceUser</code>                                                         | Implemented   |</p>
+| First byte    | Next byte(s)  | Data                  | Arch specific?    | Description                                                           |
+|---------------|---------------|-----------------------|-------------------|-----------------------------------------------------------------------|
+| <code>0x00</code>        | -             | -                     | -                 | No meaning - used to pad descriptor to required length (see above)    |
+| <code>0x01</code>        |               |                       | No                | <code>GetFramebuffer</code>                                                      |
+| <code>0x02</code>        |               |                       | No                | <code>EarlyLogging</code>                                                        |
+| <code>0x03</code>        |               |                       | No                | <code>ServiceProvider</code>                                                     |
+| <code>0x04</code>        |               |                       | No                | <code>ServiceUser</code>                                                         |</p>
 
                     </main>
 

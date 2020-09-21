@@ -163,7 +163,6 @@
 <p>On many architectures, the bootloader or kernel can create a naive framebuffer using a platform-specific method.
 This framebuffer can be used to render from userspace, if a better hardware driver is not available on the
 platform.</p>
-<p>Tasks need the <code>GetKernelFramebuffer</code> capability to use this system call.</p>
 <h3><a class="header" href="#parameters" id="parameters">Parameters</a></h3>
 <ul>
 <li><code>a</code> should contain a mapped, writable, user-space address, to which information about the framebuffer will
@@ -198,6 +197,8 @@ struct FramebufferInfo {
 }
 <span class="boring">}
 </span></code></pre></pre>
+<h3><a class="header" href="#capabilities-needed" id="capabilities-needed">Capabilities needed</a></h3>
+<p>Tasks need the <code>GetKernelFramebuffer</code> capability to use this system call.</p>
 
                     </main>
 

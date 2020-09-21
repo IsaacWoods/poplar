@@ -44,45 +44,9 @@
 <span id="43">43</span>
 <span id="44">44</span>
 <span id="45">45</span>
-<span id="46">46</span>
-<span id="47">47</span>
-<span id="48">48</span>
-<span id="49">49</span>
-<span id="50">50</span>
-<span id="51">51</span>
-<span id="52">52</span>
-<span id="53">53</span>
-<span id="54">54</span>
-<span id="55">55</span>
-<span id="56">56</span>
-<span id="57">57</span>
-<span id="58">58</span>
-<span id="59">59</span>
-<span id="60">60</span>
-<span id="61">61</span>
-<span id="62">62</span>
-<span id="63">63</span>
-<span id="64">64</span>
-<span id="65">65</span>
-<span id="66">66</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Copy</span>, <span class="ident">PartialEq</span>, <span class="ident">Eq</span>, <span class="ident">Debug</span>)]</span>
 <span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">Capability</span> {
-    <span class="comment">/*
-     * Capabilities related to kernel objects.
-     */</span>
-    <span class="ident">CreateAddressSpace</span>,
-    <span class="ident">CreateMemoryObject</span>,
-    <span class="ident">CreateTask</span>,
-
-    <span class="comment">/*
-     * Capabilities specific to tasks running on x86_64.
-     */</span>
-    <span class="ident">X86_64AccessIoPort</span>(<span class="ident">u16</span>),
-
-    <span class="comment">/*
-     * Capabilities that are owned by drivers / support services.
-     */</span>
     <span class="ident">GetFramebuffer</span>,
     <span class="ident">EarlyLogging</span>,
     <span class="ident">ServiceProvider</span>,
@@ -90,16 +54,10 @@
 }
 
 <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">CAP_PADDING</span>: <span class="ident">u8</span> <span class="op">=</span> <span class="number">0x00</span>;
-<span class="kw">pub</span> <span class="kw">const</span> <span class="ident">CAP_CREATE_ADDRESS_SPACE</span>: <span class="ident">u8</span> <span class="op">=</span> <span class="number">0x01</span>;
-<span class="kw">pub</span> <span class="kw">const</span> <span class="ident">CAP_CREATE_MEMORY_OBJECT</span>: <span class="ident">u8</span> <span class="op">=</span> <span class="number">0x02</span>;
-<span class="kw">pub</span> <span class="kw">const</span> <span class="ident">CAP_CREATE_TASK</span>: <span class="ident">u8</span> <span class="op">=</span> <span class="number">0x03</span>;
-
-<span class="kw">pub</span> <span class="kw">const</span> <span class="ident">CAP_BASE_X86_64</span>: <span class="ident">u8</span> <span class="op">=</span> <span class="number">0x20</span>;
-
-<span class="kw">pub</span> <span class="kw">const</span> <span class="ident">CAP_GET_FRAMEBUFFER</span>: <span class="ident">u8</span> <span class="op">=</span> <span class="number">0x30</span>;
-<span class="kw">pub</span> <span class="kw">const</span> <span class="ident">CAP_EARLY_LOGGING</span>: <span class="ident">u8</span> <span class="op">=</span> <span class="number">0x31</span>;
-<span class="kw">pub</span> <span class="kw">const</span> <span class="ident">CAP_SERVICE_PROVIDER</span>: <span class="ident">u8</span> <span class="op">=</span> <span class="number">0x32</span>;
-<span class="kw">pub</span> <span class="kw">const</span> <span class="ident">CAP_SERVICE_USER</span>: <span class="ident">u8</span> <span class="op">=</span> <span class="number">0x33</span>;
+<span class="kw">pub</span> <span class="kw">const</span> <span class="ident">CAP_GET_FRAMEBUFFER</span>: <span class="ident">u8</span> <span class="op">=</span> <span class="number">0x01</span>;
+<span class="kw">pub</span> <span class="kw">const</span> <span class="ident">CAP_EARLY_LOGGING</span>: <span class="ident">u8</span> <span class="op">=</span> <span class="number">0x02</span>;
+<span class="kw">pub</span> <span class="kw">const</span> <span class="ident">CAP_SERVICE_PROVIDER</span>: <span class="ident">u8</span> <span class="op">=</span> <span class="number">0x03</span>;
+<span class="kw">pub</span> <span class="kw">const</span> <span class="ident">CAP_SERVICE_USER</span>: <span class="ident">u8</span> <span class="op">=</span> <span class="number">0x04</span>;
 
 <span class="doccomment">/// `N` must be a multiple of 4, and padded with zeros, so the whole descriptor is aligned to a</span>
 <span class="doccomment">/// 4-byte boundary.</span>
