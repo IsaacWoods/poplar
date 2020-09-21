@@ -127,6 +127,8 @@ where
 /// represented in the kernel. For the format that's being decoded here, refer to the
 /// `(3.1) Userspace/Capabilities` section of the Book.
 fn decode_capabilities(mut cap_stream: &[u8]) -> Result<Vec<Capability>, TaskCreationError> {
+    use libpebble::caps::*;
+
     let mut caps = Vec::new();
 
     // TODO: when decl_macro hygiene-opt-out is implemented, this should be converted to use it
@@ -139,14 +141,10 @@ fn decode_capabilities(mut cap_stream: &[u8]) -> Result<Vec<Capability>, TaskCre
 
     while cap_stream.len() > 0 {
         match cap_stream[0] {
-            0x01 => one_byte_cap!(Capability::CreateAddressSpace),
-            0x02 => one_byte_cap!(Capability::CreateMemoryObject),
-            0x03 => one_byte_cap!(Capability::CreateTask),
-
-            0x30 => one_byte_cap!(Capability::GetFramebuffer),
-            0x31 => one_byte_cap!(Capability::EarlyLogging),
-            0x32 => one_byte_cap!(Capability::ServiceProvider),
-            0x33 => one_byte_cap!(Capability::ServiceUser),
+            CAP_GET_FRAMEBUFFER => one_byte_cap!(Capability::GetFramebuffer),
+            CAP_EARLY_LOGGING => one_byte_cap!(Capability::EarlyLogging),
+            CAP_SERVICE_PROVIDER => one_byte_cap!(Capability::ServiceProvider),
+            CAP_SERVICE_USER => one_byte_cap!(Capability::ServiceUser),
 
             // We skip `0x00` as the first byte of a capability, as it is just used to pad the
             // stream and so has no meaning

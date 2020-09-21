@@ -1,20 +1,5 @@
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum Capability {
-    /*
-     * Capabilities related to kernel objects.
-     */
-    CreateAddressSpace,
-    CreateMemoryObject,
-    CreateTask,
-
-    /*
-     * Capabilities specific to tasks running on x86_64.
-     */
-    X86_64AccessIoPort(u16),
-
-    /*
-     * Capabilities that are owned by drivers / support services.
-     */
     GetFramebuffer,
     EarlyLogging,
     ServiceProvider,
@@ -22,16 +7,10 @@ pub enum Capability {
 }
 
 pub const CAP_PADDING: u8 = 0x00;
-pub const CAP_CREATE_ADDRESS_SPACE: u8 = 0x01;
-pub const CAP_CREATE_MEMORY_OBJECT: u8 = 0x02;
-pub const CAP_CREATE_TASK: u8 = 0x03;
-
-pub const CAP_BASE_X86_64: u8 = 0x20;
-
-pub const CAP_GET_FRAMEBUFFER: u8 = 0x30;
-pub const CAP_EARLY_LOGGING: u8 = 0x31;
-pub const CAP_SERVICE_PROVIDER: u8 = 0x32;
-pub const CAP_SERVICE_USER: u8 = 0x33;
+pub const CAP_GET_FRAMEBUFFER: u8 = 0x01;
+pub const CAP_EARLY_LOGGING: u8 = 0x02;
+pub const CAP_SERVICE_PROVIDER: u8 = 0x03;
+pub const CAP_SERVICE_USER: u8 = 0x04;
 
 /// `N` must be a multiple of 4, and padded with zeros, so the whole descriptor is aligned to a
 /// 4-byte boundary.

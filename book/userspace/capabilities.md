@@ -20,16 +20,10 @@ complex / specific ones may need multiple bytes of prefix, and can also encode f
 
 ### Overview of capabilities
 This is an overview of all the capabilities the kernel supports:
-| First byte    | Next byte(s)  | Data                  | Arch specific?    | Description                                                           | Status        |
-|---------------|---------------|-----------------------|-------------------|-----------------------------------------------------------------------|---------------|
-| `0x00`        | -             | -                     | -                 | No meaning - used to pad descriptor to required length (see above)    | -             |
-| `0x01`        |               |                       | No                | `CreateAddressSpace`                                                  | Planned       |
-| `0x02`        |               |                       | No                | `CreateMemoryObject`                                                  | Planned       |
-| `0x03`        |               |                       | No                | `CreateTask`                                                          | Planned       |
-| `0x04`-`0x1f` |               |                       |                   | Reserved for future kernel objects                                    |               |
-| `0x20`        | `0x00`        | `u16` port number     | Yes - x86_64      | `X86_64AccessIoPort`                                                  | Planned       |
-| `0x21`-`0x2f` |               |                       |                   | Reserved for future architectures                                     |               |
-| `0x30`        |               |                       | No                | `GetFramebuffer`                                                      | Implemented   |
-| `0x31`        |               |                       | No                | `EarlyLogging`                                                        | Implemented   |
-| `0x32`        |               |                       | No                | `ServiceProvider`                                                     | Implemented   |
-| `0x33`        |               |                       | No                | `ServiceUser`                                                         | Implemented   |
+| First byte    | Next byte(s)  | Data                  | Arch specific?    | Description                                                           |
+|---------------|---------------|-----------------------|-------------------|-----------------------------------------------------------------------|
+| `0x00`        | -             | -                     | -                 | No meaning - used to pad descriptor to required length (see above)    |
+| `0x01`        |               |                       | No                | `GetFramebuffer`                                                      |
+| `0x02`        |               |                       | No                | `EarlyLogging`                                                        |
+| `0x03`        |               |                       | No                | `ServiceProvider`                                                     |
+| `0x04`        |               |                       | No                | `ServiceUser`                                                         |
