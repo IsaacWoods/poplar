@@ -82,7 +82,10 @@ impl IdtEntry {
     }
 }
 
-#[repr(C, packed)]
+/// Represents the Interrupt Descriptor Table in memory. We align to 16, so the table starts on an 8-aligned
+/// address to improve cache-line behaviour, and so each entry's fields are well-aligned.
+#[repr(C)]
+#[repr(align(16))]
 pub struct Idt {
     entries: [IdtEntry; 256],
 }
