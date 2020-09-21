@@ -27,3 +27,4 @@ This is an overview of all the capabilities the kernel supports:
 | `0x02`        |               |                       | No                | `EarlyLogging`                                                        |
 | `0x03`        |               |                       | No                | `ServiceProvider`                                                     |
 | `0x04`        |               |                       | No                | `ServiceUser`                                                         |
+| `0x05`        | -             | -                     | No                | `PciBusDriver`                                                        |

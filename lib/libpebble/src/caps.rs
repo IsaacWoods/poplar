@@ -4,6 +4,7 @@ pub enum Capability {
     EarlyLogging,
     ServiceProvider,
     ServiceUser,
+    PciBusDriver,
 }
 
 pub const CAP_PADDING: u8 = 0x00;
@@ -11,6 +12,7 @@ pub const CAP_GET_FRAMEBUFFER: u8 = 0x01;
 pub const CAP_EARLY_LOGGING: u8 = 0x02;
 pub const CAP_SERVICE_PROVIDER: u8 = 0x03;
 pub const CAP_SERVICE_USER: u8 = 0x04;
+pub const CAP_PCI_BUS_DRIVER: u8 = 0x05;
 
 /// `N` must be a multiple of 4, and padded with zeros, so the whole descriptor is aligned to a
 /// 4-byte boundary.

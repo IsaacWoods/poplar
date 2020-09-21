@@ -19,6 +19,7 @@
     - [`get_message`](./syscalls/get_message.md)
     - [`register_service`](./syscalls/register_service.md)
     - [`subscribe_to_service`](./syscalls/subscribe_to_service.md)
+    - [`pci_get_info`](./syscalls/pci_get_info.md)
 
 - [Userspace](./userspace/index.md)
     - [Capabilities](./userspace/capabilities.md)

@@ -1,4 +1,5 @@
 pub mod get_framebuffer;
+pub mod pci;
 pub mod result;
 
 pub use get_framebuffer::{get_framebuffer, FramebufferInfo, GetFramebufferError, PixelFormat};
@@ -27,6 +28,7 @@ pub const SYSCALL_GET_MESSAGE: usize = 7;
 pub const SYSCALL_WAIT_FOR_MESSAGE: usize = 8;
 pub const SYSCALL_REGISTER_SERVICE: usize = 9;
 pub const SYSCALL_SUBSCRIBE_TO_SERVICE: usize = 10;
+pub const SYSCALL_PCI_GET_INFO: usize = 11;
 
 pub fn yield_to_kernel() {
     unsafe {

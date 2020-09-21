@@ -145,6 +145,7 @@ fn decode_capabilities(mut cap_stream: &[u8]) -> Result<Vec<Capability>, TaskCre
             CAP_EARLY_LOGGING => one_byte_cap!(Capability::EarlyLogging),
             CAP_SERVICE_PROVIDER => one_byte_cap!(Capability::ServiceProvider),
             CAP_SERVICE_USER => one_byte_cap!(Capability::ServiceUser),
+            CAP_PCI_BUS_DRIVER => one_byte_cap!(Capability::PciBusDriver),
 
             // We skip `0x00` as the first byte of a capability, as it is just used to pad the
             // stream and so has no meaning

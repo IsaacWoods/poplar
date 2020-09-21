@@ -49,7 +49,7 @@ pub fn handle_syscall<P>(number: usize, a: usize, b: usize, c: usize, d: usize, 
 where
     P: Platform,
 {
-    info!("Syscall! number = {}, a = {}, b = {}, c = {}, d = {}, e = {}", number, a, b, c, d, e);
+    // info!("Syscall! number = {}, a = {}, b = {}, c = {}, d = {}, e = {}", number, a, b, c, d, e);
     let task = P::per_cpu().scheduler().get_mut().running_task.as_ref().unwrap();
 
     match number {
@@ -58,12 +58,13 @@ where
         syscall::SYSCALL_GET_FRAMEBUFFER => handle_to_syscall_repr(get_framebuffer(task, a)),
         syscall::SYSCALL_CREATE_MEMORY_OBJECT => handle_to_syscall_repr(create_memory_object(task, a, b, c)),
         syscall::SYSCALL_MAP_MEMORY_OBJECT => status_to_syscall_repr(map_memory_object(task, a, b, c)),
-        syscall::SYSCALL_CREATE_CHANNEL => unimplemented!(),
+        syscall::SYSCALL_CREATE_CHANNEL => todo!(),
         syscall::SYSCALL_SEND_MESSAGE => status_to_syscall_repr(send_message(task, a, b, c, d, e)),
         syscall::SYSCALL_GET_MESSAGE => status_with_payload_to_syscall_repr(get_message(task, a, b, c, d, e)),
-        syscall::SYSCALL_WAIT_FOR_MESSAGE => unimplemented!(),
+        syscall::SYSCALL_WAIT_FOR_MESSAGE => todo!(),
         syscall::SYSCALL_REGISTER_SERVICE => handle_to_syscall_repr(register_service(task, a, b)),
         syscall::SYSCALL_SUBSCRIBE_TO_SERVICE => handle_to_syscall_repr(subscribe_to_service(task, a, b)),
+        syscall::SYSCALL_PCI_GET_INFO => todo!(),
 
         _ => {
             warn!("Process made system call with invalid syscall number: {}", number);
