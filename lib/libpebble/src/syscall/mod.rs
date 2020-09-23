@@ -3,6 +3,9 @@ pub mod pci;
 pub mod result;
 
 pub use get_framebuffer::{get_framebuffer, FramebufferInfo, GetFramebufferError, PixelFormat};
+#[cfg(feature = "can_alloc")]
+pub use pci::pci_get_info_vec;
+pub use pci::{pci_get_info, pci_get_info_slice, PciAddress, PciDeviceInfo, PciGetInfoError};
 
 cfg_if::cfg_if! {
     if #[cfg(target_arch = "x86_64")] {

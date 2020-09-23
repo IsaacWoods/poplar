@@ -93,3 +93,34 @@ pub fn pci_get_info(buffer_ptr: *mut PciDeviceInfo, buffer_size: usize) -> Resul
         Err(PciGetInfoError::try_from(result).unwrap())
     }
 }
+
+pub fn pci_get_info_slice(buffer: &mut [PciDeviceInfo]) -> Result<&mut [PciDeviceInfo], PciGetInfoError> {
+    match pci_get_info(
+        if buffer.len() == 0 { 0x0 as *mut PciDeviceInfo } else { buffer.as_mut_ptr() },
+        buffer.len(),
+    ) {
+        Ok(valid_entries) => Ok(&mut buffer[0..valid_entries]),
+        Err(err) => Err(err),
+    }
+}
+
+#[cfg(feature = "can_alloc")]
+pub fn pci_get_info_vec() -> Result<alloc::vec::Vec<PciDeviceInfo>, PciGetInfoError> {
+    use alloc::vec::Vec;
+
+    // Make an initial call to find out how many descriptors there are
+    let num_descriptors = match pci_get_info(0x0 as *mut PciDeviceInfo, 0) {
+        Ok(_) => panic!("pci_get_info with null buffer succeeded."),
+        Err(PciGetInfoError::BufferNotLargeEnough(num_descriptors)) => num_descriptors as usize,
+        Err(err) => return Err(err),
+    };
+
+    // Then actually fetch the data
+    let mut descriptors = Vec::with_capacity(num_descriptors);
+    assert_eq!(pci_get_info(descriptors.as_mut_ptr(), num_descriptors)?, num_descriptors);
+    unsafe {
+        descriptors.set_len(num_descriptors);
+    }
+
+    Ok(descriptors)
+}
