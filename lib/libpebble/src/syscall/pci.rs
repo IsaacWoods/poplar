@@ -51,6 +51,7 @@ pub enum PciGetInfoError {
     TaskDoesNotHaveCorrectCapability,
     BufferPointerInvalid,
     BufferNotLargeEnough(u32),
+    PlatformDoesNotSupportPci,
 }
 
 // TODO: it would be cool if we could do this with the define_error_type macro
@@ -62,6 +63,7 @@ impl TryFrom<usize> for PciGetInfoError {
             1 => Ok(Self::TaskDoesNotHaveCorrectCapability),
             2 => Ok(Self::BufferPointerInvalid),
             3 => Ok(Self::BufferNotLargeEnough(status.get_bits(16..48) as u32)),
+            4 => Ok(Self::PlatformDoesNotSupportPci),
             _ => Err(()),
         }
     }
@@ -77,6 +79,7 @@ impl Into<usize> for PciGetInfoError {
                 result.set_bits(16..48, num_needed as usize);
                 result
             }
+            Self::PlatformDoesNotSupportPci => 4,
         }
     }
 }

@@ -421,8 +421,6 @@ where
         return Err(PciGetInfoError::TaskDoesNotHaveCorrectCapability);
     }
 
-    info!("Buffer address = {:#x}, buffer_size = {}", buffer_address, buffer_size);
-
     if let Some(ref pci_info) = *crate::PCI_INFO.read() {
         let num_descriptors = pci_info.devices.len();
 
@@ -448,16 +446,13 @@ where
                 };
             }
 
-            info!("Written PCI descriptors");
             let mut status = 0;
             status.set_bits(16..48, num_descriptors);
             Ok(status)
         } else {
-            info!("Trial run. Returning error.");
             Err(PciGetInfoError::BufferNotLargeEnough(num_descriptors as u32))
         }
     } else {
-        // TODO: deal with platforms that don't have PCI
-        todo!()
+        Err(PciGetInfoError::PlatformDoesNotSupportPci)
     }
 }
