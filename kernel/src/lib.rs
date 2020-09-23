@@ -20,11 +20,12 @@ extern crate alloc;
 mod heap_allocator;
 pub mod memory;
 pub mod object;
+pub mod pci;
 pub mod per_cpu;
 pub mod scheduler;
 pub mod syscall;
 
-use alloc::sync::Arc;
+use alloc::{boxed::Box, sync::Arc};
 use core::pin::Pin;
 use hal::{
     boot_info::LoadedImage,
@@ -33,9 +34,11 @@ use hal::{
 use heap_allocator::LockedHoleAllocator;
 use memory::{KernelStackAllocator, PhysicalMemoryManager};
 use object::{address_space::AddressSpace, memory_object::MemoryObject, task::Task, KernelObject};
+use pci::PciInfo;
 use pebble_util::InitGuard;
 use per_cpu::PerCpu;
 use scheduler::Scheduler;
+use spin::RwLock;
 
 #[cfg(not(test))]
 #[global_allocator]
@@ -43,6 +46,8 @@ pub static ALLOCATOR: LockedHoleAllocator = LockedHoleAllocator::new_uninitializ
 
 pub static PHYSICAL_MEMORY_MANAGER: InitGuard<PhysicalMemoryManager> = InitGuard::uninit();
 pub static FRAMEBUFFER: InitGuard<(libpebble::syscall::FramebufferInfo, Arc<MemoryObject>)> = InitGuard::uninit();
+pub static PCI_INFO: RwLock<Option<PciInfo>> = RwLock::new(None);
+pub static PCI_ACCESS: InitGuard<Option<Box<dyn hal::pci::ConfigRegionAccess>>> = InitGuard::uninit();
 
 pub trait Platform: Sized + 'static {
     type PageTableSize: FrameSize;

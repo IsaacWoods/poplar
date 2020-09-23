@@ -4,20 +4,11 @@ use aml::{pci_routing::PciRoutingTable, AmlContext, AmlName};
 use core::ptr;
 use hal::{
     memory::PhysicalAddress,
-    pci::{ConfigRegionAccess, DeviceId, PciAddress, PciHeader, VendorId},
+    pci::{ConfigRegionAccess, PciAddress, PciHeader},
 };
 use hal_x86_64::kernel_map;
+use kernel::pci::{PciDevice, PciInfo};
 use log::info;
-
-// TODO: this could probably live in `kernel`
-pub struct PciDevice {
-    pub vendor_id: VendorId,
-    pub device_id: DeviceId,
-}
-
-pub struct PciInfo {
-    pub devices: BTreeMap<PciAddress, PciDevice>,
-}
 
 #[derive(Clone)]
 pub struct EcamAccess(PciConfigRegions);

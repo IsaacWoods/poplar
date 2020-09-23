@@ -171,7 +171,10 @@ pub extern "C" fn kentry(boot_info: &BootInfo) -> ! {
      * Resolve all the PCI info.
      * XXX: not sure this is the right place to do this just yet.
      */
-    let pci_info = PciResolver::resolve(pci_access);
+    // TODO: this whole situation is a bit gross and needs more thought I think
+    *kernel::PCI_INFO.write() = Some(PciResolver::resolve(pci_access.clone()));
+    kernel::PCI_ACCESS.initialize(Some(Box::new(pci_access)));
+
 
     /*
      * Initialize devices defined in AML.

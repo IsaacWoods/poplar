@@ -12,7 +12,7 @@ pub struct PciAddress {
     pub function: u8,
 }
 
-pub trait ConfigRegionAccess {
+pub trait ConfigRegionAccess: Send + Sync {
     fn function_exists(&self, address: PciAddress) -> bool;
     unsafe fn read(&self, address: PciAddress, offset: u16) -> u32;
     unsafe fn write(&self, address: PciAddress, offset: u16, value: u32);
