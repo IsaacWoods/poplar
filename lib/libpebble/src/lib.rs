@@ -1,5 +1,6 @@
 #![no_std]
-#![feature(asm, decl_macro, const_generics)]
+#![feature(asm, decl_macro, const_generics, unsafe_block_in_unsafe_fn)]
+#![deny(unsafe_op_in_unsafe_fn)]
 
 pub mod caps;
 pub mod syscall;
