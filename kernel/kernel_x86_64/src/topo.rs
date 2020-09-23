@@ -1,4 +1,4 @@
-use crate::{acpi_handler::PebbleAcpiHandler, per_cpu::PerCpuImpl};
+use crate::per_cpu::PerCpuImpl;
 use acpi::platform::ProcessorState;
 use alloc::{boxed::Box, vec::Vec};
 use core::{fmt, pin::Pin};
