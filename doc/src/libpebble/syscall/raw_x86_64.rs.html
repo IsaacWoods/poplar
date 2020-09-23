@@ -85,91 +85,115 @@
 <span id="84">84</span>
 <span id="85">85</span>
 <span id="86">86</span>
+<span id="87">87</span>
+<span id="88">88</span>
+<span id="89">89</span>
+<span id="90">90</span>
+<span id="91">91</span>
+<span id="92">92</span>
+<span id="93">93</span>
+<span id="94">94</span>
+<span id="95">95</span>
+<span id="96">96</span>
+<span id="97">97</span>
+<span id="98">98</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="attribute">#[<span class="ident">inline</span>(<span class="ident">never</span>)]</span>
 <span class="kw">pub</span> <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">syscall0</span>(<span class="ident">number</span>: <span class="ident">usize</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">usize</span> {
     <span class="kw">let</span> <span class="ident">result</span>: <span class="ident">usize</span>;
-    <span class="macro">asm</span><span class="macro">!</span>(<span class="string">&quot;syscall&quot;</span>,
-        <span class="ident">out</span>(<span class="string">&quot;rax&quot;</span>) <span class="ident">result</span>,
-        <span class="kw">in</span>(<span class="string">&quot;rdi&quot;</span>) <span class="ident">number</span>,
-        <span class="ident">out</span>(<span class="string">&quot;rcx&quot;</span>) <span class="kw">_</span>,
-        <span class="ident">out</span>(<span class="string">&quot;r11&quot;</span>) <span class="kw">_</span>,
-    );
+    <span class="kw">unsafe</span> {
+        <span class="macro">asm</span><span class="macro">!</span>(<span class="string">&quot;syscall&quot;</span>,
+            <span class="ident">out</span>(<span class="string">&quot;rax&quot;</span>) <span class="ident">result</span>,
+            <span class="ident">inlateout</span>(<span class="string">&quot;rdi&quot;</span>) <span class="ident">number</span> <span class="op">=</span><span class="op">&gt;</span> <span class="kw">_</span>,
+            <span class="ident">out</span>(<span class="string">&quot;rcx&quot;</span>) <span class="kw">_</span>,
+            <span class="ident">out</span>(<span class="string">&quot;r11&quot;</span>) <span class="kw">_</span>,
+        );
+    }
     <span class="ident">result</span>
 }
 
 <span class="attribute">#[<span class="ident">inline</span>(<span class="ident">never</span>)]</span>
 <span class="kw">pub</span> <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">syscall1</span>(<span class="ident">number</span>: <span class="ident">usize</span>, <span class="ident">a</span>: <span class="ident">usize</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">usize</span> {
     <span class="kw">let</span> <span class="ident">result</span>: <span class="ident">usize</span>;
-    <span class="macro">asm</span><span class="macro">!</span>(<span class="string">&quot;syscall&quot;</span>,
-        <span class="ident">out</span>(<span class="string">&quot;rax&quot;</span>) <span class="ident">result</span>,
-        <span class="kw">in</span>(<span class="string">&quot;rdi&quot;</span>) <span class="ident">number</span>,
-        <span class="kw">in</span>(<span class="string">&quot;rsi&quot;</span>) <span class="ident">a</span>,
-        <span class="ident">out</span>(<span class="string">&quot;rcx&quot;</span>) <span class="kw">_</span>,
-        <span class="ident">out</span>(<span class="string">&quot;r11&quot;</span>) <span class="kw">_</span>,
-    );
+    <span class="kw">unsafe</span> {
+        <span class="macro">asm</span><span class="macro">!</span>(<span class="string">&quot;syscall&quot;</span>,
+            <span class="ident">out</span>(<span class="string">&quot;rax&quot;</span>) <span class="ident">result</span>,
+            <span class="ident">inlateout</span>(<span class="string">&quot;rdi&quot;</span>) <span class="ident">number</span> <span class="op">=</span><span class="op">&gt;</span> <span class="kw">_</span>,
+            <span class="ident">inlateout</span>(<span class="string">&quot;rsi&quot;</span>) <span class="ident">a</span> <span class="op">=</span><span class="op">&gt;</span> <span class="kw">_</span>,
+            <span class="ident">out</span>(<span class="string">&quot;rcx&quot;</span>) <span class="kw">_</span>,
+            <span class="ident">out</span>(<span class="string">&quot;r11&quot;</span>) <span class="kw">_</span>,
+        );
+    }
     <span class="ident">result</span>
 }
 
 <span class="attribute">#[<span class="ident">inline</span>(<span class="ident">never</span>)]</span>
 <span class="kw">pub</span> <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">syscall2</span>(<span class="ident">number</span>: <span class="ident">usize</span>, <span class="ident">a</span>: <span class="ident">usize</span>, <span class="ident">b</span>: <span class="ident">usize</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">usize</span> {
     <span class="kw">let</span> <span class="ident">result</span>: <span class="ident">usize</span>;
-    <span class="macro">asm</span><span class="macro">!</span>(<span class="string">&quot;syscall&quot;</span>,
-        <span class="ident">out</span>(<span class="string">&quot;rax&quot;</span>) <span class="ident">result</span>,
-        <span class="kw">in</span>(<span class="string">&quot;rdi&quot;</span>) <span class="ident">number</span>,
-        <span class="kw">in</span>(<span class="string">&quot;rsi&quot;</span>) <span class="ident">a</span>,
-        <span class="kw">in</span>(<span class="string">&quot;rdx&quot;</span>) <span class="ident">b</span>,
-        <span class="ident">out</span>(<span class="string">&quot;rcx&quot;</span>) <span class="kw">_</span>,
-        <span class="ident">out</span>(<span class="string">&quot;r11&quot;</span>) <span class="kw">_</span>,
-    );
+    <span class="kw">unsafe</span> {
+        <span class="macro">asm</span><span class="macro">!</span>(<span class="string">&quot;syscall&quot;</span>,
+            <span class="ident">out</span>(<span class="string">&quot;rax&quot;</span>) <span class="ident">result</span>,
+            <span class="ident">inlateout</span>(<span class="string">&quot;rdi&quot;</span>) <span class="ident">number</span> <span class="op">=</span><span class="op">&gt;</span> <span class="kw">_</span>,
+            <span class="ident">inlateout</span>(<span class="string">&quot;rsi&quot;</span>) <span class="ident">a</span> <span class="op">=</span><span class="op">&gt;</span> <span class="kw">_</span>,
+            <span class="ident">inlateout</span>(<span class="string">&quot;rdx&quot;</span>) <span class="ident">b</span> <span class="op">=</span><span class="op">&gt;</span> <span class="kw">_</span>,
+            <span class="ident">out</span>(<span class="string">&quot;rcx&quot;</span>) <span class="kw">_</span>,
+            <span class="ident">out</span>(<span class="string">&quot;r11&quot;</span>) <span class="kw">_</span>,
+        );
+    }
     <span class="ident">result</span>
 }
 
 <span class="attribute">#[<span class="ident">inline</span>(<span class="ident">never</span>)]</span>
 <span class="kw">pub</span> <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">syscall3</span>(<span class="ident">number</span>: <span class="ident">usize</span>, <span class="ident">a</span>: <span class="ident">usize</span>, <span class="ident">b</span>: <span class="ident">usize</span>, <span class="ident">c</span>: <span class="ident">usize</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">usize</span> {
     <span class="kw">let</span> <span class="ident">result</span>: <span class="ident">usize</span>;
-    <span class="macro">asm</span><span class="macro">!</span>(<span class="string">&quot;syscall&quot;</span>,
-        <span class="ident">out</span>(<span class="string">&quot;rax&quot;</span>) <span class="ident">result</span>,
-        <span class="kw">in</span>(<span class="string">&quot;rdi&quot;</span>) <span class="ident">number</span>,
-        <span class="kw">in</span>(<span class="string">&quot;rsi&quot;</span>) <span class="ident">a</span>,
-        <span class="kw">in</span>(<span class="string">&quot;rdx&quot;</span>) <span class="ident">b</span>,
-        <span class="kw">in</span>(<span class="string">&quot;r10&quot;</span>) <span class="ident">c</span>,
-        <span class="ident">out</span>(<span class="string">&quot;rcx&quot;</span>) <span class="kw">_</span>,
-        <span class="ident">out</span>(<span class="string">&quot;r11&quot;</span>) <span class="kw">_</span>,
-    );
+    <span class="kw">unsafe</span> {
+        <span class="macro">asm</span><span class="macro">!</span>(<span class="string">&quot;syscall&quot;</span>,
+            <span class="ident">out</span>(<span class="string">&quot;rax&quot;</span>) <span class="ident">result</span>,
+            <span class="ident">inlateout</span>(<span class="string">&quot;rdi&quot;</span>) <span class="ident">number</span> <span class="op">=</span><span class="op">&gt;</span> <span class="kw">_</span>,
+            <span class="ident">inlateout</span>(<span class="string">&quot;rsi&quot;</span>) <span class="ident">a</span> <span class="op">=</span><span class="op">&gt;</span> <span class="kw">_</span>,
+            <span class="ident">inlateout</span>(<span class="string">&quot;rdx&quot;</span>) <span class="ident">b</span> <span class="op">=</span><span class="op">&gt;</span> <span class="kw">_</span>,
+            <span class="ident">inlateout</span>(<span class="string">&quot;r10&quot;</span>) <span class="ident">c</span> <span class="op">=</span><span class="op">&gt;</span> <span class="kw">_</span>,
+            <span class="ident">out</span>(<span class="string">&quot;rcx&quot;</span>) <span class="kw">_</span>,
+            <span class="ident">out</span>(<span class="string">&quot;r11&quot;</span>) <span class="kw">_</span>,
+        );
+    }
     <span class="ident">result</span>
 }
 
 <span class="attribute">#[<span class="ident">inline</span>(<span class="ident">never</span>)]</span>
 <span class="kw">pub</span> <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">syscall4</span>(<span class="ident">number</span>: <span class="ident">usize</span>, <span class="ident">a</span>: <span class="ident">usize</span>, <span class="ident">b</span>: <span class="ident">usize</span>, <span class="ident">c</span>: <span class="ident">usize</span>, <span class="ident">d</span>: <span class="ident">usize</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">usize</span> {
     <span class="kw">let</span> <span class="ident">result</span>: <span class="ident">usize</span>;
-    <span class="macro">asm</span><span class="macro">!</span>(<span class="string">&quot;syscall&quot;</span>,
-        <span class="ident">out</span>(<span class="string">&quot;rax&quot;</span>) <span class="ident">result</span>,
-        <span class="kw">in</span>(<span class="string">&quot;rdi&quot;</span>) <span class="ident">number</span>,
-        <span class="kw">in</span>(<span class="string">&quot;rsi&quot;</span>) <span class="ident">a</span>,
-        <span class="kw">in</span>(<span class="string">&quot;rdx&quot;</span>) <span class="ident">b</span>,
-        <span class="kw">in</span>(<span class="string">&quot;r10&quot;</span>) <span class="ident">c</span>,
-        <span class="kw">in</span>(<span class="string">&quot;r8&quot;</span>) <span class="ident">d</span>,
-        <span class="ident">out</span>(<span class="string">&quot;rcx&quot;</span>) <span class="kw">_</span>,
-        <span class="ident">out</span>(<span class="string">&quot;r11&quot;</span>) <span class="kw">_</span>,
-    );
+    <span class="kw">unsafe</span> {
+        <span class="macro">asm</span><span class="macro">!</span>(<span class="string">&quot;syscall&quot;</span>,
+            <span class="ident">out</span>(<span class="string">&quot;rax&quot;</span>) <span class="ident">result</span>,
+            <span class="ident">inlateout</span>(<span class="string">&quot;rdi&quot;</span>) <span class="ident">number</span> <span class="op">=</span><span class="op">&gt;</span> <span class="kw">_</span>,
+            <span class="ident">inlateout</span>(<span class="string">&quot;rsi&quot;</span>) <span class="ident">a</span> <span class="op">=</span><span class="op">&gt;</span> <span class="kw">_</span>,
+            <span class="ident">inlateout</span>(<span class="string">&quot;rdx&quot;</span>) <span class="ident">b</span> <span class="op">=</span><span class="op">&gt;</span> <span class="kw">_</span>,
+            <span class="ident">inlateout</span>(<span class="string">&quot;r10&quot;</span>) <span class="ident">c</span> <span class="op">=</span><span class="op">&gt;</span> <span class="kw">_</span>,
+            <span class="ident">inlateout</span>(<span class="string">&quot;r8&quot;</span>) <span class="ident">d</span> <span class="op">=</span><span class="op">&gt;</span> <span class="kw">_</span>,
+            <span class="ident">out</span>(<span class="string">&quot;rcx&quot;</span>) <span class="kw">_</span>,
+            <span class="ident">out</span>(<span class="string">&quot;r11&quot;</span>) <span class="kw">_</span>,
+        );
+    }
     <span class="ident">result</span>
 }
 
 <span class="attribute">#[<span class="ident">inline</span>(<span class="ident">never</span>)]</span>
 <span class="kw">pub</span> <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">syscall5</span>(<span class="ident">number</span>: <span class="ident">usize</span>, <span class="ident">a</span>: <span class="ident">usize</span>, <span class="ident">b</span>: <span class="ident">usize</span>, <span class="ident">c</span>: <span class="ident">usize</span>, <span class="ident">d</span>: <span class="ident">usize</span>, <span class="ident">e</span>: <span class="ident">usize</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">usize</span> {
     <span class="kw">let</span> <span class="ident">result</span>: <span class="ident">usize</span>;
-    <span class="macro">asm</span><span class="macro">!</span>(<span class="string">&quot;syscall&quot;</span>,
-        <span class="ident">out</span>(<span class="string">&quot;rax&quot;</span>) <span class="ident">result</span>,
-        <span class="kw">in</span>(<span class="string">&quot;rdi&quot;</span>) <span class="ident">number</span>,
-        <span class="kw">in</span>(<span class="string">&quot;rsi&quot;</span>) <span class="ident">a</span>,
-        <span class="kw">in</span>(<span class="string">&quot;rdx&quot;</span>) <span class="ident">b</span>,
-        <span class="kw">in</span>(<span class="string">&quot;r10&quot;</span>) <span class="ident">c</span>,
-        <span class="kw">in</span>(<span class="string">&quot;r8&quot;</span>) <span class="ident">d</span>,
-        <span class="kw">in</span>(<span class="string">&quot;r9&quot;</span>) <span class="ident">e</span>,
-        <span class="ident">out</span>(<span class="string">&quot;rcx&quot;</span>) <span class="kw">_</span>,
-        <span class="ident">out</span>(<span class="string">&quot;r11&quot;</span>) <span class="kw">_</span>,
-    );
+    <span class="kw">unsafe</span> {
+        <span class="macro">asm</span><span class="macro">!</span>(<span class="string">&quot;syscall&quot;</span>,
+            <span class="ident">out</span>(<span class="string">&quot;rax&quot;</span>) <span class="ident">result</span>,
+            <span class="ident">inlateout</span>(<span class="string">&quot;rdi&quot;</span>) <span class="ident">number</span> <span class="op">=</span><span class="op">&gt;</span> <span class="kw">_</span>,
+            <span class="ident">inlateout</span>(<span class="string">&quot;rsi&quot;</span>) <span class="ident">a</span> <span class="op">=</span><span class="op">&gt;</span> <span class="kw">_</span>,
+            <span class="ident">inlateout</span>(<span class="string">&quot;rdx&quot;</span>) <span class="ident">b</span> <span class="op">=</span><span class="op">&gt;</span> <span class="kw">_</span>,
+            <span class="ident">inlateout</span>(<span class="string">&quot;r10&quot;</span>) <span class="ident">c</span> <span class="op">=</span><span class="op">&gt;</span> <span class="kw">_</span>,
+            <span class="ident">inlateout</span>(<span class="string">&quot;r8&quot;</span>) <span class="ident">d</span> <span class="op">=</span><span class="op">&gt;</span> <span class="kw">_</span>,
+            <span class="ident">inlateout</span>(<span class="string">&quot;r9&quot;</span>) <span class="ident">e</span> <span class="op">=</span><span class="op">&gt;</span> <span class="kw">_</span>,
+            <span class="ident">out</span>(<span class="string">&quot;rcx&quot;</span>) <span class="kw">_</span>,
+            <span class="ident">out</span>(<span class="string">&quot;r11&quot;</span>) <span class="kw">_</span>,
+        );
+    }
     <span class="ident">result</span>
 }
 </pre></div>

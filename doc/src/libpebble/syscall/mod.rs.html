@@ -188,12 +188,18 @@
 <span id="187">187</span>
 <span id="188">188</span>
 <span id="189">189</span>
+<span id="190">190</span>
+<span id="191">191</span>
+<span id="192">192</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">get_framebuffer</span>;
 <span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">pci</span>;
 <span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">result</span>;
 
 <span class="kw">pub</span> <span class="kw">use</span> <span class="ident">get_framebuffer</span>::{<span class="ident">get_framebuffer</span>, <span class="ident">FramebufferInfo</span>, <span class="ident">GetFramebufferError</span>, <span class="ident">PixelFormat</span>};
+<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;can_alloc&quot;</span>)]</span>
+<span class="kw">pub</span> <span class="kw">use</span> <span class="ident">pci</span>::<span class="ident">pci_get_info_vec</span>;
+<span class="kw">pub</span> <span class="kw">use</span> <span class="ident">pci</span>::{<span class="ident">pci_get_info</span>, <span class="ident">pci_get_info_slice</span>, <span class="ident">PciAddress</span>, <span class="ident">PciDeviceInfo</span>, <span class="ident">PciGetInfoError</span>};
 
 <span class="ident">cfg_if</span>::<span class="macro">cfg_if</span><span class="macro">!</span> {
     <span class="kw">if</span> <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;x86_64&quot;</span>)]</span> {
@@ -268,7 +274,7 @@
     <span class="ident">AddressPointerInvalid</span> <span class="op">=</span><span class="op">&gt;</span> <span class="number">5</span>,
 });
 
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">map_memory_object</span>(
+<span class="kw">pub</span> <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">map_memory_object</span>(
     <span class="ident">memory_object</span>: <span class="ident">Handle</span>,
     <span class="ident">address_space</span>: <span class="ident">Handle</span>,
     <span class="ident">address_pointer</span>: <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="ident">usize</span>,

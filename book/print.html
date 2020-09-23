@@ -522,8 +522,11 @@ driver.</p>
 <li><code>2</code> if the given buffer can't hold all the descriptors</li>
 <li><code>3</code> if the address to the descriptor buffer is invalid</li>
 </ul>
-<p>If the status code is <code>0</code> (i.e. the system call succeeded), bits <code>16..48</code> contain the number of descriptors written
-back.</p>
+<p>If the status code is <code>0</code> (i.e. the system call succeeded), bits <code>16..48</code> contain the number of descriptors written back.
+If the status code is <code>2</code> (i.e. the buffer was not large enough), bits <code>16..48</code> contain the number of entries that
+need to be written.</p>
+<p>If <code>a</code> is <code>0x0</code>, this system call will always fail with status code <code>2</code> and the number of descriptors in bits
+<code>16..48</code>. This is to allow userspace to dynamically allocate a buffer of the correct size, if it desires.</p>
 <h3><a class="header" href="#capabilities-needed-9" id="capabilities-needed-9">Capabilities needed</a></h3>
 <p>Tasks need the <code>PciBusDriver</code> capability to use this system call.</p>
 <h1><a class="header" href="#capabilities" id="capabilities">Capabilities</a></h1>
