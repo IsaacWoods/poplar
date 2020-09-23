@@ -15,8 +15,12 @@ Bits `0..16` contain a status code:
 - `2` if the given buffer can't hold all the descriptors
 - `3` if the address to the descriptor buffer is invalid
 
-If the status code is `0` (i.e. the system call succeeded), bits `16..48` contain the number of descriptors written
-back.
+If the status code is `0` (i.e. the system call succeeded), bits `16..48` contain the number of descriptors written back.
+If the status code is `2` (i.e. the buffer was not large enough), bits `16..48` contain the number of entries that
+need to be written.
+
+If `a` is `0x0`, this system call will always fail with status code `2` and the number of descriptors in bits
+`16..48`. This is to allow userspace to dynamically allocate a buffer of the correct size, if it desires.
 
 ### Capabilities needed
 Tasks need the `PciBusDriver` capability to use this system call.

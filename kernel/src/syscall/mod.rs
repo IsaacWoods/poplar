@@ -26,6 +26,7 @@ use libpebble::{
         GetFramebufferError,
         GetMessageError,
         MapMemoryObjectError,
+        PciGetInfoError,
         RegisterServiceError,
         SendMessageError,
         SubscribeToServiceError,
@@ -64,7 +65,7 @@ where
         syscall::SYSCALL_WAIT_FOR_MESSAGE => todo!(),
         syscall::SYSCALL_REGISTER_SERVICE => handle_to_syscall_repr(register_service(task, a, b)),
         syscall::SYSCALL_SUBSCRIBE_TO_SERVICE => handle_to_syscall_repr(subscribe_to_service(task, a, b)),
-        syscall::SYSCALL_PCI_GET_INFO => todo!(),
+        syscall::SYSCALL_PCI_GET_INFO => status_with_payload_to_syscall_repr(pci_get_info(task, a, b)),
 
         _ => {
             warn!("Process made system call with invalid syscall number: {}", number);
@@ -402,5 +403,61 @@ where
         Ok(task.add_handle(user_end))
     } else {
         Err(SubscribeToServiceError::NoServiceWithThatName)
+    }
+}
+
+fn pci_get_info<P>(
+    task: &Arc<Task<P>>,
+    buffer_address: usize,
+    buffer_size: usize,
+) -> Result<usize, PciGetInfoError>
+where
+    P: Platform,
+{
+    use libpebble::syscall::PciDeviceInfo;
+
+    // Check that the task has the 'PciBusDriver' capability
+    if !task.capabilities.contains(&Capability::PciBusDriver) {
+        return Err(PciGetInfoError::TaskDoesNotHaveCorrectCapability);
+    }
+
+    info!("Buffer address = {:#x}, buffer_size = {}", buffer_address, buffer_size);
+
+    if let Some(ref pci_info) = *crate::PCI_INFO.read() {
+        let num_descriptors = pci_info.devices.len();
+
+        if buffer_size > 0 && buffer_address != 0x0 {
+            if buffer_size < num_descriptors {
+                return Err(PciGetInfoError::BufferNotLargeEnough(num_descriptors as u32));
+            }
+
+            let descriptor_buffer = UserSlice::new(buffer_address as *mut PciDeviceInfo, buffer_size)
+                .validate_write()
+                .map_err(|()| PciGetInfoError::BufferPointerInvalid)?;
+
+            for (i, (address, device)) in pci_info.devices.iter().enumerate() {
+                descriptor_buffer[i] = libpebble::syscall::PciDeviceInfo {
+                    address: libpebble::syscall::PciAddress::new(
+                        address.segment,
+                        address.bus,
+                        address.device,
+                        address.function,
+                    ),
+                    vendor_id: device.vendor_id,
+                    device_id: device.device_id,
+                };
+            }
+
+            info!("Written PCI descriptors");
+            let mut status = 0;
+            status.set_bits(16..48, num_descriptors);
+            Ok(status)
+        } else {
+            info!("Trial run. Returning error.");
+            Err(PciGetInfoError::BufferNotLargeEnough(num_descriptors as u32))
+        }
+    } else {
+        // TODO: deal with platforms that don't have PCI
+        todo!()
     }
 }

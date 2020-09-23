@@ -1,9 +1,6 @@
-use super::{
-    raw,
-    result::{define_error_type, status_from_syscall_repr},
-    SYSCALL_PCI_GET_INFO,
-};
+use super::{raw, SYSCALL_PCI_GET_INFO};
 use bit_field::BitField;
+use core::convert::TryFrom;
 
 /// PCIe supports 65536 buses, each with 32 slots, each with 8 possible functions. We cram this into a `u32`:
 ///
@@ -11,6 +8,7 @@ use bit_field::BitField;
 ///  +-------------------------------+---------------+---------+------+
 ///  |            segment            |      bus      | device  | func |
 ///  +-------------------------------+---------------+---------+------+
+#[derive(Clone, Copy, PartialEq, Eq, Debug, Default)]
 pub struct PciAddress(u32);
 
 impl PciAddress {
@@ -40,23 +38,58 @@ impl PciAddress {
     }
 }
 
+#[derive(Clone, Debug, Default)]
 #[repr(C)]
 pub struct PciDeviceInfo {
-    address: PciAddress,
-    vendor_id: u16,
-    device_id: u16,
+    pub address: PciAddress,
+    pub vendor_id: u16,
+    pub device_id: u16,
 }
 
-define_error_type!(PciGetInfoError {
-    TaskDoesNotHaveCorrectCapability => 1,
-    BufferPointerInvalid => 2,
-    BufferNotLargeEnough => 3,
-});
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+pub enum PciGetInfoError {
+    TaskDoesNotHaveCorrectCapability,
+    BufferPointerInvalid,
+    BufferNotLargeEnough(u32),
+}
 
-pub fn pci_get_info(buffer: &mut [PciDeviceInfo]) -> Result<&mut [PciDeviceInfo], PciGetInfoError> {
-    let result = unsafe { raw::syscall2(SYSCALL_PCI_GET_INFO, buffer.as_ptr() as usize, buffer.len()) };
-    status_from_syscall_repr(result.get_bits(0..16))?;
+// TODO: it would be cool if we could do this with the define_error_type macro
+impl TryFrom<usize> for PciGetInfoError {
+    type Error = ();
 
-    let valid_length = result.get_bits(16..48);
-    Ok(&mut buffer[0..valid_length])
+    fn try_from(status: usize) -> Result<Self, Self::Error> {
+        match status.get_bits(0..16) {
+            1 => Ok(Self::TaskDoesNotHaveCorrectCapability),
+            2 => Ok(Self::BufferPointerInvalid),
+            3 => Ok(Self::BufferNotLargeEnough(status.get_bits(16..48) as u32)),
+            _ => Err(()),
+        }
+    }
+}
+
+impl Into<usize> for PciGetInfoError {
+    fn into(self) -> usize {
+        match self {
+            Self::TaskDoesNotHaveCorrectCapability => 1,
+            Self::BufferPointerInvalid => 2,
+            Self::BufferNotLargeEnough(num_needed) => {
+                let mut result = 3;
+                result.set_bits(16..48, num_needed as usize);
+                result
+            }
+        }
+    }
+}
+
+/// Makes a raw `pci_get_info` system call, given a pointer to a buffer and the size of the buffer. On success,
+/// returns the number of entries written into the buffer. For a nicer interface to this system call, see
+/// [`pci_get_info_slice`] or [`pci_get_info_vec`].
+pub fn pci_get_info(buffer_ptr: *mut PciDeviceInfo, buffer_size: usize) -> Result<usize, PciGetInfoError> {
+    let result = unsafe { raw::syscall2(SYSCALL_PCI_GET_INFO, buffer_ptr as usize, buffer_size) };
+
+    if result.get_bits(0..16) == 0 {
+        Ok(result.get_bits(16..48))
+    } else {
+        Err(PciGetInfoError::try_from(result).unwrap())
+    }
 }
