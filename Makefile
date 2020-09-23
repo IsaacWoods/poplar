@@ -22,11 +22,11 @@ QEMU_COMMON_FLAGS = -cpu max,vmware-cpuid-freq,invtsc \
 # This can be used to pass extra flags to QEMU
 QEMU_EXTRA_FLAGS ?=
 
-.PHONY: image_x86_64 prepare kernel simple_fb clean qemu gdb update fmt test echo
+.PHONY: image_x86_64 prepare kernel simple_fb clean qemu gdb update fmt test echo pci_bus
 .DEFAULT_GOAL := image_$(PLATFORM)
 
 # This is a temporary target to write to a real disk
-image_disk: prepare kernel simple_fb echo
+image_disk: prepare kernel simple_fb echo pci_bus
 	# Create a temporary image for the FAT partition
 	dd if=/dev/zero of=$(BUILD_DIR)/fat.img bs=1M count=64
 	mkfs.vfat -F 32 $(BUILD_DIR)/fat.img -n BOOT
@@ -40,7 +40,7 @@ image_disk: prepare kernel simple_fb echo
 	sudo dd if=$(BUILD_DIR)/fat.img of=$(DISK_NAME) bs=512 count=91669 seek=2048 conv=notrunc
 	rm $(BUILD_DIR)/fat.img
 
-image_x86_64: prepare kernel simple_fb echo
+image_x86_64: prepare kernel simple_fb echo pci_bus
 	# Create a temporary image for the FAT partition
 	dd if=/dev/zero of=$(BUILD_DIR)/fat.img bs=1M count=64
 	mkfs.vfat -F 32 $(BUILD_DIR)/fat.img -n BOOT
@@ -69,6 +69,10 @@ simple_fb:
 echo:
 	cargo build -Z build-std=core,alloc --target=drivers/$(PLATFORM)-pebble-userspace.json --manifest-path drivers/echo/Cargo.toml
 	cp drivers/target/$(PLATFORM)-pebble-userspace/debug/echo $(BUILD_DIR)/fat/echo.elf
+
+pci_bus:
+	cargo build -Z build-std=core,alloc --target=drivers/$(PLATFORM)-pebble-userspace.json --manifest-path drivers/pci_bus/Cargo.toml
+	cp drivers/target/$(PLATFORM)-pebble-userspace/debug/pci_bus $(BUILD_DIR)/fat/pci_bus.elf
 
 clean:
 	cd drivers && cargo clean
