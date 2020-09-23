@@ -77,7 +77,7 @@ define_error_type!(MapMemoryObjectError {
     AddressPointerInvalid => 5,
 });
 
-pub fn map_memory_object(
+pub unsafe fn map_memory_object(
     memory_object: Handle,
     address_space: Handle,
     address_pointer: *mut usize,

@@ -26,8 +26,8 @@ pub extern "C" fn start() -> ! {
     const HEAP_START: usize = 0x600000000;
     const HEAP_SIZE: usize = 0x4000;
     let heap_memory_object = syscall::create_memory_object(HEAP_START, HEAP_SIZE, true, false).unwrap();
-    syscall::map_memory_object(heap_memory_object, libpebble::ZERO_HANDLE, 0x0 as *mut usize).unwrap();
     unsafe {
+        syscall::map_memory_object(heap_memory_object, libpebble::ZERO_HANDLE, 0x0 as *mut usize).unwrap();
         ALLOCATOR.lock().init(HEAP_START, HEAP_SIZE);
     }
 

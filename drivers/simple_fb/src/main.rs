@@ -36,8 +36,8 @@ pub extern "C" fn start() -> ! {
     const HEAP_START: usize = 0x600000000;
     const HEAP_SIZE: usize = 0x4000;
     let heap_memory_object = syscall::create_memory_object(HEAP_START, HEAP_SIZE, true, false).unwrap();
-    syscall::map_memory_object(heap_memory_object, libpebble::ZERO_HANDLE, 0x0 as *mut usize).unwrap();
     unsafe {
+        syscall::map_memory_object(heap_memory_object, libpebble::ZERO_HANDLE, 0x0 as *mut usize).unwrap();
         ALLOCATOR.lock().init(HEAP_START, HEAP_SIZE);
     }
 
@@ -102,8 +102,10 @@ fn make_framebuffer() -> Framebuffer<Bgr32> {
     };
 
     let mut framebuffer_address: MaybeUninit<usize> = MaybeUninit::uninit();
-    syscall::map_memory_object(framebuffer_handle, libpebble::ZERO_HANDLE, framebuffer_address.as_mut_ptr())
-        .unwrap();
+    unsafe {
+        syscall::map_memory_object(framebuffer_handle, libpebble::ZERO_HANDLE, framebuffer_address.as_mut_ptr())
+            .unwrap();
+    }
     let framebuffer_address = unsafe { framebuffer_address.assume_init() };
 
     assert_eq!(framebuffer_info.pixel_format, PixelFormat::BGR32);
