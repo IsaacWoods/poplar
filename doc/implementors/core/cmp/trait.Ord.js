@@ -1,7 +1,7 @@
 (function() {var implementors = {};
 implementors["hal"] = [{"text":"impl&lt;S:&nbsp;Ord&gt; Ord for Frame&lt;S&gt; <span class=\"where fmt-newline\">where<br>&nbsp;&nbsp;&nbsp;&nbsp;S: FrameSize,&nbsp;</span>","synthetic":false,"types":[]},{"text":"impl&lt;S:&nbsp;Ord + FrameSize&gt; Ord for Page&lt;S&gt;","synthetic":false,"types":[]},{"text":"impl Ord for PhysicalAddress","synthetic":false,"types":[]},{"text":"impl Ord for VirtualAddress","synthetic":false,"types":[]},{"text":"impl Ord for Size4KiB","synthetic":false,"types":[]},{"text":"impl Ord for Size2MiB","synthetic":false,"types":[]},{"text":"impl Ord for Size1GiB","synthetic":false,"types":[]},{"text":"impl Ord for PciAddress","synthetic":false,"types":[]}];
 implementors["kernel"] = [{"text":"impl Ord for KernelObjectId","synthetic":false,"types":[]}];
-implementors["libpebble"] = [{"text":"impl Ord for Handle","synthetic":false,"types":[]}];
+implementors["libpebble"] = [{"text":"impl Ord for PciAddress","synthetic":false,"types":[]},{"text":"impl Ord for Handle","synthetic":false,"types":[]}];
 implementors["log"] = [{"text":"impl Ord for Level","synthetic":false,"types":[]},{"text":"impl Ord for LevelFilter","synthetic":false,"types":[]},{"text":"impl&lt;'a&gt; Ord for Metadata&lt;'a&gt;","synthetic":false,"types":[]},{"text":"impl&lt;'a&gt; Ord for MetadataBuilder&lt;'a&gt;","synthetic":false,"types":[]}];
 implementors["proc_macro2"] = [{"text":"impl Ord for Ident","synthetic":false,"types":[]}];
 implementors["syn"] = [{"text":"impl Ord for Lifetime","synthetic":false,"types":[]}];

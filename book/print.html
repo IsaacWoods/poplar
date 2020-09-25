@@ -521,6 +521,7 @@ driver.</p>
 <li><code>1</code> if the task does not have the correct capabilities</li>
 <li><code>2</code> if the given buffer can't hold all the descriptors</li>
 <li><code>3</code> if the address to the descriptor buffer is invalid</li>
+<li><code>4</code> if the platform doesn't support PCI</li>
 </ul>
 <p>If the status code is <code>0</code> (i.e. the system call succeeded), bits <code>16..48</code> contain the number of descriptors written back.
 If the status code is <code>2</code> (i.e. the buffer was not large enough), bits <code>16..48</code> contain the number of entries that
