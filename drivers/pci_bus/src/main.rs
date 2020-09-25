@@ -35,7 +35,7 @@ pub extern "C" fn start() -> ! {
 
     let descriptors = syscall::pci_get_info_vec().expect("Failed to get PCI descriptors");
     for descriptor in descriptors {
-        info!("PCI device: {:x}:{:x}", descriptor.vendor_id, descriptor.device_id);
+        info!("PCI device at {}: {:x}:{:x}", descriptor.address, descriptor.vendor_id, descriptor.device_id);
     }
 
     loop {

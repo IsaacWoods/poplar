@@ -1,6 +1,6 @@
 use super::{raw, SYSCALL_PCI_GET_INFO};
 use bit_field::BitField;
-use core::convert::TryFrom;
+use core::{convert::TryFrom, fmt};
 
 /// PCIe supports 65536 buses, each with 32 slots, each with 8 possible functions. We cram this into a `u32`:
 ///
@@ -8,7 +8,7 @@ use core::convert::TryFrom;
 ///  +-------------------------------+---------------+---------+------+
 ///  |            segment            |      bus      | device  | func |
 ///  +-------------------------------+---------------+---------+------+
-#[derive(Clone, Copy, PartialEq, Eq, Debug, Default)]
+#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Debug, Default)]
 pub struct PciAddress(u32);
 
 impl PciAddress {
@@ -35,6 +35,12 @@ impl PciAddress {
 
     pub fn function(&self) -> u8 {
         self.0.get_bits(0..3) as u8
+    }
+}
+
+impl fmt::Display for PciAddress {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{:02x}-{:02x}:{:02x}.{}", self.segment(), self.bus(), self.device(), self.function())
     }
 }
 
