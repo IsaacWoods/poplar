@@ -36,6 +36,13 @@ impl<'a> CommandLine<'a> {
         };
 
         /*
+         * TODO: these are temporary to avoid having to mess around with the command line
+         */
+        command_line.add_image("echo", "echo.elf");
+        command_line.add_image("fb", "simple_fb.elf");
+        command_line.add_image("pci_bus", "pci_bus.elf");
+
+        /*
          * The command line consists of a number of options, delimited by spaces. The first 'option' is the path
          * to the loader EFI executable, and so we skip it.
          */
