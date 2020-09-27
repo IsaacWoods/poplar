@@ -7,3 +7,6 @@
 [submodule "lib/ucs2-rs"]
 	path = lib/ucs2-rs
 	url = https://github.com/IsaacWoods/ucs2-rs
+[submodule "lib/pci_types"]
+	path = lib/pci_types
+	url = git@github.com:rust-osdev/pci_types
