@@ -11,7 +11,7 @@ mod logger;
 
 use allocator::BootFrameAllocator;
 use command_line::CommandLine;
-use core::{mem, panic::PanicInfo, slice};
+use core::{mem, panic::PanicInfo, ptr, slice};
 use hal::{
     boot_info::{BootInfo, VideoModeInfo},
     memory::{Flags, FrameAllocator, FrameSize, Page, PageTable, PhysicalAddress, Size4KiB, VirtualAddress},
@@ -126,7 +126,7 @@ fn main(image_handle: Handle, system_table: SystemTable<Boot>) -> Result<!, Load
         let identity_boot_info_ptr =
             VirtualAddress::new(boot_info_physical_start as usize).mut_ptr() as *mut BootInfo;
         unsafe {
-            *identity_boot_info_ptr = BootInfo::default();
+            ptr::write(identity_boot_info_ptr, BootInfo::default());
         }
 
         /*
