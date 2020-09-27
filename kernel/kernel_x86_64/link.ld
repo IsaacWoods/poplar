@@ -38,7 +38,7 @@ SECTIONS
         _guard_page = .;
         . += 4K;
         _stack_bottom = .;
-        . += 128K;
+        . += 4M;
         _stack_top = .;
         /* No need to add more alignment here - it will already be page-aligned */
     } :data
