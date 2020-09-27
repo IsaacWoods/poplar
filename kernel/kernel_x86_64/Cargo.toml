@@ -16,6 +16,7 @@ acpi = { path = "../../lib/acpi/acpi" }
 aml = { path = "../../lib/acpi/aml" }
 pebble_util = { path = "../../lib/pebble_util" }
 gfxconsole = { path = "../../lib/gfxconsole" }
+pci_types = { path = "../../lib/pci_types" }
 
 [features]
 qemu_exit = ["hal_x86_64/qemu"]

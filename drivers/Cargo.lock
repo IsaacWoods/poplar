@@ -2,9 +2,9 @@
 # It is not intended for manual editing.
 [[package]]
 name = "bit_field"
-version = "0.10.0"
+version = "0.10.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a165d606cf084741d4ac3a28fb6e9b1eb0bd31f6cd999098cfddb0b2ab381dc0"
+checksum = "dcb6dd1c2376d2e096796e234a70e17e94cc2d5d54ff8ce42b28cef1d0d359a4"
 
 [[package]]
 name = "bitflags"
@@ -50,13 +50,14 @@ dependencies = [
  "bitflags",
  "cfg-if",
  "log",
+ "pci_types",
 ]
 
 [[package]]
 name = "linked_list_allocator"
-version = "0.8.4"
+version = "0.8.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e70e46c13c0e8374c26cec5752e3347ca1087d9711de8f45aa513a7700efd73d"
+checksum = "84565678e403453d1a27a0886882b3b271701e65146d972d9d7d9a4c4a0ff498"
 dependencies = [
  "spinning_top",
 ]
@@ -72,9 +73,9 @@ dependencies = [
 
 [[package]]
 name = "log"
-version = "0.4.8"
+version = "0.4.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "14b6052be84e6b71ab17edffc2eeabf5c2c3ae1fdb464aae35ac50c67a44e1f7"
+checksum = "4fabed175da42fed1fa0746b0ea71f412aa9d35e76e95e59b192c64b9dc2bf8b"
 dependencies = [
  "cfg-if",
 ]
@@ -86,14 +87,22 @@ dependencies = [
  "libpebble",
  "linked_list_allocator",
  "log",
+ "pci_types",
  "rlibc",
 ]
 
 [[package]]
+name = "pci_types"
+version = "0.1.0"
+dependencies = [
+ "bit_field",
+]
+
+[[package]]
 name = "proc-macro2"
-version = "1.0.21"
+version = "1.0.22"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "36e28516df94f3dd551a587da5357459d9b36d945a7c37c3557928c1c2ff2a2c"
+checksum = "e4b93dba1818d32e781f9d008edd577bab215e83ef50e8a1ddf1ad301b19a09f"
 dependencies = [
  "unicode-xid",
 ]
@@ -161,9 +170,9 @@ dependencies = [
 
 [[package]]
 name = "spinning_top"
-version = "0.1.0"
+version = "0.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "32d801a3a53bcf5071f85fef8d5cab9e5f638fc5580a37e6eb7aba4b37438d24"
+checksum = "047031d6df5f5ae0092c97aa4f6bb04cfc9c081b4cd4cb9cdb38657994279a00"
 dependencies = [
  "lock_api",
 ]
