@@ -103,6 +103,7 @@ where
         if self.access.function_exists(address) {
             let header = PciHeader::new(address);
             let (vendor_id, device_id) = header.id(&self.access);
+            let (revision, class, sub_class, interface) = header.revision_and_class(&self.access);
 
             if vendor_id == 0xffff {
                 return;
@@ -116,7 +117,9 @@ where
                 bus, device, function, vendor_id, device_id
             );
 
-            self.info.devices.insert(address, PciDevice { vendor_id, device_id });
+            self.info
+                .devices
+                .insert(address, PciDevice { vendor_id, device_id, revision, class, sub_class, interface });
         }
     }
 }

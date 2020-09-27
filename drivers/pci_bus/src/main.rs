@@ -36,7 +36,15 @@ pub extern "C" fn start() -> ! {
 
     let descriptors = syscall::pci_get_info_vec().expect("Failed to get PCI descriptors");
     for descriptor in descriptors {
-        info!("PCI device at {}: {:x}:{:x}", descriptor.address, descriptor.vendor_id, descriptor.device_id);
+        info!(
+            "PCI device at {}: {:x}:{:x} (class = {}, sub = {})",
+            descriptor.address, descriptor.vendor_id, descriptor.device_id, descriptor.class, descriptor.sub_class
+        );
+        let device_type = DeviceType::from((descriptor.class, descriptor.sub_class));
+        info!("Device type: {:?}", device_type);
+        if device_type == DeviceType::UsbController {
+            info!("USB controller type: {:?}", UsbType::try_from(descriptor.interface).unwrap());
+        }
     }
 
     loop {

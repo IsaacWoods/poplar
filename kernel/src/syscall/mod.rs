@@ -438,6 +438,10 @@ where
                     address,
                     vendor_id: device.vendor_id,
                     device_id: device.device_id,
+                    revision: device.revision,
+                    class: device.class,
+                    sub_class: device.sub_class,
+                    interface: device.interface,
                 };
             }
 

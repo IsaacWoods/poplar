@@ -11,6 +11,16 @@ pub struct PciDeviceInfo {
     pub vendor_id: VendorId,
     /// The ID of the particular device. These are allocated by the vendor.
     pub device_id: DeviceId,
+    /// A device-specific revision identifier. These are chosen by the vendor, and should be thought of as a
+    /// vendor-defined extension of the device ID.
+    pub revision: DeviceRevision,
+    /// The upper byte of the class-code. This identifies the Base Class of the device.
+    pub class: BaseClass,
+    /// The middle byte of the class-code. This identifies the Sub Class of the device.
+    pub sub_class: SubClass,
+    /// The lower byte of the class-code. This may indicate a specific register-level programming interface of the
+    /// device.
+    pub interface: Interface,
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
