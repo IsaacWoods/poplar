@@ -7,4 +7,3 @@ extern crate std;
 
 pub mod boot_info;
 pub mod memory;
-pub mod pci;

@@ -1,5 +1,5 @@
 use alloc::collections::BTreeMap;
-use hal::pci::{DeviceId, PciAddress, VendorId};
+use pci_types::{BaseClass, DeviceId, DeviceRevision, Interface, PciAddress, SubClass, VendorId};
 
 pub struct PciDevice {
     pub vendor_id: VendorId,

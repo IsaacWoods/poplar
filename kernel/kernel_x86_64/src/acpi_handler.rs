@@ -2,12 +2,10 @@ use crate::kernel_map;
 use acpi::{AcpiHandler, PhysicalMapping};
 use bit_field::BitField;
 use core::ptr::NonNull;
-use hal::{
-    memory::PhysicalAddress,
-    pci::{ConfigRegionAccess, PciAddress},
-};
+use hal::memory::PhysicalAddress;
 use hal_x86_64::hw::port::Port;
 use log::debug;
+use pci_types::{ConfigRegionAccess, PciAddress};
 use pebble_util::math::align_down;
 
 #[derive(Clone)]
@@ -140,7 +138,7 @@ where
     fn read_pci_u8(&self, segment: u16, bus: u8, device: u8, function: u8, offset: u16) -> u8 {
         debug!("AML: Reading byte from PCI config space (segment={:#x},bus={:#x},device={:#x},function={:#x},offset={:#x})", segment, bus, device, function, offset);
         let dword_read = unsafe {
-            self.pci_access.read(PciAddress { segment, bus, device, function }, align_down(offset, 0x20))
+            self.pci_access.read(PciAddress::new(segment, bus, device, function), align_down(offset, 0x20))
         };
         let start_bit = (offset % 0x20) as usize;
         dword_read.get_bits(start_bit..(start_bit + 8)) as u8
@@ -149,7 +147,7 @@ where
     fn read_pci_u16(&self, segment: u16, bus: u8, device: u8, function: u8, offset: u16) -> u16 {
         debug!("AML: Reading word from PCI config space (segment={:#x},bus={:#x},device={:#x},function={:#x},offset={:#x})", segment, bus, device, function, offset);
         let dword_read = unsafe {
-            self.pci_access.read(PciAddress { segment, bus, device, function }, align_down(offset, 0x20))
+            self.pci_access.read(PciAddress::new(segment, bus, device, function), align_down(offset, 0x20))
         };
         let start_bit = (offset % 0x20) as usize;
         dword_read.get_bits(start_bit..(start_bit + 16)) as u16
@@ -157,7 +155,7 @@ where
 
     fn read_pci_u32(&self, segment: u16, bus: u8, device: u8, function: u8, offset: u16) -> u32 {
         debug!("AML: Reading dword from PCI config space (segment={:#x},bus={:#x},device={:#x},function={:#x},offset={:#x})", segment, bus, device, function, offset);
-        unsafe { self.pci_access.read(PciAddress { segment, bus, device, function }, offset) }
+        unsafe { self.pci_access.read(PciAddress::new(segment, bus, device, function), offset) }
     }
 
     fn write_pci_u8(&self, segment: u16, bus: u8, device: u8, function: u8, offset: u16, value: u8) {
@@ -172,6 +170,6 @@ where
 
     fn write_pci_u32(&self, segment: u16, bus: u8, device: u8, function: u8, offset: u16, value: u32) {
         debug!("AML: Writing dword to PCI config space (segment={:#x},bus={:#x},device={:#x},function={:#x},offset={:#x}): {:#x}", segment, bus, device, function, offset, value);
-        unsafe { self.pci_access.write(PciAddress { segment, bus, device, function }, offset, value) }
+        unsafe { self.pci_access.write(PciAddress::new(segment, bus, device, function), offset, value) }
     }
 }

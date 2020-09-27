@@ -35,10 +35,11 @@ use heap_allocator::LockedHoleAllocator;
 use memory::{KernelStackAllocator, PhysicalMemoryManager};
 use object::{address_space::AddressSpace, memory_object::MemoryObject, task::Task, KernelObject};
 use pci::PciInfo;
+use pci_types::ConfigRegionAccess as PciConfigRegionAccess;
 use pebble_util::InitGuard;
 use per_cpu::PerCpu;
 use scheduler::Scheduler;
-use spin::RwLock;
+use spin::{Mutex, RwLock};
 
 #[cfg(not(test))]
 #[global_allocator]
@@ -47,7 +48,7 @@ pub static ALLOCATOR: LockedHoleAllocator = LockedHoleAllocator::new_uninitializ
 pub static PHYSICAL_MEMORY_MANAGER: InitGuard<PhysicalMemoryManager> = InitGuard::uninit();
 pub static FRAMEBUFFER: InitGuard<(libpebble::syscall::FramebufferInfo, Arc<MemoryObject>)> = InitGuard::uninit();
 pub static PCI_INFO: RwLock<Option<PciInfo>> = RwLock::new(None);
-pub static PCI_ACCESS: InitGuard<Option<Box<dyn hal::pci::ConfigRegionAccess>>> = InitGuard::uninit();
+pub static PCI_ACCESS: InitGuard<Option<Mutex<Box<dyn PciConfigRegionAccess>>>> = InitGuard::uninit();
 
 pub trait Platform: Sized + 'static {
     type PageTableSize: FrameSize;

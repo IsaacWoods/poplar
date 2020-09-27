@@ -5,7 +5,7 @@
 extern crate alloc;
 extern crate rlibc;
 
-use core::panic::PanicInfo;
+use core::{convert::TryFrom, panic::PanicInfo};
 use libpebble::{
     caps::{CapabilitiesRepr, CAP_EARLY_LOGGING, CAP_PADDING, CAP_PCI_BUS_DRIVER},
     early_logger::EarlyLogger,
@@ -13,6 +13,7 @@ use libpebble::{
 };
 use linked_list_allocator::LockedHeap;
 use log::info;
+use pci_types::device_type::{DeviceType, UsbType};
 
 #[global_allocator]
 static ALLOCATOR: LockedHeap = LockedHeap::empty();

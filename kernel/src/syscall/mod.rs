@@ -433,14 +433,9 @@ where
                 .validate_write()
                 .map_err(|()| PciGetInfoError::BufferPointerInvalid)?;
 
-            for (i, (address, device)) in pci_info.devices.iter().enumerate() {
+            for (i, (&address, device)) in pci_info.devices.iter().enumerate() {
                 descriptor_buffer[i] = libpebble::syscall::PciDeviceInfo {
-                    address: libpebble::syscall::PciAddress::new(
-                        address.segment,
-                        address.bus,
-                        address.device,
-                        address.function,
-                    ),
+                    address,
                     vendor_id: device.vendor_id,
                     device_id: device.device_id,
                 };

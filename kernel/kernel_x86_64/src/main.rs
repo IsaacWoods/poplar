@@ -30,6 +30,7 @@ use kernel::{
 };
 use log::{error, info};
 use pci::PciResolver;
+use spin::Mutex;
 use topo::Topology;
 
 pub struct PlatformImpl {
@@ -173,7 +174,7 @@ pub extern "C" fn kentry(boot_info: &BootInfo) -> ! {
      */
     // TODO: this whole situation is a bit gross and needs more thought I think
     *kernel::PCI_INFO.write() = Some(PciResolver::resolve(pci_access.clone()));
-    kernel::PCI_ACCESS.initialize(Some(Box::new(pci_access)));
+    kernel::PCI_ACCESS.initialize(Some(Mutex::new(Box::new(pci_access))));
 
 
     /*
