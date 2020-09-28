@@ -259,7 +259,6 @@ where
         }
         arr
     };
-    trace!("Message sent down channel: {:x?} ({} handles transferred)", bytes, handles.len());
 
     task.handles
         .read()
