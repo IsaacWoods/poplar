@@ -1,3 +1,15 @@
+//! The **Platform Bus** is a concept of a single, abstract "bus" that all devices in the system hang off. These
+//! devices are contributed by various **Bus Drivers**, which register devices with the Platfom Bus when they
+//! enumerate their respective physical buses. **Device Drivers** can then register interest with the Platform Bus
+//! for a specific class of devices using a **Filter**.
+//!
+//! Devices on the Platform Bus are described by Properties, which provide both generic and platform-specific
+//! information. For example, a device created by the PCI bus driver will have `pci.vendor_id`, `pci.device_id`,
+//! `pci.class` and `pci.sub_class` as properties. A Device Driver could use the `class` and `subclass` properties
+//! to select all PCI devices of a particular type (e.g. useful for a driver for all EHCI controllers), or the
+//! `vendor_id` and `device_id` properties to select a specific device (e.g. useful for a graphics driver for a
+//! specific graphics card).
+
 #![no_std]
 
 extern crate alloc;
@@ -8,11 +20,6 @@ use serde::{Deserialize, Serialize};
 type DeviceName = String;
 type PropertyName = String;
 
-/// A `Device` represents some abstract piece of hardware on the platform, usually on some type of bus. They are
-/// created by a *Bus Driver*, and can be consumed by a *Device Driver*. Properties describe the device, both
-/// generally and in platform-specific ways, to provide information to device drivers. For example, a device
-/// created by the PCI bus driver will have `pci.vendor_id`, `pci.device_id`, `pci.class` and `pci.sub_class` as
-/// properties.
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Device {
     properties: BTreeMap<PropertyName, Property>,
