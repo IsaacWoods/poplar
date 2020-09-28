@@ -5,15 +5,17 @@
 extern crate alloc;
 extern crate rlibc;
 
+use alloc::{collections::BTreeMap, string::ToString, vec::Vec};
 use core::{convert::TryFrom, panic::PanicInfo};
 use libpebble::{
-    caps::{CapabilitiesRepr, CAP_EARLY_LOGGING, CAP_PADDING, CAP_PCI_BUS_DRIVER},
+    caps::{CapabilitiesRepr, CAP_EARLY_LOGGING, CAP_PADDING, CAP_PCI_BUS_DRIVER, CAP_SERVICE_USER},
     early_logger::EarlyLogger,
     syscall,
 };
 use linked_list_allocator::LockedHeap;
 use log::info;
 use pci_types::device_type::{DeviceType, UsbType};
+use platform_bus::{BusDriverMessage, Device, Property};
 
 #[global_allocator]
 static ALLOCATOR: LockedHeap = LockedHeap::empty();
@@ -34,6 +36,8 @@ pub extern "C" fn start() -> ! {
     log::set_max_level(log::LevelFilter::Trace);
     info!("PCI bus driver is running!");
 
+    let platform_bus_channel = syscall::subscribe_to_service("platform_bus.bus_driver").unwrap();
+
     let descriptors = syscall::pci_get_info_vec().expect("Failed to get PCI descriptors");
     for descriptor in descriptors {
         info!(
@@ -44,6 +48,22 @@ pub extern "C" fn start() -> ! {
         info!("Device type: {:?}", device_type);
         if device_type == DeviceType::UsbController {
             info!("USB controller type: {:?}", UsbType::try_from(descriptor.interface).unwrap());
+        }
+
+        /*
+         * Register the device with the Platform Bus.
+         */
+        {
+            let name = "pci-".to_string() + &descriptor.address.to_string();
+            let mut properties = BTreeMap::new();
+            properties.insert("pci.vendor_id".to_string(), Property::Integer(descriptor.vendor_id as u64));
+            properties.insert("pci.device_id".to_string(), Property::Integer(descriptor.device_id as u64));
+            properties.insert("pci.class".to_string(), Property::Integer(descriptor.class as u64));
+            properties.insert("pci.sub_class".to_string(), Property::Integer(descriptor.sub_class as u64));
+
+            let mut bytes = Vec::new();
+            ptah::to_wire(&BusDriverMessage::RegisterDevice(name, Device::new(properties)), &mut bytes).unwrap();
+            syscall::send_message(platform_bus_channel, &bytes, &[]).unwrap();
         }
     }
 
@@ -66,4 +86,4 @@ fn alloc_error(layout: core::alloc::Layout) -> ! {
 #[used]
 #[link_section = ".caps"]
 pub static mut CAPS: CapabilitiesRepr<4> =
-    CapabilitiesRepr::new([CAP_EARLY_LOGGING, CAP_PCI_BUS_DRIVER, CAP_PADDING, CAP_PADDING]);
+    CapabilitiesRepr::new([CAP_EARLY_LOGGING, CAP_PCI_BUS_DRIVER, CAP_SERVICE_USER, CAP_PADDING]);

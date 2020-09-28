@@ -40,6 +40,7 @@ impl<'a> CommandLine<'a> {
          */
         command_line.add_image("echo", "echo.elf");
         command_line.add_image("fb", "simple_fb.elf");
+        command_line.add_image("platform_bus", "platform_bus.elf");
         command_line.add_image("pci_bus", "pci_bus.elf");
 
         /*

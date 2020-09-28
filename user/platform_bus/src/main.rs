@@ -46,8 +46,55 @@ pub extern "C" fn start() -> ! {
     log::set_max_level(log::LevelFilter::Trace);
     info!("Platform-bus is running!");
 
+    let bus_driver_service_channel = syscall::register_service("bus_driver").unwrap();
+    let mut bus_drivers = Vec::new();
+    let mut devices = BTreeMap::<String, DeviceEntry>::new();
+
     loop {
         syscall::yield_to_kernel();
+
+        /*
+         * Register any new bus drivers that want a channel to register devices.
+         */
+        {
+            let mut handles = [libpebble::ZERO_HANDLE; 1];
+            match syscall::get_message(bus_driver_service_channel, &mut [], &mut handles) {
+                Ok((bytes, handles)) => {
+                    info!("Bus driver subscribed to Platform Bus 'bus_driver' service");
+                    bus_drivers.push(handles[0]);
+                }
+                Err(GetMessageError::NoMessage) => (),
+                Err(err) => panic!("Error getting message from service subscriber: {:?}", err),
+            }
+        }
+
+        /*
+         * Listen to Bus Driver channels to see if any of them have sent us any messages.
+         */
+        for bus_driver in bus_drivers.iter() {
+            loop {
+                let mut bytes = [0u8; 256];
+                match syscall::get_message(*bus_driver, &mut bytes, &mut []) {
+                    Ok((bytes, _)) => {
+                        let message = ptah::from_wire::<BusDriverMessage>(&bytes)
+                            .expect("Message from bus driver is malformed");
+                        match message {
+                            BusDriverMessage::RegisterDevice(name, device) => {
+                                info!("Registering device: {:?} as {}", device, name);
+                                devices.insert(
+                                    name,
+                                    DeviceEntry { device, bus_driver: *bus_driver, device_driver: None },
+                                );
+                            }
+                            BusDriverMessage::AddProperty(name, property) => todo!(),
+                            BusDriverMessage::RemoveProperty(name) => todo!(),
+                        }
+                    }
+                    Err(GetMessageError::NoMessage) => break,
+                    Err(err) => panic!("Failed getting message from bus driver: {:?}", err),
+                }
+            }
+        }
     }
 }
 
