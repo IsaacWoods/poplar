@@ -1,5 +1,5 @@
 [workspace]
-members = ["simple_fb", "echo", "pci_bus"]
+members = ["simple_fb", "echo", "platform_bus", "pci_bus"]
 
 [profile.dev]
 debug = false

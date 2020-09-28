@@ -88,6 +88,8 @@ dependencies = [
  "linked_list_allocator",
  "log",
  "pci_types",
+ "platform_bus",
+ "ptah",
  "rlibc",
 ]
 
@@ -96,6 +98,18 @@ name = "pci_types"
 version = "0.1.0"
 dependencies = [
  "bit_field",
+]
+
+[[package]]
+name = "platform_bus"
+version = "0.1.0"
+dependencies = [
+ "libpebble",
+ "linked_list_allocator",
+ "log",
+ "ptah",
+ "rlibc",
+ "serde",
 ]
 
 [[package]]
