@@ -1,4 +1,4 @@
-.PHONY: kernel_x86_64 efiloader kernel_rpi4 test clean
+.PHONY: kernel_x86_64 efiloader kernel_rpi4 test clean update
 
 kernel_x86_64: efiloader
 	cargo build -Z build-std=core,alloc --target=kernel_x86_64/x86_64-kernel.json --manifest-path kernel_x86_64/Cargo.toml $(KERNEL_FLAGS)
@@ -16,6 +16,9 @@ test:
 	cargo test --all-features --manifest-path hal/Cargo.toml
 	cargo test --all-features --manifest-path hal_x86_64/Cargo.toml
 	cargo test --all-features --manifest-path hal_arm64/Cargo.toml
+
+update:
+	cargo update
 
 clean:
 	cargo clean
