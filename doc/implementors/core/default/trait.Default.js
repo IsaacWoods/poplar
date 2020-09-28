@@ -1,6 +1,7 @@
 (function() {var implementors = {};
 implementors["hal"] = [{"text":"impl Default for BootInfo","synthetic":false,"types":[]},{"text":"impl Default for MemoryMap","synthetic":false,"types":[]},{"text":"impl Default for MemoryMapEntry","synthetic":false,"types":[]},{"text":"impl Default for LoadedImages","synthetic":false,"types":[]},{"text":"impl Default for LoadedImage","synthetic":false,"types":[]},{"text":"impl Default for Segment","synthetic":false,"types":[]},{"text":"impl Default for Flags","synthetic":false,"types":[]},{"text":"impl Default for PhysicalAddress","synthetic":false,"types":[]},{"text":"impl Default for VirtualAddress","synthetic":false,"types":[]}];
-implementors["libpebble"] = [{"text":"impl Default for PciAddress","synthetic":false,"types":[]},{"text":"impl Default for PciDeviceInfo","synthetic":false,"types":[]}];
+implementors["libpebble"] = [{"text":"impl Default for PciDeviceInfo","synthetic":false,"types":[]}];
+implementors["pci_types"] = [{"text":"impl Default for PciAddress","synthetic":false,"types":[]}];
 implementors["proc_macro2"] = [{"text":"impl Default for TokenStream","synthetic":false,"types":[]}];
 implementors["serde"] = [{"text":"impl Default for IgnoredAny","synthetic":false,"types":[]}];
 implementors["spin"] = [{"text":"impl&lt;T:&nbsp;?Sized + Default&gt; Default for Mutex&lt;T&gt;","synthetic":false,"types":[]},{"text":"impl&lt;T:&nbsp;?Sized + Default&gt; Default for RwLock&lt;T&gt;","synthetic":false,"types":[]}];

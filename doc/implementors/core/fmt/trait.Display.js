@@ -1,7 +1,7 @@
 (function() {var implementors = {};
-implementors["libpebble"] = [{"text":"impl Display for PciAddress","synthetic":false,"types":[]}];
 implementors["log"] = [{"text":"impl Display for Level","synthetic":false,"types":[]},{"text":"impl Display for LevelFilter","synthetic":false,"types":[]},{"text":"impl Display for SetLoggerError","synthetic":false,"types":[]},{"text":"impl Display for ParseLevelError","synthetic":false,"types":[]}];
 implementors["num_traits"] = [{"text":"impl Display for ParseFloatError","synthetic":false,"types":[]}];
+implementors["pci_types"] = [{"text":"impl Display for PciAddress","synthetic":false,"types":[]}];
 implementors["pebble_util"] = [{"text":"impl&lt;T:&nbsp;Binary + PrimInt&gt; Display for BinaryPrettyPrint&lt;T&gt;","synthetic":false,"types":[]}];
 implementors["proc_macro2"] = [{"text":"impl Display for TokenStream","synthetic":false,"types":[]},{"text":"impl Display for TokenTree","synthetic":false,"types":[]},{"text":"impl Display for Group","synthetic":false,"types":[]},{"text":"impl Display for Punct","synthetic":false,"types":[]},{"text":"impl Display for Ident","synthetic":false,"types":[]},{"text":"impl Display for Literal","synthetic":false,"types":[]}];
 implementors["ptah"] = [{"text":"impl Display for Error","synthetic":false,"types":[]}];

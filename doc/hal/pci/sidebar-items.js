@@ -1,1 +1,0 @@
-initSidebarItems({"struct":[["PciAddress",""],["PciHeader","Every PCI configuration region starts with a header made up of two parts:"]],"trait":[["ConfigRegionAccess",""]],"type":[["DeviceId",""],["VendorId",""]]});

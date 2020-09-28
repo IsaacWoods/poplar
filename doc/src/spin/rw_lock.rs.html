@@ -1,4 +1,6 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source to the Rust file `/home/runner/.cargo/registry/src/github.com-1ecc6299db9ec823/spin-0.4.10/src/rw_lock.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>rw_lock.rs.html -- source</title><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../light.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../../dark.css" disabled ><link rel="stylesheet" type="text/css" href="../../ayu.css" disabled ><script src="../../storage.js"></script><noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="shortcut icon" href="../../favicon.ico"><style type="text/css">#crate-search{background-image:url("../../down-arrow.svg");}</style></head><body class="rustdoc source"><!--[if lte IE 8]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu">&#9776;</div><a href='../../spin/index.html'><div class='logo-container rust-logo'><img src='../../rust-logo.png' alt='logo'></div></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!"><img src="../../brush.svg" width="18" alt="Pick another theme!"></button><div id="theme-choices"></div></div><script src="../../theme.js"></script><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><span class="help-button">?</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source to the Rust file `/home/runner/.cargo/registry/src/github.com-1ecc6299db9ec823/spin-0.5.2/src/rw_lock.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>rw_lock.rs.html -- source</title><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../light.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../../dark.css" disabled ><link rel="stylesheet" type="text/css" href="../../ayu.css" disabled ><script src="../../storage.js"></script><noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="icon" type="image/svg+xml" href="../../favicon.svg">
+<link rel="alternate icon" type="image/png" href="../../favicon-16x16.png">
+<link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><style type="text/css">#crate-search{background-image:url("../../down-arrow.svg");}</style></head><body class="rustdoc source"><!--[if lte IE 8]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu">&#9776;</div><a href='../../spin/index.html'><div class='logo-container rust-logo'><img src='../../rust-logo.png' alt='logo'></div></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!"><img src="../../brush.svg" width="18" alt="Pick another theme!"></button><div id="theme-choices"></div></div><script src="../../theme.js"></script><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><span class="help-button">?</span>
                 <a id="settings-menu" href="../../settings.html"><img src="../../wheel.svg" width="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><pre class="line-numbers"><span id="1">  1</span>
 <span id="2">  2</span>
 <span id="3">  3</span>
@@ -578,12 +580,213 @@
 <span id="577">577</span>
 <span id="578">578</span>
 <span id="579">579</span>
+<span id="580">580</span>
+<span id="581">581</span>
+<span id="582">582</span>
+<span id="583">583</span>
+<span id="584">584</span>
+<span id="585">585</span>
+<span id="586">586</span>
+<span id="587">587</span>
+<span id="588">588</span>
+<span id="589">589</span>
+<span id="590">590</span>
+<span id="591">591</span>
+<span id="592">592</span>
+<span id="593">593</span>
+<span id="594">594</span>
+<span id="595">595</span>
+<span id="596">596</span>
+<span id="597">597</span>
+<span id="598">598</span>
+<span id="599">599</span>
+<span id="600">600</span>
+<span id="601">601</span>
+<span id="602">602</span>
+<span id="603">603</span>
+<span id="604">604</span>
+<span id="605">605</span>
+<span id="606">606</span>
+<span id="607">607</span>
+<span id="608">608</span>
+<span id="609">609</span>
+<span id="610">610</span>
+<span id="611">611</span>
+<span id="612">612</span>
+<span id="613">613</span>
+<span id="614">614</span>
+<span id="615">615</span>
+<span id="616">616</span>
+<span id="617">617</span>
+<span id="618">618</span>
+<span id="619">619</span>
+<span id="620">620</span>
+<span id="621">621</span>
+<span id="622">622</span>
+<span id="623">623</span>
+<span id="624">624</span>
+<span id="625">625</span>
+<span id="626">626</span>
+<span id="627">627</span>
+<span id="628">628</span>
+<span id="629">629</span>
+<span id="630">630</span>
+<span id="631">631</span>
+<span id="632">632</span>
+<span id="633">633</span>
+<span id="634">634</span>
+<span id="635">635</span>
+<span id="636">636</span>
+<span id="637">637</span>
+<span id="638">638</span>
+<span id="639">639</span>
+<span id="640">640</span>
+<span id="641">641</span>
+<span id="642">642</span>
+<span id="643">643</span>
+<span id="644">644</span>
+<span id="645">645</span>
+<span id="646">646</span>
+<span id="647">647</span>
+<span id="648">648</span>
+<span id="649">649</span>
+<span id="650">650</span>
+<span id="651">651</span>
+<span id="652">652</span>
+<span id="653">653</span>
+<span id="654">654</span>
+<span id="655">655</span>
+<span id="656">656</span>
+<span id="657">657</span>
+<span id="658">658</span>
+<span id="659">659</span>
+<span id="660">660</span>
+<span id="661">661</span>
+<span id="662">662</span>
+<span id="663">663</span>
+<span id="664">664</span>
+<span id="665">665</span>
+<span id="666">666</span>
+<span id="667">667</span>
+<span id="668">668</span>
+<span id="669">669</span>
+<span id="670">670</span>
+<span id="671">671</span>
+<span id="672">672</span>
+<span id="673">673</span>
+<span id="674">674</span>
+<span id="675">675</span>
+<span id="676">676</span>
+<span id="677">677</span>
+<span id="678">678</span>
+<span id="679">679</span>
+<span id="680">680</span>
+<span id="681">681</span>
+<span id="682">682</span>
+<span id="683">683</span>
+<span id="684">684</span>
+<span id="685">685</span>
+<span id="686">686</span>
+<span id="687">687</span>
+<span id="688">688</span>
+<span id="689">689</span>
+<span id="690">690</span>
+<span id="691">691</span>
+<span id="692">692</span>
+<span id="693">693</span>
+<span id="694">694</span>
+<span id="695">695</span>
+<span id="696">696</span>
+<span id="697">697</span>
+<span id="698">698</span>
+<span id="699">699</span>
+<span id="700">700</span>
+<span id="701">701</span>
+<span id="702">702</span>
+<span id="703">703</span>
+<span id="704">704</span>
+<span id="705">705</span>
+<span id="706">706</span>
+<span id="707">707</span>
+<span id="708">708</span>
+<span id="709">709</span>
+<span id="710">710</span>
+<span id="711">711</span>
+<span id="712">712</span>
+<span id="713">713</span>
+<span id="714">714</span>
+<span id="715">715</span>
+<span id="716">716</span>
+<span id="717">717</span>
+<span id="718">718</span>
+<span id="719">719</span>
+<span id="720">720</span>
+<span id="721">721</span>
+<span id="722">722</span>
+<span id="723">723</span>
+<span id="724">724</span>
+<span id="725">725</span>
+<span id="726">726</span>
+<span id="727">727</span>
+<span id="728">728</span>
+<span id="729">729</span>
+<span id="730">730</span>
+<span id="731">731</span>
+<span id="732">732</span>
+<span id="733">733</span>
+<span id="734">734</span>
+<span id="735">735</span>
+<span id="736">736</span>
+<span id="737">737</span>
+<span id="738">738</span>
+<span id="739">739</span>
+<span id="740">740</span>
+<span id="741">741</span>
+<span id="742">742</span>
+<span id="743">743</span>
+<span id="744">744</span>
+<span id="745">745</span>
+<span id="746">746</span>
+<span id="747">747</span>
+<span id="748">748</span>
+<span id="749">749</span>
+<span id="750">750</span>
+<span id="751">751</span>
+<span id="752">752</span>
+<span id="753">753</span>
+<span id="754">754</span>
+<span id="755">755</span>
+<span id="756">756</span>
+<span id="757">757</span>
+<span id="758">758</span>
+<span id="759">759</span>
+<span id="760">760</span>
+<span id="761">761</span>
+<span id="762">762</span>
+<span id="763">763</span>
+<span id="764">764</span>
+<span id="765">765</span>
+<span id="766">766</span>
+<span id="767">767</span>
+<span id="768">768</span>
+<span id="769">769</span>
+<span id="770">770</span>
+<span id="771">771</span>
+<span id="772">772</span>
+<span id="773">773</span>
+<span id="774">774</span>
+<span id="775">775</span>
+<span id="776">776</span>
+<span id="777">777</span>
 </pre><div class="example-wrap"><pre class="rust ">
-<span class="kw">use</span> <span class="ident">core</span>::<span class="ident">sync</span>::<span class="ident">atomic</span>::{<span class="ident">AtomicUsize</span>, <span class="ident">Ordering</span>, <span class="ident">ATOMIC_USIZE_INIT</span>, <span class="ident">spin_loop_hint</span> <span class="kw">as</span> <span class="ident">cpu_relax</span>};
 <span class="kw">use</span> <span class="ident">core</span>::<span class="ident">cell</span>::<span class="ident">UnsafeCell</span>;
-<span class="kw">use</span> <span class="ident">core</span>::<span class="ident">ops</span>::{<span class="ident">Deref</span>, <span class="ident">DerefMut</span>};
-<span class="kw">use</span> <span class="ident">core</span>::<span class="ident">fmt</span>;
 <span class="kw">use</span> <span class="ident">core</span>::<span class="ident">default</span>::<span class="ident">Default</span>;
+<span class="kw">use</span> <span class="ident">core</span>::<span class="ident">fmt</span>;
+<span class="kw">use</span> <span class="ident">core</span>::<span class="ident">marker</span>::<span class="ident">PhantomData</span>;
+<span class="kw">use</span> <span class="ident">core</span>::<span class="ident">mem</span>;
+<span class="kw">use</span> <span class="ident">core</span>::<span class="ident">ops</span>::{<span class="ident">Deref</span>, <span class="ident">DerefMut</span>};
+<span class="kw">use</span> <span class="ident">core</span>::<span class="ident">ptr</span>::<span class="ident">NonNull</span>;
+<span class="kw">use</span> <span class="ident">core</span>::<span class="ident">sync</span>::<span class="ident">atomic</span>::{<span class="ident">spin_loop_hint</span> <span class="kw">as</span> <span class="ident">cpu_relax</span>, <span class="ident">AtomicUsize</span>, <span class="ident">Ordering</span>};
 
 <span class="doccomment">/// A reader-writer lock</span>
 <span class="doccomment">///</span>
@@ -598,8 +801,19 @@
 <span class="doccomment">/// locking methods implement `Deref` (and `DerefMut` for the `write` methods)</span>
 <span class="doccomment">/// to allow access to the contained of the lock.</span>
 <span class="doccomment">///</span>
-<span class="doccomment">/// Based on</span>
-<span class="doccomment">/// &lt;https://jfdube.wordpress.com/2014/01/03/implementing-a-recursive-read-write-spinlock/&gt;</span>
+<span class="doccomment">/// An [`RwLockUpgradeableGuard`](RwLockUpgradeableGuard) can be upgraded to a</span>
+<span class="doccomment">/// writable guard through the [`RwLockUpgradeableGuard::upgrade`](RwLockUpgradeableGuard::upgrade)</span>
+<span class="doccomment">/// [`RwLockUpgradeableGuard::try_upgrade`](RwLockUpgradeableGuard::try_upgrade) functions.</span>
+<span class="doccomment">/// Writable or upgradeable guards can be downgraded through their respective `downgrade`</span>
+<span class="doccomment">/// functions.</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// Based on Facebook&#39;s</span>
+<span class="doccomment">/// [`folly/RWSpinLock.h`](https://github.com/facebook/folly/blob/a0394d84f2d5c3e50ebfd0566f9d3acb52cfab5a/folly/synchronization/RWSpinLock.h).</span>
+<span class="doccomment">/// This implementation is unfair to writers - if the lock always has readers, then no writers will</span>
+<span class="doccomment">/// ever get a chance. Using an upgradeable lock guard can *somewhat* alleviate this issue as no</span>
+<span class="doccomment">/// new readers are allowed when an upgradeable guard is held, but upgradeable guards can be taken</span>
+<span class="doccomment">/// when there are existing readers. However if the lock is that highly contended and writes are</span>
+<span class="doccomment">/// crucial then this implementation may be a poor choice.</span>
 <span class="doccomment">///</span>
 <span class="doccomment">/// # Examples</span>
 <span class="doccomment">///</span>
@@ -623,47 +837,62 @@
 <span class="doccomment">///     assert_eq!(*w, 6);</span>
 <span class="doccomment">/// } // write lock is dropped here</span>
 <span class="doccomment">/// ```</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">RwLock</span><span class="op">&lt;</span><span class="ident">T</span>: <span class="question-mark">?</span><span class="ident">Sized</span><span class="op">&gt;</span>
-{
+<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">RwLock</span><span class="op">&lt;</span><span class="ident">T</span>: <span class="question-mark">?</span><span class="ident">Sized</span><span class="op">&gt;</span> {
     <span class="ident">lock</span>: <span class="ident">AtomicUsize</span>,
     <span class="ident">data</span>: <span class="ident">UnsafeCell</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span>,
 }
 
-<span class="doccomment">/// A guard to which the protected data can be read</span>
+<span class="kw">const</span> <span class="ident">READER</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="number">1</span> <span class="op">&lt;</span><span class="op">&lt;</span> <span class="number">2</span>;
+<span class="kw">const</span> <span class="ident">UPGRADED</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="number">1</span> <span class="op">&lt;</span><span class="op">&lt;</span> <span class="number">1</span>;
+<span class="kw">const</span> <span class="ident">WRITER</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="number">1</span>;
+
+<span class="doccomment">/// A guard from which the protected data can be read</span>
 <span class="doccomment">///</span>
 <span class="doccomment">/// When the guard falls out of scope it will decrement the read count,</span>
 <span class="doccomment">/// potentially releasing the lock.</span>
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>)]</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">RwLockReadGuard</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">T</span>: <span class="lifetime">&#39;a</span> <span class="op">+</span> <span class="question-mark">?</span><span class="ident">Sized</span><span class="op">&gt;</span>
-{
+<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">RwLockReadGuard</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">T</span>: <span class="lifetime">&#39;a</span> <span class="op">+</span> <span class="question-mark">?</span><span class="ident">Sized</span><span class="op">&gt;</span> {
     <span class="ident">lock</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">AtomicUsize</span>,
-    <span class="ident">data</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">T</span>,
+    <span class="ident">data</span>: <span class="ident">NonNull</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span>,
 }
 
 <span class="doccomment">/// A guard to which the protected data can be written</span>
 <span class="doccomment">///</span>
 <span class="doccomment">/// When the guard falls out of scope it will release the lock.</span>
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>)]</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">RwLockWriteGuard</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">T</span>: <span class="lifetime">&#39;a</span> <span class="op">+</span> <span class="question-mark">?</span><span class="ident">Sized</span><span class="op">&gt;</span>
-{
+<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">RwLockWriteGuard</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">T</span>: <span class="lifetime">&#39;a</span> <span class="op">+</span> <span class="question-mark">?</span><span class="ident">Sized</span><span class="op">&gt;</span> {
     <span class="ident">lock</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">AtomicUsize</span>,
-    <span class="ident">data</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="kw-2">mut</span> <span class="ident">T</span>,
+    <span class="ident">data</span>: <span class="ident">NonNull</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span>,
+    <span class="attribute">#[<span class="ident">doc</span>(<span class="ident">hidden</span>)]</span>
+    <span class="ident">_invariant</span>: <span class="ident">PhantomData</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="kw-2">mut</span> <span class="ident">T</span><span class="op">&gt;</span>,
+}
+
+<span class="doccomment">/// A guard from which the protected data can be read, and can be upgraded</span>
+<span class="doccomment">/// to a writable guard if needed</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// No writers or other upgradeable guards can exist while this is in scope. New reader</span>
+<span class="doccomment">/// creation is prevented (to alleviate writer starvation) but there may be existing readers</span>
+<span class="doccomment">/// when the lock is acquired.</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// When the guard falls out of scope it will release the lock.</span>
+<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>)]</span>
+<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">RwLockUpgradeableGuard</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">T</span>: <span class="lifetime">&#39;a</span> <span class="op">+</span> <span class="question-mark">?</span><span class="ident">Sized</span><span class="op">&gt;</span> {
+    <span class="ident">lock</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">AtomicUsize</span>,
+    <span class="ident">data</span>: <span class="ident">NonNull</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span>,
+    <span class="attribute">#[<span class="ident">doc</span>(<span class="ident">hidden</span>)]</span>
+    <span class="ident">_invariant</span>: <span class="ident">PhantomData</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="kw-2">mut</span> <span class="ident">T</span><span class="op">&gt;</span>,
 }
 
 <span class="comment">// Same unsafe impls as `std::sync::RwLock`</span>
 <span class="kw">unsafe</span> <span class="kw">impl</span><span class="op">&lt;</span><span class="ident">T</span>: <span class="question-mark">?</span><span class="ident">Sized</span> <span class="op">+</span> <span class="ident">Send</span><span class="op">&gt;</span> <span class="ident">Send</span> <span class="kw">for</span> <span class="ident">RwLock</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> {}
 <span class="kw">unsafe</span> <span class="kw">impl</span><span class="op">&lt;</span><span class="ident">T</span>: <span class="question-mark">?</span><span class="ident">Sized</span> <span class="op">+</span> <span class="ident">Send</span> <span class="op">+</span> <span class="ident">Sync</span><span class="op">&gt;</span> <span class="ident">Sync</span> <span class="kw">for</span> <span class="ident">RwLock</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> {}
 
-<span class="kw">const</span> <span class="ident">USIZE_MSB</span>: <span class="ident">usize</span> <span class="op">=</span> ::<span class="ident">core</span>::<span class="ident">isize</span>::<span class="ident">MIN</span> <span class="kw">as</span> <span class="ident">usize</span>;
-
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> <span class="ident">RwLock</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span>
-{
+<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> <span class="ident">RwLock</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> {
     <span class="doccomment">/// Creates a new spinlock wrapping the supplied data.</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// May be used statically:</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// ```</span>
-    <span class="doccomment">/// #![feature(const_fn)]</span>
     <span class="doccomment">/// use spin;</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// static RW_LOCK: spin::RwLock&lt;()&gt; = spin::RwLock::new(());</span>
@@ -675,44 +904,16 @@
     <span class="doccomment">/// }</span>
     <span class="doccomment">/// ```</span>
     <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;const_fn&quot;</span>)]</span>
-    <span class="kw">pub</span> <span class="kw">const</span> <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">user_data</span>: <span class="ident">T</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">RwLock</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span>
-    {
-        <span class="ident">RwLock</span>
-        {
-            <span class="ident">lock</span>: <span class="ident">ATOMIC_USIZE_INIT</span>,
-            <span class="ident">data</span>: <span class="ident">UnsafeCell</span>::<span class="ident">new</span>(<span class="ident">user_data</span>),
-        }
-    }
-
-    <span class="doccomment">/// Creates a new spinlock wrapping the supplied data.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// If you want to use it statically, you can use the `const_fn` feature.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// ```</span>
-    <span class="doccomment">/// use spin;</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// fn demo() {</span>
-    <span class="doccomment">///     let rw_lock = spin::RwLock::new(());</span>
-    <span class="doccomment">///     let lock = rw_lock.read();</span>
-    <span class="doccomment">///     // do something with lock</span>
-    <span class="doccomment">///     drop(lock);</span>
-    <span class="doccomment">/// }</span>
-    <span class="doccomment">/// ```</span>
-    <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">not</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;const_fn&quot;</span>))]</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">user_data</span>: <span class="ident">T</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">RwLock</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span>
-    {
-        <span class="ident">RwLock</span>
-        {
-            <span class="ident">lock</span>: <span class="ident">ATOMIC_USIZE_INIT</span>,
+    <span class="kw">pub</span> <span class="kw">const</span> <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">user_data</span>: <span class="ident">T</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">RwLock</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> {
+        <span class="ident">RwLock</span> {
+            <span class="ident">lock</span>: <span class="ident">AtomicUsize</span>::<span class="ident">new</span>(<span class="number">0</span>),
             <span class="ident">data</span>: <span class="ident">UnsafeCell</span>::<span class="ident">new</span>(<span class="ident">user_data</span>),
         }
     }
 
     <span class="doccomment">/// Consumes this `RwLock`, returning the underlying data.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">into_inner</span>(<span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">T</span>
-    {
+    <span class="attribute">#[<span class="ident">inline</span>]</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">into_inner</span>(<span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">T</span> {
         <span class="comment">// We know statically that there are no outstanding references to</span>
         <span class="comment">// `self` so there&#39;s no need to lock.</span>
         <span class="kw">let</span> <span class="ident">RwLock</span> { <span class="ident">data</span>, .. } <span class="op">=</span> <span class="self">self</span>;
@@ -720,8 +921,7 @@
     }
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">T</span>: <span class="question-mark">?</span><span class="ident">Sized</span><span class="op">&gt;</span> <span class="ident">RwLock</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span>
-{
+<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">T</span>: <span class="question-mark">?</span><span class="ident">Sized</span><span class="op">&gt;</span> <span class="ident">RwLock</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> {
     <span class="doccomment">/// Locks this rwlock with shared read access, blocking the current thread</span>
     <span class="doccomment">/// until it can be acquired.</span>
     <span class="doccomment">///</span>
@@ -744,35 +944,12 @@
     <span class="doccomment">/// }</span>
     <span class="doccomment">/// ```</span>
     <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">read</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">RwLockReadGuard</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">T</span><span class="op">&gt;</span>
-    {
-        <span class="comment">// (funny do-while loop)</span>
-        <span class="kw">while</span> {
-            <span class="comment">// Old value, with write bit unset</span>
-            <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">old</span>;
-
-            <span class="comment">// Wait for for writer to go away before doing expensive atomic ops</span>
-            <span class="comment">// (funny do-while loop)</span>
-            <span class="kw">while</span> {
-                <span class="ident">old</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">lock</span>.<span class="ident">load</span>(<span class="ident">Ordering</span>::<span class="ident">Relaxed</span>);
-                <span class="ident">old</span> <span class="op">&amp;</span> <span class="ident">USIZE_MSB</span> <span class="op">!</span><span class="op">=</span> <span class="number">0</span>
-            } {
-                <span class="ident">cpu_relax</span>();
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">read</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">RwLockReadGuard</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> {
+        <span class="kw">loop</span> {
+            <span class="kw">match</span> <span class="self">self</span>.<span class="ident">try_read</span>() {
+                <span class="prelude-val">Some</span>(<span class="ident">guard</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="kw">return</span> <span class="ident">guard</span>,
+                <span class="prelude-val">None</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">cpu_relax</span>(),
             }
-
-            <span class="comment">// unset write bit</span>
-            <span class="ident">old</span> <span class="op">&amp;=</span> <span class="op">!</span><span class="ident">USIZE_MSB</span>;
-
-            <span class="kw">let</span> <span class="ident">new</span> <span class="op">=</span> <span class="ident">old</span> <span class="op">+</span> <span class="number">1</span>;
-            <span class="macro">debug_assert</span><span class="macro">!</span>(<span class="ident">new</span> <span class="op">!</span><span class="op">=</span> (<span class="op">!</span><span class="ident">USIZE_MSB</span>) <span class="op">&amp;</span> (<span class="op">!</span><span class="number">0</span>));
-
-            <span class="self">self</span>.<span class="ident">lock</span>.<span class="ident">compare_and_swap</span>(<span class="ident">old</span>, <span class="ident">new</span>, <span class="ident">Ordering</span>::<span class="ident">SeqCst</span>) <span class="op">!</span><span class="op">=</span> <span class="ident">old</span>
-        } {
-            <span class="ident">cpu_relax</span>();
-        }
-        <span class="ident">RwLockReadGuard</span> {
-            <span class="ident">lock</span>: <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">lock</span>,
-            <span class="ident">data</span>: <span class="kw">unsafe</span> { <span class="op">&amp;</span> <span class="kw-2">*</span><span class="self">self</span>.<span class="ident">data</span>.<span class="ident">get</span>() },
         }
     }
 
@@ -799,23 +976,20 @@
     <span class="doccomment">/// }</span>
     <span class="doccomment">/// ```</span>
     <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">try_read</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">RwLockReadGuard</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span><span class="op">&gt;</span>
-    {
-        <span class="comment">// Old value, with write bit unset</span>
-        <span class="kw">let</span> <span class="ident">old</span> <span class="op">=</span> (<span class="op">!</span><span class="ident">USIZE_MSB</span>) <span class="op">&amp;</span> <span class="self">self</span>.<span class="ident">lock</span>.<span class="ident">load</span>(<span class="ident">Ordering</span>::<span class="ident">Relaxed</span>);
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">try_read</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">RwLockReadGuard</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span><span class="op">&gt;</span> {
+        <span class="kw">let</span> <span class="ident">value</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">lock</span>.<span class="ident">fetch_add</span>(<span class="ident">READER</span>, <span class="ident">Ordering</span>::<span class="ident">Acquire</span>);
 
-        <span class="kw">let</span> <span class="ident">new</span> <span class="op">=</span> <span class="ident">old</span> <span class="op">+</span> <span class="number">1</span>;
-        <span class="macro">debug_assert</span><span class="macro">!</span>(<span class="ident">new</span> <span class="op">!</span><span class="op">=</span> (<span class="op">!</span><span class="ident">USIZE_MSB</span>) <span class="op">&amp;</span> (<span class="op">!</span><span class="number">0</span>));
-        <span class="kw">if</span> <span class="self">self</span>.<span class="ident">lock</span>.<span class="ident">compare_and_swap</span>(<span class="ident">old</span>,
-                                      <span class="ident">new</span>,
-                                      <span class="ident">Ordering</span>::<span class="ident">SeqCst</span>) <span class="op">=</span><span class="op">=</span> <span class="ident">old</span>
-        {
+        <span class="comment">// We check the UPGRADED bit here so that new readers are prevented when an UPGRADED lock is held.</span>
+        <span class="comment">// This helps reduce writer starvation.</span>
+        <span class="kw">if</span> <span class="ident">value</span> <span class="op">&amp;</span> (<span class="ident">WRITER</span> <span class="op">|</span> <span class="ident">UPGRADED</span>) <span class="op">!</span><span class="op">=</span> <span class="number">0</span> {
+            <span class="comment">// Lock is taken, undo.</span>
+            <span class="self">self</span>.<span class="ident">lock</span>.<span class="ident">fetch_sub</span>(<span class="ident">READER</span>, <span class="ident">Ordering</span>::<span class="ident">Release</span>);
+            <span class="prelude-val">None</span>
+        } <span class="kw">else</span> {
             <span class="prelude-val">Some</span>(<span class="ident">RwLockReadGuard</span> {
                 <span class="ident">lock</span>: <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">lock</span>,
-                <span class="ident">data</span>: <span class="kw">unsafe</span> { <span class="op">&amp;</span> <span class="kw-2">*</span><span class="self">self</span>.<span class="ident">data</span>.<span class="ident">get</span>() },
+                <span class="ident">data</span>: <span class="kw">unsafe</span> { <span class="ident">NonNull</span>::<span class="ident">new_unchecked</span>(<span class="self">self</span>.<span class="ident">data</span>.<span class="ident">get</span>()) },
             })
-        } <span class="kw">else</span> {
-            <span class="prelude-val">None</span>
         }
     }
 
@@ -824,20 +998,45 @@
     <span class="doccomment">/// This is *extremely* unsafe if there are outstanding `RwLockReadGuard`s</span>
     <span class="doccomment">/// live, or if called more times than `read` has been called, but can be</span>
     <span class="doccomment">/// useful in FFI contexts where the caller doesn&#39;t know how to deal with</span>
-    <span class="doccomment">/// RAII.</span>
+    <span class="doccomment">/// RAII. The underlying atomic operation uses `Ordering::Release`.</span>
+    <span class="attribute">#[<span class="ident">inline</span>]</span>
     <span class="kw">pub</span> <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">force_read_decrement</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) {
-        <span class="macro">debug_assert</span><span class="macro">!</span>(<span class="self">self</span>.<span class="ident">lock</span>.<span class="ident">load</span>(<span class="ident">Ordering</span>::<span class="ident">Relaxed</span>) <span class="op">&amp;</span> (<span class="op">!</span><span class="ident">USIZE_MSB</span>) <span class="op">&gt;</span> <span class="number">0</span>);
-        <span class="self">self</span>.<span class="ident">lock</span>.<span class="ident">fetch_sub</span>(<span class="number">1</span>, <span class="ident">Ordering</span>::<span class="ident">SeqCst</span>);
+        <span class="macro">debug_assert</span><span class="macro">!</span>(<span class="self">self</span>.<span class="ident">lock</span>.<span class="ident">load</span>(<span class="ident">Ordering</span>::<span class="ident">Relaxed</span>) <span class="op">&amp;</span> <span class="op">!</span><span class="ident">WRITER</span> <span class="op">&gt;</span> <span class="number">0</span>);
+        <span class="self">self</span>.<span class="ident">lock</span>.<span class="ident">fetch_sub</span>(<span class="ident">READER</span>, <span class="ident">Ordering</span>::<span class="ident">Release</span>);
     }
 
     <span class="doccomment">/// Force unlock exclusive write access.</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// This is *extremely* unsafe if there are outstanding `RwLockWriteGuard`s</span>
     <span class="doccomment">/// live, or if called when there are current readers, but can be useful in</span>
-    <span class="doccomment">/// FFI contexts where the caller doesn&#39;t know how to deal with RAII.</span>
+    <span class="doccomment">/// FFI contexts where the caller doesn&#39;t know how to deal with RAII. The</span>
+    <span class="doccomment">/// underlying atomic operation uses `Ordering::Release`.</span>
+    <span class="attribute">#[<span class="ident">inline</span>]</span>
     <span class="kw">pub</span> <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">force_write_unlock</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) {
-        <span class="macro">debug_assert_eq</span><span class="macro">!</span>(<span class="self">self</span>.<span class="ident">lock</span>.<span class="ident">load</span>(<span class="ident">Ordering</span>::<span class="ident">Relaxed</span>), <span class="ident">USIZE_MSB</span>);
-        <span class="self">self</span>.<span class="ident">lock</span>.<span class="ident">store</span>(<span class="number">0</span>, <span class="ident">Ordering</span>::<span class="ident">Relaxed</span>);
+        <span class="macro">debug_assert_eq</span><span class="macro">!</span>(<span class="self">self</span>.<span class="ident">lock</span>.<span class="ident">load</span>(<span class="ident">Ordering</span>::<span class="ident">Relaxed</span>) <span class="op">&amp;</span> <span class="op">!</span>(<span class="ident">WRITER</span> <span class="op">|</span> <span class="ident">UPGRADED</span>), <span class="number">0</span>);
+        <span class="self">self</span>.<span class="ident">lock</span>.<span class="ident">fetch_and</span>(<span class="op">!</span>(<span class="ident">WRITER</span> <span class="op">|</span> <span class="ident">UPGRADED</span>), <span class="ident">Ordering</span>::<span class="ident">Release</span>);
+    }
+
+    <span class="attribute">#[<span class="ident">inline</span>(<span class="ident">always</span>)]</span>
+    <span class="kw">fn</span> <span class="ident">try_write_internal</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">strong</span>: <span class="ident">bool</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">RwLockWriteGuard</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span><span class="op">&gt;</span> {
+        <span class="kw">if</span> <span class="ident">compare_exchange</span>(
+            <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">lock</span>,
+            <span class="number">0</span>,
+            <span class="ident">WRITER</span>,
+            <span class="ident">Ordering</span>::<span class="ident">Acquire</span>,
+            <span class="ident">Ordering</span>::<span class="ident">Relaxed</span>,
+            <span class="ident">strong</span>,
+        )
+        .<span class="ident">is_ok</span>()
+        {
+            <span class="prelude-val">Some</span>(<span class="ident">RwLockWriteGuard</span> {
+                <span class="ident">lock</span>: <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">lock</span>,
+                <span class="ident">data</span>: <span class="kw">unsafe</span> { <span class="ident">NonNull</span>::<span class="ident">new_unchecked</span>(<span class="self">self</span>.<span class="ident">data</span>.<span class="ident">get</span>()) },
+                <span class="ident">_invariant</span>: <span class="ident">PhantomData</span>,
+            })
+        } <span class="kw">else</span> {
+            <span class="prelude-val">None</span>
+        }
     }
 
     <span class="doccomment">/// Lock this rwlock with exclusive write access, blocking the current</span>
@@ -859,28 +1058,12 @@
     <span class="doccomment">/// }</span>
     <span class="doccomment">/// ```</span>
     <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">write</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">RwLockWriteGuard</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">T</span><span class="op">&gt;</span>
-    {
-        <span class="kw">loop</span>
-        {
-            <span class="comment">// Old value, with write bit unset.</span>
-            <span class="kw">let</span> <span class="ident">old</span> <span class="op">=</span> (<span class="op">!</span><span class="ident">USIZE_MSB</span>) <span class="op">&amp;</span> <span class="self">self</span>.<span class="ident">lock</span>.<span class="ident">load</span>(<span class="ident">Ordering</span>::<span class="ident">Relaxed</span>);
-            <span class="comment">// Old value, with write bit set.</span>
-            <span class="kw">let</span> <span class="ident">new</span> <span class="op">=</span> <span class="ident">USIZE_MSB</span> <span class="op">|</span> <span class="ident">old</span>;
-            <span class="kw">if</span> <span class="self">self</span>.<span class="ident">lock</span>.<span class="ident">compare_and_swap</span>(<span class="ident">old</span>,
-                                          <span class="ident">new</span>,
-                                          <span class="ident">Ordering</span>::<span class="ident">SeqCst</span>) <span class="op">=</span><span class="op">=</span> <span class="ident">old</span>
-            {
-                <span class="comment">// Wait for readers to go away, then lock is ours.</span>
-                <span class="kw">while</span> <span class="self">self</span>.<span class="ident">lock</span>.<span class="ident">load</span>(<span class="ident">Ordering</span>::<span class="ident">Relaxed</span>) <span class="op">!</span><span class="op">=</span> <span class="ident">USIZE_MSB</span> {
-                    <span class="ident">cpu_relax</span>();
-                }
-                <span class="kw">break</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">write</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">RwLockWriteGuard</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> {
+        <span class="kw">loop</span> {
+            <span class="kw">match</span> <span class="self">self</span>.<span class="ident">try_write_internal</span>(<span class="bool-val">false</span>) {
+                <span class="prelude-val">Some</span>(<span class="ident">guard</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="kw">return</span> <span class="ident">guard</span>,
+                <span class="prelude-val">None</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">cpu_relax</span>(),
             }
-        }
-        <span class="ident">RwLockWriteGuard</span> {
-            <span class="ident">lock</span>: <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">lock</span>,
-            <span class="ident">data</span>: <span class="kw">unsafe</span> { <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="kw-2">*</span><span class="self">self</span>.<span class="ident">data</span>.<span class="ident">get</span>() },
         }
     }
 
@@ -904,29 +1087,45 @@
     <span class="doccomment">/// }</span>
     <span class="doccomment">/// ```</span>
     <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">try_write</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">RwLockWriteGuard</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span><span class="op">&gt;</span>
-    {
-        <span class="kw">if</span> <span class="self">self</span>.<span class="ident">lock</span>.<span class="ident">compare_and_swap</span>(<span class="number">0</span>,
-                                      <span class="ident">USIZE_MSB</span>,
-                                      <span class="ident">Ordering</span>::<span class="ident">SeqCst</span>) <span class="op">=</span><span class="op">=</span> <span class="number">0</span>
-        {
-            <span class="prelude-val">Some</span>(<span class="ident">RwLockWriteGuard</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">try_write</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">RwLockWriteGuard</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span><span class="op">&gt;</span> {
+        <span class="self">self</span>.<span class="ident">try_write_internal</span>(<span class="bool-val">true</span>)
+    }
+
+    <span class="doccomment">/// Obtain a readable lock guard that can later be upgraded to a writable lock guard.</span>
+    <span class="doccomment">/// Upgrades can be done through the [`RwLockUpgradeableGuard::upgrade`](RwLockUpgradeableGuard::upgrade) method.</span>
+    <span class="attribute">#[<span class="ident">inline</span>]</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">upgradeable_read</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">RwLockUpgradeableGuard</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> {
+        <span class="kw">loop</span> {
+            <span class="kw">match</span> <span class="self">self</span>.<span class="ident">try_upgradeable_read</span>() {
+                <span class="prelude-val">Some</span>(<span class="ident">guard</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="kw">return</span> <span class="ident">guard</span>,
+                <span class="prelude-val">None</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">cpu_relax</span>(),
+            }
+        }
+    }
+
+    <span class="doccomment">/// Tries to obtain an upgradeable lock guard.</span>
+    <span class="attribute">#[<span class="ident">inline</span>]</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">try_upgradeable_read</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">RwLockUpgradeableGuard</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span><span class="op">&gt;</span> {
+        <span class="kw">if</span> <span class="self">self</span>.<span class="ident">lock</span>.<span class="ident">fetch_or</span>(<span class="ident">UPGRADED</span>, <span class="ident">Ordering</span>::<span class="ident">Acquire</span>) <span class="op">&amp;</span> (<span class="ident">WRITER</span> <span class="op">|</span> <span class="ident">UPGRADED</span>) <span class="op">=</span><span class="op">=</span> <span class="number">0</span> {
+            <span class="prelude-val">Some</span>(<span class="ident">RwLockUpgradeableGuard</span> {
                 <span class="ident">lock</span>: <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">lock</span>,
-                <span class="ident">data</span>: <span class="kw">unsafe</span> { <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="kw-2">*</span><span class="self">self</span>.<span class="ident">data</span>.<span class="ident">get</span>() },
+                <span class="ident">data</span>: <span class="kw">unsafe</span> { <span class="ident">NonNull</span>::<span class="ident">new_unchecked</span>(<span class="self">self</span>.<span class="ident">data</span>.<span class="ident">get</span>()) },
+                <span class="ident">_invariant</span>: <span class="ident">PhantomData</span>,
             })
         } <span class="kw">else</span> {
+            <span class="comment">// We can&#39;t unflip the UPGRADED bit back just yet as there is another upgradeable or write lock.</span>
+            <span class="comment">// When they unlock, they will clear the bit.</span>
             <span class="prelude-val">None</span>
         }
     }
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">T</span>: <span class="question-mark">?</span><span class="ident">Sized</span> <span class="op">+</span> <span class="ident">fmt</span>::<span class="ident">Debug</span><span class="op">&gt;</span> <span class="ident">fmt</span>::<span class="ident">Debug</span> <span class="kw">for</span> <span class="ident">RwLock</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span>
-{
-    <span class="kw">fn</span> <span class="ident">fmt</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">f</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">fmt</span>::<span class="ident">Formatter</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">fmt</span>::<span class="prelude-ty">Result</span>
-    {
-        <span class="kw">match</span> <span class="self">self</span>.<span class="ident">try_read</span>()
-        {
-            <span class="prelude-val">Some</span>(<span class="ident">guard</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="macro">write</span><span class="macro">!</span>(<span class="ident">f</span>, <span class="string">&quot;RwLock {{ data: {:?} }}&quot;</span>, <span class="kw-2">&amp;</span><span class="kw-2">*</span><span class="ident">guard</span>),
+<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">T</span>: <span class="question-mark">?</span><span class="ident">Sized</span> <span class="op">+</span> <span class="ident">fmt</span>::<span class="ident">Debug</span><span class="op">&gt;</span> <span class="ident">fmt</span>::<span class="ident">Debug</span> <span class="kw">for</span> <span class="ident">RwLock</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> {
+    <span class="kw">fn</span> <span class="ident">fmt</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">f</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">fmt</span>::<span class="ident">Formatter</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">fmt</span>::<span class="prelude-ty">Result</span> {
+        <span class="kw">match</span> <span class="self">self</span>.<span class="ident">try_read</span>() {
+            <span class="prelude-val">Some</span>(<span class="ident">guard</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="macro">write</span><span class="macro">!</span>(<span class="ident">f</span>, <span class="string">&quot;RwLock {{ data: &quot;</span>)
+                .<span class="ident">and_then</span>(<span class="op">|</span>()<span class="op">|</span> (<span class="kw-2">&amp;</span><span class="kw-2">*</span><span class="ident">guard</span>).<span class="ident">fmt</span>(<span class="ident">f</span>))
+                .<span class="ident">and_then</span>(<span class="op">|</span>()<span class="op">|</span> <span class="macro">write</span><span class="macro">!</span>(<span class="ident">f</span>, <span class="string">&quot;}}&quot;</span>)),
             <span class="prelude-val">None</span> <span class="op">=</span><span class="op">&gt;</span> <span class="macro">write</span><span class="macro">!</span>(<span class="ident">f</span>, <span class="string">&quot;RwLock {{ &lt;locked&gt; }}&quot;</span>),
         }
     }
@@ -938,33 +1137,195 @@
     }
 }
 
+<span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;rwlock</span>, <span class="ident">T</span>: <span class="question-mark">?</span><span class="ident">Sized</span><span class="op">&gt;</span> <span class="ident">RwLockUpgradeableGuard</span><span class="op">&lt;</span><span class="lifetime">&#39;rwlock</span>, <span class="ident">T</span><span class="op">&gt;</span> {
+    <span class="attribute">#[<span class="ident">inline</span>(<span class="ident">always</span>)]</span>
+    <span class="kw">fn</span> <span class="ident">try_upgrade_internal</span>(<span class="self">self</span>, <span class="ident">strong</span>: <span class="ident">bool</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">RwLockWriteGuard</span><span class="op">&lt;</span><span class="lifetime">&#39;rwlock</span>, <span class="ident">T</span><span class="op">&gt;</span>, <span class="self">Self</span><span class="op">&gt;</span> {
+        <span class="kw">if</span> <span class="ident">compare_exchange</span>(
+            <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">lock</span>,
+            <span class="ident">UPGRADED</span>,
+            <span class="ident">WRITER</span>,
+            <span class="ident">Ordering</span>::<span class="ident">Acquire</span>,
+            <span class="ident">Ordering</span>::<span class="ident">Relaxed</span>,
+            <span class="ident">strong</span>,
+        )
+        .<span class="ident">is_ok</span>()
+        {
+            <span class="comment">// Upgrade successful</span>
+            <span class="kw">let</span> <span class="ident">out</span> <span class="op">=</span> <span class="prelude-val">Ok</span>(<span class="ident">RwLockWriteGuard</span> {
+                <span class="ident">lock</span>: <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">lock</span>,
+                <span class="ident">data</span>: <span class="self">self</span>.<span class="ident">data</span>,
+                <span class="ident">_invariant</span>: <span class="ident">PhantomData</span>,
+            });
+
+            <span class="comment">// Forget the old guard so its destructor doesn&#39;t run</span>
+            <span class="ident">mem</span>::<span class="ident">forget</span>(<span class="self">self</span>);
+
+            <span class="ident">out</span>
+        } <span class="kw">else</span> {
+            <span class="prelude-val">Err</span>(<span class="self">self</span>)
+        }
+    }
+
+    <span class="doccomment">/// Upgrades an upgradeable lock guard to a writable lock guard.</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// ```</span>
+    <span class="doccomment">/// let mylock = spin::RwLock::new(0);</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// let upgradeable = mylock.upgradeable_read(); // Readable, but not yet writable</span>
+    <span class="doccomment">/// let writable = upgradeable.upgrade();</span>
+    <span class="doccomment">/// ```</span>
+    <span class="attribute">#[<span class="ident">inline</span>]</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">upgrade</span>(<span class="kw-2">mut</span> <span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">RwLockWriteGuard</span><span class="op">&lt;</span><span class="lifetime">&#39;rwlock</span>, <span class="ident">T</span><span class="op">&gt;</span> {
+        <span class="kw">loop</span> {
+            <span class="self">self</span> <span class="op">=</span> <span class="kw">match</span> <span class="self">self</span>.<span class="ident">try_upgrade_internal</span>(<span class="bool-val">false</span>) {
+                <span class="prelude-val">Ok</span>(<span class="ident">guard</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="kw">return</span> <span class="ident">guard</span>,
+                <span class="prelude-val">Err</span>(<span class="ident">e</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">e</span>,
+            };
+
+            <span class="ident">cpu_relax</span>();
+        }
+    }
+
+    <span class="doccomment">/// Tries to upgrade an upgradeable lock guard to a writable lock guard.</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// ```</span>
+    <span class="doccomment">/// let mylock = spin::RwLock::new(0);</span>
+    <span class="doccomment">/// let upgradeable = mylock.upgradeable_read(); // Readable, but not yet writable</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// match upgradeable.try_upgrade() {</span>
+    <span class="doccomment">///     Ok(writable) =&gt; /* upgrade successful - use writable lock guard */ (),</span>
+    <span class="doccomment">///     Err(upgradeable) =&gt; /* upgrade unsuccessful */ (),</span>
+    <span class="doccomment">/// };</span>
+    <span class="doccomment">/// ```</span>
+    <span class="attribute">#[<span class="ident">inline</span>]</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">try_upgrade</span>(<span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">RwLockWriteGuard</span><span class="op">&lt;</span><span class="lifetime">&#39;rwlock</span>, <span class="ident">T</span><span class="op">&gt;</span>, <span class="self">Self</span><span class="op">&gt;</span> {
+        <span class="self">self</span>.<span class="ident">try_upgrade_internal</span>(<span class="bool-val">true</span>)
+    }
+
+    <span class="attribute">#[<span class="ident">inline</span>]</span>
+    <span class="doccomment">/// Downgrades the upgradeable lock guard to a readable, shared lock guard. Cannot fail and is guaranteed not to spin.</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// ```</span>
+    <span class="doccomment">/// let mylock = spin::RwLock::new(1);</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// let upgradeable = mylock.upgradeable_read();</span>
+    <span class="doccomment">/// assert!(mylock.try_read().is_none());</span>
+    <span class="doccomment">/// assert_eq!(*upgradeable, 1);</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// let readable = upgradeable.downgrade(); // This is guaranteed not to spin</span>
+    <span class="doccomment">/// assert!(mylock.try_read().is_some());</span>
+    <span class="doccomment">/// assert_eq!(*readable, 1);</span>
+    <span class="doccomment">/// ```</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">downgrade</span>(<span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">RwLockReadGuard</span><span class="op">&lt;</span><span class="lifetime">&#39;rwlock</span>, <span class="ident">T</span><span class="op">&gt;</span> {
+        <span class="comment">// Reserve the read guard for ourselves</span>
+        <span class="self">self</span>.<span class="ident">lock</span>.<span class="ident">fetch_add</span>(<span class="ident">READER</span>, <span class="ident">Ordering</span>::<span class="ident">Acquire</span>);
+
+        <span class="ident">RwLockReadGuard</span> {
+            <span class="ident">lock</span>: <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">lock</span>,
+            <span class="ident">data</span>: <span class="self">self</span>.<span class="ident">data</span>,
+        }
+
+        <span class="comment">// Dropping self removes the UPGRADED bit</span>
+    }
+}
+
+<span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;rwlock</span>, <span class="ident">T</span>: <span class="question-mark">?</span><span class="ident">Sized</span><span class="op">&gt;</span> <span class="ident">RwLockWriteGuard</span><span class="op">&lt;</span><span class="lifetime">&#39;rwlock</span>, <span class="ident">T</span><span class="op">&gt;</span> {
+    <span class="doccomment">/// Downgrades the writable lock guard to a readable, shared lock guard. Cannot fail and is guaranteed not to spin.</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// ```</span>
+    <span class="doccomment">/// let mylock = spin::RwLock::new(0);</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// let mut writable = mylock.write();</span>
+    <span class="doccomment">/// *writable = 1;</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// let readable = writable.downgrade(); // This is guaranteed not to spin</span>
+    <span class="doccomment">/// # let readable_2 = mylock.try_read().unwrap();</span>
+    <span class="doccomment">/// assert_eq!(*readable, 1);</span>
+    <span class="doccomment">/// ```</span>
+    <span class="attribute">#[<span class="ident">inline</span>]</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">downgrade</span>(<span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">RwLockReadGuard</span><span class="op">&lt;</span><span class="lifetime">&#39;rwlock</span>, <span class="ident">T</span><span class="op">&gt;</span> {
+        <span class="comment">// Reserve the read guard for ourselves</span>
+        <span class="self">self</span>.<span class="ident">lock</span>.<span class="ident">fetch_add</span>(<span class="ident">READER</span>, <span class="ident">Ordering</span>::<span class="ident">Acquire</span>);
+
+        <span class="ident">RwLockReadGuard</span> {
+            <span class="ident">lock</span>: <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">lock</span>,
+            <span class="ident">data</span>: <span class="self">self</span>.<span class="ident">data</span>,
+        }
+
+        <span class="comment">// Dropping self removes the WRITER bit</span>
+    }
+}
+
 <span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;rwlock</span>, <span class="ident">T</span>: <span class="question-mark">?</span><span class="ident">Sized</span><span class="op">&gt;</span> <span class="ident">Deref</span> <span class="kw">for</span> <span class="ident">RwLockReadGuard</span><span class="op">&lt;</span><span class="lifetime">&#39;rwlock</span>, <span class="ident">T</span><span class="op">&gt;</span> {
     <span class="kw">type</span> <span class="ident">Target</span> <span class="op">=</span> <span class="ident">T</span>;
 
-    <span class="kw">fn</span> <span class="ident">deref</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="ident">T</span> { <span class="self">self</span>.<span class="ident">data</span> }
+    <span class="kw">fn</span> <span class="ident">deref</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="ident">T</span> {
+        <span class="kw">unsafe</span> { <span class="self">self</span>.<span class="ident">data</span>.<span class="ident">as_ref</span>() }
+    }
+}
+
+<span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;rwlock</span>, <span class="ident">T</span>: <span class="question-mark">?</span><span class="ident">Sized</span><span class="op">&gt;</span> <span class="ident">Deref</span> <span class="kw">for</span> <span class="ident">RwLockUpgradeableGuard</span><span class="op">&lt;</span><span class="lifetime">&#39;rwlock</span>, <span class="ident">T</span><span class="op">&gt;</span> {
+    <span class="kw">type</span> <span class="ident">Target</span> <span class="op">=</span> <span class="ident">T</span>;
+
+    <span class="kw">fn</span> <span class="ident">deref</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="ident">T</span> {
+        <span class="kw">unsafe</span> { <span class="self">self</span>.<span class="ident">data</span>.<span class="ident">as_ref</span>() }
+    }
 }
 
 <span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;rwlock</span>, <span class="ident">T</span>: <span class="question-mark">?</span><span class="ident">Sized</span><span class="op">&gt;</span> <span class="ident">Deref</span> <span class="kw">for</span> <span class="ident">RwLockWriteGuard</span><span class="op">&lt;</span><span class="lifetime">&#39;rwlock</span>, <span class="ident">T</span><span class="op">&gt;</span> {
     <span class="kw">type</span> <span class="ident">Target</span> <span class="op">=</span> <span class="ident">T</span>;
 
-    <span class="kw">fn</span> <span class="ident">deref</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="ident">T</span> { <span class="self">self</span>.<span class="ident">data</span> }
+    <span class="kw">fn</span> <span class="ident">deref</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="ident">T</span> {
+        <span class="kw">unsafe</span> { <span class="self">self</span>.<span class="ident">data</span>.<span class="ident">as_ref</span>() }
+    }
 }
 
 <span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;rwlock</span>, <span class="ident">T</span>: <span class="question-mark">?</span><span class="ident">Sized</span><span class="op">&gt;</span> <span class="ident">DerefMut</span> <span class="kw">for</span> <span class="ident">RwLockWriteGuard</span><span class="op">&lt;</span><span class="lifetime">&#39;rwlock</span>, <span class="ident">T</span><span class="op">&gt;</span> {
-    <span class="kw">fn</span> <span class="ident">deref_mut</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">T</span> { <span class="self">self</span>.<span class="ident">data</span> }
+    <span class="kw">fn</span> <span class="ident">deref_mut</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">T</span> {
+        <span class="kw">unsafe</span> { <span class="self">self</span>.<span class="ident">data</span>.<span class="ident">as_mut</span>() }
+    }
 }
 
 <span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;rwlock</span>, <span class="ident">T</span>: <span class="question-mark">?</span><span class="ident">Sized</span><span class="op">&gt;</span> <span class="ident">Drop</span> <span class="kw">for</span> <span class="ident">RwLockReadGuard</span><span class="op">&lt;</span><span class="lifetime">&#39;rwlock</span>, <span class="ident">T</span><span class="op">&gt;</span> {
     <span class="kw">fn</span> <span class="ident">drop</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>) {
-        <span class="macro">debug_assert</span><span class="macro">!</span>(<span class="self">self</span>.<span class="ident">lock</span>.<span class="ident">load</span>(<span class="ident">Ordering</span>::<span class="ident">Relaxed</span>) <span class="op">&amp;</span> (<span class="op">!</span><span class="ident">USIZE_MSB</span>) <span class="op">&gt;</span> <span class="number">0</span>);
-        <span class="self">self</span>.<span class="ident">lock</span>.<span class="ident">fetch_sub</span>(<span class="number">1</span>, <span class="ident">Ordering</span>::<span class="ident">SeqCst</span>);
+        <span class="macro">debug_assert</span><span class="macro">!</span>(<span class="self">self</span>.<span class="ident">lock</span>.<span class="ident">load</span>(<span class="ident">Ordering</span>::<span class="ident">Relaxed</span>) <span class="op">&amp;</span> <span class="op">!</span>(<span class="ident">WRITER</span> <span class="op">|</span> <span class="ident">UPGRADED</span>) <span class="op">&gt;</span> <span class="number">0</span>);
+        <span class="self">self</span>.<span class="ident">lock</span>.<span class="ident">fetch_sub</span>(<span class="ident">READER</span>, <span class="ident">Ordering</span>::<span class="ident">Release</span>);
+    }
+}
+
+<span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;rwlock</span>, <span class="ident">T</span>: <span class="question-mark">?</span><span class="ident">Sized</span><span class="op">&gt;</span> <span class="ident">Drop</span> <span class="kw">for</span> <span class="ident">RwLockUpgradeableGuard</span><span class="op">&lt;</span><span class="lifetime">&#39;rwlock</span>, <span class="ident">T</span><span class="op">&gt;</span> {
+    <span class="kw">fn</span> <span class="ident">drop</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>) {
+        <span class="macro">debug_assert_eq</span><span class="macro">!</span>(
+            <span class="self">self</span>.<span class="ident">lock</span>.<span class="ident">load</span>(<span class="ident">Ordering</span>::<span class="ident">Relaxed</span>) <span class="op">&amp;</span> (<span class="ident">WRITER</span> <span class="op">|</span> <span class="ident">UPGRADED</span>),
+            <span class="ident">UPGRADED</span>
+        );
+        <span class="self">self</span>.<span class="ident">lock</span>.<span class="ident">fetch_sub</span>(<span class="ident">UPGRADED</span>, <span class="ident">Ordering</span>::<span class="ident">AcqRel</span>);
     }
 }
 
 <span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;rwlock</span>, <span class="ident">T</span>: <span class="question-mark">?</span><span class="ident">Sized</span><span class="op">&gt;</span> <span class="ident">Drop</span> <span class="kw">for</span> <span class="ident">RwLockWriteGuard</span><span class="op">&lt;</span><span class="lifetime">&#39;rwlock</span>, <span class="ident">T</span><span class="op">&gt;</span> {
     <span class="kw">fn</span> <span class="ident">drop</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>) {
-        <span class="macro">debug_assert_eq</span><span class="macro">!</span>(<span class="self">self</span>.<span class="ident">lock</span>.<span class="ident">load</span>(<span class="ident">Ordering</span>::<span class="ident">Relaxed</span>), <span class="ident">USIZE_MSB</span>);
-        <span class="self">self</span>.<span class="ident">lock</span>.<span class="ident">store</span>(<span class="number">0</span>, <span class="ident">Ordering</span>::<span class="ident">Relaxed</span>);
+        <span class="macro">debug_assert_eq</span><span class="macro">!</span>(<span class="self">self</span>.<span class="ident">lock</span>.<span class="ident">load</span>(<span class="ident">Ordering</span>::<span class="ident">Relaxed</span>) <span class="op">&amp;</span> <span class="ident">WRITER</span>, <span class="ident">WRITER</span>);
+
+        <span class="comment">// Writer is responsible for clearing both WRITER and UPGRADED bits.</span>
+        <span class="comment">// The UPGRADED bit may be set if an upgradeable lock attempts an upgrade while this lock is held.</span>
+        <span class="self">self</span>.<span class="ident">lock</span>.<span class="ident">fetch_and</span>(<span class="op">!</span>(<span class="ident">WRITER</span> <span class="op">|</span> <span class="ident">UPGRADED</span>), <span class="ident">Ordering</span>::<span class="ident">Release</span>);
+    }
+}
+
+<span class="attribute">#[<span class="ident">inline</span>(<span class="ident">always</span>)]</span>
+<span class="kw">fn</span> <span class="ident">compare_exchange</span>(
+    <span class="ident">atomic</span>: <span class="kw-2">&amp;</span><span class="ident">AtomicUsize</span>,
+    <span class="ident">current</span>: <span class="ident">usize</span>,
+    <span class="ident">new</span>: <span class="ident">usize</span>,
+    <span class="ident">success</span>: <span class="ident">Ordering</span>,
+    <span class="ident">failure</span>: <span class="ident">Ordering</span>,
+    <span class="ident">strong</span>: <span class="ident">bool</span>,
+) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">usize</span>, <span class="ident">usize</span><span class="op">&gt;</span> {
+    <span class="kw">if</span> <span class="ident">strong</span> {
+        <span class="ident">atomic</span>.<span class="ident">compare_exchange</span>(<span class="ident">current</span>, <span class="ident">new</span>, <span class="ident">success</span>, <span class="ident">failure</span>)
+    } <span class="kw">else</span> {
+        <span class="ident">atomic</span>.<span class="ident">compare_exchange_weak</span>(<span class="ident">current</span>, <span class="ident">new</span>, <span class="ident">success</span>, <span class="ident">failure</span>)
     }
 }
 
@@ -972,9 +1333,9 @@
 <span class="kw">mod</span> <span class="ident">tests</span> {
     <span class="kw">use</span> <span class="ident">std</span>::<span class="ident">prelude</span>::<span class="ident">v1</span>::<span class="kw-2">*</span>;
 
-    <span class="kw">use</span> <span class="ident">std</span>::<span class="ident">sync</span>::<span class="ident">Arc</span>;
-    <span class="kw">use</span> <span class="ident">std</span>::<span class="ident">sync</span>::<span class="ident">mpsc</span>::<span class="ident">channel</span>;
     <span class="kw">use</span> <span class="ident">std</span>::<span class="ident">sync</span>::<span class="ident">atomic</span>::{<span class="ident">AtomicUsize</span>, <span class="ident">Ordering</span>};
+    <span class="kw">use</span> <span class="ident">std</span>::<span class="ident">sync</span>::<span class="ident">mpsc</span>::<span class="ident">channel</span>;
+    <span class="kw">use</span> <span class="ident">std</span>::<span class="ident">sync</span>::<span class="ident">Arc</span>;
     <span class="kw">use</span> <span class="ident">std</span>::<span class="ident">thread</span>;
 
     <span class="kw">use</span> <span class="kw">super</span>::<span class="kw-2">*</span>;
@@ -1024,7 +1385,7 @@
         <span class="kw">let</span> <span class="ident">arc2</span> <span class="op">=</span> <span class="ident">arc</span>.<span class="ident">clone</span>();
         <span class="kw">let</span> (<span class="ident">tx</span>, <span class="ident">rx</span>) <span class="op">=</span> <span class="ident">channel</span>();
 
-        <span class="ident">thread</span>::<span class="ident">spawn</span>(<span class="kw">move</span><span class="op">|</span><span class="op">|</span> {
+        <span class="ident">thread</span>::<span class="ident">spawn</span>(<span class="kw">move</span> <span class="op">|</span><span class="op">|</span> {
             <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">lock</span> <span class="op">=</span> <span class="ident">arc2</span>.<span class="ident">write</span>();
             <span class="kw">for</span> <span class="kw">_</span> <span class="kw">in</span> <span class="number">0</span>..<span class="number">10</span> {
                 <span class="kw">let</span> <span class="ident">tmp</span> <span class="op">=</span> <span class="kw-2">*</span><span class="ident">lock</span>;
@@ -1039,7 +1400,7 @@
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">children</span> <span class="op">=</span> <span class="ident">Vec</span>::<span class="ident">new</span>();
         <span class="kw">for</span> <span class="kw">_</span> <span class="kw">in</span> <span class="number">0</span>..<span class="number">5</span> {
             <span class="kw">let</span> <span class="ident">arc3</span> <span class="op">=</span> <span class="ident">arc</span>.<span class="ident">clone</span>();
-            <span class="ident">children</span>.<span class="ident">push</span>(<span class="ident">thread</span>::<span class="ident">spawn</span>(<span class="kw">move</span><span class="op">|</span><span class="op">|</span> {
+            <span class="ident">children</span>.<span class="ident">push</span>(<span class="ident">thread</span>::<span class="ident">spawn</span>(<span class="kw">move</span> <span class="op">|</span><span class="op">|</span> {
                 <span class="kw">let</span> <span class="ident">lock</span> <span class="op">=</span> <span class="ident">arc3</span>.<span class="ident">read</span>();
                 <span class="macro">assert</span><span class="macro">!</span>(<span class="kw-2">*</span><span class="ident">lock</span> <span class="op">&gt;</span><span class="op">=</span> <span class="number">0</span>);
             }));
@@ -1057,10 +1418,10 @@
     }
 
     <span class="attribute">#[<span class="ident">test</span>]</span>
-    <span class="kw">fn</span> <span class="ident">test_rw_arc_access_in_unwind</span>() {
+    <span class="kw">fn</span> <span class="ident">test_rw_access_in_unwind</span>() {
         <span class="kw">let</span> <span class="ident">arc</span> <span class="op">=</span> <span class="ident">Arc</span>::<span class="ident">new</span>(<span class="ident">RwLock</span>::<span class="ident">new</span>(<span class="number">1</span>));
         <span class="kw">let</span> <span class="ident">arc2</span> <span class="op">=</span> <span class="ident">arc</span>.<span class="ident">clone</span>();
-        <span class="kw">let</span> <span class="kw">_</span> <span class="op">=</span> <span class="ident">thread</span>::<span class="ident">spawn</span>(<span class="kw">move</span><span class="op">|</span><span class="op">|</span> <span class="op">-</span><span class="op">&gt;</span> () {
+        <span class="kw">let</span> <span class="kw">_</span> <span class="op">=</span> <span class="ident">thread</span>::<span class="ident">spawn</span>(<span class="kw">move</span> <span class="op">|</span><span class="op">|</span> <span class="op">-</span><span class="op">&gt;</span> () {
             <span class="kw">struct</span> <span class="ident">Unwinder</span> {
                 <span class="ident">i</span>: <span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">RwLock</span><span class="op">&lt;</span><span class="ident">isize</span><span class="op">&gt;</span><span class="op">&gt;</span>,
             }
@@ -1072,7 +1433,8 @@
             }
             <span class="kw">let</span> <span class="ident">_u</span> <span class="op">=</span> <span class="ident">Unwinder</span> { <span class="ident">i</span>: <span class="ident">arc2</span> };
             <span class="macro">panic</span><span class="macro">!</span>();
-        }).<span class="ident">join</span>();
+        })
+        .<span class="ident">join</span>();
         <span class="kw">let</span> <span class="ident">lock</span> <span class="op">=</span> <span class="ident">arc</span>.<span class="ident">read</span>();
         <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="kw-2">*</span><span class="ident">lock</span>, <span class="number">2</span>);
     }
@@ -1099,10 +1461,20 @@
         <span class="kw">let</span> <span class="ident">write_result</span> <span class="op">=</span> <span class="ident">lock</span>.<span class="ident">try_write</span>();
         <span class="kw">match</span> <span class="ident">write_result</span> {
             <span class="prelude-val">None</span> <span class="op">=</span><span class="op">&gt;</span> (),
-            <span class="prelude-val">Some</span>(<span class="kw">_</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="macro">assert</span><span class="macro">!</span>(<span class="bool-val">false</span>, <span class="string">&quot;try_write should not succeed while read_guard is in scope&quot;</span>),
+            <span class="prelude-val">Some</span>(<span class="kw">_</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="macro">assert</span><span class="macro">!</span>(
+                <span class="bool-val">false</span>,
+                <span class="string">&quot;try_write should not succeed while read_guard is in scope&quot;</span>
+            ),
         }
 
         <span class="ident">drop</span>(<span class="ident">read_guard</span>);
+    }
+
+    <span class="attribute">#[<span class="ident">test</span>]</span>
+    <span class="kw">fn</span> <span class="ident">test_rw_try_read</span>() {
+        <span class="kw">let</span> <span class="ident">m</span> <span class="op">=</span> <span class="ident">RwLock</span>::<span class="ident">new</span>(<span class="number">0</span>);
+        <span class="ident">mem</span>::<span class="ident">forget</span>(<span class="ident">m</span>.<span class="ident">write</span>());
+        <span class="macro">assert</span><span class="macro">!</span>(<span class="ident">m</span>.<span class="ident">try_read</span>().<span class="ident">is_none</span>());
     }
 
     <span class="attribute">#[<span class="ident">test</span>]</span>
@@ -1156,6 +1528,32 @@
             <span class="ident">m</span>.<span class="ident">force_write_unlock</span>();
         }
         <span class="macro">assert</span><span class="macro">!</span>(<span class="ident">m</span>.<span class="ident">try_read</span>().<span class="ident">is_some</span>());
+    }
+
+    <span class="attribute">#[<span class="ident">test</span>]</span>
+    <span class="kw">fn</span> <span class="ident">test_upgrade_downgrade</span>() {
+        <span class="kw">let</span> <span class="ident">m</span> <span class="op">=</span> <span class="ident">RwLock</span>::<span class="ident">new</span>(());
+        {
+            <span class="kw">let</span> <span class="ident">_r</span> <span class="op">=</span> <span class="ident">m</span>.<span class="ident">read</span>();
+            <span class="kw">let</span> <span class="ident">upg</span> <span class="op">=</span> <span class="ident">m</span>.<span class="ident">try_upgradeable_read</span>().<span class="ident">unwrap</span>();
+            <span class="macro">assert</span><span class="macro">!</span>(<span class="ident">m</span>.<span class="ident">try_read</span>().<span class="ident">is_none</span>());
+            <span class="macro">assert</span><span class="macro">!</span>(<span class="ident">m</span>.<span class="ident">try_write</span>().<span class="ident">is_none</span>());
+            <span class="macro">assert</span><span class="macro">!</span>(<span class="ident">upg</span>.<span class="ident">try_upgrade</span>().<span class="ident">is_err</span>());
+        }
+        {
+            <span class="kw">let</span> <span class="ident">w</span> <span class="op">=</span> <span class="ident">m</span>.<span class="ident">write</span>();
+            <span class="macro">assert</span><span class="macro">!</span>(<span class="ident">m</span>.<span class="ident">try_upgradeable_read</span>().<span class="ident">is_none</span>());
+            <span class="kw">let</span> <span class="ident">_r</span> <span class="op">=</span> <span class="ident">w</span>.<span class="ident">downgrade</span>();
+            <span class="macro">assert</span><span class="macro">!</span>(<span class="ident">m</span>.<span class="ident">try_upgradeable_read</span>().<span class="ident">is_some</span>());
+            <span class="macro">assert</span><span class="macro">!</span>(<span class="ident">m</span>.<span class="ident">try_read</span>().<span class="ident">is_some</span>());
+            <span class="macro">assert</span><span class="macro">!</span>(<span class="ident">m</span>.<span class="ident">try_write</span>().<span class="ident">is_none</span>());
+        }
+        {
+            <span class="kw">let</span> <span class="ident">_u</span> <span class="op">=</span> <span class="ident">m</span>.<span class="ident">upgradeable_read</span>();
+            <span class="macro">assert</span><span class="macro">!</span>(<span class="ident">m</span>.<span class="ident">try_upgradeable_read</span>().<span class="ident">is_none</span>());
+        }
+
+        <span class="macro">assert</span><span class="macro">!</span>(<span class="ident">m</span>.<span class="ident">try_upgradeable_read</span>().<span class="ident">unwrap</span>().<span class="ident">try_upgrade</span>().<span class="ident">is_ok</span>());
     }
 }
 </pre></div>
