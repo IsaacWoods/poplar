@@ -9,6 +9,7 @@ use mer::{
     program::{ProgramHeader, SegmentType},
     Elf,
 };
+use pebble_util::math;
 use uefi::{
     prelude::*,
     proto::media::{
@@ -58,9 +59,15 @@ where
                         (Page::<Size4KiB>::contains(segment.virtual_address + segment.size) + 1).start;
                 }
 
-                assert!(segment.virtual_address.is_aligned(Size4KiB::SIZE));
-                assert!(segment.physical_address.is_aligned(Size4KiB::SIZE));
-                assert!(segment.size % Size4KiB::SIZE == 0, "Segment is not page-aligned");
+                assert!(
+                    segment.virtual_address.is_aligned(Size4KiB::SIZE),
+                    "Segment's virtual address is not page-aligned"
+                );
+                assert!(
+                    segment.physical_address.is_aligned(Size4KiB::SIZE),
+                    "Segment's physical address is not frame-aligned"
+                );
+                assert!(segment.size % Size4KiB::SIZE == 0, "Segment size is not a multiple of page size!");
                 page_table
                     .map_area(
                         segment.virtual_address,
@@ -208,9 +215,16 @@ fn load_segment(
     elf: &Elf,
     user_accessible: bool,
 ) -> Result<Segment, LoaderError> {
-    assert!((segment.mem_size as usize) % Size4KiB::SIZE == 0, "LOAD segment is not page aligned");
+    /*
+     * We don't require each segment to fill up all the pages it needs - as long as the start of each segment is
+     * page-aligned so they don't overlap, it's fine. This is mainly to support images linked by `lld` with the `-z
+     * separate-loadable-segments` flag, which does this.
+     *
+     * However, we do need to align up to the page margin here so we zero all the memory allocated.
+     */
+    let mem_size = math::align_up(segment.mem_size as usize, Size4KiB::SIZE);
 
-    let num_frames = (segment.mem_size as usize) / Size4KiB::SIZE;
+    let num_frames = (mem_size as usize) / Size4KiB::SIZE;
     let physical_address = boot_services
         .allocate_pages(AllocateType::AnyPages, memory_type, num_frames)
         .expect_success("Failed to allocate memory for image segment!");
@@ -218,6 +232,7 @@ fn load_segment(
     /*
      * Copy `file_size` bytes from the image into the segment's new home. Note that
      * `file_size` may be less than `mem_size`, but must never be greater than it.
+     * NOTE: we use the segment's memory size here, before we align it up to the page margin.
      */
     assert!(segment.file_size <= segment.mem_size, "Segment's mem size is greater than it's file size???");
     unsafe {
@@ -232,7 +247,7 @@ fn load_segment(
         ptr::write_bytes(
             ((physical_address as usize) + (segment.file_size as usize)) as *mut u8,
             0,
-            (segment.mem_size - segment.file_size) as usize,
+            mem_size - (segment.file_size as usize),
         );
     }
 

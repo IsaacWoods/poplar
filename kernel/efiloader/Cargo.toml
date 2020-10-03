@@ -14,3 +14,4 @@ uefi = { path = "../../lib/uefi-rs" }
 ucs2 = { path = "../../lib/ucs2-rs" }
 mer = { path = "../../lib/mer" }
 gfxconsole = { path = "../../lib/gfxconsole" }
+pebble_util = { path = "../../lib/pebble_util" }

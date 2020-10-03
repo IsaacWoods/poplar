@@ -57,6 +57,7 @@ dependencies = [
  "hal_x86_64",
  "log",
  "mer",
+ "pebble_util",
  "rlibc",
  "spin",
  "ucs2 0.3.1",
