@@ -21,7 +21,7 @@ use platform_bus::{BusDriverMessage, Device, Property};
 static ALLOCATOR: LockedHeap = LockedHeap::empty();
 
 #[no_mangle]
-pub extern "C" fn start() -> ! {
+pub extern "C" fn _start() -> ! {
     syscall::early_log("Hello from pci_bus!!").unwrap();
     // Initialise the heap
     const HEAP_START: usize = 0x600000000;

@@ -10,6 +10,19 @@ about Pebble is to read [the book](https://isaacwoods.github.io/pebble/book/).
 [The website](https://isaacwoods.github.io/pebble) also hosts some other useful resources.
 
 ## Building and running
+**This first step may take a long time, depending on your hardware. It hopefully won't be needed in the future**
+Before you build Pebble, you will need to build a version of `rustc` that includes the Pebble userspace target:
+- Clone [`IsaacWoods/rust`](https://github.com/IsaacWoods/rust) and checkout the `pebble_target` branch
+- (Optional) rebase against `rust-lang/rust` to get the latest chages
+- Copy `config.toml.example` to `config.toml` and make the following changes:
+    - Set `assertions = true` under `[llvm]`
+    - Set `debug = true` under `[rust]`
+    - Set `incremental = true` under `[rust]`
+    - Set `lld = true` under `[rust]`
+    - Set `llvm-tools = true` under `[rust]`
+- Run `./x.py build -i library/std` to build a stage-1 compiler. This will compile LLVM the first time, which may take a while.
+- Create a toolchain using `rustup toolchain link pebble build/{host triple}/stage1` (e.g. `rustup toolchain link pebble build/x86_64-unknown-linux-gnu/stage1` on Linux)
+
 To build Pebble, you will need a few things (this assumes you are running a Linux of some type):
 - A nightly Rust compiler
 - The `rust-src` component (install with `rustup component add rust-src`)

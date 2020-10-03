@@ -27,3 +27,6 @@
 
 - [Message Passing](./message_passing/index.md)
     - [Message Format](./message_passing/fmt.md)
+
+- [Journal](./journal/index.md)
+    - [Building a `rustc` target for Pebble](./journal/rustc_target.md)

@@ -20,7 +20,7 @@ use log::info;
 static ALLOCATOR: LockedHeap = LockedHeap::empty();
 
 #[no_mangle]
-pub extern "C" fn start() -> ! {
+pub extern "C" fn _start() -> ! {
     syscall::early_log("Hello, World!").unwrap();
     // Initialise the heap
     const HEAP_START: usize = 0x600000000;
