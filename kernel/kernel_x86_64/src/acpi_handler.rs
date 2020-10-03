@@ -24,9 +24,7 @@ impl AcpiHandler for PebbleAcpiHandler {
         }
     }
 
-    fn unmap_physical_region<T>(&self, _region: &PhysicalMapping<Self, T>) {
-        log::info!("Unmapping from ACPI: {:#x}, {}", _region.physical_start, _region.mapped_length);
-    }
+    fn unmap_physical_region<T>(&self, _region: &PhysicalMapping<Self, T>) {}
 }
 
 pub struct AmlHandler<A>
