@@ -57,8 +57,7 @@ SECTIONS
 
     _kernel_end = .;
 
-    /DISCARD/ :
-    {
+    /DISCARD/ : {
         *(.comment*)
         *(.gcc_except_table*)
         *(.eh_frame*)
