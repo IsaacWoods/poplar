@@ -17,7 +17,7 @@ use hal::{
     memory::{Flags, FrameAllocator, FrameSize, Page, PageTable, PhysicalAddress, Size4KiB, VirtualAddress},
 };
 use hal_x86_64::paging::PageTableImpl;
-use log::{error, info, trace};
+use log::{debug, error, info, trace};
 use logger::Logger;
 use uefi::{
     prelude::*,
@@ -311,7 +311,13 @@ where
             | MemoryType::BOOT_SERVICES_DATA
             | MemoryType::RUNTIME_SERVICES_CODE
             | MemoryType::RUNTIME_SERVICES_DATA => {
-                info!("Identity mapping area: {:?}", entry);
+                debug!(
+                    "Identity mapping {} bytes at {:#x} of type: {:?}",
+                    entry.page_count as usize * Size4KiB::SIZE,
+                    entry.phys_start,
+                    entry.ty
+                );
+
                 /*
                  * Implementations don't appear to fill out the `VirtualStart` field, so we use the physical
                  * address for both (as we're identity-mapping anyway).
