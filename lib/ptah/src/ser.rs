@@ -25,8 +25,8 @@ where
 
     fn serialize_bool(self, value: bool) -> Result<Self::Ok> {
         match value {
-            false => self.writer.write(&[0x00]),
-            true => self.writer.write(&[0x01]),
+            false => self.writer.write(&[crate::MARKER_FALSE]),
+            true => self.writer.write(&[crate::MARKER_TRUE]),
         }
     }
 
