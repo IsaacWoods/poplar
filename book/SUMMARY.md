@@ -26,7 +26,7 @@
     - [Memory map (x86_64)](./userspace/memory_map_x86_64.md)
 
 - [Message Passing](./message_passing/index.md)
-    - [Message Format](./message_passing/fmt.md)
+    - [Ptah wire format](./message_passing/wire_format.md)
 
 - [Journal](./journal/index.md)
     - [Building a `rustc` target for Pebble](./journal/rustc_target.md)
