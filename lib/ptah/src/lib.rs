@@ -1,115 +1,76 @@
 #![no_std]
-#![feature(const_generics, assoc_char_funcs)]
+#![feature(const_generics, assoc_char_funcs, decl_macro)]
 
 extern crate alloc;
 
-mod de;
-mod ser;
+pub mod de;
+pub mod ser;
 
-pub use de::Deserializer;
-pub use ser::Serializer;
+pub use de::{Deserialize, DeserializeOwned, Deserializer};
+pub use ser::{Serialize, Serializer};
 
-use alloc::{
-    string::{String, ToString},
-    vec::Vec,
-};
-use core::fmt;
-use serde::{Deserialize, Serialize};
+use alloc::vec::Vec;
 
 /// It can sometimes be useful to know the size of a value in its serialized form (e.g. to reserve space for it in
 /// a ring buffer). This calculates the number of bytes taken to serialize some `value` of `T` into Ptah's wire
 /// format. Note that this size is for the specific `value`, and may differ between values of `T`.
-pub fn serialized_size<T>(value: &T) -> Result<usize>
+pub fn serialized_size<T>(value: &T) -> ser::Result<usize>
 where
     T: Serialize,
 {
     let mut size = 0;
-    let mut serializer = Serializer { writer: SizeCalculator { size: &mut size } };
+    let mut serializer = Serializer::new(SizeCalculator { size: &mut size });
 
     value.serialize(&mut serializer)?;
     Ok(size)
 }
 
-pub fn to_wire<'w, T, W>(value: &T, writer: W) -> Result<()>
+pub fn to_wire<'w, T, W>(value: &T, writer: W) -> ser::Result<()>
 where
     T: Serialize,
     W: Writer,
 {
-    let mut serializer = Serializer { writer };
+    let mut serializer = Serializer::new(writer);
 
     value.serialize(&mut serializer)?;
     Ok(())
 }
 
-pub fn from_wire<'a, T>(serialized: &'a [u8]) -> Result<T>
+pub fn from_wire<'a, 'de, T>(serialized: &'a [u8]) -> de::Result<T>
 where
-    T: Deserialize<'a>,
+    'a: 'de,
+    T: Deserialize<'de>,
 {
     let mut deserializer = Deserializer::from_wire(serialized);
     let value = T::deserialize(&mut deserializer)?;
     if deserializer.input.is_empty() {
         Ok(value)
     } else {
-        Err(Error::TrailingBytes)
+        Err(de::Error::TrailingBytes)
     }
 }
 
+type Handle = u32;
+type HandleSlot = u8;
+
 /*
  * These are constants that are used in the wire format.
- * TODO: if this stuff grows much more, they can probably get their own module
  */
 pub(crate) const MARKER_FALSE: u8 = 0x0;
 pub(crate) const MARKER_TRUE: u8 = 0x1;
 pub(crate) const MARKER_NONE: u8 = 0x0;
 pub(crate) const MARKER_SOME: u8 = 0x1;
-
-type Result<T> = core::result::Result<T, Error>;
-
-#[derive(Clone, PartialEq, Eq, Debug)]
-pub enum Error {
-    EndOfStream,
-    TrailingBytes,
-    WriterFull,
-
-    ExpectedBool,
-    ExpectedUtf8Str,
-    InvalidOptionMarker(u8),
-    InvalidChar,
-
-    DeserializeAnyNotSupported,
-
-    Custom(String),
-}
-
-impl serde::ser::Error for Error {
-    fn custom<T>(msg: T) -> Self
-    where
-        T: fmt::Display,
-    {
-        Error::Custom(msg.to_string())
-    }
-}
-
-impl serde::de::Error for Error {
-    fn custom<T>(msg: T) -> Self
-    where
-        T: fmt::Display,
-    {
-        Error::Custom(msg.to_string())
-    }
-}
-
-impl fmt::Display for Error {
-    fn fmt(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
-        unimplemented!()
-    }
-}
+pub(crate) const HANDLE_SLOT_0: u8 = 0xf0;
+pub(crate) const HANDLE_SLOT_1: u8 = 0xf1;
+pub(crate) const HANDLE_SLOT_2: u8 = 0xf2;
+pub(crate) const HANDLE_SLOT_3: u8 = 0xf3;
 
 /// A `Writer` represents a consumer of the bytes produced by serializing a message. In cases where you can
 /// create a slice to put the bytes in, `CursorWriter` can be used. Custom `Writer`s are useful for more niche
 /// uses, such as sending the serialized bytes over a serial port.
 pub trait Writer {
-    fn write(&mut self, buf: &[u8]) -> Result<()>;
+    fn write(&mut self, buf: &[u8]) -> ser::Result<()>;
+    fn push_handle(&mut self, handle: Handle) -> ser::Result<HandleSlot>;
 }
 
 /// This is a `Writer` that can be used to serialize a value into a pre-allocated byte buffer.
@@ -125,24 +86,32 @@ impl<'a> CursorWriter<'a> {
 }
 
 impl<'a> Writer for CursorWriter<'a> {
-    fn write(&mut self, buf: &[u8]) -> Result<()> {
+    fn write(&mut self, buf: &[u8]) -> ser::Result<()> {
         /*
          * Detect if the write will overflow the buffer.
          */
         if (self.position + buf.len()) > self.buffer.len() {
-            return Err(Error::WriterFull);
+            return Err(ser::Error::WriterFullOfBytes);
         }
 
         self.buffer[self.position..(self.position + buf.len())].copy_from_slice(buf);
         self.position += buf.len();
         Ok(())
     }
+
+    fn push_handle(&mut self, handle: Handle) -> ser::Result<HandleSlot> {
+        unimplemented!()
+    }
 }
 
 impl<'a> Writer for &'a mut Vec<u8> {
-    fn write(&mut self, buf: &[u8]) -> Result<()> {
+    fn write(&mut self, buf: &[u8]) -> ser::Result<()> {
         self.extend_from_slice(buf);
         Ok(())
+    }
+
+    fn push_handle(&mut self, handle: Handle) -> ser::Result<HandleSlot> {
+        unimplemented!()
     }
 }
 
@@ -154,8 +123,16 @@ struct SizeCalculator<'a> {
 }
 
 impl<'a> Writer for SizeCalculator<'a> {
-    fn write(&mut self, buf: &[u8]) -> Result<()> {
+    fn write(&mut self, buf: &[u8]) -> ser::Result<()> {
         *self.size += buf.len();
         Ok(())
+    }
+
+    fn push_handle(&mut self, handle: Handle) -> ser::Result<HandleSlot> {
+        /*
+         * When calculating the size, we simply accept as many handles as we're passed. The encoded slot is always
+         * the same size, so it doesn't matter what we return.
+         */
+        Ok(HANDLE_SLOT_0)
     }
 }
