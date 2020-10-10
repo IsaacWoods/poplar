@@ -215,6 +215,17 @@ dependencies = [
 [[package]]
 name = "ptah"
 version = "0.0.0"
+dependencies = [
+ "ptah_derive",
+]
+
+[[package]]
+name = "ptah_derive"
+version = "0.1.0"
+dependencies = [
+ "quote 1.0.7",
+ "syn 1.0.41",
+]
 
 [[package]]
 name = "quote"

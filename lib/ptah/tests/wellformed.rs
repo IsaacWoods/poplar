@@ -1,6 +1,6 @@
 #![feature(type_ascription)]
 
-use ptah::{CursorWriter, DeserializeOwned, Serialize};
+use ptah::{CursorWriter, Deserialize, DeserializeOwned, Serialize};
 use std::{collections::BTreeMap, fmt::Debug};
 
 const BUFFER_SIZE: usize = 128;
@@ -67,6 +67,51 @@ fn bools() {
 //     test_value([5, 4, 7, 7, 2]);
 //     test_value([3u8; 32]);
 // }
+
+#[test]
+fn simple_struct_manual() {
+    #[derive(Clone, Copy, PartialEq, Debug)]
+    struct Foo {
+        a: u8,
+        b: usize,
+        c: f64,
+    }
+
+    impl Serialize for Foo {
+        fn serialize<W>(&self, serializer: &mut ptah::Serializer<W>) -> ptah::ser::Result<()>
+        where
+            W: ptah::Writer,
+        {
+            self.a.serialize(serializer)?;
+            self.b.serialize(serializer)?;
+            self.c.serialize(serializer)?;
+            Ok(())
+        }
+    }
+
+    impl<'de> Deserialize<'de> for Foo {
+        fn deserialize(deserializer: &mut ptah::Deserializer<'de>) -> ptah::de::Result<Self> {
+            let a = u8::deserialize(deserializer)?;
+            let b = usize::deserialize(deserializer)?;
+            let c = f64::deserialize(deserializer)?;
+            Ok(Foo { a, b, c })
+        }
+    }
+
+    test_value(Foo { a: 0, b: 43, c: 28.99 });
+}
+
+#[test]
+fn simple_struct_derive() {
+    #[derive(Clone, Copy, PartialEq, Debug, Serialize, Deserialize)]
+    struct Foo {
+        a: u8,
+        b: usize,
+        c: f64,
+    }
+
+    test_value(Foo { a: 0, b: 43, c: 28.99 });
+}
 
 // #[test]
 // fn simple_structs() {

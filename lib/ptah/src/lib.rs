@@ -3,6 +3,13 @@
 
 extern crate alloc;
 
+#[cfg(feature = "derive")]
+#[macro_use]
+extern crate ptah_derive;
+#[cfg(feature = "derive")]
+#[doc(hidden)]
+pub use ptah_derive::*;
+
 pub mod de;
 pub mod ser;
 
