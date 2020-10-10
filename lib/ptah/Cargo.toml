@@ -7,3 +7,4 @@ description = "Rust implementation of Ptah, Pebble's message-passing format"
 license = "MIT OR Apache-2.0"
 
 [dependencies]
+alloc = []

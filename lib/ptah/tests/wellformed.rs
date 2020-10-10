@@ -49,11 +49,11 @@ fn numbers() {
     test_value(-192.3245f64);
 }
 
-// #[test]
-// fn strings() {
-//     test_value("".to_string());
-//     test_value("Hello, World!".to_string());
-// }
+#[test]
+fn strings() {
+    test_value("".to_string());
+    test_value("Hello, World!".to_string());
+}
 
 #[test]
 fn bools() {

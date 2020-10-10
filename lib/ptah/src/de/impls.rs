@@ -38,6 +38,19 @@ impl_for_primitive!(f64, deserialize_f64);
 impl_for_primitive!(bool, deserialize_bool);
 impl_for_primitive!(char, deserialize_char);
 
+impl<'de> Deserialize<'de> for &'de str {
+    fn deserialize(deserializer: &mut Deserializer<'de>) -> Result<&'de str> {
+        deserializer.deserialize_str()
+    }
+}
+
+impl<'de> Deserialize<'de> for alloc::string::String {
+    fn deserialize(deserializer: &mut Deserializer<'de>) -> Result<alloc::string::String> {
+        use alloc::string::ToString;
+        deserializer.deserialize_str().map(|s| s.to_string())
+    }
+}
+
 impl<'de, T> Deserialize<'de> for Option<T>
 where
     T: ?Sized + Deserialize<'de>,

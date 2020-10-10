@@ -47,6 +47,25 @@ impl_for_primitive!(f64, serialize_f64);
 impl_for_primitive!(bool, serialize_bool);
 impl_for_primitive!(char, serialize_char);
 
+impl Serialize for str {
+    fn serialize<W>(&self, serializer: &mut Serializer<W>) -> Result<()>
+    where
+        W: Writer,
+    {
+        serializer.serialize_str(self)
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl Serialize for alloc::string::String {
+    fn serialize<W>(&self, serializer: &mut Serializer<W>) -> Result<()>
+    where
+        W: Writer,
+    {
+        serializer.serialize_str(self)
+    }
+}
+
 impl<T> Serialize for Option<T>
 where
     T: Serialize,
