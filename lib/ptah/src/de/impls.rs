@@ -99,7 +99,7 @@ where
         let length = deserializer.deserialize_seq_length()?;
         let mut vec = alloc::vec::Vec::with_capacity(length as usize);
 
-        for i in 0..length {
+        for _ in 0..length {
             vec.push(T::deserialize(deserializer)?);
         }
 
