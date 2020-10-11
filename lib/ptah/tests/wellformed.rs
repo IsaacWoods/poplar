@@ -204,11 +204,11 @@ fn tuple_struct() {
     test_value(Foo(9, "Foo".to_string(), ()));
 }
 
-// #[test]
-// fn tuples() {
-//     test_value((11,));
-//     test_value((0.0f32, 73, "Foo".to_string(), -6));
-// }
+#[test]
+fn tuples() {
+    test_value((11,));
+    test_value((0.0f32, 73, "Foo".to_string(), -6));
+}
 
 // #[test]
 // fn enums() {
