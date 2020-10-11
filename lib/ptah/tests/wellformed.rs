@@ -3,7 +3,7 @@
 use ptah::{CursorWriter, Deserialize, DeserializeOwned, Serialize};
 use std::{collections::BTreeMap, fmt::Debug};
 
-const BUFFER_SIZE: usize = 128;
+const BUFFER_SIZE: usize = 1024;
 
 fn test_value<T>(value: T)
 where
@@ -61,12 +61,12 @@ fn bools() {
     test_value(true);
 }
 
-// #[test]
-// fn arrays() {
-//     test_value([0xff]);
-//     test_value([5, 4, 7, 7, 2]);
-//     test_value([3u8; 32]);
-// }
+#[test]
+fn arrays() {
+    test_value([0xff]);
+    test_value([5, 4, 7, 7, 2]);
+    test_value([0xff_a4_96_2e_9a_8e_8b_ddu64; 32]);
+}
 
 #[test]
 fn simple_struct_manual() {

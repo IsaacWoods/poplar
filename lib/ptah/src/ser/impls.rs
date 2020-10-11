@@ -121,5 +121,3 @@ impl Serialize for () {
         Ok(())
     }
 }
-
-// TODO: a bunch of other types

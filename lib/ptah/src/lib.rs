@@ -1,5 +1,5 @@
 #![no_std]
-#![feature(const_generics, assoc_char_funcs, decl_macro)]
+#![feature(const_generics, assoc_char_funcs, decl_macro, maybe_uninit_uninit_array, maybe_uninit_slice)]
 
 extern crate alloc;
 
