@@ -56,6 +56,11 @@ fn bools() {
 }
 
 #[test]
+fn unit() {
+    test_value(());
+}
+
+#[test]
 fn arrays() {
     test_value([0xff]);
     test_value([5, 4, 7, 7, 2]);
@@ -71,6 +76,13 @@ fn strings() {
 #[test]
 fn vec() {
     test_value(vec![0, 1, 2, 3, 4, 5]);
+}
+
+#[test]
+fn options() {
+    test_value(None: Option<usize>);
+    test_value(Some(6));
+    test_value(Some("Hello, World!".to_string()));
 }
 
 #[test]
@@ -141,6 +153,14 @@ fn less_simple_structs() {
         other_heap_thing: vec![9, 14, 66, 34, 0],
         just_a_number: 11,
     });
+
+    #[derive(Clone, Copy, PartialEq, Eq, Debug, Serialize, Deserialize)]
+    struct Foo2 {
+        a: usize,
+        b: u8,
+    }
+
+    test_value(Some(Foo2 { a: 0, b: 43 }));
 }
 
 #[test]
@@ -167,47 +187,27 @@ fn nested_structs() {
     });
 }
 
-// #[test]
-// fn newtype_struct() {
-//     #[derive(Clone, Copy, PartialEq, Eq, Debug, Serialize, Deserialize)]
-//     #[repr(transparent)]
-//     struct Foo(u16);
+#[test]
+fn newtype_struct() {
+    #[derive(Clone, Copy, PartialEq, Eq, Debug, Serialize, Deserialize)]
+    #[repr(transparent)]
+    struct Foo(u16);
 
-//     test_value(Foo(8));
-// }
-
-// #[test]
-// fn tuple_struct() {
-//     #[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize)]
-//     struct Foo(u8, String, ());
-
-//     test_value(Foo(9, "Foo".to_string(), ()));
-// }
+    test_value(Foo(8));
+}
 
 #[test]
-fn unit() {
-    test_value(());
+fn tuple_struct() {
+    #[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize)]
+    struct Foo(u8, String, ());
+
+    test_value(Foo(9, "Foo".to_string(), ()));
 }
 
 // #[test]
 // fn tuples() {
 //     test_value((11,));
 //     test_value((0.0f32, 73, "Foo".to_string(), -6));
-// }
-
-// #[test]
-// fn options() {
-//     test_value(None: Option<usize>);
-//     test_value(Some(6));
-//     test_value(Some("Hello, World!".to_string()));
-
-//     #[derive(Clone, Copy, PartialEq, Eq, Debug, Serialize, Deserialize)]
-//     struct Foo {
-//         a: usize,
-//         b: u8,
-//     }
-
-//     test_value(Some(Foo { a: 0, b: 43 }));
 // }
 
 // #[test]

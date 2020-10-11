@@ -1,6 +1,17 @@
 use proc_macro2::TokenStream;
 use quote::{quote, quote_spanned};
-use syn::{parse_quote, spanned::Spanned, Data, DeriveInput, Fields, FieldsNamed, GenericParam, Generics};
+use syn::{
+    parse_quote,
+    spanned::Spanned,
+    Data,
+    DeriveInput,
+    Fields,
+    FieldsNamed,
+    FieldsUnnamed,
+    GenericParam,
+    Generics,
+    Index,
+};
 
 // TODO: work out how to throw errors properly (apparently there's an experimental Diagnostics API?)
 // Serde doesn't use it but it might just not have been updated yet / waiting for it to be stable
@@ -42,8 +53,8 @@ fn add_trait_bounds(mut generics: Generics) -> Generics {
 fn generate_body(data: &Data) -> TokenStream {
     match data {
         Data::Struct(ref struct_data) => match struct_data.fields {
-            Fields::Named(ref fields) => generate_named_struct(fields),
-            Fields::Unnamed(ref fields) => todo!(),
+            Fields::Named(ref fields) => generate_for_named_struct(fields),
+            Fields::Unnamed(ref fields) => generate_for_unnamed_struct(fields),
             Fields::Unit => quote! {},
         },
         Data::Enum(enum_data) => todo!(),
@@ -51,7 +62,7 @@ fn generate_body(data: &Data) -> TokenStream {
     }
 }
 
-fn generate_named_struct(fields: &FieldsNamed) -> TokenStream {
+fn generate_for_named_struct(fields: &FieldsNamed) -> TokenStream {
     /*
      * We serialise each field, making sure to use fully-qualified syntax so we don't need the
      * traits in-scope. We also make sure to match each field back to its correct span, so we get
@@ -61,6 +72,21 @@ fn generate_named_struct(fields: &FieldsNamed) -> TokenStream {
         let name = &field.ident;
         quote_spanned!(field.span() => ptah::Serialize::serialize(&self.#name, serializer)?;)
     });
+    quote! {
+        #(#fields)*
+    }
+}
+
+fn generate_for_unnamed_struct(fields: &FieldsUnnamed) -> TokenStream {
+    /*
+     * Similar to named structs, serialize each field, but we need to enumerate over them to get the indices into
+     * the tuple, as the field doesn't contain it.
+     */
+    let fields = fields.unnamed.iter().enumerate().map(|(i, field)| {
+        let index = Index::from(i);
+        quote_spanned!(field.span() => ptah::Serialize::serialize(&self.#index, serializer)?;)
+    });
+
     quote! {
         #(#fields)*
     }

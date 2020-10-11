@@ -1,6 +1,17 @@
 use proc_macro2::TokenStream;
-use quote::{quote, quote_spanned};
-use syn::{parse_quote, spanned::Spanned, Data, DeriveInput, Fields, FieldsNamed, GenericParam, Generics, Ident};
+use quote::{format_ident, quote, quote_spanned};
+use syn::{
+    parse_quote,
+    spanned::Spanned,
+    Data,
+    DeriveInput,
+    Fields,
+    FieldsNamed,
+    FieldsUnnamed,
+    GenericParam,
+    Generics,
+    Ident,
+};
 
 // TODO: work out how to throw errors properly (apparently there's an experimental Diagnostics API?)
 // Serde doesn't use it but it might just not have been updated yet / waiting for it to be stable
@@ -53,8 +64,8 @@ fn add_trait_bounds(mut generics: Generics) -> Generics {
 fn generate_body(struct_name: &Ident, data: &Data) -> TokenStream {
     match data {
         Data::Struct(ref struct_data) => match struct_data.fields {
-            Fields::Named(ref fields) => generate_named_struct(struct_name, fields),
-            Fields::Unnamed(ref fields) => todo!(),
+            Fields::Named(ref fields) => generate_for_named_struct(struct_name, fields),
+            Fields::Unnamed(ref fields) => generate_for_unnamed_struct(struct_name, fields),
             Fields::Unit => quote! {},
         },
         Data::Enum(enum_data) => todo!(),
@@ -62,7 +73,7 @@ fn generate_body(struct_name: &Ident, data: &Data) -> TokenStream {
     }
 }
 
-fn generate_named_struct(struct_name: &Ident, fields: &FieldsNamed) -> TokenStream {
+fn generate_for_named_struct(struct_name: &Ident, fields: &FieldsNamed) -> TokenStream {
     /*
      * First, we deserialize each field into a local, in order. We make sure to use fully-qualified syntax to
      * access `Deserialize`, and to match each field back to its correct span, so we get nice error messages.
@@ -81,5 +92,23 @@ fn generate_named_struct(struct_name: &Ident, fields: &FieldsNamed) -> TokenStre
     quote! {
         #(#deserialize_each)*
         Ok(#struct_name { #(#struct_init)* })
+    }
+}
+
+fn generate_for_unnamed_struct(struct_name: &Ident, fields: &FieldsUnnamed) -> TokenStream {
+    let deserialize_each = fields.unnamed.iter().enumerate().map(|(i, field)| {
+        let field_name = format_ident!("field_{}", i);
+        let field_type = &field.ty;
+        quote_spanned!(field.span() => let #field_name: #field_type = ptah::Deserialize::deserialize(deserializer)?;)
+    });
+
+    let struct_init = fields.unnamed.iter().enumerate().map(|(i, _field)| {
+        let field_name = format_ident!("field_{}", i);
+        quote!(#field_name, )
+    });
+
+    quote! {
+        #(#deserialize_each)*
+        Ok(#struct_name(#(#struct_init)*))
     }
 }
