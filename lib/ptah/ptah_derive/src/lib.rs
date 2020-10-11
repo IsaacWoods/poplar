@@ -1,3 +1,4 @@
+mod de;
 mod ser;
 
 use proc_macro::TokenStream;
@@ -9,7 +10,8 @@ pub fn derive_serialize(input: TokenStream) -> TokenStream {
     ser::impl_serialize(input)
 }
 
-#[proc_macro_derive(Deserialize, attributes(ptah))]
+#[proc_macro_derive(Deserialize)]
 pub fn derive_deserialize(input: TokenStream) -> TokenStream {
-    todo!()
+    let input = parse_macro_input!(input as DeriveInput);
+    de::impl_deserialize(input)
 }
