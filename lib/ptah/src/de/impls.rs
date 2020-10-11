@@ -59,3 +59,9 @@ where
         deserializer.deserialize_option()
     }
 }
+
+impl<'de> Deserialize<'de> for () {
+    fn deserialize(_deserializer: &mut Deserializer<'de>) -> Result<()> {
+        Ok(())
+    }
+}

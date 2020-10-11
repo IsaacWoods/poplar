@@ -179,10 +179,10 @@ fn simple_struct_derive() {
 //     test_value(Foo(9, "Foo".to_string(), ()));
 // }
 
-// #[test]
-// fn unit() {
-//     test_value(());
-// }
+#[test]
+fn unit() {
+    test_value(());
+}
 
 // #[test]
 // fn tuples() {

@@ -113,4 +113,13 @@ where
     }
 }
 
+impl Serialize for () {
+    fn serialize<W>(&self, _serializer: &mut Serializer<W>) -> Result<()>
+    where
+        W: Writer,
+    {
+        Ok(())
+    }
+}
+
 // TODO: a bunch of other types
