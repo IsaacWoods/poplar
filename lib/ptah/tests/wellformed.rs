@@ -82,18 +82,18 @@ fn simple_struct_manual() {
         where
             W: ptah::Writer,
         {
-            self.a.serialize(serializer)?;
-            self.b.serialize(serializer)?;
-            self.c.serialize(serializer)?;
+            ptah::Serialize::serialize(&self.a, serializer)?;
+            ptah::Serialize::serialize(&self.b, serializer)?;
+            ptah::Serialize::serialize(&self.c, serializer)?;
             Ok(())
         }
     }
 
     impl<'de> Deserialize<'de> for Foo {
         fn deserialize(deserializer: &mut ptah::Deserializer<'de>) -> ptah::de::Result<Self> {
-            let a = u8::deserialize(deserializer)?;
-            let b = usize::deserialize(deserializer)?;
-            let c = f64::deserialize(deserializer)?;
+            let a: u8 = ptah::Deserialize::deserialize(deserializer)?;
+            let b: usize = ptah::Deserialize::deserialize(deserializer)?;
+            let c: f64 = ptah::Deserialize::deserialize(deserializer)?;
             Ok(Foo { a, b, c })
         }
     }
