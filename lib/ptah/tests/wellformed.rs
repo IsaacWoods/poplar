@@ -50,12 +50,6 @@ fn numbers() {
 }
 
 #[test]
-fn strings() {
-    test_value("".to_string());
-    test_value("Hello, World!".to_string());
-}
-
-#[test]
 fn bools() {
     test_value(false);
     test_value(true);
@@ -66,6 +60,17 @@ fn arrays() {
     test_value([0xff]);
     test_value([5, 4, 7, 7, 2]);
     test_value([0xff_a4_96_2e_9a_8e_8b_ddu64; 32]);
+}
+
+#[test]
+fn strings() {
+    test_value("".to_string());
+    test_value("Hello, World!".to_string());
+}
+
+#[test]
+fn vec() {
+    test_value(vec![0, 1, 2, 3, 4, 5]);
 }
 
 #[test]
@@ -113,54 +118,54 @@ fn simple_struct_derive() {
     test_value(Foo { a: 0, b: 43, c: 28.99 });
 }
 
-// #[test]
-// fn simple_structs() {
-//     #[derive(Clone, Copy, PartialEq, Debug, Serialize, Deserialize)]
-//     struct Foo {
-//         a: u8,
-//         b: usize,
-//         c: f64,
-//     }
+#[test]
+fn less_simple_structs() {
+    #[derive(Clone, Copy, PartialEq, Debug, Serialize, Deserialize)]
+    struct Foo {
+        a: u8,
+        b: usize,
+        c: f64,
+    }
 
-//     test_value(Foo { a: 0, b: 43, c: 28.99 });
+    test_value(Foo { a: 0, b: 43, c: 28.99 });
 
-//     #[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize)]
-//     struct Bar {
-//         thing_on_heap: String,
-//         other_heap_thing: Vec<u16>,
-//         just_a_number: usize,
-//     }
+    #[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize)]
+    struct Bar {
+        thing_on_heap: String,
+        other_heap_thing: Vec<u16>,
+        just_a_number: usize,
+    }
 
-//     test_value(Bar {
-//         thing_on_heap: "Serde is pretty cool".to_string(),
-//         other_heap_thing: vec![9, 14, 66, 34, 0],
-//         just_a_number: 11,
-//     });
-// }
+    test_value(Bar {
+        thing_on_heap: "Serde is pretty cool".to_string(),
+        other_heap_thing: vec![9, 14, 66, 34, 0],
+        just_a_number: 11,
+    });
+}
 
-// #[test]
-// fn nested_structs() {
-//     #[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize)]
-//     struct Egg {
-//         foo: String,
-//         bar: usize,
-//     }
+#[test]
+fn nested_structs() {
+    #[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize)]
+    struct Egg {
+        foo: String,
+        bar: usize,
+    }
 
-//     #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
-//     struct Nest {
-//         egg: Egg,
-//         a: f64,
-//         other_egg: Egg,
-//         yet_another_egg: Egg,
-//     }
+    #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
+    struct Nest {
+        egg: Egg,
+        a: f64,
+        other_egg: Egg,
+        yet_another_egg: Egg,
+    }
 
-//     test_value(Nest {
-//         egg: Egg { foo: "Egg One".to_string(), bar: 43 },
-//         a: 3.14159265,
-//         other_egg: Egg { foo: "Egg B".to_string(), bar: 963 },
-//         yet_another_egg: Egg { foo: "Tertiary Egg".to_string(), bar: 7 },
-//     });
-// }
+    test_value(Nest {
+        egg: Egg { foo: "Egg One".to_string(), bar: 43 },
+        a: 3.14159265,
+        other_egg: Egg { foo: "Egg B".to_string(), bar: 963 },
+        yet_another_egg: Egg { foo: "Tertiary Egg".to_string(), bar: 7 },
+    });
+}
 
 // #[test]
 // fn newtype_struct() {

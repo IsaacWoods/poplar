@@ -116,6 +116,11 @@ impl<'de> Deserializer<'de> {
         E::visit(tag, self)
     }
 
+    /// Start deserializing a `seq`. Returns the number of elements the caller should deserialize.
+    pub fn deserialize_seq_length(&mut self) -> Result<u32> {
+        self.deserialize_u32()
+    }
+
     fn take_byte(&mut self) -> Result<u8> {
         let &byte = self.input.iter().next().ok_or(Error::EndOfStream)?;
         self.input = &self.input[1..];

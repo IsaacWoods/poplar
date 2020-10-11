@@ -121,3 +121,20 @@ impl Serialize for () {
         Ok(())
     }
 }
+
+#[cfg(feature = "alloc")]
+impl<T> Serialize for alloc::vec::Vec<T>
+where
+    T: Serialize,
+{
+    fn serialize<W>(&self, serializer: &mut Serializer<W>) -> Result<()>
+    where
+        W: Writer,
+    {
+        let mut seq = serializer.serialize_seq(self.len() as u32)?;
+        for element in self {
+            seq.serialize_element(element)?;
+        }
+        Ok(())
+    }
+}
