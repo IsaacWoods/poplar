@@ -17,10 +17,12 @@ kernel object in the new task. This effectively means we need to add a new `Hand
 is not easily possible with Serde (and would make it incompatible with standard Serde anyway).
 
 ### The Ptah Data Model
-The Ptah data model maps pretty well to the Rust type system, and closely to the Serde data model. Key differences
-are some stronger guarantees about the encoding of types such as enums (the data model only needs to fit a single
-wire format, and so can afford to be less flexible than Serde's), and the lack of `unit`-based types - these do not
-feature in the Ptah wire format.
+The Ptah data model maps pretty well to the Rust type system, and relatively closely to the Serde data model. Key
+differences are some stronger guarantees about the encoding of types such as enums (the data model only needs to
+fit a single wire format, and so can afford to be less flexible than Serde's), and the lack of a few types -
+`unit`-based types, and the statically-sized version of `seq` and `map` - `tuple` and `struct`. Ptah is not a
+self-describing format (i.e. the types you're trying to deserialize is fully known), so the elements of structs and
+tuples can simply be serialized in the order they appear, and then deserialized in order at the other end.
 
 - Primitive types
     - `bool`
@@ -42,14 +44,8 @@ feature in the Ptah wire format.
         - Rust struct variants (e.g. `E::B { foo: u8, bar: u32 }`) are represented by `struct`
 - `seq`
     - A variable-length sequence of values, mapping to many types such as `Vec<T>`.
-- `tuple`
-    - A statically-sized sequence of values, that can be deserialized without encoding their length.
-    - Statically-sized arrays are `tuple`s.
 - `map`
     - A variable-length series of key-value pairings, mapping to collections like `BTreeMap<K, V>`.
-- `struct`
-    - A statically-sized series of key-value pairings, that can be deserialized without encoding any details of
-      their structure.
 - `handle`
     - This is the type that means we need our own data model in the first place
     - These are encoded out-of-line of the rest of the data, so that the Pebble kernel can introspect into them, if
