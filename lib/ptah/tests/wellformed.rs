@@ -210,29 +210,94 @@ fn tuples() {
     test_value((0.0f32, 73, "Foo".to_string(), -6));
 }
 
-// #[test]
-// fn enums() {
-//     #[derive(Clone, Copy, PartialEq, Eq, Debug, Serialize, Deserialize)]
-//     enum Foo {
-//         A,
-//         B,
-//         C,
-//         D,
-//     }
-//     test_value(Foo::A);
-//     test_value(Foo::B);
-//     test_value(Foo::C);
-//     test_value(Foo::D);
+#[test]
+fn enum_manual() {
+    #[derive(Clone, Copy, PartialEq, Eq, Debug)]
+    enum Foo {
+        A(u8),
+        B(u32, u8),
+        C { foo: u8, bar: u8 },
+        D,
+    }
 
-//     #[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize)]
-//     enum Bar {
-//         None,
-//         Some(Vec<usize>),
-//     }
+    impl Serialize for Foo {
+        fn serialize<W>(&self, serializer: &mut ptah::Serializer<W>) -> ptah::ser::Result<()>
+        where
+            W: ptah::Writer,
+        {
+            match self {
+                Self::A(data) => {
+                    ptah::Serializer::serialize_enum_variant(serializer, 0)?;
+                    ptah::Serialize::serialize(data, serializer)?;
+                    Ok(())
+                }
+                Self::B(data_0, data_1) => {
+                    ptah::Serializer::serialize_enum_variant(serializer, 1)?;
+                    ptah::Serialize::serialize(data_0, serializer)?;
+                    ptah::Serialize::serialize(data_1, serializer)?;
+                    Ok(())
+                }
+                Self::C { foo, bar } => {
+                    ptah::Serializer::serialize_enum_variant(serializer, 2)?;
+                    ptah::Serialize::serialize(foo, serializer)?;
+                    ptah::Serialize::serialize(bar, serializer)?;
+                    Ok(())
+                }
+                Self::D => ptah::Serializer::serialize_enum_variant(serializer, 3),
+            }
+        }
+    }
 
-//     test_value(Bar::None);
-//     test_value(Bar::Some(vec![654, 9]));
-// }
+    impl<'de> Deserialize<'de> for Foo {
+        fn deserialize(deserializer: &mut ptah::Deserializer<'de>) -> ptah::de::Result<Self> {
+            let tag = ptah::Deserializer::deserialize_enum_tag(deserializer)?;
+            match tag {
+                0 => Ok(Self::A(ptah::Deserialize::deserialize(deserializer)?)),
+                1 => {
+                    let field_0: u32 = ptah::Deserialize::deserialize(deserializer)?;
+                    let field_1: u8 = ptah::Deserialize::deserialize(deserializer)?;
+                    Ok(Self::B(field_0, field_1))
+                }
+                2 => {
+                    let foo: u8 = ptah::Deserialize::deserialize(deserializer)?;
+                    let bar: u8 = ptah::Deserialize::deserialize(deserializer)?;
+                    Ok(Self::C { foo, bar })
+                }
+                3 => Ok(Self::D),
+                _ => Err(ptah::de::Error::InvalidEnumTag(tag)),
+            }
+        }
+    }
+
+    test_value(Foo::A(76));
+    test_value(Foo::B(524839, 9));
+    test_value(Foo::C { foo: 4, bar: 96 });
+    test_value(Foo::D);
+}
+
+#[test]
+fn enums() {
+    #[derive(Clone, Copy, PartialEq, Eq, Debug, Serialize, Deserialize)]
+    enum Foo {
+        A(u8),
+        B(u32, u8),
+        C { foo: u8, bar: u8 },
+        D,
+    }
+    test_value(Foo::A(76));
+    test_value(Foo::B(524839, 9));
+    test_value(Foo::C { foo: 4, bar: 96 });
+    test_value(Foo::D);
+
+    #[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize)]
+    enum Bar {
+        None,
+        Some(Vec<usize>),
+    }
+
+    test_value(Bar::None);
+    test_value(Bar::Some(vec![654, 9]));
+}
 
 // #[test]
 // fn maps() {

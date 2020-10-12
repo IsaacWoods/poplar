@@ -131,12 +131,10 @@ where
         Ok(MapSerializer(self))
     }
 
-    pub fn serialize_enum_variant<'a, T>(&'a mut self, variant_index: u32, data: &T) -> Result<()>
-    where
-        T: ?Sized + Serialize,
-    {
-        self.serialize_u32(variant_index)?;
-        data.serialize(self)
+    /// Start serializing an enum - this encodes the tag that specifies which variant is being encoded. Data
+    /// contained in the variant should be serialized following this.
+    pub fn serialize_enum_variant(&mut self, variant_index: u32) -> Result<()> {
+        self.serialize_u32(variant_index)
     }
 }
 

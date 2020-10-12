@@ -4,6 +4,7 @@ use syn::{
     parse_quote,
     spanned::Spanned,
     Data,
+    DataEnum,
     DeriveInput,
     Fields,
     FieldsNamed,
@@ -11,6 +12,7 @@ use syn::{
     GenericParam,
     Generics,
     Ident,
+    Index,
 };
 
 // TODO: work out how to throw errors properly (apparently there's an experimental Diagnostics API?)
@@ -61,41 +63,41 @@ fn add_trait_bounds(mut generics: Generics) -> Generics {
     generics
 }
 
-fn generate_body(struct_name: &Ident, data: &Data) -> TokenStream {
+fn generate_body(name: &Ident, data: &Data) -> TokenStream {
     match data {
         Data::Struct(ref struct_data) => match struct_data.fields {
-            Fields::Named(ref fields) => generate_for_named_struct(struct_name, fields),
-            Fields::Unnamed(ref fields) => generate_for_unnamed_struct(struct_name, fields),
+            Fields::Named(ref fields) => generate_for_struct(name, fields),
+            Fields::Unnamed(ref fields) => generate_for_tuple(name, fields),
             Fields::Unit => quote! {},
         },
-        Data::Enum(enum_data) => todo!(),
+        Data::Enum(ref enum_data) => generate_for_enum(name, enum_data),
         Data::Union(union_data) => todo!(),
     }
 }
 
-fn generate_for_named_struct(struct_name: &Ident, fields: &FieldsNamed) -> TokenStream {
+fn generate_for_struct(name: &Ident, fields: &FieldsNamed) -> TokenStream {
     /*
      * First, we deserialize each field into a local, in order. We make sure to use fully-qualified syntax to
      * access `Deserialize`, and to match each field back to its correct span, so we get nice error messages.
      */
     let deserialize_each = fields.named.iter().map(|field| {
-        let name = &field.ident;
+        let field_name = &field.ident;
         let field_type = &field.ty;
-        quote_spanned!(field.span() => let #name: #field_type = ptah::Deserialize::deserialize(deserializer)?;)
+        quote_spanned!(field.span() => let #field_name: #field_type = ptah::Deserialize::deserialize(deserializer)?;)
     });
 
     let struct_init = fields.named.iter().map(|field| {
-        let name = &field.ident;
-        quote!(#name, )
+        let field_name = &field.ident;
+        quote!(#field_name, )
     });
 
     quote! {
         #(#deserialize_each)*
-        Ok(#struct_name { #(#struct_init)* })
+        Ok(#name { #(#struct_init)* })
     }
 }
 
-fn generate_for_unnamed_struct(struct_name: &Ident, fields: &FieldsUnnamed) -> TokenStream {
+fn generate_for_tuple(name: &Ident, fields: &FieldsUnnamed) -> TokenStream {
     let deserialize_each = fields.unnamed.iter().enumerate().map(|(i, field)| {
         let field_name = format_ident!("field_{}", i);
         let field_type = &field.ty;
@@ -109,6 +111,60 @@ fn generate_for_unnamed_struct(struct_name: &Ident, fields: &FieldsUnnamed) -> T
 
     quote! {
         #(#deserialize_each)*
-        Ok(#struct_name(#(#struct_init)*))
+        Ok(#name(#(#struct_init)*))
+    }
+}
+
+fn generate_for_enum(enum_name: &Ident, data: &DataEnum) -> TokenStream {
+    let variants = data.variants.iter().enumerate().map(|(i, variant)| {
+        // TODO: we should probably handle explicit descriminants (e.g. SomeVariant = 78,) somehow
+        assert!(variant.discriminant.is_none());
+
+        let variant_name = &variant.ident;
+        let index = Index::from(i);
+
+        match &variant.fields {
+            Fields::Named(ref fields) => {
+                let deserialize_each = fields.named.iter().map(|field| {
+                    let field_name = &field.ident;
+                    let field_type = &field.ty;
+                    quote_spanned!(field.span() => let #field_name: #field_type = ptah::Deserialize::deserialize(deserializer)?;)
+                });
+                let struct_init = fields.named.iter().enumerate().map(|(i, field)| {
+                    let field_name = &field.ident;
+                    quote!(#field_name, )
+                });
+
+                quote_spanned!(variant.span() => #index => {
+                    #(#deserialize_each)*
+                    Ok(Self::#variant_name { #(#struct_init)* })
+                })
+            }
+            Fields::Unnamed(ref fields) => {
+                let deserialize_each = fields.unnamed.iter().enumerate().map(|(i, field)| {
+                    let field_name = format_ident!("field_{}", i);
+                    let field_type = &field.ty;
+                    quote_spanned!(field.span() => let #field_name: #field_type = ptah::Deserialize::deserialize(deserializer)?;)
+                });
+                let struct_init = fields.unnamed.iter().enumerate().map(|(i, _field)| {
+                    let field_name = format_ident!("field_{}", i);
+                    quote!(#field_name, )
+                });
+
+                quote_spanned!(variant.span() => #index => {
+                    #(#deserialize_each)*
+                    Ok(Self::#variant_name(#(#struct_init)*))
+                })
+            }
+            Fields::Unit => quote_spanned!(variant.span() => #index => Ok(Self::#variant_name),),
+        }
+    });
+
+    quote! {
+        let tag = ptah::Deserializer::deserialize_enum_tag(deserializer)?;
+        match tag {
+            #(#variants)*
+            _ => Err(ptah::de::Error::InvalidEnumTag(tag)),
+        }
     }
 }

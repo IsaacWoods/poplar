@@ -11,6 +11,7 @@ pub enum Error {
     InvalidUtf8,
     InvalidBoolMarker(u8),
     InvalidOptionMarker(u8),
+    InvalidEnumTag(u32),
 }
 
 pub type Result<T> = core::result::Result<T, Error>;
@@ -111,9 +112,9 @@ impl<'de> Deserializer<'de> {
         }
     }
 
-    pub fn deserialize_enum<E: EnumVisitor<'de>>(&mut self) -> Result<E::Value> {
-        let tag = self.deserialize_u32()?;
-        E::visit(tag, self)
+    /// Start deserializing an `enum`. Any data contained should be deserialized next.
+    pub fn deserialize_enum_tag(&mut self) -> Result<u32> {
+        self.deserialize_u32()
     }
 
     /// Start deserializing a `seq`. Returns the number of elements the caller should deserialize.
@@ -146,12 +147,4 @@ impl<'de> Deserializer<'de> {
         self.input = &self.input[N..];
         Ok(bytes.try_into().unwrap())
     }
-}
-
-/// Called to deserialize an enum variant with a given tag. This is typically implemented for a marker type for
-/// each `enum`.
-pub trait EnumVisitor<'de> {
-    type Value: ?Sized + Deserialize<'de>;
-
-    fn visit(variant_tag: u32, deserializer: &mut Deserializer<'de>) -> Result<Self::Value>;
 }
