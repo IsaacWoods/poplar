@@ -113,17 +113,9 @@ where
         value.serialize(self)
     }
 
-    pub fn serialize_tuple<'a>(&'a mut self) -> Result<TupleSerializer<'a, W>> {
-        Ok(TupleSerializer(self))
-    }
-
     pub fn serialize_seq<'a>(&'a mut self, length: u32) -> Result<SeqSerializer<'a, W>> {
         self.serialize_u32(length)?;
         Ok(SeqSerializer(self))
-    }
-
-    pub fn serialize_struct<'a>(&'a mut self) -> Result<StructSerializer<'a, W>> {
-        Ok(StructSerializer(self))
     }
 
     pub fn serialize_map<'a>(&'a mut self, length: u32) -> Result<MapSerializer<'a, W>> {
@@ -138,22 +130,6 @@ where
     }
 }
 
-pub struct TupleSerializer<'a, W>(&'a mut Serializer<W>)
-where
-    W: Writer;
-
-impl<'a, W> TupleSerializer<'a, W>
-where
-    W: Writer,
-{
-    pub fn serialize_element<T>(&mut self, value: &T) -> Result<()>
-    where
-        T: ?Sized + Serialize,
-    {
-        value.serialize(self.0)
-    }
-}
-
 pub struct SeqSerializer<'a, W>(&'a mut Serializer<W>)
 where
     W: Writer;
@@ -163,22 +139,6 @@ where
     W: Writer,
 {
     pub fn serialize_element<T>(&mut self, value: &T) -> Result<()>
-    where
-        T: ?Sized + Serialize,
-    {
-        value.serialize(self.0)
-    }
-}
-
-pub struct StructSerializer<'a, W>(&'a mut Serializer<W>)
-where
-    W: Writer;
-
-impl<'a, W> StructSerializer<'a, W>
-where
-    W: Writer,
-{
-    pub fn serialize_field<T>(&mut self, value: &T) -> Result<()>
     where
         T: ?Sized + Serialize,
     {

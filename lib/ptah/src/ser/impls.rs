@@ -89,9 +89,8 @@ where
     where
         W: Writer,
     {
-        let mut tuple = serializer.serialize_tuple()?;
         for element in self {
-            tuple.serialize_element(element)?;
+            element.serialize(serializer)?;
         }
         Ok(())
     }
