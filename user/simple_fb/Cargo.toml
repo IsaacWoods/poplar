@@ -10,5 +10,4 @@ libpebble = { path = "../../lib/libpebble", features = ["can_alloc"] }
 linked_list_allocator = "0.8"
 log = "0.4"
 gfxconsole = { path = "../../lib/gfxconsole" }
-serde = { version = "1", default-features = false, features = ["derive", "unstable", "alloc"] }
 ptah = { path = "../../lib/ptah" }

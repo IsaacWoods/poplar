@@ -15,12 +15,12 @@
 extern crate alloc;
 
 use alloc::{collections::BTreeMap, string::String};
-use serde::{Deserialize, Serialize};
+use ptah::{Deserialize, Serialize};
 
 type DeviceName = String;
 type PropertyName = String;
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct Device {
     properties: BTreeMap<PropertyName, Property>,
 }
@@ -31,7 +31,7 @@ impl Device {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize)]
 pub enum Property {
     Bool(bool),
     Integer(u64),
@@ -39,7 +39,7 @@ pub enum Property {
 }
 
 /// These are messages sent from Bus Drivers to the Platform Bus.
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Debug, Serialize, Deserialize)]
 pub enum BusDriverMessage {
     RegisterDevice(DeviceName, Device),
     AddProperty(PropertyName, Property),

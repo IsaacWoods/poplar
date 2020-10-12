@@ -18,9 +18,9 @@ use libpebble::{
 };
 use linked_list_allocator::LockedHeap;
 use log::info;
-use serde::{Deserialize, Serialize};
+use ptah::{Deserialize, Serialize};
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Debug, Serialize, Deserialize)]
 struct TestMessage {
     id: usize,
     message: String,
