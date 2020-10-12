@@ -1,5 +1,5 @@
 use core::{
-    alloc::{AllocErr, GlobalAlloc, Layout},
+    alloc::{AllocError, GlobalAlloc, Layout},
     cmp::max,
     mem::{self, size_of},
     ops::Deref,
@@ -111,7 +111,7 @@ impl HoleList {
 
     /// Search for a big enough hole for the given `Layout` with its required alignment. This uses
     /// the first-fit strategy, and so is O(n)
-    pub fn allocate_first_fit(&mut self, layout: Layout) -> Result<*mut u8, AllocErr> {
+    pub fn allocate_first_fit(&mut self, layout: Layout) -> Result<*mut u8, AllocError> {
         assert!(layout.size() >= Self::get_min_size());
 
         allocate_first_fit(&mut self.first, layout).map(|allocation| {
@@ -195,7 +195,7 @@ fn split_hole(hole: HoleInfo, required_layout: Layout) -> Option<Allocation> {
     })
 }
 
-fn allocate_first_fit(mut previous: &mut Hole, layout: Layout) -> Result<Allocation, AllocErr> {
+fn allocate_first_fit(mut previous: &mut Hole, layout: Layout) -> Result<Allocation, AllocError> {
     loop {
         let allocation: Option<Allocation> =
             previous.next.as_mut().and_then(|current| split_hole(current.info(), layout.clone()));
@@ -215,7 +215,7 @@ fn allocate_first_fit(mut previous: &mut Hole, layout: Layout) -> Result<Allocat
 
             None => {
                 // This is the last hole, so no hole is big enough for this allocation :(
-                return Err(AllocErr {});
+                return Err(AllocError {});
             }
         }
     }
