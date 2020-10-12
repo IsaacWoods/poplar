@@ -299,19 +299,19 @@ fn enums() {
     test_value(Bar::Some(vec![654, 9]));
 }
 
-// #[test]
-// fn maps() {
-//     /*
-//      * Because we enable the `alloc` feature of serde but not the `std` feature (so it's no_std compatible), we
-//      * can't use `HashMap` here.
-//      */
-//     let mut map = BTreeMap::new();
-//     map.insert("one".to_string(), 1);
-//     map.insert("two".to_string(), 2);
-//     map.insert("three".to_string(), 3);
-//     map.insert("four".to_string(), 4);
-//     map.insert("seventy-four".to_string(), 74);
-//     map.insert("eight-hundred-and-six".to_string(), 806);
+#[test]
+fn maps() {
+    /*
+     * Because we enable the `alloc` feature of serde but not the `std` feature (so it's no_std compatible), we
+     * can't use `HashMap` here.
+     */
+    let mut map = BTreeMap::new();
+    map.insert("one".to_string(), 1);
+    map.insert("two".to_string(), 2);
+    map.insert("three".to_string(), 3);
+    map.insert("four".to_string(), 4);
+    map.insert("seventy-four".to_string(), 74);
+    map.insert("eight-hundred-and-six".to_string(), 806);
 
-//     test_value(map);
-// }
+    test_value(map);
+}

@@ -122,6 +122,11 @@ impl<'de> Deserializer<'de> {
         self.deserialize_u32()
     }
 
+    /// Start deserializing a `map`. Returns the number of elements (key-value pairs) the caller should deserialize.
+    pub fn deserialize_map_length(&mut self) -> Result<u32> {
+        self.deserialize_u32()
+    }
+
     fn take_byte(&mut self) -> Result<u8> {
         let &byte = self.input.iter().next().ok_or(Error::EndOfStream)?;
         self.input = &self.input[1..];

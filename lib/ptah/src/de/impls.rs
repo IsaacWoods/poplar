@@ -136,3 +136,21 @@ impl_for_tuple!((T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12));
 impl_for_tuple!((T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13));
 impl_for_tuple!((T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14));
 impl_for_tuple!((T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15));
+
+#[cfg(feature = "alloc")]
+impl<'de, K, V> Deserialize<'de> for alloc::collections::BTreeMap<K, V>
+where
+    K: Ord + Deserialize<'de>,
+    V: Deserialize<'de>,
+{
+    fn deserialize(deserializer: &mut Deserializer<'de>) -> Result<alloc::collections::BTreeMap<K, V>> {
+        let length = deserializer.deserialize_map_length()?;
+        let mut map = alloc::collections::BTreeMap::new();
+
+        for _ in 0..length {
+            map.insert(K::deserialize(deserializer)?, V::deserialize(deserializer)?);
+        }
+
+        Ok(map)
+    }
+}

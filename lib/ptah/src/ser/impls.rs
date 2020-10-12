@@ -174,3 +174,22 @@ impl_for_tuple!((T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12) => (0, 1
 impl_for_tuple!((T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13) => (0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13));
 impl_for_tuple!((T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14) => (0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14));
 impl_for_tuple!((T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15) => (0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15));
+
+#[cfg(feature = "alloc")]
+impl<K, V> Serialize for alloc::collections::BTreeMap<K, V>
+where
+    K: Serialize,
+    V: Serialize,
+{
+    fn serialize<W>(&self, serializer: &mut Serializer<W>) -> Result<()>
+    where
+        W: Writer,
+    {
+        let mut map = serializer.serialize_map(self.len() as u32)?;
+        for (key, value) in self.iter() {
+            map.serialize_key(key)?;
+            map.serialize_value(value)?;
+        }
+        Ok(())
+    }
+}
