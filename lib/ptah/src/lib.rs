@@ -43,22 +43,25 @@ where
     Ok(())
 }
 
-pub fn from_wire<'a, 'de, T>(serialized: &'a [u8]) -> de::Result<T>
+/// Deserialize a `T` from some bytes and, optionally, some handles. If the wire is not able to transport handles,
+/// it is fine to produce `&[]` (as long as `T` does not contain any handles, that is).
+pub fn from_wire<'a, 'de, T>(bytes: &'a [u8], handles: &'a [Handle]) -> de::Result<T>
 where
     'a: 'de,
     T: Deserialize<'de>,
 {
-    let mut deserializer = Deserializer::from_wire(serialized);
+    let mut deserializer = Deserializer::from_wire(bytes, handles);
     let value = T::deserialize(&mut deserializer)?;
-    if deserializer.input.is_empty() {
+
+    if deserializer.bytes.is_empty() {
         Ok(value)
     } else {
         Err(de::Error::TrailingBytes)
     }
 }
 
-type Handle = u32;
-type HandleSlot = u8;
+pub type Handle = u32;
+pub type HandleSlot = u8;
 
 /*
  * These are constants that are used in the wire format.
@@ -71,6 +74,13 @@ pub(crate) const HANDLE_SLOT_0: u8 = 0xf0;
 pub(crate) const HANDLE_SLOT_1: u8 = 0xf1;
 pub(crate) const HANDLE_SLOT_2: u8 = 0xf2;
 pub(crate) const HANDLE_SLOT_3: u8 = 0xf3;
+
+pub fn make_handle_slot(index: u8) -> HandleSlot {
+    /*
+     * The handle slots are contiguous, and so we can just offset from the first one.
+     */
+    HANDLE_SLOT_0 + (index as u8)
+}
 
 /// A `Writer` represents a consumer of the bytes produced by serializing a message. In cases where you can
 /// create a slice to put the bytes in, `CursorWriter` can be used. Custom `Writer`s are useful for more niche

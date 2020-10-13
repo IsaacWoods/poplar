@@ -10,6 +10,7 @@ bit_field = "0.10"
 log = { version = "0.4", optional = true }
 bitflags = "1"
 pci_types = { path = "../pci_types" }
+ptah = { path = "../ptah", optional = true }
 
 [features]
-can_alloc = ["log"]
+can_alloc = ["log", "ptah"]

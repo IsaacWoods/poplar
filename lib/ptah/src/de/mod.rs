@@ -1,5 +1,6 @@
 mod impls;
 
+use crate::Handle;
 use core::{convert::TryInto, str};
 
 /// Errors that can occur during deserialization.
@@ -7,6 +8,8 @@ use core::{convert::TryInto, str};
 pub enum Error {
     EndOfStream,
     TrailingBytes,
+    InvalidHandleSlot(crate::HandleSlot),
+
     InvalidChar,
     InvalidUtf8,
     InvalidBoolMarker(u8),
@@ -26,12 +29,13 @@ pub trait DeserializeOwned: for<'de> Deserialize<'de> {}
 impl<T> DeserializeOwned for T where T: for<'de> Deserialize<'de> {}
 
 pub struct Deserializer<'de> {
-    pub(crate) input: &'de [u8],
+    pub(crate) bytes: &'de [u8],
+    pub(crate) handles: &'de [Handle],
 }
 
 impl<'de> Deserializer<'de> {
-    pub fn from_wire(input: &'de [u8]) -> Self {
-        Deserializer { input }
+    pub fn from_wire(bytes: &'de [u8], handles: &'de [Handle]) -> Self {
+        Deserializer { bytes, handles }
     }
 
     pub fn deserialize_bool(&mut self) -> Result<bool> {
@@ -128,28 +132,28 @@ impl<'de> Deserializer<'de> {
     }
 
     fn take_byte(&mut self) -> Result<u8> {
-        let &byte = self.input.iter().next().ok_or(Error::EndOfStream)?;
-        self.input = &self.input[1..];
+        let &byte = self.bytes.iter().next().ok_or(Error::EndOfStream)?;
+        self.bytes = &self.bytes[1..];
         Ok(byte)
     }
 
     fn take_n(&mut self, n: usize) -> Result<&'de [u8]> {
-        if self.input.len() < n {
+        if self.bytes.len() < n {
             return Err(Error::EndOfStream);
         }
 
-        let bytes = &self.input[0..n];
-        self.input = &self.input[n..];
+        let bytes = &self.bytes[0..n];
+        self.bytes = &self.bytes[n..];
         Ok(bytes)
     }
 
     fn take<const N: usize>(&mut self) -> Result<[u8; N]> {
-        if self.input.len() < N {
+        if self.bytes.len() < N {
             return Err(Error::EndOfStream);
         }
 
-        let bytes = &self.input[0..N];
-        self.input = &self.input[N..];
+        let bytes = &self.bytes[0..N];
+        self.bytes = &self.bytes[N..];
         Ok(bytes.try_into().unwrap())
     }
 }

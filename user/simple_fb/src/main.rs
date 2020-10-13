@@ -13,6 +13,7 @@ use core::{mem::MaybeUninit, panic::PanicInfo};
 use gfxconsole::{Bgr32, Format, Framebuffer, Pixel};
 use libpebble::{
     caps::{CapabilitiesRepr, CAP_EARLY_LOGGING, CAP_GET_FRAMEBUFFER, CAP_PADDING, CAP_SERVICE_USER},
+    channel::Channel,
     early_logger::EarlyLogger,
     syscall::{self, FramebufferInfo, PixelFormat},
 };
@@ -48,30 +49,17 @@ pub extern "C" fn _start() -> ! {
     /*
      * Test out the service stuff. We want the echo service.
      */
-    let echo_channel = syscall::subscribe_to_service("echo.echo").expect("Failed to subscribe to echo service :(");
-    let message = {
-        let mut message_bytes = Vec::new();
-        ptah::to_wire(&TestMessage { id: 43, message: "Hello, World!".to_string() }, &mut message_bytes).unwrap();
-        message_bytes
-    };
-    syscall::send_message(echo_channel, &message, &[]).unwrap();
-    let mut messages_received = 0;
+    let echo_channel = Channel::<TestMessage, TestMessage>::from_handle(
+        syscall::subscribe_to_service("echo.echo").expect("Failed to subscribe to echo service :("),
+    );
+    echo_channel.send(&TestMessage { id: 42, message: "Hello, World!".to_string() }).unwrap();
     loop {
-        let mut bytes = [0u8; 256];
-        match syscall::get_message(echo_channel, &mut bytes, &mut []) {
-            Ok((bytes, _handles)) => {
-                info!("Echo sent message back: {:x?}", bytes);
-                let received_message: TestMessage = ptah::from_wire(bytes).unwrap();
-                info!("Message from echo: {:?}", received_message);
-                messages_received += 1;
-
-                // NOTE: this can be changed to receive a total number of messages overall
-                if messages_received == 1 {
-                    break;
-                }
+        match echo_channel.try_receive().expect("Failed to receive message") {
+            Some(message) => {
+                info!("Echo sent message back: {:?}", message);
+                break;
             }
-            Err(syscall::GetMessageError::NoMessage) => syscall::yield_to_kernel(),
-            Err(err) => panic!("Error getting message from echo: {:?}", err),
+            None => syscall::yield_to_kernel(),
         }
     }
 

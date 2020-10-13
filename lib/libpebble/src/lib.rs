@@ -6,6 +6,8 @@ pub mod caps;
 pub mod syscall;
 
 #[cfg(feature = "can_alloc")]
+pub mod channel;
+#[cfg(feature = "can_alloc")]
 pub mod early_logger;
 
 #[cfg(feature = "can_alloc")]
