@@ -1,6 +1,6 @@
 #![no_std]
 #![no_main]
-#![feature(const_generics, alloc_error_handler)]
+#![feature(const_generics, alloc_error_handler, never_type)]
 
 extern crate alloc;
 extern crate rlibc;
@@ -9,9 +9,11 @@ use alloc::vec::Vec;
 use core::panic::PanicInfo;
 use libpebble::{
     caps::{CapabilitiesRepr, CAP_EARLY_LOGGING, CAP_PADDING, CAP_SERVICE_PROVIDER},
+    channel::Channel,
     early_logger::EarlyLogger,
     syscall,
     syscall::GetMessageError,
+    Handle,
 };
 use linked_list_allocator::LockedHeap;
 use log::info;
@@ -35,7 +37,7 @@ pub extern "C" fn _start() -> ! {
     log::set_max_level(log::LevelFilter::Trace);
     info!("Echo running!");
 
-    let echo_service_channel = syscall::register_service("echo").unwrap();
+    let echo_service_channel = Channel::register_service("echo").unwrap();
     let mut subscribers = Vec::new();
 
     loop {
@@ -59,15 +61,9 @@ pub extern "C" fn _start() -> ! {
             }
         }
 
-        let mut bytes = [0u8; 256];
-        let mut handles = [libpebble::ZERO_HANDLE; 4];
-        match syscall::get_message(echo_service_channel, &mut bytes, &mut handles) {
-            Ok((bytes, handles)) => {
-                info!("Task subscribed to our service!");
-                subscribers.push(handles[0]);
-            }
-            Err(GetMessageError::NoMessage) => info!("No messages yet :("),
-            Err(err) => panic!("Error getting message: {:?}", err),
+        if let Some(subscriber_handle) = echo_service_channel.try_receive().unwrap() {
+            info!("Task subscribed to our service!");
+            subscribers.push(subscriber_handle);
         }
     }
 }
