@@ -1,5 +1,5 @@
 #![no_std]
-#![feature(asm, decl_macro, const_generics, unsafe_block_in_unsafe_fn)]
+#![feature(asm, decl_macro, const_generics, unsafe_block_in_unsafe_fn, never_type)]
 #![deny(unsafe_op_in_unsafe_fn)]
 
 pub mod caps;
@@ -32,6 +32,23 @@ impl TryFrom<usize> for Handle {
 
     fn try_from(value: usize) -> Result<Self, Self::Error> {
         Ok(Handle(u32::try_from(value)?))
+    }
+}
+
+#[cfg(feature = "ptah")]
+impl ptah::Serialize for Handle {
+    fn serialize<W>(&self, serializer: &mut ptah::Serializer<W>) -> ptah::ser::Result<()>
+    where
+        W: ptah::Writer,
+    {
+        serializer.serialize_handle(self.0 as ptah::Handle)
+    }
+}
+
+#[cfg(feature = "ptah")]
+impl<'de> ptah::Deserialize<'de> for Handle {
+    fn deserialize(deserializer: &mut ptah::Deserializer<'de>) -> ptah::de::Result<Handle> {
+        Ok(Handle(deserializer.deserialize_handle()?))
     }
 }
 

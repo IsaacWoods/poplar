@@ -128,6 +128,11 @@ where
     pub fn serialize_enum_variant(&mut self, variant_index: u32) -> Result<()> {
         self.serialize_u32(variant_index)
     }
+
+    pub fn serialize_handle(&mut self, handle: crate::Handle) -> Result<()> {
+        let slot = self.writer.push_handle(handle)?;
+        self.serialize_u8(slot)
+    }
 }
 
 pub struct SeqSerializer<'a, W>(&'a mut Serializer<W>)

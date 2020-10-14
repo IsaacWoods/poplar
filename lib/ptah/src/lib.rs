@@ -1,5 +1,12 @@
 #![no_std]
-#![feature(const_generics, assoc_char_funcs, decl_macro, maybe_uninit_uninit_array, maybe_uninit_slice)]
+#![feature(
+    const_generics,
+    assoc_char_funcs,
+    decl_macro,
+    maybe_uninit_uninit_array,
+    maybe_uninit_slice,
+    never_type
+)]
 
 extern crate alloc;
 
@@ -80,6 +87,10 @@ pub fn make_handle_slot(index: u8) -> HandleSlot {
      * The handle slots are contiguous, and so we can just offset from the first one.
      */
     HANDLE_SLOT_0 + (index as u8)
+}
+
+pub fn index_from_handle_slot(slot: HandleSlot) -> u8 {
+    slot - HANDLE_SLOT_0
 }
 
 /// A `Writer` represents a consumer of the bytes produced by serializing a message. In cases where you can

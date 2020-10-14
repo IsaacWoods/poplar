@@ -131,6 +131,14 @@ impl<'de> Deserializer<'de> {
         self.deserialize_u32()
     }
 
+    pub fn deserialize_handle(&mut self) -> Result<crate::Handle> {
+        let slot = self.deserialize_u8()?;
+        match self.handles.get(crate::index_from_handle_slot(slot) as usize) {
+            Some(&handle) => Ok(handle),
+            None => Err(Error::InvalidHandleSlot(slot)),
+        }
+    }
+
     fn take_byte(&mut self) -> Result<u8> {
         let &byte = self.bytes.iter().next().ok_or(Error::EndOfStream)?;
         self.bytes = &self.bytes[1..];
