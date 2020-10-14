@@ -27,10 +27,6 @@ where
     S: Serialize + DeserializeOwned,
     R: Serialize + DeserializeOwned,
 {
-    pub fn register_service(name: &str) -> Result<Channel<S, R>, RegisterServiceError> {
-        Ok(Self::from_handle(syscall::register_service(name)?))
-    }
-
     pub fn from_handle(handle: Handle) -> Channel<S, R> {
         Channel(handle, PhantomData)
     }
@@ -61,6 +57,12 @@ where
             Err(GetMessageError::NoMessage) => Ok(None),
             Err(err) => Err(ChannelReceiveError::ReceiveError(err)),
         }
+    }
+}
+
+impl Channel<!, Handle> {
+    pub fn register_service(name: &str) -> Result<Channel<!, Handle>, RegisterServiceError> {
+        Ok(Self::from_handle(syscall::register_service(name)?))
     }
 }
 

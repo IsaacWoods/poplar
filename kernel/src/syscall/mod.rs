@@ -393,10 +393,13 @@ where
         /*
          * Send a message down `register_channel` to tell it about its new service user, transferring the
          * provider's half of the created service channel.
+         *
+         * XXX: we manually construct a Ptah message here so userspace can use the `libpebble::Channel` type if it
+         * wants to, but without having to pull that in here.
          */
         let mut handle_objects = [None; CHANNEL_MAX_NUM_HANDLES];
         handle_objects[0] = Some(provider_end as Arc<dyn KernelObject>);
-        register_channel.add_message(Message { bytes: [].to_vec(), handle_objects });
+        register_channel.add_message(Message { bytes: [ptah::make_handle_slot(0)].to_vec(), handle_objects });
 
         // Return the user's end of the new channel to it
         Ok(task.add_handle(user_end))
