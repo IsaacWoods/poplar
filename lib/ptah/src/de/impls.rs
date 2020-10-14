@@ -90,6 +90,12 @@ impl<'de> Deserialize<'de> for () {
     }
 }
 
+impl<'de> Deserialize<'de> for ! {
+    fn deserialize(_deserializer: &mut Deserializer<'de>) -> Result<!> {
+        panic!("Can't deserialize the never type `!`")
+    }
+}
+
 #[cfg(feature = "alloc")]
 impl<'de, T> Deserialize<'de> for alloc::vec::Vec<T>
 where

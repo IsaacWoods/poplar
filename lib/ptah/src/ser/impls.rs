@@ -121,6 +121,15 @@ impl Serialize for () {
     }
 }
 
+impl Serialize for ! {
+    fn serialize<W>(&self, _serializer: &mut Serializer<W>) -> Result<()>
+    where
+        W: Writer,
+    {
+        unreachable!()
+    }
+}
+
 #[cfg(feature = "alloc")]
 impl<T> Serialize for alloc::vec::Vec<T>
 where
