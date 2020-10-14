@@ -319,7 +319,7 @@
 <span id="316">316</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="kw">use</span> <span class="ident">core</span>::{
-    <span class="ident">alloc</span>::{<span class="ident">AllocErr</span>, <span class="ident">GlobalAlloc</span>, <span class="ident">Layout</span>},
+    <span class="ident">alloc</span>::{<span class="ident">AllocError</span>, <span class="ident">GlobalAlloc</span>, <span class="ident">Layout</span>},
     <span class="ident">cmp</span>::<span class="ident">max</span>,
     <span class="ident">mem</span>::{<span class="self">self</span>, <span class="ident">size_of</span>},
     <span class="ident">ops</span>::<span class="ident">Deref</span>,
@@ -431,7 +431,7 @@
 
     <span class="doccomment">/// Search for a big enough hole for the given `Layout` with its required alignment. This uses</span>
     <span class="doccomment">/// the first-fit strategy, and so is O(n)</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">allocate_first_fit</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">layout</span>: <span class="ident">Layout</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="kw-2">*</span><span class="kw-2">mut</span> <span class="ident">u8</span>, <span class="ident">AllocErr</span><span class="op">&gt;</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">allocate_first_fit</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">layout</span>: <span class="ident">Layout</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="kw-2">*</span><span class="kw-2">mut</span> <span class="ident">u8</span>, <span class="ident">AllocError</span><span class="op">&gt;</span> {
         <span class="macro">assert</span><span class="macro">!</span>(<span class="ident">layout</span>.<span class="ident">size</span>() <span class="op">&gt;</span><span class="op">=</span> <span class="self">Self</span>::<span class="ident">get_min_size</span>());
 
         <span class="ident">allocate_first_fit</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>.<span class="ident">first</span>, <span class="ident">layout</span>).<span class="ident">map</span>(<span class="op">|</span><span class="ident">allocation</span><span class="op">|</span> {
@@ -515,7 +515,7 @@
     })
 }
 
-<span class="kw">fn</span> <span class="ident">allocate_first_fit</span>(<span class="kw-2">mut</span> <span class="ident">previous</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">Hole</span>, <span class="ident">layout</span>: <span class="ident">Layout</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Allocation</span>, <span class="ident">AllocErr</span><span class="op">&gt;</span> {
+<span class="kw">fn</span> <span class="ident">allocate_first_fit</span>(<span class="kw-2">mut</span> <span class="ident">previous</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">Hole</span>, <span class="ident">layout</span>: <span class="ident">Layout</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Allocation</span>, <span class="ident">AllocError</span><span class="op">&gt;</span> {
     <span class="kw">loop</span> {
         <span class="kw">let</span> <span class="ident">allocation</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Allocation</span><span class="op">&gt;</span> <span class="op">=</span>
             <span class="ident">previous</span>.<span class="ident">next</span>.<span class="ident">as_mut</span>().<span class="ident">and_then</span>(<span class="op">|</span><span class="ident">current</span><span class="op">|</span> <span class="ident">split_hole</span>(<span class="ident">current</span>.<span class="ident">info</span>(), <span class="ident">layout</span>.<span class="ident">clone</span>()));
@@ -535,7 +535,7 @@
 
             <span class="prelude-val">None</span> <span class="op">=</span><span class="op">&gt;</span> {
                 <span class="comment">// This is the last hole, so no hole is big enough for this allocation :(</span>
-                <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">AllocErr</span> {});
+                <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">AllocError</span> {});
             }
         }
     }

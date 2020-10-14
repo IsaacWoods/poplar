@@ -5,5 +5,5 @@ implementors["libpebble"] = [{"text":"impl StructuralEq for Capability","synthet
 implementors["log"] = [{"text":"impl StructuralEq for Level","synthetic":false,"types":[]},{"text":"impl StructuralEq for LevelFilter","synthetic":false,"types":[]},{"text":"impl&lt;'a&gt; StructuralEq for Metadata&lt;'a&gt;","synthetic":false,"types":[]},{"text":"impl&lt;'a&gt; StructuralEq for MetadataBuilder&lt;'a&gt;","synthetic":false,"types":[]}];
 implementors["pci_types"] = [{"text":"impl StructuralEq for DeviceType","synthetic":false,"types":[]},{"text":"impl StructuralEq for UsbType","synthetic":false,"types":[]},{"text":"impl StructuralEq for PciAddress","synthetic":false,"types":[]}];
 implementors["proc_macro2"] = [{"text":"impl StructuralEq for Delimiter","synthetic":false,"types":[]},{"text":"impl StructuralEq for Spacing","synthetic":false,"types":[]}];
-implementors["ptah"] = [{"text":"impl StructuralEq for Error","synthetic":false,"types":[]}];
+implementors["ptah"] = [{"text":"impl StructuralEq for Error","synthetic":false,"types":[]},{"text":"impl StructuralEq for Error","synthetic":false,"types":[]}];
 if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()

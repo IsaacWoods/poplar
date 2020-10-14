@@ -1,0 +1,297 @@
+<!DOCTYPE HTML>
+<html lang="en" class="sidebar-visible no-js light">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Building a rustc target for Pebble - Pebble OS</title>
+        
+        
+
+
+        <!-- Custom HTML head -->
+        
+
+
+        <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff" />
+
+        
+        <link rel="icon" href="../favicon.svg">
+        
+        
+        <link rel="shortcut icon" href="../favicon.png">
+        
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        
+        <link rel="stylesheet" href="../fonts/fonts.css">
+        
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" href="../highlight.css">
+        <link rel="stylesheet" href="../tomorrow-night.css">
+        <link rel="stylesheet" href="../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+        
+
+        
+    </head>
+    <body>
+        <!-- Provide site root to javascript -->
+        <script type="text/javascript">
+            var path_to_root = "../";
+            var default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "navy" : "light";
+        </script>
+
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script type="text/javascript">
+            try {
+                var theme = localStorage.getItem('mdbook-theme');
+                var sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script type="text/javascript">
+            var theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            var html = document.querySelector('html');
+            html.classList.remove('no-js')
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add('js');
+        </script>
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script type="text/javascript">
+            var html = document.querySelector('html');
+            var sidebar = 'hidden';
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            }
+            html.classList.remove('sidebar-visible');
+            html.classList.add("sidebar-" + sidebar);
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <div class="sidebar-scrollbox">
+                <ol class="chapter"><li class="chapter-item expanded "><a href="../introduction/index.html"><strong aria-hidden="true">1.</strong> Introduction</a></li><li class="chapter-item expanded "><a href="../kernel/index.html"><strong aria-hidden="true">2.</strong> The Kernel</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../kernel/platforms.html"><strong aria-hidden="true">2.1.</strong> Platforms</a></li><li class="chapter-item expanded "><a href="../kernel/efiloader.html"><strong aria-hidden="true">2.2.</strong> Efiloader</a></li><li class="chapter-item expanded "><a href="../kernel/kernel_objects.html"><strong aria-hidden="true">2.3.</strong> Kernel Objects</a></li><li class="chapter-item expanded "><a href="../kernel/syscalls.html"><strong aria-hidden="true">2.4.</strong> System calls</a></li><li class="chapter-item expanded "><a href="../kernel/debugging.html"><strong aria-hidden="true">2.5.</strong> Debugging the kernel</a></li></ol></li><li class="chapter-item expanded "><a href="../syscalls/index.html"><strong aria-hidden="true">3.</strong> Syscalls</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../syscalls/yield.html"><strong aria-hidden="true">3.1.</strong> yield</a></li><li class="chapter-item expanded "><a href="../syscalls/early_log.html"><strong aria-hidden="true">3.2.</strong> early_log</a></li><li class="chapter-item expanded "><a href="../syscalls/get_framebuffer.html"><strong aria-hidden="true">3.3.</strong> get_framebuffer</a></li><li class="chapter-item expanded "><a href="../syscalls/map_memory_object.html"><strong aria-hidden="true">3.4.</strong> map_memory_object</a></li><li class="chapter-item expanded "><a href="../syscalls/create_channel.html"><strong aria-hidden="true">3.5.</strong> create_channel</a></li><li class="chapter-item expanded "><a href="../syscalls/send_message.html"><strong aria-hidden="true">3.6.</strong> send_message</a></li><li class="chapter-item expanded "><a href="../syscalls/get_message.html"><strong aria-hidden="true">3.7.</strong> get_message</a></li><li class="chapter-item expanded "><a href="../syscalls/register_service.html"><strong aria-hidden="true">3.8.</strong> register_service</a></li><li class="chapter-item expanded "><a href="../syscalls/subscribe_to_service.html"><strong aria-hidden="true">3.9.</strong> subscribe_to_service</a></li><li class="chapter-item expanded "><a href="../syscalls/pci_get_info.html"><strong aria-hidden="true">3.10.</strong> pci_get_info</a></li></ol></li><li class="chapter-item expanded "><a href="../userspace/index.html"><strong aria-hidden="true">4.</strong> Userspace</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../userspace/capabilities.html"><strong aria-hidden="true">4.1.</strong> Capabilities</a></li><li class="chapter-item expanded "><a href="../userspace/memory_map_x86_64.html"><strong aria-hidden="true">4.2.</strong> Memory map (x86_64)</a></li></ol></li><li class="chapter-item expanded "><a href="../message_passing/index.html"><strong aria-hidden="true">5.</strong> Message Passing</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../message_passing/wire_format.html"><strong aria-hidden="true">5.1.</strong> Ptah wire format</a></li></ol></li><li class="chapter-item expanded "><a href="../journal/index.html"><strong aria-hidden="true">6.</strong> Journal</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../journal/rustc_target.html" class="active"><strong aria-hidden="true">6.1.</strong> Building a rustc target for Pebble</a></li></ol></li></ol>
+            </div>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle"></div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky bordered">
+                    <div class="left-buttons">
+                        <button id="sidebar-toggle" class="icon-button" type="button" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </button>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light (default)</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        
+                        <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                        
+                    </div>
+
+                    <h1 class="menu-title">Pebble OS</h1>
+
+                    <div class="right-buttons">
+                        <a href="../print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                        
+                    </div>
+                </div>
+
+                
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <input type="search" name="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+                
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script type="text/javascript">
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1><a class="header" href="#building-a-rustc-target-for-pebble" id="building-a-rustc-target-for-pebble">Building a <code>rustc</code> target for Pebble</a></h1>
+<p>We want a target in <code>rustc</code> for building userspace programs for Pebble. It would be especially cool to get it
+merged as an upstream Tier-3 target. This documents my progress, mainly as a reference for me to remember how it all
+works.</p>
+<h3><a class="header" href="#how-do-i-actually-build-and-use-rustc" id="how-do-i-actually-build-and-use-rustc">How do I actually build and use <code>rustc</code>?</a></h3>
+<p>A useful baseline invocation for normal use is:</p>
+<pre><code>./x.py build -i library/std
+</code></pre>
+<p>The easiest way to test the built <code>rustc</code> is to create a <code>rustup</code> toolchain (from the root of the Rust repo):</p>
+<pre><code>rustup toolchain link pebble build/{host triple}/stage1     # If you built a stage-1 compiler (default with invocation above)
+rustup toolchain link pebble build/{host triple}/stage2     # If you built a stage-2 compiler
+</code></pre>
+<p>It's easiest to call your toolchain <code>pebble</code>, as this is the name we use in the Makefiles for now.</p>
+<p>You can then use this toolchain from Cargo anywhere on the system with:</p>
+<pre><code>cargo +pebble build     # Or whatever command you need
+</code></pre>
+<h3><a class="header" href="#using-a-custom-llvm" id="using-a-custom-llvm">Using a custom LLVM</a></h3>
+<ul>
+<li>Fork Rust's <code>llvm-project</code></li>
+<li><code>cd src/llvm_project</code></li>
+<li><code>git remote add my_fork {url to your custom LLVM's repo}</code></li>
+<li><code>git fetch my_fork</code></li>
+<li><code>git checkout my_fork/{the correct branch}</code></li>
+<li><code>cd ..</code></li>
+<li><code>git add llvm-project</code></li>
+<li><code>git commit -m &quot;Move to custom LLVM&quot;</code></li>
+</ul>
+<h3><a class="header" href="#things-to-change-in-configtoml" id="things-to-change-in-configtoml">Things to change in <code>config.toml</code></a></h3>
+<p>This is as of <code>2020-09-29</code> - you need to remember to keep the <code>config.toml</code> up-to-date (as it's not checked in
+upstream), and can cause confusing errors when it's out-of-date.</p>
+<ul>
+<li><code>assertions = true</code> under <code>[llvm]</code></li>
+<li><code>debug = true</code> under <code>[rust]</code></li>
+<li><code>incremental = true</code> under <code>[rust]</code></li>
+<li><code>lld = true</code> under <code>[rust]</code>. Without this, the toolchain can't find <code>rust-lld</code> when linking.</li>
+<li><code>llvm-tools = true</code> under <code>[rust]</code>. This probably isn't needed, I just chucked it in in case <code>rust-lld</code> needs it.</li>
+</ul>
+<h3><a class="header" href="#adding-the-target" id="adding-the-target">Adding the target</a></h3>
+<p>I used a slightly different layout to most targets (which have a base, which creates a <code>TargetOptions</code>, and then a
+target that modifies and uses those options).</p>
+<ul>
+<li>Pebble targets generally need a custom linker script. I added one at <code>compiler/rustc_target/src/spec/x86_64_pebble.ld</code>.</li>
+<li>Make a module for the target (I called mine <code>compiler/rustc_target/src/spec/x86_64_pebble.rs</code>). Copy from a
+existing one. Instead of a separate <code>pebble_base.rs</code> to create the <code>TargetOptions</code>, we do it in the target
+itself. We <code>include_str!</code> the linker script in here, so it's distributed as part of the <code>rustc</code> binary.</li>
+<li>Add the target in the <code>supported_targets!</code> macro in <code>compiler/rustc_target/src/spec/mod.rs</code>.</li>
+</ul>
+<h3><a class="header" href="#adding-the-target-to-llvm" id="adding-the-target-to-llvm">Adding the target to LLVM</a></h3>
+<p>I don't really know my way around the LLVM code base, so this was fairly cobbled together:</p>
+<ul>
+<li>In <code>llvm/include/llvm/ADT/Triple.h</code>, add a variant for the OS in the <code>OSType</code> enum. I called it <code>Pebble</code>. Don't
+make it the last entry, to avoid having to change the <code>LastOSType</code> variant.</li>
+<li>In <code>llvm/lib/Support/Triple.cpp</code>, in the function <code>Triple::getOSTypeName</code>, add the OS. I added <code>case Pebble: return &quot;pebble&quot;;</code>.</li>
+<li>In the same file, in the <code>parseOS</code> function, add the OS. I added <code>.StartsWith(&quot;pebble&quot;, Triple::Pebble)</code>.</li>
+<li>This file also contains a function, <code>getDefaultFormat</code>, that gives the default format for a platform. The default
+is ELF, so no changes were needed for Pebble, but they might be for another OS.</li>
+</ul>
+<p>TIP: When you make a change in the <code>llvm-project</code> submodule, you will need to commit these changes, and then update
+the submodule in the parent repo, or the bootstrap script will checkout the old version (without your changes) and
+build an entire compiler without the changes you are trying to test.</p>
+<p>NOTE: to avoid people from having to switch to our <code>llvm-project</code> fork, we don't actually use our LLVM target from
+<code>rustc</code> (yet). I'm not sure why you need per-OS targets in LLVM, as it doesn't even seem to let us do any of the
+things we wanted to (this totally might just be me not knowing how LLVM targets work).</p>
+<h3><a class="header" href="#notes" id="notes">Notes</a></h3>
+<ul>
+<li>We needed to change the entry point to <code>_start</code>, or it silently just doesn't emit any sections in the final
+image.</li>
+<li>By default, it throws away our <code>.caps</code> sections. We need a way to emit it regardless - this is done by manually
+creating the program header and specifying that they should be kept with <code>KEEP</code>. There are two possible solutions
+that I can see: make <code>rustc</code> emit a linker script, or try and introduce these ideas into <code>llvm</code>/<code>lld</code> with our
+target (I'm not even sure this is possible).</li>
+<li>It looks like <code>lld</code> has no OS-specific code at all, and the only place that specifically-kept sections are added
+is in the linker script parser. Looks like we might have to actually create a file-based linker script (does
+literally noone else need to pass a linker script by command line??).</li>
+</ul>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                        
+                            <a rel="prev" href="../journal/index.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+                        
+
+                        
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                
+                    <a rel="prev" href="../journal/index.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+                
+
+                
+            </nav>
+
+        </div>
+
+        
+
+        
+
+        
+
+        
+        <script type="text/javascript">
+            window.playground_copyable = true;
+        </script>
+        
+
+        
+
+        
+        <script src="../elasticlunr.min.js" type="text/javascript" charset="utf-8"></script>
+        <script src="../mark.min.js" type="text/javascript" charset="utf-8"></script>
+        <script src="../searcher.js" type="text/javascript" charset="utf-8"></script>
+        
+
+        <script src="../clipboard.min.js" type="text/javascript" charset="utf-8"></script>
+        <script src="../highlight.js" type="text/javascript" charset="utf-8"></script>
+        <script src="../book.js" type="text/javascript" charset="utf-8"></script>
+
+        <!-- Custom JS scripts -->
+        
+
+        
+
+    </body>
+</html>

@@ -5,6 +5,5 @@ implementors["libpebble"] = [{"text":"impl StructuralPartialEq for Capability","
 implementors["log"] = [{"text":"impl&lt;'a&gt; StructuralPartialEq for Metadata&lt;'a&gt;","synthetic":false,"types":[]},{"text":"impl&lt;'a&gt; StructuralPartialEq for MetadataBuilder&lt;'a&gt;","synthetic":false,"types":[]},{"text":"impl StructuralPartialEq for ParseLevelError","synthetic":false,"types":[]}];
 implementors["pci_types"] = [{"text":"impl StructuralPartialEq for DeviceType","synthetic":false,"types":[]},{"text":"impl StructuralPartialEq for UsbType","synthetic":false,"types":[]},{"text":"impl StructuralPartialEq for PciAddress","synthetic":false,"types":[]}];
 implementors["proc_macro2"] = [{"text":"impl StructuralPartialEq for Delimiter","synthetic":false,"types":[]},{"text":"impl StructuralPartialEq for Spacing","synthetic":false,"types":[]}];
-implementors["ptah"] = [{"text":"impl StructuralPartialEq for Error","synthetic":false,"types":[]}];
-implementors["serde"] = [{"text":"impl StructuralPartialEq for Error","synthetic":false,"types":[]},{"text":"impl&lt;'a&gt; StructuralPartialEq for Unexpected&lt;'a&gt;","synthetic":false,"types":[]}];
+implementors["ptah"] = [{"text":"impl StructuralPartialEq for Error","synthetic":false,"types":[]},{"text":"impl StructuralPartialEq for Error","synthetic":false,"types":[]}];
 if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()
