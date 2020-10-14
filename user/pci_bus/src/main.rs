@@ -1,14 +1,15 @@
 #![no_std]
 #![no_main]
-#![feature(const_generics, alloc_error_handler)]
+#![feature(const_generics, alloc_error_handler, never_type)]
 
 extern crate alloc;
 extern crate rlibc;
 
-use alloc::{collections::BTreeMap, string::ToString, vec::Vec};
+use alloc::{collections::BTreeMap, string::ToString};
 use core::{convert::TryFrom, panic::PanicInfo};
 use libpebble::{
     caps::{CapabilitiesRepr, CAP_EARLY_LOGGING, CAP_PADDING, CAP_PCI_BUS_DRIVER, CAP_SERVICE_USER},
+    channel::Channel,
     early_logger::EarlyLogger,
     syscall,
 };
@@ -36,7 +37,8 @@ pub extern "C" fn _start() -> ! {
     log::set_max_level(log::LevelFilter::Trace);
     info!("PCI bus driver is running!");
 
-    let platform_bus_channel = syscall::subscribe_to_service("platform_bus.bus_driver").unwrap();
+    let platform_bus_channel: Channel<BusDriverMessage, !> =
+        Channel::from_handle(syscall::subscribe_to_service("platform_bus.bus_driver").unwrap());
 
     let descriptors = syscall::pci_get_info_vec().expect("Failed to get PCI descriptors");
     for descriptor in descriptors {
@@ -53,18 +55,16 @@ pub extern "C" fn _start() -> ! {
         /*
          * Register the device with the Platform Bus.
          */
-        {
-            let name = "pci-".to_string() + &descriptor.address.to_string();
+        let name = "pci-".to_string() + &descriptor.address.to_string();
+        let properties = {
             let mut properties = BTreeMap::new();
             properties.insert("pci.vendor_id".to_string(), Property::Integer(descriptor.vendor_id as u64));
             properties.insert("pci.device_id".to_string(), Property::Integer(descriptor.device_id as u64));
             properties.insert("pci.class".to_string(), Property::Integer(descriptor.class as u64));
             properties.insert("pci.sub_class".to_string(), Property::Integer(descriptor.sub_class as u64));
-
-            let mut bytes = Vec::new();
-            ptah::to_wire(&BusDriverMessage::RegisterDevice(name, Device::new(properties)), &mut bytes).unwrap();
-            syscall::send_message(platform_bus_channel, &bytes, &[]).unwrap();
-        }
+            properties
+        };
+        platform_bus_channel.send(&BusDriverMessage::RegisterDevice(name, Device::new(properties))).unwrap();
     }
 
     loop {
