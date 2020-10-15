@@ -37,6 +37,34 @@ pub extern "C" fn _start() -> ! {
     log::set_logger(&EarlyLogger).unwrap();
     log::set_max_level(log::LevelFilter::Trace);
     info!("XHCI USB Bus Driver is running!");
+
+    // This allows us to talk to the PlatformBus as a bus driver (to register USB devices).
+    let platform_bus_bus_channel: Channel<BusDriverMessage, !> =
+        Channel::from_handle(syscall::subscribe_to_service("platform_bus.bus_driver").unwrap());
+    // This allows us to talk to the PlatformBus as a device driver (to find controllers we can manage).
+    let platform_bus_device_channel: Channel<DeviceDriverMessage, DeviceDriverRequest> =
+        Channel::from_handle(syscall::subscribe_to_service("platform_bus.device_driver").unwrap());
+
+    // Tell PlatformBus that we're interested in XHCI controllers.
+    platform_bus_device_channel
+        .send(&DeviceDriverMessage::RegisterInterest(vec![
+            Filter::Matches(String::from("pci.class"), Property::Integer(0x0c)),
+            Filter::Matches(String::from("pci.sub_class"), Property::Integer(0x03)),
+            Filter::Matches(String::from("pci.interface"), Property::Integer(0x30)),
+        ]))
+        .unwrap();
+
+    loop {
+        syscall::yield_to_kernel();
+
+        loop {
+            if let Some(request) = platform_bus_device_channel.try_receive().unwrap() {
+                info!("Request from PlatformBus: {:?}", request);
+            } else {
+                break;
+            }
+        }
+    }
 }
 
 #[panic_handler]
