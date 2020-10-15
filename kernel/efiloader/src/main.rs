@@ -190,6 +190,10 @@ fn main(image_handle: Handle, system_table: SystemTable<Boot>) -> Result<!, Load
             .unwrap();
     }
 
+    // TEMP XXX: pause until key pressed before switching to graphics mode
+    // info!("Waiting for key press. Will switch to graphics mode next.");
+    // system_table.boot_services().wait_for_event(&mut [system_table.stdin().wait_for_key_event()]);
+
     /*
      * Allocate memory to hold the memory map. This does something pretty janky:
      *      - Some implementations are super broken, so we ask them how much space they need for their memory
@@ -222,7 +226,7 @@ fn main(image_handle: Handle, system_table: SystemTable<Boot>) -> Result<!, Load
     if video_mode.is_none() {
         Logger::switch_to_serial();
     }
-     */
+
     let (_system_table, memory_map) = system_table
         .exit_boot_services(image_handle, memory_map_buffer)
         .expect_success("Failed to exit boot services");
