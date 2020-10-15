@@ -1,6 +1,6 @@
-.PHONY: user echo pci_bus platform_bus simple_fb update clean
+.PHONY: user echo pci_bus platform_bus simple_fb usb_bus_xhci update clean
 
-user: echo simple_fb platform_bus pci_bus;
+user: echo simple_fb platform_bus pci_bus usb_bus_xhci;
 
 echo:
 	cargo +pebble build -Z build-std=core,alloc --target x86_64-pebble --manifest-path echo/Cargo.toml
@@ -17,6 +17,10 @@ platform_bus:
 pci_bus:
 	cargo +pebble build -Z build-std=core,alloc --target x86_64-pebble --manifest-path pci_bus/Cargo.toml
 	cp target/$(PLATFORM)-pebble/debug/pci_bus $(BUILD_DIR)/fat/pci_bus.elf
+
+usb_bus_xhci:
+	cargo +pebble build -Z build-std=core,alloc --target x86_64-pebble --manifest-path usb_bus_xhci/Cargo.toml
+	cp target/$(PLATFORM)-pebble/debug/usb_bus_xhci $(BUILD_DIR)/fat/usb_bus_xhci.elf
 
 update:
 	cargo update
