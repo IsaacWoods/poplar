@@ -14,15 +14,15 @@
 
 extern crate alloc;
 
-use alloc::{collections::BTreeMap, string::String};
+use alloc::{collections::BTreeMap, string::String, vec::Vec};
 use ptah::{Deserialize, Serialize};
 
 type DeviceName = String;
 type PropertyName = String;
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Device {
-    properties: BTreeMap<PropertyName, Property>,
+    pub properties: BTreeMap<PropertyName, Property>,
 }
 
 impl Device {
@@ -42,8 +42,37 @@ pub enum Property {
 #[derive(Debug, Serialize, Deserialize)]
 pub enum BusDriverMessage {
     RegisterDevice(DeviceName, Device),
-    AddProperty(PropertyName, Property),
-    RemoveProperty(PropertyName),
     // TODO: this could have messages to handle hot-plugging (Bus Driver tells Platform Bus a device was removed,
     // we pass that on to the Device Driver if the device was claimed by one)
+}
+
+/// These are messages sent from Device Drivers to the Platform Bus.
+#[derive(Debug, Serialize, Deserialize)]
+pub enum DeviceDriverMessage {
+    /// Register interest in a particular type of device. For a device to be managed by this device driver, all of
+    /// the `Filter`s must be fulfilled.
+    RegisterInterest(Vec<Filter>),
+}
+
+/// These are message sent from the Platform Bus to a Device Driver.
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub enum DeviceDriverRequest {
+    /// Request that a Device Driver starts to handle the given Device.
+    HandoffDevice(DeviceName, Device),
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub enum Filter {
+    Matches(PropertyName, Property),
+}
+
+impl Filter {
+    pub fn match_against(&self, properties: &BTreeMap<PropertyName, Property>) -> bool {
+        match self {
+            Filter::Matches(ref name, ref property) => match properties.get(name) {
+                Some(property_to_match) => (property == property_to_match),
+                None => false,
+            },
+        }
+    }
 }

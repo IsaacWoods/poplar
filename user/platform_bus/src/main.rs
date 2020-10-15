@@ -16,18 +16,35 @@ use libpebble::{
     Handle,
 };
 use linked_list_allocator::LockedHeap;
-use log::info;
-use platform_bus::{BusDriverMessage, Device, Property};
+use log::{info, warn};
+use platform_bus::{BusDriverMessage, Device, DeviceDriverMessage, DeviceDriverRequest, Filter, Property};
 
 #[global_allocator]
 static ALLOCATOR: LockedHeap = LockedHeap::empty();
 
+type BusDriverIndex = usize;
+type DeviceDriverIndex = usize;
+
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+enum DeviceState {
+    Unclaimed,
+    Claimed(BusDriverIndex),
+}
+
 struct DeviceEntry {
     device: Device,
-    bus_driver: Rc<Channel<(), BusDriverMessage>>,
-    /// If this is `None`, the device has not been claimed. If this is `Some`, the handle points to the driver that
-    /// manages this device.
-    device_driver: Option<Handle>,
+    bus_driver: BusDriverIndex,
+    state: DeviceState,
+}
+
+struct BusDriver {
+    channel: Channel<(), BusDriverMessage>,
+}
+
+struct DeviceDriver {
+    /// If this is `None`, the driver hasn't registered its filters yet, and shouldn't be offered any devices.
+    filters: Option<Vec<Filter>>,
+    channel: Channel<DeviceDriverRequest, DeviceDriverMessage>,
 }
 
 #[no_mangle]
@@ -47,7 +64,13 @@ pub extern "C" fn _start() -> ! {
     info!("PlatformBus is running!");
 
     let bus_driver_service_channel = Channel::register_service("bus_driver").unwrap();
-    let mut bus_drivers: Vec<Rc<Channel<(), BusDriverMessage>>> = Vec::new();
+    let device_driver_service_channel = Channel::register_service("device_driver").unwrap();
+
+    let mut current_bus_driver_index = 0;
+    let mut current_device_driver_index = 0;
+
+    let mut bus_drivers: Vec<(BusDriverIndex, BusDriver)> = Vec::new();
+    let mut device_drivers: Vec<(DeviceDriverIndex, DeviceDriver)> = Vec::new();
     let mut devices = BTreeMap::<String, DeviceEntry>::new();
 
     loop {
@@ -56,29 +79,103 @@ pub extern "C" fn _start() -> ! {
         /*
          * Register any new bus drivers that want a channel to register devices.
          */
-        if let Some(bus_driver_handle) = bus_driver_service_channel.try_receive().unwrap() {
-            info!("Bus driver subscribed to PlatformBus!");
-            bus_drivers.push(Rc::new(Channel::from_handle(bus_driver_handle)));
+        loop {
+            if let Some(bus_driver_handle) = bus_driver_service_channel.try_receive().unwrap() {
+                info!("Bus driver subscribed to PlatformBus!");
+                bus_drivers.push((
+                    current_bus_driver_index,
+                    BusDriver { channel: Channel::from_handle(bus_driver_handle) },
+                ));
+                current_bus_driver_index += 1;
+            } else {
+                break;
+            }
+        }
+
+        /*
+         * Register any new device drivers.
+         */
+        loop {
+            if let Some(device_driver_handle) = device_driver_service_channel.try_receive().unwrap() {
+                info!("Device driver subscribed to PlatformBus!");
+                device_drivers.push((
+                    current_device_driver_index,
+                    DeviceDriver { channel: Channel::from_handle(device_driver_handle), filters: None },
+                ));
+                current_device_driver_index += 1;
+            } else {
+                break;
+            }
         }
 
         /*
          * Listen to Bus Driver channels to see if any of them have sent us any messages.
          */
-        for bus_driver in bus_drivers.iter() {
+        for (index, bus_driver) in bus_drivers.iter() {
             loop {
-                match bus_driver.try_receive().unwrap() {
+                match bus_driver.channel.try_receive().unwrap() {
                     Some(message) => match message {
                         BusDriverMessage::RegisterDevice(name, device) => {
                             info!("Registering device: {:?} as {}", device, name);
                             devices.insert(
                                 name,
-                                DeviceEntry { device, bus_driver: bus_driver.clone(), device_driver: None },
+                                DeviceEntry { device, bus_driver: *index, state: DeviceState::Unclaimed },
                             );
                         }
-                        BusDriverMessage::AddProperty(name, property) => todo!(),
-                        BusDriverMessage::RemoveProperty(name) => todo!(),
                     },
                     None => break,
+                }
+            }
+        }
+
+        /*
+         * Listen to Device Driver channels to see if any of them have sent us any messages.
+         */
+        for (index, device_driver) in device_drivers.iter_mut() {
+            loop {
+                match device_driver.channel.try_receive().unwrap() {
+                    Some(message) => match message {
+                        DeviceDriverMessage::RegisterInterest(filters) => {
+                            info!("Registering interest for devices with filters: {:?}", filters);
+
+                            /*
+                             * We only allow device drivers to register their interests once. After that, we just
+                             * ignore them.
+                             */
+                            if device_driver.filters.is_none() {
+                                device_driver.filters = Some(filters);
+                            } else {
+                                warn!("Device driver tried to register interests more than one. Ignored.");
+                            }
+                        }
+                    },
+                    None => break,
+                }
+            }
+        }
+
+        /*
+         * Now we've handled any new messages, check to see if we have any unclaimed devices. If we do, check to
+         * see if we have a device driver to offer them to.
+         */
+        for (name, device) in devices.iter_mut() {
+            if device.state == DeviceState::Unclaimed {
+                for (index, device_driver) in
+                    device_drivers.iter().filter(|(_index, driver)| driver.filters.is_some())
+                {
+                    let matches_filter =
+                        device_driver.filters.as_ref().unwrap().iter().fold(true, |matches_so_far, filter| {
+                            matches_so_far && filter.match_against(&device.device.properties)
+                        });
+
+                    if matches_filter {
+                        info!("Found a match for device: {:?}!", name);
+                        device.state = DeviceState::Claimed(*index);
+                        device_driver
+                            .channel
+                            .send(&DeviceDriverRequest::HandoffDevice(name.clone(), device.device.clone()))
+                            .unwrap();
+                    }
                 }
             }
         }
