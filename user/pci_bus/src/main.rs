@@ -43,8 +43,13 @@ pub extern "C" fn _start() -> ! {
     let descriptors = syscall::pci_get_info_vec().expect("Failed to get PCI descriptors");
     for descriptor in descriptors {
         info!(
-            "PCI device at {}: {:x}:{:x} (class = {}, sub = {})",
-            descriptor.address, descriptor.vendor_id, descriptor.device_id, descriptor.class, descriptor.sub_class
+            "PCI device at {}: {:04x}:{:04x} (class = {}, sub = {}, interface = {})",
+            descriptor.address,
+            descriptor.vendor_id,
+            descriptor.device_id,
+            descriptor.class,
+            descriptor.sub_class,
+            descriptor.interface
         );
         let device_type = DeviceType::from((descriptor.class, descriptor.sub_class));
         info!("Device type: {:?}", device_type);
@@ -58,10 +63,13 @@ pub extern "C" fn _start() -> ! {
         let name = "pci-".to_string() + &descriptor.address.to_string();
         let properties = {
             let mut properties = BTreeMap::new();
+
             properties.insert("pci.vendor_id".to_string(), Property::Integer(descriptor.vendor_id as u64));
             properties.insert("pci.device_id".to_string(), Property::Integer(descriptor.device_id as u64));
             properties.insert("pci.class".to_string(), Property::Integer(descriptor.class as u64));
             properties.insert("pci.sub_class".to_string(), Property::Integer(descriptor.sub_class as u64));
+            properties.insert("pci.interface".to_string(), Property::Integer(descriptor.interface as u64));
+
             properties
         };
         platform_bus_channel.send(&BusDriverMessage::RegisterDevice(name, Device::new(properties))).unwrap();
