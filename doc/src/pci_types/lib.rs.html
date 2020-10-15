@@ -169,6 +169,18 @@
 <span id="166">166</span>
 <span id="167">167</span>
 <span id="168">168</span>
+<span id="169">169</span>
+<span id="170">170</span>
+<span id="171">171</span>
+<span id="172">172</span>
+<span id="173">173</span>
+<span id="174">174</span>
+<span id="175">175</span>
+<span id="176">176</span>
+<span id="177">177</span>
+<span id="178">178</span>
+<span id="179">179</span>
+<span id="180">180</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="attribute">#![<span class="ident">no_std</span>]</span>
 
@@ -179,10 +191,12 @@
 
 <span class="doccomment">/// PCIe supports 65536 segments, each with 256 buses, each with 32 slots, each with 8 possible functions. We cram this into a `u32`:</span>
 <span class="doccomment">///</span>
+<span class="doccomment">/// ```ignore</span>
 <span class="doccomment">/// 32                              16               8         3      0</span>
 <span class="doccomment">///  +-------------------------------+---------------+---------+------+</span>
 <span class="doccomment">///  |            segment            |      bus      | device  | func |</span>
 <span class="doccomment">///  +-------------------------------+---------------+---------+------+</span>
+<span class="doccomment">/// ```</span>
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Copy</span>, <span class="ident">PartialEq</span>, <span class="ident">Eq</span>, <span class="ident">PartialOrd</span>, <span class="ident">Ord</span>, <span class="ident">Debug</span>, <span class="ident">Default</span>)]</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">PciAddress</span>(<span class="ident">u32</span>);
 
@@ -215,7 +229,14 @@
 
 <span class="kw">impl</span> <span class="ident">fmt</span>::<span class="ident">Display</span> <span class="kw">for</span> <span class="ident">PciAddress</span> {
     <span class="kw">fn</span> <span class="ident">fmt</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">f</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">fmt</span>::<span class="ident">Formatter</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">fmt</span>::<span class="prelude-ty">Result</span> {
-        <span class="macro">write</span><span class="macro">!</span>(<span class="ident">f</span>, <span class="string">&quot;{:02x}-{:02x}:{:02x}.{}&quot;</span>, <span class="self">self</span>.<span class="ident">segment</span>(), <span class="self">self</span>.<span class="ident">bus</span>(), <span class="self">self</span>.<span class="ident">device</span>(), <span class="self">self</span>.<span class="ident">function</span>())
+        <span class="macro">write</span><span class="macro">!</span>(
+            <span class="ident">f</span>,
+            <span class="string">&quot;{:02x}-{:02x}:{:02x}.{}&quot;</span>,
+            <span class="self">self</span>.<span class="ident">segment</span>(),
+            <span class="self">self</span>.<span class="ident">bus</span>(),
+            <span class="self">self</span>.<span class="ident">device</span>(),
+            <span class="self">self</span>.<span class="ident">function</span>()
+        )
     }
 }
 
@@ -328,7 +349,10 @@
         <span class="kw">unsafe</span> { <span class="ident">access</span>.<span class="ident">read</span>(<span class="self">self</span>.<span class="number">0</span>, <span class="number">0x0c</span>) }.<span class="ident">get_bit</span>(<span class="number">23</span>)
     }
 
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">revision_and_class</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">access</span>: <span class="kw-2">&amp;</span><span class="ident">A</span>) <span class="op">-</span><span class="op">&gt;</span> (<span class="ident">DeviceRevision</span>, <span class="ident">BaseClass</span>, <span class="ident">SubClass</span>, <span class="ident">Interface</span>) {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">revision_and_class</span>(
+        <span class="kw-2">&amp;</span><span class="self">self</span>,
+        <span class="ident">access</span>: <span class="kw-2">&amp;</span><span class="ident">A</span>,
+    ) <span class="op">-</span><span class="op">&gt;</span> (<span class="ident">DeviceRevision</span>, <span class="ident">BaseClass</span>, <span class="ident">SubClass</span>, <span class="ident">Interface</span>) {
         <span class="kw">let</span> <span class="ident">field</span> <span class="op">=</span> <span class="kw">unsafe</span> { <span class="ident">access</span>.<span class="ident">read</span>(<span class="self">self</span>.<span class="number">0</span>, <span class="number">0x08</span>) };
         (
             <span class="ident">field</span>.<span class="ident">get_bits</span>(<span class="number">0</span>..<span class="number">8</span>) <span class="kw">as</span> <span class="ident">DeviceRevision</span>,

@@ -337,6 +337,8 @@
 <span id="334">334</span>
 <span id="335">335</span>
 <span id="336">336</span>
+<span id="337">337</span>
+<span id="338">338</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="kw">use</span> <span class="kw">crate</span>::{<span class="ident">BaseClass</span>, <span class="ident">Interface</span>, <span class="ident">SubClass</span>};
 <span class="kw">use</span> <span class="ident">core</span>::<span class="ident">convert</span>::<span class="ident">TryFrom</span>;
@@ -656,6 +658,7 @@
     <span class="ident">Uhci</span>,
     <span class="ident">Ohci</span>,
     <span class="ident">Ehci</span>,
+    <span class="ident">Xhci</span>,
     <span class="ident">OtherInterface</span>,
     <span class="ident">Device</span>,
 }
@@ -668,6 +671,7 @@
             <span class="number">0x00</span> <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">Ok</span>(<span class="ident">UsbType</span>::<span class="ident">Uhci</span>),
             <span class="number">0x10</span> <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">Ok</span>(<span class="ident">UsbType</span>::<span class="ident">Ohci</span>),
             <span class="number">0x20</span> <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">Ok</span>(<span class="ident">UsbType</span>::<span class="ident">Ehci</span>),
+            <span class="number">0x30</span> <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">Ok</span>(<span class="ident">UsbType</span>::<span class="ident">Xhci</span>),
             <span class="number">0x80</span> <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">Ok</span>(<span class="ident">UsbType</span>::<span class="ident">OtherInterface</span>),
             <span class="number">0xfe</span> <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">Ok</span>(<span class="ident">UsbType</span>::<span class="ident">Device</span>),
             <span class="kw">_</span> <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">Err</span>(()),
