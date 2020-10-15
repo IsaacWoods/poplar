@@ -11,13 +11,14 @@ QEMU_COMMON_FLAGS = -cpu max,vmware-cpuid-freq,invtsc \
 					-smp 2 \
 					-m 512M \
 					-device isa-debug-exit,iobase=0xf4,iosize=0x04 \
-					-device usb-ehci,id=ehci,bus=pcie.0 \
+					-device qemu-xhci,id=xhci,bus=pcie.0 \
+						-device usb-kbd,bus=xhci.0 \
+						-device usb-mouse,bus=xhci.0 \
 					--no-reboot \
 					--no-shutdown \
 					-drive if=pflash,format=raw,file=bundled/ovmf/OVMF_CODE.fd,readonly \
 					-drive if=pflash,format=raw,file=bundled/ovmf/OVMF_VARS.fd \
 					-drive if=ide,format=raw,file=$(IMAGE_NAME) \
-					-usb \
 					-net none
 # This can be used to pass extra flags to QEMU
 QEMU_EXTRA_FLAGS ?=
