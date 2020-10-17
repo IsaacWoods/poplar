@@ -164,7 +164,9 @@
 <h3><a class="header" href="#parameters" id="parameters">Parameters</a></h3>
 <p><code>a</code> - a handle to the MemoryObject.
 <code>b</code> - a handle to the AddressSpace. The zero handle indicates to map the memory object into the task's AddressSpace.
-<code>c</code> - a pointer to which the kernel will write the virtual address at which the MemoryObject was mapped. Ignored if null.</p>
+<code>c</code> - the virtual address to map the MemoryObject at, if it does not need to be mapped at a specific address.
+Should be null if the MemoryObject supplies the address.
+<code>d</code> - a pointer to which the kernel will write the virtual address at which the MemoryObject was mapped. Ignored if null.</p>
 <h3><a class="header" href="#returns" id="returns">Returns</a></h3>
 <ul>
 <li><code>0</code> if the system call succeeded</li>
@@ -173,6 +175,8 @@
 <li><code>3</code> if the supplied MemoryObject handle does not point to a MemoryHandle</li>
 <li><code>4</code> if the supplied AddressSpace handle does not point to an AddressSpace</li>
 <li><code>5</code> if the pointer to write the virtual address back to is invalid</li>
+<li><code>6</code> if a virtual address to map at was supplied, but the MemoryObject needs to be mapped at a specific address.</li>
+<li><code>7</code> if a virtual address was not supplied, but the MemoryObject does not specify the address to map it at.</li>
 </ul>
 <h3><a class="header" href="#capabilities-needed" id="capabilities-needed">Capabilities needed</a></h3>
 <p>None (this may change in the future).</p>

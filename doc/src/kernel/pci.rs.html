@@ -16,9 +16,10 @@
 <span id="13">13</span>
 <span id="14">14</span>
 <span id="15">15</span>
+<span id="16">16</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="kw">use</span> <span class="ident">alloc</span>::<span class="ident">collections</span>::<span class="ident">BTreeMap</span>;
-<span class="kw">use</span> <span class="ident">pci_types</span>::{<span class="ident">BaseClass</span>, <span class="ident">DeviceId</span>, <span class="ident">DeviceRevision</span>, <span class="ident">Interface</span>, <span class="ident">PciAddress</span>, <span class="ident">SubClass</span>, <span class="ident">VendorId</span>};
+<span class="kw">use</span> <span class="ident">pci_types</span>::{<span class="ident">Bar</span>, <span class="ident">BaseClass</span>, <span class="ident">DeviceId</span>, <span class="ident">DeviceRevision</span>, <span class="ident">Interface</span>, <span class="ident">PciAddress</span>, <span class="ident">SubClass</span>, <span class="ident">VendorId</span>, <span class="ident">MAX_BARS</span>};
 
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">PciDevice</span> {
     <span class="kw">pub</span> <span class="ident">vendor_id</span>: <span class="ident">VendorId</span>,
@@ -27,6 +28,7 @@
     <span class="kw">pub</span> <span class="ident">class</span>: <span class="ident">BaseClass</span>,
     <span class="kw">pub</span> <span class="ident">sub_class</span>: <span class="ident">SubClass</span>,
     <span class="kw">pub</span> <span class="ident">interface</span>: <span class="ident">Interface</span>,
+    <span class="kw">pub</span> <span class="ident">bars</span>: [<span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Bar</span><span class="op">&gt;</span>; <span class="ident">MAX_BARS</span>],
 }
 
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">PciInfo</span> {

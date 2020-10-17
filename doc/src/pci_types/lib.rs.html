@@ -181,6 +181,79 @@
 <span id="178">178</span>
 <span id="179">179</span>
 <span id="180">180</span>
+<span id="181">181</span>
+<span id="182">182</span>
+<span id="183">183</span>
+<span id="184">184</span>
+<span id="185">185</span>
+<span id="186">186</span>
+<span id="187">187</span>
+<span id="188">188</span>
+<span id="189">189</span>
+<span id="190">190</span>
+<span id="191">191</span>
+<span id="192">192</span>
+<span id="193">193</span>
+<span id="194">194</span>
+<span id="195">195</span>
+<span id="196">196</span>
+<span id="197">197</span>
+<span id="198">198</span>
+<span id="199">199</span>
+<span id="200">200</span>
+<span id="201">201</span>
+<span id="202">202</span>
+<span id="203">203</span>
+<span id="204">204</span>
+<span id="205">205</span>
+<span id="206">206</span>
+<span id="207">207</span>
+<span id="208">208</span>
+<span id="209">209</span>
+<span id="210">210</span>
+<span id="211">211</span>
+<span id="212">212</span>
+<span id="213">213</span>
+<span id="214">214</span>
+<span id="215">215</span>
+<span id="216">216</span>
+<span id="217">217</span>
+<span id="218">218</span>
+<span id="219">219</span>
+<span id="220">220</span>
+<span id="221">221</span>
+<span id="222">222</span>
+<span id="223">223</span>
+<span id="224">224</span>
+<span id="225">225</span>
+<span id="226">226</span>
+<span id="227">227</span>
+<span id="228">228</span>
+<span id="229">229</span>
+<span id="230">230</span>
+<span id="231">231</span>
+<span id="232">232</span>
+<span id="233">233</span>
+<span id="234">234</span>
+<span id="235">235</span>
+<span id="236">236</span>
+<span id="237">237</span>
+<span id="238">238</span>
+<span id="239">239</span>
+<span id="240">240</span>
+<span id="241">241</span>
+<span id="242">242</span>
+<span id="243">243</span>
+<span id="244">244</span>
+<span id="245">245</span>
+<span id="246">246</span>
+<span id="247">247</span>
+<span id="248">248</span>
+<span id="249">249</span>
+<span id="250">250</span>
+<span id="251">251</span>
+<span id="252">252</span>
+<span id="253">253</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="attribute">#![<span class="ident">no_std</span>]</span>
 
@@ -229,14 +302,7 @@
 
 <span class="kw">impl</span> <span class="ident">fmt</span>::<span class="ident">Display</span> <span class="kw">for</span> <span class="ident">PciAddress</span> {
     <span class="kw">fn</span> <span class="ident">fmt</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">f</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">fmt</span>::<span class="ident">Formatter</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">fmt</span>::<span class="prelude-ty">Result</span> {
-        <span class="macro">write</span><span class="macro">!</span>(
-            <span class="ident">f</span>,
-            <span class="string">&quot;{:02x}-{:02x}:{:02x}.{}&quot;</span>,
-            <span class="self">self</span>.<span class="ident">segment</span>(),
-            <span class="self">self</span>.<span class="ident">bus</span>(),
-            <span class="self">self</span>.<span class="ident">device</span>(),
-            <span class="self">self</span>.<span class="ident">function</span>()
-        )
+        <span class="macro">write</span><span class="macro">!</span>(<span class="ident">f</span>, <span class="string">&quot;{:02x}-{:02x}:{:02x}.{}&quot;</span>, <span class="self">self</span>.<span class="ident">segment</span>(), <span class="self">self</span>.<span class="ident">bus</span>(), <span class="self">self</span>.<span class="ident">device</span>(), <span class="self">self</span>.<span class="ident">function</span>())
     }
 }
 
@@ -246,6 +312,7 @@
 <span class="kw">pub</span> <span class="kw">type</span> <span class="ident">BaseClass</span> <span class="op">=</span> <span class="ident">u8</span>;
 <span class="kw">pub</span> <span class="kw">type</span> <span class="ident">SubClass</span> <span class="op">=</span> <span class="ident">u8</span>;
 <span class="kw">pub</span> <span class="kw">type</span> <span class="ident">Interface</span> <span class="op">=</span> <span class="ident">u8</span>;
+<span class="kw">pub</span> <span class="kw">type</span> <span class="ident">HeaderType</span> <span class="op">=</span> <span class="ident">u8</span>;
 
 <span class="comment">// TODO: documentation</span>
 <span class="kw">pub</span> <span class="kw">trait</span> <span class="ident">ConfigRegionAccess</span>: <span class="ident">Send</span> {
@@ -253,6 +320,10 @@
     <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">read</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">address</span>: <span class="ident">PciAddress</span>, <span class="ident">offset</span>: <span class="ident">u16</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">u32</span>;
     <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">write</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">address</span>: <span class="ident">PciAddress</span>, <span class="ident">offset</span>: <span class="ident">u16</span>, <span class="ident">value</span>: <span class="ident">u32</span>);
 }
+
+<span class="kw">pub</span> <span class="kw">const</span> <span class="ident">HEADER_TYPE_ENDPOINT</span>: <span class="ident">HeaderType</span> <span class="op">=</span> <span class="number">0x00</span>;
+<span class="kw">pub</span> <span class="kw">const</span> <span class="ident">HEADER_TYPE_PCI_PCI_BRIDGE</span>: <span class="ident">HeaderType</span> <span class="op">=</span> <span class="number">0x01</span>;
+<span class="kw">pub</span> <span class="kw">const</span> <span class="ident">HEADER_TYPE_CARDBUS_BRIDGE</span>: <span class="ident">HeaderType</span> <span class="op">=</span> <span class="number">0x02</span>;
 
 <span class="doccomment">/// Every PCI configuration region starts with a header made up of two parts:</span>
 <span class="doccomment">///    - a predefined region that identify the function (bytes `0x00..0x10`)</span>
@@ -275,10 +346,55 @@
 <span class="doccomment">///      |              |     type     |     timer     |    size      |</span>
 <span class="doccomment">///      +--------------+--------------+---------------+--------------+</span>
 <span class="doccomment">/// ```</span>
-<span class="doccomment">///</span>
+<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">PciHeader</span>(<span class="ident">PciAddress</span>);
+
+<span class="kw">impl</span> <span class="ident">PciHeader</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">address</span>: <span class="ident">PciAddress</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">PciHeader</span> {
+        <span class="ident">PciHeader</span>(<span class="ident">address</span>)
+    }
+
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">id</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">access</span>: <span class="kw-2">&amp;</span><span class="kw">impl</span> <span class="ident">ConfigRegionAccess</span>) <span class="op">-</span><span class="op">&gt;</span> (<span class="ident">VendorId</span>, <span class="ident">DeviceId</span>) {
+        <span class="kw">let</span> <span class="ident">id</span> <span class="op">=</span> <span class="kw">unsafe</span> { <span class="ident">access</span>.<span class="ident">read</span>(<span class="self">self</span>.<span class="number">0</span>, <span class="number">0x00</span>) };
+        (<span class="ident">id</span>.<span class="ident">get_bits</span>(<span class="number">0</span>..<span class="number">16</span>) <span class="kw">as</span> <span class="ident">VendorId</span>, <span class="ident">id</span>.<span class="ident">get_bits</span>(<span class="number">16</span>..<span class="number">32</span>) <span class="kw">as</span> <span class="ident">DeviceId</span>)
+    }
+
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">header_type</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">access</span>: <span class="kw-2">&amp;</span><span class="kw">impl</span> <span class="ident">ConfigRegionAccess</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">HeaderType</span> {
+        <span class="comment">/*
+         * Read bits 0..=6 of the Header Type. Bit 7 dictates whether the device has multiple functions and so
+         * isn&#39;t returned here.
+         */</span>
+        <span class="kw">unsafe</span> { <span class="ident">access</span>.<span class="ident">read</span>(<span class="self">self</span>.<span class="number">0</span>, <span class="number">0x0c</span>) }.<span class="ident">get_bits</span>(<span class="number">16</span>..<span class="number">23</span>) <span class="kw">as</span> <span class="ident">HeaderType</span>
+    }
+
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">has_multiple_functions</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">access</span>: <span class="kw-2">&amp;</span><span class="kw">impl</span> <span class="ident">ConfigRegionAccess</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">bool</span> {
+        <span class="comment">/*
+         * Reads bit 7 of the Header Type, which is 1 if the device has multiple functions.
+         */</span>
+        <span class="kw">unsafe</span> { <span class="ident">access</span>.<span class="ident">read</span>(<span class="self">self</span>.<span class="number">0</span>, <span class="number">0x0c</span>) }.<span class="ident">get_bit</span>(<span class="number">23</span>)
+    }
+
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">revision_and_class</span>(
+        <span class="kw-2">&amp;</span><span class="self">self</span>,
+        <span class="ident">access</span>: <span class="kw-2">&amp;</span><span class="kw">impl</span> <span class="ident">ConfigRegionAccess</span>,
+    ) <span class="op">-</span><span class="op">&gt;</span> (<span class="ident">DeviceRevision</span>, <span class="ident">BaseClass</span>, <span class="ident">SubClass</span>, <span class="ident">Interface</span>) {
+        <span class="kw">let</span> <span class="ident">field</span> <span class="op">=</span> <span class="kw">unsafe</span> { <span class="ident">access</span>.<span class="ident">read</span>(<span class="self">self</span>.<span class="number">0</span>, <span class="number">0x08</span>) };
+        (
+            <span class="ident">field</span>.<span class="ident">get_bits</span>(<span class="number">0</span>..<span class="number">8</span>) <span class="kw">as</span> <span class="ident">DeviceRevision</span>,
+            <span class="ident">field</span>.<span class="ident">get_bits</span>(<span class="number">24</span>..<span class="number">32</span>) <span class="kw">as</span> <span class="ident">BaseClass</span>,
+            <span class="ident">field</span>.<span class="ident">get_bits</span>(<span class="number">16</span>..<span class="number">24</span>) <span class="kw">as</span> <span class="ident">SubClass</span>,
+            <span class="ident">field</span>.<span class="ident">get_bits</span>(<span class="number">8</span>..<span class="number">16</span>) <span class="kw">as</span> <span class="ident">Interface</span>,
+        )
+    }
+}
+
 <span class="doccomment">/// Endpoints have a Type-0 header, so the remainder of the header is of the form:</span>
 <span class="doccomment">/// ```ignore</span>
 <span class="doccomment">///     32                           16                              0</span>
+<span class="doccomment">///     +-----------------------------------------------------------+ 0x00</span>
+<span class="doccomment">///     |                                                           |</span>
+<span class="doccomment">///     |                Predefined region of header                |</span>
+<span class="doccomment">///     |                                                           |</span>
+<span class="doccomment">///     |                                                           |</span>
 <span class="doccomment">///     +-----------------------------------------------------------+</span>
 <span class="doccomment">///     |                  Base Address Register 0                  | 0x10</span>
 <span class="doccomment">///     |                                                           |</span>
@@ -317,50 +433,80 @@
 <span class="doccomment">///     |              |              |   line       |   line       |</span>
 <span class="doccomment">///     +--------------+--------------+--------------+--------------+</span>
 <span class="doccomment">/// ```</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">PciHeader</span><span class="op">&lt;</span><span class="ident">A</span><span class="op">&gt;</span>(<span class="ident">PciAddress</span>, <span class="ident">PhantomData</span><span class="op">&lt;</span><span class="ident">A</span><span class="op">&gt;</span>)
-<span class="kw">where</span>
-    <span class="ident">A</span>: <span class="ident">ConfigRegionAccess</span>;
+<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">EndpointHeader</span>(<span class="ident">PciAddress</span>);
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">A</span><span class="op">&gt;</span> <span class="ident">PciHeader</span><span class="op">&lt;</span><span class="ident">A</span><span class="op">&gt;</span>
-<span class="kw">where</span>
-    <span class="ident">A</span>: <span class="ident">ConfigRegionAccess</span>,
-{
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">address</span>: <span class="ident">PciAddress</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">PciHeader</span><span class="op">&lt;</span><span class="ident">A</span><span class="op">&gt;</span> {
-        <span class="ident">PciHeader</span>(<span class="ident">address</span>, <span class="ident">PhantomData</span>)
+<span class="kw">impl</span> <span class="ident">EndpointHeader</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">from_header</span>(<span class="ident">header</span>: <span class="ident">PciHeader</span>, <span class="ident">access</span>: <span class="kw-2">&amp;</span><span class="kw">impl</span> <span class="ident">ConfigRegionAccess</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">EndpointHeader</span><span class="op">&gt;</span> {
+        <span class="kw">match</span> <span class="ident">header</span>.<span class="ident">header_type</span>(<span class="ident">access</span>) {
+            <span class="number">0x00</span> <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">Some</span>(<span class="ident">EndpointHeader</span>(<span class="ident">header</span>.<span class="number">0</span>)),
+            <span class="kw">_</span> <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">None</span>,
+        }
     }
 
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">id</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">access</span>: <span class="kw-2">&amp;</span><span class="ident">A</span>) <span class="op">-</span><span class="op">&gt;</span> (<span class="ident">VendorId</span>, <span class="ident">DeviceId</span>) {
-        <span class="kw">let</span> <span class="ident">id</span> <span class="op">=</span> <span class="kw">unsafe</span> { <span class="ident">access</span>.<span class="ident">read</span>(<span class="self">self</span>.<span class="number">0</span>, <span class="number">0x00</span>) };
-        (<span class="ident">id</span>.<span class="ident">get_bits</span>(<span class="number">0</span>..<span class="number">16</span>) <span class="kw">as</span> <span class="ident">u16</span>, <span class="ident">id</span>.<span class="ident">get_bits</span>(<span class="number">16</span>..<span class="number">32</span>) <span class="kw">as</span> <span class="ident">u16</span>)
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">header</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">PciHeader</span> {
+        <span class="ident">PciHeader</span>(<span class="self">self</span>.<span class="number">0</span>)
     }
 
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">header_type</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">access</span>: <span class="kw-2">&amp;</span><span class="ident">A</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">u8</span> {
+    <span class="doccomment">/// Get the contents of a BAR in a given slot. Empty bars will return `None`.</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// ### Note</span>
+    <span class="doccomment">/// 64-bit memory BARs use two slots, so if one is decoded in e.g. slot #0, this method should not be called</span>
+    <span class="doccomment">/// for slot #1</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">bar</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">slot</span>: <span class="ident">u8</span>, <span class="ident">access</span>: <span class="kw-2">&amp;</span><span class="kw">impl</span> <span class="ident">ConfigRegionAccess</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Bar</span><span class="op">&gt;</span> {
+        <span class="kw">let</span> <span class="ident">offset</span> <span class="op">=</span> <span class="number">0x10</span> <span class="op">+</span> (<span class="ident">slot</span> <span class="kw">as</span> <span class="ident">u16</span>) <span class="op">*</span> <span class="number">4</span>;
+        <span class="kw">let</span> <span class="ident">bar</span> <span class="op">=</span> <span class="kw">unsafe</span> { <span class="ident">access</span>.<span class="ident">read</span>(<span class="self">self</span>.<span class="number">0</span>, <span class="ident">offset</span>) };
+
         <span class="comment">/*
-         * Read bits 0..=6 of the Header Type. Bit 7 dictates whether the device has multiple functions and so
-         * isn&#39;t read here.
+         * If bit 0 is `0`, the BAR is in memory. If it&#39;s `1`, it&#39;s in I/O.
          */</span>
-        <span class="kw">unsafe</span> { <span class="ident">access</span>.<span class="ident">read</span>(<span class="self">self</span>.<span class="number">0</span>, <span class="number">0x0c</span>) }.<span class="ident">get_bits</span>(<span class="number">16</span>..<span class="number">23</span>) <span class="kw">as</span> <span class="ident">u8</span>
-    }
+        <span class="kw">if</span> <span class="ident">bar</span>.<span class="ident">get_bit</span>(<span class="number">0</span>) <span class="op">=</span><span class="op">=</span> <span class="bool-val">false</span> {
+            <span class="kw">let</span> <span class="ident">prefetchable</span> <span class="op">=</span> <span class="ident">bar</span>.<span class="ident">get_bit</span>(<span class="number">3</span>);
+            <span class="kw">let</span> <span class="ident">address</span> <span class="op">=</span> <span class="ident">bar</span>.<span class="ident">get_bits</span>(<span class="number">4</span>..<span class="number">32</span>) <span class="op">&lt;</span><span class="op">&lt;</span> <span class="number">4</span>;
 
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">has_multiple_functions</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">access</span>: <span class="kw-2">&amp;</span><span class="ident">A</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">bool</span> {
-        <span class="comment">/*
-         * Reads bit 7 of the Header Type, which is 1 if the device has multiple functions.
-         */</span>
-        <span class="kw">unsafe</span> { <span class="ident">access</span>.<span class="ident">read</span>(<span class="self">self</span>.<span class="number">0</span>, <span class="number">0x0c</span>) }.<span class="ident">get_bit</span>(<span class="number">23</span>)
-    }
+            <span class="comment">// TODO: if the bar is 64-bits, do we need to do this on both BARs?</span>
+            <span class="kw">let</span> <span class="ident">size</span> <span class="op">=</span> <span class="kw">unsafe</span> {
+                <span class="ident">access</span>.<span class="ident">write</span>(<span class="self">self</span>.<span class="number">0</span>, <span class="ident">offset</span>, <span class="number">0xffffffff</span>);
+                <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">readback</span> <span class="op">=</span> <span class="ident">access</span>.<span class="ident">read</span>(<span class="self">self</span>.<span class="number">0</span>, <span class="ident">offset</span>);
+                <span class="ident">access</span>.<span class="ident">write</span>(<span class="self">self</span>.<span class="number">0</span>, <span class="ident">offset</span>, <span class="ident">address</span>);
 
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">revision_and_class</span>(
-        <span class="kw-2">&amp;</span><span class="self">self</span>,
-        <span class="ident">access</span>: <span class="kw-2">&amp;</span><span class="ident">A</span>,
-    ) <span class="op">-</span><span class="op">&gt;</span> (<span class="ident">DeviceRevision</span>, <span class="ident">BaseClass</span>, <span class="ident">SubClass</span>, <span class="ident">Interface</span>) {
-        <span class="kw">let</span> <span class="ident">field</span> <span class="op">=</span> <span class="kw">unsafe</span> { <span class="ident">access</span>.<span class="ident">read</span>(<span class="self">self</span>.<span class="number">0</span>, <span class="number">0x08</span>) };
-        (
-            <span class="ident">field</span>.<span class="ident">get_bits</span>(<span class="number">0</span>..<span class="number">8</span>) <span class="kw">as</span> <span class="ident">DeviceRevision</span>,
-            <span class="ident">field</span>.<span class="ident">get_bits</span>(<span class="number">24</span>..<span class="number">32</span>) <span class="kw">as</span> <span class="ident">BaseClass</span>,
-            <span class="ident">field</span>.<span class="ident">get_bits</span>(<span class="number">16</span>..<span class="number">24</span>) <span class="kw">as</span> <span class="ident">SubClass</span>,
-            <span class="ident">field</span>.<span class="ident">get_bits</span>(<span class="number">8</span>..<span class="number">16</span>) <span class="kw">as</span> <span class="ident">Interface</span>,
-        )
+                <span class="comment">/*
+                 * If the entire readback value is zero, the BAR is not implemented, so we return `None`.
+                 */</span>
+                <span class="kw">if</span> <span class="ident">readback</span> <span class="op">=</span><span class="op">=</span> <span class="number">0x0</span> {
+                    <span class="kw">return</span> <span class="prelude-val">None</span>;
+                }
+
+                <span class="ident">readback</span>.<span class="ident">set_bits</span>(<span class="number">0</span>..<span class="number">4</span>, <span class="number">0</span>);
+                <span class="number">1</span> <span class="op">&lt;</span><span class="op">&lt;</span> <span class="ident">readback</span>.<span class="ident">trailing_zeros</span>()
+            };
+
+            <span class="kw">match</span> <span class="ident">bar</span>.<span class="ident">get_bits</span>(<span class="number">1</span>..<span class="number">3</span>) {
+                <span class="number">0b00</span> <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">Some</span>(<span class="ident">Bar</span>::<span class="ident">Memory32</span> { <span class="ident">address</span>, <span class="ident">size</span>, <span class="ident">prefetchable</span> }),
+                <span class="number">0b10</span> <span class="op">=</span><span class="op">&gt;</span> {
+                    <span class="kw">let</span> <span class="ident">address</span> <span class="op">=</span> {
+                        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">address</span> <span class="op">=</span> <span class="ident">address</span> <span class="kw">as</span> <span class="ident">u64</span>;
+                        <span class="comment">// TODO: do we need to mask off the lower bits on this?</span>
+                        <span class="ident">address</span>.<span class="ident">set_bits</span>(<span class="number">32</span>..<span class="number">64</span>, <span class="kw">unsafe</span> { <span class="ident">access</span>.<span class="ident">read</span>(<span class="self">self</span>.<span class="number">0</span>, <span class="ident">offset</span> <span class="op">+</span> <span class="number">4</span>) } <span class="kw">as</span> <span class="ident">u64</span>);
+                        <span class="ident">address</span>
+                    };
+                    <span class="prelude-val">Some</span>(<span class="ident">Bar</span>::<span class="ident">Memory64</span> { <span class="ident">address</span>, <span class="ident">size</span>: <span class="ident">size</span> <span class="kw">as</span> <span class="ident">u64</span>, <span class="ident">prefetchable</span> })
+                }
+                <span class="comment">// TODO: should we bother to return an error here?</span>
+                <span class="kw">_</span> <span class="op">=</span><span class="op">&gt;</span> <span class="macro">panic</span><span class="macro">!</span>(<span class="string">&quot;BAR Memory type is reserved!&quot;</span>),
+            }
+        } <span class="kw">else</span> {
+            <span class="prelude-val">Some</span>(<span class="ident">Bar</span>::<span class="ident">Io</span> { <span class="ident">port</span>: <span class="ident">bar</span>.<span class="ident">get_bits</span>(<span class="number">2</span>..<span class="number">32</span>) })
+        }
     }
+}
+
+<span class="kw">pub</span> <span class="kw">const</span> <span class="ident">MAX_BARS</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="number">6</span>;
+
+<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Copy</span>, <span class="ident">Debug</span>)]</span>
+<span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">Bar</span> {
+    <span class="ident">Memory32</span> { <span class="ident">address</span>: <span class="ident">u32</span>, <span class="ident">size</span>: <span class="ident">u32</span>, <span class="ident">prefetchable</span>: <span class="ident">bool</span> },
+    <span class="ident">Memory64</span> { <span class="ident">address</span>: <span class="ident">u64</span>, <span class="ident">size</span>: <span class="ident">u64</span>, <span class="ident">prefetchable</span>: <span class="ident">bool</span> },
+    <span class="ident">Io</span> { <span class="ident">port</span>: <span class="ident">u32</span> },
 }
 </pre></div>
 </section><section id="search" class="content hidden"></section><section class="footer"></section><script>window.rootPath = "../../";window.currentCrate = "pci_types";</script><script src="../../main.js"></script><script src="../../source-script.js"></script><script src="../../source-files.js"></script><script defer src="../../search-index.js"></script></body></html>

@@ -193,6 +193,10 @@
 <span id="190">190</span>
 <span id="191">191</span>
 <span id="192">192</span>
+<span id="193">193</span>
+<span id="194">194</span>
+<span id="195">195</span>
+<span id="196">196</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">get_framebuffer</span>;
 <span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">pci</span>;
@@ -274,18 +278,22 @@
     <span class="ident">NotAMemoryObject</span> <span class="op">=</span><span class="op">&gt;</span> <span class="number">3</span>,
     <span class="ident">NotAnAddressSpace</span> <span class="op">=</span><span class="op">&gt;</span> <span class="number">4</span>,
     <span class="ident">AddressPointerInvalid</span> <span class="op">=</span><span class="op">&gt;</span> <span class="number">5</span>,
+    <span class="ident">VirtualAddressNotSupplied</span> <span class="op">=</span><span class="op">&gt;</span> <span class="number">6</span>,
+    <span class="ident">VirtualAddressShouldNotBeSupplied</span> <span class="op">=</span><span class="op">&gt;</span> <span class="number">7</span>,
 });
 
 <span class="kw">pub</span> <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">map_memory_object</span>(
     <span class="ident">memory_object</span>: <span class="ident">Handle</span>,
     <span class="ident">address_space</span>: <span class="ident">Handle</span>,
+    <span class="ident">virtual_address</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span>,
     <span class="ident">address_pointer</span>: <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="ident">usize</span>,
 ) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">MapMemoryObjectError</span><span class="op">&gt;</span> {
     <span class="ident">status_from_syscall_repr</span>(<span class="kw">unsafe</span> {
-        <span class="ident">raw</span>::<span class="ident">syscall3</span>(
+        <span class="ident">raw</span>::<span class="ident">syscall4</span>(
             <span class="ident">SYSCALL_MAP_MEMORY_OBJECT</span>,
             <span class="ident">memory_object</span>.<span class="number">0</span> <span class="kw">as</span> <span class="ident">usize</span>,
             <span class="ident">address_space</span>.<span class="number">0</span> <span class="kw">as</span> <span class="ident">usize</span>,
+            <span class="kw">if</span> <span class="ident">virtual_address</span>.<span class="ident">is_some</span>() { <span class="ident">virtual_address</span>.<span class="ident">unwrap</span>() } <span class="kw">else</span> { <span class="number">0x0</span> },
             <span class="ident">address_pointer</span> <span class="kw">as</span> <span class="ident">usize</span>,
         )
     })

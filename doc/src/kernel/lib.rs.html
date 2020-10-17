@@ -151,6 +151,7 @@
 <span id="148">148</span>
 <span id="149">149</span>
 <span id="150">150</span>
+<span id="151">151</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="attribute">#![<span class="ident">no_std</span>]</span>
 <span class="attribute">#![<span class="ident">feature</span>(
@@ -262,7 +263,7 @@
 
     <span class="kw">for</span> <span class="ident">segment</span> <span class="kw">in</span> <span class="ident">image</span>.<span class="ident">segments</span>() {
         <span class="kw">let</span> <span class="ident">memory_object</span> <span class="op">=</span> <span class="ident">MemoryObject</span>::<span class="ident">from_boot_info</span>(<span class="ident">task</span>.<span class="ident">id</span>(), <span class="ident">segment</span>);
-        <span class="ident">address_space</span>.<span class="ident">map_memory_object</span>(<span class="ident">memory_object</span>, <span class="ident">allocator</span>).<span class="ident">unwrap</span>();
+        <span class="ident">address_space</span>.<span class="ident">map_memory_object</span>(<span class="ident">memory_object</span>, <span class="prelude-val">None</span>, <span class="ident">allocator</span>).<span class="ident">unwrap</span>();
     }
 
     <span class="ident">scheduler</span>.<span class="ident">add_task</span>(<span class="ident">task</span>);
@@ -284,7 +285,8 @@
     <span class="kw">let</span> <span class="ident">size_in_bytes</span> <span class="op">=</span> <span class="ident">video_info</span>.<span class="ident">stride</span> <span class="op">*</span> <span class="ident">video_info</span>.<span class="ident">height</span> <span class="op">*</span> <span class="ident">BPP</span>;
     <span class="kw">let</span> <span class="ident">memory_object</span> <span class="op">=</span> <span class="ident">MemoryObject</span>::<span class="ident">new</span>(
         <span class="ident">object</span>::<span class="ident">SENTINEL_KERNEL_ID</span>,
-        <span class="ident">VIRTUAL_START</span>,
+        <span class="comment">// TODO: change this to `None` so the userspace task can pick where to put it</span>
+        <span class="prelude-val">Some</span>(<span class="ident">VIRTUAL_START</span>),
         <span class="ident">video_info</span>.<span class="ident">framebuffer_address</span>,
         <span class="ident">pebble_util</span>::<span class="ident">math</span>::<span class="ident">align_up</span>(<span class="ident">size_in_bytes</span>, <span class="ident">Size4KiB</span>::<span class="ident">SIZE</span>),
         <span class="ident">Flags</span> { <span class="ident">writable</span>: <span class="bool-val">true</span>, <span class="ident">user_accessible</span>: <span class="bool-val">true</span>, <span class="ident">cached</span>: <span class="bool-val">false</span>, ..<span class="ident">Default</span>::<span class="ident">default</span>() },

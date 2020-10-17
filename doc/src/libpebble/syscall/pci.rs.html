@@ -107,8 +107,18 @@
 <span id="104">104</span>
 <span id="105">105</span>
 <span id="106">106</span>
+<span id="107">107</span>
+<span id="108">108</span>
+<span id="109">109</span>
+<span id="110">110</span>
+<span id="111">111</span>
+<span id="112">112</span>
+<span id="113">113</span>
+<span id="114">114</span>
+<span id="115">115</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="kw">use</span> <span class="kw">super</span>::{<span class="ident">raw</span>, <span class="ident">SYSCALL_PCI_GET_INFO</span>};
+<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">Handle</span>;
 <span class="kw">use</span> <span class="ident">bit_field</span>::<span class="ident">BitField</span>;
 <span class="kw">use</span> <span class="ident">core</span>::<span class="ident">convert</span>::<span class="ident">TryFrom</span>;
 <span class="kw">use</span> <span class="ident">pci_types</span>::{<span class="ident">BaseClass</span>, <span class="ident">DeviceId</span>, <span class="ident">DeviceRevision</span>, <span class="ident">Interface</span>, <span class="ident">PciAddress</span>, <span class="ident">SubClass</span>, <span class="ident">VendorId</span>};
@@ -131,6 +141,14 @@
     <span class="doccomment">/// The lower byte of the class-code. This may indicate a specific register-level programming interface of the</span>
     <span class="doccomment">/// device.</span>
     <span class="kw">pub</span> <span class="ident">interface</span>: <span class="ident">Interface</span>,
+    <span class="kw">pub</span> <span class="ident">bars</span>: [<span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Bar</span><span class="op">&gt;</span>; <span class="number">6</span>],
+}
+
+<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Debug</span>)]</span>
+<span class="attribute">#[<span class="ident">repr</span>(<span class="ident">C</span>)]</span>
+<span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">Bar</span> {
+    <span class="ident">Memory32</span> { <span class="ident">memory_object</span>: <span class="ident">Handle</span>, <span class="ident">size</span>: <span class="ident">u32</span> },
+    <span class="ident">Memory64</span> { <span class="ident">memory_object</span>: <span class="ident">Handle</span>, <span class="ident">size</span>: <span class="ident">u64</span> },
 }
 
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Copy</span>, <span class="ident">PartialEq</span>, <span class="ident">Eq</span>, <span class="ident">Debug</span>)]</span>
