@@ -123,7 +123,7 @@
 <span class="kw">use</span> <span class="ident">core</span>::<span class="ident">convert</span>::<span class="ident">TryFrom</span>;
 <span class="kw">use</span> <span class="ident">pci_types</span>::{<span class="ident">BaseClass</span>, <span class="ident">DeviceId</span>, <span class="ident">DeviceRevision</span>, <span class="ident">Interface</span>, <span class="ident">PciAddress</span>, <span class="ident">SubClass</span>, <span class="ident">VendorId</span>};
 
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Debug</span>, <span class="ident">Default</span>)]</span>
+<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">Default</span>)]</span>
 <span class="attribute">#[<span class="ident">repr</span>(<span class="ident">C</span>)]</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">PciDeviceInfo</span> {
     <span class="kw">pub</span> <span class="ident">address</span>: <span class="ident">PciAddress</span>,
@@ -144,7 +144,7 @@
     <span class="kw">pub</span> <span class="ident">bars</span>: [<span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Bar</span><span class="op">&gt;</span>; <span class="number">6</span>],
 }
 
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Debug</span>)]</span>
+<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>)]</span>
 <span class="attribute">#[<span class="ident">repr</span>(<span class="ident">C</span>)]</span>
 <span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">Bar</span> {
     <span class="ident">Memory32</span> { <span class="ident">memory_object</span>: <span class="ident">Handle</span>, <span class="ident">size</span>: <span class="ident">u32</span> },

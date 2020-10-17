@@ -93,7 +93,7 @@
 <span class="doccomment">/// A `Handle` is used to represent a task&#39;s access to a kernel object. It is allocated by the kernel and is unique</span>
 <span class="doccomment">/// to the task to which it is issued - a kernel object can have handles in multiple tasks (and the numbers will</span>
 <span class="doccomment">/// not be shared between those tasks).</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Copy</span>, <span class="ident">PartialEq</span>, <span class="ident">Eq</span>, <span class="ident">PartialOrd</span>, <span class="ident">Ord</span>, <span class="ident">Debug</span>)]</span>
+<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">PartialEq</span>, <span class="ident">Eq</span>, <span class="ident">PartialOrd</span>, <span class="ident">Ord</span>, <span class="ident">Debug</span>)]</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">Handle</span>(<span class="kw">pub</span> <span class="ident">u32</span>);
 
 <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">ZERO_HANDLE</span>: <span class="ident">Handle</span> <span class="op">=</span> <span class="ident">Handle</span>(<span class="number">0</span>);
