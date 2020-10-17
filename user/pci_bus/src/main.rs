@@ -5,13 +5,14 @@
 extern crate alloc;
 extern crate rlibc;
 
-use alloc::{collections::BTreeMap, string::ToString};
+use alloc::{collections::BTreeMap, format, string::ToString};
 use core::{convert::TryFrom, panic::PanicInfo};
 use libpebble::{
     caps::{CapabilitiesRepr, CAP_EARLY_LOGGING, CAP_PADDING, CAP_PCI_BUS_DRIVER, CAP_SERVICE_USER},
     channel::Channel,
     early_logger::EarlyLogger,
     syscall,
+    syscall::pci::Bar,
 };
 use linked_list_allocator::LockedHeap;
 use log::info;
@@ -70,6 +71,23 @@ pub extern "C" fn _start() -> ! {
             properties.insert("pci.class".to_string(), Property::Integer(descriptor.class as u64));
             properties.insert("pci.sub_class".to_string(), Property::Integer(descriptor.sub_class as u64));
             properties.insert("pci.interface".to_string(), Property::Integer(descriptor.interface as u64));
+
+            for (i, bar) in descriptor.bars.iter().enumerate() {
+                if let Some(bar) = bar {
+                    match bar {
+                        Bar::Memory32 { memory_object, size } => {
+                            properties
+                                .insert(format!("pci.bar{}.handle", i), Property::MemoryObject(*memory_object));
+                            properties.insert(format!("pci.bar{}.size", i), Property::Integer(*size as u64));
+                        }
+                        Bar::Memory64 { memory_object, size } => {
+                            properties
+                                .insert(format!("pci.bar{}.handle", i), Property::MemoryObject(*memory_object));
+                            properties.insert(format!("pci.bar{}.size", i), Property::Integer(*size));
+                        }
+                    }
+                }
+            }
 
             properties
         };

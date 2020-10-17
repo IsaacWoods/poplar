@@ -15,6 +15,7 @@
 extern crate alloc;
 
 use alloc::{collections::BTreeMap, string::String, vec::Vec};
+use libpebble::Handle;
 use ptah::{Deserialize, Serialize};
 
 type DeviceName = String;
@@ -36,6 +37,7 @@ pub enum Property {
     Bool(bool),
     Integer(u64),
     String(String),
+    MemoryObject(Handle),
 }
 
 /// These are messages sent from Bus Drivers to the Platform Bus.
