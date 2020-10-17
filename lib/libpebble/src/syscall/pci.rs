@@ -1,4 +1,5 @@
 use super::{raw, SYSCALL_PCI_GET_INFO};
+use crate::Handle;
 use bit_field::BitField;
 use core::convert::TryFrom;
 use pci_types::{BaseClass, DeviceId, DeviceRevision, Interface, PciAddress, SubClass, VendorId};
@@ -21,6 +22,14 @@ pub struct PciDeviceInfo {
     /// The lower byte of the class-code. This may indicate a specific register-level programming interface of the
     /// device.
     pub interface: Interface,
+    pub bars: [Option<Bar>; 6],
+}
+
+#[derive(Clone, Debug)]
+#[repr(C)]
+pub enum Bar {
+    Memory32 { memory_object: Handle, size: u32 },
+    Memory64 { memory_object: Handle, size: u64 },
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]

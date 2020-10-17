@@ -14,7 +14,7 @@ use crate::{
 use alloc::{collections::BTreeMap, string::String, sync::Arc};
 use bit_field::BitField;
 use core::convert::TryFrom;
-use hal::memory::{Flags, VirtualAddress};
+use hal::memory::{Flags, PhysicalAddress, VirtualAddress};
 use libpebble::{
     caps::Capability,
     syscall::{
@@ -418,6 +418,7 @@ where
     P: Platform,
 {
     use libpebble::syscall::PciDeviceInfo;
+    use pci_types::{Bar, MAX_BARS};
 
     // Check that the task has the 'PciBusDriver' capability
     if !task.capabilities.contains(&Capability::PciBusDriver) {
@@ -437,7 +438,7 @@ where
                 .map_err(|()| PciGetInfoError::BufferPointerInvalid)?;
 
             for (i, (&address, device)) in pci_info.devices.iter().enumerate() {
-                descriptor_buffer[i] = libpebble::syscall::PciDeviceInfo {
+                let mut device_descriptor = libpebble::syscall::PciDeviceInfo {
                     address,
                     vendor_id: device.vendor_id,
                     device_id: device.device_id,
@@ -445,7 +446,55 @@ where
                     class: device.class,
                     sub_class: device.sub_class,
                     interface: device.interface,
+                    bars: [None; MAX_BARS],
                 };
+
+                for i in 0..MAX_BARS {
+                    match device.bars[i] {
+                        Some(Bar::Memory32 { address, size, prefetchable }) => {
+                            let flags = Flags {
+                                writable: true,
+                                executable: false,
+                                user_accessible: true,
+                                cached: prefetchable,
+                            };
+                            // TODO: should the requesting task own the BAR memory objects, or should the kernel?
+                            let memory_object = MemoryObject::new(
+                                task.id(),
+                                None,
+                                PhysicalAddress::new(address as usize).unwrap(),
+                                size as usize,
+                                flags,
+                            );
+                            let handle = task.add_handle(memory_object);
+                            device_descriptor.bars[i] =
+                                Some(libpebble::syscall::pci::Bar::Memory32 { memory_object: handle, size });
+                        }
+                        Some(Bar::Memory64 { address, size, prefetchable }) => {
+                            let flags = Flags {
+                                writable: true,
+                                executable: false,
+                                user_accessible: true,
+                                cached: prefetchable,
+                            };
+                            // TODO: should the requesting task own the BAR memory objects, or should the kernel?
+                            let memory_object = MemoryObject::new(
+                                task.id(),
+                                None,
+                                PhysicalAddress::new(address as usize).unwrap(),
+                                size as usize,
+                                flags,
+                            );
+                            let handle = task.add_handle(memory_object);
+                            device_descriptor.bars[i] =
+                                Some(libpebble::syscall::pci::Bar::Memory64 { memory_object: handle, size });
+                        }
+                        Some(Bar::Io { .. }) => warn!("PCI device has an I/O BAR. We don't support these, and so they're not passed out to userspace"),
+                        None => (),
+                    }
+                }
+
+                descriptor_buffer[i] = device_descriptor;
             }
 
             let mut status = 0;
