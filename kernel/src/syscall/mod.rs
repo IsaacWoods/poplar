@@ -224,7 +224,7 @@ where
     if address_ptr != 0x0 {
         let mut address_ptr = UserPointer::new(address_ptr as *mut VirtualAddress, true);
         address_ptr
-            .write(supplied_virtual_address.unwrap_or(memory_object.virtual_address.unwrap()))
+            .write(supplied_virtual_address.unwrap_or_else(|| memory_object.virtual_address.unwrap()))
             .map_err(|()| MapMemoryObjectError::AddressPointerInvalid)?;
     }
 
