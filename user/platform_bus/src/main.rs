@@ -175,8 +175,7 @@ pub extern "C" fn _start() -> ! {
                 );
 
                 if matches_filter {
-                    info!("Found a match for device: {:?}!", name);
-
+                    info!("Handing off device {} to device driver", name);
                     let old_state = mem::replace(&mut device.state, DeviceState::Claimed(*index));
                     match old_state {
                         DeviceState::Unclaimed(info) => {

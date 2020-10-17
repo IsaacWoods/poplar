@@ -52,7 +52,6 @@ pub extern "C" fn _start() -> ! {
             descriptor.sub_class,
             descriptor.interface
         );
-        info!("BARs: {:#?}", descriptor.bars);
         let device_type = DeviceType::from((descriptor.class, descriptor.sub_class));
         info!("Device type: {:?}", device_type);
         if device_type == DeviceType::UsbController {
