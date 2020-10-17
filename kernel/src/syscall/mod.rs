@@ -510,7 +510,7 @@ where
                             device_descriptor.bars[i] =
                                 Some(libpebble::syscall::pci::Bar::Memory64 { memory_object: handle, size });
                         }
-                        Some(Bar::Io { .. }) => warn!("PCI device has an I/O BAR. We don't support these, and so they're not passed out to userspace"),
+                        Some(Bar::Io { .. }) => warn!("PCI device at {} has an I/O BAR. We don't support these, and so they're not passed out to userspace", address),
                         None => (),
                     }
                 }
