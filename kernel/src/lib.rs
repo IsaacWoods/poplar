@@ -121,17 +121,13 @@ pub fn create_framebuffer(video_info: &hal::boot_info::VideoModeInfo) {
     };
     use libpebble::syscall::{FramebufferInfo, PixelFormat};
 
-    // TODO: this is not the way to do it - remove the set virtual address when we've implemented the virtual range
-    // manager
-    const VIRTUAL_START: VirtualAddress = VirtualAddress::new(0x00000005_00000000);
     // We only support RGB32 and BGR32 pixel formats so BPP will always be 4 for now.
     const BPP: usize = 4;
 
     let size_in_bytes = video_info.stride * video_info.height * BPP;
     let memory_object = MemoryObject::new(
         object::SENTINEL_KERNEL_ID,
-        // TODO: change this to `None` so the userspace task can pick where to put it
-        Some(VIRTUAL_START),
+        None,
         video_info.framebuffer_address,
         pebble_util::math::align_up(size_in_bytes, Size4KiB::SIZE),
         Flags { writable: true, user_accessible: true, cached: false, ..Default::default() },

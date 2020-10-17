@@ -80,6 +80,12 @@ pub extern "C" fn _start() -> ! {
 }
 
 fn make_framebuffer() -> Framebuffer<Bgr32> {
+    /*
+     * This is the virtual address the framebuffer will be mapped to in our address space.
+     * NOTE: this address was basically pulled out of thin air.
+     */
+    const FRAMEBUFFER_ADDRESS: usize = 0x00000005_00000000;
+
     let (framebuffer_handle, framebuffer_info) = {
         let mut framebuffer_info: MaybeUninit<FramebufferInfo> = MaybeUninit::uninit();
 
@@ -89,22 +95,19 @@ fn make_framebuffer() -> Framebuffer<Bgr32> {
         (framebuffer_handle, unsafe { framebuffer_info.assume_init() })
     };
 
-    let mut framebuffer_address: MaybeUninit<usize> = MaybeUninit::uninit();
     unsafe {
         syscall::map_memory_object(
             framebuffer_handle,
             libpebble::ZERO_HANDLE,
-            None,
-            framebuffer_address.as_mut_ptr(),
+            Some(FRAMEBUFFER_ADDRESS),
+            0x0 as *mut _,
         )
         .unwrap();
     }
-    let framebuffer_address = unsafe { framebuffer_address.assume_init() };
-
     assert_eq!(framebuffer_info.pixel_format, PixelFormat::BGR32);
 
     Framebuffer {
-        ptr: framebuffer_address as *mut Pixel<Bgr32>,
+        ptr: FRAMEBUFFER_ADDRESS as *mut Pixel<Bgr32>,
         width: framebuffer_info.width as usize,
         height: framebuffer_info.height as usize,
         stride: framebuffer_info.stride as usize,
