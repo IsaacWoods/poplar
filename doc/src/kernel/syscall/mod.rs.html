@@ -758,7 +758,7 @@
     <span class="kw">if</span> <span class="ident">address_ptr</span> <span class="op">!</span><span class="op">=</span> <span class="number">0x0</span> {
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">address_ptr</span> <span class="op">=</span> <span class="ident">UserPointer</span>::<span class="ident">new</span>(<span class="ident">address_ptr</span> <span class="kw">as</span> <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="ident">VirtualAddress</span>, <span class="bool-val">true</span>);
         <span class="ident">address_ptr</span>
-            .<span class="ident">write</span>(<span class="ident">supplied_virtual_address</span>.<span class="ident">unwrap_or</span>(<span class="ident">memory_object</span>.<span class="ident">virtual_address</span>.<span class="ident">unwrap</span>()))
+            .<span class="ident">write</span>(<span class="ident">supplied_virtual_address</span>.<span class="ident">unwrap_or_else</span>(<span class="op">|</span><span class="op">|</span> <span class="ident">memory_object</span>.<span class="ident">virtual_address</span>.<span class="ident">unwrap</span>()))
             .<span class="ident">map_err</span>(<span class="op">|</span>()<span class="op">|</span> <span class="ident">MapMemoryObjectError</span>::<span class="ident">AddressPointerInvalid</span>)<span class="question-mark">?</span>;
     }
 

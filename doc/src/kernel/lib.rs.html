@@ -148,10 +148,6 @@
 <span id="145">145</span>
 <span id="146">146</span>
 <span id="147">147</span>
-<span id="148">148</span>
-<span id="149">149</span>
-<span id="150">150</span>
-<span id="151">151</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="attribute">#![<span class="ident">no_std</span>]</span>
 <span class="attribute">#![<span class="ident">feature</span>(
@@ -276,17 +272,13 @@
     };
     <span class="kw">use</span> <span class="ident">libpebble</span>::<span class="ident">syscall</span>::{<span class="ident">FramebufferInfo</span>, <span class="ident">PixelFormat</span>};
 
-    <span class="comment">// TODO: this is not the way to do it - remove the set virtual address when we&#39;ve implemented the virtual range</span>
-    <span class="comment">// manager</span>
-    <span class="kw">const</span> <span class="ident">VIRTUAL_START</span>: <span class="ident">VirtualAddress</span> <span class="op">=</span> <span class="ident">VirtualAddress</span>::<span class="ident">new</span>(<span class="number">0x00000005_00000000</span>);
     <span class="comment">// We only support RGB32 and BGR32 pixel formats so BPP will always be 4 for now.</span>
     <span class="kw">const</span> <span class="ident">BPP</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="number">4</span>;
 
     <span class="kw">let</span> <span class="ident">size_in_bytes</span> <span class="op">=</span> <span class="ident">video_info</span>.<span class="ident">stride</span> <span class="op">*</span> <span class="ident">video_info</span>.<span class="ident">height</span> <span class="op">*</span> <span class="ident">BPP</span>;
     <span class="kw">let</span> <span class="ident">memory_object</span> <span class="op">=</span> <span class="ident">MemoryObject</span>::<span class="ident">new</span>(
         <span class="ident">object</span>::<span class="ident">SENTINEL_KERNEL_ID</span>,
-        <span class="comment">// TODO: change this to `None` so the userspace task can pick where to put it</span>
-        <span class="prelude-val">Some</span>(<span class="ident">VIRTUAL_START</span>),
+        <span class="prelude-val">None</span>,
         <span class="ident">video_info</span>.<span class="ident">framebuffer_address</span>,
         <span class="ident">pebble_util</span>::<span class="ident">math</span>::<span class="ident">align_up</span>(<span class="ident">size_in_bytes</span>, <span class="ident">Size4KiB</span>::<span class="ident">SIZE</span>),
         <span class="ident">Flags</span> { <span class="ident">writable</span>: <span class="bool-val">true</span>, <span class="ident">user_accessible</span>: <span class="bool-val">true</span>, <span class="ident">cached</span>: <span class="bool-val">false</span>, ..<span class="ident">Default</span>::<span class="ident">default</span>() },
