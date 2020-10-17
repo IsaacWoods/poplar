@@ -119,7 +119,7 @@ fn generate_for_enum(data: &DataEnum) -> TokenStream {
                 })
             }
             Fields::Unnamed(ref fields) => {
-                let field_names = fields.unnamed.iter().enumerate().map(|(i, field)| {
+                let field_names = fields.unnamed.iter().enumerate().map(|(i, _field)| {
                     let field_name = format_ident!("field_{}", i);
                     quote!(#field_name, )
                 });

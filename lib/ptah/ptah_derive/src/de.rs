@@ -71,7 +71,7 @@ fn generate_body(name: &Ident, data: &Data) -> TokenStream {
             Fields::Unit => quote! {},
         },
         Data::Enum(ref enum_data) => generate_for_enum(name, enum_data),
-        Data::Union(union_data) => todo!(),
+        Data::Union(_) => todo!(),
     }
 }
 
@@ -130,7 +130,7 @@ fn generate_for_enum(enum_name: &Ident, data: &DataEnum) -> TokenStream {
                     let field_type = &field.ty;
                     quote_spanned!(field.span() => let #field_name: #field_type = ptah::Deserialize::deserialize(deserializer)?;)
                 });
-                let struct_init = fields.named.iter().enumerate().map(|(i, field)| {
+                let struct_init = fields.named.iter().map(|field| {
                     let field_name = &field.ident;
                     quote!(#field_name, )
                 });
