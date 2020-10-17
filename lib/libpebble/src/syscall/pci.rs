@@ -4,7 +4,7 @@ use bit_field::BitField;
 use core::convert::TryFrom;
 use pci_types::{BaseClass, DeviceId, DeviceRevision, Interface, PciAddress, SubClass, VendorId};
 
-#[derive(Clone, Debug, Default)]
+#[derive(Debug, Default)]
 #[repr(C)]
 pub struct PciDeviceInfo {
     pub address: PciAddress,
@@ -25,7 +25,7 @@ pub struct PciDeviceInfo {
     pub bars: [Option<Bar>; 6],
 }
 
-#[derive(Clone, Debug)]
+#[derive(Debug)]
 #[repr(C)]
 pub enum Bar {
     Memory32 { memory_object: Handle, size: u32 },

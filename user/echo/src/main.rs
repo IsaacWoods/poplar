@@ -29,7 +29,7 @@ pub extern "C" fn _start() -> ! {
     const HEAP_SIZE: usize = 0x4000;
     let heap_memory_object = syscall::create_memory_object(HEAP_START, HEAP_SIZE, true, false).unwrap();
     unsafe {
-        syscall::map_memory_object(heap_memory_object, libpebble::ZERO_HANDLE, None, 0x0 as *mut usize).unwrap();
+        syscall::map_memory_object(&heap_memory_object, &libpebble::ZERO_HANDLE, None, 0x0 as *mut usize).unwrap();
         ALLOCATOR.lock().init(HEAP_START, HEAP_SIZE);
     }
 
@@ -50,10 +50,10 @@ pub extern "C" fn _start() -> ! {
         for subscriber in subscribers.iter() {
             let mut bytes = [0u8; 256];
             loop {
-                match syscall::get_message(*subscriber, &mut bytes, &mut []) {
+                match syscall::get_message(subscriber, &mut bytes, &mut []) {
                     Ok((bytes, _handles)) => {
                         info!("Echoing message: {:x?}", bytes);
-                        syscall::send_message(*subscriber, bytes, &[]).unwrap();
+                        syscall::send_message(subscriber, bytes, &[]).unwrap();
                     }
                     Err(GetMessageError::NoMessage) => break,
                     Err(err) => panic!("Error while echoing message: {:?}", err),

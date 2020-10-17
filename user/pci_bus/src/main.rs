@@ -1,6 +1,6 @@
 #![no_std]
 #![no_main]
-#![feature(const_generics, alloc_error_handler, never_type)]
+#![feature(const_generics, alloc_error_handler, never_type, array_value_iter)]
 
 extern crate alloc;
 extern crate rlibc;
@@ -17,7 +17,7 @@ use libpebble::{
 use linked_list_allocator::LockedHeap;
 use log::info;
 use pci_types::device_type::{DeviceType, UsbType};
-use platform_bus::{BusDriverMessage, Device, Property};
+use platform_bus::{BusDriverMessage, DeviceInfo, Property};
 
 #[global_allocator]
 static ALLOCATOR: LockedHeap = LockedHeap::empty();
@@ -30,7 +30,7 @@ pub extern "C" fn _start() -> ! {
     const HEAP_SIZE: usize = 0x4000;
     let heap_memory_object = syscall::create_memory_object(HEAP_START, HEAP_SIZE, true, false).unwrap();
     unsafe {
-        syscall::map_memory_object(heap_memory_object, libpebble::ZERO_HANDLE, None, 0x0 as *mut usize).unwrap();
+        syscall::map_memory_object(&heap_memory_object, &libpebble::ZERO_HANDLE, None, 0x0 as *mut usize).unwrap();
         ALLOCATOR.lock().init(HEAP_START, HEAP_SIZE);
     }
 
@@ -41,8 +41,8 @@ pub extern "C" fn _start() -> ! {
     let platform_bus_channel: Channel<BusDriverMessage, !> =
         Channel::from_handle(syscall::subscribe_to_service("platform_bus.bus_driver").unwrap());
 
-    let descriptors = syscall::pci_get_info_vec().expect("Failed to get PCI descriptors");
-    for descriptor in descriptors {
+    let mut descriptors = syscall::pci_get_info_vec().expect("Failed to get PCI descriptors");
+    for descriptor in descriptors.drain(..) {
         info!(
             "PCI device at {}: {:04x}:{:04x} (class = {}, sub = {}, interface = {})",
             descriptor.address,
@@ -72,18 +72,18 @@ pub extern "C" fn _start() -> ! {
             properties.insert("pci.sub_class".to_string(), Property::Integer(descriptor.sub_class as u64));
             properties.insert("pci.interface".to_string(), Property::Integer(descriptor.interface as u64));
 
-            for (i, bar) in descriptor.bars.iter().enumerate() {
+            for (i, bar) in core::array::IntoIter::new(descriptor.bars).enumerate() {
                 if let Some(bar) = bar {
                     match bar {
                         Bar::Memory32 { memory_object, size } => {
                             properties
-                                .insert(format!("pci.bar{}.handle", i), Property::MemoryObject(*memory_object));
-                            properties.insert(format!("pci.bar{}.size", i), Property::Integer(*size as u64));
+                                .insert(format!("pci.bar{}.handle", i), Property::MemoryObject(memory_object));
+                            properties.insert(format!("pci.bar{}.size", i), Property::Integer(size as u64));
                         }
                         Bar::Memory64 { memory_object, size } => {
                             properties
-                                .insert(format!("pci.bar{}.handle", i), Property::MemoryObject(*memory_object));
-                            properties.insert(format!("pci.bar{}.size", i), Property::Integer(*size));
+                                .insert(format!("pci.bar{}.handle", i), Property::MemoryObject(memory_object));
+                            properties.insert(format!("pci.bar{}.size", i), Property::Integer(size));
                         }
                     }
                 }

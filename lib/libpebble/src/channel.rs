@@ -34,7 +34,7 @@ where
     pub fn send(&self, message: &S) -> Result<(), ChannelSendError> {
         let mut writer = ChannelWriter::new();
         ptah::to_wire(message, &mut writer).map_err(|err| ChannelSendError::FailedToSerialize(err))?;
-        syscall::send_message(self.0, writer.bytes(), writer.handles())
+        syscall::send_message(&self.0, writer.bytes(), writer.handles())
             .map_err(|err| ChannelSendError::SendError(err))
     }
 
@@ -44,7 +44,7 @@ where
         let mut byte_buffer = [0u8; BYTES_BUFFER_SIZE];
         let mut handle_buffer = [crate::ZERO_HANDLE; CHANNEL_MAX_NUM_HANDLES];
 
-        match syscall::get_message(self.0, &mut byte_buffer, &mut handle_buffer) {
+        match syscall::get_message(&self.0, &mut byte_buffer, &mut handle_buffer) {
             Ok((bytes, handles)) => {
                 // TODO: this looks really bad, but is actually fine (since Handle is just a transparent wrapper
                 // around a `u32`). There might be a better way.

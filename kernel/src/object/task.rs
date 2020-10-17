@@ -108,9 +108,9 @@ where
     }
 
     pub fn add_handle(&self, object: Arc<dyn KernelObject>) -> Handle {
-        let handle = Handle(self.next_handle.fetch_add(1, Ordering::Relaxed));
-        self.handles.write().insert(handle, object);
-        handle
+        let handle_num = self.next_handle.fetch_add(1, Ordering::Relaxed);
+        self.handles.write().insert(Handle(handle_num), object);
+        Handle(handle_num)
     }
 }
 

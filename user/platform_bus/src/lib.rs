@@ -21,7 +21,7 @@ use ptah::{Deserialize, Serialize};
 type DeviceName = String;
 type PropertyName = String;
 
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct Device {
     pub properties: BTreeMap<PropertyName, Property>,
 }
@@ -32,7 +32,7 @@ impl Device {
     }
 }
 
-#[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize)]
+#[derive(PartialEq, Eq, Debug, Serialize, Deserialize)]
 pub enum Property {
     Bool(bool),
     Integer(u64),
@@ -57,7 +57,7 @@ pub enum DeviceDriverMessage {
 }
 
 /// These are message sent from the Platform Bus to a Device Driver.
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub enum DeviceDriverRequest {
     /// Request that a Device Driver starts to handle the given Device.
     HandoffDevice(DeviceName, Device),

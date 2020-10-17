@@ -83,8 +83,8 @@ define_error_type!(MapMemoryObjectError {
 });
 
 pub unsafe fn map_memory_object(
-    memory_object: Handle,
-    address_space: Handle,
+    memory_object: &Handle,
+    address_space: &Handle,
     virtual_address: Option<usize>,
     address_pointer: *mut usize,
 ) -> Result<(), MapMemoryObjectError> {
@@ -120,7 +120,7 @@ define_error_type!(SendMessageError {
     OtherEndDisconnected => 10,
 });
 
-pub fn send_message(channel: Handle, bytes: &[u8], handles: &[Handle]) -> Result<(), SendMessageError> {
+pub fn send_message(channel: &Handle, bytes: &[u8], handles: &[Handle]) -> Result<(), SendMessageError> {
     status_from_syscall_repr(unsafe {
         raw::syscall5(
             SYSCALL_SEND_MESSAGE,
@@ -144,7 +144,7 @@ define_error_type!(GetMessageError {
 });
 
 pub fn get_message<'b, 'h>(
-    channel: Handle,
+    channel: &Handle,
     byte_buffer: &'b mut [u8],
     handle_buffer: &'h mut [Handle],
 ) -> Result<(&'b mut [u8], &'h mut [Handle]), GetMessageError> {
