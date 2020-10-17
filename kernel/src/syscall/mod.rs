@@ -144,7 +144,7 @@ where
 
     let memory_object = MemoryObject::new(
         task.id(),
-        VirtualAddress::new(virtual_address),
+        Some(VirtualAddress::new(virtual_address)),
         physical_start,
         size,
         Flags { writable, executable, user_accessible: true, ..Default::default() },
@@ -202,7 +202,8 @@ where
     if address_ptr != 0x0 {
         let mut address_ptr = UserPointer::new(address_ptr as *mut VirtualAddress, true);
         address_ptr
-            .write(memory_object.virtual_address)
+            // TODO: handle if virtual_address is None here
+            .write(memory_object.virtual_address.unwrap())
             .map_err(|()| MapMemoryObjectError::AddressPointerInvalid)?;
     }
 

@@ -130,7 +130,8 @@ pub fn create_framebuffer(video_info: &hal::boot_info::VideoModeInfo) {
     let size_in_bytes = video_info.stride * video_info.height * BPP;
     let memory_object = MemoryObject::new(
         object::SENTINEL_KERNEL_ID,
-        VIRTUAL_START,
+        // TODO: change this to `None` so the userspace task can pick where to put it
+        Some(VIRTUAL_START),
         video_info.framebuffer_address,
         pebble_util::math::align_up(size_in_bytes, Size4KiB::SIZE),
         Flags { writable: true, user_accessible: true, cached: false, ..Default::default() },

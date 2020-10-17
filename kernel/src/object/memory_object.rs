@@ -8,7 +8,9 @@ use hal::{
 pub struct MemoryObject {
     pub id: KernelObjectId,
     pub owner: KernelObjectId,
-    pub virtual_address: VirtualAddress,
+    /// The virtual address to map this MemoryObject at. If this is `None`, the mapping task can choose to map it
+    /// at any virtual address it chooses.
+    pub virtual_address: Option<VirtualAddress>,
     pub physical_address: PhysicalAddress,
     /// Size of this MemoryObject in bytes.
     pub size: usize,
@@ -18,7 +20,7 @@ pub struct MemoryObject {
 impl MemoryObject {
     pub fn new(
         owner: KernelObjectId,
-        virtual_address: VirtualAddress,
+        virtual_address: Option<VirtualAddress>,
         physical_address: PhysicalAddress,
         size: usize,
         flags: Flags,
@@ -37,7 +39,7 @@ impl MemoryObject {
         Arc::new(MemoryObject {
             id: alloc_kernel_object_id(),
             owner,
-            virtual_address: segment.virtual_address,
+            virtual_address: Some(segment.virtual_address),
             physical_address: segment.physical_address,
             size: segment.size,
             flags: segment.flags,

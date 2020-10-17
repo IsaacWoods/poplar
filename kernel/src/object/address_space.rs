@@ -61,10 +61,12 @@ where
     ) -> Result<(), MapMemoryObjectError> {
         use hal::memory::PagingError;
 
+        // TODO: handle when the memory object doesn't have a set virtual address (probs take an
+        // Option<VirtualAddress> as a param)
         self.page_table
             .lock()
             .map_area(
-                memory_object.virtual_address,
+                memory_object.virtual_address.unwrap(),
                 memory_object.physical_address,
                 memory_object.size,
                 memory_object.flags,
