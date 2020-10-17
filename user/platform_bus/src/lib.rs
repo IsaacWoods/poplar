@@ -40,6 +40,36 @@ pub enum Property {
     MemoryObject(Handle),
 }
 
+impl Property {
+    pub fn as_bool(&self) -> Option<bool> {
+        match self {
+            Property::Bool(value) => Some(*value),
+            _ => None,
+        }
+    }
+
+    pub fn as_integer(&self) -> Option<u64> {
+        match self {
+            Property::Integer(value) => Some(*value),
+            _ => None,
+        }
+    }
+
+    pub fn as_string(&self) -> Option<&String> {
+        match self {
+            Property::String(ref value) => Some(value),
+            _ => None,
+        }
+    }
+
+    pub fn as_memory_object(&self) -> Option<&Handle> {
+        match self {
+            Property::MemoryObject(ref value) => Some(value),
+            _ => None,
+        }
+    }
+}
+
 /// These are messages sent from Bus Drivers to the Platform Bus.
 #[derive(Debug, Serialize, Deserialize)]
 pub enum BusDriverMessage {
