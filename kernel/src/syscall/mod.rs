@@ -58,7 +58,7 @@ where
         syscall::SYSCALL_EARLY_LOG => status_to_syscall_repr(early_log(task, a, b)),
         syscall::SYSCALL_GET_FRAMEBUFFER => handle_to_syscall_repr(get_framebuffer(task, a)),
         syscall::SYSCALL_CREATE_MEMORY_OBJECT => handle_to_syscall_repr(create_memory_object(task, a, b, c)),
-        syscall::SYSCALL_MAP_MEMORY_OBJECT => status_to_syscall_repr(map_memory_object(task, a, b, c)),
+        syscall::SYSCALL_MAP_MEMORY_OBJECT => status_to_syscall_repr(map_memory_object(task, a, b, c, d)),
         syscall::SYSCALL_CREATE_CHANNEL => todo!(),
         syscall::SYSCALL_SEND_MESSAGE => status_to_syscall_repr(send_message(task, a, b, c, d, e)),
         syscall::SYSCALL_GET_MESSAGE => status_with_payload_to_syscall_repr(get_message(task, a, b, c, d, e)),
@@ -157,6 +157,7 @@ fn map_memory_object<P>(
     task: &Arc<Task<P>>,
     memory_object_handle: usize,
     address_space_handle: usize,
+    virtual_address: usize,
     address_ptr: usize,
 ) -> Result<(), MapMemoryObjectError>
 where
@@ -177,12 +178,29 @@ where
         .ok()
         .ok_or(MapMemoryObjectError::NotAMemoryObject)?;
 
+    let supplied_virtual_address = if virtual_address == 0x0 {
+        if memory_object.virtual_address.is_none() {
+            return Err(MapMemoryObjectError::VirtualAddressNotSupplied);
+        }
+        None
+    } else {
+        if memory_object.virtual_address.is_some() {
+            return Err(MapMemoryObjectError::VirtualAddressShouldNotBeSupplied);
+        }
+        // TODO: we need to actually validate that the supplied address is canonical and all that jazz
+        Some(VirtualAddress::new(virtual_address))
+    };
+
     if address_space_handle == ZERO_HANDLE {
         /*
          * If the AddressSpace handle is the zero handle, we map the MemoryObject into the calling task's
          * address space.
          */
-        task.address_space.map_memory_object(memory_object.clone(), &crate::PHYSICAL_MEMORY_MANAGER.get())?;
+        task.address_space.map_memory_object(
+            memory_object.clone(),
+            supplied_virtual_address,
+            &crate::PHYSICAL_MEMORY_MANAGER.get(),
+        )?;
     } else {
         task.handles
             .read()
@@ -192,7 +210,11 @@ where
             .downcast_arc::<AddressSpace<P>>()
             .ok()
             .ok_or(MapMemoryObjectError::NotAnAddressSpace)?
-            .map_memory_object(memory_object.clone(), &crate::PHYSICAL_MEMORY_MANAGER.get())?;
+            .map_memory_object(
+                memory_object.clone(),
+                supplied_virtual_address,
+                &crate::PHYSICAL_MEMORY_MANAGER.get(),
+            )?;
     }
 
     /*
@@ -202,8 +224,7 @@ where
     if address_ptr != 0x0 {
         let mut address_ptr = UserPointer::new(address_ptr as *mut VirtualAddress, true);
         address_ptr
-            // TODO: handle if virtual_address is None here
-            .write(memory_object.virtual_address.unwrap())
+            .write(supplied_virtual_address.unwrap_or(memory_object.virtual_address.unwrap()))
             .map_err(|()| MapMemoryObjectError::AddressPointerInvalid)?;
     }
 

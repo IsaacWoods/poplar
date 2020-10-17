@@ -78,18 +78,22 @@ define_error_type!(MapMemoryObjectError {
     NotAMemoryObject => 3,
     NotAnAddressSpace => 4,
     AddressPointerInvalid => 5,
+    VirtualAddressNotSupplied => 6,
+    VirtualAddressShouldNotBeSupplied => 7,
 });
 
 pub unsafe fn map_memory_object(
     memory_object: Handle,
     address_space: Handle,
+    virtual_address: Option<usize>,
     address_pointer: *mut usize,
 ) -> Result<(), MapMemoryObjectError> {
     status_from_syscall_repr(unsafe {
-        raw::syscall3(
+        raw::syscall4(
             SYSCALL_MAP_MEMORY_OBJECT,
             memory_object.0 as usize,
             address_space.0 as usize,
+            if virtual_address.is_some() { virtual_address.unwrap() } else { 0x0 },
             address_pointer as usize,
         )
     })

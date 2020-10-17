@@ -108,7 +108,7 @@ pub fn load_task<P>(
 
     for segment in image.segments() {
         let memory_object = MemoryObject::from_boot_info(task.id(), segment);
-        address_space.map_memory_object(memory_object, allocator).unwrap();
+        address_space.map_memory_object(memory_object, None, allocator).unwrap();
     }
 
     scheduler.add_task(task);

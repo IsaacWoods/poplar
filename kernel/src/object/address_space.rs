@@ -57,16 +57,22 @@ where
     pub fn map_memory_object(
         &self,
         memory_object: Arc<MemoryObject>,
+        virtual_address: Option<VirtualAddress>,
         allocator: &PhysicalMemoryManager,
     ) -> Result<(), MapMemoryObjectError> {
         use hal::memory::PagingError;
 
-        // TODO: handle when the memory object doesn't have a set virtual address (probs take an
-        // Option<VirtualAddress> as a param)
+        let virtual_address = if virtual_address.is_some() {
+            assert!(memory_object.virtual_address.is_none());
+            virtual_address.unwrap()
+        } else {
+            memory_object.virtual_address.unwrap()
+        };
+
         self.page_table
             .lock()
             .map_area(
-                memory_object.virtual_address.unwrap(),
+                virtual_address,
                 memory_object.physical_address,
                 memory_object.size,
                 memory_object.flags,
