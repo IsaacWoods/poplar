@@ -22,13 +22,13 @@ type DeviceName = String;
 type PropertyName = String;
 
 #[derive(Debug, Serialize, Deserialize)]
-pub struct Device {
+pub struct DeviceInfo {
     pub properties: BTreeMap<PropertyName, Property>,
 }
 
-impl Device {
-    pub fn new(properties: BTreeMap<PropertyName, Property>) -> Device {
-        Device { properties }
+impl DeviceInfo {
+    pub fn new(properties: BTreeMap<PropertyName, Property>) -> DeviceInfo {
+        DeviceInfo { properties }
     }
 }
 
@@ -43,7 +43,7 @@ pub enum Property {
 /// These are messages sent from Bus Drivers to the Platform Bus.
 #[derive(Debug, Serialize, Deserialize)]
 pub enum BusDriverMessage {
-    RegisterDevice(DeviceName, Device),
+    RegisterDevice(DeviceName, DeviceInfo),
     // TODO: this could have messages to handle hot-plugging (Bus Driver tells Platform Bus a device was removed,
     // we pass that on to the Device Driver if the device was claimed by one)
 }
@@ -60,7 +60,7 @@ pub enum DeviceDriverMessage {
 #[derive(Debug, Serialize, Deserialize)]
 pub enum DeviceDriverRequest {
     /// Request that a Device Driver starts to handle the given Device.
-    HandoffDevice(DeviceName, Device),
+    HandoffDevice(DeviceName, DeviceInfo),
 }
 
 #[derive(Debug, Serialize, Deserialize)]

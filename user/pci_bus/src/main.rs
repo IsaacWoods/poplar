@@ -91,7 +91,7 @@ pub extern "C" fn _start() -> ! {
 
             properties
         };
-        platform_bus_channel.send(&BusDriverMessage::RegisterDevice(name, Device::new(properties))).unwrap();
+        platform_bus_channel.send(&BusDriverMessage::RegisterDevice(name, DeviceInfo::new(properties))).unwrap();
     }
 
     loop {

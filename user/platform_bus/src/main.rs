@@ -6,7 +6,7 @@ extern crate alloc;
 extern crate rlibc;
 
 use alloc::{collections::BTreeMap, rc::Rc, string::String, vec::Vec};
-use core::{convert::TryFrom, panic::PanicInfo};
+use core::{convert::TryFrom, mem, panic::PanicInfo};
 use libpebble::{
     caps::{CapabilitiesRepr, CAP_EARLY_LOGGING, CAP_PADDING, CAP_SERVICE_PROVIDER},
     channel::Channel,
@@ -17,7 +17,7 @@ use libpebble::{
 };
 use linked_list_allocator::LockedHeap;
 use log::{info, warn};
-use platform_bus::{BusDriverMessage, Device, DeviceDriverMessage, DeviceDriverRequest, Filter, Property};
+use platform_bus::{BusDriverMessage, DeviceDriverMessage, DeviceDriverRequest, DeviceInfo, Filter, Property};
 
 #[global_allocator]
 static ALLOCATOR: LockedHeap = LockedHeap::empty();
@@ -25,14 +25,13 @@ static ALLOCATOR: LockedHeap = LockedHeap::empty();
 type BusDriverIndex = usize;
 type DeviceDriverIndex = usize;
 
-#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+#[derive(Debug)]
 enum DeviceState {
-    Unclaimed,
+    Unclaimed(DeviceInfo),
     Claimed(BusDriverIndex),
 }
 
 struct DeviceEntry {
-    device: Device,
     bus_driver: BusDriverIndex,
     state: DeviceState,
 }
@@ -115,11 +114,11 @@ pub extern "C" fn _start() -> ! {
             loop {
                 match bus_driver.channel.try_receive().unwrap() {
                     Some(message) => match message {
-                        BusDriverMessage::RegisterDevice(name, device) => {
-                            info!("Registering device: {:?} as {}", device, name);
+                        BusDriverMessage::RegisterDevice(name, info) => {
+                            info!("Registering device: {:?} as {}", info, name);
                             devices.insert(
                                 name,
-                                DeviceEntry { device, bus_driver: *index, state: DeviceState::Unclaimed },
+                                DeviceEntry { bus_driver: *index, state: DeviceState::Unclaimed(info) },
                             );
                         }
                     },
@@ -159,22 +158,34 @@ pub extern "C" fn _start() -> ! {
          * see if we have a device driver to offer them to.
          */
         for (name, device) in devices.iter_mut() {
-            if device.state == DeviceState::Unclaimed {
-                for (index, device_driver) in
-                    device_drivers.iter().filter(|(_index, driver)| driver.filters.is_some())
-                {
-                    let matches_filter =
-                        device_driver.filters.as_ref().unwrap().iter().fold(true, |matches_so_far, filter| {
-                            matches_so_far && filter.match_against(&device.device.properties)
-                        });
+            // Skip devices that have already been handed off to a driver
+            if let DeviceState::Claimed(_) = device.state {
+                continue;
+            }
 
-                    if matches_filter {
-                        info!("Found a match for device: {:?}!", name);
-                        device.state = DeviceState::Claimed(*index);
-                        device_driver
-                            .channel
-                            .send(&DeviceDriverRequest::HandoffDevice(name.clone(), device.device.clone()))
-                            .unwrap();
+            for (index, device_driver) in device_drivers.iter().filter(|(_, driver)| driver.filters.is_some()) {
+                let matches_filter = device_driver.filters.as_ref().unwrap().iter().fold(
+                    true,
+                    |matches_so_far, filter| match device.state {
+                        DeviceState::Unclaimed(ref info) => {
+                            matches_so_far && filter.match_against(&info.properties)
+                        }
+                        _ => false,
+                    },
+                );
+
+                if matches_filter {
+                    info!("Found a match for device: {:?}!", name);
+
+                    let old_state = mem::replace(&mut device.state, DeviceState::Claimed(*index));
+                    match old_state {
+                        DeviceState::Unclaimed(info) => {
+                            device_driver
+                                .channel
+                                .send(&DeviceDriverRequest::HandoffDevice(name.clone(), info))
+                                .unwrap();
+                        }
+                        _ => unreachable!(),
                     }
                 }
             }
