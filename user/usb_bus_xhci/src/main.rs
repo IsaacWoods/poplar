@@ -5,8 +5,8 @@
 extern crate alloc;
 extern crate rlibc;
 
-use alloc::{collections::BTreeMap, rc::Rc, string::String, vec, vec::Vec};
-use core::{convert::TryFrom, panic::PanicInfo};
+use alloc::{string::String, vec};
+use core::panic::PanicInfo;
 use libpebble::{
     caps::{CapabilitiesRepr, CAP_EARLY_LOGGING, CAP_PADDING, CAP_SERVICE_USER},
     channel::Channel,
@@ -54,16 +54,34 @@ pub extern "C" fn _start() -> ! {
         ]))
         .unwrap();
 
-    loop {
-        syscall::yield_to_kernel();
-
-        loop {
-            if let Some(request) = platform_bus_device_channel.try_receive().unwrap() {
-                info!("Request from PlatformBus: {:?}", request);
-            } else {
-                break;
+    // TODO: we currently only support one controller, and just stop listening after we find the first one
+    // TODO: probably don't bother changing this until we have a futures-based message interface
+    let mut controller_device = loop {
+        match platform_bus_device_channel.try_receive().unwrap() {
+            Some(DeviceDriverRequest::HandoffDevice(device_name, device)) => {
+                info!("Started driving a XHCI controller: {}", device_name);
+                break device;
             }
+            None => syscall::yield_to_kernel(),
         }
+    };
+
+    let register_space_size = controller_device.properties.get("pci.bar0.size").unwrap().as_integer().unwrap();
+    const REGISTER_SPACE_ADDRESS: usize = 0x00000005_00000000;
+    unsafe {
+        syscall::map_memory_object(
+            controller_device.properties.get("pci.bar0.handle").as_ref().unwrap().as_memory_object().unwrap(),
+            &libpebble::ZERO_HANDLE,
+            Some(REGISTER_SPACE_ADDRESS),
+            0x0 as *mut usize,
+        )
+        .unwrap();
+    }
+    let caplength = unsafe { core::ptr::read_volatile(REGISTER_SPACE_ADDRESS as *const u8) };
+    info!("Cap length = {:#x}", caplength);
+
+    loop {
+        syscall::yield_to_kernel()
     }
 }
 
