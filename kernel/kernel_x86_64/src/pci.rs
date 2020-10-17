@@ -6,7 +6,7 @@ use hal::memory::PhysicalAddress;
 use hal_x86_64::kernel_map;
 use kernel::pci::{PciDevice, PciInfo};
 use log::info;
-use pci_types::{ConfigRegionAccess, PciAddress, PciHeader};
+use pci_types::{Bar, ConfigRegionAccess, EndpointHeader, PciAddress, PciHeader};
 
 #[derive(Clone)]
 pub struct EcamAccess(PciConfigRegions);
@@ -109,17 +109,52 @@ where
                 return;
             }
 
-            // TODO: check if the function is a PCI-to-PCI bridge, and if so, call check_bus on the secondary bus
-            // number (from the bridge's config space)
-
             info!(
                 "Found PCI device (bus={}, device={}, function={}): (vendor = {:#x}, device = {:#x})",
                 bus, device, function, vendor_id, device_id
             );
 
-            self.info
-                .devices
-                .insert(address, PciDevice { vendor_id, device_id, revision, class, sub_class, interface });
+            match header.header_type(&self.access) {
+                pci_types::HEADER_TYPE_ENDPOINT => {
+                    let endpoint_header = EndpointHeader::from_header(header, &self.access).unwrap();
+                    let bars = {
+                        let mut bars = [None; 6];
+
+                        let mut skip_next = false;
+                        for i in 0..6 {
+                            if skip_next {
+                                continue;
+                            }
+
+                            let bar = endpoint_header.bar(i, &self.access);
+                            skip_next = match bar {
+                                Some(Bar::Memory64 { .. }) => true,
+                                _ => false,
+                            };
+                            bars[i as usize] = bar;
+                        }
+
+                        bars
+                    };
+
+                    self.info.devices.insert(
+                        address,
+                        PciDevice { vendor_id, device_id, revision, class, sub_class, interface, bars },
+                    );
+                }
+
+                pci_types::HEADER_TYPE_PCI_PCI_BRIDGE => {
+                    // TODO: call check_bus on the bridge's secondary bus number
+                    todo!()
+                }
+
+                pci_types::HEADER_TYPE_CARDBUS_BRIDGE => {
+                    // TODO: what do we even do with these?
+                    todo!()
+                }
+
+                reserved => panic!("PCI function has reserved header type: {:#x}", reserved),
+            }
         }
     }
 }

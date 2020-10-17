@@ -1,5 +1,5 @@
 use alloc::collections::BTreeMap;
-use pci_types::{BaseClass, DeviceId, DeviceRevision, Interface, PciAddress, SubClass, VendorId};
+use pci_types::{Bar, BaseClass, DeviceId, DeviceRevision, Interface, PciAddress, SubClass, VendorId, MAX_BARS};
 
 pub struct PciDevice {
     pub vendor_id: VendorId,
@@ -8,6 +8,7 @@ pub struct PciDevice {
     pub class: BaseClass,
     pub sub_class: SubClass,
     pub interface: Interface,
+    pub bars: [Option<Bar>; MAX_BARS],
 }
 
 pub struct PciInfo {
