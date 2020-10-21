@@ -23,12 +23,11 @@ impl OperationRegisters {
         unsafe { self.read_register(0x14) }
     }
 
-    pub fn command_ring_control(&self) -> u32 {
-        unsafe { self.read_register(0x18) }
-    }
-
-    pub fn device_contect_base_address_array_pointer(&self) -> u64 {
-        unsafe { self.read_register(0x30) }
+    pub fn set_device_context_base_address_array_pointer(&self, pointer: u64) {
+        assert_eq!(pointer.get_bits(0..6), 0x0);
+        unsafe {
+            self.write_register(0x30, pointer);
+        }
     }
 
     pub fn update_config<F>(&mut self, f: F)
@@ -40,10 +39,6 @@ impl OperationRegisters {
         unsafe {
             self.write_register(0x38, new_config.0);
         }
-    }
-
-    pub fn configure(&self) -> u32 {
-        unsafe { self.read_register(0x38) }
     }
 
     unsafe fn read_register<T>(&self, offset: usize) -> T {

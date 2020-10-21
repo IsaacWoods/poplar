@@ -7,11 +7,12 @@ extern crate alloc;
 extern crate rlibc;
 
 mod caps;
+mod memory;
 mod operational;
 
 use alloc::{string::String, vec};
 use caps::Capabilities;
-use core::panic::PanicInfo;
+use core::{mem, mem::MaybeUninit, panic::PanicInfo};
 use libpebble::{
     caps::{CapabilitiesRepr, CAP_EARLY_LOGGING, CAP_PADDING, CAP_SERVICE_USER},
     channel::Channel,
@@ -22,6 +23,7 @@ use libpebble::{
 };
 use linked_list_allocator::LockedHeap;
 use log::info;
+use memory::MemoryArea;
 use operational::OperationRegisters;
 use platform_bus::{BusDriverMessage, DeviceDriverMessage, DeviceDriverRequest, Filter, Property};
 
@@ -95,14 +97,20 @@ pub extern "C" fn _start() -> ! {
         )
     };
 
-    initialize_controller(&mut operational);
+
+    let memory_area = MemoryArea::new(capabilities.max_ports);
+    initialize_controller(&mut operational, &capabilities, &memory_area);
 
     loop {
         syscall::yield_to_kernel()
     }
 }
 
-fn initialize_controller(operational: &mut OperationRegisters) {
+fn initialize_controller(
+    operational: &mut OperationRegisters,
+    capabilities: &Capabilities,
+    memory_area: &MemoryArea,
+) {
     // Wait until the controller clears the Controller Not Ready bit
     while operational.usb_status().controller_not_ready() {
         // TODO: is this enough to stop it from getting optimized out?
@@ -110,10 +118,15 @@ fn initialize_controller(operational: &mut OperationRegisters) {
 
     // Set the number of device slots that are enabled
     operational.update_config(|mut config| {
-        // TODO: where should this number come from? 8 is just made up.
-        config.set_device_slots_enabled(8);
+        // TODO: should we always enable all of the ports?
+        config.set_device_slots_enabled(capabilities.max_ports);
         config
     });
+
+    // Set the physical address of the Device Context Base Address Pointer Register
+    operational.set_device_context_base_address_array_pointer(
+        memory_area.physical_address_of_device_context_base_address_array(),
+    );
 
     todo!()
 }
