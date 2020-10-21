@@ -200,6 +200,7 @@ checksum = "f7fe0bb3479651439c9112f72b6c505038574c9fbb575ed1bf3b797fa39dd564"
 name = "usb_bus_xhci"
 version = "0.1.0"
 dependencies = [
+ "bit_field",
  "libpebble",
  "linked_list_allocator",
  "log",

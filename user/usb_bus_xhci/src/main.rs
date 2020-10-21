@@ -1,11 +1,14 @@
 #![no_std]
 #![no_main]
-#![feature(const_generics, alloc_error_handler, never_type)]
+#![feature(const_generics, alloc_error_handler, never_type, unsafe_block_in_unsafe_fn)]
+#![deny(unsafe_op_in_unsafe_fn)]
 
 extern crate alloc;
 extern crate rlibc;
 
+mod caps;
 use alloc::{string::String, vec};
+use caps::Capabilities;
 use core::panic::PanicInfo;
 use libpebble::{
     caps::{CapabilitiesRepr, CAP_EARLY_LOGGING, CAP_PADDING, CAP_SERVICE_USER},
@@ -77,8 +80,9 @@ pub extern "C" fn _start() -> ! {
         )
         .unwrap();
     }
-    let caplength = unsafe { core::ptr::read_volatile(REGISTER_SPACE_ADDRESS as *const u8) };
-    info!("Cap length = {:#x}", caplength);
+
+    let capabilities = unsafe { Capabilities::read_from_registers(REGISTER_SPACE_ADDRESS) };
+    info!("Capabilites: {:#?}", capabilities);
 
     loop {
         syscall::yield_to_kernel()
