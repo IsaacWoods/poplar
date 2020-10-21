@@ -5,8 +5,8 @@ driver.
 TODO: detail structure of PCI descriptor
 
 ### Parameters
-`a` - a pointer to the buffer to put the PCI descriptors in
-`b` - the size of the buffer (in descriptors)
+- `a` - a pointer to the buffer to put the PCI descriptors in
+- `b` - the size of the buffer (in descriptors)
 
 ### Returns
 Bits `0..16` contain a status code:

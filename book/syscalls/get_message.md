@@ -4,11 +4,11 @@ Receive a message from a `Channel`, if one is waiting to be received.
 A maximum of 4 handles can be transferred by each message. The maximum number of bytes is currently 4096.
 
 ### Parameters
-`a` - the handle to the `Channel` end that is receiving the message. The handle must have the `RECEIVE` right.
-`b` - a pointer to the array of bytes to put the message into
-`c` - the size of the bytes buffer
-`d` - a pointer to the array of handle entries to transfer. This may be `0x0` if the receiver does not expect to receive any handles.
-`e` - the size of the handles buffer (in handles)
+- `a` - the handle to the `Channel` end that is receiving the message. The handle must have the `RECEIVE` right.
+- `b` - a pointer to the array of bytes to put the message into
+- `c` - the size of the bytes buffer
+- `d` - a pointer to the array of handle entries to transfer. This may be `0x0` if the receiver does not expect to receive any handles.
+- `e` - the size of the handles buffer (in handles)
 
 ### Returns
 Bits `0..16` are a status code:

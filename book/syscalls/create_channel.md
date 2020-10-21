@@ -4,7 +4,7 @@ userspace by two handles, one for each "end" of the channel. This system call th
 which is usually transferred to another task.
 
 ### Parameters
-`a` - the virtual address to write the second handle into (only one can be returned in the status)
+- `a` - the virtual address to write the second handle into (only one can be returned in the status)
 
 ### Returns
 Uses the standard representation to return a `Result<Handle, CreateChannelError>` method. Error status

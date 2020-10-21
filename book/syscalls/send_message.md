@@ -5,11 +5,11 @@ All the handles are removed from the sending `Task` and added to the receiving `
 A maximum of 4 handles can be transferred by each message. The maximum number of bytes is currently 4096.
 
 ### Parameters
-`a` - the handle to the `Channel` end that is sending the message. The handle must have the `SEND` right.
-`b` - a pointer to the array of bytes to send
-`c` - the number of bytes to send
-`d` - a pointer to the array of handle entries to transfer. All handles must have the `TRANSFER` right. This may be `0x0` if the message does not transfer any handles.
-`e` - the number of handles to send
+- `a` - the handle to the `Channel` end that is sending the message. The handle must have the `SEND` right.
+- `b` - a pointer to the array of bytes to send
+- `c` - the number of bytes to send
+- `d` - a pointer to the array of handle entries to transfer. All handles must have the `TRANSFER` right. This may be `0x0` if the message does not transfer any handles.
+- `e` - the number of handles to send
 
 ### Returns
 A status code:

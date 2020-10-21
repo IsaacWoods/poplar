@@ -2,11 +2,11 @@
 Map a MemoryObject into an AddressSpace.
 
 ### Parameters
-`a` - a handle to the MemoryObject.
-`b` - a handle to the AddressSpace. The zero handle indicates to map the memory object into the task's AddressSpace.
-`c` - the virtual address to map the MemoryObject at, if it does not need to be mapped at a specific address.
+- `a` - a handle to the MemoryObject.
+- `b` - a handle to the AddressSpace. The zero handle indicates to map the memory object into the task's AddressSpace.
+- `c` - the virtual address to map the MemoryObject at, if it does not need to be mapped at a specific address.
       Should be null if the MemoryObject supplies the address.
-`d` - a pointer to which the kernel will write the virtual address at which the MemoryObject was mapped. Ignored if null.
+- `d` - a pointer to which the kernel will write the virtual address at which the MemoryObject was mapped. Ignored if null.
 
 ### Returns
 - `0` if the system call succeeded

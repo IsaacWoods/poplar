@@ -7,8 +7,8 @@ See the section on [Services](idk) for more information about services, how to r
 subscribe to a service.
 
 ### Parameters
-`a` - the length of the name string in bytes. Maximum length is 256. Must be greater than `0`.
-`b` - a usermode pointer to the start of the UTF-8 encoded name string.
+- `a` - the length of the name string in bytes. Maximum length is 256. Must be greater than `0`.
+- `b` - a usermode pointer to the start of the UTF-8 encoded name string.
 
 ### Returns
 Returns the standard representation of a `Result<Handle, ServiceError>`. Error status codes are:
