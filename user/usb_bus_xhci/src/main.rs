@@ -7,6 +7,8 @@ extern crate alloc;
 extern crate rlibc;
 
 mod caps;
+mod operational;
+
 use alloc::{string::String, vec};
 use caps::Capabilities;
 use core::panic::PanicInfo;
@@ -20,6 +22,7 @@ use libpebble::{
 };
 use linked_list_allocator::LockedHeap;
 use log::info;
+use operational::OperationRegisters;
 use platform_bus::{BusDriverMessage, DeviceDriverMessage, DeviceDriverRequest, Filter, Property};
 
 #[global_allocator]
@@ -84,9 +87,34 @@ pub extern "C" fn _start() -> ! {
     let capabilities = unsafe { Capabilities::read_from_registers(REGISTER_SPACE_ADDRESS) };
     info!("Capabilites: {:#?}", capabilities);
 
+    let mut operational = unsafe {
+        OperationRegisters::new(
+            REGISTER_SPACE_ADDRESS + usize::from(capabilities.operation_registers_offset),
+            capabilities.max_ports,
+        )
+    };
+
+    initialize_controller(&mut operational);
+
     loop {
         syscall::yield_to_kernel()
     }
+}
+
+fn initialize_controller(operational: &mut OperationRegisters) {
+    // Wait until the controller clears the Controller Not Ready bit
+    while operational.usb_status().controller_not_ready() {
+        // TODO: is this enough to stop it from getting optimized out?
+    }
+
+    // Set the number of device slots that are enabled
+    operational.update_config(|mut config| {
+        // TODO: where should this number come from? 8 is just made up.
+        config.set_device_slots_enabled(8);
+        config
+    });
+
+    todo!()
 }
 
 #[panic_handler]
