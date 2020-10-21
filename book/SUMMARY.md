@@ -13,6 +13,7 @@
     - [`yield`](./syscalls/yield.md)
     - [`early_log`](./syscalls/early_log.md)
     - [`get_framebuffer`](./syscalls/get_framebuffer.md)
+    - [`create_memory_object`](./syscalls/create_memory_object.md)
     - [`map_memory_object`](./syscalls/map_memory_object.md)
     - [`create_channel`](./syscalls/create_channel.md)
     - [`send_message`](./syscalls/send_message.md)
