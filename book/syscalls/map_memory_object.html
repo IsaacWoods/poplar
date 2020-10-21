@@ -166,11 +166,13 @@
                         <h1><a class="header" href="#map_memory_object" id="map_memory_object"><code>map_memory_object</code></a></h1>
 <p>Map a MemoryObject into an AddressSpace.</p>
 <h3><a class="header" href="#parameters" id="parameters">Parameters</a></h3>
-<p><code>a</code> - a handle to the MemoryObject.
-<code>b</code> - a handle to the AddressSpace. The zero handle indicates to map the memory object into the task's AddressSpace.
-<code>c</code> - the virtual address to map the MemoryObject at, if it does not need to be mapped at a specific address.
-Should be null if the MemoryObject supplies the address.
-<code>d</code> - a pointer to which the kernel will write the virtual address at which the MemoryObject was mapped. Ignored if null.</p>
+<ul>
+<li><code>a</code> - a handle to the MemoryObject.</li>
+<li><code>b</code> - a handle to the AddressSpace. The zero handle indicates to map the memory object into the task's AddressSpace.</li>
+<li><code>c</code> - the virtual address to map the MemoryObject at, if it does not need to be mapped at a specific address.
+Should be null if the MemoryObject supplies the address.</li>
+<li><code>d</code> - a pointer to which the kernel will write the virtual address at which the MemoryObject was mapped. Ignored if null.</li>
+</ul>
 <h3><a class="header" href="#returns" id="returns">Returns</a></h3>
 <ul>
 <li><code>0</code> if the system call succeeded</li>

@@ -168,7 +168,9 @@
 userspace by two handles, one for each &quot;end&quot; of the channel. This system call therefore returns two handles, one of
 which is usually transferred to another task.</p>
 <h3><a class="header" href="#parameters" id="parameters">Parameters</a></h3>
-<p><code>a</code> - the virtual address to write the second handle into (only one can be returned in the status)</p>
+<ul>
+<li><code>a</code> - the virtual address to write the second handle into (only one can be returned in the status)</li>
+</ul>
 <h3><a class="header" href="#returns" id="returns">Returns</a></h3>
 <p>Uses the standard representation to return a <code>Result&lt;Handle, CreateChannelError&gt;</code> method. Error status
 codes are:</p>

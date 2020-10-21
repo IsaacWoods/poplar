@@ -167,11 +167,13 @@
 <p>Receive a message from a <code>Channel</code>, if one is waiting to be received.</p>
 <p>A maximum of 4 handles can be transferred by each message. The maximum number of bytes is currently 4096.</p>
 <h3><a class="header" href="#parameters" id="parameters">Parameters</a></h3>
-<p><code>a</code> - the handle to the <code>Channel</code> end that is receiving the message. The handle must have the <code>RECEIVE</code> right.
-<code>b</code> - a pointer to the array of bytes to put the message into
-<code>c</code> - the size of the bytes buffer
-<code>d</code> - a pointer to the array of handle entries to transfer. This may be <code>0x0</code> if the receiver does not expect to receive any handles.
-<code>e</code> - the size of the handles buffer (in handles)</p>
+<ul>
+<li><code>a</code> - the handle to the <code>Channel</code> end that is receiving the message. The handle must have the <code>RECEIVE</code> right.</li>
+<li><code>b</code> - a pointer to the array of bytes to put the message into</li>
+<li><code>c</code> - the size of the bytes buffer</li>
+<li><code>d</code> - a pointer to the array of handle entries to transfer. This may be <code>0x0</code> if the receiver does not expect to receive any handles.</li>
+<li><code>e</code> - the size of the handles buffer (in handles)</li>
+</ul>
 <h3><a class="header" href="#returns" id="returns">Returns</a></h3>
 <p>Bits <code>0..16</code> are a status code:</p>
 <ul>

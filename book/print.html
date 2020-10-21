@@ -385,13 +385,16 @@ struct FramebufferInfo {
 conventional physical memory). MemoryObjects that point to special objects (e.g. framebuffer data, PCI
 configuration spaces) must be created by the kernel.</p>
 <h3><a class="header" href="#parameters-3" id="parameters-3">Parameters</a></h3>
-<p><code>a</code> - the virtual address to map the MemoryObject at
-<code>b</code> - the size of the MemoryObject's memory area (in bytes)
-<code>c</code> - flags:</p>
+<ul>
+<li><code>a</code> - the virtual address to map the MemoryObject at</li>
+<li><code>b</code> - the size of the MemoryObject's memory area (in bytes)</li>
+<li><code>c</code> - flags:
 <ul>
 <li>Bit <code>0</code>: set if the memory should be writable</li>
-<li>Bit <code>1</code>: set if the memory should be executable
-<code>d</code> - a pointer to which the kernel will write the physical address to which the MemoryObject was allocated. Ignored if null.</li>
+<li>Bit <code>1</code>: set if the memory should be executable</li>
+</ul>
+</li>
+<li><code>d</code> - a pointer to which the kernel will write the physical address to which the MemoryObject was allocated. Ignored if null.</li>
 </ul>
 <h3><a class="header" href="#returns-3" id="returns-3">Returns</a></h3>
 <p>Uses the standard representation to return a <code>Result&lt;Handle, MemoryObjectError&gt;</code> method. Error status
@@ -407,11 +410,13 @@ codes are:</p>
 <h1><a class="header" href="#map_memory_object" id="map_memory_object"><code>map_memory_object</code></a></h1>
 <p>Map a MemoryObject into an AddressSpace.</p>
 <h3><a class="header" href="#parameters-4" id="parameters-4">Parameters</a></h3>
-<p><code>a</code> - a handle to the MemoryObject.
-<code>b</code> - a handle to the AddressSpace. The zero handle indicates to map the memory object into the task's AddressSpace.
-<code>c</code> - the virtual address to map the MemoryObject at, if it does not need to be mapped at a specific address.
-Should be null if the MemoryObject supplies the address.
-<code>d</code> - a pointer to which the kernel will write the virtual address at which the MemoryObject was mapped. Ignored if null.</p>
+<ul>
+<li><code>a</code> - a handle to the MemoryObject.</li>
+<li><code>b</code> - a handle to the AddressSpace. The zero handle indicates to map the memory object into the task's AddressSpace.</li>
+<li><code>c</code> - the virtual address to map the MemoryObject at, if it does not need to be mapped at a specific address.
+Should be null if the MemoryObject supplies the address.</li>
+<li><code>d</code> - a pointer to which the kernel will write the virtual address at which the MemoryObject was mapped. Ignored if null.</li>
+</ul>
 <h3><a class="header" href="#returns-4" id="returns-4">Returns</a></h3>
 <ul>
 <li><code>0</code> if the system call succeeded</li>
@@ -430,7 +435,9 @@ Should be null if the MemoryObject supplies the address.
 userspace by two handles, one for each &quot;end&quot; of the channel. This system call therefore returns two handles, one of
 which is usually transferred to another task.</p>
 <h3><a class="header" href="#parameters-5" id="parameters-5">Parameters</a></h3>
-<p><code>a</code> - the virtual address to write the second handle into (only one can be returned in the status)</p>
+<ul>
+<li><code>a</code> - the virtual address to write the second handle into (only one can be returned in the status)</li>
+</ul>
 <h3><a class="header" href="#returns-5" id="returns-5">Returns</a></h3>
 <p>Uses the standard representation to return a <code>Result&lt;Handle, CreateChannelError&gt;</code> method. Error status
 codes are:</p>
@@ -446,11 +453,13 @@ denotes an error but not which one), we could return both handles in the status.
 All the handles are removed from the sending <code>Task</code> and added to the receiving <code>Task</code>.</p>
 <p>A maximum of 4 handles can be transferred by each message. The maximum number of bytes is currently 4096.</p>
 <h3><a class="header" href="#parameters-6" id="parameters-6">Parameters</a></h3>
-<p><code>a</code> - the handle to the <code>Channel</code> end that is sending the message. The handle must have the <code>SEND</code> right.
-<code>b</code> - a pointer to the array of bytes to send
-<code>c</code> - the number of bytes to send
-<code>d</code> - a pointer to the array of handle entries to transfer. All handles must have the <code>TRANSFER</code> right. This may be <code>0x0</code> if the message does not transfer any handles.
-<code>e</code> - the number of handles to send</p>
+<ul>
+<li><code>a</code> - the handle to the <code>Channel</code> end that is sending the message. The handle must have the <code>SEND</code> right.</li>
+<li><code>b</code> - a pointer to the array of bytes to send</li>
+<li><code>c</code> - the number of bytes to send</li>
+<li><code>d</code> - a pointer to the array of handle entries to transfer. All handles must have the <code>TRANSFER</code> right. This may be <code>0x0</code> if the message does not transfer any handles.</li>
+<li><code>e</code> - the number of handles to send</li>
+</ul>
 <h3><a class="header" href="#returns-6" id="returns-6">Returns</a></h3>
 <p>A status code:</p>
 <ul>
@@ -472,11 +481,13 @@ All the handles are removed from the sending <code>Task</code> and added to the 
 <p>Receive a message from a <code>Channel</code>, if one is waiting to be received.</p>
 <p>A maximum of 4 handles can be transferred by each message. The maximum number of bytes is currently 4096.</p>
 <h3><a class="header" href="#parameters-7" id="parameters-7">Parameters</a></h3>
-<p><code>a</code> - the handle to the <code>Channel</code> end that is receiving the message. The handle must have the <code>RECEIVE</code> right.
-<code>b</code> - a pointer to the array of bytes to put the message into
-<code>c</code> - the size of the bytes buffer
-<code>d</code> - a pointer to the array of handle entries to transfer. This may be <code>0x0</code> if the receiver does not expect to receive any handles.
-<code>e</code> - the size of the handles buffer (in handles)</p>
+<ul>
+<li><code>a</code> - the handle to the <code>Channel</code> end that is receiving the message. The handle must have the <code>RECEIVE</code> right.</li>
+<li><code>b</code> - a pointer to the array of bytes to put the message into</li>
+<li><code>c</code> - the size of the bytes buffer</li>
+<li><code>d</code> - a pointer to the array of handle entries to transfer. This may be <code>0x0</code> if the receiver does not expect to receive any handles.</li>
+<li><code>e</code> - the size of the handles buffer (in handles)</li>
+</ul>
 <h3><a class="header" href="#returns-7" id="returns-7">Returns</a></h3>
 <p>Bits <code>0..16</code> are a status code:</p>
 <ul>
@@ -506,8 +517,10 @@ returns a channel that is used to alert the provider when another task subscribe
 <p>See the section on <a href="syscalls/idk">Services</a> for more information about services, how to register a service, and how to
 subscribe to a service.</p>
 <h3><a class="header" href="#parameters-8" id="parameters-8">Parameters</a></h3>
-<p><code>a</code> - the length of the name string in bytes. Maximum length is 256. Must be greater than <code>0</code>.
-<code>b</code> - a usermode pointer to the start of the UTF-8 encoded name string.</p>
+<ul>
+<li><code>a</code> - the length of the name string in bytes. Maximum length is 256. Must be greater than <code>0</code>.</li>
+<li><code>b</code> - a usermode pointer to the start of the UTF-8 encoded name string.</li>
+</ul>
 <h3><a class="header" href="#returns-8" id="returns-8">Returns</a></h3>
 <p>Returns the standard representation of a <code>Result&lt;Handle, ServiceError&gt;</code>. Error status codes are:</p>
 <ul>
@@ -525,8 +538,10 @@ if successful.</p>
 <p>See the section on <a href="syscalls/idk">Services</a> for more information about services, how to register a service, and how to
 subscribe to a service.</p>
 <h3><a class="header" href="#parameters-9" id="parameters-9">Parameters</a></h3>
-<p><code>a</code> - the length of the name string in bytes. Maximum length is 256. Must be greater than <code>0</code>.
-<code>b</code> - a usermode pointer to the start of the UTF-8 encoded name string.</p>
+<ul>
+<li><code>a</code> - the length of the name string in bytes. Maximum length is 256. Must be greater than <code>0</code>.</li>
+<li><code>b</code> - a usermode pointer to the start of the UTF-8 encoded name string.</li>
+</ul>
 <h3><a class="header" href="#returns-9" id="returns-9">Returns</a></h3>
 <p>Returns the standard representation of a <code>Result&lt;Handle, ServiceError&gt;</code>. Error status codes are:</p>
 <ul>
@@ -544,8 +559,10 @@ the service.</p>
 driver.</p>
 <p>TODO: detail structure of PCI descriptor</p>
 <h3><a class="header" href="#parameters-10" id="parameters-10">Parameters</a></h3>
-<p><code>a</code> - a pointer to the buffer to put the PCI descriptors in
-<code>b</code> - the size of the buffer (in descriptors)</p>
+<ul>
+<li><code>a</code> - a pointer to the buffer to put the PCI descriptors in</li>
+<li><code>b</code> - the size of the buffer (in descriptors)</li>
+</ul>
 <h3><a class="header" href="#returns-10" id="returns-10">Returns</a></h3>
 <p>Bits <code>0..16</code> contain a status code:</p>
 <ul>

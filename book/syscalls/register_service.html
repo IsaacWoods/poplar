@@ -170,8 +170,10 @@ returns a channel that is used to alert the provider when another task subscribe
 <p>See the section on <a href="idk">Services</a> for more information about services, how to register a service, and how to
 subscribe to a service.</p>
 <h3><a class="header" href="#parameters" id="parameters">Parameters</a></h3>
-<p><code>a</code> - the length of the name string in bytes. Maximum length is 256. Must be greater than <code>0</code>.
-<code>b</code> - a usermode pointer to the start of the UTF-8 encoded name string.</p>
+<ul>
+<li><code>a</code> - the length of the name string in bytes. Maximum length is 256. Must be greater than <code>0</code>.</li>
+<li><code>b</code> - a usermode pointer to the start of the UTF-8 encoded name string.</li>
+</ul>
 <h3><a class="header" href="#returns" id="returns">Returns</a></h3>
 <p>Returns the standard representation of a <code>Result&lt;Handle, ServiceError&gt;</code>. Error status codes are:</p>
 <ul>

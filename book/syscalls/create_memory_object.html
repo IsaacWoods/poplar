@@ -168,13 +168,16 @@
 conventional physical memory). MemoryObjects that point to special objects (e.g. framebuffer data, PCI
 configuration spaces) must be created by the kernel.</p>
 <h3><a class="header" href="#parameters" id="parameters">Parameters</a></h3>
-<p><code>a</code> - the virtual address to map the MemoryObject at
-<code>b</code> - the size of the MemoryObject's memory area (in bytes)
-<code>c</code> - flags:</p>
+<ul>
+<li><code>a</code> - the virtual address to map the MemoryObject at</li>
+<li><code>b</code> - the size of the MemoryObject's memory area (in bytes)</li>
+<li><code>c</code> - flags:
 <ul>
 <li>Bit <code>0</code>: set if the memory should be writable</li>
-<li>Bit <code>1</code>: set if the memory should be executable
-<code>d</code> - a pointer to which the kernel will write the physical address to which the MemoryObject was allocated. Ignored if null.</li>
+<li>Bit <code>1</code>: set if the memory should be executable</li>
+</ul>
+</li>
+<li><code>d</code> - a pointer to which the kernel will write the physical address to which the MemoryObject was allocated. Ignored if null.</li>
 </ul>
 <h3><a class="header" href="#returns" id="returns">Returns</a></h3>
 <p>Uses the standard representation to return a <code>Result&lt;Handle, MemoryObjectError&gt;</code> method. Error status
