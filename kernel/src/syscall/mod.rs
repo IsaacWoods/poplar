@@ -57,7 +57,7 @@ where
         syscall::SYSCALL_YIELD => yield_syscall::<P>(),
         syscall::SYSCALL_EARLY_LOG => status_to_syscall_repr(early_log(task, a, b)),
         syscall::SYSCALL_GET_FRAMEBUFFER => handle_to_syscall_repr(get_framebuffer(task, a)),
-        syscall::SYSCALL_CREATE_MEMORY_OBJECT => handle_to_syscall_repr(create_memory_object(task, a, b, c)),
+        syscall::SYSCALL_CREATE_MEMORY_OBJECT => handle_to_syscall_repr(create_memory_object(task, a, b, c, d)),
         syscall::SYSCALL_MAP_MEMORY_OBJECT => status_to_syscall_repr(map_memory_object(task, a, b, c, d)),
         syscall::SYSCALL_CREATE_CHANNEL => todo!(),
         syscall::SYSCALL_SEND_MESSAGE => status_to_syscall_repr(send_message(task, a, b, c, d, e)),
@@ -132,6 +132,7 @@ fn create_memory_object<P>(
     virtual_address: usize,
     size: usize,
     flags: usize,
+    physical_address_ptr: usize,
 ) -> Result<Handle, CreateMemoryObjectError>
 where
     P: Platform,
@@ -149,6 +150,12 @@ where
         size,
         Flags { writable, executable, user_accessible: true, ..Default::default() },
     );
+
+    if physical_address_ptr != 0x0 {
+        UserPointer::new(physical_address_ptr as *mut PhysicalAddress, true)
+            .write(physical_start)
+            .map_err(|()| CreateMemoryObjectError::InvalidPhysicalAddressPointer)?;
+    }
 
     Ok(task.add_handle(memory_object))
 }

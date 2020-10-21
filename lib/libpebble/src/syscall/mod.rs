@@ -55,6 +55,7 @@ define_error_type!(CreateMemoryObjectError {
     InvalidVirtualAddress => 1,
     InvalidFlags => 2,
     InvalidSize => 3,
+    InvalidPhysicalAddressPointer => 4,
 });
 
 /// Create a MemoryObject kernel object at the given virtual address, with the given size (in bytes). Returns a
@@ -64,12 +65,15 @@ pub fn create_memory_object(
     size: usize,
     writable: bool,
     executable: bool,
+    physical_address_ptr: *mut usize,
 ) -> Result<Handle, CreateMemoryObjectError> {
     let mut flags = 0usize;
     flags.set_bit(0, writable);
     flags.set_bit(1, executable);
 
-    handle_from_syscall_repr(unsafe { raw::syscall3(SYSCALL_CREATE_MEMORY_OBJECT, virtual_address, size, flags) })
+    handle_from_syscall_repr(unsafe {
+        raw::syscall4(SYSCALL_CREATE_MEMORY_OBJECT, virtual_address, size, flags, physical_address_ptr as usize)
+    })
 }
 
 define_error_type!(MapMemoryObjectError {
