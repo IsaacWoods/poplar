@@ -307,6 +307,10 @@ where
 
         /*
          * Identity-map the entry in the kernel page tables, if needed.
+         *
+         * TODO: we shouldn't need to keep the Boot Services code and data mapped, as we only switch to these
+         * tables after calling `exit_boot_services`, but if we don't, something page faults. No idea what's going
+         * on, but it'd be great to fix this.
          */
         match entry.ty {
             MemoryType::LOADER_CODE
