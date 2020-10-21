@@ -375,7 +375,6 @@ impl PageTable<Size4KiB> for PageTableImpl {
         Ok(())
     }
 
-    #[allow(non_snake_case)]
     fn map_area<A>(
         &mut self,
         virtual_start: VirtualAddress,
