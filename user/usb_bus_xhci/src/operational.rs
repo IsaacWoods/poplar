@@ -41,6 +41,12 @@ impl OperationRegisters {
         }
     }
 
+    /// Read the `PortStatusAndControl` register for a given port. Valid indices are `0..num_ports`.
+    pub fn port(&self, index: u8) -> PortStatusAndControl {
+        assert!(index < self.num_ports);
+        PortStatusAndControl(unsafe { self.read_register(0x400 + 0x10 * usize::from(index)) })
+    }
+
     unsafe fn read_register<T>(&self, offset: usize) -> T {
         unsafe { ptr::read_volatile((self.base + offset) as *const T) }
     }
@@ -84,4 +90,55 @@ impl Config {
     pub fn set_device_slots_enabled(&mut self, slots: u8) {
         self.0.set_bits(0..8, slots as u32);
     }
+}
+
+#[derive(Clone, Copy, Debug)]
+#[repr(transparent)]
+pub struct PortStatusAndControl(u32);
+
+impl PortStatusAndControl {
+    pub fn device_connected(&self) -> bool {
+        self.0.get_bit(0)
+    }
+
+    pub fn port_enabled(&self) -> bool {
+        self.0.get_bit(1)
+    }
+
+    pub fn port_link_state(&self) -> PortLinkState {
+        match self.0.get_bits(5..9) {
+            0 => PortLinkState::U0,
+            1 => PortLinkState::U1,
+            2 => PortLinkState::U2,
+            3 => PortLinkState::U3,
+            4 => PortLinkState::Disabled,
+            5 => PortLinkState::RxDetect,
+            6 => PortLinkState::Inactive,
+            7 => PortLinkState::Polling,
+            8 => PortLinkState::Recovery,
+            9 => PortLinkState::HotReset,
+            10 => PortLinkState::ComplianceMode,
+            11 => PortLinkState::TestMode,
+            12..15 => panic!("Reserved Port Link State"),
+            15 => PortLinkState::Resume,
+            _ => unreachable!(),
+        }
+    }
+}
+
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+pub enum PortLinkState {
+    U0,
+    U1,
+    U2,
+    U3,
+    Disabled,
+    RxDetect,
+    Inactive,
+    Polling,
+    Recovery,
+    HotReset,
+    ComplianceMode,
+    TestMode,
+    Resume,
 }
