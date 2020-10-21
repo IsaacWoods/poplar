@@ -93,7 +93,7 @@ where
     }
 
     // Check if the message is too long
-    if str_length > 1024 {
+    if str_length > 4096 {
         return Err(EarlyLogError::MessageTooLong);
     }
 
