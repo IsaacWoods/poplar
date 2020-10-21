@@ -3,7 +3,7 @@ Used by tasks that are started early in the boot process, before reliable usersp
 Output is logged to the same place as kernel logging.
 
 ### Parameters
-- `a` - the length of the string to log in bytes. Maximum length is 1024 bytes.
+- `a` - the length of the string to log in bytes. Maximum length is 4096 bytes.
 - `b` - a usermode pointer to the start of the UTF-8 encoded string.
 
 ### Returns
