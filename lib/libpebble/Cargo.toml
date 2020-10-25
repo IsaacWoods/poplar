@@ -9,8 +9,12 @@ cfg-if = "0.1"
 bit_field = "0.10"
 log = { version = "0.4", optional = true }
 bitflags = "1"
+pci_types = "0.2"
+ptah = { version = "0.1", optional = true }
+
+[patch.crates-io]
 pci_types = { path = "../pci_types" }
-ptah = { path = "../ptah", optional = true }
+ptah = { path = "../ptah" }
 
 [features]
 can_alloc = ["log", "ptah"]

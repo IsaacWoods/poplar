@@ -7,6 +7,12 @@ pub unsafe fn syscall0(number: usize) -> usize {
             inlateout("rdi") number => _,
             out("rcx") _,
             out("r11") _,
+
+            // out("rdx") _,
+            // out("rsi") _,
+            // out("r8") _,
+            // out("r9") _,
+            // out("r10") _,
         );
     }
     result
@@ -22,6 +28,11 @@ pub unsafe fn syscall1(number: usize, a: usize) -> usize {
             inlateout("rsi") a => _,
             out("rcx") _,
             out("r11") _,
+
+            // out("rdx") _,
+            // out("r8") _,
+            // out("r9") _,
+            // out("r10") _,
         );
     }
     result
@@ -38,6 +49,10 @@ pub unsafe fn syscall2(number: usize, a: usize, b: usize) -> usize {
             inlateout("rdx") b => _,
             out("rcx") _,
             out("r11") _,
+
+            // out("r8") _,
+            // out("r9") _,
+            // out("r10") _,
         );
     }
     result
@@ -55,6 +70,9 @@ pub unsafe fn syscall3(number: usize, a: usize, b: usize, c: usize) -> usize {
             inlateout("r10") c => _,
             out("rcx") _,
             out("r11") _,
+
+            // out("r8") _,
+            // out("r9") _,
         );
     }
     result
@@ -73,6 +91,8 @@ pub unsafe fn syscall4(number: usize, a: usize, b: usize, c: usize, d: usize) ->
             inlateout("r8") d => _,
             out("rcx") _,
             out("r11") _,
+
+            // out("r9") _,
         );
     }
     result
