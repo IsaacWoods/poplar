@@ -3,6 +3,8 @@ name = "ptah_derive"
 version = "0.1.0"
 authors = ["Isaac Woods"]
 edition = "2018"
+description = "Derive macro for Rust's implementation of Ptah, Pebble's message-passing format"
+license = "MIT OR Apache-2.0"
 
 [lib]
 proc-macro = true
