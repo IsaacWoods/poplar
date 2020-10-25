@@ -3,6 +3,8 @@ name = "libpebble"
 version = "0.2.0"
 authors = ["Isaac Woods"]
 edition = "2018"
+license = "MIT OR Apache-2.0"
+description = "Rust interace to the Pebble kernel from userspace"
 
 [dependencies]
 cfg-if = "0.1"
