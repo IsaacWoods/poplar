@@ -137,8 +137,14 @@ fn create_memory_object<P>(
 where
     P: Platform,
 {
+    use hal::memory::{FrameSize, Size4KiB};
+    use pebble_util::math::align_up;
+
     let writable = flags.get_bit(0);
     let executable = flags.get_bit(1);
+
+    // TODO: should we require that the size be multiple of the page size, or just up it here?
+    let size = align_up(size, Size4KiB::SIZE);
 
     // TODO: do something more sensible with this when we have a concept of physical memory "ownership"
     let physical_start = crate::PHYSICAL_MEMORY_MANAGER.get().alloc_bytes(size);
