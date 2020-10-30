@@ -1,10 +1,12 @@
 pub mod get_framebuffer;
+#[cfg(feature = "pci")]
 pub mod pci;
 pub mod result;
 
 pub use get_framebuffer::{get_framebuffer, FramebufferInfo, GetFramebufferError, PixelFormat};
-#[cfg(feature = "can_alloc")]
+#[cfg(all(feature = "can_alloc", feature = "pci"))]
 pub use pci::pci_get_info_vec;
+#[cfg(feature = "pci")]
 pub use pci::{pci_get_info, pci_get_info_slice, PciDeviceInfo, PciGetInfoError};
 
 cfg_if::cfg_if! {

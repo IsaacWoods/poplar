@@ -143,12 +143,13 @@ dependencies = [
 
 [[package]]
 name = "libpebble"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
- "bit_field",
  "bitflags",
  "cfg-if",
+ "log",
  "pci_types",
+ "ptah",
 ]
 
 [[package]]
@@ -180,7 +181,7 @@ dependencies = [
 
 [[package]]
 name = "pci_types"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "bit_field",
 ]
@@ -205,16 +206,16 @@ dependencies = [
 
 [[package]]
 name = "proc-macro2"
-version = "1.0.22"
+version = "1.0.24"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e4b93dba1818d32e781f9d008edd577bab215e83ef50e8a1ddf1ad301b19a09f"
+checksum = "1e0704ee1a7e00d7bb417d0770ea303c1bccbabf0ef1667dae92b5967f5f8a71"
 dependencies = [
  "unicode-xid 0.2.1",
 ]
 
 [[package]]
 name = "ptah"
-version = "0.0.0"
+version = "0.1.0"
 dependencies = [
  "ptah_derive",
 ]
@@ -222,10 +223,12 @@ dependencies = [
 [[package]]
 name = "ptah_derive"
 version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "120c5f0e4963cb4367c98c8416fc5d6475521bd3d4f53ba27241d3345ab55009"
 dependencies = [
- "proc-macro2 1.0.22",
+ "proc-macro2 1.0.24",
  "quote 1.0.7",
- "syn 1.0.41",
+ "syn 1.0.48",
 ]
 
 [[package]]
@@ -243,7 +246,7 @@ version = "1.0.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "aa563d17ecb180e500da1cfd2b028310ac758de548efdd203e18f283af693f37"
 dependencies = [
- "proc-macro2 1.0.22",
+ "proc-macro2 1.0.24",
 ]
 
 [[package]]
@@ -325,11 +328,11 @@ dependencies = [
 
 [[package]]
 name = "syn"
-version = "1.0.41"
+version = "1.0.48"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6690e3e9f692504b941dc6c3b188fd28df054f7fb8469ab40680df52fdcc842b"
+checksum = "cc371affeffc477f42a221a1e4297aedcea33d47d19b61455588bd9d8f6b19ac"
 dependencies = [
- "proc-macro2 1.0.22",
+ "proc-macro2 1.0.24",
  "quote 1.0.7",
  "unicode-xid 0.2.1",
 ]
@@ -343,9 +346,9 @@ dependencies = [
 
 [[package]]
 name = "ucs2"
-version = "0.3.1"
+version = "0.3.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "85061f4e43545a613c0da6b87725bf23f8da8613cf2473719c4f71a270c4ce8a"
+checksum = "bad643914094137d475641b6bab89462505316ec2ce70907ad20102d28a79ab8"
 dependencies = [
  "bit_field",
 ]
@@ -356,7 +359,7 @@ version = "0.4.7"
 dependencies = [
  "bitflags",
  "log",
- "ucs2 0.3.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "ucs2 0.3.2",
  "uefi-macros",
 ]
 
@@ -366,9 +369,9 @@ version = "0.3.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3dcca10ca861f34a320d178f3fdb29ffbf05087fc2c70d2a99860e3329bee1a8"
 dependencies = [
- "proc-macro2 1.0.22",
+ "proc-macro2 1.0.24",
  "quote 1.0.7",
- "syn 1.0.41",
+ "syn 1.0.48",
 ]
 
 [[package]]
