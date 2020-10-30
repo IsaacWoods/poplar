@@ -3,7 +3,8 @@
 user: echo simple_fb platform_bus pci_bus usb_bus_xhci;
 
 echo:
-	cargo +pebble build -Z build-std=core,alloc --target x86_64-pebble --manifest-path echo/Cargo.toml
+	#This one is set up to build a full std
+	cargo +pebble build -Zbuild-std=core,alloc,panic_abort,std -Zbuild-std-features=compiler-builtins-mem --target x86_64-pebble --manifest-path echo/Cargo.toml
 	cp target/$(PLATFORM)-pebble/debug/echo $(BUILD_DIR)/fat/echo.elf
 
 simple_fb:

@@ -1,12 +1,5 @@
-#![no_std]
-#![no_main]
-#![feature(const_generics, alloc_error_handler, never_type)]
+#![feature(const_generics, never_type)]
 
-extern crate alloc;
-extern crate rlibc;
-
-use alloc::vec::Vec;
-use core::panic::PanicInfo;
 use libpebble::{
     caps::{CapabilitiesRepr, CAP_EARLY_LOGGING, CAP_PADDING, CAP_SERVICE_PROVIDER},
     channel::Channel,
@@ -17,12 +10,11 @@ use libpebble::{
 };
 use linked_list_allocator::LockedHeap;
 use log::info;
+use std::vec::Vec;
 
 #[global_allocator]
 static ALLOCATOR: LockedHeap = LockedHeap::empty();
-
-#[no_mangle]
-pub extern "C" fn _start() -> ! {
+pub fn main() {
     syscall::early_log("Hello, World!").unwrap();
     // Initialise the heap
     const HEAP_START: usize = 0x600000000;
@@ -67,17 +59,6 @@ pub extern "C" fn _start() -> ! {
             subscribers.push(subscriber_handle);
         }
     }
-}
-
-#[panic_handler]
-pub fn handle_panic(info: &PanicInfo) -> ! {
-    log::error!("PANIC: {}", info);
-    loop {}
-}
-
-#[alloc_error_handler]
-fn alloc_error(layout: core::alloc::Layout) -> ! {
-    panic!("Alloc error: {:?}", layout);
 }
 
 #[used]
