@@ -1,5 +1,4 @@
-use crate::Handle;
-use bit_field::BitField;
+use crate::{bit_field::BitField, Handle};
 use core::convert::TryFrom;
 
 pub(super) macro define_error_type($error_name:ident {
