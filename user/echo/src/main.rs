@@ -1,4 +1,4 @@
-#![feature(const_generics, never_type)]
+#![feature(const_generics)]
 
 use libpebble::{
     caps::{CapabilitiesRepr, CAP_EARLY_LOGGING, CAP_PADDING, CAP_SERVICE_PROVIDER},
@@ -8,24 +8,10 @@ use libpebble::{
     syscall::GetMessageError,
     Handle,
 };
-use linked_list_allocator::LockedHeap;
 use log::info;
 use std::vec::Vec;
 
-#[global_allocator]
-static ALLOCATOR: LockedHeap = LockedHeap::empty();
 pub fn main() {
-    syscall::early_log("Hello, World!").unwrap();
-    // Initialise the heap
-    const HEAP_START: usize = 0x600000000;
-    const HEAP_SIZE: usize = 0x4000;
-    let heap_memory_object =
-        syscall::create_memory_object(HEAP_START, HEAP_SIZE, true, false, 0x0 as *mut usize).unwrap();
-    unsafe {
-        syscall::map_memory_object(&heap_memory_object, &libpebble::ZERO_HANDLE, None, 0x0 as *mut usize).unwrap();
-        ALLOCATOR.lock().init(HEAP_START, HEAP_SIZE);
-    }
-
     log::set_logger(&EarlyLogger).unwrap();
     log::set_max_level(log::LevelFilter::Trace);
     info!("Echo running!");

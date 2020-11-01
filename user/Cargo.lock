@@ -13,12 +13,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "dcb6dd1c2376d2e096796e234a70e17e94cc2d5d54ff8ce42b28cef1d0d359a4"
 
 [[package]]
-name = "bitflags"
-version = "1.2.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "cf1de2fe8c75bc145a2f577add951f8134889b4795d47466a54a5c846d691693"
-
-[[package]]
 name = "cfg-if"
 version = "0.1.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -29,9 +23,7 @@ name = "echo"
 version = "0.1.0"
 dependencies = [
  "libpebble",
- "linked_list_allocator",
  "log",
- "rlibc",
 ]
 
 [[package]]
@@ -52,7 +44,6 @@ dependencies = [
 name = "libpebble"
 version = "0.3.0"
 dependencies = [
- "bitflags",
  "cfg-if",
  "log",
  "pci_types 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
