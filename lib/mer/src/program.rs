@@ -11,6 +11,7 @@ pub enum SegmentType {
     Note,
     Shlib,
     Phdr,
+    Tls,
 
     /// A section with type `0x60000000` through `0x6fffffff` inclusive is defined to be
     /// environment-specific.
@@ -37,7 +38,7 @@ pub struct ProgramHeader {
 impl ProgramHeader {
     pub(crate) fn validate(&self) -> Result<(), ElfError> {
         match self.segment_type {
-            0..=6 | 0x60000000..=0x7fffffff => Ok(()),
+            0..=7 | 0x60000000..=0x7fffffff => Ok(()),
             _ => Err(ElfError::SegmentInvalidType),
         }?;
 
@@ -53,6 +54,7 @@ impl ProgramHeader {
             4 => SegmentType::Note,
             5 => SegmentType::Shlib,
             6 => SegmentType::Phdr,
+            7 => SegmentType::Tls,
             0x60000000..=0x6fffffff => SegmentType::Os(self.segment_type),
             0x70000000..=0x7fffffff => SegmentType::Proc(self.segment_type),
 
