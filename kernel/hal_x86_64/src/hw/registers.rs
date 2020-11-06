@@ -159,6 +159,9 @@ pub const IA32_LSTAR: u32 = 0xc000_0082;
 /// in this MSR, that bit in RFLAGS is zerod.
 pub const IA32_FMASK: u32 = 0xc000_0084;
 
+/// A virtual address can be stored in this MSR, and acts as the base of the FS segment.
+pub const IA32_FS_BASE: u32 = 0xc000_0100;
+
 /// A virtual address can be stored in this MSR, and acts as the base of the GS segment.
 pub const IA32_GS_BASE: u32 = 0xc000_0101;
 
