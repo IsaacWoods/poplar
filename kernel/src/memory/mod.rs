@@ -61,4 +61,6 @@ pub struct Stack {
     pub top: VirtualAddress,
     pub slot_bottom: VirtualAddress,
     pub stack_bottom: VirtualAddress,
+
+    pub physical_start: PhysicalAddress,
 }

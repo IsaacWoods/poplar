@@ -52,6 +52,6 @@ where
             )
             .unwrap();
 
-        Some(Stack { top, slot_bottom, stack_bottom })
+        Some(Stack { top, slot_bottom, stack_bottom, physical_start })
     }
 }

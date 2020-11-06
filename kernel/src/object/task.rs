@@ -1,4 +1,9 @@
-use super::{address_space::AddressSpace, alloc_kernel_object_id, KernelObject, KernelObjectId};
+use super::{
+    address_space::{AddressSpace, TaskSlot},
+    alloc_kernel_object_id,
+    KernelObject,
+    KernelObjectId,
+};
 use crate::{
     memory::{KernelStackAllocator, PhysicalMemoryManager, Stack},
     Platform,
@@ -48,7 +53,7 @@ where
     pub state: Mutex<TaskState>,
     pub capabilities: Vec<Capability>,
 
-    pub user_stack: Mutex<Stack>,
+    pub user_slot: Mutex<TaskSlot>,
     pub kernel_stack: Mutex<Stack>,
     pub kernel_stack_pointer: UnsafeCell<VirtualAddress>,
     pub user_stack_pointer: UnsafeCell<VirtualAddress>,
@@ -78,14 +83,14 @@ where
         kernel_stack_allocator: &mut KernelStackAllocator<P>,
     ) -> Result<Arc<Task<P>>, TaskCreationError> {
         // TODO: better way of getting initial stack sizes
-        let user_stack =
-            address_space.alloc_user_stack(0x4000, allocator).ok_or(TaskCreationError::AddressSpaceFull)?;
+        let task_slot =
+            address_space.alloc_task_slot(0x4000, allocator).ok_or(TaskCreationError::AddressSpaceFull)?;
         let kernel_stack = kernel_stack_allocator
             .alloc_kernel_stack(0x4000, allocator, kernel_page_table)
             .ok_or(TaskCreationError::NoKernelStackSlots)?;
 
         let mut kernel_stack_pointer = kernel_stack.top;
-        let mut user_stack_pointer = user_stack.top;
+        let mut user_stack_pointer = task_slot.user_stack.top;
         unsafe {
             P::initialize_task_kernel_stack(&mut kernel_stack_pointer, image.entry_point, &mut user_stack_pointer);
         }
@@ -97,7 +102,7 @@ where
             address_space,
             state: Mutex::new(TaskState::Ready),
             capabilities: decode_capabilities(&image.capability_stream)?,
-            user_stack: Mutex::new(user_stack),
+            user_slot: Mutex::new(task_slot),
             kernel_stack: Mutex::new(kernel_stack),
             kernel_stack_pointer: UnsafeCell::new(kernel_stack_pointer),
             user_stack_pointer: UnsafeCell::new(user_stack_pointer),

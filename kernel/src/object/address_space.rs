@@ -6,18 +6,26 @@ use crate::{
 use alloc::{sync::Arc, vec::Vec};
 use hal::memory::{mebibytes, Bytes, FrameAllocator, PageTable, VirtualAddress};
 use libpebble::syscall::MapMemoryObjectError;
+use pebble_util::bitmap::Bitmap;
 use spin::Mutex;
+
+const MAX_TASKS: usize = 64;
 
 // TODO: we need some way of getting this from the platform I guess?
 // TODO: we've basically made these up
 const USER_STACK_BOTTOM: VirtualAddress = VirtualAddress::new(0x00000002_00000000);
 const USER_STACK_TOP: VirtualAddress = VirtualAddress::new(0x00000003_ffffffff);
-const USER_STACK_SLOT_SIZE: Bytes = mebibytes(2);
+const USER_STACK_SLOT_SIZE: Bytes = mebibytes(4);
 
 #[derive(PartialEq, Eq, Debug)]
 pub enum State {
     NotActive,
     Active,
+}
+
+pub struct TaskSlot {
+    pub index: usize,
+    pub user_stack: Stack,
 }
 
 pub struct AddressSpace<P>
@@ -29,7 +37,7 @@ where
     pub state: Mutex<State>,
     pub memory_objects: Mutex<Vec<Arc<MemoryObject>>>,
     page_table: Mutex<P::PageTable>,
-    user_stack_allocator: Mutex<SlabAllocator>,
+    slot_bitmap: Mutex<u64>,
 }
 
 impl<P> AddressSpace<P>
@@ -46,11 +54,7 @@ where
             state: Mutex::new(State::NotActive),
             memory_objects: Mutex::new(vec![]),
             page_table: Mutex::new(P::PageTable::new_with_kernel_mapped(kernel_page_table, allocator)),
-            user_stack_allocator: Mutex::new(SlabAllocator::new(
-                USER_STACK_BOTTOM,
-                USER_STACK_TOP,
-                USER_STACK_SLOT_SIZE,
-            )),
+            slot_bitmap: Mutex::new(0),
         })
     }
 
@@ -86,28 +90,38 @@ where
         Ok(())
     }
 
-    /// Try to allocate a slot for a user stack, and map `initial_size` bytes of it. Returns `None` if no more user
-    /// stacks can be allocated in this address space.
-    pub fn alloc_user_stack(&self, initial_size: usize, allocator: &PhysicalMemoryManager) -> Option<Stack> {
+    /// Try to allocate a slot for a Task. Creates a user stack with `initial_stack_size` bytes initially
+    /// allocated. Returs `None` if no more tasks can be created in this Address Space.
+    pub fn alloc_task_slot(
+        &self,
+        initial_stack_size: usize,
+        allocator: &PhysicalMemoryManager,
+    ) -> Option<TaskSlot> {
         use hal::memory::Flags;
 
-        let slot_bottom = self.user_stack_allocator.lock().alloc()?;
-        let top = slot_bottom + USER_STACK_SLOT_SIZE - 1;
-        let stack_bottom = top - initial_size + 1;
+        let index = self.slot_bitmap.lock().alloc(1)?;
 
-        let physical_start = allocator.alloc_bytes(initial_size);
-        self.page_table
-            .lock()
-            .map_area(
-                stack_bottom,
-                physical_start,
-                initial_size,
-                Flags { writable: true, user_accessible: true, ..Default::default() },
-                allocator,
-            )
-            .unwrap();
+        let user_stack = {
+            let slot_bottom = USER_STACK_BOTTOM + USER_STACK_SLOT_SIZE * index;
+            let top = slot_bottom + USER_STACK_SLOT_SIZE - 1;
+            let stack_bottom = (top + 1) - initial_stack_size;
 
-        Some(Stack { top, slot_bottom, stack_bottom })
+            let physical_start = allocator.alloc_bytes(initial_stack_size);
+            self.page_table
+                .lock()
+                .map_area(
+                    stack_bottom,
+                    physical_start,
+                    initial_stack_size,
+                    Flags { writable: true, user_accessible: true, ..Default::default() },
+                    allocator,
+                )
+                .unwrap();
+
+            Stack { top, slot_bottom, stack_bottom, physical_start }
+        };
+
+        Some(TaskSlot { index, user_stack })
     }
 
     pub fn switch_to(&self) {
