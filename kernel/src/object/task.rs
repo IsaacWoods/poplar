@@ -1,6 +1,7 @@
 use super::{
     address_space::{AddressSpace, TaskSlot},
     alloc_kernel_object_id,
+    memory_object::MemoryObject,
     KernelObject,
     KernelObjectId,
 };
@@ -58,6 +59,9 @@ where
     pub kernel_stack_pointer: UnsafeCell<VirtualAddress>,
     pub user_stack_pointer: UnsafeCell<VirtualAddress>,
 
+    pub tls_memory_object: Option<Arc<MemoryObject>>,
+    pub tls_address: VirtualAddress,
+
     pub handles: RwLock<BTreeMap<Handle, Arc<dyn KernelObject>>>,
     next_handle: AtomicU32,
 }
@@ -82,21 +86,38 @@ where
         kernel_page_table: &mut P::PageTable,
         kernel_stack_allocator: &mut KernelStackAllocator<P>,
     ) -> Result<Arc<Task<P>>, TaskCreationError> {
+        let id = alloc_kernel_object_id();
+
+        let needs_tls = image.master_tls.is_some();
         // TODO: better way of getting initial stack sizes
-        let task_slot =
-            address_space.alloc_task_slot(0x4000, allocator).ok_or(TaskCreationError::AddressSpaceFull)?;
+        let task_slot = address_space
+            .alloc_task_slot(0x4000, needs_tls, allocator)
+            .ok_or(TaskCreationError::AddressSpaceFull)?;
         let kernel_stack = kernel_stack_allocator
             .alloc_kernel_stack(0x4000, allocator, kernel_page_table)
             .ok_or(TaskCreationError::NoKernelStackSlots)?;
 
         let mut kernel_stack_pointer = kernel_stack.top;
         let mut user_stack_pointer = task_slot.user_stack.top;
+
         unsafe {
             P::initialize_task_kernel_stack(&mut kernel_stack_pointer, image.entry_point, &mut user_stack_pointer);
         }
 
+        let (tls_address, tls_memory_object) = if needs_tls {
+            let (tls_address, memory_object) = unsafe {
+                P::initialize_task_tls(image.master_tls.as_ref().unwrap(), id, task_slot.tls_address.unwrap())
+            };
+            address_space
+                .map_memory_object(memory_object.clone(), None, crate::PHYSICAL_MEMORY_MANAGER.get())
+                .unwrap();
+            (tls_address, Some(memory_object))
+        } else {
+            (VirtualAddress::new(0x0), None)
+        };
+
         Ok(Arc::new(Task {
-            id: alloc_kernel_object_id(),
+            id,
             owner,
             name: String::from(image.name()),
             address_space,
@@ -106,6 +127,8 @@ where
             kernel_stack: Mutex::new(kernel_stack),
             kernel_stack_pointer: UnsafeCell::new(kernel_stack_pointer),
             user_stack_pointer: UnsafeCell::new(user_stack_pointer),
+            tls_memory_object,
+            tls_address,
             handles: RwLock::new(BTreeMap::new()),
             // XXX: 0 is a special handle value, so start at 1
             next_handle: AtomicU32::new(1),

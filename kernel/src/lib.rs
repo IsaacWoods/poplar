@@ -33,7 +33,7 @@ use hal::{
 };
 use heap_allocator::LockedHoleAllocator;
 use memory::{KernelStackAllocator, PhysicalMemoryManager};
-use object::{address_space::AddressSpace, memory_object::MemoryObject, task::Task, KernelObject};
+use object::{address_space::AddressSpace, memory_object::MemoryObject, task::Task, KernelObject, KernelObjectId};
 use pci::PciInfo;
 use pci_types::ConfigRegionAccess as PciConfigRegionAccess;
 use pebble_util::InitGuard;
@@ -74,6 +74,13 @@ pub trait Platform: Sized + 'static {
         task_entry_point: VirtualAddress,
         user_stack_top: &mut VirtualAddress,
     );
+
+    /// Create and initialize a TLS structure for this task.
+    unsafe fn initialize_task_tls(
+        master_segment: &hal::boot_info::Segment,
+        task_id: KernelObjectId,
+        virtual_address: VirtualAddress,
+    ) -> (VirtualAddress, Arc<MemoryObject>);
 
     /// Do the final part of a context switch: save all the state that needs to be to the current kernel stack,
     /// switch to a new kernel stack, and restore all the state from that stack.

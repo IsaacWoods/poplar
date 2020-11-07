@@ -1,6 +1,6 @@
 use super::{alloc_kernel_object_id, memory_object::MemoryObject, KernelObject, KernelObjectId};
 use crate::{
-    memory::{PhysicalMemoryManager, SlabAllocator, Stack},
+    memory::{PhysicalMemoryManager, Stack},
     Platform,
 };
 use alloc::{sync::Arc, vec::Vec};
@@ -16,6 +16,9 @@ const MAX_TASKS: usize = 64;
 const USER_STACK_BOTTOM: VirtualAddress = VirtualAddress::new(0x00000002_00000000);
 const USER_STACK_TOP: VirtualAddress = VirtualAddress::new(0x00000003_ffffffff);
 const USER_STACK_SLOT_SIZE: Bytes = mebibytes(4);
+const TLS_AREA_BOTTOM: VirtualAddress = VirtualAddress::new(0x00000004_00000000);
+const TLS_AREA_TOP: VirtualAddress = VirtualAddress::new(0x00000005_ffffffff);
+const TLS_SLOT_SIZE: Bytes = mebibytes(4);
 
 #[derive(PartialEq, Eq, Debug)]
 pub enum State {
@@ -26,6 +29,7 @@ pub enum State {
 pub struct TaskSlot {
     pub index: usize,
     pub user_stack: Stack,
+    pub tls_address: Option<VirtualAddress>,
 }
 
 pub struct AddressSpace<P>
@@ -95,6 +99,7 @@ where
     pub fn alloc_task_slot(
         &self,
         initial_stack_size: usize,
+        needs_tls: bool,
         allocator: &PhysicalMemoryManager,
     ) -> Option<TaskSlot> {
         use hal::memory::Flags;
@@ -121,7 +126,9 @@ where
             Stack { top, slot_bottom, stack_bottom, physical_start }
         };
 
-        Some(TaskSlot { index, user_stack })
+        let tls_address = if needs_tls { Some(TLS_AREA_BOTTOM + TLS_SLOT_SIZE * index) } else { None };
+
+        Some(TaskSlot { index, user_stack, tls_address })
     }
 
     pub fn switch_to(&self) {

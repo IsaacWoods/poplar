@@ -15,7 +15,7 @@ mod topo;
 
 use acpi::{AcpiTables, PciConfigRegions};
 use acpi_handler::{AmlHandler, PebbleAcpiHandler};
-use alloc::boxed::Box;
+use alloc::{boxed::Box, sync::Arc};
 use aml::AmlContext;
 use core::{panic::PanicInfo, pin::Pin, time::Duration};
 use hal::{
@@ -26,6 +26,7 @@ use hal_x86_64::{hw::registers::read_control_reg, kernel_map, paging::PageTableI
 use interrupts::InterruptController;
 use kernel::{
     memory::{KernelStackAllocator, PhysicalMemoryManager},
+    object::{memory_object::MemoryObject, KernelObjectId},
     Platform,
 };
 use log::{error, info};
@@ -57,6 +58,14 @@ impl Platform for PlatformImpl {
         user_stack_top: &mut VirtualAddress,
     ) {
         task::initialize_kernel_stack(kernel_stack_top, task_entry_point, user_stack_top);
+    }
+
+    unsafe fn initialize_task_tls(
+        master_segment: &hal::boot_info::Segment,
+        task_id: KernelObjectId,
+        virtual_address: VirtualAddress,
+    ) -> (VirtualAddress, Arc<MemoryObject>) {
+        task::create_task_tls(master_segment, task_id, virtual_address)
     }
 
     unsafe fn context_switch(current_kernel_stack: *mut VirtualAddress, new_kernel_stack: VirtualAddress) {
