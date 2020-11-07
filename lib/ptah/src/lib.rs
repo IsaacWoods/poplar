@@ -83,14 +83,23 @@ pub(crate) const HANDLE_SLOT_2: u8 = 0xf2;
 pub(crate) const HANDLE_SLOT_3: u8 = 0xf3;
 
 pub fn make_handle_slot(index: u8) -> HandleSlot {
-    /*
-     * The handle slots are contiguous, and so we can just offset from the first one.
-     */
-    HANDLE_SLOT_0 + (index as u8)
+    match index {
+        0 => HANDLE_SLOT_0,
+        1 => HANDLE_SLOT_1,
+        2 => HANDLE_SLOT_2,
+        3 => HANDLE_SLOT_3,
+        _ => panic!("Invalid handle slot index!"),
+    }
 }
 
 pub fn index_from_handle_slot(slot: HandleSlot) -> u8 {
-    slot - HANDLE_SLOT_0
+    match slot {
+        HANDLE_SLOT_0 => 0,
+        HANDLE_SLOT_1 => 1,
+        HANDLE_SLOT_2 => 2,
+        HANDLE_SLOT_3 => 3,
+        _ => panic!("Invalid handle slot!"),
+    }
 }
 
 /// A `Writer` represents a consumer of the bytes produced by serializing a message. In cases where you can
@@ -127,7 +136,7 @@ impl<'a> Writer for CursorWriter<'a> {
         Ok(())
     }
 
-    fn push_handle(&mut self, handle: Handle) -> ser::Result<HandleSlot> {
+    fn push_handle(&mut self, _handle: Handle) -> ser::Result<HandleSlot> {
         unimplemented!()
     }
 }
@@ -138,7 +147,7 @@ impl<'a> Writer for &'a mut Vec<u8> {
         Ok(())
     }
 
-    fn push_handle(&mut self, handle: Handle) -> ser::Result<HandleSlot> {
+    fn push_handle(&mut self, _handle: Handle) -> ser::Result<HandleSlot> {
         unimplemented!()
     }
 }
@@ -156,7 +165,7 @@ impl<'a> Writer for SizeCalculator<'a> {
         Ok(())
     }
 
-    fn push_handle(&mut self, handle: Handle) -> ser::Result<HandleSlot> {
+    fn push_handle(&mut self, _handle: Handle) -> ser::Result<HandleSlot> {
         /*
          * When calculating the size, we simply accept as many handles as we're passed. The encoded slot is always
          * the same size, so it doesn't matter what we return.
