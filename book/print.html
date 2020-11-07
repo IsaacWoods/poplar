@@ -730,8 +730,8 @@ rustup toolchain link pebble build/{host triple}/stage2     # If you built a sta
 <p>This is as of <code>2020-09-29</code> - you need to remember to keep the <code>config.toml</code> up-to-date (as it's not checked in
 upstream), and can cause confusing errors when it's out-of-date.</p>
 <ul>
+<li><code>download-ci-llvm = true</code> under <code>[llvm]</code>. This makes the build much faster, since we don't need a custom LLVM.</li>
 <li><code>assertions = true</code> under <code>[llvm]</code></li>
-<li><code>debug = true</code> under <code>[rust]</code></li>
 <li><code>incremental = true</code> under <code>[rust]</code></li>
 <li><code>lld = true</code> under <code>[rust]</code>. Without this, the toolchain can't find <code>rust-lld</code> when linking.</li>
 <li><code>llvm-tools = true</code> under <code>[rust]</code>. This probably isn't needed, I just chucked it in in case <code>rust-lld</code> needs it.</li>

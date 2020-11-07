@@ -1,6 +1,6 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source to the Rust file `src/object/address_space.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>address_space.rs.html -- source</title><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../light.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../../../dark.css" disabled ><link rel="stylesheet" type="text/css" href="../../../ayu.css" disabled ><script src="../../../storage.js"></script><noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="icon" type="image/svg+xml" href="../../../favicon.svg">
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/object/address_space.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>address_space.rs - source</title><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../light.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../../../dark.css" disabled ><link rel="stylesheet" type="text/css" href="../../../ayu.css" disabled ><script id="default-settings"></script><script src="../../../storage.js"></script><noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="icon" type="image/svg+xml" href="../../../favicon.svg">
 <link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png">
-<link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><style type="text/css">#crate-search{background-image:url("../../../down-arrow.svg");}</style></head><body class="rustdoc source"><!--[if lte IE 8]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu">&#9776;</div><a href='../../../kernel/index.html'><div class='logo-container rust-logo'><img src='../../../rust-logo.png' alt='logo'></div></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!"><img src="../../../brush.svg" width="18" alt="Pick another theme!"></button><div id="theme-choices"></div></div><script src="../../../theme.js"></script><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><span class="help-button">?</span>
+<link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><style type="text/css">#crate-search{background-image:url("../../../down-arrow.svg");}</style></head><body class="rustdoc source"><!--[if lte IE 8]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu">&#9776;</div><a href='../../../kernel/index.html'><div class='logo-container rust-logo'><img src='../../../rust-logo.png' alt='logo'></div></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu"><img src="../../../brush.svg" width="18" alt="Pick another theme!"></button><div id="theme-choices" role="menu"></div></div><script src="../../../theme.js"></script><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><span class="help-button">?</span>
                 <a id="settings-menu" href="../../../settings.html"><img src="../../../wheel.svg" width="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><pre class="line-numbers"><span id="1">  1</span>
 <span id="2">  2</span>
 <span id="3">  3</span>
@@ -133,27 +133,60 @@
 <span id="130">130</span>
 <span id="131">131</span>
 <span id="132">132</span>
+<span id="133">133</span>
+<span id="134">134</span>
+<span id="135">135</span>
+<span id="136">136</span>
+<span id="137">137</span>
+<span id="138">138</span>
+<span id="139">139</span>
+<span id="140">140</span>
+<span id="141">141</span>
+<span id="142">142</span>
+<span id="143">143</span>
+<span id="144">144</span>
+<span id="145">145</span>
+<span id="146">146</span>
+<span id="147">147</span>
+<span id="148">148</span>
+<span id="149">149</span>
+<span id="150">150</span>
+<span id="151">151</span>
+<span id="152">152</span>
+<span id="153">153</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="kw">use</span> <span class="kw">super</span>::{<span class="ident">alloc_kernel_object_id</span>, <span class="ident">memory_object</span>::<span class="ident">MemoryObject</span>, <span class="ident">KernelObject</span>, <span class="ident">KernelObjectId</span>};
 <span class="kw">use</span> <span class="kw">crate</span>::{
-    <span class="ident">memory</span>::{<span class="ident">PhysicalMemoryManager</span>, <span class="ident">SlabAllocator</span>, <span class="ident">Stack</span>},
+    <span class="ident">memory</span>::{<span class="ident">PhysicalMemoryManager</span>, <span class="ident">Stack</span>},
     <span class="ident">Platform</span>,
 };
 <span class="kw">use</span> <span class="ident">alloc</span>::{<span class="ident">sync</span>::<span class="ident">Arc</span>, <span class="ident">vec</span>::<span class="ident">Vec</span>};
 <span class="kw">use</span> <span class="ident">hal</span>::<span class="ident">memory</span>::{<span class="ident">mebibytes</span>, <span class="ident">Bytes</span>, <span class="ident">FrameAllocator</span>, <span class="ident">PageTable</span>, <span class="ident">VirtualAddress</span>};
 <span class="kw">use</span> <span class="ident">libpebble</span>::<span class="ident">syscall</span>::<span class="ident">MapMemoryObjectError</span>;
+<span class="kw">use</span> <span class="ident">pebble_util</span>::<span class="ident">bitmap</span>::<span class="ident">Bitmap</span>;
 <span class="kw">use</span> <span class="ident">spin</span>::<span class="ident">Mutex</span>;
+
+<span class="kw">const</span> <span class="ident">MAX_TASKS</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="number">64</span>;
 
 <span class="comment">// TODO: we need some way of getting this from the platform I guess?</span>
 <span class="comment">// TODO: we&#39;ve basically made these up</span>
 <span class="kw">const</span> <span class="ident">USER_STACK_BOTTOM</span>: <span class="ident">VirtualAddress</span> <span class="op">=</span> <span class="ident">VirtualAddress</span>::<span class="ident">new</span>(<span class="number">0x00000002_00000000</span>);
 <span class="kw">const</span> <span class="ident">USER_STACK_TOP</span>: <span class="ident">VirtualAddress</span> <span class="op">=</span> <span class="ident">VirtualAddress</span>::<span class="ident">new</span>(<span class="number">0x00000003_ffffffff</span>);
-<span class="kw">const</span> <span class="ident">USER_STACK_SLOT_SIZE</span>: <span class="ident">Bytes</span> <span class="op">=</span> <span class="ident">mebibytes</span>(<span class="number">2</span>);
+<span class="kw">const</span> <span class="ident">USER_STACK_SLOT_SIZE</span>: <span class="ident">Bytes</span> <span class="op">=</span> <span class="ident">mebibytes</span>(<span class="number">4</span>);
+<span class="kw">const</span> <span class="ident">TLS_AREA_BOTTOM</span>: <span class="ident">VirtualAddress</span> <span class="op">=</span> <span class="ident">VirtualAddress</span>::<span class="ident">new</span>(<span class="number">0x00000004_00000000</span>);
+<span class="kw">const</span> <span class="ident">TLS_AREA_TOP</span>: <span class="ident">VirtualAddress</span> <span class="op">=</span> <span class="ident">VirtualAddress</span>::<span class="ident">new</span>(<span class="number">0x00000005_ffffffff</span>);
+<span class="kw">const</span> <span class="ident">TLS_SLOT_SIZE</span>: <span class="ident">Bytes</span> <span class="op">=</span> <span class="ident">mebibytes</span>(<span class="number">4</span>);
 
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">PartialEq</span>, <span class="ident">Eq</span>, <span class="ident">Debug</span>)]</span>
 <span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">State</span> {
     <span class="ident">NotActive</span>,
     <span class="ident">Active</span>,
+}
+
+<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">TaskSlot</span> {
+    <span class="kw">pub</span> <span class="ident">index</span>: <span class="ident">usize</span>,
+    <span class="kw">pub</span> <span class="ident">user_stack</span>: <span class="ident">Stack</span>,
+    <span class="kw">pub</span> <span class="ident">tls_address</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">VirtualAddress</span><span class="op">&gt;</span>,
 }
 
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">AddressSpace</span><span class="op">&lt;</span><span class="ident">P</span><span class="op">&gt;</span>
@@ -165,7 +198,7 @@
     <span class="kw">pub</span> <span class="ident">state</span>: <span class="ident">Mutex</span><span class="op">&lt;</span><span class="ident">State</span><span class="op">&gt;</span>,
     <span class="kw">pub</span> <span class="ident">memory_objects</span>: <span class="ident">Mutex</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">MemoryObject</span><span class="op">&gt;</span><span class="op">&gt;</span><span class="op">&gt;</span>,
     <span class="ident">page_table</span>: <span class="ident">Mutex</span><span class="op">&lt;</span><span class="ident">P</span>::<span class="ident">PageTable</span><span class="op">&gt;</span>,
-    <span class="ident">user_stack_allocator</span>: <span class="ident">Mutex</span><span class="op">&lt;</span><span class="ident">SlabAllocator</span><span class="op">&gt;</span>,
+    <span class="ident">slot_bitmap</span>: <span class="ident">Mutex</span><span class="op">&lt;</span><span class="ident">u64</span><span class="op">&gt;</span>,
 }
 
 <span class="kw">impl</span><span class="op">&lt;</span><span class="ident">P</span><span class="op">&gt;</span> <span class="ident">AddressSpace</span><span class="op">&lt;</span><span class="ident">P</span><span class="op">&gt;</span>
@@ -182,11 +215,7 @@
             <span class="ident">state</span>: <span class="ident">Mutex</span>::<span class="ident">new</span>(<span class="ident">State</span>::<span class="ident">NotActive</span>),
             <span class="ident">memory_objects</span>: <span class="ident">Mutex</span>::<span class="ident">new</span>(<span class="macro">vec</span><span class="macro">!</span>[]),
             <span class="ident">page_table</span>: <span class="ident">Mutex</span>::<span class="ident">new</span>(<span class="ident">P</span>::<span class="ident">PageTable</span>::<span class="ident">new_with_kernel_mapped</span>(<span class="ident">kernel_page_table</span>, <span class="ident">allocator</span>)),
-            <span class="ident">user_stack_allocator</span>: <span class="ident">Mutex</span>::<span class="ident">new</span>(<span class="ident">SlabAllocator</span>::<span class="ident">new</span>(
-                <span class="ident">USER_STACK_BOTTOM</span>,
-                <span class="ident">USER_STACK_TOP</span>,
-                <span class="ident">USER_STACK_SLOT_SIZE</span>,
-            )),
+            <span class="ident">slot_bitmap</span>: <span class="ident">Mutex</span>::<span class="ident">new</span>(<span class="number">0</span>),
         })
     }
 
@@ -222,28 +251,41 @@
         <span class="prelude-val">Ok</span>(())
     }
 
-    <span class="doccomment">/// Try to allocate a slot for a user stack, and map `initial_size` bytes of it. Returns `None` if no more user</span>
-    <span class="doccomment">/// stacks can be allocated in this address space.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">alloc_user_stack</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">initial_size</span>: <span class="ident">usize</span>, <span class="ident">allocator</span>: <span class="kw-2">&amp;</span><span class="ident">PhysicalMemoryManager</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Stack</span><span class="op">&gt;</span> {
+    <span class="doccomment">/// Try to allocate a slot for a Task. Creates a user stack with `initial_stack_size` bytes initially</span>
+    <span class="doccomment">/// allocated. Returs `None` if no more tasks can be created in this Address Space.</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">alloc_task_slot</span>(
+        <span class="kw-2">&amp;</span><span class="self">self</span>,
+        <span class="ident">initial_stack_size</span>: <span class="ident">usize</span>,
+        <span class="ident">needs_tls</span>: <span class="ident">bool</span>,
+        <span class="ident">allocator</span>: <span class="kw-2">&amp;</span><span class="ident">PhysicalMemoryManager</span>,
+    ) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">TaskSlot</span><span class="op">&gt;</span> {
         <span class="kw">use</span> <span class="ident">hal</span>::<span class="ident">memory</span>::<span class="ident">Flags</span>;
 
-        <span class="kw">let</span> <span class="ident">slot_bottom</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">user_stack_allocator</span>.<span class="ident">lock</span>().<span class="ident">alloc</span>()<span class="question-mark">?</span>;
-        <span class="kw">let</span> <span class="ident">top</span> <span class="op">=</span> <span class="ident">slot_bottom</span> <span class="op">+</span> <span class="ident">USER_STACK_SLOT_SIZE</span> <span class="op">-</span> <span class="number">1</span>;
-        <span class="kw">let</span> <span class="ident">stack_bottom</span> <span class="op">=</span> <span class="ident">top</span> <span class="op">-</span> <span class="ident">initial_size</span> <span class="op">+</span> <span class="number">1</span>;
+        <span class="kw">let</span> <span class="ident">index</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">slot_bitmap</span>.<span class="ident">lock</span>().<span class="ident">alloc</span>(<span class="number">1</span>)<span class="question-mark">?</span>;
 
-        <span class="kw">let</span> <span class="ident">physical_start</span> <span class="op">=</span> <span class="ident">allocator</span>.<span class="ident">alloc_bytes</span>(<span class="ident">initial_size</span>);
-        <span class="self">self</span>.<span class="ident">page_table</span>
-            .<span class="ident">lock</span>()
-            .<span class="ident">map_area</span>(
-                <span class="ident">stack_bottom</span>,
-                <span class="ident">physical_start</span>,
-                <span class="ident">initial_size</span>,
-                <span class="ident">Flags</span> { <span class="ident">writable</span>: <span class="bool-val">true</span>, <span class="ident">user_accessible</span>: <span class="bool-val">true</span>, ..<span class="ident">Default</span>::<span class="ident">default</span>() },
-                <span class="ident">allocator</span>,
-            )
-            .<span class="ident">unwrap</span>();
+        <span class="kw">let</span> <span class="ident">user_stack</span> <span class="op">=</span> {
+            <span class="kw">let</span> <span class="ident">slot_bottom</span> <span class="op">=</span> <span class="ident">USER_STACK_BOTTOM</span> <span class="op">+</span> <span class="ident">USER_STACK_SLOT_SIZE</span> <span class="op">*</span> <span class="ident">index</span>;
+            <span class="kw">let</span> <span class="ident">top</span> <span class="op">=</span> <span class="ident">slot_bottom</span> <span class="op">+</span> <span class="ident">USER_STACK_SLOT_SIZE</span> <span class="op">-</span> <span class="number">1</span>;
+            <span class="kw">let</span> <span class="ident">stack_bottom</span> <span class="op">=</span> (<span class="ident">top</span> <span class="op">+</span> <span class="number">1</span>) <span class="op">-</span> <span class="ident">initial_stack_size</span>;
 
-        <span class="prelude-val">Some</span>(<span class="ident">Stack</span> { <span class="ident">top</span>, <span class="ident">slot_bottom</span>, <span class="ident">stack_bottom</span> })
+            <span class="kw">let</span> <span class="ident">physical_start</span> <span class="op">=</span> <span class="ident">allocator</span>.<span class="ident">alloc_bytes</span>(<span class="ident">initial_stack_size</span>);
+            <span class="self">self</span>.<span class="ident">page_table</span>
+                .<span class="ident">lock</span>()
+                .<span class="ident">map_area</span>(
+                    <span class="ident">stack_bottom</span>,
+                    <span class="ident">physical_start</span>,
+                    <span class="ident">initial_stack_size</span>,
+                    <span class="ident">Flags</span> { <span class="ident">writable</span>: <span class="bool-val">true</span>, <span class="ident">user_accessible</span>: <span class="bool-val">true</span>, ..<span class="ident">Default</span>::<span class="ident">default</span>() },
+                    <span class="ident">allocator</span>,
+                )
+                .<span class="ident">unwrap</span>();
+
+            <span class="ident">Stack</span> { <span class="ident">top</span>, <span class="ident">slot_bottom</span>, <span class="ident">stack_bottom</span>, <span class="ident">physical_start</span> }
+        };
+
+        <span class="kw">let</span> <span class="ident">tls_address</span> <span class="op">=</span> <span class="kw">if</span> <span class="ident">needs_tls</span> { <span class="prelude-val">Some</span>(<span class="ident">TLS_AREA_BOTTOM</span> <span class="op">+</span> <span class="ident">TLS_SLOT_SIZE</span> <span class="op">*</span> <span class="ident">index</span>) } <span class="kw">else</span> { <span class="prelude-val">None</span> };
+
+        <span class="prelude-val">Some</span>(<span class="ident">TaskSlot</span> { <span class="ident">index</span>, <span class="ident">user_stack</span>, <span class="ident">tls_address</span> })
     }
 
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">switch_to</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) {
