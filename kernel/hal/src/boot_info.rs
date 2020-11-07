@@ -152,6 +152,7 @@ pub struct LoadedImage {
     pub name: [u8; MAX_IMAGE_NAME_LENGTH],
     pub num_segments: u8,
     pub segments: [Segment; MAX_IMAGE_LOADED_SEGMENTS],
+    pub master_tls: Option<Segment>,
     /// The virtual address at which to start executing the image.
     pub entry_point: VirtualAddress,
     pub capability_stream: [u8; MAX_CAPABILITY_STREAM_LENGTH],

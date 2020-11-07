@@ -128,6 +128,16 @@ pub fn load_image(
                 }
             }
 
+            SegmentType::Tls if segment.mem_size > 0 => {
+                /*
+                 * To provide the master TLS record, we load the TLS segment as if it was a `PT_LOAD` segment, at
+                 * the virtual address it's placed at in the image. Each task created will then copy out of this
+                 * master record to a location allocated per-task by the kernel.
+                 */
+                image_data.master_tls =
+                    Some(load_segment(boot_services, segment, crate::IMAGE_MEMORY_TYPE, &elf, true)?);
+            }
+
             SegmentType::Note => {
                 /*
                  * We want to search the note entries for one containing the task's capabilities (if this is an
@@ -218,7 +228,8 @@ fn load_segment(
     /*
      * We don't require each segment to fill up all the pages it needs - as long as the start of each segment is
      * page-aligned so they don't overlap, it's fine. This is mainly to support images linked by `lld` with the `-z
-     * separate-loadable-segments` flag, which does this.
+     * separate-loadable-segments` flag, which does this, and also so TLS segments don't fill up more space than
+     * they need (so the kernel knows its actual size, and can align that to a page if it needs to).
      *
      * However, we do need to align up to the page margin here so we zero all the memory allocated.
      */
