@@ -145,7 +145,6 @@ dependencies = [
 name = "libpebble"
 version = "0.3.0"
 dependencies = [
- "bitflags",
  "cfg-if",
  "log",
  "pci_types",

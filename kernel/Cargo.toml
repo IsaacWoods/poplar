@@ -14,6 +14,9 @@ spin = "0.5"
 log = { version = "0.4", default-features = false }
 libpebble = { path = "../lib/libpebble" }
 ptah = { path = "../lib/ptah" }
+pci_types = "0.2"
+
+[patch.crates-io]
 pci_types = { path = "../lib/pci_types" }
 
 [workspace]
