@@ -35,8 +35,8 @@ cargo +pebble build     # Or whatever command you need
 This is as of `2020-09-29` - you need to remember to keep the `config.toml` up-to-date (as it's not checked in
 upstream), and can cause confusing errors when it's out-of-date.
 
+- `download-ci-llvm = true` under `[llvm]`. This makes the build much faster, since we don't need a custom LLVM.
 - `assertions = true` under `[llvm]`
-- `debug = true` under `[rust]`
 - `incremental = true` under `[rust]`
 - `lld = true` under `[rust]`. Without this, the toolchain can't find `rust-lld` when linking.
 - `llvm-tools = true` under `[rust]`. This probably isn't needed, I just chucked it in in case `rust-lld` needs it.
