@@ -68,12 +68,16 @@ impl Platform for PlatformImpl {
         task::create_task_tls(master_segment, task_id, virtual_address)
     }
 
-    unsafe fn context_switch(current_kernel_stack: *mut VirtualAddress, new_kernel_stack: VirtualAddress) {
-        task::context_switch(current_kernel_stack, new_kernel_stack)
+    unsafe fn context_switch(
+        current_kernel_stack: *mut VirtualAddress,
+        new_kernel_stack: VirtualAddress,
+        tls_address: VirtualAddress,
+    ) {
+        task::context_switch(current_kernel_stack, new_kernel_stack, tls_address)
     }
 
-    unsafe fn drop_into_userspace() -> ! {
-        task::drop_into_userspace()
+    unsafe fn drop_into_userspace(tls_address: VirtualAddress) -> ! {
+        task::drop_into_userspace(tls_address)
     }
 }
 

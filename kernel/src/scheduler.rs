@@ -54,10 +54,11 @@ where
         *task.state.lock() = TaskState::Running;
         self.running_task = Some(task.clone());
         task.address_space.switch_to();
+
         unsafe {
             P::per_cpu().set_kernel_stack_pointer(*task.kernel_stack_pointer.get());
             P::per_cpu().set_user_stack_pointer(*task.user_stack_pointer.get());
-            P::drop_into_userspace()
+            P::drop_into_userspace(task.tls_address)
         }
     }
 
@@ -106,11 +107,13 @@ where
             let old_kernel_stack: *mut VirtualAddress = old_task.kernel_stack_pointer.get();
             let new_kernel_stack = unsafe { *self.running_task.as_ref().unwrap().kernel_stack_pointer.get() };
             let new_user_stack = unsafe { *self.running_task.as_ref().unwrap().user_stack_pointer.get() };
+            let new_tls_address = self.running_task.as_ref().unwrap().tls_address;
+
             unsafe {
                 *old_task.user_stack_pointer.get() = P::per_cpu().get_user_stack_pointer();
                 P::per_cpu().set_kernel_stack_pointer(new_kernel_stack);
                 P::per_cpu().set_user_stack_pointer(new_user_stack);
-                P::context_switch(old_kernel_stack, new_kernel_stack);
+                P::context_switch(old_kernel_stack, new_kernel_stack, new_tls_address);
             }
         } else {
             /*

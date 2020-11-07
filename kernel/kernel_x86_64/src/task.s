@@ -48,8 +48,8 @@ do_drop_to_usermode:
     // Switch to the task's kernel stack
     mov rsp, gs:0x8
 
-    // Pop the context-saved registers. We pop `r14` into `r11` and `r15` into `rcx` because that's where we want
-    // them for the `sysretq` anyways.
+    // Pop the context-saved registers. We pop a few of them into the "wrong" registers as we need to move some
+    // into registers not saved in the context. See documentation of `task_entry_trampoline` for details.
     pop rcx
     pop r11
     pop r13

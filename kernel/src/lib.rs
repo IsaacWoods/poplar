@@ -84,11 +84,15 @@ pub trait Platform: Sized + 'static {
 
     /// Do the final part of a context switch: save all the state that needs to be to the current kernel stack,
     /// switch to a new kernel stack, and restore all the state from that stack.
-    unsafe fn context_switch(current_kernel_stack: *mut VirtualAddress, new_kernel_stack: VirtualAddress);
+    unsafe fn context_switch(
+        current_kernel_stack: *mut VirtualAddress,
+        new_kernel_stack: VirtualAddress,
+        tls_address: VirtualAddress,
+    );
 
     /// Do the actual drop into usermode. This assumes that the task's page tables have already been installed,
     /// and that an initial frame has been put into the task's kernel stack that this will use to enter userspace.
-    unsafe fn drop_into_userspace() -> !;
+    unsafe fn drop_into_userspace(tls_address: VirtualAddress) -> !;
 }
 
 pub fn load_task<P>(

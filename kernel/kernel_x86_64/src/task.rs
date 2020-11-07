@@ -1,7 +1,7 @@
 use alloc::sync::Arc;
 use core::{mem, ptr};
 use hal::memory::VirtualAddress;
-use hal_x86_64::hw::registers::CpuFlags;
+use hal_x86_64::hw::registers::{write_msr, CpuFlags, IA32_FS_BASE};
 use kernel::object::{memory_object::MemoryObject, KernelObjectId};
 
 global_asm!(include_str!("task.s"));
@@ -139,11 +139,18 @@ pub fn create_task_tls(
     (control_block, memory_object)
 }
 
-pub unsafe fn context_switch(current_kernel_stack: *mut VirtualAddress, new_kernel_stack: VirtualAddress) {
+pub unsafe fn context_switch(
+    current_kernel_stack: *mut VirtualAddress,
+    new_kernel_stack: VirtualAddress,
+    tls_address: VirtualAddress,
+) {
+    write_msr(IA32_FS_BASE, usize::from(tls_address) as u64);
     do_context_switch(current_kernel_stack, new_kernel_stack);
 }
 
-pub unsafe fn drop_into_userspace() -> ! {
+pub unsafe fn drop_into_userspace(tls_address: VirtualAddress) -> ! {
+    write_msr(IA32_FS_BASE, usize::from(tls_address) as u64);
+
     /*
      * On x86_64, we use the context we install into the task's kernel stack to drop into usermode. We don't
      * need the kernel stack pointer as it has already been installed into the per-cpu info, so we can just
@@ -185,7 +192,7 @@ pub fn install_syscall_handler() {
     use bit_field::BitField;
     use hal_x86_64::hw::{
         gdt::{KERNEL_CODE_SELECTOR, USER_COMPAT_CODE_SELECTOR},
-        registers::{write_msr, IA32_FMASK, IA32_LSTAR, IA32_STAR},
+        registers::{IA32_FMASK, IA32_LSTAR, IA32_STAR},
     };
 
     let mut selectors = 0_u64;
