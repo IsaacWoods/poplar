@@ -58,7 +58,8 @@ where
         unsafe {
             P::per_cpu().set_kernel_stack_pointer(*task.kernel_stack_pointer.get());
             P::per_cpu().set_user_stack_pointer(*task.user_stack_pointer.get());
-            P::drop_into_userspace(task.tls_address)
+            P::load_tls(task.tls_address);
+            P::drop_into_userspace()
         }
     }
 
@@ -113,7 +114,8 @@ where
                 *old_task.user_stack_pointer.get() = P::per_cpu().get_user_stack_pointer();
                 P::per_cpu().set_kernel_stack_pointer(new_kernel_stack);
                 P::per_cpu().set_user_stack_pointer(new_user_stack);
-                P::context_switch(old_kernel_stack, new_kernel_stack, new_tls_address);
+                P::load_tls(new_tls_address);
+                P::context_switch(old_kernel_stack, new_kernel_stack);
             }
         } else {
             /*

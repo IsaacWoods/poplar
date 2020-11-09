@@ -2,7 +2,10 @@ use alloc::sync::Arc;
 use core::{mem, ptr};
 use hal::memory::VirtualAddress;
 use hal_x86_64::hw::registers::{write_msr, CpuFlags, IA32_FS_BASE};
-use kernel::object::{memory_object::MemoryObject, KernelObjectId};
+use kernel::{
+    memory::Stack,
+    object::{memory_object::MemoryObject, KernelObjectId},
+};
 
 global_asm!(include_str!("task.s"));
 global_asm!(include_str!("syscall.s"));
@@ -53,11 +56,12 @@ pub struct ContextSwitchFrame {
     pub return_address: u64,
 }
 
-pub unsafe fn initialize_kernel_stack(
-    kernel_stack_top: &mut VirtualAddress,
+/// Returns `(kernel_stack_pointer, user_stack_pointer)`.
+pub unsafe fn initialize_stacks(
+    kernel_stack: &Stack,
+    user_stack: &Stack,
     task_entry_point: VirtualAddress,
-    user_stack_top: &mut VirtualAddress,
-) {
+) -> (VirtualAddress, VirtualAddress) {
     /*
      * These are the set of flags we enter the task for the first time with. We allow, set the parity flag to
      * even, and leave everything else unset.
@@ -70,22 +74,22 @@ pub unsafe fn initialize_kernel_stack(
      * Sys-V ABI.
      */
     const REQUIRED_INITIAL_STACK_ALIGNMENT: usize = 16;
-    *kernel_stack_top = kernel_stack_top.align_down(REQUIRED_INITIAL_STACK_ALIGNMENT);
-    *user_stack_top = user_stack_top.align_down(REQUIRED_INITIAL_STACK_ALIGNMENT);
+    let mut kernel_stack_pointer = kernel_stack.top.align_down(REQUIRED_INITIAL_STACK_ALIGNMENT);
+    let mut user_stack_pointer = user_stack.top.align_down(REQUIRED_INITIAL_STACK_ALIGNMENT);
 
     /*
      * Start off with a zero return address to terminate backtraces at task entry.
      */
-    *kernel_stack_top -= 8;
-    *(kernel_stack_top.mut_ptr() as *mut u64) = 0x0;
+    kernel_stack_pointer -= 8;
+    *(kernel_stack_pointer.mut_ptr() as *mut u64) = 0x0;
 
     /*
      * Next, we construct the context-switch frame that is used when a task is switched to for
      * the first time. This initializes registers to sensible values, and then jumps to a
      * kernel-space trampoline that enters userspace.
      */
-    *kernel_stack_top -= mem::size_of::<ContextSwitchFrame>();
-    *(kernel_stack_top.mut_ptr() as *mut ContextSwitchFrame) = ContextSwitchFrame {
+    kernel_stack_pointer -= mem::size_of::<ContextSwitchFrame>();
+    *(kernel_stack_pointer.mut_ptr() as *mut ContextSwitchFrame) = ContextSwitchFrame {
         r15: usize::from(task_entry_point) as u64,
         r14: INITIAL_RFLAGS.into(),
         r13: 0x0,
@@ -94,6 +98,8 @@ pub unsafe fn initialize_kernel_stack(
         rbx: 0x0,
         return_address: task_entry_trampoline as u64,
     };
+
+    (kernel_stack_pointer, user_stack_pointer)
 }
 
 pub fn create_task_tls(
@@ -139,18 +145,11 @@ pub fn create_task_tls(
     (control_block, memory_object)
 }
 
-pub unsafe fn context_switch(
-    current_kernel_stack: *mut VirtualAddress,
-    new_kernel_stack: VirtualAddress,
-    tls_address: VirtualAddress,
-) {
-    write_msr(IA32_FS_BASE, usize::from(tls_address) as u64);
+pub unsafe fn context_switch(current_kernel_stack: *mut VirtualAddress, new_kernel_stack: VirtualAddress) {
     do_context_switch(current_kernel_stack, new_kernel_stack);
 }
 
-pub unsafe fn drop_into_userspace(tls_address: VirtualAddress) -> ! {
-    write_msr(IA32_FS_BASE, usize::from(tls_address) as u64);
-
+pub unsafe fn drop_into_userspace() -> ! {
     /*
      * On x86_64, we use the context we install into the task's kernel stack to drop into usermode. We don't
      * need the kernel stack pointer as it has already been installed into the per-cpu info, so we can just

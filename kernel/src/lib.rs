@@ -25,6 +25,7 @@ pub mod per_cpu;
 pub mod scheduler;
 pub mod syscall;
 
+use crate::memory::Stack;
 use alloc::{boxed::Box, sync::Arc};
 use core::pin::Pin;
 use hal::{
@@ -61,19 +62,16 @@ pub trait Platform: Sized + 'static {
     /// `Platform` implementation is created.
     fn per_cpu<'a>() -> Pin<&'a mut Self::PerCpu>;
 
-    /// Often, the kernel stack of a task must be initialized to allow it to enter usermode for the first time.
-    /// What is required for this is architecture-dependent, and so this is offloaded to the `TaskHelper`.
+    /// Often, the platform will need to put stuff on either the kernel or the user stack before a task is run for
+    /// the first time. `task_entry_point` is the virtual address that should be jumped to in usermode when the
+    /// task is run for the first time.
     ///
-    /// `entry_point` is the address that should be jumped to in usermode when the task is run for the first time.
-    /// `user_stack_top` is the virtual address that should be put into the stack pointer when the task is entered.
-    ///
-    /// `kernel_stack_top` is the kernel stack that the new stack frames will be installed in, and must be mapped
-    /// and writable when this is called. This method will update it as it puts stuff on the kernel stack.
-    unsafe fn initialize_task_kernel_stack(
-        kernel_stack_top: &mut VirtualAddress,
+    /// The return value is of the form `(kernel_stack_pointer, user_stack_pointer)`.
+    unsafe fn initialize_task_stacks(
+        kernel_stack: &Stack,
+        user_stack: &Stack,
         task_entry_point: VirtualAddress,
-        user_stack_top: &mut VirtualAddress,
-    );
+    ) -> (VirtualAddress, VirtualAddress);
 
     /// Create and initialize a TLS structure for this task.
     unsafe fn initialize_task_tls(
@@ -82,17 +80,15 @@ pub trait Platform: Sized + 'static {
         virtual_address: VirtualAddress,
     ) -> (VirtualAddress, Arc<MemoryObject>);
 
+    unsafe fn load_tls(address: VirtualAddress);
+
     /// Do the final part of a context switch: save all the state that needs to be to the current kernel stack,
     /// switch to a new kernel stack, and restore all the state from that stack.
-    unsafe fn context_switch(
-        current_kernel_stack: *mut VirtualAddress,
-        new_kernel_stack: VirtualAddress,
-        tls_address: VirtualAddress,
-    );
+    unsafe fn context_switch(current_kernel_stack: *mut VirtualAddress, new_kernel_stack: VirtualAddress);
 
     /// Do the actual drop into usermode. This assumes that the task's page tables have already been installed,
     /// and that an initial frame has been put into the task's kernel stack that this will use to enter userspace.
-    unsafe fn drop_into_userspace(tls_address: VirtualAddress) -> !;
+    unsafe fn drop_into_userspace() -> !;
 }
 
 pub fn load_task<P>(

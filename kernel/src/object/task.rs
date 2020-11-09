@@ -97,12 +97,8 @@ where
             .alloc_kernel_stack(0x4000, allocator, kernel_page_table)
             .ok_or(TaskCreationError::NoKernelStackSlots)?;
 
-        let mut kernel_stack_pointer = kernel_stack.top;
-        let mut user_stack_pointer = task_slot.user_stack.top;
-
-        unsafe {
-            P::initialize_task_kernel_stack(&mut kernel_stack_pointer, image.entry_point, &mut user_stack_pointer);
-        }
+        let (kernel_stack_pointer, user_stack_pointer) =
+            unsafe { P::initialize_task_stacks(&kernel_stack, &task_slot.user_stack, image.entry_point) };
 
         let (tls_address, tls_memory_object) = if needs_tls {
             let (tls_address, memory_object) = unsafe {

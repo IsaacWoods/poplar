@@ -25,7 +25,7 @@ use hal::{
 use hal_x86_64::{hw::registers::read_control_reg, kernel_map, paging::PageTableImpl};
 use interrupts::InterruptController;
 use kernel::{
-    memory::{KernelStackAllocator, PhysicalMemoryManager},
+    memory::{KernelStackAllocator, PhysicalMemoryManager, Stack},
     object::{memory_object::MemoryObject, KernelObjectId},
     Platform,
 };
@@ -52,12 +52,12 @@ impl Platform for PlatformImpl {
         unsafe { per_cpu::get_per_cpu_data() }
     }
 
-    unsafe fn initialize_task_kernel_stack(
-        kernel_stack_top: &mut VirtualAddress,
+    unsafe fn initialize_task_stacks(
+        kernel_stack: &Stack,
+        user_stack: &Stack,
         task_entry_point: VirtualAddress,
-        user_stack_top: &mut VirtualAddress,
-    ) {
-        task::initialize_kernel_stack(kernel_stack_top, task_entry_point, user_stack_top);
+    ) -> (VirtualAddress, VirtualAddress) {
+        task::initialize_stacks(kernel_stack, user_stack, task_entry_point)
     }
 
     unsafe fn initialize_task_tls(
@@ -68,16 +68,17 @@ impl Platform for PlatformImpl {
         task::create_task_tls(master_segment, task_id, virtual_address)
     }
 
-    unsafe fn context_switch(
-        current_kernel_stack: *mut VirtualAddress,
-        new_kernel_stack: VirtualAddress,
-        tls_address: VirtualAddress,
-    ) {
-        task::context_switch(current_kernel_stack, new_kernel_stack, tls_address)
+    unsafe fn load_tls(address: VirtualAddress) {
+        // TODO: move to task
+        hal_x86_64::hw::registers::write_msr(hal_x86_64::hw::registers::IA32_FS_BASE, usize::from(address) as u64);
     }
 
-    unsafe fn drop_into_userspace(tls_address: VirtualAddress) -> ! {
-        task::drop_into_userspace(tls_address)
+    unsafe fn context_switch(current_kernel_stack: *mut VirtualAddress, new_kernel_stack: VirtualAddress) {
+        task::context_switch(current_kernel_stack, new_kernel_stack)
+    }
+
+    unsafe fn drop_into_userspace() -> ! {
+        task::drop_into_userspace()
     }
 }
 
