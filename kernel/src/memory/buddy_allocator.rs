@@ -52,28 +52,13 @@ use pebble_util::math::{ceiling_integer_divide, ceiling_log2, flooring_log2};
 const MAX_ORDER: usize = 10;
 const NUM_BINS: usize = MAX_ORDER + 1;
 
-/// The "base" block size - the smallest block size this allocator tracks. This is chosen at the moment to be 4096
-/// bytes - the size of the smallest physical frame for all the architectures we wish to support at this point of
-/// time.
+/// The "base" block size - the smallest block size this allocator tracks. This is chosen at the moment to be
+/// `4096` bytes - the size of the smallest physical frame for all the architectures we wish to support at this
+/// point of time.
 const BASE_SIZE: usize = Size4KiB::SIZE;
 
-/*
- * TODO: the big testing bonanza:
- *    - test failure to allocate
- *    - test allocation
- *    - test coalescing and breaking of blocks
- *
- *    possible way of testing complete allocation:
- *        - allocate n frames, with variety of ranges requiring splitting and stuff
- *        - create a BTreeSet or whatever that contains all the 4KiB frames expected out of that range
- *        - allocate 4KiB frames out until we fail to allocate
- *        - remove the frames from the BTreeSet, checking we don't remove one that shouldn't be removed
- *        - when we fail to allocate, check that all the bins, as well as the BTreeSet of expected frames, is
- *          empty
- */
-
 pub struct BuddyAllocator {
-    /// The bins of free blocks, where bin `i` contains blocks of size `2^i`. Uses `BTreeSet` to
+    /// The bins of free blocks, where bin `i` contains blocks of size `BASE_SIZE * (2^i)`. Uses `BTreeSet` to
     /// store the blocks in each bin, for efficient buddy location. Each block is stored as the physical address
     /// of the start of the block. The actual frames can be constructed for each block using the start address and
     /// the order of the block.
@@ -110,23 +95,22 @@ impl BuddyAllocator {
         }
     }
 
-    /// Allocate (at least) `n` contiguous bytes from this allocator. Returns `None` if this
-    /// allocator can't satisfy the allocation. The requested number of bytes must be a power-of-two.
-    pub fn allocate_n(&mut self, num_bytes: usize) -> Option<PhysicalAddress> {
-        assert!(num_bytes.is_power_of_two());
+    /// Allocate a block of `block_size` bytes from this allocator. Returns `None` if the allocator can't satisfy
+    /// the allocation.
+    pub fn allocate_n(&mut self, block_size: Bytes) -> Option<PhysicalAddress> {
+        assert!(num_bytes % BASE_SIZE == 0);
+        assert!((num_bytes / BASE_SIZE).is_power_of_two());
 
-        /*
-         * Find the minimum block order that will satisfy `num_bytes`.
-         */
-        let order = ceiling_log2(ceiling_integer_divide(num_bytes, BASE_SIZE));
+        let order = (num_bytes / BASE_SIZE).trailing_zeros() as usize;
         self.allocate_block(order)
     }
 
-    /// Free the given block (starting at `start` and of size `n` frames). `n` must be a
-    /// power-of-2.
-    pub fn free_n(&mut self, start: PhysicalAddress, num_bytes: usize) {
-        assert!(num_bytes.is_power_of_two());
-        let order = flooring_log2(num_bytes / BASE_SIZE);
+    /// Free a block starting at `start` of `block_size` bytes. `block_size` must be a valid size of a whole block.
+    pub fn free_n(&mut self, start: PhysicalAddress, block_size: Bytes) {
+        assert!(num_bytes % BASE_SIZE == 0);
+        assert!((num_bytes / BASE_SIZE).is_power_of_two());
+
+        let order = (num_bytes / BASE_SIZE).trailing_zeros() as usize;
         self.free_block(start, order);
     }
 
@@ -197,7 +181,14 @@ impl BuddyAllocator {
     }
 }
 
-// TODO: actually test the allocator as well
+/*
+ * TODO: actually test the allocator as well:
+ *    - allocate n frames, with variety of ranges requiring splitting and stuff
+ *    - create a BTreeSet or whatever that contains all the 4KiB frames expected out of that range
+ *    - allocate 4KiB frames out until we fail to allocate
+ *    - remove the frames from the BTreeSet, checking we don't remove one that shouldn't be removed
+ *    - when we fail to allocate, check that all the bins, as well as the BTreeSet of expected frames, is empty
+ */
 #[cfg(test)]
 mod tests {
     use super::*;

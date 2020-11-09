@@ -30,10 +30,12 @@ impl PhysicalMemoryManager {
         PhysicalMemoryManager { buddy: Mutex::new(buddy_allocator) }
     }
 
-    /// TODO: not sure this is the best interface to provide
     pub fn alloc_bytes(&self, num_bytes: usize) -> PhysicalAddress {
         /*
          * For now, we always use the buddy allocator.
+         * TODO: this isn't very good. We can only allocate a whole block at a time, and always allocate a
+         * contiguous block of memory even when we don't need one. This should return an "owned" allocation that
+         * can hold a list of non-contiguous ranges of frames, plus information needed to free the allocation.
          */
         self.buddy.lock().allocate_n(num_bytes).expect("Failed to allocate physical memory!")
     }
