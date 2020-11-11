@@ -382,6 +382,12 @@
 <span id="379">379</span>
 <span id="380">380</span>
 <span id="381">381</span>
+<span id="382">382</span>
+<span id="383">383</span>
+<span id="384">384</span>
+<span id="385">385</span>
+<span id="386">386</span>
+<span id="387">387</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="doccomment">//! This module implements a buddy allocator, an efficient scheme for managing physical memory. In</span>
 <span class="doccomment">//! this allocator, memory is broken up into a number of blocks, each of which is a power-of-2 frames in</span>
@@ -430,35 +436,20 @@
 
 <span class="kw">use</span> <span class="ident">alloc</span>::<span class="ident">collections</span>::<span class="ident">BTreeSet</span>;
 <span class="kw">use</span> <span class="ident">core</span>::{<span class="ident">cmp</span>::<span class="ident">min</span>, <span class="ident">ops</span>::<span class="ident">Range</span>};
-<span class="kw">use</span> <span class="ident">hal</span>::<span class="ident">memory</span>::{<span class="ident">Frame</span>, <span class="ident">FrameSize</span>, <span class="ident">PhysicalAddress</span>, <span class="ident">Size4KiB</span>};
+<span class="kw">use</span> <span class="ident">hal</span>::<span class="ident">memory</span>::{<span class="ident">Bytes</span>, <span class="ident">Frame</span>, <span class="ident">FrameSize</span>, <span class="ident">PhysicalAddress</span>, <span class="ident">Size4KiB</span>};
 <span class="kw">use</span> <span class="ident">pebble_util</span>::<span class="ident">math</span>::{<span class="ident">ceiling_integer_divide</span>, <span class="ident">ceiling_log2</span>, <span class="ident">flooring_log2</span>};
 
 <span class="doccomment">/// The largest block stored by the buddy allocator is `2^MAX_ORDER`.</span>
 <span class="kw">const</span> <span class="ident">MAX_ORDER</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="number">10</span>;
 <span class="kw">const</span> <span class="ident">NUM_BINS</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="ident">MAX_ORDER</span> <span class="op">+</span> <span class="number">1</span>;
 
-<span class="doccomment">/// The &quot;base&quot; block size - the smallest block size this allocator tracks. This is chosen at the moment to be 4096</span>
-<span class="doccomment">/// bytes - the size of the smallest physical frame for all the architectures we wish to support at this point of</span>
-<span class="doccomment">/// time.</span>
+<span class="doccomment">/// The &quot;base&quot; block size - the smallest block size this allocator tracks. This is chosen at the moment to be</span>
+<span class="doccomment">/// `4096` bytes - the size of the smallest physical frame for all the architectures we wish to support at this</span>
+<span class="doccomment">/// point of time.</span>
 <span class="kw">const</span> <span class="ident">BASE_SIZE</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="ident">Size4KiB</span>::<span class="ident">SIZE</span>;
 
-<span class="comment">/*
- * TODO: the big testing bonanza:
- *    - test failure to allocate
- *    - test allocation
- *    - test coalescing and breaking of blocks
- *
- *    possible way of testing complete allocation:
- *        - allocate n frames, with variety of ranges requiring splitting and stuff
- *        - create a BTreeSet or whatever that contains all the 4KiB frames expected out of that range
- *        - allocate 4KiB frames out until we fail to allocate
- *        - remove the frames from the BTreeSet, checking we don&#39;t remove one that shouldn&#39;t be removed
- *        - when we fail to allocate, check that all the bins, as well as the BTreeSet of expected frames, is
- *          empty
- */</span>
-
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">BuddyAllocator</span> {
-    <span class="doccomment">/// The bins of free blocks, where bin `i` contains blocks of size `2^i`. Uses `BTreeSet` to</span>
+    <span class="doccomment">/// The bins of free blocks, where bin `i` contains blocks of size `BASE_SIZE * (2^i)`. Uses `BTreeSet` to</span>
     <span class="doccomment">/// store the blocks in each bin, for efficient buddy location. Each block is stored as the physical address</span>
     <span class="doccomment">/// of the start of the block. The actual frames can be constructed for each block using the start address and</span>
     <span class="doccomment">/// the order of the block.</span>
@@ -495,23 +486,30 @@
         }
     }
 
-    <span class="doccomment">/// Allocate (at least) `n` contiguous bytes from this allocator. Returns `None` if this</span>
-    <span class="doccomment">/// allocator can&#39;t satisfy the allocation. The requested number of bytes must be a power-of-two.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">allocate_n</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">num_bytes</span>: <span class="ident">usize</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">PhysicalAddress</span><span class="op">&gt;</span> {
-        <span class="macro">assert</span><span class="macro">!</span>(<span class="ident">num_bytes</span>.<span class="ident">is_power_of_two</span>());
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">available_bytes</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">Bytes</span> {
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">bytes</span> <span class="op">=</span> <span class="number">0</span>;
+        <span class="kw">for</span> <span class="ident">i</span> <span class="kw">in</span> <span class="number">0</span>..<span class="ident">NUM_BINS</span> {
+            <span class="ident">bytes</span> <span class="op">+</span><span class="op">=</span> <span class="self">self</span>.<span class="ident">bins</span>[<span class="ident">i</span>].<span class="ident">len</span>() <span class="op">*</span> ((<span class="number">1</span> <span class="op">&lt;</span><span class="op">&lt;</span> <span class="ident">i</span>) <span class="op">*</span> <span class="ident">BASE_SIZE</span>);
+        }
+        <span class="ident">bytes</span>
+    }
 
-        <span class="comment">/*
-         * Find the minimum block order that will satisfy `num_bytes`.
-         */</span>
-        <span class="kw">let</span> <span class="ident">order</span> <span class="op">=</span> <span class="ident">ceiling_log2</span>(<span class="ident">ceiling_integer_divide</span>(<span class="ident">num_bytes</span>, <span class="ident">BASE_SIZE</span>));
+    <span class="doccomment">/// Allocate a block of `block_size` bytes from this allocator. Returns `None` if the allocator can&#39;t satisfy</span>
+    <span class="doccomment">/// the allocation.</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">allocate_n</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">block_size</span>: <span class="ident">Bytes</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">PhysicalAddress</span><span class="op">&gt;</span> {
+        <span class="macro">assert</span><span class="macro">!</span>(<span class="ident">block_size</span> <span class="op">%</span> <span class="ident">BASE_SIZE</span> <span class="op">=</span><span class="op">=</span> <span class="number">0</span>);
+        <span class="macro">assert</span><span class="macro">!</span>((<span class="ident">block_size</span> <span class="op">/</span> <span class="ident">BASE_SIZE</span>).<span class="ident">is_power_of_two</span>());
+
+        <span class="kw">let</span> <span class="ident">order</span> <span class="op">=</span> (<span class="ident">block_size</span> <span class="op">/</span> <span class="ident">BASE_SIZE</span>).<span class="ident">trailing_zeros</span>() <span class="kw">as</span> <span class="ident">usize</span>;
         <span class="self">self</span>.<span class="ident">allocate_block</span>(<span class="ident">order</span>)
     }
 
-    <span class="doccomment">/// Free the given block (starting at `start` and of size `n` frames). `n` must be a</span>
-    <span class="doccomment">/// power-of-2.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">free_n</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">start</span>: <span class="ident">PhysicalAddress</span>, <span class="ident">num_bytes</span>: <span class="ident">usize</span>) {
-        <span class="macro">assert</span><span class="macro">!</span>(<span class="ident">num_bytes</span>.<span class="ident">is_power_of_two</span>());
-        <span class="kw">let</span> <span class="ident">order</span> <span class="op">=</span> <span class="ident">flooring_log2</span>(<span class="ident">num_bytes</span> <span class="op">/</span> <span class="ident">BASE_SIZE</span>);
+    <span class="doccomment">/// Free a block starting at `start` of `block_size` bytes. `block_size` must be a valid size of a whole block.</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">free_n</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">start</span>: <span class="ident">PhysicalAddress</span>, <span class="ident">block_size</span>: <span class="ident">Bytes</span>) {
+        <span class="macro">assert</span><span class="macro">!</span>(<span class="ident">block_size</span> <span class="op">%</span> <span class="ident">BASE_SIZE</span> <span class="op">=</span><span class="op">=</span> <span class="number">0</span>);
+        <span class="macro">assert</span><span class="macro">!</span>((<span class="ident">block_size</span> <span class="op">/</span> <span class="ident">BASE_SIZE</span>).<span class="ident">is_power_of_two</span>());
+
+        <span class="kw">let</span> <span class="ident">order</span> <span class="op">=</span> (<span class="ident">block_size</span> <span class="op">/</span> <span class="ident">BASE_SIZE</span>).<span class="ident">trailing_zeros</span>() <span class="kw">as</span> <span class="ident">usize</span>;
         <span class="self">self</span>.<span class="ident">free_block</span>(<span class="ident">start</span>, <span class="ident">order</span>);
     }
 
@@ -582,7 +580,14 @@
     }
 }
 
-<span class="comment">// TODO: actually test the allocator as well</span>
+<span class="comment">/*
+ * TODO: actually test the allocator as well:
+ *    - allocate n frames, with variety of ranges requiring splitting and stuff
+ *    - create a BTreeSet or whatever that contains all the 4KiB frames expected out of that range
+ *    - allocate 4KiB frames out until we fail to allocate
+ *    - remove the frames from the BTreeSet, checking we don&#39;t remove one that shouldn&#39;t be removed
+ *    - when we fail to allocate, check that all the bins, as well as the BTreeSet of expected frames, is empty
+ */</span>
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">test</span>)]</span>
 <span class="kw">mod</span> <span class="ident">tests</span> {
     <span class="kw">use</span> <span class="kw">super</span>::<span class="kw-2">*</span>;
@@ -667,6 +672,7 @@
         <span class="ident">allocator</span>.<span class="ident">add_range</span>(<span class="ident">n_frames_at</span>(<span class="number">0x2000</span>, <span class="number">1</span>));
         <span class="ident">allocator</span>.<span class="ident">add_range</span>(<span class="ident">n_frames_at</span>(<span class="number">0x16000</span>, <span class="number">1</span>));
         <span class="ident">allocator</span>.<span class="ident">add_range</span>(<span class="ident">n_frames_at</span>(<span class="number">0xf480000</span>, <span class="number">1</span>));
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">allocator</span>.<span class="ident">available_bytes</span>(), <span class="number">0x4000</span>);
         <span class="ident">check_bins</span>(
             <span class="ident">allocator</span>,
             <span class="macro">vec</span><span class="macro">!</span>[<span class="ident">Block</span>::<span class="ident">new</span>(<span class="number">0</span>, <span class="number">0x0</span>), <span class="ident">Block</span>::<span class="ident">new</span>(<span class="number">0</span>, <span class="number">0x2000</span>), <span class="ident">Block</span>::<span class="ident">new</span>(<span class="number">0</span>, <span class="number">0x16000</span>), <span class="ident">Block</span>::<span class="ident">new</span>(<span class="number">0</span>, <span class="number">0xf480000</span>)],
@@ -679,6 +685,7 @@
         <span class="ident">allocator</span>.<span class="ident">add_range</span>(<span class="ident">n_frames_at</span>(<span class="number">0x2000</span>, <span class="number">1</span>));
         <span class="ident">allocator</span>.<span class="ident">add_range</span>(<span class="ident">n_frames_at</span>(<span class="number">0x6000</span>, <span class="number">4</span>));
         <span class="ident">allocator</span>.<span class="ident">add_range</span>(<span class="ident">n_frames_at</span>(<span class="number">0x10000</span>, <span class="number">64</span>));
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">allocator</span>.<span class="ident">available_bytes</span>(), (<span class="number">1</span> <span class="op">+</span> <span class="number">4</span> <span class="op">+</span> <span class="number">64</span>) <span class="op">*</span> <span class="ident">BASE_SIZE</span>);
         <span class="ident">check_bins</span>(<span class="ident">allocator</span>, <span class="macro">vec</span><span class="macro">!</span>[<span class="ident">Block</span>::<span class="ident">new</span>(<span class="number">0</span>, <span class="number">0x2000</span>), <span class="ident">Block</span>::<span class="ident">new</span>(<span class="number">2</span>, <span class="number">0x6000</span>), <span class="ident">Block</span>::<span class="ident">new</span>(<span class="number">6</span>, <span class="number">0x10000</span>)]);
     }
 
@@ -718,6 +725,7 @@
         <span class="ident">allocator</span>.<span class="ident">add_range</span>(<span class="ident">n_frames_at</span>(<span class="number">0x1000</span>, <span class="number">1</span>));
         <span class="ident">allocator</span>.<span class="ident">add_range</span>(<span class="ident">n_frames_at</span>(<span class="number">0x3000</span>, <span class="number">1</span>));
         <span class="ident">allocator</span>.<span class="ident">add_range</span>(<span class="ident">n_frames_at</span>(<span class="number">0x2000</span>, <span class="number">1</span>));
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">allocator</span>.<span class="ident">available_bytes</span>(), <span class="number">0x3000</span>);
         <span class="ident">check_bins</span>(<span class="ident">allocator</span>, <span class="macro">vec</span><span class="macro">!</span>[<span class="ident">Block</span>::<span class="ident">new</span>(<span class="number">0</span>, <span class="number">0x1000</span>), <span class="ident">Block</span>::<span class="ident">new</span>(<span class="number">1</span>, <span class="number">0x2000</span>)]);
 
         <span class="comment">/*
@@ -728,6 +736,7 @@
         <span class="ident">allocator</span>.<span class="ident">add_range</span>(<span class="ident">n_frames_at</span>(<span class="number">0x2000</span>, <span class="number">1</span>));
         <span class="ident">allocator</span>.<span class="ident">add_range</span>(<span class="ident">n_frames_at</span>(<span class="number">0x3000</span>, <span class="number">1</span>));
         <span class="ident">allocator</span>.<span class="ident">add_range</span>(<span class="ident">n_frames_at</span>(<span class="number">0x1000</span>, <span class="number">1</span>));
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">allocator</span>.<span class="ident">available_bytes</span>(), <span class="number">0x4000</span>);
         <span class="ident">check_bins</span>(<span class="ident">allocator</span>, <span class="macro">vec</span><span class="macro">!</span>[<span class="ident">Block</span>::<span class="ident">new</span>(<span class="number">2</span>, <span class="number">0x0</span>)]);
 
         <span class="comment">/*
@@ -737,12 +746,15 @@
         <span class="kw">for</span> <span class="ident">i</span> <span class="kw">in</span> <span class="number">0</span>..<span class="number">1024</span> {
             <span class="ident">allocator</span>.<span class="ident">add_range</span>(<span class="ident">n_frames_at</span>(<span class="ident">i</span> <span class="op">*</span> <span class="ident">Size4KiB</span>::<span class="ident">SIZE</span>, <span class="number">1</span>));
         }
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">allocator</span>.<span class="ident">available_bytes</span>(), <span class="number">0x400000</span>);
         <span class="ident">check_bins</span>(<span class="ident">allocator</span>, <span class="macro">vec</span><span class="macro">!</span>[<span class="ident">Block</span>::<span class="ident">new</span>(<span class="number">10</span>, <span class="number">0x0</span>)]);
     }
 
     <span class="attribute">#[<span class="ident">test</span>]</span>
     <span class="kw">fn</span> <span class="ident">test_empty_allocator</span>() {
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">allocator</span> <span class="op">=</span> <span class="ident">BuddyAllocator</span>::<span class="ident">new</span>();
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">allocator</span>.<span class="ident">available_bytes</span>(), <span class="number">0</span>);
+
         <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">allocator</span>.<span class="ident">allocate_n</span>(<span class="number">0x1000</span>), <span class="prelude-val">None</span>);
         <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">allocator</span>.<span class="ident">allocate_block</span>(<span class="number">0</span>), <span class="prelude-val">None</span>);
         <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">allocator</span>.<span class="ident">allocate_block</span>(<span class="ident">MAX_ORDER</span>), <span class="prelude-val">None</span>);

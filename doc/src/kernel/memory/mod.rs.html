@@ -67,6 +67,10 @@
 <span id="64">64</span>
 <span id="65">65</span>
 <span id="66">66</span>
+<span id="67">67</span>
+<span id="68">68</span>
+<span id="69">69</span>
+<span id="70">70</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="kw">mod</span> <span class="ident">buddy_allocator</span>;
 <span class="kw">mod</span> <span class="ident">kernel_stack_allocator</span>;
@@ -81,6 +85,7 @@
     <span class="ident">boot_info</span>::<span class="ident">BootInfo</span>,
     <span class="ident">memory</span>::{<span class="ident">Frame</span>, <span class="ident">FrameAllocator</span>, <span class="ident">FrameSize</span>, <span class="ident">PhysicalAddress</span>, <span class="ident">VirtualAddress</span>},
 };
+<span class="kw">use</span> <span class="ident">log</span>::<span class="ident">info</span>;
 <span class="kw">use</span> <span class="ident">spin</span>::<span class="ident">Mutex</span>;
 
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">PhysicalMemoryManager</span> {
@@ -96,14 +101,17 @@
                 <span class="ident">buddy_allocator</span>.<span class="ident">add_range</span>(<span class="ident">entry</span>.<span class="ident">frame_range</span>());
             }
         }
+        <span class="macro">info</span><span class="macro">!</span>(<span class="string">&quot;Buddy allocator has {} bytes&quot;</span>, <span class="ident">buddy_allocator</span>.<span class="ident">available_bytes</span>());
 
         <span class="ident">PhysicalMemoryManager</span> { <span class="ident">buddy</span>: <span class="ident">Mutex</span>::<span class="ident">new</span>(<span class="ident">buddy_allocator</span>) }
     }
 
-    <span class="doccomment">/// TODO: not sure this is the best interface to provide</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">alloc_bytes</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">num_bytes</span>: <span class="ident">usize</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">PhysicalAddress</span> {
         <span class="comment">/*
          * For now, we always use the buddy allocator.
+         * TODO: this isn&#39;t very good. We can only allocate a whole block at a time, and always allocate a
+         * contiguous block of memory even when we don&#39;t need one. This should return an &quot;owned&quot; allocation that
+         * can hold a list of non-contiguous ranges of frames, plus information needed to free the allocation.
          */</span>
         <span class="self">self</span>.<span class="ident">buddy</span>.<span class="ident">lock</span>().<span class="ident">allocate_n</span>(<span class="ident">num_bytes</span>).<span class="ident">expect</span>(<span class="string">&quot;Failed to allocate physical memory!&quot;</span>)
     }

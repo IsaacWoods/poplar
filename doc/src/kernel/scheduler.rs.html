@@ -132,6 +132,8 @@
 <span id="129">129</span>
 <span id="130">130</span>
 <span id="131">131</span>
+<span id="132">132</span>
+<span id="133">133</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="kw">use</span> <span class="kw">crate</span>::{
     <span class="ident">object</span>::<span class="ident">task</span>::{<span class="ident">Task</span>, <span class="ident">TaskState</span>},
@@ -193,7 +195,8 @@
         <span class="kw">unsafe</span> {
             <span class="ident">P</span>::<span class="ident">per_cpu</span>().<span class="ident">set_kernel_stack_pointer</span>(<span class="kw-2">*</span><span class="ident">task</span>.<span class="ident">kernel_stack_pointer</span>.<span class="ident">get</span>());
             <span class="ident">P</span>::<span class="ident">per_cpu</span>().<span class="ident">set_user_stack_pointer</span>(<span class="kw-2">*</span><span class="ident">task</span>.<span class="ident">user_stack_pointer</span>.<span class="ident">get</span>());
-            <span class="ident">P</span>::<span class="ident">drop_into_userspace</span>(<span class="ident">task</span>.<span class="ident">tls_address</span>)
+            <span class="ident">P</span>::<span class="ident">load_tls</span>(<span class="ident">task</span>.<span class="ident">tls_address</span>);
+            <span class="ident">P</span>::<span class="ident">drop_into_userspace</span>()
         }
     }
 
@@ -248,7 +251,8 @@
                 <span class="kw-2">*</span><span class="ident">old_task</span>.<span class="ident">user_stack_pointer</span>.<span class="ident">get</span>() <span class="op">=</span> <span class="ident">P</span>::<span class="ident">per_cpu</span>().<span class="ident">get_user_stack_pointer</span>();
                 <span class="ident">P</span>::<span class="ident">per_cpu</span>().<span class="ident">set_kernel_stack_pointer</span>(<span class="ident">new_kernel_stack</span>);
                 <span class="ident">P</span>::<span class="ident">per_cpu</span>().<span class="ident">set_user_stack_pointer</span>(<span class="ident">new_user_stack</span>);
-                <span class="ident">P</span>::<span class="ident">context_switch</span>(<span class="ident">old_kernel_stack</span>, <span class="ident">new_kernel_stack</span>, <span class="ident">new_tls_address</span>);
+                <span class="ident">P</span>::<span class="ident">load_tls</span>(<span class="ident">new_tls_address</span>);
+                <span class="ident">P</span>::<span class="ident">context_switch</span>(<span class="ident">old_kernel_stack</span>, <span class="ident">new_kernel_stack</span>);
             }
         } <span class="kw">else</span> {
             <span class="comment">/*

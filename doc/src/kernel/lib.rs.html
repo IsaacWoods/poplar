@@ -155,10 +155,6 @@
 <span id="152">152</span>
 <span id="153">153</span>
 <span id="154">154</span>
-<span id="155">155</span>
-<span id="156">156</span>
-<span id="157">157</span>
-<span id="158">158</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="attribute">#![<span class="ident">no_std</span>]</span>
 <span class="attribute">#![<span class="ident">feature</span>(
@@ -187,6 +183,7 @@
 <span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">scheduler</span>;
 <span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">syscall</span>;
 
+<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">memory</span>::<span class="ident">Stack</span>;
 <span class="kw">use</span> <span class="ident">alloc</span>::{<span class="ident">boxed</span>::<span class="ident">Box</span>, <span class="ident">sync</span>::<span class="ident">Arc</span>};
 <span class="kw">use</span> <span class="ident">core</span>::<span class="ident">pin</span>::<span class="ident">Pin</span>;
 <span class="kw">use</span> <span class="ident">hal</span>::{
@@ -223,19 +220,16 @@
     <span class="doccomment">/// `Platform` implementation is created.</span>
     <span class="kw">fn</span> <span class="ident">per_cpu</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="ident">Pin</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="kw-2">mut</span> <span class="self">Self</span>::<span class="ident">PerCpu</span><span class="op">&gt;</span>;
 
-    <span class="doccomment">/// Often, the kernel stack of a task must be initialized to allow it to enter usermode for the first time.</span>
-    <span class="doccomment">/// What is required for this is architecture-dependent, and so this is offloaded to the `TaskHelper`.</span>
+    <span class="doccomment">/// Often, the platform will need to put stuff on either the kernel or the user stack before a task is run for</span>
+    <span class="doccomment">/// the first time. `task_entry_point` is the virtual address that should be jumped to in usermode when the</span>
+    <span class="doccomment">/// task is run for the first time.</span>
     <span class="doccomment">///</span>
-    <span class="doccomment">/// `entry_point` is the address that should be jumped to in usermode when the task is run for the first time.</span>
-    <span class="doccomment">/// `user_stack_top` is the virtual address that should be put into the stack pointer when the task is entered.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// `kernel_stack_top` is the kernel stack that the new stack frames will be installed in, and must be mapped</span>
-    <span class="doccomment">/// and writable when this is called. This method will update it as it puts stuff on the kernel stack.</span>
-    <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">initialize_task_kernel_stack</span>(
-        <span class="ident">kernel_stack_top</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">VirtualAddress</span>,
+    <span class="doccomment">/// The return value is of the form `(kernel_stack_pointer, user_stack_pointer)`.</span>
+    <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">initialize_task_stacks</span>(
+        <span class="ident">kernel_stack</span>: <span class="kw-2">&amp;</span><span class="ident">Stack</span>,
+        <span class="ident">user_stack</span>: <span class="kw-2">&amp;</span><span class="ident">Stack</span>,
         <span class="ident">task_entry_point</span>: <span class="ident">VirtualAddress</span>,
-        <span class="ident">user_stack_top</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">VirtualAddress</span>,
-    );
+    ) <span class="op">-</span><span class="op">&gt;</span> (<span class="ident">VirtualAddress</span>, <span class="ident">VirtualAddress</span>);
 
     <span class="doccomment">/// Create and initialize a TLS structure for this task.</span>
     <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">initialize_task_tls</span>(
@@ -244,17 +238,15 @@
         <span class="ident">virtual_address</span>: <span class="ident">VirtualAddress</span>,
     ) <span class="op">-</span><span class="op">&gt;</span> (<span class="ident">VirtualAddress</span>, <span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">MemoryObject</span><span class="op">&gt;</span>);
 
+    <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">load_tls</span>(<span class="ident">address</span>: <span class="ident">VirtualAddress</span>);
+
     <span class="doccomment">/// Do the final part of a context switch: save all the state that needs to be to the current kernel stack,</span>
     <span class="doccomment">/// switch to a new kernel stack, and restore all the state from that stack.</span>
-    <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">context_switch</span>(
-        <span class="ident">current_kernel_stack</span>: <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="ident">VirtualAddress</span>,
-        <span class="ident">new_kernel_stack</span>: <span class="ident">VirtualAddress</span>,
-        <span class="ident">tls_address</span>: <span class="ident">VirtualAddress</span>,
-    );
+    <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">context_switch</span>(<span class="ident">current_kernel_stack</span>: <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="ident">VirtualAddress</span>, <span class="ident">new_kernel_stack</span>: <span class="ident">VirtualAddress</span>);
 
     <span class="doccomment">/// Do the actual drop into usermode. This assumes that the task&#39;s page tables have already been installed,</span>
     <span class="doccomment">/// and that an initial frame has been put into the task&#39;s kernel stack that this will use to enter userspace.</span>
-    <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">drop_into_userspace</span>(<span class="ident">tls_address</span>: <span class="ident">VirtualAddress</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="op">!</span>;
+    <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">drop_into_userspace</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="op">!</span>;
 }
 
 <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">load_task</span><span class="op">&lt;</span><span class="ident">P</span><span class="op">&gt;</span>(
