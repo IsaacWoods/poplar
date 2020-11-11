@@ -92,11 +92,11 @@ pub fn align_down<T: PrimInt + PowerOfTwoable>(value: T, align: T) -> T {
 
 #[test]
 fn test_align_down() {
-    assert_eq!(align_down(17, 0), 17);
-    assert_eq!(align_down(17, 1), 17);
-    assert_eq!(align_down(9, 8), 8);
-    assert_eq!(align_down(19, 8), 16);
-    assert_eq!(align_down(1025, 16), 1024);
+    assert_eq!(align_down(17u64, 0), 17);
+    assert_eq!(align_down(17u64, 1), 17);
+    assert_eq!(align_down(9u64, 8), 8);
+    assert_eq!(align_down(19u64, 8), 16);
+    assert_eq!(align_down(1025u64, 16), 1024);
 }
 
 pub fn align_up<T: PrimInt + PowerOfTwoable>(value: T, align: T) -> T {
@@ -109,10 +109,10 @@ pub fn align_up<T: PrimInt + PowerOfTwoable>(value: T, align: T) -> T {
 
 #[test]
 fn test_align_up() {
-    assert_eq!(align_up(17, 0), 17);
-    assert_eq!(align_up(43, 1), 43);
-    assert_eq!(align_up(9, 8), 16);
-    assert_eq!(align_up(1023, 16), 1024);
+    assert_eq!(align_up(17u64, 0), 17);
+    assert_eq!(align_up(43u64, 1), 43);
+    assert_eq!(align_up(9u64, 8), 16);
+    assert_eq!(align_up(1023u64, 16), 1024);
 }
 
 /// Divide `x` by `divide_by`, taking the ceiling if it does not divide evenly.
