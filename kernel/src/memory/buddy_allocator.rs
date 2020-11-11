@@ -95,6 +95,14 @@ impl BuddyAllocator {
         }
     }
 
+    pub fn available_bytes(&self) -> Bytes {
+        let mut bytes = 0;
+        for i in 0..NUM_BINS {
+            bytes += self.bins[i].len() * ((1 << i) * BASE_SIZE);
+        }
+        bytes
+    }
+
     /// Allocate a block of `block_size` bytes from this allocator. Returns `None` if the allocator can't satisfy
     /// the allocation.
     pub fn allocate_n(&mut self, block_size: Bytes) -> Option<PhysicalAddress> {
@@ -273,6 +281,7 @@ mod tests {
         allocator.add_range(n_frames_at(0x2000, 1));
         allocator.add_range(n_frames_at(0x16000, 1));
         allocator.add_range(n_frames_at(0xf480000, 1));
+        assert_eq!(allocator.available_bytes(), 0x4000);
         check_bins(
             allocator,
             vec![Block::new(0, 0x0), Block::new(0, 0x2000), Block::new(0, 0x16000), Block::new(0, 0xf480000)],
@@ -285,6 +294,7 @@ mod tests {
         allocator.add_range(n_frames_at(0x2000, 1));
         allocator.add_range(n_frames_at(0x6000, 4));
         allocator.add_range(n_frames_at(0x10000, 64));
+        assert_eq!(allocator.available_bytes(), (1 + 4 + 64) * BASE_SIZE);
         check_bins(allocator, vec![Block::new(0, 0x2000), Block::new(2, 0x6000), Block::new(6, 0x10000)]);
     }
 
@@ -324,6 +334,7 @@ mod tests {
         allocator.add_range(n_frames_at(0x1000, 1));
         allocator.add_range(n_frames_at(0x3000, 1));
         allocator.add_range(n_frames_at(0x2000, 1));
+        assert_eq!(allocator.available_bytes(), 0x3000);
         check_bins(allocator, vec![Block::new(0, 0x1000), Block::new(1, 0x2000)]);
 
         /*
@@ -334,6 +345,7 @@ mod tests {
         allocator.add_range(n_frames_at(0x2000, 1));
         allocator.add_range(n_frames_at(0x3000, 1));
         allocator.add_range(n_frames_at(0x1000, 1));
+        assert_eq!(allocator.available_bytes(), 0x4000);
         check_bins(allocator, vec![Block::new(2, 0x0)]);
 
         /*
@@ -343,12 +355,15 @@ mod tests {
         for i in 0..1024 {
             allocator.add_range(n_frames_at(i * Size4KiB::SIZE, 1));
         }
+        assert_eq!(allocator.available_bytes(), 0x400000);
         check_bins(allocator, vec![Block::new(10, 0x0)]);
     }
 
     #[test]
     fn test_empty_allocator() {
         let mut allocator = BuddyAllocator::new();
+        assert_eq!(allocator.available_bytes(), 0);
+
         assert_eq!(allocator.allocate_n(0x1000), None);
         assert_eq!(allocator.allocate_block(0), None);
         assert_eq!(allocator.allocate_block(MAX_ORDER), None);

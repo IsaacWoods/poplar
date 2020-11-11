@@ -11,6 +11,7 @@ use hal::{
     boot_info::BootInfo,
     memory::{Frame, FrameAllocator, FrameSize, PhysicalAddress, VirtualAddress},
 };
+use log::info;
 use spin::Mutex;
 
 pub struct PhysicalMemoryManager {
@@ -26,6 +27,7 @@ impl PhysicalMemoryManager {
                 buddy_allocator.add_range(entry.frame_range());
             }
         }
+        info!("Buddy allocator has {} bytes", buddy_allocator.available_bytes());
 
         PhysicalMemoryManager { buddy: Mutex::new(buddy_allocator) }
     }
