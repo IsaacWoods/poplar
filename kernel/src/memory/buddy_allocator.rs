@@ -45,7 +45,7 @@
 
 use alloc::collections::BTreeSet;
 use core::{cmp::min, ops::Range};
-use hal::memory::{Frame, FrameSize, PhysicalAddress, Size4KiB};
+use hal::memory::{Bytes, Frame, FrameSize, PhysicalAddress, Size4KiB};
 use pebble_util::math::{ceiling_integer_divide, ceiling_log2, flooring_log2};
 
 /// The largest block stored by the buddy allocator is `2^MAX_ORDER`.
@@ -98,19 +98,19 @@ impl BuddyAllocator {
     /// Allocate a block of `block_size` bytes from this allocator. Returns `None` if the allocator can't satisfy
     /// the allocation.
     pub fn allocate_n(&mut self, block_size: Bytes) -> Option<PhysicalAddress> {
-        assert!(num_bytes % BASE_SIZE == 0);
-        assert!((num_bytes / BASE_SIZE).is_power_of_two());
+        assert!(block_size % BASE_SIZE == 0);
+        assert!((block_size / BASE_SIZE).is_power_of_two());
 
-        let order = (num_bytes / BASE_SIZE).trailing_zeros() as usize;
+        let order = (block_size / BASE_SIZE).trailing_zeros() as usize;
         self.allocate_block(order)
     }
 
     /// Free a block starting at `start` of `block_size` bytes. `block_size` must be a valid size of a whole block.
     pub fn free_n(&mut self, start: PhysicalAddress, block_size: Bytes) {
-        assert!(num_bytes % BASE_SIZE == 0);
-        assert!((num_bytes / BASE_SIZE).is_power_of_two());
+        assert!(block_size % BASE_SIZE == 0);
+        assert!((block_size / BASE_SIZE).is_power_of_two());
 
-        let order = (num_bytes / BASE_SIZE).trailing_zeros() as usize;
+        let order = (block_size / BASE_SIZE).trailing_zeros() as usize;
         self.free_block(start, order);
     }
 
