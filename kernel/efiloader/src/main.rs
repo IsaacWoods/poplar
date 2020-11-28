@@ -441,12 +441,16 @@ where
             };
         }
         match entry.ty {
-            MemoryType::BOOT_SERVICES_CODE
-            | MemoryType::BOOT_SERVICES_DATA
-            | MemoryType::CONVENTIONAL
+            MemoryType::CONVENTIONAL
             | MemoryType::LOADER_CODE
             | MemoryType::LOADER_DATA
             | MEMORY_MAP_MEMORY_TYPE => add_entry!(BootInfoMemoryType::Conventional),
+
+            MemoryType::BOOT_SERVICES_CODE | MemoryType::BOOT_SERVICES_DATA
+                if !kludges.keep_boot_services_id_mapped =>
+            {
+                add_entry!(BootInfoMemoryType::Conventional)
+            }
 
             MemoryType::ACPI_RECLAIM => add_entry!(BootInfoMemoryType::AcpiReclaimable),
             IMAGE_MEMORY_TYPE => add_entry!(BootInfoMemoryType::LoadedImage),
