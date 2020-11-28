@@ -10,7 +10,7 @@ mod image;
 mod logger;
 
 use allocator::BootFrameAllocator;
-use command_line::CommandLine;
+use command_line::{CommandLine, Kludges};
 use core::{mem, panic::PanicInfo, ptr, slice};
 use hal::{
     boot_info::{BootInfo, VideoModeInfo},
@@ -77,8 +77,11 @@ fn main(image_handle: Handle, system_table: SystemTable<Boot>) -> Result<!, Load
     const COMMAND_LINE_MAX_LENGTH: usize = 256;
     let mut buffer = [0u8; COMMAND_LINE_MAX_LENGTH];
 
-    let load_options_str = loaded_image_protocol.load_options(&mut buffer).expect("Failed to load load options");
-    let command_line = CommandLine::new(load_options_str);
+    let command_line = {
+        let load_options_str =
+            loaded_image_protocol.load_options(&mut buffer).expect("Failed to load load options");
+        CommandLine::new(load_options_str)
+    };
 
     /*
      * Switch to a suitable video mode and create a framebuffer, if the user requested us to. If we do switch video
@@ -230,7 +233,13 @@ fn main(image_handle: Handle, system_table: SystemTable<Boot>) -> Result<!, Load
     let (_system_table, memory_map) = system_table
         .exit_boot_services(image_handle, memory_map_buffer)
         .expect_success("Failed to exit boot services");
-    process_memory_map(memory_map, boot_info, &mut page_table, &allocator)?;
+    let virtual_map = process_memory_map(
+        memory_map,
+        boot_info,
+        &command_line.kludges,
+        &mut page_table,
+        &allocator,
+    )?;
 
     /*
      * Jump into the kernel!
@@ -281,6 +290,7 @@ fn main(image_handle: Handle, system_table: SystemTable<Boot>) -> Result<!, Load
 fn process_memory_map<'a, A, P>(
     memory_map: impl Iterator<Item = &'a MemoryDescriptor>,
     boot_info: &mut BootInfo,
+    kludges: &Kludges,
     mapper: &mut P,
     allocator: &A,
 ) -> Result<(), LoaderError>
@@ -306,36 +316,76 @@ where
         );
 
         /*
-         * Identity-map the entry in the kernel page tables, if needed.
+         * Keep the loader identity-mapped, or it will disappear out from under us when we switch to the kernel's
+         * page tables.
+         * Also map the boot and runtime services code and data if that kludge is set (we shouldn't need to do
+         * this, but it seems like most UEFI implementations are super broken).
          *
-         * TODO: we shouldn't need to keep the Boot Services code and data mapped, as we only switch to these
-         * tables after calling `exit_boot_services`, but if we don't, something page faults. No idea what's going
-         * on, but it'd be great to fix this.
+         * XXX: the virtual address isn't filled out when physically mapped, so use the `phys_start` for both fields
          */
         match entry.ty {
-            MemoryType::LOADER_CODE
-            | MemoryType::LOADER_DATA
-            | MemoryType::BOOT_SERVICES_CODE
-            | MemoryType::BOOT_SERVICES_DATA
-            | MemoryType::RUNTIME_SERVICES_CODE
-            | MemoryType::RUNTIME_SERVICES_DATA => {
-                debug!(
-                    "Identity mapping {} bytes at {:#x} of type: {:?}",
-                    entry.page_count as usize * Size4KiB::SIZE,
-                    entry.phys_start,
-                    entry.ty
-                );
-
-                /*
-                 * Implementations don't appear to fill out the `VirtualStart` field, so we use the physical
-                 * address for both (as we're identity-mapping anyway).
-                 */
+            MemoryType::LOADER_CODE => {
                 mapper
                     .map_area(
                         VirtualAddress::new(entry.phys_start as usize),
                         PhysicalAddress::new(entry.phys_start as usize).unwrap(),
                         entry.page_count as usize * Size4KiB::SIZE,
                         Flags { writable: true, executable: true, ..Default::default() },
+                        allocator,
+                    )
+                    .unwrap();
+            }
+            MemoryType::LOADER_DATA => {
+                mapper
+                    .map_area(
+                        VirtualAddress::new(entry.phys_start as usize),
+                        PhysicalAddress::new(entry.phys_start as usize).unwrap(),
+                        entry.page_count as usize * Size4KiB::SIZE,
+                        Flags { writable: true, ..Default::default() },
+                        allocator,
+                    )
+                    .unwrap();
+            }
+            MemoryType::BOOT_SERVICES_CODE if kludges.keep_boot_services_id_mapped => {
+                mapper
+                    .map_area(
+                        VirtualAddress::new(entry.phys_start as usize),
+                        PhysicalAddress::new(entry.phys_start as usize).unwrap(),
+                        entry.page_count as usize * Size4KiB::SIZE,
+                        Flags { executable: true, ..Default::default() },
+                        allocator,
+                    )
+                    .unwrap();
+            }
+            MemoryType::BOOT_SERVICES_DATA if kludges.keep_boot_services_id_mapped => {
+                mapper
+                    .map_area(
+                        VirtualAddress::new(entry.phys_start as usize),
+                        PhysicalAddress::new(entry.phys_start as usize).unwrap(),
+                        entry.page_count as usize * Size4KiB::SIZE,
+                        Flags { writable: true, ..Default::default() },
+                        allocator,
+                    )
+                    .unwrap();
+            }
+            MemoryType::RUNTIME_SERVICES_CODE if kludges.keep_runtime_services_id_mapped => {
+                mapper
+                    .map_area(
+                        VirtualAddress::new(entry.phys_start as usize),
+                        PhysicalAddress::new(entry.phys_start as usize).unwrap(),
+                        entry.page_count as usize * Size4KiB::SIZE,
+                        Flags { executable: true, ..Default::default() },
+                        allocator,
+                    )
+                    .unwrap();
+            }
+            MemoryType::RUNTIME_SERVICES_DATA if kludges.keep_runtime_services_id_mapped => {
+                mapper
+                    .map_area(
+                        VirtualAddress::new(entry.phys_start as usize),
+                        PhysicalAddress::new(entry.phys_start as usize).unwrap(),
+                        entry.page_count as usize * Size4KiB::SIZE,
+                        Flags { writable: true, ..Default::default() },
                         allocator,
                     )
                     .unwrap();
