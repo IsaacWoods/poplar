@@ -98,6 +98,9 @@ pub extern "C" fn _start() -> ! {
         )
     };
 
+    for i in 0..capabilities.max_ports {
+        info!("Port {}: {:?}", i, operational.port(i).port_link_state());
+    }
 
     let memory_area = MemoryArea::new(capabilities.max_ports);
     initialize_controller(&mut operational, &capabilities, &memory_area);
