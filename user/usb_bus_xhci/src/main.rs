@@ -9,6 +9,7 @@ extern crate rlibc;
 mod caps;
 mod memory;
 mod operational;
+mod trb;
 
 use alloc::{string::String, vec};
 use caps::Capabilities;
