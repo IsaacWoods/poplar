@@ -126,7 +126,7 @@ fn initialize_controller(
 
     // Set the physical address of the Device Context Base Address Pointer Register
     operational.set_device_context_base_address_array_pointer(
-        memory_area.physical_address_of_device_context_base_address_array(),
+        memory_area.physical_address_of_device_context_base_address_array() as u64,
     );
 
     todo!()

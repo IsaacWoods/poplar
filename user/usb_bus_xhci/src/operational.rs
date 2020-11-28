@@ -23,6 +23,27 @@ impl OperationRegisters {
         unsafe { self.read_register(0x14) }
     }
 
+    /// Sets the Command Ring Control register, which has the format:
+    /// ```ignore
+    ///   31                                                                      6                       0
+    ///    +----------------------------------------------------------------------------------------------+ 0x00
+    ///    |   Command Ring Pointer Lo                                            | RsvdP |CRR| CA| CS|RCS|
+    ///    +----------------------------------------------------------------------------------------------+ 0x04
+    ///    |   Command Ring Pointer Hi                                                                    |
+    ///    +----------------------------------------------------------------------------------------------+
+    /// RCS: Ring Cycle State
+    /// CS: Command Stop
+    /// CA: Command Abort
+    /// CRR: Command Ring Running
+    /// ```
+    pub fn set_command_ring_control(&mut self, pointer: u64) {
+        assert_eq!(pointer.get_bits(0..6), 0x0);
+        // TODO: do we want to provide control over the flags?
+        unsafe {
+            self.write_register(0x18, pointer);
+        }
+    }
+
     pub fn set_device_context_base_address_array_pointer(&self, pointer: u64) {
         assert_eq!(pointer.get_bits(0..6), 0x0);
         unsafe {
