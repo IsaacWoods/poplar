@@ -42,8 +42,8 @@ impl CpuInfo {
 
     pub fn microarch(&self) -> Option<Microarch> {
         /*
-         * This information is strangely hard to come by, so this is by no way complete and does not include
-         * more recent microarchitectures :(
+         * This was patched together from a bunch of sources, and isn't tested on actual processors at all, so is
+         * probably wrong/incomplete.
          */
         match self.vendor {
             Vendor::Intel if self.model_info.family == 0x6 => match self.model_info.extended_model {
@@ -54,7 +54,12 @@ impl CpuInfo {
                 0x3c | 0x3f | 0x45 | 0x46 => Some(Microarch::Haswell),
                 0x3d | 0x47 | 0x56 | 0x4f => Some(Microarch::Broadwell),
                 0x4e | 0x5e | 0x55 => Some(Microarch::Skylake),
-                0x8e | 0x9e => Some(Microarch::KabyLake),
+                0x8e if self.model_info.stepping == 0x9 => Some(Microarch::KabyLake),
+                0x8e if self.model_info.stepping == 0xa => Some(Microarch::CoffeeLake),
+                0x9e if self.model_info.stepping == 0x9 => Some(Microarch::KabyLake),
+                // TODO: when if_let_guards are implemented, this can be made a bit cleaner
+                // 0x9e if let (0xa..=0xd) = self.model_info.stepping => Some(Microarch::CoffeeLake),
+                0x9e if (0xa..=0xd).contains(&self.model_info.stepping) => Some(Microarch::CoffeeLake),
 
                 _ => None,
             },
@@ -124,6 +129,7 @@ pub enum Microarch {
     Broadwell,
     Skylake,
     KabyLake,
+    CoffeeLake,
 
     /*
      * AMD
