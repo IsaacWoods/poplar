@@ -147,6 +147,7 @@ pub struct ModelInfo {
 pub enum HypervisorVendor {
     Unknown,
     Kvm,
+    Tcg,
 }
 
 #[derive(Debug)]
@@ -276,6 +277,7 @@ fn decode_hypervisor_info() -> Option<HypervisorInfo> {
 
     let vendor = match str::from_utf8(unsafe { &vendor_repr.vendor_name }) {
         Ok("KVMKVMKVM\0\0\0") => HypervisorVendor::Kvm,
+        Ok("TCGTCGTCGTCG") => HypervisorVendor::Tcg,
         _ => HypervisorVendor::Unknown,
     };
 
