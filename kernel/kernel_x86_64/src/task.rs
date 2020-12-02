@@ -1,7 +1,7 @@
 use alloc::sync::Arc;
 use core::{mem, ptr};
 use hal::memory::VirtualAddress;
-use hal_x86_64::hw::registers::{write_msr, CpuFlags, IA32_FS_BASE};
+use hal_x86_64::hw::registers::{write_msr, CpuFlags};
 use kernel::{
     memory::Stack,
     object::{memory_object::MemoryObject, KernelObjectId},

@@ -69,8 +69,8 @@ impl Platform for PlatformImpl {
     }
 
     unsafe fn load_tls(address: VirtualAddress) {
-        // TODO: move to task
-        hal_x86_64::hw::registers::write_msr(hal_x86_64::hw::registers::IA32_FS_BASE, usize::from(address) as u64);
+        use hal_x86_64::hw::registers::{write_msr, IA32_FS_BASE};
+        write_msr(IA32_FS_BASE, usize::from(address) as u64);
     }
 
     unsafe fn context_switch(current_kernel_stack: *mut VirtualAddress, new_kernel_stack: VirtualAddress) {
