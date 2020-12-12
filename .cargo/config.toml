@@ -1,0 +1,2 @@
+[alias]
+bu = "run --release --manifest-path tools/butler/Cargo.toml"
