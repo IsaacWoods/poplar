@@ -16,7 +16,7 @@
 
 mod build;
 
-use build::RunCargo;
+use build::{BuildStep, RunCargo};
 use std::{path::PathBuf, string::ToString};
 
 #[tokio::main]
@@ -39,7 +39,7 @@ async fn main() {
         release: false,
         std_components: vec!["core".to_string(), "alloc".to_string()],
     };
-    assert!(kernel_build.build().await.unwrap().success());
+    kernel_build.build().await.unwrap();
 
     println!("Success");
 }

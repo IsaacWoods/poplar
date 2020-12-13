@@ -1,5 +1,21 @@
-use std::{future::Future, io, path::PathBuf, process::ExitStatus, string::ToString};
+use async_trait::async_trait;
+use std::{io, path::PathBuf, string::ToString};
 use tokio::process::Command;
+
+#[derive(Debug)]
+pub enum BuildError {
+    BuildFailed,
+    Io(io::Error),
+}
+
+#[async_trait]
+pub trait BuildStep {
+    async fn build(self) -> Result<(), BuildError>;
+}
+
+pub struct Build {
+    steps: Vec<Box<dyn BuildStep>>,
+}
 
 pub struct RunCargo {
     pub manifest_path: PathBuf,
@@ -8,8 +24,9 @@ pub struct RunCargo {
     pub std_components: Vec<String>,
 }
 
-impl RunCargo {
-    pub fn build(self) -> impl Future<Output = io::Result<ExitStatus>> {
+#[async_trait]
+impl BuildStep for RunCargo {
+    async fn build(self) -> Result<(), BuildError> {
         let mut args = Vec::new();
         if self.release {
             args.push("--release".to_string());
@@ -22,6 +39,19 @@ impl RunCargo {
             args.push(format!("-Zbuild-std={}", self.std_components.join(",")));
         }
 
-        Command::new("cargo").arg("build").arg("--manifest-path").arg(self.manifest_path).args(args).status()
+        match Command::new(std::env::var("CARGO").unwrap_or_else(|_| "cargo".to_string()))
+            .arg("build")
+            .arg("--manifest-path")
+            .arg(self.manifest_path)
+            .args(args)
+            .status()
+            .await
+        {
+            Ok(exit_status) => match exit_status.success() {
+                true => Ok(()),
+                false => Err(BuildError::BuildFailed),
+            },
+            Err(err) => Err(BuildError::Io(err)),
+        }
     }
 }
