@@ -12,12 +12,46 @@
  *      - Meanwhile, put a nice tree in stdout to show the build process
  * - Launch QEMU and pave the image onto it
  * - (in the future) listen to the monitor over serial and format the packets nicely
+ *
+ * Subcommands:
+ *    - `update_submodules` - goes through each submodule, looks at git status, pulls it if clean, presents list at
+ *    end (color coded!!!) for status of each one - ([DIRTY], [UP TO DATE], [UPDATED], [REMOTE MISSING!!])
+ *    - `rust` - used to manage a custom Pebble rust toolchain
  */
 
 mod build;
 
 use build::{BuildStep, RunCargo};
 use std::{path::PathBuf, string::ToString};
+
+/// A Project is something that you can instruct Butler to build or run. This might be a Pebble distribution, or
+/// something else (e.g. a target-side test that doesn't use the Pebble kernel).
+pub struct Project {
+    name: String,
+    build_steps: Vec<build::BuildFuture>,
+}
+
+impl Project {
+    pub fn new(name: String) -> Project {
+        Project { name, build_steps: Vec::new() }
+    }
+
+    pub fn add_build_step<T>(&mut self, step: T)
+    where
+        T: BuildStep + 'static,
+    {
+        self.build_steps.push(Box::pin(step.build()));
+    }
+
+    pub async fn build(&mut self) {
+        for step in self.build_steps.drain(..) {
+            match step.await {
+                Ok(_) => (),
+                Err(err) => panic!("Build of project {} failed: {:?}", self.name, err),
+            }
+        }
+    }
+}
 
 #[tokio::main]
 async fn main() {
@@ -28,18 +62,24 @@ async fn main() {
         .subcommand(clap::SubCommand::with_name("build").about("Builds a Pebble distribution"))
         .get_matches();
 
-    if let Some(matches) = matches.subcommand_matches("build") {
+    if let Some(_matches) = matches.subcommand_matches("build") {
         println!("Build requested");
     }
 
-    // TODO: test
-    let kernel_build = RunCargo {
+    let mut pebble = Project::new("Pebble".to_string());
+    pebble.add_build_step(RunCargo {
+        manifest_path: PathBuf::from("kernel/efiloader/Cargo.toml"),
+        target: Some("x86_64-unknown-uefi".to_string()),
+        release: false,
+        std_components: vec!["core".to_string()],
+    });
+    pebble.add_build_step(RunCargo {
         manifest_path: PathBuf::from("kernel/kernel_x86_64/Cargo.toml"),
         target: Some("kernel/kernel_x86_64/x86_64-kernel.json".to_string()),
         release: false,
         std_components: vec!["core".to_string(), "alloc".to_string()],
-    };
-    kernel_build.build().await.unwrap();
+    });
+    pebble.build().await;
 
     println!("Success");
 }

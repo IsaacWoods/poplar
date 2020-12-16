@@ -2,6 +2,8 @@ use async_trait::async_trait;
 use std::{io, path::PathBuf, string::ToString};
 use tokio::process::Command;
 
+pub type BuildFuture = futures::future::BoxFuture<'static, Result<(), BuildError>>;
+
 #[derive(Debug)]
 pub enum BuildError {
     BuildFailed,
@@ -11,10 +13,6 @@ pub enum BuildError {
 #[async_trait]
 pub trait BuildStep {
     async fn build(self) -> Result<(), BuildError>;
-}
-
-pub struct Build {
-    steps: Vec<Box<dyn BuildStep>>,
 }
 
 pub struct RunCargo {
