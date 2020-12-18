@@ -21,7 +21,7 @@
 
 mod build;
 
-use build::{BuildStep, RunCargo};
+use build::{BuildStep, RunCargo, Target};
 use std::{path::PathBuf, string::ToString};
 
 /// A Project is something that you can instruct Butler to build or run. This might be a Pebble distribution, or
@@ -69,13 +69,16 @@ async fn main() {
     let mut pebble = Project::new("Pebble".to_string());
     pebble.add_build_step(RunCargo {
         manifest_path: PathBuf::from("kernel/efiloader/Cargo.toml"),
-        target: Some("x86_64-unknown-uefi".to_string()),
+        target: Target::Triple("x86_64-unknown-uefi".to_string()),
         release: false,
         std_components: vec!["core".to_string()],
     });
     pebble.add_build_step(RunCargo {
         manifest_path: PathBuf::from("kernel/kernel_x86_64/Cargo.toml"),
-        target: Some("kernel/kernel_x86_64/x86_64-kernel.json".to_string()),
+        target: Target::Custom {
+            triple: "x86_64-kernel".to_string(),
+            spec: PathBuf::from("kernel/kernel_x86_64/x86_64-kernel.json"),
+        },
         release: false,
         std_components: vec!["core".to_string(), "alloc".to_string()],
     });

@@ -15,9 +15,16 @@ pub trait BuildStep {
     async fn build(self) -> Result<(), BuildError>;
 }
 
+#[derive(Clone, Debug)]
+pub enum Target {
+    Host,
+    Triple(String),
+    Custom { triple: String, spec: PathBuf },
+}
+
 pub struct RunCargo {
     pub manifest_path: PathBuf,
-    pub target: Option<String>,
+    pub target: Target,
     pub release: bool,
     pub std_components: Vec<String>,
 }
@@ -29,9 +36,17 @@ impl BuildStep for RunCargo {
         if self.release {
             args.push("--release".to_string());
         }
-        if let Some(target) = self.target {
-            args.push("--target".to_string());
-            args.push(target);
+        match self.target.clone() {
+            Target::Host => (),
+            Target::Triple(triple) => {
+                args.push("--target".to_string());
+                args.push(triple);
+            }
+            Target::Custom { triple: _triple, spec } => {
+                args.push("--target".to_string());
+                // XXX: this assumes paths on the build platform are valid UTF-8
+                args.push(spec.to_str().unwrap().to_string());
+            }
         }
         if self.std_components.len() != 0 {
             args.push(format!("-Zbuild-std={}", self.std_components.join(",")));
