@@ -66,12 +66,25 @@ async fn main() {
         println!("Build requested");
     }
 
+    let mut pebble = pebble();
+    pebble.build().await;
+
+    println!("Success");
+}
+
+fn pebble() -> Project {
+    let build_dir = PathBuf::from("build/Pebble");
+    let release = false;
+
     let mut pebble = Project::new("Pebble".to_string());
     pebble.add_build_step(RunCargo {
         manifest_path: PathBuf::from("kernel/efiloader/Cargo.toml"),
         target: Target::Triple("x86_64-unknown-uefi".to_string()),
-        release: false,
+        workspace: PathBuf::from("kernel"),
+        release,
         std_components: vec!["core".to_string()],
+        artifact_name: "efiloader.efi".to_string(),
+        artifact_path: Some(build_dir.join("fat/efi/boot/bootx64.efi")),
     });
     pebble.add_build_step(RunCargo {
         manifest_path: PathBuf::from("kernel/kernel_x86_64/Cargo.toml"),
@@ -79,10 +92,11 @@ async fn main() {
             triple: "x86_64-kernel".to_string(),
             spec: PathBuf::from("kernel/kernel_x86_64/x86_64-kernel.json"),
         },
-        release: false,
+        workspace: PathBuf::from("kernel"),
+        release,
         std_components: vec!["core".to_string(), "alloc".to_string()],
+        artifact_name: "kernel_x86_64".to_string(),
+        artifact_path: Some(build_dir.join("fat/kernel.elf")),
     });
-    pebble.build().await;
-
-    println!("Success");
+    pebble
 }
