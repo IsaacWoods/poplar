@@ -93,3 +93,12 @@ impl BuildStep for RunCargo {
         Ok(())
     }
 }
+
+pub struct MakeDirectories(pub PathBuf);
+
+#[async_trait]
+impl BuildStep for MakeDirectories {
+    async fn build(self) -> Result<(), BuildError> {
+        tokio::fs::DirBuilder::new().recursive(true).create(self.0).await.map_err(|err| BuildError::Io(err))
+    }
+}

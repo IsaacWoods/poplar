@@ -21,7 +21,7 @@
 
 mod build;
 
-use build::{BuildStep, RunCargo, Target};
+use build::{BuildStep, MakeDirectories, RunCargo, Target};
 use std::{path::PathBuf, string::ToString};
 
 /// A Project is something that you can instruct Butler to build or run. This might be a Pebble distribution, or
@@ -77,6 +77,7 @@ fn pebble() -> Project {
     let release = false;
 
     let mut pebble = Project::new("Pebble".to_string());
+    pebble.add_build_step(MakeDirectories(build_dir.join("fat/efi/boot/")));
     pebble.add_build_step(RunCargo {
         manifest_path: PathBuf::from("kernel/efiloader/Cargo.toml"),
         target: Target::Triple("x86_64-unknown-uefi".to_string()),
