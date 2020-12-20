@@ -1,19 +1,8 @@
+use super::BuildStep;
 use async_trait::async_trait;
-use std::{io, path::PathBuf, string::ToString};
+use eyre::{Result, WrapErr};
+use std::{path::PathBuf, string::ToString};
 use tokio::process::Command;
-
-pub type BuildFuture = futures::future::BoxFuture<'static, Result<(), BuildError>>;
-
-#[derive(Debug)]
-pub enum BuildError {
-    BuildFailed,
-    Io(io::Error),
-}
-
-#[async_trait]
-pub trait BuildStep {
-    async fn build(self) -> Result<(), BuildError>;
-}
 
 #[derive(Clone, Debug)]
 pub enum Target {
@@ -36,7 +25,10 @@ pub struct RunCargo {
 
 #[async_trait]
 impl BuildStep for RunCargo {
-    async fn build(self) -> Result<(), BuildError> {
+    async fn build(self) -> Result<()> {
+        // TODO: the rpi4 kernel passes `RUSTFLAGS="-Ctarget-cpu=cortex-a72". I'd like to think there's a better
+        // way to do this than setting an environment variable, but we might want to add that as a capability if
+        // not.
         let mut args = Vec::new();
         if self.release {
             args.push("--release".to_string());
@@ -57,20 +49,15 @@ impl BuildStep for RunCargo {
             args.push(format!("-Zbuild-std={}", self.std_components.join(",")));
         }
 
-        match Command::new(std::env::var("CARGO").unwrap_or_else(|_| "cargo".to_string()))
+        // TODO: check error code like before
+        Command::new(std::env::var("CARGO").unwrap_or_else(|_| "cargo".to_string()))
             .arg("build")
             .arg("--manifest-path")
-            .arg(self.manifest_path)
+            .arg(self.manifest_path.clone())
             .args(args)
             .status()
             .await
-        {
-            Ok(exit_status) => match exit_status.success() {
-                true => (),
-                false => return Err(BuildError::BuildFailed),
-            },
-            Err(err) => return Err(BuildError::Io(err)),
-        }
+            .wrap_err_with(|| format!("Failed to invoke cargo for crate at {:?}", self.manifest_path))?;
 
         if let Some(artifact_path) = self.artifact_path {
             let cargo_result_path = self
@@ -84,21 +71,11 @@ impl BuildStep for RunCargo {
                 .join(if self.release { "release" } else { "debug" })
                 .join(self.artifact_name);
             println!("Copying artifact from {:?} to {:?}", cargo_result_path, artifact_path);
-            match tokio::fs::copy(cargo_result_path, artifact_path).await {
-                Ok(_) => (),
-                Err(err) => return Err(BuildError::Io(err)),
-            }
+            tokio::fs::copy(cargo_result_path.clone(), artifact_path.clone()).await.wrap_err_with(|| {
+                format!("Failed to copy Cargo artifact from {:?} to {:?}", cargo_result_path, artifact_path)
+            })?;
         }
 
         Ok(())
-    }
-}
-
-pub struct MakeDirectories(pub PathBuf);
-
-#[async_trait]
-impl BuildStep for MakeDirectories {
-    async fn build(self) -> Result<(), BuildError> {
-        tokio::fs::DirBuilder::new().recursive(true).create(self.0).await.map_err(|err| BuildError::Io(err))
     }
 }

@@ -21,7 +21,12 @@
 
 mod build;
 
-use build::{BuildStep, MakeDirectories, RunCargo, Target};
+use build::{
+    cargo::{RunCargo, Target},
+    BuildStep,
+    MakeDirectories,
+};
+use eyre::Result;
 use std::{path::PathBuf, string::ToString};
 
 /// A Project is something that you can instruct Butler to build or run. This might be a Pebble distribution, or
@@ -54,7 +59,9 @@ impl Project {
 }
 
 #[tokio::main]
-async fn main() {
+async fn main() -> Result<()> {
+    color_eyre::install()?;
+
     let matches = clap::App::new("Butler")
         .version("0.1.0")
         .author("Isaac Woods")
@@ -70,6 +77,7 @@ async fn main() {
     pebble.build().await;
 
     println!("Success");
+    Ok(())
 }
 
 fn pebble() -> Project {
