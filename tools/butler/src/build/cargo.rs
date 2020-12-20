@@ -1,6 +1,6 @@
 use super::BuildStep;
 use async_trait::async_trait;
-use eyre::{Result, WrapErr};
+use eyre::{eyre, Result, WrapErr};
 use std::{path::PathBuf, string::ToString};
 use tokio::process::Command;
 
@@ -49,7 +49,6 @@ impl BuildStep for RunCargo {
             args.push(format!("-Zbuild-std={}", self.std_components.join(",")));
         }
 
-        // TODO: check error code like before
         Command::new(std::env::var("CARGO").unwrap_or_else(|_| "cargo".to_string()))
             .arg("build")
             .arg("--manifest-path")
@@ -57,7 +56,10 @@ impl BuildStep for RunCargo {
             .args(args)
             .status()
             .await
-            .wrap_err_with(|| format!("Failed to invoke cargo for crate at {:?}", self.manifest_path))?;
+            .wrap_err_with(|| format!("Failed to invoke cargo for crate at {:?}", self.manifest_path))?
+            .success()
+            .then_some(())
+            .ok_or(eyre!("Cargo invocation for crate {:?} failed", self.manifest_path))?;
 
         if let Some(artifact_path) = self.artifact_path {
             let cargo_result_path = self

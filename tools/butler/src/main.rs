@@ -19,6 +19,8 @@
  *    - `rust` - used to manage a custom Pebble rust toolchain
  */
 
+#![feature(bool_to_option)]
+
 mod build;
 
 use build::{
