@@ -249,7 +249,7 @@
     <span class="kw">pub</span> <span class="ident">tls_memory_object</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">MemoryObject</span><span class="op">&gt;</span><span class="op">&gt;</span>,
     <span class="kw">pub</span> <span class="ident">tls_address</span>: <span class="ident">VirtualAddress</span>,
 
-    <span class="kw">pub</span> <span class="ident">handles</span>: <span class="ident">RwLock</span><span class="op">&lt;</span><span class="ident">BTreeMap</span><span class="op">&lt;</span><span class="ident">Handle</span>, <span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">dyn</span> <span class="ident">KernelObject</span><span class="op">&gt;</span><span class="op">&gt;</span><span class="op">&gt;</span>,
+    <span class="kw">pub</span> <span class="ident">handles</span>: <span class="ident">RwLock</span><span class="op">&lt;</span><span class="ident">BTreeMap</span><span class="op">&lt;</span><span class="ident">Handle</span>, <span class="ident">Arc</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">KernelObject</span><span class="op">&gt;</span><span class="op">&gt;</span><span class="op">&gt;</span>,
     <span class="ident">next_handle</span>: <span class="ident">AtomicU32</span>,
 }
 
@@ -318,7 +318,7 @@
         }))
     }
 
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">add_handle</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">object</span>: <span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">dyn</span> <span class="ident">KernelObject</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">Handle</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">add_handle</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">object</span>: <span class="ident">Arc</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">KernelObject</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">Handle</span> {
         <span class="kw">let</span> <span class="ident">handle_num</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">next_handle</span>.<span class="ident">fetch_add</span>(<span class="number">1</span>, <span class="ident">Ordering</span>::<span class="ident">Relaxed</span>);
         <span class="self">self</span>.<span class="ident">handles</span>.<span class="ident">write</span>().<span class="ident">insert</span>(<span class="ident">Handle</span>(<span class="ident">handle_num</span>), <span class="ident">object</span>);
         <span class="ident">Handle</span>(<span class="ident">handle_num</span>)

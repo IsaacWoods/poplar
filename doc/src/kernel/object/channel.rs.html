@@ -220,7 +220,7 @@
     <span class="doccomment">/// The actual objects extracted from the handles transferred by a message. When a task receives this message,</span>
     <span class="doccomment">/// these objects are added to that task, and the new handles are put into the message. The non-`None` entries</span>
     <span class="doccomment">/// of this array must be contiguous - there cannot be a `None` entry before more non-`None` entries.</span>
-    <span class="kw">pub</span> <span class="ident">handle_objects</span>: [<span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">dyn</span> <span class="ident">KernelObject</span><span class="op">&gt;</span><span class="op">&gt;</span>; <span class="ident">CHANNEL_MAX_NUM_HANDLES</span>],
+    <span class="kw">pub</span> <span class="ident">handle_objects</span>: [<span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Arc</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">KernelObject</span><span class="op">&gt;</span><span class="op">&gt;</span>; <span class="ident">CHANNEL_MAX_NUM_HANDLES</span>],
 }
 
 <span class="kw">impl</span> <span class="ident">Message</span> {

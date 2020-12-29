@@ -980,7 +980,7 @@
          * wants to, but without having to pull that in here.
          */</span>
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">handle_objects</span> <span class="op">=</span> [<span class="prelude-val">None</span>; <span class="ident">CHANNEL_MAX_NUM_HANDLES</span>];
-        <span class="ident">handle_objects</span>[<span class="number">0</span>] <span class="op">=</span> <span class="prelude-val">Some</span>(<span class="ident">provider_end</span> <span class="kw">as</span> <span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">dyn</span> <span class="ident">KernelObject</span><span class="op">&gt;</span>);
+        <span class="ident">handle_objects</span>[<span class="number">0</span>] <span class="op">=</span> <span class="prelude-val">Some</span>(<span class="ident">provider_end</span> <span class="kw">as</span> <span class="ident">Arc</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">KernelObject</span><span class="op">&gt;</span>);
         <span class="ident">register_channel</span>.<span class="ident">add_message</span>(<span class="ident">Message</span> { <span class="ident">bytes</span>: [<span class="ident">ptah</span>::<span class="ident">make_handle_slot</span>(<span class="number">0</span>)].<span class="ident">to_vec</span>(), <span class="ident">handle_objects</span> });
 
         <span class="comment">// Return the user&#39;s end of the new channel to it</span>

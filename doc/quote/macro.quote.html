@@ -162,20 +162,20 @@ but for macros often the following is more convenient.</p>
 <p>Neither doc comments nor string literals get interpolation behavior in
 quote:</p>
 
-<div class='information'><div class='tooltip compile_fail'>ⓘ<span class='tooltiptext'>This example deliberately fails to compile</span></div></div><div class="example-wrap"><pre class="rust rust-example-rendered compile_fail">
+<div class='information'><div class='tooltip compile_fail'>ⓘ</div></div><div class="example-wrap"><pre class="rust rust-example-rendered compile_fail">
 <span class="macro">quote</span><span class="macro">!</span> {
     <span class="doccomment">/// try to interpolate: #ident</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// ...</span>
 }</pre></div>
 
-<div class='information'><div class='tooltip compile_fail'>ⓘ<span class='tooltiptext'>This example deliberately fails to compile</span></div></div><div class="example-wrap"><pre class="rust rust-example-rendered compile_fail">
+<div class='information'><div class='tooltip compile_fail'>ⓘ</div></div><div class="example-wrap"><pre class="rust rust-example-rendered compile_fail">
 <span class="macro">quote</span><span class="macro">!</span> {
     <span class="attribute">#[<span class="ident">doc</span> <span class="op">=</span> <span class="string">&quot;try to interpolate: #ident&quot;</span>]</span>
 }</pre></div>
 <p>Macro calls in a doc attribute are not valid syntax:</p>
 
-<div class='information'><div class='tooltip compile_fail'>ⓘ<span class='tooltiptext'>This example deliberately fails to compile</span></div></div><div class="example-wrap"><pre class="rust rust-example-rendered compile_fail">
+<div class='information'><div class='tooltip compile_fail'>ⓘ</div></div><div class="example-wrap"><pre class="rust rust-example-rendered compile_fail">
 <span class="macro">quote</span><span class="macro">!</span> {
     <span class="attribute">#[<span class="ident">doc</span> <span class="op">=</span> <span class="macro">concat</span><span class="macro">!</span>(<span class="string">&quot;try to interpolate: &quot;</span>, <span class="macro">stringify</span><span class="macro">!</span>(#<span class="ident">ident</span>))]</span>
 }</pre></div>
@@ -195,7 +195,7 @@ formatting the doc string literal outside of quote.</p>
 appears suffixed as integer literals by interpolating them as <a href="https://docs.rs/syn/1.0/syn/struct.Index.html"><code>syn::Index</code></a>
 instead.</p>
 
-<div class='information'><div class='tooltip compile_fail'>ⓘ<span class='tooltiptext'>This example deliberately fails to compile</span></div></div><div class="example-wrap"><pre class="rust rust-example-rendered compile_fail">
+<div class='information'><div class='tooltip compile_fail'>ⓘ</div></div><div class="example-wrap"><pre class="rust rust-example-rendered compile_fail">
 <span class="kw">let</span> <span class="ident">i</span> <span class="op">=</span> <span class="number">0usize</span>..<span class="self">self</span>.<span class="ident">fields</span>.<span class="ident">len</span>();
 
 <span class="comment">// expands to 0 + self.0usize.heap_size() + self.1usize.heap_size() + ...</span>

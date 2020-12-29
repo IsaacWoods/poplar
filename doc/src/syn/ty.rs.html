@@ -1353,7 +1353,7 @@
     <span class="doccomment">/// *This type is available only if Syn is built with the `&quot;derive&quot;` or</span>
     <span class="doccomment">/// `&quot;full&quot;` feature.*</span>
     <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">TypeTraitObject</span> {
-        <span class="kw">pub</span> <span class="ident">dyn_token</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="macro">Token</span><span class="macro">!</span>[<span class="ident">dyn</span>]<span class="op">&gt;</span>,
+        <span class="kw">pub</span> <span class="ident">dyn_token</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="macro">Token</span><span class="macro">!</span>[<span class="kw">dyn</span>]<span class="op">&gt;</span>,
         <span class="kw">pub</span> <span class="ident">bounds</span>: <span class="ident">Punctuated</span><span class="op">&lt;</span><span class="ident">TypeParamBound</span>, <span class="macro">Token</span><span class="macro">!</span>[<span class="op">+</span>]<span class="op">&gt;</span>,
     }
 }
@@ -1598,7 +1598,7 @@
             <span class="op">|</span><span class="op">|</span> <span class="ident">lookahead</span>.<span class="ident">peek</span>(<span class="macro">Token</span><span class="macro">!</span>[::])
             <span class="op">|</span><span class="op">|</span> <span class="ident">lookahead</span>.<span class="ident">peek</span>(<span class="macro">Token</span><span class="macro">!</span>[<span class="op">&lt;</span>])
         {
-            <span class="kw">if</span> <span class="ident">input</span>.<span class="ident">peek</span>(<span class="macro">Token</span><span class="macro">!</span>[<span class="ident">dyn</span>]) {
+            <span class="kw">if</span> <span class="ident">input</span>.<span class="ident">peek</span>(<span class="macro">Token</span><span class="macro">!</span>[<span class="kw">dyn</span>]) {
                 <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">trait_object</span>: <span class="ident">TypeTraitObject</span> <span class="op">=</span> <span class="ident">input</span>.<span class="ident">parse</span>()<span class="question-mark">?</span>;
                 <span class="kw">if</span> <span class="ident">lifetimes</span>.<span class="ident">is_some</span>() {
                     <span class="kw">match</span> <span class="ident">trait_object</span>.<span class="ident">bounds</span>.<span class="ident">iter_mut</span>().<span class="ident">next</span>().<span class="ident">unwrap</span>() {

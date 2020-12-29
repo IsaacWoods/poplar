@@ -87,7 +87,7 @@ would either reject valid input or accept invalid input.</p>
 <p>The <code>Parse</code> trait is not implemented in these cases because there is no good
 behavior to consider the default.</p>
 
-<div class='information'><div class='tooltip compile_fail'>ⓘ<span class='tooltiptext'>This example deliberately fails to compile</span></div></div><div class="example-wrap"><pre class="rust rust-example-rendered compile_fail">
+<div class='information'><div class='tooltip compile_fail'>ⓘ</div></div><div class="example-wrap"><pre class="rust rust-example-rendered compile_fail">
 <span class="comment">// Can&#39;t parse `Punctuated` without knowing whether trailing punctuation</span>
 <span class="comment">// should be allowed in this context.</span>
 <span class="kw">let</span> <span class="ident">path</span>: <span class="ident">Punctuated</span><span class="op">&lt;</span><span class="ident">PathSegment</span>, <span class="macro">Token</span><span class="macro">!</span>[::]<span class="op">&gt;</span> <span class="op">=</span> <span class="ident">syn</span>::<span class="ident">parse</span>(<span class="ident">tokens</span>)<span class="question-mark">?</span>;</pre></div>
