@@ -1,7 +1,9 @@
-use std::convert::TryFrom;
+use std::{
+    convert::TryFrom,
+    io::{Result, Write},
+};
 
-#[derive(Clone, Copy, Debug)]
-#[repr(C, packed)]
+#[derive(Clone, Debug)]
 pub struct MasterBootRecord {
     boot_code: [u8; 440],
     unique_disk_signature: u32,
@@ -26,10 +28,20 @@ impl MasterBootRecord {
             signature: 0xaa55,
         }
     }
+
+    pub fn write<W: Write>(self, writer: &mut W) -> Result<()> {
+        writer.write_all(&self.boot_code)?;
+        writer.write_all(&self.unique_disk_signature.to_le_bytes())?;
+        writer.write_all(&self.unknown.to_le_bytes())?;
+        for partition in std::array::IntoIter::new(self.partition_record) {
+            partition.write(writer)?;
+        }
+        writer.write_all(&self.signature.to_le_bytes())?;
+        Ok(())
+    }
 }
 
-#[derive(Clone, Copy, Debug)]
-#[repr(C, packed)]
+#[derive(Clone, Debug)]
 pub struct PartitionRecord {
     boot_indicator: u8,
     starting_chs: [u8; 3],
@@ -61,5 +73,15 @@ impl PartitionRecord {
             starting_lba: 0,
             ending_lba: 0,
         }
+    }
+
+    pub fn write<W: Write>(self, writer: &mut W) -> Result<()> {
+        writer.write_all(&self.boot_indicator.to_le_bytes())?;
+        writer.write_all(&self.starting_chs)?;
+        writer.write_all(&self.os_type.to_le_bytes())?;
+        writer.write_all(&self.ending_chs)?;
+        writer.write_all(&self.starting_lba.to_le_bytes())?;
+        writer.write_all(&self.ending_lba.to_le_bytes())?;
+        Ok(())
     }
 }

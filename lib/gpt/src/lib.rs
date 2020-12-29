@@ -1,3 +1,5 @@
+#![feature(array_value_iter)]
+
 pub mod mbr;
 
 use std::io::{Read, Result, Seek, Write};
