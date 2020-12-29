@@ -67,7 +67,22 @@ impl CpuInfo {
             Vendor::Amd if self.model_info.family == 0xf => match self.model_info.extended_family {
                 0x15 => Some(Microarch::Bulldozer),
                 0x16 => Some(Microarch::Jaguar),
-                0x17 => Some(Microarch::Zen),
+                0x17 => match self.model_info.extended_model {
+                    0x1 => Some(Microarch::Zen),  // Naples, Whitehaven, Summit Ridge, Snowy Owl
+                    0x11 => Some(Microarch::Zen), // Raven Ridge, Great Horned Owl
+                    0x18 => Some(Microarch::Zen), // Banded Kestrel (or Zen+ Picasso)
+                    0x20 => Some(Microarch::Zen), // Dali
+                    0x08 => Some(Microarch::Zen), // Colfax (Zen+), Pinnacle Ridge (Zen+)
+
+                    0x31 => Some(Microarch::Zen2), // Rome, Castle Peak
+                    0x60 => Some(Microarch::Zen2), // Renoir
+                    0x71 => Some(Microarch::Zen2), // Matisse
+                    0x90 => Some(Microarch::Zen2), // Van Gogh
+                    _ => None,
+                },
+                // Family 0x18 is used for joint ventures between AMD and Chinese companies (e.g. Hygon)
+                0x18 => Some(Microarch::Zen),
+                0x19 => Some(Microarch::Zen3),
                 _ => None,
             },
 
@@ -115,7 +130,8 @@ pub enum Vendor {
 }
 
 /// Intel and AMD microarchitectures we can expect processors we're running on to be. This doesn't include Intel
-/// Atom microarchs.
+/// Atom microarchs, or microarches we consider (slightly arbitrarily in some cases) to be die shrinks or process
+/// changes.
 #[derive(Debug)]
 pub enum Microarch {
     /*
@@ -134,9 +150,13 @@ pub enum Microarch {
     /*
      * AMD
      */
+    /// Bulldozer, Piledriver, Steamroller, and Excavator.
     Bulldozer,
     Jaguar,
+    /// Zen, and Zen+.
     Zen,
+    Zen2,
+    Zen3,
 }
 
 #[derive(Debug)]
