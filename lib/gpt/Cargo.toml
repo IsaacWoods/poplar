@@ -5,4 +5,4 @@ authors = ["Isaac Woods"]
 edition = "2018"
 
 [dependencies]
-uuid = { version = "0.8", features = ["v1"] }
+uuid = { version = "0.8", features = ["v4"] }
