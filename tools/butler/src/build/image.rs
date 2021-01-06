@@ -1,8 +1,6 @@
 use super::BuildStep;
-use async_trait::async_trait;
 use eyre::{eyre, Result, WrapErr};
-use std::{collections::BTreeMap, fs::File, path::PathBuf};
-use tokio::process::Command;
+use std::{collections::BTreeMap, fs::File, path::PathBuf, process::Command};
 
 pub struct MakeGptImage {
     pub image_path: PathBuf,
@@ -12,9 +10,8 @@ pub struct MakeGptImage {
     pub efi_partition_size: u64,
 }
 
-#[async_trait]
 impl BuildStep for MakeGptImage {
-    async fn build(self) -> Result<()> {
+    fn build(self) -> Result<()> {
         use gpt::{disk::LogicalBlockSize, mbr::ProtectiveMBR, GptConfig, GptDisk};
         use std::convert::TryFrom;
 
@@ -28,7 +25,6 @@ impl BuildStep for MakeGptImage {
             .arg("bs=512")
             .arg(format!("count={}", self.image_size / (LBA_SIZE.into(): u64)))
             .status()
-            .await
             .wrap_err("Failed to invoke dd")?
             .success()
             .then_some(())

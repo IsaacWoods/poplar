@@ -19,7 +19,7 @@
  *    - `rust` - used to manage a custom Pebble rust toolchain
  */
 
-#![feature(bool_to_option, type_ascription)]
+#![feature(bool_to_option, type_ascription, unsized_fn_params)]
 
 mod build;
 
@@ -36,7 +36,7 @@ use std::{path::PathBuf, string::ToString};
 /// something else (e.g. a target-side test that doesn't use the Pebble kernel).
 pub struct Project {
     name: String,
-    build_steps: Vec<build::BuildFuture>,
+    build_steps: Vec<Box<dyn BuildStep>>,
 }
 
 impl Project {
@@ -48,12 +48,12 @@ impl Project {
     where
         T: BuildStep + 'static,
     {
-        self.build_steps.push(Box::pin(step.build()));
+        self.build_steps.push(Box::new(step));
     }
 
-    pub async fn build(&mut self) {
+    pub fn build(&mut self) {
         for step in self.build_steps.drain(..) {
-            match step.await {
+            match step.build() {
                 Ok(_) => (),
                 Err(err) => panic!("Build of project {} failed: {:?}", self.name, err),
             }
@@ -61,8 +61,7 @@ impl Project {
     }
 }
 
-#[tokio::main]
-async fn main() -> Result<()> {
+pub fn main() -> Result<()> {
     color_eyre::install()?;
 
     let matches = clap::App::new("Butler")
@@ -77,7 +76,7 @@ async fn main() -> Result<()> {
     }
 
     let mut pebble = pebble();
-    pebble.build().await;
+    pebble.build();
 
     println!("Success");
     Ok(())

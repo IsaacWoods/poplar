@@ -1,8 +1,6 @@
 use super::BuildStep;
-use async_trait::async_trait;
 use eyre::{eyre, Result, WrapErr};
-use std::{path::PathBuf, string::ToString};
-use tokio::process::Command;
+use std::{path::PathBuf, process::Command, string::ToString};
 
 #[derive(Clone, Debug)]
 pub enum Target {
@@ -23,9 +21,8 @@ pub struct RunCargo {
     pub artifact_path: Option<PathBuf>,
 }
 
-#[async_trait]
 impl BuildStep for RunCargo {
-    async fn build(self) -> Result<()> {
+    fn build(self) -> Result<()> {
         // TODO: the rpi4 kernel passes `RUSTFLAGS="-Ctarget-cpu=cortex-a72". I'd like to think there's a better
         // way to do this than setting an environment variable, but we might want to add that as a capability if
         // not.
@@ -55,7 +52,6 @@ impl BuildStep for RunCargo {
             .arg(self.manifest_path.clone())
             .args(args)
             .status()
-            .await
             .wrap_err_with(|| format!("Failed to invoke cargo for crate at {:?}", self.manifest_path))?
             .success()
             .then_some(())
@@ -72,8 +68,9 @@ impl BuildStep for RunCargo {
                 })
                 .join(if self.release { "release" } else { "debug" })
                 .join(self.artifact_name);
+
             println!("Copying artifact from {:?} to {:?}", cargo_result_path, artifact_path);
-            tokio::fs::copy(cargo_result_path.clone(), artifact_path.clone()).await.wrap_err_with(|| {
+            std::fs::copy(cargo_result_path.clone(), artifact_path.clone()).wrap_err_with(|| {
                 format!("Failed to copy Cargo artifact from {:?} to {:?}", cargo_result_path, artifact_path)
             })?;
         }
