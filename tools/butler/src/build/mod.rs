@@ -1,5 +1,5 @@
 pub mod cargo;
-// pub mod image;
+pub mod image;
 
 use async_trait::async_trait;
 use eyre::{Result, WrapErr};

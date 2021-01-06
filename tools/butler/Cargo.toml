@@ -9,5 +9,8 @@ clap = "2"
 futures = "0.3"
 tokio = { version = "0.3", features = ["full"] }
 async-trait = "0.1"
+gpt = "2"
 eyre = "0.6"
 color-eyre = "0.5"
+fscommon = "0.1"
+fatfs = "0.3"

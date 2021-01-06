@@ -19,12 +19,13 @@
  *    - `rust` - used to manage a custom Pebble rust toolchain
  */
 
-#![feature(bool_to_option)]
+#![feature(bool_to_option, type_ascription)]
 
 mod build;
 
 use build::{
     cargo::{RunCargo, Target},
+    image::MakeGptImage,
     BuildStep,
     MakeDirectories,
 };
@@ -108,6 +109,11 @@ fn pebble() -> Project {
         std_components: vec!["core".to_string(), "alloc".to_string()],
         artifact_name: "kernel_x86_64".to_string(),
         artifact_path: Some(build_dir.join("fat/kernel.elf")),
+    });
+    pebble.add_build_step(MakeGptImage {
+        image_path: build_dir.join("pebble.img"),
+        image_size: 10485760,                // 10MiB
+        efi_partition_size: 2 * 1024 * 1024, // 5MiB
     });
     pebble
 }
