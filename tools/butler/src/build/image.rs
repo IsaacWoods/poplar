@@ -8,11 +8,14 @@ pub struct MakeGptImage {
     pub image_size: u64,
     /// Size of the FAT partition for EFI to make, in bytes.
     pub efi_partition_size: u64,
+    /// A list of files to create on the EFI system partition. The first element is the path on the FAT to put it
+    /// at, and the second is the file to read out of on the host filesystem.
+    pub efi_part_files: Vec<(String, PathBuf)>,
 }
 
 impl BuildStep for MakeGptImage {
     fn build(self) -> Result<()> {
-        use gpt::{disk::LogicalBlockSize, mbr::ProtectiveMBR, GptConfig, GptDisk};
+        use gpt::{disk::LogicalBlockSize, mbr::ProtectiveMBR, GptConfig};
         use std::convert::TryFrom;
 
         // TODO: Blocks of 512 bytes are hardcoded in a few places for now. We probably want to allow both LBA
@@ -79,13 +82,25 @@ impl BuildStep for MakeGptImage {
         let fat = fatfs::FileSystem::new(fat_partition, fatfs::FsOptions::new())
             .wrap_err("Failed to construct FAT filesystem from formatted partition")?;
 
+        /*
+         * Put the requested files into the EFI system partition.
+         */
         {
             let root_dir = fat.root_dir();
             root_dir.create_dir("efi").unwrap();
             root_dir.create_dir("efi/boot").unwrap();
-            let mut efi_loader = root_dir.create_file("efi/boot/boot_x64.efi").unwrap();
-            use std::io::Write;
-            write!(efi_loader, "Test").unwrap();
+
+            for (fat_path, host_path) in self.efi_part_files {
+                let mut host_file = File::open(host_path.clone()).wrap_err_with(|| {
+                    format!("Failed to open host file to put on EFI system partition: {:?}", host_path)
+                })?;
+                let mut fat_file = root_dir
+                    .create_file(&fat_path)
+                    .wrap_err_with(|| format!("Failed to create file on EFI system partition at: {}", fat_path))?;
+                std::io::copy(&mut host_file, &mut fat_file).wrap_err_with(|| {
+                    format!("Failed to copy host file onto FAT partition: {:?} -> {}", host_path, fat_path)
+                })?;
+            }
         }
 
         println!("FAT statistics: {:#?}", fat.stats().wrap_err("Failed to get stats from FAT")?);

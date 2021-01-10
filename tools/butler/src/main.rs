@@ -87,6 +87,8 @@ fn pebble() -> Project {
     let release = false;
 
     let mut pebble = Project::new("Pebble".to_string());
+    // TODO: it would be nice to not need to copy each artifact out of its target folder, and instead just know the
+    // correct paths to put into the GPT step
     pebble.add_build_step(MakeDirectories(build_dir.join("fat/efi/boot/")));
     pebble.add_build_step(RunCargo {
         manifest_path: PathBuf::from("kernel/efiloader/Cargo.toml"),
@@ -111,8 +113,9 @@ fn pebble() -> Project {
     });
     pebble.add_build_step(MakeGptImage {
         image_path: build_dir.join("pebble.img"),
-        image_size: 10485760,                // 10MiB
+        image_size: 10 * 1024 * 1024,        // 10MiB
         efi_partition_size: 2 * 1024 * 1024, // 5MiB
+        efi_part_files: vec![(String::from("efi/boot/boot_x64.efi"), build_dir.join("fat/efi/boot/bootx64.efi"))],
     });
     pebble
 }
