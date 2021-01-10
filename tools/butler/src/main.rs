@@ -29,6 +29,7 @@ use build::{
     BuildStep,
     MakeDirectories,
 };
+use clap::{App, Arg};
 use eyre::Result;
 use std::{path::PathBuf, string::ToString};
 
@@ -64,21 +65,27 @@ impl Project {
 pub fn main() -> Result<()> {
     color_eyre::install()?;
 
-    let matches = clap::App::new("Butler")
+    let matches = App::new("Butler")
         .version("0.1.0")
         .author("Isaac Woods")
         .about("Host-side program for managing Pebble builds")
-        .subcommand(clap::SubCommand::with_name("build").about("Builds a Pebble distribution"))
+        .subcommand(App::new("build").about("Builds a Pebble distribution").arg(Arg::from_usage("[project]")))
         .get_matches();
 
-    if let Some(_matches) = matches.subcommand_matches("build") {
-        println!("Build requested");
+    if let Some(sub_matches) = matches.subcommand_matches("build") {
+        match sub_matches.value_of("project") {
+            Some("Pebble") | None => pebble().build(),
+            Some(other) => panic!("Unknown project name: {}", other),
+        }
+    } else if let Some(_sub_matches) = matches.subcommand_matches("run") {
+        todo!()
+    } else {
+        /*
+         * If no subcommand is supplied, just build a normal Pebble distribution.
+         */
+        pebble().build();
     }
 
-    let mut pebble = pebble();
-    pebble.build();
-
-    println!("Success");
     Ok(())
 }
 

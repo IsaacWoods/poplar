@@ -4,9 +4,13 @@ use std::{path::PathBuf, process::Command, string::ToString};
 
 #[derive(Clone, Debug)]
 pub enum Target {
+    #[allow(dead_code)]
     Host,
     Triple(String),
-    Custom { triple: String, spec: PathBuf },
+    Custom {
+        triple: String,
+        spec: PathBuf,
+    },
 }
 
 pub struct RunCargo {
