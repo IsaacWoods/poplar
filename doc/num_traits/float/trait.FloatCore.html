@@ -31,7 +31,7 @@
 <div class="item-spacer"></div>    pub fn <a href="#method.min" class="fnname">min</a>(self, other: Self) -&gt; Self { ... }
 <div class="item-spacer"></div>    pub fn <a href="#method.max" class="fnname">max</a>(self, other: Self) -&gt; Self { ... }
 <div class="item-spacer"></div>    pub fn <a href="#method.recip" class="fnname">recip</a>(self) -&gt; Self { ... }
-<div class="item-spacer"></div>    pub fn <a href="#method.powi" class="fnname">powi</a>(self, exp: i32) -&gt; Self { ... }
+<div class="item-spacer"></div>    pub fn <a href="#method.powi" class="fnname">powi</a>(mut self: Self, mut exp: i32) -&gt; Self { ... }
 }</pre></div><div class="docblock"><p>Generic trait for floating point numbers that works with <code>no_std</code>.</p>
 <p>This trait implements a subset of the <code>Float</code> trait.</p>
 </div><h2 id="required-methods" class="small-section-header">Required methods<a href="#required-methods" class="anchor"></a></h2><div class="methods"><h3 id="tymethod.infinity" class="method"><code>pub fn <a href="#tymethod.infinity" class="fnname">infinity</a>() -&gt; Self</code><a class="srclink" href="../../src/num_traits/float.rs.html#32" title="goto source code">[src]</a></h3><div class="docblock"><p>Returns positive infinity.</p>
@@ -472,7 +472,7 @@ number is <code>FloatCore::nan()</code>.</p>
 <span class="ident">check</span>(<span class="number">2.0f32</span>, <span class="number">0.5</span>);
 <span class="ident">check</span>(<span class="op">-</span><span class="number">0.25f64</span>, <span class="op">-</span><span class="number">4.0</span>);
 <span class="ident">check</span>(<span class="op">-</span><span class="number">0.0f64</span>, <span class="ident">f64</span>::<span class="ident">NEG_INFINITY</span>);</pre></div>
-</div><h3 id="method.powi" class="method"><code>pub fn <a href="#method.powi" class="fnname">powi</a>(self, exp: i32) -&gt; Self</code><a class="srclink" href="../../src/num_traits/float.rs.html#676-685" title="goto source code">[src]</a></h3><div class="docblock"><p>Raise a number to an integer power.</p>
+</div><h3 id="method.powi" class="method"><code>pub fn <a href="#method.powi" class="fnname">powi</a>(mut self: Self, mut exp: i32) -&gt; Self</code><a class="srclink" href="../../src/num_traits/float.rs.html#676-685" title="goto source code">[src]</a></h3><div class="docblock"><p>Raise a number to an integer power.</p>
 <p>Using this function is generally faster than using <code>powf</code></p>
 <h1 id="examples-28" class="section-header"><a href="#examples-28">Examples</a></h1>
 <div class="example-wrap"><pre class="rust rust-example-rendered">
