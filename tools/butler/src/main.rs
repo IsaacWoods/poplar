@@ -22,6 +22,7 @@
 #![feature(bool_to_option, type_ascription, unsized_fn_params)]
 
 mod build;
+mod qemu;
 
 use build::{
     cargo::{RunCargo, Target},
@@ -31,6 +32,7 @@ use build::{
 };
 use clap::{App, Arg};
 use eyre::Result;
+use qemu::RunQemuX64;
 use std::{path::PathBuf, string::ToString};
 
 /// A Project is something that you can instruct Butler to build or run. This might be a Pebble distribution, or
@@ -38,11 +40,13 @@ use std::{path::PathBuf, string::ToString};
 pub struct Project {
     name: String,
     build_steps: Vec<Box<dyn BuildStep>>,
+    // TODO: abstract
+    pub qemu: Option<RunQemuX64>,
 }
 
 impl Project {
     pub fn new(name: String) -> Project {
-        Project { name, build_steps: Vec::new() }
+        Project { name, build_steps: Vec::new(), qemu: None }
     }
 
     pub fn add_build_step<T>(&mut self, step: T)
@@ -59,6 +63,10 @@ impl Project {
                 Err(err) => panic!("Build of project {} failed: {:?}", self.name, err),
             }
         }
+    }
+
+    pub fn run(self) {
+        self.qemu.unwrap().run().unwrap()
     }
 }
 
@@ -81,9 +89,11 @@ pub fn main() -> Result<()> {
         todo!()
     } else {
         /*
-         * If no subcommand is supplied, just build a normal Pebble distribution.
+         * If no subcommand is supplied, just build and run a normal Pebble distribution.
          */
-        pebble().build();
+        let mut pebble = pebble();
+        pebble.build();
+        pebble.run();
     }
 
     Ok(())
@@ -124,5 +134,15 @@ fn pebble() -> Project {
         efi_partition_size: 2 * 1024 * 1024, // 5MiB
         efi_part_files: vec![(String::from("efi/boot/boot_x64.efi"), build_dir.join("fat/efi/boot/bootx64.efi"))],
     });
+
+    pebble.qemu = Some(RunQemuX64 {
+        kvm: true,
+        cpus: 2,
+        ram: "512M".to_string(),
+        qemu_exit_device: true,
+        ovmf_dir: PathBuf::from("bundled/ovmf/"),
+        image: build_dir.join("pebble.img"),
+    });
+
     pebble
 }
