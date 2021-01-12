@@ -132,7 +132,7 @@ fn pebble() -> Project {
         image_path: build_dir.join("pebble.img"),
         image_size: 10 * 1024 * 1024,        // 10MiB
         efi_partition_size: 2 * 1024 * 1024, // 5MiB
-        efi_part_files: vec![(String::from("efi/boot/boot_x64.efi"), build_dir.join("fat/efi/boot/bootx64.efi"))],
+        efi_part_files: vec![(String::from("efi/boot/bootx64.efi"), build_dir.join("fat/efi/boot/bootx64.efi"))],
     });
 
     pebble.qemu = Some(RunQemuX64 {
