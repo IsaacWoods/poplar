@@ -58,6 +58,8 @@ impl Project {
 
     pub fn build(&mut self) {
         for step in self.build_steps.drain(..) {
+            // TODO: print a nice colored heading for each step, making it easy to see what's going on
+            // e.g. '[1/34] Building Cargo project at kernel/efiloader
             match step.build() {
                 Ok(_) => (),
                 Err(err) => panic!("Build of project {} failed: {:?}", self.name, err),
@@ -77,16 +79,16 @@ pub fn main() -> Result<()> {
         .version("0.1.0")
         .author("Isaac Woods")
         .about("Host-side program for managing Pebble builds")
-        .subcommand(App::new("build").about("Builds a Pebble distribution").arg(Arg::from_usage("[project]")))
+        .subcommand(App::new("build").about("Build a project").arg(Arg::from_usage("[project]")))
+        .subcommand(App::new("run").about("Build and run a project").arg(Arg::from_usage("[project]")))
         .get_matches();
 
     if let Some(sub_matches) = matches.subcommand_matches("build") {
-        match sub_matches.value_of("project") {
-            Some("Pebble") | None => pebble().build(),
-            Some(other) => panic!("Unknown project name: {}", other),
-        }
-    } else if let Some(_sub_matches) = matches.subcommand_matches("run") {
-        todo!()
+        project_from_name(sub_matches.value_of("project")).build();
+    } else if let Some(sub_matches) = matches.subcommand_matches("run") {
+        let mut project = project_from_name(sub_matches.value_of("project"));
+        project.build();
+        project.run();
     } else {
         /*
          * If no subcommand is supplied, just build and run a normal Pebble distribution.
@@ -97,6 +99,13 @@ pub fn main() -> Result<()> {
     }
 
     Ok(())
+}
+
+fn project_from_name(name: Option<&str>) -> Project {
+    match name {
+        Some("pebble") | None => pebble(),
+        Some(other) => panic!("Unknown project name: {}", other),
+    }
 }
 
 fn pebble() -> Project {
