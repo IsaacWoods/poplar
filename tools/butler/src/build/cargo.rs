@@ -20,6 +20,7 @@ pub struct RunCargo {
     pub target: Target,
     pub release: bool,
     pub std_components: Vec<String>,
+    pub std_features: Vec<String>,
     pub artifact_name: String,
     /// If this is not `None`, the result of the Cargo invocation will be copied to the given path.
     pub artifact_path: Option<PathBuf>,
@@ -48,6 +49,9 @@ impl BuildStep for RunCargo {
         }
         if self.std_components.len() != 0 {
             args.push(format!("-Zbuild-std={}", self.std_components.join(",")));
+        }
+        if self.std_features.len() != 0 {
+            args.push(format!("-Zbuild-std-features={}", self.std_features.join(",")));
         }
 
         Command::new(std::env::var("CARGO").unwrap_or_else(|_| "cargo".to_string()))
