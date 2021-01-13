@@ -1,9 +1,9 @@
-/// `butler` is Pebble's high-level build tool, coordinating the building of many different components which
-/// eventually fit together to form an operating system. It can be used to build and test a Pebble distribution,
-/// emulate it on the host, and pave it onto a real device (WIP).
-///
-/// At the core of `butler` is the idea of Projects. Each project can build and assemble a number of components
-/// (using the `build` subcommand) and can be run in some way (using the `run` subcommand).
+//! `butler` is Pebble's high-level build tool, coordinating the building of many different components which
+//! eventually fit together to form an operating system. It can be used to build and test a Pebble distribution,
+//! emulate it on the host, and pave it onto a real device (WIP).
+//!
+//! At the core of `butler` is the idea of Projects. Each project can build and assemble a number of components
+//! (using the `build` subcommand) and can be run in some way (using the `run` subcommand).
 
 /*
  * TODO:
@@ -71,8 +71,8 @@ pub fn main() -> Result<()> {
 
     let matches = App::new("Butler")
         .version("0.1.0")
-        .author("Isaac Woods")
         .about("Host-side program for managing Pebble builds")
+        .after_help(EXTRA_HELP)
         .subcommand(App::new("build").about("Build a project").arg(Arg::from_usage("[project]")))
         .subcommand(App::new("run").about("Build and run a project").arg(Arg::from_usage("[project]")))
         .get_matches();
@@ -187,3 +187,10 @@ fn efi_test_hello_world() -> Project {
 
     project
 }
+
+const EXTRA_HELP: &str = "Butler can build and run various projects.
+
+Project list:
+    - pebble                    This is the main Pebble distribution, and probably what you want.
+    - efi_test_hello_world      A EFI test to test if your setup can run an image compiled by us.
+";
