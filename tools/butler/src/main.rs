@@ -1,22 +1,16 @@
+/// `butler` is Pebble's high-level build tool, coordinating the building of many different components which
+/// eventually fit together to form an operating system. It can be used to build and test a Pebble distribution,
+/// emulate it on the host, and pave it onto a real device (WIP).
+///
+/// At the core of `butler` is the idea of Projects. Each project can build and assemble a number of components
+/// (using the `build` subcommand) and can be run in some way (using the `run` subcommand).
+
 /*
- * TODO: this is going to be Pebble's all-in-one building, testing, hosting big-mess-of-stuff application. You use
- * it on a host to create a Pebble distribution and pave it onto a target, either real (e.g. over a network) or a
- * VM on the host.
- *
- * - Read a config file (e.g. Pebble.toml) to specify options
- * - Build a Pebble distribution
- *      - Build a custom Rust toolchain
- *      - Compile a firmware if needed
- *      - Compile all the things - graph of Steps
- *      - Create an image and put all the bits in
- *      - Meanwhile, put a nice tree in stdout to show the build process
- * - Launch QEMU and pave the image onto it
- * - (in the future) listen to the monitor over serial and format the packets nicely
- *
- * Subcommands:
- *    - `update_submodules` - goes through each submodule, looks at git status, pulls it if clean, presents list at
- *    end (color coded!!!) for status of each one - ([DIRTY], [UP TO DATE], [UPDATED], [REMOTE MISSING!!])
- *    - `rust` - used to manage a custom Pebble rust toolchain
+ * TODO:
+ *    - `update_submodules` subcommand that goes through each submodule, looks at git status, pulls it if clean,
+ *    presents list at end (color coded!!!) for status of each one - ([DIRTY], [UP TO DATE], [UPDATED], [REMOTE
+ *    MISSING!!])
+ *    - `rust` subcommand that can build a custom Rust toolchain that includes all the correct Pebble stuff
  */
 
 #![feature(bool_to_option, type_ascription, unsized_fn_params)]
