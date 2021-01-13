@@ -10,28 +10,34 @@ about Pebble is to read [the book](https://isaacwoods.github.io/pebble/book/).
 [The website](https://isaacwoods.github.io/pebble) also hosts some other useful resources.
 
 ## Building and running
-**Pebble requires a nightly Rust toolchain, the `rust-src` component (`rustup component add rust-src`), and a
-working QEMU installation to be installed. To compile userspace programs, you'll need a custom Rust toolchain for
-now as well.**
+**Operating systems tend to be complex to build and run. We've tried to make this as simple as we can, but if you
+encounter problems or have suggestions to make it easier, feel free to file an issue :)**
 
+### Getting the source
 Firstly, clone the repository and fetch the submodules:
 ```
 git clone https://github.com/IsaacWoods/pebble.git
 git submodule update --init --recursive
 ```
 
+### Things you'll need
+- A nightly Rust toolchain
+- The `rust-src` component (install with `rustup component add rust-src`)
+- A working QEMU installation (one that provides `qemu-system-{arch}`)
+
+To compile userspace programs, you'll need to build a custom Rust toolchain (hopefully just for now):
+- Clone [`IsaacWoods/rust`](https://github.com/IsaacWoods/rust/tree/pebble) and checkout the `pebble` branch
+- (Optional) rebase against `rust-lang/rust` to get the latest chages
+- Copy `isaacs_config.toml` to `config.toml` (or use your own)
+- Run `./x.py build -i library/std` to build a stage-1 compiler and `libstd`
+- Create a toolchain with `rustup toolchain link pebble build/{host triple}/stage1` (e.g. `rustup toolchain link pebble build/x86_64-unknown-linux-gnu/stage1`)
+
+### Using `butler` to build and run projects
 This repository includes a build tool, `butler`, to simplify building and running Pebble. It is configured as a
 Cargo alias, `cargo bu`, to make it easy to access.
 
 Running `cargo bu` will build a standard Pebble distribution and run it in QEMU. See `cargo bu -- --help` for how
 to do more elaborate things with it, including a list of projects.
-
-To compile userspace programs, you'll need our custom Rust toolchain:
-- Clone [`IsaacWoods/rust`](https://github.com/IsaacWoods/rust) and checkout the `pebble` branch
-- (Optional) rebase against `rust-lang/rust` to get the latest chages
-- Copy `isaacs_config.toml` to `config.toml` (or use your own)
-- Run `./x.py build -i library/std` to build a stage-1 compiler and `libstd`
-- Create a toolchain with `rustup toolchain link pebble build/{host triple}/stage1` (e.g. `rustup toolchain link pebble build/x86_64-unknown-linux-gnu/stage1` on Linux)
 
 ## Contributing
 You are very welcome to contribute to Pebble! Have a look at the issue tracker, or come hang out in the Gitter room
