@@ -20,7 +20,7 @@ a register.
 | `5`       | `create_channel`          | Create a channel, returning handles to the two ends.                  |
 | `6`       | `send_message`            | Send a message down a channel.                                        |
 | `7`       | `get_message`             | Receive the next message, if there is one.                            |
-| `8`       | `wait_for_message`        | Yield to the kernel until a message arrives on the given channel.     |
+| `8`       | `wait_for_message`        | Yield to the kernel until a message arrives on the given channel (WIP)|
 | `9`       | `register_service`        | Register yourself as a service.                                       |
 | `10`      | `subscribe_to_service`    | Create a channel to a particular service provider.                    |
 | `11`      | `pci_get_info`            | Get information about the PCI devices on the platform.                |
