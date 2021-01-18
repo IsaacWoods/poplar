@@ -2,9 +2,10 @@
 #![no_main]
 #![feature(abi_efiapi, never_type)]
 
-use core::{fmt::Write, mem, ops::Range, panic::PanicInfo, slice};
+use core::{fmt, fmt::Write, mem, ops::Range, panic::PanicInfo, slice};
 use gfxconsole::{Bgr32, Format, Framebuffer, GfxConsole, Pixel};
 use hal::memory::{Frame, FrameAllocator, Size4KiB};
+use hal_x86_64::hw::serial::SerialPort;
 use uefi::{
     prelude::*,
     proto::console::gop::GraphicsOutput,
@@ -20,13 +21,16 @@ fn efi_main(handle: Handle, system_table: SystemTable<Boot>) -> Status {
      * XXX: rather than correctly detecting the pixel format, we've just chosen colors that will be the same on
      * both RGB32 and BGR32.
      */
-    let gop = system_table.boot_services().locate_protocol::<GraphicsOutput>().expect_success("No GOP");
-    let gop = unsafe { &mut *gop.get() };
-    let mode_info = gop.current_mode_info();
-    let (width, height) = mode_info.resolution();
-    let stride = mode_info.stride();
+    let (framebuffer_ptr, width, height, stride) = {
+        let gop = system_table.boot_services().locate_protocol::<GraphicsOutput>().expect_success("No GOP");
+        let gop = unsafe { &mut *gop.get() };
+        let mode_info = gop.current_mode_info();
+        let (width, height) = mode_info.resolution();
+        let stride = mode_info.stride();
+        (gop.frame_buffer().as_mut_ptr(), width, height, stride)
+    };
     let mut gfx_console = GfxConsole::new(
-        Framebuffer { ptr: gop.frame_buffer().as_mut_ptr() as *mut Pixel<_>, width, height, stride },
+        Framebuffer { ptr: framebuffer_ptr as *mut Pixel<_>, width, height, stride },
         Bgr32::pixel(0xff, 0x00, 0xff, 0xff),
         Bgr32::pixel(0xff, 0xff, 0xff, 0xff),
     );
@@ -45,7 +49,8 @@ fn efi_main(handle: Handle, system_table: SystemTable<Boot>) -> Status {
     let (system_table, memory_map) = system_table.exit_boot_services(handle, memory_map_slice)?.unwrap();
     let memory_map = UefiMemoryMap::new(memory_map);
 
-    writeln!(gfx_console, "Successfully exited boot services").unwrap();
+    let mut logger = Logger::new(gfx_console);
+    writeln!(logger, "Successfully exited boot services").unwrap();
 
     loop {}
 }
@@ -80,6 +85,30 @@ where
 
     fn free_n(&self, _start: Frame<Size4KiB>, _n: usize) {
         unimplemented!()
+    }
+}
+
+pub struct Logger {
+    console: GfxConsole<Bgr32>,
+    serial_port: SerialPort,
+}
+
+impl Logger {
+    pub fn new(console: GfxConsole<Bgr32>) -> Logger {
+        let mut serial_port = unsafe { SerialPort::new(hal_x86_64::hw::serial::COM1) };
+        unsafe {
+            serial_port.initialise();
+        }
+
+        Logger { console, serial_port }
+    }
+}
+
+impl fmt::Write for Logger {
+    fn write_str(&mut self, s: &str) -> Result<(), fmt::Error> {
+        self.console.write_str(s)?;
+        self.serial_port.write_str(s)?;
+        Ok(())
     }
 }
 
