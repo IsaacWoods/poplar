@@ -8,6 +8,7 @@ pub struct RunQemuX64 {
     pub qemu_exit_device: bool,
     pub ovmf_dir: PathBuf,
     pub image: PathBuf,
+    pub open_display: bool,
 }
 
 impl RunQemuX64 {
@@ -23,11 +24,12 @@ impl RunQemuX64 {
         qemu.args(&["-machine", "q35"]);
         qemu.args(&["-cpu", "max,vmware-cpuid-freq,invtsc"]);
         qemu.arg("--no-reboot");
-        qemu.arg("--no-shutdown");
         qemu.args(&["-smp", &self.cpus.to_string()]);
         qemu.args(&["-m", &self.ram.to_string()]);
         qemu.args(&["-serial", "stdio"]);
-        qemu.args(&["-display", "none"]);
+        if !self.open_display {
+            qemu.args(&["-display", "none"]);
+        }
 
         /*
          * Add hardware.

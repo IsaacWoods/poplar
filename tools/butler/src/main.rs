@@ -148,6 +148,7 @@ fn pebble() -> Project {
         qemu_exit_device: true,
         ovmf_dir: PathBuf::from("bundled/ovmf/"),
         image: build_dir.join("pebble.img"),
+        open_display: false,
     });
 
     pebble
@@ -183,6 +184,7 @@ fn efi_test_hello_world() -> Project {
         qemu_exit_device: true,
         ovmf_dir: PathBuf::from("bundled/ovmf/"),
         image: build_dir.join("efi_test_hello_world.img"),
+        open_display: false,
     });
 
     project
