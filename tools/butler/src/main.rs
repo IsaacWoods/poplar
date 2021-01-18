@@ -11,6 +11,9 @@
  *    presents list at end (color coded!!!) for status of each one - ([DIRTY], [UP TO DATE], [UPDATED], [REMOTE
  *    MISSING!!])
  *    - `rust` subcommand that can build a custom Rust toolchain that includes all the correct Pebble stuff
+ *    - A central list of crates for when things should be done to every crate in the tree
+ *    - `test` subcommand to run tests on all crates that can be tested on the host
+ *    - `clean` subcommand to clean up everything left behind by the build process
  */
 
 #![feature(bool_to_option, type_ascription, unsized_fn_params)]
@@ -99,6 +102,7 @@ fn project_from_name(name: Option<&str>) -> Project {
     match name {
         Some("pebble") | None => pebble(),
         Some("efi_test_hello_world") => efi_test_hello_world(),
+        Some("efi_test_exit_boot_services") => efi_test_exit_boot_services(),
         Some(other) => panic!("Unknown project name: {}", other),
     }
 }
@@ -158,7 +162,7 @@ fn efi_test_hello_world() -> Project {
     let build_dir = PathBuf::from("build/efi_test_hello_world");
     let release = false;
 
-    let mut project = Project::new("Pebble".to_string());
+    let mut project = Project::new("efi_test_hello_world".to_string());
     project.add_build_step(MakeDirectories(build_dir.join("fat/efi/boot/")));
     project.add_build_step(RunCargo {
         manifest_path: PathBuf::from("tools/efi_tests/hello_world/Cargo.toml"),
@@ -190,9 +194,46 @@ fn efi_test_hello_world() -> Project {
     project
 }
 
+fn efi_test_exit_boot_services() -> Project {
+    let build_dir = PathBuf::from("build/efi_test_exit_boot_services");
+    let release = false;
+
+    let mut project = Project::new("efi_test_exit_boot_services".to_string());
+    project.add_build_step(MakeDirectories(build_dir.join("fat/efi/boot/")));
+    project.add_build_step(RunCargo {
+        manifest_path: PathBuf::from("tools/efi_tests/exit_boot_services/Cargo.toml"),
+        target: Target::Triple("x86_64-unknown-uefi".to_string()),
+        workspace: PathBuf::from("tools/efi_tests"),
+        release,
+        std_components: vec!["core".to_string()],
+        std_features: vec!["compiler-builtins-mem".to_string()],
+        artifact_name: "exit_boot_services.efi".to_string(),
+        artifact_path: Some(build_dir.join("fat/efi/boot/bootx64.efi")),
+    });
+    project.add_build_step(MakeGptImage {
+        image_path: build_dir.join("efi_test_exit_boot_services.img"),
+        image_size: 2 * 1024 * 1024,         // 2MiB
+        efi_partition_size: 1 * 1024 * 1024, // 1MiB
+        efi_part_files: vec![(String::from("efi/boot/bootx64.efi"), build_dir.join("fat/efi/boot/bootx64.efi"))],
+    });
+
+    project.qemu = Some(RunQemuX64 {
+        kvm: true,
+        cpus: 1,
+        ram: "512M".to_string(),
+        qemu_exit_device: true,
+        ovmf_dir: PathBuf::from("bundled/ovmf/"),
+        image: build_dir.join("efi_test_exit_boot_services.img"),
+        open_display: true,
+    });
+
+    project
+}
+
 const EXTRA_HELP: &str = "Butler can build and run various projects.
 
 Project list:
-    - pebble                    This is the main Pebble distribution, and probably what you want.
-    - efi_test_hello_world      A EFI test to test if your setup can run an image compiled by us.
+    - pebble                        This is the main Pebble distribution, and probably what you want.
+    - efi_test_hello_world          A EFI test to test if your setup can run an image compiled by us.
+    - efi_test_exit_boot_services   EFI test to validate that ExitBootServices works properly.
 ";

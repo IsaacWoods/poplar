@@ -1,0 +1,11 @@
+[package]
+name = "exit_boot_services"
+version = "0.1.0"
+authors = ["Isaac Woods"]
+edition = "2018"
+
+[dependencies]
+uefi = { path = "../../../lib/uefi-rs" }
+hal = { path = "../../../kernel/hal" }
+hal_x86_64 = { path = "../../../kernel/hal_x86_64" }
+gfxconsole = { path = "../../../lib/gfxconsole" }
