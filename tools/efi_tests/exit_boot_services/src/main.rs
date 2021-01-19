@@ -1,6 +1,6 @@
 #![no_std]
 #![no_main]
-#![feature(abi_efiapi, never_type)]
+#![feature(abi_efiapi, never_type, panic_info_message)]
 
 use core::{fmt, fmt::Write, mem, ops::Range, panic::PanicInfo, slice};
 use gfxconsole::{Bgr32, Format, Framebuffer, GfxConsole, Pixel};
@@ -35,7 +35,7 @@ fn efi_main(handle: Handle, system_table: SystemTable<Boot>) -> Status {
         Bgr32::pixel(0xff, 0xff, 0xff, 0xff),
     );
     gfx_console.clear();
-    writeln!(gfx_console, "Initialized GOP-based console!\n").unwrap();
+    writeln!(gfx_console, "Initialized GOP-based console!").unwrap();
 
     /*
      * Allocate memory to hold the memory map. We add space for 8 extra entries because doing this allocation can
@@ -113,6 +113,25 @@ impl fmt::Write for Logger {
 }
 
 #[panic_handler]
-fn panic_handler(_info: &PanicInfo) -> ! {
+fn panic_handler(info: &PanicInfo) -> ! {
+    /*
+     * XXX: this is just a test, so we just spit the message out on the serial port, assuming it's initialized.
+     */
+    let mut serial_port = unsafe { SerialPort::new(hal_x86_64::hw::serial::COM1) };
+
+    if let Some(message) = info.message() {
+        if let Some(location) = info.location() {
+            writeln!(
+                serial_port,
+                "Panic message: {} ({} - {}:{})",
+                message,
+                location.file(),
+                location.line(),
+                location.column()
+            );
+        } else {
+            writeln!(serial_port, "Panic message: {} (no location info)", message);
+        }
+    }
     loop {}
 }
