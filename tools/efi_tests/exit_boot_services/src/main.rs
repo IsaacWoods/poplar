@@ -2,9 +2,9 @@
 #![no_main]
 #![feature(abi_efiapi, never_type, panic_info_message)]
 
-use core::{fmt, fmt::Write, mem, ops::Range, panic::PanicInfo, slice};
+use core::{cell::RefCell, fmt, fmt::Write, mem, ops::Range, panic::PanicInfo, slice};
 use gfxconsole::{Bgr32, Format, Framebuffer, GfxConsole, Pixel};
-use hal::memory::{Frame, FrameAllocator, Size4KiB};
+use hal::memory::{Frame, FrameAllocator, FrameSize, PhysicalAddress, Size4KiB};
 use hal_x86_64::hw::serial::SerialPort;
 use uefi::{
     prelude::*,
@@ -27,6 +27,7 @@ fn efi_main(handle: Handle, system_table: SystemTable<Boot>) -> Status {
         let mode_info = gop.current_mode_info();
         let (width, height) = mode_info.resolution();
         let stride = mode_info.stride();
+
         (gop.frame_buffer().as_mut_ptr(), width, height, stride)
     };
     let mut gfx_console = GfxConsole::new(
@@ -47,36 +48,65 @@ fn efi_main(handle: Handle, system_table: SystemTable<Boot>) -> Status {
     let memory_map_slice = unsafe { slice::from_raw_parts_mut(memory_map_ptr, memory_map_size) };
 
     let (system_table, memory_map) = system_table.exit_boot_services(handle, memory_map_slice)?.unwrap();
-    let memory_map = UefiMemoryMap::new(memory_map);
 
     let mut logger = Logger::new(gfx_console);
     writeln!(logger, "Successfully exited boot services").unwrap();
 
+    for entry in memory_map.clone() {
+        writeln!(logger, "Entry: {:?}", entry);
+    }
+
+    let allocator = Allocator::new(memory_map.clone().copied());
+    writeln!(logger, "Made allocator").unwrap();
+    for i in 0..400 {
+        let frame = allocator.allocate();
+        writeln!(logger, "{}: Got frame from allocator: {:#x}", i, frame.start).unwrap();
+    }
+
     loop {}
 }
 
-struct UefiMemoryMap<'a, M>
+struct Allocator<M>
 where
-    M: ExactSizeIterator<Item = &'a MemoryDescriptor> + Clone,
+    M: ExactSizeIterator<Item = MemoryDescriptor> + Clone,
 {
     memory_map: M,
+    consuming: Option<MemoryDescriptor>,
 }
 
-impl<'a, M> UefiMemoryMap<'a, M>
+impl<M> Allocator<M>
 where
-    M: ExactSizeIterator<Item = &'a MemoryDescriptor> + Clone,
+    M: ExactSizeIterator<Item = MemoryDescriptor> + Clone,
 {
-    pub fn new(memory_map: M) -> UefiMemoryMap<'a, M> {
-        UefiMemoryMap { memory_map }
+    pub fn new(memory_map: M) -> AllocatorCell<M> {
+        AllocatorCell(RefCell::new(Allocator { memory_map, consuming: None }))
     }
 }
 
-impl<'a, M> FrameAllocator<Size4KiB> for &mut UefiMemoryMap<'a, M>
+struct AllocatorCell<M>(pub RefCell<Allocator<M>>)
 where
-    M: ExactSizeIterator<Item = &'a MemoryDescriptor> + Clone,
+    M: ExactSizeIterator<Item = MemoryDescriptor> + Clone;
+
+impl<M> FrameAllocator<Size4KiB> for AllocatorCell<M>
+where
+    M: ExactSizeIterator<Item = MemoryDescriptor> + Clone,
 {
     fn allocate(&self) -> Frame<Size4KiB> {
-        todo!()
+        while self.0.borrow().consuming.is_none() || self.0.borrow().consuming.as_ref().unwrap().page_count == 0 {
+            let descriptor = self.0.borrow_mut().memory_map.next().unwrap();
+            match descriptor.ty {
+                MemoryType::CONVENTIONAL => self.0.borrow_mut().consuming = Some(descriptor),
+                _ => continue,
+            }
+        }
+
+        let mut guard = self.0.borrow_mut();
+        let descriptor = guard.consuming.as_mut().unwrap();
+        let frame_addr = descriptor.phys_start;
+        descriptor.phys_start += Size4KiB::SIZE as u64;
+        descriptor.page_count -= 1;
+
+        Frame::starts_with(PhysicalAddress::new(frame_addr as usize).unwrap())
     }
 
     fn allocate_n(&self, _n: usize) -> Range<Frame<Size4KiB>> {
