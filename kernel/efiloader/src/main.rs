@@ -2,8 +2,6 @@
 #![no_main]
 #![feature(panic_info_message, abi_efiapi, cell_update, never_type, asm)]
 
-extern crate rlibc;
-
 mod allocator;
 mod command_line;
 mod image;

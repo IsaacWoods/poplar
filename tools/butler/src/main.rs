@@ -121,7 +121,7 @@ fn pebble() -> Project {
         workspace: PathBuf::from("kernel"),
         release,
         std_components: vec!["core".to_string()],
-        std_features: vec![],
+        std_features: vec!["compiler-builtins-mem".to_string()],
         artifact_name: "efiloader.efi".to_string(),
         artifact_path: Some(build_dir.join("fat/efi/boot/bootx64.efi")),
     });
