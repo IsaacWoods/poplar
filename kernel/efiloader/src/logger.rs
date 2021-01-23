@@ -6,7 +6,7 @@ use log::{LevelFilter, Log, Metadata, Record};
 use spin::Mutex;
 use uefi::proto::console::text::Output;
 
-pub static LOGGER: Mutex<Logger> = Mutex::new(Logger::Nop);
+pub static LOGGER: Mutex<Logger> = Mutex::new(Logger::Uninit);
 
 struct LogWrapper;
 
@@ -27,9 +27,7 @@ impl Log for LogWrapper {
 }
 
 pub enum Logger {
-    Nop,
-    Console(NonNull<Output<'static>>),
-    Serial(SerialPort),
+    Uninit,
     /*
      * To avoid putting a generic on `Logger` (which is difficult to work with as it's stored in a static), we
      * enumerate each possible pixel format here. Kinda sucks, but it's the best way I've found to do this.
@@ -39,18 +37,7 @@ pub enum Logger {
 }
 
 impl Logger {
-    pub fn init_console(console_writer: &mut Output) {
-        *LOGGER.lock() = Logger::Console(NonNull::new(console_writer as *const _ as *mut _).unwrap());
-
-        log::set_logger(&LogWrapper).unwrap();
-        log::set_max_level(LevelFilter::Trace);
-    }
-
-    pub fn switch_to_serial() {
-        *LOGGER.lock() = Logger::Serial(unsafe { SerialPort::new(hal_x86_64::hw::serial::COM1) });
-    }
-
-    pub fn switch_to_gfx(video_mode: &VideoModeInfo) {
+    pub fn initialize(video_mode: &VideoModeInfo) {
         match video_mode {
             VideoModeInfo { framebuffer_address, pixel_format, width, height, stride } => match pixel_format {
                 hal::boot_info::PixelFormat::RGB32 => {
@@ -87,15 +74,16 @@ impl Logger {
                 }
             },
         }
+
+        log::set_logger(&LogWrapper).unwrap();
+        log::set_max_level(LevelFilter::Trace);
     }
 }
 
 impl fmt::Write for Logger {
     fn write_str(&mut self, s: &str) -> Result<(), fmt::Error> {
         match self {
-            Logger::Nop => Ok(()),
-            Logger::Console(output) => unsafe { output.as_mut() }.write_str(s),
-            Logger::Serial(serial) => serial.write_str(s),
+            Logger::Uninit => panic!("Tried to log before it was initialized!"),
             Logger::Rgb32 { serial_port, console } => {
                 serial_port.write_str(s)?;
                 console.write_str(s)

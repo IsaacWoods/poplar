@@ -9,7 +9,7 @@ mod logger;
 
 use allocator::BootFrameAllocator;
 use command_line::{CommandLine, Kludges};
-use core::{mem, panic::PanicInfo, ptr, slice};
+use core::{fmt::Write, mem, panic::PanicInfo, ptr, slice};
 use hal::{
     boot_info::{BootInfo, VideoModeInfo},
     memory::{Flags, FrameAllocator, FrameSize, Page, PageTable, PhysicalAddress, Size4KiB, VirtualAddress},
@@ -39,8 +39,10 @@ pub const VIRTUAL_MAP_MEMORY_TYPE: MemoryType = MemoryType::custom(0x80000006);
 
 #[entry]
 fn efi_main(image_handle: Handle, system_table: SystemTable<Boot>) -> Status {
-    Logger::init_console(system_table.stdout());
+    writeln!(system_table.stdout(), "Hello, World!").unwrap();
+
     let video_mode = create_framebuffer(system_table.boot_services(), 800, 600);
+    Logger::initialize(&video_mode);
     info!("Hello, World!");
 
     let loaded_image_protocol = unsafe {
@@ -191,14 +193,6 @@ fn efi_main(image_handle: Handle, system_table: SystemTable<Boot>) -> Status {
         slice::from_raw_parts_mut(virtual_map_address as *mut MemoryDescriptor, memory_map_frames * Size4KiB::SIZE)
     };
 
-    /*
-     * After we've exited from the boot services, we are not able to use the ConsoleOut services, so we switch to
-     * logging to the serial port. If we've already moved to a GOP-based logger, stick with that.
-     */
-    if video_mode.is_none() {
-        Logger::switch_to_serial();
-    }
-
     let (system_table, memory_map) = system_table
         .exit_boot_services(image_handle, memory_map_buffer)
         .expect_success("Failed to exit boot services");
@@ -224,18 +218,15 @@ fn efi_main(image_handle: Handle, system_table: SystemTable<Boot>) -> Status {
 
     /*
      * Jump into the kernel!
-     * NOTE: we can't access the GOP framebuffer after we switch page tables, so stop using it now.
      */
-    info!("Preparing to jump into kernel. Control of GOP framebuffer relinquished.");
-    trace!("Logging will only be passed on serial port");
-    Logger::switch_to_serial();
-
+    info!("Entering kernel!\n\n\n");
     unsafe {
         /*
          * We disable interrupts until the kernel has a chance to install its own IDT.
          */
         asm!("cli");
-        info!("Switching to new page tables");
+        // TODO: do this in one asm block to switch tables, then switch stacks, then jump to the kernel without any
+        // more rust.
         page_table.switch_to();
 
         /*
@@ -248,7 +239,6 @@ fn efi_main(image_handle: Handle, system_table: SystemTable<Boot>) -> Status {
          * We zero `rbp`, so when the kernel creates its first stack frame, it'll terminate at the kernel entry
          * point.
          */
-        info!("Jumping into kernel!\n\n\n");
         asm!("xor rbp, rbp
               mov rsp, rax
               jmp rbx",
