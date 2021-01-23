@@ -39,33 +39,8 @@ pub const KERNEL_HEAP_MEMORY_TYPE: MemoryType = MemoryType::custom(0x80000005);
 // kernel can use it
 pub const VIRTUAL_MAP_MEMORY_TYPE: MemoryType = MemoryType::custom(0x80000006);
 
-#[derive(Clone, Copy, Debug)]
-pub enum LoaderError {
-    NoKernelPath,
-    NoBootVolume,
-    BootVolumeDoesNotExist,
-    FailedToLoadKernel,
-    FilePathDoesNotExist,
-    NoValidVideoMode,
-}
-
 #[entry]
 fn efi_main(image_handle: Handle, system_table: SystemTable<Boot>) -> Status {
-    /*
-     * This is the UEFI entry point, which simply wraps the real entry point, `main`, so that is can return a more
-     * ergonomic `Result<!, LoaderError>`, instead of a UEFI `Status`. `main` is diverging, so we can be sure the
-     * happy path here is unreachable.
-     */
-    match main(image_handle, system_table) {
-        Ok(_) => unsafe { core::hint::unreachable_unchecked() },
-        Err(err) => {
-            error!("Something went wrong: {:?}", err);
-            Status::LOAD_ERROR
-        }
-    }
-}
-
-fn main(image_handle: Handle, system_table: SystemTable<Boot>) -> Result<!, LoaderError> {
     Logger::init_console(system_table.stdout());
     info!("Hello, World!");
 
@@ -93,7 +68,7 @@ fn main(image_handle: Handle, system_table: SystemTable<Boot>) -> Result<!, Load
      */
     let video_mode = match command_line.framebuffer {
         Some(framebuffer_info) => {
-            let mode_info = create_framebuffer(system_table.boot_services(), framebuffer_info)?;
+            let mode_info = create_framebuffer(system_table.boot_services(), framebuffer_info);
             Logger::switch_to_gfx(&mode_info);
             Some(mode_info)
         }
@@ -113,7 +88,7 @@ fn main(image_handle: Handle, system_table: SystemTable<Boot>) -> Result<!, Load
         command_line.kernel_path,
         &mut page_table,
         &allocator,
-    )?;
+    );
     let mut next_safe_address = kernel_info.next_safe_address;
 
     /*
@@ -177,7 +152,7 @@ fn main(image_handle: Handle, system_table: SystemTable<Boot>) -> Result<!, Load
         command_line.kernel_heap_size,
         &mut page_table,
         &allocator,
-    )?;
+    );
 
     /*
      * Load all the images we've been asked to.
@@ -187,12 +162,7 @@ fn main(image_handle: Handle, system_table: SystemTable<Boot>) -> Result<!, Load
         info!("Loading image called '{}' from path '{}'", name, path);
         boot_info
             .loaded_images
-            .add_image(image::load_image(
-                system_table.boot_services(),
-                loaded_image_protocol.device(),
-                name,
-                path,
-            )?)
+            .add_image(image::load_image(system_table.boot_services(), loaded_image_protocol.device(), name, path))
             .unwrap();
     }
 
@@ -254,7 +224,7 @@ fn main(image_handle: Handle, system_table: SystemTable<Boot>) -> Result<!, Load
         virtual_map_buffer,
         &mut page_table,
         &allocator,
-    )?;
+    );
 
     /*
      * Tell UEFI about its new virtual mapping. We do this after ExitBootServices, but still with physical
@@ -320,7 +290,7 @@ fn process_memory_map<'a, 'v, A, P>(
     virtual_map_buffer: &'v mut [MemoryDescriptor],
     mapper: &mut P,
     allocator: &A,
-) -> Result<&'v mut [MemoryDescriptor], LoaderError>
+) -> &'v mut [MemoryDescriptor]
 where
     A: FrameAllocator<Size4KiB>,
     P: PageTable<Size4KiB>,
@@ -494,7 +464,7 @@ where
         )
         .unwrap();
 
-    Ok(&mut virtual_map_buffer[0..num_virtual_map_entries])
+    &mut virtual_map_buffer[0..num_virtual_map_entries]
 }
 
 /// Allocate and map the kernel heap. This takes the current next safe virtual address, uses it for the heap, and
@@ -506,8 +476,7 @@ fn allocate_and_map_heap<A, P>(
     heap_size: usize,
     mapper: &mut P,
     allocator: &A,
-) -> Result<(), LoaderError>
-where
+) where
     A: FrameAllocator<Size4KiB>,
     P: PageTable<Size4KiB>,
 {
@@ -536,13 +505,9 @@ where
     );
 
     *next_safe_address = (Page::<Size4KiB>::contains(*next_safe_address + heap_size) + 1).start;
-    Ok(())
 }
 
-fn create_framebuffer(
-    boot_services: &BootServices,
-    framebuffer_info: command_line::Framebuffer,
-) -> Result<VideoModeInfo, LoaderError> {
+fn create_framebuffer(boot_services: &BootServices, framebuffer_info: command_line::Framebuffer) -> VideoModeInfo {
     use hal::boot_info::PixelFormat;
     use uefi::proto::console::gop::PixelFormat as GopFormat;
 
@@ -599,11 +564,11 @@ fn create_framebuffer(
                 VideoModeInfo { framebuffer_address, pixel_format, width, height, stride: mode_info.stride() };
             info!("Switched to video mode: {:?}", mode_info);
 
-            return Ok(mode_info);
+            return mode_info;
         }
     }
 
-    Err(LoaderError::NoValidVideoMode)
+    panic!("Could not find valid video mode!")
 }
 
 #[panic_handler]

@@ -1,4 +1,3 @@
-use crate::LoaderError;
 use core::{ptr, slice, str};
 use hal::{
     boot_info::{LoadedImage, Segment, MAX_CAPABILITY_STREAM_LENGTH},
@@ -36,12 +35,12 @@ pub fn load_kernel<A, P>(
     path: &str,
     page_table: &mut P,
     allocator: &A,
-) -> Result<KernelInfo, LoaderError>
+) -> KernelInfo
 where
     A: FrameAllocator<Size4KiB>,
     P: PageTable<Size4KiB>,
 {
-    let (elf, pool_addr) = load_elf(boot_services, volume_handle, path)?;
+    let (elf, pool_addr) = load_elf(boot_services, volume_handle, path);
     let entry_point = VirtualAddress::new(elf.entry_point());
 
     let mut next_safe_address = kernel_map::KERNEL_BASE;
@@ -49,7 +48,7 @@ where
     for segment in elf.segments() {
         match segment.segment_type() {
             SegmentType::Load if segment.mem_size > 0 => {
-                let segment = load_segment(boot_services, segment, crate::KERNEL_MEMORY_TYPE, &elf, false)?;
+                let segment = load_segment(boot_services, segment, crate::KERNEL_MEMORY_TYPE, &elf, false);
 
                 /*
                  * If this segment loads past `next_safe_address`, update it.
@@ -97,16 +96,11 @@ where
     page_table.unmap::<Size4KiB>(Page::starts_with(guard_page_address));
 
     boot_services.free_pool(pool_addr).unwrap_success();
-    Ok(KernelInfo { entry_point, stack_top, next_safe_address })
+    KernelInfo { entry_point, stack_top, next_safe_address }
 }
 
-pub fn load_image(
-    boot_services: &BootServices,
-    volume_handle: Handle,
-    name: &str,
-    path: &str,
-) -> Result<LoadedImage, LoaderError> {
-    let (elf, pool_addr) = load_elf(boot_services, volume_handle, path)?;
+pub fn load_image(boot_services: &BootServices, volume_handle: Handle, name: &str, path: &str) -> LoadedImage {
+    let (elf, pool_addr) = load_elf(boot_services, volume_handle, path);
 
     let mut image_data = LoadedImage::default();
     image_data.entry_point = VirtualAddress::new(elf.entry_point());
@@ -121,7 +115,7 @@ pub fn load_image(
     for segment in elf.segments() {
         match segment.segment_type() {
             SegmentType::Load if segment.mem_size > 0 => {
-                let segment = load_segment(boot_services, segment, crate::IMAGE_MEMORY_TYPE, &elf, true)?;
+                let segment = load_segment(boot_services, segment, crate::IMAGE_MEMORY_TYPE, &elf, true);
                 match image_data.add_segment(segment) {
                     Ok(()) => (),
                     Err(()) => panic!("Image at '{}' has too many load segments!", path),
@@ -135,7 +129,7 @@ pub fn load_image(
                  * master record to a location allocated per-task by the kernel.
                  */
                 image_data.master_tls =
-                    Some(load_segment(boot_services, segment, crate::IMAGE_MEMORY_TYPE, &elf, true)?);
+                    Some(load_segment(boot_services, segment, crate::IMAGE_MEMORY_TYPE, &elf, true));
             }
 
             SegmentType::Note => {
@@ -173,17 +167,13 @@ pub fn load_image(
     }
 
     boot_services.free_pool(pool_addr).unwrap_success();
-    Ok(image_data)
+    image_data
 }
 
 /// TODO: This returns the elf file, and also the pool addr. When the caller is done with the elf, they need to
 /// free the pool themselves. When pools is made safer, we need to rework how this all works to tie the lifetime of
 /// the elf to the pool.
-fn load_elf<'a>(
-    boot_services: &BootServices,
-    volume_handle: Handle,
-    path: &str,
-) -> Result<(Elf<'a>, *mut u8), LoaderError> {
+fn load_elf<'a>(boot_services: &BootServices, volume_handle: Handle, path: &str) -> (Elf<'a>, *mut u8) {
     let mut root_file_protocol = unsafe {
         &mut *boot_services
             .handle_protocol::<SimpleFileSystem>(volume_handle)
@@ -193,7 +183,10 @@ fn load_elf<'a>(
     .open_volume()
     .expect_success("Failed to open volume");
 
-    let mut file = root_file_protocol.open(path, FileMode::Read, FileAttribute::READ_ONLY).unwrap_success();
+    // TODO: custom match and print path on failure
+    let mut file = root_file_protocol
+        .open(path, FileMode::Read, FileAttribute::READ_ONLY)
+        .expect_success("Failed to open file");
     let mut info_buffer = [0u8; 128];
     let info = file.get_info::<FileInfo>(&mut info_buffer).unwrap_success();
 
@@ -207,7 +200,7 @@ fn load_elf<'a>(
         FileType::Regular(mut regular_file) => {
             regular_file.read(file_data).expect_success("Failed to read image");
         }
-        FileType::Dir(_) => return Err(LoaderError::FilePathDoesNotExist),
+        FileType::Dir(_) => panic!("Path is to a directory!"),
     }
 
     let elf = match Elf::new(file_data) {
@@ -215,7 +208,7 @@ fn load_elf<'a>(
         Err(err) => panic!("Failed to load ELF for image '{}': {:?}", path, err),
     };
 
-    Ok((elf, pool_addr))
+    (elf, pool_addr)
 }
 
 fn load_segment(
@@ -224,7 +217,7 @@ fn load_segment(
     memory_type: MemoryType,
     elf: &Elf,
     user_accessible: bool,
-) -> Result<Segment, LoaderError> {
+) -> Segment {
     /*
      * We don't require each segment to fill up all the pages it needs - as long as the start of each segment is
      * page-aligned so they don't overlap, it's fine. This is mainly to support images linked by `lld` with the `-z
@@ -262,7 +255,7 @@ fn load_segment(
         );
     }
 
-    Ok(Segment {
+    Segment {
         physical_address: PhysicalAddress::new(physical_address as usize).unwrap(),
         virtual_address: VirtualAddress::new(segment.virtual_address as usize),
         size: num_frames * Size4KiB::SIZE,
@@ -272,5 +265,5 @@ fn load_segment(
             user_accessible,
             ..Default::default()
         },
-    })
+    }
 }
