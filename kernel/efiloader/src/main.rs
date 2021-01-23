@@ -40,6 +40,7 @@ pub const VIRTUAL_MAP_MEMORY_TYPE: MemoryType = MemoryType::custom(0x80000006);
 #[entry]
 fn efi_main(image_handle: Handle, system_table: SystemTable<Boot>) -> Status {
     Logger::init_console(system_table.stdout());
+    let video_mode = create_framebuffer(system_table.boot_services(), 800, 600);
     info!("Hello, World!");
 
     let loaded_image_protocol = unsafe {
@@ -57,20 +58,6 @@ fn efi_main(image_handle: Handle, system_table: SystemTable<Boot>) -> Status {
         let load_options_str =
             loaded_image_protocol.load_options(&mut buffer).expect("Failed to load load options");
         CommandLine::new(load_options_str)
-    };
-
-    /*
-     * Switch to a suitable video mode and create a framebuffer, if the user requested us to. If we do switch video
-     * mode, we won't be able to see the console output from UEFI any more, so switch to a logger that renders it
-     * to the new framebuffer.
-     */
-    let video_mode = match command_line.framebuffer {
-        Some(framebuffer_info) => {
-            let mode_info = create_framebuffer(system_table.boot_services(), framebuffer_info);
-            Logger::switch_to_gfx(&mode_info);
-            Some(mode_info)
-        }
-        None => None,
     };
 
     /*
@@ -126,7 +113,7 @@ fn efi_main(image_handle: Handle, system_table: SystemTable<Boot>) -> Status {
         (boot_info_virtual_address, unsafe { &mut *identity_boot_info_ptr })
     };
     boot_info.magic = hal::boot_info::BOOT_INFO_MAGIC;
-    boot_info.video_mode = video_mode;
+    boot_info.video_mode = Some(video_mode);
 
     /*
      * Find the RSDP address and add it to the boot info.
@@ -277,7 +264,7 @@ fn efi_main(image_handle: Handle, system_table: SystemTable<Boot>) -> Status {
 ///     * We need to identity-map anything that UEFI expects to stay in the same place, including the loader image
 ///       (the code that's currently running), and the UEFI runtime services. We also map the boot services, as
 ///       many implementations don't actually stop using them after the call to `ExitBootServices` as they should.
-///     * We construct the memory map that will be passed to the kernel, which it uses to initialise its physical
+///     * We construct the memory map that will be passed to the kernel, which it uses to initialize its physical
 ///       memory manager. This is added directly to the already-allocated boot info.
 ///     * Construct the physical memory mapping - we map the entirity of physical memory into the kernel address
 ///       space to make it easy for the kernel to access any address it needs to.
@@ -505,7 +492,7 @@ fn allocate_and_map_heap<A, P>(
     *next_safe_address = (Page::<Size4KiB>::contains(*next_safe_address + heap_size) + 1).start;
 }
 
-fn create_framebuffer(boot_services: &BootServices, framebuffer_info: command_line::Framebuffer) -> VideoModeInfo {
+fn create_framebuffer(boot_services: &BootServices, width: usize, height: usize) -> VideoModeInfo {
     use hal::boot_info::PixelFormat;
     use uefi::proto::console::gop::PixelFormat as GopFormat;
 
@@ -541,8 +528,8 @@ fn create_framebuffer(boot_services: &BootServices, framebuffer_info: command_li
              * TODO: we currently assume that the command line provides both a width and a height. In the future,
              * it would be better to just apply the filters the user actually cares about
              */
-            width == framebuffer_info.width.unwrap()
-                && height == framebuffer_info.height.unwrap()
+            (width == width)
+                && (height == height)
                 && (pixel_format == GopFormat::RGB || pixel_format == GopFormat::BGR)
         });
 
