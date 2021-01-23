@@ -24,6 +24,7 @@ impl RunQemuX64 {
         qemu.args(&["-machine", "q35"]);
         qemu.args(&["-cpu", "max,vmware-cpuid-freq,invtsc"]);
         qemu.arg("--no-reboot");
+        qemu.arg("--no-shutdown");
         qemu.args(&["-smp", &self.cpus.to_string()]);
         qemu.args(&["-m", &self.ram.to_string()]);
         qemu.args(&["-serial", "stdio"]);

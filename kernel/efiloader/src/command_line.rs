@@ -51,12 +51,12 @@ impl<'a> CommandLine<'a> {
         /*
          * TODO: these are temporary to avoid having to mess around with the command line
          */
-        command_line.add_image("test_tls", "test_tls.elf");
-        command_line.add_image("echo", "echo.elf");
-        command_line.add_image("fb", "simple_fb.elf");
-        command_line.add_image("platform_bus", "platform_bus.elf");
-        command_line.add_image("pci_bus", "pci_bus.elf");
-        command_line.add_image("usb_bus_xhci", "usb_bus_xhci.elf");
+        // command_line.add_image("test_tls", "test_tls.elf");
+        // command_line.add_image("echo", "echo.elf");
+        // command_line.add_image("fb", "simple_fb.elf");
+        // command_line.add_image("platform_bus", "platform_bus.elf");
+        // command_line.add_image("pci_bus", "pci_bus.elf");
+        // command_line.add_image("usb_bus_xhci", "usb_bus_xhci.elf");
 
         /*
          * The command line consists of a number of options, delimited by spaces. The first 'option' is the path

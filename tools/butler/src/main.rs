@@ -140,9 +140,12 @@ fn pebble() -> Project {
     });
     pebble.add_build_step(MakeGptImage {
         image_path: build_dir.join("pebble.img"),
-        image_size: 10 * 1024 * 1024,        // 10MiB
-        efi_partition_size: 2 * 1024 * 1024, // 5MiB
-        efi_part_files: vec![(String::from("efi/boot/bootx64.efi"), build_dir.join("fat/efi/boot/bootx64.efi"))],
+        image_size: 30 * 1024 * 1024,
+        efi_partition_size: 20 * 1024 * 1024,
+        efi_part_files: vec![
+            (String::from("efi/boot/bootx64.efi"), build_dir.join("fat/efi/boot/bootx64.efi")),
+            (String::from("kernel.elf"), build_dir.join("fat/kernel.elf")),
+        ],
     });
 
     pebble.qemu = Some(RunQemuX64 {
@@ -176,8 +179,8 @@ fn efi_test_hello_world() -> Project {
     });
     project.add_build_step(MakeGptImage {
         image_path: build_dir.join("efi_test_hello_world.img"),
-        image_size: 2 * 1024 * 1024,         // 2MiB
-        efi_partition_size: 1 * 1024 * 1024, // 1MiB
+        image_size: 2 * 1024 * 1024,
+        efi_partition_size: 1 * 1024 * 1024,
         efi_part_files: vec![(String::from("efi/boot/bootx64.efi"), build_dir.join("fat/efi/boot/bootx64.efi"))],
     });
 
@@ -212,8 +215,8 @@ fn efi_test_exit_boot_services() -> Project {
     });
     project.add_build_step(MakeGptImage {
         image_path: build_dir.join("efi_test_exit_boot_services.img"),
-        image_size: 2 * 1024 * 1024,         // 2MiB
-        efi_partition_size: 1 * 1024 * 1024, // 1MiB
+        image_size: 2 * 1024 * 1024,
+        efi_partition_size: 1 * 1024 * 1024,
         efi_part_files: vec![(String::from("efi/boot/bootx64.efi"), build_dir.join("fat/efi/boot/bootx64.efi"))],
     });
 
