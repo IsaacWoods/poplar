@@ -13,7 +13,6 @@ pub struct CommandLine<'a> {
     // TODO: actually supply option to change heap size. Should probably parse sizes (e.g. `1G`, `512M`) nicely.
     /// The size of the kernel heap that should be allocated
     pub kernel_heap_size: Bytes,
-    pub kludges: Kludges,
     pub num_images: usize,
     /// A list of the images we've been asked to load, in the form `(name, path)`
     pub images: [Option<(&'a str, &'a str)>; MAX_IMAGES],
@@ -25,17 +24,6 @@ pub struct Framebuffer {
     pub height: Option<usize>,
 }
 
-pub struct Kludges {
-    pub keep_boot_services_id_mapped: bool,
-    pub keep_runtime_services_id_mapped: bool,
-}
-
-impl Default for Kludges {
-    fn default() -> Self {
-        Kludges { keep_boot_services_id_mapped: true, keep_runtime_services_id_mapped: true }
-    }
-}
-
 impl<'a> CommandLine<'a> {
     pub fn new(string: &'a str) -> CommandLine<'a> {
         info!("Booted with command line: '{}'", string);
@@ -43,7 +31,6 @@ impl<'a> CommandLine<'a> {
             kernel_path: DEFAULT_KERNEL_PATH,
             framebuffer: DEFAULT_FRAMEBUFFER,
             kernel_heap_size: DEFAULT_KERNEL_HEAP_SIZE,
-            kludges: Kludges::default(),
             num_images: 0,
             images: [None; MAX_IMAGES],
         };

@@ -8,7 +8,7 @@ mod image;
 mod logger;
 
 use allocator::BootFrameAllocator;
-use command_line::{CommandLine, Kludges};
+use command_line::CommandLine;
 use core::{fmt::Write, mem, panic::PanicInfo, ptr, slice};
 use hal::{
     boot_info::{BootInfo, VideoModeInfo},
@@ -196,14 +196,7 @@ fn efi_main(image_handle: Handle, system_table: SystemTable<Boot>) -> Status {
     let (system_table, memory_map) = system_table
         .exit_boot_services(image_handle, memory_map_buffer)
         .expect_success("Failed to exit boot services");
-    let virtual_map = process_memory_map(
-        memory_map,
-        boot_info,
-        &command_line.kludges,
-        virtual_map_buffer,
-        &mut page_table,
-        &allocator,
-    );
+    let virtual_map = process_memory_map(memory_map, boot_info, virtual_map_buffer, &mut page_table, &allocator);
 
     /*
      * Tell UEFI about its new virtual mapping. We do this after ExitBootServices, but still with physical
@@ -261,7 +254,6 @@ fn efi_main(image_handle: Handle, system_table: SystemTable<Boot>) -> Status {
 fn process_memory_map<'a, 'v, A, P>(
     memory_map: impl Iterator<Item = &'a MemoryDescriptor>,
     boot_info: &mut BootInfo,
-    kludges: &Kludges,
     virtual_map_buffer: &'v mut [MemoryDescriptor],
     mapper: &mut P,
     allocator: &A,
@@ -291,36 +283,13 @@ where
 
         /*
          * Keep the loader identity-mapped, or it will disappear out from under us when we switch to the kernel's
-         * page tables.
-         * Also map the boot and runtime services code and data if that kludge is set (we shouldn't need to do
-         * this, but it seems like most UEFI implementations are super broken).
+         * page tables. Also map the boot and runtime services.
          *
+         * TODO: we shouldn't need to keep the boot services mapped, but we crash if we unmap them. Investigate.
          * XXX: the virtual address isn't filled out when physically mapped, so use the `phys_start` for both fields
          */
         match entry.ty {
-            MemoryType::LOADER_CODE => {
-                mapper
-                    .map_area(
-                        VirtualAddress::new(entry.phys_start as usize),
-                        PhysicalAddress::new(entry.phys_start as usize).unwrap(),
-                        entry.page_count as usize * Size4KiB::SIZE,
-                        Flags { writable: true, executable: true, ..Default::default() },
-                        allocator,
-                    )
-                    .unwrap();
-            }
-            MemoryType::LOADER_DATA => {
-                mapper
-                    .map_area(
-                        VirtualAddress::new(entry.phys_start as usize),
-                        PhysicalAddress::new(entry.phys_start as usize).unwrap(),
-                        entry.page_count as usize * Size4KiB::SIZE,
-                        Flags { writable: true, ..Default::default() },
-                        allocator,
-                    )
-                    .unwrap();
-            }
-            MemoryType::BOOT_SERVICES_CODE if kludges.keep_boot_services_id_mapped => {
+            MemoryType::LOADER_CODE | MemoryType::BOOT_SERVICES_CODE | MemoryType::RUNTIME_SERVICES_CODE => {
                 mapper
                     .map_area(
                         VirtualAddress::new(entry.phys_start as usize),
@@ -331,29 +300,7 @@ where
                     )
                     .unwrap();
             }
-            MemoryType::BOOT_SERVICES_DATA if kludges.keep_boot_services_id_mapped => {
-                mapper
-                    .map_area(
-                        VirtualAddress::new(entry.phys_start as usize),
-                        PhysicalAddress::new(entry.phys_start as usize).unwrap(),
-                        entry.page_count as usize * Size4KiB::SIZE,
-                        Flags { writable: true, ..Default::default() },
-                        allocator,
-                    )
-                    .unwrap();
-            }
-            MemoryType::RUNTIME_SERVICES_CODE if kludges.keep_runtime_services_id_mapped => {
-                mapper
-                    .map_area(
-                        VirtualAddress::new(entry.phys_start as usize),
-                        PhysicalAddress::new(entry.phys_start as usize).unwrap(),
-                        entry.page_count as usize * Size4KiB::SIZE,
-                        Flags { executable: true, ..Default::default() },
-                        allocator,
-                    )
-                    .unwrap();
-            }
-            MemoryType::RUNTIME_SERVICES_DATA if kludges.keep_runtime_services_id_mapped => {
+            MemoryType::LOADER_DATA | MemoryType::BOOT_SERVICES_DATA | MemoryType::RUNTIME_SERVICES_DATA => {
                 mapper
                     .map_area(
                         VirtualAddress::new(entry.phys_start as usize),
@@ -389,13 +336,9 @@ where
             MemoryType::CONVENTIONAL
             | MemoryType::LOADER_CODE
             | MemoryType::LOADER_DATA
+            // | MemoryType::BOOT_SERVICES_CODE
+            // | MemoryType::BOOT_SERVICES_DATA
             | MEMORY_MAP_MEMORY_TYPE => add_entry!(BootInfoMemoryType::Conventional),
-
-            MemoryType::BOOT_SERVICES_CODE | MemoryType::BOOT_SERVICES_DATA
-                if !kludges.keep_boot_services_id_mapped =>
-            {
-                add_entry!(BootInfoMemoryType::Conventional)
-            }
 
             MemoryType::ACPI_RECLAIM => add_entry!(BootInfoMemoryType::AcpiReclaimable),
             IMAGE_MEMORY_TYPE => add_entry!(BootInfoMemoryType::LoadedImage),
