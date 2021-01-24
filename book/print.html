@@ -315,6 +315,13 @@ mov rsp, [gs:0x10]
 int3  // Is my user stack pointer correct?
 sysretq
 </code></pre>
+<h3><a class="header" href="#building-ovmf" id="building-ovmf">Building OVMF</a></h3>
+<p>Building a debug build of OVMF isn't too hard (from the base of the <code>edk2</code> repo):</p>
+<pre><code>OvmfPkg/build.sh -a X64
+</code></pre>
+<p>By default, debug builds of OVMF will output debugging information on the ISA <code>debugcon</code>, which is actually
+probably nicer for our purposes than most builds, which pass <code>DEBUG_ON_SERIAL_PORT</code> during the build. To log the
+output to a file, you can pass <code>-debugcon file:ovmf_debug.log -global isa-debugcon.iobase=0x402</code> to QEMU.</p>
 <h1><a class="header" href="#yield" id="yield"><code>yield</code></a></h1>
 <p>Used by a task that can't do any work at the moment, allowing the kernel to schedule other tasks.</p>
 <h3><a class="header" href="#parameters" id="parameters">Parameters</a></h3>
