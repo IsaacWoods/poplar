@@ -14,6 +14,7 @@ pub struct QemuOptions {
      * Firmware
      */
     pub ovmf_dir: PathBuf,
+    pub ovmf_debugcon_to_file: bool,
 
     /*
      * Devices
@@ -30,6 +31,7 @@ impl Default for QemuOptions {
             open_display: false,
 
             ovmf_dir: PathBuf::from("bundled/ovmf/"),
+            ovmf_debugcon_to_file: false,
 
             qemu_exit_device: true,
         }
@@ -69,6 +71,10 @@ impl RunQemuX64 {
         qemu.args(&["-net", "none"]);
         if self.options.qemu_exit_device {
             qemu.args(&["-device", "isa-debug-exit,iobase=0xf4,iosize=0x04"]);
+        }
+        if self.options.ovmf_debugcon_to_file {
+            qemu.args(&["-debugcon", "file:uefi_debug.log"]);
+            qemu.args(&["-global", "isa-debugcon.iobase=0x402"]);
         }
 
         qemu.args(&["-device", "qemu-xhci,id=xhci,bus=pcie.0"]);

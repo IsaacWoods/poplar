@@ -148,8 +148,10 @@ fn pebble() -> Project {
         ],
     });
 
-    pebble.qemu =
-        Some(RunQemuX64 { options: QemuOptions { ..Default::default() }, image: build_dir.join("pebble.img") });
+    pebble.qemu = Some(RunQemuX64 {
+        options: QemuOptions { ovmf_debugcon_to_file: true, ..Default::default() },
+        image: build_dir.join("pebble.img"),
+    });
 
     pebble
 }
