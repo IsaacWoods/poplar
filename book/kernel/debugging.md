@@ -37,3 +37,13 @@ mov rsp, [gs:0x10]
 int3  // Is my user stack pointer correct?
 sysretq
 ```
+
+### Building OVMF
+Building a debug build of OVMF isn't too hard (from the base of the `edk2` repo):
+```
+OvmfPkg/build.sh -a X64
+```
+
+By default, debug builds of OVMF will output debugging information on the ISA `debugcon`, which is actually
+probably nicer for our purposes than most builds, which pass `DEBUG_ON_SERIAL_PORT` during the build. To log the
+output to a file, you can pass `-debugcon file:ovmf_debug.log -global isa-debugcon.iobase=0x402` to QEMU.
