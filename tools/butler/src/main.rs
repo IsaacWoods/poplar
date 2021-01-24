@@ -29,7 +29,7 @@ use build::{
 };
 use clap::{App, Arg};
 use eyre::Result;
-use qemu::RunQemuX64;
+use qemu::{QemuOptions, RunQemuX64};
 use std::{path::PathBuf, string::ToString};
 
 /// A Project is something that you can instruct Butler to build or run. This might be a Pebble distribution, or
@@ -148,15 +148,8 @@ fn pebble() -> Project {
         ],
     });
 
-    pebble.qemu = Some(RunQemuX64 {
-        kvm: true,
-        cpus: 2,
-        ram: "512M".to_string(),
-        qemu_exit_device: true,
-        ovmf_dir: PathBuf::from("bundled/ovmf/"),
-        image: build_dir.join("pebble.img"),
-        open_display: false,
-    });
+    pebble.qemu =
+        Some(RunQemuX64 { options: QemuOptions { ..Default::default() }, image: build_dir.join("pebble.img") });
 
     pebble
 }
@@ -185,13 +178,8 @@ fn efi_test_hello_world() -> Project {
     });
 
     project.qemu = Some(RunQemuX64 {
-        kvm: true,
-        cpus: 1,
-        ram: "512M".to_string(),
-        qemu_exit_device: true,
-        ovmf_dir: PathBuf::from("bundled/ovmf/"),
+        options: QemuOptions { cpus: 1, open_display: true, ..Default::default() },
         image: build_dir.join("efi_test_hello_world.img"),
-        open_display: false,
     });
 
     project
@@ -221,13 +209,8 @@ fn efi_test_exit_boot_services() -> Project {
     });
 
     project.qemu = Some(RunQemuX64 {
-        kvm: true,
-        cpus: 1,
-        ram: "512M".to_string(),
-        qemu_exit_device: true,
-        ovmf_dir: PathBuf::from("bundled/ovmf/"),
+        options: QemuOptions { cpus: 1, open_display: true, ..Default::default() },
         image: build_dir.join("efi_test_exit_boot_services.img"),
-        open_display: true,
     });
 
     project

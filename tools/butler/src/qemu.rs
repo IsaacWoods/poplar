@@ -1,14 +1,44 @@
 use eyre::{eyre, Result, WrapErr};
 use std::{path::PathBuf, process::Command, string::ToString};
 
-pub struct RunQemuX64 {
+pub struct QemuOptions {
+    /*
+     * General
+     */
     pub kvm: bool,
     pub cpus: u16,
     pub ram: String,
-    pub qemu_exit_device: bool,
-    pub ovmf_dir: PathBuf,
-    pub image: PathBuf,
     pub open_display: bool,
+
+    /*
+     * Firmware
+     */
+    pub ovmf_dir: PathBuf,
+
+    /*
+     * Devices
+     */
+    pub qemu_exit_device: bool,
+}
+
+impl Default for QemuOptions {
+    fn default() -> Self {
+        QemuOptions {
+            kvm: true,
+            cpus: 2,
+            ram: "512M".to_string(),
+            open_display: false,
+
+            ovmf_dir: PathBuf::from("bundled/ovmf/"),
+
+            qemu_exit_device: true,
+        }
+    }
+}
+
+pub struct RunQemuX64 {
+    pub options: QemuOptions,
+    pub image: PathBuf,
 }
 
 impl RunQemuX64 {
@@ -18,17 +48,17 @@ impl RunQemuX64 {
         /*
          * Configure some general stuff.
          */
-        if self.kvm {
+        if self.options.kvm {
             qemu.arg("-enable-kvm");
         }
         qemu.args(&["-machine", "q35"]);
         qemu.args(&["-cpu", "max,vmware-cpuid-freq,invtsc"]);
         qemu.arg("--no-reboot");
         qemu.arg("--no-shutdown");
-        qemu.args(&["-smp", &self.cpus.to_string()]);
-        qemu.args(&["-m", &self.ram.to_string()]);
+        qemu.args(&["-smp", &self.options.cpus.to_string()]);
+        qemu.args(&["-m", &self.options.ram.to_string()]);
         qemu.args(&["-serial", "stdio"]);
-        if !self.open_display {
+        if !self.options.open_display {
             qemu.args(&["-display", "none"]);
         }
 
@@ -37,7 +67,7 @@ impl RunQemuX64 {
          * TODO: it would be cool to define devices programmatically, and then have it emit the right config
          */
         qemu.args(&["-net", "none"]);
-        if self.qemu_exit_device {
+        if self.options.qemu_exit_device {
             qemu.args(&["-device", "isa-debug-exit,iobase=0xf4,iosize=0x04"]);
         }
 
@@ -52,12 +82,12 @@ impl RunQemuX64 {
             "-drive",
             &format!(
                 "if=pflash,format=raw,file={},readonly",
-                self.ovmf_dir.join("OVMF_CODE.fd").to_str().unwrap()
+                self.options.ovmf_dir.join("OVMF_CODE.fd").to_str().unwrap()
             ),
         ]);
         qemu.args(&[
             "-drive",
-            &format!("if=pflash,format=raw,file={}", self.ovmf_dir.join("OVMF_VARS.fd").to_str().unwrap()),
+            &format!("if=pflash,format=raw,file={}", self.options.ovmf_dir.join("OVMF_VARS.fd").to_str().unwrap()),
         ]);
 
         /*
