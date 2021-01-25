@@ -145,12 +145,23 @@ fn efi_main(image_handle: Handle, system_table: SystemTable<Boot>) -> Status {
     /*
      * Load all the images we've been asked to.
      * TODO
+     */
+    boot_info
+        .loaded_images
+        .add_image(image::load_image(
+            system_table.boot_services(),
+            loaded_image_protocol.device(),
+            "test_tls",
+            "test_tls.elf",
+        ))
+        .unwrap();
+
     // command_line.add_image("test_tls", "test_tls.elf");
     // command_line.add_image("echo", "echo.elf");
     // command_line.add_image("fb", "simple_fb.elf");
     // command_line.add_image("platform_bus", "platform_bus.elf");
     // command_line.add_image("pci_bus", "pci_bus.elf");
-    // command_line.add_image("usb_bus_xhci", "usb_bus_xhci.elf");    */
+    // command_line.add_image("usb_bus_xhci", "usb_bus_xhci.elf");
     //
     // for image in command_line.images() {
     //     let (name, path) = image.unwrap();

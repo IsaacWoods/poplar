@@ -140,6 +140,17 @@ fn pebble() -> Project {
         artifact_name: "kernel_x86_64".to_string(),
         artifact_path: Some(build_dir.join("fat/kernel.elf")),
     });
+    pebble.add_build_step(RunCargo {
+        toolchain: Some("pebble".to_string()),
+        manifest_path: PathBuf::from("user/test_tls/Cargo.toml"),
+        target: Target::Triple("x86_64-pebble".to_string()),
+        workspace: PathBuf::from("user"),
+        release,
+        std_components: vec!["core".to_string(), "alloc".to_string()],
+        std_features: vec![],
+        artifact_name: "test_tls".to_string(),
+        artifact_path: Some(build_dir.join("fat/test_tls.elf")),
+    });
     pebble.add_build_step(MakeGptImage {
         image_path: build_dir.join("pebble.img"),
         image_size: 30 * 1024 * 1024,
@@ -147,6 +158,7 @@ fn pebble() -> Project {
         efi_part_files: vec![
             (String::from("efi/boot/bootx64.efi"), build_dir.join("fat/efi/boot/bootx64.efi")),
             (String::from("kernel.elf"), build_dir.join("fat/kernel.elf")),
+            (String::from("test_tls.elf"), build_dir.join("fat/test_tls.elf")),
         ],
     });
 
