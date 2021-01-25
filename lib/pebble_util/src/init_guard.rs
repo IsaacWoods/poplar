@@ -33,8 +33,8 @@ impl<T> InitGuard<T> {
     /// ### Panics
     /// Panics if this `InitGuard` has already been initialized.
     pub fn initialize(&self, value: T) {
-        match self.state.compare_and_swap(STATE_UNINIT, STATE_INITIALIZING, Ordering::SeqCst) {
-            STATE_UNINIT => {
+        match self.state.compare_exchange(STATE_UNINIT, STATE_INITIALIZING, Ordering::SeqCst, Ordering::SeqCst) {
+            Ok(STATE_UNINIT) => {
                 unsafe {
                     /*
                      * We make sure to initialize the entire data before marking ourselves as
@@ -45,7 +45,7 @@ impl<T> InitGuard<T> {
                 self.state.store(STATE_INITIALIZED, Ordering::SeqCst);
             }
 
-            STATE_INITIALIZING | STATE_INITIALIZED => panic!("InitGuard has already been initialized!"),
+            Err(STATE_INITIALIZING) | Err(STATE_INITIALIZED) => panic!("InitGuard has already been initialized!"),
             _ => panic!("InitGuard has invalid state"),
         }
     }
