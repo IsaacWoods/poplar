@@ -11,7 +11,6 @@
 extern crate alloc;
 
 #[cfg(feature = "derive")]
-#[macro_use]
 extern crate ptah_derive;
 #[cfg(feature = "derive")]
 #[doc(hidden)]
