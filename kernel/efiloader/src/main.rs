@@ -433,7 +433,11 @@ fn allocate_and_map_heap<A, P>(
     *next_safe_address = (Page::<Size4KiB>::contains(*next_safe_address + heap_size) + 1).start;
 }
 
-fn create_framebuffer(boot_services: &BootServices, width: usize, height: usize) -> VideoModeInfo {
+fn create_framebuffer(
+    boot_services: &BootServices,
+    requested_width: usize,
+    requested_height: usize,
+) -> VideoModeInfo {
     use hal::boot_info::PixelFormat;
     use uefi::proto::console::gop::PixelFormat as GopFormat;
 
@@ -469,8 +473,8 @@ fn create_framebuffer(boot_services: &BootServices, width: usize, height: usize)
              * TODO: we currently assume that the command line provides both a width and a height. In the future,
              * it would be better to just apply the filters the user actually cares about
              */
-            (width == width)
-                && (height == height)
+            (width == requested_width)
+                && (height == requested_height)
                 && (pixel_format == GopFormat::RGB || pixel_format == GopFormat::BGR)
         });
 
