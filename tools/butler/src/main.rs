@@ -116,6 +116,7 @@ fn pebble() -> Project {
     // correct paths to put into the GPT step
     pebble.add_build_step(MakeDirectories(build_dir.join("fat/efi/boot/")));
     pebble.add_build_step(RunCargo {
+        toolchain: None,
         manifest_path: PathBuf::from("kernel/efiloader/Cargo.toml"),
         target: Target::Triple("x86_64-unknown-uefi".to_string()),
         workspace: PathBuf::from("kernel"),
@@ -126,6 +127,7 @@ fn pebble() -> Project {
         artifact_path: Some(build_dir.join("fat/efi/boot/bootx64.efi")),
     });
     pebble.add_build_step(RunCargo {
+        toolchain: None,
         manifest_path: PathBuf::from("kernel/kernel_x86_64/Cargo.toml"),
         target: Target::Custom {
             triple: "x86_64-kernel".to_string(),
@@ -163,6 +165,7 @@ fn efi_test_hello_world() -> Project {
     let mut project = Project::new("efi_test_hello_world".to_string());
     project.add_build_step(MakeDirectories(build_dir.join("fat/efi/boot/")));
     project.add_build_step(RunCargo {
+        toolchain: None,
         manifest_path: PathBuf::from("tools/efi_tests/hello_world/Cargo.toml"),
         target: Target::Triple("x86_64-unknown-uefi".to_string()),
         workspace: PathBuf::from("tools/efi_tests"),
@@ -194,6 +197,7 @@ fn efi_test_exit_boot_services() -> Project {
     let mut project = Project::new("efi_test_exit_boot_services".to_string());
     project.add_build_step(MakeDirectories(build_dir.join("fat/efi/boot/")));
     project.add_build_step(RunCargo {
+        toolchain: None,
         manifest_path: PathBuf::from("tools/efi_tests/exit_boot_services/Cargo.toml"),
         target: Target::Triple("x86_64-unknown-uefi".to_string()),
         workspace: PathBuf::from("tools/efi_tests"),

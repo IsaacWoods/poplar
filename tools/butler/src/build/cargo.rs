@@ -1,6 +1,6 @@
 use super::BuildStep;
 use eyre::{eyre, Result, WrapErr};
-use std::{path::PathBuf, process::Command, string::ToString};
+use std::{path::PathBuf, process::Command};
 
 #[derive(Clone, Debug)]
 pub enum Target {
@@ -14,6 +14,7 @@ pub enum Target {
 }
 
 pub struct RunCargo {
+    pub toolchain: Option<String>,
     pub manifest_path: PathBuf,
     // TODO: can we work this out ourselves?
     pub workspace: PathBuf,
@@ -31,34 +32,44 @@ impl BuildStep for RunCargo {
         // TODO: the rpi4 kernel passes `RUSTFLAGS="-Ctarget-cpu=cortex-a72". I'd like to think there's a better
         // way to do this than setting an environment variable, but we might want to add that as a capability if
         // not.
-        let mut args = Vec::new();
+
+        /*
+         * Lots of people use `std::env::var("CARGO").unwrap_or_else(|_| "cargo".to_string())` to get the "real"
+         * cargo in all cases. However, this doesn't let us specify a toolchain with `+toolchain`, so doesn't
+         * really work for us.
+         */
+        let mut cargo = Command::new("cargo");
+
+        if let Some(ref toolchain) = self.toolchain {
+            cargo.arg(format!("+{}", toolchain));
+        }
+
+        cargo.arg("build");
+        cargo.arg("--manifest-path").arg(&self.manifest_path);
+
         if self.release {
-            args.push("--release".to_string());
+            cargo.arg("--release");
         }
         match self.target.clone() {
             Target::Host => (),
             Target::Triple(triple) => {
-                args.push("--target".to_string());
-                args.push(triple);
+                cargo.arg("--target");
+                cargo.arg(triple);
             }
             Target::Custom { triple: _triple, spec } => {
-                args.push("--target".to_string());
+                cargo.arg("--target");
                 // XXX: this assumes paths on the build platform are valid UTF-8
-                args.push(spec.to_str().unwrap().to_string());
+                cargo.arg(spec.to_str().unwrap());
             }
         }
         if self.std_components.len() != 0 {
-            args.push(format!("-Zbuild-std={}", self.std_components.join(",")));
+            cargo.arg(format!("-Zbuild-std={}", self.std_components.join(",")));
         }
         if self.std_features.len() != 0 {
-            args.push(format!("-Zbuild-std-features={}", self.std_features.join(",")));
+            cargo.arg(format!("-Zbuild-std-features={}", self.std_features.join(",")));
         }
 
-        Command::new(std::env::var("CARGO").unwrap_or_else(|_| "cargo".to_string()))
-            .arg("build")
-            .arg("--manifest-path")
-            .arg(self.manifest_path.clone())
-            .args(args)
+        cargo
             .status()
             .wrap_err_with(|| format!("Failed to invoke cargo for crate at {:?}", self.manifest_path))?
             .success()
