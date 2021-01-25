@@ -3,19 +3,28 @@
 #![feature(panic_info_message, abi_efiapi, cell_update, never_type, asm)]
 
 mod allocator;
-mod command_line;
 mod image;
 mod logger;
 
 use allocator::BootFrameAllocator;
-use command_line::CommandLine;
 use core::{fmt::Write, mem, panic::PanicInfo, ptr, slice};
 use hal::{
     boot_info::{BootInfo, VideoModeInfo},
-    memory::{Flags, FrameAllocator, FrameSize, Page, PageTable, PhysicalAddress, Size4KiB, VirtualAddress},
+    memory::{
+        kibibytes,
+        Bytes,
+        Flags,
+        FrameAllocator,
+        FrameSize,
+        Page,
+        PageTable,
+        PhysicalAddress,
+        Size4KiB,
+        VirtualAddress,
+    },
 };
 use hal_x86_64::paging::PageTableImpl;
-use log::{debug, error, info, trace};
+use log::{debug, error, info};
 use logger::Logger;
 use uefi::{
     prelude::*,
@@ -37,6 +46,7 @@ pub const KERNEL_HEAP_MEMORY_TYPE: MemoryType = MemoryType::custom(0x80000005);
 // kernel can use it
 pub const VIRTUAL_MAP_MEMORY_TYPE: MemoryType = MemoryType::custom(0x80000006);
 
+const KERNEL_HEAP_SIZE: Bytes = kibibytes(800);
 #[entry]
 fn efi_main(image_handle: Handle, system_table: SystemTable<Boot>) -> Status {
     writeln!(system_table.stdout(), "Hello, World!").unwrap();
@@ -53,15 +63,6 @@ fn efi_main(image_handle: Handle, system_table: SystemTable<Boot>) -> Status {
             .get()
     };
 
-    const COMMAND_LINE_MAX_LENGTH: usize = 256;
-    let mut buffer = [0u8; COMMAND_LINE_MAX_LENGTH];
-
-    let command_line = {
-        let load_options_str =
-            loaded_image_protocol.load_options(&mut buffer).expect("Failed to load load options");
-        CommandLine::new(load_options_str)
-    };
-
     /*
      * We create a set of page tables for the kernel. Because memory is identity-mapped in UEFI, we can act as
      * if we've placed the physical mapping at 0x0.
@@ -72,7 +73,7 @@ fn efi_main(image_handle: Handle, system_table: SystemTable<Boot>) -> Status {
     let kernel_info = image::load_kernel(
         system_table.boot_services(),
         loaded_image_protocol.device(),
-        command_line.kernel_path,
+        "kernel.elf",
         &mut page_table,
         &allocator,
     );
@@ -136,22 +137,29 @@ fn efi_main(image_handle: Handle, system_table: SystemTable<Boot>) -> Status {
         system_table.boot_services(),
         boot_info,
         &mut next_safe_address,
-        command_line.kernel_heap_size,
+        KERNEL_HEAP_SIZE,
         &mut page_table,
         &allocator,
     );
 
     /*
      * Load all the images we've been asked to.
-     */
-    for image in command_line.images() {
-        let (name, path) = image.unwrap();
-        info!("Loading image called '{}' from path '{}'", name, path);
-        boot_info
-            .loaded_images
-            .add_image(image::load_image(system_table.boot_services(), loaded_image_protocol.device(), name, path))
-            .unwrap();
-    }
+     * TODO
+    // command_line.add_image("test_tls", "test_tls.elf");
+    // command_line.add_image("echo", "echo.elf");
+    // command_line.add_image("fb", "simple_fb.elf");
+    // command_line.add_image("platform_bus", "platform_bus.elf");
+    // command_line.add_image("pci_bus", "pci_bus.elf");
+    // command_line.add_image("usb_bus_xhci", "usb_bus_xhci.elf");    */
+    //
+    // for image in command_line.images() {
+    //     let (name, path) = image.unwrap();
+    //     info!("Loading image called '{}' from path '{}'", name, path);
+    //     boot_info
+    //         .loaded_images
+    //         .add_image(image::load_image(system_table.boot_services(), loaded_image_protocol.device(), name, path))
+    //         .unwrap();
+    // }
 
     // TEMP XXX: pause until key pressed before switching to graphics mode
     // info!("Waiting for key press. Will switch to graphics mode next.");

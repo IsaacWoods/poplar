@@ -1,10 +1,9 @@
-use core::{fmt, ptr::NonNull};
+use core::fmt;
 use gfxconsole::{Bgr32, Format, Framebuffer, GfxConsole, Pixel, Rgb32};
 use hal::boot_info::VideoModeInfo;
 use hal_x86_64::hw::serial::SerialPort;
 use log::{LevelFilter, Log, Metadata, Record};
 use spin::Mutex;
-use uefi::proto::console::text::Output;
 
 pub static LOGGER: Mutex<Logger> = Mutex::new(Logger::Uninit);
 
