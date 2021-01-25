@@ -120,8 +120,8 @@
     <span class="doccomment">/// ### Panics</span>
     <span class="doccomment">/// Panics if this `InitGuard` has already been initialized.</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">initialize</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">value</span>: <span class="ident">T</span>) {
-        <span class="kw">match</span> <span class="self">self</span>.<span class="ident">state</span>.<span class="ident">compare_and_swap</span>(<span class="ident">STATE_UNINIT</span>, <span class="ident">STATE_INITIALIZING</span>, <span class="ident">Ordering</span>::<span class="ident">SeqCst</span>) {
-            <span class="ident">STATE_UNINIT</span> <span class="op">=</span><span class="op">&gt;</span> {
+        <span class="kw">match</span> <span class="self">self</span>.<span class="ident">state</span>.<span class="ident">compare_exchange</span>(<span class="ident">STATE_UNINIT</span>, <span class="ident">STATE_INITIALIZING</span>, <span class="ident">Ordering</span>::<span class="ident">SeqCst</span>, <span class="ident">Ordering</span>::<span class="ident">SeqCst</span>) {
+            <span class="prelude-val">Ok</span>(<span class="ident">STATE_UNINIT</span>) <span class="op">=</span><span class="op">&gt;</span> {
                 <span class="kw">unsafe</span> {
                     <span class="comment">/*
                      * We make sure to initialize the entire data before marking ourselves as
@@ -132,7 +132,7 @@
                 <span class="self">self</span>.<span class="ident">state</span>.<span class="ident">store</span>(<span class="ident">STATE_INITIALIZED</span>, <span class="ident">Ordering</span>::<span class="ident">SeqCst</span>);
             }
 
-            <span class="ident">STATE_INITIALIZING</span> <span class="op">|</span> <span class="ident">STATE_INITIALIZED</span> <span class="op">=</span><span class="op">&gt;</span> <span class="macro">panic</span><span class="macro">!</span>(<span class="string">&quot;InitGuard has already been initialized!&quot;</span>),
+            <span class="prelude-val">Err</span>(<span class="ident">STATE_INITIALIZING</span>) <span class="op">|</span> <span class="prelude-val">Err</span>(<span class="ident">STATE_INITIALIZED</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="macro">panic</span><span class="macro">!</span>(<span class="string">&quot;InitGuard has already been initialized!&quot;</span>),
             <span class="kw">_</span> <span class="op">=</span><span class="op">&gt;</span> <span class="macro">panic</span><span class="macro">!</span>(<span class="string">&quot;InitGuard has invalid state&quot;</span>),
         }
     }
