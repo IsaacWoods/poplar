@@ -1,6 +1,5 @@
 use acpi::PciConfigRegions;
 use alloc::collections::BTreeMap;
-use aml::{pci_routing::PciRoutingTable, AmlContext, AmlName};
 use core::ptr;
 use hal::memory::PhysicalAddress;
 use hal_x86_64::kernel_map;

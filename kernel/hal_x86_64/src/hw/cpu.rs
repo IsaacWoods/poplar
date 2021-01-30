@@ -277,7 +277,7 @@ fn decode_model_info(model_info: u32) -> ModelInfo {
     ModelInfo { family, model, stepping, extended_family, extended_model }
 }
 
-fn decode_supported_features(processor_info_c: u32, processor_info_d: u32) -> SupportedFeatures {
+fn decode_supported_features(processor_info_c: u32, _processor_info_d: u32) -> SupportedFeatures {
     SupportedFeatures { xsave: processor_info_c.get_bit(26) }
 }
 
