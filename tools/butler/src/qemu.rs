@@ -55,7 +55,7 @@ impl RunQemuX64 {
         if self.options.kvm {
             qemu.arg("-enable-kvm");
         }
-        if self.wait_for_gdb_connection {
+        if self.options.wait_for_gdb_connection {
             qemu.args(&["-s", "-S"]);
         }
         qemu.args(&["-machine", "q35"]);
