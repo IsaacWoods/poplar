@@ -20,6 +20,18 @@ SECTIONS
         . = ALIGN(4K);
     } :text
 
+    .rodata :
+    {
+        *(.rodata .rodata.*)
+        /* We don't need to align to 4K here because the rodata segment is aligned by .got below */
+    } :rodata
+
+    .got :
+    {
+        *(.got)
+        . = ALIGN(4K);
+    } :rodata
+
     .data :
     {
         *(.data .data.*)
@@ -42,18 +54,6 @@ SECTIONS
         _stack_top = .;
         /* No need to add more alignment here - it will already be page-aligned */
     } :data
-
-    .rodata :
-    {
-        *(.rodata .rodata.*)
-        /* We don't need to align to 4K here because the rodata segment is aligned by .got below */
-    } :rodata
-
-    .got :
-    {
-        *(.got)
-        . = ALIGN(4K);
-    } :rodata
 
     _kernel_end = .;
 
