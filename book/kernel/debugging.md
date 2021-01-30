@@ -3,9 +3,12 @@ Kernels can be difficult to debug - this page tries to collect useful techniques
 and also any Pebble specific things that might be useful.
 
 ### Using GDB
-QEMU can communicate with GDB using the remote target protocol. Running `make gdb` will start QEMU in remote
-debugging mode, and then start a version of GDB connected to the QEMU instance, with the kernel ELF preloaded and
-Rust plugins installed.
+Firstly, start GDB with (this is just an example, alter e.g. paths as needed):
+```
+tools/rust_gdb -q "build/Pebble/fat/kernel.elf" -ex "target remote :1234"
+```
+Note that the `rust_gdb` script is used instead of invoking GDB directly - this installs various plugins to make
+life easier.
 
 A few tips for using GDB specific/helpful for kernel debugging:
 * QEMU will not run any code (even the firmware) until you run `continue` in GDB. This allows you to place

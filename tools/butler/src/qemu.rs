@@ -9,6 +9,7 @@ pub struct QemuOptions {
     pub cpus: u16,
     pub ram: String,
     pub open_display: bool,
+    pub wait_for_gdb_connection: bool,
 
     /*
      * Firmware
@@ -29,6 +30,7 @@ impl Default for QemuOptions {
             cpus: 2,
             ram: "512M".to_string(),
             open_display: false,
+            wait_for_gdb_connection: false,
 
             ovmf_dir: PathBuf::from("bundled/ovmf/"),
             ovmf_debugcon_to_file: false,
@@ -52,6 +54,9 @@ impl RunQemuX64 {
          */
         if self.options.kvm {
             qemu.arg("-enable-kvm");
+        }
+        if self.wait_for_gdb_connection {
+            qemu.args(&["-s", "-S"]);
         }
         qemu.args(&["-machine", "q35"]);
         qemu.args(&["-cpu", "max,vmware-cpuid-freq,invtsc"]);
