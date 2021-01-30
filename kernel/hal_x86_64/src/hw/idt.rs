@@ -204,104 +204,116 @@ pub struct ExceptionWithErrorStackFrame {
     pub stack_segment: u64,
 }
 
-/// Macro to save the registers. We only need to save the scratch registers (`rax`, `rcx`, `rdx`, `rdi`, `rsi`,
-/// `r8`, `r9`, and `r10`), as callee-saved registers will be saved by the Rust handler, but we save all of them so
-/// we can access them in the handler if we want to.
-///
-/// The order we save them is important because we rely on their layout on the stack in `InterruptStackFrame` and
-/// `ExceptionWithErrorStackFrame`
-#[allow(unused_macros)] // `rustc` says this is unused for some reason
-macro save_regs() {
-    asm!(
-        "push rax
-         push rbx
-         push rcx
-         push rdx
-         push rsi
-         push rdi
-         push rbp
-         push r8
-         push r9
-         push r10
-         push r11
-         push r12
-         push r13
-         push r14
-         push r15"
-    );
-}
+pub macro wrap_handler($name: path) {{
+    #[naked]
+    extern "C" fn wrapper() -> ! {
+        unsafe {
+            asm!("/*
+                   * Save registers. We only need to save the scratch registers (rax, rcx, rdx, rdi, rsi, r8, r9,
+                   * and r10) as Rust will handle callee-saved registers, but we save all of them so we can inspect
+                   * register contents in a handler if we need to. Order must match `InterruptStackFrame` and
+                   * `ExceptionWithErrorStackFrame`.
+                   */
+                  push rax
+                  push rbx
+                  push rcx
+                  push rdx
+                  push rsi
+                  push rdi
+                  push rbp
+                  push r8
+                  push r9
+                  push r10
+                  push r11
+                  push r12
+                  push r13
+                  push r14
+                  push r15
 
-/// Restore the saved registers. Must be in the opposite order to `save_regs`.
-#[allow(unused_macros)] // `rustc` says this is unused for some reason
-macro restore_regs() {
-    asm!(
-        "pop r15
-         pop r14
-         pop r13
-         pop r12
-         pop r11
-         pop r10
-         pop r9
-         pop r8
-         pop rbp
-         pop rdi
-         pop rsi
-         pop rdx
-         pop rcx
-         pop rbx
-         pop rax"
-    );
-}
+                  /*
+                   * Without an error code, a total of `0xa0` bytes are pushed onto the stack. Because `rsp+8`
+                   * needs to be divisible by `0x10`, we align the stack.
+                   */
+                  mov rdi, rsp
+                  sub rsp, 8
+                  call {}
+                  add rsp, 8
 
-pub macro wrap_handler($name: path) {
-    {
-        #[naked]
-        extern "C" fn wrapper() -> ! {
-            unsafe {
-                /*
-                 * Without an error code, a total of `0xa0` bytes are pushed onto the stack by both the CPU and us.
-                 * Because `rsp+8` must be divisible by 0x10, we must align the stack.
-                 */
-                save_regs!();
-                asm!("mov rdi, rsp
-                      sub rsp, 8
-                      call {}
-                      add rsp, 8",
-                    sym $name,
-                    out("rdi") _
-                );
-                restore_regs!();
-                asm!("iretq");
-                unreachable!();
-            }
+                  pop r15
+                  pop r14
+                  pop r13
+                  pop r12
+                  pop r11
+                  pop r10
+                  pop r9
+                  pop r8
+                  pop rbp
+                  pop rdi
+                  pop rsi
+                  pop rdx
+                  pop rcx
+                  pop rbx
+                  pop rax
+
+                  iretq",
+                sym $name,
+                options(noreturn)
+            )
         }
-
-        wrapper
     }
-}
 
-pub macro wrap_handler_with_error_code($name: path) {
-    {
-        #[naked]
-        extern "C" fn wrapper() -> ! {
-            unsafe {
-                save_regs!();
-                /*
-                 * With an error code, a total of `0xa8` bytes are pushed onto the stack, and so `rsp+8` is already
-                 * divisible by 0x10, so no additional alignment is needed.
-                 */
-                asm!("mov rdi, rsp
-                      call {}",
-                    sym $name,
-                    out("rdi") _
-                );
-                restore_regs!();
-                asm!("add rsp, 8
-                      iretq");
-                unreachable!();
-            }
+    wrapper
+}}
+
+pub macro wrap_handler_with_error_code($name: path) {{
+    #[naked]
+    extern "C" fn wrapper() -> ! {
+        unsafe {
+            asm!("push rax
+                  push rbx
+                  push rcx
+                  push rdx
+                  push rsi
+                  push rdi
+                  push rbp
+                  push r8
+                  push r9
+                  push r10
+                  push r11
+                  push r12
+                  push r13
+                  push r14
+                  push r15
+
+                  /*
+                   * With an error code, a total of `0xa8` bytes are pushed onto the stack, and so `rsp+8` is already
+                   * aligned correctly.
+                   */
+                  mov rdi, rsp
+                  call {}
+
+                  pop r15
+                  pop r14
+                  pop r13
+                  pop r12
+                  pop r11
+                  pop r10
+                  pop r9
+                  pop r8
+                  pop rbp
+                  pop rdi
+                  pop rsi
+                  pop rdx
+                  pop rcx
+                  pop rbx
+                  pop rax
+
+                  iretq",
+                sym $name,
+                options(noreturn)
+            )
         }
-
-        wrapper
     }
-}
+
+    wrapper
+}}
