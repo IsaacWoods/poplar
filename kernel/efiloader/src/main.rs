@@ -42,9 +42,6 @@ pub const PAGE_TABLE_MEMORY_TYPE: MemoryType = MemoryType::custom(0x80000002);
 pub const MEMORY_MAP_MEMORY_TYPE: MemoryType = MemoryType::custom(0x80000003);
 pub const BOOT_INFO_MEMORY_TYPE: MemoryType = MemoryType::custom(0x80000004);
 pub const KERNEL_HEAP_MEMORY_TYPE: MemoryType = MemoryType::custom(0x80000005);
-// TODO: if we don't need this memory to stick around, we should get rid of this or put it in the memory map so the
-// kernel can use it
-pub const VIRTUAL_MAP_MEMORY_TYPE: MemoryType = MemoryType::custom(0x80000006);
 
 const KERNEL_HEAP_SIZE: Bytes = kibibytes(800);
 #[entry]
@@ -201,32 +198,10 @@ fn efi_main(image_handle: Handle, system_table: SystemTable<Boot>) -> Status {
     let memory_map_buffer =
         unsafe { slice::from_raw_parts_mut(memory_map_address as *mut u8, memory_map_frames * Size4KiB::SIZE) };
 
-    let virtual_map_address = system_table
-        .boot_services()
-        .allocate_pages(AllocateType::AnyPages, VIRTUAL_MAP_MEMORY_TYPE, memory_map_frames)
-        .unwrap_success();
-    unsafe {
-        system_table.boot_services().memset(virtual_map_address as *mut u8, memory_map_frames * Size4KiB::SIZE, 0);
-    }
-    let virtual_map_buffer = unsafe {
-        slice::from_raw_parts_mut(virtual_map_address as *mut MemoryDescriptor, memory_map_frames * Size4KiB::SIZE)
-    };
-
     let (system_table, memory_map) = system_table
         .exit_boot_services(image_handle, memory_map_buffer)
         .expect_success("Failed to exit boot services");
-    let virtual_map = process_memory_map(memory_map, boot_info, virtual_map_buffer, &mut page_table, &allocator);
-
-    /*
-     * Tell UEFI about its new virtual mapping. We do this after ExitBootServices, but still with physical
-     * mappings, to give the UEFI a chance to convert all its pointers. We can't make any more calls to UEFI before
-     * switching to tables that actually have that virtual mapping.
-     * TODO: this doesn't actually appear to be doing anything. Either we're doing something wrong, or OVMF is
-     * broken here too...
-     */
-    unsafe {
-        system_table.runtime_services().set_virtual_address_map(virtual_map).unwrap_success();
-    }
+    process_memory_map(memory_map, boot_info, &mut page_table, &allocator);
 
     /*
      * Jump into the kernel!
@@ -270,14 +245,12 @@ fn efi_main(image_handle: Handle, system_table: SystemTable<Boot>) -> Status {
 ///       memory manager. This is added directly to the already-allocated boot info.
 ///     * Construct the physical memory mapping - we map the entirity of physical memory into the kernel address
 ///       space to make it easy for the kernel to access any address it needs to.
-fn process_memory_map<'a, 'v, A, P>(
+fn process_memory_map<'a, A, P>(
     memory_map: impl Iterator<Item = &'a MemoryDescriptor>,
     boot_info: &mut BootInfo,
-    virtual_map_buffer: &'v mut [MemoryDescriptor],
     mapper: &mut P,
     allocator: &A,
-) -> &'v mut [MemoryDescriptor]
-where
+) where
     A: FrameAllocator<Size4KiB>,
     P: PageTable<Size4KiB>,
 {
@@ -289,7 +262,6 @@ where
      * the memory map.
      */
     let mut max_physical_address = 0x0;
-    let mut num_virtual_map_entries = 0;
 
     for entry in memory_map {
         /*
@@ -298,6 +270,13 @@ where
         max_physical_address = usize::max(
             max_physical_address,
             entry.phys_start as usize + entry.page_count as usize * Size4KiB::SIZE,
+        );
+
+        log::trace!(
+            "Entry starting at {:#x} with {} bytes of type {:?}",
+            entry.phys_start,
+            entry.page_count as usize * Size4KiB::SIZE,
+            entry.ty
         );
 
         /*
@@ -368,22 +347,6 @@ where
             // Other regions will never be useable by the kernel, so we don't bother including them
             _ => (),
         }
-
-        /*
-         * Add the entry to the virtual map if UEFI needs to be able to access it at runtime. Point into the
-         * physical mapping in the kernel's address space.
-         */
-        if entry.att.contains(MemoryAttribute::RUNTIME) {
-            let new_virtual_address = hal_x86_64::kernel_map::physical_to_virtual(
-                PhysicalAddress::new(entry.phys_start as usize).unwrap(),
-            );
-            virtual_map_buffer[num_virtual_map_entries] = {
-                let mut virtual_entry = entry.clone();
-                virtual_entry.virt_start = usize::from(new_virtual_address) as u64;
-                virtual_entry
-            };
-            num_virtual_map_entries += 1;
-        }
     }
 
     /*
@@ -400,8 +363,6 @@ where
             allocator,
         )
         .unwrap();
-
-    &mut virtual_map_buffer[0..num_virtual_map_entries]
 }
 
 /// Allocate and map the kernel heap. This takes the current next safe virtual address, uses it for the heap, and
