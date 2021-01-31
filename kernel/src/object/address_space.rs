@@ -133,7 +133,9 @@ where
 
     pub fn switch_to(&self) {
         assert_eq!(*self.state.lock(), State::NotActive);
-        self.page_table.lock().switch_to();
+        unsafe {
+            self.page_table.lock().switch_to();
+        }
         *self.state.lock() = State::Active;
     }
 

@@ -56,7 +56,7 @@ where
         A: FrameAllocator<TableSize>;
 
     /// Install these page tables as the current set.
-    fn switch_to(&self);
+    unsafe fn switch_to(&self);
 
     /// Get the physical address that a given virtual address is mapped to, if it's mapped. Returns `None` if the
     /// address is not mapped into physical memory.

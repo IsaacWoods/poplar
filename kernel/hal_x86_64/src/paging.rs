@@ -305,7 +305,7 @@ impl PageTable<Size4KiB> for PageTableImpl {
         page_table
     }
 
-    fn switch_to(&self) {
+    unsafe fn switch_to(&self) {
         unsafe {
             write_control_reg!(cr3, usize::from(self.p4_frame.start) as u64);
         }
