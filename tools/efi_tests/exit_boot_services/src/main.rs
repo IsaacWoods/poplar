@@ -1,20 +1,25 @@
 #![no_std]
 #![no_main]
-#![feature(abi_efiapi, never_type, panic_info_message)]
+#![feature(abi_efiapi, never_type, panic_info_message, asm)]
 
 use core::{cell::RefCell, fmt, fmt::Write, mem, ops::Range, panic::PanicInfo, slice};
 use gfxconsole::{Bgr32, Format, Framebuffer, GfxConsole, Pixel};
-use hal::memory::{Frame, FrameAllocator, FrameSize, PhysicalAddress, Size4KiB};
-use hal_x86_64::hw::serial::SerialPort;
+use hal::memory::{Flags, Frame, FrameAllocator, FrameSize, PageTable, PhysicalAddress, Size4KiB, VirtualAddress};
+use hal_x86_64::{hw::serial::SerialPort, paging::PageTableImpl};
 use uefi::{
     prelude::*,
     proto::console::gop::GraphicsOutput,
-    table::boot::{MemoryDescriptor, MemoryType},
+    table::boot::{MemoryAttribute, MemoryDescriptor, MemoryType},
 };
 
 #[entry]
 fn efi_main(handle: Handle, system_table: SystemTable<Boot>) -> Status {
     writeln!(system_table.stdout(), "Hello, World!").unwrap();
+    let rsp: usize;
+    unsafe {
+        asm!("mov {}, rsp", out(reg) rsp);
+    }
+    writeln!(system_table.stdout(), "Stack pointer: {:#x}", rsp);
 
     /*
      * Get the framebuffer from the GOP driver.
@@ -48,21 +53,40 @@ fn efi_main(handle: Handle, system_table: SystemTable<Boot>) -> Status {
     let memory_map_slice = unsafe { slice::from_raw_parts_mut(memory_map_ptr, memory_map_size) };
 
     let (system_table, memory_map) = system_table.exit_boot_services(handle, memory_map_slice)?.unwrap();
-
     let mut logger = Logger::new(gfx_console);
     writeln!(logger, "Successfully exited boot services").unwrap();
 
-    for entry in memory_map.clone() {
-        writeln!(logger, "Entry: {:?}", entry);
-    }
-
     let allocator = Allocator::new(memory_map.clone().copied());
-    writeln!(logger, "Made allocator").unwrap();
-    for i in 0..400 {
-        let frame = allocator.allocate();
-        writeln!(logger, "{}: Got frame from allocator: {:#x}", i, frame.start).unwrap();
+    let mut page_tables = PageTableImpl::new(allocator.allocate(), VirtualAddress::new(0x0));
+
+    for entry in memory_map.clone() {
+        if entry.att.contains(MemoryAttribute::RUNTIME)
+            || entry.ty == MemoryType::LOADER_CODE
+            || entry.ty == MemoryType::LOADER_DATA
+        {
+            writeln!(logger, "Identity mapping entry {:x?}", entry);
+            page_tables
+                .map_area(
+                    VirtualAddress::new(entry.phys_start as usize),
+                    PhysicalAddress::new(entry.phys_start as usize).unwrap(),
+                    (entry.page_count as usize) * Size4KiB::SIZE,
+                    // TODO: do these off the attributes?
+                    Flags { writable: true, executable: true, user_accessible: false, cached: true },
+                    &allocator,
+                )
+                .unwrap();
+        } else {
+            writeln!(logger, "Dropping entry: {:x?}", entry);
+        }
     }
 
+    writeln!(logger, "Switching to new page tables!").unwrap();
+    // TODO: when we switch, we crash due to the UEFI stack??? For some reason, the stack of our image doesn't
+    // actually appear in the memory map? UEFI...
+    unsafe {
+        page_tables.switch_to();
+    }
+    writeln!(logger, "Switched!").unwrap();
     loop {}
 }
 
@@ -146,6 +170,8 @@ impl fmt::Write for Logger {
 fn panic_handler(info: &PanicInfo) -> ! {
     /*
      * XXX: this is just a test, so we just spit the message out on the serial port, assuming it's initialized.
+     * We're probably either still under UEFI, or have set up the serial port ourselves after exiting, so this is
+     * fine.
      */
     let mut serial_port = unsafe { SerialPort::new(hal_x86_64::hw::serial::COM1) };
 
