@@ -10,6 +10,8 @@ pub struct QemuOptions {
     pub ram: String,
     pub open_display: bool,
     pub wait_for_gdb_connection: bool,
+    /// Passes `-d int` to QEMU. Note that this disables KVM even if `kvm` is set.
+    pub debug_int_firehose: bool,
 
     /*
      * Firmware
@@ -31,6 +33,7 @@ impl Default for QemuOptions {
             ram: "512M".to_string(),
             open_display: false,
             wait_for_gdb_connection: false,
+            debug_int_firehose: false,
 
             ovmf_dir: PathBuf::from("bundled/ovmf/"),
             ovmf_debugcon_to_file: false,
@@ -52,11 +55,14 @@ impl RunQemuX64 {
         /*
          * Configure some general stuff.
          */
-        if self.options.kvm {
+        if self.options.kvm && !self.options.debug_int_firehose {
             qemu.arg("-enable-kvm");
         }
         if self.options.wait_for_gdb_connection {
             qemu.args(&["-s", "-S"]);
+        }
+        if self.options.debug_int_firehose {
+            qemu.args(&["-d", "int"]);
         }
         qemu.args(&["-machine", "q35"]);
         qemu.args(&["-cpu", "max,vmware-cpuid-freq,invtsc"]);
