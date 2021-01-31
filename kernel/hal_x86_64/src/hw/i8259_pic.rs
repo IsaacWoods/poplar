@@ -9,11 +9,13 @@ pub struct Pic {
 
 impl Pic {
     pub const unsafe fn new() -> Pic {
-        Pic {
-            primary_command: Port::new(0x20),
-            primary_data: Port::new(0x21),
-            secondary_command: Port::new(0xa0),
-            secondary_data: Port::new(0xa1),
+        unsafe {
+            Pic {
+                primary_command: Port::new(0x20),
+                primary_data: Port::new(0x21),
+                secondary_command: Port::new(0xa0),
+                secondary_data: Port::new(0xa1),
+            }
         }
     }
 

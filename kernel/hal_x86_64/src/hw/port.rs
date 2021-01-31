@@ -10,36 +10,48 @@ pub trait PortSize {
 impl PortSize for u8 {
     unsafe fn port_read(port: u16) -> u8 {
         let result: u8;
-        asm!("in al, dx", in("dx") port, out("al") result);
+        unsafe {
+            asm!("in al, dx", in("dx") port, out("al") result);
+        }
         result
     }
 
     unsafe fn port_write(port: u16, value: u8) {
-        asm!("out dx, al", in("dx") port, in("al") value);
+        unsafe {
+            asm!("out dx, al", in("dx") port, in("al") value);
+        }
     }
 }
 
 impl PortSize for u16 {
     unsafe fn port_read(port: u16) -> u16 {
         let result: u16;
-        asm!("in ax, dx", in("dx") port, out("ax") result);
+        unsafe {
+            asm!("in ax, dx", in("dx") port, out("ax") result);
+        }
         result
     }
 
     unsafe fn port_write(port: u16, value: u16) {
-        asm!("out dx, ax", in("dx") port, in("ax") value);
+        unsafe {
+            asm!("out dx, ax", in("dx") port, in("ax") value);
+        }
     }
 }
 
 impl PortSize for u32 {
     unsafe fn port_read(port: u16) -> u32 {
         let result: u32;
-        asm!("in eax, dx", in("dx") port, out("eax") result);
+        unsafe {
+            asm!("in eax, dx", in("dx") port, out("eax") result);
+        }
         result
     }
 
     unsafe fn port_write(port: u16, value: u32) {
-        asm!("out dx, eax", in("dx") port, in("eax") value);
+        unsafe {
+            asm!("out dx, eax", in("dx") port, in("eax") value);
+        }
     }
 }
 
@@ -60,10 +72,12 @@ where
     }
 
     pub unsafe fn read(&self) -> T {
-        T::port_read(self.port)
+        unsafe { T::port_read(self.port) }
     }
 
     pub unsafe fn write(&mut self, value: T) {
-        T::port_write(self.port, value);
+        unsafe {
+            T::port_write(self.port, value);
+        }
     }
 }

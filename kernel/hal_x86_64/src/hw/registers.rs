@@ -185,9 +185,11 @@ pub fn read_msr(reg: u32) -> u64 {
 /// Write to a model-specific register. This is unsafe, because writing to certain MSRs can
 /// compromise memory safety.
 pub unsafe fn write_msr(reg: u32, value: u64) {
-    asm!("wrmsr",
-        in("ecx") reg,
-        in("eax") value.get_bits(0..32) as u32,
-        in("edx") value.get_bits(32..64) as u32
-    );
+    unsafe {
+        asm!("wrmsr",
+            in("ecx") reg,
+            in("eax") value.get_bits(0..32) as u32,
+            in("edx") value.get_bits(32..64) as u32
+        );
+    }
 }

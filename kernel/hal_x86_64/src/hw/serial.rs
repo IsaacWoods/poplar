@@ -36,50 +36,59 @@ impl fmt::Write for SerialPort {
 
 impl SerialPort {
     pub const unsafe fn new(address: u16) -> SerialPort {
-        SerialPort {
-            data_register: Port::new(address),
-            interrupt_enable_register: Port::new(address + 1),
-            interrupt_identity_register: Port::new(address + 2),
-            line_control_register: Port::new(address + 3),
-            modem_control_register: Port::new(address + 4),
-            line_status_register: Port::new(address + 5),
+        unsafe {
+            SerialPort {
+                data_register: Port::new(address),
+                interrupt_enable_register: Port::new(address + 1),
+                interrupt_identity_register: Port::new(address + 2),
+                line_control_register: Port::new(address + 3),
+                modem_control_register: Port::new(address + 4),
+                line_status_register: Port::new(address + 5),
+            }
         }
     }
 
     pub unsafe fn initialise(&mut self) {
-        // Disable IRQs
-        self.interrupt_enable_register.write(0x00);
+        unsafe {
+            // Disable IRQs
+            self.interrupt_enable_register.write(0x00);
 
-        // Set baud rate divisor to 0x0003 (38400 baud rate)
-        self.line_control_register.write(0x80);
-        self.data_register.write(0x03);
-        self.interrupt_enable_register.write(0x00);
+            // Set baud rate divisor to 0x0003 (38400 baud rate)
+            self.line_control_register.write(0x80);
+            self.data_register.write(0x03);
+            self.interrupt_enable_register.write(0x00);
 
-        // 8 bits, no parity bits, one stop bit
-        self.line_control_register.write(0x03);
+            // 8 bits, no parity bits, one stop bit
+            self.line_control_register.write(0x03);
 
-        // Enable FIFO, clear buffer, 14-byte thresh
-        self.interrupt_identity_register.write(0xC7);
+            // Enable FIFO, clear buffer, 14-byte thresh
+            self.interrupt_identity_register.write(0xC7);
 
-        // Enable IRQs again, set RTS/DSR
-        self.modem_control_register.write(0x0B);
+            // Enable IRQs again, set RTS/DSR
+            self.modem_control_register.write(0x0B);
+        }
     }
 
     #[allow(unused)]
     pub unsafe fn read(&self) -> u8 {
-        while (self.line_status_register.read() & 1) == 0 {
-            // XXX: Required to stop loop from being optimized away
-            asm!("");
+        while (unsafe { self.line_status_register.read() } & 1) == 0 {
+            unsafe {
+                asm!("pause");
+            }
         }
 
-        self.data_register.read()
+        unsafe { self.data_register.read() }
     }
 
     pub unsafe fn write(&mut self, value: u8) {
-        while (self.line_status_register.read() & 0x20) == 0 {
-            asm!("");
+        while (unsafe { self.line_status_register.read() } & 0x20) == 0 {
+            unsafe {
+                asm!("pause");
+            }
         }
 
-        self.data_register.write(value);
+        unsafe {
+            self.data_register.write(value);
+        }
     }
 }

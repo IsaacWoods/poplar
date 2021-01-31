@@ -104,13 +104,17 @@ impl IoApic {
     }
 
     unsafe fn read_register(&self, register: u32) -> u32 {
-        ptr::write_volatile(self.config_area_base.mut_ptr(), register);
-        ptr::read_volatile((self.config_area_base + 0x10).ptr())
+        unsafe {
+            ptr::write_volatile(self.config_area_base.mut_ptr(), register);
+            ptr::read_volatile((self.config_area_base + 0x10).ptr())
+        }
     }
 
     unsafe fn write_register(&mut self, register: u32, value: u32) {
-        ptr::write_volatile(self.config_area_base.mut_ptr(), register);
-        ptr::write_volatile((self.config_area_base + 0x10).mut_ptr(), value);
+        unsafe {
+            ptr::write_volatile(self.config_area_base.mut_ptr(), register);
+            ptr::write_volatile((self.config_area_base + 0x10).mut_ptr(), value);
+        }
     }
 
     fn read_raw_entry(&self, irq: u32) -> u64 {

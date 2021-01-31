@@ -13,12 +13,14 @@ impl LocalApicRegister {
 
     /// Read from this register. Unsafe because not all registers can be read from.
     pub unsafe fn read(&self) -> u32 {
-        ptr::read_volatile(self.ptr)
+        unsafe { ptr::read_volatile(self.ptr) }
     }
 
     /// Write to this register. Unsafe because not all registers can be written to.
     pub unsafe fn write(&mut self, value: u32) {
-        ptr::write_volatile(self.ptr, value);
+        unsafe {
+            ptr::write_volatile(self.ptr, value);
+        }
     }
 }
 
@@ -34,7 +36,9 @@ impl LocalApic {
          * - Enable the local APIC by setting bit 8
          * - Set the IRQ for spurious interrupts
          */
-        self.register(0xf0).write((1 << 8) | u32::from(spurious_vector));
+        unsafe {
+            self.register(0xf0).write((1 << 8) | u32::from(spurious_vector));
+        }
     }
 
     /// Set the local APIC timer to interrupt every `duration` ms, and then enable it. The timer
@@ -95,7 +99,7 @@ impl LocalApic {
     }
 
     pub unsafe fn register(&self, offset: usize) -> LocalApicRegister {
-        LocalApicRegister::new((self.0 + offset).mut_ptr() as *mut u32)
+        unsafe { LocalApicRegister::new((self.0 + offset).mut_ptr() as *mut u32) }
     }
 
     /// Send an End Of Interrupt to the local APIC. This should be called by interrupt handlers
@@ -106,6 +110,8 @@ impl LocalApic {
          * To send an EOI, we write 0 to the register with offset 0xb0. Writing any other value
          * will cause a #GP.
          */
-        self.register(0xb0).write(0);
+        unsafe {
+            self.register(0xb0).write(0);
+        }
     }
 }
