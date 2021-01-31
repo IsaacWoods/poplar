@@ -5,7 +5,6 @@ authors = ["Isaac Woods"]
 edition = "2018"
 
 [dependencies]
-rlibc = "1"
 libpebble = { path = "../../lib/libpebble", features = ["can_alloc"] }
 linked_list_allocator = "0.8"
 log = "0.4"

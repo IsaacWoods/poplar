@@ -3,7 +3,6 @@
 #![feature(const_generics, alloc_error_handler)]
 
 extern crate alloc;
-extern crate rlibc;
 
 use alloc::{
     string::{String, ToString},

@@ -147,7 +147,7 @@ fn pebble() -> Project {
         workspace: PathBuf::from("user"),
         release,
         std_components: vec!["core".to_string(), "alloc".to_string()],
-        std_features: vec![],
+        std_features: vec!["compiler-builtins-mem".to_string()],
         artifact_name: "test_tls".to_string(),
         artifact_path: Some(build_dir.join("fat/test_tls.elf")),
     });
