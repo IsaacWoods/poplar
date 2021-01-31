@@ -154,6 +154,8 @@
 <span id="151">151</span>
 <span id="152">152</span>
 <span id="153">153</span>
+<span id="154">154</span>
+<span id="155">155</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="kw">use</span> <span class="kw">super</span>::{<span class="ident">alloc_kernel_object_id</span>, <span class="ident">memory_object</span>::<span class="ident">MemoryObject</span>, <span class="ident">KernelObject</span>, <span class="ident">KernelObjectId</span>};
 <span class="kw">use</span> <span class="kw">crate</span>::{
@@ -290,7 +292,9 @@
 
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">switch_to</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) {
         <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="kw-2">*</span><span class="self">self</span>.<span class="ident">state</span>.<span class="ident">lock</span>(), <span class="ident">State</span>::<span class="ident">NotActive</span>);
-        <span class="self">self</span>.<span class="ident">page_table</span>.<span class="ident">lock</span>().<span class="ident">switch_to</span>();
+        <span class="kw">unsafe</span> {
+            <span class="self">self</span>.<span class="ident">page_table</span>.<span class="ident">lock</span>().<span class="ident">switch_to</span>();
+        }
         <span class="kw-2">*</span><span class="self">self</span>.<span class="ident">state</span>.<span class="ident">lock</span>() <span class="op">=</span> <span class="ident">State</span>::<span class="ident">Active</span>;
     }
 
