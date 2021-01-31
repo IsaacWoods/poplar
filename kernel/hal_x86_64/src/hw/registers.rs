@@ -50,8 +50,8 @@ impl CpuFlags {
     /// Note: this does not set `RFLAGS`!
     pub const fn new(flags: u64) -> CpuFlags {
         let mut result = flags;
-        result |= 0b1000000000101010;
-        result &= 0b11_1111_1111_1111_1111_1111;
+        result |= 0b10;
+        result &= 0b11_1111_0111_1111_1101_0111;
         // TODO: this is equivalent to the above, but we need const fn in traits first
         // result.set_bit(1, true);
         // result.set_bit(3, false);
@@ -74,9 +74,12 @@ impl From<CpuFlags> for u64 {
 
 impl fmt::Debug for CpuFlags {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let reserved_are_valid =
+            self.0.get_bit(1) && !self.0.get_bit(3) && !self.0.get_bit(5) && !self.0.get_bit(15);
+
         write!(
             f,
-            "[({})({})({})({}){}{}{}{}{}{}{}{}{}{}{}{}{}] {:#x}",
+            "[({})({})({})({}){}{}{}{}{}{}{}{}{}{}{}{}{}] {:#x}{}",
             if self.0.get_bit(Self::CPUID_FLAG as usize) { "ID" } else { "-" },
             if self.0.get_bit(Self::VIRTUAL_INTERRUPT_PENDING_FLAG as usize) { "VIP" } else { "-" },
             if self.0.get_bit(Self::VIRTUAL_INTERRUPT_FLAG as usize) { "VIF" } else { "-" },
@@ -94,7 +97,8 @@ impl fmt::Debug for CpuFlags {
             if self.0.get_bit(Self::ADJUST_FLAG as usize) { 'A' } else { '-' },
             if self.0.get_bit(Self::PARITY_FLAG as usize) { 'P' } else { '-' },
             if self.0.get_bit(Self::CARRY_FLAG as usize) { 'C' } else { '-' },
-            self.0
+            self.0,
+            if reserved_are_valid { "" } else { " (RESERVED BITS INVALID)" },
         )
     }
 }
