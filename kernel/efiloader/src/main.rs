@@ -24,7 +24,7 @@ use hal::{
     },
 };
 use hal_x86_64::paging::PageTableImpl;
-use log::{debug, error, info};
+use log::{error, info};
 use logger::Logger;
 use uefi::{
     prelude::*,
@@ -44,6 +44,7 @@ pub const BOOT_INFO_MEMORY_TYPE: MemoryType = MemoryType::custom(0x80000004);
 pub const KERNEL_HEAP_MEMORY_TYPE: MemoryType = MemoryType::custom(0x80000005);
 
 const KERNEL_HEAP_SIZE: Bytes = kibibytes(800);
+
 #[entry]
 fn efi_main(image_handle: Handle, system_table: SystemTable<Boot>) -> Status {
     writeln!(system_table.stdout(), "Hello, World!").unwrap();
@@ -183,6 +184,7 @@ fn efi_main(image_handle: Handle, system_table: SystemTable<Boot>) -> Status {
      *      - So we round up to the next frame, since we can only allocate in 4KiB granularity anyway
      *      - This doesn't waste any space on implementations that don't lie, and provides some headroom on ones
      *        that do
+     * TODO: consider adding a couple of entries before rounding up to make it less likely to fail
      */
     let memory_map_size = system_table.boot_services().memory_map_size();
     let memory_map_frames = Size4KiB::frames_needed(memory_map_size);
@@ -195,10 +197,13 @@ fn efi_main(image_handle: Handle, system_table: SystemTable<Boot>) -> Status {
         .boot_services()
         .allocate_pages(AllocateType::AnyPages, MEMORY_MAP_MEMORY_TYPE, memory_map_frames)
         .unwrap_success();
+    unsafe {
+        system_table.boot_services().memset(memory_map_address as *mut u8, memory_map_frames * Size4KiB::SIZE, 0);
+    }
     let memory_map_buffer =
         unsafe { slice::from_raw_parts_mut(memory_map_address as *mut u8, memory_map_frames * Size4KiB::SIZE) };
 
-    let (system_table, memory_map) = system_table
+    let (_system_table, memory_map) = system_table
         .exit_boot_services(image_handle, memory_map_buffer)
         .expect_success("Failed to exit boot services");
     process_memory_map(memory_map, boot_info, &mut page_table, &allocator);
@@ -255,7 +260,6 @@ fn process_memory_map<'a, A, P>(
     P: PageTable<Size4KiB>,
 {
     use hal::boot_info::{MemoryMapEntry, MemoryType as BootInfoMemoryType};
-    use uefi::table::boot::MemoryAttribute;
 
     /*
      * To know how much physical memory to map, we keep track of the largest physical address that appears in
