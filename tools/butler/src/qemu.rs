@@ -67,12 +67,18 @@ impl RunQemuX64 {
         qemu.args(&["-machine", "q35"]);
         qemu.args(&["-cpu", "max,vmware-cpuid-freq,invtsc"]);
         qemu.arg("--no-reboot");
-        qemu.arg("--no-shutdown");
         qemu.args(&["-smp", &self.options.cpus.to_string()]);
         qemu.args(&["-m", &self.options.ram.to_string()]);
         qemu.args(&["-serial", "stdio"]);
         if !self.options.open_display {
             qemu.args(&["-display", "none"]);
+        }
+        /*
+         * If we're opening a display, we don't want to cause it to close on a crash. If we're just running in the
+         * terminal, it's nicer to exit.
+         */
+        if self.options.open_display {
+            qemu.arg("--no-shutdown");
         }
 
         /*
