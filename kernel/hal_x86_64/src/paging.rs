@@ -262,7 +262,7 @@ pub struct PageTableImpl {
 impl PageTableImpl {
     pub fn new(p4_frame: Frame, physical_base: VirtualAddress) -> PageTableImpl {
         let mut table = PageTableImpl { p4_frame, physical_base };
-        Self::p4_mut(&mut table.p4_frame, table.physical_base).zero();
+        table.p4_mut().zero();
         table
     }
 
@@ -278,11 +278,8 @@ impl PageTableImpl {
         unsafe { &*((self.physical_base + usize::from(self.p4_frame.start)).mut_ptr()) }
     }
 
-    /// Get a mutable reference to the P4 table of this set of page tables. This can't take a `&mut self` like
-    /// you'd normally write this, because then we borrow the entire struct and so can't access `physical_base`
-    /// nicely. Instead, we mutably borrow the P4 frame to "represent" the borrow.
-    fn p4_mut(frame: &mut Frame, physical_base: VirtualAddress) -> &mut Table<Level4> {
-        unsafe { &mut *((physical_base + usize::from(frame.start)).mut_ptr()) }
+    fn p4_mut(&mut self) -> &mut Table<Level4> {
+        unsafe { &mut *((self.physical_base + usize::from(self.p4_frame.start)).mut_ptr()) }
     }
 }
 
@@ -299,7 +296,7 @@ impl PageTable<Size4KiB> for PageTableImpl {
          * if it wasn't there.
          */
         let kernel_p3_address = kernel_page_table.p4()[crate::kernel_map::KERNEL_P4_ENTRY].address().unwrap();
-        Self::p4_mut(&mut page_table.p4_frame, page_table.physical_base)[crate::kernel_map::KERNEL_P4_ENTRY]
+        page_table.p4_mut()[crate::kernel_map::KERNEL_P4_ENTRY]
             .set(Some((kernel_p3_address, EntryFlags::WRITABLE)));
 
         page_table
@@ -331,11 +328,14 @@ impl PageTable<Size4KiB> for PageTableImpl {
         S: FrameSize,
         A: FrameAllocator<Size4KiB>,
     {
+        let physical_base = self.physical_base;
+
         if S::SIZE == Size4KiB::SIZE {
-            let p1 = Self::p4_mut(&mut self.p4_frame, self.physical_base)
-                .next_table_create(page.start.p4_index(), allocator, self.physical_base)?
-                .next_table_create(page.start.p3_index(), allocator, self.physical_base)?
-                .next_table_create(page.start.p2_index(), allocator, self.physical_base)?;
+            let p1 = self
+                .p4_mut()
+                .next_table_create(page.start.p4_index(), allocator, physical_base)?
+                .next_table_create(page.start.p3_index(), allocator, physical_base)?
+                .next_table_create(page.start.p2_index(), allocator, physical_base)?;
 
             if !p1[page.start.p1_index()].is_unused() {
                 return Err(PagingError::AlreadyMapped);
@@ -343,9 +343,10 @@ impl PageTable<Size4KiB> for PageTableImpl {
 
             p1[page.start.p1_index()].set(Some((frame.start, EntryFlags::from(flags))));
         } else if S::SIZE == Size2MiB::SIZE {
-            let p2 = Self::p4_mut(&mut self.p4_frame, self.physical_base)
-                .next_table_create(page.start.p4_index(), allocator, self.physical_base)?
-                .next_table_create(page.start.p3_index(), allocator, self.physical_base)?;
+            let p2 = self
+                .p4_mut()
+                .next_table_create(page.start.p4_index(), allocator, physical_base)?
+                .next_table_create(page.start.p3_index(), allocator, physical_base)?;
 
             if !p2[page.start.p2_index()].is_unused() {
                 return Err(PagingError::AlreadyMapped);
@@ -355,11 +356,7 @@ impl PageTable<Size4KiB> for PageTableImpl {
         } else {
             assert_eq!(S::SIZE, Size1GiB::SIZE);
 
-            let p3 = Self::p4_mut(&mut self.p4_frame, self.physical_base).next_table_create(
-                page.start.p4_index(),
-                allocator,
-                self.physical_base,
-            )?;
+            let p3 = self.p4_mut().next_table_create(page.start.p4_index(), allocator, physical_base)?;
 
             if !p3[page.start.p3_index()].is_unused() {
                 return Err(PagingError::AlreadyMapped);
@@ -471,12 +468,15 @@ impl PageTable<Size4KiB> for PageTableImpl {
     where
         S: FrameSize,
     {
+        let physical_base = self.physical_base;
+
         match S::SIZE {
             Size4KiB::SIZE => {
-                let p1 = Self::p4_mut(&mut self.p4_frame, self.physical_base)
-                    .next_table_mut(page.start.p4_index(), self.physical_base)?
-                    .next_table_mut(page.start.p3_index(), self.physical_base)?
-                    .next_table_mut(page.start.p2_index(), self.physical_base)?;
+                let p1 = self
+                    .p4_mut()
+                    .next_table_mut(page.start.p4_index(), physical_base)?
+                    .next_table_mut(page.start.p3_index(), physical_base)?
+                    .next_table_mut(page.start.p2_index(), physical_base)?;
                 let frame = Frame::starts_with(p1[page.start.p1_index()].address()?);
                 p1[page.start.p1_index()].set(None);
                 tlb::invalidate_page(page.start);
