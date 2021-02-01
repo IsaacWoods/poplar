@@ -107,6 +107,8 @@ fn project_from_name(name: Option<&str>) -> Project {
     }
 }
 
+// TODO: Abstract this out into a "Pebble build"-builder sort of thing
+// TODO: to build a full-std user task, use `-Zbuild-std=core,alloc,panic_abort,std -Zbuild-std-features=compiler-builtins-mem`
 fn pebble() -> Project {
     let build_dir = PathBuf::from("build/Pebble");
     let release = false;
