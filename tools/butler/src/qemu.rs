@@ -12,6 +12,10 @@ pub struct QemuOptions {
     pub wait_for_gdb_connection: bool,
     /// Passes `-d int` to QEMU. Note that this disables KVM even if `kvm` is set.
     pub debug_int_firehose: bool,
+    /// Passes `-d mmu` to QEMU. Note that this disables KVM even if `kvm` is set.
+    pub debug_mmu_firehose: bool,
+    /// Passes `-d cpu` to QEMU. Note that this disables KVM even if `kvm` is set.
+    pub debug_cpu_firehose: bool,
 
     /*
      * Firmware
@@ -25,6 +29,12 @@ pub struct QemuOptions {
     pub qemu_exit_device: bool,
 }
 
+impl QemuOptions {
+    fn use_kvm(&self) -> bool {
+        self.kvm && !(self.debug_int_firehose || self.debug_mmu_firehose || self.debug_cpu_firehose)
+    }
+}
+
 impl Default for QemuOptions {
     fn default() -> Self {
         QemuOptions {
@@ -34,6 +44,8 @@ impl Default for QemuOptions {
             open_display: false,
             wait_for_gdb_connection: false,
             debug_int_firehose: false,
+            debug_mmu_firehose: false,
+            debug_cpu_firehose: false,
 
             ovmf_dir: PathBuf::from("bundled/ovmf/"),
             ovmf_debugcon_to_file: false,
@@ -55,7 +67,7 @@ impl RunQemuX64 {
         /*
          * Configure some general stuff.
          */
-        if self.options.kvm && !self.options.debug_int_firehose {
+        if self.options.use_kvm() {
             qemu.arg("-enable-kvm");
         }
         if self.options.wait_for_gdb_connection {
@@ -63,6 +75,12 @@ impl RunQemuX64 {
         }
         if self.options.debug_int_firehose {
             qemu.args(&["-d", "int"]);
+        }
+        if self.options.debug_mmu_firehose {
+            qemu.args(&["-d", "mmu"]);
+        }
+        if self.options.debug_cpu_firehose {
+            qemu.args(&["-d", "cpu"]);
         }
         qemu.args(&["-machine", "q35"]);
         qemu.args(&["-cpu", "max,vmware-cpuid-freq,invtsc"]);
