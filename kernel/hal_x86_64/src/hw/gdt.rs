@@ -159,7 +159,8 @@ impl Gdt {
 
     /// Load the new GDT, switch to the new `kernel_code` code segment, clear DS, ES, FS, GS, and
     /// SS to the null segment, and switch TR to the first TSS.
-    // TODO: we should probably take a Pin or something to ensure it doesn't move
+    // TODO: we should probably take a Pin or something to ensure it doesn't move (this is hard because the GDT is
+    // in a lock, so it's not easy to get a pinned reference to it)
     pub unsafe fn load(&self, tss_selector: SegmentSelector) {
         if self.next_free_tss == 0 {
             panic!("Tried to load kernel GDT before adding bootstrap TSS!");
