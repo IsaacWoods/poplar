@@ -20,7 +20,7 @@ pub unsafe fn get_per_cpu_data<'a>() -> Pin<&'a mut PerCpuImpl> {
 pub struct PerCpuImpl {
     /// The first field of the per-cpu structure must be a pointer to itself. This is used to access the info by
     /// reading from `gs:0x0`. This means the structure must be pinned, as it is self-referential.
-    _self_pointer: *const PerCpuImpl,
+    _self_pointer: *mut PerCpuImpl,
     _pin: PhantomPinned,
 
     /// The next field must then be the current task's kernel stack pointer. We access this manually from assembly
@@ -43,7 +43,7 @@ impl PerCpuImpl {
     pub fn new(scheduler: Scheduler<crate::PlatformImpl>) -> (Pin<Box<PerCpuImpl>>, SegmentSelector) {
         let tss = Tss::new();
         let mut per_cpu = Box::pin(PerCpuImpl {
-            _self_pointer: 0x0 as *const PerCpuImpl,
+            _self_pointer: 0x0 as *mut PerCpuImpl,
             _pin: PhantomPinned,
 
             current_task_kernel_rsp: VirtualAddress::new(0x0),
@@ -60,10 +60,10 @@ impl PerCpuImpl {
             hal_x86_64::hw::gdt::GDT.lock().add_tss(TssSegment::new(per_cpu.as_mut().tss().into_ref()));
 
         /*
-         * Fill out the self-pointer, and then install it into the MSR so we can access it using `gs`.
+         * Now we know the address of the structure, fill in the self-pointer.
          */
-        let address: *mut PerCpuImpl = unsafe { mem::transmute(per_cpu.as_ref()) };
         unsafe {
+            let address: *mut PerCpuImpl = mem::transmute(per_cpu.as_ref());
             Pin::get_unchecked_mut(per_cpu.as_mut())._self_pointer = address;
         }
 
