@@ -9,6 +9,6 @@ readme = "README.md"
 license = "MIT/Apache-2.0"
 
 [dependencies]
-scroll = { version = "0.9", default-features = false, features = ["derive"] }
-scroll_derive = "0.9"
+scroll = { version = "0.10", default-features = false, features = ["derive"] }
+scroll_derive = "0.10"
 bit_field = "0.10"

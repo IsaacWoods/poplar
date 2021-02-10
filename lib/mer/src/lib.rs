@@ -125,7 +125,7 @@ pub enum ElfError {
     SegmentInvalidType,
 }
 
-pub struct EntryIter<'a, T: TryFromCtx<'a, scroll::Endian, Error = scroll::Error, Size = usize>> {
+pub struct EntryIter<'a, T: TryFromCtx<'a, scroll::Endian, Error = scroll::Error>> {
     /// Reference to the start of the header / table, within the ELF's byte stream.
     bytes: &'a [u8],
 
@@ -142,7 +142,7 @@ pub struct EntryIter<'a, T: TryFromCtx<'a, scroll::Endian, Error = scroll::Error
 
 impl<'a, T> EntryIter<'a, T>
 where
-    T: TryFromCtx<'a, scroll::Endian, Error = scroll::Error, Size = usize>,
+    T: TryFromCtx<'a, scroll::Endian, Error = scroll::Error>,
 {
     pub(crate) fn new(bytes: &'a [u8], num_entries: u64, entry_size: u64) -> EntryIter<'a, T> {
         EntryIter { bytes, current_index: 0, num_entries, entry_size, _phantom: PhantomData }
@@ -151,7 +151,7 @@ where
 
 impl<'a, T> Iterator for EntryIter<'a, T>
 where
-    T: TryFromCtx<'a, scroll::Endian, Error = scroll::Error, Size = usize>,
+    T: TryFromCtx<'a, scroll::Endian, Error = scroll::Error>,
 {
     type Item = T;
 
