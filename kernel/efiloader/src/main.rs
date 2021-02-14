@@ -175,18 +175,10 @@ fn efi_main(image_handle: Handle, system_table: SystemTable<Boot>) -> Status {
     // system_table.boot_services().wait_for_event(&mut [system_table.stdin().wait_for_key_event()]);
 
     /*
-     * Allocate memory to hold the memory map. This does something pretty janky:
-     *      - Some implementations are super broken, so we ask them how much space they need for their memory
-     *        map, but they get it wrong. The most sensible reason for this is that by allocating the frames for
-     *        the memory map, you make the memory map bigger because it has to add an entry for the allocation
-     *        you've just made. Other implementations just seem to calculate it incorrectly.
-     *      - They then return `EFI_BUFFER_TOO_SMALL` when we ask for a memory map later
-     *      - So we round up to the next frame, since we can only allocate in 4KiB granularity anyway
-     *      - This doesn't waste any space on implementations that don't lie, and provides some headroom on ones
-     *        that do
-     * TODO: consider adding a couple of entries before rounding up to make it less likely to fail
+     * Allocate memory to hold the memory map. We ask UEFI how much it thinks it needs, and then add a bit, as the
+     * allocation for the memory map can itself change how much space the memory map will take.
      */
-    let memory_map_size = system_table.boot_services().memory_map_size();
+    let memory_map_size = system_table.boot_services().memory_map_size() + 4 * mem::size_of::<MemoryDescriptor>();
     let memory_map_frames = Size4KiB::frames_needed(memory_map_size);
     info!(
         "Memory map will apparently be {} bytes. Allocating {}.",
