@@ -86,3 +86,24 @@ where
     /// Free `n` frames that were previously allocated by this allocator.
     fn free_n(&self, start: Frame<S>, n: usize);
 }
+
+/// A `FrameAllocator` that can't actually allocate or free frames. Useful if you need to pass a `FrameAllocator`
+/// to something for testing, but it'll never actually try to allocate.
+pub struct FakeFrameAllocator;
+
+impl<S> FrameAllocator<S> for FakeFrameAllocator
+where
+    S: FrameSize,
+{
+    fn allocate(&self) -> Frame<S> {
+        unimplemented!()
+    }
+
+    fn allocate_n(&self, n: usize) -> Range<Frame<S>> {
+        unimplemented!()
+    }
+
+    fn free_n(&self, start: Frame<S>, n: usize) {
+        unimplemented!()
+    }
+}
