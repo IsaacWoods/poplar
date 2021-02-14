@@ -403,12 +403,14 @@ impl PageTable<Size4KiB> for PageTableImpl {
         }
 
         let mut cursor = virtual_start;
-        while cursor < (virtual_start + size) {
+        let virtual_end: VirtualAddress = virtual_start + size;
+
+        while cursor < virtual_end {
             let cursor_physical = PhysicalAddress::new(
                 usize::from(physical_start) + usize::from(cursor) - usize::from(virtual_start),
             )
             .unwrap();
-            let bytes_left = size - (usize::from(cursor) - usize::from(virtual_start));
+            let bytes_left = usize::from(virtual_end) - usize::from(cursor);
 
             if cursor.is_aligned(Size1GiB::SIZE)
                 && cursor_physical.is_aligned(Size1GiB::SIZE)
@@ -448,11 +450,11 @@ impl PageTable<Size4KiB> for PageTableImpl {
                  * NOTE: `cursor` might be 2MiB-aligned at this location, so we start from the next address so we don't get stuck here.
                  */
                 let next_boundary = (cursor + 1).align_up(Size2MiB::SIZE);
-                let bytes_to_map = if next_boundary <= (virtual_start + size) {
-                    bytes_left - (usize::from(virtual_start) + size - usize::from(next_boundary))
-                } else {
-                    bytes_left
-                };
+                // Make sure not to go past the end of the region
+                let bytes_to_map = cmp::min(
+                    usize::from(next_boundary) - usize::from(cursor),
+                    usize::from(virtual_end) - usize::from(cursor),
+                );
                 let pages = Page::starts_with(cursor)..Page::starts_with(cursor + bytes_to_map);
                 let frames =
                     Frame::starts_with(cursor_physical)..Frame::starts_with(cursor_physical + bytes_to_map);
@@ -461,7 +463,7 @@ impl PageTable<Size4KiB> for PageTableImpl {
             }
         }
 
-        assert_eq!(cursor, virtual_start + size);
+        assert_eq!(cursor, virtual_end);
         Ok(())
     }
 
