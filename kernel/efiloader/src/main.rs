@@ -213,33 +213,28 @@ fn efi_main(image_handle: Handle, system_table: SystemTable<Boot>) -> Status {
      */
     info!("Entering kernel!\n\n\n");
     unsafe {
-        /*
-         * We disable interrupts until the kernel has a chance to install its own IDT.
-         */
-        asm!("cli");
-        // TODO: do this in one asm block to switch tables, then switch stacks, then jump to the kernel without any
-        // more rust.
-        page_table.switch_to();
+        let page_table_address = page_table.p4() as *const _ as usize;
+        let kernel_rsp = usize::from(kernel_info.stack_top.align_down(8));
+        let kernel_entry_point = usize::from(kernel_info.entry_point);
+        let boot_info_address = usize::from(boot_info_kernel_address);
 
-        /*
-         * We switch to the new kernel stack, making sure to align it down by 8, so that `rsp-8` will be aligned
-         * to 16.
-         *
-         * Because we change the stack pointer, we need to load the entry point into a register, as local
-         * variables will no longer be available.
-         *
-         * We zero `rbp`, so when the kernel creates its first stack frame, it'll terminate at the kernel entry
-         * point.
-         */
-        asm!("xor rbp, rbp
-              mov rsp, rax
-              jmp rbx",
-            in("rax") usize::from(kernel_info.stack_top.align_down(8)),
-            in("rbx") usize::from(kernel_info.entry_point),
-            in("rdi") usize::from(boot_info_kernel_address),
-        );
+        asm!("// Disable interrupts until the kernel has a chance to install an IDT
+              cli
+
+              // Switch to the kernel's new page tables
+              mov cr3, rax
+
+              // Switch to the kernel's stack, create a new stack frame, and jump!
+              xor rbp, rbp
+              mov rsp, rbx
+              jmp rcx",
+          in("rax") page_table_address,
+          in("rbx") kernel_rsp,
+          in("rcx") kernel_entry_point,
+          in("rdi") boot_info_address,
+          options(noreturn)
+        )
     }
-    unreachable!()
 }
 
 /// Process the final UEFI memory map when after we've exited boot services. We need to do three things with it:
