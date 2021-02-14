@@ -2,6 +2,7 @@ use crate::hw::{registers::write_control_reg, tlb};
 use bit_field::BitField;
 use bitflags::bitflags;
 use core::{
+    cmp,
     fmt,
     marker::PhantomData,
     ops::{Index, IndexMut},
@@ -513,5 +514,223 @@ impl VirtualAddressEx for VirtualAddress {
 
     fn p1_index(self) -> usize {
         usize::from(self).get_bits(12..21)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use core::ops::Range;
+    use hal::memory::FakeFrameAllocator;
+    use std::collections::VecDeque;
+
+    #[test]
+    fn test_map_area_single_page() {
+        let mut page_table = TestPageTable::new();
+        page_table.add_expected_mapping::<Size4KiB>(0x4000_0000, 0x2000_0000);
+
+        page_table
+            .map_area(
+                VirtualAddress::new(0x4000_0000),
+                PhysicalAddress::new(0x2000_0000).unwrap(),
+                0x1000,
+                Flags::default(),
+                &FakeFrameAllocator,
+            )
+            .unwrap();
+    }
+
+    struct TestPageTable {
+        expected_maps: VecDeque<(usize, VirtualAddress, PhysicalAddress)>,
+    }
+
+    impl TestPageTable {
+        pub fn new() -> Self {
+            TestPageTable { expected_maps: VecDeque::new() }
+        }
+
+        pub fn add_expected_mapping<S>(&mut self, virtual_start: usize, physical_start: usize)
+        where
+            S: FrameSize,
+        {
+            self.expected_maps.push_back((
+                S::SIZE,
+                VirtualAddress::new(virtual_start),
+                PhysicalAddress::new(physical_start).unwrap(),
+            ));
+        }
+    }
+
+    impl PageTable<Size4KiB> for TestPageTable {
+        fn new_with_kernel_mapped<A>(_kernel_page_table: &Self, _allocator: &A) -> Self
+        where
+            A: FrameAllocator<Size4KiB>,
+        {
+            unimplemented!()
+        }
+
+        unsafe fn switch_to(&self) {
+            unimplemented!()
+        }
+
+        fn translate(&self, _address: VirtualAddress) -> Option<PhysicalAddress> {
+            unimplemented!()
+        }
+
+        fn map<S, A>(&mut self, page: Page<S>, frame: Frame<S>, flags: Flags, _: &A) -> Result<(), PagingError>
+        where
+            S: FrameSize,
+            A: FrameAllocator<Size4KiB>,
+        {
+            println!(
+                "Mapping {:#x} page at {:#x} to {:#x} with flags {:?}",
+                S::SIZE,
+                page.start,
+                frame.start,
+                flags
+            );
+
+            let (size, virt_start, phys_start) = self.expected_maps.pop_front().expect("Map not expected");
+            assert_eq!(size, S::SIZE);
+            assert_eq!(virt_start, page.start);
+            assert_eq!(phys_start, frame.start);
+
+            Ok(())
+        }
+
+        /// Map each `Page` in a range to a corresponding `Frame` with the given flags.
+        fn map_range<S, A>(
+            &mut self,
+            pages: Range<Page<S>>,
+            frames: Range<Frame<S>>,
+            flags: Flags,
+            allocator: &A,
+        ) -> Result<(), PagingError>
+        where
+            S: FrameSize,
+            A: FrameAllocator<Size4KiB>,
+        {
+            println!(
+                "Mapping range of {:#x} pages at {:#x}..{:#x} to {:#x}..{:#x} with flags {:?}",
+                S::SIZE,
+                pages.start.start,
+                pages.end.start,
+                frames.start.start,
+                frames.end.start,
+                flags
+            );
+            for (page, frame) in pages.zip(frames) {
+                self.map(page, frame, flags, allocator)?;
+            }
+
+            Ok(())
+        }
+
+        /// Map an area of `size` bytes starting at the given address pair with the given flags. Implementations are
+        /// free to map this area however they desire, and may do so with a range of page sizes.
+        fn map_area<A>(
+            &mut self,
+            virtual_start: VirtualAddress,
+            physical_start: PhysicalAddress,
+            size: usize,
+            flags: Flags,
+            allocator: &A,
+        ) -> Result<(), PagingError>
+        where
+            A: FrameAllocator<Size4KiB>,
+        {
+            use pebble_util::math::{abs_difference, align_down};
+
+            assert!(virtual_start.is_aligned(Size4KiB::SIZE));
+            assert!(physical_start.is_aligned(Size4KiB::SIZE));
+            assert!(size % Size4KiB::SIZE == 0);
+
+            /*
+             * If the area is smaller than a single 2MiB page, or if the alignment of the physical and virtual regions
+             * means we'll never be able to use larger pages, just map the whole area with 4KiB pages.
+             */
+            let align_mismatch =
+                abs_difference(usize::from(physical_start), usize::from(virtual_start)) % Size2MiB::SIZE != 0;
+            if size < Size2MiB::SIZE || align_mismatch {
+                println!("Small size or align_mismatch means we just use 4KiB pages");
+                let pages = Page::starts_with(virtual_start)..Page::starts_with(virtual_start + size);
+                let frames = Frame::starts_with(physical_start)..Frame::starts_with(physical_start + size);
+                return self.map_range::<Size4KiB, A>(pages, frames, flags, allocator);
+            }
+
+            let mut cursor = virtual_start;
+            let virtual_end: VirtualAddress = virtual_start + size;
+
+            while cursor < virtual_end {
+                let cursor_physical = PhysicalAddress::new(
+                    usize::from(physical_start) + usize::from(cursor) - usize::from(virtual_start),
+                )
+                .unwrap();
+                let bytes_left = usize::from(virtual_end) - usize::from(cursor);
+
+                if cursor.is_aligned(Size1GiB::SIZE)
+                    && cursor_physical.is_aligned(Size1GiB::SIZE)
+                    && bytes_left >= Size1GiB::SIZE
+                {
+                    /*
+                     * We can fit at least 1GiB page in, and both virtual and physical cursors have the correct
+                     * alignment. Map as much as we can with 1GiB pages.
+                     */
+                    let bytes_to_map = align_down(bytes_left, Size1GiB::SIZE);
+                    println!("Mapping {:#x} bytes using 1GiB pages", bytes_to_map);
+                    let pages = Page::starts_with(cursor)..Page::starts_with(cursor + bytes_to_map);
+                    let frames =
+                        Frame::starts_with(cursor_physical)..Frame::starts_with(cursor_physical + bytes_to_map);
+                    self.map_range::<Size1GiB, A>(pages, frames, flags, allocator)?;
+                    cursor += bytes_to_map;
+                } else if cursor.is_aligned(Size2MiB::SIZE)
+                    && cursor_physical.is_aligned(Size2MiB::SIZE)
+                    && bytes_left >= Size2MiB::SIZE
+                {
+                    /*
+                     * We couldn't use a 1GiB page, but we can use 2MiB pages! Map as much as we can.
+                     *
+                     * TODO: we could do a similar thing to below to check if we can use 1GiB pages further in, but
+                     * it's probably unlikely enough that it's not really worth it.
+                     */
+                    let bytes_to_map = align_down(bytes_left, Size2MiB::SIZE);
+                    println!("Mapping {:#x} bytes using 2MiB pages", bytes_to_map);
+                    let pages = Page::starts_with(cursor)..Page::starts_with(cursor + bytes_to_map);
+                    let frames =
+                        Frame::starts_with(cursor_physical)..Frame::starts_with(cursor_physical + bytes_to_map);
+                    self.map_range::<Size2MiB, A>(pages, frames, flags, allocator)?;
+                    cursor += bytes_to_map;
+                } else {
+                    /*
+                     * We can't use any larger pages, but we might be able to further in, if the data becomes more
+                     * aligned. If the next 2MiB-aligned address is still inside the range, stop there to have another
+                     * go.
+                     * NOTE: `cursor` might be 2MiB-aligned at this location, so we start from the next address so we don't get stuck here.
+                     */
+                    let next_boundary = (cursor + 1).align_up(Size2MiB::SIZE);
+                    // Make sure not to go past the end of the region
+                    let bytes_to_map = cmp::min(
+                        usize::from(next_boundary) - usize::from(cursor),
+                        usize::from(virtual_end) - usize::from(cursor),
+                    );
+                    println!("Mapping {:#x} bytes using 4KiB pages", bytes_to_map);
+                    let pages = Page::starts_with(cursor)..Page::starts_with(cursor + bytes_to_map);
+                    let frames =
+                        Frame::starts_with(cursor_physical)..Frame::starts_with(cursor_physical + bytes_to_map);
+                    self.map_range::<Size4KiB, A>(pages, frames, flags, allocator)?;
+                    cursor += bytes_to_map;
+                }
+            }
+
+            assert_eq!(cursor, virtual_end);
+            Ok(())
+        }
+
+        fn unmap<S>(&mut self, page: Page<S>) -> Option<Frame<S>>
+        where
+            S: FrameSize,
+        {
+            unimplemented!()
+        }
     }
 }
