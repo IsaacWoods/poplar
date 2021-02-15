@@ -494,14 +494,14 @@ impl PageTable<Size4KiB> for PageTableImpl {
     }
 }
 
-pub trait VirtualAddressEx {
+pub trait VirtualAddressIndices {
     fn p4_index(self) -> usize;
     fn p3_index(self) -> usize;
     fn p2_index(self) -> usize;
     fn p1_index(self) -> usize;
 }
 
-impl VirtualAddressEx for VirtualAddress {
+impl VirtualAddressIndices for VirtualAddress {
     fn p4_index(self) -> usize {
         usize::from(self).get_bits(39..48)
     }
