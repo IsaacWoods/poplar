@@ -99,11 +99,11 @@ where
         unimplemented!()
     }
 
-    fn allocate_n(&self, n: usize) -> Range<Frame<S>> {
+    fn allocate_n(&self, _n: usize) -> Range<Frame<S>> {
         unimplemented!()
     }
 
-    fn free_n(&self, start: Frame<S>, n: usize) {
+    fn free_n(&self, _start: Frame<S>, _n: usize) {
         unimplemented!()
     }
 }
