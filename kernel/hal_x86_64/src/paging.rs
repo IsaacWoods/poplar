@@ -391,8 +391,8 @@ impl PageTable<Size4KiB> for PageTableImpl {
         assert!(size % Size4KiB::SIZE == 0);
 
         /*
-         * If the area is smaller than a single 2MiB page, or if the alignment of the physical and virtual regions
-         * means we'll never be able to use larger pages, just map the whole area with 4KiB pages.
+         * If the area is smaller than a single 2MiB page, or if the virtual and physical starts are "out of
+         * phase" such that we'll never be able to use larger pages, just use 4KiB pages.
          */
         let align_mismatch =
             abs_difference(usize::from(physical_start), usize::from(virtual_start)) % Size2MiB::SIZE != 0;
@@ -540,6 +540,107 @@ mod tests {
                 &FakeFrameAllocator,
             )
             .unwrap();
+        page_table.ensure_all_mappings_made();
+    }
+
+    #[test]
+    fn test_map_area_range() {
+        let mut page_table = TestPageTable::new();
+        page_table.add_expected_mapping::<Size4KiB>(0x4000_0000, 0x2000_f000);
+        page_table.add_expected_mapping::<Size4KiB>(0x4000_1000, 0x2001_0000);
+        page_table.add_expected_mapping::<Size4KiB>(0x4000_2000, 0x2001_1000);
+        page_table.add_expected_mapping::<Size4KiB>(0x4000_3000, 0x2001_2000);
+        page_table.add_expected_mapping::<Size4KiB>(0x4000_4000, 0x2001_3000);
+        page_table
+            .map_area(
+                VirtualAddress::new(0x4000_0000),
+                PhysicalAddress::new(0x2000_f000).unwrap(),
+                0x5000,
+                Flags::default(),
+                &FakeFrameAllocator,
+            )
+            .unwrap();
+        page_table.ensure_all_mappings_made();
+
+        // ----------
+        page_table.add_expected_mapping::<Size2MiB>(0x6000_0000, 0x0);
+        page_table.add_expected_mapping::<Size2MiB>(0x6020_0000, 0x20_0000);
+        page_table
+            .map_area(
+                VirtualAddress::new(0x6000_0000),
+                PhysicalAddress::new(0x0).unwrap(),
+                0x400000,
+                Flags::default(),
+                &FakeFrameAllocator,
+            )
+            .unwrap();
+        page_table.ensure_all_mappings_made();
+    }
+
+    #[test]
+    fn test_map_area_unaligned() {
+        let mut page_table = TestPageTable::new();
+        let virtual_start = 0x1000_1000;
+        let physical_start = 0x2000_0000;
+        let size = 0x205000;
+
+        for address in (virtual_start..(virtual_start + size)).into_iter().step_by(0x1000) {
+            page_table.add_expected_mapping::<Size4KiB>(address, physical_start + (address - virtual_start));
+        }
+
+        page_table
+            .map_area(
+                VirtualAddress::new(virtual_start),
+                PhysicalAddress::new(physical_start).unwrap(),
+                size,
+                Flags::default(),
+                &FakeFrameAllocator,
+            )
+            .unwrap();
+        page_table.ensure_all_mappings_made();
+    }
+
+    #[test]
+    fn test_map_area_aligned() {
+        let mut page_table = TestPageTable::new();
+        page_table.add_expected_mapping::<Size2MiB>(0x1000_0000, 0x2000_0000);
+        page_table.add_expected_mapping::<Size4KiB>(0x1020_0000, 0x2020_0000);
+        page_table.add_expected_mapping::<Size4KiB>(0x1020_1000, 0x2020_1000);
+        page_table.add_expected_mapping::<Size4KiB>(0x1020_2000, 0x2020_2000);
+        page_table.add_expected_mapping::<Size4KiB>(0x1020_3000, 0x2020_3000);
+        page_table.add_expected_mapping::<Size4KiB>(0x1020_4000, 0x2020_4000);
+
+        page_table
+            .map_area(
+                VirtualAddress::new(0x1000_0000),
+                PhysicalAddress::new(0x2000_0000).unwrap(),
+                0x205000,
+                Flags::default(),
+                &FakeFrameAllocator,
+            )
+            .unwrap();
+        page_table.ensure_all_mappings_made();
+
+        // ----------
+        page_table.add_expected_mapping::<Size4KiB>(0x0fff_e000, 0x1fff_e000);
+        page_table.add_expected_mapping::<Size4KiB>(0x0fff_f000, 0x1fff_f000);
+        page_table.add_expected_mapping::<Size2MiB>(0x1000_0000, 0x2000_0000);
+        page_table.add_expected_mapping::<Size4KiB>(0x1020_0000, 0x2020_0000);
+        page_table.add_expected_mapping::<Size4KiB>(0x1020_1000, 0x2020_1000);
+        page_table.add_expected_mapping::<Size4KiB>(0x1020_2000, 0x2020_2000);
+        page_table.add_expected_mapping::<Size4KiB>(0x1020_3000, 0x2020_3000);
+        page_table.add_expected_mapping::<Size4KiB>(0x1020_4000, 0x2020_4000);
+
+        page_table
+            .map_area(
+                VirtualAddress::new(0x0fff_e000),
+                PhysicalAddress::new(0x1fff_e000).unwrap(),
+                0x207000,
+                Flags::default(),
+                &FakeFrameAllocator,
+            )
+            .unwrap();
+        page_table.ensure_all_mappings_made();
     }
 
     struct TestPageTable {
@@ -560,6 +661,10 @@ mod tests {
                 VirtualAddress::new(virtual_start),
                 PhysicalAddress::new(physical_start).unwrap(),
             ));
+        }
+
+        pub fn ensure_all_mappings_made(&self) {
+            assert!(self.expected_maps.is_empty());
         }
     }
 
@@ -600,7 +705,6 @@ mod tests {
             Ok(())
         }
 
-        /// Map each `Page` in a range to a corresponding `Frame` with the given flags.
         fn map_range<S, A>(
             &mut self,
             pages: Range<Page<S>>,
@@ -628,8 +732,8 @@ mod tests {
             Ok(())
         }
 
-        /// Map an area of `size` bytes starting at the given address pair with the given flags. Implementations are
-        /// free to map this area however they desire, and may do so with a range of page sizes.
+        // XXX: it's a shame we can't easily reuse the actual code in the test. Changes need to be reflected above
+        // into the real code.
         fn map_area<A>(
             &mut self,
             virtual_start: VirtualAddress,
@@ -648,13 +752,16 @@ mod tests {
             assert!(size % Size4KiB::SIZE == 0);
 
             /*
-             * If the area is smaller than a single 2MiB page, or if the alignment of the physical and virtual regions
-             * means we'll never be able to use larger pages, just map the whole area with 4KiB pages.
+             * If the area is smaller than a single 2MiB page, or if the virtual and physical starts are "out of
+             * phase" such that we'll never be able to use larger pages, just use 4KiB pages.
              */
             let align_mismatch =
                 abs_difference(usize::from(physical_start), usize::from(virtual_start)) % Size2MiB::SIZE != 0;
             if size < Size2MiB::SIZE || align_mismatch {
-                println!("Small size or align_mismatch means we just use 4KiB pages");
+                println!(
+                    "Small size or align_mismatch means we just use 4KiB pages (too_small = {}, align_mismatch = {})",
+                    size < Size2MiB::SIZE, align_mismatch
+                );
                 let pages = Page::starts_with(virtual_start)..Page::starts_with(virtual_start + size);
                 let frames = Frame::starts_with(physical_start)..Frame::starts_with(physical_start + size);
                 return self.map_range::<Size4KiB, A>(pages, frames, flags, allocator);
