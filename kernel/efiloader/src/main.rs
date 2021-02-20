@@ -272,13 +272,12 @@ fn process_memory_map<'a, A, P>(
 
         /*
          * Keep the loader identity-mapped, or it will disappear out from under us when we switch to the kernel's
-         * page tables. Also map the boot and runtime services.
+         * page tables. We won't be using the runtime services, so don't bother mapping them.
          *
-         * TODO: we shouldn't need to keep the boot services mapped, but we crash if we unmap them. Investigate.
          * XXX: the virtual address isn't filled out when physically mapped, so use the `phys_start` for both fields
          */
         match entry.ty {
-            MemoryType::LOADER_CODE | MemoryType::BOOT_SERVICES_CODE | MemoryType::RUNTIME_SERVICES_CODE => {
+            MemoryType::LOADER_CODE => {
                 mapper
                     .map_area(
                         VirtualAddress::new(entry.phys_start as usize),
@@ -289,7 +288,7 @@ fn process_memory_map<'a, A, P>(
                     )
                     .unwrap();
             }
-            MemoryType::LOADER_DATA | MemoryType::BOOT_SERVICES_DATA | MemoryType::RUNTIME_SERVICES_DATA => {
+            MemoryType::LOADER_DATA => {
                 mapper
                     .map_area(
                         VirtualAddress::new(entry.phys_start as usize),
