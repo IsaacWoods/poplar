@@ -4,6 +4,7 @@ use hal::{
     memory::{Flags, FrameAllocator, FrameSize, Page, PageTable, PhysicalAddress, Size4KiB, VirtualAddress},
 };
 use hal_x86_64::kernel_map;
+use log::info;
 use mer::{
     program::{ProgramHeader, SegmentType},
     Elf,
@@ -40,6 +41,7 @@ where
     A: FrameAllocator<Size4KiB>,
     P: PageTable<Size4KiB>,
 {
+    info!("Loading kernel from: {}", path);
     let (elf, pool_addr) = load_elf(boot_services, volume_handle, path);
     let entry_point = VirtualAddress::new(elf.entry_point());
 
@@ -100,6 +102,7 @@ where
 }
 
 pub fn load_image(boot_services: &BootServices, volume_handle: Handle, name: &str, path: &str) -> LoadedImage {
+    info!("Loading requested '{}' image from: {}", name, path);
     let (elf, pool_addr) = load_elf(boot_services, volume_handle, path);
 
     let mut image_data = LoadedImage::default();
@@ -116,6 +119,7 @@ pub fn load_image(boot_services: &BootServices, volume_handle: Handle, name: &st
         match segment.segment_type() {
             SegmentType::Load if segment.mem_size > 0 => {
                 let segment = load_segment(boot_services, segment, crate::IMAGE_MEMORY_TYPE, &elf, true);
+
                 match image_data.add_segment(segment) {
                     Ok(()) => (),
                     Err(()) => panic!("Image at '{}' has too many load segments!", path),

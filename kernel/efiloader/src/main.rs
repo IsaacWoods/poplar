@@ -263,13 +263,6 @@ fn process_memory_map<'a, A, P>(
             entry.phys_start as usize + entry.page_count as usize * Size4KiB::SIZE,
         );
 
-        log::trace!(
-            "Entry starting at {:#x} with {} bytes of type {:?}",
-            entry.phys_start,
-            entry.page_count as usize * Size4KiB::SIZE,
-            entry.ty
-        );
-
         /*
          * Keep the loader identity-mapped, or it will disappear out from under us when we switch to the kernel's
          * page tables. We won't be using the runtime services, so don't bother mapping them.
@@ -343,7 +336,11 @@ fn process_memory_map<'a, A, P>(
      * Construct the physical memory mapping. We find the maximum physical address that the memory map contains,
      * and map that much physical memory.
      */
-    info!("Constructing physical mapping from 0x0 to {:#x}", max_physical_address);
+    info!(
+        "Constructing physical mapping 0x0..{:#x} at {:#x}",
+        max_physical_address,
+        hal_x86_64::kernel_map::PHYSICAL_MAPPING_BASE
+    );
     mapper
         .map_area(
             hal_x86_64::kernel_map::PHYSICAL_MAPPING_BASE,
