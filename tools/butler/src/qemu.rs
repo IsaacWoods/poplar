@@ -90,6 +90,8 @@ impl RunQemuX64 {
         qemu.args(&["-serial", "stdio"]);
         if !self.options.open_display {
             qemu.args(&["-display", "none"]);
+            // If we're not opening a display, allow connections to the monitor over TCP (open with `nc 127.0.0.1 55555`)
+            qemu.args(&["-monitor", "tcp:127.0.0.1:55555,server,nowait"]);
         }
         /*
          * If we're opening a display, we don't want to cause it to close on a crash. If we're just running in the
