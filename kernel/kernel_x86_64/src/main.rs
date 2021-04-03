@@ -166,7 +166,7 @@ pub extern "C" fn kentry(boot_info: &BootInfo) -> ! {
      */
     // TODO: if we're on ACPI 1.0 - pass true as legacy mode.
     let mut aml_context =
-        AmlContext::new(Box::new(AmlHandler::new(pci_access.clone())), false, aml::DebugVerbosity::None);
+        AmlContext::new(Box::new(AmlHandler::new(pci_access.clone())), aml::DebugVerbosity::None);
     if let Some(ref dsdt) = acpi_tables.dsdt {
         let virtual_address = kernel_map::physical_to_virtual(PhysicalAddress::new(dsdt.address).unwrap());
         info!(
