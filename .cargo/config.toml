@@ -1,2 +1,2 @@
 [alias]
-bu = "run --release --manifest-path tools/butler/Cargo.toml"
+bu = "run --release --manifest-path tools/butler/Cargo.toml --"
