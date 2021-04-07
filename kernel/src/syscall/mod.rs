@@ -42,6 +42,11 @@ use validation::{UserPointer, UserSlice, UserString};
 /// Maps the name of a service to the channel used to register new service users.
 static SERVICE_MAP: Mutex<BTreeMap<String, Arc<ChannelEnd>>> = Mutex::new(BTreeMap::new());
 
+// TODO: these shouldn't be needed. Use-sites should be able to read `[None; MAX_WHATEVER]`, but can't because
+// the const_in_array_repeat_expression feature got removed. This works around that for now.
+const NONE_OBJECT: Option<Arc<dyn KernelObject>> = None;
+const NONE_BAR: Option<libpebble::syscall::pci::Bar> = None;
+
 /// This is the architecture-independent syscall handler. It should be called by the handler that
 /// receives the syscall (each architecture is free to do this however it wishes). The only
 /// parameter that is guaranteed to be valid is `number`; the meaning of the rest may be undefined
@@ -280,7 +285,7 @@ where
             .map_err(|()| SendMessageError::HandlesAddressInvalid)?
     };
     let handle_objects = {
-        let mut arr = [None; CHANNEL_MAX_NUM_HANDLES];
+        let mut arr = [NONE_OBJECT; CHANNEL_MAX_NUM_HANDLES];
         for (i, handle) in handles.iter().enumerate() {
             arr[i] = match task.handles.read().get(handle) {
                 Some(object) => Some(object.clone()),
@@ -432,7 +437,7 @@ where
          * XXX: we manually construct a Ptah message here so userspace can use the `libpebble::Channel` type if it
          * wants to, but without having to pull that in here.
          */
-        let mut handle_objects = [None; CHANNEL_MAX_NUM_HANDLES];
+        let mut handle_objects = [NONE_OBJECT; CHANNEL_MAX_NUM_HANDLES];
         handle_objects[0] = Some(provider_end as Arc<dyn KernelObject>);
         register_channel.add_message(Message { bytes: [ptah::make_handle_slot(0)].to_vec(), handle_objects });
 
@@ -480,7 +485,7 @@ where
                     class: device.class,
                     sub_class: device.sub_class,
                     interface: device.interface,
-                    bars: [None; MAX_BARS],
+                    bars: [NONE_BAR; MAX_BARS],
                 };
 
                 for i in 0..MAX_BARS {
