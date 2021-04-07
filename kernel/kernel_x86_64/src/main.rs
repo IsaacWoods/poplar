@@ -60,19 +60,6 @@ impl Platform for PlatformImpl {
         task::initialize_stacks(kernel_stack, user_stack, task_entry_point)
     }
 
-    unsafe fn initialize_task_tls(
-        master_segment: &hal::boot_info::Segment,
-        task_id: KernelObjectId,
-        virtual_address: VirtualAddress,
-    ) -> (VirtualAddress, Arc<MemoryObject>) {
-        task::create_task_tls(master_segment, task_id, virtual_address)
-    }
-
-    unsafe fn load_tls(address: VirtualAddress) {
-        use hal_x86_64::hw::registers::{write_msr, IA32_FS_BASE};
-        write_msr(IA32_FS_BASE, usize::from(address) as u64);
-    }
-
     unsafe fn context_switch(current_kernel_stack: *mut VirtualAddress, new_kernel_stack: VirtualAddress) {
         task::context_switch(current_kernel_stack, new_kernel_stack)
     }

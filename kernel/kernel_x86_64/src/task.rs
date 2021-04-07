@@ -102,49 +102,6 @@ pub unsafe fn initialize_stacks(
     (kernel_stack_pointer, user_stack_pointer)
 }
 
-pub fn create_task_tls(
-    master_segment: &hal::boot_info::Segment,
-    task_id: KernelObjectId,
-    slot_start: VirtualAddress,
-) -> (VirtualAddress, Arc<MemoryObject>) {
-    use hal::memory::{Flags, FrameSize, Size4KiB};
-    use pebble_util::math::align_up;
-
-    // Just the self pointer for now
-    const CONTROL_BLOCK_SIZE: usize = mem::size_of::<*const usize>();
-    let size = align_up(master_segment.size + CONTROL_BLOCK_SIZE, Size4KiB::SIZE);
-
-    /*
-     * On x86_64, the TLS address (the address that is eventually loaded into `FS_BASE`) is at the end of the TLS
-     * area. On its positive side is traditionally the Thread Control Block (which we just call the Control Block),
-     * and on its negative side is the actual TLS data.
-     *
-     * At the very start of the Control Block should be a self-pointer. This means the address to access either the
-     * Control Block or the TLS can be loaded from `fs:[0x0]`.
-     */
-    let control_block = slot_start + size - CONTROL_BLOCK_SIZE;
-
-    let physical_start = kernel::PHYSICAL_MEMORY_MANAGER.get().alloc_bytes(size);
-    {
-        let in_physical_mapping = hal_x86_64::kernel_map::physical_to_virtual(physical_start);
-        let control_block_in_physical_mapping = in_physical_mapping + size - CONTROL_BLOCK_SIZE;
-        unsafe {
-            ptr::write(control_block_in_physical_mapping.mut_ptr() as *mut usize, usize::from(control_block));
-        }
-        // TODO: copy the contents of the master segment into the right place
-    }
-
-    let memory_object = MemoryObject::new(
-        task_id,
-        Some(slot_start),
-        physical_start,
-        size,
-        Flags { writable: true, user_accessible: true, ..Default::default() },
-    );
-
-    (control_block, memory_object)
-}
-
 pub unsafe fn context_switch(current_kernel_stack: *mut VirtualAddress, new_kernel_stack: VirtualAddress) {
     do_context_switch(current_kernel_stack, new_kernel_stack);
 }

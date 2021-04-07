@@ -126,16 +126,6 @@ pub fn load_image(boot_services: &BootServices, volume_handle: Handle, name: &st
                 }
             }
 
-            SegmentType::Tls if segment.mem_size > 0 => {
-                /*
-                 * To provide the master TLS record, we load the TLS segment as if it was a `PT_LOAD` segment, at
-                 * the virtual address it's placed at in the image. Each task created will then copy out of this
-                 * master record to a location allocated per-task by the kernel.
-                 */
-                image_data.master_tls =
-                    Some(load_segment(boot_services, segment, crate::IMAGE_MEMORY_TYPE, &elf, true));
-            }
-
             SegmentType::Note => {
                 /*
                  * We want to search the note entries for one containing the task's capabilities (if this is an

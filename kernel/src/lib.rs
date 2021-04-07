@@ -72,15 +72,6 @@ pub trait Platform: Sized + 'static {
         task_entry_point: VirtualAddress,
     ) -> (VirtualAddress, VirtualAddress);
 
-    /// Create and initialize a TLS structure for this task.
-    unsafe fn initialize_task_tls(
-        master_segment: &hal::boot_info::Segment,
-        task_id: KernelObjectId,
-        virtual_address: VirtualAddress,
-    ) -> (VirtualAddress, Arc<MemoryObject>);
-
-    unsafe fn load_tls(address: VirtualAddress);
-
     /// Do the final part of a context switch: save all the state that needs to be to the current kernel stack,
     /// switch to a new kernel stack, and restore all the state from that stack.
     unsafe fn context_switch(current_kernel_stack: *mut VirtualAddress, new_kernel_stack: VirtualAddress);
