@@ -163,11 +163,11 @@
 
                 <div id="content" class="content">
                     <main>
-                        <h1><a class="header" href="#message-passing" id="message-passing">Message Passing</a></h1>
+                        <h1 id="message-passing"><a class="header" href="#message-passing">Message Passing</a></h1>
 <p>Pebble has a kernel object called a <code>Channel</code> for providing first-class message passing support to userspace.
 Channels move packets, called &quot;messages&quot;, which contain a stream of bytes, and optionally one or more handles that
 are transferred from the sending task to the receiving task.</p>
-<h3><a class="header" href="#ptah" id="ptah">Ptah</a></h3>
+<h3 id="ptah"><a class="header" href="#ptah">Ptah</a></h3>
 <p>Channels can move arbitrary bytes, but Pebble also includes a layer on top of of Channels called Ptah, which
 consists of a data model and wire format suitable for encoding data which can be serialized and deserialized from
 any sensible language without too much difficulty.</p>
@@ -178,7 +178,7 @@ needs to be put into a separate array, and the in-line data replaced by an index
 travels over a task boundary, the kernel examines and replaces each handle in this array with a handle to the same
 kernel object in the new task. This effectively means we need to add a new <code>Handle</code> type to our data model, which
 is not easily possible with Serde (and would make it incompatible with standard Serde anyway).</p>
-<h3><a class="header" href="#the-ptah-data-model" id="the-ptah-data-model">The Ptah Data Model</a></h3>
+<h3 id="the-ptah-data-model"><a class="header" href="#the-ptah-data-model">The Ptah Data Model</a></h3>
 <p>The Ptah data model maps pretty well to the Rust type system, and relatively closely to the Serde data model. Key
 differences are some stronger guarantees about the encoding of types such as enums (the data model only needs to
 fit a single wire format, and so can afford to be less flexible than Serde's), and the lack of a few types -

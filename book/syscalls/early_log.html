@@ -163,22 +163,22 @@
 
                 <div id="content" class="content">
                     <main>
-                        <h3><a class="header" href="#early_log" id="early_log"><code>early_log</code></a></h3>
+                        <h3 id="early_log"><a class="header" href="#early_log"><code>early_log</code></a></h3>
 <p>Used by tasks that are started early in the boot process, before reliable userspace logging support is running.
 Output is logged to the same place as kernel logging.</p>
-<h3><a class="header" href="#parameters" id="parameters">Parameters</a></h3>
+<h3 id="parameters"><a class="header" href="#parameters">Parameters</a></h3>
 <ul>
 <li><code>a</code> - the length of the string to log in bytes. Maximum length is 4096 bytes.</li>
 <li><code>b</code> - a usermode pointer to the start of the UTF-8 encoded string.</li>
 </ul>
-<h3><a class="header" href="#returns" id="returns">Returns</a></h3>
+<h3 id="returns"><a class="header" href="#returns">Returns</a></h3>
 <ul>
 <li><code>0</code> if the system call succeeded</li>
 <li><code>1</code> if the string was too long</li>
 <li><code>2</code> if the string was not valid UTF-8</li>
 <li><code>3</code> if the task making the syscall doesn't have the <code>EarlyLogging</code> capability</li>
 </ul>
-<h3><a class="header" href="#capabilities-needed" id="capabilities-needed">Capabilities needed</a></h3>
+<h3 id="capabilities-needed"><a class="header" href="#capabilities-needed">Capabilities needed</a></h3>
 <p>The <code>EarlyLogging</code> capability is needed to make this system call.</p>
 
                     </main>

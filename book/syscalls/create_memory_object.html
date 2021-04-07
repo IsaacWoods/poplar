@@ -163,11 +163,11 @@
 
                 <div id="content" class="content">
                     <main>
-                        <h1><a class="header" href="#create_memory_object" id="create_memory_object"><code>create_memory_object</code></a></h1>
+                        <h1 id="create_memory_object"><a class="header" href="#create_memory_object"><code>create_memory_object</code></a></h1>
 <p>Create a MemoryObject kernel object. Userspace can only create &quot;blank&quot; MemoryObjects (that are allocated to free,
 conventional physical memory). MemoryObjects that point to special objects (e.g. framebuffer data, PCI
 configuration spaces) must be created by the kernel.</p>
-<h3><a class="header" href="#parameters" id="parameters">Parameters</a></h3>
+<h3 id="parameters"><a class="header" href="#parameters">Parameters</a></h3>
 <ul>
 <li><code>a</code> - the virtual address to map the MemoryObject at</li>
 <li><code>b</code> - the size of the MemoryObject's memory area (in bytes)</li>
@@ -179,7 +179,7 @@ configuration spaces) must be created by the kernel.</p>
 </li>
 <li><code>d</code> - a pointer to which the kernel will write the physical address to which the MemoryObject was allocated. Ignored if null.</li>
 </ul>
-<h3><a class="header" href="#returns" id="returns">Returns</a></h3>
+<h3 id="returns"><a class="header" href="#returns">Returns</a></h3>
 <p>Uses the standard representation to return a <code>Result&lt;Handle, MemoryObjectError&gt;</code> method. Error status
 codes are:</p>
 <ul>
@@ -188,7 +188,7 @@ codes are:</p>
 <li><code>3</code> if memory of the requested size could not be allocated</li>
 <li><code>4</code> if the pointer to write the allocated physical address to was not valid</li>
 </ul>
-<h3><a class="header" href="#capabilities-needed" id="capabilities-needed">Capabilities needed</a></h3>
+<h3 id="capabilities-needed"><a class="header" href="#capabilities-needed">Capabilities needed</a></h3>
 <p>None.</p>
 
                     </main>

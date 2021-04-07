@@ -163,10 +163,10 @@
 
                 <div id="content" class="content">
                     <main>
-                        <h1><a class="header" href="#efiloader" id="efiloader">Efiloader</a></h1>
+                        <h1 id="efiloader"><a class="header" href="#efiloader">Efiloader</a></h1>
 <p><code>efiloader</code> is the bootloader for Pebble on x86_64. It utilities UEFI boot-services to load the kernel and any
 extra images needed into memory, allocate memory for the heap, configure a basic framebuffer, and enter the kernel.</p>
-<h3><a class="header" href="#description-of-booting-process" id="description-of-booting-process">Description of booting process</a></h3>
+<h3 id="description-of-booting-process"><a class="header" href="#description-of-booting-process">Description of booting process</a></h3>
 <p>A rough order of the steps that <code>efiloader</code> performs is:</p>
 <ul>
 <li>Parses a set of load options passed to the loader, allowing the user to instruct it on how to load the kernel</li>
@@ -177,7 +177,7 @@ extra images needed into memory, allocate memory for the heap, configure a basic
 <li>Constructs some &quot;boot info&quot;, including a map of physical memory, telling the kernel about the hardware</li>
 <li>Jumps into the kernel</li>
 </ul>
-<h3><a class="header" href="#load-options" id="load-options">Load options</a></h3>
+<h3 id="load-options"><a class="header" href="#load-options">Load options</a></h3>
 <p>A series of load options may be supplied to <code>efiloader</code> to tell it how Pebble should be booted. These options
 consist of a string of space separated key-value pairs, of the form <code>a.dot.separated.key=value</code>. Supported keys,
 plus descriptions of their values, are:</p>

@@ -163,15 +163,15 @@
 
                 <div id="content" class="content">
                     <main>
-                        <h1><a class="header" href="#create_channel" id="create_channel"><code>create_channel</code></a></h1>
+                        <h1 id="create_channel"><a class="header" href="#create_channel"><code>create_channel</code></a></h1>
 <p>Create a <code>Channel</code> kernel object. Channels are slightly odd kernel objects in that they must be referred to in
 userspace by two handles, one for each &quot;end&quot; of the channel. This system call therefore returns two handles, one of
 which is usually transferred to another task.</p>
-<h3><a class="header" href="#parameters" id="parameters">Parameters</a></h3>
+<h3 id="parameters"><a class="header" href="#parameters">Parameters</a></h3>
 <ul>
 <li><code>a</code> - the virtual address to write the second handle into (only one can be returned in the status)</li>
 </ul>
-<h3><a class="header" href="#returns" id="returns">Returns</a></h3>
+<h3 id="returns"><a class="header" href="#returns">Returns</a></h3>
 <p>Uses the standard representation to return a <code>Result&lt;Handle, CreateChannelError&gt;</code> method. Error status
 codes are:</p>
 <ul>
@@ -179,7 +179,7 @@ codes are:</p>
 </ul>
 <p>TODO: if we ditch the ability to return an error (i.e. by making this infallible, or by saying that a null handle
 denotes an error but not which one), we could return both handles in the status.</p>
-<h3><a class="header" href="#capabilities-needed" id="capabilities-needed">Capabilities needed</a></h3>
+<h3 id="capabilities-needed"><a class="header" href="#capabilities-needed">Capabilities needed</a></h3>
 <p>None.</p>
 
                     </main>

@@ -163,18 +163,18 @@
 
                 <div id="content" class="content">
                     <main>
-                        <h1><a class="header" href="#register_service" id="register_service"><code>register_service</code></a></h1>
+                        <h1 id="register_service"><a class="header" href="#register_service"><code>register_service</code></a></h1>
 <p>Register yourself as the provider of a service. The name of the service will be <code>{task_name}.{service_name}</code>. This 
 returns a channel that is used to alert the provider when another task subscribes to your service with the
 <code>subscribe_to_service</code> system call.</p>
 <p>See the section on <a href="idk">Services</a> for more information about services, how to register a service, and how to
 subscribe to a service.</p>
-<h3><a class="header" href="#parameters" id="parameters">Parameters</a></h3>
+<h3 id="parameters"><a class="header" href="#parameters">Parameters</a></h3>
 <ul>
 <li><code>a</code> - the length of the name string in bytes. Maximum length is 256. Must be greater than <code>0</code>.</li>
 <li><code>b</code> - a usermode pointer to the start of the UTF-8 encoded name string.</li>
 </ul>
-<h3><a class="header" href="#returns" id="returns">Returns</a></h3>
+<h3 id="returns"><a class="header" href="#returns">Returns</a></h3>
 <p>Returns the standard representation of a <code>Result&lt;Handle, ServiceError&gt;</code>. Error status codes are:</p>
 <ul>
 <li><code>1</code> if the task does not have the correct capability</li>
@@ -182,7 +182,7 @@ subscribe to a service.</p>
 <li><code>3</code> if the name is too long, or <code>0</code></li>
 </ul>
 <p>The returned handle is to a <code>Channel</code> that is used to serve channel subscriptions.</p>
-<h3><a class="header" href="#capabilities-needed" id="capabilities-needed">Capabilities needed</a></h3>
+<h3 id="capabilities-needed"><a class="header" href="#capabilities-needed">Capabilities needed</a></h3>
 <p>The <code>ServiceProvider</code> capability is needed to make this system call.</p>
 
                     </main>

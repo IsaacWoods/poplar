@@ -163,11 +163,11 @@
 
                 <div id="content" class="content">
                     <main>
-                        <h1><a class="header" href="#building-a-rustc-target-for-pebble" id="building-a-rustc-target-for-pebble">Building a <code>rustc</code> target for Pebble</a></h1>
+                        <h1 id="building-a-rustc-target-for-pebble"><a class="header" href="#building-a-rustc-target-for-pebble">Building a <code>rustc</code> target for Pebble</a></h1>
 <p>We want a target in <code>rustc</code> for building userspace programs for Pebble. It would be especially cool to get it
 merged as an upstream Tier-3 target. This documents my progress, mainly as a reference for me to remember how it all
 works.</p>
-<h3><a class="header" href="#how-do-i-actually-build-and-use-rustc" id="how-do-i-actually-build-and-use-rustc">How do I actually build and use <code>rustc</code>?</a></h3>
+<h3 id="how-do-i-actually-build-and-use-rustc"><a class="header" href="#how-do-i-actually-build-and-use-rustc">How do I actually build and use <code>rustc</code>?</a></h3>
 <p>A useful baseline invocation for normal use is:</p>
 <pre><code>./x.py build -i library/std
 </code></pre>
@@ -179,7 +179,7 @@ rustup toolchain link pebble build/{host triple}/stage2     # If you built a sta
 <p>You can then use this toolchain from Cargo anywhere on the system with:</p>
 <pre><code>cargo +pebble build     # Or whatever command you need
 </code></pre>
-<h3><a class="header" href="#using-a-custom-llvm" id="using-a-custom-llvm">Using a custom LLVM</a></h3>
+<h3 id="using-a-custom-llvm"><a class="header" href="#using-a-custom-llvm">Using a custom LLVM</a></h3>
 <ul>
 <li>Fork Rust's <code>llvm-project</code></li>
 <li><code>cd src/llvm_project</code></li>
@@ -190,7 +190,7 @@ rustup toolchain link pebble build/{host triple}/stage2     # If you built a sta
 <li><code>git add llvm-project</code></li>
 <li><code>git commit -m &quot;Move to custom LLVM&quot;</code></li>
 </ul>
-<h3><a class="header" href="#things-to-change-in-configtoml" id="things-to-change-in-configtoml">Things to change in <code>config.toml</code></a></h3>
+<h3 id="things-to-change-in-configtoml"><a class="header" href="#things-to-change-in-configtoml">Things to change in <code>config.toml</code></a></h3>
 <p>This is as of <code>2020-09-29</code> - you need to remember to keep the <code>config.toml</code> up-to-date (as it's not checked in
 upstream), and can cause confusing errors when it's out-of-date.</p>
 <ul>
@@ -200,7 +200,7 @@ upstream), and can cause confusing errors when it's out-of-date.</p>
 <li><code>lld = true</code> under <code>[rust]</code>. Without this, the toolchain can't find <code>rust-lld</code> when linking.</li>
 <li><code>llvm-tools = true</code> under <code>[rust]</code>. This probably isn't needed, I just chucked it in in case <code>rust-lld</code> needs it.</li>
 </ul>
-<h3><a class="header" href="#adding-the-target" id="adding-the-target">Adding the target</a></h3>
+<h3 id="adding-the-target"><a class="header" href="#adding-the-target">Adding the target</a></h3>
 <p>I used a slightly different layout to most targets (which have a base, which creates a <code>TargetOptions</code>, and then a
 target that modifies and uses those options).</p>
 <ul>
@@ -210,7 +210,7 @@ existing one. Instead of a separate <code>pebble_base.rs</code> to create the <c
 itself. We <code>include_str!</code> the linker script in here, so it's distributed as part of the <code>rustc</code> binary.</li>
 <li>Add the target in the <code>supported_targets!</code> macro in <code>compiler/rustc_target/src/spec/mod.rs</code>.</li>
 </ul>
-<h3><a class="header" href="#adding-the-target-to-llvm" id="adding-the-target-to-llvm">Adding the target to LLVM</a></h3>
+<h3 id="adding-the-target-to-llvm"><a class="header" href="#adding-the-target-to-llvm">Adding the target to LLVM</a></h3>
 <p>I don't really know my way around the LLVM code base, so this was fairly cobbled together:</p>
 <ul>
 <li>In <code>llvm/include/llvm/ADT/Triple.h</code>, add a variant for the OS in the <code>OSType</code> enum. I called it <code>Pebble</code>. Don't
@@ -226,7 +226,7 @@ build an entire compiler without the changes you are trying to test.</p>
 <p>NOTE: to avoid people from having to switch to our <code>llvm-project</code> fork, we don't actually use our LLVM target from
 <code>rustc</code> (yet). I'm not sure why you need per-OS targets in LLVM, as it doesn't even seem to let us do any of the
 things we wanted to (this totally might just be me not knowing how LLVM targets work).</p>
-<h3><a class="header" href="#notes" id="notes">Notes</a></h3>
+<h3 id="notes"><a class="header" href="#notes">Notes</a></h3>
 <ul>
 <li>We needed to change the entry point to <code>_start</code>, or it silently just doesn't emit any sections in the final
 image.</li>

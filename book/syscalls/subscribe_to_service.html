@@ -163,18 +163,18 @@
 
                 <div id="content" class="content">
                     <main>
-                        <h1><a class="header" href="#subscribe_to_service" id="subscribe_to_service"><code>subscribe_to_service</code></a></h1>
+                        <h1 id="subscribe_to_service"><a class="header" href="#subscribe_to_service"><code>subscribe_to_service</code></a></h1>
 <p>Subscribe to a registered service by name. This will deliver a notification to the task that registered the
 service with one end of a newly created channel. The other end of the channel will be returned by this system call,
 if successful.</p>
 <p>See the section on <a href="idk">Services</a> for more information about services, how to register a service, and how to
 subscribe to a service.</p>
-<h3><a class="header" href="#parameters" id="parameters">Parameters</a></h3>
+<h3 id="parameters"><a class="header" href="#parameters">Parameters</a></h3>
 <ul>
 <li><code>a</code> - the length of the name string in bytes. Maximum length is 256. Must be greater than <code>0</code>.</li>
 <li><code>b</code> - a usermode pointer to the start of the UTF-8 encoded name string.</li>
 </ul>
-<h3><a class="header" href="#returns" id="returns">Returns</a></h3>
+<h3 id="returns"><a class="header" href="#returns">Returns</a></h3>
 <p>Returns the standard representation of a <code>Result&lt;Handle, ServiceError&gt;</code>. Error status codes are:</p>
 <ul>
 <li><code>1</code> if the task does not have the correct capability</li>
@@ -184,7 +184,7 @@ subscribe to a service.</p>
 </ul>
 <p>The returned handle is to one end of a <code>Channel</code>, the other end of which has been given to the task that supplies
 the service.</p>
-<h3><a class="header" href="#capabilities-needed" id="capabilities-needed">Capabilities needed</a></h3>
+<h3 id="capabilities-needed"><a class="header" href="#capabilities-needed">Capabilities needed</a></h3>
 <p>The <code>ServiceUser</code> capability is needed to make this system call.</p>
 
                     </main>

@@ -1,7 +1,7 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/work/pebble/pebble/lib/pebble_util/src/bitmap.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>bitmap.rs - source</title><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../light.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../../dark.css" disabled ><link rel="stylesheet" type="text/css" href="../../ayu.css" disabled ><script id="default-settings"></script><script src="../../storage.js"></script><noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="icon" type="image/svg+xml" href="../../favicon.svg">
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/work/pebble/pebble/lib/pebble_util/src/bitmap.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>bitmap.rs - source</title><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../light.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../../dark.css" disabled ><link rel="stylesheet" type="text/css" href="../../ayu.css" disabled ><script id="default-settings"></script><script src="../../storage.js"></script><script src="../../crates.js"></script><noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="icon" type="image/svg+xml" href="../../favicon.svg">
 <link rel="alternate icon" type="image/png" href="../../favicon-16x16.png">
-<link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><style type="text/css">#crate-search{background-image:url("../../down-arrow.svg");}</style></head><body class="rustdoc source"><!--[if lte IE 8]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu">&#9776;</div><a href='../../pebble_util/index.html'><div class='logo-container rust-logo'><img src='../../rust-logo.png' alt='logo'></div></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu"><img src="../../brush.svg" width="18" alt="Pick another theme!"></button><div id="theme-choices" role="menu"></div></div><script src="../../theme.js"></script><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><button type="button" class="help-button">?</button>
-                <a id="settings-menu" href="../../settings.html"><img src="../../wheel.svg" width="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><pre class="line-numbers"><span id="1">  1</span>
+<link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><style type="text/css">#crate-search{background-image:url("../../down-arrow.svg");}</style></head><body class="rustdoc source"><!--[if lte IE 8]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu" role="button">&#9776;</div><a href='../../pebble_util/index.html'><div class='logo-container rust-logo'><img src='../../rust-logo.png' alt='logo'></div></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu"><img src="../../brush.svg" width="18" height="18" alt="Pick another theme!"></button><div id="theme-choices" role="menu"></div></div><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><button type="button" class="help-button">?</button>
+                <a id="settings-menu" href="../../settings.html"><img src="../../wheel.svg" width="18" height="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><pre class="line-numbers"><span id="1">  1</span>
 <span id="2">  2</span>
 <span id="3">  3</span>
 <span id="4">  4</span>
@@ -192,7 +192,7 @@
     }
 
     <span class="kw">fn</span> <span class="ident">free</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">index</span>: <span class="ident">usize</span>, <span class="ident">n</span>: <span class="ident">usize</span>) {
-        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="self">self</span>.<span class="ident">get_bits</span>(<span class="ident">index</span>..(<span class="ident">index</span> <span class="op">+</span> <span class="ident">n</span>)), <span class="self">Self</span>::<span class="ident">from</span>((<span class="self">Self</span>::<span class="ident">one</span>() <span class="op">&lt;</span><span class="op">&lt;</span> <span class="ident">n</span>) <span class="op">-</span> <span class="self">Self</span>::<span class="ident">one</span>()).<span class="ident">unwrap</span>());
+        <span class="macro">assert_eq!</span>(<span class="self">self</span>.<span class="ident">get_bits</span>(<span class="ident">index</span>..(<span class="ident">index</span> <span class="op">+</span> <span class="ident">n</span>)), <span class="self">Self</span>::<span class="ident">from</span>((<span class="self">Self</span>::<span class="ident">one</span>() <span class="op">&lt;</span><span class="op">&lt;</span> <span class="ident">n</span>) <span class="op">-</span> <span class="self">Self</span>::<span class="ident">one</span>()).<span class="ident">unwrap</span>());
         <span class="self">self</span>.<span class="ident">set_bits</span>(<span class="ident">index</span>..(<span class="ident">index</span> <span class="op">+</span> <span class="ident">n</span>), <span class="self">Self</span>::<span class="ident">zero</span>());
     }
 }
@@ -223,17 +223,17 @@
     }
 
     <span class="kw">fn</span> <span class="ident">free</span>(<span class="self">self</span>, <span class="ident">index</span>: <span class="ident">usize</span>, <span class="ident">n</span>: <span class="ident">usize</span>) {
-        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="self">self</span>.<span class="ident">get_bits</span>(<span class="ident">index</span>..(<span class="ident">index</span> <span class="op">+</span> <span class="ident">n</span>)), (<span class="number">1</span> <span class="op">&lt;</span><span class="op">&lt;</span> <span class="ident">n</span>) <span class="op">-</span> <span class="number">1</span>);
+        <span class="macro">assert_eq!</span>(<span class="self">self</span>.<span class="ident">get_bits</span>(<span class="ident">index</span>..(<span class="ident">index</span> <span class="op">+</span> <span class="ident">n</span>)), (<span class="number">1</span> <span class="op">&lt;</span><span class="op">&lt;</span> <span class="ident">n</span>) <span class="op">-</span> <span class="number">1</span>);
         <span class="self">self</span>.<span class="ident">set_bits</span>(<span class="ident">index</span>..(<span class="ident">index</span> <span class="op">+</span> <span class="ident">n</span>), <span class="number">0</span>);
     }
 }
 
 <span class="attribute">#[<span class="ident">test</span>]</span>
 <span class="kw">fn</span> <span class="ident">test_bitmap</span>() {
-    <span class="macro">assert_eq</span><span class="macro">!</span>((<span class="number">0b10001</span>: <span class="ident">u16</span>).<span class="ident">alloc</span>(<span class="number">3</span>), <span class="prelude-val">Some</span>(<span class="number">1</span>));
-    <span class="macro">assert_eq</span><span class="macro">!</span>((<span class="number">0b11_0000_1_000_111</span>: <span class="ident">u16</span>).<span class="ident">alloc</span>(<span class="number">4</span>), <span class="prelude-val">Some</span>(<span class="number">7</span>));
-    <span class="macro">assert_eq</span><span class="macro">!</span>((<span class="number">0b1111_1111</span>: <span class="ident">u8</span>).<span class="ident">alloc</span>(<span class="number">1</span>), <span class="prelude-val">None</span>);
-    <span class="macro">assert_eq</span><span class="macro">!</span>((<span class="number">0b0110_1010</span>: <span class="ident">u8</span>).<span class="ident">alloc</span>(<span class="number">2</span>), <span class="prelude-val">None</span>);
+    <span class="macro">assert_eq!</span>((<span class="number">0b10001</span>: <span class="ident">u16</span>).<span class="ident">alloc</span>(<span class="number">3</span>), <span class="prelude-val">Some</span>(<span class="number">1</span>));
+    <span class="macro">assert_eq!</span>((<span class="number">0b11_0000_1_000_111</span>: <span class="ident">u16</span>).<span class="ident">alloc</span>(<span class="number">4</span>), <span class="prelude-val">Some</span>(<span class="number">7</span>));
+    <span class="macro">assert_eq!</span>((<span class="number">0b1111_1111</span>: <span class="ident">u8</span>).<span class="ident">alloc</span>(<span class="number">1</span>), <span class="prelude-val">None</span>);
+    <span class="macro">assert_eq!</span>((<span class="number">0b0110_1010</span>: <span class="ident">u8</span>).<span class="ident">alloc</span>(<span class="number">2</span>), <span class="prelude-val">None</span>);
 }
 
 <span class="attribute">#[<span class="ident">test</span>]</span>
@@ -242,10 +242,10 @@
      * These might be a bit counterintuitive at first, because `BitArray` treats the array as a
      * little-endian set of bytes, so the LSB of the first byte is bit 0.
      */</span>
-    <span class="macro">assert_eq</span><span class="macro">!</span>([<span class="number">0xff</span>, <span class="number">0xff</span>, <span class="number">0xff</span>, <span class="number">0xff</span>, <span class="number">0xff</span>].<span class="ident">alloc</span>(<span class="number">3</span>), <span class="prelude-val">None</span>);
-    <span class="macro">assert_eq</span><span class="macro">!</span>([<span class="number">0xfe</span>, <span class="number">0xff</span>, <span class="number">0xff</span>, <span class="number">0xff</span>].<span class="ident">alloc</span>(<span class="number">1</span>), <span class="prelude-val">Some</span>(<span class="number">0</span>));
-    <span class="macro">assert_eq</span><span class="macro">!</span>([<span class="number">0b1111_0001</span>, <span class="number">0xff</span>, <span class="number">0xff</span>].<span class="ident">alloc</span>(<span class="number">3</span>), <span class="prelude-val">Some</span>(<span class="number">1</span>));
-    <span class="macro">assert_eq</span><span class="macro">!</span>([<span class="number">0b1111_1001</span>, <span class="number">0xff</span>, <span class="number">0xff</span>].<span class="ident">alloc</span>(<span class="number">3</span>), <span class="prelude-val">None</span>);
+    <span class="macro">assert_eq!</span>([<span class="number">0xff</span>, <span class="number">0xff</span>, <span class="number">0xff</span>, <span class="number">0xff</span>, <span class="number">0xff</span>].<span class="ident">alloc</span>(<span class="number">3</span>), <span class="prelude-val">None</span>);
+    <span class="macro">assert_eq!</span>([<span class="number">0xfe</span>, <span class="number">0xff</span>, <span class="number">0xff</span>, <span class="number">0xff</span>].<span class="ident">alloc</span>(<span class="number">1</span>), <span class="prelude-val">Some</span>(<span class="number">0</span>));
+    <span class="macro">assert_eq!</span>([<span class="number">0b1111_0001</span>, <span class="number">0xff</span>, <span class="number">0xff</span>].<span class="ident">alloc</span>(<span class="number">3</span>), <span class="prelude-val">Some</span>(<span class="number">1</span>));
+    <span class="macro">assert_eq!</span>([<span class="number">0b1111_1001</span>, <span class="number">0xff</span>, <span class="number">0xff</span>].<span class="ident">alloc</span>(<span class="number">3</span>), <span class="prelude-val">None</span>);
 }
 
 <span class="attribute">#[<span class="ident">test</span>]</span>
@@ -254,16 +254,16 @@
 
     <span class="comment">// Make the first allocation</span>
     <span class="kw">let</span> <span class="ident">first</span> <span class="op">=</span> <span class="ident">bitmap</span>.<span class="ident">alloc</span>(<span class="number">1</span>);
-    <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">first</span>, <span class="prelude-val">Some</span>(<span class="number">0</span>));
-    <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">bitmap</span>, [<span class="number">0b1111_1101</span>, <span class="number">0xff</span>, <span class="number">0xff</span>]);
+    <span class="macro">assert_eq!</span>(<span class="ident">first</span>, <span class="prelude-val">Some</span>(<span class="number">0</span>));
+    <span class="macro">assert_eq!</span>(<span class="ident">bitmap</span>, [<span class="number">0b1111_1101</span>, <span class="number">0xff</span>, <span class="number">0xff</span>]);
 
     <span class="comment">// Make a second allocation</span>
     <span class="kw">let</span> <span class="ident">second</span> <span class="op">=</span> <span class="ident">bitmap</span>.<span class="ident">alloc</span>(<span class="number">1</span>);
-    <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">second</span>, <span class="prelude-val">Some</span>(<span class="number">1</span>));
-    <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">bitmap</span>, [<span class="number">0b1111_1111</span>, <span class="number">0xff</span>, <span class="number">0xff</span>]);
+    <span class="macro">assert_eq!</span>(<span class="ident">second</span>, <span class="prelude-val">Some</span>(<span class="number">1</span>));
+    <span class="macro">assert_eq!</span>(<span class="ident">bitmap</span>, [<span class="number">0b1111_1111</span>, <span class="number">0xff</span>, <span class="number">0xff</span>]);
 
     <span class="comment">// Try to make a third allocation - it should fail</span>
-    <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">bitmap</span>.<span class="ident">alloc</span>(<span class="number">1</span>), <span class="prelude-val">None</span>);
+    <span class="macro">assert_eq!</span>(<span class="ident">bitmap</span>.<span class="ident">alloc</span>(<span class="number">1</span>), <span class="prelude-val">None</span>);
 }
 
 <span class="attribute">#[<span class="ident">test</span>]</span>
@@ -272,26 +272,26 @@
 
     <span class="comment">// Make the first allocation</span>
     <span class="kw">let</span> <span class="ident">first</span> <span class="op">=</span> <span class="ident">bitmap</span>.<span class="ident">alloc</span>(<span class="number">2</span>);
-    <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">first</span>, <span class="prelude-val">Some</span>(<span class="number">0</span>));
-    <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">bitmap</span>, [<span class="number">0b1000_1011</span>, <span class="number">0xff</span>, <span class="number">0xff</span>]);
+    <span class="macro">assert_eq!</span>(<span class="ident">first</span>, <span class="prelude-val">Some</span>(<span class="number">0</span>));
+    <span class="macro">assert_eq!</span>(<span class="ident">bitmap</span>, [<span class="number">0b1000_1011</span>, <span class="number">0xff</span>, <span class="number">0xff</span>]);
 
     <span class="comment">// Make a second allocation</span>
     <span class="kw">let</span> <span class="ident">second</span> <span class="op">=</span> <span class="ident">bitmap</span>.<span class="ident">alloc</span>(<span class="number">3</span>);
-    <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">second</span>, <span class="prelude-val">Some</span>(<span class="number">4</span>));
-    <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">bitmap</span>, [<span class="number">0b1111_1011</span>, <span class="number">0xff</span>, <span class="number">0xff</span>]);
+    <span class="macro">assert_eq!</span>(<span class="ident">second</span>, <span class="prelude-val">Some</span>(<span class="number">4</span>));
+    <span class="macro">assert_eq!</span>(<span class="ident">bitmap</span>, [<span class="number">0b1111_1011</span>, <span class="number">0xff</span>, <span class="number">0xff</span>]);
 
     <span class="comment">// Make an allocation that doesn&#39;t fit</span>
-    <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">bitmap</span>.<span class="ident">alloc</span>(<span class="number">3</span>), <span class="prelude-val">None</span>);
+    <span class="macro">assert_eq!</span>(<span class="ident">bitmap</span>.<span class="ident">alloc</span>(<span class="number">3</span>), <span class="prelude-val">None</span>);
 
     <span class="comment">// Free the first allocation</span>
     <span class="ident">bitmap</span>.<span class="ident">free</span>(<span class="ident">first</span>.<span class="ident">unwrap</span>(), <span class="number">2</span>);
-    <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">bitmap</span>, [<span class="number">0b1111_1000</span>, <span class="number">0xff</span>, <span class="number">0xff</span>]);
+    <span class="macro">assert_eq!</span>(<span class="ident">bitmap</span>, [<span class="number">0b1111_1000</span>, <span class="number">0xff</span>, <span class="number">0xff</span>]);
 
     <span class="comment">// Make another allocation that now fits</span>
     <span class="kw">let</span> <span class="ident">third</span> <span class="op">=</span> <span class="ident">bitmap</span>.<span class="ident">alloc</span>(<span class="number">3</span>);
-    <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">third</span>, <span class="prelude-val">Some</span>(<span class="number">0</span>));
-    <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">bitmap</span>, [<span class="number">0b1111_1111</span>, <span class="number">0xff</span>, <span class="number">0xff</span>]);
+    <span class="macro">assert_eq!</span>(<span class="ident">third</span>, <span class="prelude-val">Some</span>(<span class="number">0</span>));
+    <span class="macro">assert_eq!</span>(<span class="ident">bitmap</span>, [<span class="number">0b1111_1111</span>, <span class="number">0xff</span>, <span class="number">0xff</span>]);
 }
 </pre></div>
-</section><section id="search" class="content hidden"></section><section class="footer"></section><div id="rustdoc-vars" data-root-path="../../" data-current-crate="pebble_util"></div>
-    <script src="../../main.js"></script><script src="../../source-script.js"></script><script src="../../source-files.js"></script><script defer src="../../search-index.js"></script></body></html>
+</section><section id="search" class="content hidden"></section><section class="footer"></section><div id="rustdoc-vars" data-root-path="../../" data-current-crate="pebble_util" data-search-js="../../search-index.js"></div>
+    <script src="../../main.js"></script><script src="../../source-script.js"></script><script src="../../source-files.js"></script></body></html>

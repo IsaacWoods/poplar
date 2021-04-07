@@ -163,17 +163,17 @@
 
                 <div id="content" class="content">
                     <main>
-                        <h1><a class="header" href="#platforms" id="platforms">Platforms</a></h1>
+                        <h1 id="platforms"><a class="header" href="#platforms">Platforms</a></h1>
 <p>A platform is a build target for the kernel. In some cases, there is only one platform for an entire architecture because the hardware is relatively standardized (e.g. x86_64). Other times, hardware is different enough between 
 platforms that it's easier to treat them as different targets (e.g. a headless ARM server that boots using UEFI, versus a Raspberry Pi).</p>
-<h3><a class="header" href="#platform-x86_64" id="platform-x86_64">Platform: <code>x86_64</code></a></h3>
+<h3 id="platform-x86_64"><a class="header" href="#platform-x86_64">Platform: <code>x86_64</code></a></h3>
 <p>The vast majority of x86_64 hardware is pretty similar, and so is treated as a single platform. It uses the <code>hal_x86_64</code> HAL. We assume that the platform:</p>
 <ul>
 <li>Boots using UEFI</li>
 <li>Supports the APIC</li>
 <li>Supports the <code>xsave</code> instruction</li>
 </ul>
-<h3><a class="header" href="#platform-rpi4" id="platform-rpi4">Platform: <code>rpi4</code></a></h3>
+<h3 id="platform-rpi4"><a class="header" href="#platform-rpi4">Platform: <code>rpi4</code></a></h3>
 <p>The Raspberry Pi 4. It uses the <code>hal_arm64</code> HAL.</p>
 
                     </main>

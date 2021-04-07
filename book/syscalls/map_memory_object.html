@@ -163,9 +163,9 @@
 
                 <div id="content" class="content">
                     <main>
-                        <h1><a class="header" href="#map_memory_object" id="map_memory_object"><code>map_memory_object</code></a></h1>
+                        <h1 id="map_memory_object"><a class="header" href="#map_memory_object"><code>map_memory_object</code></a></h1>
 <p>Map a MemoryObject into an AddressSpace.</p>
-<h3><a class="header" href="#parameters" id="parameters">Parameters</a></h3>
+<h3 id="parameters"><a class="header" href="#parameters">Parameters</a></h3>
 <ul>
 <li><code>a</code> - a handle to the MemoryObject.</li>
 <li><code>b</code> - a handle to the AddressSpace. The zero handle indicates to map the memory object into the task's AddressSpace.</li>
@@ -173,7 +173,7 @@
 Should be null if the MemoryObject supplies the address.</li>
 <li><code>d</code> - a pointer to which the kernel will write the virtual address at which the MemoryObject was mapped. Ignored if null.</li>
 </ul>
-<h3><a class="header" href="#returns" id="returns">Returns</a></h3>
+<h3 id="returns"><a class="header" href="#returns">Returns</a></h3>
 <ul>
 <li><code>0</code> if the system call succeeded</li>
 <li><code>1</code> if either of the passed handles are invalid</li>
@@ -184,7 +184,7 @@ Should be null if the MemoryObject supplies the address.</li>
 <li><code>6</code> if a virtual address to map at was supplied, but the MemoryObject needs to be mapped at a specific address.</li>
 <li><code>7</code> if a virtual address was not supplied, but the MemoryObject does not specify the address to map it at.</li>
 </ul>
-<h3><a class="header" href="#capabilities-needed" id="capabilities-needed">Capabilities needed</a></h3>
+<h3 id="capabilities-needed"><a class="header" href="#capabilities-needed">Capabilities needed</a></h3>
 <p>None (this may change in the future).</p>
 
                     </main>

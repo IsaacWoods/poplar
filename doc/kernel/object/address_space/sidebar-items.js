@@ -1,1 +1,1 @@
-initSidebarItems({"constant":[["MAX_TASKS",""],["TLS_AREA_BOTTOM",""],["TLS_AREA_TOP",""],["TLS_SLOT_SIZE",""],["USER_STACK_BOTTOM",""],["USER_STACK_SLOT_SIZE",""],["USER_STACK_TOP",""]],"enum":[["State",""]],"struct":[["AddressSpace",""],["TaskSlot",""]]});
+initSidebarItems({"constant":[["MAX_TASKS",""],["USER_STACK_BOTTOM",""],["USER_STACK_SLOT_SIZE",""],["USER_STACK_TOP",""]],"enum":[["State",""]],"struct":[["AddressSpace",""],["TaskSlot",""]]});

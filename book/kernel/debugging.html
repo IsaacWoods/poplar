@@ -163,10 +163,10 @@
 
                 <div id="content" class="content">
                     <main>
-                        <h1><a class="header" href="#debugging-the-kernel" id="debugging-the-kernel">Debugging the kernel</a></h1>
+                        <h1 id="debugging-the-kernel"><a class="header" href="#debugging-the-kernel">Debugging the kernel</a></h1>
 <p>Kernels can be difficult to debug - this page tries to collect useful techniques for debugging kernels in general,
 and also any Pebble specific things that might be useful.</p>
-<h3><a class="header" href="#using-gdb" id="using-gdb">Using GDB</a></h3>
+<h3 id="using-gdb"><a class="header" href="#using-gdb">Using GDB</a></h3>
 <p>Firstly, start GDB with (this is just an example, alter e.g. paths as needed):</p>
 <pre><code>tools/rust_gdb -q &quot;build/Pebble/fat/kernel.elf&quot; -ex &quot;target remote :1234&quot;
 </code></pre>
@@ -181,14 +181,14 @@ breakpoints before any code runs.</li>
 <li>To step through assembly, you must use <code>si</code> instead of <code>s</code></li>
 <li>Use <code>tui enable</code> to move to the TUI, and then <code>layout regs</code> to show both general registers and source</li>
 </ul>
-<h3><a class="header" href="#emulate-with-a-custom-build-of-qemu" id="emulate-with-a-custom-build-of-qemu">Emulate with a custom build of QEMU</a></h3>
+<h3 id="emulate-with-a-custom-build-of-qemu"><a class="header" href="#emulate-with-a-custom-build-of-qemu">Emulate with a custom build of QEMU</a></h3>
 <p>For particularly tricky issues, it can sometimes be useful to insert <code>printf</code>s in QEMU and see if they trigger
 when emulating Pebble. The <code>Makefile</code> makes this easy - run something like:</p>
 <pre><code>QEMU_DIR='~/qemu/build/x86_64-softmmu/' make qemu-no-kvm
 </code></pre>
 <p>where the location pointed to by <code>QEMU_DIR</code> is the build destination of the correct QEMU executable. A lot of the
 time, the <code>printf</code>s you've inserted will only trigger with TCG, so it's usually best to use <code>qemu-no-kvm</code>.</p>
-<h3><a class="header" href="#pebble-specific-the-breakpoint-exception" id="pebble-specific-the-breakpoint-exception">Pebble specific: the breakpoint exception</a></h3>
+<h3 id="pebble-specific-the-breakpoint-exception"><a class="header" href="#pebble-specific-the-breakpoint-exception">Pebble specific: the breakpoint exception</a></h3>
 <p>The breakpoint exception is useful for inspecting the contents of registers at specific points, such as in sections
 of assembly (where it's inconvenient to call into Rust, or to use a debugger because getting <code>global_asm!</code> to play
 nicely with GDB is a pain).</p>
@@ -199,7 +199,7 @@ mov rsp, [gs:0x10]
 int3  // Is my user stack pointer correct?
 sysretq
 </code></pre>
-<h3><a class="header" href="#building-ovmf" id="building-ovmf">Building OVMF</a></h3>
+<h3 id="building-ovmf"><a class="header" href="#building-ovmf">Building OVMF</a></h3>
 <p>Building a debug build of OVMF isn't too hard (from the base of the <code>edk2</code> repo):</p>
 <pre><code>OvmfPkg/build.sh -a X64
 </code></pre>

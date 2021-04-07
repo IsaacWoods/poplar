@@ -163,16 +163,16 @@
 
                 <div id="content" class="content">
                     <main>
-                        <h1><a class="header" href="#get_framebuffer" id="get_framebuffer"><code>get_framebuffer</code></a></h1>
+                        <h1 id="get_framebuffer"><a class="header" href="#get_framebuffer"><code>get_framebuffer</code></a></h1>
 <p>On many architectures, the bootloader or kernel can create a naive framebuffer using a platform-specific method.
 This framebuffer can be used to render from userspace, if a better hardware driver is not available on the
 platform.</p>
-<h3><a class="header" href="#parameters" id="parameters">Parameters</a></h3>
+<h3 id="parameters"><a class="header" href="#parameters">Parameters</a></h3>
 <ul>
 <li><code>a</code> should contain a mapped, writable, user-space address, to which information about the framebuffer will
 be written.</li>
 </ul>
-<h3><a class="header" href="#returns" id="returns">Returns</a></h3>
+<h3 id="returns"><a class="header" href="#returns">Returns</a></h3>
 <p>This system call returns three things:</p>
 <ul>
 <li>A status code</li>
@@ -201,7 +201,7 @@ struct FramebufferInfo {
 }
 <span class="boring">}
 </span></code></pre></pre>
-<h3><a class="header" href="#capabilities-needed" id="capabilities-needed">Capabilities needed</a></h3>
+<h3 id="capabilities-needed"><a class="header" href="#capabilities-needed">Capabilities needed</a></h3>
 <p>Tasks need the <code>GetKernelFramebuffer</code> capability to use this system call.</p>
 
                     </main>
