@@ -56,8 +56,12 @@ where
         task.address_space.switch_to();
 
         unsafe {
-            P::per_cpu().set_kernel_stack_pointer(*task.kernel_stack_pointer.get());
-            P::per_cpu().set_user_stack_pointer(*task.user_stack_pointer.get());
+            let kernel_stack_pointer: VirtualAddress = *task.kernel_stack_pointer.get();
+            let user_stack_pointer: VirtualAddress = *task.user_stack_pointer.get();
+            trace!("Setting stacks - kernel: {:#x}, user: {:#x}", kernel_stack_pointer, user_stack_pointer);
+
+            P::per_cpu().set_kernel_stack_pointer(kernel_stack_pointer);
+            P::per_cpu().set_user_stack_pointer(user_stack_pointer);
             P::drop_into_userspace()
         }
     }
@@ -110,6 +114,7 @@ where
 
             unsafe {
                 *old_task.user_stack_pointer.get() = P::per_cpu().get_user_stack_pointer();
+                trace!("Setting stacks - kernel: {:#x}, user: {:#x}", new_kernel_stack, new_user_stack);
                 P::per_cpu().set_kernel_stack_pointer(new_kernel_stack);
                 P::per_cpu().set_user_stack_pointer(new_user_stack);
                 P::context_switch(old_kernel_stack, new_kernel_stack);
