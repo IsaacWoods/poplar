@@ -81,7 +81,7 @@ pub unsafe fn initialize_stacks(
      * Start off with a zero return address to terminate backtraces at task entry.
      */
     kernel_stack_pointer -= 8;
-    *(kernel_stack_pointer.mut_ptr() as *mut u64) = 0x0;
+    ptr::write(kernel_stack_pointer.mut_ptr() as *mut u64, 0x0);
 
     /*
      * Next, we construct the context-switch frame that is used when a task is switched to for
@@ -89,15 +89,18 @@ pub unsafe fn initialize_stacks(
      * kernel-space trampoline that enters userspace.
      */
     kernel_stack_pointer -= mem::size_of::<ContextSwitchFrame>();
-    *(kernel_stack_pointer.mut_ptr() as *mut ContextSwitchFrame) = ContextSwitchFrame {
-        r15: usize::from(task_entry_point) as u64,
-        r14: INITIAL_RFLAGS.into(),
-        r13: 0x0,
-        r12: 0x0,
-        rbp: 0x0,
-        rbx: 0x0,
-        return_address: task_entry_trampoline as u64,
-    };
+    ptr::write(
+        kernel_stack_pointer.mut_ptr() as *mut ContextSwitchFrame,
+        ContextSwitchFrame {
+            r15: usize::from(task_entry_point) as u64,
+            r14: INITIAL_RFLAGS.into(),
+            r13: 0x0,
+            r12: 0x0,
+            rbp: 0x0,
+            rbx: 0x0,
+            return_address: task_entry_trampoline as u64,
+        },
+    );
 
     (kernel_stack_pointer, user_stack_pointer)
 }
