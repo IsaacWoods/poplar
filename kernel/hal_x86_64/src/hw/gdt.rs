@@ -184,17 +184,17 @@ impl Gdt {
                   mov ss, ax
 
                   // Switch to the new code segment
-                  push rbx
+                  push rcx
                   lea rax, [rip+0x3]
                   push rax
                   retfq
 
                   // Load the TSS
-                  ltr cx",
+                  ltr dx",
                 in(reg) &gdt_ptr,
                 inlateout("ax") KERNEL_DATA_SELECTOR.0 => _,
-                in("rbx") KERNEL_CODE_SELECTOR.0,
-                in("cx") tss_selector.0
+                in("rcx") KERNEL_CODE_SELECTOR.0,
+                in("dx") tss_selector.0
             );
         }
     }
