@@ -4,7 +4,7 @@
 ///
 /// [linux-hypervisors]: https://lwn.net/Articles/301888/
 use bit_field::BitField;
-use core::str;
+use core::{arch::x86_64::CpuidResult, str};
 
 pub struct SupportedFeatures {
     pub xsave: bool,
@@ -27,12 +27,12 @@ impl CpuInfo {
         let processor_cpuid = cpuid(CpuidEntry::ProcessorInfo);
         let vendor_id_cpuid = cpuid(CpuidEntry::VendorId);
         let vendor = decode_vendor(&vendor_id_cpuid);
-        let model_info = decode_model_info(processor_cpuid.a);
-        let supported_features = decode_supported_features(processor_cpuid.c, processor_cpuid.d);
+        let model_info = decode_model_info(processor_cpuid.eax);
+        let supported_features = decode_supported_features(processor_cpuid.ecx, processor_cpuid.edx);
         let hypervisor_info = decode_hypervisor_info();
 
         CpuInfo {
-            max_supported_standard_level: vendor_id_cpuid.a,
+            max_supported_standard_level: vendor_id_cpuid.eax,
             vendor,
             model_info,
             supported_features,
@@ -111,8 +111,8 @@ impl CpuInfo {
         if self.max_supported_standard_level >= 0x15 {
             let tsc_entry = cpuid(CpuidEntry::TscFrequency);
 
-            if tsc_entry.c != 0 {
-                return Some(tsc_entry.c);
+            if tsc_entry.ecx != 0 {
+                return Some(tsc_entry.ecx);
             }
         }
 
@@ -201,13 +201,7 @@ union VendorRepr {
     vendor_name: [u8; 12],
 }
 
-struct CpuidResult {
-    pub a: u32,
-    pub b: u32,
-    pub c: u32,
-    pub d: u32,
-}
-
+#[repr(u32)]
 enum CpuidEntry {
     /// A = maximum supported standard level
     /// B,D,C = vendor ID string
@@ -255,7 +249,7 @@ enum CpuidEntry {
 }
 
 fn decode_vendor(vendor_id: &CpuidResult) -> Vendor {
-    let vendor_repr = VendorRepr { vendor_id: [vendor_id.b, vendor_id.d, vendor_id.c] };
+    let vendor_repr = VendorRepr { vendor_id: [vendor_id.ebx, vendor_id.edx, vendor_id.ecx] };
 
     match str::from_utf8(unsafe { &vendor_repr.vendor_name }) {
         Ok("GenuineIntel") => Vendor::Intel,
@@ -277,8 +271,8 @@ fn decode_model_info(model_info: u32) -> ModelInfo {
     ModelInfo { family, model, stepping, extended_family, extended_model }
 }
 
-fn decode_supported_features(processor_info_c: u32, _processor_info_d: u32) -> SupportedFeatures {
-    SupportedFeatures { xsave: processor_info_c.get_bit(26) }
+fn decode_supported_features(processor_info_ecx: u32, _processor_info_edx: u32) -> SupportedFeatures {
+    SupportedFeatures { xsave: processor_info_ecx.get_bit(26) }
 }
 
 fn decode_hypervisor_info() -> Option<HypervisorInfo> {
@@ -287,7 +281,7 @@ fn decode_hypervisor_info() -> Option<HypervisorInfo> {
      * 31 of ECX of the 0x1 cpuid leaf, which the hypervisor intercepts the access to and
      * advertises its presence.
      */
-    if !cpuid(CpuidEntry::ProcessorInfo).c.get_bit(31) {
+    if !cpuid(CpuidEntry::ProcessorInfo).ecx.get_bit(31) {
         return None;
     }
 
@@ -295,10 +289,10 @@ fn decode_hypervisor_info() -> Option<HypervisorInfo> {
      * Next, we detect how many hypervisor leaves are present, and the hypervisor vendor.
      */
     let hypervisor_vendor_cpuid = cpuid(CpuidEntry::HypervisorVendor);
-    let max_leaf = hypervisor_vendor_cpuid.a;
+    let max_leaf = hypervisor_vendor_cpuid.eax;
 
     let vendor_repr = VendorRepr {
-        vendor_id: [hypervisor_vendor_cpuid.b, hypervisor_vendor_cpuid.c, hypervisor_vendor_cpuid.d],
+        vendor_id: [hypervisor_vendor_cpuid.ebx, hypervisor_vendor_cpuid.ecx, hypervisor_vendor_cpuid.edx],
     };
 
     let vendor = match str::from_utf8(unsafe { &vendor_repr.vendor_name }) {
@@ -314,22 +308,11 @@ fn decode_hypervisor_info() -> Option<HypervisorInfo> {
      * set.
      */
     let apic_frequency =
-        if max_leaf >= 0x4000_0010 { Some(cpuid(CpuidEntry::HypervisorFrequencies).b * 1000) } else { None };
+        if max_leaf >= 0x4000_0010 { Some(cpuid(CpuidEntry::HypervisorFrequencies).ebx * 1000) } else { None };
 
     Some(HypervisorInfo { vendor, max_leaf, apic_frequency })
 }
 
 fn cpuid(entry: CpuidEntry) -> CpuidResult {
-    let (a, b, c, d): (u64, u32, u32, u32);
-
-    unsafe {
-        asm!("cpuid",
-             inlateout("rax") (entry as u64) => a,
-             out("ebx") b,
-             out("ecx") c,
-             out("edx") d
-        );
-    }
-
-    CpuidResult { a: a as u32, b, c, d }
+    unsafe { core::arch::x86_64::__cpuid(entry as u32) }
 }
