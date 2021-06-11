@@ -291,7 +291,7 @@ dependencies = [
 
 [[package]]
 name = "uefi"
-version = "0.7.0"
+version = "0.11.0"
 dependencies = [
  "bitflags",
  "log",
