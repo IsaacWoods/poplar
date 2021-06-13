@@ -104,7 +104,7 @@ fn make_framebuffer() -> Framebuffer<Bgr32> {
         )
         .unwrap();
     }
-    assert_eq!(framebuffer_info.pixel_format, PixelFormat::BGR32);
+    assert_eq!(framebuffer_info.pixel_format, PixelFormat::Bgr32);
 
     Framebuffer {
         ptr: FRAMEBUFFER_ADDRESS as *mut Pixel<Bgr32>,

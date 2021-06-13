@@ -80,7 +80,7 @@ pub extern "C" fn kentry(boot_info: &BootInfo) -> ! {
     }
 
     use gfxconsole::{Bgr32, Format, Framebuffer, Pixel};
-    assert_eq!(boot_info.video_mode.as_ref().unwrap().pixel_format, hal::boot_info::PixelFormat::BGR32);
+    assert_eq!(boot_info.video_mode.as_ref().unwrap().pixel_format, hal::boot_info::PixelFormat::Bgr32);
     let framebuffer = Framebuffer {
         ptr: hal_x86_64::kernel_map::physical_to_virtual(
             boot_info.video_mode.as_ref().unwrap().framebuffer_address,

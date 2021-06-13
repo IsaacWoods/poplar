@@ -437,7 +437,7 @@ fn create_framebuffer(
              */
             (width == requested_width)
                 && (height == requested_height)
-                && (pixel_format == GopFormat::RGB || pixel_format == GopFormat::BGR)
+                && (pixel_format == GopFormat::Rgb || pixel_format == GopFormat::Bgr)
         });
 
         if let Some(mode) = chosen_mode {
@@ -447,8 +447,8 @@ fn create_framebuffer(
             let mode_info = mode.info();
             let (width, height) = mode_info.resolution();
             let pixel_format = match mode_info.pixel_format() {
-                GopFormat::RGB => PixelFormat::RGB32,
-                GopFormat::BGR => PixelFormat::BGR32,
+                GopFormat::Rgb => PixelFormat::Rgb32,
+                GopFormat::Bgr => PixelFormat::Bgr32,
                 _ => panic!("Invalid video mode chosen!"),
             };
 

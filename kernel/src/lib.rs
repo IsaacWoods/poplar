@@ -135,8 +135,8 @@ pub fn create_framebuffer(video_info: &hal::boot_info::VideoModeInfo) {
         height: video_info.height as u16,
         stride: video_info.stride as u16,
         pixel_format: match video_info.pixel_format {
-            BootPixelFormat::RGB32 => PixelFormat::RGB32,
-            BootPixelFormat::BGR32 => PixelFormat::BGR32,
+            BootPixelFormat::Rgb32 => PixelFormat::Rgb32,
+            BootPixelFormat::Bgr32 => PixelFormat::Bgr32,
         },
     };
 

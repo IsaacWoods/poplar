@@ -39,7 +39,7 @@ impl Logger {
     pub fn initialize(video_mode: &VideoModeInfo) {
         match video_mode {
             VideoModeInfo { framebuffer_address, pixel_format, width, height, stride } => match pixel_format {
-                hal::boot_info::PixelFormat::RGB32 => {
+                hal::boot_info::PixelFormat::Rgb32 => {
                     let framebuffer = Framebuffer {
                         ptr: usize::from(*framebuffer_address) as *mut Pixel<Rgb32>,
                         width: *width,
@@ -55,7 +55,7 @@ impl Logger {
                         ),
                     };
                 }
-                hal::boot_info::PixelFormat::BGR32 => {
+                hal::boot_info::PixelFormat::Bgr32 => {
                     let framebuffer = Framebuffer {
                         ptr: usize::from(*framebuffer_address) as *mut Pixel<Bgr32>,
                         width: *width,

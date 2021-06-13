@@ -20,8 +20,8 @@ define_error_type!(GetFramebufferError {
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 #[repr(u8)]
 pub enum PixelFormat {
-    RGB32 = 0,
-    BGR32 = 1,
+    Rgb32 = 0,
+    Bgr32 = 1,
 }
 
 #[derive(Clone, Copy, Debug)]
