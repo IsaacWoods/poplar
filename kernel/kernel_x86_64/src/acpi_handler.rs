@@ -15,16 +15,16 @@ impl AcpiHandler for PebbleAcpiHandler {
     unsafe fn map_physical_region<T>(&self, physical_address: usize, size: usize) -> PhysicalMapping<Self, T> {
         let virtual_address = kernel_map::physical_to_virtual(PhysicalAddress::new(physical_address).unwrap());
 
-        PhysicalMapping {
-            physical_start: usize::from(physical_address),
-            virtual_start: NonNull::new(virtual_address.mut_ptr()).unwrap(),
-            region_length: size,
-            mapped_length: size,
-            handler: PebbleAcpiHandler,
-        }
+        PhysicalMapping::new(
+            usize::from(physical_address),
+            NonNull::new(virtual_address.mut_ptr()).unwrap(),
+            size,
+            size,
+            PebbleAcpiHandler,
+        )
     }
 
-    fn unmap_physical_region<T>(&self, _region: &PhysicalMapping<Self, T>) {}
+    fn unmap_physical_region<T>(_region: &PhysicalMapping<Self, T>) {}
 }
 
 pub struct AmlHandler<A>
@@ -45,7 +45,7 @@ where
 
 impl<A> aml::Handler for AmlHandler<A>
 where
-    A: ConfigRegionAccess,
+    A: ConfigRegionAccess + Sync,
 {
     fn read_u8(&self, address: usize) -> u8 {
         debug!("AML: Reading byte from {:#x}", address);

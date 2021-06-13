@@ -13,7 +13,7 @@ dependencies = [
 
 [[package]]
 name = "aml"
-version = "0.11.0"
+version = "0.13.0"
 dependencies = [
  "bit_field",
  "byteorder",
@@ -238,9 +238,7 @@ checksum = "fc874b127765f014d792f16763a81245ab80500e2ad921ed4ee9e82481ee08fe"
 
 [[package]]
 name = "rsdp"
-version = "1.0.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "49b26cb0132c85db7152fc291c9680a9240d4ef482287667819dbaec1d665dbd"
+version = "1.1.0"
 dependencies = [
  "log",
 ]
