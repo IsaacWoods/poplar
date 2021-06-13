@@ -2,7 +2,6 @@
 #![feature(
     decl_macro,
     allocator_api,
-    const_fn,
     alloc_error_handler,
     core_intrinsics,
     trait_alias,

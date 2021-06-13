@@ -29,7 +29,7 @@ impl BootFrameAllocator {
 
         // Zero all the memory so the page tables start with everything unmapped
         unsafe {
-            boot_services.memset(start_frame_address as usize as *mut _, num_frames * Size4KiB::SIZE, 0);
+            boot_services.set_mem(start_frame_address as usize as *mut _, num_frames * Size4KiB::SIZE, 0);
         }
 
         let start_frame = Frame::contains(PhysicalAddress::new(start_frame_address as usize).unwrap());

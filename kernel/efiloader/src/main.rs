@@ -192,7 +192,7 @@ fn efi_main(image_handle: Handle, system_table: SystemTable<Boot>) -> Status {
         .allocate_pages(AllocateType::AnyPages, MEMORY_MAP_MEMORY_TYPE, memory_map_frames)
         .unwrap_success();
     unsafe {
-        system_table.boot_services().memset(memory_map_address as *mut u8, memory_map_frames * Size4KiB::SIZE, 0);
+        system_table.boot_services().set_mem(memory_map_address as *mut u8, memory_map_frames * Size4KiB::SIZE, 0);
     }
     let memory_map_buffer =
         unsafe { slice::from_raw_parts_mut(memory_map_address as *mut u8, memory_map_frames * Size4KiB::SIZE) };
@@ -220,11 +220,11 @@ fn efi_main(image_handle: Handle, system_table: SystemTable<Boot>) -> Status {
 
               // Switch to the kernel's stack, create a new stack frame, and jump!
               xor rbp, rbp
-              mov rsp, rbx
-              jmp rcx",
+              mov rsp, rcx
+              jmp rdx",
           in("rax") page_table_address,
-          in("rbx") kernel_rsp,
-          in("rcx") kernel_entry_point,
+          in("rcx") kernel_rsp,
+          in("rdx") kernel_entry_point,
           in("rdi") boot_info_address,
           options(noreturn)
         )
