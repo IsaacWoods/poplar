@@ -101,8 +101,6 @@ pub fn main() -> Result<()> {
 fn project_from_name(name: Option<&str>) -> Project {
     match name {
         Some("pebble") | None => pebble(),
-        Some("efi_test_hello_world") => efi_test_hello_world(),
-        Some("efi_test_exit_boot_services") => efi_test_exit_boot_services(),
         Some(other) => panic!("Unknown project name: {}", other),
     }
 }
@@ -172,74 +170,8 @@ fn pebble() -> Project {
     pebble
 }
 
-fn efi_test_hello_world() -> Project {
-    let build_dir = PathBuf::from("build/efi_test_hello_world");
-    let release = false;
-
-    let mut project = Project::new("efi_test_hello_world".to_string());
-    project.add_build_step(MakeDirectories(build_dir.join("fat/efi/boot/")));
-    project.add_build_step(RunCargo {
-        toolchain: None,
-        manifest_path: PathBuf::from("tools/efi_tests/hello_world/Cargo.toml"),
-        target: Target::Triple("x86_64-unknown-uefi".to_string()),
-        workspace: PathBuf::from("tools/efi_tests"),
-        release,
-        std_components: vec!["core".to_string()],
-        std_features: vec!["compiler-builtins-mem".to_string()],
-        artifact_name: "hello_world.efi".to_string(),
-        artifact_path: Some(build_dir.join("fat/efi/boot/bootx64.efi")),
-    });
-    project.add_build_step(MakeGptImage {
-        image_path: build_dir.join("efi_test_hello_world.img"),
-        image_size: 2 * 1024 * 1024,
-        efi_partition_size: 1 * 1024 * 1024,
-        efi_part_files: vec![(String::from("efi/boot/bootx64.efi"), build_dir.join("fat/efi/boot/bootx64.efi"))],
-    });
-
-    project.qemu = Some(RunQemuX64 {
-        options: QemuOptions { cpus: 1, open_display: true, ..Default::default() },
-        image: build_dir.join("efi_test_hello_world.img"),
-    });
-
-    project
-}
-
-fn efi_test_exit_boot_services() -> Project {
-    let build_dir = PathBuf::from("build/efi_test_exit_boot_services");
-    let release = false;
-
-    let mut project = Project::new("efi_test_exit_boot_services".to_string());
-    project.add_build_step(MakeDirectories(build_dir.join("fat/efi/boot/")));
-    project.add_build_step(RunCargo {
-        toolchain: None,
-        manifest_path: PathBuf::from("tools/efi_tests/exit_boot_services/Cargo.toml"),
-        target: Target::Triple("x86_64-unknown-uefi".to_string()),
-        workspace: PathBuf::from("tools/efi_tests"),
-        release,
-        std_components: vec!["core".to_string()],
-        std_features: vec!["compiler-builtins-mem".to_string()],
-        artifact_name: "exit_boot_services.efi".to_string(),
-        artifact_path: Some(build_dir.join("fat/efi/boot/bootx64.efi")),
-    });
-    project.add_build_step(MakeGptImage {
-        image_path: build_dir.join("efi_test_exit_boot_services.img"),
-        image_size: 2 * 1024 * 1024,
-        efi_partition_size: 1 * 1024 * 1024,
-        efi_part_files: vec![(String::from("efi/boot/bootx64.efi"), build_dir.join("fat/efi/boot/bootx64.efi"))],
-    });
-
-    project.qemu = Some(RunQemuX64 {
-        options: QemuOptions { cpus: 1, open_display: true, ..Default::default() },
-        image: build_dir.join("efi_test_exit_boot_services.img"),
-    });
-
-    project
-}
-
 const EXTRA_HELP: &str = "Butler can build and run various projects.
 
 Project list:
     - pebble                        This is the main Pebble distribution, and probably what you want.
-    - efi_test_hello_world          A EFI test to test if your setup can run an image compiled by us.
-    - efi_test_exit_boot_services   EFI test to validate that ExitBootServices works properly.
 ";
