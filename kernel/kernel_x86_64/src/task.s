@@ -1,6 +1,3 @@
-.intel_syntax noprefix
-.code64
-
 /*
  * Used to enter a task for the first time.
  * 

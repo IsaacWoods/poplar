@@ -1,6 +1,3 @@
-.intel_syntax noprefix
-.code64
-
 .extern rust_syscall_entry
 
 /*
