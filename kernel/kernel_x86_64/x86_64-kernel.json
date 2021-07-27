@@ -12,8 +12,6 @@
   "arch":                       "x86_64",
   "os":                         "none",
   "disable-redzone":            true,
-  "no-compiler-rt":             true,
   "features":                   "-mmx,-sse,-sse2,-sse3,-sse4.1,-sse4.2,-3dnow,-3dnowa,-avx,-avx2,+soft-float",
-  "eliminate-frame-pointer":    false,
   "panic-strategy":             "abort"
 }

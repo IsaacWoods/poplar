@@ -55,7 +55,7 @@ where
     }
 }
 
-unsafe impl<S> Step for Frame<S>
+impl<S> Step for Frame<S>
 where
     S: FrameSize,
 {

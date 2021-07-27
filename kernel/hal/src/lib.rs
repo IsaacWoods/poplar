@@ -1,5 +1,5 @@
 #![no_std]
-#![feature(decl_macro, step_trait, step_trait_ext)]
+#![feature(decl_macro, step_trait)]
 
 #[cfg(test)]
 #[macro_use]

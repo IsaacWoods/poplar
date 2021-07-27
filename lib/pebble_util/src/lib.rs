@@ -1,5 +1,5 @@
 #![no_std]
-#![feature(const_generics, decl_macro, maybe_uninit_ref, type_ascription, core_intrinsics)]
+#![feature(const_generics, decl_macro, type_ascription, core_intrinsics)]
 
 #[cfg(test)]
 #[macro_use]
