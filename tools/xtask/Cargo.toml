@@ -6,5 +6,6 @@ edition = "2018"
 
 [dependencies]
 xflags = "0.2"
+xshell = "0.1.14"
 eyre = "0.6.5"
 color-eyre = "0.5.11"

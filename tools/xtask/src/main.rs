@@ -1,9 +1,19 @@
+#![feature(bool_to_option)]
+
+mod cargo;
 mod flags;
 
 use eyre::Result;
+use std::{
+    env,
+    path::{Path, PathBuf},
+};
+use xshell::pushd;
 
 fn main() -> Result<()> {
     color_eyre::install()?;
+    let _root = pushd(project_root())?;
+
     let flags = flags::Task::from_env()?;
     match flags.subcommand {
         flags::TaskCmd::Help(_) => {
@@ -11,9 +21,34 @@ fn main() -> Result<()> {
             Ok(())
         }
 
-        flags::TaskCmd::Dist(dist) => {
+        flags::TaskCmd::Dist(_dist) => {
             println!("Doing dist");
-            Ok(())
+            dist()
         }
     }
+}
+
+fn dist() -> Result<()> {
+    use cargo::{RunCargo, Target};
+
+    let release = false;
+
+    let efiloader_path = RunCargo::new("efiloader.efi".to_string(), PathBuf::from("kernel/efiloader/"))
+        .workspace(PathBuf::from("kernel"))
+        .target(Target::Triple("x86_64-unknown-uefi".to_string()))
+        .release(release)
+        .std_components(vec!["core".to_string()])
+        .std_features(vec!["compiler-builtins-mem".to_string()])
+        .run()?;
+    println!("efiloader is at {:?}", efiloader_path);
+
+    Ok(())
+}
+
+fn project_root() -> PathBuf {
+    Path::new(&env::var("CARGO_MANIFEST_DIR").unwrap_or_else(|_| env!("CARGO_MANIFEST_DIR").to_owned()))
+        .ancestors()
+        .nth(2)
+        .unwrap()
+        .to_path_buf()
 }
