@@ -1,8 +1,9 @@
 mod flags;
 
-use anyhow::Result;
+use eyre::Result;
 
 fn main() -> Result<()> {
+    color_eyre::install()?;
     let flags = flags::Task::from_env()?;
     match flags.subcommand {
         flags::TaskCmd::Help(_) => {
