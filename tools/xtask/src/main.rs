@@ -34,13 +34,22 @@ fn dist() -> Result<()> {
     let release = false;
 
     let efiloader_path = RunCargo::new("efiloader.efi".to_string(), PathBuf::from("kernel/efiloader/"))
-        .workspace(PathBuf::from("kernel"))
+        .workspace(PathBuf::from("kernel/"))
         .target(Target::Triple("x86_64-unknown-uefi".to_string()))
         .release(release)
         .std_components(vec!["core".to_string()])
         .std_features(vec!["compiler-builtins-mem".to_string()])
         .run()?;
-    println!("efiloader is at {:?}", efiloader_path);
+
+    let kernel_path = RunCargo::new("kernel_x86_64".to_string(), PathBuf::from("kernel/kernel_x86_64/"))
+        .workspace(PathBuf::from("kernel/"))
+        .target(Target::Custom {
+            triple: "x86_64-kernel".to_string(),
+            spec: PathBuf::from("kernel/kernel_x86_64/x86_64-kernel.json"),
+        })
+        .release(release)
+        .std_components(vec!["core".to_string(), "alloc".to_string()])
+        .run()?;
 
     Ok(())
 }
