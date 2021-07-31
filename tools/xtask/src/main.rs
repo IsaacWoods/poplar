@@ -1,7 +1,8 @@
-#![feature(bool_to_option)]
+#![feature(bool_to_option, type_ascription)]
 
 mod cargo;
 mod flags;
+mod image;
 
 use eyre::Result;
 use std::{
@@ -30,6 +31,7 @@ fn main() -> Result<()> {
 
 fn dist() -> Result<()> {
     use cargo::{RunCargo, Target};
+    use image::MakeGptImage;
 
     let release = false;
 
@@ -50,6 +52,11 @@ fn dist() -> Result<()> {
         .release(release)
         .std_components(vec!["core".to_string(), "alloc".to_string()])
         .run()?;
+
+    MakeGptImage::new(PathBuf::from("pebble.img"), 30 * 1024 * 1024, 20 * 1024 * 1024)
+        .add_efi_file("efi/boot/bootx64.efi".to_string(), efiloader_path)
+        .add_efi_file("kernel.elf".to_string(), kernel_path)
+        .build()?;
 
     Ok(())
 }
