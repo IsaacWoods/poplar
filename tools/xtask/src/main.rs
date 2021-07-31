@@ -26,9 +26,9 @@ fn main() -> Result<()> {
 
         flags::TaskCmd::Dist(_dist) => dist(),
 
-        flags::TaskCmd::Qemu(_qemu) => {
+        flags::TaskCmd::Qemu(qemu) => {
             dist()?;
-            RunQemuX64::new(PathBuf::from("pebble.img")).run()
+            RunQemuX64::new(PathBuf::from("pebble.img")).open_display(qemu.display).run()
         }
     }
 }

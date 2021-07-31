@@ -8,7 +8,9 @@ xflags::xflags! {
 
         cmd dist {}
 
-        cmd qemu {}
+        cmd qemu {
+            optional --display
+        }
     }
 }
 
@@ -36,7 +38,9 @@ pub struct Help {
 pub struct Dist;
 
 #[derive(Debug)]
-pub struct Qemu;
+pub struct Qemu {
+    pub display: bool,
+}
 
 impl Task {
     pub const HELP: &'static str = Self::HELP_;

@@ -52,6 +52,10 @@ impl RunQemuX64 {
         }
     }
 
+    pub fn open_display(self, open_display: bool) -> Self {
+        Self { open_display, ..self }
+    }
+
     fn use_kvm(&self) -> bool {
         self.kvm && !(self.debug_int_firehose || self.debug_mmu_firehose || self.debug_cpu_firehose)
     }
