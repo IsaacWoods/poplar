@@ -3,8 +3,10 @@
 mod cargo;
 mod flags;
 mod image;
+mod qemu;
 
 use eyre::Result;
+use qemu::RunQemuX64;
 use std::{
     env,
     path::{Path, PathBuf},
@@ -22,9 +24,11 @@ fn main() -> Result<()> {
             Ok(())
         }
 
-        flags::TaskCmd::Dist(_dist) => {
-            println!("Doing dist");
-            dist()
+        flags::TaskCmd::Dist(_dist) => dist(),
+
+        flags::TaskCmd::Qemu(_qemu) => {
+            dist()?;
+            RunQemuX64::new(PathBuf::from("pebble.img")).run()
         }
     }
 }

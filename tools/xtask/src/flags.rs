@@ -7,6 +7,8 @@ xflags::xflags! {
         }
 
         cmd dist {}
+
+        cmd qemu {}
     }
 }
 
@@ -22,6 +24,7 @@ pub struct Task {
 pub enum TaskCmd {
     Help(Help),
     Dist(Dist),
+    Qemu(Qemu),
 }
 
 #[derive(Debug)]
@@ -31,6 +34,9 @@ pub struct Help {
 
 #[derive(Debug)]
 pub struct Dist;
+
+#[derive(Debug)]
+pub struct Qemu;
 
 impl Task {
     pub const HELP: &'static str = Self::HELP_;
