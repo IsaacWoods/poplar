@@ -1,3 +1,2 @@
 [alias]
-bu = "run --release --manifest-path tools/butler/Cargo.toml --"
 xtask = "run --manifest-path tools/xtask/Cargo.toml --"
