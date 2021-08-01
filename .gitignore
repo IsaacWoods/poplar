@@ -3,10 +3,7 @@
 
 *.log
 
-/build/
-/iso/
 *.img
-*.iso
 *.o
 *.bin
 *.elf
