@@ -214,13 +214,42 @@
 <span id="214">214</span>
 <span id="215">215</span>
 <span id="216">216</span>
+<span id="217">217</span>
+<span id="218">218</span>
+<span id="219">219</span>
+<span id="220">220</span>
+<span id="221">221</span>
+<span id="222">222</span>
+<span id="223">223</span>
+<span id="224">224</span>
+<span id="225">225</span>
+<span id="226">226</span>
+<span id="227">227</span>
+<span id="228">228</span>
+<span id="229">229</span>
+<span id="230">230</span>
+<span id="231">231</span>
+<span id="232">232</span>
+<span id="233">233</span>
+<span id="234">234</span>
+<span id="235">235</span>
+<span id="236">236</span>
+<span id="237">237</span>
+<span id="238">238</span>
+<span id="239">239</span>
+<span id="240">240</span>
+<span id="241">241</span>
+<span id="242">242</span>
+<span id="243">243</span>
+<span id="244">244</span>
+<span id="245">245</span>
 </pre><pre class="rust">
-<span class="kw">use</span> <span class="kw">crate</span><span class="ident">::memory</span>::{<span class="ident">Flags</span>, <span class="ident">Frame</span>, <span class="ident">PhysicalAddress</span>, <span class="ident">VirtualAddress</span>};
-<span class="kw">use</span> <span class="ident">core::ops::Range</span>;
+<span class="kw">use</span> <span class="kw">crate</span><span class="ident">::memory</span>::{<span class="ident">Bytes</span>, <span class="ident">Flags</span>, <span class="ident">Frame</span>, <span class="ident">PhysicalAddress</span>, <span class="ident">VirtualAddress</span>};
+<span class="kw">use</span> <span class="ident">core</span>::{<span class="ident">fmt</span>, <span class="ident">fmt::Debug</span>, <span class="ident">ops::Range</span>};
 
 <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">BOOT_INFO_MAGIC</span>: <span class="ident">u32</span> <span class="op">=</span> <span class="number">0xcafebabe</span>;
 
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Default</span>)]</span>
+<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Default</span>, <span class="ident">Debug</span>)]</span>
 <span class="attribute">#[<span class="ident">repr</span>(<span class="ident">C</span>)]</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">BootInfo</span> {
     <span class="kw">pub</span> <span class="ident">magic</span>: <span class="ident">u32</span>,
@@ -268,6 +297,12 @@
     }
 }
 
+<span class="kw">impl</span> <span class="ident">Debug</span> <span class="kw">for</span> <span class="ident">MemoryMap</span> {
+    <span class="kw">fn</span> <span class="ident">fmt</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">f</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">fmt::Formatter</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">fmt::Result</span> {
+        <span class="ident">f</span>.<span class="ident">debug_list</span>().<span class="ident">entries</span>(<span class="self">self</span>.<span class="ident">entries</span>().<span class="ident">iter</span>()).<span class="ident">finish</span>()
+    }
+}
+
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Copy</span>, <span class="ident">PartialEq</span>, <span class="ident">Eq</span>, <span class="ident">Debug</span>)]</span>
 <span class="attribute">#[<span class="ident">repr</span>(<span class="ident">C</span>)]</span>
 <span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">MemoryType</span> {
@@ -295,7 +330,7 @@
     <span class="ident">BootInfo</span>,
 }
 
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Copy</span>, <span class="ident">Debug</span>)]</span>
+<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Copy</span>)]</span>
 <span class="attribute">#[<span class="ident">repr</span>(<span class="ident">C</span>)]</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">MemoryMapEntry</span> {
     <span class="kw">pub</span> <span class="ident">start</span>: <span class="ident">PhysicalAddress</span>,
@@ -320,6 +355,12 @@
             <span class="ident">size</span>: <span class="number">0</span>,
             <span class="ident">memory_type</span>: <span class="ident">MemoryType::Conventional</span>,
         }
+    }
+}
+
+<span class="kw">impl</span> <span class="ident">Debug</span> <span class="kw">for</span> <span class="ident">MemoryMapEntry</span> {
+    <span class="kw">fn</span> <span class="ident">fmt</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">f</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">fmt::Formatter</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">fmt::Result</span> {
+        <span class="macro">write!</span>(<span class="ident">f</span>, <span class="string">&quot;({:#x?}..{:#x?}) =&gt; {:?}&quot;</span>, <span class="self">self</span>.<span class="ident">start</span>, <span class="self">self</span>.<span class="ident">start</span> <span class="op">+</span> <span class="self">self</span>.<span class="ident">size</span>, <span class="self">self</span>.<span class="ident">memory_type</span>)
     }
 }
 
@@ -353,6 +394,12 @@
     }
 }
 
+<span class="kw">impl</span> <span class="ident">Debug</span> <span class="kw">for</span> <span class="ident">LoadedImages</span> {
+    <span class="kw">fn</span> <span class="ident">fmt</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">f</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">fmt::Formatter</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">fmt::Result</span> {
+        <span class="ident">f</span>.<span class="ident">debug_list</span>().<span class="ident">entries</span>(<span class="self">self</span>.<span class="ident">images</span>().<span class="ident">iter</span>()).<span class="ident">finish</span>()
+    }
+}
+
 <span class="doccomment">/// This is one less than a power-of-two, because then it&#39;s aligned when placed after the length byte.</span>
 <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">MAX_IMAGE_NAME_LENGTH</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="number">31</span>;
 <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">MAX_IMAGE_LOADED_SEGMENTS</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="number">3</span>;
@@ -361,7 +408,7 @@
 <span class="doccomment">/// Describes an image loaded from the filesystem by the loader, as the kernel does not have the capabilities to do</span>
 <span class="doccomment">/// so. Images are expected to have three segments (`rodata` loaded as read-only, `data` loaded as read+write, and</span>
 <span class="doccomment">/// `text` loaded as read+execute).</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Copy</span>, <span class="ident">Default</span>, <span class="ident">Debug</span>)]</span>
+<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Copy</span>, <span class="ident">Default</span>)]</span>
 <span class="attribute">#[<span class="ident">repr</span>(<span class="ident">C</span>)]</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">LoadedImage</span> {
     <span class="kw">pub</span> <span class="ident">name_length</span>: <span class="ident">u8</span>,
@@ -395,13 +442,24 @@
     }
 }
 
+<span class="kw">impl</span> <span class="ident">Debug</span> <span class="kw">for</span> <span class="ident">LoadedImage</span> {
+    <span class="kw">fn</span> <span class="ident">fmt</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">f</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">fmt::Formatter</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">fmt::Result</span> {
+        <span class="ident">f</span>.<span class="ident">debug_struct</span>(<span class="string">&quot;LoadedImage&quot;</span>)
+            .<span class="ident">field</span>(<span class="string">&quot;name&quot;</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">name</span>())
+            .<span class="ident">field</span>(<span class="string">&quot;segments&quot;</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">segments</span>())
+            .<span class="ident">field</span>(<span class="string">&quot;master_tls&quot;</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">master_tls</span>)
+            .<span class="ident">field</span>(<span class="string">&quot;entry_point&quot;</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">entry_point</span>)
+            .<span class="ident">field</span>(<span class="string">&quot;capability_stream&quot;</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">capability_stream</span>)
+            .<span class="ident">finish</span>()
+    }
+}
+
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Copy</span>, <span class="ident">Default</span>, <span class="ident">Debug</span>)]</span>
 <span class="attribute">#[<span class="ident">repr</span>(<span class="ident">C</span>)]</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">Segment</span> {
     <span class="kw">pub</span> <span class="ident">physical_address</span>: <span class="ident">PhysicalAddress</span>,
     <span class="kw">pub</span> <span class="ident">virtual_address</span>: <span class="ident">VirtualAddress</span>,
-    <span class="doccomment">/// In bytes.</span>
-    <span class="kw">pub</span> <span class="ident">size</span>: <span class="ident">usize</span>,
+    <span class="kw">pub</span> <span class="ident">size</span>: <span class="ident">Bytes</span>,
     <span class="kw">pub</span> <span class="ident">flags</span>: <span class="ident">Flags</span>,
 }
 
