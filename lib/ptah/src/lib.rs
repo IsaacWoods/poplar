@@ -7,6 +7,7 @@
     maybe_uninit_slice,
     never_type
 )]
+#![allow(incomplete_features)] // TODO: remove when warning about const_generics is gone
 
 extern crate alloc;
 

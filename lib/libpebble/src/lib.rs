@@ -1,5 +1,6 @@
 #![no_std]
 #![feature(asm, decl_macro, const_generics, unsafe_block_in_unsafe_fn, never_type)]
+#![allow(incomplete_features)] // TODO: remove when warning about const_generics is gone
 #![deny(unsafe_op_in_unsafe_fn)]
 
 mod bit_field;

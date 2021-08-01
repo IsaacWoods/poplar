@@ -1,5 +1,6 @@
 #![no_std]
 #![feature(const_generics, decl_macro, type_ascription, core_intrinsics)]
+#![allow(incomplete_features)] // TODO: remove when warning about const_generics is gone
 
 #[cfg(test)]
 #[macro_use]
