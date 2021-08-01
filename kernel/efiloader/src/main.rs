@@ -326,8 +326,6 @@ fn process_memory_map<'a, A, P>(
         }
         match entry.ty {
             MemoryType::CONVENTIONAL
-            | MemoryType::LOADER_CODE
-            | MemoryType::LOADER_DATA
             | MemoryType::BOOT_SERVICES_CODE
             | MemoryType::BOOT_SERVICES_DATA
             | MEMORY_MAP_MEMORY_TYPE => add_entry!(BootInfoMemoryType::Conventional),
@@ -335,6 +333,8 @@ fn process_memory_map<'a, A, P>(
             MemoryType::ACPI_RECLAIM => add_entry!(BootInfoMemoryType::AcpiReclaimable),
 
             BOOT_INFO_MEMORY_TYPE => add_entry!(BootInfoMemoryType::BootInfo),
+            MemoryType::LOADER_CODE | MemoryType::LOADER_DATA => add_entry!(BootInfoMemoryType::Loader),
+
             // IMAGE_MEMORY_TYPE => add_entry!(BootInfoMemoryType::LoadedImage),
             // PAGE_TABLE_MEMORY_TYPE => add_entry!(BootInfoMemoryType::KernelPageTables),
             // KERNEL_HEAP_MEMORY_TYPE => add_entry!(BootInfoMemoryType::KernelHeap),

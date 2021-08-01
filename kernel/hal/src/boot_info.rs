@@ -78,6 +78,10 @@ pub enum MemoryType {
     /// Memory that has been mapped for the kernel heap.
     KernelHeap,
 
+    /// Memory that the loader maps into the kernel address space. It may be reclaimed by the kernel immediately,
+    /// and the kernel should also unmap it from its address space.
+    Loader,
+
     /// Memory that is occupied by the boot info constructed by the loader for the kernel. Contains the `BootInfo`
     /// structure, and all the structures that are referenced by it. After the kernel has finished with this data,
     /// it may use this memory.
