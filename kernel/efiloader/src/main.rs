@@ -334,12 +334,12 @@ fn process_memory_map<'a, A, P>(
 
             MemoryType::ACPI_RECLAIM => add_entry!(BootInfoMemoryType::AcpiReclaimable),
 
+            BOOT_INFO_MEMORY_TYPE => add_entry!(BootInfoMemoryType::BootInfo),
             // IMAGE_MEMORY_TYPE => add_entry!(BootInfoMemoryType::LoadedImage),
             // PAGE_TABLE_MEMORY_TYPE => add_entry!(BootInfoMemoryType::KernelPageTables),
-            // BOOT_INFO_MEMORY_TYPE => add_entry!(BootInfoMemoryType::BootInfo),
             // KERNEL_HEAP_MEMORY_TYPE => add_entry!(BootInfoMemoryType::KernelHeap),
 
-            // Other regions will never be useable by the kernel, so we don't bother including them
+            // Other regions will never be usable by the kernel, so we don't bother including them
             _ => (),
         }
     }
