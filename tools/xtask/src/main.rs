@@ -24,20 +24,18 @@ fn main() -> Result<()> {
             Ok(())
         }
 
-        flags::TaskCmd::Dist(_dist) => dist(),
+        flags::TaskCmd::Dist(dist) => make_dist(dist.release),
 
         flags::TaskCmd::Qemu(qemu) => {
-            dist()?;
+            make_dist(qemu.release)?;
             RunQemuX64::new(PathBuf::from("pebble.img")).open_display(qemu.display).run()
         }
     }
 }
 
-fn dist() -> Result<()> {
+fn make_dist(release: bool) -> Result<()> {
     use cargo::{RunCargo, Target};
     use image::MakeGptImage;
-
-    let release = false;
 
     let efiloader_path = RunCargo::new("efiloader.efi".to_string(), PathBuf::from("kernel/efiloader/"))
         .workspace(PathBuf::from("kernel/"))

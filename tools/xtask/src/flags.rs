@@ -6,9 +6,12 @@ xflags::xflags! {
             optional -h,--help
         }
 
-        cmd dist {}
+        cmd dist {
+            optional --release
+        }
 
         cmd qemu {
+            optional --release
             optional --display
         }
     }
@@ -35,10 +38,13 @@ pub struct Help {
 }
 
 #[derive(Debug)]
-pub struct Dist;
+pub struct Dist {
+    pub release: bool,
+}
 
 #[derive(Debug)]
 pub struct Qemu {
+    pub release: bool,
     pub display: bool,
 }
 

@@ -58,6 +58,7 @@ impl RunCargo {
         RunCargo { std_features, ..self }
     }
 
+    #[allow(dead_code)]
     pub fn toolchain(self, toolchain: String) -> RunCargo {
         RunCargo { toolchain: Some(toolchain), ..self }
     }
