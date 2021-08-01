@@ -1,9 +1,9 @@
-use crate::memory::{Flags, Frame, PhysicalAddress, VirtualAddress};
-use core::ops::Range;
+use crate::memory::{Bytes, Flags, Frame, PhysicalAddress, VirtualAddress};
+use core::{fmt, fmt::Debug, ops::Range};
 
 pub const BOOT_INFO_MAGIC: u32 = 0xcafebabe;
 
-#[derive(Default)]
+#[derive(Default, Debug)]
 #[repr(C)]
 pub struct BootInfo {
     pub magic: u32,
@@ -51,6 +51,12 @@ impl Default for MemoryMap {
     }
 }
 
+impl Debug for MemoryMap {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_list().entries(self.entries().iter()).finish()
+    }
+}
+
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 #[repr(C)]
 pub enum MemoryType {
@@ -78,7 +84,7 @@ pub enum MemoryType {
     BootInfo,
 }
 
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy)]
 #[repr(C)]
 pub struct MemoryMapEntry {
     pub start: PhysicalAddress,
@@ -103,6 +109,12 @@ impl Default for MemoryMapEntry {
             size: 0,
             memory_type: MemoryType::Conventional,
         }
+    }
+}
+
+impl Debug for MemoryMapEntry {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "({:#x?}..{:#x?}) => {:?}", self.start, self.start + self.size, self.memory_type)
     }
 }
 
@@ -136,6 +148,12 @@ impl Default for LoadedImages {
     }
 }
 
+impl Debug for LoadedImages {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_list().entries(self.images().iter()).finish()
+    }
+}
+
 /// This is one less than a power-of-two, because then it's aligned when placed after the length byte.
 pub const MAX_IMAGE_NAME_LENGTH: usize = 31;
 pub const MAX_IMAGE_LOADED_SEGMENTS: usize = 3;
@@ -144,7 +162,7 @@ pub const MAX_CAPABILITY_STREAM_LENGTH: usize = 32;
 /// Describes an image loaded from the filesystem by the loader, as the kernel does not have the capabilities to do
 /// so. Images are expected to have three segments (`rodata` loaded as read-only, `data` loaded as read+write, and
 /// `text` loaded as read+execute).
-#[derive(Clone, Copy, Default, Debug)]
+#[derive(Clone, Copy, Default)]
 #[repr(C)]
 pub struct LoadedImage {
     pub name_length: u8,
@@ -178,13 +196,24 @@ impl LoadedImage {
     }
 }
 
+impl Debug for LoadedImage {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("LoadedImage")
+            .field("name", &self.name())
+            .field("segments", &self.segments())
+            .field("master_tls", &self.master_tls)
+            .field("entry_point", &self.entry_point)
+            .field("capability_stream", &self.capability_stream)
+            .finish()
+    }
+}
+
 #[derive(Clone, Copy, Default, Debug)]
 #[repr(C)]
 pub struct Segment {
     pub physical_address: PhysicalAddress,
     pub virtual_address: VirtualAddress,
-    /// In bytes.
-    pub size: usize,
+    pub size: Bytes,
     pub flags: Flags,
 }
 
