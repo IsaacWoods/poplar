@@ -243,6 +243,10 @@
 <span id="243">243</span>
 <span id="244">244</span>
 <span id="245">245</span>
+<span id="246">246</span>
+<span id="247">247</span>
+<span id="248">248</span>
+<span id="249">249</span>
 </pre><pre class="rust">
 <span class="kw">use</span> <span class="kw">crate</span><span class="ident">::memory</span>::{<span class="ident">Bytes</span>, <span class="ident">Flags</span>, <span class="ident">Frame</span>, <span class="ident">PhysicalAddress</span>, <span class="ident">VirtualAddress</span>};
 <span class="kw">use</span> <span class="ident">core</span>::{<span class="ident">fmt</span>, <span class="ident">fmt::Debug</span>, <span class="ident">ops::Range</span>};
@@ -323,6 +327,10 @@
 
     <span class="doccomment">/// Memory that has been mapped for the kernel heap.</span>
     <span class="ident">KernelHeap</span>,
+
+    <span class="doccomment">/// Memory that the loader maps into the kernel address space. It may be reclaimed by the kernel immediately,</span>
+    <span class="doccomment">/// and the kernel should also unmap it from its address space.</span>
+    <span class="ident">Loader</span>,
 
     <span class="doccomment">/// Memory that is occupied by the boot info constructed by the loader for the kernel. Contains the `BootInfo`</span>
     <span class="doccomment">/// structure, and all the structures that are referenced by it. After the kernel has finished with this data,</span>

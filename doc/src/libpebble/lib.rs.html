@@ -70,9 +70,11 @@
 <span id="70">70</span>
 <span id="71">71</span>
 <span id="72">72</span>
+<span id="73">73</span>
 </pre><pre class="rust">
 <span class="attribute">#![<span class="ident">no_std</span>]</span>
 <span class="attribute">#![<span class="ident">feature</span>(<span class="ident">asm</span>, <span class="ident">decl_macro</span>, <span class="ident">const_generics</span>, <span class="ident">unsafe_block_in_unsafe_fn</span>, <span class="ident">never_type</span>)]</span>
+<span class="attribute">#![<span class="ident">allow</span>(<span class="ident">incomplete_features</span>)]</span> <span class="comment">// TODO: remove when warning about const_generics is gone</span>
 <span class="attribute">#![<span class="ident">deny</span>(<span class="ident">unsafe_op_in_unsafe_fn</span>)]</span>
 
 <span class="kw">mod</span> <span class="ident">bit_field</span>;
