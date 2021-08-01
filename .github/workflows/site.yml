@@ -30,8 +30,11 @@ jobs:
           --all-features \
           --manifest-path kernel/Cargo.toml \
           --document-private-items
-        mdbook build
         mv site/* pages/
+
+    - name: Generate book
+      run: |
+        cd book && mdbook build
 
     - name: Deploy to Github Pages
       uses: JamesIves/github-pages-deploy-action@releases/v3

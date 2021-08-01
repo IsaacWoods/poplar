@@ -1,9 +1,9 @@
 [book]
 authors = ["Isaac Woods"]
 multilingual = false
-src = "book"
+src = "."
 title = "Pebble OS"
 
 [build]
-build-dir = "pages/book/"
+build-dir = "../pages/book/"
 create-missing = false
