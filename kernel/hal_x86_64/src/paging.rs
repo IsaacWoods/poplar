@@ -140,6 +140,7 @@ impl HierarchicalLevel for Level2 {
 
 const ENTRY_COUNT: usize = 512;
 
+#[repr(C, align(4096))]
 pub struct Table<L>
 where
     L: TableLevel,
