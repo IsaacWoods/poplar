@@ -13,6 +13,9 @@ xflags::xflags! {
         cmd qemu {
             optional --release
             optional --display
+            optional --debug_int_firehose
+            optional --debug_mmu_firehose
+            optional --debug_cpu_firehose
         }
     }
 }
@@ -46,6 +49,9 @@ pub struct Dist {
 pub struct Qemu {
     pub release: bool,
     pub display: bool,
+    pub debug_int_firehose: bool,
+    pub debug_mmu_firehose: bool,
+    pub debug_cpu_firehose: bool,
 }
 
 impl Task {

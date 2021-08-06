@@ -28,7 +28,12 @@ fn main() -> Result<()> {
 
         flags::TaskCmd::Qemu(qemu) => {
             make_dist(qemu.release)?;
-            RunQemuX64::new(PathBuf::from("pebble.img")).open_display(qemu.display).run()
+            RunQemuX64::new(PathBuf::from("pebble.img"))
+                .open_display(qemu.display)
+                .debug_int_firehose(qemu.debug_int_firehose)
+                .debug_mmu_firehose(qemu.debug_mmu_firehose)
+                .debug_cpu_firehose(qemu.debug_cpu_firehose)
+                .run()
         }
     }
 }

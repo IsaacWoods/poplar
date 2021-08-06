@@ -56,6 +56,18 @@ impl RunQemuX64 {
         Self { open_display, ..self }
     }
 
+    pub fn debug_int_firehose(self, enabled: bool) -> Self {
+        Self { debug_int_firehose: enabled, ..self }
+    }
+
+    pub fn debug_mmu_firehose(self, enabled: bool) -> Self {
+        Self { debug_mmu_firehose: enabled, ..self }
+    }
+
+    pub fn debug_cpu_firehose(self, enabled: bool) -> Self {
+        Self { debug_cpu_firehose: enabled, ..self }
+    }
+
     fn use_kvm(&self) -> bool {
         self.kvm && !(self.debug_int_firehose || self.debug_mmu_firehose || self.debug_cpu_firehose)
     }
