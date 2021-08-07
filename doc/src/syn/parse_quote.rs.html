@@ -215,9 +215,9 @@
 <span class="attribute">#[<span class="ident">macro_export</span>]</span>
 <span class="macro">macro_rules!</span> <span class="ident">parse_quote</span> {
     ($(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">tt</span>:<span class="ident">tt</span>)<span class="kw-2">*</span>) <span class="op">=</span><span class="op">&gt;</span> {
-        <span class="macro-nonterminal">$</span><span class="kw">crate</span><span class="macro-nonterminal">::parse_quote::parse</span>(
-            <span class="macro-nonterminal">$</span><span class="kw">crate</span><span class="macro-nonterminal">::export::From::from</span>(
-                <span class="macro-nonterminal">$</span><span class="kw">crate</span><span class="macro">::export::quote::quote!</span>($(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">tt</span>)<span class="kw-2">*</span>)
+        <span class="macro-nonterminal">$</span><span class="macro-nonterminal">crate::parse_quote::parse</span>(
+            <span class="macro-nonterminal">$</span><span class="macro-nonterminal">crate::export::From::from</span>(
+                <span class="macro-nonterminal">$</span><span class="macro">crate::export::quote::quote!</span>($(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">tt</span>)<span class="kw-2">*</span>)
             )
         )
     };
@@ -226,7 +226,7 @@
 <span class="comment">////////////////////////////////////////////////////////////////////////////////</span>
 <span class="comment">// Can parse any type that implements Parse.</span>
 
-<span class="kw">use</span> <span class="kw">crate</span><span class="ident">::parse</span>::{<span class="ident">Parse</span>, <span class="ident">ParseStream</span>, <span class="ident">Parser</span>, <span class="prelude-ty">Result</span>};
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::parse</span>::{<span class="ident">Parse</span>, <span class="ident">ParseStream</span>, <span class="ident">Parser</span>, <span class="prelude-ty">Result</span>};
 <span class="kw">use</span> <span class="ident">proc_macro2::TokenStream</span>;
 
 <span class="comment">// Not public API.</span>
@@ -254,7 +254,7 @@
 <span class="comment">////////////////////////////////////////////////////////////////////////////////</span>
 <span class="comment">// Any other types that we want `parse_quote!` to be able to parse.</span>
 
-<span class="kw">use</span> <span class="kw">crate</span><span class="ident">::punctuated::Punctuated</span>;
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::punctuated::Punctuated</span>;
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">any</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;full&quot;</span>, <span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;derive&quot;</span>))]</span>
 <span class="kw">use</span> <span class="kw">crate</span>::{<span class="ident">attr</span>, <span class="ident">Attribute</span>};
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;full&quot;</span>)]</span>
@@ -273,7 +273,7 @@
 
 <span class="kw">impl</span><span class="op">&lt;</span><span class="ident">T</span>: <span class="ident">Parse</span>, <span class="ident">P</span>: <span class="ident">Parse</span><span class="op">&gt;</span> <span class="ident">ParseQuote</span> <span class="kw">for</span> <span class="ident">Punctuated</span><span class="op">&lt;</span><span class="ident">T</span>, <span class="ident">P</span><span class="op">&gt;</span> {
     <span class="kw">fn</span> <span class="ident">parse</span>(<span class="ident">input</span>: <span class="ident">ParseStream</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="self">Self</span><span class="op">&gt;</span> {
-        <span class="self">Self</span><span class="ident">::parse_terminated</span>(<span class="ident">input</span>)
+        <span class="ident"><span class="self">Self</span>::parse_terminated</span>(<span class="ident">input</span>)
     }
 }
 

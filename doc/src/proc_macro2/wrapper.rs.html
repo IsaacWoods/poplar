@@ -912,7 +912,7 @@
 <span id="912">912</span>
 <span id="913">913</span>
 </pre><pre class="rust">
-<span class="kw">use</span> <span class="kw">crate</span><span class="ident">::detection::inside_proc_macro</span>;
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::detection::inside_proc_macro</span>;
 <span class="kw">use</span> <span class="kw">crate</span>::{<span class="ident">fallback</span>, <span class="ident">Delimiter</span>, <span class="ident">Punct</span>, <span class="ident">Spacing</span>, <span class="ident">TokenTree</span>};
 <span class="kw">use</span> <span class="ident">std::fmt</span>::{<span class="self">self</span>, <span class="ident">Debug</span>, <span class="ident">Display</span>};
 <span class="kw">use</span> <span class="ident">std::iter::FromIterator</span>;
@@ -1219,18 +1219,18 @@
             <span class="ident">TokenTreeIter::Fallback</span>(<span class="ident">iter</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="kw">return</span> <span class="ident">iter</span>.<span class="ident">next</span>(),
         };
         <span class="prelude-val">Some</span>(<span class="kw">match</span> <span class="ident">token</span> {
-            <span class="ident">proc_macro::TokenTree::Group</span>(<span class="ident">tt</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="kw">crate</span><span class="ident">::Group::_new</span>(<span class="ident">Group::Compiler</span>(<span class="ident">tt</span>)).<span class="ident">into</span>(),
+            <span class="ident">proc_macro::TokenTree::Group</span>(<span class="ident">tt</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident"><span class="kw">crate</span>::Group::_new</span>(<span class="ident">Group::Compiler</span>(<span class="ident">tt</span>)).<span class="ident">into</span>(),
             <span class="ident">proc_macro::TokenTree::Punct</span>(<span class="ident">tt</span>) <span class="op">=</span><span class="op">&gt;</span> {
                 <span class="kw">let</span> <span class="ident">spacing</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">tt</span>.<span class="ident">spacing</span>() {
                     <span class="ident">proc_macro::Spacing::Joint</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">Spacing::Joint</span>,
                     <span class="ident">proc_macro::Spacing::Alone</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">Spacing::Alone</span>,
                 };
                 <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">o</span> <span class="op">=</span> <span class="ident">Punct::new</span>(<span class="ident">tt</span>.<span class="ident">as_char</span>(), <span class="ident">spacing</span>);
-                <span class="ident">o</span>.<span class="ident">set_span</span>(<span class="kw">crate</span><span class="ident">::Span::_new</span>(<span class="ident">Span::Compiler</span>(<span class="ident">tt</span>.<span class="ident">span</span>())));
+                <span class="ident">o</span>.<span class="ident">set_span</span>(<span class="ident"><span class="kw">crate</span>::Span::_new</span>(<span class="ident">Span::Compiler</span>(<span class="ident">tt</span>.<span class="ident">span</span>())));
                 <span class="ident">o</span>.<span class="ident">into</span>()
             }
-            <span class="ident">proc_macro::TokenTree::Ident</span>(<span class="ident">s</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="kw">crate</span><span class="ident">::Ident::_new</span>(<span class="ident">Ident::Compiler</span>(<span class="ident">s</span>)).<span class="ident">into</span>(),
-            <span class="ident">proc_macro::TokenTree::Literal</span>(<span class="ident">l</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="kw">crate</span><span class="ident">::Literal::_new</span>(<span class="ident">Literal::Compiler</span>(<span class="ident">l</span>)).<span class="ident">into</span>(),
+            <span class="ident">proc_macro::TokenTree::Ident</span>(<span class="ident">s</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident"><span class="kw">crate</span>::Ident::_new</span>(<span class="ident">Ident::Compiler</span>(<span class="ident">s</span>)).<span class="ident">into</span>(),
+            <span class="ident">proc_macro::TokenTree::Literal</span>(<span class="ident">l</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident"><span class="kw">crate</span>::Literal::_new</span>(<span class="ident">Literal::Compiler</span>(<span class="ident">l</span>)).<span class="ident">into</span>(),
         })
     }
 
@@ -1430,9 +1430,9 @@
     }
 }
 
-<span class="kw">impl</span> <span class="ident">From</span><span class="op">&lt;</span><span class="ident">proc_macro::Span</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="kw">crate</span><span class="ident">::Span</span> {
-    <span class="kw">fn</span> <span class="ident">from</span>(<span class="ident">proc_span</span>: <span class="ident">proc_macro::Span</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw">crate</span><span class="ident">::Span</span> {
-        <span class="kw">crate</span><span class="ident">::Span::_new</span>(<span class="ident">Span::Compiler</span>(<span class="ident">proc_span</span>))
+<span class="kw">impl</span> <span class="ident">From</span><span class="op">&lt;</span><span class="ident">proc_macro::Span</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident"><span class="kw">crate</span>::Span</span> {
+    <span class="kw">fn</span> <span class="ident">from</span>(<span class="ident">proc_span</span>: <span class="ident">proc_macro::Span</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident"><span class="kw">crate</span>::Span</span> {
+        <span class="ident"><span class="kw">crate</span>::Span::_new</span>(<span class="ident">Span::Compiler</span>(<span class="ident">proc_span</span>))
     }
 }
 

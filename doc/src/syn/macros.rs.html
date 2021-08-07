@@ -260,7 +260,7 @@
 
 <span class="macro">macro_rules!</span> <span class="ident">ast_enum_from_struct</span> {
     <span class="comment">// No From&lt;TokenStream&gt; for verbatim variants.</span>
-    (<span class="macro-nonterminal">$</span><span class="macro-nonterminal">name</span>:<span class="ident">ident</span><span class="ident">::Verbatim</span>, <span class="macro-nonterminal">$</span><span class="macro-nonterminal">member</span>:<span class="ident">ident</span>) <span class="op">=</span><span class="op">&gt;</span> {};
+    (<span class="macro-nonterminal">$</span><span class="macro-nonterminal">name</span>:<span class="ident">ident::Verbatim</span>, <span class="macro-nonterminal">$</span><span class="macro-nonterminal">member</span>:<span class="ident">ident</span>) <span class="op">=</span><span class="op">&gt;</span> {};
 
     (<span class="macro-nonterminal">$</span><span class="macro-nonterminal">name</span>:<span class="ident">ident</span>::<span class="macro-nonterminal">$</span><span class="macro-nonterminal">variant</span>:<span class="ident">ident</span>, <span class="macro-nonterminal">$</span><span class="macro-nonterminal">member</span>:<span class="ident">ident</span>) <span class="op">=</span><span class="op">&gt;</span> {
         <span class="kw">impl</span> <span class="ident">From</span><span class="op">&lt;</span><span class="macro-nonterminal">$</span><span class="macro-nonterminal">member</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">name</span> {

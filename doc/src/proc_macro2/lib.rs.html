@@ -1333,12 +1333,12 @@
 <span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">fallback</span>;
 
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">not</span>(<span class="ident">wrap_proc_macro</span>))]</span>
-<span class="kw">use</span> <span class="kw">crate</span><span class="ident">::fallback</span> <span class="kw">as</span> <span class="ident">imp</span>;
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::fallback</span> <span class="kw">as</span> <span class="ident">imp</span>;
 <span class="attribute">#[<span class="ident">path</span> <span class="op">=</span> <span class="string">&quot;wrapper.rs&quot;</span>]</span>
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">wrap_proc_macro</span>)]</span>
 <span class="kw">mod</span> <span class="ident">imp</span>;
 
-<span class="kw">use</span> <span class="kw">crate</span><span class="ident">::marker::Marker</span>;
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::marker::Marker</span>;
 <span class="kw">use</span> <span class="ident">std::cmp::Ordering</span>;
 <span class="kw">use</span> <span class="ident">std::error::Error</span>;
 <span class="kw">use</span> <span class="ident">std::fmt</span>::{<span class="self">self</span>, <span class="ident">Debug</span>, <span class="ident">Display</span>};
@@ -2425,11 +2425,11 @@
 
 <span class="doccomment">/// Public implementation details for the `TokenStream` type, such as iterators.</span>
 <span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">token_stream</span> {
-    <span class="kw">use</span> <span class="kw">crate</span><span class="ident">::marker::Marker</span>;
+    <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::marker::Marker</span>;
     <span class="kw">use</span> <span class="kw">crate</span>::{<span class="ident">imp</span>, <span class="ident">TokenTree</span>};
     <span class="kw">use</span> <span class="ident">std::fmt</span>::{<span class="self">self</span>, <span class="ident">Debug</span>};
 
-    <span class="kw">pub</span> <span class="kw">use</span> <span class="kw">crate</span><span class="ident">::TokenStream</span>;
+    <span class="kw">pub</span> <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::TokenStream</span>;
 
     <span class="doccomment">/// An iterator over `TokenStream`&#39;s `TokenTree`s.</span>
     <span class="doccomment">///</span>

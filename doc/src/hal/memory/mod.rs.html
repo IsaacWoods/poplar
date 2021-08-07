@@ -152,7 +152,7 @@
     <span class="kw">const</span> <span class="ident">SIZE</span>: <span class="ident">Bytes</span>;
 
     <span class="kw">fn</span> <span class="ident">frames_needed</span>(<span class="ident">bytes</span>: <span class="ident">Bytes</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">Bytes</span> {
-        (<span class="ident">bytes</span> <span class="op">/</span> <span class="self">Self</span><span class="ident">::SIZE</span>) <span class="op">+</span> <span class="kw">if</span> <span class="ident">bytes</span> <span class="op">%</span> <span class="self">Self</span><span class="ident">::SIZE</span> <span class="op">&gt;</span> <span class="number">0</span> { <span class="number">1</span> } <span class="kw">else</span> { <span class="number">0</span> }
+        (<span class="ident">bytes</span> <span class="op">/</span> <span class="ident"><span class="self">Self</span>::SIZE</span>) <span class="op">+</span> <span class="kw">if</span> <span class="ident">bytes</span> <span class="op">%</span> <span class="ident"><span class="self">Self</span>::SIZE</span> <span class="op">&gt;</span> <span class="number">0</span> { <span class="number">1</span> } <span class="kw">else</span> { <span class="number">0</span> }
     }
 }
 

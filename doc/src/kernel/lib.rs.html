@@ -167,7 +167,7 @@
 <span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">scheduler</span>;
 <span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">syscall</span>;
 
-<span class="kw">use</span> <span class="kw">crate</span><span class="ident">::memory::Stack</span>;
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::memory::Stack</span>;
 <span class="kw">use</span> <span class="ident">alloc</span>::{<span class="ident">boxed::Box</span>, <span class="ident">sync::Arc</span>};
 <span class="kw">use</span> <span class="ident">core::pin::Pin</span>;
 <span class="kw">use</span> <span class="ident">hal</span>::{
@@ -195,14 +195,14 @@
 
 <span class="kw">pub</span> <span class="kw">trait</span> <span class="ident">Platform</span>: <span class="ident">Sized</span> <span class="op">+</span> <span class="lifetime">&#39;static</span> {
     <span class="kw">type</span> <span class="ident">PageTableSize</span>: <span class="ident">FrameSize</span>;
-    <span class="kw">type</span> <span class="ident">PageTable</span>: <span class="ident">PageTable</span><span class="op">&lt;</span><span class="self">Self</span><span class="ident">::PageTableSize</span><span class="op">&gt;</span> <span class="op">+</span> <span class="ident">Send</span>;
+    <span class="kw">type</span> <span class="ident">PageTable</span>: <span class="ident">PageTable</span><span class="op">&lt;</span><span class="ident"><span class="self">Self</span>::PageTableSize</span><span class="op">&gt;</span> <span class="op">+</span> <span class="ident">Send</span>;
     <span class="kw">type</span> <span class="ident">PerCpu</span>: <span class="ident">PerCpu</span><span class="op">&lt;</span><span class="self">Self</span><span class="op">&gt;</span>;
 
-    <span class="kw">fn</span> <span class="ident">kernel_page_table</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">Self</span><span class="ident">::PageTable</span>;
+    <span class="kw">fn</span> <span class="ident">kernel_page_table</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident"><span class="self">Self</span>::PageTable</span>;
 
     <span class="doccomment">/// Get the per-CPU info for the current CPU. To make this safe, the per-CPU info must be installed before the</span>
     <span class="doccomment">/// `Platform` implementation is created.</span>
-    <span class="kw">fn</span> <span class="ident">per_cpu</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="ident">Pin</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="kw-2">mut</span> <span class="self">Self</span><span class="ident">::PerCpu</span><span class="op">&gt;</span>;
+    <span class="kw">fn</span> <span class="ident">per_cpu</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="ident">Pin</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="kw-2">mut</span> <span class="ident"><span class="self">Self</span>::PerCpu</span><span class="op">&gt;</span>;
 
     <span class="doccomment">/// Often, the platform will need to put stuff on either the kernel or the user stack before a task is run for</span>
     <span class="doccomment">/// the first time. `task_entry_point` is the virtual address that should be jumped to in usermode when the</span>

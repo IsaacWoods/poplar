@@ -380,8 +380,8 @@
 <span id="380">380</span>
 </pre><pre class="rust">
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;parsing&quot;</span>)]</span>
-<span class="kw">use</span> <span class="kw">crate</span><span class="ident">::buffer::Cursor</span>;
-<span class="kw">use</span> <span class="kw">crate</span><span class="ident">::thread::ThreadBound</span>;
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::buffer::Cursor</span>;
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::thread::ThreadBound</span>;
 <span class="kw">use</span> <span class="ident">proc_macro2</span>::{
     <span class="ident">Delimiter</span>, <span class="ident">Group</span>, <span class="ident">Ident</span>, <span class="ident">LexError</span>, <span class="ident">Literal</span>, <span class="ident">Punct</span>, <span class="ident">Spacing</span>, <span class="ident">Span</span>, <span class="ident">TokenStream</span>, <span class="ident">TokenTree</span>,
 };
@@ -622,7 +622,7 @@
     <span class="kw">if</span> <span class="ident">cursor</span>.<span class="ident">eof</span>() {
         <span class="ident">Error::new</span>(<span class="ident">scope</span>, <span class="macro">format!</span>(<span class="string">&quot;unexpected end of input, {}&quot;</span>, <span class="ident">message</span>))
     } <span class="kw">else</span> {
-        <span class="kw">let</span> <span class="ident">span</span> <span class="op">=</span> <span class="kw">crate</span><span class="ident">::buffer::open_span_of_group</span>(<span class="ident">cursor</span>);
+        <span class="kw">let</span> <span class="ident">span</span> <span class="op">=</span> <span class="ident"><span class="kw">crate</span>::buffer::open_span_of_group</span>(<span class="ident">cursor</span>);
         <span class="ident">Error::new</span>(<span class="ident">span</span>, <span class="ident">message</span>)
     }
 }
@@ -706,7 +706,7 @@
     <span class="kw">type</span> <span class="ident">Item</span> <span class="op">=</span> <span class="ident">Error</span>;
     <span class="kw">type</span> <span class="ident">IntoIter</span> <span class="op">=</span> <span class="ident">IntoIter</span>;
 
-    <span class="kw">fn</span> <span class="ident">into_iter</span>(<span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span><span class="ident">::IntoIter</span> {
+    <span class="kw">fn</span> <span class="ident">into_iter</span>(<span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident"><span class="self">Self</span>::IntoIter</span> {
         <span class="ident">IntoIter</span> {
             <span class="ident">messages</span>: <span class="self">self</span>.<span class="ident">messages</span>.<span class="ident">into_iter</span>(),
         }
@@ -720,7 +720,7 @@
 <span class="kw">impl</span> <span class="ident">Iterator</span> <span class="kw">for</span> <span class="ident">IntoIter</span> {
     <span class="kw">type</span> <span class="ident">Item</span> <span class="op">=</span> <span class="ident">Error</span>;
 
-    <span class="kw">fn</span> <span class="ident">next</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="self">Self</span><span class="ident">::Item</span><span class="op">&gt;</span> {
+    <span class="kw">fn</span> <span class="ident">next</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident"><span class="self">Self</span>::Item</span><span class="op">&gt;</span> {
         <span class="prelude-val">Some</span>(<span class="ident">Error</span> {
             <span class="ident">messages</span>: <span class="macro">vec!</span>[<span class="self">self</span>.<span class="ident">messages</span>.<span class="ident">next</span>()<span class="question-mark">?</span>],
         })
@@ -731,7 +731,7 @@
     <span class="kw">type</span> <span class="ident">Item</span> <span class="op">=</span> <span class="ident">Error</span>;
     <span class="kw">type</span> <span class="ident">IntoIter</span> <span class="op">=</span> <span class="ident">Iter</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>;
 
-    <span class="kw">fn</span> <span class="ident">into_iter</span>(<span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span><span class="ident">::IntoIter</span> {
+    <span class="kw">fn</span> <span class="ident">into_iter</span>(<span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident"><span class="self">Self</span>::IntoIter</span> {
         <span class="ident">Iter</span> {
             <span class="ident">messages</span>: <span class="self">self</span>.<span class="ident">messages</span>.<span class="ident">iter</span>(),
         }
@@ -745,7 +745,7 @@
 <span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> <span class="ident">Iterator</span> <span class="kw">for</span> <span class="ident">Iter</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> {
     <span class="kw">type</span> <span class="ident">Item</span> <span class="op">=</span> <span class="ident">Error</span>;
 
-    <span class="kw">fn</span> <span class="ident">next</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="self">Self</span><span class="ident">::Item</span><span class="op">&gt;</span> {
+    <span class="kw">fn</span> <span class="ident">next</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident"><span class="self">Self</span>::Item</span><span class="op">&gt;</span> {
         <span class="prelude-val">Some</span>(<span class="ident">Error</span> {
             <span class="ident">messages</span>: <span class="macro">vec!</span>[<span class="self">self</span>.<span class="ident">messages</span>.<span class="ident">next</span>()<span class="question-mark">?</span>.<span class="ident">clone</span>()],
         })

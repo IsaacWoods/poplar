@@ -115,7 +115,7 @@
 {
     <span class="kw">type</span> <span class="ident">Output</span> <span class="op">=</span> <span class="ident">Frame</span><span class="op">&lt;</span><span class="ident">S</span><span class="op">&gt;</span>;
 
-    <span class="kw">fn</span> <span class="ident">add</span>(<span class="self">self</span>, <span class="ident">num_frames</span>: <span class="ident">usize</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span><span class="ident">::Output</span> {
+    <span class="kw">fn</span> <span class="ident">add</span>(<span class="self">self</span>, <span class="ident">num_frames</span>: <span class="ident">usize</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident"><span class="self">Self</span>::Output</span> {
         <span class="macro">assert!</span>(<span class="ident">PhysicalAddress::new</span>(<span class="ident">usize::from</span>(<span class="self">self</span>.<span class="ident">start</span>) <span class="op">+</span> <span class="ident">num_frames</span> <span class="op">*</span> <span class="ident">S::SIZE</span>).<span class="ident">is_some</span>());
         <span class="ident">Frame</span> { <span class="ident">start</span>: <span class="self">self</span>.<span class="ident">start</span> <span class="op">+</span> <span class="ident">num_frames</span> <span class="op">*</span> <span class="ident">S::SIZE</span>, <span class="ident">_phantom</span>: <span class="ident">PhantomData</span> }
     }

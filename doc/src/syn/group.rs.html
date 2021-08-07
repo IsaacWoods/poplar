@@ -278,9 +278,9 @@
 <span id="278">278</span>
 <span id="279">279</span>
 </pre><pre class="rust">
-<span class="kw">use</span> <span class="kw">crate</span><span class="ident">::error::Result</span>;
-<span class="kw">use</span> <span class="kw">crate</span><span class="ident">::parse::ParseBuffer</span>;
-<span class="kw">use</span> <span class="kw">crate</span><span class="ident">::token</span>;
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::error::Result</span>;
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::parse::ParseBuffer</span>;
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::token</span>;
 <span class="kw">use</span> <span class="ident">proc_macro2</span>::{<span class="ident">Delimiter</span>, <span class="ident">Span</span>};
 
 <span class="comment">// Not public API.</span>
@@ -353,10 +353,10 @@
 ) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>(<span class="ident">Span</span>, <span class="ident">ParseBuffer</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>)<span class="op">&gt;</span> {
     <span class="ident">input</span>.<span class="ident">step</span>(<span class="op">|</span><span class="ident">cursor</span><span class="op">|</span> {
         <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>((<span class="ident">content</span>, <span class="ident">span</span>, <span class="ident">rest</span>)) <span class="op">=</span> <span class="ident">cursor</span>.<span class="ident">group</span>(<span class="ident">delimiter</span>) {
-            <span class="kw">let</span> <span class="ident">scope</span> <span class="op">=</span> <span class="kw">crate</span><span class="ident">::buffer::close_span_of_group</span>(<span class="kw-2">*</span><span class="ident">cursor</span>);
-            <span class="kw">let</span> <span class="ident">nested</span> <span class="op">=</span> <span class="kw">crate</span><span class="ident">::parse::advance_step_cursor</span>(<span class="ident">cursor</span>, <span class="ident">content</span>);
-            <span class="kw">let</span> <span class="ident">unexpected</span> <span class="op">=</span> <span class="kw">crate</span><span class="ident">::parse::get_unexpected</span>(<span class="ident">input</span>);
-            <span class="kw">let</span> <span class="ident">content</span> <span class="op">=</span> <span class="kw">crate</span><span class="ident">::parse::new_parse_buffer</span>(<span class="ident">scope</span>, <span class="ident">nested</span>, <span class="ident">unexpected</span>);
+            <span class="kw">let</span> <span class="ident">scope</span> <span class="op">=</span> <span class="ident"><span class="kw">crate</span>::buffer::close_span_of_group</span>(<span class="kw-2">*</span><span class="ident">cursor</span>);
+            <span class="kw">let</span> <span class="ident">nested</span> <span class="op">=</span> <span class="ident"><span class="kw">crate</span>::parse::advance_step_cursor</span>(<span class="ident">cursor</span>, <span class="ident">content</span>);
+            <span class="kw">let</span> <span class="ident">unexpected</span> <span class="op">=</span> <span class="ident"><span class="kw">crate</span>::parse::get_unexpected</span>(<span class="ident">input</span>);
+            <span class="kw">let</span> <span class="ident">content</span> <span class="op">=</span> <span class="ident"><span class="kw">crate</span>::parse::new_parse_buffer</span>(<span class="ident">scope</span>, <span class="ident">nested</span>, <span class="ident">unexpected</span>);
             <span class="prelude-val">Ok</span>(((<span class="ident">span</span>, <span class="ident">content</span>), <span class="ident">rest</span>))
         } <span class="kw">else</span> {
             <span class="kw">let</span> <span class="ident">message</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">delimiter</span> {
@@ -415,13 +415,13 @@
 <span class="attribute">#[<span class="ident">macro_export</span>]</span>
 <span class="macro">macro_rules!</span> <span class="ident">parenthesized</span> {
     (<span class="macro-nonterminal">$</span><span class="macro-nonterminal">content</span>:<span class="ident">ident</span> <span class="kw">in</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">cursor</span>:<span class="ident">expr</span>) <span class="op">=</span><span class="op">&gt;</span> {
-        <span class="kw">match</span> <span class="macro-nonterminal">$</span><span class="kw">crate</span><span class="macro-nonterminal">::group::parse_parens</span>(<span class="kw-2">&amp;</span><span class="macro-nonterminal">$</span><span class="macro-nonterminal">cursor</span>) {
-            <span class="macro-nonterminal">$</span><span class="kw">crate</span><span class="macro-nonterminal">::export::Ok</span>(<span class="ident">parens</span>) <span class="op">=</span><span class="op">&gt;</span> {
+        <span class="kw">match</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">crate::group::parse_parens</span>(<span class="kw-2">&amp;</span><span class="macro-nonterminal">$</span><span class="macro-nonterminal">cursor</span>) {
+            <span class="macro-nonterminal">$</span><span class="macro-nonterminal">crate::export::Ok</span>(<span class="ident">parens</span>) <span class="op">=</span><span class="op">&gt;</span> {
                 <span class="macro-nonterminal">$</span><span class="macro-nonterminal">content</span> <span class="op">=</span> <span class="ident">parens</span>.<span class="ident">content</span>;
                 <span class="ident">parens</span>.<span class="ident">token</span>
             }
-            <span class="macro-nonterminal">$</span><span class="kw">crate</span><span class="macro-nonterminal">::export::Err</span>(<span class="ident">error</span>) <span class="op">=</span><span class="op">&gt;</span> {
-                <span class="kw">return</span> <span class="macro-nonterminal">$</span><span class="kw">crate</span><span class="macro-nonterminal">::export::Err</span>(<span class="ident">error</span>);
+            <span class="macro-nonterminal">$</span><span class="macro-nonterminal">crate::export::Err</span>(<span class="ident">error</span>) <span class="op">=</span><span class="op">&gt;</span> {
+                <span class="kw">return</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">crate::export::Err</span>(<span class="ident">error</span>);
             }
         }
     };
@@ -492,13 +492,13 @@
 <span class="attribute">#[<span class="ident">macro_export</span>]</span>
 <span class="macro">macro_rules!</span> <span class="ident">braced</span> {
     (<span class="macro-nonterminal">$</span><span class="macro-nonterminal">content</span>:<span class="ident">ident</span> <span class="kw">in</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">cursor</span>:<span class="ident">expr</span>) <span class="op">=</span><span class="op">&gt;</span> {
-        <span class="kw">match</span> <span class="macro-nonterminal">$</span><span class="kw">crate</span><span class="macro-nonterminal">::group::parse_braces</span>(<span class="kw-2">&amp;</span><span class="macro-nonterminal">$</span><span class="macro-nonterminal">cursor</span>) {
-            <span class="macro-nonterminal">$</span><span class="kw">crate</span><span class="macro-nonterminal">::export::Ok</span>(<span class="ident">braces</span>) <span class="op">=</span><span class="op">&gt;</span> {
+        <span class="kw">match</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">crate::group::parse_braces</span>(<span class="kw-2">&amp;</span><span class="macro-nonterminal">$</span><span class="macro-nonterminal">cursor</span>) {
+            <span class="macro-nonterminal">$</span><span class="macro-nonterminal">crate::export::Ok</span>(<span class="ident">braces</span>) <span class="op">=</span><span class="op">&gt;</span> {
                 <span class="macro-nonterminal">$</span><span class="macro-nonterminal">content</span> <span class="op">=</span> <span class="ident">braces</span>.<span class="ident">content</span>;
                 <span class="ident">braces</span>.<span class="ident">token</span>
             }
-            <span class="macro-nonterminal">$</span><span class="kw">crate</span><span class="macro-nonterminal">::export::Err</span>(<span class="ident">error</span>) <span class="op">=</span><span class="op">&gt;</span> {
-                <span class="kw">return</span> <span class="macro-nonterminal">$</span><span class="kw">crate</span><span class="macro-nonterminal">::export::Err</span>(<span class="ident">error</span>);
+            <span class="macro-nonterminal">$</span><span class="macro-nonterminal">crate::export::Err</span>(<span class="ident">error</span>) <span class="op">=</span><span class="op">&gt;</span> {
+                <span class="kw">return</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">crate::export::Err</span>(<span class="ident">error</span>);
             }
         }
     };
@@ -546,13 +546,13 @@
 <span class="attribute">#[<span class="ident">macro_export</span>]</span>
 <span class="macro">macro_rules!</span> <span class="ident">bracketed</span> {
     (<span class="macro-nonterminal">$</span><span class="macro-nonterminal">content</span>:<span class="ident">ident</span> <span class="kw">in</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">cursor</span>:<span class="ident">expr</span>) <span class="op">=</span><span class="op">&gt;</span> {
-        <span class="kw">match</span> <span class="macro-nonterminal">$</span><span class="kw">crate</span><span class="macro-nonterminal">::group::parse_brackets</span>(<span class="kw-2">&amp;</span><span class="macro-nonterminal">$</span><span class="macro-nonterminal">cursor</span>) {
-            <span class="macro-nonterminal">$</span><span class="kw">crate</span><span class="macro-nonterminal">::export::Ok</span>(<span class="ident">brackets</span>) <span class="op">=</span><span class="op">&gt;</span> {
+        <span class="kw">match</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">crate::group::parse_brackets</span>(<span class="kw-2">&amp;</span><span class="macro-nonterminal">$</span><span class="macro-nonterminal">cursor</span>) {
+            <span class="macro-nonterminal">$</span><span class="macro-nonterminal">crate::export::Ok</span>(<span class="ident">brackets</span>) <span class="op">=</span><span class="op">&gt;</span> {
                 <span class="macro-nonterminal">$</span><span class="macro-nonterminal">content</span> <span class="op">=</span> <span class="ident">brackets</span>.<span class="ident">content</span>;
                 <span class="ident">brackets</span>.<span class="ident">token</span>
             }
-            <span class="macro-nonterminal">$</span><span class="kw">crate</span><span class="macro-nonterminal">::export::Err</span>(<span class="ident">error</span>) <span class="op">=</span><span class="op">&gt;</span> {
-                <span class="kw">return</span> <span class="macro-nonterminal">$</span><span class="kw">crate</span><span class="macro-nonterminal">::export::Err</span>(<span class="ident">error</span>);
+            <span class="macro-nonterminal">$</span><span class="macro-nonterminal">crate::export::Err</span>(<span class="ident">error</span>) <span class="op">=</span><span class="op">&gt;</span> {
+                <span class="kw">return</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">crate::export::Err</span>(<span class="ident">error</span>);
             }
         }
     };

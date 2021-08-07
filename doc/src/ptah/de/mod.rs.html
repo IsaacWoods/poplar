@@ -168,7 +168,7 @@
 </pre><pre class="rust">
 <span class="kw">mod</span> <span class="ident">impls</span>;
 
-<span class="kw">use</span> <span class="kw">crate</span><span class="ident">::Handle</span>;
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::Handle</span>;
 <span class="kw">use</span> <span class="ident">core</span>::{<span class="ident">convert::TryInto</span>, <span class="ident">str</span>};
 
 <span class="doccomment">/// Errors that can occur during deserialization.</span>
@@ -176,7 +176,7 @@
 <span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">Error</span> {
     <span class="ident">EndOfStream</span>,
     <span class="ident">TrailingBytes</span>,
-    <span class="ident">InvalidHandleSlot</span>(<span class="kw">crate</span><span class="ident">::HandleSlot</span>),
+    <span class="ident">InvalidHandleSlot</span>(<span class="ident"><span class="kw">crate</span>::HandleSlot</span>),
 
     <span class="ident">InvalidChar</span>,
     <span class="ident">InvalidUtf8</span>,
@@ -208,8 +208,8 @@
 
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">deserialize_bool</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">bool</span><span class="op">&gt;</span> {
         <span class="kw">match</span> <span class="self">self</span>.<span class="ident">take_byte</span>()<span class="question-mark">?</span> {
-            <span class="kw">crate</span><span class="ident">::MARKER_TRUE</span> <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">Ok</span>(<span class="bool-val">true</span>),
-            <span class="kw">crate</span><span class="ident">::MARKER_FALSE</span> <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">Ok</span>(<span class="bool-val">false</span>),
+            <span class="ident"><span class="kw">crate</span>::MARKER_TRUE</span> <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">Ok</span>(<span class="bool-val">true</span>),
+            <span class="ident"><span class="kw">crate</span>::MARKER_FALSE</span> <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">Ok</span>(<span class="bool-val">false</span>),
             <span class="ident">tag</span> <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">Err</span>(<span class="ident">Error::InvalidBoolMarker</span>(<span class="ident">tag</span>)),
         }
     }
@@ -278,8 +278,8 @@
     {
         <span class="kw">let</span> <span class="ident">tag</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">take_byte</span>()<span class="question-mark">?</span>;
         <span class="kw">match</span> <span class="ident">tag</span> {
-            <span class="kw">crate</span><span class="ident">::MARKER_NONE</span> <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>),
-            <span class="kw">crate</span><span class="ident">::MARKER_SOME</span> <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(<span class="ident">T::deserialize</span>(<span class="self">self</span>)<span class="question-mark">?</span>)),
+            <span class="ident"><span class="kw">crate</span>::MARKER_NONE</span> <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>),
+            <span class="ident"><span class="kw">crate</span>::MARKER_SOME</span> <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(<span class="ident">T::deserialize</span>(<span class="self">self</span>)<span class="question-mark">?</span>)),
             <span class="kw">_</span> <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">Err</span>(<span class="ident">Error::InvalidOptionMarker</span>(<span class="ident">tag</span>)),
         }
     }
@@ -299,9 +299,9 @@
         <span class="self">self</span>.<span class="ident">deserialize_u32</span>()
     }
 
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">deserialize_handle</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="kw">crate</span><span class="ident">::Handle</span><span class="op">&gt;</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">deserialize_handle</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident"><span class="kw">crate</span>::Handle</span><span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="ident">slot</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">deserialize_u8</span>()<span class="question-mark">?</span>;
-        <span class="kw">match</span> <span class="self">self</span>.<span class="ident">handles</span>.<span class="ident">get</span>(<span class="kw">crate</span><span class="ident">::index_from_handle_slot</span>(<span class="ident">slot</span>) <span class="kw">as</span> <span class="ident">usize</span>) {
+        <span class="kw">match</span> <span class="self">self</span>.<span class="ident">handles</span>.<span class="ident">get</span>(<span class="ident"><span class="kw">crate</span>::index_from_handle_slot</span>(<span class="ident">slot</span>) <span class="kw">as</span> <span class="ident">usize</span>) {
             <span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span><span class="ident">handle</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">Ok</span>(<span class="ident">handle</span>),
             <span class="prelude-val">None</span> <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">Err</span>(<span class="ident">Error::InvalidHandleSlot</span>(<span class="ident">slot</span>)),
         }

@@ -354,7 +354,7 @@
 
 <span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> <span class="ident">Speculative</span> <span class="kw">for</span> <span class="ident">ParseBuffer</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> {
     <span class="kw">fn</span> <span class="ident">advance_to</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">fork</span>: <span class="kw-2">&amp;</span><span class="self">Self</span>) {
-        <span class="kw">if</span> <span class="op">!</span><span class="kw">crate</span><span class="ident">::buffer::same_scope</span>(<span class="self">self</span>.<span class="ident">cursor</span>(), <span class="ident">fork</span>.<span class="ident">cursor</span>()) {
+        <span class="kw">if</span> <span class="op">!</span><span class="ident"><span class="kw">crate</span>::buffer::same_scope</span>(<span class="self">self</span>.<span class="ident">cursor</span>(), <span class="ident">fork</span>.<span class="ident">cursor</span>()) {
             <span class="macro">panic!</span>(<span class="string">&quot;Fork was not derived from the advancing parse stream&quot;</span>);
         }
 

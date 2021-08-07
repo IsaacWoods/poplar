@@ -1129,7 +1129,7 @@
 <span id="1129">1129</span>
 </pre><pre class="rust">
 <span class="kw">use</span> <span class="kw">super</span>::<span class="kw-2">*</span>;
-<span class="kw">use</span> <span class="kw">crate</span><span class="ident">::punctuated::Punctuated</span>;
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::punctuated::Punctuated</span>;
 <span class="kw">use</span> <span class="ident">proc_macro2::TokenStream</span>;
 
 <span class="macro">ast_enum_of_structs!</span> {
@@ -1428,9 +1428,9 @@
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;parsing&quot;</span>)]</span>
 <span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">parsing</span> {
     <span class="kw">use</span> <span class="kw">super</span>::<span class="kw-2">*</span>;
-    <span class="kw">use</span> <span class="kw">crate</span><span class="ident">::ext::IdentExt</span>;
-    <span class="kw">use</span> <span class="kw">crate</span><span class="ident">::parse</span>::{<span class="ident">Parse</span>, <span class="ident">ParseStream</span>, <span class="prelude-ty">Result</span>};
-    <span class="kw">use</span> <span class="kw">crate</span><span class="ident">::path</span>;
+    <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::ext::IdentExt</span>;
+    <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::parse</span>::{<span class="ident">Parse</span>, <span class="ident">ParseStream</span>, <span class="prelude-ty">Result</span>};
+    <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::path</span>;
     <span class="kw">use</span> <span class="ident">proc_macro2</span>::{<span class="ident">Punct</span>, <span class="ident">Spacing</span>, <span class="ident">TokenTree</span>};
     <span class="kw">use</span> <span class="ident">std::iter::FromIterator</span>;
 
@@ -1878,7 +1878,7 @@
     <span class="kw">impl</span> <span class="ident">ReturnType</span> {
         <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">without_plus</span>(<span class="ident">input</span>: <span class="ident">ParseStream</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="self">Self</span><span class="op">&gt;</span> {
             <span class="kw">let</span> <span class="ident">allow_plus</span> <span class="op">=</span> <span class="bool-val">false</span>;
-            <span class="self">Self</span><span class="ident">::parse</span>(<span class="ident">input</span>, <span class="ident">allow_plus</span>)
+            <span class="ident"><span class="self">Self</span>::parse</span>(<span class="ident">input</span>, <span class="ident">allow_plus</span>)
         }
 
         <span class="attribute">#[<span class="ident">doc</span>(<span class="ident">hidden</span>)]</span>
@@ -1895,13 +1895,13 @@
 
     <span class="kw">impl</span> <span class="ident">Parse</span> <span class="kw">for</span> <span class="ident">ReturnType</span> {
         <span class="kw">fn</span> <span class="ident">parse</span>(<span class="ident">input</span>: <span class="ident">ParseStream</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="self">Self</span><span class="op">&gt;</span> {
-            <span class="self">Self</span><span class="ident">::parse</span>(<span class="ident">input</span>, <span class="bool-val">true</span>)
+            <span class="ident"><span class="self">Self</span>::parse</span>(<span class="ident">input</span>, <span class="bool-val">true</span>)
         }
     }
 
     <span class="kw">impl</span> <span class="ident">Parse</span> <span class="kw">for</span> <span class="ident">TypeTraitObject</span> {
         <span class="kw">fn</span> <span class="ident">parse</span>(<span class="ident">input</span>: <span class="ident">ParseStream</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="self">Self</span><span class="op">&gt;</span> {
-            <span class="self">Self</span><span class="ident">::parse</span>(<span class="ident">input</span>, <span class="bool-val">true</span>)
+            <span class="ident"><span class="self">Self</span>::parse</span>(<span class="ident">input</span>, <span class="bool-val">true</span>)
         }
     }
 
@@ -1917,7 +1917,7 @@
     <span class="kw">impl</span> <span class="ident">TypeTraitObject</span> {
         <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">without_plus</span>(<span class="ident">input</span>: <span class="ident">ParseStream</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="self">Self</span><span class="op">&gt;</span> {
             <span class="kw">let</span> <span class="ident">allow_plus</span> <span class="op">=</span> <span class="bool-val">false</span>;
-            <span class="self">Self</span><span class="ident">::parse</span>(<span class="ident">input</span>, <span class="ident">allow_plus</span>)
+            <span class="ident"><span class="self">Self</span>::parse</span>(<span class="ident">input</span>, <span class="ident">allow_plus</span>)
         }
 
         <span class="comment">// Only allow multiple trait references if allow_plus is true.</span>
@@ -1974,7 +1974,7 @@
 
     <span class="kw">impl</span> <span class="ident">Parse</span> <span class="kw">for</span> <span class="ident">TypeGroup</span> {
         <span class="kw">fn</span> <span class="ident">parse</span>(<span class="ident">input</span>: <span class="ident">ParseStream</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="self">Self</span><span class="op">&gt;</span> {
-            <span class="kw">let</span> <span class="ident">group</span> <span class="op">=</span> <span class="kw">crate</span><span class="ident">::group::parse_group</span>(<span class="ident">input</span>)<span class="question-mark">?</span>;
+            <span class="kw">let</span> <span class="ident">group</span> <span class="op">=</span> <span class="ident"><span class="kw">crate</span>::group::parse_group</span>(<span class="ident">input</span>)<span class="question-mark">?</span>;
             <span class="prelude-val">Ok</span>(<span class="ident">TypeGroup</span> {
                 <span class="ident">group_token</span>: <span class="ident">group</span>.<span class="ident">token</span>,
                 <span class="ident">elem</span>: <span class="ident">group</span>.<span class="ident">content</span>.<span class="ident">parse</span>()<span class="question-mark">?</span>,
@@ -1985,7 +1985,7 @@
     <span class="kw">impl</span> <span class="ident">Parse</span> <span class="kw">for</span> <span class="ident">TypeParen</span> {
         <span class="kw">fn</span> <span class="ident">parse</span>(<span class="ident">input</span>: <span class="ident">ParseStream</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="self">Self</span><span class="op">&gt;</span> {
             <span class="kw">let</span> <span class="ident">allow_plus</span> <span class="op">=</span> <span class="bool-val">false</span>;
-            <span class="self">Self</span><span class="ident">::parse</span>(<span class="ident">input</span>, <span class="ident">allow_plus</span>)
+            <span class="ident"><span class="self">Self</span>::parse</span>(<span class="ident">input</span>, <span class="ident">allow_plus</span>)
         }
     }
 
@@ -2093,8 +2093,8 @@
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;printing&quot;</span>)]</span>
 <span class="kw">mod</span> <span class="ident">printing</span> {
     <span class="kw">use</span> <span class="kw">super</span>::<span class="kw-2">*</span>;
-    <span class="kw">use</span> <span class="kw">crate</span><span class="ident">::attr::FilterAttrs</span>;
-    <span class="kw">use</span> <span class="kw">crate</span><span class="ident">::print::TokensOrDefault</span>;
+    <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::attr::FilterAttrs</span>;
+    <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::print::TokensOrDefault</span>;
     <span class="kw">use</span> <span class="ident">proc_macro2::TokenStream</span>;
     <span class="kw">use</span> <span class="ident">quote</span>::{<span class="ident">ToTokens</span>, <span class="ident">TokenStreamExt</span>};
 

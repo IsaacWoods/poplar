@@ -13,7 +13,7 @@ errors may occur at compile time.</p>
         <span class="kw">const</span> <span class="ident">A</span> <span class="op">=</span> <span class="number">0b00000001</span>;
         <span class="kw">const</span> <span class="ident">B</span> <span class="op">=</span> <span class="number">0b00000010</span>;
         <span class="kw">const</span> <span class="ident">C</span> <span class="op">=</span> <span class="number">0b00000100</span>;
-        <span class="kw">const</span> <span class="ident">ABC</span> <span class="op">=</span> <span class="self">Self</span><span class="ident">::A</span>.<span class="ident">bits</span> <span class="op">|</span> <span class="self">Self</span><span class="ident">::B</span>.<span class="ident">bits</span> <span class="op">|</span> <span class="self">Self</span><span class="ident">::C</span>.<span class="ident">bits</span>;
+        <span class="kw">const</span> <span class="ident">ABC</span> <span class="op">=</span> <span class="ident"><span class="self">Self</span>::A</span>.<span class="ident">bits</span> <span class="op">|</span> <span class="ident"><span class="self">Self</span>::B</span>.<span class="ident">bits</span> <span class="op">|</span> <span class="ident"><span class="self">Self</span>::C</span>.<span class="ident">bits</span>;
     }
 }
 

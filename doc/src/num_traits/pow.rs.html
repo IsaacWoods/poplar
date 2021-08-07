@@ -278,7 +278,7 @@
     <span class="doccomment">/// use num_traits::Pow;</span>
     <span class="doccomment">/// assert_eq!(Pow::pow(10u32, 2u32), 100);</span>
     <span class="doccomment">/// ```</span>
-    <span class="kw">fn</span> <span class="ident">pow</span>(<span class="self">self</span>, <span class="ident">rhs</span>: <span class="ident">RHS</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span><span class="ident">::Output</span>;
+    <span class="kw">fn</span> <span class="ident">pow</span>(<span class="self">self</span>, <span class="ident">rhs</span>: <span class="ident">RHS</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident"><span class="self">Self</span>::Output</span>;
 }
 
 <span class="macro">macro_rules!</span> <span class="ident">pow_impl</span> {
@@ -417,7 +417,7 @@
 
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">any</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;std&quot;</span>, <span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;libm&quot;</span>))]</span>
 <span class="kw">mod</span> <span class="ident">float_impls</span> {
-    <span class="kw">use</span> <span class="kw">super</span><span class="ident">::Pow</span>;
+    <span class="kw">use</span> <span class="ident"><span class="kw">super</span>::Pow</span>;
     <span class="kw">use</span> <span class="ident">Float</span>;
 
     <span class="macro">pow_impl!</span>(<span class="ident">f32</span>, <span class="ident">i8</span>, <span class="ident">i32</span>, <span class="op">&lt;</span><span class="ident">f32</span> <span class="kw">as</span> <span class="ident">Float</span><span class="op">&gt;</span><span class="ident">::powi</span>);

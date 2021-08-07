@@ -155,12 +155,12 @@
         <span class="kw">impl</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">trait_name</span> <span class="kw">for</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">t</span> {
             <span class="attribute">#[<span class="ident">inline</span>]</span>
             <span class="kw">fn</span> <span class="ident">saturating_add</span>(<span class="self">self</span>, <span class="ident">v</span>: <span class="self">Self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
-                <span class="self">Self</span><span class="ident">::saturating_add</span>(<span class="self">self</span>, <span class="ident">v</span>)
+                <span class="ident"><span class="self">Self</span>::saturating_add</span>(<span class="self">self</span>, <span class="ident">v</span>)
             }
 
             <span class="attribute">#[<span class="ident">inline</span>]</span>
             <span class="kw">fn</span> <span class="ident">saturating_sub</span>(<span class="self">self</span>, <span class="ident">v</span>: <span class="self">Self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
-                <span class="self">Self</span><span class="ident">::saturating_sub</span>(<span class="self">self</span>, <span class="ident">v</span>)
+                <span class="ident"><span class="self">Self</span>::saturating_sub</span>(<span class="self">self</span>, <span class="ident">v</span>)
             }
         }
     )<span class="kw-2">*</span>}

@@ -348,7 +348,7 @@
 
     <span class="doccomment">/// Creates a new `Once` value.</span>
     <span class="kw">pub</span> <span class="kw">const</span> <span class="kw">fn</span> <span class="ident">new</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="ident">Once</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> {
-        <span class="self">Self</span><span class="ident">::INIT</span>
+        <span class="ident"><span class="self">Self</span>::INIT</span>
     }
 
     <span class="kw">fn</span> <span class="ident">force_get</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">T</span> {
@@ -465,7 +465,7 @@
 
     <span class="kw">use</span> <span class="ident">std::sync::mpsc::channel</span>;
     <span class="kw">use</span> <span class="ident">std::thread</span>;
-    <span class="kw">use</span> <span class="kw">super</span><span class="ident">::Once</span>;
+    <span class="kw">use</span> <span class="ident"><span class="kw">super</span>::Once</span>;
 
     <span class="attribute">#[<span class="ident">test</span>]</span>
     <span class="kw">fn</span> <span class="ident">smoke_once</span>() {
