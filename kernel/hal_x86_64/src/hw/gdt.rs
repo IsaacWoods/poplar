@@ -86,6 +86,10 @@ impl TssSegment {
 
         TssSegment(low, high)
     }
+
+    pub fn present(&self) -> bool {
+        self.0.get_bit(47)
+    }
 }
 
 pub const KERNEL_CODE_SELECTOR: SegmentSelector = SegmentSelector::new(1, PrivilegeLevel::Ring0);
@@ -115,11 +119,6 @@ pub struct Gdt {
     user_code64: CodeSegment,
 
     tsss: [TssSegment; MAX_CPUS],
-
-    /// This field is not part of the actual GDT; we just use it to keep track of how many TSS
-    /// entries have been used
-    // XXX: this shouldn't be included when calculating the limit!
-    next_free_tss: usize,
 }
 
 impl Gdt {
@@ -135,7 +134,6 @@ impl Gdt {
             user_data: DataSegment::new(PrivilegeLevel::Ring3),
             user_code64: CodeSegment::new(PrivilegeLevel::Ring3),
             tsss: [TssSegment::empty(); MAX_CPUS],
-            next_free_tss: 0,
         }
     }
 
@@ -145,15 +143,12 @@ impl Gdt {
     ///
     /// ### Panics
     /// Panics if we have already added as many TSSs as this GDT can hold.
-    pub fn add_tss(&mut self, tss: TssSegment) -> SegmentSelector {
-        if self.next_free_tss == MAX_CPUS {
-            panic!("Not enough space in the GDT for the number of TSSs we need!");
-        }
+    // TODO: better type for CPU IDs
+    pub fn add_tss(&mut self, id: usize, tss: TssSegment) -> SegmentSelector {
+        assert!(!self.tsss[id].present(), "Tried to install a TSS for a CPU that already has one!");
 
-        let offset = OFFSET_TO_FIRST_TSS + self.next_free_tss * mem::size_of::<TssSegment>();
-        self.tsss[self.next_free_tss] = tss;
-        self.next_free_tss += 1;
-
+        let offset = OFFSET_TO_FIRST_TSS + id * mem::size_of::<TssSegment>();
+        self.tsss[id] = tss;
         SegmentSelector(offset as u16)
     }
 
@@ -162,14 +157,9 @@ impl Gdt {
     // TODO: we should probably take a Pin or something to ensure it doesn't move (this is hard because the GDT is
     // in a lock, so it's not easy to get a pinned reference to it)
     pub unsafe fn load(&self, tss_selector: SegmentSelector) {
-        if self.next_free_tss == 0 {
-            panic!("Tried to load kernel GDT before adding bootstrap TSS!");
-        }
-
         let gdt_ptr = DescriptorTablePointer {
-            limit: (NUM_STATIC_ENTRIES * mem::size_of::<u64>() + self.next_free_tss * mem::size_of::<TssSegment>()
-                - 1) as u16,
             base: VirtualAddress::new(self as *const _ as usize),
+            limit: (mem::size_of::<Gdt>() - 1) as u16,
         };
 
         unsafe {

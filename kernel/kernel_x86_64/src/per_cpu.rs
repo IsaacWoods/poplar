@@ -56,8 +56,9 @@ impl PerCpuImpl {
         /*
          * Install the TSS into the GDT.
          */
+        // TODO: assign CPUs unique IDs
         let tss_selector =
-            hal_x86_64::hw::gdt::GDT.lock().add_tss(TssSegment::new(per_cpu.as_mut().tss().into_ref()));
+            hal_x86_64::hw::gdt::GDT.lock().add_tss(0, TssSegment::new(per_cpu.as_mut().tss().into_ref()));
 
         /*
          * Now we know the address of the structure, fill in the self-pointer.
