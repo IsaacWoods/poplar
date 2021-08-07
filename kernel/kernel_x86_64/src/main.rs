@@ -80,6 +80,17 @@ pub extern "C" fn kentry(boot_info: &BootInfo) -> ! {
     }
 
     /*
+     * Get the kernel page tables set up by the loader. We have to assume that the loader has set up a correct set
+     * of page tables, including a full physical mapping at the correct location, and so this is very unsafe.
+     */
+    let kernel_page_table = unsafe {
+        PageTableImpl::from_frame(
+            Frame::starts_with(PhysicalAddress::new(read_control_reg!(cr3) as usize).unwrap()),
+            kernel_map::PHYSICAL_MAPPING_BASE,
+        )
+    };
+
+    /*
      * Initialise the heap allocator. After this, the kernel is free to use collections etc. that
      * can allocate on the heap through the global allocator.
      */
@@ -88,18 +99,6 @@ pub extern "C" fn kentry(boot_info: &BootInfo) -> ! {
     }
 
     kernel::PHYSICAL_MEMORY_MANAGER.initialize(PhysicalMemoryManager::new(boot_info));
-
-    /*
-     * Create our version of the kernel page table. This assumes that the loader has correctly installed a
-     * set of page tables, including a full physical mapping at the correct location. Strange things will happen
-     * if this is not the case, so this is a tad unsafe.
-     */
-    let kernel_page_table = unsafe {
-        PageTableImpl::from_frame(
-            Frame::starts_with(PhysicalAddress::new(read_control_reg!(cr3) as usize).unwrap()),
-            kernel_map::PHYSICAL_MAPPING_BASE,
-        )
-    };
 
     let mut kernel_stack_allocator = KernelStackAllocator::<PlatformImpl>::new(
         kernel_map::KERNEL_STACKS_BASE,
