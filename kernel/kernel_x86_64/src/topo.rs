@@ -91,8 +91,10 @@ pub fn build_topology(acpi_platform_info: &acpi::PlatformInfo) -> Topology {
      * processor's per-CPU data here.
      * XXX: per-CPU data must be installed after the GDT, as we zero `gs` when the GDT is loaded.
      */
+    // TODO: we no longer need to load the GDT on the boot processor, but we do need to create a TSS descriptor in
+    // the correct slot, and then call `ltr`, as this is no longer done as part of GDT creation.
     unsafe {
-        hal_x86_64::hw::gdt::GDT.lock().load(boot_cpu.tss_selector);
+        // hal_x86_64::hw::gdt::GDT.lock().load(boot_cpu.tss_selector);
     }
     boot_cpu.per_cpu.as_mut().install();
 

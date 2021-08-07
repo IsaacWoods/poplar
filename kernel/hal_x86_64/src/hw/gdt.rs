@@ -154,9 +154,7 @@ impl Gdt {
 
     /// Load the new GDT, switch to the new `kernel_code` code segment, clear DS, ES, FS, GS, and
     /// SS to the null segment, and switch TR to the first TSS.
-    // TODO: we should probably take a Pin or something to ensure it doesn't move (this is hard because the GDT is
-    // in a lock, so it's not easy to get a pinned reference to it)
-    pub unsafe fn load(&self, tss_selector: SegmentSelector) {
+    pub unsafe fn load(&self) {
         let gdt_ptr = DescriptorTablePointer {
             base: VirtualAddress::new(self as *const _ as usize),
             limit: (mem::size_of::<Gdt>() - 1) as u16,
@@ -177,14 +175,10 @@ impl Gdt {
                   push rcx
                   lea rax, [rip+0x3]
                   push rax
-                  retfq
-
-                  // Load the TSS
-                  ltr dx",
+                  retfq",
                 in(reg) &gdt_ptr,
                 inlateout("ax") KERNEL_DATA_SELECTOR.0 => _,
                 in("rcx") KERNEL_CODE_SELECTOR.0,
-                in("dx") tss_selector.0
             );
         }
     }

@@ -107,11 +107,29 @@ pub extern "C" fn kentry(boot_info: &BootInfo) -> ! {
     );
 
     /*
+     * We want to replace the GDT and IDT as soon as we can, as we're currently relying on the ones installed by
+     * UEFI. This is required for us to install exception handlers, which allows us to gracefully catch and report
+     * exceptions.
+     */
+    unsafe {
+        hal_x86_64::hw::gdt::GDT.lock().load();
+    }
+
+    // TODO: we no longer create and load a TSS for the bootstrap processor when we create the GDT anymore. This is
+    // fine - we should be able to populate the correct entry in the GDT and then do a `ltr` when it's convenient.
+
+    /*
      * Install the exception handlers. Where we do this is a compromise between as-early-as-possible (we don't
      * catch exceptions properly before this), and having enough infrastructure to install nice handlers (e.g. with
      * IST entries etc.). This seems like a good point to do it.
      */
     InterruptController::install_exception_handlers();
+
+    // XXX: do a page fault, just for testing. This didn't work before, but does now we have a proper GDT at this
+    // point.
+    unsafe {
+        core::ptr::write_volatile(0x2000 as *mut u32, 0xcafebabe);
+    }
 
     /*
      * Parse the static ACPI tables.
