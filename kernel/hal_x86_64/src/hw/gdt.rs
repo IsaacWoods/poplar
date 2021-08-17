@@ -106,7 +106,8 @@ pub const MAX_CPUS: usize = 8;
 /// A GDT suitable for the kernel to use. The order of the segments is important: `sysret` relies
 /// on the Ring-3 segments going in the order "32-bit Code Segment", "Data Segment", "64-bit Code
 /// Segment".
-#[repr(C, packed)]
+// XXX: structure is correctly aligned, and so doesn't need to be `packed`.
+#[repr(C)]
 pub struct Gdt {
     null: u64,
     kernel_code: CodeSegment,
@@ -143,12 +144,11 @@ impl Gdt {
     ///
     /// ### Panics
     /// Panics if we have already added as many TSSs as this GDT can hold.
-    // TODO: better type for CPU IDs
-    pub fn add_tss(&mut self, id: usize, tss: TssSegment) -> SegmentSelector {
+    pub fn add_tss(&mut self, id: usize, tss: Pin<&Tss>) -> SegmentSelector {
         assert!(!self.tsss[id].present(), "Tried to install a TSS for a CPU that already has one!");
 
         let offset = OFFSET_TO_FIRST_TSS + id * mem::size_of::<TssSegment>();
-        self.tsss[id] = tss;
+        self.tsss[id] = TssSegment::new(tss);
         SegmentSelector(offset as u16)
     }
 
