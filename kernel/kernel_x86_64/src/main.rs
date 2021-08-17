@@ -180,7 +180,7 @@ pub extern "C" fn kentry(boot_info: &BootInfo) -> ! {
      * Initialize devices defined in AML.
      * TODO: We should probably call `_REG` on all the op-regions we allow access to at this point before this.
      */
-    aml_context.initialize_objects().expect("Failed to initialize AML objects");
+    // aml_context.initialize_objects().expect("Failed to initialize AML objects");
 
     /*
      * Initialise the interrupt controller, which enables interrupts, and start the per-cpu timer.
@@ -210,11 +210,13 @@ pub extern "C" fn kentry(boot_info: &BootInfo) -> ! {
         kernel::create_framebuffer(video_info);
     }
 
+    loop {}
+
     /*
      * Drop into userspace!
      */
-    info!("Dropping into usermode");
-    PlatformImpl::per_cpu().scheduler().drop_to_userspace()
+    // info!("Dropping into usermode");
+    // PlatformImpl::per_cpu().scheduler().drop_to_userspace()
 }
 
 #[cfg(not(test))]
