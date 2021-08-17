@@ -1,4 +1,3 @@
-use alloc::sync::Arc;
 use core::{mem, ptr};
 use hal::memory::VirtualAddress;
 use hal_x86_64::hw::registers::{write_msr, CpuFlags};

@@ -313,7 +313,7 @@ fn process_memory_map<'a, A, P>(
          */
         // TODO: move this to a decl_macro when hygiene-opt-out is implemented
         macro_rules! add_entry {
-            ($type: expr) => {
+            ($type: expr) => {{
                 boot_info
                     .memory_map
                     .add_entry(MemoryMapEntry {
@@ -322,7 +322,7 @@ fn process_memory_map<'a, A, P>(
                         memory_type: $type,
                     })
                     .expect("Run out of memory entry slots in boot info");
-            };
+            }};
         }
         match entry.ty {
             MemoryType::CONVENTIONAL

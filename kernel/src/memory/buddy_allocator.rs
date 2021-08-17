@@ -95,6 +95,7 @@ impl BuddyAllocator {
         }
     }
 
+    #[allow(dead_code)]
     pub fn available_bytes(&self) -> Bytes {
         let mut bytes = 0;
         for i in 0..NUM_BINS {
