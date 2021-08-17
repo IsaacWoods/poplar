@@ -119,17 +119,12 @@ pub extern "C" fn kentry(boot_info: &BootInfo) -> ! {
     // fine - we should be able to populate the correct entry in the GDT and then do a `ltr` when it's convenient.
 
     /*
-     * Install the exception handlers. Where we do this is a compromise between as-early-as-possible (we don't
-     * catch exceptions properly before this), and having enough infrastructure to install nice handlers (e.g. with
-     * IST entries etc.). This seems like a good point to do it.
+     * Install exception handlers early, so we can catch and report exceptions if they occur during initialization.
+     * We don't have much infrastructure up yet, so we can't do anything fancy like set up IST stacks, but we can
+     * always come back when more of the kernel is set up and add them.
      */
     InterruptController::install_exception_handlers();
 
-    // XXX: do a page fault, just for testing. This didn't work before, but does now we have a proper GDT at this
-    // point.
-    unsafe {
-        core::ptr::write_volatile(0x2000 as *mut u32, 0xcafebabe);
-    }
 
     /*
      * Parse the static ACPI tables.
