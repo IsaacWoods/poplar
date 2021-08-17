@@ -1,6 +1,7 @@
 mod exception;
 
 use acpi::InterruptModel;
+use alloc::vec;
 use aml::{value::Args as AmlArgs, AmlContext, AmlName, AmlValue};
 use core::time::Duration;
 use hal::memory::PhysicalAddress;
@@ -92,7 +93,7 @@ impl InterruptController {
                 aml_context
                     .invoke_method(
                         &AmlName::from_str("\\_PIC").unwrap(),
-                        AmlArgs { arg_0: Some(AmlValue::Integer(1)), ..Default::default() },
+                        AmlArgs::from_list(vec![AmlValue::Integer(1)]).unwrap(),
                     )
                     .expect("Failed to invoke \\_PIC method");
 
