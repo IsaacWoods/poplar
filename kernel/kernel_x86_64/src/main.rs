@@ -13,7 +13,7 @@ mod per_cpu;
 mod task;
 mod topo;
 
-use acpi::{AcpiTables, PciConfigRegions};
+use acpi::{platform::ProcessorState, AcpiTables, PciConfigRegions};
 use acpi_handler::{AmlHandler, PebbleAcpiHandler};
 use alloc::{boxed::Box, sync::Arc};
 use aml::AmlContext;
@@ -27,10 +27,12 @@ use interrupts::InterruptController;
 use kernel::{
     memory::{KernelStackAllocator, PhysicalMemoryManager, Stack},
     object::{memory_object::MemoryObject, KernelObjectId},
+    scheduler::Scheduler,
     Platform,
 };
 use log::{error, info};
 use pci::PciResolver;
+use per_cpu::PerCpuImpl;
 use spin::Mutex;
 use topo::Topology;
 
@@ -140,10 +142,31 @@ pub extern "C" fn kentry(boot_info: &BootInfo) -> ! {
     let acpi_platform_info = acpi_tables.platform_info().unwrap();
 
     /*
-     * Create the topology, which also creates a TSS and per-CPU data for each processor, and loads them for the
-     * boot processor.
+     * Create a topology and add the boot processor to it.
      */
-    let topology = topo::build_topology(&acpi_platform_info);
+    let mut topology = Topology::new();
+    let boot_cpu = {
+        use hal_x86_64::hw::tss::Tss;
+
+        let acpi_info = acpi_platform_info.processor_info.as_ref().unwrap().boot_processor;
+        assert_eq!(acpi_info.state, ProcessorState::Running);
+        assert!(!acpi_info.is_ap);
+
+        let tss = Box::pin(Tss::new());
+        let tss_selector = hal_x86_64::hw::gdt::GDT.lock().add_tss(0, tss.as_ref());
+        unsafe {
+            asm!("ltr ax", in("ax") tss_selector.0);
+        }
+
+        let mut per_cpu = PerCpuImpl::new(tss, Scheduler::new());
+        per_cpu.as_mut().install();
+        topology.add_boot_processor(topo::Cpu {
+            id: topo::BOOT_CPU_ID,
+            local_apic_id: acpi_info.local_apic_id,
+            per_cpu,
+        });
+    };
+
     let pci_access = pci::EcamAccess::new(PciConfigRegions::new(&acpi_tables).unwrap());
 
     /*

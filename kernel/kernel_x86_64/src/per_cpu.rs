@@ -29,7 +29,7 @@ pub struct PerCpuImpl {
     /// This field must remain at `gs:0x10`, and so cannot be moved.
     current_task_user_rsp: VirtualAddress,
 
-    tss: Tss,
+    tss: Pin<Box<Tss>>,
 
     scheduler: Scheduler<crate::PlatformImpl>,
 }
@@ -37,11 +37,11 @@ pub struct PerCpuImpl {
 impl PerCpuImpl {
     unsafe_unpinned!(current_task_kernel_rsp: VirtualAddress);
     unsafe_unpinned!(current_task_user_rsp: VirtualAddress);
-    unsafe_pinned!(tss: Tss);
+    // unsafe_pinned!(tss: Tss);
     unsafe_pinned!(pub scheduler: Scheduler<crate::PlatformImpl>);
 
-    pub fn new(scheduler: Scheduler<crate::PlatformImpl>) -> (Pin<Box<PerCpuImpl>>, SegmentSelector) {
-        let tss = Tss::new();
+    pub fn new(tss: Pin<Box<Tss>>, scheduler: Scheduler<crate::PlatformImpl>) -> Pin<Box<PerCpuImpl>> {
+        // let tss = Tss::new();
         let mut per_cpu = Box::pin(PerCpuImpl {
             _self_pointer: 0x0 as *mut PerCpuImpl,
             _pin: PhantomPinned,
@@ -57,8 +57,7 @@ impl PerCpuImpl {
          * Install the TSS into the GDT.
          */
         // TODO: assign CPUs unique IDs
-        let tss_selector =
-            hal_x86_64::hw::gdt::GDT.lock().add_tss(0, TssSegment::new(per_cpu.as_mut().tss().into_ref()));
+        // let tss_selector = hal_x86_64::hw::gdt::GDT.lock().add_tss(0, per_cpu.as_mut().tss().into_ref());
 
         /*
          * Now we know the address of the structure, fill in the self-pointer.
@@ -68,7 +67,7 @@ impl PerCpuImpl {
             Pin::get_unchecked_mut(per_cpu.as_mut())._self_pointer = address;
         }
 
-        (per_cpu, tss_selector)
+        per_cpu
     }
 
     pub fn install(self: Pin<&mut Self>) {
@@ -87,7 +86,8 @@ impl PerCpu<crate::PlatformImpl> for PerCpuImpl {
 
     fn set_kernel_stack_pointer(mut self: Pin<&mut Self>, stack_pointer: VirtualAddress) {
         *self.as_mut().current_task_kernel_rsp() = stack_pointer;
-        self.as_mut().tss().set_kernel_stack(stack_pointer);
+        // TODO
+        // self.as_mut().tss().set_kernel_stack(stack_pointer);
     }
 
     fn get_user_stack_pointer(mut self: Pin<&mut Self>) -> VirtualAddress {
@@ -99,10 +99,6 @@ impl PerCpu<crate::PlatformImpl> for PerCpuImpl {
     }
 }
 
-/*
- * Accidently dropping the per-CPU data after it's been installed leads to some really weird behaviour that I've
- * found difficult to debug in the past, so this guards against that.
- */
 impl Drop for PerCpuImpl {
     fn drop(&mut self) {
         panic!("Per-CPU data should not be dropped!");
