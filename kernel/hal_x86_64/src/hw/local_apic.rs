@@ -61,8 +61,15 @@ impl LocalApic {
          * divider of 1, which would be the simplest.
          */
         unsafe {
-            self.register(0x3e0).write(0x3); // Step 1: Set the divider to 16
-            self.register(0x320).write(u32::from(vector) | 0x20000); // Step 2: enable the timer
+            let timer_entry = {
+                use bit_field::BitField;
+
+                let mut entry = u32::from(vector);
+                entry.set_bits(17..19, 0b01); // Periodic mode
+                entry
+            };
+            self.register(0x3e0).write(0b0011); // Step 1: Set the divider to 16
+            self.register(0x320).write(timer_entry); // Step 2: enable the timer
             self.register(0x380).write(ticks); // Step 3: Set the initial count
         }
 

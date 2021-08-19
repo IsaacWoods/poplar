@@ -210,6 +210,9 @@ pub extern "C" fn kentry(boot_info: &BootInfo) -> ! {
      */
     let mut interrupt_controller =
         InterruptController::init(&acpi_platform_info.interrupt_model, &mut aml_context);
+    unsafe {
+        asm!("sti");
+    }
     interrupt_controller.enable_local_timer(&topology.cpu_info, Duration::from_millis(10));
 
     task::install_syscall_handler();
