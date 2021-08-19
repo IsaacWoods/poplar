@@ -17,6 +17,7 @@ use hal_x86_64::{
 };
 use log::warn;
 use pebble_util::InitGuard;
+use spin::Mutex;
 
 /// This should only be accessed directly by the bootstrap processor.
 ///
@@ -31,7 +32,7 @@ use pebble_util::InitGuard;
 /// |        fe        | Local APIC timer            |
 /// |        ff        | APIC spurious interrupt     |
 /// |------------------|-----------------------------|
-static mut IDT: Idt = Idt::empty();
+static IDT: Mutex<Idt> = Mutex::new(Idt::empty());
 
 static LOCAL_APIC: InitGuard<LocalApic> = InitGuard::uninit();
 
@@ -50,21 +51,22 @@ impl InterruptController {
     /// Install handlers for exceptions, and load the IDT. This is done early in initialization to catch issues
     /// like page faults and kernel stack overflows nicely.
     pub fn install_exception_handlers() {
+        let mut idt = IDT.lock();
         unsafe {
-            IDT.nmi().set_handler(wrap_handler!(exception::nmi_handler), KERNEL_CODE_SELECTOR);
-            IDT.breakpoint().set_handler(wrap_handler!(exception::breakpoint_handler), KERNEL_CODE_SELECTOR);
-            IDT.invalid_opcode()
+            idt.nmi().set_handler(wrap_handler!(exception::nmi_handler), KERNEL_CODE_SELECTOR);
+            idt.breakpoint().set_handler(wrap_handler!(exception::breakpoint_handler), KERNEL_CODE_SELECTOR);
+            idt.invalid_opcode()
                 .set_handler(wrap_handler!(exception::invalid_opcode_handler), KERNEL_CODE_SELECTOR);
-            IDT.general_protection_fault().set_handler(
+            idt.general_protection_fault().set_handler(
                 wrap_handler_with_error_code!(exception::general_protection_fault_handler),
                 KERNEL_CODE_SELECTOR,
             );
-            IDT.page_fault()
+            idt.page_fault()
                 .set_handler(wrap_handler_with_error_code!(exception::page_fault_handler), KERNEL_CODE_SELECTOR);
-            IDT.double_fault()
+            idt.double_fault()
                 .set_handler(wrap_handler_with_error_code!(exception::double_fault_handler), KERNEL_CODE_SELECTOR);
 
-            IDT.load();
+            idt.load();
         }
     }
 
@@ -103,9 +105,10 @@ impl InterruptController {
                  * Install a spurious interrupt handler and enable the local APIC.
                  */
                 unsafe {
-                    IDT[APIC_TIMER_VECTOR]
+                    let mut idt = IDT.lock();
+                    idt[APIC_TIMER_VECTOR]
                         .set_handler(wrap_handler!(local_apic_timer_handler), KERNEL_CODE_SELECTOR);
-                    IDT[APIC_SPURIOUS_VECTOR].set_handler(wrap_handler!(spurious_handler), KERNEL_CODE_SELECTOR);
+                    idt[APIC_SPURIOUS_VECTOR].set_handler(wrap_handler!(spurious_handler), KERNEL_CODE_SELECTOR);
                     LOCAL_APIC.get().enable(APIC_SPURIOUS_VECTOR);
                 }
 

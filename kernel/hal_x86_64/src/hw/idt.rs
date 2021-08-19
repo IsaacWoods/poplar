@@ -125,7 +125,7 @@ impl Idt {
     getter!(20, virtualization_exception);
     // XXX: 21 through 31 are reserved
 
-    pub fn load(&'static self) {
+    pub fn load(&self) {
         let idt_ptr = DescriptorTablePointer {
             limit: mem::size_of::<Self>() as u16 - 1,
             base: VirtualAddress::from(self as *const _),
