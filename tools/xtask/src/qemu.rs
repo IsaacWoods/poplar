@@ -38,7 +38,7 @@ impl RunQemuX64 {
 
             kvm: true,
             cpus: 2,
-            ram: "512M".to_string(),
+            ram: "1G".to_string(),
             open_display: false,
             wait_for_gdb_connection: false,
             debug_int_firehose: false,
@@ -96,7 +96,7 @@ impl RunQemuX64 {
         qemu.args(&["-machine", "q35"]);
         qemu.args(&["-cpu", "max,vmware-cpuid-freq,invtsc"]);
         qemu.arg("--no-reboot");
-        qemu.args(&["-smp", &self.cpus.to_string()]);
+        // qemu.args(&["-smp", &self.cpus.to_string()]);
         qemu.args(&["-m", &self.ram.to_string()]);
         qemu.args(&["-serial", "stdio"]);
         if !self.open_display {
@@ -129,13 +129,25 @@ impl RunQemuX64 {
         qemu.args(&["-device", "usb-kbd,bus=xhci.0"]);
         qemu.args(&["-device", "usb-mouse,bus=xhci.0"]);
 
+        // XXX: for testing NUMA
+        qemu.args(&["-smp", "8"]);
+        qemu.args(&["-object", "memory-backend-ram,size=256M,id=m0"]);
+        qemu.args(&["-object", "memory-backend-ram,size=256M,id=m1"]);
+        qemu.args(&["-object", "memory-backend-ram,size=512M,id=m2"]);
+        qemu.args(&["-numa", "node,cpus=0-3,memdev=m0,nodeid=0"]);
+        qemu.args(&["-numa", "node,cpus=4-5,memdev=m1,nodeid=1"]);
+        qemu.args(&["-numa", "node,cpus=6-7,memdev=m2,nodeid=2"]);
+        qemu.args(&["-numa", "dist,src=0,dst=1,val=20"]);
+        qemu.args(&["-numa", "dist,src=0,dst=2,val=20"]);
+        qemu.args(&["-numa", "dist,src=1,dst=2,val=60"]);
+
         /*
          * Add firmware.
          */
         qemu.args(&[
             "-drive",
             &format!(
-                "if=pflash,format=raw,file={},readonly",
+                "if=pflash,format=raw,file={},readonly=on",
                 self.ovmf_dir.join("OVMF_CODE.fd").to_str().unwrap()
             ),
         ]);
