@@ -117,9 +117,6 @@ pub extern "C" fn kentry(boot_info: &BootInfo) -> ! {
         hal_x86_64::hw::gdt::GDT.lock().load();
     }
 
-    // TODO: we no longer create and load a TSS for the bootstrap processor when we create the GDT anymore. This is
-    // fine - we should be able to populate the correct entry in the GDT and then do a `ltr` when it's convenient.
-
     /*
      * Install exception handlers early, so we can catch and report exceptions if they occur during initialization.
      * We don't have much infrastructure up yet, so we can't do anything fancy like set up IST stacks, but we can
