@@ -60,9 +60,19 @@ fn make_dist(release: bool) -> Result<()> {
         .std_components(vec!["core".to_string(), "alloc".to_string()])
         .run()?;
 
+    let test1_path = RunCargo::new("test1".to_string(), PathBuf::from("user/test1/"))
+        .workspace(PathBuf::from("user/"))
+        .toolchain("pebble".to_string())
+        .target(Target::Triple("x86_64-pebble".to_string()))
+        .release(release)
+        .std_components(vec!["core".to_string(), "alloc".to_string()])
+        .std_features(vec!["compiler-builtins-mem".to_string()])
+        .run()?;
+
     MakeGptImage::new(PathBuf::from("pebble.img"), 30 * 1024 * 1024, 20 * 1024 * 1024)
         .add_efi_file("efi/boot/bootx64.efi".to_string(), efiloader_path)
         .add_efi_file("kernel.elf".to_string(), kernel_path)
+        .add_efi_file("test1.elf".to_string(), test1_path)
         .build()?;
 
     Ok(())

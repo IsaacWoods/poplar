@@ -233,13 +233,11 @@ pub extern "C" fn kentry(boot_info: &BootInfo) -> ! {
         kernel::create_framebuffer(video_info);
     }
 
-    loop {}
-
     /*
      * Drop into userspace!
      */
-    // info!("Dropping into usermode");
-    // PlatformImpl::per_cpu().scheduler().drop_to_userspace()
+    info!("Dropping into usermode");
+    PlatformImpl::per_cpu().scheduler().drop_to_userspace()
 }
 
 #[cfg(not(test))]
