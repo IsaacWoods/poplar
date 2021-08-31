@@ -63,8 +63,7 @@
 <span id="63">63</span>
 <span id="64">64</span>
 <span id="65">65</span>
-</pre><pre class="rust">
-<span class="kw">use</span> <span class="kw">super</span>::{<span class="ident">FrameSize</span>, <span class="ident">Size4KiB</span>, <span class="ident">VirtualAddress</span>};
+</pre><pre class="rust"><code><span class="kw">use</span> <span class="kw">super</span>::{<span class="ident">FrameSize</span>, <span class="ident">Size4KiB</span>, <span class="ident">VirtualAddress</span>};
 <span class="kw">use</span> <span class="ident">core</span>::{
     <span class="ident">iter::Step</span>,
     <span class="ident">marker::PhantomData</span>,
@@ -129,7 +128,7 @@
         <span class="prelude-val">Some</span>(<span class="ident">Page</span> { <span class="ident">start</span>: <span class="ident">start</span>.<span class="ident">start</span>.<span class="ident">checked_sub</span>(<span class="ident">S::SIZE</span>.<span class="ident">checked_mul</span>(<span class="ident">count</span>)<span class="question-mark">?</span>)<span class="question-mark">?</span>, <span class="ident">_phantom</span>: <span class="ident">PhantomData</span> })
     }
 }
-</pre></div>
+</code></pre></div>
 </section><section id="search" class="content hidden"></section><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="hal" data-search-index-js="../../../search-index.js" data-search-js="../../../search.js"></div>
     <script src="../../../main.js"></script><script src="../../../source-script.js"></script><script src="../../../source-files.js"></script>
 </body></html>

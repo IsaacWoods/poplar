@@ -386,8 +386,7 @@
 <span id="386">386</span>
 <span id="387">387</span>
 <span id="388">388</span>
-</pre><pre class="rust">
-<span class="kw">use</span> <span class="ident">core::sync::atomic</span>::{<span class="ident">AtomicBool</span>, <span class="ident">Ordering</span>, <span class="ident">spin_loop_hint</span> <span class="kw">as</span> <span class="ident">cpu_relax</span>};
+</pre><pre class="rust"><code><span class="kw">use</span> <span class="ident">core::sync::atomic</span>::{<span class="ident">AtomicBool</span>, <span class="ident">Ordering</span>, <span class="ident">spin_loop_hint</span> <span class="kw">as</span> <span class="ident">cpu_relax</span>};
 <span class="kw">use</span> <span class="ident">core::cell::UnsafeCell</span>;
 <span class="kw">use</span> <span class="ident">core::marker::Sync</span>;
 <span class="kw">use</span> <span class="ident">core::ops</span>::{<span class="ident">Drop</span>, <span class="ident">Deref</span>, <span class="ident">DerefMut</span>};
@@ -775,7 +774,7 @@
         <span class="macro">assert!</span>(<span class="ident">lock</span>.<span class="ident">try_lock</span>().<span class="ident">is_some</span>());
     }
 }
-</pre></div>
+</code></pre></div>
 </section><section id="search" class="content hidden"></section><div id="rustdoc-vars" data-root-path="../../" data-current-crate="spin" data-search-index-js="../../search-index.js" data-search-js="../../search.js"></div>
     <script src="../../main.js"></script><script src="../../source-script.js"></script><script src="../../source-files.js"></script>
 </body></html>

@@ -36,8 +36,7 @@
 <span id="36">36</span>
 <span id="37">37</span>
 <span id="38">38</span>
-</pre><pre class="rust">
-<span class="kw">use</span> <span class="kw">super</span>::{
+</pre><pre class="rust"><code><span class="kw">use</span> <span class="kw">super</span>::{
     <span class="ident">raw</span>,
     <span class="ident">result</span>::{<span class="ident">define_error_type</span>, <span class="ident">handle_from_syscall_repr</span>},
     <span class="ident">SYSCALL_GET_FRAMEBUFFER</span>,
@@ -75,7 +74,7 @@
 <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">get_framebuffer</span>(<span class="ident">info</span>: <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="ident">FramebufferInfo</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Handle</span>, <span class="ident">GetFramebufferError</span><span class="op">&gt;</span> {
     <span class="ident">handle_from_syscall_repr</span>(<span class="kw">unsafe</span> { <span class="ident">raw::syscall1</span>(<span class="ident">SYSCALL_GET_FRAMEBUFFER</span>, <span class="ident">info</span> <span class="kw">as</span> <span class="ident">usize</span>) })
 }
-</pre></div>
+</code></pre></div>
 </section><section id="search" class="content hidden"></section><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="libpebble" data-search-index-js="../../../search-index.js" data-search-js="../../../search.js"></div>
     <script src="../../../main.js"></script><script src="../../../source-script.js"></script><script src="../../../source-files.js"></script>
 </body></html>

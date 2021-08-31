@@ -386,8 +386,7 @@
 <span id="386">386</span>
 <span id="387">387</span>
 <span id="388">388</span>
-</pre><pre class="rust">
-<span class="doccomment">//! This module implements a buddy allocator, an efficient scheme for managing physical memory. In</span>
+</pre><pre class="rust"><code><span class="doccomment">//! This module implements a buddy allocator, an efficient scheme for managing physical memory. In</span>
 <span class="doccomment">//! this allocator, memory is broken up into a number of blocks, each of which is a power-of-2 frames in</span>
 <span class="doccomment">//! size. A block of size `2^^n` frames is said to be of order `n`:</span>
 <span class="doccomment">//! ```ignore</span>
@@ -775,7 +774,7 @@
         <span class="macro">assert_eq!</span>(<span class="ident">allocator</span>.<span class="ident">allocate_n</span>(<span class="number">2048</span> <span class="op">*</span> <span class="ident">Size4KiB::SIZE</span>), <span class="prelude-val">None</span>);
     }
 }
-</pre></div>
+</code></pre></div>
 </section><section id="search" class="content hidden"></section><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="kernel" data-search-index-js="../../../search-index.js" data-search-js="../../../search.js"></div>
     <script src="../../../main.js"></script><script src="../../../source-script.js"></script><script src="../../../source-files.js"></script>
 </body></html>
