@@ -29,7 +29,7 @@ pub struct PerCpuImpl {
     /// This field must remain at `gs:0x10`, and so cannot be moved.
     current_task_user_rsp: VirtualAddress,
 
-    tss: Pin<Box<Tss>>,
+    pub tss: Pin<Box<Tss>>,
 
     scheduler: Scheduler<crate::PlatformImpl>,
 }
@@ -37,11 +37,10 @@ pub struct PerCpuImpl {
 impl PerCpuImpl {
     unsafe_unpinned!(current_task_kernel_rsp: VirtualAddress);
     unsafe_unpinned!(current_task_user_rsp: VirtualAddress);
-    // unsafe_pinned!(tss: Tss);
+    unsafe_unpinned!(tss: Pin<Box<Tss>>);
     unsafe_pinned!(pub scheduler: Scheduler<crate::PlatformImpl>);
 
     pub fn new(tss: Pin<Box<Tss>>, scheduler: Scheduler<crate::PlatformImpl>) -> Pin<Box<PerCpuImpl>> {
-        // let tss = Tss::new();
         let mut per_cpu = Box::pin(PerCpuImpl {
             _self_pointer: 0x0 as *mut PerCpuImpl,
             _pin: PhantomPinned,
@@ -52,12 +51,6 @@ impl PerCpuImpl {
 
             scheduler,
         });
-
-        /*
-         * Install the TSS into the GDT.
-         */
-        // TODO: assign CPUs unique IDs
-        // let tss_selector = hal_x86_64::hw::gdt::GDT.lock().add_tss(0, per_cpu.as_mut().tss().into_ref());
 
         /*
          * Now we know the address of the structure, fill in the self-pointer.
@@ -86,8 +79,7 @@ impl PerCpu<crate::PlatformImpl> for PerCpuImpl {
 
     fn set_kernel_stack_pointer(mut self: Pin<&mut Self>, stack_pointer: VirtualAddress) {
         *self.as_mut().current_task_kernel_rsp() = stack_pointer;
-        // TODO
-        // self.as_mut().tss().set_kernel_stack(stack_pointer);
+        self.as_mut().tss().as_mut().set_kernel_stack(stack_pointer);
     }
 
     fn get_user_stack_pointer(mut self: Pin<&mut Self>) -> VirtualAddress {
