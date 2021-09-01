@@ -153,6 +153,15 @@ fn efi_main(image_handle: Handle, system_table: SystemTable<Boot>) -> Status {
             "test1.elf",
         ))
         .unwrap();
+    boot_info
+        .loaded_images
+        .add_image(image::load_image(
+            system_table.boot_services(),
+            loaded_image_protocol.device(),
+            "simple_fb",
+            "simple_fb.elf",
+        ))
+        .unwrap();
 
     // TEMP XXX: pause until key pressed before switching to graphics mode
     // info!("Waiting for key press. Will switch to graphics mode next.");

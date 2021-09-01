@@ -60,22 +60,30 @@ fn make_dist(release: bool) -> Result<()> {
         .std_components(vec!["core".to_string(), "alloc".to_string()])
         .run()?;
 
-    let test1_path = RunCargo::new("test1".to_string(), PathBuf::from("user/test1/"))
+    let test1_path = build_userspace_task("test1", release)?;
+    let simple_fb_path = build_userspace_task("simple_fb", release)?;
+
+    MakeGptImage::new(PathBuf::from("pebble.img"), 30 * 1024 * 1024, 20 * 1024 * 1024)
+        .add_efi_file("efi/boot/bootx64.efi".to_string(), efiloader_path)
+        .add_efi_file("kernel.elf".to_string(), kernel_path)
+        .add_efi_file("test1.elf".to_string(), test1_path)
+        .add_efi_file("simple_fb.elf".to_string(), simple_fb_path)
+        .build()?;
+
+    Ok(())
+}
+
+fn build_userspace_task(name: &str, release: bool) -> Result<PathBuf> {
+    use cargo::{RunCargo, Target};
+
+    RunCargo::new(name.to_string(), PathBuf::from("user/").join(name))
         .workspace(PathBuf::from("user/"))
         .toolchain("pebble".to_string())
         .target(Target::Triple("x86_64-pebble".to_string()))
         .release(release)
         .std_components(vec!["core".to_string(), "alloc".to_string()])
         .std_features(vec!["compiler-builtins-mem".to_string()])
-        .run()?;
-
-    MakeGptImage::new(PathBuf::from("pebble.img"), 30 * 1024 * 1024, 20 * 1024 * 1024)
-        .add_efi_file("efi/boot/bootx64.efi".to_string(), efiloader_path)
-        .add_efi_file("kernel.elf".to_string(), kernel_path)
-        .add_efi_file("test1.elf".to_string(), test1_path)
-        .build()?;
-
-    Ok(())
+        .run()
 }
 
 fn project_root() -> PathBuf {
