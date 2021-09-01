@@ -5,6 +5,7 @@
 extern crate alloc;
 
 use alloc::{
+    format,
     string::{String, ToString},
     vec::Vec,
 };
@@ -64,16 +65,18 @@ pub extern "C" fn _start() -> ! {
     // }
 
     let framebuffer = make_framebuffer();
-    framebuffer.clear(Bgr32::pixel(0xaa, 0xaa, 0xaa, 0xff));
-    framebuffer.draw_rect(100, 100, 300, 450, Bgr32::pixel(0xcc, 0x00, 0x00, 0xff));
-    framebuffer.draw_string(
-        "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
-        200,
-        400,
-        Bgr32::pixel(0x00, 0x00, 0x00, 0xff),
-    );
+    let mut yields = 0;
 
     loop {
+        framebuffer.clear(Bgr32::pixel(0xaa, 0xaa, 0xaa, 0xff));
+        framebuffer.draw_string(
+            &format!("The framebuffer driver has yielded {} times!", yields),
+            400,
+            400,
+            Bgr32::pixel(0xff, 0x00, 0xff, 0xff),
+        );
+        yields += 1;
+
         info!("Yielding from FB");
         syscall::yield_to_kernel();
     }
