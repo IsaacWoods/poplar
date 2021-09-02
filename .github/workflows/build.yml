@@ -32,12 +32,13 @@ jobs:
         sudo apt-get install qemu
         
     - name: Build
-      run: KERNEL_FLAGS='--features qemu_exit' make
+      run: cargo xtask dist --kernel_features qemu_exit
       
-    - name: Run tests
-      run: make test
+    # TODO: run tests
+    # - name: Run tests
+    #   run: make test
 
     - name: Emulate
       run: |
         qemu-system-x86_64 --version
-        KERNEL_FLAGS='--features qemu_exit' QEMU_EXTRA_FLAGS='-display none' make qemu-no-kvm
+        cargo xtask qemu --kernel_features qemu_exit
