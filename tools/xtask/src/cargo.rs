@@ -19,6 +19,7 @@ pub struct RunCargo {
     pub workspace: Option<PathBuf>,
     pub target: Target,
     pub release: bool,
+    pub features: Vec<String>,
     pub std_components: Vec<String>,
     pub std_features: Vec<String>,
     pub toolchain: Option<String>,
@@ -32,6 +33,7 @@ impl RunCargo {
             workspace: None,
             target: Target::Host,
             release: false,
+            features: vec![],
             std_components: vec![],
             std_features: vec![],
             toolchain: None,
@@ -48,6 +50,10 @@ impl RunCargo {
 
     pub fn release(self, release: bool) -> RunCargo {
         RunCargo { release, ..self }
+    }
+
+    pub fn features(self, features: Vec<String>) -> RunCargo {
+        RunCargo { features, ..self }
     }
 
     pub fn std_components(self, std_components: Vec<String>) -> RunCargo {
@@ -97,6 +103,10 @@ impl RunCargo {
                 // XXX: this assumes paths on the build platform are valid UTF-8
                 cargo.arg(spec.to_str().unwrap());
             }
+        }
+        if self.features.len() != 0 {
+            cargo.arg("--features");
+            cargo.arg(self.features.join(","));
         }
         if self.std_components.len() != 0 {
             cargo.arg(format!("-Zbuild-std={}", self.std_components.join(",")));
