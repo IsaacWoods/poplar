@@ -3,7 +3,6 @@
 #![feature(const_generics, alloc_error_handler, never_type, array_value_iter)]
 
 extern crate alloc;
-extern crate rlibc;
 
 use alloc::{collections::BTreeMap, format, string::ToString};
 use core::{convert::TryFrom, panic::PanicInfo};

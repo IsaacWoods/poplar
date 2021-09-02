@@ -4,7 +4,6 @@
 #![deny(unsafe_op_in_unsafe_fn)]
 
 extern crate alloc;
-extern crate rlibc;
 
 mod caps;
 mod memory;
