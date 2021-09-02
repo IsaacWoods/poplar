@@ -24,10 +24,10 @@ fn main() -> Result<()> {
             Ok(())
         }
 
-        flags::TaskCmd::Dist(_) => dist(&flags),
+        flags::TaskCmd::Dist(dist_flags) => dist(&dist_flags),
 
-        flags::TaskCmd::Qemu(ref qemu) => {
-            dist(&flags)?;
+        flags::TaskCmd::Qemu(qemu) => {
+            dist(&qemu)?;
             RunQemuX64::new(PathBuf::from("pebble.img"))
                 .open_display(qemu.display)
                 .debug_int_firehose(qemu.debug_int_firehose)
@@ -38,10 +38,11 @@ fn main() -> Result<()> {
     }
 }
 
-pub fn dist(flags: &flags::Task) -> Result<()> {
+pub fn dist<O: Into<flags::DistOptions>>(options: O) -> Result<()> {
+    let options = options.into();
     Dist::new()
-        .release(flags.release)
-        .kernel_features_from_cli(&flags.kernel_features)
+        .release(options.release)
+        .kernel_features_from_cli(options.kernel_features)
         .user_task("test1")
         .user_task("simple_fb")
         .user_task("platform_bus")
@@ -65,10 +66,9 @@ impl Dist {
         Dist { release, ..self }
     }
 
-    pub fn kernel_features_from_cli(self, features: &Option<String>) -> Dist {
+    pub fn kernel_features_from_cli(self, features: Option<String>) -> Dist {
         Dist {
             kernel_features: features
-                .as_ref()
                 .map(|features| features.split(',').map(str::to_string).collect())
                 .unwrap_or(vec![]),
             ..self
