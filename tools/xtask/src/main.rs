@@ -24,12 +24,10 @@ fn main() -> Result<()> {
             Ok(())
         }
 
-        flags::TaskCmd::Dist(dist) => {
-            Dist::new().release(flags.release).kernel_features_from_cli(flags.kernel_features).build()
-        }
+        flags::TaskCmd::Dist(_) => dist(&flags),
 
-        flags::TaskCmd::Qemu(qemu) => {
-            Dist::new().release(flags.release).kernel_features_from_cli(flags.kernel_features).build()?;
+        flags::TaskCmd::Qemu(ref qemu) => {
+            dist(&flags)?;
             RunQemuX64::new(PathBuf::from("pebble.img"))
                 .open_display(qemu.display)
                 .debug_int_firehose(qemu.debug_int_firehose)
@@ -40,27 +38,46 @@ fn main() -> Result<()> {
     }
 }
 
+pub fn dist(flags: &flags::Task) -> Result<()> {
+    Dist::new()
+        .release(flags.release)
+        .kernel_features_from_cli(&flags.kernel_features)
+        .user_task("test1")
+        .user_task("simple_fb")
+        .user_task("platform_bus")
+        .user_task("pci_bus")
+        .user_task("usb_bus_xhci")
+        .build()
+}
+
 struct Dist {
     release: bool,
     kernel_features: Vec<String>,
+    user_tasks: Vec<String>,
 }
 
 impl Dist {
     pub fn new() -> Dist {
-        Dist { release: false, kernel_features: vec![] }
+        Dist { release: false, kernel_features: vec![], user_tasks: vec![] }
     }
 
     pub fn release(self, release: bool) -> Dist {
         Dist { release, ..self }
     }
 
-    pub fn kernel_features_from_cli(self, features: Option<String>) -> Dist {
+    pub fn kernel_features_from_cli(self, features: &Option<String>) -> Dist {
         Dist {
             kernel_features: features
+                .as_ref()
                 .map(|features| features.split(',').map(str::to_string).collect())
                 .unwrap_or(vec![]),
             ..self
         }
+    }
+
+    pub fn user_task<S: Into<String>>(mut self, name: S) -> Dist {
+        self.user_tasks.push(name.into());
+        self
     }
 
     pub fn build(self) -> Result<()> {
@@ -86,21 +103,22 @@ impl Dist {
             .std_components(vec!["core".to_string(), "alloc".to_string()])
             .run()?;
 
-        let test1 = self.build_userspace_task("test1")?;
-        let simple_fb = self.build_userspace_task("simple_fb")?;
-        let platform_bus = self.build_userspace_task("platform_bus")?;
-        let pci_bus = self.build_userspace_task("pci_bus")?;
-        let usb_bus_xhci = self.build_userspace_task("usb_bus_xhci")?;
+        let user_task_paths = self
+            .user_tasks
+            .iter()
+            .map(|name| {
+                let artifact_path = self.build_userspace_task(&name)?;
+                Ok((name.clone(), artifact_path))
+            })
+            .collect::<Result<Vec<(String, PathBuf)>>>()?;
 
-        MakeGptImage::new(PathBuf::from("pebble.img"), 30 * 1024 * 1024, 20 * 1024 * 1024)
-            .add_efi_file("efi/boot/bootx64.efi".to_string(), efiloader)
-            .add_efi_file("kernel.elf".to_string(), kernel)
-            .add_efi_file("test1.elf".to_string(), test1)
-            .add_efi_file("simple_fb.elf".to_string(), simple_fb)
-            .add_efi_file("platform_bus.elf".to_string(), platform_bus)
-            .add_efi_file("pci_bus.elf".to_string(), pci_bus)
-            .add_efi_file("usb_bus_xhci.elf".to_string(), usb_bus_xhci)
-            .build()?;
+        let mut image = MakeGptImage::new(PathBuf::from("pebble.img"), 30 * 1024 * 1024, 20 * 1024 * 1024)
+            .add_efi_file("efi/boot/bootx64.efi", efiloader)
+            .add_efi_file("kernel.elf", kernel);
+        for (name, artifact_path) in user_task_paths {
+            image = image.add_efi_file(format!("{}.elf", name), artifact_path);
+        }
+        image.build()?;
 
         Ok(())
     }
