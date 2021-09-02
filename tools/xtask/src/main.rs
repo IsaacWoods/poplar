@@ -67,7 +67,7 @@ impl Dist {
         use cargo::{RunCargo, Target};
         use image::MakeGptImage;
 
-        let efiloader = RunCargo::new("efiloader.efi".to_string(), PathBuf::from("kernel/efiloader/"))
+        let efiloader = RunCargo::new("efiloader.efi", PathBuf::from("kernel/efiloader/"))
             .workspace(PathBuf::from("kernel/"))
             .target(Target::Triple("x86_64-unknown-uefi".to_string()))
             .release(self.release)
@@ -75,7 +75,7 @@ impl Dist {
             .std_features(vec!["compiler-builtins-mem".to_string()])
             .run()?;
 
-        let kernel = RunCargo::new("kernel_x86_64".to_string(), PathBuf::from("kernel/kernel_x86_64/"))
+        let kernel = RunCargo::new("kernel_x86_64", PathBuf::from("kernel/kernel_x86_64/"))
             .workspace(PathBuf::from("kernel/"))
             .target(Target::Custom {
                 triple: "x86_64-kernel".to_string(),

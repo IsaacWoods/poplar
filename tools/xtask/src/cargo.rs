@@ -26,9 +26,9 @@ pub struct RunCargo {
 }
 
 impl RunCargo {
-    pub fn new(artifact_name: String, manifest_dir: PathBuf) -> RunCargo {
+    pub fn new<S: Into<String>>(artifact_name: S, manifest_dir: PathBuf) -> RunCargo {
         RunCargo {
-            artifact_name,
+            artifact_name: artifact_name.into(),
             manifest_dir,
             workspace: None,
             target: Target::Host,
@@ -65,8 +65,8 @@ impl RunCargo {
     }
 
     #[allow(dead_code)]
-    pub fn toolchain(self, toolchain: String) -> RunCargo {
-        RunCargo { toolchain: Some(toolchain), ..self }
+    pub fn toolchain<S: Into<String>>(self, toolchain: S) -> RunCargo {
+        RunCargo { toolchain: Some(toolchain.into()), ..self }
     }
 
     /// Run the Cargo invocation. Returns the path at which to find the built artifact.

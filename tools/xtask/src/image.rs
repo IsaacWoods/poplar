@@ -17,8 +17,8 @@ impl MakeGptImage {
         MakeGptImage { image_path: path, image_size: size, efi_partition_size, efi_part_files: vec![] }
     }
 
-    pub fn add_efi_file(mut self, efi_path: String, host_path: PathBuf) -> MakeGptImage {
-        self.efi_part_files.push((efi_path, host_path));
+    pub fn add_efi_file<S: Into<String>>(mut self, efi_path: S, host_path: PathBuf) -> MakeGptImage {
+        self.efi_part_files.push((efi_path.into(), host_path));
         self
     }
 
