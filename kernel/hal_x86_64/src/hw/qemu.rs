@@ -16,7 +16,7 @@ pub struct ExitPort(Port<u32>);
 
 impl ExitPort {
     pub unsafe fn new() -> ExitPort {
-        ExitPort(Port::new(0xf4))
+        ExitPort(unsafe { Port::new(0xf4) })
     }
 
     pub fn exit(mut self, exit_code: ExitCode) -> ! {
