@@ -2,16 +2,17 @@ xflags::xflags! {
     src "./src/flags.rs"
 
     cmd task {
+        optional --release
+        optional --kernel_features kernel_features: String
+
         default cmd help {
             optional -h,--help
         }
 
         cmd dist {
-            optional --release
         }
 
         cmd qemu {
-            optional --release
             optional --display
             optional --debug_int_firehose
             optional --debug_mmu_firehose
@@ -25,6 +26,8 @@ xflags::xflags! {
 // Run `env UPDATE_XFLAGS=1 cargo build` to regenerate.
 #[derive(Debug)]
 pub struct Task {
+    pub release: bool,
+    pub kernel_features: Option<String>,
     pub subcommand: TaskCmd,
 }
 
@@ -41,13 +44,10 @@ pub struct Help {
 }
 
 #[derive(Debug)]
-pub struct Dist {
-    pub release: bool,
-}
+pub struct Dist;
 
 #[derive(Debug)]
 pub struct Qemu {
-    pub release: bool,
     pub display: bool,
     pub debug_int_firehose: bool,
     pub debug_mmu_firehose: bool,
