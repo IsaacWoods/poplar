@@ -8,7 +8,7 @@ use hal::memory::PhysicalAddress;
 use hal_x86_64::{
     hw::{
         cpu::CpuInfo,
-        gdt::KERNEL_CODE_SELECTOR,
+        gdt::{PrivilegeLevel, KERNEL_CODE_SELECTOR},
         i8259_pic::Pic,
         idt::{wrap_handler, wrap_handler_with_error_code, Idt, InterruptStackFrame},
         local_apic::LocalApic,
@@ -54,7 +54,9 @@ impl InterruptController {
         let mut idt = IDT.lock();
         unsafe {
             idt.nmi().set_handler(wrap_handler!(exception::nmi_handler), KERNEL_CODE_SELECTOR);
-            idt.breakpoint().set_handler(wrap_handler!(exception::breakpoint_handler), KERNEL_CODE_SELECTOR);
+            idt.breakpoint()
+                .set_handler(wrap_handler!(exception::breakpoint_handler), KERNEL_CODE_SELECTOR)
+                .set_privilege_level(PrivilegeLevel::Ring3);
             idt.invalid_opcode()
                 .set_handler(wrap_handler!(exception::invalid_opcode_handler), KERNEL_CODE_SELECTOR);
             idt.general_protection_fault().set_handler(
