@@ -5,11 +5,12 @@ mod flags;
 mod image;
 mod qemu;
 
-use eyre::Result;
+use eyre::{eyre, Result, WrapErr};
 use qemu::RunQemuX64;
 use std::{
     env,
     path::{Path, PathBuf},
+    process::Command,
 };
 use xshell::pushd;
 
@@ -34,6 +35,21 @@ fn main() -> Result<()> {
                 .debug_mmu_firehose(qemu.debug_mmu_firehose)
                 .debug_cpu_firehose(qemu.debug_cpu_firehose)
                 .run()
+        }
+
+        flags::TaskCmd::Clean(_) => {
+            clean(PathBuf::from("kernel"))?;
+            clean(PathBuf::from("user"))?;
+            clean(PathBuf::from("lib/acpi"))?;
+            clean(PathBuf::from("lib/gfxconsole"))?;
+            clean(PathBuf::from("lib/libpebble"))?;
+            clean(PathBuf::from("lib/mer"))?;
+            clean(PathBuf::from("lib/pci_types"))?;
+            clean(PathBuf::from("lib/pebble_util"))?;
+            clean(PathBuf::from("lib/ptah"))?;
+            clean(PathBuf::from("lib/ucs2-rs"))?;
+            clean(PathBuf::from("lib/uefi-rs"))?;
+            Ok(())
         }
     }
 }
@@ -135,6 +151,18 @@ impl Dist {
             .std_features(vec!["compiler-builtins-mem".to_string()])
             .run()
     }
+}
+
+fn clean(manifest_dir: PathBuf) -> Result<()> {
+    Command::new("cargo")
+        .arg("clean")
+        .arg("--manifest-path")
+        .arg(manifest_dir.join("Cargo.toml"))
+        .status()
+        .wrap_err("Failed to invoke Cargo to clean a workspace")?
+        .success()
+        .then_some(())
+        .ok_or(eyre!("Failed to clean Cargo workspace"))
 }
 
 fn project_root() -> PathBuf {

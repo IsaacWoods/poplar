@@ -21,6 +21,8 @@ xflags::xflags! {
             optional --debug_mmu_firehose
             optional --debug_cpu_firehose
         }
+
+        cmd clean {}
     }
 }
 
@@ -54,6 +56,7 @@ pub enum TaskCmd {
     Help(Help),
     Dist(Dist),
     Qemu(Qemu),
+    Clean(Clean),
 }
 
 #[derive(Debug)]
@@ -76,6 +79,9 @@ pub struct Qemu {
     pub debug_mmu_firehose: bool,
     pub debug_cpu_firehose: bool,
 }
+
+#[derive(Debug)]
+pub struct Clean;
 
 impl Task {
     pub const HELP: &'static str = Self::HELP_;
