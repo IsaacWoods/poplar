@@ -144,7 +144,7 @@ impl Dist {
 
         RunCargo::new(name.to_string(), PathBuf::from("user/").join(name))
             .workspace(PathBuf::from("user/"))
-            .toolchain("pebble".to_string())
+            .toolchain("pebble")
             .target(Target::Triple("x86_64-pebble".to_string()))
             .release(self.release)
             .std_components(vec!["core".to_string(), "alloc".to_string()])

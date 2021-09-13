@@ -64,7 +64,6 @@ impl RunCargo {
         RunCargo { std_features, ..self }
     }
 
-    #[allow(dead_code)]
     pub fn toolchain<S: Into<String>>(self, toolchain: S) -> RunCargo {
         RunCargo { toolchain: Some(toolchain.into()), ..self }
     }
