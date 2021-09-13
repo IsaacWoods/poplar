@@ -8,7 +8,6 @@
     type_ascription,
     naked_functions,
     box_syntax,
-    const_generics,
     const_btree_new,
     get_mut_unchecked
 )]

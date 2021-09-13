@@ -1,6 +1,6 @@
 #![no_std]
 #![no_main]
-#![feature(asm, const_generics, alloc_error_handler, thread_local)]
+#![feature(asm, alloc_error_handler, thread_local)]
 
 extern crate alloc;
 

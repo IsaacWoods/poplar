@@ -1,6 +1,6 @@
 #![no_std]
 #![no_main]
-#![feature(const_generics, alloc_error_handler, never_type, unsafe_block_in_unsafe_fn, exclusive_range_pattern)]
+#![feature(alloc_error_handler, never_type, exclusive_range_pattern)]
 #![deny(unsafe_op_in_unsafe_fn)]
 
 extern crate alloc;

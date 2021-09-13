@@ -1,13 +1,5 @@
 #![no_std]
-#![feature(
-    const_generics,
-    assoc_char_funcs,
-    decl_macro,
-    maybe_uninit_uninit_array,
-    maybe_uninit_slice,
-    never_type
-)]
-#![allow(incomplete_features)] // TODO: remove when warning about const_generics is gone
+#![feature(decl_macro, maybe_uninit_uninit_array, maybe_uninit_slice, never_type)]
 
 extern crate alloc;
 

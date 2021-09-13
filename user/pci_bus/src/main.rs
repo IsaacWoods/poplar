@@ -1,6 +1,6 @@
 #![no_std]
 #![no_main]
-#![feature(const_generics, alloc_error_handler, never_type, array_value_iter)]
+#![feature(alloc_error_handler, never_type, array_value_iter)]
 
 extern crate alloc;
 
