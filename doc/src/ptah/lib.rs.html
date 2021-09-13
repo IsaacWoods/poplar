@@ -165,24 +165,8 @@
 <span id="165">165</span>
 <span id="166">166</span>
 <span id="167">167</span>
-<span id="168">168</span>
-<span id="169">169</span>
-<span id="170">170</span>
-<span id="171">171</span>
-<span id="172">172</span>
-<span id="173">173</span>
-<span id="174">174</span>
-<span id="175">175</span>
 </pre><pre class="rust"><code><span class="attribute">#![<span class="ident">no_std</span>]</span>
-<span class="attribute">#![<span class="ident">feature</span>(
-    <span class="ident">const_generics</span>,
-    <span class="ident">assoc_char_funcs</span>,
-    <span class="ident">decl_macro</span>,
-    <span class="ident">maybe_uninit_uninit_array</span>,
-    <span class="ident">maybe_uninit_slice</span>,
-    <span class="ident">never_type</span>
-)]</span>
-<span class="attribute">#![<span class="ident">allow</span>(<span class="ident">incomplete_features</span>)]</span> <span class="comment">// TODO: remove when warning about const_generics is gone</span>
+<span class="attribute">#![<span class="ident">feature</span>(<span class="ident">decl_macro</span>, <span class="ident">maybe_uninit_uninit_array</span>, <span class="ident">maybe_uninit_slice</span>, <span class="ident">never_type</span>)]</span>
 
 <span class="kw">extern</span> <span class="kw">crate</span> <span class="ident">alloc</span>;
 
