@@ -70,7 +70,7 @@ pub fn dist<O: Into<flags::DistOptions>>(options: O) -> Result<()> {
 struct Dist {
     release: bool,
     kernel_features: Vec<String>,
-    user_tasks: Vec<String>,
+    user_tasks: Vec<(String, Option<PathBuf>)>,
 }
 
 impl Dist {
@@ -92,7 +92,12 @@ impl Dist {
     }
 
     pub fn user_task<S: Into<String>>(mut self, name: S) -> Dist {
-        self.user_tasks.push(name.into());
+        self.user_tasks.push((name.into(), None));
+        self
+    }
+
+    pub fn user_task_in_dir<S: Into<String>, P: Into<PathBuf>>(mut self, name: S, dir: P) -> Dist {
+        self.user_tasks.push((name.into(), Some(dir.into())));
         self
     }
 
@@ -122,8 +127,8 @@ impl Dist {
         let user_task_paths = self
             .user_tasks
             .iter()
-            .map(|name| {
-                let artifact_path = self.build_userspace_task(&name)?;
+            .map(|(name, dir)| {
+                let artifact_path = self.build_userspace_task(&name, dir.clone())?;
                 Ok((name.clone(), artifact_path))
             })
             .collect::<Result<Vec<(String, PathBuf)>>>()?;
@@ -139,10 +144,11 @@ impl Dist {
         Ok(())
     }
 
-    fn build_userspace_task(&self, name: &str) -> Result<PathBuf> {
+    fn build_userspace_task(&self, name: &str, dir: Option<PathBuf>) -> Result<PathBuf> {
         use cargo::{RunCargo, Target};
 
-        RunCargo::new(name.to_string(), PathBuf::from("user/").join(name))
+        let path = if let Some(dir) = dir { dir.join(name) } else { PathBuf::from("user/").join(name) };
+        RunCargo::new(name.to_string(), path)
             .workspace(PathBuf::from("user/"))
             .toolchain("pebble")
             .target(Target::Triple("x86_64-pebble".to_string()))
