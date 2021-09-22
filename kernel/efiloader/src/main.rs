@@ -149,19 +149,55 @@ fn efi_main(image_handle: Handle, system_table: SystemTable<Boot>) -> Status {
         .add_image(image::load_image(
             system_table.boot_services(),
             loaded_image_protocol.device(),
-            "test1",
-            "test1.elf",
+            "test_syscalls",
+            "test_syscalls.elf",
         ))
         .unwrap();
-    boot_info
-        .loaded_images
-        .add_image(image::load_image(
-            system_table.boot_services(),
-            loaded_image_protocol.device(),
-            "simple_fb",
-            "simple_fb.elf",
-        ))
-        .unwrap();
+    // boot_info
+    //     .loaded_images
+    //     .add_image(image::load_image(
+    //         system_table.boot_services(),
+    //         loaded_image_protocol.device(),
+    //         "test1",
+    //         "test1.elf",
+    //     ))
+    //     .unwrap();
+    // boot_info
+    //     .loaded_images
+    //     .add_image(image::load_image(
+    //         system_table.boot_services(),
+    //         loaded_image_protocol.device(),
+    //         "simple_fb",
+    //         "simple_fb.elf",
+    //     ))
+    //     .unwrap();
+    // boot_info
+    //     .loaded_images
+    //     .add_image(image::load_image(
+    //         system_table.boot_services(),
+    //         loaded_image_protocol.device(),
+    //         "platform_bus",
+    //         "platform_bus.elf",
+    //     ))
+    //     .unwrap();
+    // boot_info
+    //     .loaded_images
+    //     .add_image(image::load_image(
+    //         system_table.boot_services(),
+    //         loaded_image_protocol.device(),
+    //         "pci_bus",
+    //         "pci_bus.elf",
+    //     ))
+    //     .unwrap();
+    // boot_info
+    //     .loaded_images
+    //     .add_image(image::load_image(
+    //         system_table.boot_services(),
+    //         loaded_image_protocol.device(),
+    //         "usb_bus_xhci",
+    //         "usb_bus_xhci.elf",
+    //     ))
+    //     .unwrap();
 
     // TEMP XXX: pause until key pressed before switching to graphics mode
     // info!("Waiting for key press. Will switch to graphics mode next.");

@@ -242,6 +242,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "test_syscalls"
+version = "0.1.0"
+dependencies = [
+ "libpebble",
+]
+
+[[package]]
 name = "test_tls"
 version = "0.1.0"
 dependencies = [

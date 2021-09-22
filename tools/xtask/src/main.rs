@@ -64,6 +64,7 @@ pub fn dist<O: Into<flags::DistOptions>>(options: O) -> Result<()> {
         .user_task("platform_bus")
         .user_task("pci_bus")
         .user_task("usb_bus_xhci")
+        .user_task_in_dir("test_syscalls", PathBuf::from("user/tests"))
         .build()
 }
 
