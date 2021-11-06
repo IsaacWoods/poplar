@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src&#x2F;memory&#x2F;buddy_allocator.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>buddy_allocator.rs - source</title><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../light.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../../../dark.css" disabled ><link rel="stylesheet" type="text/css" href="../../../ayu.css" disabled ><script id="default-settings" ></script><script src="../../../storage.js"></script><script src="../../../crates.js"></script><noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../../favicon.svg"><style type="text/css">#crate-search{background-image:url("../../../down-arrow.svg");}</style></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu" role="button">&#9776;</div><a href='../../../kernel/index.html'><div class='logo-container rust-logo'><img src='../../../rust-logo.png' alt='logo'></div></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu" title="themes"><img width="18" height="18" alt="Pick another theme!" src="../../../brush.svg"></button><div id="theme-choices" role="menu"></div></div><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><button type="button" id="help-button" title="help">?</button><a id="settings-menu" href="../../../settings.html" title="settings"><img width="18" height="18" alt="Change settings" src="../../../wheel.svg"></a></div></form></nav><section id="main" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">  1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src&#x2F;memory&#x2F;buddy_allocator.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>buddy_allocator.rs - source</title><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../light.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../../../dark.css" disabled ><link rel="stylesheet" type="text/css" href="../../../ayu.css" disabled ><script id="default-settings" ></script><script src="../../../storage.js"></script><script src="../../../crates.js"></script><noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../../favicon.svg"><style type="text/css">#crate-search{background-image:url("../../../down-arrow.svg");}</style></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu" role="button">&#9776;</div><a href='../../../kernel/index.html'><div class='logo-container rust-logo'><img src='../../../rust-logo.png' alt='logo'></div></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu" title="themes"><img width="18" height="18" alt="Pick another theme!" src="../../../brush.svg"></button><div id="theme-choices" role="menu"></div></div><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><button type="button" id="help-button" title="help">?</button><a id="settings-menu" href="../../../settings.html" title="settings"><img width="18" height="18" alt="Change settings" src="../../../wheel.svg"></a></div></form></nav><section id="main" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">  1</span>
 <span id="2">  2</span>
 <span id="3">  3</span>
 <span id="4">  4</span>
@@ -454,13 +454,13 @@
 }
 
 <span class="kw">impl</span> <span class="ident">BuddyAllocator</span> {
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="ident">BuddyAllocator</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>() -&gt; <span class="ident">BuddyAllocator</span> {
         <span class="comment">// The `Default` implementation for `BTreeSet` is an empty set, so this works nicely</span>
         <span class="ident">BuddyAllocator</span> { <span class="ident">bins</span>: <span class="ident">Default::default</span>() }
     }
 
     <span class="doccomment">/// Add a range of `Frame`s to this allocator, marking them free to allocate.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">add_range</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">range</span>: <span class="ident">Range</span><span class="op">&lt;</span><span class="ident">Frame</span><span class="op">&gt;</span>) {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">add_range</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">range</span>: <span class="ident">Range</span><span class="op">&lt;</span><span class="ident">Frame</span><span class="op">&gt;</span>) {
         <span class="comment">// XXX: if we ever change BASE_SIZE, this needs to be adjusted, so we assert here</span>
         <span class="macro">assert_eq!</span>(<span class="ident">BASE_SIZE</span>, <span class="ident">Size4KiB::SIZE</span>);
 
@@ -484,7 +484,7 @@
     }
 
     <span class="attribute">#[<span class="ident">allow</span>(<span class="ident">dead_code</span>)]</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">available_bytes</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">Bytes</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">available_bytes</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">Bytes</span> {
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">bytes</span> <span class="op">=</span> <span class="number">0</span>;
         <span class="kw">for</span> <span class="ident">i</span> <span class="kw">in</span> <span class="number">0</span>..<span class="ident">NUM_BINS</span> {
             <span class="ident">bytes</span> <span class="op">+</span><span class="op">=</span> <span class="self">self</span>.<span class="ident">bins</span>[<span class="ident">i</span>].<span class="ident">len</span>() <span class="op">*</span> ((<span class="number">1</span> <span class="op">&lt;</span><span class="op">&lt;</span> <span class="ident">i</span>) <span class="op">*</span> <span class="ident">BASE_SIZE</span>);
@@ -494,8 +494,8 @@
 
     <span class="doccomment">/// Allocate a block of `block_size` bytes from this allocator. Returns `None` if the allocator can&#39;t satisfy</span>
     <span class="doccomment">/// the allocation.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">allocate_n</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">block_size</span>: <span class="ident">Bytes</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">PhysicalAddress</span><span class="op">&gt;</span> {
-        <span class="macro">assert!</span>(<span class="ident">block_size</span> <span class="op">%</span> <span class="ident">BASE_SIZE</span> <span class="op">=</span><span class="op">=</span> <span class="number">0</span>);
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">allocate_n</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">block_size</span>: <span class="ident">Bytes</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">PhysicalAddress</span><span class="op">&gt;</span> {
+        <span class="macro">assert!</span>(<span class="ident">block_size</span> <span class="op">%</span> <span class="ident">BASE_SIZE</span> <span class="op">==</span> <span class="number">0</span>);
         <span class="macro">assert!</span>((<span class="ident">block_size</span> <span class="op">/</span> <span class="ident">BASE_SIZE</span>).<span class="ident">is_power_of_two</span>());
 
         <span class="kw">let</span> <span class="ident">order</span> <span class="op">=</span> (<span class="ident">block_size</span> <span class="op">/</span> <span class="ident">BASE_SIZE</span>).<span class="ident">trailing_zeros</span>() <span class="kw">as</span> <span class="ident">usize</span>;
@@ -503,8 +503,8 @@
     }
 
     <span class="doccomment">/// Free a block starting at `start` of `block_size` bytes. `block_size` must be a valid size of a whole block.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">free_n</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">start</span>: <span class="ident">PhysicalAddress</span>, <span class="ident">block_size</span>: <span class="ident">Bytes</span>) {
-        <span class="macro">assert!</span>(<span class="ident">block_size</span> <span class="op">%</span> <span class="ident">BASE_SIZE</span> <span class="op">=</span><span class="op">=</span> <span class="number">0</span>);
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">free_n</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">start</span>: <span class="ident">PhysicalAddress</span>, <span class="ident">block_size</span>: <span class="ident">Bytes</span>) {
+        <span class="macro">assert!</span>(<span class="ident">block_size</span> <span class="op">%</span> <span class="ident">BASE_SIZE</span> <span class="op">==</span> <span class="number">0</span>);
         <span class="macro">assert!</span>((<span class="ident">block_size</span> <span class="op">/</span> <span class="ident">BASE_SIZE</span>).<span class="ident">is_power_of_two</span>());
 
         <span class="kw">let</span> <span class="ident">order</span> <span class="op">=</span> (<span class="ident">block_size</span> <span class="op">/</span> <span class="ident">BASE_SIZE</span>).<span class="ident">trailing_zeros</span>() <span class="kw">as</span> <span class="ident">usize</span>;
@@ -513,7 +513,7 @@
 
     <span class="doccomment">/// Tries to allocate a block of the given order. If no blocks of the correct size are</span>
     <span class="doccomment">/// available, tries to recursively split a larger block to form a block of the requested size.</span>
-    <span class="kw">fn</span> <span class="ident">allocate_block</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">order</span>: <span class="ident">usize</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">PhysicalAddress</span><span class="op">&gt;</span> {
+    <span class="kw">fn</span> <span class="ident">allocate_block</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">order</span>: <span class="ident">usize</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">PhysicalAddress</span><span class="op">&gt;</span> {
         <span class="comment">/*
          * We&#39;ve been asked for a block larger than the largest blocks we track, so we won&#39;t be
          * able to allocate a single block large enough.
@@ -545,8 +545,8 @@
     }
 
     <span class="doccomment">/// Free a block starting at `start` of order `order`.</span>
-    <span class="kw">fn</span> <span class="ident">free_block</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">start</span>: <span class="ident">PhysicalAddress</span>, <span class="ident">order</span>: <span class="ident">usize</span>) {
-        <span class="kw">if</span> <span class="ident">order</span> <span class="op">=</span><span class="op">=</span> <span class="ident">MAX_ORDER</span> {
+    <span class="kw">fn</span> <span class="ident">free_block</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">start</span>: <span class="ident">PhysicalAddress</span>, <span class="ident">order</span>: <span class="ident">usize</span>) {
+        <span class="kw">if</span> <span class="ident">order</span> <span class="op">==</span> <span class="ident">MAX_ORDER</span> {
             <span class="comment">/*
              * Blocks of the maximum order can&#39;t be coalesced, because there isn&#39;t a bin to put the result in,
              * so we just add them to the largest bin.
@@ -573,7 +573,7 @@
 
     <span class="doccomment">/// Finds the starting frame of the block that is the buddy of the block of order `order`, starting at</span>
     <span class="doccomment">/// `block_start`.</span>
-    <span class="kw">fn</span> <span class="ident">buddy_of</span>(<span class="ident">block_start</span>: <span class="ident">PhysicalAddress</span>, <span class="ident">order</span>: <span class="ident">usize</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">PhysicalAddress</span> {
+    <span class="kw">fn</span> <span class="ident">buddy_of</span>(<span class="ident">block_start</span>: <span class="ident">PhysicalAddress</span>, <span class="ident">order</span>: <span class="ident">usize</span>) -&gt; <span class="ident">PhysicalAddress</span> {
         <span class="ident">PhysicalAddress::new</span>(<span class="ident">usize::from</span>(<span class="ident">block_start</span>) <span class="op">^</span> ((<span class="number">1</span> <span class="op">&lt;</span><span class="op">&lt;</span> <span class="ident">order</span>) <span class="op">*</span> <span class="ident">BASE_SIZE</span>)).<span class="ident">unwrap</span>()
     }
 }
@@ -630,7 +630,7 @@
     <span class="kw">impl</span> <span class="ident">Block</span> {
         <span class="doccomment">/// Construct a `Block`. Takes the address as a `usize` for ease of test writing, panics here if it&#39;s not</span>
         <span class="doccomment">/// valid.</span>
-        <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">order</span>: <span class="ident">usize</span>, <span class="ident">address</span>: <span class="ident">usize</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">Block</span> {
+        <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">order</span>: <span class="ident">usize</span>, <span class="ident">address</span>: <span class="ident">usize</span>) -&gt; <span class="ident">Block</span> {
             <span class="ident">Block</span> { <span class="ident">order</span>, <span class="ident">address</span>: <span class="ident">PhysicalAddress::new</span>(<span class="ident">address</span>).<span class="ident">unwrap</span>() }
         }
     }
@@ -658,7 +658,7 @@
 
     <span class="doccomment">/// Helper to construct a frame range. Takes the address as a `usize` for ease of test writing - panics here if</span>
     <span class="doccomment">/// it&#39;s not valid.</span>
-    <span class="kw">fn</span> <span class="ident">n_frames_at</span>(<span class="ident">start</span>: <span class="ident">usize</span>, <span class="ident">n</span>: <span class="ident">usize</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">Range</span><span class="op">&lt;</span><span class="ident">Frame</span><span class="op">&gt;</span> {
+    <span class="kw">fn</span> <span class="ident">n_frames_at</span>(<span class="ident">start</span>: <span class="ident">usize</span>, <span class="ident">n</span>: <span class="ident">usize</span>) -&gt; <span class="ident">Range</span><span class="op">&lt;</span><span class="ident">Frame</span><span class="op">&gt;</span> {
         <span class="ident">Frame::starts_with</span>(<span class="ident">PhysicalAddress::new</span>(<span class="ident">start</span>).<span class="ident">unwrap</span>())
             ..<span class="ident">Frame::starts_with</span>(<span class="ident">PhysicalAddress::new</span>(<span class="ident">start</span> <span class="op">+</span> <span class="ident">n</span> <span class="op">*</span> <span class="ident">Size4KiB::SIZE</span>).<span class="ident">unwrap</span>())
     }
