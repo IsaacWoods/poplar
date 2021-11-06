@@ -115,18 +115,7 @@ fn efi_main(image_handle: Handle, system_table: SystemTable<Boot>) -> Status {
     };
     boot_info.magic = hal::boot_info::BOOT_INFO_MAGIC;
     boot_info.video_mode = Some(video_mode);
-
-    /*
-     * Find the RSDP address and add it to the boot info.
-     */
-    boot_info.rsdp_address = system_table.config_table().iter().find_map(|entry| {
-        use uefi::table::cfg::{ACPI2_GUID, ACPI_GUID};
-        if entry.guid == ACPI_GUID || entry.guid == ACPI2_GUID {
-            Some(PhysicalAddress::new(entry.address as usize).unwrap())
-        } else {
-            None
-        }
-    });
+    boot_info.rsdp_address = find_rsdp(&system_table);
 
     /*
      * Allocate the kernel heap.
@@ -256,6 +245,34 @@ fn efi_main(image_handle: Handle, system_table: SystemTable<Boot>) -> Status {
           options(noreturn)
         )
     }
+}
+
+fn find_rsdp(system_table: &SystemTable<Boot>) -> Option<PhysicalAddress> {
+    use uefi::table::cfg::{ACPI2_GUID, ACPI_GUID};
+
+    /*
+     * Search the config table for an entry containing the address of the RSDP. First, search the whole table for
+     * a v2 RSDP, then if we don't find one, look for a v1 one.
+     */
+    system_table
+        .config_table()
+        .iter()
+        .find_map(|entry| {
+            if entry.guid == ACPI2_GUID {
+                Some(PhysicalAddress::new(entry.address as usize).unwrap())
+            } else {
+                None
+            }
+        })
+        .or_else(|| {
+            system_table.config_table().iter().find_map(|entry| {
+                if entry.guid == ACPI_GUID {
+                    Some(PhysicalAddress::new(entry.address as usize).unwrap())
+                } else {
+                    None
+                }
+            })
+        })
 }
 
 /// Process the final UEFI memory map when after we've exited boot services. We need to do three things with it:
