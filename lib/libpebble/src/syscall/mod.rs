@@ -34,6 +34,8 @@ pub const SYSCALL_REGISTER_SERVICE: usize = 9;
 pub const SYSCALL_SUBSCRIBE_TO_SERVICE: usize = 10;
 pub const SYSCALL_PCI_GET_INFO: usize = 11;
 
+pub const SYSCALL_TEST: usize = usize::MAX;
+
 pub fn yield_to_kernel() {
     unsafe {
         raw::syscall0(SYSCALL_YIELD);
