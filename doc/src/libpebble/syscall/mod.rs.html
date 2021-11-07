@@ -199,6 +199,8 @@
 <span id="199">199</span>
 <span id="200">200</span>
 <span id="201">201</span>
+<span id="202">202</span>
+<span id="203">203</span>
 </pre><pre class="rust"><code><span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">get_framebuffer</span>;
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;pci&quot;</span>)]</span>
 <span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">pci</span>;
@@ -234,6 +236,8 @@
 <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">SYSCALL_REGISTER_SERVICE</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="number">9</span>;
 <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">SYSCALL_SUBSCRIBE_TO_SERVICE</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="number">10</span>;
 <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">SYSCALL_PCI_GET_INFO</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="number">11</span>;
+
+<span class="kw">pub</span> <span class="kw">const</span> <span class="ident">SYSCALL_TEST</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="ident">usize::MAX</span>;
 
 <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">yield_to_kernel</span>() {
     <span class="kw">unsafe</span> {
