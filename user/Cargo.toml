@@ -1,6 +1,16 @@
 [workspace]
-members = ["simple_fb", "echo", "platform_bus", "pci_bus", "usb_bus_xhci", "test_tls", "test_pf", "test1", "test2",
-"tests/test_syscalls"]
+members = [
+    "simple_fb",
+    "echo",
+    "platform_bus",
+    "pci_bus",
+    "usb_bus_xhci",
+    "tests/test_tls",
+    "tests/test_pf",
+    "tests/test1",
+    "tests/test2",
+    "tests/test_syscalls",
+]
 
 [profile.dev]
 debug = false

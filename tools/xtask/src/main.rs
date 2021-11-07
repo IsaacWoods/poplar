@@ -59,12 +59,12 @@ pub fn dist<O: Into<flags::DistOptions>>(options: O) -> Result<()> {
     Dist::new()
         .release(options.release)
         .kernel_features_from_cli(options.kernel_features)
-        .user_task("test1")
         .user_task("simple_fb")
         .user_task("platform_bus")
         .user_task("pci_bus")
         .user_task("usb_bus_xhci")
         .user_task_in_dir("test_syscalls", PathBuf::from("user/tests"))
+        .user_task_in_dir("test1", PathBuf::from("user/tests"))
         .build()
 }
 

@@ -28,6 +28,9 @@ static BAR: RefCell<u32> = RefCell::new(0);
 #[no_mangle]
 pub extern "C" fn _start() -> ! {
     syscall::early_log("Hello from test_tls").unwrap();
+    // TODO: this doesn't crash, BUT if you look at `info tlb`, the kernel stack has still been fucked up. I reckon
+    // this is an issue in the paging system?
+    loop {}
     // Initialise the heap
     const HEAP_START: usize = 0x600000000;
     const HEAP_SIZE: usize = 0x4000;
@@ -41,6 +44,7 @@ pub extern "C" fn _start() -> ! {
     log::set_logger(&EarlyLogger).unwrap();
     log::set_max_level(log::LevelFilter::Trace);
     info!("test_tls is running");
+    loop {}
 
     let fs_ptr = unsafe {
         let fs_ptr: usize;
