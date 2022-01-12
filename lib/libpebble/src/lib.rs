@@ -1,5 +1,5 @@
 #![no_std]
-#![feature(asm, decl_macro, never_type)]
+#![feature(decl_macro, never_type)]
 #![deny(unsafe_op_in_unsafe_fn)]
 
 mod bit_field;

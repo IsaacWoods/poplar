@@ -1,3 +1,5 @@
+use core::arch::asm;
+
 #[inline(never)]
 pub unsafe fn syscall0(number: usize) -> usize {
     let result: usize;
