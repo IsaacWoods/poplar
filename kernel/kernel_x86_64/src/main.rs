@@ -1,6 +1,6 @@
 #![no_std]
 #![no_main]
-#![feature(asm, global_asm, decl_macro, naked_functions)]
+#![feature(asm_sym, decl_macro, naked_functions)]
 
 extern crate alloc;
 extern crate rlibc;
@@ -152,7 +152,7 @@ pub extern "C" fn kentry(boot_info: &BootInfo) -> ! {
         let tss = Box::pin(Tss::new());
         let tss_selector = hal_x86_64::hw::gdt::GDT.lock().add_tss(0, tss.as_ref());
         unsafe {
-            asm!("ltr ax", in("ax") tss_selector.0);
+            core::arch::asm!("ltr ax", in("ax") tss_selector.0);
         }
 
         let mut per_cpu = PerCpuImpl::new(tss, Scheduler::new());
@@ -208,7 +208,7 @@ pub extern "C" fn kentry(boot_info: &BootInfo) -> ! {
     let mut interrupt_controller =
         InterruptController::init(&acpi_platform_info.interrupt_model, &mut aml_context);
     unsafe {
-        asm!("sti");
+        core::arch::asm!("sti");
     }
     interrupt_controller.enable_local_timer(&topology.cpu_info, Duration::from_millis(10));
 
@@ -256,7 +256,7 @@ fn panic(info: &PanicInfo) -> ! {
 
     loop {
         unsafe {
-            asm!("hlt");
+            core::arch::asm!("hlt");
         }
     }
 }

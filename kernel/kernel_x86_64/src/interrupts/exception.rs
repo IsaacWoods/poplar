@@ -3,6 +3,7 @@
 //! panics.
 
 use bit_field::BitField;
+use core::arch::asm;
 use hal_x86_64::hw::{
     idt::{ExceptionWithErrorStackFrame, InterruptStackFrame},
     registers::read_control_reg,

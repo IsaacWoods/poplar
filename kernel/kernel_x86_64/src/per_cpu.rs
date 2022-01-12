@@ -1,5 +1,5 @@
 use alloc::boxed::Box;
-use core::{marker::PhantomPinned, mem, pin::Pin};
+use core::{arch::asm, marker::PhantomPinned, mem, pin::Pin};
 use hal::memory::VirtualAddress;
 use hal_x86_64::hw::{
     gdt::{SegmentSelector, TssSegment},

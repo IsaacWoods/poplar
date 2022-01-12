@@ -1,4 +1,4 @@
-use core::{mem, ptr};
+use core::{arch::global_asm, mem, ptr};
 use hal::memory::VirtualAddress;
 use hal_x86_64::hw::registers::{write_msr, CpuFlags};
 use kernel::{
