@@ -1,13 +1,13 @@
 #![no_std]
 #![no_main]
-#![feature(panic_info_message, abi_efiapi, cell_update, never_type, asm)]
+#![feature(panic_info_message, abi_efiapi, cell_update, never_type)]
 
 mod allocator;
 mod image;
 mod logger;
 
 use allocator::BootFrameAllocator;
-use core::{fmt::Write, mem, panic::PanicInfo, ptr, slice};
+use core::{arch::asm, fmt::Write, mem, panic::PanicInfo, ptr, slice};
 use hal::{
     boot_info::{BootInfo, VideoModeInfo},
     memory::{
