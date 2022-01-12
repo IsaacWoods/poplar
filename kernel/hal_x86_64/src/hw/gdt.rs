@@ -1,6 +1,6 @@
 use super::{tss::Tss, DescriptorTablePointer};
 use bit_field::BitField;
-use core::{mem, ops::Deref, pin::Pin};
+use core::{arch::asm, mem, ops::Deref, pin::Pin};
 use hal::memory::VirtualAddress;
 use spin::Mutex;
 

@@ -1,5 +1,5 @@
 #![no_std]
-#![feature(asm, decl_macro, global_asm, naked_functions, type_ascription, const_fn_trait_bound)]
+#![feature(decl_macro, naked_functions, type_ascription, const_fn_trait_bound)]
 #![deny(unsafe_op_in_unsafe_fn)]
 
 #[cfg(test)]

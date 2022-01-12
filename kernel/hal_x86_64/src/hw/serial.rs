@@ -1,5 +1,5 @@
 use super::port::Port;
-use core::fmt;
+use core::{arch::asm, fmt};
 
 pub const COM1: u16 = 0x3f8;
 

@@ -1,4 +1,4 @@
-use core::marker::PhantomData;
+use core::{arch::asm, marker::PhantomData};
 
 /// Implemented by the types used to represent 8-bit, 16-bit, and 32-bit IO ports. Should not be
 /// implemented for any types apart from `u8`, `u16`, and `u32`.

@@ -1,5 +1,5 @@
 use bit_field::BitField;
-use core::{fmt, ops::Range};
+use core::{arch::asm, fmt, ops::Range};
 
 /// A wrapper for the `RFLAGS` register, providing a nice `Debug` implementation that details which
 /// flags are set and unset.

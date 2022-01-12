@@ -2,6 +2,7 @@ use super::{registers::CpuFlags, DescriptorTablePointer};
 use crate::hw::gdt::{PrivilegeLevel, SegmentSelector};
 use bit_field::BitField;
 use core::{
+    arch::asm,
     mem,
     ops::{Index, IndexMut},
 };

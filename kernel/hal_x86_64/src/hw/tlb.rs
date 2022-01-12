@@ -1,4 +1,5 @@
 use super::registers::{read_control_reg, write_control_reg};
+use core::arch::asm;
 use hal::memory::VirtualAddress;
 
 #[rustfmt::skip]
