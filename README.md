@@ -41,6 +41,6 @@ without it!**
 This repository includes an [`xtask`-based](https://github.com/matklad/cargo-xtask) build tool to simplify building and running Poplar.
 
 * Running `cargo xtask dist` will build a disk image for x86_64
-* Running `cargo xtask qemu` will build a disk image for x86_64, and then start emulating it into QEMU
+* Running `cargo xtask qemu` will build a disk image for x86_64, and then start emulating it in QEMU
 
 See `cargo xtask --help` for more information about how to invoke the build system.
