@@ -1,6 +1,7 @@
 #![feature(const_generics)]
 
-use libpebble::{
+use log::info;
+use poplar::{
     caps::{CapabilitiesRepr, CAP_EARLY_LOGGING, CAP_PADDING, CAP_SERVICE_PROVIDER},
     channel::Channel,
     early_logger::EarlyLogger,
@@ -8,7 +9,6 @@ use libpebble::{
     syscall::GetMessageError,
     Handle,
 };
-use log::info;
 use std::vec::Vec;
 
 pub fn main() {

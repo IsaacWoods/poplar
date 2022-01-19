@@ -1,6 +1,6 @@
 #![no_std]
 #![no_main]
-#![feature(asm, alloc_error_handler, thread_local)]
+#![feature(alloc_error_handler, thread_local)]
 
 extern crate alloc;
 
@@ -9,13 +9,13 @@ use core::{
     panic::PanicInfo,
     sync::atomic::{AtomicUsize, Ordering},
 };
-use libpebble::{
+use linked_list_allocator::LockedHeap;
+use log::info;
+use poplar::{
     caps::{CapabilitiesRepr, CAP_EARLY_LOGGING, CAP_GET_FRAMEBUFFER, CAP_PADDING, CAP_SERVICE_USER},
     early_logger::EarlyLogger,
     syscall,
 };
-use linked_list_allocator::LockedHeap;
-use log::info;
 
 #[global_allocator]
 static ALLOCATOR: LockedHeap = LockedHeap::empty();
@@ -37,7 +37,7 @@ pub extern "C" fn _start() -> ! {
     let heap_memory_object =
         syscall::create_memory_object(HEAP_START, HEAP_SIZE, true, false, 0x0 as *mut usize).unwrap();
     unsafe {
-        syscall::map_memory_object(&heap_memory_object, &libpebble::ZERO_HANDLE, None, 0x0 as *mut usize).unwrap();
+        syscall::map_memory_object(&heap_memory_object, &poplar::ZERO_HANDLE, None, 0x0 as *mut usize).unwrap();
         ALLOCATOR.lock().init(HEAP_START, HEAP_SIZE);
     }
 

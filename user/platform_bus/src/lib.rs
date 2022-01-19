@@ -15,7 +15,7 @@
 extern crate alloc;
 
 use alloc::{collections::BTreeMap, string::String, vec::Vec};
-use libpebble::Handle;
+use poplar::Handle;
 use ptah::{Deserialize, Serialize};
 
 type DeviceName = String;

@@ -137,10 +137,10 @@ dependencies = [
  "bitflags",
  "cfg-if 0.1.10",
  "hal",
- "libpebble",
  "log",
  "pci_types",
  "pebble_util",
+ "poplar",
  "ptah",
  "spin",
 ]
@@ -165,16 +165,6 @@ dependencies = [
  "pebble_util",
  "rlibc",
  "spin",
-]
-
-[[package]]
-name = "libpebble"
-version = "0.3.0"
-dependencies = [
- "cfg-if 0.1.10",
- "log",
- "pci_types",
- "ptah",
 ]
 
 [[package]]
@@ -227,6 +217,16 @@ dependencies = [
  "bit_field",
  "cfg-if 0.1.10",
  "num-traits",
+]
+
+[[package]]
+name = "poplar"
+version = "0.3.0"
+dependencies = [
+ "cfg-if 0.1.10",
+ "log",
+ "pci_types",
+ "ptah",
 ]
 
 [[package]]

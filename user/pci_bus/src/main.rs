@@ -6,17 +6,17 @@ extern crate alloc;
 
 use alloc::{collections::BTreeMap, format, string::ToString};
 use core::{convert::TryFrom, panic::PanicInfo};
-use libpebble::{
+use linked_list_allocator::LockedHeap;
+use log::info;
+use pci_types::device_type::{DeviceType, UsbType};
+use platform_bus::{BusDriverMessage, DeviceInfo, Property};
+use poplar::{
     caps::{CapabilitiesRepr, CAP_EARLY_LOGGING, CAP_PADDING, CAP_PCI_BUS_DRIVER, CAP_SERVICE_USER},
     channel::Channel,
     early_logger::EarlyLogger,
     syscall,
     syscall::pci::Bar,
 };
-use linked_list_allocator::LockedHeap;
-use log::info;
-use pci_types::device_type::{DeviceType, UsbType};
-use platform_bus::{BusDriverMessage, DeviceInfo, Property};
 
 #[global_allocator]
 static ALLOCATOR: LockedHeap = LockedHeap::empty();
@@ -30,7 +30,7 @@ pub extern "C" fn _start() -> ! {
     let heap_memory_object =
         syscall::create_memory_object(HEAP_START, HEAP_SIZE, true, false, 0x0 as *mut usize).unwrap();
     unsafe {
-        syscall::map_memory_object(&heap_memory_object, &libpebble::ZERO_HANDLE, None, 0x0 as *mut usize).unwrap();
+        syscall::map_memory_object(&heap_memory_object, &poplar::ZERO_HANDLE, None, 0x0 as *mut usize).unwrap();
         ALLOCATOR.lock().init(HEAP_START, HEAP_SIZE);
     }
 

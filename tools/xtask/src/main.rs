@@ -42,7 +42,7 @@ fn main() -> Result<()> {
             clean(PathBuf::from("user"))?;
             clean(PathBuf::from("lib/acpi"))?;
             clean(PathBuf::from("lib/gfxconsole"))?;
-            clean(PathBuf::from("lib/libpebble"))?;
+            clean(PathBuf::from("lib/poplar"))?;
             clean(PathBuf::from("lib/mer"))?;
             clean(PathBuf::from("lib/pci_types"))?;
             clean(PathBuf::from("lib/pebble_util"))?;

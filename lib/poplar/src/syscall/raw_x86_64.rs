@@ -4,17 +4,17 @@ use core::arch::asm;
 pub unsafe fn syscall0(number: usize) -> usize {
     let result: usize;
     unsafe {
-        asm!("syscall",
+        asm!("syscall; int3",
             out("rax") result,
             inlateout("rdi") number => _,
             out("rcx") _,
             out("r11") _,
 
-            // out("rdx") _,
-            // out("rsi") _,
-            // out("r8") _,
-            // out("r9") _,
-            // out("r10") _,
+            out("rdx") _,
+            out("rsi") _,
+            out("r8") _,
+            out("r9") _,
+            out("r10") _,
         );
     }
     result
@@ -24,17 +24,17 @@ pub unsafe fn syscall0(number: usize) -> usize {
 pub unsafe fn syscall1(number: usize, a: usize) -> usize {
     let result: usize;
     unsafe {
-        asm!("syscall",
+        asm!("syscall; int3",
             out("rax") result,
             inlateout("rdi") number => _,
             inlateout("rsi") a => _,
             out("rcx") _,
             out("r11") _,
 
-            // out("rdx") _,
-            // out("r8") _,
-            // out("r9") _,
-            // out("r10") _,
+            out("rdx") _,
+            out("r8") _,
+            out("r9") _,
+            out("r10") _,
         );
     }
     result
@@ -44,7 +44,7 @@ pub unsafe fn syscall1(number: usize, a: usize) -> usize {
 pub unsafe fn syscall2(number: usize, a: usize, b: usize) -> usize {
     let result: usize;
     unsafe {
-        asm!("syscall",
+        asm!("syscall; int3",
             out("rax") result,
             inlateout("rdi") number => _,
             inlateout("rsi") a => _,
@@ -52,9 +52,9 @@ pub unsafe fn syscall2(number: usize, a: usize, b: usize) -> usize {
             out("rcx") _,
             out("r11") _,
 
-            // out("r8") _,
-            // out("r9") _,
-            // out("r10") _,
+            out("r8") _,
+            out("r9") _,
+            out("r10") _,
         );
     }
     result
@@ -64,7 +64,7 @@ pub unsafe fn syscall2(number: usize, a: usize, b: usize) -> usize {
 pub unsafe fn syscall3(number: usize, a: usize, b: usize, c: usize) -> usize {
     let result: usize;
     unsafe {
-        asm!("syscall",
+        asm!("syscall; int3",
             out("rax") result,
             inlateout("rdi") number => _,
             inlateout("rsi") a => _,
@@ -73,8 +73,8 @@ pub unsafe fn syscall3(number: usize, a: usize, b: usize, c: usize) -> usize {
             out("rcx") _,
             out("r11") _,
 
-            // out("r8") _,
-            // out("r9") _,
+            out("r8") _,
+            out("r9") _,
         );
     }
     result
@@ -84,7 +84,7 @@ pub unsafe fn syscall3(number: usize, a: usize, b: usize, c: usize) -> usize {
 pub unsafe fn syscall4(number: usize, a: usize, b: usize, c: usize, d: usize) -> usize {
     let result: usize;
     unsafe {
-        asm!("syscall",
+        asm!("syscall; int3",
             out("rax") result,
             inlateout("rdi") number => _,
             inlateout("rsi") a => _,
@@ -94,7 +94,7 @@ pub unsafe fn syscall4(number: usize, a: usize, b: usize, c: usize, d: usize) ->
             out("rcx") _,
             out("r11") _,
 
-            // out("r9") _,
+            out("r9") _,
         );
     }
     result
@@ -104,7 +104,7 @@ pub unsafe fn syscall4(number: usize, a: usize, b: usize, c: usize, d: usize) ->
 pub unsafe fn syscall5(number: usize, a: usize, b: usize, c: usize, d: usize, e: usize) -> usize {
     let result: usize;
     unsafe {
-        asm!("syscall",
+        asm!("int3; syscall; int3",
             out("rax") result,
             inlateout("rdi") number => _,
             inlateout("rsi") a => _,

@@ -15,7 +15,8 @@ use alloc::{collections::BTreeMap, string::String, sync::Arc};
 use bit_field::BitField;
 use core::convert::TryFrom;
 use hal::memory::{Flags, PhysicalAddress, VirtualAddress};
-use libpebble::{
+use log::{info, trace, warn};
+use poplar::{
     caps::Capability,
     syscall::{
         self,
@@ -35,7 +36,6 @@ use libpebble::{
     Handle,
     ZERO_HANDLE,
 };
-use log::{info, trace, warn};
 use spin::Mutex;
 use validation::{UserPointer, UserSlice, UserString};
 
@@ -45,7 +45,7 @@ static SERVICE_MAP: Mutex<BTreeMap<String, Arc<ChannelEnd>>> = Mutex::new(BTreeM
 // TODO: these shouldn't be needed. Use-sites should be able to read `[None; MAX_WHATEVER]`, but can't because
 // the const_in_array_repeat_expression feature got removed. This works around that for now.
 const NONE_OBJECT: Option<Arc<dyn KernelObject>> = None;
-const NONE_BAR: Option<libpebble::syscall::pci::Bar> = None;
+const NONE_BAR: Option<poplar::syscall::pci::Bar> = None;
 
 /// This is the architecture-independent syscall handler. It should be called by the handler that
 /// receives the syscall (each architecture is free to do this however it wishes). The only
@@ -55,7 +55,7 @@ pub fn handle_syscall<P>(number: usize, a: usize, b: usize, c: usize, d: usize, 
 where
     P: Platform,
 {
-    // info!("Syscall! number = {}, a = {}, b = {}, c = {}, d = {}, e = {}", number, a, b, c, d, e);
+    info!("Syscall! number = {}, a = {}, b = {}, c = {}, d = {}, e = {}", number, a, b, c, d, e);
     let task = P::per_cpu().scheduler().get_mut().running_task.as_ref().unwrap();
 
     match number {
@@ -261,7 +261,7 @@ fn send_message<P>(
 where
     P: Platform,
 {
-    use libpebble::syscall::CHANNEL_MAX_NUM_BYTES;
+    use poplar::syscall::CHANNEL_MAX_NUM_BYTES;
 
     if num_bytes > CHANNEL_MAX_NUM_BYTES {
         return Err(SendMessageError::TooManyBytes);
@@ -380,7 +380,7 @@ fn register_service<P>(
 where
     P: Platform,
 {
-    use libpebble::syscall::SERVICE_NAME_MAX_LENGTH;
+    use poplar::syscall::SERVICE_NAME_MAX_LENGTH;
 
     // Check that the task has the `ServiceProvider` capability
     if !task.capabilities.contains(&Capability::ServiceProvider) {
@@ -411,7 +411,7 @@ fn subscribe_to_service<P>(
 where
     P: Platform,
 {
-    use libpebble::syscall::SERVICE_NAME_MAX_LENGTH;
+    use poplar::syscall::SERVICE_NAME_MAX_LENGTH;
 
     // Check that the task has the `ServiceUser` capability
     if !task.capabilities.contains(&Capability::ServiceUser) {
@@ -435,7 +435,7 @@ where
          * Send a message down `register_channel` to tell it about its new service user, transferring the
          * provider's half of the created service channel.
          *
-         * XXX: we manually construct a Ptah message here so userspace can use the `libpebble::Channel` type if it
+         * XXX: we manually construct a Ptah message here so userspace can use the `poplar::Channel` type if it
          * wants to, but without having to pull that in here.
          */
         let mut handle_objects = [NONE_OBJECT; CHANNEL_MAX_NUM_HANDLES];
@@ -457,14 +457,15 @@ fn pci_get_info<P>(
 where
     P: Platform,
 {
-    use libpebble::syscall::PciDeviceInfo;
     use pci_types::{Bar, MAX_BARS};
+    use poplar::syscall::PciDeviceInfo;
 
     // Check that the task has the 'PciBusDriver' capability
     if !task.capabilities.contains(&Capability::PciBusDriver) {
         return Err(PciGetInfoError::TaskDoesNotHaveCorrectCapability);
     }
 
+    // TODO: request this through the platform nicely instead of through a huge global
     if let Some(ref pci_info) = *crate::PCI_INFO.read() {
         let num_descriptors = pci_info.devices.len();
 
@@ -478,7 +479,7 @@ where
                 .map_err(|()| PciGetInfoError::BufferPointerInvalid)?;
 
             for (i, (&address, device)) in pci_info.devices.iter().enumerate() {
-                let mut device_descriptor = libpebble::syscall::PciDeviceInfo {
+                let mut device_descriptor = poplar::syscall::PciDeviceInfo {
                     address,
                     vendor_id: device.vendor_id,
                     device_id: device.device_id,
@@ -508,7 +509,7 @@ where
                             );
                             let handle = task.add_handle(memory_object);
                             device_descriptor.bars[i] =
-                                Some(libpebble::syscall::pci::Bar::Memory32 { memory_object: handle, size });
+                                Some(poplar::syscall::pci::Bar::Memory32 { memory_object: handle, size });
                         }
                         Some(Bar::Memory64 { address, size, prefetchable }) => {
                             let flags = Flags {
@@ -527,7 +528,7 @@ where
                             );
                             let handle = task.add_handle(memory_object);
                             device_descriptor.bars[i] =
-                                Some(libpebble::syscall::pci::Bar::Memory64 { memory_object: handle, size });
+                                Some(poplar::syscall::pci::Bar::Memory64 { memory_object: handle, size });
                         }
                         Some(Bar::Io { .. }) => warn!("PCI device at {} has an I/O BAR. We don't support these, and so they're not passed out to userspace", address),
                         None => (),

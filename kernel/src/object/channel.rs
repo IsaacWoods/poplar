@@ -4,8 +4,8 @@ use alloc::{
     sync::{Arc, Weak},
     vec::Vec,
 };
-use libpebble::syscall::{GetMessageError, SendMessageError, CHANNEL_MAX_NUM_HANDLES};
 use log::warn;
+use poplar::syscall::{GetMessageError, SendMessageError, CHANNEL_MAX_NUM_HANDLES};
 use spin::Mutex;
 
 pub struct ChannelEnd {

@@ -30,8 +30,8 @@ checksum = "baf1de4339761588bc0619e3cbc0120ee582ebb74b53b4efbf79117bd2da40fd"
 name = "echo"
 version = "0.1.0"
 dependencies = [
- "libpebble",
  "log",
+ "poplar",
 ]
 
 [[package]]
@@ -46,16 +46,6 @@ version = "0.1.0"
 dependencies = [
  "bit_field",
  "font8x8",
-]
-
-[[package]]
-name = "libpebble"
-version = "0.3.0"
-dependencies = [
- "cfg-if 0.1.10",
- "log",
- "pci_types 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "ptah",
 ]
 
 [[package]]
@@ -98,11 +88,11 @@ dependencies = [
 name = "pci_bus"
 version = "0.1.0"
 dependencies = [
- "libpebble",
  "linked_list_allocator",
  "log",
  "pci_types 0.2.0",
  "platform_bus",
+ "poplar",
  "ptah",
 ]
 
@@ -135,9 +125,19 @@ dependencies = [
 name = "platform_bus"
 version = "0.1.0"
 dependencies = [
- "libpebble",
  "linked_list_allocator",
  "log",
+ "poplar",
+ "ptah",
+]
+
+[[package]]
+name = "poplar"
+version = "0.3.0"
+dependencies = [
+ "cfg-if 0.1.10",
+ "log",
+ "pci_types 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "ptah",
 ]
 
@@ -188,9 +188,9 @@ name = "simple_fb"
 version = "0.1.0"
 dependencies = [
  "gfxconsole",
- "libpebble",
  "linked_list_allocator",
  "log",
+ "poplar",
  "ptah",
 ]
 
@@ -218,43 +218,43 @@ dependencies = [
 name = "test1"
 version = "0.1.0"
 dependencies = [
- "libpebble",
  "linked_list_allocator",
  "log",
+ "poplar",
 ]
 
 [[package]]
 name = "test2"
 version = "0.1.0"
 dependencies = [
- "libpebble",
  "linked_list_allocator",
  "log",
+ "poplar",
 ]
 
 [[package]]
 name = "test_pf"
 version = "0.1.0"
 dependencies = [
- "libpebble",
  "linked_list_allocator",
  "log",
+ "poplar",
 ]
 
 [[package]]
 name = "test_syscalls"
 version = "0.1.0"
 dependencies = [
- "libpebble",
+ "poplar",
 ]
 
 [[package]]
 name = "test_tls"
 version = "0.1.0"
 dependencies = [
- "libpebble",
  "linked_list_allocator",
  "log",
+ "poplar",
 ]
 
 [[package]]
@@ -268,10 +268,10 @@ name = "usb_bus_xhci"
 version = "0.1.0"
 dependencies = [
  "bit_field",
- "libpebble",
  "linked_list_allocator",
  "log",
  "pebble_util",
  "platform_bus",
+ "poplar",
  "ptah",
 ]

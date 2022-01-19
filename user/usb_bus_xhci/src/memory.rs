@@ -1,6 +1,6 @@
 use core::{mem, mem::MaybeUninit, ptr};
-use libpebble::{syscall, Handle};
 use log::info;
+use poplar::{syscall, Handle};
 
 const MEMORY_AREA_VIRTUAL_ADDRESS: usize = 0x50000000;
 // TODO: how large should the command ring be?
@@ -71,7 +71,7 @@ impl MemoryArea {
             )
             .unwrap();
             unsafe {
-                syscall::map_memory_object(&handle, &libpebble::ZERO_HANDLE, None, 0x0 as *mut usize).unwrap();
+                syscall::map_memory_object(&handle, &poplar::ZERO_HANDLE, None, 0x0 as *mut usize).unwrap();
             }
 
             (handle, unsafe { physical_address.assume_init() })

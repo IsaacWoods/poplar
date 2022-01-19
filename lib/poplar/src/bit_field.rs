@@ -1,5 +1,5 @@
 //! This is an in-tree copy of parts of the `bit_field` crate, which provides a useful trait for getting and setting bit
-//! ranges on primitive types. We use this throughout `libpebble`, but we can't use the actual crate from `std` as
+//! ranges on primitive types. We use this throughout `poplar`, but we can't use the actual crate from `std` as
 //! it complains that it can't find `core` (because we'd need to do the whole `rustc-std-workspace-core` charade
 //! from `bit_field`. If that changes, we should remove this).
 //!

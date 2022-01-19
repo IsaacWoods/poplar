@@ -15,7 +15,7 @@ use core::{
     sync::atomic::{AtomicU32, Ordering},
 };
 use hal::memory::VirtualAddress;
-use libpebble::{caps::Capability, Handle};
+use poplar::{caps::Capability, Handle};
 use spin::{Mutex, RwLock};
 
 #[derive(Clone, PartialEq, Eq, Debug)]
@@ -132,7 +132,7 @@ where
 /// represented in the kernel. For the format that's being decoded here, refer to the
 /// `(3.1) Userspace/Capabilities` section of the Book.
 fn decode_capabilities(mut cap_stream: &[u8]) -> Result<Vec<Capability>, TaskCreationError> {
-    use libpebble::caps::*;
+    use poplar::caps::*;
 
     let mut caps = Vec::new();
 

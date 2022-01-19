@@ -5,4 +5,4 @@ authors = ["Isaac Woods"]
 edition = "2021"
 
 [dependencies]
-libpebble = { path = "../../../lib/libpebble", default-features = false }
+poplar = { path = "../../../lib/poplar", default-features = false }

@@ -14,7 +14,7 @@ cfg_if::cfg_if! {
         pub mod raw_x86_64;
         pub use raw_x86_64 as raw;
     } else {
-        compile_error!("libpebble does not support this target architecture!");
+        compile_error!("poplar does not support this target architecture!");
     }
 }
 

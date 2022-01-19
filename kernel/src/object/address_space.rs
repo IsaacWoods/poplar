@@ -5,8 +5,8 @@ use crate::{
 };
 use alloc::{sync::Arc, vec::Vec};
 use hal::memory::{mebibytes, Bytes, FrameAllocator, PageTable, VirtualAddress};
-use libpebble::syscall::MapMemoryObjectError;
 use pebble_util::bitmap::Bitmap;
+use poplar::syscall::MapMemoryObjectError;
 use spin::Mutex;
 
 const MAX_TASKS: usize = 64;

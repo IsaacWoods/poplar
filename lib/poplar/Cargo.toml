@@ -1,10 +1,10 @@
 [package]
-name = "libpebble"
+name = "poplar"
 version = "0.3.0"
 authors = ["Isaac Woods"]
 edition = "2018"
 license = "MIT OR Apache-2.0"
-description = "Rust interace to the Pebble kernel from userspace"
+description = "Rust interace to the Poplar kernel from userspace"
 
 # NOTE: dependencies that aren't designed for use from `std` can't be used here unless they're behind optional
 # features we don't need from `std`

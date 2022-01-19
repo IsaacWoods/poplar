@@ -1,9 +1,8 @@
 #![no_std]
 #![no_main]
-#![feature(asm)]
 
 use core::panic::PanicInfo;
-use libpebble::{
+use poplar::{
     caps::{CapabilitiesRepr, CAP_EARLY_LOGGING, CAP_PADDING},
     syscall,
 };
@@ -17,17 +16,24 @@ pub extern "C" fn _start() -> ! {
     // TODO: validate in userspace that register values we expect to be preserved are
     // TODO: explore userspace stack canaries to see if it's faffing with that
 
-    let a = 0;
-    let b = 1;
-    let c = 2;
-    let d = 3;
-    let e = 4;
-    let result = unsafe { syscall::raw::syscall5(syscall::SYSCALL_TEST, a, b, c, d, e) };
-    assert_eq!(result, 963);
+    for i in 0..10 {
+        let a = 0;
+        let b = 1;
+        let c = 2;
+        let d = 3;
+        let e = 4;
+        let result = unsafe { syscall::raw::syscall5(syscall::SYSCALL_TEST, a, b, c, d, e) };
+        assert_eq!(a, 0);
+        assert_eq!(b, 1);
+        assert_eq!(c, 2);
+        assert_eq!(d, 3);
+        assert_eq!(e, 4);
+        assert_eq!(result, 963);
+    }
 
     loop {
-        syscall::early_log("Yielding").unwrap();
-        syscall::yield_to_kernel();
+        // syscall::early_log("Yielding").unwrap();
+        // syscall::yield_to_kernel();
     }
 }
 
