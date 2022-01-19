@@ -9,7 +9,7 @@ use mer::{
     program::{ProgramHeader, SegmentType},
     Elf,
 };
-use pebble_util::math;
+use poplar_util::math;
 use uefi::{
     prelude::*,
     proto::media::{

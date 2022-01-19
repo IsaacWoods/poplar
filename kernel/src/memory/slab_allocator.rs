@@ -1,6 +1,6 @@
 use alloc::vec::Vec;
 use hal::memory::VirtualAddress;
-use pebble_util::{bitmap::BitmapSlice, math::ceiling_integer_divide};
+use poplar_util::{bitmap::BitmapSlice, math::ceiling_integer_divide};
 
 pub struct SlabAllocator {
     bottom: VirtualAddress,

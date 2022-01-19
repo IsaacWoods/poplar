@@ -9,7 +9,7 @@ use hal_x86_64::hw::{
     registers::read_control_reg,
 };
 use log::{error, info};
-use pebble_util::BinaryPrettyPrint;
+use poplar_util::BinaryPrettyPrint;
 
 pub extern "C" fn nmi_handler(_: &InterruptStackFrame) {
     info!("NMI occured!");

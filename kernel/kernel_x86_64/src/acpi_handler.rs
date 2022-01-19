@@ -6,7 +6,7 @@ use hal::memory::PhysicalAddress;
 use hal_x86_64::hw::port::Port;
 use log::debug;
 use pci_types::{ConfigRegionAccess, PciAddress};
-use pebble_util::math::align_down;
+use poplar_util::math::align_down;
 
 #[derive(Clone)]
 pub struct PebbleAcpiHandler;

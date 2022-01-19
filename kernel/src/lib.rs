@@ -34,8 +34,8 @@ use memory::{KernelStackAllocator, PhysicalMemoryManager};
 use object::{address_space::AddressSpace, memory_object::MemoryObject, task::Task, KernelObject, KernelObjectId};
 use pci::PciInfo;
 use pci_types::ConfigRegionAccess as PciConfigRegionAccess;
-use pebble_util::InitGuard;
 use per_cpu::PerCpu;
+use poplar_util::InitGuard;
 use scheduler::Scheduler;
 use spin::{Mutex, RwLock};
 
@@ -44,7 +44,7 @@ use spin::{Mutex, RwLock};
 pub static ALLOCATOR: LockedHoleAllocator = LockedHoleAllocator::new_uninitialized();
 
 pub static PHYSICAL_MEMORY_MANAGER: InitGuard<PhysicalMemoryManager> = InitGuard::uninit();
-pub static FRAMEBUFFER: InitGuard<(libpebble::syscall::FramebufferInfo, Arc<MemoryObject>)> = InitGuard::uninit();
+pub static FRAMEBUFFER: InitGuard<(poplar::syscall::FramebufferInfo, Arc<MemoryObject>)> = InitGuard::uninit();
 pub static PCI_INFO: RwLock<Option<PciInfo>> = RwLock::new(None);
 pub static PCI_ACCESS: InitGuard<Option<Mutex<Box<dyn PciConfigRegionAccess>>>> = InitGuard::uninit();
 
@@ -114,7 +114,7 @@ pub fn create_framebuffer(video_info: &hal::boot_info::VideoModeInfo) {
         boot_info::PixelFormat as BootPixelFormat,
         memory::{Flags, Size4KiB},
     };
-    use libpebble::syscall::{FramebufferInfo, PixelFormat};
+    use poplar::syscall::{FramebufferInfo, PixelFormat};
 
     // We only support RGB32 and BGR32 pixel formats so BPP will always be 4 for now.
     const BPP: usize = 4;
@@ -124,7 +124,7 @@ pub fn create_framebuffer(video_info: &hal::boot_info::VideoModeInfo) {
         object::SENTINEL_KERNEL_ID,
         None,
         video_info.framebuffer_address,
-        pebble_util::math::align_up(size_in_bytes, Size4KiB::SIZE),
+        poplar_util::math::align_up(size_in_bytes, Size4KiB::SIZE),
         Flags { writable: true, user_accessible: true, cached: false, ..Default::default() },
     );
 

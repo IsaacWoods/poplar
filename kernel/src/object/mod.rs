@@ -4,7 +4,7 @@ pub mod memory_object;
 pub mod task;
 
 use core::sync::atomic::{AtomicU64, Ordering};
-use pebble_util::{downcast::DowncastSync, impl_downcast};
+use poplar_util::{downcast::DowncastSync, impl_downcast};
 
 /// Each kernel object is assigned a unique 64-bit ID, which is never reused. An ID of `0` is never allocated, and
 /// is used as a sentinel value.

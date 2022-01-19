@@ -16,7 +16,7 @@ use hal_x86_64::{
     kernel_map,
 };
 use log::warn;
-use pebble_util::InitGuard;
+use poplar_util::InitGuard;
 use spin::Mutex;
 
 /// This should only be accessed directly by the bootstrap processor.

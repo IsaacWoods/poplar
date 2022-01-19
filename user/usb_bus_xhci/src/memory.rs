@@ -50,7 +50,7 @@ pub struct MemoryArea {
 
 impl MemoryArea {
     pub fn new(num_ports: u8) -> MemoryArea {
-        use pebble_util::math::align_up;
+        use poplar_util::math::align_up;
 
         let bytes_for_device_context_base_address_array = (usize::from(num_ports) + 1) * mem::size_of::<u64>();
         // The Command Ring needs to be aligned on a 16-byte boundary, so we align upwards to do that

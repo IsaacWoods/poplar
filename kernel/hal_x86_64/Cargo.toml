@@ -9,7 +9,7 @@ hal = { path = "../hal" }
 bitflags = "1"
 bit_field = "0.10"
 spin = "0.9.2"
-pebble_util = { path = "../../lib/pebble_util" }
+poplar_util = { path = "../../lib/poplar_util" }
 log = { version = "0.4", default-features = false }
 
 [features]

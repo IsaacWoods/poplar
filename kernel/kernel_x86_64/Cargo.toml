@@ -14,7 +14,7 @@ log = "0.4"
 bit_field = "0.10"
 acpi = { path = "../../lib/acpi/acpi" }
 aml = { path = "../../lib/acpi/aml" }
-pebble_util = { path = "../../lib/pebble_util" }
+poplar_util = { path = "../../lib/poplar_util" }
 gfxconsole = { path = "../../lib/gfxconsole" }
 pci_types = { path = "../../lib/pci_types" }
 

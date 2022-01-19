@@ -6,7 +6,7 @@ use hal_x86_64::hw::{
     tss::Tss,
 };
 use kernel::{per_cpu::PerCpu, scheduler::Scheduler};
-use pebble_util::{unsafe_pinned, unsafe_unpinned};
+use poplar_util::{unsafe_pinned, unsafe_unpinned};
 
 /// Get a mutable reference to the per-CPU data of the running CPU. This is unsafe because it is the caller's
 /// responsibility to ensure that only one mutable reference to the per-CPU data exists at any one time. It is also

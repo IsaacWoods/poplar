@@ -11,4 +11,4 @@ log = "0.4"
 platform_bus = { path = "../platform_bus" }
 ptah = { path = "../../lib/ptah" }
 bit_field = "0.10"
-pebble_util = { path = "../../lib/pebble_util" }
+poplar_util = { path = "../../lib/poplar_util" }

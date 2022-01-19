@@ -46,7 +46,7 @@
 use alloc::collections::BTreeSet;
 use core::{cmp::min, ops::Range};
 use hal::memory::{Bytes, Frame, FrameSize, PhysicalAddress, Size4KiB};
-use pebble_util::math::flooring_log2;
+use poplar_util::math::flooring_log2;
 
 /// The largest block stored by the buddy allocator is `2^MAX_ORDER`.
 const MAX_ORDER: usize = 10;

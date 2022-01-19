@@ -5,7 +5,7 @@ use core::{
     ops::Deref,
 };
 use hal::memory::VirtualAddress;
-use pebble_util::math::align_up;
+use poplar_util::math::align_up;
 use spin::Mutex;
 
 pub struct HoleAllocator {

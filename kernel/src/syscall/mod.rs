@@ -144,7 +144,7 @@ where
     P: Platform,
 {
     use hal::memory::{FrameSize, Size4KiB};
-    use pebble_util::math::align_up;
+    use poplar_util::math::align_up;
 
     let writable = flags.get_bit(0);
     let executable = flags.get_bit(1);
