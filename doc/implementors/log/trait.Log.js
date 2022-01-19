@@ -1,3 +1,3 @@
 (function() {var implementors = {};
-implementors["libpebble"] = [{"text":"impl <a class=\"trait\" href=\"log/trait.Log.html\" title=\"trait log::Log\">Log</a> for <a class=\"struct\" href=\"libpebble/early_logger/struct.EarlyLogger.html\" title=\"struct libpebble::early_logger::EarlyLogger\">EarlyLogger</a>","synthetic":false,"types":["libpebble::early_logger::EarlyLogger"]}];
+implementors["poplar"] = [{"text":"impl <a class=\"trait\" href=\"log/trait.Log.html\" title=\"trait log::Log\">Log</a> for <a class=\"struct\" href=\"poplar/early_logger/struct.EarlyLogger.html\" title=\"struct poplar::early_logger::EarlyLogger\">EarlyLogger</a>","synthetic":false,"types":["poplar::early_logger::EarlyLogger"]}];
 if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()

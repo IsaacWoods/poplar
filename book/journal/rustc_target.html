@@ -3,7 +3,7 @@
     <head>
         <!-- Book generated using mdBook -->
         <meta charset="UTF-8">
-        <title>Building a rustc target for Pebble - Pebble OS</title>
+        <title>Building a rustc target for Poplar - Poplar</title>
 
 
         <!-- Custom HTML head -->
@@ -81,7 +81,7 @@
 
         <nav id="sidebar" class="sidebar" aria-label="Table of contents">
             <div class="sidebar-scrollbox">
-                <ol class="chapter"><li class="chapter-item expanded "><a href="../introduction/index.html"><strong aria-hidden="true">1.</strong> Introduction</a></li><li class="chapter-item expanded "><a href="../kernel/index.html"><strong aria-hidden="true">2.</strong> The Kernel</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../kernel/platforms.html"><strong aria-hidden="true">2.1.</strong> Platforms</a></li><li class="chapter-item expanded "><a href="../kernel/efiloader.html"><strong aria-hidden="true">2.2.</strong> Efiloader</a></li><li class="chapter-item expanded "><a href="../kernel/kernel_objects.html"><strong aria-hidden="true">2.3.</strong> Kernel Objects</a></li><li class="chapter-item expanded "><a href="../kernel/syscalls.html"><strong aria-hidden="true">2.4.</strong> System calls</a></li><li class="chapter-item expanded "><a href="../kernel/debugging.html"><strong aria-hidden="true">2.5.</strong> Debugging the kernel</a></li></ol></li><li class="chapter-item expanded "><a href="../syscalls/index.html"><strong aria-hidden="true">3.</strong> Syscalls</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../syscalls/yield.html"><strong aria-hidden="true">3.1.</strong> yield</a></li><li class="chapter-item expanded "><a href="../syscalls/early_log.html"><strong aria-hidden="true">3.2.</strong> early_log</a></li><li class="chapter-item expanded "><a href="../syscalls/get_framebuffer.html"><strong aria-hidden="true">3.3.</strong> get_framebuffer</a></li><li class="chapter-item expanded "><a href="../syscalls/create_memory_object.html"><strong aria-hidden="true">3.4.</strong> create_memory_object</a></li><li class="chapter-item expanded "><a href="../syscalls/map_memory_object.html"><strong aria-hidden="true">3.5.</strong> map_memory_object</a></li><li class="chapter-item expanded "><a href="../syscalls/create_channel.html"><strong aria-hidden="true">3.6.</strong> create_channel</a></li><li class="chapter-item expanded "><a href="../syscalls/send_message.html"><strong aria-hidden="true">3.7.</strong> send_message</a></li><li class="chapter-item expanded "><a href="../syscalls/get_message.html"><strong aria-hidden="true">3.8.</strong> get_message</a></li><li class="chapter-item expanded "><a href="../syscalls/register_service.html"><strong aria-hidden="true">3.9.</strong> register_service</a></li><li class="chapter-item expanded "><a href="../syscalls/subscribe_to_service.html"><strong aria-hidden="true">3.10.</strong> subscribe_to_service</a></li><li class="chapter-item expanded "><a href="../syscalls/pci_get_info.html"><strong aria-hidden="true">3.11.</strong> pci_get_info</a></li></ol></li><li class="chapter-item expanded "><a href="../userspace/index.html"><strong aria-hidden="true">4.</strong> Userspace</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../userspace/capabilities.html"><strong aria-hidden="true">4.1.</strong> Capabilities</a></li><li class="chapter-item expanded "><a href="../userspace/memory_map_x86_64.html"><strong aria-hidden="true">4.2.</strong> Memory map (x86_64)</a></li></ol></li><li class="chapter-item expanded "><a href="../message_passing/index.html"><strong aria-hidden="true">5.</strong> Message Passing</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../message_passing/wire_format.html"><strong aria-hidden="true">5.1.</strong> Ptah wire format</a></li></ol></li><li class="chapter-item expanded "><a href="../journal/index.html"><strong aria-hidden="true">6.</strong> Journal</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../journal/rustc_target.html" class="active"><strong aria-hidden="true">6.1.</strong> Building a rustc target for Pebble</a></li></ol></li></ol>
+                <ol class="chapter"><li class="chapter-item expanded "><a href="../introduction/index.html"><strong aria-hidden="true">1.</strong> Introduction</a></li><li class="chapter-item expanded "><a href="../kernel/index.html"><strong aria-hidden="true">2.</strong> The Kernel</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../kernel/platforms.html"><strong aria-hidden="true">2.1.</strong> Platforms</a></li><li class="chapter-item expanded "><a href="../kernel/efiloader.html"><strong aria-hidden="true">2.2.</strong> Efiloader</a></li><li class="chapter-item expanded "><a href="../kernel/kernel_objects.html"><strong aria-hidden="true">2.3.</strong> Kernel Objects</a></li><li class="chapter-item expanded "><a href="../kernel/syscalls.html"><strong aria-hidden="true">2.4.</strong> System calls</a></li><li class="chapter-item expanded "><a href="../kernel/debugging.html"><strong aria-hidden="true">2.5.</strong> Debugging the kernel</a></li></ol></li><li class="chapter-item expanded "><a href="../syscalls/index.html"><strong aria-hidden="true">3.</strong> Syscalls</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../syscalls/yield.html"><strong aria-hidden="true">3.1.</strong> yield</a></li><li class="chapter-item expanded "><a href="../syscalls/early_log.html"><strong aria-hidden="true">3.2.</strong> early_log</a></li><li class="chapter-item expanded "><a href="../syscalls/get_framebuffer.html"><strong aria-hidden="true">3.3.</strong> get_framebuffer</a></li><li class="chapter-item expanded "><a href="../syscalls/create_memory_object.html"><strong aria-hidden="true">3.4.</strong> create_memory_object</a></li><li class="chapter-item expanded "><a href="../syscalls/map_memory_object.html"><strong aria-hidden="true">3.5.</strong> map_memory_object</a></li><li class="chapter-item expanded "><a href="../syscalls/create_channel.html"><strong aria-hidden="true">3.6.</strong> create_channel</a></li><li class="chapter-item expanded "><a href="../syscalls/send_message.html"><strong aria-hidden="true">3.7.</strong> send_message</a></li><li class="chapter-item expanded "><a href="../syscalls/get_message.html"><strong aria-hidden="true">3.8.</strong> get_message</a></li><li class="chapter-item expanded "><a href="../syscalls/register_service.html"><strong aria-hidden="true">3.9.</strong> register_service</a></li><li class="chapter-item expanded "><a href="../syscalls/subscribe_to_service.html"><strong aria-hidden="true">3.10.</strong> subscribe_to_service</a></li><li class="chapter-item expanded "><a href="../syscalls/pci_get_info.html"><strong aria-hidden="true">3.11.</strong> pci_get_info</a></li></ol></li><li class="chapter-item expanded "><a href="../userspace/index.html"><strong aria-hidden="true">4.</strong> Userspace</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../userspace/capabilities.html"><strong aria-hidden="true">4.1.</strong> Capabilities</a></li><li class="chapter-item expanded "><a href="../userspace/memory_map_x86_64.html"><strong aria-hidden="true">4.2.</strong> Memory map (x86_64)</a></li></ol></li><li class="chapter-item expanded "><a href="../message_passing/index.html"><strong aria-hidden="true">5.</strong> Message Passing</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../message_passing/wire_format.html"><strong aria-hidden="true">5.1.</strong> Ptah wire format</a></li></ol></li><li class="chapter-item expanded "><a href="../journal/index.html"><strong aria-hidden="true">6.</strong> Journal</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../journal/rustc_target.html" class="active"><strong aria-hidden="true">6.1.</strong> Building a rustc target for Poplar</a></li></ol></li></ol>
             </div>
             <div id="sidebar-resize-handle" class="sidebar-resize-handle"></div>
         </nav>
@@ -110,7 +110,7 @@
                         </button>
                     </div>
 
-                    <h1 class="menu-title">Pebble OS</h1>
+                    <h1 class="menu-title">Poplar</h1>
 
                     <div class="right-buttons">
                         <a href="../print.html" title="Print this book" aria-label="Print this book">
@@ -142,8 +142,8 @@
 
                 <div id="content" class="content">
                     <main>
-                        <h1 id="building-a-rustc-target-for-pebble"><a class="header" href="#building-a-rustc-target-for-pebble">Building a <code>rustc</code> target for Pebble</a></h1>
-<p>We want a target in <code>rustc</code> for building userspace programs for Pebble. It would be especially cool to get it
+                        <h1 id="building-a-rustc-target-for-poplar"><a class="header" href="#building-a-rustc-target-for-poplar">Building a <code>rustc</code> target for Poplar</a></h1>
+<p>We want a target in <code>rustc</code> for building userspace programs for Poplar. It would be especially cool to get it
 merged as an upstream Tier-3 target. This documents my progress, mainly as a reference for me to remember how it all
 works.</p>
 <h3 id="how-do-i-actually-build-and-use-rustc"><a class="header" href="#how-do-i-actually-build-and-use-rustc">How do I actually build and use <code>rustc</code>?</a></h3>
@@ -151,12 +151,12 @@ works.</p>
 <pre><code>./x.py build -i library/std
 </code></pre>
 <p>The easiest way to test the built <code>rustc</code> is to create a <code>rustup</code> toolchain (from the root of the Rust repo):</p>
-<pre><code>rustup toolchain link pebble build/{host triple}/stage1     # If you built a stage-1 compiler (default with invocation above)
-rustup toolchain link pebble build/{host triple}/stage2     # If you built a stage-2 compiler
+<pre><code>rustup toolchain link poplar build/{host triple}/stage1     # If you built a stage-1 compiler (default with invocation above)
+rustup toolchain link poplar build/{host triple}/stage2     # If you built a stage-2 compiler
 </code></pre>
-<p>It's easiest to call your toolchain <code>pebble</code>, as this is the name we use in the Makefiles for now.</p>
+<p>It's easiest to call your toolchain <code>poplar</code>, as this is the name we use in the Makefiles for now.</p>
 <p>You can then use this toolchain from Cargo anywhere on the system with:</p>
-<pre><code>cargo +pebble build     # Or whatever command you need
+<pre><code>cargo +poplar build     # Or whatever command you need
 </code></pre>
 <h3 id="using-a-custom-llvm"><a class="header" href="#using-a-custom-llvm">Using a custom LLVM</a></h3>
 <ul>
@@ -183,21 +183,21 @@ upstream), and can cause confusing errors when it's out-of-date.</p>
 <p>I used a slightly different layout to most targets (which have a base, which creates a <code>TargetOptions</code>, and then a
 target that modifies and uses those options).</p>
 <ul>
-<li>Pebble targets generally need a custom linker script. I added one at <code>compiler/rustc_target/src/spec/x86_64_pebble.ld</code>.</li>
-<li>Make a module for the target (I called mine <code>compiler/rustc_target/src/spec/x86_64_pebble.rs</code>). Copy from a
-existing one. Instead of a separate <code>pebble_base.rs</code> to create the <code>TargetOptions</code>, we do it in the target
+<li>Poplar targets generally need a custom linker script. I added one at <code>compiler/rustc_target/src/spec/x86_64_poplar.ld</code>.</li>
+<li>Make a module for the target (I called mine <code>compiler/rustc_target/src/spec/x86_64_poplar.rs</code>). Copy from a
+existing one. Instead of a separate <code>poplar_base.rs</code> to create the <code>TargetOptions</code>, we do it in the target
 itself. We <code>include_str!</code> the linker script in here, so it's distributed as part of the <code>rustc</code> binary.</li>
 <li>Add the target in the <code>supported_targets!</code> macro in <code>compiler/rustc_target/src/spec/mod.rs</code>.</li>
 </ul>
 <h3 id="adding-the-target-to-llvm"><a class="header" href="#adding-the-target-to-llvm">Adding the target to LLVM</a></h3>
 <p>I don't really know my way around the LLVM code base, so this was fairly cobbled together:</p>
 <ul>
-<li>In <code>llvm/include/llvm/ADT/Triple.h</code>, add a variant for the OS in the <code>OSType</code> enum. I called it <code>Pebble</code>. Don't
+<li>In <code>llvm/include/llvm/ADT/Triple.h</code>, add a variant for the OS in the <code>OSType</code> enum. I called it <code>Poplar</code>. Don't
 make it the last entry, to avoid having to change the <code>LastOSType</code> variant.</li>
-<li>In <code>llvm/lib/Support/Triple.cpp</code>, in the function <code>Triple::getOSTypeName</code>, add the OS. I added <code>case Pebble: return &quot;pebble&quot;;</code>.</li>
-<li>In the same file, in the <code>parseOS</code> function, add the OS. I added <code>.StartsWith(&quot;pebble&quot;, Triple::Pebble)</code>.</li>
+<li>In <code>llvm/lib/Support/Triple.cpp</code>, in the function <code>Triple::getOSTypeName</code>, add the OS. I added <code>case Poplar: return &quot;poplar&quot;;</code>.</li>
+<li>In the same file, in the <code>parseOS</code> function, add the OS. I added <code>.StartsWith(&quot;poplar&quot;, Triple::Poplar)</code>.</li>
 <li>This file also contains a function, <code>getDefaultFormat</code>, that gives the default format for a platform. The default
-is ELF, so no changes were needed for Pebble, but they might be for another OS.</li>
+is ELF, so no changes were needed for Poplar, but they might be for another OS.</li>
 </ul>
 <p>TIP: When you make a change in the <code>llvm-project</code> submodule, you will need to commit these changes, and then update
 the submodule in the parent repo, or the bootstrap script will checkout the old version (without your changes) and
