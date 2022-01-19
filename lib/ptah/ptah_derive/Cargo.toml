@@ -1,6 +1,6 @@
 [package]
 name = "ptah_derive"
-version = "0.1.0"
+version = "0.2.0"
 authors = ["Isaac Woods"]
 edition = "2018"
 description = "Derive macro for Rust's implementation of Ptah, Poplar's message-passing format"
