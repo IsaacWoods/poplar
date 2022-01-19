@@ -10,7 +10,7 @@ use std::{
 use tokio::{fs, net::UdpSocket, try_join};
 
 // TODO: don't hardcode this
-const SERVED_DIRECTORY: &str = "/hdd/pebble/tftp_served";
+const SERVED_DIRECTORY: &str = "/hdd/poplar/tftp_served";
 
 const OPCODE_READ_REQUEST: u16 = 1;
 const OPCODE_WRITE_REQUEST: u16 = 2;

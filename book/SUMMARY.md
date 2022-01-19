@@ -30,4 +30,4 @@
     - [Ptah wire format](./message_passing/wire_format.md)
 
 - [Journal](./journal/index.md)
-    - [Building a `rustc` target for Pebble](./journal/rustc_target.md)
+    - [Building a `rustc` target for Poplar](./journal/rustc_target.md)

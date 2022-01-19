@@ -14,7 +14,7 @@ mod task;
 mod topo;
 
 use acpi::{platform::ProcessorState, AcpiTables, PciConfigRegions};
-use acpi_handler::{AmlHandler, PebbleAcpiHandler};
+use acpi_handler::{AmlHandler, PoplarAcpiHandler};
 use alloc::{boxed::Box, sync::Arc};
 use aml::AmlContext;
 use core::{panic::PanicInfo, pin::Pin, time::Duration};
@@ -75,7 +75,7 @@ impl Platform for PlatformImpl {
 pub extern "C" fn kentry(boot_info: &BootInfo) -> ! {
     log::set_logger(&logger::KernelLogger).unwrap();
     log::set_max_level(log::LevelFilter::Trace);
-    info!("Pebble kernel is running");
+    info!("Poplar kernel is running");
 
     if boot_info.magic != hal::boot_info::BOOT_INFO_MAGIC {
         panic!("Boot info magic is not correct!");
@@ -132,7 +132,7 @@ pub extern "C" fn kentry(boot_info: &BootInfo) -> ! {
         panic!("Bootloader did not pass RSDP address. Booting without ACPI is not supported.");
     }
     let acpi_tables =
-        match unsafe { AcpiTables::from_rsdp(PebbleAcpiHandler, usize::from(boot_info.rsdp_address.unwrap())) } {
+        match unsafe { AcpiTables::from_rsdp(PoplarAcpiHandler, usize::from(boot_info.rsdp_address.unwrap())) } {
             Ok(acpi_tables) => acpi_tables,
             Err(err) => panic!("Failed to discover ACPI tables: {:?}", err),
         };

@@ -1,5 +1,5 @@
 # Kernel Objects
-Kernel Objects are how Pebble represents resources that can be interacted with from userspace. They are all
+Kernel Objects are how Poplar represents resources that can be interacted with from userspace. They are all
 allocated a unique ID.
 
 ### Handles

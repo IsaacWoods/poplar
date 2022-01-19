@@ -1,11 +1,11 @@
 # Debugging the kernel
 Kernels can be difficult to debug - this page tries to collect useful techniques for debugging kernels in general,
-and also any Pebble specific things that might be useful.
+and also any Poplar specific things that might be useful.
 
 ### Using GDB
 Firstly, start GDB with (this is just an example, alter e.g. paths as needed):
 ```
-tools/rust_gdb -q "build/Pebble/fat/kernel.elf" -ex "target remote :1234"
+tools/rust_gdb -q "build/Poplar/fat/kernel.elf" -ex "target remote :1234"
 ```
 Note that the `rust_gdb` script is used instead of invoking GDB directly - this installs various plugins to make
 life easier.
@@ -20,14 +20,14 @@ breakpoints before any code runs.
 
 ### Emulate with a custom build of QEMU
 For particularly tricky issues, it can sometimes be useful to insert `printf`s in QEMU and see if they trigger
-when emulating Pebble. The `Makefile` makes this easy - run something like:
+when emulating Poplar. The `Makefile` makes this easy - run something like:
 ```
 QEMU_DIR='~/qemu/build/x86_64-softmmu/' make qemu-no-kvm
 ```
 where the location pointed to by `QEMU_DIR` is the build destination of the correct QEMU executable. A lot of the
 time, the `printf`s you've inserted will only trigger with TCG, so it's usually best to use `qemu-no-kvm`.
 
-### Pebble specific: the breakpoint exception
+### Poplar specific: the breakpoint exception
 The breakpoint exception is useful for inspecting the contents of registers at specific points, such as in sections
 of assembly (where it's inconvenient to call into Rust, or to use a debugger because getting `global_asm!` to play
 nicely with GDB is a pain).

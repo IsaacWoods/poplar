@@ -1,2 +1,2 @@
-### The Pebble Kernel
+### The Poplar Kernel
 TODO

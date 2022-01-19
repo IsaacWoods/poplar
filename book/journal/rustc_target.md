@@ -1,5 +1,5 @@
-# Building a `rustc` target for Pebble
-We want a target in `rustc` for building userspace programs for Pebble. It would be especially cool to get it
+# Building a `rustc` target for Poplar
+We want a target in `rustc` for building userspace programs for Poplar. It would be especially cool to get it
 merged as an upstream Tier-3 target. This documents my progress, mainly as a reference for me to remember how it all
 works.
 
@@ -11,14 +11,14 @@ A useful baseline invocation for normal use is:
 
 The easiest way to test the built `rustc` is to create a `rustup` toolchain (from the root of the Rust repo):
 ```
-rustup toolchain link pebble build/{host triple}/stage1     # If you built a stage-1 compiler (default with invocation above)
-rustup toolchain link pebble build/{host triple}/stage2     # If you built a stage-2 compiler
+rustup toolchain link poplar build/{host triple}/stage1     # If you built a stage-1 compiler (default with invocation above)
+rustup toolchain link poplar build/{host triple}/stage2     # If you built a stage-2 compiler
 ```
-It's easiest to call your toolchain `pebble`, as this is the name we use in the Makefiles for now.
+It's easiest to call your toolchain `poplar`, as this is the name we use in the Makefiles for now.
 
 You can then use this toolchain from Cargo anywhere on the system with:
 ```
-cargo +pebble build     # Or whatever command you need
+cargo +poplar build     # Or whatever command you need
 ```
 
 ### Using a custom LLVM
@@ -45,20 +45,20 @@ upstream), and can cause confusing errors when it's out-of-date.
 I used a slightly different layout to most targets (which have a base, which creates a `TargetOptions`, and then a
 target that modifies and uses those options).
 
-- Pebble targets generally need a custom linker script. I added one at `compiler/rustc_target/src/spec/x86_64_pebble.ld`.
-- Make a module for the target (I called mine `compiler/rustc_target/src/spec/x86_64_pebble.rs`). Copy from a
-  existing one. Instead of a separate `pebble_base.rs` to create the `TargetOptions`, we do it in the target
+- Poplar targets generally need a custom linker script. I added one at `compiler/rustc_target/src/spec/x86_64_poplar.ld`.
+- Make a module for the target (I called mine `compiler/rustc_target/src/spec/x86_64_poplar.rs`). Copy from a
+  existing one. Instead of a separate `poplar_base.rs` to create the `TargetOptions`, we do it in the target
   itself. We `include_str!` the linker script in here, so it's distributed as part of the `rustc` binary.
 - Add the target in the `supported_targets!` macro in `compiler/rustc_target/src/spec/mod.rs`.
 
 ### Adding the target to LLVM
 I don't really know my way around the LLVM code base, so this was fairly cobbled together:
-- In `llvm/include/llvm/ADT/Triple.h`, add a variant for the OS in the `OSType` enum. I called it `Pebble`. Don't
+- In `llvm/include/llvm/ADT/Triple.h`, add a variant for the OS in the `OSType` enum. I called it `Poplar`. Don't
   make it the last entry, to avoid having to change the `LastOSType` variant.
-- In `llvm/lib/Support/Triple.cpp`, in the function `Triple::getOSTypeName`, add the OS. I added `case Pebble: return "pebble";`.
-- In the same file, in the `parseOS` function, add the OS. I added `.StartsWith("pebble", Triple::Pebble)`.
+- In `llvm/lib/Support/Triple.cpp`, in the function `Triple::getOSTypeName`, add the OS. I added `case Poplar: return "poplar";`.
+- In the same file, in the `parseOS` function, add the OS. I added `.StartsWith("poplar", Triple::Poplar)`.
 - This file also contains a function, `getDefaultFormat`, that gives the default format for a platform. The default
-  is ELF, so no changes were needed for Pebble, but they might be for another OS.
+  is ELF, so no changes were needed for Poplar, but they might be for another OS.
 
 TIP: When you make a change in the `llvm-project` submodule, you will need to commit these changes, and then update
 the submodule in the parent repo, or the bootstrap script will checkout the old version (without your changes) and

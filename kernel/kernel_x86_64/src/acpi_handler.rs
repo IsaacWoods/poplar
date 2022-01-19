@@ -9,9 +9,9 @@ use pci_types::{ConfigRegionAccess, PciAddress};
 use poplar_util::math::align_down;
 
 #[derive(Clone)]
-pub struct PebbleAcpiHandler;
+pub struct PoplarAcpiHandler;
 
-impl AcpiHandler for PebbleAcpiHandler {
+impl AcpiHandler for PoplarAcpiHandler {
     unsafe fn map_physical_region<T>(&self, physical_address: usize, size: usize) -> PhysicalMapping<Self, T> {
         let virtual_address = kernel_map::physical_to_virtual(PhysicalAddress::new(physical_address).unwrap());
 
@@ -20,7 +20,7 @@ impl AcpiHandler for PebbleAcpiHandler {
             NonNull::new(virtual_address.mut_ptr()).unwrap(),
             size,
             size,
-            PebbleAcpiHandler,
+            PoplarAcpiHandler,
         )
     }
 

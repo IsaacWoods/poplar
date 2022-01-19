@@ -2,7 +2,7 @@
 authors = ["Isaac Woods"]
 multilingual = false
 src = "."
-title = "Pebble OS"
+title = "Poplar"
 
 [build]
 build-dir = "../pages/book/"

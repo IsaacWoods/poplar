@@ -29,7 +29,7 @@ fn main() -> Result<()> {
 
         flags::TaskCmd::Qemu(qemu) => {
             dist(&qemu)?;
-            RunQemuX64::new(PathBuf::from("pebble.img"))
+            RunQemuX64::new(PathBuf::from("poplar.img"))
                 .open_display(qemu.display)
                 .debug_int_firehose(qemu.debug_int_firehose)
                 .debug_mmu_firehose(qemu.debug_mmu_firehose)
@@ -134,7 +134,7 @@ impl Dist {
             })
             .collect::<Result<Vec<(String, PathBuf)>>>()?;
 
-        let mut image = MakeGptImage::new(PathBuf::from("pebble.img"), 30 * 1024 * 1024, 20 * 1024 * 1024)
+        let mut image = MakeGptImage::new(PathBuf::from("poplar.img"), 30 * 1024 * 1024, 20 * 1024 * 1024)
             .add_efi_file("efi/boot/bootx64.efi", efiloader)
             .add_efi_file("kernel.elf", kernel);
         for (name, artifact_path) in user_task_paths {
@@ -151,8 +151,8 @@ impl Dist {
         let path = if let Some(dir) = dir { dir.join(name) } else { PathBuf::from("user/").join(name) };
         RunCargo::new(name.to_string(), path)
             .workspace(PathBuf::from("user/"))
-            .toolchain("pebble")
-            .target(Target::Triple("x86_64-pebble".to_string()))
+            .toolchain("poplar")
+            .target(Target::Triple("x86_64-poplar".to_string()))
             .release(self.release)
             .std_components(vec!["core".to_string(), "alloc".to_string()])
             .std_features(vec!["compiler-builtins-mem".to_string()])

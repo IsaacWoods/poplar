@@ -6,7 +6,7 @@ name = "ptah"
 version = "0.1.0"
 authors = ["Isaac Woods"]
 edition = "2018"
-description = "Rust implementation of Ptah, Pebble's message-passing format"
+description = "Rust implementation of Ptah, Poplar's message-passing format"
 license = "MIT OR Apache-2.0"
 
 [dependencies]

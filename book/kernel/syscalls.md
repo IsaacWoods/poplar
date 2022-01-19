@@ -1,7 +1,7 @@
 # System calls
-Userspace code can interact with the kernel through system calls. Pebble's system call interface is based around
+Userspace code can interact with the kernel through system calls. Poplar's system call interface is based around
 'kernel objects', and so many of the system calls are to create, destroy, or modify the state of various types of
-kernel object. Because of Pebble's microkernel design, many traditional system calls (e.g. `open`) are not present,
+kernel object. Because of Poplar's microkernel design, many traditional system calls (e.g. `open`) are not present,
 their functionality instead being provided by userspace.
 
 Each system call has a unique number that is used to identify it. A system call can then take up to five
@@ -32,11 +32,11 @@ To make a system call on x86_64, populate these registers:
 |-----------------------|-------|-------|-------|-------|-------|
 | System call number    | `a`   | `b`   | `c`   | `d`   | `e`   |
 
-The only way in which these registers deviate from the x86_64 Sys-V ABI is that `c` is passed in `r10` instead
-of `rcx`. This is because `rcx` is used by the `syscall` instruction, and so is not free.
-You can then make the system call by executing `syscall`. Before the kernel returns to userspace, it will put the
-result of the system call (if there is one) in `rax`. If a system call takes less than five parameters, the unused
-parameter registers will be preserved across the system call.
+The only way in which these registers deviate from the x86_64 Sys-V ABI is that `c` is passed in `r10` instead of
+`rcx`, because `rcx` is used by the `syscall` instruction.  You can then make the system call by executing
+`syscall`. Before the kernel returns to userspace, it will put the result of the system call (if there is one) in
+`rax`. If a system call takes less than five parameters, the unused parameter registers will be preserved across
+the system call.
 
 ### Return values
 Often, a system call will need to return a status, plus one or more handles. The first handle a system call needs

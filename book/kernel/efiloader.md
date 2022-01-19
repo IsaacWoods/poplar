@@ -1,5 +1,5 @@
 # Efiloader
-`efiloader` is the bootloader for Pebble on x86_64. It utilities UEFI boot-services to load the kernel and any
+`efiloader` is the bootloader for Poplar on x86_64. It utilities UEFI boot-services to load the kernel and any
 extra images needed into memory, allocate memory for the heap, configure a basic framebuffer, and enter the kernel.
 
 ### Description of booting process
@@ -13,7 +13,7 @@ A rough order of the steps that `efiloader` performs is:
 - Jumps into the kernel
 
 ### Load options
-A series of load options may be supplied to `efiloader` to tell it how Pebble should be booted. These options
+A series of load options may be supplied to `efiloader` to tell it how Poplar should be booted. These options
 consist of a string of space separated key-value pairs, of the form `a.dot.separated.key=value`. Supported keys,
 plus descriptions of their values, are:
 
