@@ -3,7 +3,7 @@ members = ["ptah_derive"]
 
 [package]
 name = "ptah"
-version = "0.1.0"
+version = "0.2.0"
 authors = ["Isaac Woods"]
 edition = "2018"
 description = "Rust implementation of Ptah, Poplar's message-passing format"
