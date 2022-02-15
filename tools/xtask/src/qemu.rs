@@ -98,12 +98,17 @@ impl RunQemuX64 {
         qemu.arg("--no-reboot");
         // qemu.args(&["-smp", &self.cpus.to_string()]);
         qemu.args(&["-m", &self.ram.to_string()]);
-        qemu.args(&["-serial", "stdio"]);
+
+        // Emit serial on both stdio and to a file
+        qemu.args(&["-chardev", "stdio,id=char0,logfile=qemu_serial.log,signal=off"]);
+        qemu.args(&["-serial", "chardev:char0"]);
+
         if !self.open_display {
             qemu.args(&["-display", "none"]);
             // If we're not opening a display, allow connections to the monitor over TCP (open with `nc 127.0.0.1 55555`)
             qemu.args(&["-monitor", "tcp:127.0.0.1:55555,server,nowait"]);
         }
+
         /*
          * If we're opening a display, we don't want to cause it to close on a crash. If we're just running in the
          * terminal, it's nicer to exit.
