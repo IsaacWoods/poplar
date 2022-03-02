@@ -232,7 +232,7 @@ fn load_segment(
      * `file_size` may be less than `mem_size`, but must never be greater than it.
      * NOTE: we use the segment's memory size here, before we align it up to the page margin.
      */
-    assert!(segment.file_size <= segment.mem_size, "Segment's mem size is greater than it's file size???");
+    assert!(segment.file_size <= segment.mem_size, "Segment's data will not fit in requested memory");
     unsafe {
         slice::from_raw_parts_mut(physical_address as usize as *mut u8, segment.file_size as usize)
             .copy_from_slice(segment.data(&elf));
