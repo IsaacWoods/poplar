@@ -1,6 +1,11 @@
 use bit_field::BitField;
 use core::ptr;
 
+/// Allows access to the controller's Operational Registers. The `base` of these registers is dword-aligned and
+/// found by adding the length of the Capability Registers to Capability Base.
+///
+/// All registers are multiples of 32-bits in length, and must be accessed as dwords with appropriate masking. This
+/// is enforced by the `read_register` and `write_register` methods.
 pub struct OperationRegisters {
     base: usize,
     num_ports: u8,
@@ -26,9 +31,9 @@ impl OperationRegisters {
     /// Sets the Command Ring Control register, which has the format:
     /// ```ignore
     ///   31                                                                      6                       0
-    ///    +----------------------------------------------------------------------------------------------+ 0x00
+    ///    +----------------------------------------------------------------------------------------------+ 0x18
     ///    |   Command Ring Pointer Lo                                            | RsvdP |CRR| CA| CS|RCS|
-    ///    +----------------------------------------------------------------------------------------------+ 0x04
+    ///    +----------------------------------------------------------------------------------------------+ 0x1c
     ///    |   Command Ring Pointer Hi                                                                    |
     ///    +----------------------------------------------------------------------------------------------+
     /// RCS: Ring Cycle State
@@ -40,14 +45,16 @@ impl OperationRegisters {
         assert_eq!(pointer.get_bits(0..6), 0x0);
         // TODO: do we want to provide control over the flags?
         unsafe {
-            self.write_register(0x18, pointer);
+            self.write_register(0x18, pointer.get_bits(0..32) as u32);
+            self.write_register(0x1c, pointer.get_bits(32..64) as u32);
         }
     }
 
     pub fn set_device_context_base_address_array_pointer(&self, pointer: u64) {
         assert_eq!(pointer.get_bits(0..6), 0x0);
         unsafe {
-            self.write_register(0x30, pointer);
+            self.write_register(0x30, pointer.get_bits(0..32) as u32);
+            self.write_register(0x34, pointer.get_bits(32..64) as u32);
         }
     }
 
@@ -68,13 +75,13 @@ impl OperationRegisters {
         PortStatusAndControl(unsafe { self.read_register(0x400 + 0x10 * usize::from(index)) })
     }
 
-    unsafe fn read_register<T>(&self, offset: usize) -> T {
-        unsafe { ptr::read_volatile((self.base + offset) as *const T) }
+    unsafe fn read_register(&self, offset: usize) -> u32 {
+        unsafe { ptr::read_volatile((self.base + offset) as *const u32) }
     }
 
-    unsafe fn write_register<T>(&self, offset: usize, value: T) {
+    unsafe fn write_register(&self, offset: usize, value: u32) {
         unsafe {
-            ptr::write_volatile((self.base + offset) as *mut T, value);
+            ptr::write_volatile((self.base + offset) as *mut u32, value);
         }
     }
 }
