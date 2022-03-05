@@ -1,26 +1,14 @@
-; ModuleID = 'probe2.e0be6912-cgu.0'
-source_filename = "probe2.e0be6912-cgu.0"
+; ModuleID = 'probe2.13583eeb-cgu.0'
+source_filename = "probe2.13583eeb-cgu.0"
 target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-f80:128-n8:16:32:64-S128"
 target triple = "x86_64-unknown-linux-gnu"
 
-; probe2::probe
-; Function Attrs: nonlazybind uwtable
-define void @_ZN6probe25probe17h8c90d985b12a6959E() unnamed_addr #0 {
-start:
-; call core::f64::<impl f64>::to_int_unchecked
-  %_1 = call i32 @"_ZN4core3f6421_$LT$impl$u20$f64$GT$16to_int_unchecked17h1354eda5dbb57225E"(double 1.000000e+00)
-  br label %bb1
-
-bb1:                                              ; preds = %start
-  ret void
-}
-
 ; core::f64::<impl f64>::to_int_unchecked
 ; Function Attrs: inlinehint nonlazybind uwtable
-define i32 @"_ZN4core3f6421_$LT$impl$u20$f64$GT$16to_int_unchecked17h1354eda5dbb57225E"(double %self) unnamed_addr #1 {
+define i32 @"_ZN4core3f6421_$LT$impl$u20$f64$GT$16to_int_unchecked17h410ee92b1819ee9dE"(double %self) unnamed_addr #0 {
 start:
 ; call <f64 as core::convert::num::FloatToInt<i32>>::to_int_unchecked
-  %0 = call i32 @"_ZN65_$LT$f64$u20$as$u20$core..convert..num..FloatToInt$LT$i32$GT$$GT$16to_int_unchecked17h192dce1cd691c4a3E"(double %self)
+  %0 = call i32 @"_ZN65_$LT$f64$u20$as$u20$core..convert..num..FloatToInt$LT$i32$GT$$GT$16to_int_unchecked17h3d2cc44e073ab3d5E"(double %self)
   br label %bb1
 
 bb1:                                              ; preds = %start
@@ -29,7 +17,7 @@ bb1:                                              ; preds = %start
 
 ; <f64 as core::convert::num::FloatToInt<i32>>::to_int_unchecked
 ; Function Attrs: inlinehint nonlazybind uwtable
-define internal i32 @"_ZN65_$LT$f64$u20$as$u20$core..convert..num..FloatToInt$LT$i32$GT$$GT$16to_int_unchecked17h192dce1cd691c4a3E"(double %self) unnamed_addr #1 {
+define internal i32 @"_ZN65_$LT$f64$u20$as$u20$core..convert..num..FloatToInt$LT$i32$GT$$GT$16to_int_unchecked17h3d2cc44e073ab3d5E"(double %self) unnamed_addr #0 {
 start:
   %0 = alloca i32, align 4
   %1 = fptosi double %self to i32
@@ -41,8 +29,20 @@ bb1:                                              ; preds = %start
   ret i32 %2
 }
 
-attributes #0 = { nonlazybind uwtable "probe-stack"="__rust_probestack" "target-cpu"="x86-64" }
-attributes #1 = { inlinehint nonlazybind uwtable "probe-stack"="__rust_probestack" "target-cpu"="x86-64" }
+; probe2::probe
+; Function Attrs: nonlazybind uwtable
+define void @_ZN6probe25probe17h5784aabe2a67c8f6E() unnamed_addr #1 {
+start:
+; call core::f64::<impl f64>::to_int_unchecked
+  %_1 = call i32 @"_ZN4core3f6421_$LT$impl$u20$f64$GT$16to_int_unchecked17h410ee92b1819ee9dE"(double 1.000000e+00)
+  br label %bb1
+
+bb1:                                              ; preds = %start
+  ret void
+}
+
+attributes #0 = { inlinehint nonlazybind uwtable "probe-stack"="__rust_probestack" "target-cpu"="x86-64" }
+attributes #1 = { nonlazybind uwtable "probe-stack"="__rust_probestack" "target-cpu"="x86-64" }
 
 !llvm.module.flags = !{!0, !1}
 
