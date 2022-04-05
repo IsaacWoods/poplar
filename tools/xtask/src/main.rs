@@ -134,7 +134,7 @@ impl Dist {
             })
             .collect::<Result<Vec<(String, PathBuf)>>>()?;
 
-        let mut image = MakeGptImage::new(PathBuf::from("poplar.img"), 30 * 1024 * 1024, 20 * 1024 * 1024)
+        let mut image = MakeGptImage::new(PathBuf::from("poplar.img"), 40 * 1024 * 1024, 35 * 1024 * 1024)
             .add_efi_file("efi/boot/bootx64.efi", efiloader)
             .add_efi_file("kernel.elf", kernel);
         for (name, artifact_path) in user_task_paths {
