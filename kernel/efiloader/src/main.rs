@@ -7,7 +7,7 @@ mod image;
 mod logger;
 
 use allocator::BootFrameAllocator;
-use core::{arch::asm, fmt::Write, mem, panic::PanicInfo, ptr, slice};
+use core::{arch::asm, fmt::Write, mem, mem::MaybeUninit, panic::PanicInfo, ptr, slice};
 use hal::{
     boot_info::{BootInfo, VideoModeInfo},
     memory::{
@@ -46,7 +46,7 @@ pub const KERNEL_HEAP_MEMORY_TYPE: MemoryType = MemoryType::custom(0x80000005);
 const KERNEL_HEAP_SIZE: Bytes = kibibytes(800);
 
 #[entry]
-fn efi_main(image_handle: Handle, system_table: SystemTable<Boot>) -> Status {
+fn efi_main(image_handle: Handle, mut system_table: SystemTable<Boot>) -> Status {
     writeln!(system_table.stdout(), "Hello, World!").unwrap();
 
     let video_mode = create_framebuffer(system_table.boot_services(), 800, 600);
@@ -57,7 +57,7 @@ fn efi_main(image_handle: Handle, system_table: SystemTable<Boot>) -> Status {
         &mut *system_table
             .boot_services()
             .handle_protocol::<LoadedImage>(image_handle)
-            .expect_success("Failed to open LoadedImage protocol")
+            .expect("Failed to open LoadedImage protocol")
             .get()
     };
 
@@ -89,7 +89,7 @@ fn efi_main(image_handle: Handle, system_table: SystemTable<Boot>) -> Status {
         let boot_info_physical_start = system_table
             .boot_services()
             .allocate_pages(AllocateType::AnyPages, BOOT_INFO_MEMORY_TYPE, boot_info_needed_frames)
-            .unwrap_success();
+            .unwrap();
         let identity_boot_info_ptr =
             VirtualAddress::new(boot_info_physical_start as usize).mut_ptr() as *mut BootInfo;
         unsafe {
@@ -192,11 +192,14 @@ fn efi_main(image_handle: Handle, system_table: SystemTable<Boot>) -> Status {
     // info!("Waiting for key press. Will switch to graphics mode next.");
     // system_table.boot_services().wait_for_event(&mut [system_table.stdin().wait_for_key_event()]);
 
-    /*
-     * Allocate memory to hold the memory map. We ask UEFI how much it thinks it needs, and then add a bit, as the
-     * allocation for the memory map can itself change how much space the memory map will take.
-     */
-    let memory_map_size = system_table.boot_services().memory_map_size() + 4 * mem::size_of::<MemoryDescriptor>();
+    let memory_map_size = {
+        let memory_map_size = system_table.boot_services().memory_map_size();
+        /*
+         * Allocate memory to hold the memory map. We ask UEFI how much it thinks it needs, and then add a bit, as the
+         * allocation for the memory map can itself change how much space the memory map will take.
+         */
+        memory_map_size.map_size + 4 * memory_map_size.entry_size
+    };
     let memory_map_frames = Size4KiB::frames_needed(memory_map_size);
     info!(
         "Memory map will apparently be {} bytes. Allocating {}.",
@@ -206,16 +209,15 @@ fn efi_main(image_handle: Handle, system_table: SystemTable<Boot>) -> Status {
     let memory_map_address = system_table
         .boot_services()
         .allocate_pages(AllocateType::AnyPages, MEMORY_MAP_MEMORY_TYPE, memory_map_frames)
-        .unwrap_success();
+        .unwrap();
     unsafe {
         system_table.boot_services().set_mem(memory_map_address as *mut u8, memory_map_frames * Size4KiB::SIZE, 0);
     }
     let memory_map_buffer =
         unsafe { slice::from_raw_parts_mut(memory_map_address as *mut u8, memory_map_frames * Size4KiB::SIZE) };
 
-    let (_system_table, memory_map) = system_table
-        .exit_boot_services(image_handle, memory_map_buffer)
-        .expect_success("Failed to exit boot services");
+    let (_system_table, memory_map) =
+        system_table.exit_boot_services(image_handle, memory_map_buffer).expect("Failed to exit boot services");
     process_memory_map(memory_map, boot_info, &mut page_table, &allocator);
 
     /*
@@ -414,9 +416,8 @@ fn allocate_and_map_heap<A, P>(
 {
     assert!(heap_size % Size4KiB::SIZE == 0, "Heap will not be page aligned");
     let frames_needed = Size4KiB::frames_needed(heap_size);
-    let physical_start = boot_services
-        .allocate_pages(AllocateType::AnyPages, KERNEL_HEAP_MEMORY_TYPE, frames_needed)
-        .unwrap_success();
+    let physical_start =
+        boot_services.allocate_pages(AllocateType::AnyPages, KERNEL_HEAP_MEMORY_TYPE, frames_needed).unwrap();
 
     mapper
         .map_area(
@@ -450,28 +451,29 @@ fn create_framebuffer(
     // Make an initial call to find how many handles we need to search
     let num_handles = boot_services
         .locate_handle(SearchType::from_proto::<GraphicsOutput>(), None)
-        .expect_success("Failed to get list of GOP devices");
+        .expect("Failed to get list of GOP devices");
 
     // Allocate a pool of the needed size
     let pool_addr = boot_services
         .allocate_pool(MemoryType::LOADER_DATA, mem::size_of::<Handle>() * num_handles)
-        .expect_success("Failed to allocate pool for GOP handles");
-    let handle_slice: &mut [Handle] = unsafe { slice::from_raw_parts_mut(pool_addr as *mut Handle, num_handles) };
+        .expect("Failed to allocate pool for GOP handles");
+    let handle_slice: &mut [MaybeUninit<Handle>] =
+        unsafe { slice::from_raw_parts_mut(pool_addr as *mut MaybeUninit<Handle>, num_handles) };
 
     // Actually fetch the handles
     boot_services
         .locate_handle(SearchType::from_proto::<GraphicsOutput>(), Some(handle_slice))
-        .expect_success("Failed to get list of graphics output devices");
+        .expect("Failed to get list of graphics output devices");
 
     for &mut handle in handle_slice {
         let proto = unsafe {
             &mut *boot_services
-                .handle_protocol::<GraphicsOutput>(handle)
-                .expect_success("Failed to open GraphicsOutput")
+                .handle_protocol::<GraphicsOutput>(handle.assume_init())
+                .expect("Failed to open GraphicsOutput")
                 .get()
         };
 
-        let chosen_mode = proto.modes().map(|mode| mode.unwrap()).find(|mode| {
+        let chosen_mode = proto.modes().find(|mode| {
             let (width, height) = mode.info().resolution();
             let pixel_format = mode.info().pixel_format();
 
@@ -485,7 +487,7 @@ fn create_framebuffer(
         });
 
         if let Some(mode) = chosen_mode {
-            proto.set_mode(&mode).expect_success("Failed to switch to new video mode");
+            proto.set_mode(&mode).expect("Failed to switch to new video mode");
 
             let framebuffer_address = PhysicalAddress::new(proto.frame_buffer().as_mut_ptr() as usize).unwrap();
             let mode_info = mode.info();

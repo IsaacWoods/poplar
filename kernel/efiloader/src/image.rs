@@ -11,12 +11,12 @@ use mer::{
 };
 use poplar_util::math;
 use uefi::{
-    prelude::*,
     proto::media::{
         file::{File, FileAttribute, FileInfo, FileMode, FileType},
         fs::SimpleFileSystem,
     },
     table::boot::{AllocateType, BootServices, MemoryType},
+    CStr16,
     Handle,
 };
 
@@ -97,7 +97,7 @@ where
     assert!(guard_page_address.is_aligned(Size4KiB::SIZE), "Guard page address is not page aligned");
     page_table.unmap::<Size4KiB>(Page::starts_with(guard_page_address));
 
-    boot_services.free_pool(pool_addr).unwrap_success();
+    boot_services.free_pool(pool_addr).unwrap();
     KernelInfo { entry_point, stack_top, next_safe_address }
 }
 
@@ -160,7 +160,7 @@ pub fn load_image(boot_services: &BootServices, volume_handle: Handle, name: &st
         }
     }
 
-    boot_services.free_pool(pool_addr).unwrap_success();
+    boot_services.free_pool(pool_addr).unwrap();
     image_data
 }
 
@@ -169,30 +169,29 @@ pub fn load_image(boot_services: &BootServices, volume_handle: Handle, name: &st
 /// the elf to the pool.
 fn load_elf<'a>(boot_services: &BootServices, volume_handle: Handle, path: &str) -> (Elf<'a>, *mut u8) {
     let mut root_file_protocol = unsafe {
-        &mut *boot_services
-            .handle_protocol::<SimpleFileSystem>(volume_handle)
-            .expect_success("Failed to get volume")
-            .get()
+        &mut *boot_services.handle_protocol::<SimpleFileSystem>(volume_handle).expect("Failed to get volume").get()
     }
     .open_volume()
-    .expect_success("Failed to open volume");
+    .expect("Failed to open volume");
 
     // TODO: custom match and print path on failure
-    let mut file = root_file_protocol
-        .open(path, FileMode::Read, FileAttribute::READ_ONLY)
-        .expect_success("Failed to open file");
+    // TODO: make the path handling less brittle
+    let mut path_buf = [0; 256];
+    let path = CStr16::from_str_with_buf(path, &mut path_buf).unwrap();
+    let mut file =
+        root_file_protocol.open(path, FileMode::Read, FileAttribute::READ_ONLY).expect("Failed to open file");
     let mut info_buffer = [0u8; 128];
-    let info = file.get_info::<FileInfo>(&mut info_buffer).unwrap_success();
+    let info = file.get_info::<FileInfo>(&mut info_buffer).unwrap();
 
     let pool_addr = boot_services
         .allocate_pool(MemoryType::LOADER_DATA, info.file_size() as usize)
-        .expect_success("Failed to allocate data for image file");
+        .expect("Failed to allocate data for image file");
     let file_data: &mut [u8] =
         unsafe { slice::from_raw_parts_mut(pool_addr as *mut u8, info.file_size() as usize) };
 
-    match file.into_type().unwrap_success() {
+    match file.into_type().unwrap() {
         FileType::Regular(mut regular_file) => {
-            regular_file.read(file_data).expect_success("Failed to read image");
+            regular_file.read(file_data).expect("Failed to read image");
         }
         FileType::Dir(_) => panic!("Path is to a directory!"),
     }
@@ -225,7 +224,7 @@ fn load_segment(
     let num_frames = (mem_size as usize) / Size4KiB::SIZE;
     let physical_address = boot_services
         .allocate_pages(AllocateType::AnyPages, memory_type, num_frames)
-        .expect_success("Failed to allocate memory for image segment!");
+        .expect("Failed to allocate memory for image segment!");
 
     /*
      * Copy `file_size` bytes from the image into the segment's new home. Note that
