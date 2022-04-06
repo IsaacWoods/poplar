@@ -41,6 +41,7 @@ extern "C" fn rust_syscall_entry(number: usize, a: usize, b: usize, c: usize, d:
 #[derive(Default, Debug)]
 #[repr(C)]
 pub struct ContextSwitchFrame {
+    pub flags: u64,
     pub r15: u64,
     pub r14: u64,
     pub r13: u64,
@@ -91,7 +92,9 @@ pub unsafe fn initialize_stacks(
     ptr::write(
         kernel_stack_pointer.mut_ptr() as *mut ContextSwitchFrame,
         ContextSwitchFrame {
+            flags: INITIAL_RFLAGS.into(),
             r15: usize::from(task_entry_point) as u64,
+            // TODO: if we keep the new flags thing, revisit this
             r14: INITIAL_RFLAGS.into(),
             r13: 0x0,
             r12: 0x0,

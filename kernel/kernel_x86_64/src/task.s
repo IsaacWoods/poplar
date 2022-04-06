@@ -47,6 +47,7 @@ do_drop_to_usermode:
 
     // Pop the context-saved registers. We pop a few of them into the "wrong" registers as we need to move some
     // into registers not saved in the context. See documentation of `task_entry_trampoline` for details.
+    popfq
     pop rcx
     pop r11
     pop r13
@@ -55,6 +56,7 @@ do_drop_to_usermode:
     pop rbx
 
     // Switch to the task's user stack
+    mov gs:0x8, rsp
     mov rsp, gs:0x10
 
     /*
@@ -85,12 +87,14 @@ do_context_switch:
     push r13
     push r14
     push r15
+    pushfq
 
     // Change kernel stacks
     mov [rdi], rsp
     mov rsp, rsi
 
     // Restore state of new task
+    popfq
     pop r15
     pop r14
     pop r13

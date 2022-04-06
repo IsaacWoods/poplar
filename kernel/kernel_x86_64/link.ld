@@ -46,6 +46,7 @@ SECTIONS
         /*
          * We reserve a guard page that should be unmapped by the bootloader. This will cause a
          * page-fault if accessed and so will detect a stack overflow.
+         * TODO: maybe manually allocate a stack in the efiloader for each CPU?
          */
         _guard_page = .;
         . += 4K;

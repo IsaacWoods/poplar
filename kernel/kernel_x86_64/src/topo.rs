@@ -43,6 +43,59 @@ impl Topology {
     }
 }
 
+// pub fn build_topology(acpi_platform_info: &acpi::PlatformInfo) -> Topology {
+//     let processor_info = acpi_platform_info.processor_info.as_ref().unwrap();
+//     let mut boot_cpu = {
+//         assert_eq!(processor_info.boot_processor.state, ProcessorState::Running);
+//         assert!(!processor_info.boot_processor.is_ap);
+//         Cpu::new(0, processor_info.boot_processor.local_apic_id)
+//     };
+
+//     /*
+//      * Create a `Cpu` for each application processor that can be brought up. This maintains the order that the
+//      * processors appear in the MADT, which is the order that they should be brought up in.
+//      */
+//     let application_cpus = Vec::new();
+//     // let mut id = 1;
+//     // let application_cpus = processor_info
+//     //     .application_processors
+//     //     .iter()
+//     //     .filter_map(|processor| match processor.state {
+//     //         ProcessorState::WaitingForSipi => {
+//     //             assert!(processor.is_ap);
+//     //             let cpu = Cpu::new(id, processor.local_apic_id);
+//     //             id += 1;
+//     //             Some(cpu)
+//     //         }
+//     //         ProcessorState::Disabled => {
+//     //             warn!(
+//     //                 "Processor with local APIC id {} is disabled by firmware. Ignoring.",
+//     //                 processor.local_apic_id
+//     //             );
+//     //             None
+//     //         }
+//     //         ProcessorState::Running => {
+//     //             panic!("Application processor is already running; how have you managed that?")
+//     //         }
+//     //     })
+//     //     .collect::<Vec<_>>();
+//     // info!("Located {} application processors to attempt bring-up on", application_cpus.len());
+
+//     /*
+//      * This code runs on the boot processor, so we can load the GDT with the boot processor's TSS and the boot
+//      * processor's per-CPU data here.
+//      * XXX: per-CPU data must be installed after the GDT, as we zero `gs` when the GDT is loaded.
+//      */
+//     // TODO: we no longer need to load the GDT on the boot processor, but we do need to create a TSS descriptor in
+//     // the correct slot, and then call `ltr`, as this is no longer done as part of GDT creation.
+//     unsafe {
+//         // hal_x86_64::hw::gdt::GDT.lock().load(boot_cpu.tss_selector);
+//     }
+//     boot_cpu.per_cpu.as_mut().install();
+
+//     Topology { cpu_info, boot_cpu, application_cpus }
+// }
+
 /// We rely on certain processor features to be present for simplicity and sanity-retention. This
 /// function checks that we support everything we need to, and enable features that we need.
 fn check_support_and_enable_features(cpu_info: &CpuInfo) {

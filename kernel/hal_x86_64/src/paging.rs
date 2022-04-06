@@ -311,6 +311,8 @@ impl PageTable<Size4KiB> for PageTableImpl {
     }
 
     fn translate(&self, address: VirtualAddress) -> Option<PhysicalAddress> {
+        // TODO: handle huge pages at the P3 level as well
+
         let p2 = self
             .p4()
             .next_table(address.p4_index(), self.physical_base)

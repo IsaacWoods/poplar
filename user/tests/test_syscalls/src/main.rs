@@ -32,8 +32,8 @@ pub extern "C" fn _start() -> ! {
     }
 
     loop {
-        // syscall::early_log("Yielding").unwrap();
-        // syscall::yield_to_kernel();
+        syscall::early_log("Yielding").unwrap();
+        syscall::yield_to_kernel();
     }
 }
 

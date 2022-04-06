@@ -36,6 +36,7 @@ use per_cpu::PerCpuImpl;
 use spin::Mutex;
 use topo::Topology;
 
+// TODO: store the PciInfo in here and allow access from the common kernel
 pub struct PlatformImpl {
     kernel_page_table: PageTableImpl,
     topology: Topology,
@@ -124,7 +125,6 @@ pub extern "C" fn kentry(boot_info: &BootInfo) -> ! {
      */
     InterruptController::install_exception_handlers();
 
-
     /*
      * Parse the static ACPI tables.
      */
@@ -195,6 +195,10 @@ pub extern "C" fn kentry(boot_info: &BootInfo) -> ! {
     *kernel::PCI_INFO.write() = Some(PciResolver::resolve(pci_access.clone()));
     kernel::PCI_ACCESS.initialize(Some(Mutex::new(Box::new(pci_access))));
 
+    // TODO: if we need to route PCI interrupts, this might be useful at some point?
+    // let routing_table =
+    //     PciRoutingTable::from_prt_path(&AmlName::from_str("\\_SB.PCI0._PRT").unwrap(), aml_context)
+    //         .expect("Failed to parse _PRT");
 
     /*
      * Initialize devices defined in AML.

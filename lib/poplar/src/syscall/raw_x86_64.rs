@@ -4,7 +4,7 @@ use core::arch::asm;
 pub unsafe fn syscall0(number: usize) -> usize {
     let result: usize;
     unsafe {
-        asm!("syscall; int3",
+        asm!("syscall",
             out("rax") result,
             inlateout("rdi") number => _,
             out("rcx") _,
@@ -24,7 +24,7 @@ pub unsafe fn syscall0(number: usize) -> usize {
 pub unsafe fn syscall1(number: usize, a: usize) -> usize {
     let result: usize;
     unsafe {
-        asm!("syscall; int3",
+        asm!("syscall",
             out("rax") result,
             inlateout("rdi") number => _,
             inlateout("rsi") a => _,
@@ -44,7 +44,7 @@ pub unsafe fn syscall1(number: usize, a: usize) -> usize {
 pub unsafe fn syscall2(number: usize, a: usize, b: usize) -> usize {
     let result: usize;
     unsafe {
-        asm!("syscall; int3",
+        asm!("syscall",
             out("rax") result,
             inlateout("rdi") number => _,
             inlateout("rsi") a => _,
@@ -64,7 +64,7 @@ pub unsafe fn syscall2(number: usize, a: usize, b: usize) -> usize {
 pub unsafe fn syscall3(number: usize, a: usize, b: usize, c: usize) -> usize {
     let result: usize;
     unsafe {
-        asm!("syscall; int3",
+        asm!("syscall",
             out("rax") result,
             inlateout("rdi") number => _,
             inlateout("rsi") a => _,
@@ -84,7 +84,7 @@ pub unsafe fn syscall3(number: usize, a: usize, b: usize, c: usize) -> usize {
 pub unsafe fn syscall4(number: usize, a: usize, b: usize, c: usize, d: usize) -> usize {
     let result: usize;
     unsafe {
-        asm!("syscall; int3",
+        asm!("syscall",
             out("rax") result,
             inlateout("rdi") number => _,
             inlateout("rsi") a => _,
@@ -104,7 +104,7 @@ pub unsafe fn syscall4(number: usize, a: usize, b: usize, c: usize, d: usize) ->
 pub unsafe fn syscall5(number: usize, a: usize, b: usize, c: usize, d: usize, e: usize) -> usize {
     let result: usize;
     unsafe {
-        asm!("int3; syscall; int3",
+        asm!("syscall",
             out("rax") result,
             inlateout("rdi") number => _,
             inlateout("rsi") a => _,

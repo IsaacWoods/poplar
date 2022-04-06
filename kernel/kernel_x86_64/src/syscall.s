@@ -7,17 +7,23 @@
  *    - has put the `rflags` to return with in `r11`, masked with `IA32_FMASK`
  *    - does not save `rsp`. It is our responsibility to deal with the stack(s).
  *
- * Because we are using the System-V ABI:
- *    - `rbp`, `rbx`, `r12`, `r13`, `r14`, and `r15` must be preserved
- *    - Other registers may be clobbered
+ * Register summary:
+ *    rax => system call result
+ *    rbx - MUST BE PRESERVED
+ *    rcx - users' rip
+ *    rdx - b
+ *    rdi - system call number
+ *    rsi - a
+ *    rbp - MUST BE PRESERVED
+ *    r8  - d
+ *    r9  - e
+ *    r10 - c
+ *    r11 - users' rflags
+ *    r12 - MUST BE PRESERVED
+ *    r13 - MUST BE PRESERVED
+ *    r14 - MUST BE PRESERVED
+ *    r15 - MUST BE PRESERVED
  *
- * Values of registers for syscall instructions.
- *     rdi = number
- *     rsi = a
- *     rdx = b
- *     r10 = c
- *     r8  = d
- *     r9  = e
  * This is only different from the Sys-V ABI in that `c` is in `r10` and not `rcx` (because `rcx` is being
  * used by syscall). To call into the Rust function (as long as it is using the C ABI), we only need to
  * move that one parameter.
@@ -37,6 +43,20 @@ syscall_handler:
     push rcx
     push r11
 
+    // Save registers
+    push rbp
+    push rbx
+    push rdx
+    push rdi
+    push rsi
+    push r8
+    push r9
+    push r10
+    push r12
+    push r13
+    push r14
+    push r15
+
     // Move `c` into the right register. This is fine now because we've saved syscall's expected `rcx` on the
     // stack.
     mov rcx, r10
@@ -44,13 +64,19 @@ syscall_handler:
     // Call the Rust handler. From this point, `rax` contains the return value, so musn't be trashed!
     call rust_syscall_entry
 
-    // Zero registers trashed by the Rust code before we return to userspace
-    xor rsi, rsi
-    xor rdi, rdi
-    xor rdx, rdx
-    xor r10, r10
-    xor r8, r8
-    xor r9, r9
+    // Restore registers
+    pop r15
+    pop r14
+    pop r13
+    pop r12
+    pop r10
+    pop r9
+    pop r8
+    pop rsi
+    pop rdi
+    pop rdx
+    pop rbx
+    pop rbp
 
     // Restore state needed for `sysretq`
     pop r11

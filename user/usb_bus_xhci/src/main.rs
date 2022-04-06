@@ -131,7 +131,7 @@ fn initialize_controller(
         memory_area.physical_address_of_device_context_base_address_array() as u64,
     );
 
-    todo!()
+    // todo!()
 }
 
 #[panic_handler]

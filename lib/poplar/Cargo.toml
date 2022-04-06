@@ -12,8 +12,8 @@ description = "Rust interace to the Poplar kernel from userspace"
 cfg-if = "0.1"
 log = { version = "0.4", optional = true }
 pci_types = { version = "0.2.0", optional = true }
-ptah = { version = "0.2.0", optional = true, default-features = false }
-# ptah = { path = "../ptah", optional = true, default-features = false }
+#ptah = { version = "0.2.0", optional = true, default-features = false }
+ptah = { path = "../ptah", optional = true, default-features = false }
 
 # This is a weird hack needed to make this usable from Rust's `std`
 core = { version = "1.0.0", optional = true, package = "rustc-std-workspace-core" }
@@ -26,6 +26,6 @@ ptah = { path = "../ptah" }
 
 [features]
 default = ["can_alloc", "pci"]
-can_alloc = ["log", "ptah"]
+can_alloc = ["log", "ptah", "ptah/alloc", "ptah/derive"]
 pci = ["pci_types"]
 rustc-dep-of-std = ["core", "compiler_builtins", "alloc"]
