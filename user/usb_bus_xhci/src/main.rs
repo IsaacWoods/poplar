@@ -12,7 +12,7 @@ mod trb;
 
 use alloc::{string::String, vec};
 use caps::Capabilities;
-use core::{mem, mem::MaybeUninit, panic::PanicInfo};
+use core::panic::PanicInfo;
 use linked_list_allocator::LockedHeap;
 use log::info;
 use memory::MemoryArea;
@@ -23,8 +23,6 @@ use poplar::{
     channel::Channel,
     early_logger::EarlyLogger,
     syscall,
-    syscall::GetMessageError,
-    Handle,
 };
 
 #[global_allocator]
