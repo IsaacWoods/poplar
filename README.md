@@ -3,7 +3,7 @@
 [![License: MPL-2.0](https://img.shields.io/badge/license-MPL--2.0-blue.svg)](https://opensource.org/licenses/MPL-2.0)
 
 **Poplar was previously called Pebble. It was renamed to avoid confusion with the OS that runs on the [defunct
-Pebble smartwatches](https://en.wikipedia.org/wiki/Poplar_(watch))**
+Pebble smartwatches](https://en.wikipedia.org/wiki/Pebble_(watch))**
 
 Poplar is a microkernel and userspace written in Rust, exploring modern ideas. It is not a UNIX, and does not aim
 for compatibility with existing software.
