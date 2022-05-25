@@ -1,4 +1,4 @@
-#![feature(bool_to_option, type_ascription)]
+#![feature(type_ascription)]
 
 mod cargo;
 mod flags;
