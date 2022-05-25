@@ -1,14 +1,14 @@
-; ModuleID = 'probe2.1d21843c-cgu.0'
-source_filename = "probe2.1d21843c-cgu.0"
+; ModuleID = 'probe2.ed6d2586-cgu.0'
+source_filename = "probe2.ed6d2586-cgu.0"
 target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-f80:128-n8:16:32:64-S128"
 target triple = "x86_64-unknown-linux-gnu"
 
 ; core::f64::<impl f64>::to_int_unchecked
 ; Function Attrs: inlinehint nonlazybind uwtable
-define i32 @"_ZN4core3f6421_$LT$impl$u20$f64$GT$16to_int_unchecked17h21258c57f6a84aefE"(double %self) unnamed_addr #0 {
+define i32 @"_ZN4core3f6421_$LT$impl$u20$f64$GT$16to_int_unchecked17he329a99a2d3c58e3E"(double %self) unnamed_addr #0 {
 start:
 ; call <f64 as core::convert::num::FloatToInt<i32>>::to_int_unchecked
-  %0 = call i32 @"_ZN65_$LT$f64$u20$as$u20$core..convert..num..FloatToInt$LT$i32$GT$$GT$16to_int_unchecked17h4edfe960de2e9c6dE"(double %self)
+  %0 = call i32 @"_ZN65_$LT$f64$u20$as$u20$core..convert..num..FloatToInt$LT$i32$GT$$GT$16to_int_unchecked17h8c1e6861c52714f3E"(double %self)
   br label %bb1
 
 bb1:                                              ; preds = %start
@@ -17,7 +17,7 @@ bb1:                                              ; preds = %start
 
 ; <f64 as core::convert::num::FloatToInt<i32>>::to_int_unchecked
 ; Function Attrs: inlinehint nonlazybind uwtable
-define internal i32 @"_ZN65_$LT$f64$u20$as$u20$core..convert..num..FloatToInt$LT$i32$GT$$GT$16to_int_unchecked17h4edfe960de2e9c6dE"(double %self) unnamed_addr #0 {
+define internal i32 @"_ZN65_$LT$f64$u20$as$u20$core..convert..num..FloatToInt$LT$i32$GT$$GT$16to_int_unchecked17h8c1e6861c52714f3E"(double %self) unnamed_addr #0 {
 start:
   %0 = alloca i32, align 4
   %1 = fptosi double %self to i32
@@ -31,10 +31,10 @@ bb1:                                              ; preds = %start
 
 ; probe2::probe
 ; Function Attrs: nonlazybind uwtable
-define void @_ZN6probe25probe17h15188e230f7083cdE() unnamed_addr #1 {
+define void @_ZN6probe25probe17hc07b9433d5ec6496E() unnamed_addr #1 {
 start:
 ; call core::f64::<impl f64>::to_int_unchecked
-  %_1 = call i32 @"_ZN4core3f6421_$LT$impl$u20$f64$GT$16to_int_unchecked17h21258c57f6a84aefE"(double 1.000000e+00)
+  %_1 = call i32 @"_ZN4core3f6421_$LT$impl$u20$f64$GT$16to_int_unchecked17he329a99a2d3c58e3E"(double 1.000000e+00)
   br label %bb1
 
 bb1:                                              ; preds = %start
