@@ -7,6 +7,3 @@ The vast majority of x86_64 hardware is pretty similar, and so is treated as a s
 - Boots using UEFI
 - Supports the APIC
 - Supports the `xsave` instruction
-
-### Platform: `rpi4`
-The Raspberry Pi 4. It uses the `hal_arm64` HAL.

@@ -114,10 +114,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "hal_arm64"
-version = "0.1.0"
-
-[[package]]
 name = "hal_x86_64"
 version = "0.1.0"
 dependencies = [
@@ -144,10 +140,6 @@ dependencies = [
  "ptah",
  "spin",
 ]
-
-[[package]]
-name = "kernel_rpi4"
-version = "0.1.0"
 
 [[package]]
 name = "kernel_x86_64"

@@ -70,10 +70,6 @@ impl RunCargo {
 
     /// Run the Cargo invocation. Returns the path at which to find the built artifact.
     pub fn run(self) -> Result<PathBuf> {
-        // TODO: the rpi4 kernel passes `RUSTFLAGS="-Ctarget-cpu=cortex-a72". I'd like to think there's a better
-        // way to do this than setting an environment variable, but we might want to add that as a capability if
-        // not.
-
         /*
          * Lots of people use `std::env::var("CARGO").unwrap_or_else(|_| "cargo".to_string())` to get the "real"
          * cargo in all cases. However, this doesn't let us specify a toolchain with `+toolchain`, so doesn't

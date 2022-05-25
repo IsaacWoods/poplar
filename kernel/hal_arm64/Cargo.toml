@@ -1,7 +1,0 @@
-[package]
-name = "hal_arm64"
-version = "0.1.0"
-authors = ["Isaac Woods"]
-edition = "2018"
-
-[dependencies]
