@@ -31,3 +31,5 @@
 
 - [Journal](./journal/index.md)
     - [Building a `rustc` target for Poplar](./journal/rustc_target.md)
+    - [USB](./journal/usb.md)
+    - [RISC-V](./journal/riscv.md)
