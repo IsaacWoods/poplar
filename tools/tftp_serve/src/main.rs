@@ -23,7 +23,7 @@ const OPCODE_OACK: u16 = 6;
 async fn main() {
     let socket = UdpSocket::bind(SocketAddrV4::new(Ipv4Addr::new(0, 0, 0, 0), 69)).await.unwrap();
 
-    futures::stream::unfold(socket, |mut s| async move {
+    futures::stream::unfold(socket, |s| async move {
         const REQUEST_PACKET_MAX_SIZE: usize = 512;
 
         let mut buffer = vec![0u8; REQUEST_PACKET_MAX_SIZE];
