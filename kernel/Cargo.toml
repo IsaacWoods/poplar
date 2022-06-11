@@ -20,4 +20,4 @@ pci_types = "0.2"
 pci_types = { path = "../lib/pci_types" }
 
 [workspace]
-members = ["efiloader", "hal", "hal_x86_64", "kernel_x86_64"]
+members = ["efiloader", "hal", "hal_x86_64", "kernel_x86_64", "kernel_riscv"]

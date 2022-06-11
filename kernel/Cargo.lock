@@ -142,6 +142,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "kernel_riscv"
+version = "0.1.0"
+
+[[package]]
 name = "kernel_x86_64"
 version = "0.1.0"
 dependencies = [
