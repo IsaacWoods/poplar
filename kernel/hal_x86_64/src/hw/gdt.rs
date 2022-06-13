@@ -138,9 +138,7 @@ impl Gdt {
         }
     }
 
-    /// Add a new TSS, if there's space for it. The first TSS added **must** be for the bootstrap
-    /// processor (the one that should be touching the GDT), then subsequent TSSs for the
-    /// application processors may be added.
+    /// Add a new TSS, if there's space for it.
     ///
     /// ### Panics
     /// Panics if we have already added as many TSSs as this GDT can hold.
@@ -152,8 +150,6 @@ impl Gdt {
         SegmentSelector(offset as u16)
     }
 
-    /// Load the new GDT, switch to the new `kernel_code` code segment, clear DS, ES, FS, GS, and
-    /// SS to the null segment, and switch TR to the first TSS.
     pub unsafe fn load(&self) {
         let gdt_ptr = DescriptorTablePointer {
             base: VirtualAddress::new(self as *const _ as usize),
