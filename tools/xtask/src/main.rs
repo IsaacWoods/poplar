@@ -2,16 +2,17 @@
 
 mod cargo;
 mod flags;
-mod image;
-mod qemu;
+mod riscv;
+mod x64;
 
+use cargo::Target;
 use eyre::{eyre, Result, WrapErr};
-use qemu::RunQemuX64;
 use std::{
     env,
     path::{Path, PathBuf},
     process::Command,
 };
+use x64::qemu::RunQemuX64;
 use xshell::pushd;
 
 fn main() -> Result<()> {
@@ -65,7 +66,7 @@ pub fn dist<O: Into<flags::DistOptions>>(options: O) -> Result<()> {
         .user_task("usb_bus_xhci")
         .user_task_in_dir("test_syscalls", PathBuf::from("user/tests"))
         .user_task_in_dir("test1", PathBuf::from("user/tests"))
-        .build()
+        .build_x64()
 }
 
 struct Dist {
@@ -102,9 +103,9 @@ impl Dist {
         self
     }
 
-    pub fn build(self) -> Result<()> {
+    pub fn build_x64(self) -> Result<()> {
         use cargo::{RunCargo, Target};
-        use image::MakeGptImage;
+        use x64::image::MakeGptImage;
 
         let efiloader = RunCargo::new("efiloader.efi", PathBuf::from("kernel/efiloader/"))
             .workspace(PathBuf::from("kernel/"))
@@ -129,7 +130,8 @@ impl Dist {
             .user_tasks
             .iter()
             .map(|(name, dir)| {
-                let artifact_path = self.build_userspace_task(&name, dir.clone())?;
+                let artifact_path =
+                    self.build_userspace_task(&name, dir.clone(), Target::Triple("x86_64-poplar".to_string()))?;
                 Ok((name.clone(), artifact_path))
             })
             .collect::<Result<Vec<(String, PathBuf)>>>()?;
@@ -145,14 +147,14 @@ impl Dist {
         Ok(())
     }
 
-    fn build_userspace_task(&self, name: &str, dir: Option<PathBuf>) -> Result<PathBuf> {
+    fn build_userspace_task(&self, name: &str, dir: Option<PathBuf>, target: Target) -> Result<PathBuf> {
         use cargo::{RunCargo, Target};
 
         let path = if let Some(dir) = dir { dir.join(name) } else { PathBuf::from("user/").join(name) };
         RunCargo::new(name.to_string(), path)
             .workspace(PathBuf::from("user/"))
             .toolchain("poplar")
-            .target(Target::Triple("x86_64-poplar".to_string()))
+            .target(target)
             .release(self.release)
             .std_components(vec!["core".to_string(), "alloc".to_string()])
             .std_features(vec!["compiler-builtins-mem".to_string()])
