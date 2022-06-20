@@ -23,6 +23,8 @@ pub struct RunCargo {
     pub std_components: Vec<String>,
     pub std_features: Vec<String>,
     pub toolchain: Option<String>,
+    // These are passed in the `RUSTFLAGS` environment variable
+    pub rustflags: Option<String>,
 }
 
 impl RunCargo {
@@ -37,6 +39,7 @@ impl RunCargo {
             std_components: vec![],
             std_features: vec![],
             toolchain: None,
+            rustflags: None,
         }
     }
 
@@ -66,6 +69,10 @@ impl RunCargo {
 
     pub fn toolchain<S: Into<String>>(self, toolchain: S) -> RunCargo {
         RunCargo { toolchain: Some(toolchain.into()), ..self }
+    }
+
+    pub fn rustflags<S: Into<String>>(self, rustflags: S) -> RunCargo {
+        RunCargo { rustflags: Some(rustflags.into()), ..self }
     }
 
     /// Run the Cargo invocation. Returns the path at which to find the built artifact.
@@ -108,6 +115,9 @@ impl RunCargo {
         }
         if self.std_features.len() != 0 {
             cargo.arg(format!("-Zbuild-std-features={}", self.std_features.join(",")));
+        }
+        if let Some(ref rustflags) = self.rustflags {
+            cargo.env("RUSTFLAGS", rustflags);
         }
 
         cargo
