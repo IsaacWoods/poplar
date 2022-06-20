@@ -26,20 +26,28 @@ xflags::xflags! {
     }
 }
 
+#[allow(dead_code)]
+pub enum Arch {
+    X64,
+    RiscV,
+}
+
 pub struct DistOptions {
+    // TODO: method to set persistent default and control this from flags
+    pub arch: Arch,
     pub release: bool,
     pub kernel_features: Option<String>,
 }
 
 impl From<&Dist> for DistOptions {
     fn from(flags: &Dist) -> DistOptions {
-        DistOptions { release: flags.release, kernel_features: flags.kernel_features.clone() }
+        DistOptions { release: flags.release, kernel_features: flags.kernel_features.clone(), arch: Arch::RiscV }
     }
 }
 
 impl From<&Qemu> for DistOptions {
     fn from(flags: &Qemu) -> DistOptions {
-        DistOptions { release: flags.release, kernel_features: flags.kernel_features.clone() }
+        DistOptions { release: flags.release, kernel_features: flags.kernel_features.clone(), arch: Arch::RiscV }
     }
 }
 

@@ -7,6 +7,8 @@ mod x64;
 
 use cargo::Target;
 use eyre::{eyre, Result, WrapErr};
+use flags::{Arch, DistOptions, TaskCmd};
+use riscv::qemu::RunQemuRiscV;
 use std::{
     env,
     path::{Path, PathBuf},
@@ -21,24 +23,34 @@ fn main() -> Result<()> {
 
     let flags = flags::Task::from_env()?;
     match flags.subcommand {
-        flags::TaskCmd::Help(_) => {
+        TaskCmd::Help(_) => {
             println!("{}", flags::Task::HELP);
             Ok(())
         }
 
-        flags::TaskCmd::Dist(dist_flags) => dist(&dist_flags),
-
-        flags::TaskCmd::Qemu(qemu) => {
-            dist(&qemu)?;
-            RunQemuX64::new(PathBuf::from("poplar.img"))
-                .open_display(qemu.display)
-                .debug_int_firehose(qemu.debug_int_firehose)
-                .debug_mmu_firehose(qemu.debug_mmu_firehose)
-                .debug_cpu_firehose(qemu.debug_cpu_firehose)
-                .run()
+        TaskCmd::Dist(dist_flags) => {
+            dist(&dist_flags)?;
+            Ok(())
         }
 
-        flags::TaskCmd::Clean(_) => {
+        TaskCmd::Qemu(qemu) => {
+            let dist_result = dist(&qemu)?;
+            // TODO: get this from the args / persistent default when that's supported
+            match Arch::RiscV {
+                Arch::X64 => RunQemuX64::new(dist_result.disk_image.unwrap())
+                    .open_display(qemu.display)
+                    .debug_int_firehose(qemu.debug_int_firehose)
+                    .debug_mmu_firehose(qemu.debug_mmu_firehose)
+                    .debug_cpu_firehose(qemu.debug_cpu_firehose)
+                    .run(),
+                Arch::RiscV => RunQemuRiscV::new(dist_result.kernel_path)
+                    .opensbi(PathBuf::from("lib/opensbi/build/platform/generic/firmware/fw_jump.elf"))
+                    .open_display(qemu.display)
+                    .run(),
+            }
+        }
+
+        TaskCmd::Clean(_) => {
             clean(PathBuf::from("kernel"))?;
             clean(PathBuf::from("user"))?;
             clean(PathBuf::from("lib/acpi"))?;
@@ -55,9 +67,9 @@ fn main() -> Result<()> {
     }
 }
 
-pub fn dist<O: Into<flags::DistOptions>>(options: O) -> Result<()> {
+fn dist<O: Into<DistOptions>>(options: O) -> Result<DistResult> {
     let options = options.into();
-    Dist::new()
+    let dist = Dist::new()
         .release(options.release)
         .kernel_features_from_cli(options.kernel_features)
         .user_task("simple_fb")
@@ -65,14 +77,24 @@ pub fn dist<O: Into<flags::DistOptions>>(options: O) -> Result<()> {
         .user_task("pci_bus")
         .user_task("usb_bus_xhci")
         .user_task_in_dir("test_syscalls", PathBuf::from("user/tests"))
-        .user_task_in_dir("test1", PathBuf::from("user/tests"))
-        .build_x64()
+        .user_task_in_dir("test1", PathBuf::from("user/tests"));
+
+    match options.arch {
+        Arch::X64 => dist.build_x64(),
+        Arch::RiscV => dist.build_riscv(),
+    }
 }
 
 struct Dist {
     release: bool,
     kernel_features: Vec<String>,
     user_tasks: Vec<(String, Option<PathBuf>)>,
+}
+
+struct DistResult {
+    kernel_path: PathBuf,
+    // Only produced by some architectures
+    disk_image: Option<PathBuf>,
 }
 
 impl Dist {
@@ -103,8 +125,23 @@ impl Dist {
         self
     }
 
-    pub fn build_x64(self) -> Result<()> {
-        use cargo::{RunCargo, Target};
+    pub fn build_riscv(self) -> Result<DistResult> {
+        use cargo::RunCargo;
+
+        let kernel = RunCargo::new("kernel_riscv", PathBuf::from("kernel/kernel_riscv/"))
+            .workspace(PathBuf::from("kernel/"))
+            .target(Target::Triple("riscv64gc-unknown-none-elf".to_string()))
+            .release(self.release)
+            .features(self.kernel_features.clone())
+            .std_components(vec!["core".to_string(), "alloc".to_string()])
+            .rustflags("-Clink-arg=-Tkernel_riscv/link.ld")
+            .run()?;
+
+        Ok(DistResult { kernel_path: kernel, disk_image: None })
+    }
+
+    pub fn build_x64(self) -> Result<DistResult> {
+        use cargo::RunCargo;
         use x64::image::MakeGptImage;
 
         let efiloader = RunCargo::new("efiloader.efi", PathBuf::from("kernel/efiloader/"))
@@ -136,19 +173,20 @@ impl Dist {
             })
             .collect::<Result<Vec<(String, PathBuf)>>>()?;
 
-        let mut image = MakeGptImage::new(PathBuf::from("poplar.img"), 40 * 1024 * 1024, 35 * 1024 * 1024)
+        let image_path = PathBuf::from("poplar_x64.img");
+        let mut image = MakeGptImage::new(image_path.clone(), 40 * 1024 * 1024, 35 * 1024 * 1024)
             .add_efi_file("efi/boot/bootx64.efi", efiloader)
-            .add_efi_file("kernel.elf", kernel);
+            .add_efi_file("kernel.elf", kernel.clone());
         for (name, artifact_path) in user_task_paths {
             image = image.add_efi_file(format!("{}.elf", name), artifact_path);
         }
         image.build()?;
 
-        Ok(())
+        Ok(DistResult { kernel_path: kernel, disk_image: Some(image_path) })
     }
 
     fn build_userspace_task(&self, name: &str, dir: Option<PathBuf>, target: Target) -> Result<PathBuf> {
-        use cargo::{RunCargo, Target};
+        use cargo::RunCargo;
 
         let path = if let Some(dir) = dir { dir.join(name) } else { PathBuf::from("user/").join(name) };
         RunCargo::new(name.to_string(), path)
