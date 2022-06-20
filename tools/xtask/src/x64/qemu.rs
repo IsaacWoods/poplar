@@ -100,7 +100,7 @@ impl RunQemuX64 {
         qemu.args(&["-m", &self.ram.to_string()]);
 
         // Emit serial on both stdio and to a file
-        qemu.args(&["-chardev", "stdio,id=char0,logfile=qemu_serial.log,signal=off"]);
+        qemu.args(&["-chardev", "stdio,id=char0,logfile=qemu_serial_x64.log"]);
         qemu.args(&["-serial", "chardev:char0"]);
 
         if !self.open_display {
