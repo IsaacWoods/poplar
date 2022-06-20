@@ -34,9 +34,9 @@ fn main() -> Result<()> {
         }
 
         TaskCmd::Qemu(qemu) => {
+            let options = DistOptions::from(&qemu);
             let dist_result = dist(&qemu)?;
-            // TODO: get this from the args / persistent default when that's supported
-            match Arch::RiscV {
+            match options.arch {
                 Arch::X64 => RunQemuX64::new(dist_result.disk_image.unwrap())
                     .open_display(qemu.display)
                     .debug_int_firehose(qemu.debug_int_firehose)
