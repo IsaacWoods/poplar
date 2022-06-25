@@ -1,5 +1,3 @@
-use std::convert::TryFrom;
-
 xflags::xflags! {
     src "./src/flags.rs"
 
@@ -10,14 +8,14 @@ xflags::xflags! {
 
         cmd dist {
             optional --release
-            optional -a,--arch arch: String
+            optional -a,--arch arch: Arch
             optional --kernel_features kernel_features: String
         }
 
         cmd qemu {
             // XXX: shared with dist command. Should be the same.
             optional --release
-            optional -a,--arch arch: String
+            optional -a,--arch arch: Arch
             optional --kernel_features kernel_features: String
 
             optional --display
@@ -31,15 +29,22 @@ xflags::xflags! {
 }
 
 #[allow(dead_code)]
+#[derive(Clone, Copy, Debug)]
 pub enum Arch {
     X64,
     RiscV,
 }
 
-impl TryFrom<&String> for Arch {
-    type Error = &'static str;
+impl Default for Arch {
+    fn default() -> Self {
+        Arch::RiscV
+    }
+}
 
-    fn try_from(s: &String) -> Result<Self, Self::Error> {
+impl std::str::FromStr for Arch {
+    type Err = &'static str;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s.as_ref() {
             "x64" => Ok(Arch::X64),
             "riscv" => Ok(Arch::RiscV),
@@ -47,8 +52,6 @@ impl TryFrom<&String> for Arch {
         }
     }
 }
-
-const DEFAULT_ARCH: Arch = Arch::RiscV;
 
 pub struct DistOptions {
     // TODO: method to set persistent default and control this from flags
@@ -62,7 +65,7 @@ impl From<&Dist> for DistOptions {
         DistOptions {
             release: flags.release,
             kernel_features: flags.kernel_features.clone(),
-            arch: flags.arch.as_ref().map(|s| Arch::try_from(s).unwrap()).unwrap_or(DEFAULT_ARCH),
+            arch: flags.arch.unwrap_or(Arch::default()),
         }
     }
 }
@@ -72,7 +75,7 @@ impl From<&Qemu> for DistOptions {
         DistOptions {
             release: flags.release,
             kernel_features: flags.kernel_features.clone(),
-            arch: flags.arch.as_ref().map(|s| Arch::try_from(s).unwrap()).unwrap_or(DEFAULT_ARCH),
+            arch: flags.arch.unwrap_or(Arch::default()),
         }
     }
 }
@@ -101,14 +104,14 @@ pub struct Help {
 #[derive(Debug)]
 pub struct Dist {
     pub release: bool,
-    pub arch: Option<String>,
+    pub arch: Option<Arch>,
     pub kernel_features: Option<String>,
 }
 
 #[derive(Debug)]
 pub struct Qemu {
     pub release: bool,
-    pub arch: Option<String>,
+    pub arch: Option<Arch>,
     pub kernel_features: Option<String>,
     pub display: bool,
     pub debug_int_firehose: bool,
