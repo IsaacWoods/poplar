@@ -1,1 +1,1 @@
-initSidebarItems({"struct":[["Scheduler",""]]});
+window.SIDEBAR_ITEMS = {"struct":[["Scheduler",""]]};

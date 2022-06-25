@@ -1,1 +1,1 @@
-initSidebarItems({"enum":[["ChannelReceiveError",""],["ChannelSendError",""]],"struct":[["Channel",""]]});
+window.SIDEBAR_ITEMS = {"enum":[["ChannelReceiveError",""],["ChannelSendError",""]],"struct":[["Channel",""]]};

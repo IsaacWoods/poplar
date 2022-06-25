@@ -1,1 +1,1 @@
-initSidebarItems({"struct":[["PciDevice",""],["PciInfo",""]]});
+window.SIDEBAR_ITEMS = {"struct":[["PciDevice",""],["PciInfo",""]]};

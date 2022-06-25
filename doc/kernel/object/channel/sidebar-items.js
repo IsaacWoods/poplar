@@ -1,1 +1,1 @@
-initSidebarItems({"struct":[["ChannelEnd",""],["Message",""]]});
+window.SIDEBAR_ITEMS = {"struct":[["ChannelEnd",""],["Message",""]]};

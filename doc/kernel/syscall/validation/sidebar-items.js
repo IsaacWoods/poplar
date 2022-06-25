@@ -1,1 +1,1 @@
-initSidebarItems({"struct":[["UserPointer",""],["UserSlice","Represents a slice of `T`s in userspace."],["UserString",""]]});
+window.SIDEBAR_ITEMS = {"struct":[["UserPointer",""],["UserSlice","Represents a slice of `T`s in userspace."],["UserString",""]]};
