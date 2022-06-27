@@ -1,9 +1,13 @@
 #![no_std]
 #![no_main]
 
+/*
+ * This is the entry-point jumped to from OpenSBI. It needs to be at the very start of the ELF, so we put it in its
+ * own section and then place it manually during linking.
+ */
 core::arch::global_asm!(
     "
-    .section .text
+    .section .text.entry
     .global _start
     _start:
         // la sp, _stack_top
