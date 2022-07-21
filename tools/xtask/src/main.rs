@@ -144,8 +144,8 @@ impl Dist {
         use cargo::RunCargo;
         use x64::image::MakeGptImage;
 
-        let efiloader = RunCargo::new("efiloader.efi", PathBuf::from("kernel/efiloader/"))
-            .workspace(PathBuf::from("kernel/"))
+        let seed_uefi = RunCargo::new("seed_uefi.efi", PathBuf::from("seed/seed_uefi/"))
+            .workspace(PathBuf::from("seed/"))
             .target(Target::Triple("x86_64-unknown-uefi".to_string()))
             .release(self.release)
             .std_components(vec!["core".to_string()])
@@ -175,7 +175,7 @@ impl Dist {
 
         let image_path = PathBuf::from("poplar_x64.img");
         let mut image = MakeGptImage::new(image_path.clone(), 40 * 1024 * 1024, 35 * 1024 * 1024)
-            .add_efi_file("efi/boot/bootx64.efi", efiloader)
+            .add_efi_file("efi/boot/bootx64.efi", seed_uefi)
             .add_efi_file("kernel.elf", kernel.clone());
         for (name, artifact_path) in user_task_paths {
             image = image.add_efi_file(format!("{}.elf", name), artifact_path);
