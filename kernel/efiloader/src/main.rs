@@ -29,7 +29,14 @@ use logger::Logger;
 use uefi::{
     prelude::*,
     proto::{console::gop::GraphicsOutput, loaded_image::LoadedImage},
-    table::boot::{AllocateType, MemoryDescriptor, MemoryType, SearchType},
+    table::boot::{
+        AllocateType,
+        MemoryDescriptor,
+        MemoryType,
+        OpenProtocolAttributes,
+        OpenProtocolParams,
+        SearchType,
+    },
 };
 
 /*
@@ -49,7 +56,7 @@ const KERNEL_HEAP_SIZE: Bytes = kibibytes(800);
 fn efi_main(image_handle: Handle, mut system_table: SystemTable<Boot>) -> Status {
     writeln!(system_table.stdout(), "Hello, World!").unwrap();
 
-    let video_mode = create_framebuffer(system_table.boot_services(), 800, 600);
+    let video_mode = create_framebuffer(system_table.boot_services(), image_handle, 800, 600);
     Logger::initialize(&video_mode);
     info!("Hello, World!");
 
@@ -442,6 +449,7 @@ fn allocate_and_map_heap<A, P>(
 
 fn create_framebuffer(
     boot_services: &BootServices,
+    image_handle: Handle,
     requested_width: usize,
     requested_height: usize,
 ) -> VideoModeInfo {
@@ -466,14 +474,19 @@ fn create_framebuffer(
         .expect("Failed to get list of graphics output devices");
 
     for &mut handle in handle_slice {
-        let proto = unsafe {
-            &mut *boot_services
-                .handle_protocol::<GraphicsOutput>(handle.assume_init())
-                .expect("Failed to open GraphicsOutput")
-                .get()
-        };
+        let proto = boot_services
+            .open_protocol::<GraphicsOutput>(
+                OpenProtocolParams {
+                    handle: unsafe { handle.assume_init() },
+                    agent: image_handle,
+                    controller: None,
+                },
+                OpenProtocolAttributes::GetProtocol,
+            )
+            .unwrap();
+        let interface = unsafe { &mut *proto.interface.get() };
 
-        let chosen_mode = proto.modes().find(|mode| {
+        let chosen_mode = interface.modes().find(|mode| {
             let (width, height) = mode.info().resolution();
             let pixel_format = mode.info().pixel_format();
 
@@ -487,9 +500,10 @@ fn create_framebuffer(
         });
 
         if let Some(mode) = chosen_mode {
-            proto.set_mode(&mode).expect("Failed to switch to new video mode");
+            interface.set_mode(&mode).expect("Failed to switch to new video mode");
 
-            let framebuffer_address = PhysicalAddress::new(proto.frame_buffer().as_mut_ptr() as usize).unwrap();
+            let framebuffer_address =
+                PhysicalAddress::new(interface.frame_buffer().as_mut_ptr() as usize).unwrap();
             let mode_info = mode.info();
             let (width, height) = mode_info.resolution();
             let pixel_format = match mode_info.pixel_format() {
