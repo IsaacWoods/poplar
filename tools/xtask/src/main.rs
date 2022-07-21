@@ -128,16 +128,16 @@ impl Dist {
     pub fn build_riscv(self) -> Result<DistResult> {
         use cargo::RunCargo;
 
-        let kernel = RunCargo::new("kernel_riscv", PathBuf::from("kernel/kernel_riscv/"))
-            .workspace(PathBuf::from("kernel/"))
+        let seed_riscv = RunCargo::new("seed_riscv", PathBuf::from("seed/seed_riscv/"))
+            .workspace(PathBuf::from("seed/"))
             .target(Target::Triple("riscv64gc-unknown-none-elf".to_string()))
             .release(self.release)
             .features(self.kernel_features.clone())
             .std_components(vec!["core".to_string(), "alloc".to_string()])
-            .rustflags("-Clink-arg=-Tkernel_riscv/link.ld")
+            .rustflags("-Clink-arg=-Tseed_riscv/link.ld")
             .run()?;
 
-        Ok(DistResult { kernel_path: kernel, disk_image: None })
+        Ok(DistResult { kernel_path: seed_riscv, disk_image: None })
     }
 
     pub fn build_x64(self) -> Result<DistResult> {

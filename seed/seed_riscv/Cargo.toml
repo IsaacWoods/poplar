@@ -1,0 +1,10 @@
+[package]
+name = "seed_riscv"
+version = "0.1.0"
+authors = ["Isaac Woods"]
+edition = "2021"
+
+[dependencies]
+hal = { path = "../../lib/hal" }
+hal_riscv = { path = "../../lib/hal_riscv" }
+fdt = "0.1.3"
