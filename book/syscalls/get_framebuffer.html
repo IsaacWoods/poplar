@@ -166,8 +166,7 @@ be written.</li>
 <li><code>3</code> means that the kernel did not create the framebuffer</li>
 </ul>
 <p>The information written back to the address in <code>a</code> has the following structure:</p>
-<pre><pre class="playground"><code class="language-rust">
-<span class="boring">#![allow(unused)]
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>#[repr(C)]
 struct FramebufferInfo {

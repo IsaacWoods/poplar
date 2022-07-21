@@ -160,13 +160,14 @@ extra images needed into memory, allocate memory for the heap, configure a basic
 <p>A series of load options may be supplied to <code>efiloader</code> to tell it how Poplar should be booted. These options
 consist of a string of space separated key-value pairs, of the form <code>a.dot.separated.key=value</code>. Supported keys,
 plus descriptions of their values, are:</p>
-<table><thead><tr><th>Key</th><th>Example value</th><th>Description</th></tr></thead><tbody>
+<div class="table-wrapper"><table><thead><tr><th>Key</th><th>Example value</th><th>Description</th></tr></thead><tbody>
 <tr><td><code>kernel</code></td><td><code>kernel.elf</code></td><td>The path within the ESP that the kernel should be loaded from.</td></tr>
 <tr><td><code>fb.none</code></td><td>No value</td><td>Specify that a GOP framebuffer should not be created.</td></tr>
 <tr><td><code>fb.width</code></td><td><code>1920</code></td><td>Specify that a GOP framebuffer should be created, and its width.</td></tr>
 <tr><td><code>fb.height</code></td><td><code>1080</code></td><td>Specify that a GOP framebuffer should be created, and its height.</td></tr>
 <tr><td><code>image.{name}</code></td><td><code>my_task.elf</code></td><td>Specifies a path that an additional image should be loaded from. The key is the name that is passed in the boot info.</td></tr>
 </tbody></table>
+</div>
 <p>If no load options are supplied, a kernel will be loaded from <code>\kernel.elf</code>, no additional images will be loaded,
 and a GOP framebuffer with a width of <code>800</code> and a height of <code>600</code> will be created. </p>
 

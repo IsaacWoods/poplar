@@ -192,13 +192,14 @@ extra images needed into memory, allocate memory for the heap, configure a basic
 <p>A series of load options may be supplied to <code>efiloader</code> to tell it how Poplar should be booted. These options
 consist of a string of space separated key-value pairs, of the form <code>a.dot.separated.key=value</code>. Supported keys,
 plus descriptions of their values, are:</p>
-<table><thead><tr><th>Key</th><th>Example value</th><th>Description</th></tr></thead><tbody>
+<div class="table-wrapper"><table><thead><tr><th>Key</th><th>Example value</th><th>Description</th></tr></thead><tbody>
 <tr><td><code>kernel</code></td><td><code>kernel.elf</code></td><td>The path within the ESP that the kernel should be loaded from.</td></tr>
 <tr><td><code>fb.none</code></td><td>No value</td><td>Specify that a GOP framebuffer should not be created.</td></tr>
 <tr><td><code>fb.width</code></td><td><code>1920</code></td><td>Specify that a GOP framebuffer should be created, and its width.</td></tr>
 <tr><td><code>fb.height</code></td><td><code>1080</code></td><td>Specify that a GOP framebuffer should be created, and its height.</td></tr>
 <tr><td><code>image.{name}</code></td><td><code>my_task.elf</code></td><td>Specifies a path that an additional image should be loaded from. The key is the name that is passed in the boot info.</td></tr>
 </tbody></table>
+</div>
 <p>If no load options are supplied, a kernel will be loaded from <code>\kernel.elf</code>, no additional images will be loaded,
 and a GOP framebuffer with a width of <code>800</code> and a height of <code>600</code> will be created. </p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="kernel-objects"><a class="header" href="#kernel-objects">Kernel Objects</a></h1>
@@ -217,7 +218,7 @@ their functionality instead being provided by userspace.</p>
 parameters, each a maximum in size of the system's register width. It can return a single value, also the size of
 a register.</p>
 <h3 id="overview-of-system-calls"><a class="header" href="#overview-of-system-calls">Overview of system calls</a></h3>
-<table><thead><tr><th>Number</th><th>System call</th><th>Description</th></tr></thead><tbody>
+<div class="table-wrapper"><table><thead><tr><th>Number</th><th>System call</th><th>Description</th></tr></thead><tbody>
 <tr><td><code>0</code></td><td><code>yield</code></td><td>Yield to the kernel.</td></tr>
 <tr><td><code>1</code></td><td><code>early_log</code></td><td>Log a message. Designed to be used from early processes.</td></tr>
 <tr><td><code>2</code></td><td><code>get_framebuffer</code></td><td>Get the framebuffer that the kernel has created, if it has.</td></tr>
@@ -231,11 +232,13 @@ a register.</p>
 <tr><td><code>10</code></td><td><code>subscribe_to_service</code></td><td>Create a channel to a particular service provider.</td></tr>
 <tr><td><code>11</code></td><td><code>pci_get_info</code></td><td>Get information about the PCI devices on the platform.</td></tr>
 </tbody></table>
+</div>
 <h3 id="making-a-system-call-on-x86_64"><a class="header" href="#making-a-system-call-on-x86_64">Making a system call on x86_64</a></h3>
 <p>To make a system call on x86_64, populate these registers:</p>
-<table><thead><tr><th><code>rdi</code></th><th><code>rsi</code></th><th><code>rdx</code></th><th><code>r10</code></th><th><code>r8</code></th><th><code>r9</code></th></tr></thead><tbody>
+<div class="table-wrapper"><table><thead><tr><th><code>rdi</code></th><th><code>rsi</code></th><th><code>rdx</code></th><th><code>r10</code></th><th><code>r8</code></th><th><code>r9</code></th></tr></thead><tbody>
 <tr><td>System call number</td><td><code>a</code></td><td><code>b</code></td><td><code>c</code></td><td><code>d</code></td><td><code>e</code></td></tr>
 </tbody></table>
+</div>
 <p>The only way in which these registers deviate from the x86_64 Sys-V ABI is that <code>c</code> is passed in <code>r10</code> instead of
 <code>rcx</code>, because <code>rcx</code> is used by the <code>syscall</code> instruction.  You can then make the system call by executing
 <code>syscall</code>. Before the kernel returns to userspace, it will put the result of the system call (if there is one) in
@@ -349,8 +352,7 @@ be written.</li>
 <li><code>3</code> means that the kernel did not create the framebuffer</li>
 </ul>
 <p>The information written back to the address in <code>a</code> has the following structure:</p>
-<pre><pre class="playground"><code class="language-rust">
-<span class="boring">#![allow(unused)]
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>#[repr(C)]
 struct FramebufferInfo {
@@ -582,7 +584,7 @@ capabilities).</p>
 complex / specific ones may need multiple bytes of prefix, and can also encode fixed-length data.</p>
 <h3 id="overview-of-capabilities"><a class="header" href="#overview-of-capabilities">Overview of capabilities</a></h3>
 <p>This is an overview of all the capabilities the kernel supports:</p>
-<table><thead><tr><th>First byte</th><th>Next byte(s)</th><th>Data</th><th>Arch specific?</th><th>Description</th></tr></thead><tbody>
+<div class="table-wrapper"><table><thead><tr><th>First byte</th><th>Next byte(s)</th><th>Data</th><th>Arch specific?</th><th>Description</th></tr></thead><tbody>
 <tr><td><code>0x00</code></td><td>-</td><td>-</td><td>-</td><td>No meaning - used to pad descriptor to required length (see above)</td></tr>
 <tr><td><code>0x01</code></td><td></td><td></td><td>No</td><td><code>GetFramebuffer</code></td></tr>
 <tr><td><code>0x02</code></td><td></td><td></td><td>No</td><td><code>EarlyLogging</code></td></tr>
@@ -590,7 +592,7 @@ complex / specific ones may need multiple bytes of prefix, and can also encode f
 <tr><td><code>0x04</code></td><td></td><td></td><td>No</td><td><code>ServiceUser</code></td></tr>
 <tr><td><code>0x05</code></td><td>-</td><td>-</td><td>No</td><td><code>PciBusDriver</code></td></tr>
 </tbody></table>
-<div style="break-before: page; page-break-before: always;"></div><h1 id="userspace-memory-map-x86_64"><a class="header" href="#userspace-memory-map-x86_64">Userspace memory map (x86_64)</a></h1>
+</div><div style="break-before: page; page-break-before: always;"></div><h1 id="userspace-memory-map-x86_64"><a class="header" href="#userspace-memory-map-x86_64">Userspace memory map (x86_64)</a></h1>
 <p>x86_64 features an enormous 256TB virtual address space, most of which is available to userspace processes under Poplar. For this reason, things are spread throughout the virtual address space to make it
 easy to identify what a virtual address points to.</p>
 <h3 id="userspace-stacks"><a class="header" href="#userspace-stacks">Userspace stacks</a></h3>

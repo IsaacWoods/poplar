@@ -151,7 +151,7 @@ their functionality instead being provided by userspace.</p>
 parameters, each a maximum in size of the system's register width. It can return a single value, also the size of
 a register.</p>
 <h3 id="overview-of-system-calls"><a class="header" href="#overview-of-system-calls">Overview of system calls</a></h3>
-<table><thead><tr><th>Number</th><th>System call</th><th>Description</th></tr></thead><tbody>
+<div class="table-wrapper"><table><thead><tr><th>Number</th><th>System call</th><th>Description</th></tr></thead><tbody>
 <tr><td><code>0</code></td><td><code>yield</code></td><td>Yield to the kernel.</td></tr>
 <tr><td><code>1</code></td><td><code>early_log</code></td><td>Log a message. Designed to be used from early processes.</td></tr>
 <tr><td><code>2</code></td><td><code>get_framebuffer</code></td><td>Get the framebuffer that the kernel has created, if it has.</td></tr>
@@ -165,11 +165,13 @@ a register.</p>
 <tr><td><code>10</code></td><td><code>subscribe_to_service</code></td><td>Create a channel to a particular service provider.</td></tr>
 <tr><td><code>11</code></td><td><code>pci_get_info</code></td><td>Get information about the PCI devices on the platform.</td></tr>
 </tbody></table>
+</div>
 <h3 id="making-a-system-call-on-x86_64"><a class="header" href="#making-a-system-call-on-x86_64">Making a system call on x86_64</a></h3>
 <p>To make a system call on x86_64, populate these registers:</p>
-<table><thead><tr><th><code>rdi</code></th><th><code>rsi</code></th><th><code>rdx</code></th><th><code>r10</code></th><th><code>r8</code></th><th><code>r9</code></th></tr></thead><tbody>
+<div class="table-wrapper"><table><thead><tr><th><code>rdi</code></th><th><code>rsi</code></th><th><code>rdx</code></th><th><code>r10</code></th><th><code>r8</code></th><th><code>r9</code></th></tr></thead><tbody>
 <tr><td>System call number</td><td><code>a</code></td><td><code>b</code></td><td><code>c</code></td><td><code>d</code></td><td><code>e</code></td></tr>
 </tbody></table>
+</div>
 <p>The only way in which these registers deviate from the x86_64 Sys-V ABI is that <code>c</code> is passed in <code>r10</code> instead of
 <code>rcx</code>, because <code>rcx</code> is used by the <code>syscall</code> instruction.  You can then make the system call by executing
 <code>syscall</code>. Before the kernel returns to userspace, it will put the result of the system call (if there is one) in

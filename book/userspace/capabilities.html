@@ -160,7 +160,7 @@ capabilities).</p>
 complex / specific ones may need multiple bytes of prefix, and can also encode fixed-length data.</p>
 <h3 id="overview-of-capabilities"><a class="header" href="#overview-of-capabilities">Overview of capabilities</a></h3>
 <p>This is an overview of all the capabilities the kernel supports:</p>
-<table><thead><tr><th>First byte</th><th>Next byte(s)</th><th>Data</th><th>Arch specific?</th><th>Description</th></tr></thead><tbody>
+<div class="table-wrapper"><table><thead><tr><th>First byte</th><th>Next byte(s)</th><th>Data</th><th>Arch specific?</th><th>Description</th></tr></thead><tbody>
 <tr><td><code>0x00</code></td><td>-</td><td>-</td><td>-</td><td>No meaning - used to pad descriptor to required length (see above)</td></tr>
 <tr><td><code>0x01</code></td><td></td><td></td><td>No</td><td><code>GetFramebuffer</code></td></tr>
 <tr><td><code>0x02</code></td><td></td><td></td><td>No</td><td><code>EarlyLogging</code></td></tr>
@@ -168,7 +168,7 @@ complex / specific ones may need multiple bytes of prefix, and can also encode f
 <tr><td><code>0x04</code></td><td></td><td></td><td>No</td><td><code>ServiceUser</code></td></tr>
 <tr><td><code>0x05</code></td><td>-</td><td>-</td><td>No</td><td><code>PciBusDriver</code></td></tr>
 </tbody></table>
-
+</div>
                     </main>
 
                     <nav class="nav-wrapper" aria-label="Page navigation">
