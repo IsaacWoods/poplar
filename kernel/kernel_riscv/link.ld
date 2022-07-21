@@ -20,9 +20,15 @@ SECTIONS {
         *(.data .data.*)
     }
 
+    . = ALIGN(8);
+
     .sdata : {
-        . = ALIGN(8);
         *(.sdata .sdata.*)
+        . = ALIGN(4K);
+    }
+
+    .sbss : {
+        *(.sbss .sbss.*)
     }
 
     .bss : {
@@ -35,4 +41,6 @@ SECTIONS {
     }
 
     _kernel_end = .;
+
+    /DISCARD/ : { *(.eh_frame_hdr .eh_frame) }
 }

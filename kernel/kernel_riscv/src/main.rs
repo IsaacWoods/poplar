@@ -10,17 +10,15 @@ core::arch::global_asm!(
     .section .text.entry
     .global _start
     _start:
-        // la sp, _stack_top
-        // mv fp, sp
+        la sp, _stack_top
+        mv fp, sp
 
-        li s1, 0x10000000
-        li s2, 0x48
-        sb s2, 0(s1)
-
-        // li a0, 65
-        // li a6, 0
-        // li a7, 1
-        // ecall
+        li a0, '!'
+        li a6, 0
+        li a7, 1
+        ecall
+        li a0, '\n'
+        ecall
 
         j kmain
 "
@@ -28,6 +26,9 @@ core::arch::global_asm!(
 
 #[no_mangle]
 pub fn kmain() -> ! {
+    let uart = unsafe { &mut *(0x10000000 as *mut hal_riscv::hw::uart16550::Uart16550) };
+    use core::fmt::Write;
+    write!(uart, "Hello, World!").unwrap();
     loop {}
 }
 
