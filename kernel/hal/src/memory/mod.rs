@@ -57,7 +57,7 @@ macro frame_size($name: ident, $size: expr, $condition: meta) {
     }
 }
 
-frame_size!(Size4KiB, kibibytes(4), cfg(target_arch = "x86_64"));
+frame_size!(Size4KiB, kibibytes(4), cfg(any(target_arch = "x86_64", target_arch = "riscv64")));
 frame_size!(Size2MiB, mebibytes(2), cfg(target_arch = "x86_64"));
 frame_size!(Size1GiB, gibibytes(1), cfg(target_arch = "x86_64"));
 
