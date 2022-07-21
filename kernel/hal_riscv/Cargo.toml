@@ -1,0 +1,9 @@
+[package]
+name = "hal_riscv"
+version = "0.1.0"
+authors = ["Isaac Woods"]
+edition = "2021"
+
+[dependencies]
+hal = { path = "../hal" }
+volatile = { path = "../../lib/volatile" }

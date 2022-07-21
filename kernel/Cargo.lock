@@ -114,6 +114,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "hal_riscv"
+version = "0.1.0"
+dependencies = [
+ "hal",
+ "volatile",
+]
+
+[[package]]
 name = "hal_x86_64"
 version = "0.1.0"
 dependencies = [
@@ -144,6 +152,9 @@ dependencies = [
 [[package]]
 name = "kernel_riscv"
 version = "0.1.0"
+dependencies = [
+ "hal_riscv",
+]
 
 [[package]]
 name = "kernel_x86_64"
@@ -376,6 +387,10 @@ name = "unicode-xid"
 version = "0.2.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8ccb82d61f80a663efe1f787a51b16b5a51e3314d6ac365b08639f52387b33f3"
+
+[[package]]
+name = "volatile"
+version = "0.1.0"
 
 [[package]]
 name = "wyz"
