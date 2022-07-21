@@ -6,4 +6,4 @@ edition = "2021"
 
 [dependencies]
 hal = { path = "../hal" }
-volatile = { path = "../../lib/volatile" }
+volatile = { path = "../volatile" }

@@ -5,7 +5,7 @@ authors = ["Isaac Woods"]
 edition = "2018"
 
 [dependencies]
-hal = { path = "hal" }
+hal = { path = "../lib/hal" }
 poplar_util = { path = "../lib/poplar_util", features = ["has_alloc"] }
 cfg-if = "0.1"
 bitflags = "1"
@@ -20,4 +20,4 @@ pci_types = "0.2"
 pci_types = { path = "../lib/pci_types" }
 
 [workspace]
-members = ["efiloader", "hal", "hal_x86_64", "kernel_x86_64", "hal_riscv", "kernel_riscv"]
+members = ["efiloader", "kernel_x86_64", "kernel_riscv"]
