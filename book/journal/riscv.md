@@ -45,3 +45,34 @@ Seems everything is memory-mapped, which makes for a nice change coming from x86
 | PCIe MMIO     | 0x40000000          | 0x40000000    |
 | PCIe PIO      | 0x03000000          | 0x10000       |
 | PCIe ECAM     | 0x30000000          | 0x10000000    |
+
+### Getting control from OpenSBI
+On QEMU, we can get control from OpenSBI by linking a binary at `0x80200000`, and then using `-kernel` to
+automatically load it at the right location. OpenSBI will then jump to this location with the HART ID in `a0` and
+a pointer to the device tree in `a1`.
+
+However, this does make setting paging up slightly icky, as has been a problem on other architectures. Basically,
+the first binary needs to be linked at a low address with bare translation, and then we need to construct page
+tables and enable translation, then jump to a higher address. I'm thinking we might as well do it in two stages:
+a Seed stage that loads the kernel and early tasks from the filesystem/network/whatever, builds the kernel page
+tables, and then enters the kernel and can be unloaded at a later date. The kernel can then be linked normally at
+its high address without faffing around with a bootstrap or anything.
+
+### The device tree
+So the device tree seems to be a data structure passed to you that tells you about the hardware present / memory
+etc. Hopefully it's less gross than ACPI eh. Repnop has written [a crate, `fdt`](https://docs.rs/fdt/0.1.3/fdt/),
+so I think we're just going to use that.
+
+So `fdt` seems to work fine, we can list memory regions etc. The only issue seems to be that `memory_reservations`
+doesn't return anything, which is kind of weird. There also seems to be a `/reserved-memory` node, but [this](https://github.com/devicetree-org/devicetree-specification/blob/master/source/chapter3-devicenodes.rst#reserved-memory-and-uefi)
+suggests that this doesn't include stuff we want like which part of memory OpenSBI resides in.
+
+[This issue](https://github.com/riscv-software-src/opensbi/issues/70) says Linux just assumes it shouldn't touch
+anything before it was loaded. I guess we could use the same approach, reserving the memory used by Seed via linker
+symbols, and then seeing where the `loader` device gets put to reserve the ramdisk, but the issue was closed saying
+OpenSBI now does the reservations correctly which would be cleaner, but doesn't stack up with what we're seeing.
+
+Ah so actually, `/reserved-memory` does seem to have some of what we need. On QEMU there is one child node, called
+`mmode_resv@80000000`, which would fit with being the memory OpenSBI is in. We would still need to handle the
+memory we're in, and idk what happens with the `loader` device yet, but it's a start. Might be worth talking to
+repnop about whether the crate should use this node.

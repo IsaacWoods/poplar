@@ -36,14 +36,27 @@ pub fn seed_main(hart_id: usize, fdt: *const u8) -> ! {
     writeln!(uart, "FDT address: {:?}", fdt).unwrap();
 
     let fdt = unsafe { Fdt::from_ptr(fdt).expect("Failed to parse FDT") };
-    for cpu in fdt.cpus() {
-        writeln!(uart, "CPU: {:?}", cpu).unwrap();
+    for region in fdt.memory().regions() {
+        writeln!(uart, "Memory region: {:?}", region).unwrap();
     }
-    writeln!(uart, "Memory: {:?}", fdt.memory()).unwrap();
-    for reservation in fdt.memory_reservations() {
-        writeln!(uart, "Memory reservation: {:?}", reservation).unwrap();
+    // for reservation in fdt.memory_reservations() {
+    //     writeln!(uart, "Memory reservation: {:?}", reservation).unwrap();
+    // }
+    if let Some(reservations) = fdt.find_node("/reserved-memory") {
+        for child in reservations.children() {
+            writeln!(
+                uart,
+                "Memory reservation with name {}. Reg = {:?}",
+                child.name,
+                child.reg().unwrap().next().unwrap()
+            )
+            .unwrap();
+        }
+    } else {
+        writeln!(uart, "No memory reservations :(").unwrap();
     }
 
+    writeln!(uart, "Looping :)").unwrap();
     loop {}
 }
 
