@@ -3,7 +3,7 @@
 
 #![no_std]
 #![no_main]
-#![feature(pointer_is_aligned)]
+#![feature(pointer_is_aligned, panic_info_message)]
 
 use fdt::Fdt;
 
@@ -48,9 +48,23 @@ pub fn seed_main(hart_id: usize, fdt: *const u8) -> ! {
 }
 
 #[panic_handler]
-pub fn panic(_info: &core::panic::PanicInfo) -> ! {
+pub fn panic(info: &core::panic::PanicInfo) -> ! {
     let uart = unsafe { &mut *(0x10000000 as *mut hal_riscv::hw::uart16550::Uart16550) };
     use core::fmt::Write;
-    write!(uart, "Panic :(").unwrap();
+
+    if let Some(message) = info.message() {
+        if let Some(location) = info.location() {
+            let _ = writeln!(
+                uart,
+                "Panic message: {} ({} - {}:{})",
+                message,
+                location.file(),
+                location.line(),
+                location.column()
+            );
+        } else {
+            let _ = writeln!(uart, "Panic message: {} (no location info)", message);
+        }
+    }
     loop {}
 }
