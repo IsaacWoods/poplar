@@ -20,9 +20,8 @@ but guessing it's the hardware it assumes it needs to drive? Worth exploring. (A
 doing dynamic discovery (I'm assuming from the device tree) so that sounds good for now).
 
 So the jump firmware (`fw_jump.elf`) jumps to a specified address in memory (apparently QEMU can load an ELF which
-would be fine initially, but I think SPIKE can't so other people seem to be using a flat binary which is kinda
-icky). Other option would be a payload firmware, which bundles your code into the SBI image (assuming as a flat
-binary) and executes it like that.
+would be fine initially). Other option would be a payload firmware, which bundles your code into the SBI image
+(assuming as a flat binary) and executes it like that.
 
 We should probably make an `xtask` step to build OpenSBI and move it to the `bundled` directory, plus decide what
 sort of firmware / booting strategy we're going to use. Then the next step would be some Rust code that can print
@@ -31,7 +30,8 @@ to the serial port, to prove it's all working.
 ### QEMU `virt` memory map
 Seems everything is memory-mapped, which makes for a nice change coming from x86's nasty port thingy. This is the
 `virt` machine's one (from the QEMU source...):
-|Thing          | Address             | Size          |
+
+| Region        | Address             | Size          |
 |---------------|---------------------|---------------|
 | Debug         | 0x0                 | 0x100         |
 | MROM          | 0x1000              | 0x11000       |
