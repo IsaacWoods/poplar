@@ -3,9 +3,13 @@
 
 #![no_std]
 #![no_main]
-#![feature(pointer_is_aligned, panic_info_message)]
+#![feature(pointer_is_aligned, panic_info_message, const_mut_refs)]
+
+mod logger;
 
 use fdt::Fdt;
+use logger::Logger;
+use tracing::info;
 
 /*
  * This is the entry-point jumped to from OpenSBI. It needs to be at the very start of the ELF, so we put it in its
@@ -29,6 +33,8 @@ core::arch::global_asm!(
 pub fn seed_main(hart_id: usize, fdt: *const u8) -> ! {
     assert!(fdt.is_aligned_to(8));
 
+    Logger::init();
+    info!("Hello, World!");
     let uart = unsafe { &mut *(0x10000000 as *mut hal_riscv::hw::uart16550::Uart16550) };
     use core::fmt::Write;
     writeln!(uart, "Hello, World!").unwrap();
