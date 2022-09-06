@@ -51,6 +51,7 @@ fn main() -> Result<()> {
         }
 
         TaskCmd::Clean(_) => {
+            clean(PathBuf::from("seed/"))?;
             clean(PathBuf::from("kernel"))?;
             clean(PathBuf::from("user"))?;
             clean(PathBuf::from("lib/acpi"))?;
@@ -130,7 +131,7 @@ impl Dist {
 
         let seed_riscv = RunCargo::new("seed_riscv", PathBuf::from("seed/seed_riscv/"))
             .workspace(PathBuf::from("seed/"))
-            .target(Target::Triple("riscv64gc-unknown-none-elf".to_string()))
+            .target(Target::Triple("riscv64imac-unknown-none-elf".to_string()))
             .release(self.release)
             .features(self.kernel_features.clone())
             .std_components(vec!["core".to_string(), "alloc".to_string()])

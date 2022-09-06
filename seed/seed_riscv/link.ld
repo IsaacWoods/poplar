@@ -1,46 +1,50 @@
 OUTPUT_ARCH("riscv")
+OUTPUT_FORMAT("elf64-littleriscv")
 ENTRY(_start)
 
 SECTIONS {
     . = 0x80200000;
-    _kernel_start = .;
-
-    .text : {
-        *(.text.entry)
+    .text : ALIGN(16) {
+        *(.text.start)
         *(.text .text.*)
-        . = ALIGN(4K);
     }
 
-    .rodata : {
-        *(.rodata .rodata.*)
-        . = ALIGN(4K);
+    .srodata : ALIGN(16) {
+        *(.srodata .srodata.*)
     }
 
-    .data : {
-        *(.data .data.*)
-    }
-
-    . = ALIGN(8);
-
-    .sdata : {
+    .sdata : ALIGN(16) {
         *(.sdata .sdata.*)
-        . = ALIGN(4K);
     }
 
-    .sbss : {
+    PROVIDE(__global_pointer$ = .);
+    PROVIDE(__bss_start = .);
+
+    .sbss : ALIGN(16) {
         *(.sbss .sbss.*)
     }
 
-    .bss : {
+    .bss : ALIGN(16) {
         *(.bss .bss.*)
-        . = ALIGN(4K);
 
-        _stack_bottom = .;
-        . += 4K;
-        _stack_top = .;
+        PROVIDE(_stack_bottom = .);
+        . += 64K;
+        PROVIDE(_stack_top = .);
     }
 
-    _kernel_end = .;
+    PROVIDE(__bss_end = .);
+
+    .data : ALIGN(16) {
+        *(.data .data.*)
+    }
+
+    .rodata : ALIGN(16) {
+        *(.rodata .rodata.*)
+    }
+
+    .eh_frame : ALIGN(16) {
+        *(.eh_frame)
+    }
 
     /DISCARD/ : { *(.eh_frame_hdr .eh_frame) }
 }

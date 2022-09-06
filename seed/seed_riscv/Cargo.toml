@@ -5,9 +5,5 @@ authors = ["Isaac Woods"]
 edition = "2021"
 
 [dependencies]
-hal = { path = "../../lib/hal" }
-hal_riscv = { path = "../../lib/hal_riscv" }
 fdt = "0.1.3"
-tracing = { git = "https://github.com/tokio-rs/tracing", default-features = false }
-tracing-core = { git = "https://github.com/tokio-rs/tracing", default-features = false }
-poplar_util = { path = "../../lib/poplar_util" }
+log = "0.4.17"

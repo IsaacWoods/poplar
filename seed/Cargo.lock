@@ -62,14 +62,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "hal_riscv"
-version = "0.1.0"
-dependencies = [
- "hal",
- "volatile",
-]
-
-[[package]]
 name = "hal_x86_64"
 version = "0.1.0"
 dependencies = [
@@ -117,12 +109,6 @@ checksum = "578ede34cf02f8924ab9447f50c28075b4d3e5b269972345e7e0372b38c6cdcd"
 dependencies = [
  "autocfg",
 ]
-
-[[package]]
-name = "pin-project-lite"
-version = "0.2.9"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e0a7ae3ac2f1173085d398531c705756c94a4c56843785df85a60c1a0afac116"
 
 [[package]]
 name = "poplar_util"
@@ -186,11 +172,7 @@ name = "seed_riscv"
 version = "0.1.0"
 dependencies = [
  "fdt",
- "hal",
- "hal_riscv",
- "poplar_util",
- "tracing",
- "tracing-core",
+ "log",
 ]
 
 [[package]]
@@ -228,21 +210,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "tracing"
-version = "0.2.0"
-source = "git+https://github.com/tokio-rs/tracing#bfd0e55a2d3a5c83cc0d4a988da52cf14fa1ef8a"
-dependencies = [
- "cfg-if 1.0.0",
- "pin-project-lite",
- "tracing-core",
-]
-
-[[package]]
-name = "tracing-core"
-version = "0.2.0"
-source = "git+https://github.com/tokio-rs/tracing#bfd0e55a2d3a5c83cc0d4a988da52cf14fa1ef8a"
-
-[[package]]
 name = "ucs2"
 version = "0.3.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -277,7 +244,3 @@ name = "unicode-ident"
 version = "1.0.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "15c61ba63f9235225a22310255a29b806b907c9b8c964bcbd0a2c70f3f2deea7"
-
-[[package]]
-name = "volatile"
-version = "0.1.0"

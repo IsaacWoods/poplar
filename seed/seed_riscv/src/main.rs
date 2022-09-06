@@ -8,8 +8,8 @@
 mod logger;
 
 use fdt::Fdt;
+use log::info;
 use logger::Logger;
-use tracing::info;
 
 /*
  * This is the entry-point jumped to from OpenSBI. It needs to be at the very start of the ELF, so we put it in its
@@ -19,62 +19,60 @@ use tracing::info;
  */
 core::arch::global_asm!(
     "
-    .section .text.entry
+    .section .text.start
     .global _start
     _start:
-        la sp, _stack_top
-        mv fp, sp
+        // Zero the BSS
+        la t0, __bss_start
+        la t1, __bss_end
+        bgeu t0, t1, .bss_zero_loop_end
+    .bss_zero_loop:
+        sd zero, (t0)
+        addi t0, t0, 8
+        bltu t0, t1, .bss_zero_loop
+    .bss_zero_loop_end:
 
-        j seed_main
+        la sp, _stack_top
+
+        jal seed_main
+        unimp
 "
 );
 
 #[no_mangle]
-pub fn seed_main(hart_id: usize, fdt: *const u8) -> ! {
+pub fn seed_main(hart_id: u64, fdt: *const u8) -> ! {
     assert!(fdt.is_aligned_to(8));
 
     Logger::init();
     info!("Hello, World!");
-    let uart = unsafe { &mut *(0x10000000 as *mut hal_riscv::hw::uart16550::Uart16550) };
-    use core::fmt::Write;
-    writeln!(uart, "Hello, World!").unwrap();
-    writeln!(uart, "HART ID: {}", hart_id).unwrap();
-    writeln!(uart, "FDT address: {:?}", fdt).unwrap();
+    info!("HART ID: {}", hart_id);
+    info!("FDT address: {:?}", fdt);
+    info!("Foo bar baz");
 
     let fdt = unsafe { Fdt::from_ptr(fdt).expect("Failed to parse FDT") };
     for region in fdt.memory().regions() {
-        writeln!(uart, "Memory region: {:?}", region).unwrap();
+        info!("Memory region: {:?}", region);
     }
-    // for reservation in fdt.memory_reservations() {
-    //     writeln!(uart, "Memory reservation: {:?}", reservation).unwrap();
-    // }
     if let Some(reservations) = fdt.find_node("/reserved-memory") {
         for child in reservations.children() {
-            writeln!(
-                uart,
-                "Memory reservation with name {}. Reg = {:?}",
-                child.name,
-                child.reg().unwrap().next().unwrap()
-            )
-            .unwrap();
+            info!("Memory reservation with name {}. Reg = {:?}", child.name, child.reg().unwrap().next().unwrap());
         }
     } else {
-        writeln!(uart, "No memory reservations :(").unwrap();
+        info!("No memory reservations :(");
     }
 
-    writeln!(uart, "Looping :)").unwrap();
+    info!("Looping");
     loop {}
 }
 
 #[panic_handler]
 pub fn panic(info: &core::panic::PanicInfo) -> ! {
-    let uart = unsafe { &mut *(0x10000000 as *mut hal_riscv::hw::uart16550::Uart16550) };
     use core::fmt::Write;
 
     if let Some(message) = info.message() {
         if let Some(location) = info.location() {
             let _ = writeln!(
-                uart,
+                Logger,
                 "Panic message: {} ({} - {}:{})",
                 message,
                 location.file(),
@@ -82,7 +80,7 @@ pub fn panic(info: &core::panic::PanicInfo) -> ! {
                 location.column()
             );
         } else {
-            let _ = writeln!(uart, "Panic message: {} (no location info)", message);
+            let _ = writeln!(Logger, "Panic message: {} (no location info)", message);
         }
     }
     loop {}

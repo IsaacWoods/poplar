@@ -1,60 +1,46 @@
-use core::sync::atomic::{AtomicU64, Ordering};
-use hal_riscv::hw::uart16550::Uart16550;
-use poplar_util::InitGuard;
-use tracing::{span, Collect, Event, Metadata};
-use tracing_core::span::Current as CurrentSpan;
+use core::{fmt, fmt::Write};
+use log::{Level, LevelFilter, Metadata, Record};
 
-static LOGGER: Logger = Logger::new();
+pub struct Logger;
 
-pub struct Logger {
-    next_id: AtomicU64,
-    serial_port: InitGuard<&'static mut Uart16550>,
-}
+static LOGGER: Logger = Logger;
 
 impl Logger {
-    const fn new() -> Logger {
-        Logger { next_id: AtomicU64::new(0), serial_port: InitGuard::uninit() }
-    }
-
     pub fn init() {
-        let serial_port = unsafe { &mut *(0x10000000 as *mut hal_riscv::hw::uart16550::Uart16550) };
-        LOGGER.serial_port.initialize(serial_port);
-        tracing::dispatch::set_global_default(tracing::dispatch::Dispatch::from_static(&LOGGER))
-            .expect("Failed to set default tracing dispatch");
+        log::set_logger(&LOGGER).map(|_| log::set_max_level(LevelFilter::Trace)).unwrap();
     }
 }
 
-impl Collect for Logger {
-    fn current_span(&self) -> CurrentSpan {
-        todo!()
-    }
+impl fmt::Write for Logger {
+    fn write_str(&mut self, s: &str) -> fmt::Result {
+        for byte in s.bytes() {
+            unsafe {
+                (0x1000_0000 as *mut u8).write_volatile(byte);
+            }
+        }
 
-    fn enabled(&self, _: &Metadata) -> bool {
+        Ok(())
+    }
+}
+
+impl log::Log for Logger {
+    fn enabled(&self, _metadata: &Metadata) -> bool {
         true
     }
 
-    fn enter(&self, span: &span::Id) {
-        todo!()
+    fn log(&self, record: &Record) {
+        if self.enabled(record.metadata()) {
+            let color = match record.metadata().level() {
+                Level::Trace => "\x1b[36m",
+                Level::Debug => "\x1b[34m",
+                Level::Info => "\x1b[32m",
+                Level::Warn => "\x1b[33m",
+                Level::Error => "\x1b[31m",
+            };
+            writeln!(Logger, "[{}{:5}\x1b[0m] {}: {}", color, record.level(), record.target(), record.args())
+                .unwrap();
+        }
     }
 
-    fn event(&self, event: &Event) {
-        todo!()
-    }
-
-    fn exit(&self, span: &span::Id) {
-        todo!()
-    }
-
-    fn new_span(&self, span: &span::Attributes) -> span::Id {
-        let mut id = self.next_id.fetch_add(1, Ordering::Acquire);
-        span::Id::from_u64(id)
-    }
-
-    fn record(&self, _span: &span::Id, _values: &span::Record) {
-        todo!()
-    }
-
-    fn record_follows_from(&self, _span: &span::Id, _follows: &span::Id) {
-        todo!()
-    }
+    fn flush(&self) {}
 }
