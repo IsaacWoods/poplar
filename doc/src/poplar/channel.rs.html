@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/work/poplar/poplar/lib/poplar/src/channel.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>channel.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script><script defer src="../../main.js"></script><noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../poplar/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div></a><h2 class="location"></h2></nav><nav class="sidebar"><a class="sidebar-logo" href="../../poplar/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div></a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../poplar/index.html"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></a><nav class="sub"><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><button type="button">?</button></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../wheel.svg"></a></div></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/work/poplar/poplar/lib/poplar/src/channel.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>channel.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" href="../../normalize.css"><link rel="stylesheet" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" href="../../ayu.css" disabled><link rel="stylesheet" href="../../dark.css" disabled><link rel="stylesheet" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script><script defer src="../../main.js"></script><noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../poplar/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div></a><h2 class="location"></h2></nav><nav class="sidebar"><a class="sidebar-logo" href="../../poplar/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div></a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../poplar/index.html"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></a><nav class="sub"><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><button type="button">?</button></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../wheel.svg"></a></div></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
 <span id="2">2</span>
 <span id="3">3</span>
 <span id="4">4</span>
@@ -123,130 +123,130 @@
 <span id="123">123</span>
 <span id="124">124</span>
 <span id="125">125</span>
-</pre><pre class="rust"><code><span class="kw">use</span> <span class="kw">crate</span>::{
-    <span class="ident">syscall</span>::{<span class="self">self</span>, <span class="ident">GetMessageError</span>, <span class="ident">RegisterServiceError</span>, <span class="ident">SendMessageError</span>, <span class="ident">CHANNEL_MAX_NUM_HANDLES</span>},
-    <span class="ident">Handle</span>,
+</pre><pre class="rust"><code><span class="kw">use crate</span>::{
+    syscall::{<span class="self">self</span>, GetMessageError, RegisterServiceError, SendMessageError, CHANNEL_MAX_NUM_HANDLES},
+    Handle,
 };
-<span class="kw">use</span> <span class="ident">core</span>::{<span class="ident">marker::PhantomData</span>, <span class="ident">mem</span>};
-<span class="kw">use</span> <span class="ident">ptah</span>::{<span class="ident">DeserializeOwned</span>, <span class="ident">Serialize</span>};
+<span class="kw">use </span>core::{marker::PhantomData, mem};
+<span class="kw">use </span>ptah::{DeserializeOwned, Serialize};
 
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>)]</span>
-<span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">ChannelSendError</span> {
-    <span class="ident">FailedToSerialize</span>(<span class="ident">ptah::ser::Error</span>),
-    <span class="ident">SendError</span>(<span class="ident">SendMessageError</span>),
+<span class="attribute">#[derive(Debug)]
+</span><span class="kw">pub enum </span>ChannelSendError {
+    FailedToSerialize(ptah::ser::Error),
+    SendError(SendMessageError),
 }
 
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>)]</span>
-<span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">ChannelReceiveError</span> {
-    <span class="ident">FailedToDeserialize</span>(<span class="ident">ptah::de::Error</span>),
-    <span class="ident">ReceiveError</span>(<span class="ident">GetMessageError</span>),
+<span class="attribute">#[derive(Debug)]
+</span><span class="kw">pub enum </span>ChannelReceiveError {
+    FailedToDeserialize(ptah::de::Error),
+    ReceiveError(GetMessageError),
 }
 
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">Channel</span><span class="op">&lt;</span><span class="ident">S</span>, <span class="ident">R</span><span class="op">&gt;</span>(<span class="ident">Handle</span>, <span class="ident">PhantomData</span><span class="op">&lt;</span>(<span class="ident">S</span>, <span class="ident">R</span>)<span class="op">&gt;</span>)
-<span class="kw">where</span>
-    <span class="ident">S</span>: <span class="ident">Serialize</span> <span class="op">+</span> <span class="ident">DeserializeOwned</span>,
-    <span class="ident">R</span>: <span class="ident">Serialize</span> <span class="op">+</span> <span class="ident">DeserializeOwned</span>;
+<span class="kw">pub struct </span>Channel&lt;S, R&gt;(Handle, PhantomData&lt;(S, R)&gt;)
+<span class="kw">where
+    </span>S: Serialize + DeserializeOwned,
+    R: Serialize + DeserializeOwned;
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">S</span>, <span class="ident">R</span><span class="op">&gt;</span> <span class="ident">Channel</span><span class="op">&lt;</span><span class="ident">S</span>, <span class="ident">R</span><span class="op">&gt;</span>
-<span class="kw">where</span>
-    <span class="ident">S</span>: <span class="ident">Serialize</span> <span class="op">+</span> <span class="ident">DeserializeOwned</span>,
-    <span class="ident">R</span>: <span class="ident">Serialize</span> <span class="op">+</span> <span class="ident">DeserializeOwned</span>,
+<span class="kw">impl</span>&lt;S, R&gt; Channel&lt;S, R&gt;
+<span class="kw">where
+    </span>S: Serialize + DeserializeOwned,
+    R: Serialize + DeserializeOwned,
 {
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">from_handle</span>(<span class="ident">handle</span>: <span class="ident">Handle</span>) -&gt; <span class="ident">Channel</span><span class="op">&lt;</span><span class="ident">S</span>, <span class="ident">R</span><span class="op">&gt;</span> {
-        <span class="ident">Channel</span>(<span class="ident">handle</span>, <span class="ident">PhantomData</span>)
+    <span class="kw">pub fn </span>from_handle(handle: Handle) -&gt; Channel&lt;S, R&gt; {
+        Channel(handle, PhantomData)
     }
 
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">send</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">message</span>: <span class="kw-2">&amp;</span><span class="ident">S</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">ChannelSendError</span><span class="op">&gt;</span> {
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">writer</span> <span class="op">=</span> <span class="ident">ChannelWriter::new</span>();
-        <span class="ident">ptah::to_wire</span>(<span class="ident">message</span>, <span class="kw-2">&amp;mut</span> <span class="ident">writer</span>).<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">err</span><span class="op">|</span> <span class="ident">ChannelSendError::FailedToSerialize</span>(<span class="ident">err</span>))<span class="question-mark">?</span>;
-        <span class="ident">syscall::send_message</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="number">0</span>, <span class="ident">writer</span>.<span class="ident">bytes</span>(), <span class="ident">writer</span>.<span class="ident">handles</span>())
-            .<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">err</span><span class="op">|</span> <span class="ident">ChannelSendError::SendError</span>(<span class="ident">err</span>))
+    <span class="kw">pub fn </span>send(<span class="kw-2">&amp;</span><span class="self">self</span>, message: <span class="kw-2">&amp;</span>S) -&gt; <span class="prelude-ty">Result</span>&lt;(), ChannelSendError&gt; {
+        <span class="kw">let </span><span class="kw-2">mut </span>writer = ChannelWriter::new();
+        ptah::to_wire(message, <span class="kw-2">&amp;mut </span>writer).map_err(|err| ChannelSendError::FailedToSerialize(err))<span class="question-mark">?</span>;
+        syscall::send_message(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="number">0</span>, writer.bytes(), writer.handles())
+            .map_err(|err| ChannelSendError::SendError(err))
     }
 
-    <span class="doccomment">/// Receive a message from the channel, if there&#39;s one waiting. Returns `Ok(None)` if there are no pending</span>
-    <span class="doccomment">/// messages to be received.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">try_receive</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">R</span><span class="op">&gt;</span>, <span class="ident">ChannelReceiveError</span><span class="op">&gt;</span> {
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">byte_buffer</span> <span class="op">=</span> [<span class="number">0u8</span>; <span class="ident">BYTES_BUFFER_SIZE</span>];
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">handle_buffer</span> <span class="op">=</span> [<span class="ident"><span class="kw">crate</span>::ZERO_HANDLE</span>; <span class="ident">CHANNEL_MAX_NUM_HANDLES</span>];
+    <span class="doccomment">/// Receive a message from the channel, if there&#39;s one waiting. Returns `Ok(None)` if there are no pending
+    /// messages to be received.
+    </span><span class="kw">pub fn </span>try_receive(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;R&gt;, ChannelReceiveError&gt; {
+        <span class="kw">let </span><span class="kw-2">mut </span>byte_buffer = [<span class="number">0u8</span>; BYTES_BUFFER_SIZE];
+        <span class="kw">let </span><span class="kw-2">mut </span>handle_buffer = [<span class="kw">crate</span>::ZERO_HANDLE; CHANNEL_MAX_NUM_HANDLES];
 
-        <span class="kw">match</span> <span class="ident">syscall::get_message</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="number">0</span>, <span class="kw-2">&amp;mut</span> <span class="ident">byte_buffer</span>, <span class="kw-2">&amp;mut</span> <span class="ident">handle_buffer</span>) {
-            <span class="prelude-val">Ok</span>((<span class="ident">bytes</span>, <span class="ident">handles</span>)) =&gt; {
-                <span class="comment">// TODO: this looks really bad, but is actually fine (since Handle is just a transparent wrapper</span>
-                <span class="comment">// around a `u32`). There might be a better way.</span>
-                <span class="kw">let</span> <span class="ident">ptah_handles</span>: <span class="kw-2">&amp;</span>[<span class="ident">u32</span>] <span class="op">=</span> <span class="kw">unsafe</span> { <span class="ident">mem::transmute</span>(<span class="ident">handles</span>) };
+        <span class="kw">match </span>syscall::get_message(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="number">0</span>, <span class="kw-2">&amp;mut </span>byte_buffer, <span class="kw-2">&amp;mut </span>handle_buffer) {
+            <span class="prelude-val">Ok</span>((bytes, handles)) =&gt; {
+                <span class="comment">// TODO: this looks really bad, but is actually fine (since Handle is just a transparent wrapper
+                // around a `u32`). There might be a better way.
+                </span><span class="kw">let </span>ptah_handles: <span class="kw-2">&amp;</span>[u32] = <span class="kw">unsafe </span>{ mem::transmute(handles) };
 
-                <span class="kw">let</span> <span class="ident">message</span>: <span class="ident">R</span> <span class="op">=</span> <span class="ident">ptah::from_wire</span>(<span class="ident">bytes</span>, <span class="ident">ptah_handles</span>)
-                    .<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">err</span><span class="op">|</span> <span class="ident">ChannelReceiveError::FailedToDeserialize</span>(<span class="ident">err</span>))<span class="question-mark">?</span>;
-                <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(<span class="ident">message</span>))
+                <span class="kw">let </span>message: R = ptah::from_wire(bytes, ptah_handles)
+                    .map_err(|err| ChannelReceiveError::FailedToDeserialize(err))<span class="question-mark">?</span>;
+                <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(message))
             }
-            <span class="prelude-val">Err</span>(<span class="ident">GetMessageError::NoMessage</span>) =&gt; <span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>),
-            <span class="prelude-val">Err</span>(<span class="ident">err</span>) =&gt; <span class="prelude-val">Err</span>(<span class="ident">ChannelReceiveError::ReceiveError</span>(<span class="ident">err</span>)),
+            <span class="prelude-val">Err</span>(GetMessageError::NoMessage) =&gt; <span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>),
+            <span class="prelude-val">Err</span>(err) =&gt; <span class="prelude-val">Err</span>(ChannelReceiveError::ReceiveError(err)),
         }
     }
 }
 
-<span class="kw">impl</span> <span class="ident">Channel</span><span class="op">&lt;</span><span class="op">!</span>, <span class="ident">Handle</span><span class="op">&gt;</span> {
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">register_service</span>(<span class="ident">name</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Channel</span><span class="op">&lt;</span><span class="op">!</span>, <span class="ident">Handle</span><span class="op">&gt;</span>, <span class="ident">RegisterServiceError</span><span class="op">&gt;</span> {
-        <span class="prelude-val">Ok</span>(<span class="ident"><span class="self">Self</span>::from_handle</span>(<span class="ident">syscall::register_service</span>(<span class="ident">name</span>)<span class="question-mark">?</span>))
+<span class="kw">impl </span>Channel&lt;!, Handle&gt; {
+    <span class="kw">pub fn </span>register_service(name: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Result</span>&lt;Channel&lt;!, Handle&gt;, RegisterServiceError&gt; {
+        <span class="prelude-val">Ok</span>(<span class="self">Self</span>::from_handle(syscall::register_service(name)<span class="question-mark">?</span>))
     }
 }
 
-<span class="kw">const</span> <span class="ident">BYTES_BUFFER_SIZE</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="number">512</span>;
+<span class="kw">const </span>BYTES_BUFFER_SIZE: usize = <span class="number">512</span>;
 
-<span class="kw">struct</span> <span class="ident">ChannelWriter</span> {
-    <span class="ident">byte_buffer</span>: [<span class="ident">u8</span>; <span class="ident">BYTES_BUFFER_SIZE</span>],
-    <span class="ident">handle_buffer</span>: [<span class="ident">Handle</span>; <span class="ident">CHANNEL_MAX_NUM_HANDLES</span>],
-    <span class="ident">num_bytes</span>: <span class="ident">usize</span>,
-    <span class="ident">num_handles</span>: <span class="ident">u8</span>,
+<span class="kw">struct </span>ChannelWriter {
+    byte_buffer: [u8; BYTES_BUFFER_SIZE],
+    handle_buffer: [Handle; CHANNEL_MAX_NUM_HANDLES],
+    num_bytes: usize,
+    num_handles: u8,
 }
 
-<span class="kw">impl</span> <span class="ident">ChannelWriter</span> {
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>() -&gt; <span class="ident">ChannelWriter</span> {
-        <span class="ident">ChannelWriter</span> {
-            <span class="ident">byte_buffer</span>: [<span class="number">0u8</span>; <span class="ident">BYTES_BUFFER_SIZE</span>],
-            <span class="ident">handle_buffer</span>: [<span class="ident"><span class="kw">crate</span>::ZERO_HANDLE</span>; <span class="ident">CHANNEL_MAX_NUM_HANDLES</span>],
-            <span class="ident">num_bytes</span>: <span class="number">0</span>,
-            <span class="ident">num_handles</span>: <span class="number">0</span>,
+<span class="kw">impl </span>ChannelWriter {
+    <span class="kw">pub fn </span>new() -&gt; ChannelWriter {
+        ChannelWriter {
+            byte_buffer: [<span class="number">0u8</span>; BYTES_BUFFER_SIZE],
+            handle_buffer: [<span class="kw">crate</span>::ZERO_HANDLE; CHANNEL_MAX_NUM_HANDLES],
+            num_bytes: <span class="number">0</span>,
+            num_handles: <span class="number">0</span>,
         }
     }
 
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">bytes</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>[<span class="ident">u8</span>] {
-        <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">byte_buffer</span>[<span class="number">0</span>..<span class="self">self</span>.<span class="ident">num_bytes</span>]
+    <span class="kw">pub fn </span>bytes(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>[u8] {
+        <span class="kw-2">&amp;</span><span class="self">self</span>.byte_buffer[<span class="number">0</span>..<span class="self">self</span>.num_bytes]
     }
 
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">handles</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>[<span class="ident">Handle</span>] {
-        <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">handle_buffer</span>[<span class="number">0</span>..(<span class="self">self</span>.<span class="ident">num_handles</span> <span class="kw">as</span> <span class="ident">usize</span>)]
+    <span class="kw">pub fn </span>handles(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>[Handle] {
+        <span class="kw-2">&amp;</span><span class="self">self</span>.handle_buffer[<span class="number">0</span>..(<span class="self">self</span>.num_handles <span class="kw">as </span>usize)]
     }
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> <span class="ident">ptah::Writer</span> <span class="kw">for</span> <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="kw-2">mut</span> <span class="ident">ChannelWriter</span> {
-    <span class="kw">fn</span> <span class="ident">write</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">buf</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>]) -&gt; <span class="ident">ptah::ser::Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
+<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>&gt; ptah::Writer <span class="kw">for </span><span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span><span class="kw-2">mut </span>ChannelWriter {
+    <span class="kw">fn </span>write(<span class="kw-2">&amp;mut </span><span class="self">self</span>, buf: <span class="kw-2">&amp;</span>[u8]) -&gt; ptah::ser::Result&lt;()&gt; {
         <span class="comment">/*
          * Detect if the write will overflow the buffer.
-         */</span>
-        <span class="kw">if</span> (<span class="self">self</span>.<span class="ident">num_bytes</span> <span class="op">+</span> <span class="ident">buf</span>.<span class="ident">len</span>()) <span class="op">&gt;</span> <span class="ident">BYTES_BUFFER_SIZE</span> {
-            <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">ptah::ser::Error::WriterFullOfBytes</span>);
+         */
+        </span><span class="kw">if </span>(<span class="self">self</span>.num_bytes + buf.len()) &gt; BYTES_BUFFER_SIZE {
+            <span class="kw">return </span><span class="prelude-val">Err</span>(ptah::ser::Error::WriterFullOfBytes);
         }
 
-        <span class="self">self</span>.<span class="ident">byte_buffer</span>[<span class="self">self</span>.<span class="ident">num_bytes</span>..(<span class="self">self</span>.<span class="ident">num_bytes</span> <span class="op">+</span> <span class="ident">buf</span>.<span class="ident">len</span>())].<span class="ident">copy_from_slice</span>(<span class="ident">buf</span>);
-        <span class="self">self</span>.<span class="ident">num_bytes</span> <span class="op">+</span><span class="op">=</span> <span class="ident">buf</span>.<span class="ident">len</span>();
+        <span class="self">self</span>.byte_buffer[<span class="self">self</span>.num_bytes..(<span class="self">self</span>.num_bytes + buf.len())].copy_from_slice(buf);
+        <span class="self">self</span>.num_bytes += buf.len();
         <span class="prelude-val">Ok</span>(())
     }
 
-    <span class="kw">fn</span> <span class="ident">push_handle</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">handle</span>: <span class="ident">ptah::Handle</span>) -&gt; <span class="ident">ptah::ser::Result</span><span class="op">&lt;</span><span class="ident">ptah::HandleSlot</span><span class="op">&gt;</span> {
+    <span class="kw">fn </span>push_handle(<span class="kw-2">&amp;mut </span><span class="self">self</span>, handle: ptah::Handle) -&gt; ptah::ser::Result&lt;ptah::HandleSlot&gt; {
         <span class="comment">/*
          * Check if we&#39;re full of handles yet.
-         */</span>
-        <span class="kw">if</span> (<span class="self">self</span>.<span class="ident">num_handles</span> <span class="kw">as</span> <span class="ident">usize</span> <span class="op">+</span> <span class="number">1</span>) <span class="op">&gt;</span> <span class="ident">CHANNEL_MAX_NUM_HANDLES</span> {
-            <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">ptah::ser::Error::WriterFullOfHandles</span>);
+         */
+        </span><span class="kw">if </span>(<span class="self">self</span>.num_handles <span class="kw">as </span>usize + <span class="number">1</span>) &gt; CHANNEL_MAX_NUM_HANDLES {
+            <span class="kw">return </span><span class="prelude-val">Err</span>(ptah::ser::Error::WriterFullOfHandles);
         }
 
-        <span class="self">self</span>.<span class="ident">handle_buffer</span>[<span class="self">self</span>.<span class="ident">num_handles</span> <span class="kw">as</span> <span class="ident">usize</span>] <span class="op">=</span> <span class="ident">Handle</span>(<span class="ident">handle</span>);
+        <span class="self">self</span>.handle_buffer[<span class="self">self</span>.num_handles <span class="kw">as </span>usize] = Handle(handle);
 
-        <span class="kw">let</span> <span class="ident">slot</span> <span class="op">=</span> <span class="ident">ptah::make_handle_slot</span>(<span class="self">self</span>.<span class="ident">num_handles</span>);
-        <span class="self">self</span>.<span class="ident">num_handles</span> <span class="op">+</span><span class="op">=</span> <span class="number">1</span>;
-        <span class="prelude-val">Ok</span>(<span class="ident">slot</span>)
+        <span class="kw">let </span>slot = ptah::make_handle_slot(<span class="self">self</span>.num_handles);
+        <span class="self">self</span>.num_handles += <span class="number">1</span>;
+        <span class="prelude-val">Ok</span>(slot)
     }
 }
 </code></pre></div>
-</section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="poplar" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.65.0-nightly (34a6cae28 2022-08-09)" ></div></body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="poplar" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.65.0-nightly (b44197abb 2022-09-05)" ></div></body></html>

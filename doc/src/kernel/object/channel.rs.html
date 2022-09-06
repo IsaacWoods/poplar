@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/object/channel.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>channel.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../storage.js"></script><script defer src="../../../source-script.js"></script><script defer src="../../../source-files.js"></script><script defer src="../../../main.js"></script><noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../../kernel/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div></a><h2 class="location"></h2></nav><nav class="sidebar"><a class="sidebar-logo" href="../../../kernel/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div></a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../../kernel/index.html"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></a><nav class="sub"><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><button type="button">?</button></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../wheel.svg"></a></div></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/object/channel.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>channel.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" href="../../../normalize.css"><link rel="stylesheet" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" href="../../../ayu.css" disabled><link rel="stylesheet" href="../../../dark.css" disabled><link rel="stylesheet" href="../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../storage.js"></script><script defer src="../../../source-script.js"></script><script defer src="../../../source-files.js"></script><script defer src="../../../main.js"></script><noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../../kernel/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div></a><h2 class="location"></h2></nav><nav class="sidebar"><a class="sidebar-logo" href="../../../kernel/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div></a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../../kernel/index.html"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></a><nav class="sub"><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><button type="button">?</button></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../wheel.svg"></a></div></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
 <span id="2">2</span>
 <span id="3">3</span>
 <span id="4">4</span>
@@ -111,118 +111,118 @@
 <span id="111">111</span>
 <span id="112">112</span>
 <span id="113">113</span>
-</pre><pre class="rust"><code><span class="kw">use</span> <span class="kw">super</span>::{<span class="ident">alloc_kernel_object_id</span>, <span class="ident">KernelObject</span>, <span class="ident">KernelObjectId</span>};
-<span class="kw">use</span> <span class="ident">alloc</span>::{
-    <span class="ident">collections::VecDeque</span>,
-    <span class="ident">sync</span>::{<span class="ident">Arc</span>, <span class="ident">Weak</span>},
-    <span class="ident">vec::Vec</span>,
+</pre><pre class="rust"><code><span class="kw">use super</span>::{alloc_kernel_object_id, KernelObject, KernelObjectId};
+<span class="kw">use </span>alloc::{
+    collections::VecDeque,
+    sync::{Arc, Weak},
+    vec::Vec,
 };
-<span class="kw">use</span> <span class="ident">log::warn</span>;
-<span class="kw">use</span> <span class="ident">poplar::syscall</span>::{<span class="ident">GetMessageError</span>, <span class="ident">SendMessageError</span>, <span class="ident">CHANNEL_MAX_NUM_HANDLES</span>};
-<span class="kw">use</span> <span class="ident">spin::Mutex</span>;
+<span class="kw">use </span>log::warn;
+<span class="kw">use </span>poplar::syscall::{GetMessageError, SendMessageError, CHANNEL_MAX_NUM_HANDLES};
+<span class="kw">use </span>spin::Mutex;
 
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">ChannelEnd</span> {
-    <span class="kw">pub</span> <span class="ident">id</span>: <span class="ident">KernelObjectId</span>,
-    <span class="kw">pub</span> <span class="ident">owner</span>: <span class="ident">KernelObjectId</span>,
-    <span class="ident">messages</span>: <span class="ident">Mutex</span><span class="op">&lt;</span><span class="ident">VecDeque</span><span class="op">&lt;</span><span class="ident">Message</span><span class="op">&gt;</span><span class="op">&gt;</span>,
-    <span class="doccomment">/// The other end of the channel. If this is `None`, the channel&#39;s messages come from the kernel.</span>
-    <span class="ident">other_end</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Weak</span><span class="op">&lt;</span><span class="ident">ChannelEnd</span><span class="op">&gt;</span><span class="op">&gt;</span>,
+<span class="kw">pub struct </span>ChannelEnd {
+    <span class="kw">pub </span>id: KernelObjectId,
+    <span class="kw">pub </span>owner: KernelObjectId,
+    messages: Mutex&lt;VecDeque&lt;Message&gt;&gt;,
+    <span class="doccomment">/// The other end of the channel. If this is `None`, the channel&#39;s messages come from the kernel.
+    </span>other_end: <span class="prelude-ty">Option</span>&lt;Weak&lt;ChannelEnd&gt;&gt;,
 }
 
-<span class="kw">impl</span> <span class="ident">ChannelEnd</span> {
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new_channel</span>(<span class="ident">owner</span>: <span class="ident">KernelObjectId</span>) -&gt; (<span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">ChannelEnd</span><span class="op">&gt;</span>, <span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">ChannelEnd</span><span class="op">&gt;</span>) {
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">end_a</span> <span class="op">=</span> <span class="ident">Arc::new</span>(<span class="ident">ChannelEnd</span> {
-            <span class="ident">id</span>: <span class="ident">alloc_kernel_object_id</span>(),
-            <span class="ident">owner</span>,
-            <span class="ident">messages</span>: <span class="ident">Mutex::new</span>(<span class="ident">VecDeque::new</span>()),
-            <span class="ident">other_end</span>: <span class="prelude-val">Some</span>(<span class="ident">Weak::default</span>()),
+<span class="kw">impl </span>ChannelEnd {
+    <span class="kw">pub fn </span>new_channel(owner: KernelObjectId) -&gt; (Arc&lt;ChannelEnd&gt;, Arc&lt;ChannelEnd&gt;) {
+        <span class="kw">let </span><span class="kw-2">mut </span>end_a = Arc::new(ChannelEnd {
+            id: alloc_kernel_object_id(),
+            owner,
+            messages: Mutex::new(VecDeque::new()),
+            other_end: <span class="prelude-val">Some</span>(Weak::default()),
         });
 
-        <span class="kw">let</span> <span class="ident">end_b</span> <span class="op">=</span> <span class="ident">Arc::new</span>(<span class="ident">ChannelEnd</span> {
-            <span class="ident">id</span>: <span class="ident">alloc_kernel_object_id</span>(),
-            <span class="ident">owner</span>,
-            <span class="ident">messages</span>: <span class="ident">Mutex::new</span>(<span class="ident">VecDeque::new</span>()),
-            <span class="ident">other_end</span>: <span class="prelude-val">Some</span>(<span class="ident">Arc::downgrade</span>(<span class="kw-2">&amp;</span><span class="ident">end_a</span>)),
+        <span class="kw">let </span>end_b = Arc::new(ChannelEnd {
+            id: alloc_kernel_object_id(),
+            owner,
+            messages: Mutex::new(VecDeque::new()),
+            other_end: <span class="prelude-val">Some</span>(Arc::downgrade(<span class="kw-2">&amp;</span>end_a)),
         });
 
-        <span class="comment">// TODO: is there a nicer way of doing this?</span>
-        <span class="kw">unsafe</span> {
-            <span class="ident">Arc::get_mut_unchecked</span>(<span class="kw-2">&amp;mut</span> <span class="ident">end_a</span>).<span class="ident">other_end</span> <span class="op">=</span> <span class="prelude-val">Some</span>(<span class="ident">Arc::downgrade</span>(<span class="kw-2">&amp;</span><span class="ident">end_b</span>));
+        <span class="comment">// TODO: is there a nicer way of doing this?
+        </span><span class="kw">unsafe </span>{
+            Arc::get_mut_unchecked(<span class="kw-2">&amp;mut </span>end_a).other_end = <span class="prelude-val">Some</span>(Arc::downgrade(<span class="kw-2">&amp;</span>end_b));
         }
 
-        (<span class="ident">end_a</span>, <span class="ident">end_b</span>)
+        (end_a, end_b)
     }
 
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new_kernel_channel</span>(<span class="ident">owner</span>: <span class="ident">KernelObjectId</span>) -&gt; <span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">ChannelEnd</span><span class="op">&gt;</span> {
-        <span class="ident">Arc::new</span>(<span class="ident">ChannelEnd</span> {
-            <span class="ident">id</span>: <span class="ident">alloc_kernel_object_id</span>(),
-            <span class="ident">owner</span>,
-            <span class="ident">messages</span>: <span class="ident">Mutex::new</span>(<span class="ident">VecDeque::new</span>()),
-            <span class="ident">other_end</span>: <span class="prelude-val">None</span>,
+    <span class="kw">pub fn </span>new_kernel_channel(owner: KernelObjectId) -&gt; Arc&lt;ChannelEnd&gt; {
+        Arc::new(ChannelEnd {
+            id: alloc_kernel_object_id(),
+            owner,
+            messages: Mutex::new(VecDeque::new()),
+            other_end: <span class="prelude-val">None</span>,
         })
     }
 
-    <span class="doccomment">/// Add a message *to* this `ChannelEnd`. Use `send` if you want to send a message *through* this</span>
-    <span class="doccomment">/// `ChannelEnd` (i.e. to the other end of the Channel).</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">add_message</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">message</span>: <span class="ident">Message</span>) {
-        <span class="self">self</span>.<span class="ident">messages</span>.<span class="ident">lock</span>().<span class="ident">push_back</span>(<span class="ident">message</span>);
+    <span class="doccomment">/// Add a message *to* this `ChannelEnd`. Use `send` if you want to send a message *through* this
+    /// `ChannelEnd` (i.e. to the other end of the Channel).
+    </span><span class="kw">pub fn </span>add_message(<span class="kw-2">&amp;</span><span class="self">self</span>, message: Message) {
+        <span class="self">self</span>.messages.lock().push_back(message);
     }
 
-    <span class="doccomment">/// Send a message through this `ChannelEnd`, to be received by the other end. If this is a kernel channel, the</span>
-    <span class="doccomment">/// message is discarded.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">send</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">message</span>: <span class="ident">Message</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">SendMessageError</span><span class="op">&gt;</span> {
-        <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="kw-2">ref</span> <span class="ident">other_end</span>) <span class="op">=</span> <span class="self">self</span>.<span class="ident">other_end</span> {
-            <span class="kw">match</span> <span class="ident">other_end</span>.<span class="ident">upgrade</span>() {
-                <span class="prelude-val">Some</span>(<span class="ident">other_end</span>) =&gt; {
-                    <span class="ident">other_end</span>.<span class="ident">add_message</span>(<span class="ident">message</span>);
+    <span class="doccomment">/// Send a message through this `ChannelEnd`, to be received by the other end. If this is a kernel channel, the
+    /// message is discarded.
+    </span><span class="kw">pub fn </span>send(<span class="kw-2">&amp;</span><span class="self">self</span>, message: Message) -&gt; <span class="prelude-ty">Result</span>&lt;(), SendMessageError&gt; {
+        <span class="kw">if let </span><span class="prelude-val">Some</span>(<span class="kw-2">ref </span>other_end) = <span class="self">self</span>.other_end {
+            <span class="kw">match </span>other_end.upgrade() {
+                <span class="prelude-val">Some</span>(other_end) =&gt; {
+                    other_end.add_message(message);
                     <span class="prelude-val">Ok</span>(())
                 }
-                <span class="prelude-val">None</span> =&gt; <span class="prelude-val">Err</span>(<span class="ident">SendMessageError::OtherEndDisconnected</span>),
+                <span class="prelude-val">None </span>=&gt; <span class="prelude-val">Err</span>(SendMessageError::OtherEndDisconnected),
             }
-        } <span class="kw">else</span> {
+        } <span class="kw">else </span>{
             <span class="macro">warn!</span>(<span class="string">&quot;Discarding message sent down kernel channel&quot;</span>);
             <span class="prelude-val">Ok</span>(())
         }
     }
 
-    <span class="doccomment">/// Try to &quot;receive&quot; a message from this `ChannelEnd`, potentially removing it from the queue. Note that this</span>
-    <span class="doccomment">/// keeps a lock over the message queue while the passed function is called - if the handling of the message</span>
-    <span class="doccomment">/// fails (for example, the buffer to put it into is too small), the passed function can return it with</span>
-    <span class="doccomment">/// `Err((message, some_error))`, and the message will be placed back into the queue (preserving message</span>
-    <span class="doccomment">/// order), and the error will be returned.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">receive</span><span class="op">&lt;</span><span class="ident">F</span>, <span class="ident">R</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">f</span>: <span class="ident">F</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">R</span>, <span class="ident">GetMessageError</span><span class="op">&gt;</span>
-    <span class="kw">where</span>
-        <span class="ident">F</span>: <span class="ident">FnOnce</span>(<span class="ident">Message</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">R</span>, (<span class="ident">Message</span>, <span class="ident">GetMessageError</span>)<span class="op">&gt;</span>,
+    <span class="doccomment">/// Try to &quot;receive&quot; a message from this `ChannelEnd`, potentially removing it from the queue. Note that this
+    /// keeps a lock over the message queue while the passed function is called - if the handling of the message
+    /// fails (for example, the buffer to put it into is too small), the passed function can return it with
+    /// `Err((message, some_error))`, and the message will be placed back into the queue (preserving message
+    /// order), and the error will be returned.
+    </span><span class="kw">pub fn </span>receive&lt;F, R&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, f: F) -&gt; <span class="prelude-ty">Result</span>&lt;R, GetMessageError&gt;
+    <span class="kw">where
+        </span>F: FnOnce(Message) -&gt; <span class="prelude-ty">Result</span>&lt;R, (Message, GetMessageError)&gt;,
     {
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">message_queue</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">messages</span>.<span class="ident">lock</span>();
-        <span class="kw">match</span> <span class="ident">f</span>(<span class="ident">message_queue</span>.<span class="ident">pop_front</span>().<span class="ident">ok_or</span>(<span class="ident">GetMessageError::NoMessage</span>)<span class="question-mark">?</span>) {
-            <span class="prelude-val">Ok</span>(<span class="ident">value</span>) =&gt; <span class="prelude-val">Ok</span>(<span class="ident">value</span>),
-            <span class="prelude-val">Err</span>((<span class="ident">message</span>, <span class="ident">err</span>)) =&gt; {
-                <span class="ident">message_queue</span>.<span class="ident">push_front</span>(<span class="ident">message</span>);
-                <span class="prelude-val">Err</span>(<span class="ident">err</span>)
+        <span class="kw">let </span><span class="kw-2">mut </span>message_queue = <span class="self">self</span>.messages.lock();
+        <span class="kw">match </span>f(message_queue.pop_front().ok_or(GetMessageError::NoMessage)<span class="question-mark">?</span>) {
+            <span class="prelude-val">Ok</span>(value) =&gt; <span class="prelude-val">Ok</span>(value),
+            <span class="prelude-val">Err</span>((message, err)) =&gt; {
+                message_queue.push_front(message);
+                <span class="prelude-val">Err</span>(err)
             }
         }
     }
 }
 
-<span class="kw">impl</span> <span class="ident">KernelObject</span> <span class="kw">for</span> <span class="ident">ChannelEnd</span> {
-    <span class="kw">fn</span> <span class="ident">id</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">KernelObjectId</span> {
-        <span class="self">self</span>.<span class="ident">id</span>
+<span class="kw">impl </span>KernelObject <span class="kw">for </span>ChannelEnd {
+    <span class="kw">fn </span>id(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; KernelObjectId {
+        <span class="self">self</span>.id
     }
 }
 
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">Message</span> {
-    <span class="kw">pub</span> <span class="ident">bytes</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span>,
-    <span class="doccomment">/// The actual objects extracted from the handles transferred by a message. When a task receives this message,</span>
-    <span class="doccomment">/// these objects are added to that task, and the new handles are put into the message. The non-`None` entries</span>
-    <span class="doccomment">/// of this array must be contiguous - there cannot be a `None` entry before more non-`None` entries.</span>
-    <span class="kw">pub</span> <span class="ident">handle_objects</span>: [<span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Arc</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">KernelObject</span><span class="op">&gt;</span><span class="op">&gt;</span>; <span class="ident">CHANNEL_MAX_NUM_HANDLES</span>],
+<span class="kw">pub struct </span>Message {
+    <span class="kw">pub </span>bytes: Vec&lt;u8&gt;,
+    <span class="doccomment">/// The actual objects extracted from the handles transferred by a message. When a task receives this message,
+    /// these objects are added to that task, and the new handles are put into the message. The non-`None` entries
+    /// of this array must be contiguous - there cannot be a `None` entry before more non-`None` entries.
+    </span><span class="kw">pub </span>handle_objects: [<span class="prelude-ty">Option</span>&lt;Arc&lt;<span class="kw">dyn </span>KernelObject&gt;&gt;; CHANNEL_MAX_NUM_HANDLES],
 }
 
-<span class="kw">impl</span> <span class="ident">Message</span> {
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">num_handles</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">usize</span> {
-        <span class="self">self</span>.<span class="ident">handle_objects</span>.<span class="ident">iter</span>().<span class="ident">fold</span>(<span class="number">0</span>, <span class="op">|</span><span class="ident">n</span>, <span class="kw-2">ref</span> <span class="ident">handle</span><span class="op">|</span> <span class="kw">if</span> <span class="ident">handle</span>.<span class="ident">is_some</span>() { <span class="ident">n</span> <span class="op">+</span> <span class="number">1</span> } <span class="kw">else</span> { <span class="ident">n</span> })
+<span class="kw">impl </span>Message {
+    <span class="kw">pub fn </span>num_handles(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; usize {
+        <span class="self">self</span>.handle_objects.iter().fold(<span class="number">0</span>, |n, <span class="kw-2">ref </span>handle| <span class="kw">if </span>handle.is_some() { n + <span class="number">1 </span>} <span class="kw">else </span>{ n })
     }
 }
 </code></pre></div>
-</section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="kernel" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.65.0-nightly (34a6cae28 2022-08-09)" ></div></body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="kernel" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.65.0-nightly (b44197abb 2022-09-05)" ></div></body></html>

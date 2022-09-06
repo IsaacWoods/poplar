@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/work/poplar/poplar/lib/pci_types/src/device_type.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>device_type.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script><script defer src="../../main.js"></script><noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../pci_types/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div></a><h2 class="location"></h2></nav><nav class="sidebar"><a class="sidebar-logo" href="../../pci_types/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div></a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../pci_types/index.html"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></a><nav class="sub"><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><button type="button">?</button></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../wheel.svg"></a></div></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/work/poplar/poplar/lib/pci_types/src/device_type.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>device_type.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" href="../../normalize.css"><link rel="stylesheet" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" href="../../ayu.css" disabled><link rel="stylesheet" href="../../dark.css" disabled><link rel="stylesheet" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script><script defer src="../../main.js"></script><noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../pci_types/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div></a><h2 class="location"></h2></nav><nav class="sidebar"><a class="sidebar-logo" href="../../pci_types/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div></a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../pci_types/index.html"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></a><nav class="sub"><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><button type="button">?</button></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../wheel.svg"></a></div></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
 <span id="2">2</span>
 <span id="3">3</span>
 <span id="4">4</span>
@@ -336,343 +336,343 @@
 <span id="336">336</span>
 <span id="337">337</span>
 <span id="338">338</span>
-</pre><pre class="rust"><code><span class="kw">use</span> <span class="kw">crate</span>::{<span class="ident">BaseClass</span>, <span class="ident">Interface</span>, <span class="ident">SubClass</span>};
-<span class="kw">use</span> <span class="ident">core::convert::TryFrom</span>;
+</pre><pre class="rust"><code><span class="kw">use crate</span>::{BaseClass, Interface, SubClass};
+<span class="kw">use </span>core::convert::TryFrom;
 
-<span class="doccomment">/// Combines the Base Class and the Sub-class of a device to classify it into a `DeviceType`. Combined with the</span>
-<span class="doccomment">/// device&#39;s Interface, this can be enough to know how to drive the device.</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Copy</span>, <span class="ident">PartialEq</span>, <span class="ident">Eq</span>, <span class="ident">Debug</span>)]</span>
-<span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">DeviceType</span> {
-    <span class="ident">Unknown</span>,
+<span class="doccomment">/// Combines the Base Class and the Sub-class of a device to classify it into a `DeviceType`. Combined with the
+/// device&#39;s Interface, this can be enough to know how to drive the device.
+</span><span class="attribute">#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+</span><span class="kw">pub enum </span>DeviceType {
+    Unknown,
 
     <span class="comment">/*
      * Base Class 0x00 - Devices that predate Class Codes
-     */</span>
-    <span class="ident">LegacyVgaCompatible</span>,
-    <span class="ident">LegacyNotVgaCompatible</span>,
+     */
+    </span>LegacyVgaCompatible,
+    LegacyNotVgaCompatible,
 
     <span class="comment">/*
      * Base Class 0x01 - Mass Storage Controllers
-     */</span>
-    <span class="ident">ScsiBusController</span>,
-    <span class="ident">IdeController</span>,
-    <span class="ident">FloppyController</span>,
-    <span class="ident">IpiBusController</span>,
-    <span class="ident">RaidController</span>,
-    <span class="ident">AtaController</span>,
-    <span class="ident">SataController</span>,
-    <span class="ident">SasController</span>,
-    <span class="ident">OtherMassStorageController</span>,
+     */
+    </span>ScsiBusController,
+    IdeController,
+    FloppyController,
+    IpiBusController,
+    RaidController,
+    AtaController,
+    SataController,
+    SasController,
+    OtherMassStorageController,
 
     <span class="comment">/*
      * Base Class 0x02 - Network Controllers
-     */</span>
-    <span class="ident">EthernetController</span>,
-    <span class="ident">TokenRingController</span>,
-    <span class="ident">FddiController</span>,
-    <span class="ident">AtmController</span>,
-    <span class="ident">IsdnController</span>,
-    <span class="ident">WorldFipController</span>,
-    <span class="ident">PicmgController</span>,
-    <span class="ident">OtherNetworkController</span>,
+     */
+    </span>EthernetController,
+    TokenRingController,
+    FddiController,
+    AtmController,
+    IsdnController,
+    WorldFipController,
+    PicmgController,
+    OtherNetworkController,
 
     <span class="comment">/*
      * Base Class 0x03 - Display Controllers
-     */</span>
-    <span class="ident">VgaCompatibleController</span>,
-    <span class="ident">XgaController</span>,
-    <span class="ident">ThreeDController</span>,
-    <span class="ident">OtherDisplayController</span>,
+     */
+    </span>VgaCompatibleController,
+    XgaController,
+    ThreeDController,
+    OtherDisplayController,
 
     <span class="comment">/*
      * Base Class 0x04 - Multimedia Devices
-     */</span>
-    <span class="ident">VideoDevice</span>,
-    <span class="ident">AudioDevice</span>,
-    <span class="ident">TelephonyDevice</span>,
-    <span class="ident">OtherMultimediaDevice</span>,
+     */
+    </span>VideoDevice,
+    AudioDevice,
+    TelephonyDevice,
+    OtherMultimediaDevice,
 
     <span class="comment">/*
      * Base Class 0x05 - Memory Controllers
-     */</span>
-    <span class="ident">RamController</span>,
-    <span class="ident">FlashController</span>,
-    <span class="ident">OtherMemoryController</span>,
+     */
+    </span>RamController,
+    FlashController,
+    OtherMemoryController,
 
     <span class="comment">/*
      * Base Class 0x06 - Bridge Devices
-     */</span>
-    <span class="ident">HostBridge</span>,
-    <span class="ident">IsaBridge</span>,
-    <span class="ident">EisaBridge</span>,
-    <span class="ident">McaBridge</span>,
-    <span class="ident">PciPciBridge</span>,
-    <span class="ident">PcmciaBridge</span>,
-    <span class="ident">NuBusBridge</span>,
-    <span class="ident">CardBusBridge</span>,
-    <span class="ident">RacewayBridge</span>,
-    <span class="ident">SemiTransparentPciPciBridge</span>,
-    <span class="ident">InfinibandPciHostBridge</span>,
-    <span class="ident">OtherBridgeDevice</span>,
+     */
+    </span>HostBridge,
+    IsaBridge,
+    EisaBridge,
+    McaBridge,
+    PciPciBridge,
+    PcmciaBridge,
+    NuBusBridge,
+    CardBusBridge,
+    RacewayBridge,
+    SemiTransparentPciPciBridge,
+    InfinibandPciHostBridge,
+    OtherBridgeDevice,
 
     <span class="comment">/*
      * Base Class 0x07 - Simple Communications Controllers
-     */</span>
-    <span class="ident">SerialController</span>,
-    <span class="ident">ParallelPort</span>,
-    <span class="ident">MultiportSerialController</span>,
-    <span class="ident">Modem</span>,
-    <span class="ident">GpibController</span>,
-    <span class="ident">SmartCard</span>,
-    <span class="ident">OtherCommunicationsDevice</span>,
+     */
+    </span>SerialController,
+    ParallelPort,
+    MultiportSerialController,
+    Modem,
+    GpibController,
+    SmartCard,
+    OtherCommunicationsDevice,
 
     <span class="comment">/*
      * Base Class 0x08 - Generic System Peripherals
-     */</span>
-    <span class="ident">InterruptController</span>,
-    <span class="ident">DmaController</span>,
-    <span class="ident">SystemTimer</span>,
-    <span class="ident">RtcController</span>,
-    <span class="ident">GenericPciHotPlugController</span>,
-    <span class="ident">SdHostController</span>,
-    <span class="ident">OtherSystemPeripheral</span>,
+     */
+    </span>InterruptController,
+    DmaController,
+    SystemTimer,
+    RtcController,
+    GenericPciHotPlugController,
+    SdHostController,
+    OtherSystemPeripheral,
 
     <span class="comment">/*
      * Base Class 0x09 - Input Devices
-     */</span>
-    <span class="ident">KeyboardController</span>,
-    <span class="ident">Digitizer</span>,
-    <span class="ident">MouseController</span>,
-    <span class="ident">ScannerController</span>,
-    <span class="ident">GameportController</span>,
-    <span class="ident">OtherInputController</span>,
+     */
+    </span>KeyboardController,
+    Digitizer,
+    MouseController,
+    ScannerController,
+    GameportController,
+    OtherInputController,
 
     <span class="comment">/*
      * Base Class 0x0a - Docking Stations
-     */</span>
-    <span class="ident">GenericDockingStation</span>,
-    <span class="ident">OtherDockingStation</span>,
+     */
+    </span>GenericDockingStation,
+    OtherDockingStation,
 
     <span class="comment">/*
      * Base Class 0x0b - Processors
-     */</span>
-    <span class="ident">Processor386</span>,
-    <span class="ident">Processor486</span>,
-    <span class="ident">ProcessorPentium</span>,
-    <span class="ident">ProcessorAlpha</span>,
-    <span class="ident">ProcessorPowerPc</span>,
-    <span class="ident">ProcessorMips</span>,
-    <span class="ident">CoProcessor</span>,
+     */
+    </span>Processor386,
+    Processor486,
+    ProcessorPentium,
+    ProcessorAlpha,
+    ProcessorPowerPc,
+    ProcessorMips,
+    CoProcessor,
 
     <span class="comment">/*
      * Base Class 0x0c - Serial Bus Controllers
-     */</span>
-    <span class="ident">FirewireController</span>,
-    <span class="ident">AccessBusController</span>,
-    <span class="ident">SsaBusController</span>,
-    <span class="ident">UsbController</span>,
-    <span class="ident">FibreChannelController</span>,
-    <span class="ident">SmBusController</span>,
-    <span class="ident">InfiniBandController</span>,
-    <span class="ident">IpmiController</span>,
-    <span class="ident">SercosController</span>,
-    <span class="ident">CanBusController</span>,
+     */
+    </span>FirewireController,
+    AccessBusController,
+    SsaBusController,
+    UsbController,
+    FibreChannelController,
+    SmBusController,
+    InfiniBandController,
+    IpmiController,
+    SercosController,
+    CanBusController,
 
     <span class="comment">/*
      * Base Class 0x0d - Wireless Controllers
-     */</span>
-    <span class="ident">IrdaController</span>,
-    <span class="ident">ConsumerIrController</span>,
-    <span class="ident">RfController</span>,
-    <span class="ident">BluetoothController</span>,
-    <span class="ident">BroadbandController</span>,
-    <span class="ident">Ethernet5GHzController</span>,
-    <span class="ident">Ethernet24GHzController</span>,
-    <span class="ident">OtherWirelessController</span>,
+     */
+    </span>IrdaController,
+    ConsumerIrController,
+    RfController,
+    BluetoothController,
+    BroadbandController,
+    Ethernet5GHzController,
+    Ethernet24GHzController,
+    OtherWirelessController,
 
     <span class="comment">/*
      * Base Class 0x0e - Intelligent IO Controllers
-     */</span>
-    <span class="ident">IntelligentIoController</span>,
+     */
+    </span>IntelligentIoController,
 
     <span class="comment">/*
      * Base Class 0x0f - Satellite Communications Controllers
-     */</span>
-    <span class="ident">TvSatelliteCommunicationsController</span>,
-    <span class="ident">AudioSatelliteCommunicationsController</span>,
-    <span class="ident">VoiceSatelliteCommunicationsController</span>,
-    <span class="ident">DataSatelliteCommunicationsController</span>,
+     */
+    </span>TvSatelliteCommunicationsController,
+    AudioSatelliteCommunicationsController,
+    VoiceSatelliteCommunicationsController,
+    DataSatelliteCommunicationsController,
 
     <span class="comment">/*
      * Base Class 0x10 - Encryption and Decryption Controllers
-     */</span>
-    <span class="ident">NetworkCryptionController</span>,
-    <span class="ident">EntertainmentCryptionController</span>,
-    <span class="ident">OtherCryptionController</span>,
+     */
+    </span>NetworkCryptionController,
+    EntertainmentCryptionController,
+    OtherCryptionController,
 
     <span class="comment">/*
      * Base Class 0x11 - Data Acquisition and Signal Processing Controllers
-     */</span>
-    <span class="ident">DpioModule</span>,
-    <span class="ident">PerformanceCounter</span>,
-    <span class="ident">CommunicationsSynchronizationController</span>,
-    <span class="ident">ManagementCard</span>,
-    <span class="ident">OtherSignalProcessingController</span>,
+     */
+    </span>DpioModule,
+    PerformanceCounter,
+    CommunicationsSynchronizationController,
+    ManagementCard,
+    OtherSignalProcessingController,
 }
 
-<span class="kw">impl</span> <span class="ident">From</span><span class="op">&lt;</span>(<span class="ident">BaseClass</span>, <span class="ident">SubClass</span>)<span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">DeviceType</span> {
-    <span class="kw">fn</span> <span class="ident">from</span>(<span class="ident">class</span>: (<span class="ident">BaseClass</span>, <span class="ident">SubClass</span>)) -&gt; <span class="self">Self</span> {
-        <span class="kw">match</span> <span class="ident">class</span> {
-            (<span class="number">0x00</span>, <span class="number">0x00</span>) =&gt; <span class="ident">DeviceType::LegacyNotVgaCompatible</span>,
-            (<span class="number">0x00</span>, <span class="number">0x01</span>) =&gt; <span class="ident">DeviceType::LegacyVgaCompatible</span>,
+<span class="kw">impl </span>From&lt;(BaseClass, SubClass)&gt; <span class="kw">for </span>DeviceType {
+    <span class="kw">fn </span>from(class: (BaseClass, SubClass)) -&gt; <span class="self">Self </span>{
+        <span class="kw">match </span>class {
+            (<span class="number">0x00</span>, <span class="number">0x00</span>) =&gt; DeviceType::LegacyNotVgaCompatible,
+            (<span class="number">0x00</span>, <span class="number">0x01</span>) =&gt; DeviceType::LegacyVgaCompatible,
 
-            (<span class="number">0x01</span>, <span class="number">0x00</span>) =&gt; <span class="ident">DeviceType::ScsiBusController</span>,
-            (<span class="number">0x01</span>, <span class="number">0x01</span>) =&gt; <span class="ident">DeviceType::IdeController</span>,
-            (<span class="number">0x01</span>, <span class="number">0x02</span>) =&gt; <span class="ident">DeviceType::FloppyController</span>,
-            (<span class="number">0x01</span>, <span class="number">0x03</span>) =&gt; <span class="ident">DeviceType::IpiBusController</span>,
-            (<span class="number">0x01</span>, <span class="number">0x04</span>) =&gt; <span class="ident">DeviceType::RaidController</span>,
-            (<span class="number">0x01</span>, <span class="number">0x05</span>) =&gt; <span class="ident">DeviceType::AtaController</span>,
-            (<span class="number">0x01</span>, <span class="number">0x06</span>) =&gt; <span class="ident">DeviceType::SataController</span>,
-            (<span class="number">0x01</span>, <span class="number">0x07</span>) =&gt; <span class="ident">DeviceType::SasController</span>,
-            (<span class="number">0x01</span>, <span class="number">0x80</span>) =&gt; <span class="ident">DeviceType::OtherMassStorageController</span>,
+            (<span class="number">0x01</span>, <span class="number">0x00</span>) =&gt; DeviceType::ScsiBusController,
+            (<span class="number">0x01</span>, <span class="number">0x01</span>) =&gt; DeviceType::IdeController,
+            (<span class="number">0x01</span>, <span class="number">0x02</span>) =&gt; DeviceType::FloppyController,
+            (<span class="number">0x01</span>, <span class="number">0x03</span>) =&gt; DeviceType::IpiBusController,
+            (<span class="number">0x01</span>, <span class="number">0x04</span>) =&gt; DeviceType::RaidController,
+            (<span class="number">0x01</span>, <span class="number">0x05</span>) =&gt; DeviceType::AtaController,
+            (<span class="number">0x01</span>, <span class="number">0x06</span>) =&gt; DeviceType::SataController,
+            (<span class="number">0x01</span>, <span class="number">0x07</span>) =&gt; DeviceType::SasController,
+            (<span class="number">0x01</span>, <span class="number">0x80</span>) =&gt; DeviceType::OtherMassStorageController,
 
-            (<span class="number">0x02</span>, <span class="number">0x00</span>) =&gt; <span class="ident">DeviceType::EthernetController</span>,
-            (<span class="number">0x02</span>, <span class="number">0x01</span>) =&gt; <span class="ident">DeviceType::TokenRingController</span>,
-            (<span class="number">0x02</span>, <span class="number">0x02</span>) =&gt; <span class="ident">DeviceType::FddiController</span>,
-            (<span class="number">0x02</span>, <span class="number">0x03</span>) =&gt; <span class="ident">DeviceType::AtmController</span>,
-            (<span class="number">0x02</span>, <span class="number">0x04</span>) =&gt; <span class="ident">DeviceType::IsdnController</span>,
-            (<span class="number">0x02</span>, <span class="number">0x06</span>) =&gt; <span class="ident">DeviceType::PicmgController</span>,
-            (<span class="number">0x02</span>, <span class="number">0x80</span>) =&gt; <span class="ident">DeviceType::OtherNetworkController</span>,
+            (<span class="number">0x02</span>, <span class="number">0x00</span>) =&gt; DeviceType::EthernetController,
+            (<span class="number">0x02</span>, <span class="number">0x01</span>) =&gt; DeviceType::TokenRingController,
+            (<span class="number">0x02</span>, <span class="number">0x02</span>) =&gt; DeviceType::FddiController,
+            (<span class="number">0x02</span>, <span class="number">0x03</span>) =&gt; DeviceType::AtmController,
+            (<span class="number">0x02</span>, <span class="number">0x04</span>) =&gt; DeviceType::IsdnController,
+            (<span class="number">0x02</span>, <span class="number">0x06</span>) =&gt; DeviceType::PicmgController,
+            (<span class="number">0x02</span>, <span class="number">0x80</span>) =&gt; DeviceType::OtherNetworkController,
 
-            (<span class="number">0x03</span>, <span class="number">0x00</span>) =&gt; <span class="ident">DeviceType::VgaCompatibleController</span>,
-            (<span class="number">0x03</span>, <span class="number">0x01</span>) =&gt; <span class="ident">DeviceType::XgaController</span>,
-            (<span class="number">0x03</span>, <span class="number">0x02</span>) =&gt; <span class="ident">DeviceType::ThreeDController</span>,
-            (<span class="number">0x03</span>, <span class="number">0x80</span>) =&gt; <span class="ident">DeviceType::OtherDisplayController</span>,
+            (<span class="number">0x03</span>, <span class="number">0x00</span>) =&gt; DeviceType::VgaCompatibleController,
+            (<span class="number">0x03</span>, <span class="number">0x01</span>) =&gt; DeviceType::XgaController,
+            (<span class="number">0x03</span>, <span class="number">0x02</span>) =&gt; DeviceType::ThreeDController,
+            (<span class="number">0x03</span>, <span class="number">0x80</span>) =&gt; DeviceType::OtherDisplayController,
 
-            (<span class="number">0x04</span>, <span class="number">0x00</span>) =&gt; <span class="ident">DeviceType::VideoDevice</span>,
-            (<span class="number">0x04</span>, <span class="number">0x01</span>) =&gt; <span class="ident">DeviceType::AudioDevice</span>,
-            (<span class="number">0x04</span>, <span class="number">0x02</span>) =&gt; <span class="ident">DeviceType::TelephonyDevice</span>,
-            (<span class="number">0x04</span>, <span class="number">0x03</span>) =&gt; <span class="ident">DeviceType::OtherMultimediaDevice</span>,
+            (<span class="number">0x04</span>, <span class="number">0x00</span>) =&gt; DeviceType::VideoDevice,
+            (<span class="number">0x04</span>, <span class="number">0x01</span>) =&gt; DeviceType::AudioDevice,
+            (<span class="number">0x04</span>, <span class="number">0x02</span>) =&gt; DeviceType::TelephonyDevice,
+            (<span class="number">0x04</span>, <span class="number">0x03</span>) =&gt; DeviceType::OtherMultimediaDevice,
 
-            (<span class="number">0x05</span>, <span class="number">0x00</span>) =&gt; <span class="ident">DeviceType::RamController</span>,
-            (<span class="number">0x05</span>, <span class="number">0x01</span>) =&gt; <span class="ident">DeviceType::FlashController</span>,
-            (<span class="number">0x05</span>, <span class="number">0x02</span>) =&gt; <span class="ident">DeviceType::OtherMemoryController</span>,
+            (<span class="number">0x05</span>, <span class="number">0x00</span>) =&gt; DeviceType::RamController,
+            (<span class="number">0x05</span>, <span class="number">0x01</span>) =&gt; DeviceType::FlashController,
+            (<span class="number">0x05</span>, <span class="number">0x02</span>) =&gt; DeviceType::OtherMemoryController,
 
-            (<span class="number">0x06</span>, <span class="number">0x00</span>) =&gt; <span class="ident">DeviceType::HostBridge</span>,
-            (<span class="number">0x06</span>, <span class="number">0x01</span>) =&gt; <span class="ident">DeviceType::IsaBridge</span>,
-            (<span class="number">0x06</span>, <span class="number">0x02</span>) =&gt; <span class="ident">DeviceType::EisaBridge</span>,
-            (<span class="number">0x06</span>, <span class="number">0x03</span>) =&gt; <span class="ident">DeviceType::McaBridge</span>,
-            (<span class="number">0x06</span>, <span class="number">0x04</span>) =&gt; <span class="ident">DeviceType::PciPciBridge</span>,
-            (<span class="number">0x06</span>, <span class="number">0x05</span>) =&gt; <span class="ident">DeviceType::PcmciaBridge</span>,
-            (<span class="number">0x06</span>, <span class="number">0x06</span>) =&gt; <span class="ident">DeviceType::NuBusBridge</span>,
-            (<span class="number">0x06</span>, <span class="number">0x07</span>) =&gt; <span class="ident">DeviceType::CardBusBridge</span>,
-            (<span class="number">0x06</span>, <span class="number">0x08</span>) =&gt; <span class="ident">DeviceType::RacewayBridge</span>,
-            (<span class="number">0x06</span>, <span class="number">0x09</span>) =&gt; <span class="ident">DeviceType::SemiTransparentPciPciBridge</span>,
-            (<span class="number">0x06</span>, <span class="number">0x0a</span>) =&gt; <span class="ident">DeviceType::InfinibandPciHostBridge</span>,
-            (<span class="number">0x06</span>, <span class="number">0x80</span>) =&gt; <span class="ident">DeviceType::OtherBridgeDevice</span>,
+            (<span class="number">0x06</span>, <span class="number">0x00</span>) =&gt; DeviceType::HostBridge,
+            (<span class="number">0x06</span>, <span class="number">0x01</span>) =&gt; DeviceType::IsaBridge,
+            (<span class="number">0x06</span>, <span class="number">0x02</span>) =&gt; DeviceType::EisaBridge,
+            (<span class="number">0x06</span>, <span class="number">0x03</span>) =&gt; DeviceType::McaBridge,
+            (<span class="number">0x06</span>, <span class="number">0x04</span>) =&gt; DeviceType::PciPciBridge,
+            (<span class="number">0x06</span>, <span class="number">0x05</span>) =&gt; DeviceType::PcmciaBridge,
+            (<span class="number">0x06</span>, <span class="number">0x06</span>) =&gt; DeviceType::NuBusBridge,
+            (<span class="number">0x06</span>, <span class="number">0x07</span>) =&gt; DeviceType::CardBusBridge,
+            (<span class="number">0x06</span>, <span class="number">0x08</span>) =&gt; DeviceType::RacewayBridge,
+            (<span class="number">0x06</span>, <span class="number">0x09</span>) =&gt; DeviceType::SemiTransparentPciPciBridge,
+            (<span class="number">0x06</span>, <span class="number">0x0a</span>) =&gt; DeviceType::InfinibandPciHostBridge,
+            (<span class="number">0x06</span>, <span class="number">0x80</span>) =&gt; DeviceType::OtherBridgeDevice,
 
-            (<span class="number">0x07</span>, <span class="number">0x00</span>) =&gt; <span class="ident">DeviceType::SerialController</span>,
-            (<span class="number">0x07</span>, <span class="number">0x01</span>) =&gt; <span class="ident">DeviceType::ParallelPort</span>,
-            (<span class="number">0x07</span>, <span class="number">0x02</span>) =&gt; <span class="ident">DeviceType::MultiportSerialController</span>,
-            (<span class="number">0x07</span>, <span class="number">0x03</span>) =&gt; <span class="ident">DeviceType::Modem</span>,
-            (<span class="number">0x07</span>, <span class="number">0x04</span>) =&gt; <span class="ident">DeviceType::GpibController</span>,
-            (<span class="number">0x07</span>, <span class="number">0x05</span>) =&gt; <span class="ident">DeviceType::SmartCard</span>,
-            (<span class="number">0x07</span>, <span class="number">0x80</span>) =&gt; <span class="ident">DeviceType::OtherCommunicationsDevice</span>,
+            (<span class="number">0x07</span>, <span class="number">0x00</span>) =&gt; DeviceType::SerialController,
+            (<span class="number">0x07</span>, <span class="number">0x01</span>) =&gt; DeviceType::ParallelPort,
+            (<span class="number">0x07</span>, <span class="number">0x02</span>) =&gt; DeviceType::MultiportSerialController,
+            (<span class="number">0x07</span>, <span class="number">0x03</span>) =&gt; DeviceType::Modem,
+            (<span class="number">0x07</span>, <span class="number">0x04</span>) =&gt; DeviceType::GpibController,
+            (<span class="number">0x07</span>, <span class="number">0x05</span>) =&gt; DeviceType::SmartCard,
+            (<span class="number">0x07</span>, <span class="number">0x80</span>) =&gt; DeviceType::OtherCommunicationsDevice,
 
-            (<span class="number">0x08</span>, <span class="number">0x00</span>) =&gt; <span class="ident">DeviceType::InterruptController</span>,
-            (<span class="number">0x08</span>, <span class="number">0x01</span>) =&gt; <span class="ident">DeviceType::DmaController</span>,
-            (<span class="number">0x08</span>, <span class="number">0x02</span>) =&gt; <span class="ident">DeviceType::SystemTimer</span>,
-            (<span class="number">0x08</span>, <span class="number">0x03</span>) =&gt; <span class="ident">DeviceType::RtcController</span>,
-            (<span class="number">0x08</span>, <span class="number">0x04</span>) =&gt; <span class="ident">DeviceType::GenericPciHotPlugController</span>,
-            (<span class="number">0x08</span>, <span class="number">0x05</span>) =&gt; <span class="ident">DeviceType::SdHostController</span>,
-            (<span class="number">0x08</span>, <span class="number">0x80</span>) =&gt; <span class="ident">DeviceType::OtherSystemPeripheral</span>,
+            (<span class="number">0x08</span>, <span class="number">0x00</span>) =&gt; DeviceType::InterruptController,
+            (<span class="number">0x08</span>, <span class="number">0x01</span>) =&gt; DeviceType::DmaController,
+            (<span class="number">0x08</span>, <span class="number">0x02</span>) =&gt; DeviceType::SystemTimer,
+            (<span class="number">0x08</span>, <span class="number">0x03</span>) =&gt; DeviceType::RtcController,
+            (<span class="number">0x08</span>, <span class="number">0x04</span>) =&gt; DeviceType::GenericPciHotPlugController,
+            (<span class="number">0x08</span>, <span class="number">0x05</span>) =&gt; DeviceType::SdHostController,
+            (<span class="number">0x08</span>, <span class="number">0x80</span>) =&gt; DeviceType::OtherSystemPeripheral,
 
-            (<span class="number">0x09</span>, <span class="number">0x00</span>) =&gt; <span class="ident">DeviceType::KeyboardController</span>,
-            (<span class="number">0x09</span>, <span class="number">0x01</span>) =&gt; <span class="ident">DeviceType::Digitizer</span>,
-            (<span class="number">0x09</span>, <span class="number">0x02</span>) =&gt; <span class="ident">DeviceType::MouseController</span>,
-            (<span class="number">0x09</span>, <span class="number">0x03</span>) =&gt; <span class="ident">DeviceType::ScannerController</span>,
-            (<span class="number">0x09</span>, <span class="number">0x04</span>) =&gt; <span class="ident">DeviceType::GameportController</span>,
-            (<span class="number">0x09</span>, <span class="number">0x80</span>) =&gt; <span class="ident">DeviceType::OtherInputController</span>,
+            (<span class="number">0x09</span>, <span class="number">0x00</span>) =&gt; DeviceType::KeyboardController,
+            (<span class="number">0x09</span>, <span class="number">0x01</span>) =&gt; DeviceType::Digitizer,
+            (<span class="number">0x09</span>, <span class="number">0x02</span>) =&gt; DeviceType::MouseController,
+            (<span class="number">0x09</span>, <span class="number">0x03</span>) =&gt; DeviceType::ScannerController,
+            (<span class="number">0x09</span>, <span class="number">0x04</span>) =&gt; DeviceType::GameportController,
+            (<span class="number">0x09</span>, <span class="number">0x80</span>) =&gt; DeviceType::OtherInputController,
 
-            (<span class="number">0x0a</span>, <span class="number">0x00</span>) =&gt; <span class="ident">DeviceType::GenericDockingStation</span>,
-            (<span class="number">0x0a</span>, <span class="number">0x80</span>) =&gt; <span class="ident">DeviceType::OtherDockingStation</span>,
+            (<span class="number">0x0a</span>, <span class="number">0x00</span>) =&gt; DeviceType::GenericDockingStation,
+            (<span class="number">0x0a</span>, <span class="number">0x80</span>) =&gt; DeviceType::OtherDockingStation,
 
-            (<span class="number">0x0b</span>, <span class="number">0x00</span>) =&gt; <span class="ident">DeviceType::Processor386</span>,
-            (<span class="number">0x0b</span>, <span class="number">0x01</span>) =&gt; <span class="ident">DeviceType::Processor486</span>,
-            (<span class="number">0x0b</span>, <span class="number">0x02</span>) =&gt; <span class="ident">DeviceType::ProcessorPentium</span>,
-            (<span class="number">0x0b</span>, <span class="number">0x10</span>) =&gt; <span class="ident">DeviceType::ProcessorAlpha</span>,
-            (<span class="number">0x0b</span>, <span class="number">0x20</span>) =&gt; <span class="ident">DeviceType::ProcessorPowerPc</span>,
-            (<span class="number">0x0b</span>, <span class="number">0x30</span>) =&gt; <span class="ident">DeviceType::ProcessorMips</span>,
-            (<span class="number">0x0b</span>, <span class="number">0x40</span>) =&gt; <span class="ident">DeviceType::CoProcessor</span>,
+            (<span class="number">0x0b</span>, <span class="number">0x00</span>) =&gt; DeviceType::Processor386,
+            (<span class="number">0x0b</span>, <span class="number">0x01</span>) =&gt; DeviceType::Processor486,
+            (<span class="number">0x0b</span>, <span class="number">0x02</span>) =&gt; DeviceType::ProcessorPentium,
+            (<span class="number">0x0b</span>, <span class="number">0x10</span>) =&gt; DeviceType::ProcessorAlpha,
+            (<span class="number">0x0b</span>, <span class="number">0x20</span>) =&gt; DeviceType::ProcessorPowerPc,
+            (<span class="number">0x0b</span>, <span class="number">0x30</span>) =&gt; DeviceType::ProcessorMips,
+            (<span class="number">0x0b</span>, <span class="number">0x40</span>) =&gt; DeviceType::CoProcessor,
 
-            (<span class="number">0x0c</span>, <span class="number">0x00</span>) =&gt; <span class="ident">DeviceType::FirewireController</span>,
-            (<span class="number">0x0c</span>, <span class="number">0x01</span>) =&gt; <span class="ident">DeviceType::AccessBusController</span>,
-            (<span class="number">0x0c</span>, <span class="number">0x02</span>) =&gt; <span class="ident">DeviceType::SsaBusController</span>,
-            (<span class="number">0x0c</span>, <span class="number">0x03</span>) =&gt; <span class="ident">DeviceType::UsbController</span>,
-            (<span class="number">0x0c</span>, <span class="number">0x04</span>) =&gt; <span class="ident">DeviceType::FibreChannelController</span>,
-            (<span class="number">0x0c</span>, <span class="number">0x05</span>) =&gt; <span class="ident">DeviceType::SmBusController</span>,
-            (<span class="number">0x0c</span>, <span class="number">0x06</span>) =&gt; <span class="ident">DeviceType::InfiniBandController</span>,
-            (<span class="number">0x0c</span>, <span class="number">0x07</span>) =&gt; <span class="ident">DeviceType::IpmiController</span>,
-            (<span class="number">0x0c</span>, <span class="number">0x08</span>) =&gt; <span class="ident">DeviceType::SercosController</span>,
-            (<span class="number">0x0c</span>, <span class="number">0x09</span>) =&gt; <span class="ident">DeviceType::CanBusController</span>,
+            (<span class="number">0x0c</span>, <span class="number">0x00</span>) =&gt; DeviceType::FirewireController,
+            (<span class="number">0x0c</span>, <span class="number">0x01</span>) =&gt; DeviceType::AccessBusController,
+            (<span class="number">0x0c</span>, <span class="number">0x02</span>) =&gt; DeviceType::SsaBusController,
+            (<span class="number">0x0c</span>, <span class="number">0x03</span>) =&gt; DeviceType::UsbController,
+            (<span class="number">0x0c</span>, <span class="number">0x04</span>) =&gt; DeviceType::FibreChannelController,
+            (<span class="number">0x0c</span>, <span class="number">0x05</span>) =&gt; DeviceType::SmBusController,
+            (<span class="number">0x0c</span>, <span class="number">0x06</span>) =&gt; DeviceType::InfiniBandController,
+            (<span class="number">0x0c</span>, <span class="number">0x07</span>) =&gt; DeviceType::IpmiController,
+            (<span class="number">0x0c</span>, <span class="number">0x08</span>) =&gt; DeviceType::SercosController,
+            (<span class="number">0x0c</span>, <span class="number">0x09</span>) =&gt; DeviceType::CanBusController,
 
-            (<span class="number">0x0d</span>, <span class="number">0x00</span>) =&gt; <span class="ident">DeviceType::IrdaController</span>,
-            (<span class="number">0x0d</span>, <span class="number">0x01</span>) =&gt; <span class="ident">DeviceType::ConsumerIrController</span>,
-            (<span class="number">0x0d</span>, <span class="number">0x10</span>) =&gt; <span class="ident">DeviceType::RfController</span>,
-            (<span class="number">0x0d</span>, <span class="number">0x11</span>) =&gt; <span class="ident">DeviceType::BluetoothController</span>,
-            (<span class="number">0x0d</span>, <span class="number">0x12</span>) =&gt; <span class="ident">DeviceType::BroadbandController</span>,
-            (<span class="number">0x0d</span>, <span class="number">0x20</span>) =&gt; <span class="ident">DeviceType::Ethernet5GHzController</span>,
-            (<span class="number">0x0d</span>, <span class="number">0x21</span>) =&gt; <span class="ident">DeviceType::Ethernet24GHzController</span>,
-            (<span class="number">0x0d</span>, <span class="number">0x80</span>) =&gt; <span class="ident">DeviceType::OtherWirelessController</span>,
+            (<span class="number">0x0d</span>, <span class="number">0x00</span>) =&gt; DeviceType::IrdaController,
+            (<span class="number">0x0d</span>, <span class="number">0x01</span>) =&gt; DeviceType::ConsumerIrController,
+            (<span class="number">0x0d</span>, <span class="number">0x10</span>) =&gt; DeviceType::RfController,
+            (<span class="number">0x0d</span>, <span class="number">0x11</span>) =&gt; DeviceType::BluetoothController,
+            (<span class="number">0x0d</span>, <span class="number">0x12</span>) =&gt; DeviceType::BroadbandController,
+            (<span class="number">0x0d</span>, <span class="number">0x20</span>) =&gt; DeviceType::Ethernet5GHzController,
+            (<span class="number">0x0d</span>, <span class="number">0x21</span>) =&gt; DeviceType::Ethernet24GHzController,
+            (<span class="number">0x0d</span>, <span class="number">0x80</span>) =&gt; DeviceType::OtherWirelessController,
 
-            (<span class="number">0x0e</span>, <span class="number">0x00</span>) =&gt; <span class="ident">DeviceType::IntelligentIoController</span>,
+            (<span class="number">0x0e</span>, <span class="number">0x00</span>) =&gt; DeviceType::IntelligentIoController,
 
-            (<span class="number">0x0f</span>, <span class="number">0x00</span>) =&gt; <span class="ident">DeviceType::TvSatelliteCommunicationsController</span>,
-            (<span class="number">0x0f</span>, <span class="number">0x01</span>) =&gt; <span class="ident">DeviceType::AudioSatelliteCommunicationsController</span>,
-            (<span class="number">0x0f</span>, <span class="number">0x02</span>) =&gt; <span class="ident">DeviceType::VoiceSatelliteCommunicationsController</span>,
-            (<span class="number">0x0f</span>, <span class="number">0x03</span>) =&gt; <span class="ident">DeviceType::DataSatelliteCommunicationsController</span>,
+            (<span class="number">0x0f</span>, <span class="number">0x00</span>) =&gt; DeviceType::TvSatelliteCommunicationsController,
+            (<span class="number">0x0f</span>, <span class="number">0x01</span>) =&gt; DeviceType::AudioSatelliteCommunicationsController,
+            (<span class="number">0x0f</span>, <span class="number">0x02</span>) =&gt; DeviceType::VoiceSatelliteCommunicationsController,
+            (<span class="number">0x0f</span>, <span class="number">0x03</span>) =&gt; DeviceType::DataSatelliteCommunicationsController,
 
-            (<span class="number">0x10</span>, <span class="number">0x00</span>) =&gt; <span class="ident">DeviceType::NetworkCryptionController</span>,
-            (<span class="number">0x10</span>, <span class="number">0x10</span>) =&gt; <span class="ident">DeviceType::EntertainmentCryptionController</span>,
-            (<span class="number">0x10</span>, <span class="number">0x80</span>) =&gt; <span class="ident">DeviceType::OtherCryptionController</span>,
+            (<span class="number">0x10</span>, <span class="number">0x00</span>) =&gt; DeviceType::NetworkCryptionController,
+            (<span class="number">0x10</span>, <span class="number">0x10</span>) =&gt; DeviceType::EntertainmentCryptionController,
+            (<span class="number">0x10</span>, <span class="number">0x80</span>) =&gt; DeviceType::OtherCryptionController,
 
-            (<span class="number">0x11</span>, <span class="number">0x00</span>) =&gt; <span class="ident">DeviceType::DpioModule</span>,
-            (<span class="number">0x11</span>, <span class="number">0x01</span>) =&gt; <span class="ident">DeviceType::PerformanceCounter</span>,
-            (<span class="number">0x11</span>, <span class="number">0x10</span>) =&gt; <span class="ident">DeviceType::CommunicationsSynchronizationController</span>,
-            (<span class="number">0x11</span>, <span class="number">0x20</span>) =&gt; <span class="ident">DeviceType::ManagementCard</span>,
-            (<span class="number">0x11</span>, <span class="number">0x80</span>) =&gt; <span class="ident">DeviceType::OtherSignalProcessingController</span>,
+            (<span class="number">0x11</span>, <span class="number">0x00</span>) =&gt; DeviceType::DpioModule,
+            (<span class="number">0x11</span>, <span class="number">0x01</span>) =&gt; DeviceType::PerformanceCounter,
+            (<span class="number">0x11</span>, <span class="number">0x10</span>) =&gt; DeviceType::CommunicationsSynchronizationController,
+            (<span class="number">0x11</span>, <span class="number">0x20</span>) =&gt; DeviceType::ManagementCard,
+            (<span class="number">0x11</span>, <span class="number">0x80</span>) =&gt; DeviceType::OtherSignalProcessingController,
 
-            <span class="kw">_</span> =&gt; <span class="ident">DeviceType::Unknown</span>,
+            <span class="kw">_ </span>=&gt; DeviceType::Unknown,
         }
     }
 }
 
-<span class="doccomment">/// The different register-level programming interfaces defined for USB controllers (devices of type</span>
-<span class="doccomment">/// `DeviceType::UsbController`).</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Copy</span>, <span class="ident">PartialEq</span>, <span class="ident">Eq</span>, <span class="ident">Debug</span>)]</span>
-<span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">UsbType</span> {
-    <span class="ident">Uhci</span>,
-    <span class="ident">Ohci</span>,
-    <span class="ident">Ehci</span>,
-    <span class="ident">Xhci</span>,
-    <span class="ident">OtherInterface</span>,
-    <span class="ident">Device</span>,
+<span class="doccomment">/// The different register-level programming interfaces defined for USB controllers (devices of type
+/// `DeviceType::UsbController`).
+</span><span class="attribute">#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+</span><span class="kw">pub enum </span>UsbType {
+    Uhci,
+    Ohci,
+    Ehci,
+    Xhci,
+    OtherInterface,
+    Device,
 }
 
-<span class="kw">impl</span> <span class="ident">TryFrom</span><span class="op">&lt;</span><span class="ident">Interface</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">UsbType</span> {
-    <span class="kw">type</span> <span class="ident">Error</span> <span class="op">=</span> ();
+<span class="kw">impl </span>TryFrom&lt;Interface&gt; <span class="kw">for </span>UsbType {
+    <span class="kw">type </span>Error = ();
 
-    <span class="kw">fn</span> <span class="ident">try_from</span>(<span class="ident">interface</span>: <span class="ident">Interface</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="self">Self</span>, <span class="ident"><span class="self">Self</span>::Error</span><span class="op">&gt;</span> {
-        <span class="kw">match</span> <span class="ident">interface</span> {
-            <span class="number">0x00</span> =&gt; <span class="prelude-val">Ok</span>(<span class="ident">UsbType::Uhci</span>),
-            <span class="number">0x10</span> =&gt; <span class="prelude-val">Ok</span>(<span class="ident">UsbType::Ohci</span>),
-            <span class="number">0x20</span> =&gt; <span class="prelude-val">Ok</span>(<span class="ident">UsbType::Ehci</span>),
-            <span class="number">0x30</span> =&gt; <span class="prelude-val">Ok</span>(<span class="ident">UsbType::Xhci</span>),
-            <span class="number">0x80</span> =&gt; <span class="prelude-val">Ok</span>(<span class="ident">UsbType::OtherInterface</span>),
-            <span class="number">0xfe</span> =&gt; <span class="prelude-val">Ok</span>(<span class="ident">UsbType::Device</span>),
-            <span class="kw">_</span> =&gt; <span class="prelude-val">Err</span>(()),
+    <span class="kw">fn </span>try_from(interface: Interface) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, <span class="self">Self</span>::Error&gt; {
+        <span class="kw">match </span>interface {
+            <span class="number">0x00 </span>=&gt; <span class="prelude-val">Ok</span>(UsbType::Uhci),
+            <span class="number">0x10 </span>=&gt; <span class="prelude-val">Ok</span>(UsbType::Ohci),
+            <span class="number">0x20 </span>=&gt; <span class="prelude-val">Ok</span>(UsbType::Ehci),
+            <span class="number">0x30 </span>=&gt; <span class="prelude-val">Ok</span>(UsbType::Xhci),
+            <span class="number">0x80 </span>=&gt; <span class="prelude-val">Ok</span>(UsbType::OtherInterface),
+            <span class="number">0xfe </span>=&gt; <span class="prelude-val">Ok</span>(UsbType::Device),
+            <span class="kw">_ </span>=&gt; <span class="prelude-val">Err</span>(()),
         }
     }
 }
 </code></pre></div>
-</section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="pci_types" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.65.0-nightly (34a6cae28 2022-08-09)" ></div></body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="pci_types" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.65.0-nightly (b44197abb 2022-09-05)" ></div></body></html>

@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/work/poplar/poplar/lib/poplar/src/syscall/pci.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>pci.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../storage.js"></script><script defer src="../../../source-script.js"></script><script defer src="../../../source-files.js"></script><script defer src="../../../main.js"></script><noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../../poplar/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div></a><h2 class="location"></h2></nav><nav class="sidebar"><a class="sidebar-logo" href="../../../poplar/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div></a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../../poplar/index.html"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></a><nav class="sub"><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><button type="button">?</button></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../wheel.svg"></a></div></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/work/poplar/poplar/lib/poplar/src/syscall/pci.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>pci.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" href="../../../normalize.css"><link rel="stylesheet" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" href="../../../ayu.css" disabled><link rel="stylesheet" href="../../../dark.css" disabled><link rel="stylesheet" href="../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../storage.js"></script><script defer src="../../../source-script.js"></script><script defer src="../../../source-files.js"></script><script defer src="../../../main.js"></script><noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../../poplar/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div></a><h2 class="location"></h2></nav><nav class="sidebar"><a class="sidebar-logo" href="../../../poplar/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div></a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../../poplar/index.html"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></a><nav class="sub"><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><button type="button">?</button></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../wheel.svg"></a></div></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
 <span id="2">2</span>
 <span id="3">3</span>
 <span id="4">4</span>
@@ -112,119 +112,119 @@
 <span id="112">112</span>
 <span id="113">113</span>
 <span id="114">114</span>
-</pre><pre class="rust"><code><span class="kw">use</span> <span class="kw">super</span>::{<span class="ident">raw</span>, <span class="ident">SYSCALL_PCI_GET_INFO</span>};
-<span class="kw">use</span> <span class="kw">crate</span>::{<span class="ident">bit_field::BitField</span>, <span class="ident">Handle</span>};
-<span class="kw">use</span> <span class="ident">core::convert::TryFrom</span>;
-<span class="kw">use</span> <span class="ident">pci_types</span>::{<span class="ident">BaseClass</span>, <span class="ident">DeviceId</span>, <span class="ident">DeviceRevision</span>, <span class="ident">Interface</span>, <span class="ident">PciAddress</span>, <span class="ident">SubClass</span>, <span class="ident">VendorId</span>};
+</pre><pre class="rust"><code><span class="kw">use super</span>::{raw, SYSCALL_PCI_GET_INFO};
+<span class="kw">use crate</span>::{bit_field::BitField, Handle};
+<span class="kw">use </span>core::convert::TryFrom;
+<span class="kw">use </span>pci_types::{BaseClass, DeviceId, DeviceRevision, Interface, PciAddress, SubClass, VendorId};
 
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">Default</span>)]</span>
-<span class="attribute">#[<span class="ident">repr</span>(<span class="ident">C</span>)]</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">PciDeviceInfo</span> {
-    <span class="kw">pub</span> <span class="ident">address</span>: <span class="ident">PciAddress</span>,
-    <span class="doccomment">/// The ID of the manufacturer of the device. These are allocated by PCI SIG.</span>
-    <span class="kw">pub</span> <span class="ident">vendor_id</span>: <span class="ident">VendorId</span>,
-    <span class="doccomment">/// The ID of the particular device. These are allocated by the vendor.</span>
-    <span class="kw">pub</span> <span class="ident">device_id</span>: <span class="ident">DeviceId</span>,
-    <span class="doccomment">/// A device-specific revision identifier. These are chosen by the vendor, and should be thought of as a</span>
-    <span class="doccomment">/// vendor-defined extension of the device ID.</span>
-    <span class="kw">pub</span> <span class="ident">revision</span>: <span class="ident">DeviceRevision</span>,
-    <span class="doccomment">/// The upper byte of the class-code. This identifies the Base Class of the device.</span>
-    <span class="kw">pub</span> <span class="ident">class</span>: <span class="ident">BaseClass</span>,
-    <span class="doccomment">/// The middle byte of the class-code. This identifies the Sub Class of the device.</span>
-    <span class="kw">pub</span> <span class="ident">sub_class</span>: <span class="ident">SubClass</span>,
-    <span class="doccomment">/// The lower byte of the class-code. This may indicate a specific register-level programming interface of the</span>
-    <span class="doccomment">/// device.</span>
-    <span class="kw">pub</span> <span class="ident">interface</span>: <span class="ident">Interface</span>,
-    <span class="kw">pub</span> <span class="ident">bars</span>: [<span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Bar</span><span class="op">&gt;</span>; <span class="number">6</span>],
+<span class="attribute">#[derive(Debug, Default)]
+#[repr(C)]
+</span><span class="kw">pub struct </span>PciDeviceInfo {
+    <span class="kw">pub </span>address: PciAddress,
+    <span class="doccomment">/// The ID of the manufacturer of the device. These are allocated by PCI SIG.
+    </span><span class="kw">pub </span>vendor_id: VendorId,
+    <span class="doccomment">/// The ID of the particular device. These are allocated by the vendor.
+    </span><span class="kw">pub </span>device_id: DeviceId,
+    <span class="doccomment">/// A device-specific revision identifier. These are chosen by the vendor, and should be thought of as a
+    /// vendor-defined extension of the device ID.
+    </span><span class="kw">pub </span>revision: DeviceRevision,
+    <span class="doccomment">/// The upper byte of the class-code. This identifies the Base Class of the device.
+    </span><span class="kw">pub </span>class: BaseClass,
+    <span class="doccomment">/// The middle byte of the class-code. This identifies the Sub Class of the device.
+    </span><span class="kw">pub </span>sub_class: SubClass,
+    <span class="doccomment">/// The lower byte of the class-code. This may indicate a specific register-level programming interface of the
+    /// device.
+    </span><span class="kw">pub </span>interface: Interface,
+    <span class="kw">pub </span>bars: [<span class="prelude-ty">Option</span>&lt;Bar&gt;; <span class="number">6</span>],
 }
 
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>)]</span>
-<span class="attribute">#[<span class="ident">repr</span>(<span class="ident">C</span>)]</span>
-<span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">Bar</span> {
-    <span class="ident">Memory32</span> { <span class="ident">memory_object</span>: <span class="ident">Handle</span>, <span class="ident">size</span>: <span class="ident">u32</span> },
-    <span class="ident">Memory64</span> { <span class="ident">memory_object</span>: <span class="ident">Handle</span>, <span class="ident">size</span>: <span class="ident">u64</span> },
+<span class="attribute">#[derive(Debug)]
+#[repr(C)]
+</span><span class="kw">pub enum </span>Bar {
+    Memory32 { memory_object: Handle, size: u32 },
+    Memory64 { memory_object: Handle, size: u64 },
 }
 
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Copy</span>, <span class="ident">PartialEq</span>, <span class="ident">Eq</span>, <span class="ident">Debug</span>)]</span>
-<span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">PciGetInfoError</span> {
-    <span class="ident">TaskDoesNotHaveCorrectCapability</span>,
-    <span class="ident">BufferPointerInvalid</span>,
-    <span class="ident">BufferNotLargeEnough</span>(<span class="ident">u32</span>),
-    <span class="ident">PlatformDoesNotSupportPci</span>,
+<span class="attribute">#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+</span><span class="kw">pub enum </span>PciGetInfoError {
+    TaskDoesNotHaveCorrectCapability,
+    BufferPointerInvalid,
+    BufferNotLargeEnough(u32),
+    PlatformDoesNotSupportPci,
 }
 
-<span class="comment">// TODO: it would be cool if we could do this with the define_error_type macro</span>
-<span class="kw">impl</span> <span class="ident">TryFrom</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">PciGetInfoError</span> {
-    <span class="kw">type</span> <span class="ident">Error</span> <span class="op">=</span> ();
+<span class="comment">// TODO: it would be cool if we could do this with the define_error_type macro
+</span><span class="kw">impl </span>TryFrom&lt;usize&gt; <span class="kw">for </span>PciGetInfoError {
+    <span class="kw">type </span>Error = ();
 
-    <span class="kw">fn</span> <span class="ident">try_from</span>(<span class="ident">status</span>: <span class="ident">usize</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="self">Self</span>, <span class="ident"><span class="self">Self</span>::Error</span><span class="op">&gt;</span> {
-        <span class="kw">match</span> <span class="ident">status</span>.<span class="ident">get_bits</span>(<span class="number">0</span>..<span class="number">16</span>) {
-            <span class="number">1</span> =&gt; <span class="prelude-val">Ok</span>(<span class="ident"><span class="self">Self</span>::TaskDoesNotHaveCorrectCapability</span>),
-            <span class="number">2</span> =&gt; <span class="prelude-val">Ok</span>(<span class="ident"><span class="self">Self</span>::BufferPointerInvalid</span>),
-            <span class="number">3</span> =&gt; <span class="prelude-val">Ok</span>(<span class="ident"><span class="self">Self</span>::BufferNotLargeEnough</span>(<span class="ident">status</span>.<span class="ident">get_bits</span>(<span class="number">16</span>..<span class="number">48</span>) <span class="kw">as</span> <span class="ident">u32</span>)),
-            <span class="number">4</span> =&gt; <span class="prelude-val">Ok</span>(<span class="ident"><span class="self">Self</span>::PlatformDoesNotSupportPci</span>),
-            <span class="kw">_</span> =&gt; <span class="prelude-val">Err</span>(()),
+    <span class="kw">fn </span>try_from(status: usize) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, <span class="self">Self</span>::Error&gt; {
+        <span class="kw">match </span>status.get_bits(<span class="number">0</span>..<span class="number">16</span>) {
+            <span class="number">1 </span>=&gt; <span class="prelude-val">Ok</span>(<span class="self">Self</span>::TaskDoesNotHaveCorrectCapability),
+            <span class="number">2 </span>=&gt; <span class="prelude-val">Ok</span>(<span class="self">Self</span>::BufferPointerInvalid),
+            <span class="number">3 </span>=&gt; <span class="prelude-val">Ok</span>(<span class="self">Self</span>::BufferNotLargeEnough(status.get_bits(<span class="number">16</span>..<span class="number">48</span>) <span class="kw">as </span>u32)),
+            <span class="number">4 </span>=&gt; <span class="prelude-val">Ok</span>(<span class="self">Self</span>::PlatformDoesNotSupportPci),
+            <span class="kw">_ </span>=&gt; <span class="prelude-val">Err</span>(()),
         }
     }
 }
 
-<span class="kw">impl</span> <span class="ident">Into</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">PciGetInfoError</span> {
-    <span class="kw">fn</span> <span class="ident">into</span>(<span class="self">self</span>) -&gt; <span class="ident">usize</span> {
-        <span class="kw">match</span> <span class="self">self</span> {
-            <span class="ident"><span class="self">Self</span>::TaskDoesNotHaveCorrectCapability</span> =&gt; <span class="number">1</span>,
-            <span class="ident"><span class="self">Self</span>::BufferPointerInvalid</span> =&gt; <span class="number">2</span>,
-            <span class="ident"><span class="self">Self</span>::BufferNotLargeEnough</span>(<span class="ident">num_needed</span>) =&gt; {
-                <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">result</span> <span class="op">=</span> <span class="number">3</span>;
-                <span class="ident">result</span>.<span class="ident">set_bits</span>(<span class="number">16</span>..<span class="number">48</span>, <span class="ident">num_needed</span> <span class="kw">as</span> <span class="ident">usize</span>);
-                <span class="ident">result</span>
+<span class="kw">impl </span>Into&lt;usize&gt; <span class="kw">for </span>PciGetInfoError {
+    <span class="kw">fn </span>into(<span class="self">self</span>) -&gt; usize {
+        <span class="kw">match </span><span class="self">self </span>{
+            <span class="self">Self</span>::TaskDoesNotHaveCorrectCapability =&gt; <span class="number">1</span>,
+            <span class="self">Self</span>::BufferPointerInvalid =&gt; <span class="number">2</span>,
+            <span class="self">Self</span>::BufferNotLargeEnough(num_needed) =&gt; {
+                <span class="kw">let </span><span class="kw-2">mut </span>result = <span class="number">3</span>;
+                result.set_bits(<span class="number">16</span>..<span class="number">48</span>, num_needed <span class="kw">as </span>usize);
+                result
             }
-            <span class="ident"><span class="self">Self</span>::PlatformDoesNotSupportPci</span> =&gt; <span class="number">4</span>,
+            <span class="self">Self</span>::PlatformDoesNotSupportPci =&gt; <span class="number">4</span>,
         }
     }
 }
 
-<span class="doccomment">/// Makes a raw `pci_get_info` system call, given a pointer to a buffer and the size of the buffer. On success,</span>
-<span class="doccomment">/// returns the number of entries written into the buffer. For a nicer interface to this system call, see</span>
-<span class="doccomment">/// [`pci_get_info_slice`] or [`pci_get_info_vec`].</span>
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">pci_get_info</span>(<span class="ident">buffer_ptr</span>: <span class="kw-2">*mut</span> <span class="ident">PciDeviceInfo</span>, <span class="ident">buffer_size</span>: <span class="ident">usize</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">usize</span>, <span class="ident">PciGetInfoError</span><span class="op">&gt;</span> {
-    <span class="kw">let</span> <span class="ident">result</span> <span class="op">=</span> <span class="kw">unsafe</span> { <span class="ident">raw::syscall2</span>(<span class="ident">SYSCALL_PCI_GET_INFO</span>, <span class="ident">buffer_ptr</span> <span class="kw">as</span> <span class="ident">usize</span>, <span class="ident">buffer_size</span>) };
+<span class="doccomment">/// Makes a raw `pci_get_info` system call, given a pointer to a buffer and the size of the buffer. On success,
+/// returns the number of entries written into the buffer. For a nicer interface to this system call, see
+/// [`pci_get_info_slice`] or [`pci_get_info_vec`].
+</span><span class="kw">pub fn </span>pci_get_info(buffer_ptr: <span class="kw-2">*mut </span>PciDeviceInfo, buffer_size: usize) -&gt; <span class="prelude-ty">Result</span>&lt;usize, PciGetInfoError&gt; {
+    <span class="kw">let </span>result = <span class="kw">unsafe </span>{ raw::syscall2(SYSCALL_PCI_GET_INFO, buffer_ptr <span class="kw">as </span>usize, buffer_size) };
 
-    <span class="kw">if</span> <span class="ident">result</span>.<span class="ident">get_bits</span>(<span class="number">0</span>..<span class="number">16</span>) <span class="op">==</span> <span class="number">0</span> {
-        <span class="prelude-val">Ok</span>(<span class="ident">result</span>.<span class="ident">get_bits</span>(<span class="number">16</span>..<span class="number">48</span>))
-    } <span class="kw">else</span> {
-        <span class="prelude-val">Err</span>(<span class="ident">PciGetInfoError::try_from</span>(<span class="ident">result</span>).<span class="ident">unwrap</span>())
+    <span class="kw">if </span>result.get_bits(<span class="number">0</span>..<span class="number">16</span>) == <span class="number">0 </span>{
+        <span class="prelude-val">Ok</span>(result.get_bits(<span class="number">16</span>..<span class="number">48</span>))
+    } <span class="kw">else </span>{
+        <span class="prelude-val">Err</span>(PciGetInfoError::try_from(result).unwrap())
     }
 }
 
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">pci_get_info_slice</span>(<span class="ident">buffer</span>: <span class="kw-2">&amp;mut</span> [<span class="ident">PciDeviceInfo</span>]) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="kw-2">&amp;mut</span> [<span class="ident">PciDeviceInfo</span>], <span class="ident">PciGetInfoError</span><span class="op">&gt;</span> {
-    <span class="kw">match</span> <span class="ident">pci_get_info</span>(
-        <span class="kw">if</span> <span class="ident">buffer</span>.<span class="ident">len</span>() <span class="op">==</span> <span class="number">0</span> { <span class="number">0x0</span> <span class="kw">as</span> <span class="kw-2">*mut</span> <span class="ident">PciDeviceInfo</span> } <span class="kw">else</span> { <span class="ident">buffer</span>.<span class="ident">as_mut_ptr</span>() },
-        <span class="ident">buffer</span>.<span class="ident">len</span>(),
+<span class="kw">pub fn </span>pci_get_info_slice(buffer: <span class="kw-2">&amp;mut </span>[PciDeviceInfo]) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="kw-2">&amp;mut </span>[PciDeviceInfo], PciGetInfoError&gt; {
+    <span class="kw">match </span>pci_get_info(
+        <span class="kw">if </span>buffer.len() == <span class="number">0 </span>{ <span class="number">0x0 </span><span class="kw">as </span><span class="kw-2">*mut </span>PciDeviceInfo } <span class="kw">else </span>{ buffer.as_mut_ptr() },
+        buffer.len(),
     ) {
-        <span class="prelude-val">Ok</span>(<span class="ident">valid_entries</span>) =&gt; <span class="prelude-val">Ok</span>(<span class="kw-2">&amp;mut</span> <span class="ident">buffer</span>[<span class="number">0</span>..<span class="ident">valid_entries</span>]),
-        <span class="prelude-val">Err</span>(<span class="ident">err</span>) =&gt; <span class="prelude-val">Err</span>(<span class="ident">err</span>),
+        <span class="prelude-val">Ok</span>(valid_entries) =&gt; <span class="prelude-val">Ok</span>(<span class="kw-2">&amp;mut </span>buffer[<span class="number">0</span>..valid_entries]),
+        <span class="prelude-val">Err</span>(err) =&gt; <span class="prelude-val">Err</span>(err),
     }
 }
 
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;can_alloc&quot;</span>)]</span>
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">pci_get_info_vec</span>() -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">alloc::vec::Vec</span><span class="op">&lt;</span><span class="ident">PciDeviceInfo</span><span class="op">&gt;</span>, <span class="ident">PciGetInfoError</span><span class="op">&gt;</span> {
-    <span class="kw">use</span> <span class="ident">alloc::vec::Vec</span>;
+<span class="attribute">#[cfg(feature = <span class="string">&quot;can_alloc&quot;</span>)]
+</span><span class="kw">pub fn </span>pci_get_info_vec() -&gt; <span class="prelude-ty">Result</span>&lt;alloc::vec::Vec&lt;PciDeviceInfo&gt;, PciGetInfoError&gt; {
+    <span class="kw">use </span>alloc::vec::Vec;
 
-    <span class="comment">// Make an initial call to find out how many descriptors there are</span>
-    <span class="kw">let</span> <span class="ident">num_descriptors</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">pci_get_info</span>(<span class="number">0x0</span> <span class="kw">as</span> <span class="kw-2">*mut</span> <span class="ident">PciDeviceInfo</span>, <span class="number">0</span>) {
+    <span class="comment">// Make an initial call to find out how many descriptors there are
+    </span><span class="kw">let </span>num_descriptors = <span class="kw">match </span>pci_get_info(<span class="number">0x0 </span><span class="kw">as </span><span class="kw-2">*mut </span>PciDeviceInfo, <span class="number">0</span>) {
         <span class="prelude-val">Ok</span>(<span class="kw">_</span>) =&gt; <span class="macro">panic!</span>(<span class="string">&quot;pci_get_info with null buffer succeeded.&quot;</span>),
-        <span class="prelude-val">Err</span>(<span class="ident">PciGetInfoError::BufferNotLargeEnough</span>(<span class="ident">num_descriptors</span>)) =&gt; <span class="ident">num_descriptors</span> <span class="kw">as</span> <span class="ident">usize</span>,
-        <span class="prelude-val">Err</span>(<span class="ident">err</span>) =&gt; <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">err</span>),
+        <span class="prelude-val">Err</span>(PciGetInfoError::BufferNotLargeEnough(num_descriptors)) =&gt; num_descriptors <span class="kw">as </span>usize,
+        <span class="prelude-val">Err</span>(err) =&gt; <span class="kw">return </span><span class="prelude-val">Err</span>(err),
     };
 
-    <span class="comment">// Then actually fetch the data</span>
-    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">descriptors</span> <span class="op">=</span> <span class="ident">Vec::with_capacity</span>(<span class="ident">num_descriptors</span>);
-    <span class="macro">assert_eq!</span>(<span class="ident">pci_get_info</span>(<span class="ident">descriptors</span>.<span class="ident">as_mut_ptr</span>(), <span class="ident">num_descriptors</span>)<span class="question-mark">?</span>, <span class="ident">num_descriptors</span>);
-    <span class="kw">unsafe</span> {
-        <span class="ident">descriptors</span>.<span class="ident">set_len</span>(<span class="ident">num_descriptors</span>);
+    <span class="comment">// Then actually fetch the data
+    </span><span class="kw">let </span><span class="kw-2">mut </span>descriptors = Vec::with_capacity(num_descriptors);
+    <span class="macro">assert_eq!</span>(pci_get_info(descriptors.as_mut_ptr(), num_descriptors)<span class="question-mark">?</span>, num_descriptors);
+    <span class="kw">unsafe </span>{
+        descriptors.set_len(num_descriptors);
     }
 
-    <span class="prelude-val">Ok</span>(<span class="ident">descriptors</span>)
+    <span class="prelude-val">Ok</span>(descriptors)
 }
 </code></pre></div>
-</section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="poplar" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.65.0-nightly (34a6cae28 2022-08-09)" ></div></body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="poplar" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.65.0-nightly (b44197abb 2022-09-05)" ></div></body></html>

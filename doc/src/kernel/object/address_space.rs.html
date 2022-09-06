@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/object/address_space.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>address_space.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../storage.js"></script><script defer src="../../../source-script.js"></script><script defer src="../../../source-files.js"></script><script defer src="../../../main.js"></script><noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../../kernel/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div></a><h2 class="location"></h2></nav><nav class="sidebar"><a class="sidebar-logo" href="../../../kernel/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div></a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../../kernel/index.html"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></a><nav class="sub"><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><button type="button">?</button></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../wheel.svg"></a></div></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/object/address_space.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>address_space.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" href="../../../normalize.css"><link rel="stylesheet" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" href="../../../ayu.css" disabled><link rel="stylesheet" href="../../../dark.css" disabled><link rel="stylesheet" href="../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../storage.js"></script><script defer src="../../../source-script.js"></script><script defer src="../../../source-files.js"></script><script defer src="../../../main.js"></script><noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../../kernel/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div></a><h2 class="location"></h2></nav><nav class="sidebar"><a class="sidebar-logo" href="../../../kernel/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div></a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../../kernel/index.html"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></a><nav class="sub"><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><button type="button">?</button></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../wheel.svg"></a></div></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
 <span id="2">2</span>
 <span id="3">3</span>
 <span id="4">4</span>
@@ -146,153 +146,153 @@
 <span id="146">146</span>
 <span id="147">147</span>
 <span id="148">148</span>
-</pre><pre class="rust"><code><span class="kw">use</span> <span class="kw">super</span>::{<span class="ident">alloc_kernel_object_id</span>, <span class="ident">memory_object::MemoryObject</span>, <span class="ident">KernelObject</span>, <span class="ident">KernelObjectId</span>};
-<span class="kw">use</span> <span class="kw">crate</span>::{
-    <span class="ident">memory</span>::{<span class="ident">PhysicalMemoryManager</span>, <span class="ident">Stack</span>},
-    <span class="ident">Platform</span>,
+</pre><pre class="rust"><code><span class="kw">use super</span>::{alloc_kernel_object_id, memory_object::MemoryObject, KernelObject, KernelObjectId};
+<span class="kw">use crate</span>::{
+    memory::{PhysicalMemoryManager, Stack},
+    Platform,
 };
-<span class="kw">use</span> <span class="ident">alloc</span>::{<span class="ident">sync::Arc</span>, <span class="ident">vec::Vec</span>};
-<span class="kw">use</span> <span class="ident">hal::memory</span>::{<span class="ident">mebibytes</span>, <span class="ident">Bytes</span>, <span class="ident">FrameAllocator</span>, <span class="ident">PageTable</span>, <span class="ident">VirtualAddress</span>};
-<span class="kw">use</span> <span class="ident">poplar::syscall::MapMemoryObjectError</span>;
-<span class="kw">use</span> <span class="ident">poplar_util::bitmap::Bitmap</span>;
-<span class="kw">use</span> <span class="ident">spin::Mutex</span>;
+<span class="kw">use </span>alloc::{sync::Arc, vec::Vec};
+<span class="kw">use </span>hal::memory::{mebibytes, Bytes, FrameAllocator, PageTable, VirtualAddress};
+<span class="kw">use </span>poplar::syscall::MapMemoryObjectError;
+<span class="kw">use </span>poplar_util::bitmap::Bitmap;
+<span class="kw">use </span>spin::Mutex;
 
-<span class="kw">const</span> <span class="ident">MAX_TASKS</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="number">64</span>;
+<span class="kw">const </span>MAX_TASKS: usize = <span class="number">64</span>;
 
-<span class="comment">// TODO: we need some way of getting this from the platform I guess?</span>
-<span class="comment">// TODO: we&#39;ve basically made these up</span>
-<span class="kw">const</span> <span class="ident">USER_STACK_BOTTOM</span>: <span class="ident">VirtualAddress</span> <span class="op">=</span> <span class="ident">VirtualAddress::new</span>(<span class="number">0x00000002_00000000</span>);
-<span class="kw">const</span> <span class="ident">USER_STACK_TOP</span>: <span class="ident">VirtualAddress</span> <span class="op">=</span> <span class="ident">VirtualAddress::new</span>(<span class="number">0x00000003_ffffffff</span>);
-<span class="kw">const</span> <span class="ident">USER_STACK_SLOT_SIZE</span>: <span class="ident">Bytes</span> <span class="op">=</span> <span class="ident">mebibytes</span>(<span class="number">4</span>);
+<span class="comment">// TODO: we need some way of getting this from the platform I guess?
+// TODO: we&#39;ve basically made these up
+</span><span class="kw">const </span>USER_STACK_BOTTOM: VirtualAddress = VirtualAddress::new(<span class="number">0x00000002_00000000</span>);
+<span class="kw">const </span>USER_STACK_TOP: VirtualAddress = VirtualAddress::new(<span class="number">0x00000003_ffffffff</span>);
+<span class="kw">const </span>USER_STACK_SLOT_SIZE: Bytes = mebibytes(<span class="number">4</span>);
 
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">PartialEq</span>, <span class="ident">Eq</span>, <span class="ident">Debug</span>)]</span>
-<span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">State</span> {
-    <span class="ident">NotActive</span>,
-    <span class="ident">Active</span>,
+<span class="attribute">#[derive(PartialEq, Eq, Debug)]
+</span><span class="kw">pub enum </span>State {
+    NotActive,
+    Active,
 }
 
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">TaskSlot</span> {
-    <span class="kw">pub</span> <span class="ident">index</span>: <span class="ident">usize</span>,
-    <span class="kw">pub</span> <span class="ident">user_stack</span>: <span class="ident">Stack</span>,
+<span class="kw">pub struct </span>TaskSlot {
+    <span class="kw">pub </span>index: usize,
+    <span class="kw">pub </span>user_stack: Stack,
 }
 
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">AddressSpace</span><span class="op">&lt;</span><span class="ident">P</span><span class="op">&gt;</span>
-<span class="kw">where</span>
-    <span class="ident">P</span>: <span class="ident">Platform</span>,
+<span class="kw">pub struct </span>AddressSpace&lt;P&gt;
+<span class="kw">where
+    </span>P: Platform,
 {
-    <span class="kw">pub</span> <span class="ident">id</span>: <span class="ident">KernelObjectId</span>,
-    <span class="kw">pub</span> <span class="ident">owner</span>: <span class="ident">KernelObjectId</span>,
-    <span class="kw">pub</span> <span class="ident">state</span>: <span class="ident">Mutex</span><span class="op">&lt;</span><span class="ident">State</span><span class="op">&gt;</span>,
-    <span class="kw">pub</span> <span class="ident">memory_objects</span>: <span class="ident">Mutex</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">MemoryObject</span><span class="op">&gt;</span><span class="op">&gt;</span><span class="op">&gt;</span>,
-    <span class="ident">page_table</span>: <span class="ident">Mutex</span><span class="op">&lt;</span><span class="ident">P::PageTable</span><span class="op">&gt;</span>,
-    <span class="ident">slot_bitmap</span>: <span class="ident">Mutex</span><span class="op">&lt;</span><span class="ident">u64</span><span class="op">&gt;</span>,
+    <span class="kw">pub </span>id: KernelObjectId,
+    <span class="kw">pub </span>owner: KernelObjectId,
+    <span class="kw">pub </span>state: Mutex&lt;State&gt;,
+    <span class="kw">pub </span>memory_objects: Mutex&lt;Vec&lt;Arc&lt;MemoryObject&gt;&gt;&gt;,
+    page_table: Mutex&lt;P::PageTable&gt;,
+    slot_bitmap: Mutex&lt;u64&gt;,
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">P</span><span class="op">&gt;</span> <span class="ident">AddressSpace</span><span class="op">&lt;</span><span class="ident">P</span><span class="op">&gt;</span>
-<span class="kw">where</span>
-    <span class="ident">P</span>: <span class="ident">Platform</span>,
+<span class="kw">impl</span>&lt;P&gt; AddressSpace&lt;P&gt;
+<span class="kw">where
+    </span>P: Platform,
 {
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span><span class="op">&lt;</span><span class="ident">A</span><span class="op">&gt;</span>(<span class="ident">owner</span>: <span class="ident">KernelObjectId</span>, <span class="ident">kernel_page_table</span>: <span class="kw-2">&amp;</span><span class="ident">P::PageTable</span>, <span class="ident">allocator</span>: <span class="kw-2">&amp;</span><span class="ident">A</span>) -&gt; <span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">AddressSpace</span><span class="op">&lt;</span><span class="ident">P</span><span class="op">&gt;</span><span class="op">&gt;</span>
-    <span class="kw">where</span>
-        <span class="ident">A</span>: <span class="ident">FrameAllocator</span><span class="op">&lt;</span><span class="ident">P::PageTableSize</span><span class="op">&gt;</span>,
+    <span class="kw">pub fn </span>new&lt;A&gt;(owner: KernelObjectId, kernel_page_table: <span class="kw-2">&amp;</span>P::PageTable, allocator: <span class="kw-2">&amp;</span>A) -&gt; Arc&lt;AddressSpace&lt;P&gt;&gt;
+    <span class="kw">where
+        </span>A: FrameAllocator&lt;P::PageTableSize&gt;,
     {
-        <span class="ident">Arc::new</span>(<span class="ident">AddressSpace</span> {
-            <span class="ident">id</span>: <span class="ident">alloc_kernel_object_id</span>(),
-            <span class="ident">owner</span>,
-            <span class="ident">state</span>: <span class="ident">Mutex::new</span>(<span class="ident">State::NotActive</span>),
-            <span class="ident">memory_objects</span>: <span class="ident">Mutex::new</span>(<span class="macro">vec!</span>[]),
-            <span class="ident">page_table</span>: <span class="ident">Mutex::new</span>(<span class="ident">P::PageTable::new_with_kernel_mapped</span>(<span class="ident">kernel_page_table</span>, <span class="ident">allocator</span>)),
-            <span class="ident">slot_bitmap</span>: <span class="ident">Mutex::new</span>(<span class="number">0</span>),
+        Arc::new(AddressSpace {
+            id: alloc_kernel_object_id(),
+            owner,
+            state: Mutex::new(State::NotActive),
+            memory_objects: Mutex::new(<span class="macro">vec!</span>[]),
+            page_table: Mutex::new(P::PageTable::new_with_kernel_mapped(kernel_page_table, allocator)),
+            slot_bitmap: Mutex::new(<span class="number">0</span>),
         })
     }
 
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">map_memory_object</span>(
+    <span class="kw">pub fn </span>map_memory_object(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
-        <span class="ident">memory_object</span>: <span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">MemoryObject</span><span class="op">&gt;</span>,
-        <span class="ident">virtual_address</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">VirtualAddress</span><span class="op">&gt;</span>,
-        <span class="ident">allocator</span>: <span class="kw-2">&amp;</span><span class="ident">PhysicalMemoryManager</span>,
-    ) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">MapMemoryObjectError</span><span class="op">&gt;</span> {
-        <span class="kw">use</span> <span class="ident">hal::memory::PagingError</span>;
+        memory_object: Arc&lt;MemoryObject&gt;,
+        virtual_address: <span class="prelude-ty">Option</span>&lt;VirtualAddress&gt;,
+        allocator: <span class="kw-2">&amp;</span>PhysicalMemoryManager,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;(), MapMemoryObjectError&gt; {
+        <span class="kw">use </span>hal::memory::PagingError;
 
-        <span class="kw">let</span> <span class="ident">virtual_address</span> <span class="op">=</span> <span class="kw">if</span> <span class="ident">virtual_address</span>.<span class="ident">is_some</span>() {
-            <span class="macro">assert!</span>(<span class="ident">memory_object</span>.<span class="ident">virtual_address</span>.<span class="ident">is_none</span>());
-            <span class="ident">virtual_address</span>.<span class="ident">unwrap</span>()
-        } <span class="kw">else</span> {
-            <span class="ident">memory_object</span>.<span class="ident">virtual_address</span>.<span class="ident">unwrap</span>()
+        <span class="kw">let </span>virtual_address = <span class="kw">if </span>virtual_address.is_some() {
+            <span class="macro">assert!</span>(memory_object.virtual_address.is_none());
+            virtual_address.unwrap()
+        } <span class="kw">else </span>{
+            memory_object.virtual_address.unwrap()
         };
 
-        <span class="self">self</span>.<span class="ident">page_table</span>
-            .<span class="ident">lock</span>()
-            .<span class="ident">map_area</span>(
-                <span class="ident">virtual_address</span>,
-                <span class="ident">memory_object</span>.<span class="ident">physical_address</span>,
-                <span class="ident">memory_object</span>.<span class="ident">size</span>,
-                <span class="ident">memory_object</span>.<span class="ident">flags</span>,
-                <span class="ident">allocator</span>,
+        <span class="self">self</span>.page_table
+            .lock()
+            .map_area(
+                virtual_address,
+                memory_object.physical_address,
+                memory_object.size,
+                memory_object.flags,
+                allocator,
             )
-            .<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">err</span><span class="op">|</span> <span class="kw">match</span> <span class="ident">err</span> {
-                <span class="comment">// XXX: these are explicity enumerated to avoid a bug if variants are added to `PagingError`.</span>
-                <span class="ident">PagingError::AlreadyMapped</span> =&gt; <span class="ident">MapMemoryObjectError::RegionAlreadyMapped</span>,
+            .map_err(|err| <span class="kw">match </span>err {
+                <span class="comment">// XXX: these are explicity enumerated to avoid a bug if variants are added to `PagingError`.
+                </span>PagingError::AlreadyMapped =&gt; MapMemoryObjectError::RegionAlreadyMapped,
             })<span class="question-mark">?</span>;
-        <span class="self">self</span>.<span class="ident">memory_objects</span>.<span class="ident">lock</span>().<span class="ident">push</span>(<span class="ident">memory_object</span>);
+        <span class="self">self</span>.memory_objects.lock().push(memory_object);
         <span class="prelude-val">Ok</span>(())
     }
 
-    <span class="doccomment">/// Try to allocate a slot for a Task. Creates a user stack with `initial_stack_size` bytes initially</span>
-    <span class="doccomment">/// allocated. Returs `None` if no more tasks can be created in this Address Space.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">alloc_task_slot</span>(
+    <span class="doccomment">/// Try to allocate a slot for a Task. Creates a user stack with `initial_stack_size` bytes initially
+    /// allocated. Returs `None` if no more tasks can be created in this Address Space.
+    </span><span class="kw">pub fn </span>alloc_task_slot(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
-        <span class="ident">initial_stack_size</span>: <span class="ident">usize</span>,
-        <span class="ident">allocator</span>: <span class="kw-2">&amp;</span><span class="ident">PhysicalMemoryManager</span>,
-    ) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">TaskSlot</span><span class="op">&gt;</span> {
-        <span class="kw">use</span> <span class="ident">hal::memory::Flags</span>;
+        initial_stack_size: usize,
+        allocator: <span class="kw-2">&amp;</span>PhysicalMemoryManager,
+    ) -&gt; <span class="prelude-ty">Option</span>&lt;TaskSlot&gt; {
+        <span class="kw">use </span>hal::memory::Flags;
 
-        <span class="kw">let</span> <span class="ident">index</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">slot_bitmap</span>.<span class="ident">lock</span>().<span class="ident">alloc</span>(<span class="number">1</span>)<span class="question-mark">?</span>;
+        <span class="kw">let </span>index = <span class="self">self</span>.slot_bitmap.lock().alloc(<span class="number">1</span>)<span class="question-mark">?</span>;
 
-        <span class="kw">let</span> <span class="ident">user_stack</span> <span class="op">=</span> {
-            <span class="kw">let</span> <span class="ident">slot_bottom</span> <span class="op">=</span> <span class="ident">USER_STACK_BOTTOM</span> <span class="op">+</span> <span class="ident">USER_STACK_SLOT_SIZE</span> <span class="op">*</span> <span class="ident">index</span>;
-            <span class="kw">let</span> <span class="ident">top</span> <span class="op">=</span> <span class="ident">slot_bottom</span> <span class="op">+</span> <span class="ident">USER_STACK_SLOT_SIZE</span> <span class="op">-</span> <span class="number">1</span>;
-            <span class="kw">let</span> <span class="ident">stack_bottom</span> <span class="op">=</span> (<span class="ident">top</span> <span class="op">+</span> <span class="number">1</span>) <span class="op">-</span> <span class="ident">initial_stack_size</span>;
+        <span class="kw">let </span>user_stack = {
+            <span class="kw">let </span>slot_bottom = USER_STACK_BOTTOM + USER_STACK_SLOT_SIZE * index;
+            <span class="kw">let </span>top = slot_bottom + USER_STACK_SLOT_SIZE - <span class="number">1</span>;
+            <span class="kw">let </span>stack_bottom = (top + <span class="number">1</span>) - initial_stack_size;
 
-            <span class="kw">let</span> <span class="ident">physical_start</span> <span class="op">=</span> <span class="ident">allocator</span>.<span class="ident">alloc_bytes</span>(<span class="ident">initial_stack_size</span>);
-            <span class="self">self</span>.<span class="ident">page_table</span>
-                .<span class="ident">lock</span>()
-                .<span class="ident">map_area</span>(
-                    <span class="ident">stack_bottom</span>,
-                    <span class="ident">physical_start</span>,
-                    <span class="ident">initial_stack_size</span>,
-                    <span class="ident">Flags</span> { <span class="ident">writable</span>: <span class="bool-val">true</span>, <span class="ident">user_accessible</span>: <span class="bool-val">true</span>, ..<span class="ident">Default::default</span>() },
-                    <span class="ident">allocator</span>,
+            <span class="kw">let </span>physical_start = allocator.alloc_bytes(initial_stack_size);
+            <span class="self">self</span>.page_table
+                .lock()
+                .map_area(
+                    stack_bottom,
+                    physical_start,
+                    initial_stack_size,
+                    Flags { writable: <span class="bool-val">true</span>, user_accessible: <span class="bool-val">true</span>, ..Default::default() },
+                    allocator,
                 )
-                .<span class="ident">unwrap</span>();
+                .unwrap();
 
-            <span class="ident">Stack</span> { <span class="ident">top</span>, <span class="ident">slot_bottom</span>, <span class="ident">stack_bottom</span>, <span class="ident">physical_start</span> }
+            Stack { top, slot_bottom, stack_bottom, physical_start }
         };
 
-        <span class="prelude-val">Some</span>(<span class="ident">TaskSlot</span> { <span class="ident">index</span>, <span class="ident">user_stack</span> })
+        <span class="prelude-val">Some</span>(TaskSlot { index, user_stack })
     }
 
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">switch_to</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) {
-        <span class="macro">assert_eq!</span>(<span class="kw-2">*</span><span class="self">self</span>.<span class="ident">state</span>.<span class="ident">lock</span>(), <span class="ident">State::NotActive</span>);
-        <span class="kw">unsafe</span> {
-            <span class="self">self</span>.<span class="ident">page_table</span>.<span class="ident">lock</span>().<span class="ident">switch_to</span>();
+    <span class="kw">pub fn </span>switch_to(<span class="kw-2">&amp;</span><span class="self">self</span>) {
+        <span class="macro">assert_eq!</span>(<span class="kw-2">*</span><span class="self">self</span>.state.lock(), State::NotActive);
+        <span class="kw">unsafe </span>{
+            <span class="self">self</span>.page_table.lock().switch_to();
         }
-        <span class="kw-2">*</span><span class="self">self</span>.<span class="ident">state</span>.<span class="ident">lock</span>() <span class="op">=</span> <span class="ident">State::Active</span>;
+        <span class="kw-2">*</span><span class="self">self</span>.state.lock() = State::Active;
     }
 
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">switch_from</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) {
-        <span class="macro">assert_eq!</span>(<span class="kw-2">*</span><span class="self">self</span>.<span class="ident">state</span>.<span class="ident">lock</span>(), <span class="ident">State::Active</span>);
-        <span class="kw-2">*</span><span class="self">self</span>.<span class="ident">state</span>.<span class="ident">lock</span>() <span class="op">=</span> <span class="ident">State::NotActive</span>;
+    <span class="kw">pub fn </span>switch_from(<span class="kw-2">&amp;</span><span class="self">self</span>) {
+        <span class="macro">assert_eq!</span>(<span class="kw-2">*</span><span class="self">self</span>.state.lock(), State::Active);
+        <span class="kw-2">*</span><span class="self">self</span>.state.lock() = State::NotActive;
     }
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">P</span><span class="op">&gt;</span> <span class="ident">KernelObject</span> <span class="kw">for</span> <span class="ident">AddressSpace</span><span class="op">&lt;</span><span class="ident">P</span><span class="op">&gt;</span>
-<span class="kw">where</span>
-    <span class="ident">P</span>: <span class="ident">Platform</span>,
+<span class="kw">impl</span>&lt;P&gt; KernelObject <span class="kw">for </span>AddressSpace&lt;P&gt;
+<span class="kw">where
+    </span>P: Platform,
 {
-    <span class="kw">fn</span> <span class="ident">id</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">KernelObjectId</span> {
-        <span class="self">self</span>.<span class="ident">id</span>
+    <span class="kw">fn </span>id(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; KernelObjectId {
+        <span class="self">self</span>.id
     }
 }
 </code></pre></div>
-</section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="kernel" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.65.0-nightly (34a6cae28 2022-08-09)" ></div></body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="kernel" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.65.0-nightly (b44197abb 2022-09-05)" ></div></body></html>

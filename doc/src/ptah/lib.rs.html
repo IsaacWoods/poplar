@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/work/poplar/poplar/lib/ptah/src/lib.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>lib.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script><script defer src="../../main.js"></script><noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../ptah/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div></a><h2 class="location"></h2></nav><nav class="sidebar"><a class="sidebar-logo" href="../../ptah/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div></a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../ptah/index.html"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></a><nav class="sub"><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><button type="button">?</button></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../wheel.svg"></a></div></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/work/poplar/poplar/lib/ptah/src/lib.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>lib.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" href="../../normalize.css"><link rel="stylesheet" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" href="../../ayu.css" disabled><link rel="stylesheet" href="../../dark.css" disabled><link rel="stylesheet" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script><script defer src="../../main.js"></script><noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../ptah/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div></a><h2 class="location"></h2></nav><nav class="sidebar"><a class="sidebar-logo" href="../../ptah/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div></a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../ptah/index.html"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></a><nav class="sub"><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><button type="button">?</button></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../wheel.svg"></a></div></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
 <span id="2">2</span>
 <span id="3">3</span>
 <span id="4">4</span>
@@ -165,172 +165,172 @@
 <span id="165">165</span>
 <span id="166">166</span>
 <span id="167">167</span>
-</pre><pre class="rust"><code><span class="attribute">#![<span class="ident">no_std</span>]</span>
-<span class="attribute">#![<span class="ident">feature</span>(<span class="ident">decl_macro</span>, <span class="ident">maybe_uninit_uninit_array</span>, <span class="ident">maybe_uninit_slice</span>, <span class="ident">never_type</span>)]</span>
+</pre><pre class="rust"><code><span class="attribute">#![no_std]
+#![feature(decl_macro, maybe_uninit_uninit_array, maybe_uninit_slice, never_type)]
 
-<span class="kw">extern</span> <span class="kw">crate</span> <span class="ident">alloc</span>;
+</span><span class="kw">extern crate </span>alloc;
 
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;derive&quot;</span>)]</span>
-<span class="kw">extern</span> <span class="kw">crate</span> <span class="ident">ptah_derive</span>;
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;derive&quot;</span>)]</span>
-<span class="attribute">#[<span class="ident">doc</span>(<span class="ident">hidden</span>)]</span>
-<span class="kw">pub</span> <span class="kw">use</span> <span class="ident">ptah_derive</span>::<span class="kw-2">*</span>;
+<span class="attribute">#[cfg(feature = <span class="string">&quot;derive&quot;</span>)]
+</span><span class="kw">extern crate </span>ptah_derive;
+<span class="attribute">#[cfg(feature = <span class="string">&quot;derive&quot;</span>)]
+#[doc(hidden)]
+</span><span class="kw">pub use </span>ptah_derive::<span class="kw-2">*</span>;
 
-<span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">de</span>;
-<span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">ser</span>;
+<span class="kw">pub mod </span>de;
+<span class="kw">pub mod </span>ser;
 
-<span class="kw">pub</span> <span class="kw">use</span> <span class="ident">de</span>::{<span class="ident">Deserialize</span>, <span class="ident">DeserializeOwned</span>, <span class="ident">Deserializer</span>};
-<span class="kw">pub</span> <span class="kw">use</span> <span class="ident">ser</span>::{<span class="ident">Serialize</span>, <span class="ident">Serializer</span>};
+<span class="kw">pub use </span>de::{Deserialize, DeserializeOwned, Deserializer};
+<span class="kw">pub use </span>ser::{Serialize, Serializer};
 
-<span class="kw">use</span> <span class="ident">alloc::vec::Vec</span>;
+<span class="kw">use </span>alloc::vec::Vec;
 
-<span class="doccomment">/// It can sometimes be useful to know the size of a value in its serialized form (e.g. to reserve space for it in</span>
-<span class="doccomment">/// a ring buffer). This calculates the number of bytes taken to serialize some `value` of `T` into Ptah&#39;s wire</span>
-<span class="doccomment">/// format. Note that this size is for the specific `value`, and may differ between values of `T`.</span>
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">serialized_size</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span>(<span class="ident">value</span>: <span class="kw-2">&amp;</span><span class="ident">T</span>) -&gt; <span class="ident">ser::Result</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span>
-<span class="kw">where</span>
-    <span class="ident">T</span>: <span class="ident">Serialize</span>,
+<span class="doccomment">/// It can sometimes be useful to know the size of a value in its serialized form (e.g. to reserve space for it in
+/// a ring buffer). This calculates the number of bytes taken to serialize some `value` of `T` into Ptah&#39;s wire
+/// format. Note that this size is for the specific `value`, and may differ between values of `T`.
+</span><span class="kw">pub fn </span>serialized_size&lt;T&gt;(value: <span class="kw-2">&amp;</span>T) -&gt; ser::Result&lt;usize&gt;
+<span class="kw">where
+    </span>T: Serialize,
 {
-    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">size</span> <span class="op">=</span> <span class="number">0</span>;
-    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">serializer</span> <span class="op">=</span> <span class="ident">Serializer::new</span>(<span class="ident">SizeCalculator</span> { <span class="ident">size</span>: <span class="kw-2">&amp;mut</span> <span class="ident">size</span> });
+    <span class="kw">let </span><span class="kw-2">mut </span>size = <span class="number">0</span>;
+    <span class="kw">let </span><span class="kw-2">mut </span>serializer = Serializer::new(SizeCalculator { size: <span class="kw-2">&amp;mut </span>size });
 
-    <span class="ident">value</span>.<span class="ident">serialize</span>(<span class="kw-2">&amp;mut</span> <span class="ident">serializer</span>)<span class="question-mark">?</span>;
-    <span class="prelude-val">Ok</span>(<span class="ident">size</span>)
+    value.serialize(<span class="kw-2">&amp;mut </span>serializer)<span class="question-mark">?</span>;
+    <span class="prelude-val">Ok</span>(size)
 }
 
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">to_wire</span><span class="op">&lt;</span><span class="lifetime">&#39;w</span>, <span class="ident">T</span>, <span class="ident">W</span><span class="op">&gt;</span>(<span class="ident">value</span>: <span class="kw-2">&amp;</span><span class="ident">T</span>, <span class="ident">writer</span>: <span class="ident">W</span>) -&gt; <span class="ident">ser::Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span>
-<span class="kw">where</span>
-    <span class="ident">T</span>: <span class="ident">Serialize</span>,
-    <span class="ident">W</span>: <span class="ident">Writer</span>,
+<span class="kw">pub fn </span>to_wire&lt;<span class="lifetime">&#39;w</span>, T, W&gt;(value: <span class="kw-2">&amp;</span>T, writer: W) -&gt; ser::Result&lt;()&gt;
+<span class="kw">where
+    </span>T: Serialize,
+    W: Writer,
 {
-    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">serializer</span> <span class="op">=</span> <span class="ident">Serializer::new</span>(<span class="ident">writer</span>);
+    <span class="kw">let </span><span class="kw-2">mut </span>serializer = Serializer::new(writer);
 
-    <span class="ident">value</span>.<span class="ident">serialize</span>(<span class="kw-2">&amp;mut</span> <span class="ident">serializer</span>)<span class="question-mark">?</span>;
+    value.serialize(<span class="kw-2">&amp;mut </span>serializer)<span class="question-mark">?</span>;
     <span class="prelude-val">Ok</span>(())
 }
 
-<span class="doccomment">/// Deserialize a `T` from some bytes and, optionally, some handles. If the wire is not able to transport handles,</span>
-<span class="doccomment">/// it is fine to produce `&amp;[]` (as long as `T` does not contain any handles, that is).</span>
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">from_wire</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="lifetime">&#39;de</span>, <span class="ident">T</span><span class="op">&gt;</span>(<span class="ident">bytes</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> [<span class="ident">u8</span>], <span class="ident">handles</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> [<span class="ident">Handle</span>]) -&gt; <span class="ident">de::Result</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span>
-<span class="kw">where</span>
-    <span class="lifetime">&#39;a</span>: <span class="lifetime">&#39;de</span>,
-    <span class="ident">T</span>: <span class="ident">Deserialize</span><span class="op">&lt;</span><span class="lifetime">&#39;de</span><span class="op">&gt;</span>,
+<span class="doccomment">/// Deserialize a `T` from some bytes and, optionally, some handles. If the wire is not able to transport handles,
+/// it is fine to produce `&amp;[]` (as long as `T` does not contain any handles, that is).
+</span><span class="kw">pub fn </span>from_wire&lt;<span class="lifetime">&#39;a</span>, <span class="lifetime">&#39;de</span>, T&gt;(bytes: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>[u8], handles: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>[Handle]) -&gt; de::Result&lt;T&gt;
+<span class="kw">where
+    </span><span class="lifetime">&#39;a</span>: <span class="lifetime">&#39;de</span>,
+    T: Deserialize&lt;<span class="lifetime">&#39;de</span>&gt;,
 {
-    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">deserializer</span> <span class="op">=</span> <span class="ident">Deserializer::from_wire</span>(<span class="ident">bytes</span>, <span class="ident">handles</span>);
-    <span class="kw">let</span> <span class="ident">value</span> <span class="op">=</span> <span class="ident">T::deserialize</span>(<span class="kw-2">&amp;mut</span> <span class="ident">deserializer</span>)<span class="question-mark">?</span>;
+    <span class="kw">let </span><span class="kw-2">mut </span>deserializer = Deserializer::from_wire(bytes, handles);
+    <span class="kw">let </span>value = T::deserialize(<span class="kw-2">&amp;mut </span>deserializer)<span class="question-mark">?</span>;
 
-    <span class="kw">if</span> <span class="ident">deserializer</span>.<span class="ident">bytes</span>.<span class="ident">is_empty</span>() {
-        <span class="prelude-val">Ok</span>(<span class="ident">value</span>)
-    } <span class="kw">else</span> {
-        <span class="prelude-val">Err</span>(<span class="ident">de::Error::TrailingBytes</span>)
+    <span class="kw">if </span>deserializer.bytes.is_empty() {
+        <span class="prelude-val">Ok</span>(value)
+    } <span class="kw">else </span>{
+        <span class="prelude-val">Err</span>(de::Error::TrailingBytes)
     }
 }
 
-<span class="kw">pub</span> <span class="kw">type</span> <span class="ident">Handle</span> <span class="op">=</span> <span class="ident">u32</span>;
-<span class="kw">pub</span> <span class="kw">type</span> <span class="ident">HandleSlot</span> <span class="op">=</span> <span class="ident">u8</span>;
+<span class="kw">pub type </span>Handle = u32;
+<span class="kw">pub type </span>HandleSlot = u8;
 
 <span class="comment">/*
  * These are constants that are used in the wire format.
- */</span>
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">const</span> <span class="ident">MARKER_FALSE</span>: <span class="ident">u8</span> <span class="op">=</span> <span class="number">0x0</span>;
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">const</span> <span class="ident">MARKER_TRUE</span>: <span class="ident">u8</span> <span class="op">=</span> <span class="number">0x1</span>;
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">const</span> <span class="ident">MARKER_NONE</span>: <span class="ident">u8</span> <span class="op">=</span> <span class="number">0x0</span>;
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">const</span> <span class="ident">MARKER_SOME</span>: <span class="ident">u8</span> <span class="op">=</span> <span class="number">0x1</span>;
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">const</span> <span class="ident">HANDLE_SLOT_0</span>: <span class="ident">u8</span> <span class="op">=</span> <span class="number">0xf0</span>;
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">const</span> <span class="ident">HANDLE_SLOT_1</span>: <span class="ident">u8</span> <span class="op">=</span> <span class="number">0xf1</span>;
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">const</span> <span class="ident">HANDLE_SLOT_2</span>: <span class="ident">u8</span> <span class="op">=</span> <span class="number">0xf2</span>;
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">const</span> <span class="ident">HANDLE_SLOT_3</span>: <span class="ident">u8</span> <span class="op">=</span> <span class="number">0xf3</span>;
+ */
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">const </span>MARKER_FALSE: u8 = <span class="number">0x0</span>;
+<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">const </span>MARKER_TRUE: u8 = <span class="number">0x1</span>;
+<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">const </span>MARKER_NONE: u8 = <span class="number">0x0</span>;
+<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">const </span>MARKER_SOME: u8 = <span class="number">0x1</span>;
+<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">const </span>HANDLE_SLOT_0: u8 = <span class="number">0xf0</span>;
+<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">const </span>HANDLE_SLOT_1: u8 = <span class="number">0xf1</span>;
+<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">const </span>HANDLE_SLOT_2: u8 = <span class="number">0xf2</span>;
+<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">const </span>HANDLE_SLOT_3: u8 = <span class="number">0xf3</span>;
 
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">make_handle_slot</span>(<span class="ident">index</span>: <span class="ident">u8</span>) -&gt; <span class="ident">HandleSlot</span> {
-    <span class="kw">match</span> <span class="ident">index</span> {
-        <span class="number">0</span> =&gt; <span class="ident">HANDLE_SLOT_0</span>,
-        <span class="number">1</span> =&gt; <span class="ident">HANDLE_SLOT_1</span>,
-        <span class="number">2</span> =&gt; <span class="ident">HANDLE_SLOT_2</span>,
-        <span class="number">3</span> =&gt; <span class="ident">HANDLE_SLOT_3</span>,
-        <span class="kw">_</span> =&gt; <span class="macro">panic!</span>(<span class="string">&quot;Invalid handle slot index!&quot;</span>),
+<span class="kw">pub fn </span>make_handle_slot(index: u8) -&gt; HandleSlot {
+    <span class="kw">match </span>index {
+        <span class="number">0 </span>=&gt; HANDLE_SLOT_0,
+        <span class="number">1 </span>=&gt; HANDLE_SLOT_1,
+        <span class="number">2 </span>=&gt; HANDLE_SLOT_2,
+        <span class="number">3 </span>=&gt; HANDLE_SLOT_3,
+        <span class="kw">_ </span>=&gt; <span class="macro">panic!</span>(<span class="string">&quot;Invalid handle slot index!&quot;</span>),
     }
 }
 
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">index_from_handle_slot</span>(<span class="ident">slot</span>: <span class="ident">HandleSlot</span>) -&gt; <span class="ident">u8</span> {
-    <span class="kw">match</span> <span class="ident">slot</span> {
-        <span class="ident">HANDLE_SLOT_0</span> =&gt; <span class="number">0</span>,
-        <span class="ident">HANDLE_SLOT_1</span> =&gt; <span class="number">1</span>,
-        <span class="ident">HANDLE_SLOT_2</span> =&gt; <span class="number">2</span>,
-        <span class="ident">HANDLE_SLOT_3</span> =&gt; <span class="number">3</span>,
-        <span class="kw">_</span> =&gt; <span class="macro">panic!</span>(<span class="string">&quot;Invalid handle slot!&quot;</span>),
+<span class="kw">pub fn </span>index_from_handle_slot(slot: HandleSlot) -&gt; u8 {
+    <span class="kw">match </span>slot {
+        HANDLE_SLOT_0 =&gt; <span class="number">0</span>,
+        HANDLE_SLOT_1 =&gt; <span class="number">1</span>,
+        HANDLE_SLOT_2 =&gt; <span class="number">2</span>,
+        HANDLE_SLOT_3 =&gt; <span class="number">3</span>,
+        <span class="kw">_ </span>=&gt; <span class="macro">panic!</span>(<span class="string">&quot;Invalid handle slot!&quot;</span>),
     }
 }
 
-<span class="doccomment">/// A `Writer` represents a consumer of the bytes produced by serializing a message. In cases where you can</span>
-<span class="doccomment">/// create a slice to put the bytes in, `CursorWriter` can be used. Custom `Writer`s are useful for more niche</span>
-<span class="doccomment">/// uses, such as sending the serialized bytes over a serial port.</span>
-<span class="kw">pub</span> <span class="kw">trait</span> <span class="ident">Writer</span> {
-    <span class="kw">fn</span> <span class="ident">write</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">buf</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>]) -&gt; <span class="ident">ser::Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span>;
-    <span class="kw">fn</span> <span class="ident">push_handle</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">handle</span>: <span class="ident">Handle</span>) -&gt; <span class="ident">ser::Result</span><span class="op">&lt;</span><span class="ident">HandleSlot</span><span class="op">&gt;</span>;
+<span class="doccomment">/// A `Writer` represents a consumer of the bytes produced by serializing a message. In cases where you can
+/// create a slice to put the bytes in, `CursorWriter` can be used. Custom `Writer`s are useful for more niche
+/// uses, such as sending the serialized bytes over a serial port.
+</span><span class="kw">pub trait </span>Writer {
+    <span class="kw">fn </span>write(<span class="kw-2">&amp;mut </span><span class="self">self</span>, buf: <span class="kw-2">&amp;</span>[u8]) -&gt; ser::Result&lt;()&gt;;
+    <span class="kw">fn </span>push_handle(<span class="kw-2">&amp;mut </span><span class="self">self</span>, handle: Handle) -&gt; ser::Result&lt;HandleSlot&gt;;
 }
 
-<span class="doccomment">/// This is a `Writer` that can be used to serialize a value into a pre-allocated byte buffer.</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">CursorWriter</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> {
-    <span class="ident">buffer</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="kw-2">mut</span> [<span class="ident">u8</span>],
-    <span class="ident">position</span>: <span class="ident">usize</span>,
+<span class="doccomment">/// This is a `Writer` that can be used to serialize a value into a pre-allocated byte buffer.
+</span><span class="kw">pub struct </span>CursorWriter&lt;<span class="lifetime">&#39;a</span>&gt; {
+    buffer: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span><span class="kw-2">mut </span>[u8],
+    position: usize,
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> <span class="ident">CursorWriter</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> {
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">buffer</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="kw-2">mut</span> [<span class="ident">u8</span>]) -&gt; <span class="ident">CursorWriter</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> {
-        <span class="ident">CursorWriter</span> { <span class="ident">buffer</span>, <span class="ident">position</span>: <span class="number">0</span> }
+<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>&gt; CursorWriter&lt;<span class="lifetime">&#39;a</span>&gt; {
+    <span class="kw">pub fn </span>new(buffer: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span><span class="kw-2">mut </span>[u8]) -&gt; CursorWriter&lt;<span class="lifetime">&#39;a</span>&gt; {
+        CursorWriter { buffer, position: <span class="number">0 </span>}
     }
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> <span class="ident">Writer</span> <span class="kw">for</span> <span class="ident">CursorWriter</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> {
-    <span class="kw">fn</span> <span class="ident">write</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">buf</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>]) -&gt; <span class="ident">ser::Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
+<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>&gt; Writer <span class="kw">for </span>CursorWriter&lt;<span class="lifetime">&#39;a</span>&gt; {
+    <span class="kw">fn </span>write(<span class="kw-2">&amp;mut </span><span class="self">self</span>, buf: <span class="kw-2">&amp;</span>[u8]) -&gt; ser::Result&lt;()&gt; {
         <span class="comment">/*
          * Detect if the write will overflow the buffer.
-         */</span>
-        <span class="kw">if</span> (<span class="self">self</span>.<span class="ident">position</span> <span class="op">+</span> <span class="ident">buf</span>.<span class="ident">len</span>()) <span class="op">&gt;</span> <span class="self">self</span>.<span class="ident">buffer</span>.<span class="ident">len</span>() {
-            <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">ser::Error::WriterFullOfBytes</span>);
+         */
+        </span><span class="kw">if </span>(<span class="self">self</span>.position + buf.len()) &gt; <span class="self">self</span>.buffer.len() {
+            <span class="kw">return </span><span class="prelude-val">Err</span>(ser::Error::WriterFullOfBytes);
         }
 
-        <span class="self">self</span>.<span class="ident">buffer</span>[<span class="self">self</span>.<span class="ident">position</span>..(<span class="self">self</span>.<span class="ident">position</span> <span class="op">+</span> <span class="ident">buf</span>.<span class="ident">len</span>())].<span class="ident">copy_from_slice</span>(<span class="ident">buf</span>);
-        <span class="self">self</span>.<span class="ident">position</span> <span class="op">+</span><span class="op">=</span> <span class="ident">buf</span>.<span class="ident">len</span>();
+        <span class="self">self</span>.buffer[<span class="self">self</span>.position..(<span class="self">self</span>.position + buf.len())].copy_from_slice(buf);
+        <span class="self">self</span>.position += buf.len();
         <span class="prelude-val">Ok</span>(())
     }
 
-    <span class="kw">fn</span> <span class="ident">push_handle</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">_handle</span>: <span class="ident">Handle</span>) -&gt; <span class="ident">ser::Result</span><span class="op">&lt;</span><span class="ident">HandleSlot</span><span class="op">&gt;</span> {
+    <span class="kw">fn </span>push_handle(<span class="kw-2">&amp;mut </span><span class="self">self</span>, _handle: Handle) -&gt; ser::Result&lt;HandleSlot&gt; {
         <span class="macro">unimplemented!</span>()
     }
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> <span class="ident">Writer</span> <span class="kw">for</span> <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="kw-2">mut</span> <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span> {
-    <span class="kw">fn</span> <span class="ident">write</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">buf</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>]) -&gt; <span class="ident">ser::Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
-        <span class="self">self</span>.<span class="ident">extend_from_slice</span>(<span class="ident">buf</span>);
+<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>&gt; Writer <span class="kw">for </span><span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span><span class="kw-2">mut </span>Vec&lt;u8&gt; {
+    <span class="kw">fn </span>write(<span class="kw-2">&amp;mut </span><span class="self">self</span>, buf: <span class="kw-2">&amp;</span>[u8]) -&gt; ser::Result&lt;()&gt; {
+        <span class="self">self</span>.extend_from_slice(buf);
         <span class="prelude-val">Ok</span>(())
     }
 
-    <span class="kw">fn</span> <span class="ident">push_handle</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">_handle</span>: <span class="ident">Handle</span>) -&gt; <span class="ident">ser::Result</span><span class="op">&lt;</span><span class="ident">HandleSlot</span><span class="op">&gt;</span> {
+    <span class="kw">fn </span>push_handle(<span class="kw-2">&amp;mut </span><span class="self">self</span>, _handle: Handle) -&gt; ser::Result&lt;HandleSlot&gt; {
         <span class="macro">unimplemented!</span>()
     }
 }
 
-<span class="doccomment">/// This is a writer that can be used to calculate the size of a serialized value. It doesn&#39;t actually write the</span>
-<span class="doccomment">/// serialized bytes anywhere - it simply tracks how are produced. Because the `Serializer` takes the `Writer` by</span>
-<span class="doccomment">/// value, this stores a reference back to the size, so it can be accessed after serialization is complete.</span>
-<span class="kw">struct</span> <span class="ident">SizeCalculator</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> {
-    <span class="ident">size</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="kw-2">mut</span> <span class="ident">usize</span>,
+<span class="doccomment">/// This is a writer that can be used to calculate the size of a serialized value. It doesn&#39;t actually write the
+/// serialized bytes anywhere - it simply tracks how are produced. Because the `Serializer` takes the `Writer` by
+/// value, this stores a reference back to the size, so it can be accessed after serialization is complete.
+</span><span class="kw">struct </span>SizeCalculator&lt;<span class="lifetime">&#39;a</span>&gt; {
+    size: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span><span class="kw-2">mut </span>usize,
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> <span class="ident">Writer</span> <span class="kw">for</span> <span class="ident">SizeCalculator</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> {
-    <span class="kw">fn</span> <span class="ident">write</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">buf</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>]) -&gt; <span class="ident">ser::Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
-        <span class="kw-2">*</span><span class="self">self</span>.<span class="ident">size</span> <span class="op">+</span><span class="op">=</span> <span class="ident">buf</span>.<span class="ident">len</span>();
+<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>&gt; Writer <span class="kw">for </span>SizeCalculator&lt;<span class="lifetime">&#39;a</span>&gt; {
+    <span class="kw">fn </span>write(<span class="kw-2">&amp;mut </span><span class="self">self</span>, buf: <span class="kw-2">&amp;</span>[u8]) -&gt; ser::Result&lt;()&gt; {
+        <span class="kw-2">*</span><span class="self">self</span>.size += buf.len();
         <span class="prelude-val">Ok</span>(())
     }
 
-    <span class="kw">fn</span> <span class="ident">push_handle</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">_handle</span>: <span class="ident">Handle</span>) -&gt; <span class="ident">ser::Result</span><span class="op">&lt;</span><span class="ident">HandleSlot</span><span class="op">&gt;</span> {
+    <span class="kw">fn </span>push_handle(<span class="kw-2">&amp;mut </span><span class="self">self</span>, _handle: Handle) -&gt; ser::Result&lt;HandleSlot&gt; {
         <span class="comment">/*
          * When calculating the size, we simply accept as many handles as we&#39;re passed. The encoded slot is always
          * the same size, so it doesn&#39;t matter what we return.
-         */</span>
-        <span class="prelude-val">Ok</span>(<span class="ident">HANDLE_SLOT_0</span>)
+         */
+        </span><span class="prelude-val">Ok</span>(HANDLE_SLOT_0)
     }
 }
 </code></pre></div>
-</section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="ptah" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.65.0-nightly (34a6cae28 2022-08-09)" ></div></body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="ptah" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.65.0-nightly (b44197abb 2022-09-05)" ></div></body></html>

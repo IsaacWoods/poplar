@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/work/poplar/poplar/lib/poplar_util/src/init_guard.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>init_guard.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script><script defer src="../../main.js"></script><noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../poplar_util/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div></a><h2 class="location"></h2></nav><nav class="sidebar"><a class="sidebar-logo" href="../../poplar_util/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div></a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../poplar_util/index.html"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></a><nav class="sub"><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><button type="button">?</button></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../wheel.svg"></a></div></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/work/poplar/poplar/lib/poplar_util/src/init_guard.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>init_guard.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" href="../../normalize.css"><link rel="stylesheet" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" href="../../ayu.css" disabled><link rel="stylesheet" href="../../dark.css" disabled><link rel="stylesheet" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script><script defer src="../../main.js"></script><noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../poplar_util/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div></a><h2 class="location"></h2></nav><nav class="sidebar"><a class="sidebar-logo" href="../../poplar_util/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div></a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../poplar_util/index.html"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></a><nav class="sub"><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><button type="button">?</button></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../wheel.svg"></a></div></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
 <span id="2">2</span>
 <span id="3">3</span>
 <span id="4">4</span>
@@ -81,88 +81,88 @@
 <span id="81">81</span>
 <span id="82">82</span>
 <span id="83">83</span>
-</pre><pre class="rust"><code><span class="kw">use</span> <span class="ident">core</span>::{
-    <span class="ident">cell::UnsafeCell</span>,
-    <span class="ident">mem::MaybeUninit</span>,
-    <span class="ident">sync::atomic</span>::{<span class="ident">AtomicU8</span>, <span class="ident">Ordering</span>},
+</pre><pre class="rust"><code><span class="kw">use </span>core::{
+    cell::UnsafeCell,
+    mem::MaybeUninit,
+    sync::atomic::{AtomicU8, Ordering},
 };
 
-<span class="doccomment">/// A guard for when you want to store some data in a static, and explicitly initialize it at some point. This</span>
-<span class="doccomment">/// is different from `spin::Once` in that you do not need to provide an initialization method every time you</span>
-<span class="doccomment">/// access the object (it also uses `MaybeUninit` instead of `Option`). This will only release shared</span>
-<span class="doccomment">/// references to the data inside, so if you want to mutate it from mutable threads, you&#39;ll need to use a type</span>
-<span class="doccomment">/// like `Mutex` or `RwLock` within this.</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">InitGuard</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> {
-    <span class="doccomment">/// The actual data. We can only assume that this holds initialized data if the state is</span>
-    <span class="doccomment">/// `STATE_INITIALIZED`.</span>
-    <span class="ident">data</span>: <span class="ident">UnsafeCell</span><span class="op">&lt;</span><span class="ident">MaybeUninit</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span><span class="op">&gt;</span>,
-    <span class="ident">state</span>: <span class="ident">AtomicU8</span>,
+<span class="doccomment">/// A guard for when you want to store some data in a static, and explicitly initialize it at some point. This
+/// is different from `spin::Once` in that you do not need to provide an initialization method every time you
+/// access the object (it also uses `MaybeUninit` instead of `Option`). This will only release shared
+/// references to the data inside, so if you want to mutate it from mutable threads, you&#39;ll need to use a type
+/// like `Mutex` or `RwLock` within this.
+</span><span class="kw">pub struct </span>InitGuard&lt;T&gt; {
+    <span class="doccomment">/// The actual data. We can only assume that this holds initialized data if the state is
+    /// `STATE_INITIALIZED`.
+    </span>data: UnsafeCell&lt;MaybeUninit&lt;T&gt;&gt;,
+    state: AtomicU8,
 }
 
-<span class="kw">unsafe</span> <span class="kw">impl</span><span class="op">&lt;</span><span class="ident">T</span>: <span class="ident">Send</span> <span class="op">+</span> <span class="ident">Sync</span><span class="op">&gt;</span> <span class="ident">Sync</span> <span class="kw">for</span> <span class="ident">InitGuard</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> {}
-<span class="kw">unsafe</span> <span class="kw">impl</span><span class="op">&lt;</span><span class="ident">T</span>: <span class="ident">Send</span><span class="op">&gt;</span> <span class="ident">Send</span> <span class="kw">for</span> <span class="ident">InitGuard</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> {}
+<span class="kw">unsafe impl</span>&lt;T: Send + Sync&gt; Sync <span class="kw">for </span>InitGuard&lt;T&gt; {}
+<span class="kw">unsafe impl</span>&lt;T: Send&gt; Send <span class="kw">for </span>InitGuard&lt;T&gt; {}
 
-<span class="kw">const</span> <span class="ident">STATE_UNINIT</span>: <span class="ident">u8</span> <span class="op">=</span> <span class="number">0</span>;
-<span class="kw">const</span> <span class="ident">STATE_INITIALIZING</span>: <span class="ident">u8</span> <span class="op">=</span> <span class="number">1</span>;
-<span class="kw">const</span> <span class="ident">STATE_INITIALIZED</span>: <span class="ident">u8</span> <span class="op">=</span> <span class="number">2</span>;
+<span class="kw">const </span>STATE_UNINIT: u8 = <span class="number">0</span>;
+<span class="kw">const </span>STATE_INITIALIZING: u8 = <span class="number">1</span>;
+<span class="kw">const </span>STATE_INITIALIZED: u8 = <span class="number">2</span>;
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> <span class="ident">InitGuard</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> {
-    <span class="kw">pub</span> <span class="kw">const</span> <span class="kw">fn</span> <span class="ident">uninit</span>() -&gt; <span class="ident">InitGuard</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> {
-        <span class="ident">InitGuard</span> { <span class="ident">data</span>: <span class="ident">UnsafeCell::new</span>(<span class="ident">MaybeUninit::uninit</span>()), <span class="ident">state</span>: <span class="ident">AtomicU8::new</span>(<span class="ident">STATE_UNINIT</span>) }
+<span class="kw">impl</span>&lt;T&gt; InitGuard&lt;T&gt; {
+    <span class="kw">pub const fn </span>uninit() -&gt; InitGuard&lt;T&gt; {
+        InitGuard { data: UnsafeCell::new(MaybeUninit::uninit()), state: AtomicU8::new(STATE_UNINIT) }
     }
 
-    <span class="doccomment">/// Initialize this `InitGuard`, allowing it to be read from in the future.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// ### Panics</span>
-    <span class="doccomment">/// Panics if this `InitGuard` has already been initialized.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">initialize</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">value</span>: <span class="ident">T</span>) {
-        <span class="kw">match</span> <span class="self">self</span>.<span class="ident">state</span>.<span class="ident">compare_exchange</span>(<span class="ident">STATE_UNINIT</span>, <span class="ident">STATE_INITIALIZING</span>, <span class="ident">Ordering::SeqCst</span>, <span class="ident">Ordering::SeqCst</span>) {
-            <span class="prelude-val">Ok</span>(<span class="ident">STATE_UNINIT</span>) =&gt; {
-                <span class="kw">unsafe</span> {
+    <span class="doccomment">/// Initialize this `InitGuard`, allowing it to be read from in the future.
+    ///
+    /// ### Panics
+    /// Panics if this `InitGuard` has already been initialized.
+    </span><span class="kw">pub fn </span>initialize(<span class="kw-2">&amp;</span><span class="self">self</span>, value: T) {
+        <span class="kw">match </span><span class="self">self</span>.state.compare_exchange(STATE_UNINIT, STATE_INITIALIZING, Ordering::SeqCst, Ordering::SeqCst) {
+            <span class="prelude-val">Ok</span>(STATE_UNINIT) =&gt; {
+                <span class="kw">unsafe </span>{
                     <span class="comment">/*
                      * We make sure to initialize the entire data before marking ourselves as
                      * initialized. If we read from the data before doing this, we cause UB.
-                     */</span>
-                    (<span class="kw-2">*</span><span class="self">self</span>.<span class="ident">data</span>.<span class="ident">get</span>()).<span class="ident">as_mut_ptr</span>().<span class="ident">write</span>(<span class="ident">value</span>);
+                     */
+                    </span>(<span class="kw-2">*</span><span class="self">self</span>.data.get()).as_mut_ptr().write(value);
                 }
-                <span class="self">self</span>.<span class="ident">state</span>.<span class="ident">store</span>(<span class="ident">STATE_INITIALIZED</span>, <span class="ident">Ordering::SeqCst</span>);
+                <span class="self">self</span>.state.store(STATE_INITIALIZED, Ordering::SeqCst);
             }
 
-            <span class="prelude-val">Err</span>(<span class="ident">STATE_INITIALIZING</span>) <span class="op">|</span> <span class="prelude-val">Err</span>(<span class="ident">STATE_INITIALIZED</span>) =&gt; <span class="macro">panic!</span>(<span class="string">&quot;InitGuard has already been initialized!&quot;</span>),
-            <span class="kw">_</span> =&gt; <span class="macro">panic!</span>(<span class="string">&quot;InitGuard has invalid state&quot;</span>),
+            <span class="prelude-val">Err</span>(STATE_INITIALIZING) | <span class="prelude-val">Err</span>(STATE_INITIALIZED) =&gt; <span class="macro">panic!</span>(<span class="string">&quot;InitGuard has already been initialized!&quot;</span>),
+            <span class="kw">_ </span>=&gt; <span class="macro">panic!</span>(<span class="string">&quot;InitGuard has invalid state&quot;</span>),
         }
     }
 
-    <span class="doccomment">/// Get a reference to the data, if this guard has been initialized.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// ### Panics</span>
-    <span class="doccomment">/// Panics if this guard hasn&#39;t been initialized yet. Use `try_get` if you want a fallible</span>
-    <span class="doccomment">/// variant.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">get</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="ident">T</span> {
-        <span class="kw">match</span> <span class="self">self</span>.<span class="ident">state</span>.<span class="ident">load</span>(<span class="ident">Ordering::SeqCst</span>) {
+    <span class="doccomment">/// Get a reference to the data, if this guard has been initialized.
+    ///
+    /// ### Panics
+    /// Panics if this guard hasn&#39;t been initialized yet. Use `try_get` if you want a fallible
+    /// variant.
+    </span><span class="kw">pub fn </span>get(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>T {
+        <span class="kw">match </span><span class="self">self</span>.state.load(Ordering::SeqCst) {
             <span class="comment">/*
              * Here, we create a reference to the data within the `MaybeUninit`. This causes UB if
              * the data isn&#39;t really initialized.
-             */</span>
-            <span class="ident">STATE_INITIALIZED</span> =&gt; <span class="kw">unsafe</span> { (<span class="kw-2">*</span><span class="self">self</span>.<span class="ident">data</span>.<span class="ident">get</span>()).<span class="ident">assume_init_ref</span>() },
-            <span class="ident">STATE_UNINIT</span> <span class="op">|</span> <span class="ident">STATE_INITIALIZING</span> =&gt; <span class="macro">panic!</span>(<span class="string">&quot;InitGuard has not been initialized!&quot;</span>),
-            <span class="kw">_</span> =&gt; <span class="macro">panic!</span>(<span class="string">&quot;InitGuard has invalid state&quot;</span>),
+             */
+            </span>STATE_INITIALIZED =&gt; <span class="kw">unsafe </span>{ (<span class="kw-2">*</span><span class="self">self</span>.data.get()).assume_init_ref() },
+            STATE_UNINIT | STATE_INITIALIZING =&gt; <span class="macro">panic!</span>(<span class="string">&quot;InitGuard has not been initialized!&quot;</span>),
+            <span class="kw">_ </span>=&gt; <span class="macro">panic!</span>(<span class="string">&quot;InitGuard has invalid state&quot;</span>),
         }
     }
 
-    <span class="doccomment">/// Get a reference to the data, if this guard has been initialized. Returns `None` if it has</span>
-    <span class="doccomment">/// not yet been initialized, or is currently being initialized.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">try_get</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="ident">T</span><span class="op">&gt;</span> {
-        <span class="kw">match</span> <span class="self">self</span>.<span class="ident">state</span>.<span class="ident">load</span>(<span class="ident">Ordering::SeqCst</span>) {
+    <span class="doccomment">/// Get a reference to the data, if this guard has been initialized. Returns `None` if it has
+    /// not yet been initialized, or is currently being initialized.
+    </span><span class="kw">pub fn </span>try_get(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>T&gt; {
+        <span class="kw">match </span><span class="self">self</span>.state.load(Ordering::SeqCst) {
             <span class="comment">/*
              * Here, we create a reference to the data within the `MaybeUninit`. This causes UB if
              * the data isn&#39;t really initialized.
-             */</span>
-            <span class="ident">STATE_INITIALIZED</span> =&gt; <span class="prelude-val">Some</span>(<span class="kw">unsafe</span> { (<span class="kw-2">*</span><span class="self">self</span>.<span class="ident">data</span>.<span class="ident">get</span>()).<span class="ident">assume_init_ref</span>() }),
-            <span class="ident">STATE_UNINIT</span> <span class="op">|</span> <span class="ident">STATE_INITIALIZING</span> =&gt; <span class="prelude-val">None</span>,
-            <span class="kw">_</span> =&gt; <span class="macro">panic!</span>(<span class="string">&quot;InitGuard has invalid state&quot;</span>),
+             */
+            </span>STATE_INITIALIZED =&gt; <span class="prelude-val">Some</span>(<span class="kw">unsafe </span>{ (<span class="kw-2">*</span><span class="self">self</span>.data.get()).assume_init_ref() }),
+            STATE_UNINIT | STATE_INITIALIZING =&gt; <span class="prelude-val">None</span>,
+            <span class="kw">_ </span>=&gt; <span class="macro">panic!</span>(<span class="string">&quot;InitGuard has invalid state&quot;</span>),
         }
     }
 }
 </code></pre></div>
-</section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="poplar_util" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.65.0-nightly (34a6cae28 2022-08-09)" ></div></body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="poplar_util" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.65.0-nightly (b44197abb 2022-09-05)" ></div></body></html>

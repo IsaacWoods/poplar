@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/github.com-1ecc6299db9ec823/ptah_derive-0.1.0/src/ser.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>ser.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script><script defer src="../../main.js"></script><noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../ptah_derive/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div></a><h2 class="location"></h2></nav><nav class="sidebar"><a class="sidebar-logo" href="../../ptah_derive/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div></a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../ptah_derive/index.html"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></a><nav class="sub"><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><button type="button">?</button></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../wheel.svg"></a></div></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/github.com-1ecc6299db9ec823/ptah_derive-0.1.0/src/ser.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>ser.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" href="../../normalize.css"><link rel="stylesheet" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" href="../../ayu.css" disabled><link rel="stylesheet" href="../../dark.css" disabled><link rel="stylesheet" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script><script defer src="../../main.js"></script><noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../ptah_derive/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div></a><h2 class="location"></h2></nav><nav class="sidebar"><a class="sidebar-logo" href="../../ptah_derive/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div></a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../ptah_derive/index.html"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></a><nav class="sub"><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><button type="button">?</button></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../wheel.svg"></a></div></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
 <span id="2">2</span>
 <span id="3">3</span>
 <span id="4">4</span>
@@ -145,152 +145,152 @@
 <span id="145">145</span>
 <span id="146">146</span>
 <span id="147">147</span>
-</pre><pre class="rust"><code><span class="kw">use</span> <span class="ident">proc_macro2::TokenStream</span>;
-<span class="kw">use</span> <span class="ident">quote</span>::{<span class="ident">format_ident</span>, <span class="ident">quote</span>, <span class="ident">quote_spanned</span>};
-<span class="kw">use</span> <span class="ident">syn</span>::{
-    <span class="ident">parse_quote</span>,
-    <span class="ident">spanned::Spanned</span>,
-    <span class="ident">Data</span>,
-    <span class="ident">DataEnum</span>,
-    <span class="ident">DeriveInput</span>,
-    <span class="ident">Fields</span>,
-    <span class="ident">FieldsNamed</span>,
-    <span class="ident">FieldsUnnamed</span>,
-    <span class="ident">GenericParam</span>,
-    <span class="ident">Generics</span>,
-    <span class="ident">Index</span>,
+</pre><pre class="rust"><code><span class="kw">use </span>proc_macro2::TokenStream;
+<span class="kw">use </span>quote::{format_ident, quote, quote_spanned};
+<span class="kw">use </span>syn::{
+    parse_quote,
+    spanned::Spanned,
+    Data,
+    DataEnum,
+    DeriveInput,
+    Fields,
+    FieldsNamed,
+    FieldsUnnamed,
+    GenericParam,
+    Generics,
+    Index,
 };
 
-<span class="comment">// TODO: work out how to throw errors properly (apparently there&#39;s an experimental Diagnostics API?)</span>
-<span class="comment">// Serde doesn&#39;t use it but it might just not have been updated yet / waiting for it to be stable</span>
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">impl_serialize</span>(<span class="ident">input</span>: <span class="ident">DeriveInput</span>) -&gt; <span class="ident">proc_macro::TokenStream</span> {
-    <span class="kw">let</span> <span class="ident">name</span> <span class="op">=</span> <span class="ident">input</span>.<span class="ident">ident</span>;
+<span class="comment">// TODO: work out how to throw errors properly (apparently there&#39;s an experimental Diagnostics API?)
+// Serde doesn&#39;t use it but it might just not have been updated yet / waiting for it to be stable
+</span><span class="kw">pub fn </span>impl_serialize(input: DeriveInput) -&gt; proc_macro::TokenStream {
+    <span class="kw">let </span>name = input.ident;
 
-    <span class="kw">let</span> <span class="ident">generics</span> <span class="op">=</span> <span class="ident">add_trait_bounds</span>(<span class="ident">input</span>.<span class="ident">generics</span>);
-    <span class="kw">let</span> (<span class="ident">impl_generics</span>, <span class="ident">ty_generics</span>, <span class="ident">where_clause</span>) <span class="op">=</span> <span class="ident">generics</span>.<span class="ident">split_for_impl</span>();
+    <span class="kw">let </span>generics = add_trait_bounds(input.generics);
+    <span class="kw">let </span>(impl_generics, ty_generics, where_clause) = generics.split_for_impl();
 
-    <span class="kw">let</span> <span class="ident">body</span> <span class="op">=</span> <span class="ident">generate_body</span>(<span class="kw-2">&amp;</span><span class="ident">input</span>.<span class="ident">data</span>);
+    <span class="kw">let </span>body = generate_body(<span class="kw-2">&amp;</span>input.data);
 
-    <span class="kw">let</span> <span class="ident">expanded</span> <span class="op">=</span> <span class="macro">quote!</span> {
-        <span class="attribute">#[<span class="ident">automatically_derived</span>]</span>
-        <span class="kw">impl</span> #<span class="ident">impl_generics</span> <span class="ident">ptah::Serialize</span> <span class="kw">for</span> #<span class="ident">name</span> #<span class="ident">ty_generics</span> #<span class="ident">where_clause</span> {
-            <span class="kw">fn</span> <span class="ident">serialize</span><span class="op">&lt;</span><span class="ident">W</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">serializer</span>: <span class="kw-2">&amp;mut</span> <span class="ident">ptah::Serializer</span><span class="op">&lt;</span><span class="ident">W</span><span class="op">&gt;</span>) -&gt; <span class="ident">ptah::ser::Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span>
-            <span class="kw">where</span>
-                <span class="ident">W</span>: <span class="ident">ptah::Writer</span>,
+    <span class="kw">let </span>expanded = <span class="macro">quote! </span>{
+        <span class="attribute">#[automatically_derived]
+        </span><span class="kw">impl </span>#impl_generics ptah::Serialize <span class="kw">for </span>#name #ty_generics #where_clause {
+            <span class="kw">fn </span>serialize&lt;W&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, serializer: <span class="kw-2">&amp;mut </span>ptah::Serializer&lt;W&gt;) -&gt; ptah::ser::Result&lt;()&gt;
+            <span class="kw">where
+                </span>W: ptah::Writer,
             {
-                #<span class="ident">body</span>
+                #body
                 <span class="prelude-val">Ok</span>(())
             }
         }
     };
-    <span class="ident">proc_macro::TokenStream::from</span>(<span class="ident">expanded</span>)
+    proc_macro::TokenStream::from(expanded)
 }
 
 <span class="comment">/*
  * This adds a bound `T: ptah::Serialize` to each type parameter `T`.
- */</span>
-<span class="kw">fn</span> <span class="ident">add_trait_bounds</span>(<span class="kw-2">mut</span> <span class="ident">generics</span>: <span class="ident">Generics</span>) -&gt; <span class="ident">Generics</span> {
-    <span class="kw">for</span> <span class="ident">param</span> <span class="kw">in</span> <span class="kw-2">&amp;mut</span> <span class="ident">generics</span>.<span class="ident">params</span> {
-        <span class="kw">if</span> <span class="kw">let</span> <span class="ident">GenericParam::Type</span>(<span class="kw-2">ref</span> <span class="kw-2">mut</span> <span class="ident">type_param</span>) <span class="op">=</span> <span class="kw-2">*</span><span class="ident">param</span> {
-            <span class="ident">type_param</span>.<span class="ident">bounds</span>.<span class="ident">push</span>(<span class="macro">parse_quote!</span>(<span class="ident">ptah::Serialize</span>));
+ */
+</span><span class="kw">fn </span>add_trait_bounds(<span class="kw-2">mut </span>generics: Generics) -&gt; Generics {
+    <span class="kw">for </span>param <span class="kw">in </span><span class="kw-2">&amp;mut </span>generics.params {
+        <span class="kw">if let </span>GenericParam::Type(<span class="kw-2">ref mut </span>type_param) = <span class="kw-2">*</span>param {
+            type_param.bounds.push(<span class="macro">parse_quote!</span>(ptah::Serialize));
         }
     }
-    <span class="ident">generics</span>
+    generics
 }
 
-<span class="kw">fn</span> <span class="ident">generate_body</span>(<span class="ident">data</span>: <span class="kw-2">&amp;</span><span class="ident">Data</span>) -&gt; <span class="ident">TokenStream</span> {
-    <span class="kw">match</span> <span class="ident">data</span> {
-        <span class="ident">Data::Struct</span>(<span class="kw-2">ref</span> <span class="ident">struct_data</span>) =&gt; <span class="kw">match</span> <span class="ident">struct_data</span>.<span class="ident">fields</span> {
-            <span class="ident">Fields::Named</span>(<span class="kw-2">ref</span> <span class="ident">fields</span>) =&gt; <span class="ident">generate_for_struct</span>(<span class="ident">fields</span>),
-            <span class="ident">Fields::Unnamed</span>(<span class="kw-2">ref</span> <span class="ident">fields</span>) =&gt; <span class="ident">generate_for_tuple</span>(<span class="ident">fields</span>),
-            <span class="ident">Fields::Unit</span> =&gt; <span class="macro">quote!</span> {},
+<span class="kw">fn </span>generate_body(data: <span class="kw-2">&amp;</span>Data) -&gt; TokenStream {
+    <span class="kw">match </span>data {
+        Data::Struct(<span class="kw-2">ref </span>struct_data) =&gt; <span class="kw">match </span>struct_data.fields {
+            Fields::Named(<span class="kw-2">ref </span>fields) =&gt; generate_for_struct(fields),
+            Fields::Unnamed(<span class="kw-2">ref </span>fields) =&gt; generate_for_tuple(fields),
+            Fields::Unit =&gt; <span class="macro">quote! </span>{},
         },
-        <span class="ident">Data::Enum</span>(<span class="ident">enum_data</span>) =&gt; <span class="ident">generate_for_enum</span>(<span class="kw-2">&amp;</span><span class="ident">enum_data</span>),
-        <span class="comment">// TODO: I&#39;m not sure we want to support this from Rust. Probably throw a compile error here?</span>
-        <span class="ident">Data::Union</span>(<span class="ident">union_data</span>) =&gt; <span class="macro">todo!</span>(),
+        Data::Enum(enum_data) =&gt; generate_for_enum(<span class="kw-2">&amp;</span>enum_data),
+        <span class="comment">// TODO: I&#39;m not sure we want to support this from Rust. Probably throw a compile error here?
+        </span>Data::Union(union_data) =&gt; <span class="macro">todo!</span>(),
     }
 }
 
-<span class="kw">fn</span> <span class="ident">generate_for_struct</span>(<span class="ident">fields</span>: <span class="kw-2">&amp;</span><span class="ident">FieldsNamed</span>) -&gt; <span class="ident">TokenStream</span> {
+<span class="kw">fn </span>generate_for_struct(fields: <span class="kw-2">&amp;</span>FieldsNamed) -&gt; TokenStream {
     <span class="comment">/*
      * We serialise each field, making sure to use fully-qualified syntax so we don&#39;t need the
      * traits in-scope. We also make sure to match each field back to its correct span, so we get
      * nice error messages.
-     */</span>
-    <span class="kw">let</span> <span class="ident">fields</span> <span class="op">=</span> <span class="ident">fields</span>.<span class="ident">named</span>.<span class="ident">iter</span>().<span class="ident">map</span>(<span class="op">|</span><span class="ident">field</span><span class="op">|</span> {
-        <span class="kw">let</span> <span class="ident">name</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="ident">field</span>.<span class="ident">ident</span>;
-        <span class="macro">quote_spanned!</span>(<span class="ident">field</span>.<span class="ident">span</span>() =&gt; <span class="ident">ptah::Serialize::serialize</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.#<span class="ident">name</span>, <span class="ident">serializer</span>)<span class="question-mark">?</span>;)
+     */
+    </span><span class="kw">let </span>fields = fields.named.iter().map(|field| {
+        <span class="kw">let </span>name = <span class="kw-2">&amp;</span>field.ident;
+        <span class="macro">quote_spanned!</span>(field.span() =&gt; ptah::Serialize::serialize(<span class="kw-2">&amp;</span><span class="self">self</span>.#name, serializer)<span class="question-mark">?</span>;)
     });
-    <span class="macro">quote!</span> {
-        #(#<span class="ident">fields</span>)<span class="op">*</span>
+    <span class="macro">quote! </span>{
+        #(#fields)*
     }
 }
 
-<span class="kw">fn</span> <span class="ident">generate_for_tuple</span>(<span class="ident">fields</span>: <span class="kw-2">&amp;</span><span class="ident">FieldsUnnamed</span>) -&gt; <span class="ident">TokenStream</span> {
+<span class="kw">fn </span>generate_for_tuple(fields: <span class="kw-2">&amp;</span>FieldsUnnamed) -&gt; TokenStream {
     <span class="comment">/*
      * Similar to named fields, serialize each one, but we need to enumerate over them to get the indices into
      * the tuple, as the field doesn&#39;t contain it.
-     */</span>
-    <span class="kw">let</span> <span class="ident">fields</span> <span class="op">=</span> <span class="ident">fields</span>.<span class="ident">unnamed</span>.<span class="ident">iter</span>().<span class="ident">enumerate</span>().<span class="ident">map</span>(<span class="op">|</span>(<span class="ident">i</span>, <span class="ident">field</span>)<span class="op">|</span> {
-        <span class="kw">let</span> <span class="ident">index</span> <span class="op">=</span> <span class="ident">Index::from</span>(<span class="ident">i</span>);
-        <span class="macro">quote_spanned!</span>(<span class="ident">field</span>.<span class="ident">span</span>() =&gt; <span class="ident">ptah::Serialize::serialize</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.#<span class="ident">index</span>, <span class="ident">serializer</span>)<span class="question-mark">?</span>;)
+     */
+    </span><span class="kw">let </span>fields = fields.unnamed.iter().enumerate().map(|(i, field)| {
+        <span class="kw">let </span>index = Index::from(i);
+        <span class="macro">quote_spanned!</span>(field.span() =&gt; ptah::Serialize::serialize(<span class="kw-2">&amp;</span><span class="self">self</span>.#index, serializer)<span class="question-mark">?</span>;)
     });
 
-    <span class="macro">quote!</span> {
-        #(#<span class="ident">fields</span>)<span class="op">*</span>
+    <span class="macro">quote! </span>{
+        #(#fields)*
     }
 }
 
-<span class="kw">fn</span> <span class="ident">generate_for_enum</span>(<span class="ident">data</span>: <span class="kw-2">&amp;</span><span class="ident">DataEnum</span>) -&gt; <span class="ident">TokenStream</span> {
-    <span class="kw">let</span> <span class="ident">variants</span> <span class="op">=</span> <span class="ident">data</span>.<span class="ident">variants</span>.<span class="ident">iter</span>().<span class="ident">enumerate</span>().<span class="ident">map</span>(<span class="op">|</span>(<span class="ident">i</span>, <span class="ident">variant</span>)<span class="op">|</span> {
-        <span class="comment">// TODO: we should probably handle explicit descriminants (e.g. SomeVariant = 78,) somehow</span>
-        <span class="macro">assert!</span>(<span class="ident">variant</span>.<span class="ident">discriminant</span>.<span class="ident">is_none</span>());
+<span class="kw">fn </span>generate_for_enum(data: <span class="kw-2">&amp;</span>DataEnum) -&gt; TokenStream {
+    <span class="kw">let </span>variants = data.variants.iter().enumerate().map(|(i, variant)| {
+        <span class="comment">// TODO: we should probably handle explicit descriminants (e.g. SomeVariant = 78,) somehow
+        </span><span class="macro">assert!</span>(variant.discriminant.is_none());
 
-        <span class="kw">let</span> <span class="ident">index</span> <span class="op">=</span> <span class="ident">Index::from</span>(<span class="ident">i</span>);
-        <span class="kw">let</span> <span class="ident">variant_name</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="ident">variant</span>.<span class="ident">ident</span>;
+        <span class="kw">let </span>index = Index::from(i);
+        <span class="kw">let </span>variant_name = <span class="kw-2">&amp;</span>variant.ident;
 
-        <span class="kw">match</span> <span class="kw-2">&amp;</span><span class="ident">variant</span>.<span class="ident">fields</span> {
-            <span class="ident">Fields::Named</span>(<span class="kw-2">ref</span> <span class="ident">fields</span>) =&gt; {
-                <span class="kw">let</span> <span class="ident">serialize_fields</span> <span class="op">=</span> <span class="ident">fields</span>.<span class="ident">named</span>.<span class="ident">iter</span>().<span class="ident">map</span>(<span class="op">|</span><span class="ident">field</span><span class="op">|</span> {
-                    <span class="kw">let</span> <span class="ident">field_name</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="ident">field</span>.<span class="ident">ident</span>;
-                    <span class="macro">quote_spanned!</span>(<span class="ident">variant</span>.<span class="ident">span</span>() =&gt; <span class="ident">ptah::Serialize::serialize</span>(#<span class="ident">field_name</span>, <span class="ident">serializer</span>)<span class="question-mark">?</span>;)
+        <span class="kw">match </span><span class="kw-2">&amp;</span>variant.fields {
+            Fields::Named(<span class="kw-2">ref </span>fields) =&gt; {
+                <span class="kw">let </span>serialize_fields = fields.named.iter().map(|field| {
+                    <span class="kw">let </span>field_name = <span class="kw-2">&amp;</span>field.ident;
+                    <span class="macro">quote_spanned!</span>(variant.span() =&gt; ptah::Serialize::serialize(#field_name, serializer)<span class="question-mark">?</span>;)
                 });
-                <span class="kw">let</span> <span class="ident">field_names</span> <span class="op">=</span> <span class="ident">fields</span>.<span class="ident">named</span>.<span class="ident">iter</span>().<span class="ident">map</span>(<span class="op">|</span><span class="ident">field</span><span class="op">|</span> {
-                    <span class="kw">let</span> <span class="ident">field_name</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="ident">field</span>.<span class="ident">ident</span>;
-                    <span class="macro">quote!</span>(#<span class="ident">field_name</span>, )
+                <span class="kw">let </span>field_names = fields.named.iter().map(|field| {
+                    <span class="kw">let </span>field_name = <span class="kw-2">&amp;</span>field.ident;
+                    <span class="macro">quote!</span>(#field_name, )
                 });
 
-                <span class="macro">quote_spanned!</span>(<span class="ident">variant</span>.<span class="ident">span</span>() =&gt; <span class="self">Self</span>::#<span class="ident">variant_name</span> { #(#<span class="ident">field_names</span>)<span class="op">*</span> } =&gt; {
-                    <span class="ident">ptah::Serializer::serialize_enum_variant</span>(<span class="ident">serializer</span>, #<span class="ident">index</span>)<span class="question-mark">?</span>;
-                    #(#<span class="ident">serialize_fields</span>)<span class="op">*</span>
+                <span class="macro">quote_spanned!</span>(variant.span() =&gt; <span class="self">Self</span>::#variant_name { #(#field_names)* } =&gt; {
+                    ptah::Serializer::serialize_enum_variant(serializer, #index)<span class="question-mark">?</span>;
+                    #(#serialize_fields)*
                 })
             }
-            <span class="ident">Fields::Unnamed</span>(<span class="kw-2">ref</span> <span class="ident">fields</span>) =&gt; {
-                <span class="kw">let</span> <span class="ident">field_names</span> <span class="op">=</span> <span class="ident">fields</span>.<span class="ident">unnamed</span>.<span class="ident">iter</span>().<span class="ident">enumerate</span>().<span class="ident">map</span>(<span class="op">|</span>(<span class="ident">i</span>, <span class="ident">_field</span>)<span class="op">|</span> {
-                    <span class="kw">let</span> <span class="ident">field_name</span> <span class="op">=</span> <span class="macro">format_ident!</span>(<span class="string">&quot;field_{}&quot;</span>, <span class="ident">i</span>);
-                    <span class="macro">quote!</span>(#<span class="ident">field_name</span>, )
+            Fields::Unnamed(<span class="kw-2">ref </span>fields) =&gt; {
+                <span class="kw">let </span>field_names = fields.unnamed.iter().enumerate().map(|(i, _field)| {
+                    <span class="kw">let </span>field_name = <span class="macro">format_ident!</span>(<span class="string">&quot;field_{}&quot;</span>, i);
+                    <span class="macro">quote!</span>(#field_name, )
                 });
-                <span class="kw">let</span> <span class="ident">serialize_fields</span> <span class="op">=</span> <span class="ident">fields</span>.<span class="ident">unnamed</span>.<span class="ident">iter</span>().<span class="ident">enumerate</span>().<span class="ident">map</span>(<span class="op">|</span>(<span class="ident">i</span>, <span class="ident">field</span>)<span class="op">|</span> {
-                    <span class="kw">let</span> <span class="ident">field_name</span> <span class="op">=</span> <span class="macro">format_ident!</span>(<span class="string">&quot;field_{}&quot;</span>, <span class="ident">i</span>);
-                    <span class="macro">quote_spanned!</span>(<span class="ident">field</span>.<span class="ident">span</span>() =&gt; <span class="ident">ptah::Serialize::serialize</span>(#<span class="ident">field_name</span>, <span class="ident">serializer</span>)<span class="question-mark">?</span>;)
+                <span class="kw">let </span>serialize_fields = fields.unnamed.iter().enumerate().map(|(i, field)| {
+                    <span class="kw">let </span>field_name = <span class="macro">format_ident!</span>(<span class="string">&quot;field_{}&quot;</span>, i);
+                    <span class="macro">quote_spanned!</span>(field.span() =&gt; ptah::Serialize::serialize(#field_name, serializer)<span class="question-mark">?</span>;)
                 });
 
-                <span class="macro">quote_spanned!</span>(<span class="ident">variant</span>.<span class="ident">span</span>() =&gt; <span class="self">Self</span>::#<span class="ident">variant_name</span>(#(#<span class="ident">field_names</span>)<span class="kw-2">*</span>) =&gt; {
-                    <span class="ident">ptah::Serializer::serialize_enum_variant</span>(<span class="ident">serializer</span>, #<span class="ident">index</span>)<span class="question-mark">?</span>;
-                    #(#<span class="ident">serialize_fields</span>)<span class="op">*</span>
+                <span class="macro">quote_spanned!</span>(variant.span() =&gt; <span class="self">Self</span>::#variant_name(#(#field_names)<span class="kw-2">*</span>) =&gt; {
+                    ptah::Serializer::serialize_enum_variant(serializer, #index)<span class="question-mark">?</span>;
+                    #(#serialize_fields)*
                 })
             }
-            <span class="ident">Fields::Unit</span> =&gt; <span class="macro">quote_spanned!</span>(<span class="ident">variant</span>.<span class="ident">span</span>() =&gt; <span class="self">Self</span>::#<span class="ident">variant_name</span> =&gt; {
-                <span class="ident">ptah::Serializer::serialize_enum_variant</span>(<span class="ident">serializer</span>, #<span class="ident">index</span>)<span class="question-mark">?</span>;
+            Fields::Unit =&gt; <span class="macro">quote_spanned!</span>(variant.span() =&gt; <span class="self">Self</span>::#variant_name =&gt; {
+                ptah::Serializer::serialize_enum_variant(serializer, #index)<span class="question-mark">?</span>;
             }),
         }
     });
 
-    <span class="macro">quote!</span> {
-        <span class="kw">match</span> <span class="self">self</span> {
-            #(#<span class="ident">variants</span>)<span class="op">*</span>
+    <span class="macro">quote! </span>{
+        <span class="kw">match </span><span class="self">self </span>{
+            #(#variants)*
         }
     }
 }
 </code></pre></div>
-</section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="ptah_derive" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.65.0-nightly (34a6cae28 2022-08-09)" ></div></body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="ptah_derive" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.65.0-nightly (b44197abb 2022-09-05)" ></div></body></html>

@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/memory/kernel_stack_allocator.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>kernel_stack_allocator.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../storage.js"></script><script defer src="../../../source-script.js"></script><script defer src="../../../source-files.js"></script><script defer src="../../../main.js"></script><noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../../kernel/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div></a><h2 class="location"></h2></nav><nav class="sidebar"><a class="sidebar-logo" href="../../../kernel/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div></a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../../kernel/index.html"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></a><nav class="sub"><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><button type="button">?</button></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../wheel.svg"></a></div></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/memory/kernel_stack_allocator.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>kernel_stack_allocator.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" href="../../../normalize.css"><link rel="stylesheet" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" href="../../../ayu.css" disabled><link rel="stylesheet" href="../../../dark.css" disabled><link rel="stylesheet" href="../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../storage.js"></script><script defer src="../../../source-script.js"></script><script defer src="../../../source-files.js"></script><script defer src="../../../main.js"></script><noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../../kernel/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div></a><h2 class="location"></h2></nav><nav class="sidebar"><a class="sidebar-logo" href="../../../kernel/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div></a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../../kernel/index.html"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></a><nav class="sub"><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><button type="button">?</button></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../wheel.svg"></a></div></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
 <span id="2">2</span>
 <span id="3">3</span>
 <span id="4">4</span>
@@ -55,62 +55,62 @@
 <span id="55">55</span>
 <span id="56">56</span>
 <span id="57">57</span>
-</pre><pre class="rust"><code><span class="kw">use</span> <span class="kw">super</span>::{<span class="ident">PhysicalMemoryManager</span>, <span class="ident">SlabAllocator</span>, <span class="ident">Stack</span>};
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::Platform</span>;
-<span class="kw">use</span> <span class="ident">core::marker::PhantomData</span>;
-<span class="kw">use</span> <span class="ident">hal::memory::VirtualAddress</span>;
-<span class="kw">use</span> <span class="ident">spin::Mutex</span>;
+</pre><pre class="rust"><code><span class="kw">use super</span>::{PhysicalMemoryManager, SlabAllocator, Stack};
+<span class="kw">use </span><span class="kw">crate</span>::Platform;
+<span class="kw">use </span>core::marker::PhantomData;
+<span class="kw">use </span>hal::memory::VirtualAddress;
+<span class="kw">use </span>spin::Mutex;
 
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">KernelStackAllocator</span><span class="op">&lt;</span><span class="ident">P</span><span class="op">&gt;</span>
-<span class="kw">where</span>
-    <span class="ident">P</span>: <span class="ident">Platform</span>,
+<span class="kw">pub struct </span>KernelStackAllocator&lt;P&gt;
+<span class="kw">where
+    </span>P: Platform,
 {
-    <span class="ident">kernel_stack_slots</span>: <span class="ident">Mutex</span><span class="op">&lt;</span><span class="ident">SlabAllocator</span><span class="op">&gt;</span>,
-    <span class="ident">slot_size</span>: <span class="ident">usize</span>,
-    <span class="ident">_phantom</span>: <span class="ident">PhantomData</span><span class="op">&lt;</span><span class="ident">P</span><span class="op">&gt;</span>,
+    kernel_stack_slots: Mutex&lt;SlabAllocator&gt;,
+    slot_size: usize,
+    _phantom: PhantomData&lt;P&gt;,
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">P</span><span class="op">&gt;</span> <span class="ident">KernelStackAllocator</span><span class="op">&lt;</span><span class="ident">P</span><span class="op">&gt;</span>
-<span class="kw">where</span>
-    <span class="ident">P</span>: <span class="ident">Platform</span>,
+<span class="kw">impl</span>&lt;P&gt; KernelStackAllocator&lt;P&gt;
+<span class="kw">where
+    </span>P: Platform,
 {
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>(
-        <span class="ident">stacks_bottom</span>: <span class="ident">VirtualAddress</span>,
-        <span class="ident">stacks_top</span>: <span class="ident">VirtualAddress</span>,
-        <span class="ident">slot_size</span>: <span class="ident">usize</span>,
-    ) -&gt; <span class="ident">KernelStackAllocator</span><span class="op">&lt;</span><span class="ident">P</span><span class="op">&gt;</span> {
-        <span class="ident">KernelStackAllocator</span> {
-            <span class="ident">kernel_stack_slots</span>: <span class="ident">Mutex::new</span>(<span class="ident">SlabAllocator::new</span>(<span class="ident">stacks_bottom</span>, <span class="ident">stacks_top</span>, <span class="ident">slot_size</span>)),
-            <span class="ident">slot_size</span>,
-            <span class="ident">_phantom</span>: <span class="ident">PhantomData</span>,
+    <span class="kw">pub fn </span>new(
+        stacks_bottom: VirtualAddress,
+        stacks_top: VirtualAddress,
+        slot_size: usize,
+    ) -&gt; KernelStackAllocator&lt;P&gt; {
+        KernelStackAllocator {
+            kernel_stack_slots: Mutex::new(SlabAllocator::new(stacks_bottom, stacks_top, slot_size)),
+            slot_size,
+            _phantom: PhantomData,
         }
     }
 
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">alloc_kernel_stack</span>(
+    <span class="kw">pub fn </span>alloc_kernel_stack(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
-        <span class="ident">initial_size</span>: <span class="ident">usize</span>,
-        <span class="ident">physical_memory_manager</span>: <span class="kw-2">&amp;</span><span class="ident">PhysicalMemoryManager</span>,
-        <span class="ident">kernel_page_table</span>: <span class="kw-2">&amp;mut</span> <span class="ident">P::PageTable</span>,
-    ) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Stack</span><span class="op">&gt;</span> {
-        <span class="kw">use</span> <span class="ident">hal::memory</span>::{<span class="ident">Flags</span>, <span class="ident">PageTable</span>};
+        initial_size: usize,
+        physical_memory_manager: <span class="kw-2">&amp;</span>PhysicalMemoryManager,
+        kernel_page_table: <span class="kw-2">&amp;mut </span>P::PageTable,
+    ) -&gt; <span class="prelude-ty">Option</span>&lt;Stack&gt; {
+        <span class="kw">use </span>hal::memory::{Flags, PageTable};
 
-        <span class="kw">let</span> <span class="ident">slot_bottom</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">kernel_stack_slots</span>.<span class="ident">lock</span>().<span class="ident">alloc</span>()<span class="question-mark">?</span>;
-        <span class="kw">let</span> <span class="ident">top</span> <span class="op">=</span> <span class="ident">slot_bottom</span> <span class="op">+</span> <span class="self">self</span>.<span class="ident">slot_size</span> <span class="op">-</span> <span class="number">1</span>;
-        <span class="kw">let</span> <span class="ident">stack_bottom</span> <span class="op">=</span> <span class="ident">top</span> <span class="op">-</span> <span class="ident">initial_size</span> <span class="op">+</span> <span class="number">1</span>;
+        <span class="kw">let </span>slot_bottom = <span class="self">self</span>.kernel_stack_slots.lock().alloc()<span class="question-mark">?</span>;
+        <span class="kw">let </span>top = slot_bottom + <span class="self">self</span>.slot_size - <span class="number">1</span>;
+        <span class="kw">let </span>stack_bottom = top - initial_size + <span class="number">1</span>;
 
-        <span class="kw">let</span> <span class="ident">physical_start</span> <span class="op">=</span> <span class="ident">physical_memory_manager</span>.<span class="ident">alloc_bytes</span>(<span class="ident">initial_size</span>);
-        <span class="ident">kernel_page_table</span>
-            .<span class="ident">map_area</span>(
-                <span class="ident">stack_bottom</span>,
-                <span class="ident">physical_start</span>,
-                <span class="ident">initial_size</span>,
-                <span class="ident">Flags</span> { <span class="ident">writable</span>: <span class="bool-val">true</span>, ..<span class="ident">Default::default</span>() },
-                <span class="ident">physical_memory_manager</span>,
+        <span class="kw">let </span>physical_start = physical_memory_manager.alloc_bytes(initial_size);
+        kernel_page_table
+            .map_area(
+                stack_bottom,
+                physical_start,
+                initial_size,
+                Flags { writable: <span class="bool-val">true</span>, ..Default::default() },
+                physical_memory_manager,
             )
-            .<span class="ident">unwrap</span>();
+            .unwrap();
 
-        <span class="prelude-val">Some</span>(<span class="ident">Stack</span> { <span class="ident">top</span>, <span class="ident">slot_bottom</span>, <span class="ident">stack_bottom</span>, <span class="ident">physical_start</span> })
+        <span class="prelude-val">Some</span>(Stack { top, slot_bottom, stack_bottom, physical_start })
     }
 }
 </code></pre></div>
-</section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="kernel" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.65.0-nightly (34a6cae28 2022-08-09)" ></div></body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="kernel" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.65.0-nightly (b44197abb 2022-09-05)" ></div></body></html>

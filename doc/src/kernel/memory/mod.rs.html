@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/memory/mod.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>mod.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../storage.js"></script><script defer src="../../../source-script.js"></script><script defer src="../../../source-files.js"></script><script defer src="../../../main.js"></script><noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../../kernel/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div></a><h2 class="location"></h2></nav><nav class="sidebar"><a class="sidebar-logo" href="../../../kernel/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div></a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../../kernel/index.html"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></a><nav class="sub"><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><button type="button">?</button></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../wheel.svg"></a></div></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/memory/mod.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>mod.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" href="../../../normalize.css"><link rel="stylesheet" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" href="../../../ayu.css" disabled><link rel="stylesheet" href="../../../dark.css" disabled><link rel="stylesheet" href="../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../storage.js"></script><script defer src="../../../source-script.js"></script><script defer src="../../../source-files.js"></script><script defer src="../../../main.js"></script><noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../../kernel/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div></a><h2 class="location"></h2></nav><nav class="sidebar"><a class="sidebar-logo" href="../../../kernel/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div></a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../../kernel/index.html"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></a><nav class="sub"><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><button type="button">?</button></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../wheel.svg"></a></div></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
 <span id="2">2</span>
 <span id="3">3</span>
 <span id="4">4</span>
@@ -66,73 +66,73 @@
 <span id="66">66</span>
 <span id="67">67</span>
 <span id="68">68</span>
-</pre><pre class="rust"><code><span class="kw">mod</span> <span class="ident">buddy_allocator</span>;
-<span class="kw">mod</span> <span class="ident">kernel_stack_allocator</span>;
-<span class="kw">mod</span> <span class="ident">slab_allocator</span>;
+</pre><pre class="rust"><code><span class="kw">mod </span>buddy_allocator;
+<span class="kw">mod </span>kernel_stack_allocator;
+<span class="kw">mod </span>slab_allocator;
 
-<span class="kw">pub</span> <span class="kw">use</span> <span class="ident">kernel_stack_allocator::KernelStackAllocator</span>;
-<span class="kw">pub</span> <span class="kw">use</span> <span class="ident">slab_allocator::SlabAllocator</span>;
+<span class="kw">pub use </span>kernel_stack_allocator::KernelStackAllocator;
+<span class="kw">pub use </span>slab_allocator::SlabAllocator;
 
-<span class="kw">use</span> <span class="ident">buddy_allocator::BuddyAllocator</span>;
-<span class="kw">use</span> <span class="ident">core::ops::Range</span>;
-<span class="kw">use</span> <span class="ident">hal</span>::{
-    <span class="ident">boot_info::BootInfo</span>,
-    <span class="ident">memory</span>::{<span class="ident">Frame</span>, <span class="ident">FrameAllocator</span>, <span class="ident">FrameSize</span>, <span class="ident">PhysicalAddress</span>, <span class="ident">VirtualAddress</span>},
+<span class="kw">use </span>buddy_allocator::BuddyAllocator;
+<span class="kw">use </span>core::ops::Range;
+<span class="kw">use </span>hal::{
+    boot_info::BootInfo,
+    memory::{Frame, FrameAllocator, FrameSize, PhysicalAddress, VirtualAddress},
 };
-<span class="kw">use</span> <span class="ident">spin::Mutex</span>;
+<span class="kw">use </span>spin::Mutex;
 
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">PhysicalMemoryManager</span> {
-    <span class="ident">buddy</span>: <span class="ident">Mutex</span><span class="op">&lt;</span><span class="ident">BuddyAllocator</span><span class="op">&gt;</span>,
+<span class="kw">pub struct </span>PhysicalMemoryManager {
+    buddy: Mutex&lt;BuddyAllocator&gt;,
 }
 
-<span class="kw">impl</span> <span class="ident">PhysicalMemoryManager</span> {
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">boot_info</span>: <span class="kw-2">&amp;</span><span class="ident">BootInfo</span>) -&gt; <span class="ident">PhysicalMemoryManager</span> {
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">buddy_allocator</span> <span class="op">=</span> <span class="ident">BuddyAllocator::new</span>();
+<span class="kw">impl </span>PhysicalMemoryManager {
+    <span class="kw">pub fn </span>new(boot_info: <span class="kw-2">&amp;</span>BootInfo) -&gt; PhysicalMemoryManager {
+        <span class="kw">let </span><span class="kw-2">mut </span>buddy_allocator = BuddyAllocator::new();
 
-        <span class="kw">for</span> <span class="ident">entry</span> <span class="kw">in</span> <span class="ident">boot_info</span>.<span class="ident">memory_map</span>.<span class="ident">entries</span>() {
-            <span class="kw">if</span> <span class="ident">entry</span>.<span class="ident">memory_type</span> <span class="op">==</span> <span class="ident">hal::boot_info::MemoryType::Conventional</span> {
-                <span class="ident">buddy_allocator</span>.<span class="ident">add_range</span>(<span class="ident">entry</span>.<span class="ident">frame_range</span>());
+        <span class="kw">for </span>entry <span class="kw">in </span>boot_info.memory_map.entries() {
+            <span class="kw">if </span>entry.memory_type == hal::boot_info::MemoryType::Conventional {
+                buddy_allocator.add_range(entry.frame_range());
             }
         }
 
-        <span class="ident">PhysicalMemoryManager</span> { <span class="ident">buddy</span>: <span class="ident">Mutex::new</span>(<span class="ident">buddy_allocator</span>) }
+        PhysicalMemoryManager { buddy: Mutex::new(buddy_allocator) }
     }
 
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">alloc_bytes</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">num_bytes</span>: <span class="ident">usize</span>) -&gt; <span class="ident">PhysicalAddress</span> {
+    <span class="kw">pub fn </span>alloc_bytes(<span class="kw-2">&amp;</span><span class="self">self</span>, num_bytes: usize) -&gt; PhysicalAddress {
         <span class="comment">/*
          * For now, we always use the buddy allocator.
          * TODO: this isn&#39;t very good. We can only allocate a whole block at a time, and always allocate a
          * contiguous block of memory even when we don&#39;t need one. This should return an &quot;owned&quot; allocation that
          * can hold a list of non-contiguous ranges of frames, plus information needed to free the allocation.
-         */</span>
-        <span class="self">self</span>.<span class="ident">buddy</span>.<span class="ident">lock</span>().<span class="ident">allocate_n</span>(<span class="ident">num_bytes</span>).<span class="ident">expect</span>(<span class="string">&quot;Failed to allocate physical memory!&quot;</span>)
+         */
+        </span><span class="self">self</span>.buddy.lock().allocate_n(num_bytes).expect(<span class="string">&quot;Failed to allocate physical memory!&quot;</span>)
     }
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">S</span><span class="op">&gt;</span> <span class="ident">FrameAllocator</span><span class="op">&lt;</span><span class="ident">S</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">PhysicalMemoryManager</span>
-<span class="kw">where</span>
-    <span class="ident">S</span>: <span class="ident">FrameSize</span>,
+<span class="kw">impl</span>&lt;S&gt; FrameAllocator&lt;S&gt; <span class="kw">for </span>PhysicalMemoryManager
+<span class="kw">where
+    </span>S: FrameSize,
 {
-    <span class="kw">fn</span> <span class="ident">allocate_n</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">n</span>: <span class="ident">usize</span>) -&gt; <span class="ident">Range</span><span class="op">&lt;</span><span class="ident">Frame</span><span class="op">&lt;</span><span class="ident">S</span><span class="op">&gt;</span><span class="op">&gt;</span> {
-        <span class="kw">let</span> <span class="ident">start</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">buddy</span>.<span class="ident">lock</span>().<span class="ident">allocate_n</span>(<span class="ident">n</span> <span class="op">*</span> <span class="ident">S::SIZE</span>).<span class="ident">expect</span>(<span class="string">&quot;Failed to allocate physical memory!&quot;</span>);
-        <span class="ident">Frame</span>::<span class="op">&lt;</span><span class="ident">S</span><span class="op">&gt;</span><span class="ident">::starts_with</span>(<span class="ident">start</span>)..(<span class="ident">Frame</span>::<span class="op">&lt;</span><span class="ident">S</span><span class="op">&gt;</span><span class="ident">::starts_with</span>(<span class="ident">start</span>) <span class="op">+</span> <span class="ident">n</span>)
+    <span class="kw">fn </span>allocate_n(<span class="kw-2">&amp;</span><span class="self">self</span>, n: usize) -&gt; Range&lt;Frame&lt;S&gt;&gt; {
+        <span class="kw">let </span>start = <span class="self">self</span>.buddy.lock().allocate_n(n * S::SIZE).expect(<span class="string">&quot;Failed to allocate physical memory!&quot;</span>);
+        Frame::&lt;S&gt;::starts_with(start)..(Frame::&lt;S&gt;::starts_with(start) + n)
     }
 
-    <span class="kw">fn</span> <span class="ident">free_n</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">start</span>: <span class="ident">Frame</span><span class="op">&lt;</span><span class="ident">S</span><span class="op">&gt;</span>, <span class="ident">num_frames</span>: <span class="ident">usize</span>) {
-        <span class="self">self</span>.<span class="ident">buddy</span>.<span class="ident">lock</span>().<span class="ident">free_n</span>(<span class="ident">start</span>.<span class="ident">start</span>, <span class="ident">num_frames</span> <span class="op">*</span> <span class="ident">S::SIZE</span>);
+    <span class="kw">fn </span>free_n(<span class="kw-2">&amp;</span><span class="self">self</span>, start: Frame&lt;S&gt;, num_frames: usize) {
+        <span class="self">self</span>.buddy.lock().free_n(start.start, num_frames * S::SIZE);
     }
 }
 
-<span class="doccomment">/// Represents a stack, either in kernel-space or user-space. Stacks are allocated in &quot;slots&quot; of fixed size, but</span>
-<span class="doccomment">/// only a subset of the slot may be mapped initially (to reduce physical memory usage). Stacks can&#39;t grow above</span>
-<span class="doccomment">/// the size of their slot.</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Debug</span>)]</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">Stack</span> {
-    <span class="kw">pub</span> <span class="ident">top</span>: <span class="ident">VirtualAddress</span>,
-    <span class="kw">pub</span> <span class="ident">slot_bottom</span>: <span class="ident">VirtualAddress</span>,
-    <span class="kw">pub</span> <span class="ident">stack_bottom</span>: <span class="ident">VirtualAddress</span>,
+<span class="doccomment">/// Represents a stack, either in kernel-space or user-space. Stacks are allocated in &quot;slots&quot; of fixed size, but
+/// only a subset of the slot may be mapped initially (to reduce physical memory usage). Stacks can&#39;t grow above
+/// the size of their slot.
+</span><span class="attribute">#[derive(Clone, Debug)]
+</span><span class="kw">pub struct </span>Stack {
+    <span class="kw">pub </span>top: VirtualAddress,
+    <span class="kw">pub </span>slot_bottom: VirtualAddress,
+    <span class="kw">pub </span>stack_bottom: VirtualAddress,
 
-    <span class="kw">pub</span> <span class="ident">physical_start</span>: <span class="ident">PhysicalAddress</span>,
+    <span class="kw">pub </span>physical_start: PhysicalAddress,
 }
 </code></pre></div>
-</section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="kernel" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.65.0-nightly (34a6cae28 2022-08-09)" ></div></body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="kernel" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.65.0-nightly (b44197abb 2022-09-05)" ></div></body></html>

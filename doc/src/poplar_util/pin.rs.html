@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/work/poplar/poplar/lib/poplar_util/src/pin.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>pin.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script><script defer src="../../main.js"></script><noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../poplar_util/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div></a><h2 class="location"></h2></nav><nav class="sidebar"><a class="sidebar-logo" href="../../poplar_util/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div></a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../poplar_util/index.html"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></a><nav class="sub"><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><button type="button">?</button></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../wheel.svg"></a></div></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/work/poplar/poplar/lib/poplar_util/src/pin.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>pin.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" href="../../normalize.css"><link rel="stylesheet" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" href="../../ayu.css" disabled><link rel="stylesheet" href="../../dark.css" disabled><link rel="stylesheet" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script><script defer src="../../main.js"></script><noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../poplar_util/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div></a><h2 class="location"></h2></nav><nav class="sidebar"><a class="sidebar-logo" href="../../poplar_util/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div></a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../poplar_util/index.html"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></a><nav class="sub"><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><button type="button">?</button></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../wheel.svg"></a></div></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
 <span id="2">2</span>
 <span id="3">3</span>
 <span id="4">4</span>
@@ -87,94 +87,94 @@
 <span id="87">87</span>
 <span id="88">88</span>
 <span id="89">89</span>
-</pre><pre class="rust"><code><span class="doccomment">//! This module includes some macros for more easily working with pinned types. It takes inspiration from the</span>
-<span class="doccomment">//! `pin-utils` crate, but extends it to provide custom visibility on the created methods.</span>
-<span class="comment">/*
+</pre><pre class="rust"><code><span class="doccomment">//! This module includes some macros for more easily working with pinned types. It takes inspiration from the
+//! `pin-utils` crate, but extends it to provide custom visibility on the created methods.
+</span><span class="comment">/*
  * This file alone is:
  *      Copyright (c) 2018 The pin-utils authors
  * and is dual-licensed under either the MIT and Apache 2.0 licenses, at your option.
- */</span>
+ */
 
-<span class="doccomment">/// A pinned projection of a struct field.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// To make using this macro safe, three things need to be ensured:</span>
-<span class="doccomment">/// - If the struct implements [`Drop`], the [`drop`] method is not allowed to move the value of the field.</span>
-<span class="doccomment">/// - If the struct wants to implement [`Unpin`], it has to do so conditionally: The struct can only implement</span>
-<span class="doccomment">///   [`Unpin`] if the field&#39;s type is [`Unpin`].</span>
-<span class="doccomment">/// - The struct must not be `#[repr(packed)]`.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// ```</span>
-<span class="doccomment">/// use poplar_util::unsafe_pinned;</span>
-<span class="doccomment">/// use core::marker::Unpin;</span>
-<span class="doccomment">/// use core::pin::Pin;</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// struct Foo&lt;T&gt; {</span>
-<span class="doccomment">///     field: T,</span>
-<span class="doccomment">/// }</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// impl&lt;T&gt; Foo&lt;T&gt; {</span>
-<span class="doccomment">///     unsafe_pinned!(field: T);</span>
-<span class="doccomment">///</span>
-<span class="doccomment">///     fn baz(mut self: Pin&lt;&amp;mut Self&gt;) {</span>
-<span class="doccomment">///         let _: Pin&lt;&amp;mut T&gt; = self.field();</span>
-<span class="doccomment">///     }</span>
-<span class="doccomment">/// }</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// impl&lt;T: Unpin&gt; Unpin for Foo&lt;T&gt; {}</span>
-<span class="doccomment">/// ```</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// Note that borrowing the field multiple times requires using `.as_mut()` to</span>
-<span class="doccomment">/// avoid consuming the `Pin`.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// [`Unpin`]: core::marker::Unpin</span>
-<span class="doccomment">/// [`drop`]: Drop::drop</span>
-<span class="attribute">#[<span class="ident">macro_export</span>]</span>
-<span class="macro">macro_rules!</span> <span class="ident">unsafe_pinned</span> {
-    (<span class="macro-nonterminal">$</span><span class="macro-nonterminal">v</span>:<span class="ident">vis</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">f</span>:<span class="ident">ident</span>: <span class="macro-nonterminal">$</span><span class="macro-nonterminal">t</span>:<span class="ident">ty</span>) =&gt; {
-        <span class="attribute">#[<span class="ident">allow</span>(<span class="ident">unsafe_code</span>)]</span>
-        <span class="macro-nonterminal">$</span><span class="macro-nonterminal">v</span> <span class="kw">fn</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">f</span><span class="op">&lt;</span><span class="lifetime">&#39;__a</span><span class="op">&gt;</span>(
-            <span class="self">self</span>: <span class="macro-nonterminal">$</span><span class="macro-nonterminal">crate::core_reexport::pin::Pin</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="lifetime">&#39;__a</span> <span class="kw-2">mut</span> <span class="self">Self</span><span class="op">&gt;</span>,
-        ) -&gt; <span class="macro-nonterminal">$</span><span class="macro-nonterminal">crate::core_reexport::pin::Pin</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="lifetime">&#39;__a</span> <span class="kw-2">mut</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">t</span><span class="op">&gt;</span> {
-            <span class="kw">unsafe</span> { <span class="macro-nonterminal">$</span><span class="macro-nonterminal">crate::core_reexport::pin::Pin::map_unchecked_mut</span>(<span class="self">self</span>, <span class="op">|</span><span class="ident">x</span><span class="op">|</span> <span class="kw-2">&amp;mut</span> <span class="ident">x</span>.<span class="macro-nonterminal">$</span><span class="macro-nonterminal">f</span>) }
+</span><span class="doccomment">/// A pinned projection of a struct field.
+///
+/// To make using this macro safe, three things need to be ensured:
+/// - If the struct implements [`Drop`], the [`drop`] method is not allowed to move the value of the field.
+/// - If the struct wants to implement [`Unpin`], it has to do so conditionally: The struct can only implement
+///   [`Unpin`] if the field&#39;s type is [`Unpin`].
+/// - The struct must not be `#[repr(packed)]`.
+///
+/// ```
+/// use poplar_util::unsafe_pinned;
+/// use core::marker::Unpin;
+/// use core::pin::Pin;
+///
+/// struct Foo&lt;T&gt; {
+///     field: T,
+/// }
+///
+/// impl&lt;T&gt; Foo&lt;T&gt; {
+///     unsafe_pinned!(field: T);
+///
+///     fn baz(mut self: Pin&lt;&amp;mut Self&gt;) {
+///         let _: Pin&lt;&amp;mut T&gt; = self.field();
+///     }
+/// }
+///
+/// impl&lt;T: Unpin&gt; Unpin for Foo&lt;T&gt; {}
+/// ```
+///
+/// Note that borrowing the field multiple times requires using `.as_mut()` to
+/// avoid consuming the `Pin`.
+///
+/// [`Unpin`]: core::marker::Unpin
+/// [`drop`]: Drop::drop
+</span><span class="attribute">#[macro_export]
+</span><span class="macro">macro_rules! </span>unsafe_pinned {
+    (<span class="macro-nonterminal">$v</span>:vis <span class="macro-nonterminal">$f</span>:ident: <span class="macro-nonterminal">$t</span>:ty) =&gt; {
+        <span class="attribute">#[allow(unsafe_code)]
+        </span><span class="macro-nonterminal">$v </span><span class="kw">fn </span><span class="macro-nonterminal">$f</span>&lt;<span class="lifetime">&#39;__a</span>&gt;(
+            <span class="self">self</span>: <span class="macro-nonterminal">$crate::core_reexport::pin::Pin</span>&lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;__a </span><span class="kw-2">mut </span><span class="self">Self</span>&gt;,
+        ) -&gt; <span class="macro-nonterminal">$crate::core_reexport::pin::Pin</span>&lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;__a </span><span class="kw-2">mut </span><span class="macro-nonterminal">$t</span>&gt; {
+            <span class="kw">unsafe </span>{ <span class="macro-nonterminal">$crate::core_reexport::pin::Pin::map_unchecked_mut</span>(<span class="self">self</span>, |x| <span class="kw-2">&amp;mut </span>x.<span class="macro-nonterminal">$f</span>) }
         }
     };
 }
 
-<span class="doccomment">/// An unpinned projection of a struct field.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// This macro is unsafe because it creates a method that returns a normal</span>
-<span class="doccomment">/// non-pin reference to the struct field. It is up to the programmer to ensure</span>
-<span class="doccomment">/// that the contained value can be considered not pinned in the current</span>
-<span class="doccomment">/// context.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// Note that borrowing the field multiple times requires using `.as_mut()` to</span>
-<span class="doccomment">/// avoid consuming the `Pin`.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// ```</span>
-<span class="doccomment">/// use poplar_util::unsafe_unpinned;</span>
-<span class="doccomment">/// use core::pin::Pin;</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// struct Bar;</span>
-<span class="doccomment">/// struct Foo {</span>
-<span class="doccomment">///     field: Bar,</span>
-<span class="doccomment">/// }</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// impl Foo {</span>
-<span class="doccomment">///     unsafe_unpinned!(field: Bar);</span>
-<span class="doccomment">///</span>
-<span class="doccomment">///     fn baz(mut self: Pin&lt;&amp;mut Self&gt;) {</span>
-<span class="doccomment">///         let _: &amp;mut Bar = self.field();</span>
-<span class="doccomment">///     }</span>
-<span class="doccomment">/// }</span>
-<span class="doccomment">/// ```</span>
-<span class="attribute">#[<span class="ident">macro_export</span>]</span>
-<span class="macro">macro_rules!</span> <span class="ident">unsafe_unpinned</span> {
-    (<span class="macro-nonterminal">$</span><span class="macro-nonterminal">v</span>:<span class="ident">vis</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">f</span>:<span class="ident">ident</span>: <span class="macro-nonterminal">$</span><span class="macro-nonterminal">t</span>:<span class="ident">ty</span>) =&gt; {
-        <span class="attribute">#[<span class="ident">allow</span>(<span class="ident">unsafe_code</span>)]</span>
-        <span class="macro-nonterminal">$</span><span class="macro-nonterminal">v</span> <span class="kw">fn</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">f</span><span class="op">&lt;</span><span class="lifetime">&#39;__a</span><span class="op">&gt;</span>(<span class="self">self</span>: <span class="macro-nonterminal">$</span><span class="macro-nonterminal">crate::core_reexport::pin::Pin</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="lifetime">&#39;__a</span> <span class="kw-2">mut</span> <span class="self">Self</span><span class="op">&gt;</span>) -&gt; <span class="kw-2">&amp;</span><span class="lifetime">&#39;__a</span> <span class="kw-2">mut</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">t</span> {
-            <span class="kw">unsafe</span> { <span class="kw-2">&amp;mut</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">crate::core_reexport::pin::Pin::get_unchecked_mut</span>(<span class="self">self</span>).<span class="macro-nonterminal">$</span><span class="macro-nonterminal">f</span> }
+<span class="doccomment">/// An unpinned projection of a struct field.
+///
+/// This macro is unsafe because it creates a method that returns a normal
+/// non-pin reference to the struct field. It is up to the programmer to ensure
+/// that the contained value can be considered not pinned in the current
+/// context.
+///
+/// Note that borrowing the field multiple times requires using `.as_mut()` to
+/// avoid consuming the `Pin`.
+///
+/// ```
+/// use poplar_util::unsafe_unpinned;
+/// use core::pin::Pin;
+///
+/// struct Bar;
+/// struct Foo {
+///     field: Bar,
+/// }
+///
+/// impl Foo {
+///     unsafe_unpinned!(field: Bar);
+///
+///     fn baz(mut self: Pin&lt;&amp;mut Self&gt;) {
+///         let _: &amp;mut Bar = self.field();
+///     }
+/// }
+/// ```
+</span><span class="attribute">#[macro_export]
+</span><span class="macro">macro_rules! </span>unsafe_unpinned {
+    (<span class="macro-nonterminal">$v</span>:vis <span class="macro-nonterminal">$f</span>:ident: <span class="macro-nonterminal">$t</span>:ty) =&gt; {
+        <span class="attribute">#[allow(unsafe_code)]
+        </span><span class="macro-nonterminal">$v </span><span class="kw">fn </span><span class="macro-nonterminal">$f</span>&lt;<span class="lifetime">&#39;__a</span>&gt;(<span class="self">self</span>: <span class="macro-nonterminal">$crate::core_reexport::pin::Pin</span>&lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;__a </span><span class="kw-2">mut </span><span class="self">Self</span>&gt;) -&gt; <span class="kw-2">&amp;</span><span class="lifetime">&#39;__a </span><span class="kw-2">mut </span><span class="macro-nonterminal">$t </span>{
+            <span class="kw">unsafe </span>{ <span class="kw-2">&amp;mut </span><span class="macro-nonterminal">$crate::core_reexport::pin::Pin::get_unchecked_mut</span>(<span class="self">self</span>).<span class="macro-nonterminal">$f </span>}
         }
     };
 }
 </code></pre></div>
-</section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="poplar_util" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.65.0-nightly (34a6cae28 2022-08-09)" ></div></body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="poplar_util" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.65.0-nightly (b44197abb 2022-09-05)" ></div></body></html>

@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/memory/buddy_allocator.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>buddy_allocator.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../storage.js"></script><script defer src="../../../source-script.js"></script><script defer src="../../../source-files.js"></script><script defer src="../../../main.js"></script><noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../../kernel/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div></a><h2 class="location"></h2></nav><nav class="sidebar"><a class="sidebar-logo" href="../../../kernel/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div></a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../../kernel/index.html"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></a><nav class="sub"><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><button type="button">?</button></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../wheel.svg"></a></div></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/memory/buddy_allocator.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>buddy_allocator.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" href="../../../normalize.css"><link rel="stylesheet" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" href="../../../ayu.css" disabled><link rel="stylesheet" href="../../../dark.css" disabled><link rel="stylesheet" href="../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../storage.js"></script><script defer src="../../../source-script.js"></script><script defer src="../../../source-files.js"></script><script defer src="../../../main.js"></script><noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../../kernel/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div></a><h2 class="location"></h2></nav><nav class="sidebar"><a class="sidebar-logo" href="../../../kernel/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div></a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../../kernel/index.html"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></a><nav class="sub"><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><button type="button">?</button></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../wheel.svg"></a></div></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
 <span id="2">2</span>
 <span id="3">3</span>
 <span id="4">4</span>
@@ -386,195 +386,195 @@
 <span id="386">386</span>
 <span id="387">387</span>
 <span id="388">388</span>
-</pre><pre class="rust"><code><span class="doccomment">//! This module implements a buddy allocator, an efficient scheme for managing physical memory. In</span>
-<span class="doccomment">//! this allocator, memory is broken up into a number of blocks, each of which is a power-of-2 frames in</span>
-<span class="doccomment">//! size. A block of size `2^^n` frames is said to be of order `n`:</span>
-<span class="doccomment">//! ```ignore</span>
-<span class="doccomment">//!       16                               0       Order       Size of blocks</span>
-<span class="doccomment">//!        |-------------------------------|</span>
-<span class="doccomment">//!        |               8               |       4           2^^4 = 16</span>
-<span class="doccomment">//!        |---------------|---------------|</span>
-<span class="doccomment">//!        |      12       |       4       |       3           2^^3 = 8</span>
-<span class="doccomment">//!        |-------|-------|-------|-------|</span>
-<span class="doccomment">//!        |  14   |  10   |   6   |   2   |       2           2^^2 = 4</span>
-<span class="doccomment">//!        |---|---|---|---|---|---|---|---|</span>
-<span class="doccomment">//!        |   |   |   |   |   |   |   |   |       1           2^^1 = 2</span>
-<span class="doccomment">//!        |-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|</span>
-<span class="doccomment">//!        | | | | | | | | | | | | | | | | |       0           2^^0 = 1</span>
-<span class="doccomment">//!        |-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|</span>
-<span class="doccomment">//! ```</span>
-<span class="doccomment">//!</span>
-<span class="doccomment">//! The blocks in each order are arranged in pairs - each has a &quot;buddy&quot; where A&#39;s buddy is B and B&#39;s</span>
-<span class="doccomment">//! buddy is A. To find the address of a block&#39;s buddy, the bit corresponding to the order is simply</span>
-<span class="doccomment">//! flipped (and so is easily calculated with XOR - see the `buddy_of` method). Blocks are tracked in</span>
-<span class="doccomment">//! bins, where each bin contains blocks of a single order.</span>
-<span class="doccomment">//!</span>
-<span class="doccomment">//! When an allocation is requested, the allocator looks in the bin of the correct size. If a block</span>
-<span class="doccomment">//! is available, that block is removed from the bin and returned. If no blocks of the correct size</span>
-<span class="doccomment">//! are available, a block of the order above the one requested is removed from its bin, split into</span>
-<span class="doccomment">//! two blocks of the order requested (which are &quot;buddies&quot; of each other), of which one is returned</span>
-<span class="doccomment">//! and one is added to the correct bin. If no blocks of the larger order are available, this</span>
-<span class="doccomment">//! process continues recursively upwards to larger and larger block sizes, until a free block is</span>
-<span class="doccomment">//! found. If no block is found, an &quot;out of memory&quot; error is issued.</span>
-<span class="doccomment">//!</span>
-<span class="doccomment">//! When a block is &quot;freed&quot; (returned to the allocator so that it can be allocated again), the</span>
-<span class="doccomment">//! allocator checks to see if its &quot;buddy&quot; is also free. If it&#39;s not, the block is just added to the</span>
-<span class="doccomment">//! bin corresponding to its order. However, if its buddy is also free, the two can be merged to form</span>
-<span class="doccomment">//! a block of an order one greater - this process happens recursively until the block&#39;s buddy is not</span>
-<span class="doccomment">//! free, at which point the block is added to the correct bin.</span>
-<span class="doccomment">//!</span>
-<span class="doccomment">//! Overall, the buddy allocator is an efficient allocator that has a much lower cost than other</span>
-<span class="doccomment">//! algorithms such as first-fit. It also helps reduce external fragmentation, but can suffer from</span>
-<span class="doccomment">//! internal fragmentation in the case of allocations that are slightly larger than a block size</span>
-<span class="doccomment">//! (e.g. allocating 17 frames actually returns 32, wasting 15 frames). If the kernel needs to make</span>
-<span class="doccomment">//! many allocations of a constant, &quot;known bad&quot; size (e.g. 3 frames at a time), it would be better</span>
-<span class="doccomment">//! served allocating a larger block of frames at a time, and using a slab allocator to make the</span>
-<span class="doccomment">//! individual allocations.</span>
+</pre><pre class="rust"><code><span class="doccomment">//! This module implements a buddy allocator, an efficient scheme for managing physical memory. In
+//! this allocator, memory is broken up into a number of blocks, each of which is a power-of-2 frames in
+//! size. A block of size `2^^n` frames is said to be of order `n`:
+//! ```ignore
+//!       16                               0       Order       Size of blocks
+//!        |-------------------------------|
+//!        |               8               |       4           2^^4 = 16
+//!        |---------------|---------------|
+//!        |      12       |       4       |       3           2^^3 = 8
+//!        |-------|-------|-------|-------|
+//!        |  14   |  10   |   6   |   2   |       2           2^^2 = 4
+//!        |---|---|---|---|---|---|---|---|
+//!        |   |   |   |   |   |   |   |   |       1           2^^1 = 2
+//!        |-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|
+//!        | | | | | | | | | | | | | | | | |       0           2^^0 = 1
+//!        |-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|
+//! ```
+//!
+//! The blocks in each order are arranged in pairs - each has a &quot;buddy&quot; where A&#39;s buddy is B and B&#39;s
+//! buddy is A. To find the address of a block&#39;s buddy, the bit corresponding to the order is simply
+//! flipped (and so is easily calculated with XOR - see the `buddy_of` method). Blocks are tracked in
+//! bins, where each bin contains blocks of a single order.
+//!
+//! When an allocation is requested, the allocator looks in the bin of the correct size. If a block
+//! is available, that block is removed from the bin and returned. If no blocks of the correct size
+//! are available, a block of the order above the one requested is removed from its bin, split into
+//! two blocks of the order requested (which are &quot;buddies&quot; of each other), of which one is returned
+//! and one is added to the correct bin. If no blocks of the larger order are available, this
+//! process continues recursively upwards to larger and larger block sizes, until a free block is
+//! found. If no block is found, an &quot;out of memory&quot; error is issued.
+//!
+//! When a block is &quot;freed&quot; (returned to the allocator so that it can be allocated again), the
+//! allocator checks to see if its &quot;buddy&quot; is also free. If it&#39;s not, the block is just added to the
+//! bin corresponding to its order. However, if its buddy is also free, the two can be merged to form
+//! a block of an order one greater - this process happens recursively until the block&#39;s buddy is not
+//! free, at which point the block is added to the correct bin.
+//!
+//! Overall, the buddy allocator is an efficient allocator that has a much lower cost than other
+//! algorithms such as first-fit. It also helps reduce external fragmentation, but can suffer from
+//! internal fragmentation in the case of allocations that are slightly larger than a block size
+//! (e.g. allocating 17 frames actually returns 32, wasting 15 frames). If the kernel needs to make
+//! many allocations of a constant, &quot;known bad&quot; size (e.g. 3 frames at a time), it would be better
+//! served allocating a larger block of frames at a time, and using a slab allocator to make the
+//! individual allocations.
 
-<span class="kw">use</span> <span class="ident">alloc::collections::BTreeSet</span>;
-<span class="kw">use</span> <span class="ident">core</span>::{<span class="ident">cmp::min</span>, <span class="ident">ops::Range</span>};
-<span class="kw">use</span> <span class="ident">hal::memory</span>::{<span class="ident">Bytes</span>, <span class="ident">Frame</span>, <span class="ident">FrameSize</span>, <span class="ident">PhysicalAddress</span>, <span class="ident">Size4KiB</span>};
-<span class="kw">use</span> <span class="ident">poplar_util::math::flooring_log2</span>;
+</span><span class="kw">use </span>alloc::collections::BTreeSet;
+<span class="kw">use </span>core::{cmp::min, ops::Range};
+<span class="kw">use </span>hal::memory::{Bytes, Frame, FrameSize, PhysicalAddress, Size4KiB};
+<span class="kw">use </span>poplar_util::math::flooring_log2;
 
-<span class="doccomment">/// The largest block stored by the buddy allocator is `2^MAX_ORDER`.</span>
-<span class="kw">const</span> <span class="ident">MAX_ORDER</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="number">10</span>;
-<span class="kw">const</span> <span class="ident">NUM_BINS</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="ident">MAX_ORDER</span> <span class="op">+</span> <span class="number">1</span>;
+<span class="doccomment">/// The largest block stored by the buddy allocator is `2^MAX_ORDER`.
+</span><span class="kw">const </span>MAX_ORDER: usize = <span class="number">10</span>;
+<span class="kw">const </span>NUM_BINS: usize = MAX_ORDER + <span class="number">1</span>;
 
-<span class="doccomment">/// The &quot;base&quot; block size - the smallest block size this allocator tracks. This is chosen at the moment to be</span>
-<span class="doccomment">/// `4096` bytes - the size of the smallest physical frame for all the architectures we wish to support at this</span>
-<span class="doccomment">/// point of time.</span>
-<span class="kw">const</span> <span class="ident">BASE_SIZE</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="ident">Size4KiB::SIZE</span>;
+<span class="doccomment">/// The &quot;base&quot; block size - the smallest block size this allocator tracks. This is chosen at the moment to be
+/// `4096` bytes - the size of the smallest physical frame for all the architectures we wish to support at this
+/// point of time.
+</span><span class="kw">const </span>BASE_SIZE: usize = Size4KiB::SIZE;
 
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">BuddyAllocator</span> {
-    <span class="doccomment">/// The bins of free blocks, where bin `i` contains blocks of size `BASE_SIZE * (2^i)`. Uses `BTreeSet` to</span>
-    <span class="doccomment">/// store the blocks in each bin, for efficient buddy location. Each block is stored as the physical address</span>
-    <span class="doccomment">/// of the start of the block. The actual frames can be constructed for each block using the start address and</span>
-    <span class="doccomment">/// the order of the block.</span>
-    <span class="ident">bins</span>: [<span class="ident">BTreeSet</span><span class="op">&lt;</span><span class="ident">PhysicalAddress</span><span class="op">&gt;</span>; <span class="ident">NUM_BINS</span>],
+<span class="kw">pub struct </span>BuddyAllocator {
+    <span class="doccomment">/// The bins of free blocks, where bin `i` contains blocks of size `BASE_SIZE * (2^i)`. Uses `BTreeSet` to
+    /// store the blocks in each bin, for efficient buddy location. Each block is stored as the physical address
+    /// of the start of the block. The actual frames can be constructed for each block using the start address and
+    /// the order of the block.
+    </span>bins: [BTreeSet&lt;PhysicalAddress&gt;; NUM_BINS],
 }
 
-<span class="kw">impl</span> <span class="ident">BuddyAllocator</span> {
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>() -&gt; <span class="ident">BuddyAllocator</span> {
-        <span class="comment">// The `Default` implementation for `BTreeSet` is an empty set, so this works nicely</span>
-        <span class="ident">BuddyAllocator</span> { <span class="ident">bins</span>: <span class="ident">Default::default</span>() }
+<span class="kw">impl </span>BuddyAllocator {
+    <span class="kw">pub fn </span>new() -&gt; BuddyAllocator {
+        <span class="comment">// The `Default` implementation for `BTreeSet` is an empty set, so this works nicely
+        </span>BuddyAllocator { bins: Default::default() }
     }
 
-    <span class="doccomment">/// Add a range of `Frame`s to this allocator, marking them free to allocate.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">add_range</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">range</span>: <span class="ident">Range</span><span class="op">&lt;</span><span class="ident">Frame</span><span class="op">&gt;</span>) {
-        <span class="comment">// XXX: if we ever change BASE_SIZE, this needs to be adjusted, so we assert here</span>
-        <span class="macro">assert_eq!</span>(<span class="ident">BASE_SIZE</span>, <span class="ident">Size4KiB::SIZE</span>);
+    <span class="doccomment">/// Add a range of `Frame`s to this allocator, marking them free to allocate.
+    </span><span class="kw">pub fn </span>add_range(<span class="kw-2">&amp;mut </span><span class="self">self</span>, range: Range&lt;Frame&gt;) {
+        <span class="comment">// XXX: if we ever change BASE_SIZE, this needs to be adjusted, so we assert here
+        </span><span class="macro">assert_eq!</span>(BASE_SIZE, Size4KiB::SIZE);
 
         <span class="comment">/*
          * Break the frame area into a set of blocks with power-of-2 sizes, and register each
          * block as free to allocate.
-         */</span>
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">block_start</span> <span class="op">=</span> <span class="ident">range</span>.<span class="ident">start</span>;
+         */
+        </span><span class="kw">let </span><span class="kw-2">mut </span>block_start = range.start;
 
-        <span class="kw">while</span> <span class="ident">block_start</span> <span class="op">&lt;</span> <span class="ident">range</span>.<span class="ident">end</span> {
+        <span class="kw">while </span>block_start &lt; range.end {
             <span class="comment">/*
              * Pick the largest order block that fits in the remaining area, but cap it at the
              * largest order the allocator can manage.
-             */</span>
-            <span class="kw">let</span> <span class="ident">num_frames</span> <span class="op">=</span> (<span class="ident">block_start</span>..<span class="ident">range</span>.<span class="ident">end</span>).<span class="ident">count</span>();
-            <span class="kw">let</span> <span class="ident">order</span> <span class="op">=</span> <span class="ident">min</span>(<span class="ident">MAX_ORDER</span>, <span class="ident">flooring_log2</span>(<span class="ident">num_frames</span>));
+             */
+            </span><span class="kw">let </span>num_frames = (block_start..range.end).count();
+            <span class="kw">let </span>order = min(MAX_ORDER, flooring_log2(num_frames));
 
-            <span class="self">self</span>.<span class="ident">free_block</span>(<span class="ident">block_start</span>.<span class="ident">start</span>, <span class="ident">order</span>);
-            <span class="ident">block_start</span> <span class="op">+</span><span class="op">=</span> <span class="number">1</span> <span class="op">&lt;</span><span class="op">&lt;</span> <span class="ident">order</span>;
+            <span class="self">self</span>.free_block(block_start.start, order);
+            block_start += <span class="number">1 </span>&lt;&lt; order;
         }
     }
 
-    <span class="attribute">#[<span class="ident">allow</span>(<span class="ident">dead_code</span>)]</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">available_bytes</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">Bytes</span> {
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">bytes</span> <span class="op">=</span> <span class="number">0</span>;
-        <span class="kw">for</span> <span class="ident">i</span> <span class="kw">in</span> <span class="number">0</span>..<span class="ident">NUM_BINS</span> {
-            <span class="ident">bytes</span> <span class="op">+</span><span class="op">=</span> <span class="self">self</span>.<span class="ident">bins</span>[<span class="ident">i</span>].<span class="ident">len</span>() <span class="op">*</span> ((<span class="number">1</span> <span class="op">&lt;</span><span class="op">&lt;</span> <span class="ident">i</span>) <span class="op">*</span> <span class="ident">BASE_SIZE</span>);
+    <span class="attribute">#[allow(dead_code)]
+    </span><span class="kw">pub fn </span>available_bytes(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Bytes {
+        <span class="kw">let </span><span class="kw-2">mut </span>bytes = <span class="number">0</span>;
+        <span class="kw">for </span>i <span class="kw">in </span><span class="number">0</span>..NUM_BINS {
+            bytes += <span class="self">self</span>.bins[i].len() * ((<span class="number">1 </span>&lt;&lt; i) * BASE_SIZE);
         }
-        <span class="ident">bytes</span>
+        bytes
     }
 
-    <span class="doccomment">/// Allocate a block of `block_size` bytes from this allocator. Returns `None` if the allocator can&#39;t satisfy</span>
-    <span class="doccomment">/// the allocation.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">allocate_n</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">block_size</span>: <span class="ident">Bytes</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">PhysicalAddress</span><span class="op">&gt;</span> {
-        <span class="macro">assert!</span>(<span class="ident">block_size</span> <span class="op">%</span> <span class="ident">BASE_SIZE</span> <span class="op">==</span> <span class="number">0</span>);
-        <span class="macro">assert!</span>((<span class="ident">block_size</span> <span class="op">/</span> <span class="ident">BASE_SIZE</span>).<span class="ident">is_power_of_two</span>());
+    <span class="doccomment">/// Allocate a block of `block_size` bytes from this allocator. Returns `None` if the allocator can&#39;t satisfy
+    /// the allocation.
+    </span><span class="kw">pub fn </span>allocate_n(<span class="kw-2">&amp;mut </span><span class="self">self</span>, block_size: Bytes) -&gt; <span class="prelude-ty">Option</span>&lt;PhysicalAddress&gt; {
+        <span class="macro">assert!</span>(block_size % BASE_SIZE == <span class="number">0</span>);
+        <span class="macro">assert!</span>((block_size / BASE_SIZE).is_power_of_two());
 
-        <span class="kw">let</span> <span class="ident">order</span> <span class="op">=</span> (<span class="ident">block_size</span> <span class="op">/</span> <span class="ident">BASE_SIZE</span>).<span class="ident">trailing_zeros</span>() <span class="kw">as</span> <span class="ident">usize</span>;
-        <span class="self">self</span>.<span class="ident">allocate_block</span>(<span class="ident">order</span>)
+        <span class="kw">let </span>order = (block_size / BASE_SIZE).trailing_zeros() <span class="kw">as </span>usize;
+        <span class="self">self</span>.allocate_block(order)
     }
 
-    <span class="doccomment">/// Free a block starting at `start` of `block_size` bytes. `block_size` must be a valid size of a whole block.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">free_n</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">start</span>: <span class="ident">PhysicalAddress</span>, <span class="ident">block_size</span>: <span class="ident">Bytes</span>) {
-        <span class="macro">assert!</span>(<span class="ident">block_size</span> <span class="op">%</span> <span class="ident">BASE_SIZE</span> <span class="op">==</span> <span class="number">0</span>);
-        <span class="macro">assert!</span>((<span class="ident">block_size</span> <span class="op">/</span> <span class="ident">BASE_SIZE</span>).<span class="ident">is_power_of_two</span>());
+    <span class="doccomment">/// Free a block starting at `start` of `block_size` bytes. `block_size` must be a valid size of a whole block.
+    </span><span class="kw">pub fn </span>free_n(<span class="kw-2">&amp;mut </span><span class="self">self</span>, start: PhysicalAddress, block_size: Bytes) {
+        <span class="macro">assert!</span>(block_size % BASE_SIZE == <span class="number">0</span>);
+        <span class="macro">assert!</span>((block_size / BASE_SIZE).is_power_of_two());
 
-        <span class="kw">let</span> <span class="ident">order</span> <span class="op">=</span> (<span class="ident">block_size</span> <span class="op">/</span> <span class="ident">BASE_SIZE</span>).<span class="ident">trailing_zeros</span>() <span class="kw">as</span> <span class="ident">usize</span>;
-        <span class="self">self</span>.<span class="ident">free_block</span>(<span class="ident">start</span>, <span class="ident">order</span>);
+        <span class="kw">let </span>order = (block_size / BASE_SIZE).trailing_zeros() <span class="kw">as </span>usize;
+        <span class="self">self</span>.free_block(start, order);
     }
 
-    <span class="doccomment">/// Tries to allocate a block of the given order. If no blocks of the correct size are</span>
-    <span class="doccomment">/// available, tries to recursively split a larger block to form a block of the requested size.</span>
-    <span class="kw">fn</span> <span class="ident">allocate_block</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">order</span>: <span class="ident">usize</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">PhysicalAddress</span><span class="op">&gt;</span> {
+    <span class="doccomment">/// Tries to allocate a block of the given order. If no blocks of the correct size are
+    /// available, tries to recursively split a larger block to form a block of the requested size.
+    </span><span class="kw">fn </span>allocate_block(<span class="kw-2">&amp;mut </span><span class="self">self</span>, order: usize) -&gt; <span class="prelude-ty">Option</span>&lt;PhysicalAddress&gt; {
         <span class="comment">/*
          * We&#39;ve been asked for a block larger than the largest blocks we track, so we won&#39;t be
          * able to allocate a single block large enough.
-         */</span>
-        <span class="kw">if</span> <span class="ident">order</span> <span class="op">&gt;</span> <span class="ident">MAX_ORDER</span> {
-            <span class="kw">return</span> <span class="prelude-val">None</span>;
+         */
+        </span><span class="kw">if </span>order &gt; MAX_ORDER {
+            <span class="kw">return </span><span class="prelude-val">None</span>;
         }
 
         <span class="comment">/*
          * If that order&#39;s bin has any free blocks, use one of those.
-         */</span>
-        <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span><span class="ident">block</span>) <span class="op">=</span> <span class="self">self</span>.<span class="ident">bins</span>[<span class="ident">order</span>].<span class="ident">iter</span>().<span class="ident">next</span>() {
-            <span class="kw">return</span> <span class="self">self</span>.<span class="ident">bins</span>[<span class="ident">order</span>].<span class="ident">take</span>(<span class="kw-2">&amp;</span><span class="ident">block</span>);
+         */
+        </span><span class="kw">if let </span><span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span>block) = <span class="self">self</span>.bins[order].iter().next() {
+            <span class="kw">return </span><span class="self">self</span>.bins[order].take(<span class="kw-2">&amp;</span>block);
         }
 
         <span class="comment">/*
          * Otherwise, try to allocate a block of the order one larger, and split it in two.
-         */</span>
-        <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">block</span>) <span class="op">=</span> <span class="self">self</span>.<span class="ident">allocate_block</span>(<span class="ident">order</span> <span class="op">+</span> <span class="number">1</span>) {
-            <span class="kw">let</span> <span class="ident">second_half</span> <span class="op">=</span> <span class="ident">BuddyAllocator::buddy_of</span>(<span class="ident">block</span>, <span class="ident">order</span>);
-            <span class="self">self</span>.<span class="ident">free_block</span>(<span class="ident">second_half</span>, <span class="ident">order</span>);
-            <span class="prelude-val">Some</span>(<span class="ident">block</span>)
-        } <span class="kw">else</span> {
+         */
+        </span><span class="kw">if let </span><span class="prelude-val">Some</span>(block) = <span class="self">self</span>.allocate_block(order + <span class="number">1</span>) {
+            <span class="kw">let </span>second_half = BuddyAllocator::buddy_of(block, order);
+            <span class="self">self</span>.free_block(second_half, order);
+            <span class="prelude-val">Some</span>(block)
+        } <span class="kw">else </span>{
             <span class="comment">/*
              * This allocator doesn&#39;t have any blocks that are able to satify the request.
-             */</span>
-            <span class="prelude-val">None</span>
-        }
+             */
+            </span><span class="prelude-val">None
+        </span>}
     }
 
-    <span class="doccomment">/// Free a block starting at `start` of order `order`.</span>
-    <span class="kw">fn</span> <span class="ident">free_block</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">start</span>: <span class="ident">PhysicalAddress</span>, <span class="ident">order</span>: <span class="ident">usize</span>) {
-        <span class="kw">if</span> <span class="ident">order</span> <span class="op">==</span> <span class="ident">MAX_ORDER</span> {
+    <span class="doccomment">/// Free a block starting at `start` of order `order`.
+    </span><span class="kw">fn </span>free_block(<span class="kw-2">&amp;mut </span><span class="self">self</span>, start: PhysicalAddress, order: usize) {
+        <span class="kw">if </span>order == MAX_ORDER {
             <span class="comment">/*
              * Blocks of the maximum order can&#39;t be coalesced, because there isn&#39;t a bin to put the result in,
              * so we just add them to the largest bin.
-             */</span>
-            <span class="macro">assert!</span>(<span class="op">!</span><span class="self">self</span>.<span class="ident">bins</span>[<span class="ident">order</span>].<span class="ident">contains</span>(<span class="kw-2">&amp;</span><span class="ident">start</span>));
-            <span class="self">self</span>.<span class="ident">bins</span>[<span class="ident">order</span>].<span class="ident">insert</span>(<span class="ident">start</span>);
-        } <span class="kw">else</span> {
+             */
+            </span><span class="macro">assert!</span>(!<span class="self">self</span>.bins[order].contains(<span class="kw-2">&amp;</span>start));
+            <span class="self">self</span>.bins[order].insert(start);
+        } <span class="kw">else </span>{
             <span class="comment">/*
              * Check if this block&#39;s buddy is also free. If it is, remove it from its bin and coalesce the
              * blocks into one of the order above this one. We then recursively free that block.
-             */</span>
-            <span class="kw">let</span> <span class="ident">buddy</span> <span class="op">=</span> <span class="ident"><span class="self">Self</span>::buddy_of</span>(<span class="ident">start</span>, <span class="ident">order</span>);
-            <span class="kw">if</span> <span class="self">self</span>.<span class="ident">bins</span>[<span class="ident">order</span>].<span class="ident">remove</span>(<span class="kw-2">&amp;</span><span class="ident">buddy</span>) {
-                <span class="self">self</span>.<span class="ident">free_block</span>(<span class="ident">min</span>(<span class="ident">start</span>, <span class="ident">buddy</span>), <span class="ident">order</span> <span class="op">+</span> <span class="number">1</span>);
-            } <span class="kw">else</span> {
+             */
+            </span><span class="kw">let </span>buddy = <span class="self">Self</span>::buddy_of(start, order);
+            <span class="kw">if </span><span class="self">self</span>.bins[order].remove(<span class="kw-2">&amp;</span>buddy) {
+                <span class="self">self</span>.free_block(min(start, buddy), order + <span class="number">1</span>);
+            } <span class="kw">else </span>{
                 <span class="comment">/*
                  * The buddy isn&#39;t free, so just insert the block at this order.
-                 */</span>
-                <span class="macro">assert!</span>(<span class="op">!</span><span class="self">self</span>.<span class="ident">bins</span>[<span class="ident">order</span>].<span class="ident">contains</span>(<span class="kw-2">&amp;</span><span class="ident">start</span>));
-                <span class="self">self</span>.<span class="ident">bins</span>[<span class="ident">order</span>].<span class="ident">insert</span>(<span class="ident">start</span>);
+                 */
+                </span><span class="macro">assert!</span>(!<span class="self">self</span>.bins[order].contains(<span class="kw-2">&amp;</span>start));
+                <span class="self">self</span>.bins[order].insert(start);
             }
         }
     }
 
-    <span class="doccomment">/// Finds the starting frame of the block that is the buddy of the block of order `order`, starting at</span>
-    <span class="doccomment">/// `block_start`.</span>
-    <span class="kw">fn</span> <span class="ident">buddy_of</span>(<span class="ident">block_start</span>: <span class="ident">PhysicalAddress</span>, <span class="ident">order</span>: <span class="ident">usize</span>) -&gt; <span class="ident">PhysicalAddress</span> {
-        <span class="ident">PhysicalAddress::new</span>(<span class="ident">usize::from</span>(<span class="ident">block_start</span>) <span class="op">^</span> ((<span class="number">1</span> <span class="op">&lt;</span><span class="op">&lt;</span> <span class="ident">order</span>) <span class="op">*</span> <span class="ident">BASE_SIZE</span>)).<span class="ident">unwrap</span>()
+    <span class="doccomment">/// Finds the starting frame of the block that is the buddy of the block of order `order`, starting at
+    /// `block_start`.
+    </span><span class="kw">fn </span>buddy_of(block_start: PhysicalAddress, order: usize) -&gt; PhysicalAddress {
+        PhysicalAddress::new(usize::from(block_start) ^ ((<span class="number">1 </span>&lt;&lt; order) * BASE_SIZE)).unwrap()
     }
 }
 
@@ -585,19 +585,19 @@
  *    - allocate 4KiB frames out until we fail to allocate
  *    - remove the frames from the BTreeSet, checking we don&#39;t remove one that shouldn&#39;t be removed
  *    - when we fail to allocate, check that all the bins, as well as the BTreeSet of expected frames, is empty
- */</span>
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">test</span>)]</span>
-<span class="kw">mod</span> <span class="ident">tests</span> {
-    <span class="kw">use</span> <span class="kw">super</span>::<span class="kw-2">*</span>;
-    <span class="kw">use</span> <span class="ident">alloc::vec::Vec</span>;
-    <span class="kw">use</span> <span class="ident">hal::memory</span>::{<span class="ident">Frame</span>, <span class="ident">PhysicalAddress</span>, <span class="ident">Size4KiB</span>};
+ */
+</span><span class="attribute">#[cfg(test)]
+</span><span class="kw">mod </span>tests {
+    <span class="kw">use super</span>::<span class="kw-2">*</span>;
+    <span class="kw">use </span>alloc::vec::Vec;
+    <span class="kw">use </span>hal::memory::{Frame, PhysicalAddress, Size4KiB};
 
-    <span class="attribute">#[<span class="ident">test</span>]</span>
-    <span class="kw">fn</span> <span class="ident">test_buddy_of</span>() {
-        <span class="kw">macro</span> <span class="ident">test</span>(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">order</span>: <span class="ident">expr</span>, <span class="macro-nonterminal">$</span><span class="macro-nonterminal">first</span>: <span class="ident">expr</span>, <span class="macro-nonterminal">$</span><span class="macro-nonterminal">second</span>: <span class="ident">expr</span>) {
+    <span class="attribute">#[test]
+    </span><span class="kw">fn </span>test_buddy_of() {
+        <span class="kw">macro </span>test(<span class="macro-nonterminal">$order</span>: expr, <span class="macro-nonterminal">$first</span>: expr, <span class="macro-nonterminal">$second</span>: expr) {
             <span class="macro">assert_eq!</span>(
-                <span class="ident">BuddyAllocator::buddy_of</span>(<span class="ident">PhysicalAddress::new</span>(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">first</span>).<span class="ident">unwrap</span>(), <span class="macro-nonterminal">$</span><span class="macro-nonterminal">order</span>),
-                <span class="ident">PhysicalAddress::new</span>(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">second</span>).<span class="ident">unwrap</span>()
+                BuddyAllocator::buddy_of(PhysicalAddress::new(<span class="macro-nonterminal">$first</span>).unwrap(), <span class="macro-nonterminal">$order</span>),
+                PhysicalAddress::new(<span class="macro-nonterminal">$second</span>).unwrap()
             );
         }
 
@@ -622,157 +622,157 @@
         <span class="macro">test!</span>(<span class="number">4</span>, <span class="number">0x170000</span>, <span class="number">0x160000</span>);
     }
 
-    <span class="kw">struct</span> <span class="ident">Block</span> {
-        <span class="ident">order</span>: <span class="ident">usize</span>,
-        <span class="ident">address</span>: <span class="ident">PhysicalAddress</span>,
+    <span class="kw">struct </span>Block {
+        order: usize,
+        address: PhysicalAddress,
     }
 
-    <span class="kw">impl</span> <span class="ident">Block</span> {
-        <span class="doccomment">/// Construct a `Block`. Takes the address as a `usize` for ease of test writing, panics here if it&#39;s not</span>
-        <span class="doccomment">/// valid.</span>
-        <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">order</span>: <span class="ident">usize</span>, <span class="ident">address</span>: <span class="ident">usize</span>) -&gt; <span class="ident">Block</span> {
-            <span class="ident">Block</span> { <span class="ident">order</span>, <span class="ident">address</span>: <span class="ident">PhysicalAddress::new</span>(<span class="ident">address</span>).<span class="ident">unwrap</span>() }
+    <span class="kw">impl </span>Block {
+        <span class="doccomment">/// Construct a `Block`. Takes the address as a `usize` for ease of test writing, panics here if it&#39;s not
+        /// valid.
+        </span><span class="kw">fn </span>new(order: usize, address: usize) -&gt; Block {
+            Block { order, address: PhysicalAddress::new(address).unwrap() }
         }
     }
 
-    <span class="doccomment">/// Helper to check the content of a `BuddyAllocator`&#39;s bins.</span>
-    <span class="kw">fn</span> <span class="ident">check_bins</span>(<span class="kw-2">mut</span> <span class="ident">allocator</span>: <span class="ident">BuddyAllocator</span>, <span class="ident">expected_blocks</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">Block</span><span class="op">&gt;</span>) {
+    <span class="doccomment">/// Helper to check the content of a `BuddyAllocator`&#39;s bins.
+    </span><span class="kw">fn </span>check_bins(<span class="kw-2">mut </span>allocator: BuddyAllocator, expected_blocks: Vec&lt;Block&gt;) {
         <span class="comment">/*
          * First, try to remove all the expected blocks from the correct bins. Panic if a block isn&#39;t there.
-         */</span>
-        <span class="kw">for</span> <span class="ident">block</span> <span class="kw">in</span> <span class="ident">expected_blocks</span> {
-            <span class="kw">if</span> <span class="op">!</span><span class="ident">allocator</span>.<span class="ident">bins</span>[<span class="ident">block</span>.<span class="ident">order</span>].<span class="ident">remove</span>(<span class="kw-2">&amp;</span><span class="ident">block</span>.<span class="ident">address</span>) {
-                <span class="macro">panic!</span>(<span class="string">&quot;Allocator does not have block of order {} starting at {:#x}&quot;</span>, <span class="ident">block</span>.<span class="ident">order</span>, <span class="ident">block</span>.<span class="ident">address</span>);
+         */
+        </span><span class="kw">for </span>block <span class="kw">in </span>expected_blocks {
+            <span class="kw">if </span>!allocator.bins[block.order].remove(<span class="kw-2">&amp;</span>block.address) {
+                <span class="macro">panic!</span>(<span class="string">&quot;Allocator does not have block of order {} starting at {:#x}&quot;</span>, block.order, block.address);
             }
         }
 
         <span class="comment">/*
          * Next, assert that all the bins are empty.
-         */</span>
-        <span class="kw">for</span> <span class="ident">i</span> <span class="kw">in</span> <span class="number">0</span>..<span class="ident">NUM_BINS</span> {
-            <span class="kw">if</span> <span class="op">!</span><span class="ident">allocator</span>.<span class="ident">bins</span>[<span class="ident">i</span>].<span class="ident">is_empty</span>() {
-                <span class="macro">panic!</span>(<span class="string">&quot;Bin of order {} is not empty&quot;</span>, <span class="ident">i</span>);
+         */
+        </span><span class="kw">for </span>i <span class="kw">in </span><span class="number">0</span>..NUM_BINS {
+            <span class="kw">if </span>!allocator.bins[i].is_empty() {
+                <span class="macro">panic!</span>(<span class="string">&quot;Bin of order {} is not empty&quot;</span>, i);
             }
         }
     }
 
-    <span class="doccomment">/// Helper to construct a frame range. Takes the address as a `usize` for ease of test writing - panics here if</span>
-    <span class="doccomment">/// it&#39;s not valid.</span>
-    <span class="kw">fn</span> <span class="ident">n_frames_at</span>(<span class="ident">start</span>: <span class="ident">usize</span>, <span class="ident">n</span>: <span class="ident">usize</span>) -&gt; <span class="ident">Range</span><span class="op">&lt;</span><span class="ident">Frame</span><span class="op">&gt;</span> {
-        <span class="ident">Frame::starts_with</span>(<span class="ident">PhysicalAddress::new</span>(<span class="ident">start</span>).<span class="ident">unwrap</span>())
-            ..<span class="ident">Frame::starts_with</span>(<span class="ident">PhysicalAddress::new</span>(<span class="ident">start</span> <span class="op">+</span> <span class="ident">n</span> <span class="op">*</span> <span class="ident">Size4KiB::SIZE</span>).<span class="ident">unwrap</span>())
+    <span class="doccomment">/// Helper to construct a frame range. Takes the address as a `usize` for ease of test writing - panics here if
+    /// it&#39;s not valid.
+    </span><span class="kw">fn </span>n_frames_at(start: usize, n: usize) -&gt; Range&lt;Frame&gt; {
+        Frame::starts_with(PhysicalAddress::new(start).unwrap())
+            ..Frame::starts_with(PhysicalAddress::new(start + n * Size4KiB::SIZE).unwrap())
     }
 
-    <span class="attribute">#[<span class="ident">test</span>]</span>
-    <span class="kw">fn</span> <span class="ident">test_single_frame_binning</span>() {
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">allocator</span> <span class="op">=</span> <span class="ident">BuddyAllocator::new</span>();
-        <span class="ident">allocator</span>.<span class="ident">add_range</span>(<span class="ident">n_frames_at</span>(<span class="number">0x0</span>, <span class="number">1</span>));
-        <span class="ident">allocator</span>.<span class="ident">add_range</span>(<span class="ident">n_frames_at</span>(<span class="number">0x2000</span>, <span class="number">1</span>));
-        <span class="ident">allocator</span>.<span class="ident">add_range</span>(<span class="ident">n_frames_at</span>(<span class="number">0x16000</span>, <span class="number">1</span>));
-        <span class="ident">allocator</span>.<span class="ident">add_range</span>(<span class="ident">n_frames_at</span>(<span class="number">0xf480000</span>, <span class="number">1</span>));
-        <span class="macro">assert_eq!</span>(<span class="ident">allocator</span>.<span class="ident">available_bytes</span>(), <span class="number">0x4000</span>);
-        <span class="ident">check_bins</span>(
-            <span class="ident">allocator</span>,
-            <span class="macro">vec!</span>[<span class="ident">Block::new</span>(<span class="number">0</span>, <span class="number">0x0</span>), <span class="ident">Block::new</span>(<span class="number">0</span>, <span class="number">0x2000</span>), <span class="ident">Block::new</span>(<span class="number">0</span>, <span class="number">0x16000</span>), <span class="ident">Block::new</span>(<span class="number">0</span>, <span class="number">0xf480000</span>)],
+    <span class="attribute">#[test]
+    </span><span class="kw">fn </span>test_single_frame_binning() {
+        <span class="kw">let </span><span class="kw-2">mut </span>allocator = BuddyAllocator::new();
+        allocator.add_range(n_frames_at(<span class="number">0x0</span>, <span class="number">1</span>));
+        allocator.add_range(n_frames_at(<span class="number">0x2000</span>, <span class="number">1</span>));
+        allocator.add_range(n_frames_at(<span class="number">0x16000</span>, <span class="number">1</span>));
+        allocator.add_range(n_frames_at(<span class="number">0xf480000</span>, <span class="number">1</span>));
+        <span class="macro">assert_eq!</span>(allocator.available_bytes(), <span class="number">0x4000</span>);
+        check_bins(
+            allocator,
+            <span class="macro">vec!</span>[Block::new(<span class="number">0</span>, <span class="number">0x0</span>), Block::new(<span class="number">0</span>, <span class="number">0x2000</span>), Block::new(<span class="number">0</span>, <span class="number">0x16000</span>), Block::new(<span class="number">0</span>, <span class="number">0xf480000</span>)],
         );
     }
 
-    <span class="attribute">#[<span class="ident">test</span>]</span>
-    <span class="kw">fn</span> <span class="ident">test_bigger_block_binning</span>() {
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">allocator</span> <span class="op">=</span> <span class="ident">BuddyAllocator::new</span>();
-        <span class="ident">allocator</span>.<span class="ident">add_range</span>(<span class="ident">n_frames_at</span>(<span class="number">0x2000</span>, <span class="number">1</span>));
-        <span class="ident">allocator</span>.<span class="ident">add_range</span>(<span class="ident">n_frames_at</span>(<span class="number">0x6000</span>, <span class="number">4</span>));
-        <span class="ident">allocator</span>.<span class="ident">add_range</span>(<span class="ident">n_frames_at</span>(<span class="number">0x10000</span>, <span class="number">64</span>));
-        <span class="macro">assert_eq!</span>(<span class="ident">allocator</span>.<span class="ident">available_bytes</span>(), (<span class="number">1</span> <span class="op">+</span> <span class="number">4</span> <span class="op">+</span> <span class="number">64</span>) <span class="op">*</span> <span class="ident">BASE_SIZE</span>);
-        <span class="ident">check_bins</span>(<span class="ident">allocator</span>, <span class="macro">vec!</span>[<span class="ident">Block::new</span>(<span class="number">0</span>, <span class="number">0x2000</span>), <span class="ident">Block::new</span>(<span class="number">2</span>, <span class="number">0x6000</span>), <span class="ident">Block::new</span>(<span class="number">6</span>, <span class="number">0x10000</span>)]);
+    <span class="attribute">#[test]
+    </span><span class="kw">fn </span>test_bigger_block_binning() {
+        <span class="kw">let </span><span class="kw-2">mut </span>allocator = BuddyAllocator::new();
+        allocator.add_range(n_frames_at(<span class="number">0x2000</span>, <span class="number">1</span>));
+        allocator.add_range(n_frames_at(<span class="number">0x6000</span>, <span class="number">4</span>));
+        allocator.add_range(n_frames_at(<span class="number">0x10000</span>, <span class="number">64</span>));
+        <span class="macro">assert_eq!</span>(allocator.available_bytes(), (<span class="number">1 </span>+ <span class="number">4 </span>+ <span class="number">64</span>) * BASE_SIZE);
+        check_bins(allocator, <span class="macro">vec!</span>[Block::new(<span class="number">0</span>, <span class="number">0x2000</span>), Block::new(<span class="number">2</span>, <span class="number">0x6000</span>), Block::new(<span class="number">6</span>, <span class="number">0x10000</span>)]);
     }
 
-    <span class="doccomment">/// Test the splitting of weird-sized ranges into blocks.</span>
-    <span class="attribute">#[<span class="ident">test</span>]</span>
-    <span class="kw">fn</span> <span class="ident">test_complex_range_binning</span>() {
+    <span class="doccomment">/// Test the splitting of weird-sized ranges into blocks.
+    </span><span class="attribute">#[test]
+    </span><span class="kw">fn </span>test_complex_range_binning() {
         <span class="comment">/*
          * Split 3 frames into an order-1 block and an order-0 block.
-         */</span>
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">allocator</span> <span class="op">=</span> <span class="ident">BuddyAllocator::new</span>();
-        <span class="ident">allocator</span>.<span class="ident">add_range</span>(<span class="ident">n_frames_at</span>(<span class="number">0x0</span>, <span class="number">3</span>));
-        <span class="ident">check_bins</span>(<span class="ident">allocator</span>, <span class="macro">vec!</span>[<span class="ident">Block::new</span>(<span class="number">1</span>, <span class="number">0x0</span>), <span class="ident">Block::new</span>(<span class="number">0</span>, <span class="number">0x2000</span>)]);
+         */
+        </span><span class="kw">let </span><span class="kw-2">mut </span>allocator = BuddyAllocator::new();
+        allocator.add_range(n_frames_at(<span class="number">0x0</span>, <span class="number">3</span>));
+        check_bins(allocator, <span class="macro">vec!</span>[Block::new(<span class="number">1</span>, <span class="number">0x0</span>), Block::new(<span class="number">0</span>, <span class="number">0x2000</span>)]);
 
         <span class="comment">/*
          * Split 523 frames into 4 blocks of orders: 9, then 3, then 1, then 0.
-         */</span>
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">allocator</span> <span class="op">=</span> <span class="ident">BuddyAllocator::new</span>();
-        <span class="ident">allocator</span>.<span class="ident">add_range</span>(<span class="ident">n_frames_at</span>(<span class="number">0x40000</span>, <span class="number">523</span>));
-        <span class="ident">check_bins</span>(
-            <span class="ident">allocator</span>,
+         */
+        </span><span class="kw">let </span><span class="kw-2">mut </span>allocator = BuddyAllocator::new();
+        allocator.add_range(n_frames_at(<span class="number">0x40000</span>, <span class="number">523</span>));
+        check_bins(
+            allocator,
             <span class="macro">vec!</span>[
-                <span class="ident">Block::new</span>(<span class="number">9</span>, <span class="number">0x40000</span>),
-                <span class="ident">Block::new</span>(<span class="number">3</span>, <span class="number">0x240000</span>),
-                <span class="ident">Block::new</span>(<span class="number">1</span>, <span class="number">0x248000</span>),
-                <span class="ident">Block::new</span>(<span class="number">0</span>, <span class="number">0x24a000</span>),
+                Block::new(<span class="number">9</span>, <span class="number">0x40000</span>),
+                Block::new(<span class="number">3</span>, <span class="number">0x240000</span>),
+                Block::new(<span class="number">1</span>, <span class="number">0x248000</span>),
+                Block::new(<span class="number">0</span>, <span class="number">0x24a000</span>),
             ],
         );
     }
 
-    <span class="attribute">#[<span class="ident">test</span>]</span>
-    <span class="kw">fn</span> <span class="ident">test_block_coalescing</span>() {
+    <span class="attribute">#[test]
+    </span><span class="kw">fn </span>test_block_coalescing() {
         <span class="comment">/*
          * Test the coalescing of two order-0 blocks into a single order-1 block, with a neighbour that can&#39;t
          * be.
-         */</span>
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">allocator</span> <span class="op">=</span> <span class="ident">BuddyAllocator::new</span>();
-        <span class="ident">allocator</span>.<span class="ident">add_range</span>(<span class="ident">n_frames_at</span>(<span class="number">0x1000</span>, <span class="number">1</span>));
-        <span class="ident">allocator</span>.<span class="ident">add_range</span>(<span class="ident">n_frames_at</span>(<span class="number">0x3000</span>, <span class="number">1</span>));
-        <span class="ident">allocator</span>.<span class="ident">add_range</span>(<span class="ident">n_frames_at</span>(<span class="number">0x2000</span>, <span class="number">1</span>));
-        <span class="macro">assert_eq!</span>(<span class="ident">allocator</span>.<span class="ident">available_bytes</span>(), <span class="number">0x3000</span>);
-        <span class="ident">check_bins</span>(<span class="ident">allocator</span>, <span class="macro">vec!</span>[<span class="ident">Block::new</span>(<span class="number">0</span>, <span class="number">0x1000</span>), <span class="ident">Block::new</span>(<span class="number">1</span>, <span class="number">0x2000</span>)]);
+         */
+        </span><span class="kw">let </span><span class="kw-2">mut </span>allocator = BuddyAllocator::new();
+        allocator.add_range(n_frames_at(<span class="number">0x1000</span>, <span class="number">1</span>));
+        allocator.add_range(n_frames_at(<span class="number">0x3000</span>, <span class="number">1</span>));
+        allocator.add_range(n_frames_at(<span class="number">0x2000</span>, <span class="number">1</span>));
+        <span class="macro">assert_eq!</span>(allocator.available_bytes(), <span class="number">0x3000</span>);
+        check_bins(allocator, <span class="macro">vec!</span>[Block::new(<span class="number">0</span>, <span class="number">0x1000</span>), Block::new(<span class="number">1</span>, <span class="number">0x2000</span>)]);
 
         <span class="comment">/*
          * Start with four order-0 blocks that can be coalesced into a single order-2 block.
-         */</span>
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">allocator</span> <span class="op">=</span> <span class="ident">BuddyAllocator::new</span>();
-        <span class="ident">allocator</span>.<span class="ident">add_range</span>(<span class="ident">n_frames_at</span>(<span class="number">0x0</span>, <span class="number">1</span>));
-        <span class="ident">allocator</span>.<span class="ident">add_range</span>(<span class="ident">n_frames_at</span>(<span class="number">0x2000</span>, <span class="number">1</span>));
-        <span class="ident">allocator</span>.<span class="ident">add_range</span>(<span class="ident">n_frames_at</span>(<span class="number">0x3000</span>, <span class="number">1</span>));
-        <span class="ident">allocator</span>.<span class="ident">add_range</span>(<span class="ident">n_frames_at</span>(<span class="number">0x1000</span>, <span class="number">1</span>));
-        <span class="macro">assert_eq!</span>(<span class="ident">allocator</span>.<span class="ident">available_bytes</span>(), <span class="number">0x4000</span>);
-        <span class="ident">check_bins</span>(<span class="ident">allocator</span>, <span class="macro">vec!</span>[<span class="ident">Block::new</span>(<span class="number">2</span>, <span class="number">0x0</span>)]);
+         */
+        </span><span class="kw">let </span><span class="kw-2">mut </span>allocator = BuddyAllocator::new();
+        allocator.add_range(n_frames_at(<span class="number">0x0</span>, <span class="number">1</span>));
+        allocator.add_range(n_frames_at(<span class="number">0x2000</span>, <span class="number">1</span>));
+        allocator.add_range(n_frames_at(<span class="number">0x3000</span>, <span class="number">1</span>));
+        allocator.add_range(n_frames_at(<span class="number">0x1000</span>, <span class="number">1</span>));
+        <span class="macro">assert_eq!</span>(allocator.available_bytes(), <span class="number">0x4000</span>);
+        check_bins(allocator, <span class="macro">vec!</span>[Block::new(<span class="number">2</span>, <span class="number">0x0</span>)]);
 
         <span class="comment">/*
          * Add 1024 single frames, which should be coalesced into a single order-10 block.
-         */</span>
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">allocator</span> <span class="op">=</span> <span class="ident">BuddyAllocator::new</span>();
-        <span class="kw">for</span> <span class="ident">i</span> <span class="kw">in</span> <span class="number">0</span>..<span class="number">1024</span> {
-            <span class="ident">allocator</span>.<span class="ident">add_range</span>(<span class="ident">n_frames_at</span>(<span class="ident">i</span> <span class="op">*</span> <span class="ident">Size4KiB::SIZE</span>, <span class="number">1</span>));
+         */
+        </span><span class="kw">let </span><span class="kw-2">mut </span>allocator = BuddyAllocator::new();
+        <span class="kw">for </span>i <span class="kw">in </span><span class="number">0</span>..<span class="number">1024 </span>{
+            allocator.add_range(n_frames_at(i * Size4KiB::SIZE, <span class="number">1</span>));
         }
-        <span class="macro">assert_eq!</span>(<span class="ident">allocator</span>.<span class="ident">available_bytes</span>(), <span class="number">0x400000</span>);
-        <span class="ident">check_bins</span>(<span class="ident">allocator</span>, <span class="macro">vec!</span>[<span class="ident">Block::new</span>(<span class="number">10</span>, <span class="number">0x0</span>)]);
+        <span class="macro">assert_eq!</span>(allocator.available_bytes(), <span class="number">0x400000</span>);
+        check_bins(allocator, <span class="macro">vec!</span>[Block::new(<span class="number">10</span>, <span class="number">0x0</span>)]);
     }
 
-    <span class="attribute">#[<span class="ident">test</span>]</span>
-    <span class="kw">fn</span> <span class="ident">test_empty_allocator</span>() {
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">allocator</span> <span class="op">=</span> <span class="ident">BuddyAllocator::new</span>();
-        <span class="macro">assert_eq!</span>(<span class="ident">allocator</span>.<span class="ident">available_bytes</span>(), <span class="number">0</span>);
+    <span class="attribute">#[test]
+    </span><span class="kw">fn </span>test_empty_allocator() {
+        <span class="kw">let </span><span class="kw-2">mut </span>allocator = BuddyAllocator::new();
+        <span class="macro">assert_eq!</span>(allocator.available_bytes(), <span class="number">0</span>);
 
-        <span class="macro">assert_eq!</span>(<span class="ident">allocator</span>.<span class="ident">allocate_n</span>(<span class="number">0x1000</span>), <span class="prelude-val">None</span>);
-        <span class="macro">assert_eq!</span>(<span class="ident">allocator</span>.<span class="ident">allocate_block</span>(<span class="number">0</span>), <span class="prelude-val">None</span>);
-        <span class="macro">assert_eq!</span>(<span class="ident">allocator</span>.<span class="ident">allocate_block</span>(<span class="ident">MAX_ORDER</span>), <span class="prelude-val">None</span>);
+        <span class="macro">assert_eq!</span>(allocator.allocate_n(<span class="number">0x1000</span>), <span class="prelude-val">None</span>);
+        <span class="macro">assert_eq!</span>(allocator.allocate_block(<span class="number">0</span>), <span class="prelude-val">None</span>);
+        <span class="macro">assert_eq!</span>(allocator.allocate_block(MAX_ORDER), <span class="prelude-val">None</span>);
     }
 
-    <span class="attribute">#[<span class="ident">test</span>]</span>
-    <span class="kw">fn</span> <span class="ident">test_block_larger_than_max_order</span>() {
+    <span class="attribute">#[test]
+    </span><span class="kw">fn </span>test_block_larger_than_max_order() {
         <span class="comment">/*
          * Currently, if we try and allocate a block greater than the current maximum block size, we return
          * `None` even if we could service the request overall.
-         */</span>
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">allocator</span> <span class="op">=</span> <span class="ident">BuddyAllocator::new</span>();
-        <span class="ident">allocator</span>.<span class="ident">add_range</span>(<span class="ident">n_frames_at</span>(<span class="number">0x0</span>, <span class="number">4096</span>)); <span class="comment">// Allocate 4 blocks of the maximum order (currently 10)</span>
-        <span class="macro">assert_eq!</span>(<span class="ident">allocator</span>.<span class="ident">allocate_block</span>(<span class="number">12</span>), <span class="prelude-val">None</span>);
+         */
+        </span><span class="kw">let </span><span class="kw-2">mut </span>allocator = BuddyAllocator::new();
+        allocator.add_range(n_frames_at(<span class="number">0x0</span>, <span class="number">4096</span>)); <span class="comment">// Allocate 4 blocks of the maximum order (currently 10)
+        </span><span class="macro">assert_eq!</span>(allocator.allocate_block(<span class="number">12</span>), <span class="prelude-val">None</span>);
 
         <span class="comment">/*
          * Currently, `allocate_n` can only allocate contiguous bytes, but this could be relaxed in the future.
-         */</span>
-        <span class="macro">assert_eq!</span>(<span class="ident">allocator</span>.<span class="ident">allocate_n</span>(<span class="number">2048</span> <span class="op">*</span> <span class="ident">Size4KiB::SIZE</span>), <span class="prelude-val">None</span>);
+         */
+        </span><span class="macro">assert_eq!</span>(allocator.allocate_n(<span class="number">2048 </span>* Size4KiB::SIZE), <span class="prelude-val">None</span>);
     }
 }
 </code></pre></div>
-</section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="kernel" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.65.0-nightly (34a6cae28 2022-08-09)" ></div></body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="kernel" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.65.0-nightly (b44197abb 2022-09-05)" ></div></body></html>

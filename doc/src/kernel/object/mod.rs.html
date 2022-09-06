@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/object/mod.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>mod.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../storage.js"></script><script defer src="../../../source-script.js"></script><script defer src="../../../source-files.js"></script><script defer src="../../../main.js"></script><noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../../kernel/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div></a><h2 class="location"></h2></nav><nav class="sidebar"><a class="sidebar-logo" href="../../../kernel/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div></a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../../kernel/index.html"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></a><nav class="sub"><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><button type="button">?</button></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../wheel.svg"></a></div></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/object/mod.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>mod.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" href="../../../normalize.css"><link rel="stylesheet" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" href="../../../ayu.css" disabled><link rel="stylesheet" href="../../../dark.css" disabled><link rel="stylesheet" href="../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../storage.js"></script><script defer src="../../../source-script.js"></script><script defer src="../../../source-files.js"></script><script defer src="../../../main.js"></script><noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../../kernel/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div></a><h2 class="location"></h2></nav><nav class="sidebar"><a class="sidebar-logo" href="../../../kernel/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div></a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../../kernel/index.html"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></a><nav class="sub"><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><button type="button">?</button></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../wheel.svg"></a></div></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
 <span id="2">2</span>
 <span id="3">3</span>
 <span id="4">4</span>
@@ -55,62 +55,62 @@
 <span id="55">55</span>
 <span id="56">56</span>
 <span id="57">57</span>
-</pre><pre class="rust"><code><span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">address_space</span>;
-<span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">channel</span>;
-<span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">memory_object</span>;
-<span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">task</span>;
+</pre><pre class="rust"><code><span class="kw">pub mod </span>address_space;
+<span class="kw">pub mod </span>channel;
+<span class="kw">pub mod </span>memory_object;
+<span class="kw">pub mod </span>task;
 
-<span class="kw">use</span> <span class="ident">core::sync::atomic</span>::{<span class="ident">AtomicU64</span>, <span class="ident">Ordering</span>};
-<span class="kw">use</span> <span class="ident">poplar_util</span>::{<span class="ident">downcast::DowncastSync</span>, <span class="ident">impl_downcast</span>};
+<span class="kw">use </span>core::sync::atomic::{AtomicU64, Ordering};
+<span class="kw">use </span>poplar_util::{downcast::DowncastSync, impl_downcast};
 
-<span class="doccomment">/// Each kernel object is assigned a unique 64-bit ID, which is never reused. An ID of `0` is never allocated, and</span>
-<span class="doccomment">/// is used as a sentinel value.</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Copy</span>, <span class="ident">PartialEq</span>, <span class="ident">Eq</span>, <span class="ident">PartialOrd</span>, <span class="ident">Ord</span>, <span class="ident">Hash</span>, <span class="ident">Debug</span>)]</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">KernelObjectId</span>(<span class="ident">u64</span>);
+<span class="doccomment">/// Each kernel object is assigned a unique 64-bit ID, which is never reused. An ID of `0` is never allocated, and
+/// is used as a sentinel value.
+</span><span class="attribute">#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
+</span><span class="kw">pub struct </span>KernelObjectId(u64);
 
-<span class="doccomment">/// A kernel object ID of `0` is reserved as a sentinel value that will never point to a real kernel object. It is</span>
-<span class="doccomment">/// used to mark things like the `owner` of a kernel object being the kernel itself.</span>
-<span class="kw">pub</span> <span class="kw">const</span> <span class="ident">SENTINEL_KERNEL_ID</span>: <span class="ident">KernelObjectId</span> <span class="op">=</span> <span class="ident">KernelObjectId</span>(<span class="number">0</span>);
+<span class="doccomment">/// A kernel object ID of `0` is reserved as a sentinel value that will never point to a real kernel object. It is
+/// used to mark things like the `owner` of a kernel object being the kernel itself.
+</span><span class="kw">pub const </span>SENTINEL_KERNEL_ID: KernelObjectId = KernelObjectId(<span class="number">0</span>);
 
-<span class="doccomment">/// The next available `KernelObjectId`. It is shared between all the CPUs, and so is incremented atomically.</span>
-<span class="kw">static</span> <span class="ident">KERNEL_OBJECT_ID_COUNTER</span>: <span class="ident">AtomicU64</span> <span class="op">=</span> <span class="ident">AtomicU64::new</span>(<span class="number">1</span>);
+<span class="doccomment">/// The next available `KernelObjectId`. It is shared between all the CPUs, and so is incremented atomically.
+</span><span class="kw">static </span>KERNEL_OBJECT_ID_COUNTER: AtomicU64 = AtomicU64::new(<span class="number">1</span>);
 
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">alloc_kernel_object_id</span>() -&gt; <span class="ident">KernelObjectId</span> {
-    <span class="comment">// TODO: this wraps, so we should manually detect when it wraps around and panic to prevent ID reuse</span>
-    <span class="ident">KernelObjectId</span>(<span class="ident">KERNEL_OBJECT_ID_COUNTER</span>.<span class="ident">fetch_add</span>(<span class="number">1</span>, <span class="ident">Ordering::Relaxed</span>))
+<span class="kw">pub fn </span>alloc_kernel_object_id() -&gt; KernelObjectId {
+    <span class="comment">// TODO: this wraps, so we should manually detect when it wraps around and panic to prevent ID reuse
+    </span>KernelObjectId(KERNEL_OBJECT_ID_COUNTER.fetch_add(<span class="number">1</span>, Ordering::Relaxed))
 }
 
-<span class="doccomment">/// This trait should be implemented by all types that implement kernel objects, and allows common code to</span>
-<span class="doccomment">/// be generic over all kernel objects. Kernel objects are generally handled as `Arc&lt;T&gt;` where `T` is the type</span>
-<span class="doccomment">/// implementing `KernelObject`, and so interior mutability should be used for data that needs to be mutable within</span>
-<span class="doccomment">/// the kernel object.</span>
-<span class="kw">pub</span> <span class="kw">trait</span> <span class="ident">KernelObject</span>: <span class="ident">DowncastSync</span> {
-    <span class="kw">fn</span> <span class="ident">id</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">KernelObjectId</span>;
-    <span class="comment">// fn owner(&amp;self) -&gt; KernelObjectId;</span>
-}
+<span class="doccomment">/// This trait should be implemented by all types that implement kernel objects, and allows common code to
+/// be generic over all kernel objects. Kernel objects are generally handled as `Arc&lt;T&gt;` where `T` is the type
+/// implementing `KernelObject`, and so interior mutability should be used for data that needs to be mutable within
+/// the kernel object.
+</span><span class="kw">pub trait </span>KernelObject: DowncastSync {
+    <span class="kw">fn </span>id(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; KernelObjectId;
+    <span class="comment">// fn owner(&amp;self) -&gt; KernelObjectId;
+</span>}
 
-<span class="macro">impl_downcast!</span>(<span class="ident">sync</span> <span class="ident">KernelObject</span>);
+<span class="macro">impl_downcast!</span>(sync KernelObject);
 
-<span class="comment">// This doesn&#39;t really work because hygiene opt-out (needed for the fields) still isn&#39;t implemented :(</span>
-<span class="comment">// macro kernel_object {</span>
-<span class="comment">//     ($(#[$outer_meta:meta])*</span>
-<span class="comment">//     struct $name:ident {</span>
-<span class="comment">//         $($(#[$field_meta:meta])*$vis:vis $field:ident: $type:ty),*$(,)?</span>
-<span class="comment">//     }</span>
-<span class="comment">// ) =&gt; {</span>
-<span class="comment">//     $(#[$outer_meta])*</span>
-<span class="comment">//     pub struct $name {</span>
-<span class="comment">//         pub id: $crate::object::KernelObjectId,</span>
-<span class="comment">//         pub owner: $crate::object::KernelObjectId,</span>
-<span class="comment">//         $($(#[$field_meta])* $vis $field: $type),*</span>
-<span class="comment">//     }</span>
+<span class="comment">// This doesn&#39;t really work because hygiene opt-out (needed for the fields) still isn&#39;t implemented :(
+// macro kernel_object {
+//     ($(#[$outer_meta:meta])*
+//     struct $name:ident {
+//         $($(#[$field_meta:meta])*$vis:vis $field:ident: $type:ty),*$(,)?
+//     }
+// ) =&gt; {
+//     $(#[$outer_meta])*
+//     pub struct $name {
+//         pub id: $crate::object::KernelObjectId,
+//         pub owner: $crate::object::KernelObjectId,
+//         $($(#[$field_meta])* $vis $field: $type),*
+//     }
 
-<span class="comment">//     impl $crate::object::KernelObject for $name {</span>
-<span class="comment">//         fn id(&amp;self) -&gt; $crate::object::KernelObjectId {</span>
-<span class="comment">//             self.id</span>
-<span class="comment">//         }</span>
-<span class="comment">//     }</span>
-<span class="comment">// }</span>
-<span class="comment">// }</span>
-</code></pre></div>
-</section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="kernel" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.65.0-nightly (34a6cae28 2022-08-09)" ></div></body></html>
+//     impl $crate::object::KernelObject for $name {
+//         fn id(&amp;self) -&gt; $crate::object::KernelObjectId {
+//             self.id
+//         }
+//     }
+// }
+// }
+</span></code></pre></div>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="kernel" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.65.0-nightly (b44197abb 2022-09-05)" ></div></body></html>

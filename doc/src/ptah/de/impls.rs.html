@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/work/poplar/poplar/lib/ptah/src/de/impls.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>impls.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../storage.js"></script><script defer src="../../../source-script.js"></script><script defer src="../../../source-files.js"></script><script defer src="../../../main.js"></script><noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../../ptah/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div></a><h2 class="location"></h2></nav><nav class="sidebar"><a class="sidebar-logo" href="../../../ptah/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div></a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../../ptah/index.html"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></a><nav class="sub"><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><button type="button">?</button></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../wheel.svg"></a></div></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/work/poplar/poplar/lib/ptah/src/de/impls.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>impls.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" href="../../../normalize.css"><link rel="stylesheet" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" href="../../../ayu.css" disabled><link rel="stylesheet" href="../../../dark.css" disabled><link rel="stylesheet" href="../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../storage.js"></script><script defer src="../../../source-script.js"></script><script defer src="../../../source-files.js"></script><script defer src="../../../main.js"></script><noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../../ptah/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div></a><h2 class="location"></h2></nav><nav class="sidebar"><a class="sidebar-logo" href="../../../ptah/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div></a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../../ptah/index.html"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></a><nav class="sub"><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><button type="button">?</button></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../wheel.svg"></a></div></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
 <span id="2">2</span>
 <span id="3">3</span>
 <span id="4">4</span>
@@ -160,80 +160,80 @@
 <span id="160">160</span>
 <span id="161">161</span>
 <span id="162">162</span>
-</pre><pre class="rust"><code><span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::de</span>::{<span class="ident">Deserialize</span>, <span class="ident">Deserializer</span>, <span class="prelude-ty">Result</span>};
-<span class="kw">use</span> <span class="ident">core</span>::{<span class="ident">mem::MaybeUninit</span>, <span class="ident">ptr</span>};
+</pre><pre class="rust"><code><span class="kw">use </span><span class="kw">crate</span>::de::{Deserialize, Deserializer, <span class="prelude-ty">Result</span>};
+<span class="kw">use </span>core::{mem::MaybeUninit, ptr};
 
-<span class="kw">macro</span> <span class="ident">impl_for_primitive</span> {
-    (<span class="macro-nonterminal">$</span><span class="macro-nonterminal">ty</span>:<span class="ident">ty</span>, <span class="macro-nonterminal">$</span><span class="macro-nonterminal">method</span>:<span class="ident">ident</span>) =&gt; {
-        <span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;de</span><span class="op">&gt;</span> <span class="ident">Deserialize</span><span class="op">&lt;</span><span class="lifetime">&#39;de</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">ty</span> {
-            <span class="kw">fn</span> <span class="ident">deserialize</span>(<span class="ident">deserializer</span>: <span class="kw-2">&amp;mut</span> <span class="ident">Deserializer</span><span class="op">&lt;</span><span class="lifetime">&#39;de</span><span class="op">&gt;</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="self">Self</span><span class="op">&gt;</span> {
-                <span class="ident">deserializer</span>.<span class="macro-nonterminal">$</span><span class="macro-nonterminal">method</span>()
+<span class="kw">macro </span>impl_for_primitive {
+    (<span class="macro-nonterminal">$ty</span>:ty, <span class="macro-nonterminal">$method</span>:ident) =&gt; {
+        <span class="kw">impl</span>&lt;<span class="lifetime">&#39;de</span>&gt; Deserialize&lt;<span class="lifetime">&#39;de</span>&gt; <span class="kw">for </span><span class="macro-nonterminal">$ty </span>{
+            <span class="kw">fn </span>deserialize(deserializer: <span class="kw-2">&amp;mut </span>Deserializer&lt;<span class="lifetime">&#39;de</span>&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>&gt; {
+                deserializer.<span class="macro-nonterminal">$method</span>()
             }
         }
     },
 
-    (<span class="ident">needs_cast</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">ty</span>:<span class="ident">ty</span>, <span class="macro-nonterminal">$</span><span class="macro-nonterminal">method</span>:<span class="ident">ident</span>) =&gt; {
-        <span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;de</span><span class="op">&gt;</span> <span class="ident">Deserialize</span><span class="op">&lt;</span><span class="lifetime">&#39;de</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">ty</span> {
-            <span class="kw">fn</span> <span class="ident">deserialize</span>(<span class="ident">deserializer</span>: <span class="kw-2">&amp;mut</span> <span class="ident">Deserializer</span><span class="op">&lt;</span><span class="lifetime">&#39;de</span><span class="op">&gt;</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="self">Self</span><span class="op">&gt;</span> {
-                <span class="ident">deserializer</span>.<span class="macro-nonterminal">$</span><span class="macro-nonterminal">method</span>().<span class="ident">map</span>(<span class="op">|</span><span class="ident">value</span><span class="op">|</span> <span class="ident">value</span> <span class="kw">as</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">ty</span>)
+    (needs_cast <span class="macro-nonterminal">$ty</span>:ty, <span class="macro-nonterminal">$method</span>:ident) =&gt; {
+        <span class="kw">impl</span>&lt;<span class="lifetime">&#39;de</span>&gt; Deserialize&lt;<span class="lifetime">&#39;de</span>&gt; <span class="kw">for </span><span class="macro-nonterminal">$ty </span>{
+            <span class="kw">fn </span>deserialize(deserializer: <span class="kw-2">&amp;mut </span>Deserializer&lt;<span class="lifetime">&#39;de</span>&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>&gt; {
+                deserializer.<span class="macro-nonterminal">$method</span>().map(|value| value <span class="kw">as </span><span class="macro-nonterminal">$ty</span>)
             }
         }
     }
 }
 
-<span class="macro">impl_for_primitive!</span>(<span class="ident">u8</span>, <span class="ident">deserialize_u8</span>);
-<span class="macro">impl_for_primitive!</span>(<span class="ident">u16</span>, <span class="ident">deserialize_u16</span>);
-<span class="macro">impl_for_primitive!</span>(<span class="ident">u32</span>, <span class="ident">deserialize_u32</span>);
-<span class="macro">impl_for_primitive!</span>(<span class="ident">u64</span>, <span class="ident">deserialize_u64</span>);
-<span class="macro">impl_for_primitive!</span>(<span class="ident">u128</span>, <span class="ident">deserialize_u128</span>);
-<span class="macro">impl_for_primitive!</span>(<span class="ident">needs_cast</span> <span class="ident">usize</span>, <span class="ident">deserialize_u64</span>);
+<span class="macro">impl_for_primitive!</span>(u8, deserialize_u8);
+<span class="macro">impl_for_primitive!</span>(u16, deserialize_u16);
+<span class="macro">impl_for_primitive!</span>(u32, deserialize_u32);
+<span class="macro">impl_for_primitive!</span>(u64, deserialize_u64);
+<span class="macro">impl_for_primitive!</span>(u128, deserialize_u128);
+<span class="macro">impl_for_primitive!</span>(needs_cast usize, deserialize_u64);
 
-<span class="macro">impl_for_primitive!</span>(<span class="ident">i8</span>, <span class="ident">deserialize_i8</span>);
-<span class="macro">impl_for_primitive!</span>(<span class="ident">i16</span>, <span class="ident">deserialize_i16</span>);
-<span class="macro">impl_for_primitive!</span>(<span class="ident">i32</span>, <span class="ident">deserialize_i32</span>);
-<span class="macro">impl_for_primitive!</span>(<span class="ident">i64</span>, <span class="ident">deserialize_i64</span>);
-<span class="macro">impl_for_primitive!</span>(<span class="ident">i128</span>, <span class="ident">deserialize_i128</span>);
-<span class="macro">impl_for_primitive!</span>(<span class="ident">needs_cast</span> <span class="ident">isize</span>, <span class="ident">deserialize_i64</span>);
+<span class="macro">impl_for_primitive!</span>(i8, deserialize_i8);
+<span class="macro">impl_for_primitive!</span>(i16, deserialize_i16);
+<span class="macro">impl_for_primitive!</span>(i32, deserialize_i32);
+<span class="macro">impl_for_primitive!</span>(i64, deserialize_i64);
+<span class="macro">impl_for_primitive!</span>(i128, deserialize_i128);
+<span class="macro">impl_for_primitive!</span>(needs_cast isize, deserialize_i64);
 
-<span class="macro">impl_for_primitive!</span>(<span class="ident">f32</span>, <span class="ident">deserialize_f32</span>);
-<span class="macro">impl_for_primitive!</span>(<span class="ident">f64</span>, <span class="ident">deserialize_f64</span>);
+<span class="macro">impl_for_primitive!</span>(f32, deserialize_f32);
+<span class="macro">impl_for_primitive!</span>(f64, deserialize_f64);
 
-<span class="macro">impl_for_primitive!</span>(<span class="ident">bool</span>, <span class="ident">deserialize_bool</span>);
-<span class="macro">impl_for_primitive!</span>(<span class="ident">char</span>, <span class="ident">deserialize_char</span>);
+<span class="macro">impl_for_primitive!</span>(bool, deserialize_bool);
+<span class="macro">impl_for_primitive!</span>(char, deserialize_char);
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;de</span><span class="op">&gt;</span> <span class="ident">Deserialize</span><span class="op">&lt;</span><span class="lifetime">&#39;de</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="kw-2">&amp;</span><span class="lifetime">&#39;de</span> <span class="ident">str</span> {
-    <span class="kw">fn</span> <span class="ident">deserialize</span>(<span class="ident">deserializer</span>: <span class="kw-2">&amp;mut</span> <span class="ident">Deserializer</span><span class="op">&lt;</span><span class="lifetime">&#39;de</span><span class="op">&gt;</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="lifetime">&#39;de</span> <span class="ident">str</span><span class="op">&gt;</span> {
-        <span class="ident">deserializer</span>.<span class="ident">deserialize_str</span>()
+<span class="kw">impl</span>&lt;<span class="lifetime">&#39;de</span>&gt; Deserialize&lt;<span class="lifetime">&#39;de</span>&gt; <span class="kw">for </span><span class="kw-2">&amp;</span><span class="lifetime">&#39;de </span>str {
+    <span class="kw">fn </span>deserialize(deserializer: <span class="kw-2">&amp;mut </span>Deserializer&lt;<span class="lifetime">&#39;de</span>&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;de </span>str&gt; {
+        deserializer.deserialize_str()
     }
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;de</span><span class="op">&gt;</span> <span class="ident">Deserialize</span><span class="op">&lt;</span><span class="lifetime">&#39;de</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">alloc::string::String</span> {
-    <span class="kw">fn</span> <span class="ident">deserialize</span>(<span class="ident">deserializer</span>: <span class="kw-2">&amp;mut</span> <span class="ident">Deserializer</span><span class="op">&lt;</span><span class="lifetime">&#39;de</span><span class="op">&gt;</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">alloc::string::String</span><span class="op">&gt;</span> {
-        <span class="kw">use</span> <span class="ident">alloc::string::ToString</span>;
-        <span class="ident">deserializer</span>.<span class="ident">deserialize_str</span>().<span class="ident">map</span>(<span class="op">|</span><span class="ident">s</span><span class="op">|</span> <span class="ident">s</span>.<span class="ident">to_string</span>())
+<span class="kw">impl</span>&lt;<span class="lifetime">&#39;de</span>&gt; Deserialize&lt;<span class="lifetime">&#39;de</span>&gt; <span class="kw">for </span>alloc::string::String {
+    <span class="kw">fn </span>deserialize(deserializer: <span class="kw-2">&amp;mut </span>Deserializer&lt;<span class="lifetime">&#39;de</span>&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;alloc::string::String&gt; {
+        <span class="kw">use </span>alloc::string::ToString;
+        deserializer.deserialize_str().map(|s| s.to_string())
     }
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;de</span>, <span class="ident">T</span><span class="op">&gt;</span> <span class="ident">Deserialize</span><span class="op">&lt;</span><span class="lifetime">&#39;de</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span>
-<span class="kw">where</span>
-    <span class="ident">T</span>: <span class="question-mark">?</span><span class="ident">Sized</span> <span class="op">+</span> <span class="ident">Deserialize</span><span class="op">&lt;</span><span class="lifetime">&#39;de</span><span class="op">&gt;</span>,
+<span class="kw">impl</span>&lt;<span class="lifetime">&#39;de</span>, T&gt; Deserialize&lt;<span class="lifetime">&#39;de</span>&gt; <span class="kw">for </span><span class="prelude-ty">Option</span>&lt;T&gt;
+<span class="kw">where
+    </span>T: <span class="question-mark">?</span>Sized + Deserialize&lt;<span class="lifetime">&#39;de</span>&gt;,
 {
-    <span class="kw">fn</span> <span class="ident">deserialize</span>(<span class="ident">deserializer</span>: <span class="kw-2">&amp;mut</span> <span class="ident">Deserializer</span><span class="op">&lt;</span><span class="lifetime">&#39;de</span><span class="op">&gt;</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span><span class="op">&gt;</span> {
-        <span class="ident">deserializer</span>.<span class="ident">deserialize_option</span>()
+    <span class="kw">fn </span>deserialize(deserializer: <span class="kw-2">&amp;mut </span>Deserializer&lt;<span class="lifetime">&#39;de</span>&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;T&gt;&gt; {
+        deserializer.deserialize_option()
     }
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;de</span>, <span class="ident">T</span>, <span class="kw">const</span> <span class="ident">N</span>: <span class="ident">usize</span><span class="op">&gt;</span> <span class="ident">Deserialize</span><span class="op">&lt;</span><span class="lifetime">&#39;de</span><span class="op">&gt;</span> <span class="kw">for</span> [<span class="ident">T</span>; <span class="ident">N</span>]
-<span class="kw">where</span>
-    <span class="ident">T</span>: <span class="ident">Deserialize</span><span class="op">&lt;</span><span class="lifetime">&#39;de</span><span class="op">&gt;</span>,
+<span class="kw">impl</span>&lt;<span class="lifetime">&#39;de</span>, T, <span class="kw">const </span>N: usize&gt; Deserialize&lt;<span class="lifetime">&#39;de</span>&gt; <span class="kw">for </span>[T; N]
+<span class="kw">where
+    </span>T: Deserialize&lt;<span class="lifetime">&#39;de</span>&gt;,
 {
-    <span class="kw">fn</span> <span class="ident">deserialize</span>(<span class="ident">deserializer</span>: <span class="kw-2">&amp;mut</span> <span class="ident">Deserializer</span><span class="op">&lt;</span><span class="lifetime">&#39;de</span><span class="op">&gt;</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>[<span class="ident">T</span>; <span class="ident">N</span>]<span class="op">&gt;</span> {
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">array</span>: [<span class="ident">MaybeUninit</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span>; <span class="ident">N</span>] <span class="op">=</span> <span class="ident">MaybeUninit::uninit_array</span>();
-        <span class="kw">let</span> <span class="ident">start_ptr</span>: <span class="kw-2">*mut</span> <span class="ident">T</span> <span class="op">=</span> <span class="ident">MaybeUninit::slice_as_mut_ptr</span>(<span class="kw-2">&amp;mut</span> <span class="ident">array</span>);
+    <span class="kw">fn </span>deserialize(deserializer: <span class="kw-2">&amp;mut </span>Deserializer&lt;<span class="lifetime">&#39;de</span>&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;[T; N]&gt; {
+        <span class="kw">let </span><span class="kw-2">mut </span>array: [MaybeUninit&lt;T&gt;; N] = MaybeUninit::uninit_array();
+        <span class="kw">let </span>start_ptr: <span class="kw-2">*mut </span>T = MaybeUninit::slice_as_mut_ptr(<span class="kw-2">&amp;mut </span>array);
 
-        <span class="kw">for</span> <span class="ident">i</span> <span class="kw">in</span> <span class="number">0</span>..<span class="ident">N</span> {
-            <span class="kw">unsafe</span> {
-                <span class="ident">ptr::write</span>(<span class="ident">start_ptr</span>.<span class="ident">offset</span>(<span class="ident">i</span> <span class="kw">as</span> <span class="ident">isize</span>), <span class="ident">T::deserialize</span>(<span class="ident">deserializer</span>)<span class="question-mark">?</span>);
+        <span class="kw">for </span>i <span class="kw">in </span><span class="number">0</span>..N {
+            <span class="kw">unsafe </span>{
+                ptr::write(start_ptr.offset(i <span class="kw">as </span>isize), T::deserialize(deserializer)<span class="question-mark">?</span>);
             }
         }
 
@@ -241,86 +241,86 @@
          * TODO: this isn&#39;t great. It feels like there should be a function on MaybeUninit to allow us to do this.
          * We can&#39;t use `slice_assume_init_ref` because there&#39;s no easy way to then turn that slice into an array
          * without constraining T to be `Copy` or at least `Clone`.
-         */</span>
-        <span class="prelude-val">Ok</span>(<span class="kw">unsafe</span> { <span class="ident">ptr::read</span>(<span class="ident">start_ptr</span> <span class="kw">as</span> <span class="kw-2">*const</span> [<span class="ident">T</span>; <span class="ident">N</span>]) })
+         */
+        </span><span class="prelude-val">Ok</span>(<span class="kw">unsafe </span>{ ptr::read(start_ptr <span class="kw">as </span><span class="kw-2">*const </span>[T; N]) })
     }
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;de</span><span class="op">&gt;</span> <span class="ident">Deserialize</span><span class="op">&lt;</span><span class="lifetime">&#39;de</span><span class="op">&gt;</span> <span class="kw">for</span> () {
-    <span class="kw">fn</span> <span class="ident">deserialize</span>(<span class="ident">_deserializer</span>: <span class="kw-2">&amp;mut</span> <span class="ident">Deserializer</span><span class="op">&lt;</span><span class="lifetime">&#39;de</span><span class="op">&gt;</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
+<span class="kw">impl</span>&lt;<span class="lifetime">&#39;de</span>&gt; Deserialize&lt;<span class="lifetime">&#39;de</span>&gt; <span class="kw">for </span>() {
+    <span class="kw">fn </span>deserialize(_deserializer: <span class="kw-2">&amp;mut </span>Deserializer&lt;<span class="lifetime">&#39;de</span>&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
         <span class="prelude-val">Ok</span>(())
     }
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;de</span><span class="op">&gt;</span> <span class="ident">Deserialize</span><span class="op">&lt;</span><span class="lifetime">&#39;de</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="op">!</span> {
-    <span class="kw">fn</span> <span class="ident">deserialize</span>(<span class="ident">_deserializer</span>: <span class="kw-2">&amp;mut</span> <span class="ident">Deserializer</span><span class="op">&lt;</span><span class="lifetime">&#39;de</span><span class="op">&gt;</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="op">!</span><span class="op">&gt;</span> {
+<span class="kw">impl</span>&lt;<span class="lifetime">&#39;de</span>&gt; Deserialize&lt;<span class="lifetime">&#39;de</span>&gt; <span class="kw">for </span>! {
+    <span class="kw">fn </span>deserialize(_deserializer: <span class="kw-2">&amp;mut </span>Deserializer&lt;<span class="lifetime">&#39;de</span>&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;!&gt; {
         <span class="macro">panic!</span>(<span class="string">&quot;Can&#39;t deserialize the never type `!`&quot;</span>)
     }
 }
 
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;alloc&quot;</span>)]</span>
-<span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;de</span>, <span class="ident">T</span><span class="op">&gt;</span> <span class="ident">Deserialize</span><span class="op">&lt;</span><span class="lifetime">&#39;de</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">alloc::vec::Vec</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span>
-<span class="kw">where</span>
-    <span class="ident">T</span>: <span class="ident">Deserialize</span><span class="op">&lt;</span><span class="lifetime">&#39;de</span><span class="op">&gt;</span>,
+<span class="attribute">#[cfg(feature = <span class="string">&quot;alloc&quot;</span>)]
+</span><span class="kw">impl</span>&lt;<span class="lifetime">&#39;de</span>, T&gt; Deserialize&lt;<span class="lifetime">&#39;de</span>&gt; <span class="kw">for </span>alloc::vec::Vec&lt;T&gt;
+<span class="kw">where
+    </span>T: Deserialize&lt;<span class="lifetime">&#39;de</span>&gt;,
 {
-    <span class="kw">fn</span> <span class="ident">deserialize</span>(<span class="ident">deserializer</span>: <span class="kw-2">&amp;mut</span> <span class="ident">Deserializer</span><span class="op">&lt;</span><span class="lifetime">&#39;de</span><span class="op">&gt;</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">alloc::vec::Vec</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span><span class="op">&gt;</span> {
-        <span class="kw">let</span> <span class="ident">length</span> <span class="op">=</span> <span class="ident">deserializer</span>.<span class="ident">deserialize_seq_length</span>()<span class="question-mark">?</span>;
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">vec</span> <span class="op">=</span> <span class="ident">alloc::vec::Vec::with_capacity</span>(<span class="ident">length</span> <span class="kw">as</span> <span class="ident">usize</span>);
+    <span class="kw">fn </span>deserialize(deserializer: <span class="kw-2">&amp;mut </span>Deserializer&lt;<span class="lifetime">&#39;de</span>&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;alloc::vec::Vec&lt;T&gt;&gt; {
+        <span class="kw">let </span>length = deserializer.deserialize_seq_length()<span class="question-mark">?</span>;
+        <span class="kw">let </span><span class="kw-2">mut </span>vec = alloc::vec::Vec::with_capacity(length <span class="kw">as </span>usize);
 
-        <span class="kw">for</span> <span class="kw">_</span> <span class="kw">in</span> <span class="number">0</span>..<span class="ident">length</span> {
-            <span class="ident">vec</span>.<span class="ident">push</span>(<span class="ident">T::deserialize</span>(<span class="ident">deserializer</span>)<span class="question-mark">?</span>);
+        <span class="kw">for _ in </span><span class="number">0</span>..length {
+            vec.push(T::deserialize(deserializer)<span class="question-mark">?</span>);
         }
 
-        <span class="prelude-val">Ok</span>(<span class="ident">vec</span>)
+        <span class="prelude-val">Ok</span>(vec)
     }
 }
 
-<span class="kw">macro</span> <span class="ident">impl_for_tuple</span>(($(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">typ</span>:<span class="ident">ident</span>),<span class="op">+</span>)) {
-    <span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;de</span>, $(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">typ</span>),<span class="op">+</span><span class="op">&gt;</span> <span class="ident">Deserialize</span><span class="op">&lt;</span><span class="lifetime">&#39;de</span><span class="op">&gt;</span> <span class="kw">for</span> ($(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">typ</span>,)<span class="op">+</span>)
-    <span class="kw">where</span>
-        $(
-            <span class="macro-nonterminal">$</span><span class="macro-nonterminal">typ</span>: <span class="ident">Deserialize</span><span class="op">&lt;</span><span class="lifetime">&#39;de</span><span class="op">&gt;</span>
-         ),<span class="op">+</span>
+<span class="kw">macro </span>impl_for_tuple(($(<span class="macro-nonterminal">$typ</span>:ident),+)) {
+    <span class="kw">impl</span>&lt;<span class="lifetime">&#39;de</span>, $(<span class="macro-nonterminal">$typ</span>),+&gt; Deserialize&lt;<span class="lifetime">&#39;de</span>&gt; <span class="kw">for </span>($(<span class="macro-nonterminal">$typ</span>,)+)
+    <span class="kw">where
+        </span>$(
+            <span class="macro-nonterminal">$typ</span>: Deserialize&lt;<span class="lifetime">&#39;de</span>&gt;
+         ),+
     {
-        <span class="kw">fn</span> <span class="ident">deserialize</span>(<span class="ident">deserializer</span>: <span class="kw-2">&amp;mut</span> <span class="ident">Deserializer</span><span class="op">&lt;</span><span class="lifetime">&#39;de</span><span class="op">&gt;</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="self">Self</span><span class="op">&gt;</span> {
-            <span class="prelude-val">Ok</span>(($(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">typ::deserialize</span>(<span class="ident">deserializer</span>)<span class="question-mark">?</span>,)<span class="op">+</span>))
+        <span class="kw">fn </span>deserialize(deserializer: <span class="kw-2">&amp;mut </span>Deserializer&lt;<span class="lifetime">&#39;de</span>&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>&gt; {
+            <span class="prelude-val">Ok</span>(($(<span class="macro-nonterminal">$typ::deserialize</span>(deserializer)<span class="question-mark">?</span>,)+))
         }
     }
 }
 
-<span class="macro">impl_for_tuple!</span>((<span class="ident">T0</span>));
-<span class="macro">impl_for_tuple!</span>((<span class="ident">T0</span>, <span class="ident">T1</span>));
-<span class="macro">impl_for_tuple!</span>((<span class="ident">T0</span>, <span class="ident">T1</span>, <span class="ident">T2</span>));
-<span class="macro">impl_for_tuple!</span>((<span class="ident">T0</span>, <span class="ident">T1</span>, <span class="ident">T2</span>, <span class="ident">T3</span>));
-<span class="macro">impl_for_tuple!</span>((<span class="ident">T0</span>, <span class="ident">T1</span>, <span class="ident">T2</span>, <span class="ident">T3</span>, <span class="ident">T4</span>));
-<span class="macro">impl_for_tuple!</span>((<span class="ident">T0</span>, <span class="ident">T1</span>, <span class="ident">T2</span>, <span class="ident">T3</span>, <span class="ident">T4</span>, <span class="ident">T5</span>));
-<span class="macro">impl_for_tuple!</span>((<span class="ident">T0</span>, <span class="ident">T1</span>, <span class="ident">T2</span>, <span class="ident">T3</span>, <span class="ident">T4</span>, <span class="ident">T5</span>, <span class="ident">T6</span>));
-<span class="macro">impl_for_tuple!</span>((<span class="ident">T0</span>, <span class="ident">T1</span>, <span class="ident">T2</span>, <span class="ident">T3</span>, <span class="ident">T4</span>, <span class="ident">T5</span>, <span class="ident">T6</span>, <span class="ident">T7</span>));
-<span class="macro">impl_for_tuple!</span>((<span class="ident">T0</span>, <span class="ident">T1</span>, <span class="ident">T2</span>, <span class="ident">T3</span>, <span class="ident">T4</span>, <span class="ident">T5</span>, <span class="ident">T6</span>, <span class="ident">T7</span>, <span class="ident">T8</span>));
-<span class="macro">impl_for_tuple!</span>((<span class="ident">T0</span>, <span class="ident">T1</span>, <span class="ident">T2</span>, <span class="ident">T3</span>, <span class="ident">T4</span>, <span class="ident">T5</span>, <span class="ident">T6</span>, <span class="ident">T7</span>, <span class="ident">T8</span>, <span class="ident">T9</span>));
-<span class="macro">impl_for_tuple!</span>((<span class="ident">T0</span>, <span class="ident">T1</span>, <span class="ident">T2</span>, <span class="ident">T3</span>, <span class="ident">T4</span>, <span class="ident">T5</span>, <span class="ident">T6</span>, <span class="ident">T7</span>, <span class="ident">T8</span>, <span class="ident">T9</span>, <span class="ident">T10</span>));
-<span class="macro">impl_for_tuple!</span>((<span class="ident">T0</span>, <span class="ident">T1</span>, <span class="ident">T2</span>, <span class="ident">T3</span>, <span class="ident">T4</span>, <span class="ident">T5</span>, <span class="ident">T6</span>, <span class="ident">T7</span>, <span class="ident">T8</span>, <span class="ident">T9</span>, <span class="ident">T10</span>, <span class="ident">T11</span>));
-<span class="macro">impl_for_tuple!</span>((<span class="ident">T0</span>, <span class="ident">T1</span>, <span class="ident">T2</span>, <span class="ident">T3</span>, <span class="ident">T4</span>, <span class="ident">T5</span>, <span class="ident">T6</span>, <span class="ident">T7</span>, <span class="ident">T8</span>, <span class="ident">T9</span>, <span class="ident">T10</span>, <span class="ident">T11</span>, <span class="ident">T12</span>));
-<span class="macro">impl_for_tuple!</span>((<span class="ident">T0</span>, <span class="ident">T1</span>, <span class="ident">T2</span>, <span class="ident">T3</span>, <span class="ident">T4</span>, <span class="ident">T5</span>, <span class="ident">T6</span>, <span class="ident">T7</span>, <span class="ident">T8</span>, <span class="ident">T9</span>, <span class="ident">T10</span>, <span class="ident">T11</span>, <span class="ident">T12</span>, <span class="ident">T13</span>));
-<span class="macro">impl_for_tuple!</span>((<span class="ident">T0</span>, <span class="ident">T1</span>, <span class="ident">T2</span>, <span class="ident">T3</span>, <span class="ident">T4</span>, <span class="ident">T5</span>, <span class="ident">T6</span>, <span class="ident">T7</span>, <span class="ident">T8</span>, <span class="ident">T9</span>, <span class="ident">T10</span>, <span class="ident">T11</span>, <span class="ident">T12</span>, <span class="ident">T13</span>, <span class="ident">T14</span>));
-<span class="macro">impl_for_tuple!</span>((<span class="ident">T0</span>, <span class="ident">T1</span>, <span class="ident">T2</span>, <span class="ident">T3</span>, <span class="ident">T4</span>, <span class="ident">T5</span>, <span class="ident">T6</span>, <span class="ident">T7</span>, <span class="ident">T8</span>, <span class="ident">T9</span>, <span class="ident">T10</span>, <span class="ident">T11</span>, <span class="ident">T12</span>, <span class="ident">T13</span>, <span class="ident">T14</span>, <span class="ident">T15</span>));
+<span class="macro">impl_for_tuple!</span>((T0));
+<span class="macro">impl_for_tuple!</span>((T0, T1));
+<span class="macro">impl_for_tuple!</span>((T0, T1, T2));
+<span class="macro">impl_for_tuple!</span>((T0, T1, T2, T3));
+<span class="macro">impl_for_tuple!</span>((T0, T1, T2, T3, T4));
+<span class="macro">impl_for_tuple!</span>((T0, T1, T2, T3, T4, T5));
+<span class="macro">impl_for_tuple!</span>((T0, T1, T2, T3, T4, T5, T6));
+<span class="macro">impl_for_tuple!</span>((T0, T1, T2, T3, T4, T5, T6, T7));
+<span class="macro">impl_for_tuple!</span>((T0, T1, T2, T3, T4, T5, T6, T7, T8));
+<span class="macro">impl_for_tuple!</span>((T0, T1, T2, T3, T4, T5, T6, T7, T8, T9));
+<span class="macro">impl_for_tuple!</span>((T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10));
+<span class="macro">impl_for_tuple!</span>((T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11));
+<span class="macro">impl_for_tuple!</span>((T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12));
+<span class="macro">impl_for_tuple!</span>((T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13));
+<span class="macro">impl_for_tuple!</span>((T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14));
+<span class="macro">impl_for_tuple!</span>((T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15));
 
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;alloc&quot;</span>)]</span>
-<span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;de</span>, <span class="ident">K</span>, <span class="ident">V</span><span class="op">&gt;</span> <span class="ident">Deserialize</span><span class="op">&lt;</span><span class="lifetime">&#39;de</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">alloc::collections::BTreeMap</span><span class="op">&lt;</span><span class="ident">K</span>, <span class="ident">V</span><span class="op">&gt;</span>
-<span class="kw">where</span>
-    <span class="ident">K</span>: <span class="ident">Ord</span> <span class="op">+</span> <span class="ident">Deserialize</span><span class="op">&lt;</span><span class="lifetime">&#39;de</span><span class="op">&gt;</span>,
-    <span class="ident">V</span>: <span class="ident">Deserialize</span><span class="op">&lt;</span><span class="lifetime">&#39;de</span><span class="op">&gt;</span>,
+<span class="attribute">#[cfg(feature = <span class="string">&quot;alloc&quot;</span>)]
+</span><span class="kw">impl</span>&lt;<span class="lifetime">&#39;de</span>, K, V&gt; Deserialize&lt;<span class="lifetime">&#39;de</span>&gt; <span class="kw">for </span>alloc::collections::BTreeMap&lt;K, V&gt;
+<span class="kw">where
+    </span>K: Ord + Deserialize&lt;<span class="lifetime">&#39;de</span>&gt;,
+    V: Deserialize&lt;<span class="lifetime">&#39;de</span>&gt;,
 {
-    <span class="kw">fn</span> <span class="ident">deserialize</span>(<span class="ident">deserializer</span>: <span class="kw-2">&amp;mut</span> <span class="ident">Deserializer</span><span class="op">&lt;</span><span class="lifetime">&#39;de</span><span class="op">&gt;</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">alloc::collections::BTreeMap</span><span class="op">&lt;</span><span class="ident">K</span>, <span class="ident">V</span><span class="op">&gt;</span><span class="op">&gt;</span> {
-        <span class="kw">let</span> <span class="ident">length</span> <span class="op">=</span> <span class="ident">deserializer</span>.<span class="ident">deserialize_map_length</span>()<span class="question-mark">?</span>;
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">map</span> <span class="op">=</span> <span class="ident">alloc::collections::BTreeMap::new</span>();
+    <span class="kw">fn </span>deserialize(deserializer: <span class="kw-2">&amp;mut </span>Deserializer&lt;<span class="lifetime">&#39;de</span>&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;alloc::collections::BTreeMap&lt;K, V&gt;&gt; {
+        <span class="kw">let </span>length = deserializer.deserialize_map_length()<span class="question-mark">?</span>;
+        <span class="kw">let </span><span class="kw-2">mut </span>map = alloc::collections::BTreeMap::new();
 
-        <span class="kw">for</span> <span class="kw">_</span> <span class="kw">in</span> <span class="number">0</span>..<span class="ident">length</span> {
-            <span class="ident">map</span>.<span class="ident">insert</span>(<span class="ident">K::deserialize</span>(<span class="ident">deserializer</span>)<span class="question-mark">?</span>, <span class="ident">V::deserialize</span>(<span class="ident">deserializer</span>)<span class="question-mark">?</span>);
+        <span class="kw">for _ in </span><span class="number">0</span>..length {
+            map.insert(K::deserialize(deserializer)<span class="question-mark">?</span>, V::deserialize(deserializer)<span class="question-mark">?</span>);
         }
 
-        <span class="prelude-val">Ok</span>(<span class="ident">map</span>)
+        <span class="prelude-val">Ok</span>(map)
     }
 }
 </code></pre></div>
-</section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="ptah" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.65.0-nightly (34a6cae28 2022-08-09)" ></div></body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="ptah" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.65.0-nightly (b44197abb 2022-09-05)" ></div></body></html>

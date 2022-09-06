@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/work/poplar/poplar/lib/poplar_util/src/bitmap.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>bitmap.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script><script defer src="../../main.js"></script><noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../poplar_util/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div></a><h2 class="location"></h2></nav><nav class="sidebar"><a class="sidebar-logo" href="../../poplar_util/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div></a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../poplar_util/index.html"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></a><nav class="sub"><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><button type="button">?</button></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../wheel.svg"></a></div></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/work/poplar/poplar/lib/poplar_util/src/bitmap.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>bitmap.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" href="../../normalize.css"><link rel="stylesheet" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" href="../../ayu.css" disabled><link rel="stylesheet" href="../../dark.css" disabled><link rel="stylesheet" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script><script defer src="../../main.js"></script><noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../poplar_util/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div></a><h2 class="location"></h2></nav><nav class="sidebar"><a class="sidebar-logo" href="../../poplar_util/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div></a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../poplar_util/index.html"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></a><nav class="sub"><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><button type="button">?</button></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../wheel.svg"></a></div></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
 <span id="2">2</span>
 <span id="3">3</span>
 <span id="4">4</span>
@@ -143,150 +143,150 @@
 <span id="143">143</span>
 <span id="144">144</span>
 <span id="145">145</span>
-</pre><pre class="rust"><code><span class="doccomment">//! It&#39;s useful to be able to model an integral type such as `u32` as being a series of bits,</span>
-<span class="doccomment">//! instead of a whole number. There are, of course, the usual bitwise operators for simple stuff,</span>
-<span class="doccomment">//! but the `Bitmap` trait provides more complex, specific operations that are useful for bitmaps.</span>
-<span class="doccomment">//!</span>
-<span class="doccomment">//! A common use of the `Bitmap` trait is for memory allocators to track an area of pages, where</span>
-<span class="doccomment">//! each bit represents a page. You might, for example, want to find a series of `n` zeros (which</span>
-<span class="doccomment">//! would mark an area of `n` pages that are free to allocate) - the `alloc` method provides this</span>
-<span class="doccomment">//! functionality.</span>
+</pre><pre class="rust"><code><span class="doccomment">//! It&#39;s useful to be able to model an integral type such as `u32` as being a series of bits,
+//! instead of a whole number. There are, of course, the usual bitwise operators for simple stuff,
+//! but the `Bitmap` trait provides more complex, specific operations that are useful for bitmaps.
+//!
+//! A common use of the `Bitmap` trait is for memory allocators to track an area of pages, where
+//! each bit represents a page. You might, for example, want to find a series of `n` zeros (which
+//! would mark an area of `n` pages that are free to allocate) - the `alloc` method provides this
+//! functionality.
 
-<span class="kw">use</span> <span class="ident">bit_field</span>::{<span class="ident">BitArray</span>, <span class="ident">BitField</span>};
-<span class="kw">use</span> <span class="ident">core</span>::{<span class="ident">fmt::Debug</span>, <span class="ident">mem</span>};
-<span class="kw">use</span> <span class="ident">num_traits::PrimInt</span>;
+</span><span class="kw">use </span>bit_field::{BitArray, BitField};
+<span class="kw">use </span>core::{fmt::Debug, mem};
+<span class="kw">use </span>num_traits::PrimInt;
 
-<span class="kw">pub</span> <span class="kw">trait</span> <span class="ident">Bitmap</span>: <span class="ident">Sized</span> {
-    <span class="doccomment">/// Find `n` consecutive unset bits, set them and return the index of the first bit.</span>
-    <span class="kw">fn</span> <span class="ident">alloc</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">n</span>: <span class="ident">usize</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span>;
+<span class="kw">pub trait </span>Bitmap: Sized {
+    <span class="doccomment">/// Find `n` consecutive unset bits, set them and return the index of the first bit.
+    </span><span class="kw">fn </span>alloc(<span class="kw-2">&amp;mut </span><span class="self">self</span>, n: usize) -&gt; <span class="prelude-ty">Option</span>&lt;usize&gt;;
 
-    <span class="doccomment">/// Free `n` previously allocated bits, starting at `index`.</span>
-    <span class="kw">fn</span> <span class="ident">free</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">index</span>: <span class="ident">usize</span>, <span class="ident">n</span>: <span class="ident">usize</span>);
+    <span class="doccomment">/// Free `n` previously allocated bits, starting at `index`.
+    </span><span class="kw">fn </span>free(<span class="kw-2">&amp;mut </span><span class="self">self</span>, index: usize, n: usize);
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> <span class="ident">Bitmap</span> <span class="kw">for</span> <span class="ident">T</span>
-<span class="kw">where</span>
-    <span class="ident">T</span>: <span class="ident">PrimInt</span> <span class="op">+</span> <span class="ident">BitField</span> <span class="op">+</span> <span class="ident">Debug</span>,
+<span class="kw">impl</span>&lt;T&gt; Bitmap <span class="kw">for </span>T
+<span class="kw">where
+    </span>T: PrimInt + BitField + Debug,
 {
-    <span class="kw">fn</span> <span class="ident">alloc</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">n</span>: <span class="ident">usize</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span> {
-        <span class="kw">let</span> <span class="ident">num_bits</span> <span class="op">=</span> <span class="number">8</span> <span class="op">*</span> <span class="ident">mem::size_of</span>::<span class="op">&lt;</span><span class="self">Self</span><span class="op">&gt;</span>();
-        <span class="kw">let</span> <span class="ident">mask</span> <span class="op">=</span> <span class="ident"><span class="self">Self</span>::from</span>((<span class="ident"><span class="self">Self</span>::one</span>() <span class="op">&lt;</span><span class="op">&lt;</span> <span class="ident">n</span>) <span class="op">-</span> <span class="ident"><span class="self">Self</span>::one</span>()).<span class="ident">unwrap</span>();
+    <span class="kw">fn </span>alloc(<span class="kw-2">&amp;mut </span><span class="self">self</span>, n: usize) -&gt; <span class="prelude-ty">Option</span>&lt;usize&gt; {
+        <span class="kw">let </span>num_bits = <span class="number">8 </span>* mem::size_of::&lt;<span class="self">Self</span>&gt;();
+        <span class="kw">let </span>mask = <span class="self">Self</span>::from((<span class="self">Self</span>::one() &lt;&lt; n) - <span class="self">Self</span>::one()).unwrap();
 
         <span class="comment">/*
          * For each bit before there are no longer `n` bits to the end, take the next `n` bits
          * and and them with a mask of `n` ones. If the result is zero, all the bits in
          * the slice must be 0 and so we&#39;ve found a run of `n` zeros.
-         */</span>
-        <span class="kw">for</span> <span class="ident">i</span> <span class="kw">in</span> <span class="number">0</span>..(<span class="ident">num_bits</span> <span class="op">-</span> <span class="ident">n</span>) {
-            <span class="kw">if</span> <span class="self">self</span>.<span class="ident">get_bits</span>(<span class="ident">i</span>..(<span class="ident">i</span> <span class="op">+</span> <span class="ident">n</span>)) <span class="op">&amp;</span> <span class="ident">mask</span> <span class="op">==</span> <span class="ident"><span class="self">Self</span>::zero</span>() {
-                <span class="self">self</span>.<span class="ident">set_bits</span>(<span class="ident">i</span>..(<span class="ident">i</span> <span class="op">+</span> <span class="ident">n</span>), <span class="ident">mask</span>);
-                <span class="kw">return</span> <span class="prelude-val">Some</span>(<span class="ident">i</span>);
+         */
+        </span><span class="kw">for </span>i <span class="kw">in </span><span class="number">0</span>..(num_bits - n) {
+            <span class="kw">if </span><span class="self">self</span>.get_bits(i..(i + n)) &amp; mask == <span class="self">Self</span>::zero() {
+                <span class="self">self</span>.set_bits(i..(i + n), mask);
+                <span class="kw">return </span><span class="prelude-val">Some</span>(i);
             }
         }
 
-        <span class="prelude-val">None</span>
-    }
+        <span class="prelude-val">None
+    </span>}
 
-    <span class="kw">fn</span> <span class="ident">free</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">index</span>: <span class="ident">usize</span>, <span class="ident">n</span>: <span class="ident">usize</span>) {
-        <span class="macro">assert_eq!</span>(<span class="self">self</span>.<span class="ident">get_bits</span>(<span class="ident">index</span>..(<span class="ident">index</span> <span class="op">+</span> <span class="ident">n</span>)), <span class="ident"><span class="self">Self</span>::from</span>((<span class="ident"><span class="self">Self</span>::one</span>() <span class="op">&lt;</span><span class="op">&lt;</span> <span class="ident">n</span>) <span class="op">-</span> <span class="ident"><span class="self">Self</span>::one</span>()).<span class="ident">unwrap</span>());
-        <span class="self">self</span>.<span class="ident">set_bits</span>(<span class="ident">index</span>..(<span class="ident">index</span> <span class="op">+</span> <span class="ident">n</span>), <span class="ident"><span class="self">Self</span>::zero</span>());
+    <span class="kw">fn </span>free(<span class="kw-2">&amp;mut </span><span class="self">self</span>, index: usize, n: usize) {
+        <span class="macro">assert_eq!</span>(<span class="self">self</span>.get_bits(index..(index + n)), <span class="self">Self</span>::from((<span class="self">Self</span>::one() &lt;&lt; n) - <span class="self">Self</span>::one()).unwrap());
+        <span class="self">self</span>.set_bits(index..(index + n), <span class="self">Self</span>::zero());
     }
 }
 
-<span class="doccomment">/// Like `Bitmap`, but for arrays. This is unfortunately needed due to conflicting implementations.</span>
-<span class="kw">pub</span> <span class="kw">trait</span> <span class="ident">BitmapSlice</span>: <span class="ident">Sized</span> {
-    <span class="doccomment">/// Find `n` consecutive unset bits, set them and return the index of the first bit.</span>
-    <span class="doccomment">/// This is useful for memory managers using `Bitmap` to track free frames / pages.</span>
-    <span class="kw">fn</span> <span class="ident">alloc</span>(<span class="self">self</span>, <span class="ident">n</span>: <span class="ident">usize</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span>;
+<span class="doccomment">/// Like `Bitmap`, but for arrays. This is unfortunately needed due to conflicting implementations.
+</span><span class="kw">pub trait </span>BitmapSlice: Sized {
+    <span class="doccomment">/// Find `n` consecutive unset bits, set them and return the index of the first bit.
+    /// This is useful for memory managers using `Bitmap` to track free frames / pages.
+    </span><span class="kw">fn </span>alloc(<span class="self">self</span>, n: usize) -&gt; <span class="prelude-ty">Option</span>&lt;usize&gt;;
 
-    <span class="doccomment">/// Free `n` previously allocated bits, starting at `index`.</span>
-    <span class="kw">fn</span> <span class="ident">free</span>(<span class="self">self</span>, <span class="ident">index</span>: <span class="ident">usize</span>, <span class="ident">n</span>: <span class="ident">usize</span>);
+    <span class="doccomment">/// Free `n` previously allocated bits, starting at `index`.
+    </span><span class="kw">fn </span>free(<span class="self">self</span>, index: usize, n: usize);
 }
 
-<span class="kw">impl</span> <span class="ident">BitmapSlice</span> <span class="kw">for</span> <span class="kw-2">&amp;mut</span> [<span class="ident">u8</span>] {
-    <span class="kw">fn</span> <span class="ident">alloc</span>(<span class="self">self</span>, <span class="ident">n</span>: <span class="ident">usize</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span> {
-        <span class="kw">let</span> <span class="ident">num_bits</span> <span class="op">=</span> <span class="number">8</span> <span class="op">*</span> <span class="self">self</span>.<span class="ident">len</span>();
-        <span class="kw">let</span> <span class="ident">mask</span> <span class="op">=</span> (<span class="number">1</span> <span class="op">&lt;</span><span class="op">&lt;</span> <span class="ident">n</span>) <span class="op">-</span> <span class="number">1</span>;
+<span class="kw">impl </span>BitmapSlice <span class="kw">for </span><span class="kw-2">&amp;mut </span>[u8] {
+    <span class="kw">fn </span>alloc(<span class="self">self</span>, n: usize) -&gt; <span class="prelude-ty">Option</span>&lt;usize&gt; {
+        <span class="kw">let </span>num_bits = <span class="number">8 </span>* <span class="self">self</span>.len();
+        <span class="kw">let </span>mask = (<span class="number">1 </span>&lt;&lt; n) - <span class="number">1</span>;
 
-        <span class="kw">for</span> <span class="ident">i</span> <span class="kw">in</span> <span class="number">0</span>..(<span class="ident">num_bits</span> <span class="op">-</span> <span class="ident">n</span>) {
-            <span class="kw">if</span> <span class="self">self</span>.<span class="ident">get_bits</span>(<span class="ident">i</span>..(<span class="ident">i</span> <span class="op">+</span> <span class="ident">n</span>)) <span class="op">&amp;</span> <span class="ident">mask</span> <span class="op">==</span> <span class="number">0</span> {
-                <span class="self">self</span>.<span class="ident">set_bits</span>(<span class="ident">i</span>..(<span class="ident">i</span> <span class="op">+</span> <span class="ident">n</span>), <span class="ident">mask</span>);
-                <span class="kw">return</span> <span class="prelude-val">Some</span>(<span class="ident">i</span>);
+        <span class="kw">for </span>i <span class="kw">in </span><span class="number">0</span>..(num_bits - n) {
+            <span class="kw">if </span><span class="self">self</span>.get_bits(i..(i + n)) &amp; mask == <span class="number">0 </span>{
+                <span class="self">self</span>.set_bits(i..(i + n), mask);
+                <span class="kw">return </span><span class="prelude-val">Some</span>(i);
             }
         }
 
-        <span class="prelude-val">None</span>
-    }
+        <span class="prelude-val">None
+    </span>}
 
-    <span class="kw">fn</span> <span class="ident">free</span>(<span class="self">self</span>, <span class="ident">index</span>: <span class="ident">usize</span>, <span class="ident">n</span>: <span class="ident">usize</span>) {
-        <span class="macro">assert_eq!</span>(<span class="self">self</span>.<span class="ident">get_bits</span>(<span class="ident">index</span>..(<span class="ident">index</span> <span class="op">+</span> <span class="ident">n</span>)), (<span class="number">1</span> <span class="op">&lt;</span><span class="op">&lt;</span> <span class="ident">n</span>) <span class="op">-</span> <span class="number">1</span>);
-        <span class="self">self</span>.<span class="ident">set_bits</span>(<span class="ident">index</span>..(<span class="ident">index</span> <span class="op">+</span> <span class="ident">n</span>), <span class="number">0</span>);
+    <span class="kw">fn </span>free(<span class="self">self</span>, index: usize, n: usize) {
+        <span class="macro">assert_eq!</span>(<span class="self">self</span>.get_bits(index..(index + n)), (<span class="number">1 </span>&lt;&lt; n) - <span class="number">1</span>);
+        <span class="self">self</span>.set_bits(index..(index + n), <span class="number">0</span>);
     }
 }
 
-<span class="attribute">#[<span class="ident">test</span>]</span>
-<span class="kw">fn</span> <span class="ident">test_bitmap</span>() {
-    <span class="macro">assert_eq!</span>((<span class="number">0b10001</span>: <span class="ident">u16</span>).<span class="ident">alloc</span>(<span class="number">3</span>), <span class="prelude-val">Some</span>(<span class="number">1</span>));
-    <span class="macro">assert_eq!</span>((<span class="number">0b11_0000_1_000_111</span>: <span class="ident">u16</span>).<span class="ident">alloc</span>(<span class="number">4</span>), <span class="prelude-val">Some</span>(<span class="number">7</span>));
-    <span class="macro">assert_eq!</span>((<span class="number">0b1111_1111</span>: <span class="ident">u8</span>).<span class="ident">alloc</span>(<span class="number">1</span>), <span class="prelude-val">None</span>);
-    <span class="macro">assert_eq!</span>((<span class="number">0b0110_1010</span>: <span class="ident">u8</span>).<span class="ident">alloc</span>(<span class="number">2</span>), <span class="prelude-val">None</span>);
+<span class="attribute">#[test]
+</span><span class="kw">fn </span>test_bitmap() {
+    <span class="macro">assert_eq!</span>((<span class="number">0b10001</span>: u16).alloc(<span class="number">3</span>), <span class="prelude-val">Some</span>(<span class="number">1</span>));
+    <span class="macro">assert_eq!</span>((<span class="number">0b11_0000_1_000_111</span>: u16).alloc(<span class="number">4</span>), <span class="prelude-val">Some</span>(<span class="number">7</span>));
+    <span class="macro">assert_eq!</span>((<span class="number">0b1111_1111</span>: u8).alloc(<span class="number">1</span>), <span class="prelude-val">None</span>);
+    <span class="macro">assert_eq!</span>((<span class="number">0b0110_1010</span>: u8).alloc(<span class="number">2</span>), <span class="prelude-val">None</span>);
 }
 
-<span class="attribute">#[<span class="ident">test</span>]</span>
-<span class="kw">fn</span> <span class="ident">test_bitmap_array_simple</span>() {
+<span class="attribute">#[test]
+</span><span class="kw">fn </span>test_bitmap_array_simple() {
     <span class="comment">/*
      * These might be a bit counterintuitive at first, because `BitArray` treats the array as a
      * little-endian set of bytes, so the LSB of the first byte is bit 0.
-     */</span>
-    <span class="macro">assert_eq!</span>([<span class="number">0xff</span>, <span class="number">0xff</span>, <span class="number">0xff</span>, <span class="number">0xff</span>, <span class="number">0xff</span>].<span class="ident">alloc</span>(<span class="number">3</span>), <span class="prelude-val">None</span>);
-    <span class="macro">assert_eq!</span>([<span class="number">0xfe</span>, <span class="number">0xff</span>, <span class="number">0xff</span>, <span class="number">0xff</span>].<span class="ident">alloc</span>(<span class="number">1</span>), <span class="prelude-val">Some</span>(<span class="number">0</span>));
-    <span class="macro">assert_eq!</span>([<span class="number">0b1111_0001</span>, <span class="number">0xff</span>, <span class="number">0xff</span>].<span class="ident">alloc</span>(<span class="number">3</span>), <span class="prelude-val">Some</span>(<span class="number">1</span>));
-    <span class="macro">assert_eq!</span>([<span class="number">0b1111_1001</span>, <span class="number">0xff</span>, <span class="number">0xff</span>].<span class="ident">alloc</span>(<span class="number">3</span>), <span class="prelude-val">None</span>);
+     */
+    </span><span class="macro">assert_eq!</span>([<span class="number">0xff</span>, <span class="number">0xff</span>, <span class="number">0xff</span>, <span class="number">0xff</span>, <span class="number">0xff</span>].alloc(<span class="number">3</span>), <span class="prelude-val">None</span>);
+    <span class="macro">assert_eq!</span>([<span class="number">0xfe</span>, <span class="number">0xff</span>, <span class="number">0xff</span>, <span class="number">0xff</span>].alloc(<span class="number">1</span>), <span class="prelude-val">Some</span>(<span class="number">0</span>));
+    <span class="macro">assert_eq!</span>([<span class="number">0b1111_0001</span>, <span class="number">0xff</span>, <span class="number">0xff</span>].alloc(<span class="number">3</span>), <span class="prelude-val">Some</span>(<span class="number">1</span>));
+    <span class="macro">assert_eq!</span>([<span class="number">0b1111_1001</span>, <span class="number">0xff</span>, <span class="number">0xff</span>].alloc(<span class="number">3</span>), <span class="prelude-val">None</span>);
 }
 
-<span class="attribute">#[<span class="ident">test</span>]</span>
-<span class="kw">fn</span> <span class="ident">test_bitmap_array_multiple</span>() {
-    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">bitmap</span> <span class="op">=</span> [<span class="number">0b1111_1100</span>, <span class="number">0xff</span>, <span class="number">0xff</span>];
+<span class="attribute">#[test]
+</span><span class="kw">fn </span>test_bitmap_array_multiple() {
+    <span class="kw">let </span><span class="kw-2">mut </span>bitmap = [<span class="number">0b1111_1100</span>, <span class="number">0xff</span>, <span class="number">0xff</span>];
 
-    <span class="comment">// Make the first allocation</span>
-    <span class="kw">let</span> <span class="ident">first</span> <span class="op">=</span> <span class="ident">bitmap</span>.<span class="ident">alloc</span>(<span class="number">1</span>);
-    <span class="macro">assert_eq!</span>(<span class="ident">first</span>, <span class="prelude-val">Some</span>(<span class="number">0</span>));
-    <span class="macro">assert_eq!</span>(<span class="ident">bitmap</span>, [<span class="number">0b1111_1101</span>, <span class="number">0xff</span>, <span class="number">0xff</span>]);
+    <span class="comment">// Make the first allocation
+    </span><span class="kw">let </span>first = bitmap.alloc(<span class="number">1</span>);
+    <span class="macro">assert_eq!</span>(first, <span class="prelude-val">Some</span>(<span class="number">0</span>));
+    <span class="macro">assert_eq!</span>(bitmap, [<span class="number">0b1111_1101</span>, <span class="number">0xff</span>, <span class="number">0xff</span>]);
 
-    <span class="comment">// Make a second allocation</span>
-    <span class="kw">let</span> <span class="ident">second</span> <span class="op">=</span> <span class="ident">bitmap</span>.<span class="ident">alloc</span>(<span class="number">1</span>);
-    <span class="macro">assert_eq!</span>(<span class="ident">second</span>, <span class="prelude-val">Some</span>(<span class="number">1</span>));
-    <span class="macro">assert_eq!</span>(<span class="ident">bitmap</span>, [<span class="number">0b1111_1111</span>, <span class="number">0xff</span>, <span class="number">0xff</span>]);
+    <span class="comment">// Make a second allocation
+    </span><span class="kw">let </span>second = bitmap.alloc(<span class="number">1</span>);
+    <span class="macro">assert_eq!</span>(second, <span class="prelude-val">Some</span>(<span class="number">1</span>));
+    <span class="macro">assert_eq!</span>(bitmap, [<span class="number">0b1111_1111</span>, <span class="number">0xff</span>, <span class="number">0xff</span>]);
 
-    <span class="comment">// Try to make a third allocation - it should fail</span>
-    <span class="macro">assert_eq!</span>(<span class="ident">bitmap</span>.<span class="ident">alloc</span>(<span class="number">1</span>), <span class="prelude-val">None</span>);
+    <span class="comment">// Try to make a third allocation - it should fail
+    </span><span class="macro">assert_eq!</span>(bitmap.alloc(<span class="number">1</span>), <span class="prelude-val">None</span>);
 }
 
-<span class="attribute">#[<span class="ident">test</span>]</span>
-<span class="kw">fn</span> <span class="ident">test_bitmap_free</span>() {
-    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">bitmap</span> <span class="op">=</span> [<span class="number">0b1000_1000</span>, <span class="number">0xff</span>, <span class="number">0xff</span>];
+<span class="attribute">#[test]
+</span><span class="kw">fn </span>test_bitmap_free() {
+    <span class="kw">let </span><span class="kw-2">mut </span>bitmap = [<span class="number">0b1000_1000</span>, <span class="number">0xff</span>, <span class="number">0xff</span>];
 
-    <span class="comment">// Make the first allocation</span>
-    <span class="kw">let</span> <span class="ident">first</span> <span class="op">=</span> <span class="ident">bitmap</span>.<span class="ident">alloc</span>(<span class="number">2</span>);
-    <span class="macro">assert_eq!</span>(<span class="ident">first</span>, <span class="prelude-val">Some</span>(<span class="number">0</span>));
-    <span class="macro">assert_eq!</span>(<span class="ident">bitmap</span>, [<span class="number">0b1000_1011</span>, <span class="number">0xff</span>, <span class="number">0xff</span>]);
+    <span class="comment">// Make the first allocation
+    </span><span class="kw">let </span>first = bitmap.alloc(<span class="number">2</span>);
+    <span class="macro">assert_eq!</span>(first, <span class="prelude-val">Some</span>(<span class="number">0</span>));
+    <span class="macro">assert_eq!</span>(bitmap, [<span class="number">0b1000_1011</span>, <span class="number">0xff</span>, <span class="number">0xff</span>]);
 
-    <span class="comment">// Make a second allocation</span>
-    <span class="kw">let</span> <span class="ident">second</span> <span class="op">=</span> <span class="ident">bitmap</span>.<span class="ident">alloc</span>(<span class="number">3</span>);
-    <span class="macro">assert_eq!</span>(<span class="ident">second</span>, <span class="prelude-val">Some</span>(<span class="number">4</span>));
-    <span class="macro">assert_eq!</span>(<span class="ident">bitmap</span>, [<span class="number">0b1111_1011</span>, <span class="number">0xff</span>, <span class="number">0xff</span>]);
+    <span class="comment">// Make a second allocation
+    </span><span class="kw">let </span>second = bitmap.alloc(<span class="number">3</span>);
+    <span class="macro">assert_eq!</span>(second, <span class="prelude-val">Some</span>(<span class="number">4</span>));
+    <span class="macro">assert_eq!</span>(bitmap, [<span class="number">0b1111_1011</span>, <span class="number">0xff</span>, <span class="number">0xff</span>]);
 
-    <span class="comment">// Make an allocation that doesn&#39;t fit</span>
-    <span class="macro">assert_eq!</span>(<span class="ident">bitmap</span>.<span class="ident">alloc</span>(<span class="number">3</span>), <span class="prelude-val">None</span>);
+    <span class="comment">// Make an allocation that doesn&#39;t fit
+    </span><span class="macro">assert_eq!</span>(bitmap.alloc(<span class="number">3</span>), <span class="prelude-val">None</span>);
 
-    <span class="comment">// Free the first allocation</span>
-    <span class="ident">bitmap</span>.<span class="ident">free</span>(<span class="ident">first</span>.<span class="ident">unwrap</span>(), <span class="number">2</span>);
-    <span class="macro">assert_eq!</span>(<span class="ident">bitmap</span>, [<span class="number">0b1111_1000</span>, <span class="number">0xff</span>, <span class="number">0xff</span>]);
+    <span class="comment">// Free the first allocation
+    </span>bitmap.free(first.unwrap(), <span class="number">2</span>);
+    <span class="macro">assert_eq!</span>(bitmap, [<span class="number">0b1111_1000</span>, <span class="number">0xff</span>, <span class="number">0xff</span>]);
 
-    <span class="comment">// Make another allocation that now fits</span>
-    <span class="kw">let</span> <span class="ident">third</span> <span class="op">=</span> <span class="ident">bitmap</span>.<span class="ident">alloc</span>(<span class="number">3</span>);
-    <span class="macro">assert_eq!</span>(<span class="ident">third</span>, <span class="prelude-val">Some</span>(<span class="number">0</span>));
-    <span class="macro">assert_eq!</span>(<span class="ident">bitmap</span>, [<span class="number">0b1111_1111</span>, <span class="number">0xff</span>, <span class="number">0xff</span>]);
+    <span class="comment">// Make another allocation that now fits
+    </span><span class="kw">let </span>third = bitmap.alloc(<span class="number">3</span>);
+    <span class="macro">assert_eq!</span>(third, <span class="prelude-val">Some</span>(<span class="number">0</span>));
+    <span class="macro">assert_eq!</span>(bitmap, [<span class="number">0b1111_1111</span>, <span class="number">0xff</span>, <span class="number">0xff</span>]);
 }
 </code></pre></div>
-</section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="poplar_util" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.65.0-nightly (34a6cae28 2022-08-09)" ></div></body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="poplar_util" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.65.0-nightly (b44197abb 2022-09-05)" ></div></body></html>

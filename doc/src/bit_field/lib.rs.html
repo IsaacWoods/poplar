@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/github.com-1ecc6299db9ec823/bit_field-0.10.1/src/lib.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>lib.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script><script defer src="../../main.js"></script><noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../bit_field/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div></a><h2 class="location"></h2></nav><nav class="sidebar"><a class="sidebar-logo" href="../../bit_field/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div></a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../bit_field/index.html"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></a><nav class="sub"><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><button type="button">?</button></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../wheel.svg"></a></div></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/github.com-1ecc6299db9ec823/bit_field-0.10.1/src/lib.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>lib.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" href="../../normalize.css"><link rel="stylesheet" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" href="../../ayu.css" disabled><link rel="stylesheet" href="../../dark.css" disabled><link rel="stylesheet" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script><script defer src="../../main.js"></script><noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../bit_field/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div></a><h2 class="location"></h2></nav><nav class="sidebar"><a class="sidebar-logo" href="../../bit_field/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div></a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../bit_field/index.html"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></a><nav class="sub"><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><button type="button">?</button></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../wheel.svg"></a></div></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
 <span id="2">2</span>
 <span id="3">3</span>
 <span id="4">4</span>
@@ -364,371 +364,371 @@
 <span id="364">364</span>
 <span id="365">365</span>
 <span id="366">366</span>
-</pre><pre class="rust"><code><span class="doccomment">//! Provides the abstraction of a bit field, which allows for bit-level update and retrieval</span>
-<span class="doccomment">//! operations.</span>
+</pre><pre class="rust"><code><span class="doccomment">//! Provides the abstraction of a bit field, which allows for bit-level update and retrieval
+//! operations.
 
-<span class="attribute">#![<span class="ident">no_std</span>]</span>
+</span><span class="attribute">#![no_std]
 
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">test</span>)]</span>
-<span class="kw">mod</span> <span class="ident">tests</span>;
+#[cfg(test)]
+</span><span class="kw">mod </span>tests;
 
-<span class="kw">use</span> <span class="ident">core::ops</span>::{<span class="ident">Bound</span>, <span class="ident">Range</span>, <span class="ident">RangeBounds</span>};
+<span class="kw">use </span>core::ops::{Bound, Range, RangeBounds};
 
-<span class="doccomment">/// A generic trait which provides methods for extracting and setting specific bits or ranges of</span>
-<span class="doccomment">/// bits.</span>
-<span class="kw">pub</span> <span class="kw">trait</span> <span class="ident">BitField</span> {
-    <span class="doccomment">/// The number of bits in this bit field.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// ```rust</span>
-    <span class="doccomment">/// use bit_field::BitField;</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// assert_eq!(u32::BIT_LENGTH, 32);</span>
-    <span class="doccomment">/// assert_eq!(u64::BIT_LENGTH, 64);</span>
-    <span class="doccomment">/// ```</span>
-    <span class="kw">const</span> <span class="ident">BIT_LENGTH</span>: <span class="ident">usize</span>;
+<span class="doccomment">/// A generic trait which provides methods for extracting and setting specific bits or ranges of
+/// bits.
+</span><span class="kw">pub trait </span>BitField {
+    <span class="doccomment">/// The number of bits in this bit field.
+    ///
+    /// ```rust
+    /// use bit_field::BitField;
+    ///
+    /// assert_eq!(u32::BIT_LENGTH, 32);
+    /// assert_eq!(u64::BIT_LENGTH, 64);
+    /// ```
+    </span><span class="kw">const </span>BIT_LENGTH: usize;
 
-    <span class="doccomment">/// Obtains the bit at the index `bit`; note that index 0 is the least significant bit, while</span>
-    <span class="doccomment">/// index `length() - 1` is the most significant bit.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// ```rust</span>
-    <span class="doccomment">/// use bit_field::BitField;</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// let value: u32 = 0b110101;</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// assert_eq!(value.get_bit(1), false);</span>
-    <span class="doccomment">/// assert_eq!(value.get_bit(2), true);</span>
-    <span class="doccomment">/// ```</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// ## Panics</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// This method will panic if the bit index is out of bounds of the bit field.</span>
-    <span class="kw">fn</span> <span class="ident">get_bit</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">bit</span>: <span class="ident">usize</span>) -&gt; <span class="ident">bool</span>;
+    <span class="doccomment">/// Obtains the bit at the index `bit`; note that index 0 is the least significant bit, while
+    /// index `length() - 1` is the most significant bit.
+    ///
+    /// ```rust
+    /// use bit_field::BitField;
+    ///
+    /// let value: u32 = 0b110101;
+    ///
+    /// assert_eq!(value.get_bit(1), false);
+    /// assert_eq!(value.get_bit(2), true);
+    /// ```
+    ///
+    /// ## Panics
+    ///
+    /// This method will panic if the bit index is out of bounds of the bit field.
+    </span><span class="kw">fn </span>get_bit(<span class="kw-2">&amp;</span><span class="self">self</span>, bit: usize) -&gt; bool;
 
-    <span class="doccomment">/// Obtains the range of bits specified by `range`; note that index 0 is the least significant</span>
-    <span class="doccomment">/// bit, while index `length() - 1` is the most significant bit.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// ```rust</span>
-    <span class="doccomment">/// use bit_field::BitField;</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// let value: u32 = 0b110101;</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// assert_eq!(value.get_bits(0..3), 0b101);</span>
-    <span class="doccomment">/// assert_eq!(value.get_bits(2..6), 0b1101);</span>
-    <span class="doccomment">/// assert_eq!(value.get_bits(..), 0b110101);</span>
-    <span class="doccomment">/// assert_eq!(value.get_bits(3..=3), value.get_bit(3) as u32);</span>
-    <span class="doccomment">/// ```</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// ## Panics</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// This method will panic if the start or end indexes of the range are out of bounds of the</span>
-    <span class="doccomment">/// bit field.</span>
-    <span class="kw">fn</span> <span class="ident">get_bits</span><span class="op">&lt;</span><span class="ident">T</span>: <span class="ident">RangeBounds</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">range</span>: <span class="ident">T</span>) -&gt; <span class="self">Self</span>;
+    <span class="doccomment">/// Obtains the range of bits specified by `range`; note that index 0 is the least significant
+    /// bit, while index `length() - 1` is the most significant bit.
+    ///
+    /// ```rust
+    /// use bit_field::BitField;
+    ///
+    /// let value: u32 = 0b110101;
+    ///
+    /// assert_eq!(value.get_bits(0..3), 0b101);
+    /// assert_eq!(value.get_bits(2..6), 0b1101);
+    /// assert_eq!(value.get_bits(..), 0b110101);
+    /// assert_eq!(value.get_bits(3..=3), value.get_bit(3) as u32);
+    /// ```
+    ///
+    /// ## Panics
+    ///
+    /// This method will panic if the start or end indexes of the range are out of bounds of the
+    /// bit field.
+    </span><span class="kw">fn </span>get_bits&lt;T: RangeBounds&lt;usize&gt;&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, range: T) -&gt; <span class="self">Self</span>;
 
-    <span class="doccomment">/// Sets the bit at the index `bit` to the value `value` (where true means a value of &#39;1&#39; and</span>
-    <span class="doccomment">/// false means a value of &#39;0&#39;); note that index 0 is the least significant bit, while index</span>
-    <span class="doccomment">/// `length() - 1` is the most significant bit.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// ```rust</span>
-    <span class="doccomment">/// use bit_field::BitField;</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// let mut value = 0u32;</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// value.set_bit(1, true);</span>
-    <span class="doccomment">/// assert_eq!(value, 2u32);</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// value.set_bit(3, true);</span>
-    <span class="doccomment">/// assert_eq!(value, 10u32);</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// value.set_bit(1, false);</span>
-    <span class="doccomment">/// assert_eq!(value, 8u32);</span>
-    <span class="doccomment">/// ```</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// ## Panics</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// This method will panic if the bit index is out of the bounds of the bit field.</span>
-    <span class="kw">fn</span> <span class="ident">set_bit</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">bit</span>: <span class="ident">usize</span>, <span class="ident">value</span>: <span class="ident">bool</span>) -&gt; <span class="kw-2">&amp;mut</span> <span class="self">Self</span>;
+    <span class="doccomment">/// Sets the bit at the index `bit` to the value `value` (where true means a value of &#39;1&#39; and
+    /// false means a value of &#39;0&#39;); note that index 0 is the least significant bit, while index
+    /// `length() - 1` is the most significant bit.
+    ///
+    /// ```rust
+    /// use bit_field::BitField;
+    ///
+    /// let mut value = 0u32;
+    ///
+    /// value.set_bit(1, true);
+    /// assert_eq!(value, 2u32);
+    ///
+    /// value.set_bit(3, true);
+    /// assert_eq!(value, 10u32);
+    ///
+    /// value.set_bit(1, false);
+    /// assert_eq!(value, 8u32);
+    /// ```
+    ///
+    /// ## Panics
+    ///
+    /// This method will panic if the bit index is out of the bounds of the bit field.
+    </span><span class="kw">fn </span>set_bit(<span class="kw-2">&amp;mut </span><span class="self">self</span>, bit: usize, value: bool) -&gt; <span class="kw-2">&amp;mut </span><span class="self">Self</span>;
 
-    <span class="doccomment">/// Sets the range of bits defined by the range `range` to the lower bits of `value`; to be</span>
-    <span class="doccomment">/// specific, if the range is N bits long, the N lower bits of `value` will be used; if any of</span>
-    <span class="doccomment">/// the other bits in `value` are set to 1, this function will panic.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// ```rust</span>
-    <span class="doccomment">/// use bit_field::BitField;</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// let mut value = 0u32;</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// value.set_bits(0..2, 0b11);</span>
-    <span class="doccomment">/// assert_eq!(value, 0b11);</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// value.set_bits(2..=3, 0b11);</span>
-    <span class="doccomment">/// assert_eq!(value, 0b1111);</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// value.set_bits(..4, 0b1010);</span>
-    <span class="doccomment">/// assert_eq!(value, 0b1010);</span>
-    <span class="doccomment">/// ```</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// ## Panics</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// This method will panic if the range is out of bounds of the bit field, or if there are `1`s</span>
-    <span class="doccomment">/// not in the lower N bits of `value`.</span>
-    <span class="kw">fn</span> <span class="ident">set_bits</span><span class="op">&lt;</span><span class="ident">T</span>: <span class="ident">RangeBounds</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span><span class="op">&gt;</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">range</span>: <span class="ident">T</span>, <span class="ident">value</span>: <span class="self">Self</span>) -&gt; <span class="kw-2">&amp;mut</span> <span class="self">Self</span>;
+    <span class="doccomment">/// Sets the range of bits defined by the range `range` to the lower bits of `value`; to be
+    /// specific, if the range is N bits long, the N lower bits of `value` will be used; if any of
+    /// the other bits in `value` are set to 1, this function will panic.
+    ///
+    /// ```rust
+    /// use bit_field::BitField;
+    ///
+    /// let mut value = 0u32;
+    ///
+    /// value.set_bits(0..2, 0b11);
+    /// assert_eq!(value, 0b11);
+    ///
+    /// value.set_bits(2..=3, 0b11);
+    /// assert_eq!(value, 0b1111);
+    ///
+    /// value.set_bits(..4, 0b1010);
+    /// assert_eq!(value, 0b1010);
+    /// ```
+    ///
+    /// ## Panics
+    ///
+    /// This method will panic if the range is out of bounds of the bit field, or if there are `1`s
+    /// not in the lower N bits of `value`.
+    </span><span class="kw">fn </span>set_bits&lt;T: RangeBounds&lt;usize&gt;&gt;(<span class="kw-2">&amp;mut </span><span class="self">self</span>, range: T, value: <span class="self">Self</span>) -&gt; <span class="kw-2">&amp;mut </span><span class="self">Self</span>;
 }
 
-<span class="kw">pub</span> <span class="kw">trait</span> <span class="ident">BitArray</span><span class="op">&lt;</span><span class="ident">T</span>: <span class="ident">BitField</span><span class="op">&gt;</span> {
-    <span class="doccomment">/// Returns the length, eg number of bits, in this bit array.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// ```rust</span>
-    <span class="doccomment">/// use bit_field::BitArray;</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// assert_eq!([0u8, 4u8, 8u8].bit_length(), 24);</span>
-    <span class="doccomment">/// assert_eq!([0u32, 5u32].bit_length(), 64);</span>
-    <span class="doccomment">/// ```</span>
-    <span class="kw">fn</span> <span class="ident">bit_length</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">usize</span>;
+<span class="kw">pub trait </span>BitArray&lt;T: BitField&gt; {
+    <span class="doccomment">/// Returns the length, eg number of bits, in this bit array.
+    ///
+    /// ```rust
+    /// use bit_field::BitArray;
+    ///
+    /// assert_eq!([0u8, 4u8, 8u8].bit_length(), 24);
+    /// assert_eq!([0u32, 5u32].bit_length(), 64);
+    /// ```
+    </span><span class="kw">fn </span>bit_length(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; usize;
 
-    <span class="doccomment">/// Obtains the bit at the index `bit`; note that index 0 is the least significant bit, while</span>
-    <span class="doccomment">/// index `length() - 1` is the most significant bit.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// ```rust</span>
-    <span class="doccomment">/// use bit_field::BitArray;</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// let value: [u32; 1] = [0b110101];</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// assert_eq!(value.get_bit(1), false);</span>
-    <span class="doccomment">/// assert_eq!(value.get_bit(2), true);</span>
-    <span class="doccomment">/// ```</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// ## Panics</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// This method will panic if the bit index is out of bounds of the bit array.</span>
-    <span class="kw">fn</span> <span class="ident">get_bit</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">bit</span>: <span class="ident">usize</span>) -&gt; <span class="ident">bool</span>;
+    <span class="doccomment">/// Obtains the bit at the index `bit`; note that index 0 is the least significant bit, while
+    /// index `length() - 1` is the most significant bit.
+    ///
+    /// ```rust
+    /// use bit_field::BitArray;
+    ///
+    /// let value: [u32; 1] = [0b110101];
+    ///
+    /// assert_eq!(value.get_bit(1), false);
+    /// assert_eq!(value.get_bit(2), true);
+    /// ```
+    ///
+    /// ## Panics
+    ///
+    /// This method will panic if the bit index is out of bounds of the bit array.
+    </span><span class="kw">fn </span>get_bit(<span class="kw-2">&amp;</span><span class="self">self</span>, bit: usize) -&gt; bool;
 
-    <span class="doccomment">/// Obtains the range of bits specified by `range`; note that index 0 is the least significant</span>
-    <span class="doccomment">/// bit, while index `length() - 1` is the most significant bit.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// ```rust</span>
-    <span class="doccomment">/// use bit_field::BitArray;</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// let value: [u32; 2] = [0b110101, 0b11];</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// assert_eq!(value.get_bits(0..3), 0b101);</span>
-    <span class="doccomment">/// assert_eq!(value.get_bits(..6), 0b110101);</span>
-    <span class="doccomment">/// assert_eq!(value.get_bits(31..33), 0b10);</span>
-    <span class="doccomment">/// assert_eq!(value.get_bits(5..=32), 0b1_0000_0000_0000_0000_0000_0000_001);</span>
-    <span class="doccomment">/// assert_eq!(value.get_bits(34..), 0);</span>
-    <span class="doccomment">/// ```</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// ## Panics</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// This method will panic if the start or end indexes of the range are out of bounds of the</span>
-    <span class="doccomment">/// bit array, or if the range can&#39;t be contained by the bit field T.</span>
-    <span class="kw">fn</span> <span class="ident">get_bits</span><span class="op">&lt;</span><span class="ident">U</span>: <span class="ident">RangeBounds</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">range</span>: <span class="ident">U</span>) -&gt; <span class="ident">T</span>;
+    <span class="doccomment">/// Obtains the range of bits specified by `range`; note that index 0 is the least significant
+    /// bit, while index `length() - 1` is the most significant bit.
+    ///
+    /// ```rust
+    /// use bit_field::BitArray;
+    ///
+    /// let value: [u32; 2] = [0b110101, 0b11];
+    ///
+    /// assert_eq!(value.get_bits(0..3), 0b101);
+    /// assert_eq!(value.get_bits(..6), 0b110101);
+    /// assert_eq!(value.get_bits(31..33), 0b10);
+    /// assert_eq!(value.get_bits(5..=32), 0b1_0000_0000_0000_0000_0000_0000_001);
+    /// assert_eq!(value.get_bits(34..), 0);
+    /// ```
+    ///
+    /// ## Panics
+    ///
+    /// This method will panic if the start or end indexes of the range are out of bounds of the
+    /// bit array, or if the range can&#39;t be contained by the bit field T.
+    </span><span class="kw">fn </span>get_bits&lt;U: RangeBounds&lt;usize&gt;&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, range: U) -&gt; T;
 
-    <span class="doccomment">/// Sets the bit at the index `bit` to the value `value` (where true means a value of &#39;1&#39; and</span>
-    <span class="doccomment">/// false means a value of &#39;0&#39;); note that index 0 is the least significant bit, while index</span>
-    <span class="doccomment">/// `length() - 1` is the most significant bit.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// ```rust</span>
-    <span class="doccomment">/// use bit_field::BitArray;</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// let mut value = [0u32];</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// value.set_bit(1, true);</span>
-    <span class="doccomment">/// assert_eq!(value, [2u32]);</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// value.set_bit(3, true);</span>
-    <span class="doccomment">/// assert_eq!(value, [10u32]);</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// value.set_bit(1, false);</span>
-    <span class="doccomment">/// assert_eq!(value, [8u32]);</span>
-    <span class="doccomment">/// ```</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// ## Panics</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// This method will panic if the bit index is out of the bounds of the bit array.</span>
-    <span class="kw">fn</span> <span class="ident">set_bit</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">bit</span>: <span class="ident">usize</span>, <span class="ident">value</span>: <span class="ident">bool</span>);
+    <span class="doccomment">/// Sets the bit at the index `bit` to the value `value` (where true means a value of &#39;1&#39; and
+    /// false means a value of &#39;0&#39;); note that index 0 is the least significant bit, while index
+    /// `length() - 1` is the most significant bit.
+    ///
+    /// ```rust
+    /// use bit_field::BitArray;
+    ///
+    /// let mut value = [0u32];
+    ///
+    /// value.set_bit(1, true);
+    /// assert_eq!(value, [2u32]);
+    ///
+    /// value.set_bit(3, true);
+    /// assert_eq!(value, [10u32]);
+    ///
+    /// value.set_bit(1, false);
+    /// assert_eq!(value, [8u32]);
+    /// ```
+    ///
+    /// ## Panics
+    ///
+    /// This method will panic if the bit index is out of the bounds of the bit array.
+    </span><span class="kw">fn </span>set_bit(<span class="kw-2">&amp;mut </span><span class="self">self</span>, bit: usize, value: bool);
 
-    <span class="doccomment">/// Sets the range of bits defined by the range `range` to the lower bits of `value`; to be</span>
-    <span class="doccomment">/// specific, if the range is N bits long, the N lower bits of `value` will be used; if any of</span>
-    <span class="doccomment">/// the other bits in `value` are set to 1, this function will panic.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// ```rust</span>
-    <span class="doccomment">/// use bit_field::BitArray;</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// let mut value = [0u32, 0u32];</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// value.set_bits(0..2, 0b11);</span>
-    <span class="doccomment">/// assert_eq!(value, [0b11, 0u32]);</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// value.set_bits(31..35, 0b1010);</span>
-    <span class="doccomment">/// assert_eq!(value, [0x0003, 0b101]);</span>
-    <span class="doccomment">/// ```</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// ## Panics</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// This method will panic if the range is out of bounds of the bit array,</span>
-    <span class="doccomment">/// if the range can&#39;t be contained by the bit field T, or if there are `1`s</span>
-    <span class="doccomment">/// not in the lower N bits of `value`.</span>
-    <span class="kw">fn</span> <span class="ident">set_bits</span><span class="op">&lt;</span><span class="ident">U</span>: <span class="ident">RangeBounds</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span><span class="op">&gt;</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">range</span>: <span class="ident">U</span>, <span class="ident">value</span>: <span class="ident">T</span>);
+    <span class="doccomment">/// Sets the range of bits defined by the range `range` to the lower bits of `value`; to be
+    /// specific, if the range is N bits long, the N lower bits of `value` will be used; if any of
+    /// the other bits in `value` are set to 1, this function will panic.
+    ///
+    /// ```rust
+    /// use bit_field::BitArray;
+    ///
+    /// let mut value = [0u32, 0u32];
+    ///
+    /// value.set_bits(0..2, 0b11);
+    /// assert_eq!(value, [0b11, 0u32]);
+    ///
+    /// value.set_bits(31..35, 0b1010);
+    /// assert_eq!(value, [0x0003, 0b101]);
+    /// ```
+    ///
+    /// ## Panics
+    ///
+    /// This method will panic if the range is out of bounds of the bit array,
+    /// if the range can&#39;t be contained by the bit field T, or if there are `1`s
+    /// not in the lower N bits of `value`.
+    </span><span class="kw">fn </span>set_bits&lt;U: RangeBounds&lt;usize&gt;&gt;(<span class="kw-2">&amp;mut </span><span class="self">self</span>, range: U, value: T);
 }
 
-<span class="doccomment">/// An internal macro used for implementing BitField on the standard integral types.</span>
-<span class="macro">macro_rules!</span> <span class="ident">bitfield_numeric_impl</span> {
-    ($(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">t</span>:<span class="ident">ty</span>)<span class="kw-2">*</span>) =&gt; ($(
-        <span class="kw">impl</span> <span class="ident">BitField</span> <span class="kw">for</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">t</span> {
-            <span class="kw">const</span> <span class="ident">BIT_LENGTH</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="ident">::core::mem::size_of</span>::<span class="op">&lt;</span><span class="self">Self</span><span class="op">&gt;</span>() <span class="kw">as</span> <span class="ident">usize</span> <span class="op">*</span> <span class="number">8</span>;
+<span class="doccomment">/// An internal macro used for implementing BitField on the standard integral types.
+</span><span class="macro">macro_rules! </span>bitfield_numeric_impl {
+    ($(<span class="macro-nonterminal">$t</span>:ty)<span class="kw-2">*</span>) =&gt; ($(
+        <span class="kw">impl </span>BitField <span class="kw">for </span><span class="macro-nonterminal">$t </span>{
+            <span class="kw">const </span>BIT_LENGTH: usize = ::core::mem::size_of::&lt;<span class="self">Self</span>&gt;() <span class="kw">as </span>usize * <span class="number">8</span>;
 
-            <span class="attribute">#[<span class="ident">inline</span>]</span>
-            <span class="kw">fn</span> <span class="ident">get_bit</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">bit</span>: <span class="ident">usize</span>) -&gt; <span class="ident">bool</span> {
-                <span class="macro">assert!</span>(<span class="ident">bit</span> <span class="op">&lt;</span> <span class="ident"><span class="self">Self</span>::BIT_LENGTH</span>);
+            <span class="attribute">#[inline]
+            </span><span class="kw">fn </span>get_bit(<span class="kw-2">&amp;</span><span class="self">self</span>, bit: usize) -&gt; bool {
+                <span class="macro">assert!</span>(bit &lt; <span class="self">Self</span>::BIT_LENGTH);
 
-                (<span class="kw-2">*</span><span class="self">self</span> <span class="op">&amp;</span> (<span class="number">1</span> <span class="op">&lt;</span><span class="op">&lt;</span> <span class="ident">bit</span>)) <span class="op">!</span><span class="op">=</span> <span class="number">0</span>
+                (<span class="kw-2">*</span><span class="self">self </span>&amp; (<span class="number">1 </span>&lt;&lt; bit)) != <span class="number">0
+            </span>}
+
+            <span class="attribute">#[inline]
+            </span><span class="kw">fn </span>get_bits&lt;T: RangeBounds&lt;usize&gt;&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, range: T) -&gt; <span class="self">Self </span>{
+                <span class="kw">let </span>range = to_regular_range(<span class="kw-2">&amp;</span>range, <span class="self">Self</span>::BIT_LENGTH);
+
+                <span class="macro">assert!</span>(range.start &lt; <span class="self">Self</span>::BIT_LENGTH);
+                <span class="macro">assert!</span>(range.end &lt;= <span class="self">Self</span>::BIT_LENGTH);
+                <span class="macro">assert!</span>(range.start &lt; range.end);
+
+                <span class="comment">// shift away high bits
+                </span><span class="kw">let </span>bits = <span class="kw-2">*</span><span class="self">self </span>&lt;&lt; (<span class="self">Self</span>::BIT_LENGTH - range.end) &gt;&gt; (<span class="self">Self</span>::BIT_LENGTH - range.end);
+
+                <span class="comment">// shift away low bits
+                </span>bits &gt;&gt; range.start
             }
 
-            <span class="attribute">#[<span class="ident">inline</span>]</span>
-            <span class="kw">fn</span> <span class="ident">get_bits</span><span class="op">&lt;</span><span class="ident">T</span>: <span class="ident">RangeBounds</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">range</span>: <span class="ident">T</span>) -&gt; <span class="self">Self</span> {
-                <span class="kw">let</span> <span class="ident">range</span> <span class="op">=</span> <span class="ident">to_regular_range</span>(<span class="kw-2">&amp;</span><span class="ident">range</span>, <span class="ident"><span class="self">Self</span>::BIT_LENGTH</span>);
+            <span class="attribute">#[inline]
+            </span><span class="kw">fn </span>set_bit(<span class="kw-2">&amp;mut </span><span class="self">self</span>, bit: usize, value: bool) -&gt; <span class="kw-2">&amp;mut </span><span class="self">Self </span>{
+                <span class="macro">assert!</span>(bit &lt; <span class="self">Self</span>::BIT_LENGTH);
 
-                <span class="macro">assert!</span>(<span class="ident">range</span>.<span class="ident">start</span> <span class="op">&lt;</span> <span class="ident"><span class="self">Self</span>::BIT_LENGTH</span>);
-                <span class="macro">assert!</span>(<span class="ident">range</span>.<span class="ident">end</span> <span class="op">&lt;</span><span class="op">=</span> <span class="ident"><span class="self">Self</span>::BIT_LENGTH</span>);
-                <span class="macro">assert!</span>(<span class="ident">range</span>.<span class="ident">start</span> <span class="op">&lt;</span> <span class="ident">range</span>.<span class="ident">end</span>);
-
-                <span class="comment">// shift away high bits</span>
-                <span class="kw">let</span> <span class="ident">bits</span> <span class="op">=</span> <span class="kw-2">*</span><span class="self">self</span> <span class="op">&lt;</span><span class="op">&lt;</span> (<span class="ident"><span class="self">Self</span>::BIT_LENGTH</span> <span class="op">-</span> <span class="ident">range</span>.<span class="ident">end</span>) <span class="op">&gt;</span><span class="op">&gt;</span> (<span class="ident"><span class="self">Self</span>::BIT_LENGTH</span> <span class="op">-</span> <span class="ident">range</span>.<span class="ident">end</span>);
-
-                <span class="comment">// shift away low bits</span>
-                <span class="ident">bits</span> <span class="op">&gt;</span><span class="op">&gt;</span> <span class="ident">range</span>.<span class="ident">start</span>
-            }
-
-            <span class="attribute">#[<span class="ident">inline</span>]</span>
-            <span class="kw">fn</span> <span class="ident">set_bit</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">bit</span>: <span class="ident">usize</span>, <span class="ident">value</span>: <span class="ident">bool</span>) -&gt; <span class="kw-2">&amp;mut</span> <span class="self">Self</span> {
-                <span class="macro">assert!</span>(<span class="ident">bit</span> <span class="op">&lt;</span> <span class="ident"><span class="self">Self</span>::BIT_LENGTH</span>);
-
-                <span class="kw">if</span> <span class="ident">value</span> {
-                    <span class="kw-2">*</span><span class="self">self</span> <span class="op">|</span><span class="op">=</span> <span class="number">1</span> <span class="op">&lt;</span><span class="op">&lt;</span> <span class="ident">bit</span>;
-                } <span class="kw">else</span> {
-                    <span class="kw-2">*</span><span class="self">self</span> <span class="op">&amp;=</span> <span class="op">!</span>(<span class="number">1</span> <span class="op">&lt;</span><span class="op">&lt;</span> <span class="ident">bit</span>);
+                <span class="kw">if </span>value {
+                    <span class="kw-2">*</span><span class="self">self </span>|= <span class="number">1 </span>&lt;&lt; bit;
+                } <span class="kw">else </span>{
+                    <span class="kw-2">*</span><span class="self">self </span>&amp;= !(<span class="number">1 </span>&lt;&lt; bit);
                 }
 
-                <span class="self">self</span>
-            }
+                <span class="self">self
+            </span>}
 
-            <span class="attribute">#[<span class="ident">inline</span>]</span>
-            <span class="kw">fn</span> <span class="ident">set_bits</span><span class="op">&lt;</span><span class="ident">T</span>: <span class="ident">RangeBounds</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span><span class="op">&gt;</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">range</span>: <span class="ident">T</span>, <span class="ident">value</span>: <span class="self">Self</span>) -&gt; <span class="kw-2">&amp;mut</span> <span class="self">Self</span> {
-                <span class="kw">let</span> <span class="ident">range</span> <span class="op">=</span> <span class="ident">to_regular_range</span>(<span class="kw-2">&amp;</span><span class="ident">range</span>, <span class="ident"><span class="self">Self</span>::BIT_LENGTH</span>);
+            <span class="attribute">#[inline]
+            </span><span class="kw">fn </span>set_bits&lt;T: RangeBounds&lt;usize&gt;&gt;(<span class="kw-2">&amp;mut </span><span class="self">self</span>, range: T, value: <span class="self">Self</span>) -&gt; <span class="kw-2">&amp;mut </span><span class="self">Self </span>{
+                <span class="kw">let </span>range = to_regular_range(<span class="kw-2">&amp;</span>range, <span class="self">Self</span>::BIT_LENGTH);
 
-                <span class="macro">assert!</span>(<span class="ident">range</span>.<span class="ident">start</span> <span class="op">&lt;</span> <span class="ident"><span class="self">Self</span>::BIT_LENGTH</span>);
-                <span class="macro">assert!</span>(<span class="ident">range</span>.<span class="ident">end</span> <span class="op">&lt;</span><span class="op">=</span> <span class="ident"><span class="self">Self</span>::BIT_LENGTH</span>);
-                <span class="macro">assert!</span>(<span class="ident">range</span>.<span class="ident">start</span> <span class="op">&lt;</span> <span class="ident">range</span>.<span class="ident">end</span>);
-                <span class="macro">assert!</span>(<span class="ident">value</span> <span class="op">&lt;</span><span class="op">&lt;</span> (<span class="ident"><span class="self">Self</span>::BIT_LENGTH</span> <span class="op">-</span> (<span class="ident">range</span>.<span class="ident">end</span> <span class="op">-</span> <span class="ident">range</span>.<span class="ident">start</span>)) <span class="op">&gt;</span><span class="op">&gt;</span>
-                        (<span class="ident"><span class="self">Self</span>::BIT_LENGTH</span> <span class="op">-</span> (<span class="ident">range</span>.<span class="ident">end</span> <span class="op">-</span> <span class="ident">range</span>.<span class="ident">start</span>)) <span class="op">==</span> <span class="ident">value</span>,
+                <span class="macro">assert!</span>(range.start &lt; <span class="self">Self</span>::BIT_LENGTH);
+                <span class="macro">assert!</span>(range.end &lt;= <span class="self">Self</span>::BIT_LENGTH);
+                <span class="macro">assert!</span>(range.start &lt; range.end);
+                <span class="macro">assert!</span>(value &lt;&lt; (<span class="self">Self</span>::BIT_LENGTH - (range.end - range.start)) &gt;&gt;
+                        (<span class="self">Self</span>::BIT_LENGTH - (range.end - range.start)) == value,
                         <span class="string">&quot;value does not fit into bit range&quot;</span>);
 
-                <span class="kw">let</span> <span class="ident">bitmask</span>: <span class="self">Self</span> <span class="op">=</span> <span class="op">!</span>(<span class="op">!</span><span class="number">0</span> <span class="op">&lt;</span><span class="op">&lt;</span> (<span class="ident"><span class="self">Self</span>::BIT_LENGTH</span> <span class="op">-</span> <span class="ident">range</span>.<span class="ident">end</span>) <span class="op">&gt;</span><span class="op">&gt;</span>
-                                    (<span class="ident"><span class="self">Self</span>::BIT_LENGTH</span> <span class="op">-</span> <span class="ident">range</span>.<span class="ident">end</span>) <span class="op">&gt;</span><span class="op">&gt;</span>
-                                    <span class="ident">range</span>.<span class="ident">start</span> <span class="op">&lt;</span><span class="op">&lt;</span> <span class="ident">range</span>.<span class="ident">start</span>);
+                <span class="kw">let </span>bitmask: <span class="self">Self </span>= !(!<span class="number">0 </span>&lt;&lt; (<span class="self">Self</span>::BIT_LENGTH - range.end) &gt;&gt;
+                                    (<span class="self">Self</span>::BIT_LENGTH - range.end) &gt;&gt;
+                                    range.start &lt;&lt; range.start);
 
-                <span class="comment">// set bits</span>
-                <span class="kw-2">*</span><span class="self">self</span> <span class="op">=</span> (<span class="kw-2">*</span><span class="self">self</span> <span class="op">&amp;</span> <span class="ident">bitmask</span>) <span class="op">|</span> (<span class="ident">value</span> <span class="op">&lt;</span><span class="op">&lt;</span> <span class="ident">range</span>.<span class="ident">start</span>);
+                <span class="comment">// set bits
+                </span><span class="kw-2">*</span><span class="self">self </span>= (<span class="kw-2">*</span><span class="self">self </span>&amp; bitmask) | (value &lt;&lt; range.start);
 
-                <span class="self">self</span>
-            }
+                <span class="self">self
+            </span>}
         }
     )<span class="kw-2">*</span>)
 }
 
-<span class="macro">bitfield_numeric_impl!</span> { <span class="ident">u8</span> <span class="ident">u16</span> <span class="ident">u32</span> <span class="ident">u64</span> <span class="ident">u128</span> <span class="ident">usize</span> <span class="ident">i8</span> <span class="ident">i16</span> <span class="ident">i32</span> <span class="ident">i64</span> <span class="ident">i128</span> <span class="ident">isize</span> }
+<span class="macro">bitfield_numeric_impl! </span>{ u8 u16 u32 u64 u128 usize i8 i16 i32 i64 i128 isize }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">T</span>: <span class="ident">BitField</span><span class="op">&gt;</span> <span class="ident">BitArray</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> <span class="kw">for</span> [<span class="ident">T</span>] {
-    <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">fn</span> <span class="ident">bit_length</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">usize</span> {
-        <span class="self">self</span>.<span class="ident">len</span>() <span class="op">*</span> <span class="ident">T::BIT_LENGTH</span>
+<span class="kw">impl</span>&lt;T: BitField&gt; BitArray&lt;T&gt; <span class="kw">for </span>[T] {
+    <span class="attribute">#[inline]
+    </span><span class="kw">fn </span>bit_length(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; usize {
+        <span class="self">self</span>.len() * T::BIT_LENGTH
     }
 
-    <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">fn</span> <span class="ident">get_bit</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">bit</span>: <span class="ident">usize</span>) -&gt; <span class="ident">bool</span> {
-        <span class="kw">let</span> <span class="ident">slice_index</span> <span class="op">=</span> <span class="ident">bit</span> <span class="op">/</span> <span class="ident">T::BIT_LENGTH</span>;
-        <span class="kw">let</span> <span class="ident">bit_index</span> <span class="op">=</span> <span class="ident">bit</span> <span class="op">%</span> <span class="ident">T::BIT_LENGTH</span>;
-        <span class="self">self</span>[<span class="ident">slice_index</span>].<span class="ident">get_bit</span>(<span class="ident">bit_index</span>)
+    <span class="attribute">#[inline]
+    </span><span class="kw">fn </span>get_bit(<span class="kw-2">&amp;</span><span class="self">self</span>, bit: usize) -&gt; bool {
+        <span class="kw">let </span>slice_index = bit / T::BIT_LENGTH;
+        <span class="kw">let </span>bit_index = bit % T::BIT_LENGTH;
+        <span class="self">self</span>[slice_index].get_bit(bit_index)
     }
 
-    <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">fn</span> <span class="ident">get_bits</span><span class="op">&lt;</span><span class="ident">U</span>: <span class="ident">RangeBounds</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">range</span>: <span class="ident">U</span>) -&gt; <span class="ident">T</span> {
-        <span class="kw">let</span> <span class="ident">range</span> <span class="op">=</span> <span class="ident">to_regular_range</span>(<span class="kw-2">&amp;</span><span class="ident">range</span>, <span class="self">self</span>.<span class="ident">bit_length</span>());
+    <span class="attribute">#[inline]
+    </span><span class="kw">fn </span>get_bits&lt;U: RangeBounds&lt;usize&gt;&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, range: U) -&gt; T {
+        <span class="kw">let </span>range = to_regular_range(<span class="kw-2">&amp;</span>range, <span class="self">self</span>.bit_length());
 
-        <span class="macro">assert!</span>(<span class="ident">range</span>.<span class="ident">len</span>() <span class="op">&lt;</span><span class="op">=</span> <span class="ident">T::BIT_LENGTH</span>);
+        <span class="macro">assert!</span>(range.len() &lt;= T::BIT_LENGTH);
 
-        <span class="kw">let</span> <span class="ident">slice_start</span> <span class="op">=</span> <span class="ident">range</span>.<span class="ident">start</span> <span class="op">/</span> <span class="ident">T::BIT_LENGTH</span>;
-        <span class="kw">let</span> <span class="ident">slice_end</span> <span class="op">=</span> <span class="ident">range</span>.<span class="ident">end</span> <span class="op">/</span> <span class="ident">T::BIT_LENGTH</span>;
-        <span class="kw">let</span> <span class="ident">bit_start</span> <span class="op">=</span> <span class="ident">range</span>.<span class="ident">start</span> <span class="op">%</span> <span class="ident">T::BIT_LENGTH</span>;
-        <span class="kw">let</span> <span class="ident">bit_end</span> <span class="op">=</span> <span class="ident">range</span>.<span class="ident">end</span> <span class="op">%</span> <span class="ident">T::BIT_LENGTH</span>;
-        <span class="kw">let</span> <span class="ident">len</span> <span class="op">=</span> <span class="ident">range</span>.<span class="ident">len</span>();
+        <span class="kw">let </span>slice_start = range.start / T::BIT_LENGTH;
+        <span class="kw">let </span>slice_end = range.end / T::BIT_LENGTH;
+        <span class="kw">let </span>bit_start = range.start % T::BIT_LENGTH;
+        <span class="kw">let </span>bit_end = range.end % T::BIT_LENGTH;
+        <span class="kw">let </span>len = range.len();
 
-        <span class="macro">assert!</span>(<span class="ident">slice_end</span> <span class="op">-</span> <span class="ident">slice_start</span> <span class="op">&lt;</span><span class="op">=</span> <span class="number">1</span>);
+        <span class="macro">assert!</span>(slice_end - slice_start &lt;= <span class="number">1</span>);
 
-        <span class="kw">if</span> <span class="ident">slice_start</span> <span class="op">==</span> <span class="ident">slice_end</span> {
-            <span class="self">self</span>[<span class="ident">slice_start</span>].<span class="ident">get_bits</span>(<span class="ident">bit_start</span>..<span class="ident">bit_end</span>)
-        } <span class="kw">else</span> <span class="kw">if</span> <span class="ident">bit_end</span> <span class="op">==</span> <span class="number">0</span> {
-            <span class="self">self</span>[<span class="ident">slice_start</span>].<span class="ident">get_bits</span>(<span class="ident">bit_start</span>..<span class="ident">T::BIT_LENGTH</span>)
-        } <span class="kw">else</span> {
-            <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">ret</span> <span class="op">=</span> <span class="self">self</span>[<span class="ident">slice_start</span>].<span class="ident">get_bits</span>(<span class="ident">bit_start</span>..<span class="ident">T::BIT_LENGTH</span>);
-            <span class="ident">ret</span>.<span class="ident">set_bits</span>(
-                (<span class="ident">T::BIT_LENGTH</span> <span class="op">-</span> <span class="ident">bit_start</span>)..<span class="ident">len</span>,
-                <span class="self">self</span>[<span class="ident">slice_end</span>].<span class="ident">get_bits</span>(<span class="number">0</span>..<span class="ident">bit_end</span>),
+        <span class="kw">if </span>slice_start == slice_end {
+            <span class="self">self</span>[slice_start].get_bits(bit_start..bit_end)
+        } <span class="kw">else if </span>bit_end == <span class="number">0 </span>{
+            <span class="self">self</span>[slice_start].get_bits(bit_start..T::BIT_LENGTH)
+        } <span class="kw">else </span>{
+            <span class="kw">let </span><span class="kw-2">mut </span>ret = <span class="self">self</span>[slice_start].get_bits(bit_start..T::BIT_LENGTH);
+            ret.set_bits(
+                (T::BIT_LENGTH - bit_start)..len,
+                <span class="self">self</span>[slice_end].get_bits(<span class="number">0</span>..bit_end),
             );
-            <span class="ident">ret</span>
+            ret
         }
     }
 
-    <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">fn</span> <span class="ident">set_bit</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">bit</span>: <span class="ident">usize</span>, <span class="ident">value</span>: <span class="ident">bool</span>) {
-        <span class="kw">let</span> <span class="ident">slice_index</span> <span class="op">=</span> <span class="ident">bit</span> <span class="op">/</span> <span class="ident">T::BIT_LENGTH</span>;
-        <span class="kw">let</span> <span class="ident">bit_index</span> <span class="op">=</span> <span class="ident">bit</span> <span class="op">%</span> <span class="ident">T::BIT_LENGTH</span>;
-        <span class="self">self</span>[<span class="ident">slice_index</span>].<span class="ident">set_bit</span>(<span class="ident">bit_index</span>, <span class="ident">value</span>);
+    <span class="attribute">#[inline]
+    </span><span class="kw">fn </span>set_bit(<span class="kw-2">&amp;mut </span><span class="self">self</span>, bit: usize, value: bool) {
+        <span class="kw">let </span>slice_index = bit / T::BIT_LENGTH;
+        <span class="kw">let </span>bit_index = bit % T::BIT_LENGTH;
+        <span class="self">self</span>[slice_index].set_bit(bit_index, value);
     }
 
-    <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">fn</span> <span class="ident">set_bits</span><span class="op">&lt;</span><span class="ident">U</span>: <span class="ident">RangeBounds</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span><span class="op">&gt;</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">range</span>: <span class="ident">U</span>, <span class="ident">value</span>: <span class="ident">T</span>) {
-        <span class="kw">let</span> <span class="ident">range</span> <span class="op">=</span> <span class="ident">to_regular_range</span>(<span class="kw-2">&amp;</span><span class="ident">range</span>, <span class="self">self</span>.<span class="ident">bit_length</span>());
+    <span class="attribute">#[inline]
+    </span><span class="kw">fn </span>set_bits&lt;U: RangeBounds&lt;usize&gt;&gt;(<span class="kw-2">&amp;mut </span><span class="self">self</span>, range: U, value: T) {
+        <span class="kw">let </span>range = to_regular_range(<span class="kw-2">&amp;</span>range, <span class="self">self</span>.bit_length());
 
-        <span class="macro">assert!</span>(<span class="ident">range</span>.<span class="ident">len</span>() <span class="op">&lt;</span><span class="op">=</span> <span class="ident">T::BIT_LENGTH</span>);
+        <span class="macro">assert!</span>(range.len() &lt;= T::BIT_LENGTH);
 
-        <span class="kw">let</span> <span class="ident">slice_start</span> <span class="op">=</span> <span class="ident">range</span>.<span class="ident">start</span> <span class="op">/</span> <span class="ident">T::BIT_LENGTH</span>;
-        <span class="kw">let</span> <span class="ident">slice_end</span> <span class="op">=</span> <span class="ident">range</span>.<span class="ident">end</span> <span class="op">/</span> <span class="ident">T::BIT_LENGTH</span>;
-        <span class="kw">let</span> <span class="ident">bit_start</span> <span class="op">=</span> <span class="ident">range</span>.<span class="ident">start</span> <span class="op">%</span> <span class="ident">T::BIT_LENGTH</span>;
-        <span class="kw">let</span> <span class="ident">bit_end</span> <span class="op">=</span> <span class="ident">range</span>.<span class="ident">end</span> <span class="op">%</span> <span class="ident">T::BIT_LENGTH</span>;
+        <span class="kw">let </span>slice_start = range.start / T::BIT_LENGTH;
+        <span class="kw">let </span>slice_end = range.end / T::BIT_LENGTH;
+        <span class="kw">let </span>bit_start = range.start % T::BIT_LENGTH;
+        <span class="kw">let </span>bit_end = range.end % T::BIT_LENGTH;
 
-        <span class="macro">assert!</span>(<span class="ident">slice_end</span> <span class="op">-</span> <span class="ident">slice_start</span> <span class="op">&lt;</span><span class="op">=</span> <span class="number">1</span>);
+        <span class="macro">assert!</span>(slice_end - slice_start &lt;= <span class="number">1</span>);
 
-        <span class="kw">if</span> <span class="ident">slice_start</span> <span class="op">==</span> <span class="ident">slice_end</span> {
-            <span class="self">self</span>[<span class="ident">slice_start</span>].<span class="ident">set_bits</span>(<span class="ident">bit_start</span>..<span class="ident">bit_end</span>, <span class="ident">value</span>);
-        } <span class="kw">else</span> <span class="kw">if</span> <span class="ident">bit_end</span> <span class="op">==</span> <span class="number">0</span> {
-            <span class="self">self</span>[<span class="ident">slice_start</span>].<span class="ident">set_bits</span>(<span class="ident">bit_start</span>..<span class="ident">T::BIT_LENGTH</span>, <span class="ident">value</span>);
-        } <span class="kw">else</span> {
-            <span class="self">self</span>[<span class="ident">slice_start</span>].<span class="ident">set_bits</span>(
-                <span class="ident">bit_start</span>..<span class="ident">T::BIT_LENGTH</span>,
-                <span class="ident">value</span>.<span class="ident">get_bits</span>(<span class="number">0</span>..<span class="ident">T::BIT_LENGTH</span> <span class="op">-</span> <span class="ident">bit_start</span>),
+        <span class="kw">if </span>slice_start == slice_end {
+            <span class="self">self</span>[slice_start].set_bits(bit_start..bit_end, value);
+        } <span class="kw">else if </span>bit_end == <span class="number">0 </span>{
+            <span class="self">self</span>[slice_start].set_bits(bit_start..T::BIT_LENGTH, value);
+        } <span class="kw">else </span>{
+            <span class="self">self</span>[slice_start].set_bits(
+                bit_start..T::BIT_LENGTH,
+                value.get_bits(<span class="number">0</span>..T::BIT_LENGTH - bit_start),
             );
-            <span class="self">self</span>[<span class="ident">slice_end</span>].<span class="ident">set_bits</span>(
-                <span class="number">0</span>..<span class="ident">bit_end</span>,
-                <span class="ident">value</span>.<span class="ident">get_bits</span>(<span class="ident">T::BIT_LENGTH</span> <span class="op">-</span> <span class="ident">bit_start</span>..<span class="ident">T::BIT_LENGTH</span>),
+            <span class="self">self</span>[slice_end].set_bits(
+                <span class="number">0</span>..bit_end,
+                value.get_bits(T::BIT_LENGTH - bit_start..T::BIT_LENGTH),
             );
         }
     }
 }
 
-<span class="kw">fn</span> <span class="ident">to_regular_range</span><span class="op">&lt;</span><span class="ident">T</span>: <span class="ident">RangeBounds</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span><span class="op">&gt;</span>(<span class="ident">generic_rage</span>: <span class="kw-2">&amp;</span><span class="ident">T</span>, <span class="ident">bit_length</span>: <span class="ident">usize</span>) -&gt; <span class="ident">Range</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span> {
-    <span class="kw">let</span> <span class="ident">start</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">generic_rage</span>.<span class="ident">start_bound</span>() {
-        <span class="ident">Bound::Excluded</span>(<span class="kw-2">&amp;</span><span class="ident">value</span>) =&gt; <span class="ident">value</span> <span class="op">+</span> <span class="number">1</span>,
-        <span class="ident">Bound::Included</span>(<span class="kw-2">&amp;</span><span class="ident">value</span>) =&gt; <span class="ident">value</span>,
-        <span class="ident">Bound::Unbounded</span> =&gt; <span class="number">0</span>,
+<span class="kw">fn </span>to_regular_range&lt;T: RangeBounds&lt;usize&gt;&gt;(generic_rage: <span class="kw-2">&amp;</span>T, bit_length: usize) -&gt; Range&lt;usize&gt; {
+    <span class="kw">let </span>start = <span class="kw">match </span>generic_rage.start_bound() {
+        Bound::Excluded(<span class="kw-2">&amp;</span>value) =&gt; value + <span class="number">1</span>,
+        Bound::Included(<span class="kw-2">&amp;</span>value) =&gt; value,
+        Bound::Unbounded =&gt; <span class="number">0</span>,
     };
-    <span class="kw">let</span> <span class="ident">end</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">generic_rage</span>.<span class="ident">end_bound</span>() {
-        <span class="ident">Bound::Excluded</span>(<span class="kw-2">&amp;</span><span class="ident">value</span>) =&gt; <span class="ident">value</span>,
-        <span class="ident">Bound::Included</span>(<span class="kw-2">&amp;</span><span class="ident">value</span>) =&gt; <span class="ident">value</span> <span class="op">+</span> <span class="number">1</span>,
-        <span class="ident">Bound::Unbounded</span> =&gt; <span class="ident">bit_length</span>,
+    <span class="kw">let </span>end = <span class="kw">match </span>generic_rage.end_bound() {
+        Bound::Excluded(<span class="kw-2">&amp;</span>value) =&gt; value,
+        Bound::Included(<span class="kw-2">&amp;</span>value) =&gt; value + <span class="number">1</span>,
+        Bound::Unbounded =&gt; bit_length,
     };
 
-    <span class="ident">start</span>..<span class="ident">end</span>
+    start..end
 }
 </code></pre></div>
-</section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="bit_field" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.65.0-nightly (34a6cae28 2022-08-09)" ></div></body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="bit_field" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.65.0-nightly (b44197abb 2022-09-05)" ></div></body></html>

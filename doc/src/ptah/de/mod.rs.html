@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/work/poplar/poplar/lib/ptah/src/de/mod.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>mod.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../storage.js"></script><script defer src="../../../source-script.js"></script><script defer src="../../../source-files.js"></script><script defer src="../../../main.js"></script><noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../../ptah/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div></a><h2 class="location"></h2></nav><nav class="sidebar"><a class="sidebar-logo" href="../../../ptah/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div></a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../../ptah/index.html"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></a><nav class="sub"><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><button type="button">?</button></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../wheel.svg"></a></div></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/work/poplar/poplar/lib/ptah/src/de/mod.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>mod.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" href="../../../normalize.css"><link rel="stylesheet" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" href="../../../ayu.css" disabled><link rel="stylesheet" href="../../../dark.css" disabled><link rel="stylesheet" href="../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../storage.js"></script><script defer src="../../../source-script.js"></script><script defer src="../../../source-files.js"></script><script defer src="../../../main.js"></script><noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../../ptah/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div></a><h2 class="location"></h2></nav><nav class="sidebar"><a class="sidebar-logo" href="../../../ptah/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div></a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../../ptah/index.html"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></a><nav class="sub"><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><button type="button">?</button></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../wheel.svg"></a></div></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
 <span id="2">2</span>
 <span id="3">3</span>
 <span id="4">4</span>
@@ -165,172 +165,172 @@
 <span id="165">165</span>
 <span id="166">166</span>
 <span id="167">167</span>
-</pre><pre class="rust"><code><span class="kw">mod</span> <span class="ident">impls</span>;
+</pre><pre class="rust"><code><span class="kw">mod </span>impls;
 
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::Handle</span>;
-<span class="kw">use</span> <span class="ident">core</span>::{<span class="ident">convert::TryInto</span>, <span class="ident">str</span>};
+<span class="kw">use </span><span class="kw">crate</span>::Handle;
+<span class="kw">use </span>core::{convert::TryInto, str};
 
-<span class="doccomment">/// Errors that can occur during deserialization.</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Copy</span>, <span class="ident">PartialEq</span>, <span class="ident">Eq</span>, <span class="ident">Debug</span>)]</span>
-<span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">Error</span> {
-    <span class="ident">EndOfStream</span>,
-    <span class="ident">TrailingBytes</span>,
-    <span class="ident">InvalidHandleSlot</span>(<span class="ident"><span class="kw">crate</span>::HandleSlot</span>),
+<span class="doccomment">/// Errors that can occur during deserialization.
+</span><span class="attribute">#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+</span><span class="kw">pub enum </span>Error {
+    EndOfStream,
+    TrailingBytes,
+    InvalidHandleSlot(<span class="kw">crate</span>::HandleSlot),
 
-    <span class="ident">InvalidChar</span>,
-    <span class="ident">InvalidUtf8</span>,
-    <span class="ident">InvalidBoolMarker</span>(<span class="ident">u8</span>),
-    <span class="ident">InvalidOptionMarker</span>(<span class="ident">u8</span>),
-    <span class="ident">InvalidEnumTag</span>(<span class="ident">u32</span>),
+    InvalidChar,
+    InvalidUtf8,
+    InvalidBoolMarker(u8),
+    InvalidOptionMarker(u8),
+    InvalidEnumTag(u32),
 }
 
-<span class="kw">pub</span> <span class="kw">type</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">core::result::Result</span><span class="op">&lt;</span><span class="ident">T</span>, <span class="ident">Error</span><span class="op">&gt;</span>;
+<span class="kw">pub type </span><span class="prelude-ty">Result</span>&lt;T&gt; = core::result::Result&lt;T, Error&gt;;
 
-<span class="kw">pub</span> <span class="kw">trait</span> <span class="ident">Deserialize</span><span class="op">&lt;</span><span class="lifetime">&#39;de</span><span class="op">&gt;</span>: <span class="ident">Sized</span> {
-    <span class="kw">fn</span> <span class="ident">deserialize</span>(<span class="ident">deserializer</span>: <span class="kw-2">&amp;mut</span> <span class="ident">Deserializer</span><span class="op">&lt;</span><span class="lifetime">&#39;de</span><span class="op">&gt;</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="self">Self</span><span class="op">&gt;</span>;
+<span class="kw">pub trait </span>Deserialize&lt;<span class="lifetime">&#39;de</span>&gt;: Sized {
+    <span class="kw">fn </span>deserialize(deserializer: <span class="kw-2">&amp;mut </span>Deserializer&lt;<span class="lifetime">&#39;de</span>&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>&gt;;
 }
 
-<span class="doccomment">/// A type implements `DeserializeOwned` if it does not borrow any data out of the buffer. In other words, it can</span>
-<span class="doccomment">/// be deserialized for any buffer lifetime.</span>
-<span class="kw">pub</span> <span class="kw">trait</span> <span class="ident">DeserializeOwned</span>: <span class="kw">for</span><span class="op">&lt;</span><span class="lifetime">&#39;de</span><span class="op">&gt;</span> <span class="ident">Deserialize</span><span class="op">&lt;</span><span class="lifetime">&#39;de</span><span class="op">&gt;</span> {}
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> <span class="ident">DeserializeOwned</span> <span class="kw">for</span> <span class="ident">T</span> <span class="kw">where</span> <span class="ident">T</span>: <span class="kw">for</span><span class="op">&lt;</span><span class="lifetime">&#39;de</span><span class="op">&gt;</span> <span class="ident">Deserialize</span><span class="op">&lt;</span><span class="lifetime">&#39;de</span><span class="op">&gt;</span> {}
+<span class="doccomment">/// A type implements `DeserializeOwned` if it does not borrow any data out of the buffer. In other words, it can
+/// be deserialized for any buffer lifetime.
+</span><span class="kw">pub trait </span>DeserializeOwned: <span class="kw">for</span>&lt;<span class="lifetime">&#39;de</span>&gt; Deserialize&lt;<span class="lifetime">&#39;de</span>&gt; {}
+<span class="kw">impl</span>&lt;T&gt; DeserializeOwned <span class="kw">for </span>T <span class="kw">where </span>T: <span class="kw">for</span>&lt;<span class="lifetime">&#39;de</span>&gt; Deserialize&lt;<span class="lifetime">&#39;de</span>&gt; {}
 
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">Deserializer</span><span class="op">&lt;</span><span class="lifetime">&#39;de</span><span class="op">&gt;</span> {
-    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="ident">bytes</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;de</span> [<span class="ident">u8</span>],
-    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="ident">handles</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;de</span> [<span class="ident">Handle</span>],
+<span class="kw">pub struct </span>Deserializer&lt;<span class="lifetime">&#39;de</span>&gt; {
+    <span class="kw">pub</span>(<span class="kw">crate</span>) bytes: <span class="kw-2">&amp;</span><span class="lifetime">&#39;de </span>[u8],
+    <span class="kw">pub</span>(<span class="kw">crate</span>) handles: <span class="kw-2">&amp;</span><span class="lifetime">&#39;de </span>[Handle],
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;de</span><span class="op">&gt;</span> <span class="ident">Deserializer</span><span class="op">&lt;</span><span class="lifetime">&#39;de</span><span class="op">&gt;</span> {
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">from_wire</span>(<span class="ident">bytes</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;de</span> [<span class="ident">u8</span>], <span class="ident">handles</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;de</span> [<span class="ident">Handle</span>]) -&gt; <span class="self">Self</span> {
-        <span class="ident">Deserializer</span> { <span class="ident">bytes</span>, <span class="ident">handles</span> }
+<span class="kw">impl</span>&lt;<span class="lifetime">&#39;de</span>&gt; Deserializer&lt;<span class="lifetime">&#39;de</span>&gt; {
+    <span class="kw">pub fn </span>from_wire(bytes: <span class="kw-2">&amp;</span><span class="lifetime">&#39;de </span>[u8], handles: <span class="kw-2">&amp;</span><span class="lifetime">&#39;de </span>[Handle]) -&gt; <span class="self">Self </span>{
+        Deserializer { bytes, handles }
     }
 
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">deserialize_bool</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">bool</span><span class="op">&gt;</span> {
-        <span class="kw">match</span> <span class="self">self</span>.<span class="ident">take_byte</span>()<span class="question-mark">?</span> {
-            <span class="ident"><span class="kw">crate</span>::MARKER_TRUE</span> =&gt; <span class="prelude-val">Ok</span>(<span class="bool-val">true</span>),
-            <span class="ident"><span class="kw">crate</span>::MARKER_FALSE</span> =&gt; <span class="prelude-val">Ok</span>(<span class="bool-val">false</span>),
-            <span class="ident">tag</span> =&gt; <span class="prelude-val">Err</span>(<span class="ident">Error::InvalidBoolMarker</span>(<span class="ident">tag</span>)),
+    <span class="kw">pub fn </span>deserialize_bool(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;bool&gt; {
+        <span class="kw">match </span><span class="self">self</span>.take_byte()<span class="question-mark">? </span>{
+            <span class="kw">crate</span>::MARKER_TRUE =&gt; <span class="prelude-val">Ok</span>(<span class="bool-val">true</span>),
+            <span class="kw">crate</span>::MARKER_FALSE =&gt; <span class="prelude-val">Ok</span>(<span class="bool-val">false</span>),
+            tag =&gt; <span class="prelude-val">Err</span>(Error::InvalidBoolMarker(tag)),
         }
     }
 
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">deserialize_u8</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span> {
-        <span class="self">self</span>.<span class="ident">take_byte</span>()
+    <span class="kw">pub fn </span>deserialize_u8(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;u8&gt; {
+        <span class="self">self</span>.take_byte()
     }
 
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">deserialize_u16</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">u16</span><span class="op">&gt;</span> {
-        <span class="prelude-val">Ok</span>(<span class="ident">u16::from_le_bytes</span>(<span class="self">self</span>.<span class="ident">take</span>::<span class="op">&lt;</span><span class="number">2</span><span class="op">&gt;</span>()<span class="question-mark">?</span>))
+    <span class="kw">pub fn </span>deserialize_u16(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;u16&gt; {
+        <span class="prelude-val">Ok</span>(u16::from_le_bytes(<span class="self">self</span>.take::&lt;<span class="number">2</span>&gt;()<span class="question-mark">?</span>))
     }
 
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">deserialize_u32</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">u32</span><span class="op">&gt;</span> {
-        <span class="prelude-val">Ok</span>(<span class="ident">u32::from_le_bytes</span>(<span class="self">self</span>.<span class="ident">take</span>::<span class="op">&lt;</span><span class="number">4</span><span class="op">&gt;</span>()<span class="question-mark">?</span>))
+    <span class="kw">pub fn </span>deserialize_u32(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;u32&gt; {
+        <span class="prelude-val">Ok</span>(u32::from_le_bytes(<span class="self">self</span>.take::&lt;<span class="number">4</span>&gt;()<span class="question-mark">?</span>))
     }
 
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">deserialize_u64</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">u64</span><span class="op">&gt;</span> {
-        <span class="prelude-val">Ok</span>(<span class="ident">u64::from_le_bytes</span>(<span class="self">self</span>.<span class="ident">take</span>::<span class="op">&lt;</span><span class="number">8</span><span class="op">&gt;</span>()<span class="question-mark">?</span>))
+    <span class="kw">pub fn </span>deserialize_u64(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;u64&gt; {
+        <span class="prelude-val">Ok</span>(u64::from_le_bytes(<span class="self">self</span>.take::&lt;<span class="number">8</span>&gt;()<span class="question-mark">?</span>))
     }
 
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">deserialize_u128</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">u128</span><span class="op">&gt;</span> {
-        <span class="prelude-val">Ok</span>(<span class="ident">u128::from_le_bytes</span>(<span class="self">self</span>.<span class="ident">take</span>::<span class="op">&lt;</span><span class="number">16</span><span class="op">&gt;</span>()<span class="question-mark">?</span>))
+    <span class="kw">pub fn </span>deserialize_u128(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;u128&gt; {
+        <span class="prelude-val">Ok</span>(u128::from_le_bytes(<span class="self">self</span>.take::&lt;<span class="number">16</span>&gt;()<span class="question-mark">?</span>))
     }
 
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">deserialize_i8</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">i8</span><span class="op">&gt;</span> {
-        <span class="prelude-val">Ok</span>(<span class="self">self</span>.<span class="ident">take_byte</span>()<span class="question-mark">?</span> <span class="kw">as</span> <span class="ident">i8</span>)
+    <span class="kw">pub fn </span>deserialize_i8(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;i8&gt; {
+        <span class="prelude-val">Ok</span>(<span class="self">self</span>.take_byte()<span class="question-mark">? </span><span class="kw">as </span>i8)
     }
 
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">deserialize_i16</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">i16</span><span class="op">&gt;</span> {
-        <span class="prelude-val">Ok</span>(<span class="ident">i16::from_le_bytes</span>(<span class="self">self</span>.<span class="ident">take</span>::<span class="op">&lt;</span><span class="number">2</span><span class="op">&gt;</span>()<span class="question-mark">?</span>))
+    <span class="kw">pub fn </span>deserialize_i16(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;i16&gt; {
+        <span class="prelude-val">Ok</span>(i16::from_le_bytes(<span class="self">self</span>.take::&lt;<span class="number">2</span>&gt;()<span class="question-mark">?</span>))
     }
 
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">deserialize_i32</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">i32</span><span class="op">&gt;</span> {
-        <span class="prelude-val">Ok</span>(<span class="ident">i32::from_le_bytes</span>(<span class="self">self</span>.<span class="ident">take</span>::<span class="op">&lt;</span><span class="number">4</span><span class="op">&gt;</span>()<span class="question-mark">?</span>))
+    <span class="kw">pub fn </span>deserialize_i32(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;i32&gt; {
+        <span class="prelude-val">Ok</span>(i32::from_le_bytes(<span class="self">self</span>.take::&lt;<span class="number">4</span>&gt;()<span class="question-mark">?</span>))
     }
 
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">deserialize_i64</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">i64</span><span class="op">&gt;</span> {
-        <span class="prelude-val">Ok</span>(<span class="ident">i64::from_le_bytes</span>(<span class="self">self</span>.<span class="ident">take</span>::<span class="op">&lt;</span><span class="number">8</span><span class="op">&gt;</span>()<span class="question-mark">?</span>))
+    <span class="kw">pub fn </span>deserialize_i64(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;i64&gt; {
+        <span class="prelude-val">Ok</span>(i64::from_le_bytes(<span class="self">self</span>.take::&lt;<span class="number">8</span>&gt;()<span class="question-mark">?</span>))
     }
 
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">deserialize_i128</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">i128</span><span class="op">&gt;</span> {
-        <span class="prelude-val">Ok</span>(<span class="ident">i128::from_le_bytes</span>(<span class="self">self</span>.<span class="ident">take</span>::<span class="op">&lt;</span><span class="number">16</span><span class="op">&gt;</span>()<span class="question-mark">?</span>))
+    <span class="kw">pub fn </span>deserialize_i128(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;i128&gt; {
+        <span class="prelude-val">Ok</span>(i128::from_le_bytes(<span class="self">self</span>.take::&lt;<span class="number">16</span>&gt;()<span class="question-mark">?</span>))
     }
 
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">deserialize_f32</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">f32</span><span class="op">&gt;</span> {
-        <span class="prelude-val">Ok</span>(<span class="ident">f32::from_le_bytes</span>(<span class="self">self</span>.<span class="ident">take</span>::<span class="op">&lt;</span><span class="number">4</span><span class="op">&gt;</span>()<span class="question-mark">?</span>))
+    <span class="kw">pub fn </span>deserialize_f32(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;f32&gt; {
+        <span class="prelude-val">Ok</span>(f32::from_le_bytes(<span class="self">self</span>.take::&lt;<span class="number">4</span>&gt;()<span class="question-mark">?</span>))
     }
 
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">deserialize_f64</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">f64</span><span class="op">&gt;</span> {
-        <span class="prelude-val">Ok</span>(<span class="ident">f64::from_le_bytes</span>(<span class="self">self</span>.<span class="ident">take</span>::<span class="op">&lt;</span><span class="number">8</span><span class="op">&gt;</span>()<span class="question-mark">?</span>))
+    <span class="kw">pub fn </span>deserialize_f64(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;f64&gt; {
+        <span class="prelude-val">Ok</span>(f64::from_le_bytes(<span class="self">self</span>.take::&lt;<span class="number">8</span>&gt;()<span class="question-mark">?</span>))
     }
 
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">deserialize_char</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">char</span><span class="op">&gt;</span> {
-        <span class="ident">char::from_u32</span>(<span class="ident">u32::from_le_bytes</span>(<span class="self">self</span>.<span class="ident">take</span>::<span class="op">&lt;</span><span class="number">4</span><span class="op">&gt;</span>()<span class="question-mark">?</span>)).<span class="ident">ok_or</span>(<span class="ident">Error::InvalidChar</span>)
+    <span class="kw">pub fn </span>deserialize_char(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;char&gt; {
+        char::from_u32(u32::from_le_bytes(<span class="self">self</span>.take::&lt;<span class="number">4</span>&gt;()<span class="question-mark">?</span>)).ok_or(Error::InvalidChar)
     }
 
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">deserialize_str</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="lifetime">&#39;de</span> <span class="ident">str</span><span class="op">&gt;</span> {
-        <span class="kw">let</span> <span class="ident">length</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">deserialize_u32</span>()<span class="question-mark">?</span>;
-        <span class="kw">let</span> <span class="ident">bytes</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">take_n</span>(<span class="ident">length</span> <span class="kw">as</span> <span class="ident">usize</span>)<span class="question-mark">?</span>;
-        <span class="ident">str::from_utf8</span>(<span class="ident">bytes</span>).<span class="ident">map_err</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> <span class="ident">Error::InvalidUtf8</span>)
+    <span class="kw">pub fn </span>deserialize_str(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;de </span>str&gt; {
+        <span class="kw">let </span>length = <span class="self">self</span>.deserialize_u32()<span class="question-mark">?</span>;
+        <span class="kw">let </span>bytes = <span class="self">self</span>.take_n(length <span class="kw">as </span>usize)<span class="question-mark">?</span>;
+        str::from_utf8(bytes).map_err(|<span class="kw">_</span>| Error::InvalidUtf8)
     }
 
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">deserialize_option</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span><span class="op">&gt;</span>
-    <span class="kw">where</span>
-        <span class="ident">T</span>: <span class="question-mark">?</span><span class="ident">Sized</span> <span class="op">+</span> <span class="ident">Deserialize</span><span class="op">&lt;</span><span class="lifetime">&#39;de</span><span class="op">&gt;</span>,
+    <span class="kw">pub fn </span>deserialize_option&lt;T&gt;(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;T&gt;&gt;
+    <span class="kw">where
+        </span>T: <span class="question-mark">?</span>Sized + Deserialize&lt;<span class="lifetime">&#39;de</span>&gt;,
     {
-        <span class="kw">let</span> <span class="ident">tag</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">take_byte</span>()<span class="question-mark">?</span>;
-        <span class="kw">match</span> <span class="ident">tag</span> {
-            <span class="ident"><span class="kw">crate</span>::MARKER_NONE</span> =&gt; <span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>),
-            <span class="ident"><span class="kw">crate</span>::MARKER_SOME</span> =&gt; <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(<span class="ident">T::deserialize</span>(<span class="self">self</span>)<span class="question-mark">?</span>)),
-            <span class="kw">_</span> =&gt; <span class="prelude-val">Err</span>(<span class="ident">Error::InvalidOptionMarker</span>(<span class="ident">tag</span>)),
+        <span class="kw">let </span>tag = <span class="self">self</span>.take_byte()<span class="question-mark">?</span>;
+        <span class="kw">match </span>tag {
+            <span class="kw">crate</span>::MARKER_NONE =&gt; <span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>),
+            <span class="kw">crate</span>::MARKER_SOME =&gt; <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(T::deserialize(<span class="self">self</span>)<span class="question-mark">?</span>)),
+            <span class="kw">_ </span>=&gt; <span class="prelude-val">Err</span>(Error::InvalidOptionMarker(tag)),
         }
     }
 
-    <span class="doccomment">/// Start deserializing an `enum`. Any data contained should be deserialized next.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">deserialize_enum_tag</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">u32</span><span class="op">&gt;</span> {
-        <span class="self">self</span>.<span class="ident">deserialize_u32</span>()
+    <span class="doccomment">/// Start deserializing an `enum`. Any data contained should be deserialized next.
+    </span><span class="kw">pub fn </span>deserialize_enum_tag(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;u32&gt; {
+        <span class="self">self</span>.deserialize_u32()
     }
 
-    <span class="doccomment">/// Start deserializing a `seq`. Returns the number of elements the caller should deserialize.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">deserialize_seq_length</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">u32</span><span class="op">&gt;</span> {
-        <span class="self">self</span>.<span class="ident">deserialize_u32</span>()
+    <span class="doccomment">/// Start deserializing a `seq`. Returns the number of elements the caller should deserialize.
+    </span><span class="kw">pub fn </span>deserialize_seq_length(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;u32&gt; {
+        <span class="self">self</span>.deserialize_u32()
     }
 
-    <span class="doccomment">/// Start deserializing a `map`. Returns the number of elements (key-value pairs) the caller should deserialize.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">deserialize_map_length</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">u32</span><span class="op">&gt;</span> {
-        <span class="self">self</span>.<span class="ident">deserialize_u32</span>()
+    <span class="doccomment">/// Start deserializing a `map`. Returns the number of elements (key-value pairs) the caller should deserialize.
+    </span><span class="kw">pub fn </span>deserialize_map_length(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;u32&gt; {
+        <span class="self">self</span>.deserialize_u32()
     }
 
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">deserialize_handle</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident"><span class="kw">crate</span>::Handle</span><span class="op">&gt;</span> {
-        <span class="kw">let</span> <span class="ident">slot</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">deserialize_u8</span>()<span class="question-mark">?</span>;
-        <span class="kw">match</span> <span class="self">self</span>.<span class="ident">handles</span>.<span class="ident">get</span>(<span class="ident"><span class="kw">crate</span>::index_from_handle_slot</span>(<span class="ident">slot</span>) <span class="kw">as</span> <span class="ident">usize</span>) {
-            <span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span><span class="ident">handle</span>) =&gt; <span class="prelude-val">Ok</span>(<span class="ident">handle</span>),
-            <span class="prelude-val">None</span> =&gt; <span class="prelude-val">Err</span>(<span class="ident">Error::InvalidHandleSlot</span>(<span class="ident">slot</span>)),
+    <span class="kw">pub fn </span>deserialize_handle(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="kw">crate</span>::Handle&gt; {
+        <span class="kw">let </span>slot = <span class="self">self</span>.deserialize_u8()<span class="question-mark">?</span>;
+        <span class="kw">match </span><span class="self">self</span>.handles.get(<span class="kw">crate</span>::index_from_handle_slot(slot) <span class="kw">as </span>usize) {
+            <span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span>handle) =&gt; <span class="prelude-val">Ok</span>(handle),
+            <span class="prelude-val">None </span>=&gt; <span class="prelude-val">Err</span>(Error::InvalidHandleSlot(slot)),
         }
     }
 
-    <span class="kw">fn</span> <span class="ident">take_byte</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span> {
-        <span class="kw">let</span> <span class="kw-2">&amp;</span><span class="ident">byte</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">bytes</span>.<span class="ident">iter</span>().<span class="ident">next</span>().<span class="ident">ok_or</span>(<span class="ident">Error::EndOfStream</span>)<span class="question-mark">?</span>;
-        <span class="self">self</span>.<span class="ident">bytes</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">bytes</span>[<span class="number">1</span>..];
-        <span class="prelude-val">Ok</span>(<span class="ident">byte</span>)
+    <span class="kw">fn </span>take_byte(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;u8&gt; {
+        <span class="kw">let </span><span class="kw-2">&amp;</span>byte = <span class="self">self</span>.bytes.iter().next().ok_or(Error::EndOfStream)<span class="question-mark">?</span>;
+        <span class="self">self</span>.bytes = <span class="kw-2">&amp;</span><span class="self">self</span>.bytes[<span class="number">1</span>..];
+        <span class="prelude-val">Ok</span>(byte)
     }
 
-    <span class="kw">fn</span> <span class="ident">take_n</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">n</span>: <span class="ident">usize</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="lifetime">&#39;de</span> [<span class="ident">u8</span>]<span class="op">&gt;</span> {
-        <span class="kw">if</span> <span class="self">self</span>.<span class="ident">bytes</span>.<span class="ident">len</span>() <span class="op">&lt;</span> <span class="ident">n</span> {
-            <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">Error::EndOfStream</span>);
+    <span class="kw">fn </span>take_n(<span class="kw-2">&amp;mut </span><span class="self">self</span>, n: usize) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;de </span>[u8]&gt; {
+        <span class="kw">if </span><span class="self">self</span>.bytes.len() &lt; n {
+            <span class="kw">return </span><span class="prelude-val">Err</span>(Error::EndOfStream);
         }
 
-        <span class="kw">let</span> <span class="ident">bytes</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">bytes</span>[<span class="number">0</span>..<span class="ident">n</span>];
-        <span class="self">self</span>.<span class="ident">bytes</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">bytes</span>[<span class="ident">n</span>..];
-        <span class="prelude-val">Ok</span>(<span class="ident">bytes</span>)
+        <span class="kw">let </span>bytes = <span class="kw-2">&amp;</span><span class="self">self</span>.bytes[<span class="number">0</span>..n];
+        <span class="self">self</span>.bytes = <span class="kw-2">&amp;</span><span class="self">self</span>.bytes[n..];
+        <span class="prelude-val">Ok</span>(bytes)
     }
 
-    <span class="kw">fn</span> <span class="ident">take</span><span class="op">&lt;</span><span class="kw">const</span> <span class="ident">N</span>: <span class="ident">usize</span><span class="op">&gt;</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>[<span class="ident">u8</span>; <span class="ident">N</span>]<span class="op">&gt;</span> {
-        <span class="kw">if</span> <span class="self">self</span>.<span class="ident">bytes</span>.<span class="ident">len</span>() <span class="op">&lt;</span> <span class="ident">N</span> {
-            <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">Error::EndOfStream</span>);
+    <span class="kw">fn </span>take&lt;<span class="kw">const </span>N: usize&gt;(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;[u8; N]&gt; {
+        <span class="kw">if </span><span class="self">self</span>.bytes.len() &lt; N {
+            <span class="kw">return </span><span class="prelude-val">Err</span>(Error::EndOfStream);
         }
 
-        <span class="kw">let</span> <span class="ident">bytes</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">bytes</span>[<span class="number">0</span>..<span class="ident">N</span>];
-        <span class="self">self</span>.<span class="ident">bytes</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">bytes</span>[<span class="ident">N</span>..];
-        <span class="prelude-val">Ok</span>(<span class="ident">bytes</span>.<span class="ident">try_into</span>().<span class="ident">unwrap</span>())
+        <span class="kw">let </span>bytes = <span class="kw-2">&amp;</span><span class="self">self</span>.bytes[<span class="number">0</span>..N];
+        <span class="self">self</span>.bytes = <span class="kw-2">&amp;</span><span class="self">self</span>.bytes[N..];
+        <span class="prelude-val">Ok</span>(bytes.try_into().unwrap())
     }
 }
 </code></pre></div>
-</section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="ptah" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.65.0-nightly (34a6cae28 2022-08-09)" ></div></body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="ptah" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.65.0-nightly (b44197abb 2022-09-05)" ></div></body></html>

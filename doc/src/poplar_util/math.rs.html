@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/work/poplar/poplar/lib/poplar_util/src/math.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>math.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script><script defer src="../../main.js"></script><noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../poplar_util/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div></a><h2 class="location"></h2></nav><nav class="sidebar"><a class="sidebar-logo" href="../../poplar_util/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div></a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../poplar_util/index.html"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></a><nav class="sub"><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><button type="button">?</button></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../wheel.svg"></a></div></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/work/poplar/poplar/lib/poplar_util/src/math.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>math.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" href="../../normalize.css"><link rel="stylesheet" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" href="../../ayu.css" disabled><link rel="stylesheet" href="../../dark.css" disabled><link rel="stylesheet" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script><script defer src="../../main.js"></script><noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../poplar_util/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div></a><h2 class="location"></h2></nav><nav class="sidebar"><a class="sidebar-logo" href="../../poplar_util/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div></a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../poplar_util/index.html"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></a><nav class="sub"><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><button type="button">?</button></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../wheel.svg"></a></div></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
 <span id="2">2</span>
 <span id="3">3</span>
 <span id="4">4</span>
@@ -138,85 +138,85 @@
 <span id="138">138</span>
 <span id="139">139</span>
 <span id="140">140</span>
-</pre><pre class="rust"><code><span class="kw">use</span> <span class="ident">core</span>::{<span class="ident">mem</span>, <span class="ident">ops</span>};
-<span class="kw">use</span> <span class="ident">num_traits::PrimInt</span>;
+</pre><pre class="rust"><code><span class="kw">use </span>core::{mem, ops};
+<span class="kw">use </span>num_traits::PrimInt;
 
-<span class="comment">// TODO: feels like something like this should exist in `num_traits` or something, but if it does I couldn&#39;t find</span>
-<span class="comment">// it</span>
-<span class="kw">pub</span> <span class="kw">trait</span> <span class="ident">PowerOfTwoable</span> {
-    <span class="kw">fn</span> <span class="ident">is_power_of_two</span>(<span class="self">self</span>) -&gt; <span class="ident">bool</span>;
-    <span class="kw">fn</span> <span class="ident">next_power_of_two</span>(<span class="self">self</span>) -&gt; <span class="self">Self</span>;
+<span class="comment">// TODO: feels like something like this should exist in `num_traits` or something, but if it does I couldn&#39;t find
+// it
+</span><span class="kw">pub trait </span>PowerOfTwoable {
+    <span class="kw">fn </span>is_power_of_two(<span class="self">self</span>) -&gt; bool;
+    <span class="kw">fn </span>next_power_of_two(<span class="self">self</span>) -&gt; <span class="self">Self</span>;
 }
 
-<span class="kw">macro</span> <span class="ident">impl_power_of_twoable</span>(<span class="macro-nonterminal">$</span><span class="kw">type</span>:<span class="macro-nonterminal">ty</span>) {
-    <span class="kw">impl</span> <span class="ident">PowerOfTwoable</span> <span class="kw">for</span> <span class="macro-nonterminal">$</span><span class="kw">type</span> {
-        <span class="kw">fn</span> <span class="macro-nonterminal">is_power_of_two</span>(<span class="self">self</span>) -&gt; <span class="ident">bool</span> {
-            <span class="self">self</span>.<span class="ident">is_power_of_two</span>()
+<span class="kw">macro </span>impl_power_of_twoable(<span class="macro-nonterminal">$</span><span class="kw">type</span>:<span class="macro-nonterminal">ty</span>) {
+    <span class="kw">impl </span>PowerOfTwoable <span class="kw">for </span><span class="macro-nonterminal">$</span><span class="kw">type </span>{
+        <span class="kw">fn </span><span class="macro-nonterminal">is_power_of_two</span>(<span class="self">self</span>) -&gt; bool {
+            <span class="self">self</span>.is_power_of_two()
         }
 
-        <span class="kw">fn</span> <span class="ident">next_power_of_two</span>(<span class="self">self</span>) -&gt; <span class="self">Self</span> {
-            <span class="self">self</span>.<span class="ident">next_power_of_two</span>()
+        <span class="kw">fn </span>next_power_of_two(<span class="self">self</span>) -&gt; <span class="self">Self </span>{
+            <span class="self">self</span>.next_power_of_two()
         }
     }
 }
 
-<span class="macro">impl_power_of_twoable!</span>(<span class="ident">u8</span>);
-<span class="macro">impl_power_of_twoable!</span>(<span class="ident">u16</span>);
-<span class="macro">impl_power_of_twoable!</span>(<span class="ident">u32</span>);
-<span class="macro">impl_power_of_twoable!</span>(<span class="ident">u64</span>);
-<span class="macro">impl_power_of_twoable!</span>(<span class="ident">usize</span>);
+<span class="macro">impl_power_of_twoable!</span>(u8);
+<span class="macro">impl_power_of_twoable!</span>(u16);
+<span class="macro">impl_power_of_twoable!</span>(u32);
+<span class="macro">impl_power_of_twoable!</span>(u64);
+<span class="macro">impl_power_of_twoable!</span>(usize);
 
-<span class="doccomment">/// Fast integer `log2` that floors to the lower power-of-2 if `x` is not a power-of-2. `x`</span>
-<span class="doccomment">/// must not be 0.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// ### Example</span>
-<span class="doccomment">/// ``` ignore</span>
-<span class="doccomment">/// assert_eq!(flooring_log2(1), 0);</span>
-<span class="doccomment">/// assert_eq!(flooring_log2(64), 6);</span>
-<span class="doccomment">/// assert_eq!(flooring_log2(61), 5);</span>
-<span class="doccomment">/// assert_eq!(flooring_log2(4095), 11);</span>
-<span class="doccomment">/// ```</span>
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">flooring_log2</span>(<span class="ident">x</span>: <span class="ident">usize</span>) -&gt; <span class="ident">usize</span> {
-    <span class="macro">assert!</span>(<span class="ident">x</span> <span class="op">&gt;</span> <span class="number">0</span>);
-    <span class="kw">const</span> <span class="ident">NUM_BITS</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="ident">mem::size_of</span>::<span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span>() <span class="op">*</span> <span class="number">8</span>;
+<span class="doccomment">/// Fast integer `log2` that floors to the lower power-of-2 if `x` is not a power-of-2. `x`
+/// must not be 0.
+///
+/// ### Example
+/// ``` ignore
+/// assert_eq!(flooring_log2(1), 0);
+/// assert_eq!(flooring_log2(64), 6);
+/// assert_eq!(flooring_log2(61), 5);
+/// assert_eq!(flooring_log2(4095), 11);
+/// ```
+</span><span class="kw">pub fn </span>flooring_log2(x: usize) -&gt; usize {
+    <span class="macro">assert!</span>(x &gt; <span class="number">0</span>);
+    <span class="kw">const </span>NUM_BITS: usize = mem::size_of::&lt;usize&gt;() * <span class="number">8</span>;
 
     <span class="comment">/*
      * Count the number of leading zeros in the value, then subtract that from the total
      * number of bits in the type (64 for a `u64`). This gets the first bit set, which is
      * the largest power-of-2 component of the value.
-     */</span>
-    <span class="kw">return</span> <span class="ident">NUM_BITS</span> <span class="op">-</span> <span class="ident">core::intrinsics::ctlz</span>(<span class="ident">x</span>) <span class="op">-</span> <span class="number">1</span>;
+     */
+    </span><span class="kw">return </span>NUM_BITS - core::intrinsics::ctlz(x) - <span class="number">1</span>;
 }
 
-<span class="attribute">#[<span class="ident">test</span>]</span>
-<span class="kw">fn</span> <span class="ident">test_flooring_log2</span>() {
-    <span class="macro">assert_eq!</span>(<span class="ident">flooring_log2</span>(<span class="number">1</span>), <span class="number">0</span>);
-    <span class="macro">assert_eq!</span>(<span class="ident">flooring_log2</span>(<span class="number">64</span>), <span class="number">6</span>);
-    <span class="macro">assert_eq!</span>(<span class="ident">flooring_log2</span>(<span class="number">61</span>), <span class="number">5</span>);
-    <span class="macro">assert_eq!</span>(<span class="ident">flooring_log2</span>(<span class="number">4095</span>), <span class="number">11</span>);
+<span class="attribute">#[test]
+</span><span class="kw">fn </span>test_flooring_log2() {
+    <span class="macro">assert_eq!</span>(flooring_log2(<span class="number">1</span>), <span class="number">0</span>);
+    <span class="macro">assert_eq!</span>(flooring_log2(<span class="number">64</span>), <span class="number">6</span>);
+    <span class="macro">assert_eq!</span>(flooring_log2(<span class="number">61</span>), <span class="number">5</span>);
+    <span class="macro">assert_eq!</span>(flooring_log2(<span class="number">4095</span>), <span class="number">11</span>);
 }
 
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">ceiling_log2</span>(<span class="ident">x</span>: <span class="ident">usize</span>) -&gt; <span class="ident">usize</span> {
-    <span class="kw">let</span> <span class="ident">x</span> <span class="op">=</span> <span class="kw">if</span> <span class="ident">x</span>.<span class="ident">is_power_of_two</span>() { <span class="ident">x</span> } <span class="kw">else</span> { <span class="ident">x</span>.<span class="ident">next_power_of_two</span>() };
+<span class="kw">pub fn </span>ceiling_log2(x: usize) -&gt; usize {
+    <span class="kw">let </span>x = <span class="kw">if </span>x.is_power_of_two() { x } <span class="kw">else </span>{ x.next_power_of_two() };
 
-    <span class="comment">// `x` will always be a power of two now, so log(2) == the number of trailing zeros</span>
-    <span class="ident">x</span>.<span class="ident">trailing_zeros</span>() <span class="kw">as</span> <span class="ident">usize</span>
+    <span class="comment">// `x` will always be a power of two now, so log(2) == the number of trailing zeros
+    </span>x.trailing_zeros() <span class="kw">as </span>usize
 }
 
-<span class="attribute">#[<span class="ident">test</span>]</span>
-<span class="kw">fn</span> <span class="ident">test_ceiling_log2</span>() {
-    <span class="macro">assert_eq!</span>(<span class="ident">ceiling_log2</span>(<span class="number">1</span>), <span class="number">0</span>);
-    <span class="macro">assert_eq!</span>(<span class="ident">ceiling_log2</span>(<span class="number">64</span>), <span class="number">6</span>);
-    <span class="macro">assert_eq!</span>(<span class="ident">ceiling_log2</span>(<span class="number">61</span>), <span class="number">6</span>);
-    <span class="macro">assert_eq!</span>(<span class="ident">ceiling_log2</span>(<span class="number">4095</span>), <span class="number">12</span>);
+<span class="attribute">#[test]
+</span><span class="kw">fn </span>test_ceiling_log2() {
+    <span class="macro">assert_eq!</span>(ceiling_log2(<span class="number">1</span>), <span class="number">0</span>);
+    <span class="macro">assert_eq!</span>(ceiling_log2(<span class="number">64</span>), <span class="number">6</span>);
+    <span class="macro">assert_eq!</span>(ceiling_log2(<span class="number">61</span>), <span class="number">6</span>);
+    <span class="macro">assert_eq!</span>(ceiling_log2(<span class="number">4095</span>), <span class="number">12</span>);
 }
 
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">align_down</span><span class="op">&lt;</span><span class="ident">T</span>: <span class="ident">PrimInt</span> <span class="op">+</span> <span class="ident">PowerOfTwoable</span><span class="op">&gt;</span>(<span class="ident">value</span>: <span class="ident">T</span>, <span class="ident">align</span>: <span class="ident">T</span>) -&gt; <span class="ident">T</span> {
-    <span class="macro">assert!</span>(<span class="ident">align</span> <span class="op">==</span> <span class="ident">T::zero</span>() <span class="op">|</span><span class="op">|</span> <span class="ident">align</span>.<span class="ident">is_power_of_two</span>());
+<span class="kw">pub fn </span>align_down&lt;T: PrimInt + PowerOfTwoable&gt;(value: T, align: T) -&gt; T {
+    <span class="macro">assert!</span>(align == T::zero() || align.is_power_of_two());
 
-    <span class="kw">if</span> <span class="ident">align</span> <span class="op">==</span> <span class="ident">T::zero</span>() {
-        <span class="ident">value</span>
-    } <span class="kw">else</span> {
+    <span class="kw">if </span>align == T::zero() {
+        value
+    } <span class="kw">else </span>{
         <span class="comment">/*
          * Alignment must be a power of two.
          *
@@ -225,58 +225,58 @@
          * align-1     =   0b00000111
          * !(align-1)  =   0b11111000
          * ^^^ Masks the value to the one below it with the correct align
-         */</span>
-        <span class="ident">value</span> <span class="op">&amp;</span> <span class="op">!</span>(<span class="ident">align</span> <span class="op">-</span> <span class="ident">T::one</span>())
+         */
+        </span>value &amp; !(align - T::one())
     }
 }
 
-<span class="attribute">#[<span class="ident">test</span>]</span>
-<span class="kw">fn</span> <span class="ident">test_align_down</span>() {
-    <span class="macro">assert_eq!</span>(<span class="ident">align_down</span>(<span class="number">17u64</span>, <span class="number">0</span>), <span class="number">17</span>);
-    <span class="macro">assert_eq!</span>(<span class="ident">align_down</span>(<span class="number">17u64</span>, <span class="number">1</span>), <span class="number">17</span>);
-    <span class="macro">assert_eq!</span>(<span class="ident">align_down</span>(<span class="number">9u64</span>, <span class="number">8</span>), <span class="number">8</span>);
-    <span class="macro">assert_eq!</span>(<span class="ident">align_down</span>(<span class="number">19u64</span>, <span class="number">8</span>), <span class="number">16</span>);
-    <span class="macro">assert_eq!</span>(<span class="ident">align_down</span>(<span class="number">1025u64</span>, <span class="number">16</span>), <span class="number">1024</span>);
+<span class="attribute">#[test]
+</span><span class="kw">fn </span>test_align_down() {
+    <span class="macro">assert_eq!</span>(align_down(<span class="number">17u64</span>, <span class="number">0</span>), <span class="number">17</span>);
+    <span class="macro">assert_eq!</span>(align_down(<span class="number">17u64</span>, <span class="number">1</span>), <span class="number">17</span>);
+    <span class="macro">assert_eq!</span>(align_down(<span class="number">9u64</span>, <span class="number">8</span>), <span class="number">8</span>);
+    <span class="macro">assert_eq!</span>(align_down(<span class="number">19u64</span>, <span class="number">8</span>), <span class="number">16</span>);
+    <span class="macro">assert_eq!</span>(align_down(<span class="number">1025u64</span>, <span class="number">16</span>), <span class="number">1024</span>);
 }
 
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">align_up</span><span class="op">&lt;</span><span class="ident">T</span>: <span class="ident">PrimInt</span> <span class="op">+</span> <span class="ident">PowerOfTwoable</span><span class="op">&gt;</span>(<span class="ident">value</span>: <span class="ident">T</span>, <span class="ident">align</span>: <span class="ident">T</span>) -&gt; <span class="ident">T</span> {
-    <span class="kw">if</span> <span class="ident">align</span> <span class="op">==</span> <span class="ident">T::zero</span>() {
-        <span class="ident">value</span>
-    } <span class="kw">else</span> {
-        <span class="ident">align_down</span>(<span class="ident">value</span> <span class="op">+</span> <span class="ident">align</span> <span class="op">-</span> <span class="ident">T::one</span>(), <span class="ident">align</span>)
+<span class="kw">pub fn </span>align_up&lt;T: PrimInt + PowerOfTwoable&gt;(value: T, align: T) -&gt; T {
+    <span class="kw">if </span>align == T::zero() {
+        value
+    } <span class="kw">else </span>{
+        align_down(value + align - T::one(), align)
     }
 }
 
-<span class="attribute">#[<span class="ident">test</span>]</span>
-<span class="kw">fn</span> <span class="ident">test_align_up</span>() {
-    <span class="macro">assert_eq!</span>(<span class="ident">align_up</span>(<span class="number">17u64</span>, <span class="number">0</span>), <span class="number">17</span>);
-    <span class="macro">assert_eq!</span>(<span class="ident">align_up</span>(<span class="number">43u64</span>, <span class="number">1</span>), <span class="number">43</span>);
-    <span class="macro">assert_eq!</span>(<span class="ident">align_up</span>(<span class="number">9u64</span>, <span class="number">8</span>), <span class="number">16</span>);
-    <span class="macro">assert_eq!</span>(<span class="ident">align_up</span>(<span class="number">1023u64</span>, <span class="number">16</span>), <span class="number">1024</span>);
+<span class="attribute">#[test]
+</span><span class="kw">fn </span>test_align_up() {
+    <span class="macro">assert_eq!</span>(align_up(<span class="number">17u64</span>, <span class="number">0</span>), <span class="number">17</span>);
+    <span class="macro">assert_eq!</span>(align_up(<span class="number">43u64</span>, <span class="number">1</span>), <span class="number">43</span>);
+    <span class="macro">assert_eq!</span>(align_up(<span class="number">9u64</span>, <span class="number">8</span>), <span class="number">16</span>);
+    <span class="macro">assert_eq!</span>(align_up(<span class="number">1023u64</span>, <span class="number">16</span>), <span class="number">1024</span>);
 }
 
-<span class="doccomment">/// Divide `x` by `divide_by`, taking the ceiling if it does not divide evenly.</span>
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">ceiling_integer_divide</span>(<span class="ident">x</span>: <span class="ident">usize</span>, <span class="ident">divide_by</span>: <span class="ident">usize</span>) -&gt; <span class="ident">usize</span> {
-    <span class="ident">x</span> <span class="op">/</span> <span class="ident">divide_by</span> <span class="op">+</span> <span class="kw">if</span> <span class="ident">x</span> <span class="op">%</span> <span class="ident">divide_by</span> <span class="op">!</span><span class="op">=</span> <span class="number">0</span> { <span class="number">1</span> } <span class="kw">else</span> { <span class="number">0</span> }
+<span class="doccomment">/// Divide `x` by `divide_by`, taking the ceiling if it does not divide evenly.
+</span><span class="kw">pub fn </span>ceiling_integer_divide(x: usize, divide_by: usize) -&gt; usize {
+    x / divide_by + <span class="kw">if </span>x % divide_by != <span class="number">0 </span>{ <span class="number">1 </span>} <span class="kw">else </span>{ <span class="number">0 </span>}
 }
 
-<span class="attribute">#[<span class="ident">test</span>]</span>
-<span class="kw">fn</span> <span class="ident">test_ceiling_integer_divide</span>() {
-    <span class="macro">assert_eq!</span>(<span class="ident">ceiling_integer_divide</span>(<span class="number">1</span>, <span class="number">1</span>), <span class="number">1</span>);
-    <span class="macro">assert_eq!</span>(<span class="ident">ceiling_integer_divide</span>(<span class="number">10</span>, <span class="number">5</span>), <span class="number">2</span>);
-    <span class="macro">assert_eq!</span>(<span class="ident">ceiling_integer_divide</span>(<span class="number">11</span>, <span class="number">5</span>), <span class="number">3</span>);
-    <span class="macro">assert_eq!</span>(<span class="ident">ceiling_integer_divide</span>(<span class="number">0</span>, <span class="number">5</span>), <span class="number">0</span>);
+<span class="attribute">#[test]
+</span><span class="kw">fn </span>test_ceiling_integer_divide() {
+    <span class="macro">assert_eq!</span>(ceiling_integer_divide(<span class="number">1</span>, <span class="number">1</span>), <span class="number">1</span>);
+    <span class="macro">assert_eq!</span>(ceiling_integer_divide(<span class="number">10</span>, <span class="number">5</span>), <span class="number">2</span>);
+    <span class="macro">assert_eq!</span>(ceiling_integer_divide(<span class="number">11</span>, <span class="number">5</span>), <span class="number">3</span>);
+    <span class="macro">assert_eq!</span>(ceiling_integer_divide(<span class="number">0</span>, <span class="number">5</span>), <span class="number">0</span>);
 }
 
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">abs_difference</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span>(<span class="ident">a</span>: <span class="ident">T</span>, <span class="ident">b</span>: <span class="ident">T</span>) -&gt; <span class="ident">T</span>
-<span class="kw">where</span>
-    <span class="ident">T</span>: <span class="ident">Ord</span> <span class="op">+</span> <span class="ident">ops::Sub</span><span class="op">&lt;</span><span class="ident">Output</span> <span class="op">=</span> <span class="ident">T</span><span class="op">&gt;</span>,
+<span class="kw">pub fn </span>abs_difference&lt;T&gt;(a: T, b: T) -&gt; T
+<span class="kw">where
+    </span>T: Ord + ops::Sub&lt;Output = T&gt;,
 {
-    <span class="kw">if</span> <span class="ident">a</span> <span class="op">&gt;</span> <span class="ident">b</span> {
-        <span class="ident">a</span> <span class="op">-</span> <span class="ident">b</span>
-    } <span class="kw">else</span> {
-        <span class="ident">b</span> <span class="op">-</span> <span class="ident">a</span>
+    <span class="kw">if </span>a &gt; b {
+        a - b
+    } <span class="kw">else </span>{
+        b - a
     }
 }
 </code></pre></div>
-</section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="poplar_util" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.65.0-nightly (34a6cae28 2022-08-09)" ></div></body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="poplar_util" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.65.0-nightly (b44197abb 2022-09-05)" ></div></body></html>

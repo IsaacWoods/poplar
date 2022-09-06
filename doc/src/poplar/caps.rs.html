@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/work/poplar/poplar/lib/poplar/src/caps.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>caps.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script><script defer src="../../main.js"></script><noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../poplar/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div></a><h2 class="location"></h2></nav><nav class="sidebar"><a class="sidebar-logo" href="../../poplar/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div></a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../poplar/index.html"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></a><nav class="sub"><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><button type="button">?</button></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../wheel.svg"></a></div></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/work/poplar/poplar/lib/poplar/src/caps.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>caps.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" href="../../normalize.css"><link rel="stylesheet" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" href="../../ayu.css" disabled><link rel="stylesheet" href="../../dark.css" disabled><link rel="stylesheet" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script><script defer src="../../main.js"></script><noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../poplar/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div></a><h2 class="location"></h2></nav><nav class="sidebar"><a class="sidebar-logo" href="../../poplar/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div></a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../poplar/index.html"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></a><nav class="sub"><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><button type="button">?</button></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../wheel.svg"></a></div></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
 <span id="2">2</span>
 <span id="3">3</span>
 <span id="4">4</span>
@@ -45,52 +45,52 @@
 <span id="45">45</span>
 <span id="46">46</span>
 <span id="47">47</span>
-</pre><pre class="rust"><code><span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Copy</span>, <span class="ident">PartialEq</span>, <span class="ident">Eq</span>, <span class="ident">Debug</span>)]</span>
-<span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">Capability</span> {
-    <span class="ident">GetFramebuffer</span>,
-    <span class="ident">EarlyLogging</span>,
-    <span class="ident">ServiceProvider</span>,
-    <span class="ident">ServiceUser</span>,
-    <span class="ident">PciBusDriver</span>,
+</pre><pre class="rust"><code><span class="attribute">#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+</span><span class="kw">pub enum </span>Capability {
+    GetFramebuffer,
+    EarlyLogging,
+    ServiceProvider,
+    ServiceUser,
+    PciBusDriver,
 }
 
-<span class="kw">pub</span> <span class="kw">const</span> <span class="ident">CAP_PADDING</span>: <span class="ident">u8</span> <span class="op">=</span> <span class="number">0x00</span>;
-<span class="kw">pub</span> <span class="kw">const</span> <span class="ident">CAP_GET_FRAMEBUFFER</span>: <span class="ident">u8</span> <span class="op">=</span> <span class="number">0x01</span>;
-<span class="kw">pub</span> <span class="kw">const</span> <span class="ident">CAP_EARLY_LOGGING</span>: <span class="ident">u8</span> <span class="op">=</span> <span class="number">0x02</span>;
-<span class="kw">pub</span> <span class="kw">const</span> <span class="ident">CAP_SERVICE_PROVIDER</span>: <span class="ident">u8</span> <span class="op">=</span> <span class="number">0x03</span>;
-<span class="kw">pub</span> <span class="kw">const</span> <span class="ident">CAP_SERVICE_USER</span>: <span class="ident">u8</span> <span class="op">=</span> <span class="number">0x04</span>;
-<span class="kw">pub</span> <span class="kw">const</span> <span class="ident">CAP_PCI_BUS_DRIVER</span>: <span class="ident">u8</span> <span class="op">=</span> <span class="number">0x05</span>;
+<span class="kw">pub const </span>CAP_PADDING: u8 = <span class="number">0x00</span>;
+<span class="kw">pub const </span>CAP_GET_FRAMEBUFFER: u8 = <span class="number">0x01</span>;
+<span class="kw">pub const </span>CAP_EARLY_LOGGING: u8 = <span class="number">0x02</span>;
+<span class="kw">pub const </span>CAP_SERVICE_PROVIDER: u8 = <span class="number">0x03</span>;
+<span class="kw">pub const </span>CAP_SERVICE_USER: u8 = <span class="number">0x04</span>;
+<span class="kw">pub const </span>CAP_PCI_BUS_DRIVER: u8 = <span class="number">0x05</span>;
 
-<span class="doccomment">/// `N` must be a multiple of 4, and padded with zeros, so the whole descriptor is aligned to a</span>
-<span class="doccomment">/// 4-byte boundary.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// This structure can be used to emit an ELF note section containing a list of capabilities. `N` must be a</span>
-<span class="doccomment">/// multiple of 4 (padded with `CAP_PADDING`). You can define the capabilities of a task image like so:</span>
-<span class="doccomment">/// ```</span>
-<span class="doccomment">/// #[used]</span>
-<span class="doccomment">/// #[link_section = &quot;.caps&quot;]</span>
-<span class="doccomment">/// pub static mut CAPS: CapabilitiesRepr&lt;4&gt; = CapabilitiesRepr::new([CAP_EARLY_LOGGING,</span>
-<span class="doccomment">/// CAP_GET_FRAMEBUFFER, CAP_PADDING, CAP_PADDING]);</span>
-<span class="doccomment">/// ```</span>
-<span class="attribute">#[<span class="ident">repr</span>(<span class="ident">C</span>)]</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">CapabilitiesRepr</span><span class="op">&lt;</span><span class="kw">const</span> <span class="ident">N</span>: <span class="ident">usize</span><span class="op">&gt;</span> {
-    <span class="ident">name_size</span>: <span class="ident">u32</span>,
-    <span class="ident">desc_size</span>: <span class="ident">u32</span>,
-    <span class="ident">entry_type</span>: <span class="ident">u32</span>,
-    <span class="ident">name</span>: [<span class="ident">u8</span>; <span class="number">8</span>],
-    <span class="ident">desc</span>: [<span class="ident">u8</span>; <span class="ident">N</span>],
+<span class="doccomment">/// `N` must be a multiple of 4, and padded with zeros, so the whole descriptor is aligned to a
+/// 4-byte boundary.
+///
+/// This structure can be used to emit an ELF note section containing a list of capabilities. `N` must be a
+/// multiple of 4 (padded with `CAP_PADDING`). You can define the capabilities of a task image like so:
+/// ```
+/// #[used]
+/// #[link_section = &quot;.caps&quot;]
+/// pub static mut CAPS: CapabilitiesRepr&lt;4&gt; = CapabilitiesRepr::new([CAP_EARLY_LOGGING,
+/// CAP_GET_FRAMEBUFFER, CAP_PADDING, CAP_PADDING]);
+/// ```
+</span><span class="attribute">#[repr(C)]
+</span><span class="kw">pub struct </span>CapabilitiesRepr&lt;<span class="kw">const </span>N: usize&gt; {
+    name_size: u32,
+    desc_size: u32,
+    entry_type: u32,
+    name: [u8; <span class="number">8</span>],
+    desc: [u8; N],
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="kw">const</span> <span class="ident">N</span>: <span class="ident">usize</span><span class="op">&gt;</span> <span class="ident">CapabilitiesRepr</span><span class="op">&lt;</span>{ <span class="ident">N</span> }<span class="op">&gt;</span> {
-    <span class="kw">pub</span> <span class="kw">const</span> <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">caps</span>: [<span class="ident">u8</span>; <span class="ident">N</span>]) -&gt; <span class="ident">CapabilitiesRepr</span><span class="op">&lt;</span>{ <span class="ident">N</span> }<span class="op">&gt;</span> {
-        <span class="ident">CapabilitiesRepr</span> {
-            <span class="ident">name_size</span>: <span class="number">6</span>,
-            <span class="ident">desc_size</span>: <span class="ident">N</span> <span class="kw">as</span> <span class="ident">u32</span>,
-            <span class="ident">entry_type</span>: <span class="number">0</span>,
-            <span class="ident">name</span>: [<span class="string">b&#39;P&#39;</span>, <span class="string">b&#39;E&#39;</span>, <span class="string">b&#39;B&#39;</span>, <span class="string">b&#39;B&#39;</span>, <span class="string">b&#39;L&#39;</span>, <span class="string">b&#39;E&#39;</span>, <span class="string">b&#39;\0&#39;</span>, <span class="number">0x00</span>],
-            <span class="ident">desc</span>: <span class="ident">caps</span>,
+<span class="kw">impl</span>&lt;<span class="kw">const </span>N: usize&gt; CapabilitiesRepr&lt;{ N }&gt; {
+    <span class="kw">pub const fn </span>new(caps: [u8; N]) -&gt; CapabilitiesRepr&lt;{ N }&gt; {
+        CapabilitiesRepr {
+            name_size: <span class="number">6</span>,
+            desc_size: N <span class="kw">as </span>u32,
+            entry_type: <span class="number">0</span>,
+            name: [<span class="string">b&#39;P&#39;</span>, <span class="string">b&#39;E&#39;</span>, <span class="string">b&#39;B&#39;</span>, <span class="string">b&#39;B&#39;</span>, <span class="string">b&#39;L&#39;</span>, <span class="string">b&#39;E&#39;</span>, <span class="string">b&#39;\0&#39;</span>, <span class="number">0x00</span>],
+            desc: caps,
         }
     }
 }
 </code></pre></div>
-</section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="poplar" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.65.0-nightly (34a6cae28 2022-08-09)" ></div></body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="poplar" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.65.0-nightly (b44197abb 2022-09-05)" ></div></body></html>

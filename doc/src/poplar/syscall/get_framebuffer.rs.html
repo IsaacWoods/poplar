@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/work/poplar/poplar/lib/poplar/src/syscall/get_framebuffer.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>get_framebuffer.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../storage.js"></script><script defer src="../../../source-script.js"></script><script defer src="../../../source-files.js"></script><script defer src="../../../main.js"></script><noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../../poplar/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div></a><h2 class="location"></h2></nav><nav class="sidebar"><a class="sidebar-logo" href="../../../poplar/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div></a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../../poplar/index.html"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></a><nav class="sub"><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><button type="button">?</button></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../wheel.svg"></a></div></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/work/poplar/poplar/lib/poplar/src/syscall/get_framebuffer.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>get_framebuffer.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" href="../../../normalize.css"><link rel="stylesheet" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" href="../../../ayu.css" disabled><link rel="stylesheet" href="../../../dark.css" disabled><link rel="stylesheet" href="../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../storage.js"></script><script defer src="../../../source-script.js"></script><script defer src="../../../source-files.js"></script><script defer src="../../../main.js"></script><noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../../poplar/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div></a><h2 class="location"></h2></nav><nav class="sidebar"><a class="sidebar-logo" href="../../../poplar/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div></a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../../poplar/index.html"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></a><nav class="sub"><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><button type="button">?</button></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../wheel.svg"></a></div></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
 <span id="2">2</span>
 <span id="3">3</span>
 <span id="4">4</span>
@@ -36,43 +36,43 @@
 <span id="36">36</span>
 <span id="37">37</span>
 <span id="38">38</span>
-</pre><pre class="rust"><code><span class="kw">use</span> <span class="kw">super</span>::{
-    <span class="ident">raw</span>,
-    <span class="ident">result</span>::{<span class="ident">define_error_type</span>, <span class="ident">handle_from_syscall_repr</span>},
-    <span class="ident">SYSCALL_GET_FRAMEBUFFER</span>,
+</pre><pre class="rust"><code><span class="kw">use super</span>::{
+    raw,
+    result::{define_error_type, handle_from_syscall_repr},
+    SYSCALL_GET_FRAMEBUFFER,
 };
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::Handle</span>;
+<span class="kw">use </span><span class="kw">crate</span>::Handle;
 
-<span class="macro">define_error_type!</span>(<span class="ident">GetFramebufferError</span> {
-    <span class="doccomment">/// The calling task does not have the correct capability to access the framebuffer.</span>
-    <span class="ident">AccessDenied</span> =&gt; <span class="number">1</span>,
+<span class="macro">define_error_type!</span>(GetFramebufferError {
+    <span class="doccomment">/// The calling task does not have the correct capability to access the framebuffer.
+    </span>AccessDenied =&gt; <span class="number">1</span>,
 
-    <span class="doccomment">/// The address passed in `a` to write the info struct into was invalid.</span>
-    <span class="ident">InfoAddressIsInvalid</span> =&gt; <span class="number">2</span>,
+    <span class="doccomment">/// The address passed in `a` to write the info struct into was invalid.
+    </span>InfoAddressIsInvalid =&gt; <span class="number">2</span>,
 
-    <span class="doccomment">/// The kernel did not create a framebuffer.</span>
-    <span class="ident">NoFramebufferCreated</span> =&gt; <span class="number">3</span>,
+    <span class="doccomment">/// The kernel did not create a framebuffer.
+    </span>NoFramebufferCreated =&gt; <span class="number">3</span>,
 });
 
-<span class="doccomment">/// Describes how the supplied framebuffer represents pixels.</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Copy</span>, <span class="ident">PartialEq</span>, <span class="ident">Eq</span>, <span class="ident">Debug</span>)]</span>
-<span class="attribute">#[<span class="ident">repr</span>(<span class="ident">u8</span>)]</span>
-<span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">PixelFormat</span> {
-    <span class="ident">Rgb32</span> <span class="op">=</span> <span class="number">0</span>,
-    <span class="ident">Bgr32</span> <span class="op">=</span> <span class="number">1</span>,
+<span class="doccomment">/// Describes how the supplied framebuffer represents pixels.
+</span><span class="attribute">#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+#[repr(u8)]
+</span><span class="kw">pub enum </span>PixelFormat {
+    Rgb32 = <span class="number">0</span>,
+    Bgr32 = <span class="number">1</span>,
 }
 
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Copy</span>, <span class="ident">Debug</span>)]</span>
-<span class="attribute">#[<span class="ident">repr</span>(<span class="ident">C</span>)]</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">FramebufferInfo</span> {
-    <span class="kw">pub</span> <span class="ident">width</span>: <span class="ident">u16</span>,
-    <span class="kw">pub</span> <span class="ident">height</span>: <span class="ident">u16</span>,
-    <span class="kw">pub</span> <span class="ident">stride</span>: <span class="ident">u16</span>,
-    <span class="kw">pub</span> <span class="ident">pixel_format</span>: <span class="ident">PixelFormat</span>,
+<span class="attribute">#[derive(Clone, Copy, Debug)]
+#[repr(C)]
+</span><span class="kw">pub struct </span>FramebufferInfo {
+    <span class="kw">pub </span>width: u16,
+    <span class="kw">pub </span>height: u16,
+    <span class="kw">pub </span>stride: u16,
+    <span class="kw">pub </span>pixel_format: PixelFormat,
 }
 
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">get_framebuffer</span>(<span class="ident">info</span>: <span class="kw-2">*mut</span> <span class="ident">FramebufferInfo</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Handle</span>, <span class="ident">GetFramebufferError</span><span class="op">&gt;</span> {
-    <span class="ident">handle_from_syscall_repr</span>(<span class="kw">unsafe</span> { <span class="ident">raw::syscall1</span>(<span class="ident">SYSCALL_GET_FRAMEBUFFER</span>, <span class="ident">info</span> <span class="kw">as</span> <span class="ident">usize</span>) })
+<span class="kw">pub fn </span>get_framebuffer(info: <span class="kw-2">*mut </span>FramebufferInfo) -&gt; <span class="prelude-ty">Result</span>&lt;Handle, GetFramebufferError&gt; {
+    handle_from_syscall_repr(<span class="kw">unsafe </span>{ raw::syscall1(SYSCALL_GET_FRAMEBUFFER, info <span class="kw">as </span>usize) })
 }
 </code></pre></div>
-</section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="poplar" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.65.0-nightly (34a6cae28 2022-08-09)" ></div></body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="poplar" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.65.0-nightly (b44197abb 2022-09-05)" ></div></body></html>

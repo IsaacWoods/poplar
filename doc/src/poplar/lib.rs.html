@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/work/poplar/poplar/lib/poplar/src/lib.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>lib.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script><script defer src="../../main.js"></script><noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../poplar/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div></a><h2 class="location"></h2></nav><nav class="sidebar"><a class="sidebar-logo" href="../../poplar/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div></a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../poplar/index.html"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></a><nav class="sub"><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><button type="button">?</button></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../wheel.svg"></a></div></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/work/poplar/poplar/lib/poplar/src/lib.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>lib.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" href="../../normalize.css"><link rel="stylesheet" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" href="../../ayu.css" disabled><link rel="stylesheet" href="../../dark.css" disabled><link rel="stylesheet" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script><script defer src="../../main.js"></script><noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../poplar/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div></a><h2 class="location"></h2></nav><nav class="sidebar"><a class="sidebar-logo" href="../../poplar/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div></a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../poplar/index.html"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></a><nav class="sub"><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><button type="button">?</button></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../wheel.svg"></a></div></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
 <span id="2">2</span>
 <span id="3">3</span>
 <span id="4">4</span>
@@ -70,77 +70,77 @@
 <span id="70">70</span>
 <span id="71">71</span>
 <span id="72">72</span>
-</pre><pre class="rust"><code><span class="attribute">#![<span class="ident">no_std</span>]</span>
-<span class="attribute">#![<span class="ident">feature</span>(<span class="ident">decl_macro</span>, <span class="ident">never_type</span>)]</span>
-<span class="attribute">#![<span class="ident">deny</span>(<span class="ident">unsafe_op_in_unsafe_fn</span>)]</span>
+</pre><pre class="rust"><code><span class="attribute">#![no_std]
+#![feature(decl_macro, never_type)]
+#![deny(unsafe_op_in_unsafe_fn)]
 
-<span class="kw">mod</span> <span class="ident">bit_field</span>;
-<span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">caps</span>;
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;can_alloc&quot;</span>)]</span>
-<span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">channel</span>;
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;can_alloc&quot;</span>)]</span>
-<span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">early_logger</span>;
-<span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">syscall</span>;
+</span><span class="kw">mod </span>bit_field;
+<span class="kw">pub mod </span>caps;
+<span class="attribute">#[cfg(feature = <span class="string">&quot;can_alloc&quot;</span>)]
+</span><span class="kw">pub mod </span>channel;
+<span class="attribute">#[cfg(feature = <span class="string">&quot;can_alloc&quot;</span>)]
+</span><span class="kw">pub mod </span>early_logger;
+<span class="kw">pub mod </span>syscall;
 
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;can_alloc&quot;</span>)]</span>
-<span class="kw">extern</span> <span class="kw">crate</span> <span class="ident">alloc</span>;
+<span class="attribute">#[cfg(feature = <span class="string">&quot;can_alloc&quot;</span>)]
+</span><span class="kw">extern crate </span>alloc;
 
-<span class="kw">use</span> <span class="ident">core</span>::{<span class="ident">convert::TryFrom</span>, <span class="ident">num::TryFromIntError</span>};
+<span class="kw">use </span>core::{convert::TryFrom, num::TryFromIntError};
 
-<span class="doccomment">/// A `Handle` is used to represent a task&#39;s access to a kernel object. It is allocated by the kernel and is unique</span>
-<span class="doccomment">/// to the task to which it is issued - a kernel object can have handles in multiple tasks (and the numbers will</span>
-<span class="doccomment">/// not be shared between those tasks).</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">PartialEq</span>, <span class="ident">Eq</span>, <span class="ident">PartialOrd</span>, <span class="ident">Ord</span>, <span class="ident">Debug</span>)]</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">Handle</span>(<span class="kw">pub</span> <span class="ident">u32</span>);
+<span class="doccomment">/// A `Handle` is used to represent a task&#39;s access to a kernel object. It is allocated by the kernel and is unique
+/// to the task to which it is issued - a kernel object can have handles in multiple tasks (and the numbers will
+/// not be shared between those tasks).
+</span><span class="attribute">#[derive(PartialEq, Eq, PartialOrd, Ord, Debug)]
+</span><span class="kw">pub struct </span>Handle(<span class="kw">pub </span>u32);
 
-<span class="kw">pub</span> <span class="kw">const</span> <span class="ident">ZERO_HANDLE</span>: <span class="ident">Handle</span> <span class="op">=</span> <span class="ident">Handle</span>(<span class="number">0</span>);
+<span class="kw">pub const </span>ZERO_HANDLE: Handle = Handle(<span class="number">0</span>);
 
 <span class="comment">/*
  * Often, handles are passed in single syscall parameters, and need to be turned into `Handle`s fallibly.
  * XXX: this cannot be used to convert `Result` types that contain handles - it simply does the bounds check!
- */</span>
-<span class="kw">impl</span> <span class="ident">TryFrom</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">Handle</span> {
-    <span class="kw">type</span> <span class="ident">Error</span> <span class="op">=</span> <span class="ident">TryFromIntError</span>;
+ */
+</span><span class="kw">impl </span>TryFrom&lt;usize&gt; <span class="kw">for </span>Handle {
+    <span class="kw">type </span>Error = TryFromIntError;
 
-    <span class="kw">fn</span> <span class="ident">try_from</span>(<span class="ident">value</span>: <span class="ident">usize</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="self">Self</span>, <span class="ident"><span class="self">Self</span>::Error</span><span class="op">&gt;</span> {
-        <span class="prelude-val">Ok</span>(<span class="ident">Handle</span>(<span class="ident">u32::try_from</span>(<span class="ident">value</span>)<span class="question-mark">?</span>))
+    <span class="kw">fn </span>try_from(value: usize) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, <span class="self">Self</span>::Error&gt; {
+        <span class="prelude-val">Ok</span>(Handle(u32::try_from(value)<span class="question-mark">?</span>))
     }
 }
 
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;ptah&quot;</span>)]</span>
-<span class="kw">impl</span> <span class="ident">ptah::Serialize</span> <span class="kw">for</span> <span class="ident">Handle</span> {
-    <span class="kw">fn</span> <span class="ident">serialize</span><span class="op">&lt;</span><span class="ident">W</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">serializer</span>: <span class="kw-2">&amp;mut</span> <span class="ident">ptah::Serializer</span><span class="op">&lt;</span><span class="ident">W</span><span class="op">&gt;</span>) -&gt; <span class="ident">ptah::ser::Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span>
-    <span class="kw">where</span>
-        <span class="ident">W</span>: <span class="ident">ptah::Writer</span>,
+<span class="attribute">#[cfg(feature = <span class="string">&quot;ptah&quot;</span>)]
+</span><span class="kw">impl </span>ptah::Serialize <span class="kw">for </span>Handle {
+    <span class="kw">fn </span>serialize&lt;W&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, serializer: <span class="kw-2">&amp;mut </span>ptah::Serializer&lt;W&gt;) -&gt; ptah::ser::Result&lt;()&gt;
+    <span class="kw">where
+        </span>W: ptah::Writer,
     {
-        <span class="ident">serializer</span>.<span class="ident">serialize_handle</span>(<span class="self">self</span>.<span class="number">0</span> <span class="kw">as</span> <span class="ident">ptah::Handle</span>)
+        serializer.serialize_handle(<span class="self">self</span>.<span class="number">0 </span><span class="kw">as </span>ptah::Handle)
     }
 }
 
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;ptah&quot;</span>)]</span>
-<span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;de</span><span class="op">&gt;</span> <span class="ident">ptah::Deserialize</span><span class="op">&lt;</span><span class="lifetime">&#39;de</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">Handle</span> {
-    <span class="kw">fn</span> <span class="ident">deserialize</span>(<span class="ident">deserializer</span>: <span class="kw-2">&amp;mut</span> <span class="ident">ptah::Deserializer</span><span class="op">&lt;</span><span class="lifetime">&#39;de</span><span class="op">&gt;</span>) -&gt; <span class="ident">ptah::de::Result</span><span class="op">&lt;</span><span class="ident">Handle</span><span class="op">&gt;</span> {
-        <span class="prelude-val">Ok</span>(<span class="ident">Handle</span>(<span class="ident">deserializer</span>.<span class="ident">deserialize_handle</span>()<span class="question-mark">?</span>))
+<span class="attribute">#[cfg(feature = <span class="string">&quot;ptah&quot;</span>)]
+</span><span class="kw">impl</span>&lt;<span class="lifetime">&#39;de</span>&gt; ptah::Deserialize&lt;<span class="lifetime">&#39;de</span>&gt; <span class="kw">for </span>Handle {
+    <span class="kw">fn </span>deserialize(deserializer: <span class="kw-2">&amp;mut </span>ptah::Deserializer&lt;<span class="lifetime">&#39;de</span>&gt;) -&gt; ptah::de::Result&lt;Handle&gt; {
+        <span class="prelude-val">Ok</span>(Handle(deserializer.deserialize_handle()<span class="question-mark">?</span>))
     }
 }
 
-<span class="comment">// TODO: we can&#39;t bring `bitflags` in because of std :(</span>
-<span class="comment">// bitflags::bitflags! {</span>
-<span class="comment">//     struct HandleRights: u32 {</span>
-<span class="comment">//         /// Whether the handle&#39;s owner can use it to modify the kernel object it points to. What is means to</span>
-<span class="comment">//         /// &quot;modify&quot; a kernel object differs depending on the type of the kernel object.</span>
-<span class="comment">//         const MODIFY = 0b1;</span>
-<span class="comment">//         /// Whether the handle can be duplicated.</span>
-<span class="comment">//         const DUPLICATE = 0b10;</span>
-<span class="comment">//         /// Whether the handle can be transferred over a `Channel`.</span>
-<span class="comment">//         const TRANSFER = 0b100;</span>
-<span class="comment">//         /// For `MemoryObject`s, whether the memory can be mapped into the handle owner&#39;s `AddressSpace`.</span>
-<span class="comment">//         const MAP = 0x1000;</span>
-<span class="comment">//         /// For `Channel` ends, whether the `send_message` system call can be used on this `Channel` end.</span>
-<span class="comment">//         const SEND = 0x1_0000;</span>
-<span class="comment">//         /// For `Channel` ends, whether the `receive_message` &amp; co. system calls can be used on this `Channel` end.</span>
-<span class="comment">//         const RECEIVE = 0x10_0000;</span>
-<span class="comment">//     }</span>
-<span class="comment">// }</span>
-</code></pre></div>
-</section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="poplar" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.65.0-nightly (34a6cae28 2022-08-09)" ></div></body></html>
+<span class="comment">// TODO: we can&#39;t bring `bitflags` in because of std :(
+// bitflags::bitflags! {
+//     struct HandleRights: u32 {
+//         /// Whether the handle&#39;s owner can use it to modify the kernel object it points to. What is means to
+//         /// &quot;modify&quot; a kernel object differs depending on the type of the kernel object.
+//         const MODIFY = 0b1;
+//         /// Whether the handle can be duplicated.
+//         const DUPLICATE = 0b10;
+//         /// Whether the handle can be transferred over a `Channel`.
+//         const TRANSFER = 0b100;
+//         /// For `MemoryObject`s, whether the memory can be mapped into the handle owner&#39;s `AddressSpace`.
+//         const MAP = 0x1000;
+//         /// For `Channel` ends, whether the `send_message` system call can be used on this `Channel` end.
+//         const SEND = 0x1_0000;
+//         /// For `Channel` ends, whether the `receive_message` &amp; co. system calls can be used on this `Channel` end.
+//         const RECEIVE = 0x10_0000;
+//     }
+// }
+</span></code></pre></div>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="poplar" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.65.0-nightly (b44197abb 2022-09-05)" ></div></body></html>

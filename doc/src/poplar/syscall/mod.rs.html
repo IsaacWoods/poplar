@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/work/poplar/poplar/lib/poplar/src/syscall/mod.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>mod.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../storage.js"></script><script defer src="../../../source-script.js"></script><script defer src="../../../source-files.js"></script><script defer src="../../../main.js"></script><noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../../poplar/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div></a><h2 class="location"></h2></nav><nav class="sidebar"><a class="sidebar-logo" href="../../../poplar/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div></a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../../poplar/index.html"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></a><nav class="sub"><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><button type="button">?</button></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../wheel.svg"></a></div></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/work/poplar/poplar/lib/poplar/src/syscall/mod.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>mod.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" href="../../../normalize.css"><link rel="stylesheet" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" href="../../../ayu.css" disabled><link rel="stylesheet" href="../../../dark.css" disabled><link rel="stylesheet" href="../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../storage.js"></script><script defer src="../../../source-script.js"></script><script defer src="../../../source-files.js"></script><script defer src="../../../main.js"></script><noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../../poplar/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div></a><h2 class="location"></h2></nav><nav class="sidebar"><a class="sidebar-logo" href="../../../poplar/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div></a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../../poplar/index.html"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></a><nav class="sub"><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><button type="button">?</button></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../wheel.svg"></a></div></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
 <span id="2">2</span>
 <span id="3">3</span>
 <span id="4">4</span>
@@ -201,208 +201,208 @@
 <span id="201">201</span>
 <span id="202">202</span>
 <span id="203">203</span>
-</pre><pre class="rust"><code><span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">get_framebuffer</span>;
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;pci&quot;</span>)]</span>
-<span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">pci</span>;
-<span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">result</span>;
+</pre><pre class="rust"><code><span class="kw">pub mod </span>get_framebuffer;
+<span class="attribute">#[cfg(feature = <span class="string">&quot;pci&quot;</span>)]
+</span><span class="kw">pub mod </span>pci;
+<span class="kw">pub mod </span>result;
 
-<span class="kw">pub</span> <span class="kw">use</span> <span class="ident">get_framebuffer</span>::{<span class="ident">get_framebuffer</span>, <span class="ident">FramebufferInfo</span>, <span class="ident">GetFramebufferError</span>, <span class="ident">PixelFormat</span>};
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">all</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;can_alloc&quot;</span>, <span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;pci&quot;</span>))]</span>
-<span class="kw">pub</span> <span class="kw">use</span> <span class="ident">pci::pci_get_info_vec</span>;
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;pci&quot;</span>)]</span>
-<span class="kw">pub</span> <span class="kw">use</span> <span class="ident">pci</span>::{<span class="ident">pci_get_info</span>, <span class="ident">pci_get_info_slice</span>, <span class="ident">PciDeviceInfo</span>, <span class="ident">PciGetInfoError</span>};
+<span class="kw">pub use </span>get_framebuffer::{get_framebuffer, FramebufferInfo, GetFramebufferError, PixelFormat};
+<span class="attribute">#[cfg(all(feature = <span class="string">&quot;can_alloc&quot;</span>, feature = <span class="string">&quot;pci&quot;</span>))]
+</span><span class="kw">pub use </span>pci::pci_get_info_vec;
+<span class="attribute">#[cfg(feature = <span class="string">&quot;pci&quot;</span>)]
+</span><span class="kw">pub use </span>pci::{pci_get_info, pci_get_info_slice, PciDeviceInfo, PciGetInfoError};
 
-<span class="macro">cfg_if::cfg_if!</span> {
-    <span class="kw">if</span> <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;x86_64&quot;</span>)]</span> {
-        <span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">raw_x86_64</span>;
-        <span class="kw">pub</span> <span class="kw">use</span> <span class="ident">raw_x86_64</span> <span class="kw">as</span> <span class="ident">raw</span>;
-    } <span class="kw">else</span> {
+<span class="macro">cfg_if::cfg_if! </span>{
+    <span class="kw">if </span><span class="attribute">#[cfg(target_arch = <span class="string">&quot;x86_64&quot;</span>)] </span>{
+        <span class="kw">pub mod </span>raw_x86_64;
+        <span class="kw">pub use </span>raw_x86_64 <span class="kw">as </span>raw;
+    } <span class="kw">else </span>{
         <span class="macro">compile_error!</span>(<span class="string">&quot;poplar does not support this target architecture!&quot;</span>);
     }
 }
 
-<span class="kw">use</span> <span class="kw">crate</span>::{<span class="ident">bit_field::BitField</span>, <span class="ident">Handle</span>};
-<span class="kw">use</span> <span class="ident">result</span>::{<span class="ident">define_error_type</span>, <span class="ident">handle_from_syscall_repr</span>, <span class="ident">status_from_syscall_repr</span>};
+<span class="kw">use crate</span>::{bit_field::BitField, Handle};
+<span class="kw">use </span>result::{define_error_type, handle_from_syscall_repr, status_from_syscall_repr};
 
-<span class="kw">pub</span> <span class="kw">const</span> <span class="ident">SYSCALL_YIELD</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="number">0</span>;
-<span class="kw">pub</span> <span class="kw">const</span> <span class="ident">SYSCALL_EARLY_LOG</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="number">1</span>;
-<span class="kw">pub</span> <span class="kw">const</span> <span class="ident">SYSCALL_GET_FRAMEBUFFER</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="number">2</span>;
-<span class="kw">pub</span> <span class="kw">const</span> <span class="ident">SYSCALL_CREATE_MEMORY_OBJECT</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="number">3</span>;
-<span class="kw">pub</span> <span class="kw">const</span> <span class="ident">SYSCALL_MAP_MEMORY_OBJECT</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="number">4</span>;
-<span class="kw">pub</span> <span class="kw">const</span> <span class="ident">SYSCALL_CREATE_CHANNEL</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="number">5</span>;
-<span class="kw">pub</span> <span class="kw">const</span> <span class="ident">SYSCALL_SEND_MESSAGE</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="number">6</span>;
-<span class="kw">pub</span> <span class="kw">const</span> <span class="ident">SYSCALL_GET_MESSAGE</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="number">7</span>;
-<span class="kw">pub</span> <span class="kw">const</span> <span class="ident">SYSCALL_WAIT_FOR_MESSAGE</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="number">8</span>;
-<span class="kw">pub</span> <span class="kw">const</span> <span class="ident">SYSCALL_REGISTER_SERVICE</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="number">9</span>;
-<span class="kw">pub</span> <span class="kw">const</span> <span class="ident">SYSCALL_SUBSCRIBE_TO_SERVICE</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="number">10</span>;
-<span class="kw">pub</span> <span class="kw">const</span> <span class="ident">SYSCALL_PCI_GET_INFO</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="number">11</span>;
+<span class="kw">pub const </span>SYSCALL_YIELD: usize = <span class="number">0</span>;
+<span class="kw">pub const </span>SYSCALL_EARLY_LOG: usize = <span class="number">1</span>;
+<span class="kw">pub const </span>SYSCALL_GET_FRAMEBUFFER: usize = <span class="number">2</span>;
+<span class="kw">pub const </span>SYSCALL_CREATE_MEMORY_OBJECT: usize = <span class="number">3</span>;
+<span class="kw">pub const </span>SYSCALL_MAP_MEMORY_OBJECT: usize = <span class="number">4</span>;
+<span class="kw">pub const </span>SYSCALL_CREATE_CHANNEL: usize = <span class="number">5</span>;
+<span class="kw">pub const </span>SYSCALL_SEND_MESSAGE: usize = <span class="number">6</span>;
+<span class="kw">pub const </span>SYSCALL_GET_MESSAGE: usize = <span class="number">7</span>;
+<span class="kw">pub const </span>SYSCALL_WAIT_FOR_MESSAGE: usize = <span class="number">8</span>;
+<span class="kw">pub const </span>SYSCALL_REGISTER_SERVICE: usize = <span class="number">9</span>;
+<span class="kw">pub const </span>SYSCALL_SUBSCRIBE_TO_SERVICE: usize = <span class="number">10</span>;
+<span class="kw">pub const </span>SYSCALL_PCI_GET_INFO: usize = <span class="number">11</span>;
 
-<span class="kw">pub</span> <span class="kw">const</span> <span class="ident">SYSCALL_TEST</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="ident">usize::MAX</span>;
+<span class="kw">pub const </span>SYSCALL_TEST: usize = usize::MAX;
 
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">yield_to_kernel</span>() {
-    <span class="kw">unsafe</span> {
-        <span class="ident">raw::syscall0</span>(<span class="ident">SYSCALL_YIELD</span>);
+<span class="kw">pub fn </span>yield_to_kernel() {
+    <span class="kw">unsafe </span>{
+        raw::syscall0(SYSCALL_YIELD);
     }
 }
 
-<span class="macro">define_error_type!</span>(<span class="ident">EarlyLogError</span> {
-    <span class="ident">MessageTooLong</span> =&gt; <span class="number">1</span>,
-    <span class="ident">MessageNotValidUtf8</span> =&gt; <span class="number">2</span>,
-    <span class="ident">TaskDoesNotHaveCorrectCapability</span> =&gt; <span class="number">3</span>,
+<span class="macro">define_error_type!</span>(EarlyLogError {
+    MessageTooLong =&gt; <span class="number">1</span>,
+    MessageNotValidUtf8 =&gt; <span class="number">2</span>,
+    TaskDoesNotHaveCorrectCapability =&gt; <span class="number">3</span>,
 });
 
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">early_log</span>(<span class="ident">message</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">EarlyLogError</span><span class="op">&gt;</span> {
-    <span class="ident">status_from_syscall_repr</span>(<span class="kw">unsafe</span> {
-        <span class="ident">raw::syscall2</span>(<span class="ident">SYSCALL_EARLY_LOG</span>, <span class="ident">message</span>.<span class="ident">len</span>(), <span class="ident">message</span> <span class="kw">as</span> <span class="kw-2">*const</span> <span class="ident">str</span> <span class="kw">as</span> <span class="kw-2">*const</span> <span class="ident">u8</span> <span class="kw">as</span> <span class="ident">usize</span>)
+<span class="kw">pub fn </span>early_log(message: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Result</span>&lt;(), EarlyLogError&gt; {
+    status_from_syscall_repr(<span class="kw">unsafe </span>{
+        raw::syscall2(SYSCALL_EARLY_LOG, message.len(), message <span class="kw">as </span><span class="kw-2">*const </span>str <span class="kw">as </span><span class="kw-2">*const </span>u8 <span class="kw">as </span>usize)
     })
 }
 
-<span class="macro">define_error_type!</span>(<span class="ident">CreateMemoryObjectError</span> {
-    <span class="ident">InvalidVirtualAddress</span> =&gt; <span class="number">1</span>,
-    <span class="ident">InvalidFlags</span> =&gt; <span class="number">2</span>,
-    <span class="ident">InvalidSize</span> =&gt; <span class="number">3</span>,
-    <span class="ident">InvalidPhysicalAddressPointer</span> =&gt; <span class="number">4</span>,
+<span class="macro">define_error_type!</span>(CreateMemoryObjectError {
+    InvalidVirtualAddress =&gt; <span class="number">1</span>,
+    InvalidFlags =&gt; <span class="number">2</span>,
+    InvalidSize =&gt; <span class="number">3</span>,
+    InvalidPhysicalAddressPointer =&gt; <span class="number">4</span>,
 });
 
-<span class="doccomment">/// Create a MemoryObject kernel object at the given virtual address, with the given size (in bytes). Returns a</span>
-<span class="doccomment">/// handle to the new MemoryObject, if the call was successful.</span>
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">create_memory_object</span>(
-    <span class="ident">virtual_address</span>: <span class="ident">usize</span>,
-    <span class="ident">size</span>: <span class="ident">usize</span>,
-    <span class="ident">writable</span>: <span class="ident">bool</span>,
-    <span class="ident">executable</span>: <span class="ident">bool</span>,
-    <span class="ident">physical_address_ptr</span>: <span class="kw-2">*mut</span> <span class="ident">usize</span>,
-) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Handle</span>, <span class="ident">CreateMemoryObjectError</span><span class="op">&gt;</span> {
-    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">flags</span> <span class="op">=</span> <span class="number">0usize</span>;
-    <span class="ident">flags</span>.<span class="ident">set_bit</span>(<span class="number">0</span>, <span class="ident">writable</span>);
-    <span class="ident">flags</span>.<span class="ident">set_bit</span>(<span class="number">1</span>, <span class="ident">executable</span>);
+<span class="doccomment">/// Create a MemoryObject kernel object at the given virtual address, with the given size (in bytes). Returns a
+/// handle to the new MemoryObject, if the call was successful.
+</span><span class="kw">pub fn </span>create_memory_object(
+    virtual_address: usize,
+    size: usize,
+    writable: bool,
+    executable: bool,
+    physical_address_ptr: <span class="kw-2">*mut </span>usize,
+) -&gt; <span class="prelude-ty">Result</span>&lt;Handle, CreateMemoryObjectError&gt; {
+    <span class="kw">let </span><span class="kw-2">mut </span>flags = <span class="number">0usize</span>;
+    flags.set_bit(<span class="number">0</span>, writable);
+    flags.set_bit(<span class="number">1</span>, executable);
 
-    <span class="ident">handle_from_syscall_repr</span>(<span class="kw">unsafe</span> {
-        <span class="ident">raw::syscall4</span>(<span class="ident">SYSCALL_CREATE_MEMORY_OBJECT</span>, <span class="ident">virtual_address</span>, <span class="ident">size</span>, <span class="ident">flags</span>, <span class="ident">physical_address_ptr</span> <span class="kw">as</span> <span class="ident">usize</span>)
+    handle_from_syscall_repr(<span class="kw">unsafe </span>{
+        raw::syscall4(SYSCALL_CREATE_MEMORY_OBJECT, virtual_address, size, flags, physical_address_ptr <span class="kw">as </span>usize)
     })
 }
 
-<span class="macro">define_error_type!</span>(<span class="ident">MapMemoryObjectError</span> {
-    <span class="ident">InvalidHandle</span> =&gt; <span class="number">1</span>,
-    <span class="ident">RegionAlreadyMapped</span> =&gt; <span class="number">2</span>,
-    <span class="ident">NotAMemoryObject</span> =&gt; <span class="number">3</span>,
-    <span class="ident">NotAnAddressSpace</span> =&gt; <span class="number">4</span>,
-    <span class="ident">AddressPointerInvalid</span> =&gt; <span class="number">5</span>,
-    <span class="ident">VirtualAddressNotSupplied</span> =&gt; <span class="number">6</span>,
-    <span class="ident">VirtualAddressShouldNotBeSupplied</span> =&gt; <span class="number">7</span>,
+<span class="macro">define_error_type!</span>(MapMemoryObjectError {
+    InvalidHandle =&gt; <span class="number">1</span>,
+    RegionAlreadyMapped =&gt; <span class="number">2</span>,
+    NotAMemoryObject =&gt; <span class="number">3</span>,
+    NotAnAddressSpace =&gt; <span class="number">4</span>,
+    AddressPointerInvalid =&gt; <span class="number">5</span>,
+    VirtualAddressNotSupplied =&gt; <span class="number">6</span>,
+    VirtualAddressShouldNotBeSupplied =&gt; <span class="number">7</span>,
 });
 
-<span class="kw">pub</span> <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">map_memory_object</span>(
-    <span class="ident">memory_object</span>: <span class="kw-2">&amp;</span><span class="ident">Handle</span>,
-    <span class="ident">address_space</span>: <span class="kw-2">&amp;</span><span class="ident">Handle</span>,
-    <span class="ident">virtual_address</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span>,
-    <span class="ident">address_pointer</span>: <span class="kw-2">*mut</span> <span class="ident">usize</span>,
-) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">MapMemoryObjectError</span><span class="op">&gt;</span> {
-    <span class="ident">status_from_syscall_repr</span>(<span class="kw">unsafe</span> {
-        <span class="ident">raw::syscall4</span>(
-            <span class="ident">SYSCALL_MAP_MEMORY_OBJECT</span>,
-            <span class="ident">memory_object</span>.<span class="number">0</span> <span class="kw">as</span> <span class="ident">usize</span>,
-            <span class="ident">address_space</span>.<span class="number">0</span> <span class="kw">as</span> <span class="ident">usize</span>,
-            <span class="kw">if</span> <span class="ident">virtual_address</span>.<span class="ident">is_some</span>() { <span class="ident">virtual_address</span>.<span class="ident">unwrap</span>() } <span class="kw">else</span> { <span class="number">0x0</span> },
-            <span class="ident">address_pointer</span> <span class="kw">as</span> <span class="ident">usize</span>,
+<span class="kw">pub unsafe fn </span>map_memory_object(
+    memory_object: <span class="kw-2">&amp;</span>Handle,
+    address_space: <span class="kw-2">&amp;</span>Handle,
+    virtual_address: <span class="prelude-ty">Option</span>&lt;usize&gt;,
+    address_pointer: <span class="kw-2">*mut </span>usize,
+) -&gt; <span class="prelude-ty">Result</span>&lt;(), MapMemoryObjectError&gt; {
+    status_from_syscall_repr(<span class="kw">unsafe </span>{
+        raw::syscall4(
+            SYSCALL_MAP_MEMORY_OBJECT,
+            memory_object.<span class="number">0 </span><span class="kw">as </span>usize,
+            address_space.<span class="number">0 </span><span class="kw">as </span>usize,
+            <span class="kw">if </span>virtual_address.is_some() { virtual_address.unwrap() } <span class="kw">else </span>{ <span class="number">0x0 </span>},
+            address_pointer <span class="kw">as </span>usize,
         )
     })
 }
 
-<span class="kw">pub</span> <span class="kw">const</span> <span class="ident">CHANNEL_MAX_NUM_BYTES</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="number">4096</span>;
-<span class="kw">pub</span> <span class="kw">const</span> <span class="ident">CHANNEL_MAX_NUM_HANDLES</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="number">4</span>;
+<span class="kw">pub const </span>CHANNEL_MAX_NUM_BYTES: usize = <span class="number">4096</span>;
+<span class="kw">pub const </span>CHANNEL_MAX_NUM_HANDLES: usize = <span class="number">4</span>;
 
-<span class="macro">define_error_type!</span>(<span class="ident">SendMessageError</span> {
-    <span class="doccomment">/// The `Channel` handle is invalid.</span>
-    <span class="ident">InvalidChannelHandle</span> =&gt; <span class="number">1</span>,
-    <span class="doccomment">/// The `Channel` handle isn&#39;t a `Channel`.</span>
-    <span class="ident">NotAChannel</span> =&gt; <span class="number">2</span>,
-    <span class="doccomment">/// The `Channel` handle must have the `SEND` right to use the `send_message` system call.</span>
-    <span class="ident">ChannelCannotSend</span> =&gt; <span class="number">3</span>,
-    <span class="doccomment">/// A handle to be transferred is invalid.</span>
-    <span class="ident">InvalidTransferredHandle</span> =&gt; <span class="number">4</span>,
-    <span class="doccomment">/// Transferred handles must have the `TRANSFER` right.</span>
-    <span class="ident">CannotTransferHandle</span> =&gt; <span class="number">5</span>,
-    <span class="ident">BytesAddressInvalid</span> =&gt; <span class="number">6</span>,
-    <span class="ident">TooManyBytes</span> =&gt; <span class="number">7</span>,
-    <span class="ident">HandlesAddressInvalid</span> =&gt; <span class="number">8</span>,
-    <span class="ident">TooManyHandles</span> =&gt; <span class="number">9</span>,
-    <span class="ident">OtherEndDisconnected</span> =&gt; <span class="number">10</span>,
+<span class="macro">define_error_type!</span>(SendMessageError {
+    <span class="doccomment">/// The `Channel` handle is invalid.
+    </span>InvalidChannelHandle =&gt; <span class="number">1</span>,
+    <span class="doccomment">/// The `Channel` handle isn&#39;t a `Channel`.
+    </span>NotAChannel =&gt; <span class="number">2</span>,
+    <span class="doccomment">/// The `Channel` handle must have the `SEND` right to use the `send_message` system call.
+    </span>ChannelCannotSend =&gt; <span class="number">3</span>,
+    <span class="doccomment">/// A handle to be transferred is invalid.
+    </span>InvalidTransferredHandle =&gt; <span class="number">4</span>,
+    <span class="doccomment">/// Transferred handles must have the `TRANSFER` right.
+    </span>CannotTransferHandle =&gt; <span class="number">5</span>,
+    BytesAddressInvalid =&gt; <span class="number">6</span>,
+    TooManyBytes =&gt; <span class="number">7</span>,
+    HandlesAddressInvalid =&gt; <span class="number">8</span>,
+    TooManyHandles =&gt; <span class="number">9</span>,
+    OtherEndDisconnected =&gt; <span class="number">10</span>,
 });
 
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">send_message</span>(<span class="ident">channel</span>: <span class="kw-2">&amp;</span><span class="ident">Handle</span>, <span class="ident">bytes</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>], <span class="ident">handles</span>: <span class="kw-2">&amp;</span>[<span class="ident">Handle</span>]) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">SendMessageError</span><span class="op">&gt;</span> {
-    <span class="ident">status_from_syscall_repr</span>(<span class="kw">unsafe</span> {
-        <span class="ident">raw::syscall5</span>(
-            <span class="ident">SYSCALL_SEND_MESSAGE</span>,
-            <span class="ident">channel</span>.<span class="number">0</span> <span class="kw">as</span> <span class="ident">usize</span>,
-            <span class="kw">if</span> <span class="ident">bytes</span>.<span class="ident">len</span>() <span class="op">==</span> <span class="number">0</span> { <span class="number">0x0</span> } <span class="kw">else</span> { <span class="ident">bytes</span>.<span class="ident">as_ptr</span>() <span class="kw">as</span> <span class="ident">usize</span> },
-            <span class="ident">bytes</span>.<span class="ident">len</span>(),
-            <span class="kw">if</span> <span class="ident">handles</span>.<span class="ident">len</span>() <span class="op">==</span> <span class="number">0</span> { <span class="number">0x0</span> } <span class="kw">else</span> { <span class="ident">handles</span>.<span class="ident">as_ptr</span>() <span class="kw">as</span> <span class="ident">usize</span> },
-            <span class="ident">handles</span>.<span class="ident">len</span>(),
+<span class="kw">pub fn </span>send_message(channel: <span class="kw-2">&amp;</span>Handle, bytes: <span class="kw-2">&amp;</span>[u8], handles: <span class="kw-2">&amp;</span>[Handle]) -&gt; <span class="prelude-ty">Result</span>&lt;(), SendMessageError&gt; {
+    status_from_syscall_repr(<span class="kw">unsafe </span>{
+        raw::syscall5(
+            SYSCALL_SEND_MESSAGE,
+            channel.<span class="number">0 </span><span class="kw">as </span>usize,
+            <span class="kw">if </span>bytes.len() == <span class="number">0 </span>{ <span class="number">0x0 </span>} <span class="kw">else </span>{ bytes.as_ptr() <span class="kw">as </span>usize },
+            bytes.len(),
+            <span class="kw">if </span>handles.len() == <span class="number">0 </span>{ <span class="number">0x0 </span>} <span class="kw">else </span>{ handles.as_ptr() <span class="kw">as </span>usize },
+            handles.len(),
         )
     })
 }
 
-<span class="macro">define_error_type!</span>(<span class="ident">GetMessageError</span> {
-    <span class="ident">InvalidChannelHandle</span> =&gt; <span class="number">1</span>,
-    <span class="ident">NotAChannel</span> =&gt; <span class="number">2</span>,
-    <span class="ident">NoMessage</span> =&gt; <span class="number">3</span>,
-    <span class="ident">BytesAddressInvalid</span> =&gt; <span class="number">4</span>,
-    <span class="ident">BytesBufferTooSmall</span> =&gt; <span class="number">5</span>,
-    <span class="ident">HandlesAddressInvalid</span> =&gt; <span class="number">6</span>,
-    <span class="ident">HandlesBufferTooSmall</span> =&gt; <span class="number">7</span>,
+<span class="macro">define_error_type!</span>(GetMessageError {
+    InvalidChannelHandle =&gt; <span class="number">1</span>,
+    NotAChannel =&gt; <span class="number">2</span>,
+    NoMessage =&gt; <span class="number">3</span>,
+    BytesAddressInvalid =&gt; <span class="number">4</span>,
+    BytesBufferTooSmall =&gt; <span class="number">5</span>,
+    HandlesAddressInvalid =&gt; <span class="number">6</span>,
+    HandlesBufferTooSmall =&gt; <span class="number">7</span>,
 });
 
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">get_message</span><span class="op">&lt;</span><span class="lifetime">&#39;b</span>, <span class="lifetime">&#39;h</span><span class="op">&gt;</span>(
-    <span class="ident">channel</span>: <span class="kw-2">&amp;</span><span class="ident">Handle</span>,
-    <span class="ident">byte_buffer</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;b</span> <span class="kw-2">mut</span> [<span class="ident">u8</span>],
-    <span class="ident">handle_buffer</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;h</span> <span class="kw-2">mut</span> [<span class="ident">Handle</span>],
-) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(<span class="kw-2">&amp;</span><span class="lifetime">&#39;b</span> <span class="kw-2">mut</span> [<span class="ident">u8</span>], <span class="kw-2">&amp;</span><span class="lifetime">&#39;h</span> <span class="kw-2">mut</span> [<span class="ident">Handle</span>]), <span class="ident">GetMessageError</span><span class="op">&gt;</span> {
-    <span class="kw">let</span> <span class="ident">result</span> <span class="op">=</span> <span class="kw">unsafe</span> {
-        <span class="ident">raw::syscall5</span>(
-            <span class="ident">SYSCALL_GET_MESSAGE</span>,
-            <span class="ident">channel</span>.<span class="number">0</span> <span class="kw">as</span> <span class="ident">usize</span>,
-            <span class="kw">if</span> <span class="ident">byte_buffer</span>.<span class="ident">len</span>() <span class="op">==</span> <span class="number">0</span> { <span class="number">0x0</span> } <span class="kw">else</span> { <span class="ident">byte_buffer</span>.<span class="ident">as_ptr</span>() <span class="kw">as</span> <span class="ident">usize</span> },
-            <span class="ident">byte_buffer</span>.<span class="ident">len</span>(),
-            <span class="kw">if</span> <span class="ident">handle_buffer</span>.<span class="ident">len</span>() <span class="op">==</span> <span class="number">0</span> { <span class="number">0x0</span> } <span class="kw">else</span> { <span class="ident">handle_buffer</span>.<span class="ident">as_ptr</span>() <span class="kw">as</span> <span class="ident">usize</span> },
-            <span class="ident">handle_buffer</span>.<span class="ident">len</span>(),
+<span class="kw">pub fn </span>get_message&lt;<span class="lifetime">&#39;b</span>, <span class="lifetime">&#39;h</span>&gt;(
+    channel: <span class="kw-2">&amp;</span>Handle,
+    byte_buffer: <span class="kw-2">&amp;</span><span class="lifetime">&#39;b </span><span class="kw-2">mut </span>[u8],
+    handle_buffer: <span class="kw-2">&amp;</span><span class="lifetime">&#39;h </span><span class="kw-2">mut </span>[Handle],
+) -&gt; <span class="prelude-ty">Result</span>&lt;(<span class="kw-2">&amp;</span><span class="lifetime">&#39;b </span><span class="kw-2">mut </span>[u8], <span class="kw-2">&amp;</span><span class="lifetime">&#39;h </span><span class="kw-2">mut </span>[Handle]), GetMessageError&gt; {
+    <span class="kw">let </span>result = <span class="kw">unsafe </span>{
+        raw::syscall5(
+            SYSCALL_GET_MESSAGE,
+            channel.<span class="number">0 </span><span class="kw">as </span>usize,
+            <span class="kw">if </span>byte_buffer.len() == <span class="number">0 </span>{ <span class="number">0x0 </span>} <span class="kw">else </span>{ byte_buffer.as_ptr() <span class="kw">as </span>usize },
+            byte_buffer.len(),
+            <span class="kw">if </span>handle_buffer.len() == <span class="number">0 </span>{ <span class="number">0x0 </span>} <span class="kw">else </span>{ handle_buffer.as_ptr() <span class="kw">as </span>usize },
+            handle_buffer.len(),
         )
     };
-    <span class="ident">status_from_syscall_repr</span>(<span class="ident">result</span>.<span class="ident">get_bits</span>(<span class="number">0</span>..<span class="number">16</span>))<span class="question-mark">?</span>;
+    status_from_syscall_repr(result.get_bits(<span class="number">0</span>..<span class="number">16</span>))<span class="question-mark">?</span>;
 
-    <span class="kw">let</span> <span class="ident">valid_bytes_len</span> <span class="op">=</span> <span class="ident">result</span>.<span class="ident">get_bits</span>(<span class="number">16</span>..<span class="number">32</span>);
-    <span class="kw">let</span> <span class="ident">valid_handles_len</span> <span class="op">=</span> <span class="ident">result</span>.<span class="ident">get_bits</span>(<span class="number">32</span>..<span class="number">48</span>);
+    <span class="kw">let </span>valid_bytes_len = result.get_bits(<span class="number">16</span>..<span class="number">32</span>);
+    <span class="kw">let </span>valid_handles_len = result.get_bits(<span class="number">32</span>..<span class="number">48</span>);
 
-    <span class="prelude-val">Ok</span>((<span class="kw-2">&amp;mut</span> <span class="ident">byte_buffer</span>[<span class="number">0</span>..<span class="ident">valid_bytes_len</span>], <span class="kw-2">&amp;mut</span> <span class="ident">handle_buffer</span>[<span class="number">0</span>..<span class="ident">valid_handles_len</span>]))
+    <span class="prelude-val">Ok</span>((<span class="kw-2">&amp;mut </span>byte_buffer[<span class="number">0</span>..valid_bytes_len], <span class="kw-2">&amp;mut </span>handle_buffer[<span class="number">0</span>..valid_handles_len]))
 }
 
-<span class="kw">pub</span> <span class="kw">const</span> <span class="ident">SERVICE_NAME_MAX_LENGTH</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="number">256</span>;
+<span class="kw">pub const </span>SERVICE_NAME_MAX_LENGTH: usize = <span class="number">256</span>;
 
-<span class="macro">define_error_type!</span>(<span class="ident">RegisterServiceError</span> {
-    <span class="ident">TaskDoesNotHaveCorrectCapability</span> =&gt; <span class="number">1</span>,
-    <span class="ident">NamePointerNotValid</span> =&gt; <span class="number">2</span>,
-    <span class="doccomment">/// Name must be greater than `0` bytes, and not greater than `256` bytes.</span>
-    <span class="ident">NameLengthNotValid</span> =&gt; <span class="number">3</span>,
+<span class="macro">define_error_type!</span>(RegisterServiceError {
+    TaskDoesNotHaveCorrectCapability =&gt; <span class="number">1</span>,
+    NamePointerNotValid =&gt; <span class="number">2</span>,
+    <span class="doccomment">/// Name must be greater than `0` bytes, and not greater than `256` bytes.
+    </span>NameLengthNotValid =&gt; <span class="number">3</span>,
 });
 
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">register_service</span>(<span class="ident">name</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Handle</span>, <span class="ident">RegisterServiceError</span><span class="op">&gt;</span> {
-    <span class="ident">handle_from_syscall_repr</span>(<span class="kw">unsafe</span> {
-        <span class="ident">raw::syscall2</span>(<span class="ident">SYSCALL_REGISTER_SERVICE</span>, <span class="ident">name</span>.<span class="ident">len</span>(), <span class="ident">name</span>.<span class="ident">as_ptr</span>() <span class="kw">as</span> <span class="ident">usize</span>)
+<span class="kw">pub fn </span>register_service(name: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Result</span>&lt;Handle, RegisterServiceError&gt; {
+    handle_from_syscall_repr(<span class="kw">unsafe </span>{
+        raw::syscall2(SYSCALL_REGISTER_SERVICE, name.len(), name.as_ptr() <span class="kw">as </span>usize)
     })
 }
 
-<span class="macro">define_error_type!</span>(<span class="ident">SubscribeToServiceError</span> {
-    <span class="ident">TaskDoesNotHaveCorrectCapability</span> =&gt; <span class="number">1</span>,
-    <span class="ident">NamePointerNotValid</span> =&gt; <span class="number">2</span>,
-    <span class="doccomment">/// Name must be greater than `0` bytes, and not greater than `256` bytes.</span>
-    <span class="ident">NameLengthNotValid</span> =&gt; <span class="number">3</span>,
-    <span class="ident">NoServiceWithThatName</span> =&gt; <span class="number">4</span>,
+<span class="macro">define_error_type!</span>(SubscribeToServiceError {
+    TaskDoesNotHaveCorrectCapability =&gt; <span class="number">1</span>,
+    NamePointerNotValid =&gt; <span class="number">2</span>,
+    <span class="doccomment">/// Name must be greater than `0` bytes, and not greater than `256` bytes.
+    </span>NameLengthNotValid =&gt; <span class="number">3</span>,
+    NoServiceWithThatName =&gt; <span class="number">4</span>,
 });
 
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">subscribe_to_service</span>(<span class="ident">name</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Handle</span>, <span class="ident">SubscribeToServiceError</span><span class="op">&gt;</span> {
-    <span class="ident">handle_from_syscall_repr</span>(<span class="kw">unsafe</span> {
-        <span class="ident">raw::syscall2</span>(<span class="ident">SYSCALL_SUBSCRIBE_TO_SERVICE</span>, <span class="ident">name</span>.<span class="ident">len</span>(), <span class="ident">name</span>.<span class="ident">as_ptr</span>() <span class="kw">as</span> <span class="ident">usize</span>)
+<span class="kw">pub fn </span>subscribe_to_service(name: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Result</span>&lt;Handle, SubscribeToServiceError&gt; {
+    handle_from_syscall_repr(<span class="kw">unsafe </span>{
+        raw::syscall2(SYSCALL_SUBSCRIBE_TO_SERVICE, name.len(), name.as_ptr() <span class="kw">as </span>usize)
     })
 }
 </code></pre></div>
-</section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="poplar" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.65.0-nightly (34a6cae28 2022-08-09)" ></div></body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="poplar" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.65.0-nightly (b44197abb 2022-09-05)" ></div></body></html>

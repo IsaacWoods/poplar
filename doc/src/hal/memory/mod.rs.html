@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/work/poplar/poplar/lib/hal/src/memory/mod.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>mod.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../storage.js"></script><script defer src="../../../source-script.js"></script><script defer src="../../../source-files.js"></script><script defer src="../../../main.js"></script><noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../../hal/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div></a><h2 class="location"></h2></nav><nav class="sidebar"><a class="sidebar-logo" href="../../../hal/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div></a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../../hal/index.html"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></a><nav class="sub"><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><button type="button">?</button></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../wheel.svg"></a></div></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/work/poplar/poplar/lib/hal/src/memory/mod.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>mod.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" href="../../../normalize.css"><link rel="stylesheet" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" href="../../../ayu.css" disabled><link rel="stylesheet" href="../../../dark.css" disabled><link rel="stylesheet" href="../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../storage.js"></script><script defer src="../../../source-script.js"></script><script defer src="../../../source-files.js"></script><script defer src="../../../main.js"></script><noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../../hal/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div></a><h2 class="location"></h2></nav><nav class="sidebar"><a class="sidebar-logo" href="../../../hal/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div></a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../../hal/index.html"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></a><nav class="sub"><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><button type="button">?</button></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../wheel.svg"></a></div></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
 <span id="2">2</span>
 <span id="3">3</span>
 <span id="4">4</span>
@@ -107,114 +107,114 @@
 <span id="107">107</span>
 <span id="108">108</span>
 <span id="109">109</span>
-</pre><pre class="rust"><code><span class="doccomment">//! The HAL memory API tries to model an abstract version of a sensible architecture&#39;s virtual memory model. It</span>
-<span class="doccomment">//! should be suitable for implementations for x86_64, AArch64, and paged RISC-V.</span>
-<span class="doccomment">//!</span>
-<span class="doccomment">//! It assumes two address spaces, the physical and the virtual (each of which have an address type). Physical</span>
-<span class="doccomment">//! memory is split into frames, while virtual memory is split into pages. A `Mapper` can be used to map parts of</span>
-<span class="doccomment">//! the virtual address space into the physical address space.</span>
+</pre><pre class="rust"><code><span class="doccomment">//! The HAL memory API tries to model an abstract version of a sensible architecture&#39;s virtual memory model. It
+//! should be suitable for implementations for x86_64, AArch64, and paged RISC-V.
+//!
+//! It assumes two address spaces, the physical and the virtual (each of which have an address type). Physical
+//! memory is split into frames, while virtual memory is split into pages. A `Mapper` can be used to map parts of
+//! the virtual address space into the physical address space.
 
-<span class="kw">mod</span> <span class="ident">frame</span>;
-<span class="kw">mod</span> <span class="ident">page</span>;
-<span class="kw">mod</span> <span class="ident">paging</span>;
-<span class="kw">mod</span> <span class="ident">physical_address</span>;
-<span class="kw">mod</span> <span class="ident">virtual_address</span>;
+</span><span class="kw">mod </span>frame;
+<span class="kw">mod </span>page;
+<span class="kw">mod </span>paging;
+<span class="kw">mod </span>physical_address;
+<span class="kw">mod </span>virtual_address;
 
-<span class="kw">pub</span> <span class="kw">use</span> <span class="ident">frame::Frame</span>;
-<span class="kw">pub</span> <span class="kw">use</span> <span class="ident">page::Page</span>;
-<span class="kw">pub</span> <span class="kw">use</span> <span class="ident">paging</span>::{<span class="ident">Flags</span>, <span class="ident">PageTable</span>, <span class="ident">PagingError</span>};
-<span class="kw">pub</span> <span class="kw">use</span> <span class="ident">physical_address::PhysicalAddress</span>;
-<span class="kw">pub</span> <span class="kw">use</span> <span class="ident">virtual_address::VirtualAddress</span>;
+<span class="kw">pub use </span>frame::Frame;
+<span class="kw">pub use </span>page::Page;
+<span class="kw">pub use </span>paging::{Flags, PageTable, PagingError};
+<span class="kw">pub use </span>physical_address::PhysicalAddress;
+<span class="kw">pub use </span>virtual_address::VirtualAddress;
 
-<span class="kw">use</span> <span class="ident">core</span>::{<span class="ident">fmt::Debug</span>, <span class="ident">ops::Range</span>};
+<span class="kw">use </span>core::{fmt::Debug, ops::Range};
 
-<span class="kw">pub</span> <span class="kw">type</span> <span class="ident">Bytes</span> <span class="op">=</span> <span class="ident">usize</span>;
-<span class="kw">pub</span> <span class="kw">type</span> <span class="ident">Kibibytes</span> <span class="op">=</span> <span class="ident">usize</span>;
-<span class="kw">pub</span> <span class="kw">type</span> <span class="ident">Mebibytes</span> <span class="op">=</span> <span class="ident">usize</span>;
-<span class="kw">pub</span> <span class="kw">type</span> <span class="ident">Gibibytes</span> <span class="op">=</span> <span class="ident">usize</span>;
+<span class="kw">pub type </span>Bytes = usize;
+<span class="kw">pub type </span>Kibibytes = usize;
+<span class="kw">pub type </span>Mebibytes = usize;
+<span class="kw">pub type </span>Gibibytes = usize;
 
-<span class="kw">pub</span> <span class="kw">const</span> <span class="kw">fn</span> <span class="ident">kibibytes</span>(<span class="ident">kibibytes</span>: <span class="ident">Kibibytes</span>) -&gt; <span class="ident">Bytes</span> {
-    <span class="ident">kibibytes</span> <span class="op">*</span> <span class="number">1024</span>
+<span class="kw">pub const fn </span>kibibytes(kibibytes: Kibibytes) -&gt; Bytes {
+    kibibytes * <span class="number">1024
+</span>}
+
+<span class="kw">pub const fn </span>mebibytes(mebibytes: Mebibytes) -&gt; Bytes {
+    kibibytes(mebibytes * <span class="number">1024</span>)
 }
 
-<span class="kw">pub</span> <span class="kw">const</span> <span class="kw">fn</span> <span class="ident">mebibytes</span>(<span class="ident">mebibytes</span>: <span class="ident">Mebibytes</span>) -&gt; <span class="ident">Bytes</span> {
-    <span class="ident">kibibytes</span>(<span class="ident">mebibytes</span> <span class="op">*</span> <span class="number">1024</span>)
+<span class="kw">pub const fn </span>gibibytes(gibibytes: Gibibytes) -&gt; Bytes {
+    mebibytes(gibibytes * <span class="number">1024</span>)
 }
 
-<span class="kw">pub</span> <span class="kw">const</span> <span class="kw">fn</span> <span class="ident">gibibytes</span>(<span class="ident">gibibytes</span>: <span class="ident">Gibibytes</span>) -&gt; <span class="ident">Bytes</span> {
-    <span class="ident">mebibytes</span>(<span class="ident">gibibytes</span> <span class="op">*</span> <span class="number">1024</span>)
-}
+<span class="doccomment">/// This trait is implemented by a number of marker types, one for each size of frame and page. Different size
+/// types are defined depending on the target architecture.
+</span><span class="kw">pub trait </span>FrameSize: Clone + Copy + PartialEq + Eq + PartialOrd + Ord + Debug {
+    <span class="kw">const </span>SIZE: Bytes;
 
-<span class="doccomment">/// This trait is implemented by a number of marker types, one for each size of frame and page. Different size</span>
-<span class="doccomment">/// types are defined depending on the target architecture.</span>
-<span class="kw">pub</span> <span class="kw">trait</span> <span class="ident">FrameSize</span>: <span class="ident">Clone</span> <span class="op">+</span> <span class="ident">Copy</span> <span class="op">+</span> <span class="ident">PartialEq</span> <span class="op">+</span> <span class="ident">Eq</span> <span class="op">+</span> <span class="ident">PartialOrd</span> <span class="op">+</span> <span class="ident">Ord</span> <span class="op">+</span> <span class="ident">Debug</span> {
-    <span class="kw">const</span> <span class="ident">SIZE</span>: <span class="ident">Bytes</span>;
-
-    <span class="kw">fn</span> <span class="ident">frames_needed</span>(<span class="ident">bytes</span>: <span class="ident">Bytes</span>) -&gt; <span class="ident">Bytes</span> {
-        (<span class="ident">bytes</span> <span class="op">/</span> <span class="ident"><span class="self">Self</span>::SIZE</span>) <span class="op">+</span> <span class="kw">if</span> <span class="ident">bytes</span> <span class="op">%</span> <span class="ident"><span class="self">Self</span>::SIZE</span> <span class="op">&gt;</span> <span class="number">0</span> { <span class="number">1</span> } <span class="kw">else</span> { <span class="number">0</span> }
+    <span class="kw">fn </span>frames_needed(bytes: Bytes) -&gt; Bytes {
+        (bytes / <span class="self">Self</span>::SIZE) + <span class="kw">if </span>bytes % <span class="self">Self</span>::SIZE &gt; <span class="number">0 </span>{ <span class="number">1 </span>} <span class="kw">else </span>{ <span class="number">0 </span>}
     }
 }
 
-<span class="kw">macro</span> <span class="ident">frame_size</span>(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">name</span>: <span class="ident">ident</span>, <span class="macro-nonterminal">$</span><span class="macro-nonterminal">size</span>: <span class="ident">expr</span>, <span class="macro-nonterminal">$</span><span class="macro-nonterminal">condition</span>: <span class="ident">meta</span>) {
-    <span class="attribute">#[<span class="macro-nonterminal">$</span><span class="macro-nonterminal">condition</span>]</span>
-    <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Copy</span>, <span class="ident">PartialEq</span>, <span class="ident">Eq</span>, <span class="ident">PartialOrd</span>, <span class="ident">Ord</span>, <span class="ident">Debug</span>)]</span>
-    <span class="kw">pub</span> <span class="kw">enum</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">name</span> {}
+<span class="kw">macro </span>frame_size(<span class="macro-nonterminal">$name</span>: ident, <span class="macro-nonterminal">$size</span>: expr, <span class="macro-nonterminal">$condition</span>: meta) {
+    <span class="attribute">#[<span class="macro-nonterminal">$condition</span>]
+    #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Debug)]
+    </span><span class="kw">pub enum </span><span class="macro-nonterminal">$name </span>{}
 
-    <span class="attribute">#[<span class="macro-nonterminal">$</span><span class="macro-nonterminal">condition</span>]</span>
-    <span class="kw">impl</span> <span class="ident">FrameSize</span> <span class="kw">for</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">name</span> {
-        <span class="kw">const</span> <span class="ident">SIZE</span>: <span class="ident">Bytes</span> <span class="op">=</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">size</span>;
+    <span class="attribute">#[<span class="macro-nonterminal">$condition</span>]
+    </span><span class="kw">impl </span>FrameSize <span class="kw">for </span><span class="macro-nonterminal">$name </span>{
+        <span class="kw">const </span>SIZE: Bytes = <span class="macro-nonterminal">$size</span>;
     }
 }
 
-<span class="macro">frame_size!</span>(<span class="ident">Size4KiB</span>, <span class="ident">kibibytes</span>(<span class="number">4</span>), <span class="ident">cfg</span>(<span class="ident">any</span>(<span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;x86_64&quot;</span>, <span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;riscv64&quot;</span>)));
-<span class="macro">frame_size!</span>(<span class="ident">Size2MiB</span>, <span class="ident">mebibytes</span>(<span class="number">2</span>), <span class="ident">cfg</span>(<span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;x86_64&quot;</span>));
-<span class="macro">frame_size!</span>(<span class="ident">Size1GiB</span>, <span class="ident">gibibytes</span>(<span class="number">1</span>), <span class="ident">cfg</span>(<span class="ident">target_arch</span> <span class="op">=</span> <span class="string">&quot;x86_64&quot;</span>));
+<span class="macro">frame_size!</span>(Size4KiB, kibibytes(<span class="number">4</span>), cfg(any(target_arch = <span class="string">&quot;x86_64&quot;</span>, target_arch = <span class="string">&quot;riscv64&quot;</span>)));
+<span class="macro">frame_size!</span>(Size2MiB, mebibytes(<span class="number">2</span>), cfg(target_arch = <span class="string">&quot;x86_64&quot;</span>));
+<span class="macro">frame_size!</span>(Size1GiB, gibibytes(<span class="number">1</span>), cfg(target_arch = <span class="string">&quot;x86_64&quot;</span>));
 
-<span class="doccomment">/// `FrameAllocator` is used to interact with a physical memory manager in a platform-independent way. Methods on</span>
-<span class="doccomment">/// `FrameAllocator` take `&amp;self` and so are expected to use interior-mutability through a type such as `Mutex` to</span>
-<span class="doccomment">/// ensure safe access. This allows structures to store a reference to the allocator, and deallocate memory when</span>
-<span class="doccomment">/// they&#39;re dropped.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// A `FrameAllocator` is defined for a specific `FrameSize`, but multiple implementations of `FrameAllocator`</span>
-<span class="doccomment">/// (each with a different frame size) can be used for allocators that aren&#39;t tied to a specific block size.</span>
-<span class="kw">pub</span> <span class="kw">trait</span> <span class="ident">FrameAllocator</span><span class="op">&lt;</span><span class="ident">S</span><span class="op">&gt;</span>
-<span class="kw">where</span>
-    <span class="ident">S</span>: <span class="ident">FrameSize</span>,
+<span class="doccomment">/// `FrameAllocator` is used to interact with a physical memory manager in a platform-independent way. Methods on
+/// `FrameAllocator` take `&amp;self` and so are expected to use interior-mutability through a type such as `Mutex` to
+/// ensure safe access. This allows structures to store a reference to the allocator, and deallocate memory when
+/// they&#39;re dropped.
+///
+/// A `FrameAllocator` is defined for a specific `FrameSize`, but multiple implementations of `FrameAllocator`
+/// (each with a different frame size) can be used for allocators that aren&#39;t tied to a specific block size.
+</span><span class="kw">pub trait </span>FrameAllocator&lt;S&gt;
+<span class="kw">where
+    </span>S: FrameSize,
 {
-    <span class="doccomment">/// Allocate a `Frame`.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// By default, this calls `allocate_n(1)`, but can be overridden if an allocator can provide a</span>
-    <span class="doccomment">/// more efficient method for allocating single frames.</span>
-    <span class="kw">fn</span> <span class="ident">allocate</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">Frame</span><span class="op">&lt;</span><span class="ident">S</span><span class="op">&gt;</span> {
-        <span class="self">self</span>.<span class="ident">allocate_n</span>(<span class="number">1</span>).<span class="ident">start</span>
+    <span class="doccomment">/// Allocate a `Frame`.
+    ///
+    /// By default, this calls `allocate_n(1)`, but can be overridden if an allocator can provide a
+    /// more efficient method for allocating single frames.
+    </span><span class="kw">fn </span>allocate(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Frame&lt;S&gt; {
+        <span class="self">self</span>.allocate_n(<span class="number">1</span>).start
     }
 
-    <span class="doccomment">/// Allocate `n` contiguous `Frame`s.</span>
-    <span class="kw">fn</span> <span class="ident">allocate_n</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">n</span>: <span class="ident">usize</span>) -&gt; <span class="ident">Range</span><span class="op">&lt;</span><span class="ident">Frame</span><span class="op">&lt;</span><span class="ident">S</span><span class="op">&gt;</span><span class="op">&gt;</span>;
+    <span class="doccomment">/// Allocate `n` contiguous `Frame`s.
+    </span><span class="kw">fn </span>allocate_n(<span class="kw-2">&amp;</span><span class="self">self</span>, n: usize) -&gt; Range&lt;Frame&lt;S&gt;&gt;;
 
-    <span class="doccomment">/// Free `n` frames that were previously allocated by this allocator.</span>
-    <span class="kw">fn</span> <span class="ident">free_n</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">start</span>: <span class="ident">Frame</span><span class="op">&lt;</span><span class="ident">S</span><span class="op">&gt;</span>, <span class="ident">n</span>: <span class="ident">usize</span>);
+    <span class="doccomment">/// Free `n` frames that were previously allocated by this allocator.
+    </span><span class="kw">fn </span>free_n(<span class="kw-2">&amp;</span><span class="self">self</span>, start: Frame&lt;S&gt;, n: usize);
 }
 
-<span class="doccomment">/// A `FrameAllocator` that can&#39;t actually allocate or free frames. Useful if you need to pass a `FrameAllocator`</span>
-<span class="doccomment">/// to something for testing, but it&#39;ll never actually try to allocate.</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">FakeFrameAllocator</span>;
+<span class="doccomment">/// A `FrameAllocator` that can&#39;t actually allocate or free frames. Useful if you need to pass a `FrameAllocator`
+/// to something for testing, but it&#39;ll never actually try to allocate.
+</span><span class="kw">pub struct </span>FakeFrameAllocator;
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">S</span><span class="op">&gt;</span> <span class="ident">FrameAllocator</span><span class="op">&lt;</span><span class="ident">S</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">FakeFrameAllocator</span>
-<span class="kw">where</span>
-    <span class="ident">S</span>: <span class="ident">FrameSize</span>,
+<span class="kw">impl</span>&lt;S&gt; FrameAllocator&lt;S&gt; <span class="kw">for </span>FakeFrameAllocator
+<span class="kw">where
+    </span>S: FrameSize,
 {
-    <span class="kw">fn</span> <span class="ident">allocate</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">Frame</span><span class="op">&lt;</span><span class="ident">S</span><span class="op">&gt;</span> {
+    <span class="kw">fn </span>allocate(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Frame&lt;S&gt; {
         <span class="macro">unimplemented!</span>()
     }
 
-    <span class="kw">fn</span> <span class="ident">allocate_n</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">_n</span>: <span class="ident">usize</span>) -&gt; <span class="ident">Range</span><span class="op">&lt;</span><span class="ident">Frame</span><span class="op">&lt;</span><span class="ident">S</span><span class="op">&gt;</span><span class="op">&gt;</span> {
+    <span class="kw">fn </span>allocate_n(<span class="kw-2">&amp;</span><span class="self">self</span>, _n: usize) -&gt; Range&lt;Frame&lt;S&gt;&gt; {
         <span class="macro">unimplemented!</span>()
     }
 
-    <span class="kw">fn</span> <span class="ident">free_n</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">_start</span>: <span class="ident">Frame</span><span class="op">&lt;</span><span class="ident">S</span><span class="op">&gt;</span>, <span class="ident">_n</span>: <span class="ident">usize</span>) {
+    <span class="kw">fn </span>free_n(<span class="kw-2">&amp;</span><span class="self">self</span>, _start: Frame&lt;S&gt;, _n: usize) {
         <span class="macro">unimplemented!</span>()
     }
 }
 </code></pre></div>
-</section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="hal" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.65.0-nightly (34a6cae28 2022-08-09)" ></div></body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="hal" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.65.0-nightly (b44197abb 2022-09-05)" ></div></body></html>

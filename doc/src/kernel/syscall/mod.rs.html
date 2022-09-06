@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/syscall/mod.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>mod.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../storage.js"></script><script defer src="../../../source-script.js"></script><script defer src="../../../source-files.js"></script><script defer src="../../../main.js"></script><noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../../kernel/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div></a><h2 class="location"></h2></nav><nav class="sidebar"><a class="sidebar-logo" href="../../../kernel/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div></a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../../kernel/index.html"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></a><nav class="sub"><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><button type="button">?</button></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../wheel.svg"></a></div></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/syscall/mod.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>mod.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" href="../../../normalize.css"><link rel="stylesheet" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" href="../../../ayu.css" disabled><link rel="stylesheet" href="../../../dark.css" disabled><link rel="stylesheet" href="../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../storage.js"></script><script defer src="../../../source-script.js"></script><script defer src="../../../source-files.js"></script><script defer src="../../../main.js"></script><noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../../kernel/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div></a><h2 class="location"></h2></nav><nav class="sidebar"><a class="sidebar-logo" href="../../../kernel/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div></a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../../kernel/index.html"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></a><nav class="sub"><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><button type="button">?</button></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../wheel.svg"></a></div></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
 <span id="2">2</span>
 <span id="3">3</span>
 <span id="4">4</span>
@@ -556,438 +556,438 @@
 <span id="556">556</span>
 <span id="557">557</span>
 <span id="558">558</span>
-</pre><pre class="rust"><code><span class="kw">mod</span> <span class="ident">validation</span>;
+</pre><pre class="rust"><code><span class="kw">mod </span>validation;
 
-<span class="kw">use</span> <span class="kw">crate</span>::{
-    <span class="ident">object</span>::{
-        <span class="ident">address_space::AddressSpace</span>,
-        <span class="ident">channel</span>::{<span class="ident">ChannelEnd</span>, <span class="ident">Message</span>},
-        <span class="ident">memory_object::MemoryObject</span>,
-        <span class="ident">task</span>::{<span class="ident">Task</span>, <span class="ident">TaskState</span>},
-        <span class="ident">KernelObject</span>,
+<span class="kw">use crate</span>::{
+    object::{
+        address_space::AddressSpace,
+        channel::{ChannelEnd, Message},
+        memory_object::MemoryObject,
+        task::{Task, TaskState},
+        KernelObject,
     },
-    <span class="ident">per_cpu::PerCpu</span>,
-    <span class="ident">Platform</span>,
+    per_cpu::PerCpu,
+    Platform,
 };
-<span class="kw">use</span> <span class="ident">alloc</span>::{<span class="ident">collections::BTreeMap</span>, <span class="ident">string::String</span>, <span class="ident">sync::Arc</span>};
-<span class="kw">use</span> <span class="ident">bit_field::BitField</span>;
-<span class="kw">use</span> <span class="ident">core::convert::TryFrom</span>;
-<span class="kw">use</span> <span class="ident">hal::memory</span>::{<span class="ident">Flags</span>, <span class="ident">PhysicalAddress</span>, <span class="ident">VirtualAddress</span>};
-<span class="kw">use</span> <span class="ident">log</span>::{<span class="ident">info</span>, <span class="ident">trace</span>, <span class="ident">warn</span>};
-<span class="kw">use</span> <span class="ident">poplar</span>::{
-    <span class="ident">caps::Capability</span>,
-    <span class="ident">syscall</span>::{
+<span class="kw">use </span>alloc::{collections::BTreeMap, string::String, sync::Arc};
+<span class="kw">use </span>bit_field::BitField;
+<span class="kw">use </span>core::convert::TryFrom;
+<span class="kw">use </span>hal::memory::{Flags, PhysicalAddress, VirtualAddress};
+<span class="kw">use </span>log::{info, trace, warn};
+<span class="kw">use </span>poplar::{
+    caps::Capability,
+    syscall::{
         <span class="self">self</span>,
-        <span class="ident">result</span>::{<span class="ident">handle_to_syscall_repr</span>, <span class="ident">status_to_syscall_repr</span>, <span class="ident">status_with_payload_to_syscall_repr</span>},
-        <span class="ident">CreateMemoryObjectError</span>,
-        <span class="ident">EarlyLogError</span>,
-        <span class="ident">FramebufferInfo</span>,
-        <span class="ident">GetFramebufferError</span>,
-        <span class="ident">GetMessageError</span>,
-        <span class="ident">MapMemoryObjectError</span>,
-        <span class="ident">PciGetInfoError</span>,
-        <span class="ident">RegisterServiceError</span>,
-        <span class="ident">SendMessageError</span>,
-        <span class="ident">SubscribeToServiceError</span>,
-        <span class="ident">CHANNEL_MAX_NUM_HANDLES</span>,
+        result::{handle_to_syscall_repr, status_to_syscall_repr, status_with_payload_to_syscall_repr},
+        CreateMemoryObjectError,
+        EarlyLogError,
+        FramebufferInfo,
+        GetFramebufferError,
+        GetMessageError,
+        MapMemoryObjectError,
+        PciGetInfoError,
+        RegisterServiceError,
+        SendMessageError,
+        SubscribeToServiceError,
+        CHANNEL_MAX_NUM_HANDLES,
     },
-    <span class="ident">Handle</span>,
-    <span class="ident">ZERO_HANDLE</span>,
+    Handle,
+    ZERO_HANDLE,
 };
-<span class="kw">use</span> <span class="ident">spin::Mutex</span>;
-<span class="kw">use</span> <span class="ident">validation</span>::{<span class="ident">UserPointer</span>, <span class="ident">UserSlice</span>, <span class="ident">UserString</span>};
+<span class="kw">use </span>spin::Mutex;
+<span class="kw">use </span>validation::{UserPointer, UserSlice, UserString};
 
-<span class="doccomment">/// Maps the name of a service to the channel used to register new service users.</span>
-<span class="kw">static</span> <span class="ident">SERVICE_MAP</span>: <span class="ident">Mutex</span><span class="op">&lt;</span><span class="ident">BTreeMap</span><span class="op">&lt;</span><span class="ident">String</span>, <span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">ChannelEnd</span><span class="op">&gt;</span><span class="op">&gt;</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">Mutex::new</span>(<span class="ident">BTreeMap::new</span>());
+<span class="doccomment">/// Maps the name of a service to the channel used to register new service users.
+</span><span class="kw">static </span>SERVICE_MAP: Mutex&lt;BTreeMap&lt;String, Arc&lt;ChannelEnd&gt;&gt;&gt; = Mutex::new(BTreeMap::new());
 
-<span class="comment">// TODO: these shouldn&#39;t be needed. Use-sites should be able to read `[None; MAX_WHATEVER]`, but can&#39;t because</span>
-<span class="comment">// the const_in_array_repeat_expression feature got removed. This works around that for now.</span>
-<span class="kw">const</span> <span class="ident">NONE_OBJECT</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Arc</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">KernelObject</span><span class="op">&gt;</span><span class="op">&gt;</span> <span class="op">=</span> <span class="prelude-val">None</span>;
-<span class="kw">const</span> <span class="ident">NONE_BAR</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">poplar::syscall::pci::Bar</span><span class="op">&gt;</span> <span class="op">=</span> <span class="prelude-val">None</span>;
+<span class="comment">// TODO: these shouldn&#39;t be needed. Use-sites should be able to read `[None; MAX_WHATEVER]`, but can&#39;t because
+// the const_in_array_repeat_expression feature got removed. This works around that for now.
+</span><span class="kw">const </span>NONE_OBJECT: <span class="prelude-ty">Option</span>&lt;Arc&lt;<span class="kw">dyn </span>KernelObject&gt;&gt; = <span class="prelude-val">None</span>;
+<span class="kw">const </span>NONE_BAR: <span class="prelude-ty">Option</span>&lt;poplar::syscall::pci::Bar&gt; = <span class="prelude-val">None</span>;
 
-<span class="doccomment">/// This is the architecture-independent syscall handler. It should be called by the handler that</span>
-<span class="doccomment">/// receives the syscall (each architecture is free to do this however it wishes). The only</span>
-<span class="doccomment">/// parameter that is guaranteed to be valid is `number`; the meaning of the rest may be undefined</span>
-<span class="doccomment">/// depending on how many parameters the specific system call takes.</span>
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">handle_syscall</span><span class="op">&lt;</span><span class="ident">P</span><span class="op">&gt;</span>(<span class="ident">number</span>: <span class="ident">usize</span>, <span class="ident">a</span>: <span class="ident">usize</span>, <span class="ident">b</span>: <span class="ident">usize</span>, <span class="ident">c</span>: <span class="ident">usize</span>, <span class="ident">d</span>: <span class="ident">usize</span>, <span class="ident">e</span>: <span class="ident">usize</span>) -&gt; <span class="ident">usize</span>
-<span class="kw">where</span>
-    <span class="ident">P</span>: <span class="ident">Platform</span>,
+<span class="doccomment">/// This is the architecture-independent syscall handler. It should be called by the handler that
+/// receives the syscall (each architecture is free to do this however it wishes). The only
+/// parameter that is guaranteed to be valid is `number`; the meaning of the rest may be undefined
+/// depending on how many parameters the specific system call takes.
+</span><span class="kw">pub fn </span>handle_syscall&lt;P&gt;(number: usize, a: usize, b: usize, c: usize, d: usize, e: usize) -&gt; usize
+<span class="kw">where
+    </span>P: Platform,
 {
-    <span class="macro">info!</span>(<span class="string">&quot;Syscall! number = {}, a = {}, b = {}, c = {}, d = {}, e = {}&quot;</span>, <span class="ident">number</span>, <span class="ident">a</span>, <span class="ident">b</span>, <span class="ident">c</span>, <span class="ident">d</span>, <span class="ident">e</span>);
-    <span class="kw">let</span> <span class="ident">task</span> <span class="op">=</span> <span class="ident">P::per_cpu</span>().<span class="ident">scheduler</span>().<span class="ident">get_mut</span>().<span class="ident">running_task</span>.<span class="ident">as_ref</span>().<span class="ident">unwrap</span>();
+    <span class="macro">info!</span>(<span class="string">&quot;Syscall! number = {}, a = {}, b = {}, c = {}, d = {}, e = {}&quot;</span>, number, a, b, c, d, e);
+    <span class="kw">let </span>task = P::per_cpu().scheduler().get_mut().running_task.as_ref().unwrap();
 
-    <span class="kw">match</span> <span class="ident">number</span> {
-        <span class="ident">syscall::SYSCALL_YIELD</span> =&gt; <span class="ident">yield_syscall</span>::<span class="op">&lt;</span><span class="ident">P</span><span class="op">&gt;</span>(),
-        <span class="ident">syscall::SYSCALL_EARLY_LOG</span> =&gt; <span class="ident">status_to_syscall_repr</span>(<span class="ident">early_log</span>(<span class="ident">task</span>, <span class="ident">a</span>, <span class="ident">b</span>)),
-        <span class="ident">syscall::SYSCALL_GET_FRAMEBUFFER</span> =&gt; <span class="ident">handle_to_syscall_repr</span>(<span class="ident">get_framebuffer</span>(<span class="ident">task</span>, <span class="ident">a</span>)),
-        <span class="ident">syscall::SYSCALL_CREATE_MEMORY_OBJECT</span> =&gt; <span class="ident">handle_to_syscall_repr</span>(<span class="ident">create_memory_object</span>(<span class="ident">task</span>, <span class="ident">a</span>, <span class="ident">b</span>, <span class="ident">c</span>, <span class="ident">d</span>)),
-        <span class="ident">syscall::SYSCALL_MAP_MEMORY_OBJECT</span> =&gt; <span class="ident">status_to_syscall_repr</span>(<span class="ident">map_memory_object</span>(<span class="ident">task</span>, <span class="ident">a</span>, <span class="ident">b</span>, <span class="ident">c</span>, <span class="ident">d</span>)),
-        <span class="ident">syscall::SYSCALL_CREATE_CHANNEL</span> =&gt; <span class="macro">todo!</span>(),
-        <span class="ident">syscall::SYSCALL_SEND_MESSAGE</span> =&gt; <span class="ident">status_to_syscall_repr</span>(<span class="ident">send_message</span>(<span class="ident">task</span>, <span class="ident">a</span>, <span class="ident">b</span>, <span class="ident">c</span>, <span class="ident">d</span>, <span class="ident">e</span>)),
-        <span class="ident">syscall::SYSCALL_GET_MESSAGE</span> =&gt; <span class="ident">status_with_payload_to_syscall_repr</span>(<span class="ident">get_message</span>(<span class="ident">task</span>, <span class="ident">a</span>, <span class="ident">b</span>, <span class="ident">c</span>, <span class="ident">d</span>, <span class="ident">e</span>)),
-        <span class="ident">syscall::SYSCALL_WAIT_FOR_MESSAGE</span> =&gt; <span class="macro">todo!</span>(),
-        <span class="ident">syscall::SYSCALL_REGISTER_SERVICE</span> =&gt; <span class="ident">handle_to_syscall_repr</span>(<span class="ident">register_service</span>(<span class="ident">task</span>, <span class="ident">a</span>, <span class="ident">b</span>)),
-        <span class="ident">syscall::SYSCALL_SUBSCRIBE_TO_SERVICE</span> =&gt; <span class="ident">handle_to_syscall_repr</span>(<span class="ident">subscribe_to_service</span>(<span class="ident">task</span>, <span class="ident">a</span>, <span class="ident">b</span>)),
-        <span class="ident">syscall::SYSCALL_PCI_GET_INFO</span> =&gt; <span class="ident">status_with_payload_to_syscall_repr</span>(<span class="ident">pci_get_info</span>(<span class="ident">task</span>, <span class="ident">a</span>, <span class="ident">b</span>)),
-        <span class="ident">syscall::SYSCALL_TEST</span> =&gt; <span class="ident">test_syscall</span>(<span class="ident">task</span>, <span class="ident">a</span>, <span class="ident">b</span>, <span class="ident">c</span>, <span class="ident">d</span>, <span class="ident">e</span>),
+    <span class="kw">match </span>number {
+        syscall::SYSCALL_YIELD =&gt; yield_syscall::&lt;P&gt;(),
+        syscall::SYSCALL_EARLY_LOG =&gt; status_to_syscall_repr(early_log(task, a, b)),
+        syscall::SYSCALL_GET_FRAMEBUFFER =&gt; handle_to_syscall_repr(get_framebuffer(task, a)),
+        syscall::SYSCALL_CREATE_MEMORY_OBJECT =&gt; handle_to_syscall_repr(create_memory_object(task, a, b, c, d)),
+        syscall::SYSCALL_MAP_MEMORY_OBJECT =&gt; status_to_syscall_repr(map_memory_object(task, a, b, c, d)),
+        syscall::SYSCALL_CREATE_CHANNEL =&gt; <span class="macro">todo!</span>(),
+        syscall::SYSCALL_SEND_MESSAGE =&gt; status_to_syscall_repr(send_message(task, a, b, c, d, e)),
+        syscall::SYSCALL_GET_MESSAGE =&gt; status_with_payload_to_syscall_repr(get_message(task, a, b, c, d, e)),
+        syscall::SYSCALL_WAIT_FOR_MESSAGE =&gt; <span class="macro">todo!</span>(),
+        syscall::SYSCALL_REGISTER_SERVICE =&gt; handle_to_syscall_repr(register_service(task, a, b)),
+        syscall::SYSCALL_SUBSCRIBE_TO_SERVICE =&gt; handle_to_syscall_repr(subscribe_to_service(task, a, b)),
+        syscall::SYSCALL_PCI_GET_INFO =&gt; status_with_payload_to_syscall_repr(pci_get_info(task, a, b)),
+        syscall::SYSCALL_TEST =&gt; test_syscall(task, a, b, c, d, e),
 
-        <span class="kw">_</span> =&gt; {
-            <span class="macro">warn!</span>(<span class="string">&quot;Process made system call with invalid syscall number: {}&quot;</span>, <span class="ident">number</span>);
-            <span class="ident">usize::MAX</span>
+        <span class="kw">_ </span>=&gt; {
+            <span class="macro">warn!</span>(<span class="string">&quot;Process made system call with invalid syscall number: {}&quot;</span>, number);
+            usize::MAX
         }
     }
 }
 
-<span class="kw">fn</span> <span class="ident">yield_syscall</span><span class="op">&lt;</span><span class="ident">P</span><span class="op">&gt;</span>() -&gt; <span class="ident">usize</span>
-<span class="kw">where</span>
-    <span class="ident">P</span>: <span class="ident">Platform</span>,
+<span class="kw">fn </span>yield_syscall&lt;P&gt;() -&gt; usize
+<span class="kw">where
+    </span>P: Platform,
 {
     <span class="macro">info!</span>(<span class="string">&quot;Process yielded!&quot;</span>);
-    <span class="ident">P::per_cpu</span>().<span class="ident">scheduler</span>().<span class="ident">switch_to_next</span>(<span class="ident">TaskState::Ready</span>);
-    <span class="number">0</span>
-}
+    P::per_cpu().scheduler().switch_to_next(TaskState::Ready);
+    <span class="number">0
+</span>}
 
-<span class="kw">fn</span> <span class="ident">early_log</span><span class="op">&lt;</span><span class="ident">P</span><span class="op">&gt;</span>(<span class="ident">task</span>: <span class="kw-2">&amp;</span><span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">Task</span><span class="op">&lt;</span><span class="ident">P</span><span class="op">&gt;</span><span class="op">&gt;</span>, <span class="ident">str_length</span>: <span class="ident">usize</span>, <span class="ident">str_address</span>: <span class="ident">usize</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">EarlyLogError</span><span class="op">&gt;</span>
-<span class="kw">where</span>
-    <span class="ident">P</span>: <span class="ident">Platform</span>,
+<span class="kw">fn </span>early_log&lt;P&gt;(task: <span class="kw-2">&amp;</span>Arc&lt;Task&lt;P&gt;&gt;, str_length: usize, str_address: usize) -&gt; <span class="prelude-ty">Result</span>&lt;(), EarlyLogError&gt;
+<span class="kw">where
+    </span>P: Platform,
 {
-    <span class="comment">// Check the current task has the `EarlyLogging` capability</span>
-    <span class="kw">if</span> <span class="op">!</span><span class="ident">task</span>.<span class="ident">capabilities</span>.<span class="ident">contains</span>(<span class="kw-2">&amp;</span><span class="ident">Capability::EarlyLogging</span>) {
-        <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">EarlyLogError::TaskDoesNotHaveCorrectCapability</span>);
+    <span class="comment">// Check the current task has the `EarlyLogging` capability
+    </span><span class="kw">if </span>!task.capabilities.contains(<span class="kw-2">&amp;</span>Capability::EarlyLogging) {
+        <span class="kw">return </span><span class="prelude-val">Err</span>(EarlyLogError::TaskDoesNotHaveCorrectCapability);
     }
 
-    <span class="comment">// Check if the message is too long</span>
-    <span class="kw">if</span> <span class="ident">str_length</span> <span class="op">&gt;</span> <span class="number">4096</span> {
-        <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">EarlyLogError::MessageTooLong</span>);
+    <span class="comment">// Check if the message is too long
+    </span><span class="kw">if </span>str_length &gt; <span class="number">4096 </span>{
+        <span class="kw">return </span><span class="prelude-val">Err</span>(EarlyLogError::MessageTooLong);
     }
 
-    <span class="comment">// Check the message is valid UTF-8</span>
-    <span class="kw">let</span> <span class="ident">message</span> <span class="op">=</span> <span class="ident">UserString::new</span>(<span class="ident">str_address</span> <span class="kw">as</span> <span class="kw-2">*mut</span> <span class="ident">u8</span>, <span class="ident">str_length</span>)
-        .<span class="ident">validate</span>()
-        .<span class="ident">map_err</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> <span class="ident">EarlyLogError::MessageNotValidUtf8</span>)<span class="question-mark">?</span>;
+    <span class="comment">// Check the message is valid UTF-8
+    </span><span class="kw">let </span>message = UserString::new(str_address <span class="kw">as </span><span class="kw-2">*mut </span>u8, str_length)
+        .validate()
+        .map_err(|<span class="kw">_</span>| EarlyLogError::MessageNotValidUtf8)<span class="question-mark">?</span>;
 
-    <span class="macro">trace!</span>(<span class="string">&quot;Early log message from {}: {}&quot;</span>, <span class="ident">task</span>.<span class="ident">name</span>, <span class="ident">message</span>);
+    <span class="macro">trace!</span>(<span class="string">&quot;Early log message from {}: {}&quot;</span>, task.name, message);
     <span class="prelude-val">Ok</span>(())
 }
 
-<span class="kw">fn</span> <span class="ident">get_framebuffer</span><span class="op">&lt;</span><span class="ident">P</span><span class="op">&gt;</span>(<span class="ident">task</span>: <span class="kw-2">&amp;</span><span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">Task</span><span class="op">&lt;</span><span class="ident">P</span><span class="op">&gt;</span><span class="op">&gt;</span>, <span class="ident">info_address</span>: <span class="ident">usize</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Handle</span>, <span class="ident">GetFramebufferError</span><span class="op">&gt;</span>
-<span class="kw">where</span>
-    <span class="ident">P</span>: <span class="ident">Platform</span>,
+<span class="kw">fn </span>get_framebuffer&lt;P&gt;(task: <span class="kw-2">&amp;</span>Arc&lt;Task&lt;P&gt;&gt;, info_address: usize) -&gt; <span class="prelude-ty">Result</span>&lt;Handle, GetFramebufferError&gt;
+<span class="kw">where
+    </span>P: Platform,
 {
     <span class="comment">/*
      * Check that the task has the correct capability.
-     */</span>
-    <span class="kw">if</span> <span class="op">!</span><span class="ident">task</span>.<span class="ident">capabilities</span>.<span class="ident">contains</span>(<span class="kw-2">&amp;</span><span class="ident">Capability::GetFramebuffer</span>) {
-        <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">GetFramebufferError::AccessDenied</span>);
+     */
+    </span><span class="kw">if </span>!task.capabilities.contains(<span class="kw-2">&amp;</span>Capability::GetFramebuffer) {
+        <span class="kw">return </span><span class="prelude-val">Err</span>(GetFramebufferError::AccessDenied);
     }
 
-    <span class="kw">let</span> (<span class="ident">info</span>, <span class="ident">memory_object</span>) <span class="op">=</span> <span class="ident"><span class="kw">crate</span>::FRAMEBUFFER</span>.<span class="ident">try_get</span>().<span class="ident">ok_or</span>(<span class="ident">GetFramebufferError::NoFramebufferCreated</span>)<span class="question-mark">?</span>;
-    <span class="kw">let</span> <span class="ident">handle</span> <span class="op">=</span> <span class="ident">task</span>.<span class="ident">add_handle</span>(<span class="ident">memory_object</span>.<span class="ident">clone</span>());
+    <span class="kw">let </span>(info, memory_object) = <span class="kw">crate</span>::FRAMEBUFFER.try_get().ok_or(GetFramebufferError::NoFramebufferCreated)<span class="question-mark">?</span>;
+    <span class="kw">let </span>handle = task.add_handle(memory_object.clone());
 
-    <span class="ident">UserPointer::new</span>(<span class="ident">info_address</span> <span class="kw">as</span> <span class="kw-2">*mut</span> <span class="ident">FramebufferInfo</span>, <span class="bool-val">true</span>)
-        .<span class="ident">write</span>(<span class="kw-2">*</span><span class="ident">info</span>)
-        .<span class="ident">map_err</span>(<span class="op">|</span>()<span class="op">|</span> <span class="ident">GetFramebufferError::InfoAddressIsInvalid</span>)<span class="question-mark">?</span>;
+    UserPointer::new(info_address <span class="kw">as </span><span class="kw-2">*mut </span>FramebufferInfo, <span class="bool-val">true</span>)
+        .write(<span class="kw-2">*</span>info)
+        .map_err(|()| GetFramebufferError::InfoAddressIsInvalid)<span class="question-mark">?</span>;
 
-    <span class="prelude-val">Ok</span>(<span class="ident">handle</span>)
+    <span class="prelude-val">Ok</span>(handle)
 }
 
-<span class="kw">fn</span> <span class="ident">create_memory_object</span><span class="op">&lt;</span><span class="ident">P</span><span class="op">&gt;</span>(
-    <span class="ident">task</span>: <span class="kw-2">&amp;</span><span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">Task</span><span class="op">&lt;</span><span class="ident">P</span><span class="op">&gt;</span><span class="op">&gt;</span>,
-    <span class="ident">virtual_address</span>: <span class="ident">usize</span>,
-    <span class="ident">size</span>: <span class="ident">usize</span>,
-    <span class="ident">flags</span>: <span class="ident">usize</span>,
-    <span class="ident">physical_address_ptr</span>: <span class="ident">usize</span>,
-) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Handle</span>, <span class="ident">CreateMemoryObjectError</span><span class="op">&gt;</span>
-<span class="kw">where</span>
-    <span class="ident">P</span>: <span class="ident">Platform</span>,
+<span class="kw">fn </span>create_memory_object&lt;P&gt;(
+    task: <span class="kw-2">&amp;</span>Arc&lt;Task&lt;P&gt;&gt;,
+    virtual_address: usize,
+    size: usize,
+    flags: usize,
+    physical_address_ptr: usize,
+) -&gt; <span class="prelude-ty">Result</span>&lt;Handle, CreateMemoryObjectError&gt;
+<span class="kw">where
+    </span>P: Platform,
 {
-    <span class="kw">use</span> <span class="ident">hal::memory</span>::{<span class="ident">FrameSize</span>, <span class="ident">Size4KiB</span>};
-    <span class="kw">use</span> <span class="ident">poplar_util::math::align_up</span>;
+    <span class="kw">use </span>hal::memory::{FrameSize, Size4KiB};
+    <span class="kw">use </span>poplar_util::math::align_up;
 
-    <span class="kw">let</span> <span class="ident">writable</span> <span class="op">=</span> <span class="ident">flags</span>.<span class="ident">get_bit</span>(<span class="number">0</span>);
-    <span class="kw">let</span> <span class="ident">executable</span> <span class="op">=</span> <span class="ident">flags</span>.<span class="ident">get_bit</span>(<span class="number">1</span>);
+    <span class="kw">let </span>writable = flags.get_bit(<span class="number">0</span>);
+    <span class="kw">let </span>executable = flags.get_bit(<span class="number">1</span>);
 
-    <span class="comment">// TODO: should we require that the size be multiple of the page size, or just up it here?</span>
-    <span class="kw">let</span> <span class="ident">size</span> <span class="op">=</span> <span class="ident">align_up</span>(<span class="ident">size</span>, <span class="ident">Size4KiB::SIZE</span>);
+    <span class="comment">// TODO: should we require that the size be multiple of the page size, or just up it here?
+    </span><span class="kw">let </span>size = align_up(size, Size4KiB::SIZE);
 
-    <span class="comment">// TODO: do something more sensible with this when we have a concept of physical memory &quot;ownership&quot;</span>
-    <span class="kw">let</span> <span class="ident">physical_start</span> <span class="op">=</span> <span class="ident"><span class="kw">crate</span>::PHYSICAL_MEMORY_MANAGER</span>.<span class="ident">get</span>().<span class="ident">alloc_bytes</span>(<span class="ident">size</span>);
+    <span class="comment">// TODO: do something more sensible with this when we have a concept of physical memory &quot;ownership&quot;
+    </span><span class="kw">let </span>physical_start = <span class="kw">crate</span>::PHYSICAL_MEMORY_MANAGER.get().alloc_bytes(size);
 
-    <span class="kw">let</span> <span class="ident">memory_object</span> <span class="op">=</span> <span class="ident">MemoryObject::new</span>(
-        <span class="ident">task</span>.<span class="ident">id</span>(),
-        <span class="prelude-val">Some</span>(<span class="ident">VirtualAddress::new</span>(<span class="ident">virtual_address</span>)),
-        <span class="ident">physical_start</span>,
-        <span class="ident">size</span>,
-        <span class="ident">Flags</span> { <span class="ident">writable</span>, <span class="ident">executable</span>, <span class="ident">user_accessible</span>: <span class="bool-val">true</span>, ..<span class="ident">Default::default</span>() },
+    <span class="kw">let </span>memory_object = MemoryObject::new(
+        task.id(),
+        <span class="prelude-val">Some</span>(VirtualAddress::new(virtual_address)),
+        physical_start,
+        size,
+        Flags { writable, executable, user_accessible: <span class="bool-val">true</span>, ..Default::default() },
     );
 
-    <span class="kw">if</span> <span class="ident">physical_address_ptr</span> <span class="op">!</span><span class="op">=</span> <span class="number">0x0</span> {
-        <span class="ident">UserPointer::new</span>(<span class="ident">physical_address_ptr</span> <span class="kw">as</span> <span class="kw-2">*mut</span> <span class="ident">PhysicalAddress</span>, <span class="bool-val">true</span>)
-            .<span class="ident">write</span>(<span class="ident">physical_start</span>)
-            .<span class="ident">map_err</span>(<span class="op">|</span>()<span class="op">|</span> <span class="ident">CreateMemoryObjectError::InvalidPhysicalAddressPointer</span>)<span class="question-mark">?</span>;
+    <span class="kw">if </span>physical_address_ptr != <span class="number">0x0 </span>{
+        UserPointer::new(physical_address_ptr <span class="kw">as </span><span class="kw-2">*mut </span>PhysicalAddress, <span class="bool-val">true</span>)
+            .write(physical_start)
+            .map_err(|()| CreateMemoryObjectError::InvalidPhysicalAddressPointer)<span class="question-mark">?</span>;
     }
 
-    <span class="prelude-val">Ok</span>(<span class="ident">task</span>.<span class="ident">add_handle</span>(<span class="ident">memory_object</span>))
+    <span class="prelude-val">Ok</span>(task.add_handle(memory_object))
 }
 
-<span class="kw">fn</span> <span class="ident">map_memory_object</span><span class="op">&lt;</span><span class="ident">P</span><span class="op">&gt;</span>(
-    <span class="ident">task</span>: <span class="kw-2">&amp;</span><span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">Task</span><span class="op">&lt;</span><span class="ident">P</span><span class="op">&gt;</span><span class="op">&gt;</span>,
-    <span class="ident">memory_object_handle</span>: <span class="ident">usize</span>,
-    <span class="ident">address_space_handle</span>: <span class="ident">usize</span>,
-    <span class="ident">virtual_address</span>: <span class="ident">usize</span>,
-    <span class="ident">address_ptr</span>: <span class="ident">usize</span>,
-) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">MapMemoryObjectError</span><span class="op">&gt;</span>
-<span class="kw">where</span>
-    <span class="ident">P</span>: <span class="ident">Platform</span>,
+<span class="kw">fn </span>map_memory_object&lt;P&gt;(
+    task: <span class="kw-2">&amp;</span>Arc&lt;Task&lt;P&gt;&gt;,
+    memory_object_handle: usize,
+    address_space_handle: usize,
+    virtual_address: usize,
+    address_ptr: usize,
+) -&gt; <span class="prelude-ty">Result</span>&lt;(), MapMemoryObjectError&gt;
+<span class="kw">where
+    </span>P: Platform,
 {
-    <span class="kw">let</span> <span class="ident">memory_object_handle</span> <span class="op">=</span>
-        <span class="ident">Handle::try_from</span>(<span class="ident">memory_object_handle</span>).<span class="ident">map_err</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> <span class="ident">MapMemoryObjectError::InvalidHandle</span>)<span class="question-mark">?</span>;
-    <span class="kw">let</span> <span class="ident">address_space_handle</span> <span class="op">=</span>
-        <span class="ident">Handle::try_from</span>(<span class="ident">address_space_handle</span>).<span class="ident">map_err</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> <span class="ident">MapMemoryObjectError::InvalidHandle</span>)<span class="question-mark">?</span>;
+    <span class="kw">let </span>memory_object_handle =
+        Handle::try_from(memory_object_handle).map_err(|<span class="kw">_</span>| MapMemoryObjectError::InvalidHandle)<span class="question-mark">?</span>;
+    <span class="kw">let </span>address_space_handle =
+        Handle::try_from(address_space_handle).map_err(|<span class="kw">_</span>| MapMemoryObjectError::InvalidHandle)<span class="question-mark">?</span>;
 
-    <span class="kw">let</span> <span class="ident">memory_object</span> <span class="op">=</span> <span class="ident">task</span>
-        .<span class="ident">handles</span>
-        .<span class="ident">read</span>()
-        .<span class="ident">get</span>(<span class="kw-2">&amp;</span><span class="ident">memory_object_handle</span>)
-        .<span class="ident">ok_or</span>(<span class="ident">MapMemoryObjectError::InvalidHandle</span>)<span class="question-mark">?</span>
-        .<span class="ident">clone</span>()
-        .<span class="ident">downcast_arc</span>::<span class="op">&lt;</span><span class="ident">MemoryObject</span><span class="op">&gt;</span>()
-        .<span class="ident">ok</span>()
-        .<span class="ident">ok_or</span>(<span class="ident">MapMemoryObjectError::NotAMemoryObject</span>)<span class="question-mark">?</span>;
+    <span class="kw">let </span>memory_object = task
+        .handles
+        .read()
+        .get(<span class="kw-2">&amp;</span>memory_object_handle)
+        .ok_or(MapMemoryObjectError::InvalidHandle)<span class="question-mark">?
+        </span>.clone()
+        .downcast_arc::&lt;MemoryObject&gt;()
+        .ok()
+        .ok_or(MapMemoryObjectError::NotAMemoryObject)<span class="question-mark">?</span>;
 
-    <span class="kw">let</span> <span class="ident">supplied_virtual_address</span> <span class="op">=</span> <span class="kw">if</span> <span class="ident">virtual_address</span> <span class="op">==</span> <span class="number">0x0</span> {
-        <span class="kw">if</span> <span class="ident">memory_object</span>.<span class="ident">virtual_address</span>.<span class="ident">is_none</span>() {
-            <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">MapMemoryObjectError::VirtualAddressNotSupplied</span>);
+    <span class="kw">let </span>supplied_virtual_address = <span class="kw">if </span>virtual_address == <span class="number">0x0 </span>{
+        <span class="kw">if </span>memory_object.virtual_address.is_none() {
+            <span class="kw">return </span><span class="prelude-val">Err</span>(MapMemoryObjectError::VirtualAddressNotSupplied);
         }
-        <span class="prelude-val">None</span>
-    } <span class="kw">else</span> {
-        <span class="kw">if</span> <span class="ident">memory_object</span>.<span class="ident">virtual_address</span>.<span class="ident">is_some</span>() {
-            <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">MapMemoryObjectError::VirtualAddressShouldNotBeSupplied</span>);
+        <span class="prelude-val">None
+    </span>} <span class="kw">else </span>{
+        <span class="kw">if </span>memory_object.virtual_address.is_some() {
+            <span class="kw">return </span><span class="prelude-val">Err</span>(MapMemoryObjectError::VirtualAddressShouldNotBeSupplied);
         }
-        <span class="comment">// TODO: we need to actually validate that the supplied address is canonical and all that jazz</span>
-        <span class="prelude-val">Some</span>(<span class="ident">VirtualAddress::new</span>(<span class="ident">virtual_address</span>))
+        <span class="comment">// TODO: we need to actually validate that the supplied address is canonical and all that jazz
+        </span><span class="prelude-val">Some</span>(VirtualAddress::new(virtual_address))
     };
 
-    <span class="kw">if</span> <span class="ident">address_space_handle</span> <span class="op">==</span> <span class="ident">ZERO_HANDLE</span> {
+    <span class="kw">if </span>address_space_handle == ZERO_HANDLE {
         <span class="comment">/*
          * If the AddressSpace handle is the zero handle, we map the MemoryObject into the calling task&#39;s
          * address space.
-         */</span>
-        <span class="ident">task</span>.<span class="ident">address_space</span>.<span class="ident">map_memory_object</span>(
-            <span class="ident">memory_object</span>.<span class="ident">clone</span>(),
-            <span class="ident">supplied_virtual_address</span>,
-            <span class="kw-2">&amp;</span><span class="ident"><span class="kw">crate</span>::PHYSICAL_MEMORY_MANAGER</span>.<span class="ident">get</span>(),
+         */
+        </span>task.address_space.map_memory_object(
+            memory_object.clone(),
+            supplied_virtual_address,
+            <span class="kw-2">&amp;</span><span class="kw">crate</span>::PHYSICAL_MEMORY_MANAGER.get(),
         )<span class="question-mark">?</span>;
-    } <span class="kw">else</span> {
-        <span class="ident">task</span>.<span class="ident">handles</span>
-            .<span class="ident">read</span>()
-            .<span class="ident">get</span>(<span class="kw-2">&amp;</span><span class="ident">memory_object_handle</span>)
-            .<span class="ident">ok_or</span>(<span class="ident">MapMemoryObjectError::InvalidHandle</span>)<span class="question-mark">?</span>
-            .<span class="ident">clone</span>()
-            .<span class="ident">downcast_arc</span>::<span class="op">&lt;</span><span class="ident">AddressSpace</span><span class="op">&lt;</span><span class="ident">P</span><span class="op">&gt;</span><span class="op">&gt;</span>()
-            .<span class="ident">ok</span>()
-            .<span class="ident">ok_or</span>(<span class="ident">MapMemoryObjectError::NotAnAddressSpace</span>)<span class="question-mark">?</span>
-            .<span class="ident">map_memory_object</span>(
-                <span class="ident">memory_object</span>.<span class="ident">clone</span>(),
-                <span class="ident">supplied_virtual_address</span>,
-                <span class="kw-2">&amp;</span><span class="ident"><span class="kw">crate</span>::PHYSICAL_MEMORY_MANAGER</span>.<span class="ident">get</span>(),
+    } <span class="kw">else </span>{
+        task.handles
+            .read()
+            .get(<span class="kw-2">&amp;</span>memory_object_handle)
+            .ok_or(MapMemoryObjectError::InvalidHandle)<span class="question-mark">?
+            </span>.clone()
+            .downcast_arc::&lt;AddressSpace&lt;P&gt;&gt;()
+            .ok()
+            .ok_or(MapMemoryObjectError::NotAnAddressSpace)<span class="question-mark">?
+            </span>.map_memory_object(
+                memory_object.clone(),
+                supplied_virtual_address,
+                <span class="kw-2">&amp;</span><span class="kw">crate</span>::PHYSICAL_MEMORY_MANAGER.get(),
             )<span class="question-mark">?</span>;
     }
 
     <span class="comment">/*
      * An address pointer of `0` signals to the kernel that the caller does not need to know the virtual
      * address, so don&#39;t bother writing it back.
-     */</span>
-    <span class="kw">if</span> <span class="ident">address_ptr</span> <span class="op">!</span><span class="op">=</span> <span class="number">0x0</span> {
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">address_ptr</span> <span class="op">=</span> <span class="ident">UserPointer::new</span>(<span class="ident">address_ptr</span> <span class="kw">as</span> <span class="kw-2">*mut</span> <span class="ident">VirtualAddress</span>, <span class="bool-val">true</span>);
-        <span class="ident">address_ptr</span>
-            .<span class="ident">write</span>(<span class="ident">supplied_virtual_address</span>.<span class="ident">unwrap_or_else</span>(<span class="op">|</span><span class="op">|</span> <span class="ident">memory_object</span>.<span class="ident">virtual_address</span>.<span class="ident">unwrap</span>()))
-            .<span class="ident">map_err</span>(<span class="op">|</span>()<span class="op">|</span> <span class="ident">MapMemoryObjectError::AddressPointerInvalid</span>)<span class="question-mark">?</span>;
+     */
+    </span><span class="kw">if </span>address_ptr != <span class="number">0x0 </span>{
+        <span class="kw">let </span><span class="kw-2">mut </span>address_ptr = UserPointer::new(address_ptr <span class="kw">as </span><span class="kw-2">*mut </span>VirtualAddress, <span class="bool-val">true</span>);
+        address_ptr
+            .write(supplied_virtual_address.unwrap_or_else(|| memory_object.virtual_address.unwrap()))
+            .map_err(|()| MapMemoryObjectError::AddressPointerInvalid)<span class="question-mark">?</span>;
     }
 
     <span class="prelude-val">Ok</span>(())
 }
 
-<span class="kw">fn</span> <span class="ident">send_message</span><span class="op">&lt;</span><span class="ident">P</span><span class="op">&gt;</span>(
-    <span class="ident">task</span>: <span class="kw-2">&amp;</span><span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">Task</span><span class="op">&lt;</span><span class="ident">P</span><span class="op">&gt;</span><span class="op">&gt;</span>,
-    <span class="ident">channel_handle</span>: <span class="ident">usize</span>,
-    <span class="ident">byte_address</span>: <span class="ident">usize</span>,
-    <span class="ident">num_bytes</span>: <span class="ident">usize</span>,
-    <span class="ident">handles_address</span>: <span class="ident">usize</span>,
-    <span class="ident">num_handles</span>: <span class="ident">usize</span>,
-) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">SendMessageError</span><span class="op">&gt;</span>
-<span class="kw">where</span>
-    <span class="ident">P</span>: <span class="ident">Platform</span>,
+<span class="kw">fn </span>send_message&lt;P&gt;(
+    task: <span class="kw-2">&amp;</span>Arc&lt;Task&lt;P&gt;&gt;,
+    channel_handle: usize,
+    byte_address: usize,
+    num_bytes: usize,
+    handles_address: usize,
+    num_handles: usize,
+) -&gt; <span class="prelude-ty">Result</span>&lt;(), SendMessageError&gt;
+<span class="kw">where
+    </span>P: Platform,
 {
-    <span class="kw">use</span> <span class="ident">poplar::syscall::CHANNEL_MAX_NUM_BYTES</span>;
+    <span class="kw">use </span>poplar::syscall::CHANNEL_MAX_NUM_BYTES;
 
-    <span class="kw">if</span> <span class="ident">num_bytes</span> <span class="op">&gt;</span> <span class="ident">CHANNEL_MAX_NUM_BYTES</span> {
-        <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">SendMessageError::TooManyBytes</span>);
+    <span class="kw">if </span>num_bytes &gt; CHANNEL_MAX_NUM_BYTES {
+        <span class="kw">return </span><span class="prelude-val">Err</span>(SendMessageError::TooManyBytes);
     }
-    <span class="kw">if</span> <span class="ident">num_handles</span> <span class="op">&gt;</span> <span class="ident">CHANNEL_MAX_NUM_HANDLES</span> {
-        <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">SendMessageError::TooManyHandles</span>);
+    <span class="kw">if </span>num_handles &gt; CHANNEL_MAX_NUM_HANDLES {
+        <span class="kw">return </span><span class="prelude-val">Err</span>(SendMessageError::TooManyHandles);
     }
 
-    <span class="kw">let</span> <span class="ident">channel_handle</span> <span class="op">=</span> <span class="ident">Handle::try_from</span>(<span class="ident">channel_handle</span>).<span class="ident">map_err</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> <span class="ident">SendMessageError::InvalidChannelHandle</span>)<span class="question-mark">?</span>;
-    <span class="kw">let</span> <span class="ident">bytes</span> <span class="op">=</span> <span class="kw">if</span> <span class="ident">num_bytes</span> <span class="op">==</span> <span class="number">0</span> {
+    <span class="kw">let </span>channel_handle = Handle::try_from(channel_handle).map_err(|<span class="kw">_</span>| SendMessageError::InvalidChannelHandle)<span class="question-mark">?</span>;
+    <span class="kw">let </span>bytes = <span class="kw">if </span>num_bytes == <span class="number">0 </span>{
         <span class="kw-2">&amp;</span>[]
-    } <span class="kw">else</span> {
-        <span class="ident">UserSlice::new</span>(<span class="ident">byte_address</span> <span class="kw">as</span> <span class="kw-2">*mut</span> <span class="ident">u8</span>, <span class="ident">num_bytes</span>)
-            .<span class="ident">validate_read</span>()
-            .<span class="ident">map_err</span>(<span class="op">|</span>()<span class="op">|</span> <span class="ident">SendMessageError::BytesAddressInvalid</span>)<span class="question-mark">?</span>
-    };
-    <span class="kw">let</span> <span class="ident">handles</span> <span class="op">=</span> <span class="kw">if</span> <span class="ident">num_handles</span> <span class="op">==</span> <span class="number">0</span> {
+    } <span class="kw">else </span>{
+        UserSlice::new(byte_address <span class="kw">as </span><span class="kw-2">*mut </span>u8, num_bytes)
+            .validate_read()
+            .map_err(|()| SendMessageError::BytesAddressInvalid)<span class="question-mark">?
+    </span>};
+    <span class="kw">let </span>handles = <span class="kw">if </span>num_handles == <span class="number">0 </span>{
         <span class="kw-2">&amp;</span>[]
-    } <span class="kw">else</span> {
-        <span class="ident">UserSlice::new</span>(<span class="ident">handles_address</span> <span class="kw">as</span> <span class="kw-2">*mut</span> <span class="ident">Handle</span>, <span class="ident">num_handles</span>)
-            .<span class="ident">validate_read</span>()
-            .<span class="ident">map_err</span>(<span class="op">|</span>()<span class="op">|</span> <span class="ident">SendMessageError::HandlesAddressInvalid</span>)<span class="question-mark">?</span>
-    };
-    <span class="kw">let</span> <span class="ident">handle_objects</span> <span class="op">=</span> {
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">arr</span> <span class="op">=</span> [<span class="ident">NONE_OBJECT</span>; <span class="ident">CHANNEL_MAX_NUM_HANDLES</span>];
-        <span class="kw">for</span> (<span class="ident">i</span>, <span class="ident">handle</span>) <span class="kw">in</span> <span class="ident">handles</span>.<span class="ident">iter</span>().<span class="ident">enumerate</span>() {
-            <span class="ident">arr</span>[<span class="ident">i</span>] <span class="op">=</span> <span class="kw">match</span> <span class="ident">task</span>.<span class="ident">handles</span>.<span class="ident">read</span>().<span class="ident">get</span>(<span class="ident">handle</span>) {
-                <span class="prelude-val">Some</span>(<span class="ident">object</span>) =&gt; <span class="prelude-val">Some</span>(<span class="ident">object</span>.<span class="ident">clone</span>()),
-                <span class="prelude-val">None</span> =&gt; <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">SendMessageError::InvalidTransferredHandle</span>),
+    } <span class="kw">else </span>{
+        UserSlice::new(handles_address <span class="kw">as </span><span class="kw-2">*mut </span>Handle, num_handles)
+            .validate_read()
+            .map_err(|()| SendMessageError::HandlesAddressInvalid)<span class="question-mark">?
+    </span>};
+    <span class="kw">let </span>handle_objects = {
+        <span class="kw">let </span><span class="kw-2">mut </span>arr = [NONE_OBJECT; CHANNEL_MAX_NUM_HANDLES];
+        <span class="kw">for </span>(i, handle) <span class="kw">in </span>handles.iter().enumerate() {
+            arr[i] = <span class="kw">match </span>task.handles.read().get(handle) {
+                <span class="prelude-val">Some</span>(object) =&gt; <span class="prelude-val">Some</span>(object.clone()),
+                <span class="prelude-val">None </span>=&gt; <span class="kw">return </span><span class="prelude-val">Err</span>(SendMessageError::InvalidTransferredHandle),
             };
 
             <span class="comment">/*
              * We&#39;re transferring the handle&#39;s object, so we remove the handle to it from the sending task.
-             */</span>
-            <span class="ident">task</span>.<span class="ident">handles</span>.<span class="ident">write</span>().<span class="ident">remove</span>(<span class="kw-2">&amp;</span><span class="ident">handle</span>);
+             */
+            </span>task.handles.write().remove(<span class="kw-2">&amp;</span>handle);
         }
-        <span class="ident">arr</span>
+        arr
     };
 
-    <span class="ident">task</span>.<span class="ident">handles</span>
-        .<span class="ident">read</span>()
-        .<span class="ident">get</span>(<span class="kw-2">&amp;</span><span class="ident">channel_handle</span>)
-        .<span class="ident">ok_or</span>(<span class="ident">SendMessageError::InvalidChannelHandle</span>)<span class="question-mark">?</span>
-        .<span class="ident">clone</span>()
-        .<span class="ident">downcast_arc</span>::<span class="op">&lt;</span><span class="ident">ChannelEnd</span><span class="op">&gt;</span>()
-        .<span class="ident">ok</span>()
-        .<span class="ident">ok_or</span>(<span class="ident">SendMessageError::NotAChannel</span>)<span class="question-mark">?</span>
-        .<span class="ident">send</span>(<span class="ident">Message</span> { <span class="ident">bytes</span>: <span class="ident">bytes</span>.<span class="ident">to_vec</span>(), <span class="ident">handle_objects</span> })
+    task.handles
+        .read()
+        .get(<span class="kw-2">&amp;</span>channel_handle)
+        .ok_or(SendMessageError::InvalidChannelHandle)<span class="question-mark">?
+        </span>.clone()
+        .downcast_arc::&lt;ChannelEnd&gt;()
+        .ok()
+        .ok_or(SendMessageError::NotAChannel)<span class="question-mark">?
+        </span>.send(Message { bytes: bytes.to_vec(), handle_objects })
 }
 
-<span class="kw">fn</span> <span class="ident">get_message</span><span class="op">&lt;</span><span class="ident">P</span><span class="op">&gt;</span>(
-    <span class="ident">task</span>: <span class="kw-2">&amp;</span><span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">Task</span><span class="op">&lt;</span><span class="ident">P</span><span class="op">&gt;</span><span class="op">&gt;</span>,
-    <span class="ident">channel_handle</span>: <span class="ident">usize</span>,
-    <span class="ident">bytes_address</span>: <span class="ident">usize</span>,
-    <span class="ident">bytes_len</span>: <span class="ident">usize</span>,
-    <span class="ident">handles_address</span>: <span class="ident">usize</span>,
-    <span class="ident">handles_len</span>: <span class="ident">usize</span>,
-) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">usize</span>, <span class="ident">GetMessageError</span><span class="op">&gt;</span>
-<span class="kw">where</span>
-    <span class="ident">P</span>: <span class="ident">Platform</span>,
+<span class="kw">fn </span>get_message&lt;P&gt;(
+    task: <span class="kw-2">&amp;</span>Arc&lt;Task&lt;P&gt;&gt;,
+    channel_handle: usize,
+    bytes_address: usize,
+    bytes_len: usize,
+    handles_address: usize,
+    handles_len: usize,
+) -&gt; <span class="prelude-ty">Result</span>&lt;usize, GetMessageError&gt;
+<span class="kw">where
+    </span>P: Platform,
 {
-    <span class="kw">let</span> <span class="ident">channel_handle</span> <span class="op">=</span> <span class="ident">Handle::try_from</span>(<span class="ident">channel_handle</span>).<span class="ident">map_err</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> <span class="ident">GetMessageError::InvalidChannelHandle</span>)<span class="question-mark">?</span>;
+    <span class="kw">let </span>channel_handle = Handle::try_from(channel_handle).map_err(|<span class="kw">_</span>| GetMessageError::InvalidChannelHandle)<span class="question-mark">?</span>;
 
-    <span class="kw">let</span> <span class="ident">channel</span> <span class="op">=</span> <span class="ident">task</span>
-        .<span class="ident">handles</span>
-        .<span class="ident">read</span>()
-        .<span class="ident">get</span>(<span class="kw-2">&amp;</span><span class="ident">channel_handle</span>)
-        .<span class="ident">ok_or</span>(<span class="ident">GetMessageError::InvalidChannelHandle</span>)<span class="question-mark">?</span>
-        .<span class="ident">clone</span>()
-        .<span class="ident">downcast_arc</span>::<span class="op">&lt;</span><span class="ident">ChannelEnd</span><span class="op">&gt;</span>()
-        .<span class="ident">ok</span>()
-        .<span class="ident">ok_or</span>(<span class="ident">GetMessageError::NotAChannel</span>)<span class="question-mark">?</span>;
+    <span class="kw">let </span>channel = task
+        .handles
+        .read()
+        .get(<span class="kw-2">&amp;</span>channel_handle)
+        .ok_or(GetMessageError::InvalidChannelHandle)<span class="question-mark">?
+        </span>.clone()
+        .downcast_arc::&lt;ChannelEnd&gt;()
+        .ok()
+        .ok_or(GetMessageError::NotAChannel)<span class="question-mark">?</span>;
 
-    <span class="ident">channel</span>.<span class="ident">receive</span>(<span class="op">|</span><span class="ident">message</span><span class="op">|</span> {
-        <span class="kw">let</span> <span class="ident">num_handles</span> <span class="op">=</span> <span class="ident">message</span>.<span class="ident">num_handles</span>();
+    channel.receive(|message| {
+        <span class="kw">let </span>num_handles = message.num_handles();
 
-        <span class="kw">if</span> <span class="ident">message</span>.<span class="ident">bytes</span>.<span class="ident">len</span>() <span class="op">&gt;</span> <span class="ident">bytes_len</span> {
-            <span class="kw">return</span> <span class="prelude-val">Err</span>((<span class="ident">message</span>, <span class="ident">GetMessageError::BytesBufferTooSmall</span>));
+        <span class="kw">if </span>message.bytes.len() &gt; bytes_len {
+            <span class="kw">return </span><span class="prelude-val">Err</span>((message, GetMessageError::BytesBufferTooSmall));
         }
-        <span class="kw">if</span> <span class="ident">num_handles</span> <span class="op">&gt;</span> <span class="ident">handles_len</span> {
-            <span class="kw">return</span> <span class="prelude-val">Err</span>((<span class="ident">message</span>, <span class="ident">GetMessageError::HandlesBufferTooSmall</span>));
+        <span class="kw">if </span>num_handles &gt; handles_len {
+            <span class="kw">return </span><span class="prelude-val">Err</span>((message, GetMessageError::HandlesBufferTooSmall));
         }
 
-        <span class="kw">if</span> <span class="ident">bytes_len</span> <span class="op">&gt;</span> <span class="number">0</span> <span class="op">&amp;&amp;</span> <span class="ident">bytes_address</span> <span class="op">!</span><span class="op">=</span> <span class="number">0x0</span> {
-            <span class="kw">let</span> <span class="ident">byte_buffer</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">UserSlice::new</span>(<span class="ident">bytes_address</span> <span class="kw">as</span> <span class="kw-2">*mut</span> <span class="ident">u8</span>, <span class="ident">message</span>.<span class="ident">bytes</span>.<span class="ident">len</span>()).<span class="ident">validate_write</span>()
+        <span class="kw">if </span>bytes_len &gt; <span class="number">0 </span>&amp;&amp; bytes_address != <span class="number">0x0 </span>{
+            <span class="kw">let </span>byte_buffer = <span class="kw">match </span>UserSlice::new(bytes_address <span class="kw">as </span><span class="kw-2">*mut </span>u8, message.bytes.len()).validate_write()
             {
-                <span class="prelude-val">Ok</span>(<span class="ident">buffer</span>) =&gt; <span class="ident">buffer</span>,
-                <span class="prelude-val">Err</span>(()) =&gt; <span class="kw">return</span> <span class="prelude-val">Err</span>((<span class="ident">message</span>, <span class="ident">GetMessageError::BytesAddressInvalid</span>)),
+                <span class="prelude-val">Ok</span>(buffer) =&gt; buffer,
+                <span class="prelude-val">Err</span>(()) =&gt; <span class="kw">return </span><span class="prelude-val">Err</span>((message, GetMessageError::BytesAddressInvalid)),
             };
-            <span class="ident">byte_buffer</span>.<span class="ident">copy_from_slice</span>(<span class="kw-2">&amp;</span><span class="ident">message</span>.<span class="ident">bytes</span>);
+            byte_buffer.copy_from_slice(<span class="kw-2">&amp;</span>message.bytes);
         }
 
-        <span class="kw">if</span> <span class="ident">handles_len</span> <span class="op">&gt;</span> <span class="number">0</span> <span class="op">&amp;&amp;</span> <span class="ident">handles_address</span> <span class="op">!</span><span class="op">=</span> <span class="number">0x0</span> {
-            <span class="kw">let</span> <span class="ident">handles_buffer</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">UserSlice::new</span>(<span class="ident">handles_address</span> <span class="kw">as</span> <span class="kw-2">*mut</span> <span class="ident">Handle</span>, <span class="ident">num_handles</span>).<span class="ident">validate_write</span>()
+        <span class="kw">if </span>handles_len &gt; <span class="number">0 </span>&amp;&amp; handles_address != <span class="number">0x0 </span>{
+            <span class="kw">let </span>handles_buffer = <span class="kw">match </span>UserSlice::new(handles_address <span class="kw">as </span><span class="kw-2">*mut </span>Handle, num_handles).validate_write()
             {
-                <span class="prelude-val">Ok</span>(<span class="ident">buffer</span>) =&gt; <span class="ident">buffer</span>,
-                <span class="prelude-val">Err</span>(()) =&gt; <span class="kw">return</span> <span class="prelude-val">Err</span>((<span class="ident">message</span>, <span class="ident">GetMessageError::HandlesAddressInvalid</span>)),
+                <span class="prelude-val">Ok</span>(buffer) =&gt; buffer,
+                <span class="prelude-val">Err</span>(()) =&gt; <span class="kw">return </span><span class="prelude-val">Err</span>((message, GetMessageError::HandlesAddressInvalid)),
             };
-            <span class="kw">for</span> <span class="ident">i</span> <span class="kw">in</span> <span class="number">0</span>..<span class="ident">num_handles</span> {
-                <span class="ident">handles_buffer</span>[<span class="ident">i</span>] <span class="op">=</span> <span class="ident">task</span>.<span class="ident">add_handle</span>(<span class="ident">message</span>.<span class="ident">handle_objects</span>[<span class="ident">i</span>].<span class="ident">as_ref</span>().<span class="ident">unwrap</span>().<span class="ident">clone</span>());
+            <span class="kw">for </span>i <span class="kw">in </span><span class="number">0</span>..num_handles {
+                handles_buffer[i] = task.add_handle(message.handle_objects[i].as_ref().unwrap().clone());
             }
         }
 
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">status</span> <span class="op">=</span> <span class="number">0</span>;
-        <span class="ident">status</span>.<span class="ident">set_bits</span>(<span class="number">16</span>..<span class="number">32</span>, <span class="ident">message</span>.<span class="ident">bytes</span>.<span class="ident">len</span>());
-        <span class="ident">status</span>.<span class="ident">set_bits</span>(<span class="number">32</span>..<span class="number">48</span>, <span class="ident">num_handles</span>);
-        <span class="prelude-val">Ok</span>(<span class="ident">status</span>)
+        <span class="kw">let </span><span class="kw-2">mut </span>status = <span class="number">0</span>;
+        status.set_bits(<span class="number">16</span>..<span class="number">32</span>, message.bytes.len());
+        status.set_bits(<span class="number">32</span>..<span class="number">48</span>, num_handles);
+        <span class="prelude-val">Ok</span>(status)
     })
 }
 
-<span class="kw">fn</span> <span class="ident">register_service</span><span class="op">&lt;</span><span class="ident">P</span><span class="op">&gt;</span>(
-    <span class="ident">task</span>: <span class="kw-2">&amp;</span><span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">Task</span><span class="op">&lt;</span><span class="ident">P</span><span class="op">&gt;</span><span class="op">&gt;</span>,
-    <span class="ident">name_length</span>: <span class="ident">usize</span>,
-    <span class="ident">name_ptr</span>: <span class="ident">usize</span>,
-) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Handle</span>, <span class="ident">RegisterServiceError</span><span class="op">&gt;</span>
-<span class="kw">where</span>
-    <span class="ident">P</span>: <span class="ident">Platform</span>,
+<span class="kw">fn </span>register_service&lt;P&gt;(
+    task: <span class="kw-2">&amp;</span>Arc&lt;Task&lt;P&gt;&gt;,
+    name_length: usize,
+    name_ptr: usize,
+) -&gt; <span class="prelude-ty">Result</span>&lt;Handle, RegisterServiceError&gt;
+<span class="kw">where
+    </span>P: Platform,
 {
-    <span class="kw">use</span> <span class="ident">poplar::syscall::SERVICE_NAME_MAX_LENGTH</span>;
+    <span class="kw">use </span>poplar::syscall::SERVICE_NAME_MAX_LENGTH;
 
-    <span class="comment">// Check that the task has the `ServiceProvider` capability</span>
-    <span class="kw">if</span> <span class="op">!</span><span class="ident">task</span>.<span class="ident">capabilities</span>.<span class="ident">contains</span>(<span class="kw-2">&amp;</span><span class="ident">Capability::ServiceProvider</span>) {
-        <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">RegisterServiceError::TaskDoesNotHaveCorrectCapability</span>);
+    <span class="comment">// Check that the task has the `ServiceProvider` capability
+    </span><span class="kw">if </span>!task.capabilities.contains(<span class="kw-2">&amp;</span>Capability::ServiceProvider) {
+        <span class="kw">return </span><span class="prelude-val">Err</span>(RegisterServiceError::TaskDoesNotHaveCorrectCapability);
     }
 
-    <span class="comment">// Check that the name is not too short or long</span>
-    <span class="kw">if</span> <span class="ident">name_length</span> <span class="op">==</span> <span class="number">0</span> <span class="op">|</span><span class="op">|</span> <span class="ident">name_length</span> <span class="op">&gt;</span> <span class="ident">SERVICE_NAME_MAX_LENGTH</span> {
-        <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">RegisterServiceError::NameLengthNotValid</span>);
+    <span class="comment">// Check that the name is not too short or long
+    </span><span class="kw">if </span>name_length == <span class="number">0 </span>|| name_length &gt; SERVICE_NAME_MAX_LENGTH {
+        <span class="kw">return </span><span class="prelude-val">Err</span>(RegisterServiceError::NameLengthNotValid);
     }
 
-    <span class="kw">let</span> <span class="ident">service_name</span> <span class="op">=</span> <span class="ident">UserString::new</span>(<span class="ident">name_ptr</span> <span class="kw">as</span> <span class="kw-2">*mut</span> <span class="ident">u8</span>, <span class="ident">name_length</span>)
-        .<span class="ident">validate</span>()
-        .<span class="ident">map_err</span>(<span class="op">|</span>()<span class="op">|</span> <span class="ident">RegisterServiceError::NamePointerNotValid</span>)<span class="question-mark">?</span>;
+    <span class="kw">let </span>service_name = UserString::new(name_ptr <span class="kw">as </span><span class="kw-2">*mut </span>u8, name_length)
+        .validate()
+        .map_err(|()| RegisterServiceError::NamePointerNotValid)<span class="question-mark">?</span>;
 
-    <span class="macro">info!</span>(<span class="string">&quot;Task {} has registered a service called {}&quot;</span>, <span class="ident">task</span>.<span class="ident">name</span>, <span class="ident">service_name</span>);
-    <span class="kw">let</span> <span class="ident">channel</span> <span class="op">=</span> <span class="ident">ChannelEnd::new_kernel_channel</span>(<span class="ident">task</span>.<span class="ident">id</span>());
-    <span class="ident">SERVICE_MAP</span>.<span class="ident">lock</span>().<span class="ident">insert</span>(<span class="ident">task</span>.<span class="ident">name</span>.<span class="ident">clone</span>() <span class="op">+</span> <span class="string">&quot;.&quot;</span> <span class="op">+</span> <span class="ident">service_name</span>, <span class="ident">channel</span>.<span class="ident">clone</span>());
+    <span class="macro">info!</span>(<span class="string">&quot;Task {} has registered a service called {}&quot;</span>, task.name, service_name);
+    <span class="kw">let </span>channel = ChannelEnd::new_kernel_channel(task.id());
+    SERVICE_MAP.lock().insert(task.name.clone() + <span class="string">&quot;.&quot; </span>+ service_name, channel.clone());
 
-    <span class="prelude-val">Ok</span>(<span class="ident">task</span>.<span class="ident">add_handle</span>(<span class="ident">channel</span>))
+    <span class="prelude-val">Ok</span>(task.add_handle(channel))
 }
 
-<span class="kw">fn</span> <span class="ident">subscribe_to_service</span><span class="op">&lt;</span><span class="ident">P</span><span class="op">&gt;</span>(
-    <span class="ident">task</span>: <span class="kw-2">&amp;</span><span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">Task</span><span class="op">&lt;</span><span class="ident">P</span><span class="op">&gt;</span><span class="op">&gt;</span>,
-    <span class="ident">name_length</span>: <span class="ident">usize</span>,
-    <span class="ident">name_ptr</span>: <span class="ident">usize</span>,
-) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Handle</span>, <span class="ident">SubscribeToServiceError</span><span class="op">&gt;</span>
-<span class="kw">where</span>
-    <span class="ident">P</span>: <span class="ident">Platform</span>,
+<span class="kw">fn </span>subscribe_to_service&lt;P&gt;(
+    task: <span class="kw-2">&amp;</span>Arc&lt;Task&lt;P&gt;&gt;,
+    name_length: usize,
+    name_ptr: usize,
+) -&gt; <span class="prelude-ty">Result</span>&lt;Handle, SubscribeToServiceError&gt;
+<span class="kw">where
+    </span>P: Platform,
 {
-    <span class="kw">use</span> <span class="ident">poplar::syscall::SERVICE_NAME_MAX_LENGTH</span>;
+    <span class="kw">use </span>poplar::syscall::SERVICE_NAME_MAX_LENGTH;
 
-    <span class="comment">// Check that the task has the `ServiceUser` capability</span>
-    <span class="kw">if</span> <span class="op">!</span><span class="ident">task</span>.<span class="ident">capabilities</span>.<span class="ident">contains</span>(<span class="kw-2">&amp;</span><span class="ident">Capability::ServiceUser</span>) {
-        <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">SubscribeToServiceError::TaskDoesNotHaveCorrectCapability</span>);
+    <span class="comment">// Check that the task has the `ServiceUser` capability
+    </span><span class="kw">if </span>!task.capabilities.contains(<span class="kw-2">&amp;</span>Capability::ServiceUser) {
+        <span class="kw">return </span><span class="prelude-val">Err</span>(SubscribeToServiceError::TaskDoesNotHaveCorrectCapability);
     }
 
-    <span class="comment">// Check that the name is not too short or long</span>
-    <span class="kw">if</span> <span class="ident">name_length</span> <span class="op">==</span> <span class="number">0</span> <span class="op">|</span><span class="op">|</span> <span class="ident">name_length</span> <span class="op">&gt;</span> <span class="ident">SERVICE_NAME_MAX_LENGTH</span> {
-        <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">SubscribeToServiceError::NameLengthNotValid</span>);
+    <span class="comment">// Check that the name is not too short or long
+    </span><span class="kw">if </span>name_length == <span class="number">0 </span>|| name_length &gt; SERVICE_NAME_MAX_LENGTH {
+        <span class="kw">return </span><span class="prelude-val">Err</span>(SubscribeToServiceError::NameLengthNotValid);
     }
 
-    <span class="kw">let</span> <span class="ident">service_name</span> <span class="op">=</span> <span class="ident">UserString::new</span>(<span class="ident">name_ptr</span> <span class="kw">as</span> <span class="kw-2">*mut</span> <span class="ident">u8</span>, <span class="ident">name_length</span>)
-        .<span class="ident">validate</span>()
-        .<span class="ident">map_err</span>(<span class="op">|</span>()<span class="op">|</span> <span class="ident">SubscribeToServiceError::NamePointerNotValid</span>)<span class="question-mark">?</span>;
+    <span class="kw">let </span>service_name = UserString::new(name_ptr <span class="kw">as </span><span class="kw-2">*mut </span>u8, name_length)
+        .validate()
+        .map_err(|()| SubscribeToServiceError::NamePointerNotValid)<span class="question-mark">?</span>;
 
-    <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">register_channel</span>) <span class="op">=</span> <span class="ident">SERVICE_MAP</span>.<span class="ident">lock</span>().<span class="ident">get</span>(<span class="ident">service_name</span>) {
-        <span class="comment">// Create new channel to allow the two tasks to communicate</span>
-        <span class="kw">let</span> (<span class="ident">provider_end</span>, <span class="ident">user_end</span>) <span class="op">=</span> <span class="ident">ChannelEnd::new_channel</span>(<span class="ident">task</span>.<span class="ident">id</span>());
+    <span class="kw">if let </span><span class="prelude-val">Some</span>(register_channel) = SERVICE_MAP.lock().get(service_name) {
+        <span class="comment">// Create new channel to allow the two tasks to communicate
+        </span><span class="kw">let </span>(provider_end, user_end) = ChannelEnd::new_channel(task.id());
 
         <span class="comment">/*
          * Send a message down `register_channel` to tell it about its new service user, transferring the
@@ -995,124 +995,124 @@
          *
          * XXX: we manually construct a Ptah message here so userspace can use the `poplar::Channel` type if it
          * wants to, but without having to pull that in here.
-         */</span>
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">handle_objects</span> <span class="op">=</span> [<span class="ident">NONE_OBJECT</span>; <span class="ident">CHANNEL_MAX_NUM_HANDLES</span>];
-        <span class="ident">handle_objects</span>[<span class="number">0</span>] <span class="op">=</span> <span class="prelude-val">Some</span>(<span class="ident">provider_end</span> <span class="kw">as</span> <span class="ident">Arc</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">KernelObject</span><span class="op">&gt;</span>);
-        <span class="ident">register_channel</span>.<span class="ident">add_message</span>(<span class="ident">Message</span> { <span class="ident">bytes</span>: [<span class="ident">ptah::make_handle_slot</span>(<span class="number">0</span>)].<span class="ident">to_vec</span>(), <span class="ident">handle_objects</span> });
+         */
+        </span><span class="kw">let </span><span class="kw-2">mut </span>handle_objects = [NONE_OBJECT; CHANNEL_MAX_NUM_HANDLES];
+        handle_objects[<span class="number">0</span>] = <span class="prelude-val">Some</span>(provider_end <span class="kw">as </span>Arc&lt;<span class="kw">dyn </span>KernelObject&gt;);
+        register_channel.add_message(Message { bytes: [ptah::make_handle_slot(<span class="number">0</span>)].to_vec(), handle_objects });
 
-        <span class="comment">// Return the user&#39;s end of the new channel to it</span>
-        <span class="prelude-val">Ok</span>(<span class="ident">task</span>.<span class="ident">add_handle</span>(<span class="ident">user_end</span>))
-    } <span class="kw">else</span> {
-        <span class="prelude-val">Err</span>(<span class="ident">SubscribeToServiceError::NoServiceWithThatName</span>)
+        <span class="comment">// Return the user&#39;s end of the new channel to it
+        </span><span class="prelude-val">Ok</span>(task.add_handle(user_end))
+    } <span class="kw">else </span>{
+        <span class="prelude-val">Err</span>(SubscribeToServiceError::NoServiceWithThatName)
     }
 }
 
-<span class="kw">fn</span> <span class="ident">pci_get_info</span><span class="op">&lt;</span><span class="ident">P</span><span class="op">&gt;</span>(
-    <span class="ident">task</span>: <span class="kw-2">&amp;</span><span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">Task</span><span class="op">&lt;</span><span class="ident">P</span><span class="op">&gt;</span><span class="op">&gt;</span>,
-    <span class="ident">buffer_address</span>: <span class="ident">usize</span>,
-    <span class="ident">buffer_size</span>: <span class="ident">usize</span>,
-) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">usize</span>, <span class="ident">PciGetInfoError</span><span class="op">&gt;</span>
-<span class="kw">where</span>
-    <span class="ident">P</span>: <span class="ident">Platform</span>,
+<span class="kw">fn </span>pci_get_info&lt;P&gt;(
+    task: <span class="kw-2">&amp;</span>Arc&lt;Task&lt;P&gt;&gt;,
+    buffer_address: usize,
+    buffer_size: usize,
+) -&gt; <span class="prelude-ty">Result</span>&lt;usize, PciGetInfoError&gt;
+<span class="kw">where
+    </span>P: Platform,
 {
-    <span class="kw">use</span> <span class="ident">pci_types</span>::{<span class="ident">Bar</span>, <span class="ident">MAX_BARS</span>};
-    <span class="kw">use</span> <span class="ident">poplar::syscall::PciDeviceInfo</span>;
+    <span class="kw">use </span>pci_types::{Bar, MAX_BARS};
+    <span class="kw">use </span>poplar::syscall::PciDeviceInfo;
 
-    <span class="comment">// Check that the task has the &#39;PciBusDriver&#39; capability</span>
-    <span class="kw">if</span> <span class="op">!</span><span class="ident">task</span>.<span class="ident">capabilities</span>.<span class="ident">contains</span>(<span class="kw-2">&amp;</span><span class="ident">Capability::PciBusDriver</span>) {
-        <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">PciGetInfoError::TaskDoesNotHaveCorrectCapability</span>);
+    <span class="comment">// Check that the task has the &#39;PciBusDriver&#39; capability
+    </span><span class="kw">if </span>!task.capabilities.contains(<span class="kw-2">&amp;</span>Capability::PciBusDriver) {
+        <span class="kw">return </span><span class="prelude-val">Err</span>(PciGetInfoError::TaskDoesNotHaveCorrectCapability);
     }
 
-    <span class="comment">// TODO: request this through the platform nicely instead of through a huge global</span>
-    <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="kw-2">ref</span> <span class="ident">pci_info</span>) <span class="op">=</span> <span class="kw-2">*</span><span class="ident"><span class="kw">crate</span>::PCI_INFO</span>.<span class="ident">read</span>() {
-        <span class="kw">let</span> <span class="ident">num_descriptors</span> <span class="op">=</span> <span class="ident">pci_info</span>.<span class="ident">devices</span>.<span class="ident">len</span>();
+    <span class="comment">// TODO: request this through the platform nicely instead of through a huge global
+    </span><span class="kw">if let </span><span class="prelude-val">Some</span>(<span class="kw-2">ref </span>pci_info) = <span class="kw-2">*</span><span class="kw">crate</span>::PCI_INFO.read() {
+        <span class="kw">let </span>num_descriptors = pci_info.devices.len();
 
-        <span class="kw">if</span> <span class="ident">buffer_size</span> <span class="op">&gt;</span> <span class="number">0</span> <span class="op">&amp;&amp;</span> <span class="ident">buffer_address</span> <span class="op">!</span><span class="op">=</span> <span class="number">0x0</span> {
-            <span class="kw">if</span> <span class="ident">buffer_size</span> <span class="op">&lt;</span> <span class="ident">num_descriptors</span> {
-                <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">PciGetInfoError::BufferNotLargeEnough</span>(<span class="ident">num_descriptors</span> <span class="kw">as</span> <span class="ident">u32</span>));
+        <span class="kw">if </span>buffer_size &gt; <span class="number">0 </span>&amp;&amp; buffer_address != <span class="number">0x0 </span>{
+            <span class="kw">if </span>buffer_size &lt; num_descriptors {
+                <span class="kw">return </span><span class="prelude-val">Err</span>(PciGetInfoError::BufferNotLargeEnough(num_descriptors <span class="kw">as </span>u32));
             }
 
-            <span class="kw">let</span> <span class="ident">descriptor_buffer</span> <span class="op">=</span> <span class="ident">UserSlice::new</span>(<span class="ident">buffer_address</span> <span class="kw">as</span> <span class="kw-2">*mut</span> <span class="ident">PciDeviceInfo</span>, <span class="ident">buffer_size</span>)
-                .<span class="ident">validate_write</span>()
-                .<span class="ident">map_err</span>(<span class="op">|</span>()<span class="op">|</span> <span class="ident">PciGetInfoError::BufferPointerInvalid</span>)<span class="question-mark">?</span>;
+            <span class="kw">let </span>descriptor_buffer = UserSlice::new(buffer_address <span class="kw">as </span><span class="kw-2">*mut </span>PciDeviceInfo, buffer_size)
+                .validate_write()
+                .map_err(|()| PciGetInfoError::BufferPointerInvalid)<span class="question-mark">?</span>;
 
-            <span class="kw">for</span> (<span class="ident">i</span>, (<span class="kw-2">&amp;</span><span class="ident">address</span>, <span class="ident">device</span>)) <span class="kw">in</span> <span class="ident">pci_info</span>.<span class="ident">devices</span>.<span class="ident">iter</span>().<span class="ident">enumerate</span>() {
-                <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">device_descriptor</span> <span class="op">=</span> <span class="ident">poplar::syscall::PciDeviceInfo</span> {
-                    <span class="ident">address</span>,
-                    <span class="ident">vendor_id</span>: <span class="ident">device</span>.<span class="ident">vendor_id</span>,
-                    <span class="ident">device_id</span>: <span class="ident">device</span>.<span class="ident">device_id</span>,
-                    <span class="ident">revision</span>: <span class="ident">device</span>.<span class="ident">revision</span>,
-                    <span class="ident">class</span>: <span class="ident">device</span>.<span class="ident">class</span>,
-                    <span class="ident">sub_class</span>: <span class="ident">device</span>.<span class="ident">sub_class</span>,
-                    <span class="ident">interface</span>: <span class="ident">device</span>.<span class="ident">interface</span>,
-                    <span class="ident">bars</span>: [<span class="ident">NONE_BAR</span>; <span class="ident">MAX_BARS</span>],
+            <span class="kw">for </span>(i, (<span class="kw-2">&amp;</span>address, device)) <span class="kw">in </span>pci_info.devices.iter().enumerate() {
+                <span class="kw">let </span><span class="kw-2">mut </span>device_descriptor = poplar::syscall::PciDeviceInfo {
+                    address,
+                    vendor_id: device.vendor_id,
+                    device_id: device.device_id,
+                    revision: device.revision,
+                    class: device.class,
+                    sub_class: device.sub_class,
+                    interface: device.interface,
+                    bars: [NONE_BAR; MAX_BARS],
                 };
 
-                <span class="kw">for</span> <span class="ident">i</span> <span class="kw">in</span> <span class="number">0</span>..<span class="ident">MAX_BARS</span> {
-                    <span class="kw">match</span> <span class="ident">device</span>.<span class="ident">bars</span>[<span class="ident">i</span>] {
-                        <span class="prelude-val">Some</span>(<span class="ident">Bar::Memory32</span> { <span class="ident">address</span>, <span class="ident">size</span>, <span class="ident">prefetchable</span> }) =&gt; {
-                            <span class="kw">let</span> <span class="ident">flags</span> <span class="op">=</span> <span class="ident">Flags</span> {
-                                <span class="ident">writable</span>: <span class="bool-val">true</span>,
-                                <span class="ident">executable</span>: <span class="bool-val">false</span>,
-                                <span class="ident">user_accessible</span>: <span class="bool-val">true</span>,
-                                <span class="ident">cached</span>: <span class="ident">prefetchable</span>,
+                <span class="kw">for </span>i <span class="kw">in </span><span class="number">0</span>..MAX_BARS {
+                    <span class="kw">match </span>device.bars[i] {
+                        <span class="prelude-val">Some</span>(Bar::Memory32 { address, size, prefetchable }) =&gt; {
+                            <span class="kw">let </span>flags = Flags {
+                                writable: <span class="bool-val">true</span>,
+                                executable: <span class="bool-val">false</span>,
+                                user_accessible: <span class="bool-val">true</span>,
+                                cached: prefetchable,
                             };
-                            <span class="comment">// TODO: should the requesting task own the BAR memory objects, or should the kernel?</span>
-                            <span class="kw">let</span> <span class="ident">memory_object</span> <span class="op">=</span> <span class="ident">MemoryObject::new</span>(
-                                <span class="ident">task</span>.<span class="ident">id</span>(),
+                            <span class="comment">// TODO: should the requesting task own the BAR memory objects, or should the kernel?
+                            </span><span class="kw">let </span>memory_object = MemoryObject::new(
+                                task.id(),
                                 <span class="prelude-val">None</span>,
-                                <span class="ident">PhysicalAddress::new</span>(<span class="ident">address</span> <span class="kw">as</span> <span class="ident">usize</span>).<span class="ident">unwrap</span>(),
-                                <span class="ident">size</span> <span class="kw">as</span> <span class="ident">usize</span>,
-                                <span class="ident">flags</span>,
+                                PhysicalAddress::new(address <span class="kw">as </span>usize).unwrap(),
+                                size <span class="kw">as </span>usize,
+                                flags,
                             );
-                            <span class="kw">let</span> <span class="ident">handle</span> <span class="op">=</span> <span class="ident">task</span>.<span class="ident">add_handle</span>(<span class="ident">memory_object</span>);
-                            <span class="ident">device_descriptor</span>.<span class="ident">bars</span>[<span class="ident">i</span>] <span class="op">=</span>
-                                <span class="prelude-val">Some</span>(<span class="ident">poplar::syscall::pci::Bar::Memory32</span> { <span class="ident">memory_object</span>: <span class="ident">handle</span>, <span class="ident">size</span> });
+                            <span class="kw">let </span>handle = task.add_handle(memory_object);
+                            device_descriptor.bars[i] =
+                                <span class="prelude-val">Some</span>(poplar::syscall::pci::Bar::Memory32 { memory_object: handle, size });
                         }
-                        <span class="prelude-val">Some</span>(<span class="ident">Bar::Memory64</span> { <span class="ident">address</span>, <span class="ident">size</span>, <span class="ident">prefetchable</span> }) =&gt; {
-                            <span class="kw">let</span> <span class="ident">flags</span> <span class="op">=</span> <span class="ident">Flags</span> {
-                                <span class="ident">writable</span>: <span class="bool-val">true</span>,
-                                <span class="ident">executable</span>: <span class="bool-val">false</span>,
-                                <span class="ident">user_accessible</span>: <span class="bool-val">true</span>,
-                                <span class="ident">cached</span>: <span class="ident">prefetchable</span>,
+                        <span class="prelude-val">Some</span>(Bar::Memory64 { address, size, prefetchable }) =&gt; {
+                            <span class="kw">let </span>flags = Flags {
+                                writable: <span class="bool-val">true</span>,
+                                executable: <span class="bool-val">false</span>,
+                                user_accessible: <span class="bool-val">true</span>,
+                                cached: prefetchable,
                             };
-                            <span class="comment">// TODO: should the requesting task own the BAR memory objects, or should the kernel?</span>
-                            <span class="kw">let</span> <span class="ident">memory_object</span> <span class="op">=</span> <span class="ident">MemoryObject::new</span>(
-                                <span class="ident">task</span>.<span class="ident">id</span>(),
+                            <span class="comment">// TODO: should the requesting task own the BAR memory objects, or should the kernel?
+                            </span><span class="kw">let </span>memory_object = MemoryObject::new(
+                                task.id(),
                                 <span class="prelude-val">None</span>,
-                                <span class="ident">PhysicalAddress::new</span>(<span class="ident">address</span> <span class="kw">as</span> <span class="ident">usize</span>).<span class="ident">unwrap</span>(),
-                                <span class="ident">size</span> <span class="kw">as</span> <span class="ident">usize</span>,
-                                <span class="ident">flags</span>,
+                                PhysicalAddress::new(address <span class="kw">as </span>usize).unwrap(),
+                                size <span class="kw">as </span>usize,
+                                flags,
                             );
-                            <span class="kw">let</span> <span class="ident">handle</span> <span class="op">=</span> <span class="ident">task</span>.<span class="ident">add_handle</span>(<span class="ident">memory_object</span>);
-                            <span class="ident">device_descriptor</span>.<span class="ident">bars</span>[<span class="ident">i</span>] <span class="op">=</span>
-                                <span class="prelude-val">Some</span>(<span class="ident">poplar::syscall::pci::Bar::Memory64</span> { <span class="ident">memory_object</span>: <span class="ident">handle</span>, <span class="ident">size</span> });
+                            <span class="kw">let </span>handle = task.add_handle(memory_object);
+                            device_descriptor.bars[i] =
+                                <span class="prelude-val">Some</span>(poplar::syscall::pci::Bar::Memory64 { memory_object: handle, size });
                         }
-                        <span class="prelude-val">Some</span>(<span class="ident">Bar::Io</span> { .. }) =&gt; <span class="macro">warn!</span>(<span class="string">&quot;PCI device at {} has an I/O BAR. We don&#39;t support these, and so they&#39;re not passed out to userspace&quot;</span>, <span class="ident">address</span>),
-                        <span class="prelude-val">None</span> =&gt; (),
+                        <span class="prelude-val">Some</span>(Bar::Io { .. }) =&gt; <span class="macro">warn!</span>(<span class="string">&quot;PCI device at {} has an I/O BAR. We don&#39;t support these, and so they&#39;re not passed out to userspace&quot;</span>, address),
+                        <span class="prelude-val">None </span>=&gt; (),
                     }
                 }
 
-                <span class="ident">descriptor_buffer</span>[<span class="ident">i</span>] <span class="op">=</span> <span class="ident">device_descriptor</span>;
+                descriptor_buffer[i] = device_descriptor;
             }
 
-            <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">status</span> <span class="op">=</span> <span class="number">0</span>;
-            <span class="ident">status</span>.<span class="ident">set_bits</span>(<span class="number">16</span>..<span class="number">48</span>, <span class="ident">num_descriptors</span>);
-            <span class="prelude-val">Ok</span>(<span class="ident">status</span>)
-        } <span class="kw">else</span> {
-            <span class="prelude-val">Err</span>(<span class="ident">PciGetInfoError::BufferNotLargeEnough</span>(<span class="ident">num_descriptors</span> <span class="kw">as</span> <span class="ident">u32</span>))
+            <span class="kw">let </span><span class="kw-2">mut </span>status = <span class="number">0</span>;
+            status.set_bits(<span class="number">16</span>..<span class="number">48</span>, num_descriptors);
+            <span class="prelude-val">Ok</span>(status)
+        } <span class="kw">else </span>{
+            <span class="prelude-val">Err</span>(PciGetInfoError::BufferNotLargeEnough(num_descriptors <span class="kw">as </span>u32))
         }
-    } <span class="kw">else</span> {
-        <span class="prelude-val">Err</span>(<span class="ident">PciGetInfoError::PlatformDoesNotSupportPci</span>)
+    } <span class="kw">else </span>{
+        <span class="prelude-val">Err</span>(PciGetInfoError::PlatformDoesNotSupportPci)
     }
 }
 
-<span class="kw">fn</span> <span class="ident">test_syscall</span><span class="op">&lt;</span><span class="ident">P</span><span class="op">&gt;</span>(<span class="ident">task</span>: <span class="kw-2">&amp;</span><span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">Task</span><span class="op">&lt;</span><span class="ident">P</span><span class="op">&gt;</span><span class="op">&gt;</span>, <span class="ident">a</span>: <span class="ident">usize</span>, <span class="ident">b</span>: <span class="ident">usize</span>, <span class="ident">c</span>: <span class="ident">usize</span>, <span class="ident">d</span>: <span class="ident">usize</span>, <span class="ident">e</span>: <span class="ident">usize</span>) -&gt; <span class="ident">usize</span>
-<span class="kw">where</span>
-    <span class="ident">P</span>: <span class="ident">Platform</span>,
+<span class="kw">fn </span>test_syscall&lt;P&gt;(task: <span class="kw-2">&amp;</span>Arc&lt;Task&lt;P&gt;&gt;, a: usize, b: usize, c: usize, d: usize, e: usize) -&gt; usize
+<span class="kw">where
+    </span>P: Platform,
 {
-    <span class="macro">info!</span>(<span class="string">&quot;Task &#39;{}&#39; made a test system call. a = {}, b = {}, c = {}, d = {}, e = {}&quot;</span>, <span class="ident">task</span>.<span class="ident">name</span>, <span class="ident">a</span>, <span class="ident">b</span>, <span class="ident">c</span>, <span class="ident">d</span>, <span class="ident">e</span>);
-    <span class="number">963</span>
-}
+    <span class="macro">info!</span>(<span class="string">&quot;Task &#39;{}&#39; made a test system call. a = {}, b = {}, c = {}, d = {}, e = {}&quot;</span>, task.name, a, b, c, d, e);
+    <span class="number">963
+</span>}
 </code></pre></div>
-</section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="kernel" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.65.0-nightly (34a6cae28 2022-08-09)" ></div></body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="kernel" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.65.0-nightly (b44197abb 2022-09-05)" ></div></body></html>
