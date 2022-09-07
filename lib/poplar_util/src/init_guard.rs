@@ -67,6 +67,23 @@ impl<T> InitGuard<T> {
         }
     }
 
+    /// Get a mutable reference to the data, if this guard has been initialized.
+    ///
+    /// ### Panics
+    /// Panics if this guard hasn't been initialized yet. Use `try_get_mut` if you want a fallible
+    /// variant.
+    pub fn get_mut(&mut self) -> &mut T {
+        match self.state.load(Ordering::SeqCst) {
+            /*
+             * Here, we create a reference to the data within the `MaybeUninit`. This causes UB if
+             * the data isn't really initialized.
+             */
+            STATE_INITIALIZED => unsafe { (*self.data.get()).assume_init_mut() },
+            STATE_UNINIT | STATE_INITIALIZING => panic!("InitGuard has not been initialized!"),
+            _ => panic!("InitGuard has invalid state"),
+        }
+    }
+
     /// Get a reference to the data, if this guard has been initialized. Returns `None` if it has
     /// not yet been initialized, or is currently being initialized.
     pub fn try_get(&self) -> Option<&T> {
@@ -76,6 +93,20 @@ impl<T> InitGuard<T> {
              * the data isn't really initialized.
              */
             STATE_INITIALIZED => Some(unsafe { (*self.data.get()).assume_init_ref() }),
+            STATE_UNINIT | STATE_INITIALIZING => None,
+            _ => panic!("InitGuard has invalid state"),
+        }
+    }
+
+    /// Get a mutable reference to the data, if this guard has been initialized. Returns `None` if it has
+    /// not yet been initialized, or is currently being initialized.
+    pub fn try_get_mut(&mut self) -> Option<&mut T> {
+        match self.state.load(Ordering::SeqCst) {
+            /*
+             * Here, we create a reference to the data within the `MaybeUninit`. This causes UB if
+             * the data isn't really initialized.
+             */
+            STATE_INITIALIZED => Some(unsafe { (*self.data.get()).assume_init_mut() }),
             STATE_UNINIT | STATE_INITIALIZING => None,
             _ => panic!("InitGuard has invalid state"),
         }
