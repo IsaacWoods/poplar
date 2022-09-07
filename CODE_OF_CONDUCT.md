@@ -24,7 +24,7 @@ abide by these expectations, your contributions are not welcome, regardless of t
 ### Enforcement
 Poplar's maintainers have the right to remove, edit, or reject comments, commits, wiki edits, issues, or any other contributions that do not align with this code of conduct, or to temporarily or permanently
 ban any contributor for breaking these expectations, or for any other behaviour that they deem inappropriate, threatening, offensive, or harmful. They also have the right to expand this code of conduct at
-any time, should the community grow - the new changes come into effect from the point the change is committed to `master`.
+any time, should the community grow - the new changes come into effect from the point the change is committed to `main`.
 
 ### Scope
 This code of conduct applies both within project spaces and in public spaces when an individual is representing the project or its community.
