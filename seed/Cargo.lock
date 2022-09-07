@@ -62,6 +62,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "hal_riscv"
+version = "0.1.0"
+dependencies = [
+ "hal",
+ "volatile",
+]
+
+[[package]]
 name = "hal_x86_64"
 version = "0.1.0"
 dependencies = [
@@ -172,7 +180,11 @@ name = "seed_riscv"
 version = "0.1.0"
 dependencies = [
  "fdt",
+ "hal",
+ "hal_riscv",
  "log",
+ "poplar_util",
+ "spinning_top",
 ]
 
 [[package]]
@@ -194,6 +206,15 @@ name = "spin"
 version = "0.9.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7f6002a767bff9e83f8eeecf883ecb8011875a21ae8da43bffb817a57e78cc09"
+dependencies = [
+ "lock_api",
+]
+
+[[package]]
+name = "spinning_top"
+version = "0.2.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "75adad84ee84b521fb2cca2d4fd0f1dab1d8d026bda3c5bea4ca63b5f9f9293c"
 dependencies = [
  "lock_api",
 ]
@@ -244,3 +265,7 @@ name = "unicode-ident"
 version = "1.0.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "15c61ba63f9235225a22310255a29b806b907c9b8c964bcbd0a2c70f3f2deea7"
+
+[[package]]
+name = "volatile"
+version = "0.1.0"

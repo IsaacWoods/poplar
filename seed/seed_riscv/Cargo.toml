@@ -5,5 +5,9 @@ authors = ["Isaac Woods"]
 edition = "2021"
 
 [dependencies]
+hal = { path = "../../lib/hal/" }
+hal_riscv = { path = "../../lib/hal_riscv/" }
+poplar_util = { path = "../../lib/poplar_util/" }
+spinning_top = "0.2.4"
 fdt = "0.1.3"
 log = "0.4.17"

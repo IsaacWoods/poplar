@@ -9,7 +9,6 @@ mod logger;
 
 use fdt::Fdt;
 use log::info;
-use logger::Logger;
 
 /*
  * This is the entry-point jumped to from OpenSBI. It needs to be at the very start of the ELF, so we put it in its
@@ -43,11 +42,10 @@ core::arch::global_asm!(
 pub fn seed_main(hart_id: u64, fdt: *const u8) -> ! {
     assert!(fdt.is_aligned_to(8));
 
-    Logger::init();
+    logger::init();
     info!("Hello, World!");
     info!("HART ID: {}", hart_id);
     info!("FDT address: {:?}", fdt);
-    info!("Foo bar baz");
 
     let fdt = unsafe { Fdt::from_ptr(fdt).expect("Failed to parse FDT") };
     for region in fdt.memory().regions() {
@@ -62,26 +60,5 @@ pub fn seed_main(hart_id: u64, fdt: *const u8) -> ! {
     }
 
     info!("Looping");
-    loop {}
-}
-
-#[panic_handler]
-pub fn panic(info: &core::panic::PanicInfo) -> ! {
-    use core::fmt::Write;
-
-    if let Some(message) = info.message() {
-        if let Some(location) = info.location() {
-            let _ = writeln!(
-                Logger,
-                "Panic message: {} ({} - {}:{})",
-                message,
-                location.file(),
-                location.line(),
-                location.column()
-            );
-        } else {
-            let _ = writeln!(Logger, "Panic message: {} (no location info)", message);
-        }
-    }
     loop {}
 }
