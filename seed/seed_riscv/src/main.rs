@@ -22,8 +22,8 @@ core::arch::global_asm!(
     .global _start
     _start:
         // Zero the BSS
-        la t0, __bss_start
-        la t1, __bss_end
+        la t0, _bss_start
+        la t1, _bss_end
         bgeu t0, t1, .bss_zero_loop_end
     .bss_zero_loop:
         sd zero, (t0)

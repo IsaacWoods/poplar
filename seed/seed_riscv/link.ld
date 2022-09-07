@@ -17,8 +17,8 @@ SECTIONS {
         *(.sdata .sdata.*)
     }
 
-    PROVIDE(__global_pointer$ = .);
-    PROVIDE(__bss_start = .);
+    PROVIDE(_global_pointer$ = .);
+    PROVIDE(_bss_start = .);
 
     .sbss : ALIGN(16) {
         *(.sbss .sbss.*)
@@ -32,7 +32,7 @@ SECTIONS {
         PROVIDE(_stack_top = .);
     }
 
-    PROVIDE(__bss_end = .);
+    PROVIDE(_bss_end = .);
 
     .data : ALIGN(16) {
         *(.data .data.*)
