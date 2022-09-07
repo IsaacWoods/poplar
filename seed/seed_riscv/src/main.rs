@@ -8,7 +8,7 @@
 mod logger;
 
 use fdt::Fdt;
-use log::info;
+use tracing::info;
 
 /*
  * This is the entry-point jumped to from OpenSBI. It needs to be at the very start of the ELF, so we put it in its

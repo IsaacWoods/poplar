@@ -119,6 +119,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "pin-project-lite"
+version = "0.2.9"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e0a7ae3ac2f1173085d398531c705756c94a4c56843785df85a60c1a0afac116"
+
+[[package]]
 name = "poplar_util"
 version = "0.1.0"
 dependencies = [
@@ -182,9 +188,10 @@ dependencies = [
  "fdt",
  "hal",
  "hal_riscv",
- "log",
  "poplar_util",
  "spinning_top",
+ "tracing",
+ "tracing-core",
 ]
 
 [[package]]
@@ -229,6 +236,21 @@ dependencies = [
  "quote",
  "unicode-ident",
 ]
+
+[[package]]
+name = "tracing"
+version = "0.2.0"
+source = "git+https://github.com/tokio-rs/tracing#f09bc43c3f13e6df856b809d47544e7e846a6192"
+dependencies = [
+ "cfg-if 1.0.0",
+ "pin-project-lite",
+ "tracing-core",
+]
+
+[[package]]
+name = "tracing-core"
+version = "0.2.0"
+source = "git+https://github.com/tokio-rs/tracing#f09bc43c3f13e6df856b809d47544e7e846a6192"
 
 [[package]]
 name = "ucs2"
