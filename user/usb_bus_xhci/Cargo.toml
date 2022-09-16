@@ -6,7 +6,7 @@ edition = "2018"
 
 [dependencies]
 poplar = { path = "../../lib/poplar", features = ["can_alloc"] }
-linked_list_allocator = "0.9.0"
+linked_list_allocator = "0.10.2"
 log = "0.4"
 platform_bus = { path = "../platform_bus" }
 ptah = { path = "../../lib/ptah" }
