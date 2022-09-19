@@ -185,6 +185,7 @@ version = "0.1.0"
 name = "seed_riscv"
 version = "0.1.0"
 dependencies = [
+ "bit_field",
  "fdt",
  "hal",
  "hal_riscv",

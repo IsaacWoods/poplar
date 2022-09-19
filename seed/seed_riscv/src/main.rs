@@ -7,6 +7,7 @@
 
 mod logger;
 
+use bit_field::BitField;
 use fdt::Fdt;
 use tracing::info;
 
@@ -48,6 +49,8 @@ pub fn seed_main(hart_id: u64, fdt: *const u8) -> ! {
     info!("FDT address: {:?}", fdt);
 
     let fdt = unsafe { Fdt::from_ptr(fdt).expect("Failed to parse FDT") };
+    print_fdt(&fdt);
+
     for region in fdt.memory().regions() {
         info!("Memory region: {:?}", region);
     }
@@ -61,4 +64,74 @@ pub fn seed_main(hart_id: u64, fdt: *const u8) -> ! {
 
     info!("Looping");
     loop {}
+}
+
+fn print_fdt(fdt: &Fdt) {
+    use fdt::node::FdtNode;
+
+    fn print_node(node: &FdtNode, mut depth: usize) {
+        info!("{:indent$}{} {{", "", node.name, indent = depth * 4);
+        depth += 1;
+
+        for prop in node.properties() {
+            match prop.name {
+                "stdout-path" | "riscv,isa" | "status" | "mmu-type" | "model" | "device_type" => {
+                    info!("{:indent$}{} = {}", "", prop.name, prop.as_str().unwrap(), indent = depth * 4);
+                }
+                "compatible" => {
+                    info!("{:indent$}{} = [", "", prop.name, indent = depth * 4);
+                    for compatible in node.compatible().unwrap().all() {
+                        info!("{:indent$}{:?}", "", compatible, indent = (depth + 1) * 4);
+                    }
+                    info!("{:indent$}]", "", indent = depth * 4);
+                }
+                "interrupt-map" if node.compatible().unwrap().all().any(|c| c == "pci-host-ecam-generic") => {
+                    let mut chunks = prop.value.chunks_exact(4).map(|c| u32::from_be_bytes(c.try_into().unwrap()));
+                    info!("{:indent$}{} = [", "", prop.name, indent = depth * 4);
+                    while let Some(entry) = chunks.next() {
+                        let _ = chunks.next().unwrap();
+                        let _ = chunks.next().unwrap();
+                        let intn = chunks.next().unwrap();
+                        let ctrl = chunks.next().unwrap();
+                        let cintr = chunks.next().unwrap();
+
+                        let bus = entry.get_bits(16..24);
+                        let device = entry.get_bits(11..16);
+                        let function = entry.get_bits(8..11);
+
+                        info!(
+                            "{:indent$}  {bus:02x}:{device:02x}:{function:02x} INT{} on controller {ctrl:#x}, vector {cintr}",
+                            "",
+                            (b'A' - 1 + intn as u8) as char,
+                            indent = depth * 4
+                        );
+                    }
+                }
+                _ => {
+                    info!("{:indent$}{} = [", "", prop.name, indent = depth * 4);
+                    let mut first = true;
+                    prop.value.chunks_exact(4).for_each(|c| {
+                        first = false;
+                        info!(
+                            "{:indent$}{:#010x}",
+                            "",
+                            u32::from_be_bytes(<[u8; 4]>::try_from(c).unwrap()),
+                            indent = (depth + 1) * 4
+                        );
+                    });
+                    info!("{:indent$}]", "", indent = depth * 4);
+                }
+            }
+        }
+
+        for node in node.children() {
+            print_node(&node, depth);
+        }
+
+        depth -= 1;
+        info!("{:indent$}}};", "", indent = depth * 4);
+    }
+
+    let root = fdt.all_nodes().next().unwrap();
+    print_node(&root, 0);
 }
