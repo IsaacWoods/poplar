@@ -22,6 +22,12 @@ pub struct Volatile<T, Access = ReadWrite>(UnsafeCell<T>, PhantomData<Access>);
 unsafe impl<T, A> Send for Volatile<T, A> {}
 unsafe impl<T, A> Sync for Volatile<T, A> {}
 
+impl<T, Access> Volatile<T, Access> {
+    pub fn new(value: T) -> Volatile<T, Access> {
+        Volatile(UnsafeCell::new(value), PhantomData)
+    }
+}
+
 impl<T> Volatile<T, Read>
 where
     T: Copy + 'static,
