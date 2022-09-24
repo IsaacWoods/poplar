@@ -1,5 +1,7 @@
-// SPDX-License-Identifier: MPL-2.0
-// Copyright 2022, Isaac Woods
+/*
+ * Copyright 2022, Isaac Woods
+ * SPDX-License-Identifier: MPL-2.0
+ */
 
 use core::{
     fmt,

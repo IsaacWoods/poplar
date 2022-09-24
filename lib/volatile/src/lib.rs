@@ -1,6 +1,8 @@
-// SPDX-License-Identifier: MPL-2.0
-// Copyright 2021, The Vanadinite Developers
-// Copyright 2022, Isaac Woods
+/*
+ * Copyright 2021, The Vanadinite Developers
+ * Copyright 2022, Isaac Woods
+ * SPDX-License-Identifier: MPL-2.0
+ */
 
 #![no_std]
 
