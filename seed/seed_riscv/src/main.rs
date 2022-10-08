@@ -11,6 +11,7 @@ mod logger;
 
 use bit_field::BitField;
 use fdt::Fdt;
+use poplar_util::linker::LinkerSymbol;
 use tracing::info;
 
 /*
@@ -41,6 +42,15 @@ core::arch::global_asm!(
 "
 );
 
+extern "C" {
+    static _seed_start: LinkerSymbol;
+    static _bss_start: LinkerSymbol;
+    static _stack_bottom: LinkerSymbol;
+    static _stack_top: LinkerSymbol;
+    static _bss_end: LinkerSymbol;
+    static _seed_end: LinkerSymbol;
+}
+
 #[no_mangle]
 pub fn seed_main(hart_id: u64, fdt: *const u8) -> ! {
     assert!(fdt.is_aligned_to(8));
@@ -49,6 +59,15 @@ pub fn seed_main(hart_id: u64, fdt: *const u8) -> ! {
     info!("Hello, World!");
     info!("HART ID: {}", hart_id);
     info!("FDT address: {:?}", fdt);
+
+    unsafe {
+        info!("Seed start: {:?}", _seed_start.ptr());
+        info!("Seed end: {:?}", _seed_end.ptr());
+        info!("BSS start: {:?}", _bss_start.ptr());
+        info!("BSS end: {:?}", _bss_end.ptr());
+        info!("Stack top: {:?}", _stack_top.ptr());
+        info!("Stack bottom: {:?}", _stack_bottom.ptr());
+    }
 
     let fdt = unsafe { Fdt::from_ptr(fdt).expect("Failed to parse FDT") };
     print_fdt(&fdt);

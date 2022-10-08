@@ -4,6 +4,7 @@ ENTRY(_start)
 
 SECTIONS {
     . = 0x80200000;
+    PROVIDE(_seed_start = .);
 
     .text : ALIGN(16) {
         *(.text.start)
@@ -46,6 +47,7 @@ SECTIONS {
     .eh_frame : ALIGN(16) {
         *(.eh_frame)
     }
+    PROVIDE(_seed_end = .);
 
     /DISCARD/ : { *(.eh_frame_hdr .eh_frame) }
 }
