@@ -9,7 +9,7 @@ var sourcesIndex = JSON.parse('{\
 "num_traits":["",[["ops",[],["checked.rs","inv.rs","mod.rs","mul_add.rs","overflowing.rs","saturating.rs","wrapping.rs"]]],["bounds.rs","cast.rs","float.rs","identities.rs","int.rs","lib.rs","macros.rs","pow.rs","sign.rs"]],\
 "pci_types":["",[],["device_type.rs","lib.rs"]],\
 "poplar":["",[["syscall",[],["get_framebuffer.rs","mod.rs","pci.rs","raw_x86_64.rs","result.rs"]]],["bit_field.rs","caps.rs","channel.rs","early_logger.rs","lib.rs"]],\
-"poplar_util":["",[],["binary_pretty_print.rs","bitmap.rs","downcast.rs","init_guard.rs","lib.rs","math.rs","pin.rs"]],\
+"poplar_util":["",[],["binary_pretty_print.rs","bitmap.rs","downcast.rs","init_guard.rs","lib.rs","linker.rs","math.rs","pin.rs","ranges.rs"]],\
 "proc_macro2":["",[],["detection.rs","fallback.rs","lib.rs","marker.rs","parse.rs","wrapper.rs"]],\
 "ptah":["",[["de",[],["impls.rs","mod.rs"]],["ser",[],["impls.rs","mod.rs"]]],["lib.rs"]],\
 "ptah_derive":["",[],["de.rs","lib.rs","ser.rs"]],\
