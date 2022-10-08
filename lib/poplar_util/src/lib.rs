@@ -1,5 +1,5 @@
 #![no_std]
-#![feature(decl_macro, type_ascription, core_intrinsics)]
+#![feature(decl_macro, type_ascription, core_intrinsics, extern_types)]
 
 #[cfg(test)]
 #[macro_use]
@@ -26,6 +26,7 @@ mod init_guard;
 pub mod math;
 #[macro_use]
 pub mod pin;
+pub mod linker;
 
 pub use self::{binary_pretty_print::BinaryPrettyPrint, init_guard::InitGuard};
 
@@ -55,7 +56,7 @@ pub macro assert_first_call
 }
 
 /*
- * These are used in macros to prevent weird issues if the using crate doesn't something weird like re-exports
+ * These are used in macros to prevent weird issues if the user crate does something weird like re-exports
  * another crate as `core` or `alloc`.
  */
 #[doc(hidden)]
