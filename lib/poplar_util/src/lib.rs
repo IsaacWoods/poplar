@@ -27,6 +27,7 @@ pub mod math;
 #[macro_use]
 pub mod pin;
 pub mod linker;
+pub mod ranges;
 
 pub use self::{binary_pretty_print::BinaryPrettyPrint, init_guard::InitGuard};
 

@@ -8,9 +8,12 @@
 #![feature(pointer_is_aligned, panic_info_message, const_mut_refs)]
 
 mod logger;
+mod memory;
 
 use bit_field::BitField;
 use fdt::Fdt;
+use hal::memory::PhysicalAddress;
+use memory::{MemoryManager, Region};
 use poplar_util::linker::LinkerSymbol;
 use tracing::info;
 
@@ -72,17 +75,35 @@ pub fn seed_main(hart_id: u64, fdt: *const u8) -> ! {
     let fdt = unsafe { Fdt::from_ptr(fdt).expect("Failed to parse FDT") };
     print_fdt(&fdt);
 
+    let mut memory_manager = MemoryManager::new();
+
     for region in fdt.memory().regions() {
         info!("Memory region: {:?}", region);
+        memory_manager.add_region(Region::usable(
+            PhysicalAddress::new(region.starting_address as usize).unwrap(),
+            region.size.unwrap(),
+        ));
     }
     if let Some(reservations) = fdt.find_node("/reserved-memory") {
-        for child in reservations.children() {
-            info!("Memory reservation with name {}. Reg = {:?}", child.name, child.reg().unwrap().next().unwrap());
+        for reservation in reservations.children() {
+            let reg = reservation.reg().unwrap().next().unwrap();
+            info!("Memory reservation with name {}. Reg = {:?}", reservation.name, reg);
+            memory_manager.add_region(Region::reserved(
+                PhysicalAddress::new(reg.starting_address as usize).unwrap(),
+                reg.size.unwrap(),
+            ));
         }
     } else {
         info!("No memory reservations :(");
     }
+    let seed_start = unsafe { _seed_start.ptr() as usize };
+    let seed_end = unsafe { _seed_end.ptr() as usize };
+    memory_manager.add_region(Region::reserved(
+        PhysicalAddress::new(unsafe { _seed_start.ptr() as usize }).unwrap(),
+        seed_end - seed_start,
+    ));
 
+    info!("Memory regions: {:#?}", memory_manager);
     info!("Looping");
     loop {}
 }
