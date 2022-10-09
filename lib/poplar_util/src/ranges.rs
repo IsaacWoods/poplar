@@ -10,7 +10,7 @@ pub trait RangeIntersect: Sized {
     fn encompasses(&self, other: Self) -> bool;
 
     fn intersects(&self, other: Self) -> bool;
-    fn intersection(&self, other: Self) -> Self;
+    fn intersection(&self, other: Self) -> Option<Self>;
 
     /// Split `self` into three ranges: the portion before `other`, the intersection, and the portion after `other`.
     fn split(&self, other: Self) -> (Option<Self>, Option<Self>, Option<Self>);
@@ -28,14 +28,18 @@ where
         self.start < other.end && self.end > other.start
     }
 
-    fn intersection(&self, other: Self) -> Self {
+    fn intersection(&self, other: Self) -> Option<Self> {
         use core::cmp::{max, min};
-        max(self.start, other.start)..min(self.end, other.end)
+        if self.intersects(other.clone()) {
+            Some(max(self.start, other.start)..min(self.end, other.end))
+        } else {
+            None
+        }
     }
 
     fn split(&self, other: Self) -> (Option<Self>, Option<Self>, Option<Self>) {
         let before = if self.start >= other.start { None } else { Some(self.start..other.start) };
-        let middle = Some(self.intersection(other.clone()));
+        let middle = self.intersection(other.clone());
         let after = if self.end <= other.end { None } else { Some(other.end..self.end) };
 
         (before, middle, after)
@@ -57,9 +61,10 @@ mod tests {
 
     #[test]
     fn intersection() {
-        assert_eq!((0..1000).intersection(100..300), 100..300);
-        assert_eq!((0..1000).intersection(500..1500), 500..1000);
-        assert_eq!((500..1500).intersection(0..600), 500..600);
+        assert_eq!((0..1000).intersection(100..300), Some(100..300));
+        assert_eq!((0..1000).intersection(500..1500), Some(500..1000));
+        assert_eq!((500..1500).intersection(0..600), Some(500..600));
+        assert_eq!((0..500).intersection(800..1000), None);
     }
 
     #[test]

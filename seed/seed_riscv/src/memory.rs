@@ -132,7 +132,7 @@ impl MemoryManager {
                      * portions that don't intersect the new region (potentially one before and one after) back as
                      * two separate regions.
                      */
-                    trace!("Regions do intersect! Splitting.");
+                    trace!("Regions do intersect! Splitting. before={:?}, after={:?}", before, after);
                     if let Some(before) = before {
                         new_entries.push(Region::new(
                             existing.typ,
