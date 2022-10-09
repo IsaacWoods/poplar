@@ -143,6 +143,7 @@ impl Dist {
             .release(self.release)
             .features(self.kernel_features.clone())
             .std_components(vec!["core".to_string(), "alloc".to_string()])
+            .rustflags("-Clink-arg=-Tkernel_riscv/link.ld")
             .run()?;
 
         Ok(DistResult { kernel_path: seed_riscv, disk_image: Some(kernel) })
