@@ -805,15 +805,15 @@ to the serial port, to prove it's all working.</p>
 <tr><td>Debug</td><td>0x0</td><td>0x100</td></tr>
 <tr><td>MROM</td><td>0x1000</td><td>0x11000</td></tr>
 <tr><td>Test</td><td>0x100000</td><td>0x1000</td></tr>
-<tr><td>CLINT</td><td>0x2000000</td><td>0x10000</td></tr>
-<tr><td>PLIC</td><td>0xc000000</td><td>0x4000000</td></tr>
-<tr><td>UART0</td><td>0x10000000</td><td>0x100</td></tr>
-<tr><td>Virtio</td><td>0x10001000</td><td>0x1000</td></tr>
-<tr><td>Flash</td><td>0x20000000</td><td>0x4000000</td></tr>
-<tr><td>DRAM</td><td>0x80000000</td><td>{mem size}</td></tr>
-<tr><td>PCIe MMIO</td><td>0x40000000</td><td>0x40000000</td></tr>
-<tr><td>PCIe PIO</td><td>0x03000000</td><td>0x10000</td></tr>
-<tr><td>PCIe ECAM</td><td>0x30000000</td><td>0x10000000</td></tr>
+<tr><td>CLINT</td><td>0x0200_0000</td><td>0x10000</td></tr>
+<tr><td>PCIe PIO</td><td>0x0300_0000</td><td>0x10000</td></tr>
+<tr><td>PLIC</td><td>0x0c00_0000</td><td>0x4000000</td></tr>
+<tr><td>UART0</td><td>0x1000_0000</td><td>0x100</td></tr>
+<tr><td>Virtio</td><td>0x1000_1000</td><td>0x1000</td></tr>
+<tr><td>Flash</td><td>0x2000_0000</td><td>0x4000000</td></tr>
+<tr><td>PCIe ECAM</td><td>0x3000_0000</td><td>0x10000000</td></tr>
+<tr><td>PCIe MMIO</td><td>0x4000_0000</td><td>0x40000000</td></tr>
+<tr><td>DRAM</td><td>0x8000_0000</td><td>{mem size}</td></tr>
 </tbody></table>
 </div>
 <h3 id="getting-control-from-opensbi"><a class="header" href="#getting-control-from-opensbi">Getting control from OpenSBI</a></h3>
@@ -841,6 +841,24 @@ OpenSBI now does the reservations correctly which would be cleaner, but doesn't 
 <code>mmode_resv@80000000</code>, which would fit with being the memory OpenSBI is in. We would still need to handle the
 memory we're in, and idk what happens with the <code>loader</code> device yet, but it's a start. Might be worth talking to
 repnop about whether the crate should use this node.</p>
+<h3 id="dumb-way-to-load-the-kernel-for-now"><a class="header" href="#dumb-way-to-load-the-kernel-for-now">Dumb way to load the kernel for now</a></h3>
+<p>So for some reason, <code>fw_cfg</code> doesn't seem to be working on QEMU 7.1. This is what we were gonna use for loading the
+kernel, command line, and user programs, etc. but obvs this is not possible atm. For now, as a workaround, we can
+use the <code>loader</code> device to load arbitrary data and files into memory.</p>
+<p>I'm thinking we could use <code>0x1_0000_0000</code> as the base physical address for this - this gives us a maximum of 2GiB
+of DRAM, which seems plenty for now (famous last words). We'll need to know the size of the object we're loading on
+the guest-side, so we'll load that separately for now (in the future, this whole scheme could be extended to some
+sort of mini-filesystem).</p>
+<p>Okay so the <code>loader</code> device is pretty finnicky, and has no error handling. Turns out you can't define new memory
+with it, just load values into RAM, but it doesn't actually tell you this has failed. You then try and read this
+on the guest, and get super wierd UB from doing so - it doesn't just fault or whatever, it seems to break code
+before you ever read the memory (super weird ngl, didn't stick around to work out what was going on).</p>
+<p>Right, seems to be working much better by actually putting the values in RAM. We've extended RAM to 1GiB
+(0x8000_0000..0xc000_0000) and we'll use this as the new layout:</p>
+<p>|    Address    | Description   | Size (bytes) |
++---------------+---------------+--------------+
+| 0xb000_0000   | Size of Data  | 4            |
+| 0xb000_0004   | Data          | N            |</p>
 
                     </main>
 
