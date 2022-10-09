@@ -1,4 +1,9 @@
 /*
+ * Copyright 2022, Isaac Woods
+ * SPDX-License-Identifier: MPL-2.0
+ */
+
+/*
  * NOTE: This assumes that a byte is 8 bits long. I don't think I'll ever be insane enough to
  * cater for an architecture where this isn't true, so I'm gonna call this platform-independent.
  */

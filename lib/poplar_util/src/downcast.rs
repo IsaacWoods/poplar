@@ -1,10 +1,13 @@
-//! A copy of the `downcast-rs` library, but that has been made `no_std` compatible.
-// TODO: this should be upstreamed at some point
 /*
- * This file alone is licensed under either MIT and Apache-2 at your discretion, and is:
- *    Copyright (c) 2015 Ashish Myles
- * */
+ * Copyright 2015, Ashish Myles
+ * Copyright 2022, Isaac Woods
+ * SPDX-License-Identifier: MIT OR Apache-2.0
+ */
+
+// TODO: this should be upstreamed at some point
 // TODO: fix all the warnings
+
+//! A copy of the `downcast-rs` library, but that has been made `no_std` compatible.
 
 #![deny(unsafe_code)]
 

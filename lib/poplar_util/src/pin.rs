@@ -1,10 +1,11 @@
+/*
+ * Copyright 2018, The pin-utils authors
+ * Copyright 2022, Isaac Woods
+ * SPDX-License-Identifier: MIT OR Apache-2.0
+ */
+
 //! This module includes some macros for more easily working with pinned types. It takes inspiration from the
 //! `pin-utils` crate, but extends it to provide custom visibility on the created methods.
-/*
- * This file alone is:
- *      Copyright (c) 2018 The pin-utils authors
- * and is dual-licensed under either the MIT and Apache 2.0 licenses, at your option.
- */
 
 /// A pinned projection of a struct field.
 ///

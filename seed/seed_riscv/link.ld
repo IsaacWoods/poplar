@@ -1,3 +1,8 @@
+/*
+ * Copyright 2022, Isaac Woods
+ * SPDX-License-Identifier: MPL-2.0
+ */
+
 OUTPUT_ARCH("riscv")
 OUTPUT_FORMAT("elf64-littleriscv")
 ENTRY(_start)

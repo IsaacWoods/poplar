@@ -1,3 +1,8 @@
+/*
+ * Copyright 2022, Isaac Woods
+ * SPDX-License-Identifier: MPL-2.0
+ */
+
 #![no_std]
 #![feature(decl_macro, type_ascription, core_intrinsics, extern_types)]
 

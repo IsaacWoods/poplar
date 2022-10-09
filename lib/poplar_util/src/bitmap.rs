@@ -1,3 +1,8 @@
+/*
+ * Copyright 2022, Isaac Woods
+ * SPDX-License-Identifier: MPL-2.0
+ */
+
 //! It's useful to be able to model an integral type such as `u32` as being a series of bits,
 //! instead of a whole number. There are, of course, the usual bitwise operators for simple stuff,
 //! but the `Bitmap` trait provides more complex, specific operations that are useful for bitmaps.
