@@ -14,6 +14,7 @@ use bit_field::BitField;
 use fdt::Fdt;
 use hal::memory::PhysicalAddress;
 use memory::{MemoryManager, Region};
+use mer::Elf;
 use poplar_util::linker::LinkerSymbol;
 use tracing::info;
 
@@ -74,6 +75,15 @@ pub fn seed_main(hart_id: u64, fdt: *const u8) -> ! {
 
     let fdt = unsafe { Fdt::from_ptr(fdt).expect("Failed to parse FDT") };
     print_fdt(&fdt);
+    let kernel_elf_size = unsafe { *(0xb000_0000 as *const u32) };
+    info!("Kernel elf size: {}", kernel_elf_size);
+    assert_eq!(unsafe { &*(0xb000_0004 as *const [u8; 4]) }, b"\x7fELF", "Kernel ELF magic isn't correct");
+    let kernel_elf =
+        Elf::new(unsafe { core::slice::from_raw_parts(0xb000_0004 as *const u8, kernel_elf_size as usize) })
+            .expect("Failed to read kernel ELF :(");
+    for section in kernel_elf.sections() {
+        info!("Section: called {:?} at {:#x}", section.name(&kernel_elf), section.address);
+    }
 
     let mut memory_manager = MemoryManager::new();
 

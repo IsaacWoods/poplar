@@ -196,6 +196,7 @@ dependencies = [
  "fdt",
  "hal",
  "hal_riscv",
+ "mer",
  "poplar_util",
  "spinning_top",
  "tracing",

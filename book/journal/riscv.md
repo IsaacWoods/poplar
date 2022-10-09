@@ -36,15 +36,15 @@ Seems everything is memory-mapped, which makes for a nice change coming from x86
 | Debug         | 0x0                 | 0x100         |
 | MROM          | 0x1000              | 0x11000       |
 | Test          | 0x100000            | 0x1000        |
-| CLINT         | 0x2000000           | 0x10000       |
-| PLIC          | 0xc000000           | 0x4000000     |
-| UART0         | 0x10000000          | 0x100         |
-| Virtio        | 0x10001000          | 0x1000        |
-| Flash         | 0x20000000          | 0x4000000     |
-| DRAM          | 0x80000000          | {mem size}    |
-| PCIe MMIO     | 0x40000000          | 0x40000000    |
-| PCIe PIO      | 0x03000000          | 0x10000       |
-| PCIe ECAM     | 0x30000000          | 0x10000000    |
+| CLINT         | 0x0200_0000         | 0x10000       |
+| PCIe PIO      | 0x0300_0000         | 0x10000       |
+| PLIC          | 0x0c00_0000         | 0x4000000     |
+| UART0         | 0x1000_0000         | 0x100         |
+| Virtio        | 0x1000_1000         | 0x1000        |
+| Flash         | 0x2000_0000         | 0x4000000     |
+| PCIe ECAM     | 0x3000_0000         | 0x10000000    |
+| PCIe MMIO     | 0x4000_0000         | 0x40000000    |
+| DRAM          | 0x8000_0000         | {mem size}    |
 
 ### Getting control from OpenSBI
 On QEMU, we can get control from OpenSBI by linking a binary at `0x80200000`, and then using `-kernel` to
@@ -76,3 +76,26 @@ Ah so actually, `/reserved-memory` does seem to have some of what we need. On QE
 `mmode_resv@80000000`, which would fit with being the memory OpenSBI is in. We would still need to handle the
 memory we're in, and idk what happens with the `loader` device yet, but it's a start. Might be worth talking to
 repnop about whether the crate should use this node.
+
+### Dumb way to load the kernel for now
+So for some reason, `fw_cfg` doesn't seem to be working on QEMU 7.1. This is what we were gonna use for loading the
+kernel, command line, and user programs, etc. but obvs this is not possible atm. For now, as a workaround, we can
+use the `loader` device to load arbitrary data and files into memory.
+
+I'm thinking we could use `0x1_0000_0000` as the base physical address for this - this gives us a maximum of 2GiB
+of DRAM, which seems plenty for now (famous last words). We'll need to know the size of the object we're loading on
+the guest-side, so we'll load that separately for now (in the future, this whole scheme could be extended to some
+sort of mini-filesystem).
+
+Okay so the `loader` device is pretty finnicky, and has no error handling. Turns out you can't define new memory
+with it, just load values into RAM, but it doesn't actually tell you this has failed. You then try and read this
+on the guest, and get super wierd UB from doing so - it doesn't just fault or whatever, it seems to break code
+before you ever read the memory (super weird ngl, didn't stick around to work out what was going on).
+
+Right, seems to be working much better by actually putting the values in RAM. We've extended RAM to 1GiB
+(0x8000_0000..0xc000_0000) and we'll use this as the new layout:
+
+|    Address    | Description   | Size (bytes) |
++---------------+---------------+--------------+
+| 0xb000_0000   | Size of Data  | 4            |
+| 0xb000_0004   | Data          | N            |

@@ -1,18 +1,21 @@
 use eyre::{eyre, Result, WrapErr};
-use std::{path::PathBuf, process::Command};
+use std::{fs::File, path::PathBuf, process::Command};
 
 pub struct RunQemuRiscV {
-    pub kernel: PathBuf,
     pub opensbi: PathBuf,
+    pub seed: PathBuf,
+    pub kernel: PathBuf,
 
     pub open_display: bool,
 }
 
 impl RunQemuRiscV {
-    pub fn new(kernel: PathBuf) -> RunQemuRiscV {
+    pub fn new(seed: PathBuf, kernel: PathBuf) -> RunQemuRiscV {
         RunQemuRiscV {
-            kernel,
             opensbi: PathBuf::from("lib/opensbi/build/platform/generic/firmware/fw_jump.elf"),
+            seed,
+            kernel,
+
             open_display: false,
         }
     }
@@ -29,8 +32,17 @@ impl RunQemuRiscV {
         let mut qemu = Command::new("qemu-system-riscv64");
 
         qemu.args(&["-M", "virt"]);
+        qemu.args(&["-m", "1G"]);
         qemu.args(&["-bios", self.opensbi.to_str().unwrap()]);
-        qemu.args(&["-kernel", self.kernel.to_str().unwrap()]);
+        qemu.args(&["-kernel", self.seed.to_str().unwrap()]);
+        // qemu.args(&["-fw_cfg", &format!("opt/poplar.kernel,file={}", self.kernel.to_str().unwrap())]);
+        let kernel_size =
+            File::open(self.kernel.clone()).expect("Failed to open kernel ELF").metadata().unwrap().len();
+        qemu.args(&["-device", &format!("loader,addr=0xb0000000,data={},data-len=4", kernel_size)]);
+        qemu.args(&[
+            "-device",
+            &format!("loader,file={},addr=0xb0000004,force-raw=on", self.kernel.to_str().unwrap()),
+        ]);
 
         // Emit serial on both stdio and to a file
         qemu.args(&["-chardev", "stdio,id=char0,logfile=qemu_serial_riscv.log"]);

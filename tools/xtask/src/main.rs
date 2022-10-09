@@ -43,7 +43,7 @@ fn main() -> Result<()> {
                     .debug_mmu_firehose(qemu.debug_mmu_firehose)
                     .debug_cpu_firehose(qemu.debug_cpu_firehose)
                     .run(),
-                Arch::RiscV => RunQemuRiscV::new(dist_result.kernel_path)
+                Arch::RiscV => RunQemuRiscV::new(dist_result.kernel_path, dist_result.disk_image.unwrap())
                     .opensbi(PathBuf::from("lib/opensbi/build/platform/generic/firmware/fw_jump.elf"))
                     .open_display(qemu.display)
                     .run(),
@@ -133,12 +133,19 @@ impl Dist {
             .workspace(PathBuf::from("seed/"))
             .target(Target::Triple("riscv64imac-unknown-none-elf".to_string()))
             .release(self.release)
-            .features(self.kernel_features.clone())
             .std_components(vec!["core".to_string(), "alloc".to_string()])
             .rustflags("-Clink-arg=-Tseed_riscv/link.ld")
             .run()?;
 
-        Ok(DistResult { kernel_path: seed_riscv, disk_image: None })
+        let kernel = RunCargo::new("kernel_riscv", PathBuf::from("kernel/kernel_riscv/"))
+            .workspace(PathBuf::from("kernel/"))
+            .target(Target::Triple("riscv64imac-unknown-none-elf".to_string()))
+            .release(self.release)
+            .features(self.kernel_features.clone())
+            .std_components(vec!["core".to_string(), "alloc".to_string()])
+            .run()?;
+
+        Ok(DistResult { kernel_path: seed_riscv, disk_image: Some(kernel) })
     }
 
     pub fn build_x64(self) -> Result<DistResult> {
