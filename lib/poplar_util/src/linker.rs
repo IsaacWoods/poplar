@@ -9,7 +9,7 @@ extern "C" {
     /// instead of by reference.
     ///
     /// Symbols can be defined with something like, and accessed only via the `LinkerSymbol::ptr` method:
-    /// ``` rust
+    /// ```ignore
     /// extern "C" {
     ///     static _stack_top: LinkerSymbol;
     /// }
