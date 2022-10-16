@@ -19,6 +19,7 @@ pub enum RegionType {
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum Usage {
     Firmware,
+    DeviceTree,
     Seed,
     KernelImage,
     Unknown,

@@ -5,7 +5,7 @@
 
 #![no_std]
 #![no_main]
-#![feature(pointer_is_aligned, panic_info_message, const_mut_refs)]
+#![feature(pointer_is_aligned, panic_info_message, const_mut_refs, strict_provenance)]
 
 mod logger;
 mod memory;
@@ -56,14 +56,15 @@ extern "C" {
 }
 
 #[no_mangle]
-pub fn seed_main(hart_id: u64, fdt: *const u8) -> ! {
-    assert!(fdt.is_aligned_to(8));
+pub fn seed_main(hart_id: u64, fdt_ptr: *const u8) -> ! {
+    assert!(fdt_ptr.is_aligned_to(8));
 
     logger::init();
     info!("Hello, World!");
     info!("HART ID: {}", hart_id);
-    info!("FDT address: {:?}", fdt);
+    info!("FDT address: {:?}", fdt_ptr);
 
+    let fdt = unsafe { Fdt::from_ptr(fdt_ptr).expect("Failed to parse FDT") };
     let fdt = unsafe { Fdt::from_ptr(fdt).expect("Failed to parse FDT") };
     print_fdt(&fdt);
     let kernel_elf_size = unsafe { *(0xb000_0000 as *const u32) };
@@ -109,6 +110,11 @@ pub fn seed_main(hart_id: u64, fdt: *const u8) -> ! {
         memory::Usage::Seed,
         PhysicalAddress::new(unsafe { _seed_start.ptr() as usize }).unwrap(),
         seed_end - seed_start,
+    ));
+    memory_manager.add_region(Region::reserved(
+        memory::Usage::DeviceTree,
+        PhysicalAddress::new(fdt_ptr.addr()).unwrap(),
+        fdt.total_size(),
     ));
 
     info!("Memory regions: {:#?}", memory_manager);
