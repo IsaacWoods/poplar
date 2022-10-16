@@ -64,15 +64,6 @@ pub fn seed_main(hart_id: u64, fdt: *const u8) -> ! {
     info!("HART ID: {}", hart_id);
     info!("FDT address: {:?}", fdt);
 
-    unsafe {
-        info!("Seed start: {:?}", _seed_start.ptr());
-        info!("Seed end: {:?}", _seed_end.ptr());
-        info!("BSS start: {:?}", _bss_start.ptr());
-        info!("BSS end: {:?}", _bss_end.ptr());
-        info!("Stack top: {:?}", _stack_top.ptr());
-        info!("Stack bottom: {:?}", _stack_bottom.ptr());
-    }
-
     let fdt = unsafe { Fdt::from_ptr(fdt).expect("Failed to parse FDT") };
     print_fdt(&fdt);
     let kernel_elf_size = unsafe { *(0xb000_0000 as *const u32) };
@@ -98,7 +89,13 @@ pub fn seed_main(hart_id: u64, fdt: *const u8) -> ! {
         for reservation in reservations.children() {
             let reg = reservation.reg().unwrap().next().unwrap();
             info!("Memory reservation with name {}. Reg = {:?}", reservation.name, reg);
+            let usage = if reservation.name.starts_with("mmode_resv") {
+                memory::Usage::Firmware
+            } else {
+                memory::Usage::Unknown
+            };
             memory_manager.add_region(Region::reserved(
+                usage,
                 PhysicalAddress::new(reg.starting_address as usize).unwrap(),
                 reg.size.unwrap(),
             ));
@@ -109,6 +106,7 @@ pub fn seed_main(hart_id: u64, fdt: *const u8) -> ! {
     let seed_start = unsafe { _seed_start.ptr() as usize };
     let seed_end = unsafe { _seed_end.ptr() as usize };
     memory_manager.add_region(Region::reserved(
+        memory::Usage::Seed,
         PhysicalAddress::new(unsafe { _seed_start.ptr() as usize }).unwrap(),
         seed_end - seed_start,
     ));

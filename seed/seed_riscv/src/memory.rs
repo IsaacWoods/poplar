@@ -13,8 +13,15 @@ use tracing::trace;
 pub enum RegionType {
     #[default]
     Usable,
-    Reserved,
-    Used,
+    Reserved(Usage),
+}
+
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+pub enum Usage {
+    Firmware,
+    Seed,
+    KernelImage,
+    Unknown,
 }
 
 #[derive(Clone, Copy, Default)]
@@ -33,12 +40,8 @@ impl Region {
         Self::new(RegionType::Usable, address, size)
     }
 
-    pub fn reserved(address: PhysicalAddress, size: usize) -> Region {
-        Self::new(RegionType::Reserved, address, size)
-    }
-
-    pub fn used(address: PhysicalAddress, size: usize) -> Region {
-        Self::new(RegionType::Used, address, size)
+    pub fn reserved(usage: Usage, address: PhysicalAddress, size: usize) -> Region {
+        Self::new(RegionType::Reserved(usage), address, size)
     }
 
     pub fn range(&self) -> Range<PhysicalAddress> {
