@@ -4,7 +4,7 @@
  */
 
 use arrayvec::ArrayVec;
-use core::{fmt, ops::Range};
+use core::{fmt, ops::Range, ptr::NonNull};
 use hal::memory::PhysicalAddress;
 use poplar_util::ranges::RangeIntersect;
 use tracing::trace;
@@ -60,16 +60,33 @@ const MAX_REGIONS: usize = 32;
 
 #[derive(Clone, Debug)]
 pub struct MemoryManager {
+    /// The region map is a high-level view of the physical memory space, containing large regions of memory that
+    /// are usable or reserved in some way. Each usable region is then managed separately; in `seed` this is done
+    /// intrusively using free lists, but this information is then summarised in the information passed to the
+    /// kernel, so it can choose a different strategy if it chooses.
     regions: ArrayVec<Region, MAX_REGIONS>,
+    regions_locked: bool,
+    usable_head: Option<NonNull<Node>>,
+    usable_tail: Option<NonNull<Node>>,
+}
+
+/// Memory nodes are stored intrusively in the memory that they manage.
+#[derive(Clone, Copy, Debug)]
+pub struct Node {
+    size: usize,
+    prev: Option<NonNull<Node>>,
+    next: Option<NonNull<Node>>,
 }
 
 impl MemoryManager {
     pub fn new() -> MemoryManager {
-        MemoryManager { regions: ArrayVec::new() }
+        MemoryManager { regions: ArrayVec::new(), regions_locked: false, usable_head: None, usable_tail: None }
     }
 
     /// Add a region of memory to the manager, merging and handling intersecting regions as needed.
     pub fn add_region(&mut self, region: Region) {
+        assert!(!self.regions_locked);
+
         let mut added = false;
 
         for mut existing in &mut self.regions {
@@ -160,5 +177,49 @@ impl MemoryManager {
             trace!("Considered all regions and not yet added. Adding as a new region.");
             self.regions.push(region);
         }
+    }
+
+    pub fn init_usable_regions(&mut self) {
+        assert!(!self.regions_locked);
+        self.regions_locked = true;
+
+        let mut prev: Option<NonNull<Node>> = None;
+
+        for region in self.regions.iter().filter(|region| region.typ == RegionType::Usable) {
+            trace!("Initialising free list in usable region: {:?}", region);
+
+            let node = Node { size: region.size, prev, next: None };
+            let node_ptr = NonNull::new(usize::from(region.address) as *mut Node).unwrap();
+            unsafe {
+                node_ptr.as_ptr().write(node);
+            }
+
+            if prev.is_none() {
+                assert!(self.usable_head.is_none());
+                assert!(self.usable_tail.is_none());
+                self.usable_head = Some(node_ptr);
+                self.usable_tail = Some(node_ptr);
+            } else {
+                unsafe {
+                    prev.as_mut().unwrap().as_mut().next = Some(node_ptr);
+                }
+                self.usable_tail = Some(node_ptr);
+            }
+
+            prev = Some(node_ptr);
+        }
+    }
+
+    pub fn walk_usable_memory(&self) {
+        assert!(self.regions_locked);
+
+        trace!("Tracing usable memory");
+        let mut current_node = self.usable_head;
+        while let Some(node) = current_node {
+            let inner_node = unsafe { *node.as_ptr() };
+            trace!("Found some usable memory at {:#x}, {} bytes of it!", node.as_ptr().addr(), inner_node.size);
+            current_node = inner_node.next;
+        }
+        trace!("Finished tracing usable memory");
     }
 }

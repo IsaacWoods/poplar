@@ -117,7 +117,10 @@ pub fn seed_main(hart_id: u64, fdt_ptr: *const u8) -> ! {
         fdt.total_size(),
     ));
 
+    memory_manager.init_usable_regions();
+
     info!("Memory regions: {:#?}", memory_manager);
+    memory_manager.walk_usable_memory();
     info!("Looping");
     loop {}
 }
