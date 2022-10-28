@@ -86,7 +86,7 @@ impl MemoryManager {
 
     /// Add a region of memory to the manager, merging and handling intersecting regions as needed.
     pub fn add_region(&mut self, region: Region) {
-        assert!(!self.regions_locked);
+        assert!(!self.regions_locked, "Tried to add a memory region after initialising free list allocator");
 
         let mut added = false;
 

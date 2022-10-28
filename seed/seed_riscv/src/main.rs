@@ -65,17 +65,7 @@ pub fn seed_main(hart_id: u64, fdt_ptr: *const u8) -> ! {
     info!("FDT address: {:?}", fdt_ptr);
 
     let fdt = unsafe { Fdt::from_ptr(fdt_ptr).expect("Failed to parse FDT") };
-    let fdt = unsafe { Fdt::from_ptr(fdt).expect("Failed to parse FDT") };
-    print_fdt(&fdt);
-    let kernel_elf_size = unsafe { *(0xb000_0000 as *const u32) };
-    info!("Kernel elf size: {}", kernel_elf_size);
-    assert_eq!(unsafe { &*(0xb000_0004 as *const [u8; 4]) }, b"\x7fELF", "Kernel ELF magic isn't correct");
-    let kernel_elf =
-        Elf::new(unsafe { core::slice::from_raw_parts(0xb000_0004 as *const u8, kernel_elf_size as usize) })
-            .expect("Failed to read kernel ELF :(");
-    for section in kernel_elf.sections() {
-        info!("Section: called {:?} at {:#x}", section.name(&kernel_elf), section.address);
-    }
+    // print_fdt(&fdt);
 
     let mut memory_manager = MemoryManager::new();
 
@@ -117,12 +107,40 @@ pub fn seed_main(hart_id: u64, fdt_ptr: *const u8) -> ! {
         align_up(fdt.total_size(), Size4KiB::SIZE),
     ));
 
+    let kernel_elf = extract_kernel(&mut memory_manager);
     memory_manager.init_usable_regions();
+
+    for section in kernel_elf.sections() {
+        info!("Section: called {:?} at {:#x}", section.name(&kernel_elf), section.address);
+    }
 
     info!("Memory regions: {:#?}", memory_manager);
     memory_manager.walk_usable_memory();
     info!("Looping");
     loop {}
+}
+
+fn extract_kernel(memory_manager: &mut MemoryManager) -> Elf<'static> {
+    const LOADER_DEVICE_BASE: usize = 0xb000_0000;
+
+    // TODO: loader devices are not added to the FDT - this is kind of gross so maybe use fw_cfg or something else instead?
+    let kernel_elf_size = unsafe { *(LOADER_DEVICE_BASE as *const u32) } as usize;
+    info!("Kernel elf size: {}", kernel_elf_size);
+
+    // Reserve the kernel ELF in the memory manager, so we don't trample over it
+    memory_manager.add_region(Region::reserved(
+        memory::Usage::KernelImage,
+        PhysicalAddress::new(LOADER_DEVICE_BASE).unwrap(),
+        align_up(kernel_elf_size + 4, Size4KiB::SIZE),
+    ));
+
+    assert_eq!(
+        unsafe { &*((LOADER_DEVICE_BASE + 4) as *const [u8; 4]) },
+        b"\x7fELF",
+        "Kernel ELF magic isn't correct"
+    );
+    Elf::new(unsafe { core::slice::from_raw_parts((LOADER_DEVICE_BASE + 4) as *const u8, kernel_elf_size) })
+        .expect("Failed to read kernel ELF :(")
 }
 
 fn print_fdt(fdt: &Fdt) {
