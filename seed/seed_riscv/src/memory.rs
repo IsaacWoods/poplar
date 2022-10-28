@@ -5,7 +5,7 @@
 
 use arrayvec::ArrayVec;
 use core::{fmt, ops::Range, ptr::NonNull};
-use hal::memory::PhysicalAddress;
+use hal::memory::{FrameSize, PhysicalAddress, Size4KiB};
 use poplar_util::ranges::RangeIntersect;
 use tracing::trace;
 
@@ -34,6 +34,7 @@ pub struct Region {
 
 impl Region {
     pub fn new(typ: RegionType, address: PhysicalAddress, size: usize) -> Region {
+        assert_eq!(size % Size4KiB::SIZE, 0);
         Region { typ, address, size }
     }
 

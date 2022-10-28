@@ -12,10 +12,10 @@ mod memory;
 
 use bit_field::BitField;
 use fdt::Fdt;
-use hal::memory::PhysicalAddress;
+use hal::memory::{FrameSize, PhysicalAddress, Size4KiB};
 use memory::{MemoryManager, Region};
 use mer::Elf;
-use poplar_util::linker::LinkerSymbol;
+use poplar_util::{linker::LinkerSymbol, math::align_up};
 use tracing::info;
 
 /*
@@ -109,12 +109,12 @@ pub fn seed_main(hart_id: u64, fdt_ptr: *const u8) -> ! {
     memory_manager.add_region(Region::reserved(
         memory::Usage::Seed,
         PhysicalAddress::new(unsafe { _seed_start.ptr() as usize }).unwrap(),
-        seed_end - seed_start,
+        align_up(seed_end - seed_start, Size4KiB::SIZE),
     ));
     memory_manager.add_region(Region::reserved(
         memory::Usage::DeviceTree,
         PhysicalAddress::new(fdt_ptr.addr()).unwrap(),
-        fdt.total_size(),
+        align_up(fdt.total_size(), Size4KiB::SIZE),
     ));
 
     memory_manager.init_usable_regions();
