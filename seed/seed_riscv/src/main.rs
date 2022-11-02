@@ -13,7 +13,7 @@ mod memory;
 use bit_field::BitField;
 use fdt::Fdt;
 use hal::memory::{FrameSize, PhysicalAddress, Size4KiB};
-use memory::{MemoryManager, Region};
+use memory::{MemoryManager, MemoryRegions, Region};
 use mer::Elf;
 use poplar_util::{linker::LinkerSymbol, math::align_up};
 use tracing::info;
@@ -55,6 +55,8 @@ extern "C" {
     static _seed_end: LinkerSymbol;
 }
 
+static MEMORY_MANAGER: MemoryManager = MemoryManager::new();
+
 #[no_mangle]
 pub fn seed_main(hart_id: u64, fdt_ptr: *const u8) -> ! {
     assert!(fdt_ptr.is_aligned_to(8));
@@ -67,11 +69,11 @@ pub fn seed_main(hart_id: u64, fdt_ptr: *const u8) -> ! {
     let fdt = unsafe { Fdt::from_ptr(fdt_ptr).expect("Failed to parse FDT") };
     // print_fdt(&fdt);
 
-    let mut memory_manager = MemoryManager::new();
+    let mut memory_regions = MemoryRegions::new();
 
     for region in fdt.memory().regions() {
         info!("Memory region: {:?}", region);
-        memory_manager.add_region(Region::usable(
+        memory_regions.add_region(Region::usable(
             PhysicalAddress::new(region.starting_address as usize).unwrap(),
             region.size.unwrap(),
         ));
@@ -85,7 +87,7 @@ pub fn seed_main(hart_id: u64, fdt_ptr: *const u8) -> ! {
             } else {
                 memory::Usage::Unknown
             };
-            memory_manager.add_region(Region::reserved(
+            memory_regions.add_region(Region::reserved(
                 usage,
                 PhysicalAddress::new(reg.starting_address as usize).unwrap(),
                 reg.size.unwrap(),
@@ -96,39 +98,42 @@ pub fn seed_main(hart_id: u64, fdt_ptr: *const u8) -> ! {
     }
     let seed_start = unsafe { _seed_start.ptr() as usize };
     let seed_end = unsafe { _seed_end.ptr() as usize };
-    memory_manager.add_region(Region::reserved(
+    memory_regions.add_region(Region::reserved(
         memory::Usage::Seed,
         PhysicalAddress::new(unsafe { _seed_start.ptr() as usize }).unwrap(),
         align_up(seed_end - seed_start, Size4KiB::SIZE),
     ));
-    memory_manager.add_region(Region::reserved(
+    memory_regions.add_region(Region::reserved(
         memory::Usage::DeviceTree,
         PhysicalAddress::new(fdt_ptr.addr()).unwrap(),
         align_up(fdt.total_size(), Size4KiB::SIZE),
     ));
 
-    let kernel_elf = extract_kernel(&mut memory_manager);
-    memory_manager.init_usable_regions();
+    let kernel_elf = extract_kernel(&mut memory_regions);
+    info!("Memory regions: {:#?}", memory_regions);
+    MEMORY_MANAGER.init(memory_regions);
+
+    use hal::memory::FrameAllocator;
+    info!("Allocating 11 frames: {:?}", MEMORY_MANAGER.allocate_n(11));
 
     for section in kernel_elf.sections() {
         info!("Section: called {:?} at {:#x}", section.name(&kernel_elf), section.address);
     }
 
-    info!("Memory regions: {:#?}", memory_manager);
-    memory_manager.walk_usable_memory();
+    MEMORY_MANAGER.walk_usable_memory();
     info!("Looping");
     loop {}
 }
 
-fn extract_kernel(memory_manager: &mut MemoryManager) -> Elf<'static> {
+fn extract_kernel(memory_regions: &mut MemoryRegions) -> Elf<'static> {
     const LOADER_DEVICE_BASE: usize = 0xb000_0000;
 
     // TODO: loader devices are not added to the FDT - this is kind of gross so maybe use fw_cfg or something else instead?
     let kernel_elf_size = unsafe { *(LOADER_DEVICE_BASE as *const u32) } as usize;
     info!("Kernel elf size: {}", kernel_elf_size);
 
-    // Reserve the kernel ELF in the memory manager, so we don't trample over it
-    memory_manager.add_region(Region::reserved(
+    // Reserve the kernel ELF in the memory ranges, so we don't trample over it
+    memory_regions.add_region(Region::reserved(
         memory::Usage::KernelImage,
         PhysicalAddress::new(LOADER_DEVICE_BASE).unwrap(),
         align_up(kernel_elf_size + 4, Size4KiB::SIZE),
