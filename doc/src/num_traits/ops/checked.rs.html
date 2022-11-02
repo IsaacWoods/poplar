@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/github.com-1ecc6299db9ec823/num-traits-0.2.14/src/ops/checked.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>checked.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" href="../../../normalize.css"><link rel="stylesheet" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" href="../../../ayu.css" disabled><link rel="stylesheet" href="../../../dark.css" disabled><link rel="stylesheet" href="../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../storage.js"></script><script defer src="../../../source-script.js"></script><script defer src="../../../source-files.js"></script><script defer src="../../../main.js"></script><noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><div class="width-limiter"><nav class="sub"><a class="sub-logo-container" href="../../../num_traits/index.html"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></a><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../wheel.svg"></a></div></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><pre class="src-line-numbers"><span id="1">1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/github.com-1ecc6299db9ec823/num-traits-0.2.14/src/ops/checked.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>checked.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" href="../../../normalize.css"><link rel="stylesheet" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" href="../../../ayu.css" disabled><link rel="stylesheet" href="../../../dark.css" disabled><link rel="stylesheet" href="../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../storage.js"></script><script defer src="../../../source-script.js"></script><script defer src="../../../source-files.js"></script><script defer src="../../../main.js"></script><noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><div class="width-limiter"><nav class="sub"><a class="sub-logo-container" href="../../../num_traits/index.html"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../wheel.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><pre class="src-line-numbers"><span id="1">1</span>
 <span id="2">2</span>
 <span id="3">3</span>
 <span id="4">4</span>
@@ -288,7 +288,7 @@
 <span class="macro">macro_rules! </span>checked_impl {
     (<span class="macro-nonterminal">$trait_name</span>:ident, <span class="macro-nonterminal">$method</span>:ident, <span class="macro-nonterminal">$t</span>:ty) =&gt; {
         <span class="kw">impl </span><span class="macro-nonterminal">$trait_name </span><span class="kw">for </span><span class="macro-nonterminal">$t </span>{
-            <span class="attribute">#[inline]
+            <span class="attr">#[inline]
             </span><span class="kw">fn </span><span class="macro-nonterminal">$method</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, v: <span class="kw-2">&amp;</span><span class="macro-nonterminal">$t</span>) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="macro-nonterminal">$t</span>&gt; {
                 &lt;<span class="macro-nonterminal">$t</span>&gt;::<span class="macro-nonterminal">$method</span>(<span class="kw-2">*</span><span class="self">self</span>, <span class="kw-2">*</span>v)
             }
@@ -301,7 +301,7 @@
 <span class="macro">checked_impl!</span>(CheckedAdd, checked_add, u32);
 <span class="macro">checked_impl!</span>(CheckedAdd, checked_add, u64);
 <span class="macro">checked_impl!</span>(CheckedAdd, checked_add, usize);
-<span class="attribute">#[cfg(has_i128)]
+<span class="attr">#[cfg(has_i128)]
 </span><span class="macro">checked_impl!</span>(CheckedAdd, checked_add, u128);
 
 <span class="macro">checked_impl!</span>(CheckedAdd, checked_add, i8);
@@ -309,7 +309,7 @@
 <span class="macro">checked_impl!</span>(CheckedAdd, checked_add, i32);
 <span class="macro">checked_impl!</span>(CheckedAdd, checked_add, i64);
 <span class="macro">checked_impl!</span>(CheckedAdd, checked_add, isize);
-<span class="attribute">#[cfg(has_i128)]
+<span class="attr">#[cfg(has_i128)]
 </span><span class="macro">checked_impl!</span>(CheckedAdd, checked_add, i128);
 
 <span class="doccomment">/// Performs subtraction that returns `None` instead of wrapping around on underflow.
@@ -324,7 +324,7 @@
 <span class="macro">checked_impl!</span>(CheckedSub, checked_sub, u32);
 <span class="macro">checked_impl!</span>(CheckedSub, checked_sub, u64);
 <span class="macro">checked_impl!</span>(CheckedSub, checked_sub, usize);
-<span class="attribute">#[cfg(has_i128)]
+<span class="attr">#[cfg(has_i128)]
 </span><span class="macro">checked_impl!</span>(CheckedSub, checked_sub, u128);
 
 <span class="macro">checked_impl!</span>(CheckedSub, checked_sub, i8);
@@ -332,7 +332,7 @@
 <span class="macro">checked_impl!</span>(CheckedSub, checked_sub, i32);
 <span class="macro">checked_impl!</span>(CheckedSub, checked_sub, i64);
 <span class="macro">checked_impl!</span>(CheckedSub, checked_sub, isize);
-<span class="attribute">#[cfg(has_i128)]
+<span class="attr">#[cfg(has_i128)]
 </span><span class="macro">checked_impl!</span>(CheckedSub, checked_sub, i128);
 
 <span class="doccomment">/// Performs multiplication that returns `None` instead of wrapping around on underflow or
@@ -348,7 +348,7 @@
 <span class="macro">checked_impl!</span>(CheckedMul, checked_mul, u32);
 <span class="macro">checked_impl!</span>(CheckedMul, checked_mul, u64);
 <span class="macro">checked_impl!</span>(CheckedMul, checked_mul, usize);
-<span class="attribute">#[cfg(has_i128)]
+<span class="attr">#[cfg(has_i128)]
 </span><span class="macro">checked_impl!</span>(CheckedMul, checked_mul, u128);
 
 <span class="macro">checked_impl!</span>(CheckedMul, checked_mul, i8);
@@ -356,7 +356,7 @@
 <span class="macro">checked_impl!</span>(CheckedMul, checked_mul, i32);
 <span class="macro">checked_impl!</span>(CheckedMul, checked_mul, i64);
 <span class="macro">checked_impl!</span>(CheckedMul, checked_mul, isize);
-<span class="attribute">#[cfg(has_i128)]
+<span class="attr">#[cfg(has_i128)]
 </span><span class="macro">checked_impl!</span>(CheckedMul, checked_mul, i128);
 
 <span class="doccomment">/// Performs division that returns `None` instead of panicking on division by zero and instead of
@@ -372,7 +372,7 @@
 <span class="macro">checked_impl!</span>(CheckedDiv, checked_div, u32);
 <span class="macro">checked_impl!</span>(CheckedDiv, checked_div, u64);
 <span class="macro">checked_impl!</span>(CheckedDiv, checked_div, usize);
-<span class="attribute">#[cfg(has_i128)]
+<span class="attr">#[cfg(has_i128)]
 </span><span class="macro">checked_impl!</span>(CheckedDiv, checked_div, u128);
 
 <span class="macro">checked_impl!</span>(CheckedDiv, checked_div, i8);
@@ -380,7 +380,7 @@
 <span class="macro">checked_impl!</span>(CheckedDiv, checked_div, i32);
 <span class="macro">checked_impl!</span>(CheckedDiv, checked_div, i64);
 <span class="macro">checked_impl!</span>(CheckedDiv, checked_div, isize);
-<span class="attribute">#[cfg(has_i128)]
+<span class="attr">#[cfg(has_i128)]
 </span><span class="macro">checked_impl!</span>(CheckedDiv, checked_div, i128);
 
 <span class="doccomment">/// Performs an integral remainder that returns `None` instead of panicking on division by zero and
@@ -413,7 +413,7 @@
 <span class="macro">checked_impl!</span>(CheckedRem, checked_rem, u32);
 <span class="macro">checked_impl!</span>(CheckedRem, checked_rem, u64);
 <span class="macro">checked_impl!</span>(CheckedRem, checked_rem, usize);
-<span class="attribute">#[cfg(has_i128)]
+<span class="attr">#[cfg(has_i128)]
 </span><span class="macro">checked_impl!</span>(CheckedRem, checked_rem, u128);
 
 <span class="macro">checked_impl!</span>(CheckedRem, checked_rem, i8);
@@ -421,13 +421,13 @@
 <span class="macro">checked_impl!</span>(CheckedRem, checked_rem, i32);
 <span class="macro">checked_impl!</span>(CheckedRem, checked_rem, i64);
 <span class="macro">checked_impl!</span>(CheckedRem, checked_rem, isize);
-<span class="attribute">#[cfg(has_i128)]
+<span class="attr">#[cfg(has_i128)]
 </span><span class="macro">checked_impl!</span>(CheckedRem, checked_rem, i128);
 
 <span class="macro">macro_rules! </span>checked_impl_unary {
     (<span class="macro-nonterminal">$trait_name</span>:ident, <span class="macro-nonterminal">$method</span>:ident, <span class="macro-nonterminal">$t</span>:ty) =&gt; {
         <span class="kw">impl </span><span class="macro-nonterminal">$trait_name </span><span class="kw">for </span><span class="macro-nonterminal">$t </span>{
-            <span class="attribute">#[inline]
+            <span class="attr">#[inline]
             </span><span class="kw">fn </span><span class="macro-nonterminal">$method</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="macro-nonterminal">$t</span>&gt; {
                 &lt;<span class="macro-nonterminal">$t</span>&gt;::<span class="macro-nonterminal">$method</span>(<span class="kw-2">*</span><span class="self">self</span>)
             }
@@ -461,7 +461,7 @@
 <span class="macro">checked_impl_unary!</span>(CheckedNeg, checked_neg, u32);
 <span class="macro">checked_impl_unary!</span>(CheckedNeg, checked_neg, u64);
 <span class="macro">checked_impl_unary!</span>(CheckedNeg, checked_neg, usize);
-<span class="attribute">#[cfg(has_i128)]
+<span class="attr">#[cfg(has_i128)]
 </span><span class="macro">checked_impl_unary!</span>(CheckedNeg, checked_neg, u128);
 
 <span class="macro">checked_impl_unary!</span>(CheckedNeg, checked_neg, i8);
@@ -469,7 +469,7 @@
 <span class="macro">checked_impl_unary!</span>(CheckedNeg, checked_neg, i32);
 <span class="macro">checked_impl_unary!</span>(CheckedNeg, checked_neg, i64);
 <span class="macro">checked_impl_unary!</span>(CheckedNeg, checked_neg, isize);
-<span class="attribute">#[cfg(has_i128)]
+<span class="attr">#[cfg(has_i128)]
 </span><span class="macro">checked_impl_unary!</span>(CheckedNeg, checked_neg, i128);
 
 <span class="doccomment">/// Performs a left shift that returns `None` on shifts larger than
@@ -494,7 +494,7 @@
 <span class="macro">macro_rules! </span>checked_shift_impl {
     (<span class="macro-nonterminal">$trait_name</span>:ident, <span class="macro-nonterminal">$method</span>:ident, <span class="macro-nonterminal">$t</span>:ty) =&gt; {
         <span class="kw">impl </span><span class="macro-nonterminal">$trait_name </span><span class="kw">for </span><span class="macro-nonterminal">$t </span>{
-            <span class="attribute">#[inline]
+            <span class="attr">#[inline]
             </span><span class="kw">fn </span><span class="macro-nonterminal">$method</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, rhs: u32) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="macro-nonterminal">$t</span>&gt; {
                 &lt;<span class="macro-nonterminal">$t</span>&gt;::<span class="macro-nonterminal">$method</span>(<span class="kw-2">*</span><span class="self">self</span>, rhs)
             }
@@ -507,7 +507,7 @@
 <span class="macro">checked_shift_impl!</span>(CheckedShl, checked_shl, u32);
 <span class="macro">checked_shift_impl!</span>(CheckedShl, checked_shl, u64);
 <span class="macro">checked_shift_impl!</span>(CheckedShl, checked_shl, usize);
-<span class="attribute">#[cfg(has_i128)]
+<span class="attr">#[cfg(has_i128)]
 </span><span class="macro">checked_shift_impl!</span>(CheckedShl, checked_shl, u128);
 
 <span class="macro">checked_shift_impl!</span>(CheckedShl, checked_shl, i8);
@@ -515,7 +515,7 @@
 <span class="macro">checked_shift_impl!</span>(CheckedShl, checked_shl, i32);
 <span class="macro">checked_shift_impl!</span>(CheckedShl, checked_shl, i64);
 <span class="macro">checked_shift_impl!</span>(CheckedShl, checked_shl, isize);
-<span class="attribute">#[cfg(has_i128)]
+<span class="attr">#[cfg(has_i128)]
 </span><span class="macro">checked_shift_impl!</span>(CheckedShl, checked_shl, i128);
 
 <span class="doccomment">/// Performs a right shift that returns `None` on shifts larger than
@@ -542,7 +542,7 @@
 <span class="macro">checked_shift_impl!</span>(CheckedShr, checked_shr, u32);
 <span class="macro">checked_shift_impl!</span>(CheckedShr, checked_shr, u64);
 <span class="macro">checked_shift_impl!</span>(CheckedShr, checked_shr, usize);
-<span class="attribute">#[cfg(has_i128)]
+<span class="attr">#[cfg(has_i128)]
 </span><span class="macro">checked_shift_impl!</span>(CheckedShr, checked_shr, u128);
 
 <span class="macro">checked_shift_impl!</span>(CheckedShr, checked_shr, i8);
@@ -550,7 +550,7 @@
 <span class="macro">checked_shift_impl!</span>(CheckedShr, checked_shr, i32);
 <span class="macro">checked_shift_impl!</span>(CheckedShr, checked_shr, i64);
 <span class="macro">checked_shift_impl!</span>(CheckedShr, checked_shr, isize);
-<span class="attribute">#[cfg(has_i128)]
+<span class="attr">#[cfg(has_i128)]
 </span><span class="macro">checked_shift_impl!</span>(CheckedShr, checked_shr, i128);
 </code></pre></div>
-</section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="num_traits" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.66.0-nightly (0da281b60 2022-10-27)" ></div></body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="num_traits" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.67.0-nightly (11ebe6512 2022-11-01)" ></div></body></html>

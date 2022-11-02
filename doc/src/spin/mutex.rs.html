@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/github.com-1ecc6299db9ec823/spin-0.9.2/src/mutex.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>mutex.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" href="../../normalize.css"><link rel="stylesheet" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" href="../../ayu.css" disabled><link rel="stylesheet" href="../../dark.css" disabled><link rel="stylesheet" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script><script defer src="../../main.js"></script><noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><div class="width-limiter"><nav class="sub"><a class="sub-logo-container" href="../../spin/index.html"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></a><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../wheel.svg"></a></div></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><pre class="src-line-numbers"><span id="1">1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/github.com-1ecc6299db9ec823/spin-0.9.2/src/mutex.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>mutex.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" href="../../normalize.css"><link rel="stylesheet" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" href="../../ayu.css" disabled><link rel="stylesheet" href="../../dark.css" disabled><link rel="stylesheet" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script><script defer src="../../main.js"></script><noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><div class="width-limiter"><nav class="sub"><a class="sub-logo-container" href="../../spin/index.html"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../wheel.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><pre class="src-line-numbers"><span id="1">1</span>
 <span id="2">2</span>
 <span id="3">3</span>
 <span id="4">4</span>
@@ -337,17 +337,17 @@
 //! [`SpinMutex`]: ./struct.SpinMutex.html
 //! [`SpinMutexGuard`]: ./struct.SpinMutexGuard.html
 
-</span><span class="attribute">#[cfg(feature = <span class="string">&quot;spin_mutex&quot;</span>)]
+</span><span class="attr">#[cfg(feature = <span class="string">&quot;spin_mutex&quot;</span>)]
 #[cfg_attr(docsrs, doc(cfg(feature = <span class="string">&quot;spin_mutex&quot;</span>)))]
 </span><span class="kw">pub mod </span>spin;
-<span class="attribute">#[cfg(feature = <span class="string">&quot;spin_mutex&quot;</span>)]
+<span class="attr">#[cfg(feature = <span class="string">&quot;spin_mutex&quot;</span>)]
 #[cfg_attr(docsrs, doc(cfg(feature = <span class="string">&quot;spin_mutex&quot;</span>)))]
 </span><span class="kw">pub use </span><span class="self">self</span>::spin::{SpinMutex, SpinMutexGuard};
 
-<span class="attribute">#[cfg(feature = <span class="string">&quot;ticket_mutex&quot;</span>)]
+<span class="attr">#[cfg(feature = <span class="string">&quot;ticket_mutex&quot;</span>)]
 #[cfg_attr(docsrs, doc(cfg(feature = <span class="string">&quot;ticket_mutex&quot;</span>)))]
 </span><span class="kw">pub mod </span>ticket;
-<span class="attribute">#[cfg(feature = <span class="string">&quot;ticket_mutex&quot;</span>)]
+<span class="attr">#[cfg(feature = <span class="string">&quot;ticket_mutex&quot;</span>)]
 #[cfg_attr(docsrs, doc(cfg(feature = <span class="string">&quot;ticket_mutex&quot;</span>)))]
 </span><span class="kw">pub use </span><span class="self">self</span>::ticket::{TicketMutex, TicketMutexGuard};
 
@@ -357,17 +357,17 @@
 };
 <span class="kw">use crate</span>::{RelaxStrategy, Spin};
 
-<span class="attribute">#[cfg(all(not(feature = <span class="string">&quot;spin_mutex&quot;</span>), not(feature = <span class="string">&quot;use_ticket_mutex&quot;</span>)))]
+<span class="attr">#[cfg(all(not(feature = <span class="string">&quot;spin_mutex&quot;</span>), not(feature = <span class="string">&quot;use_ticket_mutex&quot;</span>)))]
 </span><span class="macro">compile_error!</span>(<span class="string">&quot;The `mutex` feature flag was used (perhaps through another feature?) without either `spin_mutex` or `use_ticket_mutex`. One of these is required.&quot;</span>);
 
-<span class="attribute">#[cfg(all(not(feature = <span class="string">&quot;use_ticket_mutex&quot;</span>), feature = <span class="string">&quot;spin_mutex&quot;</span>))]
+<span class="attr">#[cfg(all(not(feature = <span class="string">&quot;use_ticket_mutex&quot;</span>), feature = <span class="string">&quot;spin_mutex&quot;</span>))]
 </span><span class="kw">type </span>InnerMutex&lt;T, R&gt; = <span class="self">self</span>::spin::SpinMutex&lt;T, R&gt;;
-<span class="attribute">#[cfg(all(not(feature = <span class="string">&quot;use_ticket_mutex&quot;</span>), feature = <span class="string">&quot;spin_mutex&quot;</span>))]
+<span class="attr">#[cfg(all(not(feature = <span class="string">&quot;use_ticket_mutex&quot;</span>), feature = <span class="string">&quot;spin_mutex&quot;</span>))]
 </span><span class="kw">type </span>InnerMutexGuard&lt;<span class="lifetime">&#39;a</span>, T&gt; = <span class="self">self</span>::spin::SpinMutexGuard&lt;<span class="lifetime">&#39;a</span>, T&gt;;
 
-<span class="attribute">#[cfg(feature = <span class="string">&quot;use_ticket_mutex&quot;</span>)]
+<span class="attr">#[cfg(feature = <span class="string">&quot;use_ticket_mutex&quot;</span>)]
 </span><span class="kw">type </span>InnerMutex&lt;T, R&gt; = <span class="self">self</span>::ticket::TicketMutex&lt;T, R&gt;;
-<span class="attribute">#[cfg(feature = <span class="string">&quot;use_ticket_mutex&quot;</span>)]
+<span class="attr">#[cfg(feature = <span class="string">&quot;use_ticket_mutex&quot;</span>)]
 </span><span class="kw">type </span>InnerMutexGuard&lt;<span class="lifetime">&#39;a</span>, T&gt; = <span class="self">self</span>::ticket::TicketMutexGuard&lt;<span class="lifetime">&#39;a</span>, T&gt;;
 
 <span class="doccomment">/// A spin-based lock providing mutually exclusive access to data.
@@ -454,7 +454,7 @@
     ///     drop(lock);
     /// }
     /// ```
-    </span><span class="attribute">#[inline(always)]
+    </span><span class="attr">#[inline(always)]
     </span><span class="kw">pub const fn </span>new(value: T) -&gt; <span class="self">Self </span>{
         <span class="self">Self </span>{ inner: InnerMutex::new(value) }
     }
@@ -467,7 +467,7 @@
     /// let lock = spin::Mutex::new(42);
     /// assert_eq!(42, lock.into_inner());
     /// ```
-    </span><span class="attribute">#[inline(always)]
+    </span><span class="attr">#[inline(always)]
     </span><span class="kw">pub fn </span>into_inner(<span class="self">self</span>) -&gt; T {
         <span class="self">self</span>.inner.into_inner()
     }
@@ -488,7 +488,7 @@
     ///     // The lock is implicitly dropped at the end of the scope
     /// }
     /// ```
-    </span><span class="attribute">#[inline(always)]
+    </span><span class="attr">#[inline(always)]
     </span><span class="kw">pub fn </span>lock(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; MutexGuard&lt;T&gt; {
         MutexGuard {
             inner: <span class="self">self</span>.inner.lock(),
@@ -503,7 +503,7 @@
     ///
     /// This function provides no synchronization guarantees and so its result should be considered &#39;out of date&#39;
     /// the instant it is called. Do not use it for synchronization purposes. However, it may be useful as a heuristic.
-    </span><span class="attribute">#[inline(always)]
+    </span><span class="attr">#[inline(always)]
     </span><span class="kw">pub fn </span>is_locked(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool {
         <span class="self">self</span>.inner.is_locked()
     }
@@ -515,7 +515,7 @@
     /// This is *extremely* unsafe if the lock is not held by the current
     /// thread. However, this can be useful in some instances for exposing the
     /// lock to FFI that doesn&#39;t know how to deal with RAII.
-    </span><span class="attribute">#[inline(always)]
+    </span><span class="attr">#[inline(always)]
     </span><span class="kw">pub unsafe fn </span>force_unlock(<span class="kw-2">&amp;</span><span class="self">self</span>) {
         <span class="self">self</span>.inner.force_unlock()
     }
@@ -534,7 +534,7 @@
     /// let maybe_guard2 = lock.try_lock();
     /// assert!(maybe_guard2.is_none());
     /// ```
-    </span><span class="attribute">#[inline(always)]
+    </span><span class="attr">#[inline(always)]
     </span><span class="kw">pub fn </span>try_lock(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;MutexGuard&lt;T&gt;&gt; {
         <span class="self">self</span>.inner
             .try_lock()
@@ -554,7 +554,7 @@
     /// *lock.get_mut() = 10;
     /// assert_eq!(*lock.lock(), 10);
     /// ```
-    </span><span class="attribute">#[inline(always)]
+    </span><span class="attr">#[inline(always)]
     </span><span class="kw">pub fn </span>get_mut(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;mut </span>T {
         <span class="self">self</span>.inner.get_mut()
     }
@@ -591,7 +591,7 @@
     /// *data = 1;
     /// assert_eq!(*data, 1);
     /// ```
-    </span><span class="attribute">#[inline(always)]
+    </span><span class="attr">#[inline(always)]
     </span><span class="kw">pub fn </span>leak(this: <span class="self">Self</span>) -&gt; <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span><span class="kw-2">mut </span>T {
         InnerMutexGuard::leak(this.inner)
     }
@@ -622,7 +622,7 @@
     }
 }
 
-<span class="attribute">#[cfg(feature = <span class="string">&quot;lock_api&quot;</span>)]
+<span class="attr">#[cfg(feature = <span class="string">&quot;lock_api&quot;</span>)]
 </span><span class="kw">unsafe impl</span>&lt;R: RelaxStrategy&gt; lock_api_crate::RawMutex <span class="kw">for </span>Mutex&lt;(), R&gt; {
     <span class="kw">type </span>GuardMarker = lock_api_crate::GuardSend;
 
@@ -647,4 +647,4 @@
     }
 }
 </code></pre></div>
-</section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="spin" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.66.0-nightly (0da281b60 2022-10-27)" ></div></body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="spin" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.67.0-nightly (11ebe6512 2022-11-01)" ></div></body></html>
