@@ -8,10 +8,14 @@ body {
 }
 
 div.header {
-    display: inline-block;
-    vertical-align: middle;
-    padding-top: 20px;
-    padding-bottom: 30px;
+    display: flex;
+    align-items: center;
+    padding: 20px 0;
+}
+
+h1.logo {
+    font-family: sans-serif;
+    margin-right: 20px;
 }
 
 nav {
