@@ -1,3 +1,8 @@
+/*
+ * Copyright 2022, Isaac Woods
+ * SPDX-License-Identifier: MPL-2.0
+ */
+
 ENTRY(kentry)
 OUTPUT_FORMAT(elf64-x86-64)
 
@@ -46,7 +51,7 @@ SECTIONS
         /*
          * We reserve a guard page that should be unmapped by the bootloader. This will cause a
          * page-fault if accessed and so will detect a stack overflow.
-         * TODO: maybe manually allocate a stack in the efiloader for each CPU?
+         * TODO: maybe manually allocate a stack in seed_uefi for each CPU?
          */
         _guard_page = .;
         . += 4K;
