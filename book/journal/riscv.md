@@ -33,18 +33,18 @@ Seems everything is memory-mapped, which makes for a nice change coming from x86
 
 | Region        | Address             | Size          |
 |---------------|---------------------|---------------|
-| Debug         | 0x0                 | 0x100         |
-| MROM          | 0x1000              | 0x11000       |
-| Test          | 0x100000            | 0x1000        |
-| CLINT         | 0x0200_0000         | 0x10000       |
-| PCIe PIO      | 0x0300_0000         | 0x10000       |
-| PLIC          | 0x0c00_0000         | 0x4000000     |
-| UART0         | 0x1000_0000         | 0x100         |
-| Virtio        | 0x1000_1000         | 0x1000        |
-| Flash         | 0x2000_0000         | 0x4000000     |
-| PCIe ECAM     | 0x3000_0000         | 0x10000000    |
-| PCIe MMIO     | 0x4000_0000         | 0x40000000    |
-| DRAM          | 0x8000_0000         | {mem size}    |
+| Debug         | `0x0`               | `0x100`       |
+| MROM          | `0x1000`            | `0x11000`     |
+| Test          | `0x100000`          | `0x1000`      |
+| CLINT         | `0x0200_0000`       | `0x10000`     |
+| PCIe PIO      | `0x0300_0000`       | `0x10000`     |
+| PLIC          | `0x0c00_0000`       | `0x4000000`   |
+| UART0         | `0x1000_0000`       | `0x100`       |
+| Virtio        | `0x1000_1000`       | `0x1000`      |
+| Flash         | `0x2000_0000`       | `0x4000000`   |
+| PCIe ECAM     | `0x3000_0000`       | `0x10000000`  |
+| PCIe MMIO     | `0x4000_0000`       | `0x40000000`  |
+| DRAM          | `0x8000_0000`       | `{mem size}`  |
 
 ### Getting control from OpenSBI
 On QEMU, we can get control from OpenSBI by linking a binary at `0x80200000`, and then using `-kernel` to
@@ -93,9 +93,9 @@ on the guest, and get super wierd UB from doing so - it doesn't just fault or wh
 before you ever read the memory (super weird ngl, didn't stick around to work out what was going on).
 
 Right, seems to be working much better by actually putting the values in RAM. We've extended RAM to 1GiB
-(0x8000_0000..0xc000_0000) and we'll use this as the new layout:
+(`0x8000_0000..0xc000_0000`) and we'll use this as the new layout:
 
 |    Address    | Description   | Size (bytes) |
-+---------------+---------------+--------------+
+|---------------|---------------|--------------|
 | 0xb000_0000   | Size of Data  | 4            |
 | 0xb000_0004   | Data          | N            |
