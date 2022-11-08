@@ -802,18 +802,18 @@ to the serial port, to prove it's all working.</p>
 <p>Seems everything is memory-mapped, which makes for a nice change coming from x86's nasty port thingy. This is the
 <code>virt</code> machine's one (from the QEMU source...):</p>
 <div class="table-wrapper"><table><thead><tr><th>Region</th><th>Address</th><th>Size</th></tr></thead><tbody>
-<tr><td>Debug</td><td>0x0</td><td>0x100</td></tr>
-<tr><td>MROM</td><td>0x1000</td><td>0x11000</td></tr>
-<tr><td>Test</td><td>0x100000</td><td>0x1000</td></tr>
-<tr><td>CLINT</td><td>0x0200_0000</td><td>0x10000</td></tr>
-<tr><td>PCIe PIO</td><td>0x0300_0000</td><td>0x10000</td></tr>
-<tr><td>PLIC</td><td>0x0c00_0000</td><td>0x4000000</td></tr>
-<tr><td>UART0</td><td>0x1000_0000</td><td>0x100</td></tr>
-<tr><td>Virtio</td><td>0x1000_1000</td><td>0x1000</td></tr>
-<tr><td>Flash</td><td>0x2000_0000</td><td>0x4000000</td></tr>
-<tr><td>PCIe ECAM</td><td>0x3000_0000</td><td>0x10000000</td></tr>
-<tr><td>PCIe MMIO</td><td>0x4000_0000</td><td>0x40000000</td></tr>
-<tr><td>DRAM</td><td>0x8000_0000</td><td>{mem size}</td></tr>
+<tr><td>Debug</td><td><code>0x0</code></td><td><code>0x100</code></td></tr>
+<tr><td>MROM</td><td><code>0x1000</code></td><td><code>0x11000</code></td></tr>
+<tr><td>Test</td><td><code>0x100000</code></td><td><code>0x1000</code></td></tr>
+<tr><td>CLINT</td><td><code>0x0200_0000</code></td><td><code>0x10000</code></td></tr>
+<tr><td>PCIe PIO</td><td><code>0x0300_0000</code></td><td><code>0x10000</code></td></tr>
+<tr><td>PLIC</td><td><code>0x0c00_0000</code></td><td><code>0x4000000</code></td></tr>
+<tr><td>UART0</td><td><code>0x1000_0000</code></td><td><code>0x100</code></td></tr>
+<tr><td>Virtio</td><td><code>0x1000_1000</code></td><td><code>0x1000</code></td></tr>
+<tr><td>Flash</td><td><code>0x2000_0000</code></td><td><code>0x4000000</code></td></tr>
+<tr><td>PCIe ECAM</td><td><code>0x3000_0000</code></td><td><code>0x10000000</code></td></tr>
+<tr><td>PCIe MMIO</td><td><code>0x4000_0000</code></td><td><code>0x40000000</code></td></tr>
+<tr><td>DRAM</td><td><code>0x8000_0000</code></td><td><code>{mem size}</code></td></tr>
 </tbody></table>
 </div>
 <h3 id="getting-control-from-opensbi"><a class="header" href="#getting-control-from-opensbi">Getting control from OpenSBI</a></h3>
@@ -854,12 +854,12 @@ with it, just load values into RAM, but it doesn't actually tell you this has fa
 on the guest, and get super wierd UB from doing so - it doesn't just fault or whatever, it seems to break code
 before you ever read the memory (super weird ngl, didn't stick around to work out what was going on).</p>
 <p>Right, seems to be working much better by actually putting the values in RAM. We've extended RAM to 1GiB
-(0x8000_0000..0xc000_0000) and we'll use this as the new layout:</p>
-<p>|    Address    | Description   | Size (bytes) |
-+---------------+---------------+--------------+
-| 0xb000_0000   | Size of Data  | 4            |
-| 0xb000_0004   | Data          | N            |</p>
-
+(<code>0x8000_0000..0xc000_0000</code>) and we'll use this as the new layout:</p>
+<div class="table-wrapper"><table><thead><tr><th>Address</th><th>Description</th><th>Size (bytes)</th></tr></thead><tbody>
+<tr><td>0xb000_0000</td><td>Size of Data</td><td>4</td></tr>
+<tr><td>0xb000_0004</td><td>Data</td><td>N</td></tr>
+</tbody></table>
+</div>
                     </main>
 
                     <nav class="nav-wrapper" aria-label="Page navigation">
