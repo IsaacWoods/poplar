@@ -1,7 +1,7 @@
 mod exception;
 
 use acpi::InterruptModel;
-use alloc::vec;
+use alloc::{alloc::Global, vec};
 use aml::{value::Args as AmlArgs, AmlContext, AmlName, AmlValue};
 use core::time::Duration;
 use hal::memory::PhysicalAddress;
@@ -72,7 +72,7 @@ impl InterruptController {
         }
     }
 
-    pub fn init(interrupt_model: &InterruptModel, aml_context: &mut AmlContext) -> InterruptController {
+    pub fn init(interrupt_model: &InterruptModel<Global>, aml_context: &mut AmlContext) -> InterruptController {
         match interrupt_model {
             InterruptModel::Apic(info) => {
                 if info.also_has_legacy_pics {

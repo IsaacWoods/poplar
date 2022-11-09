@@ -1,5 +1,5 @@
 use acpi::PciConfigRegions;
-use alloc::collections::BTreeMap;
+use alloc::{alloc::Global, collections::BTreeMap};
 use core::ptr;
 use hal::memory::PhysicalAddress;
 use hal_x86_64::kernel_map;
@@ -7,16 +7,15 @@ use kernel::pci::{PciDevice, PciInfo};
 use log::info;
 use pci_types::{Bar, ConfigRegionAccess, EndpointHeader, PciAddress, PciHeader};
 
-#[derive(Clone)]
-pub struct EcamAccess(PciConfigRegions);
+pub struct EcamAccess<'a>(PciConfigRegions<'a, Global>);
 
-impl EcamAccess {
-    pub fn new(regions: PciConfigRegions) -> EcamAccess {
+impl<'a> EcamAccess<'a> {
+    pub fn new(regions: PciConfigRegions<'a, Global>) -> EcamAccess<'a> {
         EcamAccess(regions)
     }
 }
 
-impl ConfigRegionAccess for EcamAccess {
+impl<'a> ConfigRegionAccess for EcamAccess<'a> {
     fn function_exists(&self, address: PciAddress) -> bool {
         self.0.physical_address(address.segment(), address.bus(), address.device(), address.function()).is_some()
     }

@@ -1,6 +1,6 @@
 #![no_std]
 #![no_main]
-#![feature(asm_sym, decl_macro, naked_functions)]
+#![feature(asm_sym, decl_macro, naked_functions, allocator_api)]
 
 extern crate alloc;
 extern crate rlibc;
@@ -15,7 +15,7 @@ mod topo;
 
 use acpi::{platform::ProcessorState, AcpiTables, PciConfigRegions};
 use acpi_handler::{AmlHandler, PoplarAcpiHandler};
-use alloc::{boxed::Box, sync::Arc};
+use alloc::{alloc::Global, boxed::Box, sync::Arc};
 use aml::AmlContext;
 use core::{panic::PanicInfo, pin::Pin, time::Duration};
 use hal::{
@@ -136,7 +136,7 @@ pub extern "C" fn kentry(boot_info: &BootInfo) -> ! {
             Ok(acpi_tables) => acpi_tables,
             Err(err) => panic!("Failed to discover ACPI tables: {:?}", err),
         };
-    let acpi_platform_info = acpi_tables.platform_info().unwrap();
+    let acpi_platform_info = acpi_tables.platform_info_in(&Global).unwrap();
 
     /*
      * Create a topology and add the boot processor to it.
@@ -164,15 +164,15 @@ pub extern "C" fn kentry(boot_info: &BootInfo) -> ! {
         });
     };
 
-    let pci_access = pci::EcamAccess::new(PciConfigRegions::new(&acpi_tables).unwrap());
+    let pci_access = pci::EcamAccess::new(PciConfigRegions::new_in(&acpi_tables, &Global).unwrap());
 
     /*
      * Parse the DSDT.
      */
     // TODO: if we're on ACPI 1.0 - pass true as legacy mode.
-    let mut aml_context =
-        AmlContext::new(Box::new(AmlHandler::new(pci_access.clone())), aml::DebugVerbosity::None);
-    if let Some(ref dsdt) = acpi_tables.dsdt {
+    let mut aml_context = AmlContext::new(Box::new(AmlHandler::new(pci_access)), aml::DebugVerbosity::None);
+    // TODO: match on this to differentiate between there being no DSDT vs real error
+    if let Ok(ref dsdt) = acpi_tables.dsdt() {
         let virtual_address = kernel_map::physical_to_virtual(PhysicalAddress::new(dsdt.address).unwrap());
         info!(
             "DSDT parse: {:?}",
@@ -192,8 +192,9 @@ pub extern "C" fn kentry(boot_info: &BootInfo) -> ! {
      * XXX: not sure this is the right place to do this just yet.
      */
     // TODO: this whole situation is a bit gross and needs more thought I think
-    *kernel::PCI_INFO.write() = Some(PciResolver::resolve(pci_access.clone()));
-    kernel::PCI_ACCESS.initialize(Some(Mutex::new(Box::new(pci_access))));
+    // FIXME: this is broken by the new version of `acpi` for now
+    // *kernel::PCI_INFO.write() = Some(PciResolver::resolve(pci_access.clone()));
+    // kernel::PCI_ACCESS.initialize(Some(Mutex::new(Box::new(pci_access))));
 
     // TODO: if we need to route PCI interrupts, this might be useful at some point?
     // let routing_table =
