@@ -5,6 +5,7 @@ channel, or over another transport layer such as the network or a serial port.
 ### Primitives
 Primitives are transmitted as little-endian and packed to their natural alignment. The following primitive types
 are recognised:
+
 | Name                              | Size (bytes)  | Description                                   |
 |-----------------------------------|---------------|-----------------------------------------------|
 | `bool`                            | 1             | A boolean value                               |
