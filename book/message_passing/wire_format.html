@@ -147,15 +147,15 @@
 channel, or over another transport layer such as the network or a serial port.</p>
 <h3 id="primitives"><a class="header" href="#primitives">Primitives</a></h3>
 <p>Primitives are transmitted as little-endian and packed to their natural alignment. The following primitive types
-are recognised:
-| Name                              | Size (bytes)  | Description                                   |
-|-----------------------------------|---------------|-----------------------------------------------|
-| <code>bool</code>                            | 1             | A boolean value                               |
-| <code>u8</code>, <code>u16</code>, <code>u32</code>, <code>u64</code>, <code>u128</code> | 1, 2, 4, 8    | An unsigned integer                           |
-| <code>i8</code>, <code>i16</code>, <code>i32</code>, <code>i64</code>, <code>i128</code> | 1, 2, 4, 8    | A signed integer                              |
-| <code>f32</code>, <code>f64</code>                      | 4, 8          | Single / double-precision IEEE-754 FP values  |
-| <code>char</code>                            | 4             | A single UTF-8 Unicode scalar value           |</p>
-
+are recognised:</p>
+<div class="table-wrapper"><table><thead><tr><th>Name</th><th>Size (bytes)</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>bool</code></td><td>1</td><td>A boolean value</td></tr>
+<tr><td><code>u8</code>, <code>u16</code>, <code>u32</code>, <code>u64</code>, <code>u128</code></td><td>1, 2, 4, 8</td><td>An unsigned integer</td></tr>
+<tr><td><code>i8</code>, <code>i16</code>, <code>i32</code>, <code>i64</code>, <code>i128</code></td><td>1, 2, 4, 8</td><td>A signed integer</td></tr>
+<tr><td><code>f32</code>, <code>f64</code></td><td>4, 8</td><td>Single / double-precision IEEE-754 FP values</td></tr>
+<tr><td><code>char</code></td><td>4</td><td>A single UTF-8 Unicode scalar value</td></tr>
+</tbody></table>
+</div>
                     </main>
 
                     <nav class="nav-wrapper" aria-label="Page navigation">
