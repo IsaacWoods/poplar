@@ -29,8 +29,8 @@ impl VirtualAddress {
      * simpler to use. We enforce whatever requirements are needed for the target architecture.
      */
     cfg_if! {
-        if #[cfg(target_arch = "x86_64")] {
-            /// Canonicalise this virtual address. On x86_64, that involves making sure that bits 48..63 match the
+        if #[cfg(any(target_arch = "x86_64", target_arch = "riscv64"))] {
+            /// Canonicalise this virtual address. On x86_64 and RV64-Sv48, that involves making sure that bits 48..63 match the
             /// sign extension expected from the value of bit 47.
             pub const fn canonicalise(self) -> VirtualAddress {
                 #[allow(inconsistent_digit_grouping)]
