@@ -71,6 +71,7 @@ dependencies = [
 name = "hal_riscv"
 version = "0.1.0"
 dependencies = [
+ "bit_field",
  "hal",
  "volatile",
 ]

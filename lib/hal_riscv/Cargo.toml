@@ -7,3 +7,4 @@ edition = "2021"
 [dependencies]
 hal = { path = "../hal" }
 volatile = { path = "../volatile" }
+bit_field = "0.10.1"
