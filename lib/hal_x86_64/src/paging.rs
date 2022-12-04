@@ -277,7 +277,7 @@ impl PageTableImpl {
     }
 
     pub fn p4(&self) -> &Table<Level4> {
-        unsafe { &*((self.physical_base + usize::from(self.p4_frame.start)).mut_ptr()) }
+        unsafe { &*((self.physical_base + usize::from(self.p4_frame.start)).ptr()) }
     }
 
     pub fn p4_mut(&mut self) -> &mut Table<Level4> {
