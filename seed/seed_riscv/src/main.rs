@@ -7,12 +7,14 @@
 #![no_main]
 #![feature(pointer_is_aligned, panic_info_message, const_mut_refs, strict_provenance)]
 
+mod image;
 mod logger;
 mod memory;
 
 use bit_field::BitField;
 use fdt::Fdt;
-use hal::memory::{FrameSize, PhysicalAddress, Size4KiB};
+use hal::memory::{FrameAllocator, FrameSize, PhysicalAddress, Size4KiB, VirtualAddress};
+use hal_riscv::paging::PageTableImpl;
 use memory::{MemoryManager, MemoryRegions, Region};
 use mer::Elf;
 use poplar_util::{linker::LinkerSymbol, math::align_up};
@@ -109,43 +111,17 @@ pub fn seed_main(hart_id: u64, fdt_ptr: *const u8) -> ! {
         align_up(fdt.total_size(), Size4KiB::SIZE),
     ));
 
-    let kernel_elf = extract_kernel(&mut memory_regions);
+    let kernel_elf = image::extract_kernel(&mut memory_regions);
     info!("Memory regions: {:#?}", memory_regions);
     MEMORY_MANAGER.init(memory_regions);
+    MEMORY_MANAGER.walk_usable_memory();
 
-    use hal::memory::FrameAllocator;
-    info!("Allocating 11 frames: {:?}", MEMORY_MANAGER.allocate_n(11));
-
-    for section in kernel_elf.sections() {
-        info!("Section: called {:?} at {:#x}", section.name(&kernel_elf), section.address);
-    }
+    let mut kernel_page_table = PageTableImpl::new(MEMORY_MANAGER.allocate(), VirtualAddress::new(0x0));
+    image::load_kernel(kernel_elf, &mut kernel_page_table, &MEMORY_MANAGER);
 
     MEMORY_MANAGER.walk_usable_memory();
     info!("Looping");
     loop {}
-}
-
-fn extract_kernel(memory_regions: &mut MemoryRegions) -> Elf<'static> {
-    const LOADER_DEVICE_BASE: usize = 0xb000_0000;
-
-    // TODO: loader devices are not added to the FDT - this is kind of gross so maybe use fw_cfg or something else instead?
-    let kernel_elf_size = unsafe { *(LOADER_DEVICE_BASE as *const u32) } as usize;
-    info!("Kernel elf size: {}", kernel_elf_size);
-
-    // Reserve the kernel ELF in the memory ranges, so we don't trample over it
-    memory_regions.add_region(Region::reserved(
-        memory::Usage::KernelImage,
-        PhysicalAddress::new(LOADER_DEVICE_BASE).unwrap(),
-        align_up(kernel_elf_size + 4, Size4KiB::SIZE),
-    ));
-
-    assert_eq!(
-        unsafe { &*((LOADER_DEVICE_BASE + 4) as *const [u8; 4]) },
-        b"\x7fELF",
-        "Kernel ELF magic isn't correct"
-    );
-    Elf::new(unsafe { core::slice::from_raw_parts((LOADER_DEVICE_BASE + 4) as *const u8, kernel_elf_size) })
-        .expect("Failed to read kernel ELF :(")
 }
 
 fn print_fdt(fdt: &Fdt) {

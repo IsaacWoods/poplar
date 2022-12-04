@@ -248,16 +248,13 @@ impl FrameAllocator<Size4KiB> for MemoryManager {
             let inner_node = unsafe { &mut *node.as_ptr() };
             if inner_node.size >= (n * Size4KiB::SIZE) {
                 let start_addr = node.as_ptr().addr();
-                trace!("Allocating {} frames out of region starting at {:#x}", n, start_addr);
 
                 // Allocate from the end of the region so we don't need to alter the node pointers
                 inner_node.size -= n * Size4KiB::SIZE;
-                let frames = Frame::starts_with(PhysicalAddress::new(start_addr + inner_node.size).unwrap())
+                return Frame::starts_with(PhysicalAddress::new(start_addr + inner_node.size).unwrap())
                     ..Frame::starts_with(
                         PhysicalAddress::new(start_addr + inner_node.size + n * Size4KiB::SIZE).unwrap(),
                     );
-                trace!("Allocated {} frames: {:#x}..{:#x}", n, frames.start.start, frames.end.start);
-                return frames;
             }
 
             current_node = inner_node.next;
