@@ -35,6 +35,7 @@ impl RunQemuRiscV {
         qemu.args(&["-m", "1G"]);
         qemu.args(&["-bios", self.opensbi.to_str().unwrap()]);
         qemu.args(&["-kernel", self.seed.to_str().unwrap()]);
+        qemu.args(&["-d", "int"]);
         // qemu.args(&["-fw_cfg", &format!("opt/poplar.kernel,file={}", self.kernel.to_str().unwrap())]);
         let kernel_size =
             File::open(self.kernel.clone()).expect("Failed to open kernel ELF").metadata().unwrap().len();
