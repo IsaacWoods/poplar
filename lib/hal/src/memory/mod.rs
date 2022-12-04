@@ -58,8 +58,8 @@ macro frame_size($name: ident, $size: expr, $condition: meta) {
 }
 
 frame_size!(Size4KiB, kibibytes(4), cfg(any(target_arch = "x86_64", target_arch = "riscv64")));
-frame_size!(Size2MiB, mebibytes(2), cfg(target_arch = "x86_64"));
-frame_size!(Size1GiB, gibibytes(1), cfg(target_arch = "x86_64"));
+frame_size!(Size2MiB, mebibytes(2), cfg(any(target_arch = "x86_64", target_arch = "riscv64")));
+frame_size!(Size1GiB, gibibytes(1), cfg(any(target_arch = "x86_64", target_arch = "riscv64")));
 
 /// `FrameAllocator` is used to interact with a physical memory manager in a platform-independent way. Methods on
 /// `FrameAllocator` take `&self` and so are expected to use interior-mutability through a type such as `Mutex` to
@@ -76,6 +76,8 @@ where
     ///
     /// By default, this calls `allocate_n(1)`, but can be overridden if an allocator can provide a
     /// more efficient method for allocating single frames.
+    // TODO: this should return some sort of `PhysicalAllocation`, which a) can have both contiguous and scatter
+    // options (impl Iterator<Item=Frame<S>> for this too) and b) can auto-handle the free maybe?
     fn allocate(&self) -> Frame<S> {
         self.allocate_n(1).start
     }

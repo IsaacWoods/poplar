@@ -72,7 +72,10 @@ name = "hal_riscv"
 version = "0.1.0"
 dependencies = [
  "bit_field",
+ "bitflags",
  "hal",
+ "poplar_util",
+ "tracing",
  "volatile",
 ]
 
