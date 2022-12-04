@@ -20,7 +20,7 @@ use aml::AmlContext;
 use core::{panic::PanicInfo, pin::Pin, time::Duration};
 use hal::{
     boot_info::BootInfo,
-    memory::{Frame, PhysicalAddress, VirtualAddress},
+    memory::{Frame, PAddr, VAddr},
 };
 use hal_x86_64::{hw::registers::read_control_reg, kernel_map, paging::PageTableImpl};
 use interrupts::InterruptController;
@@ -58,12 +58,12 @@ impl Platform for PlatformImpl {
     unsafe fn initialize_task_stacks(
         kernel_stack: &Stack,
         user_stack: &Stack,
-        task_entry_point: VirtualAddress,
-    ) -> (VirtualAddress, VirtualAddress) {
+        task_entry_point: VAddr,
+    ) -> (VAddr, VAddr) {
         task::initialize_stacks(kernel_stack, user_stack, task_entry_point)
     }
 
-    unsafe fn context_switch(current_kernel_stack: *mut VirtualAddress, new_kernel_stack: VirtualAddress) {
+    unsafe fn context_switch(current_kernel_stack: *mut VAddr, new_kernel_stack: VAddr) {
         task::context_switch(current_kernel_stack, new_kernel_stack)
     }
 
@@ -88,7 +88,7 @@ pub extern "C" fn kentry(boot_info: &BootInfo) -> ! {
      */
     let kernel_page_table = unsafe {
         PageTableImpl::from_frame(
-            Frame::starts_with(PhysicalAddress::new(read_control_reg!(cr3) as usize).unwrap()),
+            Frame::starts_with(PAddr::new(read_control_reg!(cr3) as usize).unwrap()),
             kernel_map::PHYSICAL_MAPPING_BASE,
         )
     };
@@ -173,7 +173,7 @@ pub extern "C" fn kentry(boot_info: &BootInfo) -> ! {
     let mut aml_context = AmlContext::new(Box::new(AmlHandler::new(pci_access)), aml::DebugVerbosity::None);
     // TODO: match on this to differentiate between there being no DSDT vs real error
     if let Ok(ref dsdt) = acpi_tables.dsdt() {
-        let virtual_address = kernel_map::physical_to_virtual(PhysicalAddress::new(dsdt.address).unwrap());
+        let virtual_address = kernel_map::physical_to_virtual(PAddr::new(dsdt.address).unwrap());
         info!(
             "DSDT parse: {:?}",
             aml_context

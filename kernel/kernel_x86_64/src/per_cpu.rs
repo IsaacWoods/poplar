@@ -1,6 +1,6 @@
 use alloc::boxed::Box;
 use core::{arch::asm, marker::PhantomPinned, mem, pin::Pin};
-use hal::memory::VirtualAddress;
+use hal::memory::VAddr;
 use hal_x86_64::hw::{
     gdt::{SegmentSelector, TssSegment},
     tss::Tss,
@@ -25,9 +25,9 @@ pub struct PerCpuImpl {
 
     /// The next field must then be the current task's kernel stack pointer. We access this manually from assembly
     /// with `gs:0x8`, so it must remain at a fixed offset within this struct.
-    current_task_kernel_rsp: VirtualAddress,
+    current_task_kernel_rsp: VAddr,
     /// This field must remain at `gs:0x10`, and so cannot be moved.
-    current_task_user_rsp: VirtualAddress,
+    current_task_user_rsp: VAddr,
 
     pub tss: Pin<Box<Tss>>,
 
@@ -35,8 +35,8 @@ pub struct PerCpuImpl {
 }
 
 impl PerCpuImpl {
-    unsafe_unpinned!(current_task_kernel_rsp: VirtualAddress);
-    unsafe_unpinned!(current_task_user_rsp: VirtualAddress);
+    unsafe_unpinned!(current_task_kernel_rsp: VAddr);
+    unsafe_unpinned!(current_task_user_rsp: VAddr);
     unsafe_unpinned!(tss: Pin<Box<Tss>>);
     unsafe_pinned!(pub scheduler: Scheduler<crate::PlatformImpl>);
 
@@ -45,8 +45,8 @@ impl PerCpuImpl {
             _self_pointer: 0x0 as *mut PerCpuImpl,
             _pin: PhantomPinned,
 
-            current_task_kernel_rsp: VirtualAddress::new(0x0),
-            current_task_user_rsp: VirtualAddress::new(0x0),
+            current_task_kernel_rsp: VAddr::new(0x0),
+            current_task_user_rsp: VAddr::new(0x0),
             tss,
 
             scheduler,
@@ -77,16 +77,16 @@ impl PerCpu<crate::PlatformImpl> for PerCpuImpl {
         self.scheduler()
     }
 
-    fn set_kernel_stack_pointer(mut self: Pin<&mut Self>, stack_pointer: VirtualAddress) {
+    fn set_kernel_stack_pointer(mut self: Pin<&mut Self>, stack_pointer: VAddr) {
         *self.as_mut().current_task_kernel_rsp() = stack_pointer;
         self.as_mut().tss().as_mut().set_kernel_stack(stack_pointer);
     }
 
-    fn get_user_stack_pointer(mut self: Pin<&mut Self>) -> VirtualAddress {
+    fn get_user_stack_pointer(mut self: Pin<&mut Self>) -> VAddr {
         *self.as_mut().current_task_user_rsp()
     }
 
-    fn set_user_stack_pointer(mut self: Pin<&mut Self>, stack_pointer: VirtualAddress) {
+    fn set_user_stack_pointer(mut self: Pin<&mut Self>, stack_pointer: VAddr) {
         *self.as_mut().current_task_user_rsp() = stack_pointer;
     }
 }

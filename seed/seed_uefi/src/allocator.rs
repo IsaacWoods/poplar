@@ -1,5 +1,5 @@
 use core::{cell::Cell, ops::Range};
-use hal::memory::{Frame, FrameAllocator, FrameSize, PhysicalAddress, Size4KiB};
+use hal::memory::{Frame, FrameAllocator, FrameSize, PAddr, Size4KiB};
 use uefi::table::boot::{AllocateType, BootServices};
 
 /// `BootFrameAllocator` is the allocator we use in the bootloader to allocate memory for the
@@ -29,7 +29,7 @@ impl BootFrameAllocator {
             boot_services.set_mem(start_frame_address as usize as *mut _, num_frames * Size4KiB::SIZE, 0);
         }
 
-        let start_frame = Frame::contains(PhysicalAddress::new(start_frame_address as usize).unwrap());
+        let start_frame = Frame::contains(PAddr::new(start_frame_address as usize).unwrap());
         BootFrameAllocator { end_frame: start_frame + num_frames, next_frame: Cell::new(start_frame) }
     }
 }

@@ -6,7 +6,7 @@ use core::{
     mem,
     ops::{Index, IndexMut},
 };
-use hal::memory::VirtualAddress;
+use hal::memory::VAddr;
 
 /// The type of a function that can be used as an interrupt handler. It's marked as diverging
 /// because we don't exactly 'return' from an interrupt. This should not be used directly to create
@@ -129,7 +129,7 @@ impl Idt {
     pub fn load(&self) {
         let idt_ptr = DescriptorTablePointer {
             limit: mem::size_of::<Self>() as u16 - 1,
-            base: VirtualAddress::from(self as *const _),
+            base: VAddr::from(self as *const _),
         };
 
         unsafe {
@@ -171,10 +171,10 @@ pub struct InterruptStackFrame {
     pub rbx: u64,
     pub rax: u64,
 
-    pub instruction_pointer: VirtualAddress,
+    pub instruction_pointer: VAddr,
     pub code_segment: u64,
     pub cpu_flags: CpuFlags,
-    pub stack_pointer: VirtualAddress,
+    pub stack_pointer: VAddr,
     pub stack_segment: u64,
 }
 
@@ -198,10 +198,10 @@ pub struct ExceptionWithErrorStackFrame {
     pub rax: u64,
 
     pub error_code: u64,
-    pub instruction_pointer: VirtualAddress,
+    pub instruction_pointer: VAddr,
     pub code_segment: u64,
     pub cpu_flags: CpuFlags,
-    pub stack_pointer: VirtualAddress,
+    pub stack_pointer: VAddr,
     pub stack_segment: u64,
 }
 

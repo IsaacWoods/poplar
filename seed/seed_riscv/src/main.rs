@@ -13,7 +13,7 @@ mod memory;
 
 use bit_field::BitField;
 use fdt::Fdt;
-use hal::memory::{FrameAllocator, FrameSize, PhysicalAddress, Size4KiB, VirtualAddress};
+use hal::memory::{FrameAllocator, FrameSize, PAddr, Size4KiB, VAddr};
 use hal_riscv::paging::PageTableImpl;
 use memory::{MemoryManager, MemoryRegions, Region};
 use mer::Elf;
@@ -76,7 +76,7 @@ pub fn seed_main(hart_id: u64, fdt_ptr: *const u8) -> ! {
     for region in fdt.memory().regions() {
         info!("Memory region: {:?}", region);
         memory_regions.add_region(Region::usable(
-            PhysicalAddress::new(region.starting_address as usize).unwrap(),
+            PAddr::new(region.starting_address as usize).unwrap(),
             region.size.unwrap(),
         ));
     }
@@ -91,7 +91,7 @@ pub fn seed_main(hart_id: u64, fdt_ptr: *const u8) -> ! {
             };
             memory_regions.add_region(Region::reserved(
                 usage,
-                PhysicalAddress::new(reg.starting_address as usize).unwrap(),
+                PAddr::new(reg.starting_address as usize).unwrap(),
                 reg.size.unwrap(),
             ));
         }
@@ -102,12 +102,12 @@ pub fn seed_main(hart_id: u64, fdt_ptr: *const u8) -> ! {
     let seed_end = unsafe { _seed_end.ptr() as usize };
     memory_regions.add_region(Region::reserved(
         memory::Usage::Seed,
-        PhysicalAddress::new(unsafe { _seed_start.ptr() as usize }).unwrap(),
+        PAddr::new(unsafe { _seed_start.ptr() as usize }).unwrap(),
         align_up(seed_end - seed_start, Size4KiB::SIZE),
     ));
     memory_regions.add_region(Region::reserved(
         memory::Usage::DeviceTree,
-        PhysicalAddress::new(fdt_ptr.addr()).unwrap(),
+        PAddr::new(fdt_ptr.addr()).unwrap(),
         align_up(fdt.total_size(), Size4KiB::SIZE),
     ));
 
@@ -116,7 +116,7 @@ pub fn seed_main(hart_id: u64, fdt_ptr: *const u8) -> ! {
     MEMORY_MANAGER.init(memory_regions);
     MEMORY_MANAGER.walk_usable_memory();
 
-    let mut kernel_page_table = PageTableImpl::new(MEMORY_MANAGER.allocate(), VirtualAddress::new(0x0));
+    let mut kernel_page_table = PageTableImpl::new(MEMORY_MANAGER.allocate(), VAddr::new(0x0));
     image::load_kernel(kernel_elf, &mut kernel_page_table, &MEMORY_MANAGER);
 
     MEMORY_MANAGER.walk_usable_memory();

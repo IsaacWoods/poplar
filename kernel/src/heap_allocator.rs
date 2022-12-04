@@ -4,12 +4,12 @@ use core::{
     mem::{self, size_of},
     ops::Deref,
 };
-use hal::memory::VirtualAddress;
+use hal::memory::VAddr;
 use poplar_util::math::align_up;
 use spin::Mutex;
 
 pub struct HoleAllocator {
-    heap_bottom: VirtualAddress,
+    heap_bottom: VAddr,
     heap_size: usize,
     holes: Option<HoleList>,
 }
@@ -18,12 +18,12 @@ impl HoleAllocator {
     /// Create a new, uninitialized `HoleAllocator`. Before heap allocations can be made, `init`
     /// must be called.
     pub const fn new_uninitialized() -> HoleAllocator {
-        HoleAllocator { heap_bottom: VirtualAddress::new(0), heap_size: 0, holes: None }
+        HoleAllocator { heap_bottom: VAddr::new(0), heap_size: 0, holes: None }
     }
 
     /// Initialise the `HoleAllocator`. This should only be called once, and constructs the
     /// `HoleList` from the address range.
-    pub unsafe fn init(&mut self, heap_bottom: VirtualAddress, heap_size: usize) {
+    pub unsafe fn init(&mut self, heap_bottom: VAddr, heap_size: usize) {
         assert!(self.holes.is_none());
         self.heap_bottom = heap_bottom;
         self.heap_size = heap_size;
@@ -73,7 +73,7 @@ unsafe impl GlobalAlloc for LockedHoleAllocator {
 
 #[derive(Debug, Clone, Copy)]
 pub struct HoleInfo {
-    addr: VirtualAddress,
+    addr: VAddr,
     size: usize,
 }
 
@@ -86,7 +86,7 @@ impl Hole {
     fn info(&self) -> HoleInfo {
         HoleInfo {
             // Safe to unwrap because we know `self` points to a valid address
-            addr: VirtualAddress::new(self as *const _ as usize),
+            addr: VAddr::new(self as *const _ as usize),
             size: self.size,
         }
     }
@@ -100,7 +100,7 @@ impl HoleList {
     /// Create a new `HoleList` that contains the given hole. Unsafe because it is undefined
     /// bahaviour if the address passes is invalid or if [hole_addr, hole_addr+size) is used
     /// somewhere.
-    pub unsafe fn new(hole_addr: VirtualAddress, hole_size: usize) -> HoleList {
+    pub unsafe fn new(hole_addr: VAddr, hole_size: usize) -> HoleList {
         assert!(size_of::<Hole>() == Self::get_min_size());
 
         let ptr = hole_addr.mut_ptr() as *mut Hole;
@@ -132,11 +132,11 @@ impl HoleList {
     /// list and inserts the given hole at the correct position. If the freed block is adjacent to
     /// another one, they are merged.
     pub unsafe fn free(&mut self, ptr: *mut u8, layout: Layout) {
-        free(&mut self.first, VirtualAddress::from(ptr), layout.size());
+        free(&mut self.first, VAddr::from(ptr), layout.size());
     }
 
     pub fn get_min_size() -> usize {
-        (size_of::<VirtualAddress>() + size_of::<usize>()) as usize
+        (size_of::<VAddr>() + size_of::<usize>()) as usize
     }
 }
 
@@ -222,15 +222,14 @@ fn allocate_first_fit(mut previous: &mut Hole, layout: Layout) -> Result<Allocat
 }
 
 /// Walk the list, starting at `hole` and free the allocation given by `(addr,size)`
-fn free(mut hole: &mut Hole, addr: VirtualAddress, mut size: usize) {
+fn free(mut hole: &mut Hole, addr: VAddr, mut size: usize) {
     loop {
         assert!(size >= HoleList::get_min_size());
 
         /*
          * If the size is 0, it's the dummy hole, so just set the address to 0
          */
-        let hole_addr =
-            if hole.size == 0 { VirtualAddress::new(0) } else { VirtualAddress::new(hole as *mut _ as usize) };
+        let hole_addr = if hole.size == 0 { VAddr::new(0) } else { VAddr::new(hole as *mut _ as usize) };
         assert!((hole_addr + hole.size) <= addr, "Invalid deallocation (probable double free)");
         let next_hole_info = hole.next.as_ref().map(|next| next.info());
 

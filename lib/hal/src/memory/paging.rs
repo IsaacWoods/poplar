@@ -1,4 +1,4 @@
-use super::{Frame, FrameAllocator, FrameSize, Page, PhysicalAddress, VirtualAddress};
+use super::{Frame, FrameAllocator, FrameSize, PAddr, Page, VAddr};
 use core::ops::{self, Range};
 
 /// Defines the permissions for a region of memory. Used both for abstract regions of memory (e.g. entries in a
@@ -60,7 +60,7 @@ where
 
     /// Get the physical address that a given virtual address is mapped to, if it's mapped. Returns `None` if the
     /// address is not mapped into physical memory.
-    fn translate(&self, address: VirtualAddress) -> Option<PhysicalAddress>;
+    fn translate(&self, address: VAddr) -> Option<PAddr>;
 
     /// Map a `Page` to a `Frame` with the given flags.
     fn map<S, A>(
@@ -97,8 +97,9 @@ where
     /// free to map this area however they desire, and may do so with a range of page sizes.
     fn map_area<A>(
         &mut self,
-        virtual_start: VirtualAddress,
-        physical_start: PhysicalAddress,
+        // memory_type: MemoryType,
+        virtual_start: VAddr,
+        physical_start: PAddr,
         size: usize,
         flags: Flags,
         allocator: &A,

@@ -1,5 +1,5 @@
 use core::{arch::global_asm, mem, ptr};
-use hal::memory::VirtualAddress;
+use hal::memory::VAddr;
 use hal_x86_64::hw::registers::{write_msr, CpuFlags};
 use kernel::{
     memory::Stack,
@@ -21,7 +21,7 @@ extern "C" {
     /// there, and so we manually insert a return to a kernel-space usermode trampoline that
     /// enters userspace for the first time in the initial stack frame, which is what the context
     /// switch returns to.
-    fn do_context_switch(current_kernel_rsp: *mut VirtualAddress, new_kernel_rsp: VirtualAddress);
+    fn do_context_switch(current_kernel_rsp: *mut VAddr, new_kernel_rsp: VAddr);
 
     /// This function is defined in assembly, and is called when userspace does a `syscall`. It returns back to
     /// userspace using `sysret`, and so is diverging.
@@ -60,8 +60,8 @@ pub struct ContextSwitchFrame {
 pub unsafe fn initialize_stacks(
     kernel_stack: &Stack,
     user_stack: &Stack,
-    task_entry_point: VirtualAddress,
-) -> (VirtualAddress, VirtualAddress) {
+    task_entry_point: VAddr,
+) -> (VAddr, VAddr) {
     /*
      * These are the set of flags we enter the task for the first time with. We allow, set the parity flag to
      * even, and leave everything else unset.
@@ -107,7 +107,7 @@ pub unsafe fn initialize_stacks(
     (kernel_stack_pointer, user_stack_pointer)
 }
 
-pub unsafe fn context_switch(current_kernel_stack: *mut VirtualAddress, new_kernel_stack: VirtualAddress) {
+pub unsafe fn context_switch(current_kernel_stack: *mut VAddr, new_kernel_stack: VAddr) {
     do_context_switch(current_kernel_stack, new_kernel_stack);
 }
 

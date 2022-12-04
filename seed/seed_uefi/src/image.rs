@@ -1,7 +1,7 @@
 use core::{ptr, slice, str};
 use hal::{
     boot_info::{LoadedImage, Segment, MAX_CAPABILITY_STREAM_LENGTH},
-    memory::{Flags, FrameAllocator, FrameSize, Page, PageTable, PhysicalAddress, Size4KiB, VirtualAddress},
+    memory::{Flags, FrameAllocator, FrameSize, PAddr, Page, PageTable, Size4KiB, VAddr},
 };
 use hal_x86_64::kernel_map;
 use log::info;
@@ -21,13 +21,13 @@ use uefi::{
 };
 
 pub struct KernelInfo {
-    pub entry_point: VirtualAddress,
-    pub stack_top: VirtualAddress,
+    pub entry_point: VAddr,
+    pub stack_top: VAddr,
 
     /// We load the kernel at the base of the kernel address space. We want to put other stuff after it, and so
     /// need to know how much memory the loaded image has taken up. During loading, we calculate the address of
     /// the next available page (this) to use.
-    pub next_safe_address: VirtualAddress,
+    pub next_safe_address: VAddr,
 }
 
 pub fn load_kernel<A, P>(
@@ -43,7 +43,7 @@ where
 {
     info!("Loading kernel from: {}", path);
     let (elf, pool_addr) = load_elf(boot_services, volume_handle, path);
-    let entry_point = VirtualAddress::new(elf.entry_point());
+    let entry_point = VAddr::new(elf.entry_point());
 
     let mut next_safe_address = kernel_map::KERNEL_BASE;
 
@@ -85,13 +85,13 @@ where
     }
 
     let stack_top = match elf.symbols().find(|symbol| symbol.name(&elf) == Some("_stack_top")) {
-        Some(symbol) => VirtualAddress::new(symbol.value as usize),
+        Some(symbol) => VAddr::new(symbol.value as usize),
         None => panic!("Kernel does not have a '_stack_top' symbol!"),
     };
 
     // Unmap the stack guard page
     let guard_page_address = match elf.symbols().find(|symbol| symbol.name(&elf) == Some("_guard_page")) {
-        Some(symbol) => VirtualAddress::new(symbol.value as usize),
+        Some(symbol) => VAddr::new(symbol.value as usize),
         None => panic!("Kernel does not have a '_guard_page' symbol!"),
     };
     assert!(guard_page_address.is_aligned(Size4KiB::SIZE), "Guard page address is not page aligned");
@@ -106,7 +106,7 @@ pub fn load_image(boot_services: &BootServices, volume_handle: Handle, name: &st
     let (elf, pool_addr) = load_elf(boot_services, volume_handle, path);
 
     let mut image_data = LoadedImage::default();
-    image_data.entry_point = VirtualAddress::new(elf.entry_point());
+    image_data.entry_point = VAddr::new(elf.entry_point());
 
     let name_bytes = name.as_bytes();
     if name_bytes.len() > hal::boot_info::MAX_IMAGE_NAME_LENGTH {
@@ -249,8 +249,8 @@ fn load_segment(
     }
 
     Segment {
-        physical_address: PhysicalAddress::new(physical_address as usize).unwrap(),
-        virtual_address: VirtualAddress::new(segment.virtual_address as usize),
+        physical_address: PAddr::new(physical_address as usize).unwrap(),
+        virtual_address: VAddr::new(segment.virtual_address as usize),
         size: num_frames * Size4KiB::SIZE,
         flags: Flags {
             writable: segment.is_writable(),

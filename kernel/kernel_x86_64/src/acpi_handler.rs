@@ -2,7 +2,7 @@ use crate::kernel_map;
 use acpi::{AcpiHandler, PhysicalMapping};
 use bit_field::BitField;
 use core::ptr::NonNull;
-use hal::memory::PhysicalAddress;
+use hal::memory::PAddr;
 use hal_x86_64::hw::port::Port;
 use log::debug;
 use pci_types::{ConfigRegionAccess, PciAddress};
@@ -13,7 +13,7 @@ pub struct PoplarAcpiHandler;
 
 impl AcpiHandler for PoplarAcpiHandler {
     unsafe fn map_physical_region<T>(&self, physical_address: usize, size: usize) -> PhysicalMapping<Self, T> {
-        let virtual_address = kernel_map::physical_to_virtual(PhysicalAddress::new(physical_address).unwrap());
+        let virtual_address = kernel_map::physical_to_virtual(PAddr::new(physical_address).unwrap());
 
         PhysicalMapping::new(
             usize::from(physical_address),
@@ -49,56 +49,56 @@ where
 {
     fn read_u8(&self, address: usize) -> u8 {
         debug!("AML: Reading byte from {:#x}", address);
-        let address = hal_x86_64::kernel_map::physical_to_virtual(PhysicalAddress::new(address).unwrap());
+        let address = hal_x86_64::kernel_map::physical_to_virtual(PAddr::new(address).unwrap());
         assert!(address.is_aligned(1));
         unsafe { core::ptr::read_volatile(address.ptr()) }
     }
 
     fn read_u16(&self, address: usize) -> u16 {
         debug!("AML: Reading word from {:#x}", address);
-        let address = hal_x86_64::kernel_map::physical_to_virtual(PhysicalAddress::new(address).unwrap());
+        let address = hal_x86_64::kernel_map::physical_to_virtual(PAddr::new(address).unwrap());
         assert!(address.is_aligned(2));
         unsafe { core::ptr::read_volatile(address.ptr()) }
     }
 
     fn read_u32(&self, address: usize) -> u32 {
         debug!("AML: Reading dword from {:#x}", address);
-        let address = hal_x86_64::kernel_map::physical_to_virtual(PhysicalAddress::new(address).unwrap());
+        let address = hal_x86_64::kernel_map::physical_to_virtual(PAddr::new(address).unwrap());
         assert!(address.is_aligned(4));
         unsafe { core::ptr::read_volatile(address.ptr()) }
     }
 
     fn read_u64(&self, address: usize) -> u64 {
         debug!("AML: Reading qword from {:#x}", address);
-        let address = hal_x86_64::kernel_map::physical_to_virtual(PhysicalAddress::new(address).unwrap());
+        let address = hal_x86_64::kernel_map::physical_to_virtual(PAddr::new(address).unwrap());
         assert!(address.is_aligned(8));
         unsafe { core::ptr::read_volatile(address.ptr()) }
     }
 
     fn write_u8(&mut self, address: usize, value: u8) {
         debug!("AML: Writing byte to {:#x}: {:#x}", address, value);
-        let address = hal_x86_64::kernel_map::physical_to_virtual(PhysicalAddress::new(address).unwrap());
+        let address = hal_x86_64::kernel_map::physical_to_virtual(PAddr::new(address).unwrap());
         assert!(address.is_aligned(1));
         unsafe { core::ptr::write_volatile(address.mut_ptr(), value) }
     }
 
     fn write_u16(&mut self, address: usize, value: u16) {
         debug!("AML: Writing word to {:#x}: {:#x}", address, value);
-        let address = hal_x86_64::kernel_map::physical_to_virtual(PhysicalAddress::new(address).unwrap());
+        let address = hal_x86_64::kernel_map::physical_to_virtual(PAddr::new(address).unwrap());
         assert!(address.is_aligned(2));
         unsafe { core::ptr::write_volatile(address.mut_ptr(), value) }
     }
 
     fn write_u32(&mut self, address: usize, value: u32) {
         debug!("AML: Writing dword to {:#x}: {:#x}", address, value);
-        let address = hal_x86_64::kernel_map::physical_to_virtual(PhysicalAddress::new(address).unwrap());
+        let address = hal_x86_64::kernel_map::physical_to_virtual(PAddr::new(address).unwrap());
         assert!(address.is_aligned(4));
         unsafe { core::ptr::write_volatile(address.mut_ptr(), value) }
     }
 
     fn write_u64(&mut self, address: usize, value: u64) {
         debug!("AML: Writing qword to {:#x}: {:#x}", address, value);
-        let address = hal_x86_64::kernel_map::physical_to_virtual(PhysicalAddress::new(address).unwrap());
+        let address = hal_x86_64::kernel_map::physical_to_virtual(PAddr::new(address).unwrap());
         assert!(address.is_aligned(8));
         unsafe { core::ptr::write_volatile(address.mut_ptr(), value) }
     }

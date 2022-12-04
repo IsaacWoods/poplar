@@ -45,7 +45,7 @@
 
 use alloc::collections::BTreeSet;
 use core::{cmp::min, ops::Range};
-use hal::memory::{Bytes, Frame, FrameSize, PhysicalAddress, Size4KiB};
+use hal::memory::{Bytes, Frame, FrameSize, PAddr, Size4KiB};
 use poplar_util::math::flooring_log2;
 
 /// The largest block stored by the buddy allocator is `2^MAX_ORDER`.
@@ -62,7 +62,7 @@ pub struct BuddyAllocator {
     /// store the blocks in each bin, for efficient buddy location. Each block is stored as the physical address
     /// of the start of the block. The actual frames can be constructed for each block using the start address and
     /// the order of the block.
-    bins: [BTreeSet<PhysicalAddress>; NUM_BINS],
+    bins: [BTreeSet<PAddr>; NUM_BINS],
 }
 
 impl BuddyAllocator {
@@ -106,7 +106,7 @@ impl BuddyAllocator {
 
     /// Allocate a block of `block_size` bytes from this allocator. Returns `None` if the allocator can't satisfy
     /// the allocation.
-    pub fn allocate_n(&mut self, block_size: Bytes) -> Option<PhysicalAddress> {
+    pub fn allocate_n(&mut self, block_size: Bytes) -> Option<PAddr> {
         assert!(block_size % BASE_SIZE == 0);
         assert!((block_size / BASE_SIZE).is_power_of_two());
 
@@ -115,7 +115,7 @@ impl BuddyAllocator {
     }
 
     /// Free a block starting at `start` of `block_size` bytes. `block_size` must be a valid size of a whole block.
-    pub fn free_n(&mut self, start: PhysicalAddress, block_size: Bytes) {
+    pub fn free_n(&mut self, start: PAddr, block_size: Bytes) {
         assert!(block_size % BASE_SIZE == 0);
         assert!((block_size / BASE_SIZE).is_power_of_two());
 
@@ -125,7 +125,7 @@ impl BuddyAllocator {
 
     /// Tries to allocate a block of the given order. If no blocks of the correct size are
     /// available, tries to recursively split a larger block to form a block of the requested size.
-    fn allocate_block(&mut self, order: usize) -> Option<PhysicalAddress> {
+    fn allocate_block(&mut self, order: usize) -> Option<PAddr> {
         /*
          * We've been asked for a block larger than the largest blocks we track, so we won't be
          * able to allocate a single block large enough.
@@ -157,7 +157,7 @@ impl BuddyAllocator {
     }
 
     /// Free a block starting at `start` of order `order`.
-    fn free_block(&mut self, start: PhysicalAddress, order: usize) {
+    fn free_block(&mut self, start: PAddr, order: usize) {
         if order == MAX_ORDER {
             /*
              * Blocks of the maximum order can't be coalesced, because there isn't a bin to put the result in,
@@ -185,8 +185,8 @@ impl BuddyAllocator {
 
     /// Finds the starting frame of the block that is the buddy of the block of order `order`, starting at
     /// `block_start`.
-    fn buddy_of(block_start: PhysicalAddress, order: usize) -> PhysicalAddress {
-        PhysicalAddress::new(usize::from(block_start) ^ ((1 << order) * BASE_SIZE)).unwrap()
+    fn buddy_of(block_start: PAddr, order: usize) -> PAddr {
+        PAddr::new(usize::from(block_start) ^ ((1 << order) * BASE_SIZE)).unwrap()
     }
 }
 
@@ -202,14 +202,14 @@ impl BuddyAllocator {
 mod tests {
     use super::*;
     use alloc::vec::Vec;
-    use hal::memory::{Frame, PhysicalAddress, Size4KiB};
+    use hal::memory::{Frame, PAddr, Size4KiB};
 
     #[test]
     fn test_buddy_of() {
         macro test($order: expr, $first: expr, $second: expr) {
             assert_eq!(
-                BuddyAllocator::buddy_of(PhysicalAddress::new($first).unwrap(), $order),
-                PhysicalAddress::new($second).unwrap()
+                BuddyAllocator::buddy_of(PAddr::new($first).unwrap(), $order),
+                PAddr::new($second).unwrap()
             );
         }
 
@@ -236,14 +236,14 @@ mod tests {
 
     struct Block {
         order: usize,
-        address: PhysicalAddress,
+        address: PAddr,
     }
 
     impl Block {
         /// Construct a `Block`. Takes the address as a `usize` for ease of test writing, panics here if it's not
         /// valid.
         fn new(order: usize, address: usize) -> Block {
-            Block { order, address: PhysicalAddress::new(address).unwrap() }
+            Block { order, address: PAddr::new(address).unwrap() }
         }
     }
 
@@ -271,8 +271,8 @@ mod tests {
     /// Helper to construct a frame range. Takes the address as a `usize` for ease of test writing - panics here if
     /// it's not valid.
     fn n_frames_at(start: usize, n: usize) -> Range<Frame> {
-        Frame::starts_with(PhysicalAddress::new(start).unwrap())
-            ..Frame::starts_with(PhysicalAddress::new(start + n * Size4KiB::SIZE).unwrap())
+        Frame::starts_with(PAddr::new(start).unwrap())
+            ..Frame::starts_with(PAddr::new(start + n * Size4KiB::SIZE).unwrap())
     }
 
     #[test]

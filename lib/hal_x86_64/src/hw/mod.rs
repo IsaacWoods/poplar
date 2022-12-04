@@ -13,7 +13,7 @@ pub mod tss;
 #[cfg(feature = "qemu")]
 pub mod qemu;
 
-use hal::memory::VirtualAddress;
+use hal::memory::VAddr;
 
 #[repr(C, packed)]
 pub struct DescriptorTablePointer {
@@ -21,5 +21,5 @@ pub struct DescriptorTablePointer {
     pub limit: u16,
 
     /// Virtual address of the start of the descriptor table.
-    pub base: VirtualAddress,
+    pub base: VAddr,
 }

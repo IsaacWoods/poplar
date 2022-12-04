@@ -7,17 +7,7 @@ use crate::memory::{self, MemoryManager, MemoryRegions, Region};
 use core::{ptr, slice};
 use hal::{
     boot_info::{MemoryType, Segment},
-    memory::{
-        Flags,
-        Frame,
-        FrameAllocator,
-        FrameSize,
-        Page,
-        PageTable,
-        PhysicalAddress,
-        Size4KiB,
-        VirtualAddress,
-    },
+    memory::{Flags, Frame, FrameAllocator, FrameSize, PAddr, Page, PageTable, Size4KiB, VAddr},
 };
 use mer::{
     program::{ProgramHeader, SegmentType},
@@ -36,7 +26,7 @@ pub fn extract_kernel(memory_regions: &mut MemoryRegions) -> Elf<'static> {
     // Reserve the kernel ELF in the memory ranges, so we don't trample over it
     memory_regions.add_region(Region::reserved(
         memory::Usage::KernelImage,
-        PhysicalAddress::new(LOADER_DEVICE_BASE).unwrap(),
+        PAddr::new(LOADER_DEVICE_BASE).unwrap(),
         align_up(kernel_elf_size + 4, Size4KiB::SIZE),
     ));
 
@@ -53,7 +43,7 @@ pub fn load_kernel<P>(elf: Elf<'_>, page_table: &mut P, memory_manager: &MemoryM
 where
     P: PageTable<Size4KiB>,
 {
-    let entry_point = VirtualAddress::new(elf.entry_point());
+    let entry_point = VAddr::new(elf.entry_point());
 
     for segment in elf.segments() {
         match segment.segment_type() {
@@ -86,13 +76,13 @@ where
     }
 
     let stack_top = match elf.symbols().find(|symbol| symbol.name(&elf) == Some("_stack_top")) {
-        Some(symbol) => VirtualAddress::new(symbol.value as usize),
+        Some(symbol) => VAddr::new(symbol.value as usize),
         None => panic!("Kernel does not have a '_stack_top' symbol!"),
     };
 
     // Unmap the stack guard page
     let guard_page_address = match elf.symbols().find(|symbol| symbol.name(&elf) == Some("_guard_page")) {
-        Some(symbol) => VirtualAddress::new(symbol.value as usize),
+        Some(symbol) => VAddr::new(symbol.value as usize),
         None => panic!("Kernel does not have a '_guard_page' symbol!"),
     };
     assert!(guard_page_address.is_aligned(Size4KiB::SIZE), "Guard page address is not page aligned");
@@ -141,8 +131,8 @@ fn load_segment(
     }
 
     Segment {
-        physical_address: PhysicalAddress::new(usize::from(physical_address)).unwrap(),
-        virtual_address: VirtualAddress::new(segment.virtual_address as usize),
+        physical_address: PAddr::new(usize::from(physical_address)).unwrap(),
+        virtual_address: VAddr::new(segment.virtual_address as usize),
         size: num_frames * Size4KiB::SIZE,
         flags: Flags {
             writable: segment.is_writable(),

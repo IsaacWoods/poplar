@@ -4,7 +4,7 @@ use acpi::InterruptModel;
 use alloc::{alloc::Global, vec};
 use aml::{value::Args as AmlArgs, AmlContext, AmlName, AmlValue};
 use core::time::Duration;
-use hal::memory::PhysicalAddress;
+use hal::memory::PAddr;
 use hal_x86_64::{
     hw::{
         cpu::CpuInfo,
@@ -87,7 +87,7 @@ impl InterruptController {
                 // TODO: change the region to be NO_CACHE
                 LOCAL_APIC.initialize(unsafe {
                     LocalApic::new(kernel_map::physical_to_virtual(
-                        PhysicalAddress::new(info.local_apic_address as usize).unwrap(),
+                        PAddr::new(info.local_apic_address as usize).unwrap(),
                     ))
                 });
 

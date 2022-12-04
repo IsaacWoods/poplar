@@ -77,7 +77,7 @@ do_drop_to_usermode:
     // Leap of faith!
     sysretq
 
-// fn do_context_switch(current_kernel_rsp: *mut VirtualAddress, new_kernel_rsp: VirtualAddress)
+// fn do_context_switch(current_kernel_rsp: *mut VAddr, new_kernel_rsp: VAddr)
 .global do_context_switch
 do_context_switch:
     // Save current task's context

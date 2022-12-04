@@ -14,7 +14,7 @@ use core::{
     cell::UnsafeCell,
     sync::atomic::{AtomicU32, Ordering},
 };
-use hal::memory::VirtualAddress;
+use hal::memory::VAddr;
 use poplar::{caps::Capability, Handle};
 use spin::{Mutex, RwLock};
 
@@ -56,8 +56,8 @@ where
 
     pub user_slot: Mutex<TaskSlot>,
     pub kernel_stack: Mutex<Stack>,
-    pub kernel_stack_pointer: UnsafeCell<VirtualAddress>,
-    pub user_stack_pointer: UnsafeCell<VirtualAddress>,
+    pub kernel_stack_pointer: UnsafeCell<VAddr>,
+    pub user_stack_pointer: UnsafeCell<VAddr>,
 
     pub handles: RwLock<BTreeMap<Handle, Arc<dyn KernelObject>>>,
     next_handle: AtomicU32,

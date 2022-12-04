@@ -4,7 +4,7 @@ use crate::{
     Platform,
 };
 use alloc::{collections::VecDeque, sync::Arc, vec::Vec};
-use hal::memory::VirtualAddress;
+use hal::memory::VAddr;
 use log::trace;
 
 pub struct Scheduler<P>
@@ -56,8 +56,8 @@ where
         task.address_space.switch_to();
 
         unsafe {
-            let kernel_stack_pointer: VirtualAddress = *task.kernel_stack_pointer.get();
-            let user_stack_pointer: VirtualAddress = *task.user_stack_pointer.get();
+            let kernel_stack_pointer: VAddr = *task.kernel_stack_pointer.get();
+            let user_stack_pointer: VAddr = *task.user_stack_pointer.get();
             trace!("Setting stacks - kernel: {:#x}, user: {:#x}", kernel_stack_pointer, user_stack_pointer);
 
             P::per_cpu().set_kernel_stack_pointer(kernel_stack_pointer);
@@ -108,7 +108,7 @@ where
             old_task.address_space.switch_from();
             next_task.address_space.switch_to();
 
-            let old_kernel_stack: *mut VirtualAddress = old_task.kernel_stack_pointer.get();
+            let old_kernel_stack: *mut VAddr = old_task.kernel_stack_pointer.get();
             let new_kernel_stack = unsafe { *self.running_task.as_ref().unwrap().kernel_stack_pointer.get() };
             let new_user_stack = unsafe { *self.running_task.as_ref().unwrap().user_stack_pointer.get() };
 

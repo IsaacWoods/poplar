@@ -1,4 +1,4 @@
-use crate::memory::{Bytes, Flags, Frame, PhysicalAddress, VirtualAddress};
+use crate::memory::{Bytes, Flags, Frame, PAddr, VAddr};
 use core::{fmt, fmt::Debug, ops::Range};
 
 pub const BOOT_INFO_MAGIC: u32 = 0xcafebabe;
@@ -13,11 +13,11 @@ pub struct BootInfo {
     pub memory_map: MemoryMap,
     pub loaded_images: LoadedImages,
     pub video_mode: Option<VideoModeInfo>,
-    pub heap_address: VirtualAddress,
+    pub heap_address: VAddr,
     pub heap_size: usize,
 
     /// The physical address of the RSDP, the first ACPI table.
-    pub rsdp_address: Option<PhysicalAddress>,
+    pub rsdp_address: Option<PAddr>,
 }
 
 pub const MAX_MEMORY_MAP_ENTRIES: usize = 256;
@@ -91,13 +91,13 @@ pub enum MemoryType {
 #[derive(Clone, Copy)]
 #[repr(C)]
 pub struct MemoryMapEntry {
-    pub start: PhysicalAddress,
+    pub start: PAddr,
     pub size: usize,
     pub memory_type: MemoryType,
 }
 
 impl MemoryMapEntry {
-    pub fn address_range(&self) -> Range<PhysicalAddress> {
+    pub fn address_range(&self) -> Range<PAddr> {
         self.start..(self.start + self.size)
     }
 
@@ -108,11 +108,7 @@ impl MemoryMapEntry {
 
 impl Default for MemoryMapEntry {
     fn default() -> Self {
-        MemoryMapEntry {
-            start: PhysicalAddress::new(0x0).unwrap(),
-            size: 0,
-            memory_type: MemoryType::Conventional,
-        }
+        MemoryMapEntry { start: PAddr::new(0x0).unwrap(), size: 0, memory_type: MemoryType::Conventional }
     }
 }
 
@@ -176,7 +172,7 @@ pub struct LoadedImage {
     pub segments: [Segment; MAX_IMAGE_LOADED_SEGMENTS],
     pub master_tls: Option<Segment>,
     /// The virtual address at which to start executing the image.
-    pub entry_point: VirtualAddress,
+    pub entry_point: VAddr,
     pub capability_stream: [u8; MAX_CAPABILITY_STREAM_LENGTH],
 }
 
@@ -215,8 +211,8 @@ impl Debug for LoadedImage {
 #[derive(Clone, Copy, Default, Debug)]
 #[repr(C)]
 pub struct Segment {
-    pub physical_address: PhysicalAddress,
-    pub virtual_address: VirtualAddress,
+    pub physical_address: PAddr,
+    pub virtual_address: VAddr,
     pub size: Bytes,
     pub flags: Flags,
 }
@@ -224,7 +220,7 @@ pub struct Segment {
 #[derive(Clone, Copy, Debug)]
 #[repr(C)]
 pub struct VideoModeInfo {
-    pub framebuffer_address: PhysicalAddress,
+    pub framebuffer_address: PAddr,
     pub pixel_format: PixelFormat,
     pub width: usize,
     pub height: usize,

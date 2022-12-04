@@ -1,7 +1,7 @@
 use super::{tss::Tss, DescriptorTablePointer};
 use bit_field::BitField;
 use core::{arch::asm, mem, ops::Deref, pin::Pin};
-use hal::memory::VirtualAddress;
+use hal::memory::VAddr;
 use spin::Mutex;
 
 pub static GDT: Mutex<Gdt> = Mutex::new(Gdt::new());
@@ -152,7 +152,7 @@ impl Gdt {
 
     pub unsafe fn load(&self) {
         let gdt_ptr = DescriptorTablePointer {
-            base: VirtualAddress::new(self as *const _ as usize),
+            base: VAddr::new(self as *const _ as usize),
             limit: (mem::size_of::<Gdt>() - 1) as u16,
         };
 

@@ -1,9 +1,9 @@
 use super::registers::{read_control_reg, write_control_reg};
 use core::arch::asm;
-use hal::memory::VirtualAddress;
+use hal::memory::VAddr;
 
 #[rustfmt::skip]
-pub fn invalidate_page(address: VirtualAddress) {
+pub fn invalidate_page(address: VAddr) {
     unsafe {
         asm!("invlpg [{}]", in(reg) usize::from(address));
     }

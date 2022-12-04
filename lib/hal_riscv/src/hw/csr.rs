@@ -5,7 +5,7 @@
 
 use bit_field::BitField;
 use core::arch::asm;
-use hal::memory::PhysicalAddress;
+use hal::memory::PAddr;
 
 /// The Supervisor Address Translation and Protection (`satp`) register controls supervisor-mode address
 /// translation and protection. It contains the physical address of the root page table, plus an associated Address
@@ -16,9 +16,9 @@ use hal::memory::PhysicalAddress;
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum Satp {
     Bare,
-    Sv39 { asid: u16, root: PhysicalAddress },
-    Sv48 { asid: u16, root: PhysicalAddress },
-    Sv57 { asid: u16, root: PhysicalAddress },
+    Sv39 { asid: u16, root: PAddr },
+    Sv48 { asid: u16, root: PAddr },
+    Sv57 { asid: u16, root: PAddr },
 }
 
 impl Satp {
@@ -32,7 +32,7 @@ impl Satp {
         let asid = value.get_bits(44..60) as u16;
         let mode = value.get_bits(60..64);
 
-        let root = PhysicalAddress::new(ppn << 12).unwrap();
+        let root = PAddr::new(ppn << 12).unwrap();
 
         match mode {
             0 => Satp::Bare,

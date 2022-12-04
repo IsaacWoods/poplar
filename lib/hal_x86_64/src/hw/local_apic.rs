@@ -1,5 +1,5 @@
 use core::ptr;
-use hal::memory::VirtualAddress;
+use hal::memory::VAddr;
 
 /// Represents a register in the local APIC's configuration area.
 pub struct LocalApicRegister {
@@ -24,10 +24,10 @@ impl LocalApicRegister {
     }
 }
 
-pub struct LocalApic(VirtualAddress);
+pub struct LocalApic(VAddr);
 
 impl LocalApic {
-    pub unsafe fn new(address: VirtualAddress) -> LocalApic {
+    pub unsafe fn new(address: VAddr) -> LocalApic {
         LocalApic(address)
     }
 

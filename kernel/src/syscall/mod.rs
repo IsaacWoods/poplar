@@ -14,7 +14,7 @@ use crate::{
 use alloc::{collections::BTreeMap, string::String, sync::Arc};
 use bit_field::BitField;
 use core::convert::TryFrom;
-use hal::memory::{Flags, PhysicalAddress, VirtualAddress};
+use hal::memory::{Flags, PAddr, VAddr};
 use log::{info, trace, warn};
 use poplar::{
     caps::Capability,
@@ -157,14 +157,14 @@ where
 
     let memory_object = MemoryObject::new(
         task.id(),
-        Some(VirtualAddress::new(virtual_address)),
+        Some(VAddr::new(virtual_address)),
         physical_start,
         size,
         Flags { writable, executable, user_accessible: true, ..Default::default() },
     );
 
     if physical_address_ptr != 0x0 {
-        UserPointer::new(physical_address_ptr as *mut PhysicalAddress, true)
+        UserPointer::new(physical_address_ptr as *mut PAddr, true)
             .write(physical_start)
             .map_err(|()| CreateMemoryObjectError::InvalidPhysicalAddressPointer)?;
     }
@@ -207,7 +207,7 @@ where
             return Err(MapMemoryObjectError::VirtualAddressShouldNotBeSupplied);
         }
         // TODO: we need to actually validate that the supplied address is canonical and all that jazz
-        Some(VirtualAddress::new(virtual_address))
+        Some(VAddr::new(virtual_address))
     };
 
     if address_space_handle == ZERO_HANDLE {
@@ -241,7 +241,7 @@ where
      * address, so don't bother writing it back.
      */
     if address_ptr != 0x0 {
-        let mut address_ptr = UserPointer::new(address_ptr as *mut VirtualAddress, true);
+        let mut address_ptr = UserPointer::new(address_ptr as *mut VAddr, true);
         address_ptr
             .write(supplied_virtual_address.unwrap_or_else(|| memory_object.virtual_address.unwrap()))
             .map_err(|()| MapMemoryObjectError::AddressPointerInvalid)?;
@@ -503,7 +503,7 @@ where
                             let memory_object = MemoryObject::new(
                                 task.id(),
                                 None,
-                                PhysicalAddress::new(address as usize).unwrap(),
+                                PAddr::new(address as usize).unwrap(),
                                 size as usize,
                                 flags,
                             );
@@ -522,7 +522,7 @@ where
                             let memory_object = MemoryObject::new(
                                 task.id(),
                                 None,
-                                PhysicalAddress::new(address as usize).unwrap(),
+                                PAddr::new(address as usize).unwrap(),
                                 size as usize,
                                 flags,
                             );

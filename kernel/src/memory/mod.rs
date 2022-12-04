@@ -9,7 +9,7 @@ use buddy_allocator::BuddyAllocator;
 use core::ops::Range;
 use hal::{
     boot_info::BootInfo,
-    memory::{Frame, FrameAllocator, FrameSize, PhysicalAddress, VirtualAddress},
+    memory::{Frame, FrameAllocator, FrameSize, PAddr, VAddr},
 };
 use spin::Mutex;
 
@@ -30,7 +30,7 @@ impl PhysicalMemoryManager {
         PhysicalMemoryManager { buddy: Mutex::new(buddy_allocator) }
     }
 
-    pub fn alloc_bytes(&self, num_bytes: usize) -> PhysicalAddress {
+    pub fn alloc_bytes(&self, num_bytes: usize) -> PAddr {
         /*
          * For now, we always use the buddy allocator.
          * TODO: this isn't very good. We can only allocate a whole block at a time, and always allocate a
@@ -60,9 +60,9 @@ where
 /// the size of their slot.
 #[derive(Clone, Debug)]
 pub struct Stack {
-    pub top: VirtualAddress,
-    pub slot_bottom: VirtualAddress,
-    pub stack_bottom: VirtualAddress,
+    pub top: VAddr,
+    pub slot_bottom: VAddr,
+    pub stack_bottom: VAddr,
 
-    pub physical_start: PhysicalAddress,
+    pub physical_start: PAddr,
 }

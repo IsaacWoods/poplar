@@ -27,7 +27,7 @@ use alloc::{boxed::Box, sync::Arc};
 use core::pin::Pin;
 use hal::{
     boot_info::LoadedImage,
-    memory::{FrameSize, PageTable, VirtualAddress},
+    memory::{FrameSize, PageTable, VAddr},
 };
 use heap_allocator::LockedHoleAllocator;
 use memory::{KernelStackAllocator, PhysicalMemoryManager};
@@ -67,12 +67,12 @@ pub trait Platform: Sized + 'static {
     unsafe fn initialize_task_stacks(
         kernel_stack: &Stack,
         user_stack: &Stack,
-        task_entry_point: VirtualAddress,
-    ) -> (VirtualAddress, VirtualAddress);
+        task_entry_point: VAddr,
+    ) -> (VAddr, VAddr);
 
     /// Do the final part of a context switch: save all the state that needs to be to the current kernel stack,
     /// switch to a new kernel stack, and restore all the state from that stack.
-    unsafe fn context_switch(current_kernel_stack: *mut VirtualAddress, new_kernel_stack: VirtualAddress);
+    unsafe fn context_switch(current_kernel_stack: *mut VAddr, new_kernel_stack: VAddr);
 
     /// Do the actual drop into usermode. This assumes that the task's page tables have already been installed,
     /// and that an initial frame has been put into the task's kernel stack that this will use to enter userspace.

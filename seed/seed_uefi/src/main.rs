@@ -10,18 +10,7 @@ use allocator::BootFrameAllocator;
 use core::{arch::asm, fmt::Write, mem, mem::MaybeUninit, panic::PanicInfo, ptr, slice};
 use hal::{
     boot_info::{BootInfo, VideoModeInfo},
-    memory::{
-        kibibytes,
-        Bytes,
-        Flags,
-        FrameAllocator,
-        FrameSize,
-        Page,
-        PageTable,
-        PhysicalAddress,
-        Size4KiB,
-        VirtualAddress,
-    },
+    memory::{kibibytes, Bytes, Flags, FrameAllocator, FrameSize, PAddr, Page, PageTable, Size4KiB, VAddr},
 };
 use hal_x86_64::paging::PageTableImpl;
 use log::{error, info};
@@ -73,7 +62,7 @@ fn efi_main(image_handle: Handle, mut system_table: SystemTable<Boot>) -> Status
      * if we've placed the physical mapping at 0x0.
      */
     let allocator = BootFrameAllocator::new(system_table.boot_services(), 64);
-    let mut page_table = PageTableImpl::new(allocator.allocate(), VirtualAddress::new(0x0));
+    let mut page_table = PageTableImpl::new(allocator.allocate(), VAddr::new(0x0));
 
     let kernel_info = image::load_kernel(
         system_table.boot_services(),
@@ -97,8 +86,7 @@ fn efi_main(image_handle: Handle, mut system_table: SystemTable<Boot>) -> Status
             .boot_services()
             .allocate_pages(AllocateType::AnyPages, BOOT_INFO_MEMORY_TYPE, boot_info_needed_frames)
             .unwrap();
-        let identity_boot_info_ptr =
-            VirtualAddress::new(boot_info_physical_start as usize).mut_ptr() as *mut BootInfo;
+        let identity_boot_info_ptr = VAddr::new(boot_info_physical_start as usize).mut_ptr() as *mut BootInfo;
         unsafe {
             ptr::write(identity_boot_info_ptr, BootInfo::default());
         }
@@ -112,7 +100,7 @@ fn efi_main(image_handle: Handle, mut system_table: SystemTable<Boot>) -> Status
         page_table
             .map_area(
                 boot_info_virtual_address,
-                PhysicalAddress::new(boot_info_physical_start as usize).unwrap(),
+                PAddr::new(boot_info_physical_start as usize).unwrap(),
                 boot_info_needed_frames * Size4KiB::SIZE,
                 Flags { ..Default::default() },
                 &allocator,
@@ -256,7 +244,7 @@ fn efi_main(image_handle: Handle, mut system_table: SystemTable<Boot>) -> Status
     }
 }
 
-fn find_rsdp(system_table: &SystemTable<Boot>) -> Option<PhysicalAddress> {
+fn find_rsdp(system_table: &SystemTable<Boot>) -> Option<PAddr> {
     use uefi::table::cfg::{ACPI2_GUID, ACPI_GUID};
 
     /*
@@ -266,17 +254,19 @@ fn find_rsdp(system_table: &SystemTable<Boot>) -> Option<PhysicalAddress> {
     system_table
         .config_table()
         .iter()
-        .find_map(|entry| {
-            if entry.guid == ACPI2_GUID {
-                Some(PhysicalAddress::new(entry.address as usize).unwrap())
-            } else {
-                None
-            }
-        })
+        .find_map(
+            |entry| {
+                if entry.guid == ACPI2_GUID {
+                    Some(PAddr::new(entry.address as usize).unwrap())
+                } else {
+                    None
+                }
+            },
+        )
         .or_else(|| {
             system_table.config_table().iter().find_map(|entry| {
                 if entry.guid == ACPI_GUID {
-                    Some(PhysicalAddress::new(entry.address as usize).unwrap())
+                    Some(PAddr::new(entry.address as usize).unwrap())
                 } else {
                     None
                 }
@@ -328,8 +318,8 @@ fn process_memory_map<'a, A, P>(
             MemoryType::LOADER_CODE => {
                 mapper
                     .map_area(
-                        VirtualAddress::new(entry.phys_start as usize),
-                        PhysicalAddress::new(entry.phys_start as usize).unwrap(),
+                        VAddr::new(entry.phys_start as usize),
+                        PAddr::new(entry.phys_start as usize).unwrap(),
                         entry.page_count as usize * Size4KiB::SIZE,
                         Flags { executable: true, ..Default::default() },
                         allocator,
@@ -339,8 +329,8 @@ fn process_memory_map<'a, A, P>(
             MemoryType::LOADER_DATA => {
                 mapper
                     .map_area(
-                        VirtualAddress::new(entry.phys_start as usize),
-                        PhysicalAddress::new(entry.phys_start as usize).unwrap(),
+                        VAddr::new(entry.phys_start as usize),
+                        PAddr::new(entry.phys_start as usize).unwrap(),
                         entry.page_count as usize * Size4KiB::SIZE,
                         Flags { writable: true, ..Default::default() },
                         allocator,
@@ -361,7 +351,7 @@ fn process_memory_map<'a, A, P>(
                 boot_info
                     .memory_map
                     .add_entry(MemoryMapEntry {
-                        start: PhysicalAddress::new(entry.phys_start as usize).unwrap(),
+                        start: PAddr::new(entry.phys_start as usize).unwrap(),
                         size: entry.page_count as usize * Size4KiB::SIZE,
                         memory_type: $type,
                     })
@@ -400,7 +390,7 @@ fn process_memory_map<'a, A, P>(
     mapper
         .map_area(
             hal_x86_64::kernel_map::PHYSICAL_MAPPING_BASE,
-            PhysicalAddress::new(0x0).unwrap(),
+            PAddr::new(0x0).unwrap(),
             max_physical_address,
             Flags { writable: true, ..Default::default() },
             allocator,
@@ -413,7 +403,7 @@ fn process_memory_map<'a, A, P>(
 fn allocate_and_map_heap<A, P>(
     boot_services: &BootServices,
     boot_info: &mut BootInfo,
-    next_safe_address: &mut VirtualAddress,
+    next_safe_address: &mut VAddr,
     heap_size: usize,
     mapper: &mut P,
     allocator: &A,
@@ -429,7 +419,7 @@ fn allocate_and_map_heap<A, P>(
     mapper
         .map_area(
             *next_safe_address,
-            PhysicalAddress::new(physical_start as usize).unwrap(),
+            PAddr::new(physical_start as usize).unwrap(),
             heap_size,
             Flags { writable: true, ..Default::default() },
             allocator,
@@ -502,8 +492,7 @@ fn create_framebuffer(
         if let Some(mode) = chosen_mode {
             interface.set_mode(&mode).expect("Failed to switch to new video mode");
 
-            let framebuffer_address =
-                PhysicalAddress::new(interface.frame_buffer().as_mut_ptr() as usize).unwrap();
+            let framebuffer_address = PAddr::new(interface.frame_buffer().as_mut_ptr() as usize).unwrap();
             let mode_info = mode.info();
             let (width, height) = mode_info.resolution();
             let pixel_format = match mode_info.pixel_format() {

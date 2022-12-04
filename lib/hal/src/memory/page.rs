@@ -1,4 +1,4 @@
-use super::{FrameSize, Size4KiB, VirtualAddress};
+use super::{FrameSize, Size4KiB, VAddr};
 use core::{
     iter::Step,
     marker::PhantomData,
@@ -7,7 +7,7 @@ use core::{
 
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Debug)]
 pub struct Page<S: FrameSize = Size4KiB> {
-    pub start: VirtualAddress,
+    pub start: VAddr,
     _phantom: PhantomData<S>,
 }
 
@@ -15,12 +15,12 @@ impl<S> Page<S>
 where
     S: FrameSize,
 {
-    pub fn starts_with(address: VirtualAddress) -> Page<S> {
+    pub fn starts_with(address: VAddr) -> Page<S> {
         assert!(usize::from(address) % S::SIZE == 0, "Address is not at the start of a page");
         Page { start: address, _phantom: PhantomData }
     }
 
-    pub fn contains(address: VirtualAddress) -> Page<S> {
+    pub fn contains(address: VAddr) -> Page<S> {
         Page { start: address.align_down(S::SIZE), _phantom: PhantomData }
     }
 }

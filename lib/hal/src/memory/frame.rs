@@ -1,4 +1,4 @@
-use super::{FrameSize, PhysicalAddress, Size4KiB};
+use super::{FrameSize, PAddr, Size4KiB};
 use core::{
     iter::Step,
     marker::PhantomData,
@@ -10,7 +10,7 @@ pub struct Frame<S = Size4KiB>
 where
     S: FrameSize,
 {
-    pub start: PhysicalAddress,
+    pub start: PAddr,
     _phantom: PhantomData<S>,
 }
 
@@ -18,7 +18,7 @@ impl<S> Frame<S>
 where
     S: FrameSize,
 {
-    pub fn starts_with(address: PhysicalAddress) -> Frame<S> {
+    pub fn starts_with(address: PAddr) -> Frame<S> {
         assert!(
             address.is_aligned(S::SIZE),
             "Tried to create frame of size {:#x} starting at invalid address: {:#x}",
@@ -28,7 +28,7 @@ where
         Frame { start: address, _phantom: PhantomData }
     }
 
-    pub fn contains(address: PhysicalAddress) -> Frame<S> {
+    pub fn contains(address: PAddr) -> Frame<S> {
         Frame { start: address.align_down(S::SIZE), _phantom: PhantomData }
     }
 }
@@ -40,7 +40,7 @@ where
     type Output = Frame<S>;
 
     fn add(self, num_frames: usize) -> Self::Output {
-        assert!(PhysicalAddress::new(usize::from(self.start) + num_frames * S::SIZE).is_some());
+        assert!(PAddr::new(usize::from(self.start) + num_frames * S::SIZE).is_some());
         Frame { start: self.start + num_frames * S::SIZE, _phantom: PhantomData }
     }
 }
@@ -50,7 +50,7 @@ where
     S: FrameSize,
 {
     fn add_assign(&mut self, num_frames: usize) {
-        assert!(PhysicalAddress::new(usize::from(self.start) + num_frames * S::SIZE).is_some());
+        assert!(PAddr::new(usize::from(self.start) + num_frames * S::SIZE).is_some());
         self.start += num_frames * S::SIZE;
     }
 }

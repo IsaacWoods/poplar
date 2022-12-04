@@ -1,6 +1,6 @@
 use bit_field::BitField;
 use core::ptr;
-use hal::memory::VirtualAddress;
+use hal::memory::VAddr;
 
 #[derive(Clone, Copy, Debug)]
 pub enum DeliveryMode {
@@ -26,7 +26,7 @@ pub enum TriggerMode {
 
 #[derive(Debug)]
 pub struct IoApic {
-    pub config_area_base: VirtualAddress,
+    pub config_area_base: VAddr,
     pub global_interrupt_base: u32,
 }
 
@@ -37,7 +37,7 @@ impl IoApic {
     /// # Unsafety
     /// Assumes that the config area is correctly mapped to the given virtual
     /// address.
-    pub unsafe fn new(config_area_base: VirtualAddress, global_interrupt_base: u32) -> IoApic {
+    pub unsafe fn new(config_area_base: VAddr, global_interrupt_base: u32) -> IoApic {
         IoApic { config_area_base, global_interrupt_base }
     }
 

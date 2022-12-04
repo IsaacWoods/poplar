@@ -8,12 +8,12 @@ use core::{
 /// (e.g. x86_64 requiring correct sign-extension in high bits), these requirements are always enforced.
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Default)]
 #[repr(transparent)]
-pub struct VirtualAddress(usize);
+pub struct VAddr(usize);
 
-impl VirtualAddress {
-    /// Construct a new `VirtualAddress`. This will canonicalise the given value.
-    pub const fn new(address: usize) -> VirtualAddress {
-        VirtualAddress(address).canonicalise()
+impl VAddr {
+    /// Construct a new `VAddr`. This will canonicalise the given value.
+    pub const fn new(address: usize) -> VAddr {
+        VAddr(address).canonicalise()
     }
 
     pub const fn ptr<T>(self) -> *const T {
@@ -32,16 +32,16 @@ impl VirtualAddress {
         if #[cfg(any(target_arch = "x86_64", target_arch = "riscv64"))] {
             /// Canonicalise this virtual address. On x86_64 and RV64-Sv48, that involves making sure that bits 48..63 match the
             /// sign extension expected from the value of bit 47.
-            pub const fn canonicalise(self) -> VirtualAddress {
+            pub const fn canonicalise(self) -> VAddr {
                 #[allow(inconsistent_digit_grouping)]
                 const SIGN_EXTENSION: usize = 0o177777_000_000_000_000_0000;
 
-                VirtualAddress((SIGN_EXTENSION * ((self.0 >> 47) & 0b1)) | (self.0 & ((1 << 48) - 1)))
+                VAddr((SIGN_EXTENSION * ((self.0 >> 47) & 0b1)) | (self.0 & ((1 << 48) - 1)))
             }
         } else {
             /// Canonicalise this virtual address. On this architecture, there are no extra requirements, and so we
             /// just return the address as is.
-            pub const fn canonicalise(self) -> VirtualAddress {
+            pub const fn canonicalise(self) -> VAddr {
                 self
             }
         }
@@ -49,7 +49,7 @@ impl VirtualAddress {
 
     /// Align this address to the given alignment, moving downwards if this is not already aligned. `align` must
     /// be `0` or a power-of-two.
-    pub fn align_down(self, align: usize) -> VirtualAddress {
+    pub fn align_down(self, align: usize) -> VAddr {
         if align.is_power_of_two() {
             /*
              * E.g.
@@ -59,7 +59,7 @@ impl VirtualAddress {
              *                             ^^^ Masks the address to the value below it with the
              *                                 correct alignment
              */
-            VirtualAddress(self.0 & !(align - 1))
+            VAddr(self.0 & !(align - 1))
         } else {
             assert!(align == 0);
             self
@@ -68,8 +68,8 @@ impl VirtualAddress {
 
     /// Align this address to the given alignment, moving upwards if this is not already aligned. `align` must be
     /// `0` or a power-of-two.
-    pub fn align_up(self, align: usize) -> VirtualAddress {
-        VirtualAddress(self.0 + align - 1).align_down(align)
+    pub fn align_up(self, align: usize) -> VAddr {
+        VAddr(self.0 + align - 1).align_down(align)
     }
 
     pub fn is_aligned(self, align: usize) -> bool {
@@ -77,74 +77,74 @@ impl VirtualAddress {
     }
 
     pub fn checked_add(self, rhs: usize) -> Option<Self> {
-        Some(VirtualAddress::new(self.0.checked_add(rhs)?))
+        Some(VAddr::new(self.0.checked_add(rhs)?))
     }
 
     pub fn checked_sub(self, rhs: usize) -> Option<Self> {
-        Some(VirtualAddress::new(self.0.checked_sub(rhs)?))
+        Some(VAddr::new(self.0.checked_sub(rhs)?))
     }
 }
 
-impl fmt::LowerHex for VirtualAddress {
+impl fmt::LowerHex for VAddr {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{:#x}", self.0)
     }
 }
 
-impl fmt::UpperHex for VirtualAddress {
+impl fmt::UpperHex for VAddr {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{:#X}", self.0)
     }
 }
 
-impl fmt::Debug for VirtualAddress {
+impl fmt::Debug for VAddr {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "VirtualAddress({:#x})", self)
+        write!(f, "VAddr({:#x})", self)
     }
 }
 
-impl From<VirtualAddress> for usize {
-    fn from(address: VirtualAddress) -> usize {
+impl From<VAddr> for usize {
+    fn from(address: VAddr) -> usize {
         address.0
     }
 }
 
-impl<T> From<*const T> for VirtualAddress {
-    fn from(ptr: *const T) -> VirtualAddress {
-        VirtualAddress::new(ptr as usize)
+impl<T> From<*const T> for VAddr {
+    fn from(ptr: *const T) -> VAddr {
+        VAddr::new(ptr as usize)
     }
 }
 
-impl<T> From<*mut T> for VirtualAddress {
-    fn from(ptr: *mut T) -> VirtualAddress {
-        VirtualAddress::new(ptr as usize)
+impl<T> From<*mut T> for VAddr {
+    fn from(ptr: *mut T) -> VAddr {
+        VAddr::new(ptr as usize)
     }
 }
 
-impl Add<usize> for VirtualAddress {
-    type Output = VirtualAddress;
+impl Add<usize> for VAddr {
+    type Output = VAddr;
 
     fn add(self, rhs: usize) -> Self::Output {
-        VirtualAddress::new(self.0 + rhs)
+        VAddr::new(self.0 + rhs)
     }
 }
 
-impl AddAssign<usize> for VirtualAddress {
+impl AddAssign<usize> for VAddr {
     fn add_assign(&mut self, rhs: usize) {
         // XXX: this ensures correctness as it goes through the `Add` implementation
         *self = *self + rhs;
     }
 }
 
-impl Sub<usize> for VirtualAddress {
-    type Output = VirtualAddress;
+impl Sub<usize> for VAddr {
+    type Output = VAddr;
 
     fn sub(self, rhs: usize) -> Self::Output {
-        VirtualAddress::new(self.0 - rhs)
+        VAddr::new(self.0 - rhs)
     }
 }
 
-impl SubAssign<usize> for VirtualAddress {
+impl SubAssign<usize> for VAddr {
     fn sub_assign(&mut self, rhs: usize) {
         // XXX: this ensures correctness as it goes through the `Sub` implementation
         *self = *self - rhs;

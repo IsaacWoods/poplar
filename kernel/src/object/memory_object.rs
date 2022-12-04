@@ -2,7 +2,7 @@ use super::{alloc_kernel_object_id, KernelObject, KernelObjectId};
 use alloc::sync::Arc;
 use hal::{
     boot_info::Segment,
-    memory::{Flags, PhysicalAddress, VirtualAddress},
+    memory::{Flags, PAddr, VAddr},
 };
 
 pub struct MemoryObject {
@@ -10,8 +10,8 @@ pub struct MemoryObject {
     pub owner: KernelObjectId,
     /// The virtual address to map this MemoryObject at. If this is `None`, the mapping task can choose to map it
     /// at any virtual address it chooses.
-    pub virtual_address: Option<VirtualAddress>,
-    pub physical_address: PhysicalAddress,
+    pub virtual_address: Option<VAddr>,
+    pub physical_address: PAddr,
     /// Size of this MemoryObject in bytes.
     pub size: usize,
     pub flags: Flags,
@@ -20,8 +20,8 @@ pub struct MemoryObject {
 impl MemoryObject {
     pub fn new(
         owner: KernelObjectId,
-        virtual_address: Option<VirtualAddress>,
-        physical_address: PhysicalAddress,
+        virtual_address: Option<VAddr>,
+        physical_address: PAddr,
         size: usize,
         flags: Flags,
     ) -> Arc<MemoryObject> {

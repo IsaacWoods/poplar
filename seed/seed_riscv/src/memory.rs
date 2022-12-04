@@ -5,7 +5,7 @@
 
 use arrayvec::ArrayVec;
 use core::{fmt, ops::Range, ptr::NonNull};
-use hal::memory::{Frame, FrameAllocator, FrameSize, PhysicalAddress, Size4KiB};
+use hal::memory::{Frame, FrameAllocator, FrameSize, PAddr, Size4KiB};
 use poplar_util::ranges::RangeIntersect;
 use spinning_top::Spinlock;
 use tracing::trace;
@@ -29,26 +29,26 @@ pub enum Usage {
 #[derive(Clone, Copy, Default)]
 pub struct Region {
     pub typ: RegionType,
-    pub address: PhysicalAddress,
+    pub address: PAddr,
     pub size: usize,
 }
 
 impl Region {
-    pub fn new(typ: RegionType, address: PhysicalAddress, size: usize) -> Region {
+    pub fn new(typ: RegionType, address: PAddr, size: usize) -> Region {
         trace!("New region of type {:?}, address = {:#x}, size = {:#x}", typ, address, size);
         assert_eq!(size % Size4KiB::SIZE, 0);
         Region { typ, address, size }
     }
 
-    pub fn usable(address: PhysicalAddress, size: usize) -> Region {
+    pub fn usable(address: PAddr, size: usize) -> Region {
         Self::new(RegionType::Usable, address, size)
     }
 
-    pub fn reserved(usage: Usage, address: PhysicalAddress, size: usize) -> Region {
+    pub fn reserved(usage: Usage, address: PAddr, size: usize) -> Region {
         Self::new(RegionType::Reserved(usage), address, size)
     }
 
-    pub fn range(&self) -> Range<PhysicalAddress> {
+    pub fn range(&self) -> Range<PAddr> {
         self.address..(self.address + self.size)
     }
 }
@@ -251,10 +251,8 @@ impl FrameAllocator<Size4KiB> for MemoryManager {
 
                 // Allocate from the end of the region so we don't need to alter the node pointers
                 inner_node.size -= n * Size4KiB::SIZE;
-                return Frame::starts_with(PhysicalAddress::new(start_addr + inner_node.size).unwrap())
-                    ..Frame::starts_with(
-                        PhysicalAddress::new(start_addr + inner_node.size + n * Size4KiB::SIZE).unwrap(),
-                    );
+                return Frame::starts_with(PAddr::new(start_addr + inner_node.size).unwrap())
+                    ..Frame::starts_with(PAddr::new(start_addr + inner_node.size + n * Size4KiB::SIZE).unwrap());
             }
 
             current_node = inner_node.next;

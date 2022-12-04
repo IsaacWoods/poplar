@@ -4,7 +4,7 @@ use crate::{
     Platform,
 };
 use alloc::{sync::Arc, vec::Vec};
-use hal::memory::{mebibytes, Bytes, FrameAllocator, PageTable, VirtualAddress};
+use hal::memory::{mebibytes, Bytes, FrameAllocator, PageTable, VAddr};
 use poplar::syscall::MapMemoryObjectError;
 use poplar_util::bitmap::Bitmap;
 use spin::Mutex;
@@ -13,8 +13,8 @@ const MAX_TASKS: usize = 64;
 
 // TODO: we need some way of getting this from the platform I guess?
 // TODO: we've basically made these up
-const USER_STACK_BOTTOM: VirtualAddress = VirtualAddress::new(0x00000002_00000000);
-const USER_STACK_TOP: VirtualAddress = VirtualAddress::new(0x00000003_ffffffff);
+const USER_STACK_BOTTOM: VAddr = VAddr::new(0x00000002_00000000);
+const USER_STACK_TOP: VAddr = VAddr::new(0x00000003_ffffffff);
 const USER_STACK_SLOT_SIZE: Bytes = mebibytes(4);
 
 #[derive(PartialEq, Eq, Debug)]
@@ -61,7 +61,7 @@ where
     pub fn map_memory_object(
         &self,
         memory_object: Arc<MemoryObject>,
-        virtual_address: Option<VirtualAddress>,
+        virtual_address: Option<VAddr>,
         allocator: &PhysicalMemoryManager,
     ) -> Result<(), MapMemoryObjectError> {
         use hal::memory::PagingError;

@@ -19,14 +19,14 @@ use hal::memory::{
     Frame,
     FrameAllocator,
     FrameSize,
+    PAddr,
     Page,
     PageTable,
     PagingError,
-    PhysicalAddress,
     Size1GiB,
     Size2MiB,
     Size4KiB,
-    VirtualAddress,
+    VAddr,
 };
 use tracing::trace;
 
@@ -83,15 +83,15 @@ impl Entry {
             && flags.intersects(EntryFlags::READABLE | EntryFlags::WRITABLE | EntryFlags::EXECUTABLE)
     }
 
-    pub fn address(&self) -> Option<PhysicalAddress> {
+    pub fn address(&self) -> Option<PAddr> {
         if self.flags().contains(EntryFlags::VALID) {
-            Some(PhysicalAddress::new((self.0.get_bits(10..54) as usize) << 10).unwrap())
+            Some(PAddr::new((self.0.get_bits(10..54) as usize) << 10).unwrap())
         } else {
             None
         }
     }
 
-    pub fn set(&mut self, entry: Option<(PhysicalAddress, EntryFlags)>) {
+    pub fn set(&mut self, entry: Option<(PAddr, EntryFlags)>) {
         self.0 = match entry {
             Some((address, flags)) => (usize::from(address) as u64) | (flags | EntryFlags::VALID).bits(),
             None => 0,
@@ -184,7 +184,7 @@ where
 {
     /// Get a reference to the table at the given `index`, assuming the entirity of
     /// the physical address space is mapped from `physical_base`.
-    pub fn next_table(&self, index: usize, physical_base: VirtualAddress) -> Option<&Table<L::NextLevel>> {
+    pub fn next_table(&self, index: usize, physical_base: VAddr) -> Option<&Table<L::NextLevel>> {
         self[index]
             .address()
             .map(|physical_address| physical_base + usize::from(physical_address))
@@ -193,11 +193,7 @@ where
 
     /// Get a mutable reference to the table at the given `index`, assuming the entirity of
     /// the physical address space is mapped from `physical_base`.
-    pub fn next_table_mut(
-        &mut self,
-        index: usize,
-        physical_base: VirtualAddress,
-    ) -> Option<&mut Table<L::NextLevel>> {
+    pub fn next_table_mut(&mut self, index: usize, physical_base: VAddr) -> Option<&mut Table<L::NextLevel>> {
         self[index]
             .address()
             .map(|physical_address| physical_base + usize::from(physical_address))
@@ -208,7 +204,7 @@ where
         &mut self,
         index: usize,
         allocator: &A,
-        physical_base: VirtualAddress,
+        physical_base: VAddr,
     ) -> Result<&mut Table<L::NextLevel>, PagingError>
     where
         A: FrameAllocator<Size4KiB>,
@@ -243,11 +239,11 @@ pub struct PageTableImpl {
     /// The virtual address at which physical memory is mapped in the environment that these page
     /// tables are being constructed in. This is **not** a property of the set of page tables being
     /// mapped, but of the context the tables are being modified from.
-    physical_base: VirtualAddress,
+    physical_base: VAddr,
 }
 
 impl PageTableImpl {
-    pub fn new(p4_frame: Frame, physical_base: VirtualAddress) -> PageTableImpl {
+    pub fn new(p4_frame: Frame, physical_base: VAddr) -> PageTableImpl {
         let mut table = PageTableImpl { p4_frame, physical_base };
         table.p4_mut().zero();
         table
@@ -257,7 +253,7 @@ impl PageTableImpl {
     /// it assumes that the frame contains a valid page table, and that no other `PageTableImpl`s
     /// currently exist that use this same backing frame (as calling `mapper` on both could lead to
     /// two mutable references aliasing the same data to exist, which is UB).
-    pub unsafe fn from_frame(p4_frame: Frame, physical_base: VirtualAddress) -> PageTableImpl {
+    pub unsafe fn from_frame(p4_frame: Frame, physical_base: VAddr) -> PageTableImpl {
         PageTableImpl { p4_frame, physical_base }
     }
 
@@ -294,7 +290,7 @@ impl PageTable<Size4KiB> for PageTableImpl {
         unsafe { Satp::Sv48 { asid: 0, root: self.p4_frame.start }.write() }
     }
 
-    fn translate(&self, address: VirtualAddress) -> Option<PhysicalAddress> {
+    fn translate(&self, address: VAddr) -> Option<PAddr> {
         // TODO: handle huge pages at the P3 level as well
 
         let p2 = self
@@ -360,8 +356,8 @@ impl PageTable<Size4KiB> for PageTableImpl {
 
     fn map_area<A>(
         &mut self,
-        virtual_start: VirtualAddress,
-        physical_start: PhysicalAddress,
+        virtual_start: VAddr,
+        physical_start: PAddr,
         size: usize,
         flags: Flags,
         allocator: &A,
@@ -388,13 +384,12 @@ impl PageTable<Size4KiB> for PageTableImpl {
         }
 
         let mut cursor = virtual_start;
-        let virtual_end: VirtualAddress = virtual_start + size;
+        let virtual_end: VAddr = virtual_start + size;
 
         while cursor < virtual_end {
-            let cursor_physical = PhysicalAddress::new(
-                usize::from(physical_start) + usize::from(cursor) - usize::from(virtual_start),
-            )
-            .unwrap();
+            let cursor_physical =
+                PAddr::new(usize::from(physical_start) + usize::from(cursor) - usize::from(virtual_start))
+                    .unwrap();
             let bytes_left = usize::from(virtual_end) - usize::from(cursor);
 
             if cursor.is_aligned(Size1GiB::SIZE)
@@ -479,14 +474,14 @@ impl PageTable<Size4KiB> for PageTableImpl {
     }
 }
 
-pub trait VirtualAddressIndices {
+pub trait VAddrIndices {
     fn p4_index(self) -> usize;
     fn p3_index(self) -> usize;
     fn p2_index(self) -> usize;
     fn p1_index(self) -> usize;
 }
 
-impl VirtualAddressIndices for VirtualAddress {
+impl VAddrIndices for VAddr {
     fn p4_index(self) -> usize {
         usize::from(self).get_bits(39..48)
     }
@@ -505,7 +500,7 @@ impl VirtualAddressIndices for VirtualAddress {
 }
 
 #[inline(always)]
-pub fn sfence_vma(asid: Option<usize>, addr: VirtualAddress) {
+pub fn sfence_vma(asid: Option<usize>, addr: VAddr) {
     match asid {
         Some(asid) => unsafe { asm!("sfence.vma {}, {}", in(reg) usize::from(addr), in(reg) asid) },
         None => unsafe { asm!("sfence.vma {}, zero", in(reg) usize::from(addr)) },

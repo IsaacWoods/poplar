@@ -13,24 +13,24 @@
 //! This leaves us 382GiB for the physical memory map, which should be sufficient for any system I can imagine us
 //! running on (famous last words).
 
-use hal::memory::{mebibytes, Bytes, PhysicalAddress, VirtualAddress};
+use hal::memory::{mebibytes, Bytes, PAddr, VAddr};
 
 pub const KERNEL_P4_ENTRY: usize = 511;
-pub const KERNEL_ADDRESS_SPACE_START: VirtualAddress = VirtualAddress::new(0xffff_ff80_0000_0000);
+pub const KERNEL_ADDRESS_SPACE_START: VAddr = VAddr::new(0xffff_ff80_0000_0000);
 
-pub const PHYSICAL_MAPPING_BASE: VirtualAddress = KERNEL_ADDRESS_SPACE_START;
+pub const PHYSICAL_MAPPING_BASE: VAddr = KERNEL_ADDRESS_SPACE_START;
 
 /// Access a given physical address through the physical mapping. This cannot be used until the kernel page tables
 /// have been switched to.
 ///
 /// # Safety
 /// This itself is safe, because to cause memory unsafety a raw pointer must be created and accessed from the
-/// `VirtualAddress`, which is unsafe.
-pub fn physical_to_virtual(address: PhysicalAddress) -> VirtualAddress {
+/// `VAddr`, which is unsafe.
+pub fn physical_to_virtual(address: PAddr) -> VAddr {
     PHYSICAL_MAPPING_BASE + usize::from(address)
 }
 
-pub const KERNEL_STACKS_BASE: VirtualAddress = VirtualAddress::new(0xffff_ffdf_8000_0000);
+pub const KERNEL_STACKS_BASE: VAddr = VAddr::new(0xffff_ffdf_8000_0000);
 /*
  * There is an imposed maximum number of tasks because of the simple way we're allocating task kernel stacks.
  * This is currently 65536 with a task kernel stack size of 2MiB.
@@ -40,4 +40,4 @@ pub const MAX_TASKS: usize = 65536;
 
 /// The kernel starts at -2GiB. The kernel image is loaded directly at this address, and the following space until
 /// the top of memory is managed dynamically and contains the boot info structures, memory map, and kernel heap.
-pub const KERNEL_BASE: VirtualAddress = VirtualAddress::new(0xffff_ffff_8000_0000);
+pub const KERNEL_BASE: VAddr = VAddr::new(0xffff_ffff_8000_0000);

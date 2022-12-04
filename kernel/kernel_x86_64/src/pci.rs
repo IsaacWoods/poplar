@@ -1,7 +1,7 @@
 use acpi::PciConfigRegions;
 use alloc::{alloc::Global, collections::BTreeMap};
 use core::ptr;
-use hal::memory::PhysicalAddress;
+use hal::memory::PAddr;
 use hal_x86_64::kernel_map;
 use kernel::pci::{PciDevice, PciInfo};
 use log::info;
@@ -25,7 +25,7 @@ impl<'a> ConfigRegionAccess for EcamAccess<'a> {
             .0
             .physical_address(address.segment(), address.bus(), address.device(), address.function())
             .unwrap();
-        let ptr = (kernel_map::physical_to_virtual(PhysicalAddress::new(physical_address as usize).unwrap())
+        let ptr = (kernel_map::physical_to_virtual(PAddr::new(physical_address as usize).unwrap())
             + offset as usize)
             .ptr();
         ptr::read_volatile(ptr)
@@ -36,7 +36,7 @@ impl<'a> ConfigRegionAccess for EcamAccess<'a> {
             .0
             .physical_address(address.segment(), address.bus(), address.device(), address.function())
             .unwrap();
-        let ptr = (kernel_map::physical_to_virtual(PhysicalAddress::new(physical_address as usize).unwrap())
+        let ptr = (kernel_map::physical_to_virtual(PAddr::new(physical_address as usize).unwrap())
             + offset as usize)
             .mut_ptr();
         ptr::write_volatile(ptr, value)

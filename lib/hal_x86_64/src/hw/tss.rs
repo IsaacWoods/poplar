@@ -1,5 +1,5 @@
 use core::{marker::PhantomPinned, pin::Pin};
-use hal::memory::VirtualAddress;
+use hal::memory::VAddr;
 
 /// Hardware task switching isn't supported on x86_64, so the TSS is just used as a vestigal place
 /// to stick stuff. It's used to store kernel-level stacks that should be used if interrupts occur
@@ -8,9 +8,9 @@ use hal::memory::VirtualAddress;
 #[repr(C, packed)]
 pub struct Tss {
     _reserved_1: u32,
-    pub privilege_stack_table: [VirtualAddress; 3],
+    pub privilege_stack_table: [VAddr; 3],
     _reserved_2: u64,
-    pub interrupt_stack_table: [VirtualAddress; 7],
+    pub interrupt_stack_table: [VAddr; 7],
     _reserved_3: u64,
     _reserved_4: u16,
     pub iomap_base: u16,
@@ -26,9 +26,9 @@ impl Tss {
     pub fn new() -> Tss {
         Tss {
             _reserved_1: 0,
-            privilege_stack_table: [VirtualAddress::new(0x0); 3],
+            privilege_stack_table: [VAddr::new(0x0); 3],
             _reserved_2: 0,
-            interrupt_stack_table: [VirtualAddress::new(0x0); 7],
+            interrupt_stack_table: [VAddr::new(0x0); 7],
             _reserved_3: 0,
             _reserved_4: 0,
             iomap_base: 0,
@@ -36,7 +36,7 @@ impl Tss {
         }
     }
 
-    pub fn set_kernel_stack(self: Pin<&mut Self>, address: VirtualAddress) {
+    pub fn set_kernel_stack(self: Pin<&mut Self>, address: VAddr) {
         // Safety: this does not move out of the structure. We have to get an inner pointer like this because these
         // fields are unaligned, and so creating a reference to them (like we normally would with a pin projection)
         // would be UB
