@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/memory/buddy_allocator.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>buddy_allocator.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Regular-1f7d512b176f0f72.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Bold-124a1ca42af929b6.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-75894291877b32c0.css" id="mainThemeStyle"><link rel="stylesheet" id="themeStyle" href="../../../static.files/light-3bcdcab5f4113412.css"><link rel="stylesheet" disabled href="../../../static.files/dark-091ecdca18d5df85.css"><link rel="stylesheet" disabled href="../../../static.files/ayu-45445754dcd01ab2.css"><script id="default-settings" ></script><script src="../../../static.files/storage-d43fa987303ecbbb.js"></script><script defer src="../../../static.files/source-script-5cf2e01a42cc9858.js"></script><script defer src="../../../source-files.js"></script><script defer src="../../../static.files/main-d2f7777684990013.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-13285aec31fa243e.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><div class="width-limiter"><nav class="sub"><a class="sub-logo-container" href="../../../kernel/index.html"><img class="rust-logo" src="../../../static.files/rust-logo-151179464ae7ed46.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../static.files/wheel-5ec35bf9ca753509.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/memory/buddy_allocator.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>buddy_allocator.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Regular-1f7d512b176f0f72.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Bold-124a1ca42af929b6.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-e963ab4a0d0c903e.css" id="mainThemeStyle"><link rel="stylesheet" id="themeStyle" href="../../../static.files/light-046227e470cd3629.css"><link rel="stylesheet" disabled href="../../../static.files/dark-800f2ee593c8e6f7.css"><link rel="stylesheet" disabled href="../../../static.files/ayu-9edae3c387f5a5b3.css"><script id="default-settings" ></script><script src="../../../static.files/storage-d43fa987303ecbbb.js"></script><script defer src="../../../static.files/source-script-5cf2e01a42cc9858.js"></script><script defer src="../../../source-files.js"></script><script defer src="../../../static.files/main-287cecec4dbb45b0.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-13285aec31fa243e.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><div class="width-limiter"><nav class="sub"><a class="sub-logo-container" href="../../../kernel/index.html"><img class="rust-logo" src="../../../static.files/rust-logo-151179464ae7ed46.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../static.files/wheel-5ec35bf9ca753509.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -433,7 +433,7 @@
 
 </span><span class="kw">use </span>alloc::collections::BTreeSet;
 <span class="kw">use </span>core::{cmp::min, ops::Range};
-<span class="kw">use </span>hal::memory::{Bytes, Frame, FrameSize, PhysicalAddress, Size4KiB};
+<span class="kw">use </span>hal::memory::{Bytes, Frame, FrameSize, PAddr, Size4KiB};
 <span class="kw">use </span>poplar_util::math::flooring_log2;
 
 <span class="doccomment">/// The largest block stored by the buddy allocator is `2^MAX_ORDER`.
@@ -450,7 +450,7 @@
     /// store the blocks in each bin, for efficient buddy location. Each block is stored as the physical address
     /// of the start of the block. The actual frames can be constructed for each block using the start address and
     /// the order of the block.
-    </span>bins: [BTreeSet&lt;PhysicalAddress&gt;; NUM_BINS],
+    </span>bins: [BTreeSet&lt;PAddr&gt;; NUM_BINS],
 }
 
 <span class="kw">impl </span>BuddyAllocator {
@@ -494,7 +494,7 @@
 
     <span class="doccomment">/// Allocate a block of `block_size` bytes from this allocator. Returns `None` if the allocator can&#39;t satisfy
     /// the allocation.
-    </span><span class="kw">pub fn </span>allocate_n(<span class="kw-2">&amp;mut </span><span class="self">self</span>, block_size: Bytes) -&gt; <span class="prelude-ty">Option</span>&lt;PhysicalAddress&gt; {
+    </span><span class="kw">pub fn </span>allocate_n(<span class="kw-2">&amp;mut </span><span class="self">self</span>, block_size: Bytes) -&gt; <span class="prelude-ty">Option</span>&lt;PAddr&gt; {
         <span class="macro">assert!</span>(block_size % BASE_SIZE == <span class="number">0</span>);
         <span class="macro">assert!</span>((block_size / BASE_SIZE).is_power_of_two());
 
@@ -503,7 +503,7 @@
     }
 
     <span class="doccomment">/// Free a block starting at `start` of `block_size` bytes. `block_size` must be a valid size of a whole block.
-    </span><span class="kw">pub fn </span>free_n(<span class="kw-2">&amp;mut </span><span class="self">self</span>, start: PhysicalAddress, block_size: Bytes) {
+    </span><span class="kw">pub fn </span>free_n(<span class="kw-2">&amp;mut </span><span class="self">self</span>, start: PAddr, block_size: Bytes) {
         <span class="macro">assert!</span>(block_size % BASE_SIZE == <span class="number">0</span>);
         <span class="macro">assert!</span>((block_size / BASE_SIZE).is_power_of_two());
 
@@ -513,7 +513,7 @@
 
     <span class="doccomment">/// Tries to allocate a block of the given order. If no blocks of the correct size are
     /// available, tries to recursively split a larger block to form a block of the requested size.
-    </span><span class="kw">fn </span>allocate_block(<span class="kw-2">&amp;mut </span><span class="self">self</span>, order: usize) -&gt; <span class="prelude-ty">Option</span>&lt;PhysicalAddress&gt; {
+    </span><span class="kw">fn </span>allocate_block(<span class="kw-2">&amp;mut </span><span class="self">self</span>, order: usize) -&gt; <span class="prelude-ty">Option</span>&lt;PAddr&gt; {
         <span class="comment">/*
          * We&#39;ve been asked for a block larger than the largest blocks we track, so we won&#39;t be
          * able to allocate a single block large enough.
@@ -545,7 +545,7 @@
     }
 
     <span class="doccomment">/// Free a block starting at `start` of order `order`.
-    </span><span class="kw">fn </span>free_block(<span class="kw-2">&amp;mut </span><span class="self">self</span>, start: PhysicalAddress, order: usize) {
+    </span><span class="kw">fn </span>free_block(<span class="kw-2">&amp;mut </span><span class="self">self</span>, start: PAddr, order: usize) {
         <span class="kw">if </span>order == MAX_ORDER {
             <span class="comment">/*
              * Blocks of the maximum order can&#39;t be coalesced, because there isn&#39;t a bin to put the result in,
@@ -573,8 +573,8 @@
 
     <span class="doccomment">/// Finds the starting frame of the block that is the buddy of the block of order `order`, starting at
     /// `block_start`.
-    </span><span class="kw">fn </span>buddy_of(block_start: PhysicalAddress, order: usize) -&gt; PhysicalAddress {
-        PhysicalAddress::new(usize::from(block_start) ^ ((<span class="number">1 </span>&lt;&lt; order) * BASE_SIZE)).unwrap()
+    </span><span class="kw">fn </span>buddy_of(block_start: PAddr, order: usize) -&gt; PAddr {
+        PAddr::new(usize::from(block_start) ^ ((<span class="number">1 </span>&lt;&lt; order) * BASE_SIZE)).unwrap()
     }
 }
 
@@ -590,14 +590,14 @@
 </span><span class="kw">mod </span>tests {
     <span class="kw">use super</span>::<span class="kw-2">*</span>;
     <span class="kw">use </span>alloc::vec::Vec;
-    <span class="kw">use </span>hal::memory::{Frame, PhysicalAddress, Size4KiB};
+    <span class="kw">use </span>hal::memory::{Frame, PAddr, Size4KiB};
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>test_buddy_of() {
         <span class="kw">macro </span>test(<span class="macro-nonterminal">$order</span>: expr, <span class="macro-nonterminal">$first</span>: expr, <span class="macro-nonterminal">$second</span>: expr) {
             <span class="macro">assert_eq!</span>(
-                BuddyAllocator::buddy_of(PhysicalAddress::new(<span class="macro-nonterminal">$first</span>).unwrap(), <span class="macro-nonterminal">$order</span>),
-                PhysicalAddress::new(<span class="macro-nonterminal">$second</span>).unwrap()
+                BuddyAllocator::buddy_of(PAddr::new(<span class="macro-nonterminal">$first</span>).unwrap(), <span class="macro-nonterminal">$order</span>),
+                PAddr::new(<span class="macro-nonterminal">$second</span>).unwrap()
             );
         }
 
@@ -624,14 +624,14 @@
 
     <span class="kw">struct </span>Block {
         order: usize,
-        address: PhysicalAddress,
+        address: PAddr,
     }
 
     <span class="kw">impl </span>Block {
         <span class="doccomment">/// Construct a `Block`. Takes the address as a `usize` for ease of test writing, panics here if it&#39;s not
         /// valid.
         </span><span class="kw">fn </span>new(order: usize, address: usize) -&gt; Block {
-            Block { order, address: PhysicalAddress::new(address).unwrap() }
+            Block { order, address: PAddr::new(address).unwrap() }
         }
     }
 
@@ -659,8 +659,8 @@
     <span class="doccomment">/// Helper to construct a frame range. Takes the address as a `usize` for ease of test writing - panics here if
     /// it&#39;s not valid.
     </span><span class="kw">fn </span>n_frames_at(start: usize, n: usize) -&gt; Range&lt;Frame&gt; {
-        Frame::starts_with(PhysicalAddress::new(start).unwrap())
-            ..Frame::starts_with(PhysicalAddress::new(start + n * Size4KiB::SIZE).unwrap())
+        Frame::starts_with(PAddr::new(start).unwrap())
+            ..Frame::starts_with(PAddr::new(start + n * Size4KiB::SIZE).unwrap())
     }
 
     <span class="attr">#[test]
@@ -775,4 +775,4 @@
     }
 }
 </code></pre></div>
-</section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="kernel" data-themes="" data-resource-suffix="" data-rustdoc-version="1.67.0-nightly (1eb62b123 2022-11-27)" data-search-js="search-df80cc3cb87b6482.js" data-settings-js="settings-bebeae96e00e4617.js" data-settings-css="settings-af96d9e2fc13e081.css" ></div></body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="kernel" data-themes="" data-resource-suffix="" data-rustdoc-version="1.67.0-nightly (234151769 2022-12-03)" data-search-js="search-444266647c4dba98.js" data-settings-js="settings-bebeae96e00e4617.js" data-settings-css="settings-af96d9e2fc13e081.css" ></div></body></html>

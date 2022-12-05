@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/work/poplar/poplar/lib/hal/src/memory/virtual_address.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>virtual_address.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Regular-1f7d512b176f0f72.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Bold-124a1ca42af929b6.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-75894291877b32c0.css" id="mainThemeStyle"><link rel="stylesheet" id="themeStyle" href="../../../static.files/light-3bcdcab5f4113412.css"><link rel="stylesheet" disabled href="../../../static.files/dark-091ecdca18d5df85.css"><link rel="stylesheet" disabled href="../../../static.files/ayu-45445754dcd01ab2.css"><script id="default-settings" ></script><script src="../../../static.files/storage-d43fa987303ecbbb.js"></script><script defer src="../../../static.files/source-script-5cf2e01a42cc9858.js"></script><script defer src="../../../source-files.js"></script><script defer src="../../../static.files/main-d2f7777684990013.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-13285aec31fa243e.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><div class="width-limiter"><nav class="sub"><a class="sub-logo-container" href="../../../hal/index.html"><img class="rust-logo" src="../../../static.files/rust-logo-151179464ae7ed46.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../static.files/wheel-5ec35bf9ca753509.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/work/poplar/poplar/lib/hal/src/memory/virtual_address.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>virtual_address.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Regular-1f7d512b176f0f72.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Bold-124a1ca42af929b6.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-e963ab4a0d0c903e.css" id="mainThemeStyle"><link rel="stylesheet" id="themeStyle" href="../../../static.files/light-046227e470cd3629.css"><link rel="stylesheet" disabled href="../../../static.files/dark-800f2ee593c8e6f7.css"><link rel="stylesheet" disabled href="../../../static.files/ayu-9edae3c387f5a5b3.css"><script id="default-settings" ></script><script src="../../../static.files/storage-d43fa987303ecbbb.js"></script><script defer src="../../../static.files/source-script-5cf2e01a42cc9858.js"></script><script defer src="../../../source-files.js"></script><script defer src="../../../static.files/main-287cecec4dbb45b0.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-13285aec31fa243e.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><div class="width-limiter"><nav class="sub"><a class="sub-logo-container" href="../../../hal/index.html"><img class="rust-logo" src="../../../static.files/rust-logo-151179464ae7ed46.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../static.files/wheel-5ec35bf9ca753509.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -160,12 +160,12 @@
 /// (e.g. x86_64 requiring correct sign-extension in high bits), these requirements are always enforced.
 </span><span class="attr">#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Default)]
 #[repr(transparent)]
-</span><span class="kw">pub struct </span>VirtualAddress(usize);
+</span><span class="kw">pub struct </span>VAddr(usize);
 
-<span class="kw">impl </span>VirtualAddress {
-    <span class="doccomment">/// Construct a new `VirtualAddress`. This will canonicalise the given value.
-    </span><span class="kw">pub const fn </span>new(address: usize) -&gt; VirtualAddress {
-        VirtualAddress(address).canonicalise()
+<span class="kw">impl </span>VAddr {
+    <span class="doccomment">/// Construct a new `VAddr`. This will canonicalise the given value.
+    </span><span class="kw">pub const fn </span>new(address: usize) -&gt; VAddr {
+        VAddr(address).canonicalise()
     }
 
     <span class="kw">pub const fn </span>ptr&lt;T&gt;(<span class="self">self</span>) -&gt; <span class="kw-2">*const </span>T {
@@ -181,19 +181,19 @@
      * simpler to use. We enforce whatever requirements are needed for the target architecture.
      */
     </span><span class="macro">cfg_if! </span>{
-        <span class="kw">if </span><span class="attr">#[cfg(target_arch = <span class="string">&quot;x86_64&quot;</span>)] </span>{
-            <span class="doccomment">/// Canonicalise this virtual address. On x86_64, that involves making sure that bits 48..63 match the
+        <span class="kw">if </span><span class="attr">#[cfg(any(target_arch = <span class="string">&quot;x86_64&quot;</span>, target_arch = <span class="string">&quot;riscv64&quot;</span>))] </span>{
+            <span class="doccomment">/// Canonicalise this virtual address. On x86_64 and RV64-Sv48, that involves making sure that bits 48..63 match the
             /// sign extension expected from the value of bit 47.
-            </span><span class="kw">pub const fn </span>canonicalise(<span class="self">self</span>) -&gt; VirtualAddress {
+            </span><span class="kw">pub const fn </span>canonicalise(<span class="self">self</span>) -&gt; VAddr {
                 <span class="attr">#[allow(inconsistent_digit_grouping)]
                 </span><span class="kw">const </span>SIGN_EXTENSION: usize = <span class="number">0o177777_000_000_000_000_0000</span>;
 
-                VirtualAddress((SIGN_EXTENSION * ((<span class="self">self</span>.<span class="number">0 </span>&gt;&gt; <span class="number">47</span>) &amp; <span class="number">0b1</span>)) | (<span class="self">self</span>.<span class="number">0 </span>&amp; ((<span class="number">1 </span>&lt;&lt; <span class="number">48</span>) - <span class="number">1</span>)))
+                VAddr((SIGN_EXTENSION * ((<span class="self">self</span>.<span class="number">0 </span>&gt;&gt; <span class="number">47</span>) &amp; <span class="number">0b1</span>)) | (<span class="self">self</span>.<span class="number">0 </span>&amp; ((<span class="number">1 </span>&lt;&lt; <span class="number">48</span>) - <span class="number">1</span>)))
             }
         } <span class="kw">else </span>{
             <span class="doccomment">/// Canonicalise this virtual address. On this architecture, there are no extra requirements, and so we
             /// just return the address as is.
-            </span><span class="kw">pub const fn </span>canonicalise(<span class="self">self</span>) -&gt; VirtualAddress {
+            </span><span class="kw">pub const fn </span>canonicalise(<span class="self">self</span>) -&gt; VAddr {
                 <span class="self">self
             </span>}
         }
@@ -201,7 +201,7 @@
 
     <span class="doccomment">/// Align this address to the given alignment, moving downwards if this is not already aligned. `align` must
     /// be `0` or a power-of-two.
-    </span><span class="kw">pub fn </span>align_down(<span class="self">self</span>, align: usize) -&gt; VirtualAddress {
+    </span><span class="kw">pub fn </span>align_down(<span class="self">self</span>, align: usize) -&gt; VAddr {
         <span class="kw">if </span>align.is_power_of_two() {
             <span class="comment">/*
              * E.g.
@@ -211,7 +211,7 @@
              *                             ^^^ Masks the address to the value below it with the
              *                                 correct alignment
              */
-            </span>VirtualAddress(<span class="self">self</span>.<span class="number">0 </span>&amp; !(align - <span class="number">1</span>))
+            </span>VAddr(<span class="self">self</span>.<span class="number">0 </span>&amp; !(align - <span class="number">1</span>))
         } <span class="kw">else </span>{
             <span class="macro">assert!</span>(align == <span class="number">0</span>);
             <span class="self">self
@@ -220,8 +220,8 @@
 
     <span class="doccomment">/// Align this address to the given alignment, moving upwards if this is not already aligned. `align` must be
     /// `0` or a power-of-two.
-    </span><span class="kw">pub fn </span>align_up(<span class="self">self</span>, align: usize) -&gt; VirtualAddress {
-        VirtualAddress(<span class="self">self</span>.<span class="number">0 </span>+ align - <span class="number">1</span>).align_down(align)
+    </span><span class="kw">pub fn </span>align_up(<span class="self">self</span>, align: usize) -&gt; VAddr {
+        VAddr(<span class="self">self</span>.<span class="number">0 </span>+ align - <span class="number">1</span>).align_down(align)
     }
 
     <span class="kw">pub fn </span>is_aligned(<span class="self">self</span>, align: usize) -&gt; bool {
@@ -229,78 +229,78 @@
     </span>}
 
     <span class="kw">pub fn </span>checked_add(<span class="self">self</span>, rhs: usize) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="self">Self</span>&gt; {
-        <span class="prelude-val">Some</span>(VirtualAddress::new(<span class="self">self</span>.<span class="number">0</span>.checked_add(rhs)<span class="question-mark">?</span>))
+        <span class="prelude-val">Some</span>(VAddr::new(<span class="self">self</span>.<span class="number">0</span>.checked_add(rhs)<span class="question-mark">?</span>))
     }
 
     <span class="kw">pub fn </span>checked_sub(<span class="self">self</span>, rhs: usize) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="self">Self</span>&gt; {
-        <span class="prelude-val">Some</span>(VirtualAddress::new(<span class="self">self</span>.<span class="number">0</span>.checked_sub(rhs)<span class="question-mark">?</span>))
+        <span class="prelude-val">Some</span>(VAddr::new(<span class="self">self</span>.<span class="number">0</span>.checked_sub(rhs)<span class="question-mark">?</span>))
     }
 }
 
-<span class="kw">impl </span>fmt::LowerHex <span class="kw">for </span>VirtualAddress {
+<span class="kw">impl </span>fmt::LowerHex <span class="kw">for </span>VAddr {
     <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter) -&gt; fmt::Result {
         <span class="macro">write!</span>(f, <span class="string">&quot;{:#x}&quot;</span>, <span class="self">self</span>.<span class="number">0</span>)
     }
 }
 
-<span class="kw">impl </span>fmt::UpperHex <span class="kw">for </span>VirtualAddress {
+<span class="kw">impl </span>fmt::UpperHex <span class="kw">for </span>VAddr {
     <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter) -&gt; fmt::Result {
         <span class="macro">write!</span>(f, <span class="string">&quot;{:#X}&quot;</span>, <span class="self">self</span>.<span class="number">0</span>)
     }
 }
 
-<span class="kw">impl </span>fmt::Debug <span class="kw">for </span>VirtualAddress {
+<span class="kw">impl </span>fmt::Debug <span class="kw">for </span>VAddr {
     <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter) -&gt; fmt::Result {
-        <span class="macro">write!</span>(f, <span class="string">&quot;VirtualAddress({:#x})&quot;</span>, <span class="self">self</span>)
+        <span class="macro">write!</span>(f, <span class="string">&quot;VAddr({:#x})&quot;</span>, <span class="self">self</span>)
     }
 }
 
-<span class="kw">impl </span>From&lt;VirtualAddress&gt; <span class="kw">for </span>usize {
-    <span class="kw">fn </span>from(address: VirtualAddress) -&gt; usize {
+<span class="kw">impl </span>From&lt;VAddr&gt; <span class="kw">for </span>usize {
+    <span class="kw">fn </span>from(address: VAddr) -&gt; usize {
         address.<span class="number">0
     </span>}
 }
 
-<span class="kw">impl</span>&lt;T&gt; From&lt;<span class="kw-2">*const </span>T&gt; <span class="kw">for </span>VirtualAddress {
-    <span class="kw">fn </span>from(ptr: <span class="kw-2">*const </span>T) -&gt; VirtualAddress {
-        VirtualAddress::new(ptr <span class="kw">as </span>usize)
+<span class="kw">impl</span>&lt;T&gt; From&lt;<span class="kw-2">*const </span>T&gt; <span class="kw">for </span>VAddr {
+    <span class="kw">fn </span>from(ptr: <span class="kw-2">*const </span>T) -&gt; VAddr {
+        VAddr::new(ptr <span class="kw">as </span>usize)
     }
 }
 
-<span class="kw">impl</span>&lt;T&gt; From&lt;<span class="kw-2">*mut </span>T&gt; <span class="kw">for </span>VirtualAddress {
-    <span class="kw">fn </span>from(ptr: <span class="kw-2">*mut </span>T) -&gt; VirtualAddress {
-        VirtualAddress::new(ptr <span class="kw">as </span>usize)
+<span class="kw">impl</span>&lt;T&gt; From&lt;<span class="kw-2">*mut </span>T&gt; <span class="kw">for </span>VAddr {
+    <span class="kw">fn </span>from(ptr: <span class="kw-2">*mut </span>T) -&gt; VAddr {
+        VAddr::new(ptr <span class="kw">as </span>usize)
     }
 }
 
-<span class="kw">impl </span>Add&lt;usize&gt; <span class="kw">for </span>VirtualAddress {
-    <span class="kw">type </span>Output = VirtualAddress;
+<span class="kw">impl </span>Add&lt;usize&gt; <span class="kw">for </span>VAddr {
+    <span class="kw">type </span>Output = VAddr;
 
     <span class="kw">fn </span>add(<span class="self">self</span>, rhs: usize) -&gt; <span class="self">Self</span>::Output {
-        VirtualAddress::new(<span class="self">self</span>.<span class="number">0 </span>+ rhs)
+        VAddr::new(<span class="self">self</span>.<span class="number">0 </span>+ rhs)
     }
 }
 
-<span class="kw">impl </span>AddAssign&lt;usize&gt; <span class="kw">for </span>VirtualAddress {
+<span class="kw">impl </span>AddAssign&lt;usize&gt; <span class="kw">for </span>VAddr {
     <span class="kw">fn </span>add_assign(<span class="kw-2">&amp;mut </span><span class="self">self</span>, rhs: usize) {
         <span class="comment">// XXX: this ensures correctness as it goes through the `Add` implementation
         </span><span class="kw-2">*</span><span class="self">self </span>= <span class="kw-2">*</span><span class="self">self </span>+ rhs;
     }
 }
 
-<span class="kw">impl </span>Sub&lt;usize&gt; <span class="kw">for </span>VirtualAddress {
-    <span class="kw">type </span>Output = VirtualAddress;
+<span class="kw">impl </span>Sub&lt;usize&gt; <span class="kw">for </span>VAddr {
+    <span class="kw">type </span>Output = VAddr;
 
     <span class="kw">fn </span>sub(<span class="self">self</span>, rhs: usize) -&gt; <span class="self">Self</span>::Output {
-        VirtualAddress::new(<span class="self">self</span>.<span class="number">0 </span>- rhs)
+        VAddr::new(<span class="self">self</span>.<span class="number">0 </span>- rhs)
     }
 }
 
-<span class="kw">impl </span>SubAssign&lt;usize&gt; <span class="kw">for </span>VirtualAddress {
+<span class="kw">impl </span>SubAssign&lt;usize&gt; <span class="kw">for </span>VAddr {
     <span class="kw">fn </span>sub_assign(<span class="kw-2">&amp;mut </span><span class="self">self</span>, rhs: usize) {
         <span class="comment">// XXX: this ensures correctness as it goes through the `Sub` implementation
         </span><span class="kw-2">*</span><span class="self">self </span>= <span class="kw-2">*</span><span class="self">self </span>- rhs;
     }
 }
 </code></pre></div>
-</section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="hal" data-themes="" data-resource-suffix="" data-rustdoc-version="1.67.0-nightly (1eb62b123 2022-11-27)" data-search-js="search-df80cc3cb87b6482.js" data-settings-js="settings-bebeae96e00e4617.js" data-settings-css="settings-af96d9e2fc13e081.css" ></div></body></html>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="hal" data-themes="" data-resource-suffix="" data-rustdoc-version="1.67.0-nightly (234151769 2022-12-03)" data-search-js="search-444266647c4dba98.js" data-settings-js="settings-bebeae96e00e4617.js" data-settings-css="settings-af96d9e2fc13e081.css" ></div></body></html>
