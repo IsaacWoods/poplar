@@ -11,6 +11,8 @@ use bitflags::bitflags;
 use core::{
     arch::asm,
     cmp,
+    fmt,
+    fmt::Debug,
     marker::PhantomData,
     ops::{Index, IndexMut},
 };
@@ -40,19 +42,15 @@ bitflags! {
         const GLOBAL            = 1 << 5;
         const ACCESSED          = 1 << 6;
         const DIRTY             = 1 << 7;
-
-        /// In RISC-V, marking a page as readable or executable marks it as a terminal entry, and so we only want
-        /// to mark non-terminal entries as valid.
-        const NON_TERMINAL_FLAGS = Self::VALID.bits;
     }
 }
 
 impl From<Flags> for EntryFlags {
     fn from(flags: Flags) -> Self {
         // TODO: should we do anything with `flags.cached` here?
-        // TODO: should we expose the readable flag in `hal`? Bc x64 can't choose?
+        // TODO: should we expose the readable flag in `hal`? Bc x64 can't choose? I think so to expose ability to have executable-only pages?
         EntryFlags::VALID
-            | if flags.writable { EntryFlags::READABLE | EntryFlags::WRITABLE } else { EntryFlags::empty() }
+            | if flags.writable { EntryFlags::READABLE | EntryFlags::WRITABLE } else { EntryFlags::READABLE }
             | if flags.executable { EntryFlags::EXECUTABLE } else { EntryFlags::empty() }
             | if flags.user_accessible { EntryFlags::USER_ACCESSIBLE } else { EntryFlags::empty() }
     }
@@ -85,7 +83,7 @@ impl Entry {
 
     pub fn address(&self) -> Option<PAddr> {
         if self.flags().contains(EntryFlags::VALID) {
-            Some(PAddr::new((self.0.get_bits(10..54) as usize) << 10).unwrap())
+            Some(PAddr::new((self.0.get_bits(10..54) as usize) << 12).unwrap())
         } else {
             None
         }
@@ -93,9 +91,19 @@ impl Entry {
 
     pub fn set(&mut self, entry: Option<(PAddr, EntryFlags)>) {
         self.0 = match entry {
-            Some((address, flags)) => (usize::from(address) as u64) | (flags | EntryFlags::VALID).bits(),
+            Some((address, flags)) => (usize::from(address) as u64 >> 2) | (flags | EntryFlags::VALID).bits(),
             None => 0,
         };
+    }
+}
+
+impl Debug for Entry {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        if self.is_valid() {
+            f.debug_tuple("Entry").field(&self.address().unwrap()).field(&self.flags()).finish()
+        } else {
+            write!(f, "Not Present")
+        }
     }
 }
 
@@ -213,7 +221,7 @@ where
             /*
              * This entry is empty, so we create a new page table, zero it, and return that.
              */
-            self.entries[index].set(Some((allocator.allocate().start, EntryFlags::NON_TERMINAL_FLAGS)));
+            self.entries[index].set(Some((allocator.allocate().start, EntryFlags::VALID)));
             let table = self.next_table_mut(index, physical_base).unwrap();
             table.zero();
             Ok(table)
@@ -264,6 +272,39 @@ impl PageTableImpl {
     pub fn p4_mut(&mut self) -> &mut Table<Level4> {
         unsafe { &mut *((self.physical_base + usize::from(self.p4_frame.start)).mut_ptr()) }
     }
+
+    pub fn satp(&self) -> Satp {
+        Satp::Sv48 { asid: 0, root: self.p4_frame.start }
+    }
+
+    pub fn walk(&self) {
+        use tracing::trace;
+        trace!("Starting page table walk");
+        let p4 = self.p4();
+        for i in 0..512 {
+            if p4[i].is_valid() {
+                trace!("P4 entry {}: {:?}", i, p4[i]);
+                let p3 = p4.next_table(i, self.physical_base).unwrap();
+                for j in 0..512 {
+                    if p3[j].is_valid() {
+                        trace!("    P3 entry {}: {:?}", j, p3[j]);
+                        let p2 = p3.next_table(j, self.physical_base).unwrap();
+                        for k in 0..512 {
+                            if p2[k].is_valid() {
+                                trace!("        P2 entry {}: {:?}", k, p2[k]);
+                                let p1 = p2.next_table(k, self.physical_base).unwrap();
+                                for m in 0..512 {
+                                    if p1[m].is_valid() {
+                                        trace!("            P1 entry {}: {:?}", m, p1[m]);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
 }
 
 impl PageTable<Size4KiB> for PageTableImpl {
@@ -287,7 +328,7 @@ impl PageTable<Size4KiB> for PageTableImpl {
     }
 
     unsafe fn switch_to(&self) {
-        unsafe { Satp::Sv48 { asid: 0, root: self.p4_frame.start }.write() }
+        unsafe { self.satp().write() }
     }
 
     fn translate(&self, address: VAddr) -> Option<PAddr> {
@@ -313,6 +354,7 @@ impl PageTable<Size4KiB> for PageTableImpl {
         A: FrameAllocator<Size4KiB>,
     {
         let physical_base = self.physical_base;
+        tracing::trace!("Mapping {:?} to {:?} with flags: {:?}", page.start, frame.start, EntryFlags::from(flags));
 
         if S::SIZE == Size4KiB::SIZE {
             let p1 = self
