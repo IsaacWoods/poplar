@@ -5,7 +5,7 @@
 
 use bit_field::BitField;
 use core::arch::asm;
-use hal::memory::PAddr;
+use hal::memory::{PAddr, VAddr};
 
 /// The Supervisor Address Translation and Protection (`satp`) register controls supervisor-mode address
 /// translation and protection. It contains the physical address of the root page table, plus an associated Address
@@ -75,6 +75,16 @@ impl Satp {
     pub unsafe fn write(self) {
         unsafe {
             asm!("csrw satp, {}", in(reg) self.raw());
+        }
+    }
+}
+
+pub struct Stvec;
+
+impl Stvec {
+    pub fn set(trap_address: VAddr) {
+        unsafe {
+            asm!("csrw stvec, {}", in(reg) usize::from(trap_address));
         }
     }
 }
