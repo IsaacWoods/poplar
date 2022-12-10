@@ -45,8 +45,8 @@ impl Satp {
         }
     }
 
-    pub unsafe fn write(self) {
-        let value = match self {
+    pub fn raw(self) -> u64 {
+        match self {
             Self::Bare => 0,
             Self::Sv39 { asid, root } => {
                 let mut value: u64 = 0;
@@ -69,10 +69,12 @@ impl Satp {
                 value.set_bits(60..64, 10);
                 value
             }
-        };
+        }
+    }
 
+    pub unsafe fn write(self) {
         unsafe {
-            asm!("csrw satp, {}", in(reg) value);
+            asm!("csrw satp, {}", in(reg) self.raw());
         }
     }
 }
