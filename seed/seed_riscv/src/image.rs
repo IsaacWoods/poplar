@@ -39,7 +39,13 @@ pub fn extract_kernel(memory_regions: &mut MemoryRegions) -> Elf<'static> {
         .expect("Failed to read kernel ELF :(")
 }
 
-pub fn load_kernel<P>(elf: Elf<'_>, page_table: &mut P, memory_manager: &MemoryManager)
+#[derive(Clone, Debug)]
+pub struct LoadedKernel {
+    pub entry_point: VAddr,
+    pub stack_top: VAddr,
+}
+
+pub fn load_kernel<P>(elf: Elf<'_>, page_table: &mut P, memory_manager: &MemoryManager) -> LoadedKernel
 where
     P: PageTable<Size4KiB>,
 {
@@ -87,6 +93,8 @@ where
     };
     assert!(guard_page_address.is_aligned(Size4KiB::SIZE), "Guard page address is not page aligned");
     page_table.unmap::<Size4KiB>(Page::starts_with(guard_page_address));
+
+    LoadedKernel { entry_point, stack_top }
 }
 
 fn load_segment(

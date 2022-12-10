@@ -12,11 +12,11 @@ mod logger;
 mod memory;
 
 use bit_field::BitField;
+use core::arch::asm;
 use fdt::Fdt;
-use hal::memory::{FrameAllocator, FrameSize, PAddr, Size4KiB, VAddr};
-use hal_riscv::paging::PageTableImpl;
+use hal::memory::{FrameAllocator, FrameSize, PAddr, PageTable, Size4KiB, VAddr};
+use hal_riscv::{hw::csr::Stvec, paging::PageTableImpl};
 use memory::{MemoryManager, MemoryRegions, Region};
-use mer::Elf;
 use poplar_util::{linker::LinkerSymbol, math::align_up};
 use tracing::info;
 
@@ -117,11 +117,40 @@ pub fn seed_main(hart_id: u64, fdt_ptr: *const u8) -> ! {
     MEMORY_MANAGER.walk_usable_memory();
 
     let mut kernel_page_table = PageTableImpl::new(MEMORY_MANAGER.allocate(), VAddr::new(0x0));
-    image::load_kernel(kernel_elf, &mut kernel_page_table, &MEMORY_MANAGER);
+    let kernel = image::load_kernel(kernel_elf, &mut kernel_page_table, &MEMORY_MANAGER);
+
+    // Map the serial port so the kernel can do stuff - TODO: this should probably be done more properly somehow
+    use hal::memory::{Flags, Frame, Page};
+    kernel_page_table
+        .map::<Size4KiB, _>(
+            Page::starts_with(VAddr::new(0x1000_0000)),
+            Frame::starts_with(PAddr::new(0x1000_0000).unwrap()),
+            Flags { writable: true, ..Default::default() },
+            &MEMORY_MANAGER,
+        )
+        .unwrap();
+
+    kernel_page_table.walk();
+    info!("Kernel info: {:?}", kernel);
+    Stvec::set(kernel.entry_point);
 
     MEMORY_MANAGER.walk_usable_memory();
-    info!("Looping");
-    loop {}
+
+    // Enter the kernel by trapping on a fetch (definitely safe)
+    unsafe {
+        asm!(
+            "
+                mv sp, {new_sp}
+
+                csrw satp, {new_satp}
+                sfence.vma
+                unimp
+            ",
+            new_satp = in(reg) kernel_page_table.satp().raw(),
+            new_sp = in(reg) usize::from(kernel.stack_top),
+            options(nostack, noreturn)
+        )
+    }
 }
 
 fn print_fdt(fdt: &Fdt) {
