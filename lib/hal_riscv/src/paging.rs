@@ -284,14 +284,23 @@ impl PageTableImpl {
         for i in 0..512 {
             if p4[i].is_valid() {
                 trace!("P4 entry {}: {:?}", i, p4[i]);
+                if p4[i].is_leaf() {
+                    continue;
+                }
                 let p3 = p4.next_table(i, self.physical_base).unwrap();
                 for j in 0..512 {
                     if p3[j].is_valid() {
                         trace!("    P3 entry {}: {:?}", j, p3[j]);
+                        if p3[j].is_leaf() {
+                            continue;
+                        }
                         let p2 = p3.next_table(j, self.physical_base).unwrap();
                         for k in 0..512 {
                             if p2[k].is_valid() {
                                 trace!("        P2 entry {}: {:?}", k, p2[k]);
+                                if p2[k].is_leaf() {
+                                    continue;
+                                }
                                 let p1 = p2.next_table(k, self.physical_base).unwrap();
                                 for m in 0..512 {
                                     if p1[m].is_valid() {

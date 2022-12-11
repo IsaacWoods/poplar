@@ -125,7 +125,7 @@ pub fn seed_main(hart_id: u64, fdt_ptr: *const u8) -> ! {
      * map 32GiB.
      */
     // This is the start of the 511th P4 entry - the very start of kernel space
-    // TODO: put this somewhere better once we've laid everything out properly
+    // TODO: put this constant somewhere better once we've laid everything out properly
     const PHYSICAL_MAP_BASE: VAddr = VAddr::new(0xffff_ff80_0000_0000);
     kernel_page_table
         .map_area(
