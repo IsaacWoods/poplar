@@ -1,5 +1,5 @@
 # Poplar
-![Build status](https://github.com/IsaacWoods/poplar/actions/workflows/build/badge.svg)
+[![Build](https://github.com/IsaacWoods/poplar/actions/workflows/build.yml/badge.svg)](https://github.com/IsaacWoods/poplar/actions/workflows/build.yml)
 [![License: MPL-2.0](https://img.shields.io/badge/license-MPL--2.0-blue.svg)](https://opensource.org/licenses/MPL-2.0)
 
 **Poplar was previously called Pebble. It was renamed to avoid confusion with the OS that runs on the [defunct
