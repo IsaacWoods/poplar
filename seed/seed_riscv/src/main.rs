@@ -14,7 +14,7 @@ mod memory;
 use bit_field::BitField;
 use core::arch::asm;
 use fdt::Fdt;
-use hal::memory::{FrameAllocator, FrameSize, PAddr, PageTable, Size4KiB, VAddr};
+use hal::memory::{Flags, FrameAllocator, FrameSize, PAddr, PageTable, Size4KiB, VAddr};
 use hal_riscv::{hw::csr::Stvec, paging::PageTableImpl};
 use memory::{MemoryManager, MemoryRegions, Region};
 use poplar_util::{linker::LinkerSymbol, math::align_up};
@@ -119,24 +119,34 @@ pub fn seed_main(hart_id: u64, fdt_ptr: *const u8) -> ! {
     let mut kernel_page_table = PageTableImpl::new(MEMORY_MANAGER.allocate(), VAddr::new(0x0));
     let kernel = image::load_kernel(kernel_elf, &mut kernel_page_table, &MEMORY_MANAGER);
 
-    // Map the serial port so the kernel can do stuff - TODO: this should probably be done more properly somehow
-    use hal::memory::{Flags, Frame, Page};
+    /*
+     * Construct the direct physical memory map.
+     * TODO: we should probably do this properly by walking the FDT (you need RAM + devices) but we currently just
+     * map 32GiB.
+     */
+    // This is the start of the 511th P4 entry - the very start of kernel space
+    // TODO: put this somewhere better once we've laid everything out properly
+    const PHYSICAL_MAP_BASE: VAddr = VAddr::new(0xffff_ff80_0000_0000);
     kernel_page_table
-        .map::<Size4KiB, _>(
-            Page::starts_with(VAddr::new(0x1000_0000)),
-            Frame::starts_with(PAddr::new(0x1000_0000).unwrap()),
+        .map_area(
+            PHYSICAL_MAP_BASE,
+            PAddr::new(0x0).unwrap(),
+            hal::memory::gibibytes(32),
             Flags { writable: true, ..Default::default() },
             &MEMORY_MANAGER,
         )
         .unwrap();
 
     kernel_page_table.walk();
-    info!("Kernel info: {:?}", kernel);
     Stvec::set(kernel.entry_point);
 
     MEMORY_MANAGER.walk_usable_memory();
 
     // Enter the kernel by trapping on a fetch (definitely safe)
+    /*
+     * Jump into the kernel by setting up the required state, and then moving page tables. Because we don't have
+     * Seed's code mapped, this causes a page-fault
+     */
     unsafe {
         asm!(
             "

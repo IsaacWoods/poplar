@@ -10,7 +10,8 @@
 pub extern "C" fn kentry() -> ! {
     use core::fmt::Write;
 
-    let uart = unsafe { &mut *(0x10000000 as *mut hal_riscv::hw::uart16550::Uart16550) };
+    let uart =
+        unsafe { &mut *((0xffff_ff80_0000_0000usize + 0x1000_0000) as *mut hal_riscv::hw::uart16550::Uart16550) };
     writeln!(uart, "Hello from the kernel!").unwrap();
     loop {}
 }
@@ -19,7 +20,8 @@ pub extern "C" fn kentry() -> ! {
 pub fn panic(_info: &core::panic::PanicInfo) -> ! {
     use core::fmt::Write;
 
-    let uart = unsafe { &mut *(0x10000000 as *mut hal_riscv::hw::uart16550::Uart16550) };
+    let uart =
+        unsafe { &mut *((0xffff_ff80_0000_0000usize + 0x1000_0000) as *mut hal_riscv::hw::uart16550::Uart16550) };
     write!(uart, "Panic :(").unwrap();
     loop {}
 }
