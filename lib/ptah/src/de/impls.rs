@@ -45,6 +45,7 @@ impl<'de> Deserialize<'de> for &'de str {
     }
 }
 
+#[cfg(feature = "alloc")]
 impl<'de> Deserialize<'de> for alloc::string::String {
     fn deserialize(deserializer: &mut Deserializer<'de>) -> Result<alloc::string::String> {
         use alloc::string::ToString;

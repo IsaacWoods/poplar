@@ -1,8 +1,6 @@
 #![no_std]
 #![feature(decl_macro, maybe_uninit_uninit_array, maybe_uninit_slice, never_type)]
 
-extern crate alloc;
-
 #[cfg(feature = "derive")]
 extern crate ptah_derive;
 #[cfg(feature = "derive")]
@@ -14,8 +12,6 @@ pub mod ser;
 
 pub use de::{Deserialize, DeserializeOwned, Deserializer};
 pub use ser::{Serialize, Serializer};
-
-use alloc::vec::Vec;
 
 /// It can sometimes be useful to know the size of a value in its serialized form (e.g. to reserve space for it in
 /// a ring buffer). This calculates the number of bytes taken to serialize some `value` of `T` into Ptah's wire
@@ -133,7 +129,8 @@ impl<'a> Writer for CursorWriter<'a> {
     }
 }
 
-impl<'a> Writer for &'a mut Vec<u8> {
+#[cfg(feature = "alloc")]
+impl<'a> Writer for &'a mut alloc::vec::Vec<u8> {
     fn write(&mut self, buf: &[u8]) -> ser::Result<()> {
         self.extend_from_slice(buf);
         Ok(())
