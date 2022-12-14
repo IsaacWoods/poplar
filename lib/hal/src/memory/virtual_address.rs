@@ -33,7 +33,6 @@ impl VAddr {
             /// Canonicalise this virtual address. On x86_64 and RV64-Sv48, that involves making sure that bits 48..63 match the
             /// sign extension expected from the value of bit 47.
             pub const fn canonicalise(self) -> VAddr {
-                #[allow(inconsistent_digit_grouping)]
                 const SIGN_EXTENSION: usize = 0o177777_000_000_000_000_0000;
 
                 VAddr((SIGN_EXTENSION * ((self.0 >> 47) & 0b1)) | (self.0 & ((1 << 48) - 1)))

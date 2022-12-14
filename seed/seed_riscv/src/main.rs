@@ -163,6 +163,7 @@ pub fn seed_main(hart_id: u64, fdt_ptr: *const u8) -> ! {
     }
 }
 
+#[allow(dead_code)]
 fn print_fdt(fdt: &Fdt) {
     use fdt::node::FdtNode;
 

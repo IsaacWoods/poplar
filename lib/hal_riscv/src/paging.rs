@@ -180,7 +180,7 @@ where
     L: TableLevel,
 {
     pub fn zero(&mut self) {
-        for (i, entry) in self.entries.iter_mut().enumerate() {
+        for entry in self.entries.iter_mut() {
             entry.set(None);
         }
     }
@@ -278,7 +278,6 @@ impl PageTableImpl {
     }
 
     pub fn walk(&self) {
-        use tracing::trace;
         trace!("Starting page table walk");
         let p4 = self.p4();
         for i in 0..512 {
@@ -317,7 +316,7 @@ impl PageTableImpl {
 }
 
 impl PageTable<Size4KiB> for PageTableImpl {
-    fn new_with_kernel_mapped<A>(kernel_page_table: &Self, allocator: &A) -> Self
+    fn new_with_kernel_mapped<A>(_kernel_page_table: &Self, _allocator: &A) -> Self
     where
         A: FrameAllocator<Size4KiB>,
     {

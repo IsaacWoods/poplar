@@ -6,8 +6,8 @@
 use crate::memory::{self, MemoryManager, MemoryRegions, Region};
 use core::{ptr, slice};
 use hal::{
-    boot_info::{MemoryType, Segment},
-    memory::{Flags, Frame, FrameAllocator, FrameSize, PAddr, Page, PageTable, Size4KiB, VAddr},
+    boot_info::Segment,
+    memory::{Flags, FrameAllocator, FrameSize, PAddr, Page, PageTable, Size4KiB, VAddr},
 };
 use mer::{
     program::{ProgramHeader, SegmentType},

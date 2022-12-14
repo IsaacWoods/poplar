@@ -261,7 +261,7 @@ impl FrameAllocator<Size4KiB> for MemoryManager {
         panic!("Can't allocate {} frames :(", n);
     }
 
-    fn free_n(&self, start: Frame<Size4KiB>, n: usize) {
+    fn free_n(&self, _start: Frame<Size4KiB>, _n: usize) {
         unimplemented!();
     }
 }
