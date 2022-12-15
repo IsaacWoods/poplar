@@ -1,9 +1,8 @@
 #![no_std]
 #![no_main]
-#![feature(asm_sym, decl_macro, naked_functions, allocator_api)]
+#![feature(decl_macro, naked_functions, allocator_api)]
 
 extern crate alloc;
-extern crate rlibc;
 
 mod acpi_handler;
 mod interrupts;

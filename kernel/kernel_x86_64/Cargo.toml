@@ -5,7 +5,6 @@ authors = ["Isaac Woods"]
 edition = "2018"
 
 [dependencies]
-rlibc = "1"
 kernel = { path = "../" }
 hal = { path = "../../lib/hal" }
 hal_x86_64 = { path = "../../lib/hal_x86_64" }

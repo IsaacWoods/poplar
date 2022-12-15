@@ -170,6 +170,7 @@ impl Dist {
             .release(self.release)
             .features(self.kernel_features.clone())
             .std_components(vec!["core".to_string(), "alloc".to_string()])
+            .std_features(vec!["compiler-builtins-mem".to_string()])
             .run()?;
 
         let user_task_paths = self
