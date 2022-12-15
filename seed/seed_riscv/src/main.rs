@@ -137,16 +137,13 @@ pub fn seed_main(hart_id: u64, fdt_ptr: *const u8) -> ! {
         )
         .unwrap();
 
-    kernel_page_table.walk();
-    Stvec::set(kernel.entry_point);
 
-    MEMORY_MANAGER.walk_usable_memory();
-
-    // Enter the kernel by trapping on a fetch (definitely safe)
     /*
-     * Jump into the kernel by setting up the required state, and then moving page tables. Because we don't have
-     * Seed's code mapped, this causes a page-fault
+     * Jump into the kernel by setting up the required state, and then moving to the new kernel page tables.
+     * Because we don't have Seed's code mapped, this causes a page-fault, and so we trap. We set the trap handler
+     * to the kernel's entry point, so this jumps us into the kernel.
      */
+    Stvec::set(kernel.entry_point);
     unsafe {
         asm!(
             "

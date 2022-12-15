@@ -30,7 +30,6 @@ use hal::memory::{
     Size4KiB,
     VAddr,
 };
-use tracing::trace;
 
 bitflags! {
     pub struct EntryFlags: u64 {
@@ -278,6 +277,7 @@ impl PageTableImpl {
     }
 
     pub fn walk(&self) {
+        use tracing::trace;
         trace!("Starting page table walk");
         let p4 = self.p4();
         for i in 0..512 {
@@ -362,7 +362,6 @@ impl PageTable<Size4KiB> for PageTableImpl {
         A: FrameAllocator<Size4KiB>,
     {
         let physical_base = self.physical_base;
-        tracing::trace!("Mapping {:?} to {:?} with flags: {:?}", page.start, frame.start, EntryFlags::from(flags));
 
         if S::SIZE == Size4KiB::SIZE {
             let p1 = self

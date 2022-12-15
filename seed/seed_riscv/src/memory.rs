@@ -35,7 +35,6 @@ pub struct Region {
 
 impl Region {
     pub fn new(typ: RegionType, address: PAddr, size: usize) -> Region {
-        trace!("New region of type {:?}, address = {:#x}, size = {:#x}", typ, address, size);
         assert_eq!(size % Size4KiB::SIZE, 0);
         Region { typ, address, size }
     }
@@ -84,25 +83,15 @@ impl MemoryRegions {
                  * TODO: this doesn't consider the case of a new region connecting two regions so that all three
                  * can be merged - do we care?
                  */
-                trace!(
-                    "Comparing region {:?} against existing region {:?} since they're the same type",
-                    region,
-                    existing
-                );
                 if existing.range().encompasses(region.range()) {
-                    trace!("Existing region contains new region. No action needed.");
                     added = true;
                 } else if (region.address + region.size) == existing.address {
-                    trace!("New region is directly before the existing region. Merging.");
                     existing.address = region.address;
                     existing.size += region.size;
                     added = true;
                 } else if (existing.address + existing.size) == region.address {
-                    trace!("New region is directly after the existing region. Merging");
                     existing.size += region.size;
                     added = true;
-                } else {
-                    trace!("Nothing we can do. Continuing to next region.");
                 }
             }
         }
@@ -124,15 +113,9 @@ impl MemoryRegions {
                     return new_entries;
                 }
 
-                trace!(
-                    "Comparing region {:?} against existing region {:?} as they're different types",
-                    region,
-                    existing
-                );
                 let (before, middle, after) = existing.range().split(region.range());
                 if middle.is_none() {
                     // The regions don't intersect - add the existing region back
-                    trace!("Regions don't intersect - add existing region back");
                     new_entries.push(existing);
                 } else {
                     /*
@@ -140,7 +123,6 @@ impl MemoryRegions {
                      * portions that don't intersect the new region (potentially one before and one after) back as
                      * two separate regions.
                      */
-                    trace!("Regions do intersect! Splitting. before={:?}, after={:?}", before, after);
                     if let Some(before) = before {
                         new_entries.push(Region::new(
                             existing.typ,
@@ -161,7 +143,6 @@ impl MemoryRegions {
             .collect();
 
         if !added {
-            trace!("Considered all regions and not yet added. Adding as a new region.");
             self.0.push(region);
         }
     }
