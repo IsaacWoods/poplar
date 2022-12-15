@@ -12,13 +12,14 @@ mod logger;
 mod memory;
 
 use bit_field::BitField;
-use core::arch::asm;
+use core::{arch::asm, mem, ptr};
 use fdt::Fdt;
 use hal::memory::{Flags, FrameAllocator, FrameSize, PAddr, PageTable, Size4KiB, VAddr};
 use hal_riscv::{hw::csr::Stvec, paging::PageTableImpl};
 use memory::{MemoryManager, MemoryRegions, Region};
 use poplar_util::{linker::LinkerSymbol, math::align_up};
-use tracing::info;
+use seed::boot_info::BootInfo;
+use tracing::{info, trace};
 
 /*
  * This is the entry-point jumped to from OpenSBI. It needs to be at the very start of the ELF, so we put it in its
@@ -119,14 +120,33 @@ pub fn seed_main(hart_id: u64, fdt_ptr: *const u8) -> ! {
     let mut kernel_page_table = PageTableImpl::new(MEMORY_MANAGER.allocate(), VAddr::new(0x0));
     let kernel = image::load_kernel(kernel_elf, &mut kernel_page_table, &MEMORY_MANAGER);
 
+    // This is the start of the 511th P4 entry - the very start of kernel space
+    // TODO: put this constant somewhere better once we've laid everything out properly
+    const PHYSICAL_MAP_BASE: VAddr = VAddr::new(0xffff_ff80_0000_0000);
+
+    /*
+     * Allocate memory for the boot info and start filling it out.
+     */
+    let (boot_info_kernel_address, boot_info) = {
+        let boot_info_physical_start =
+            MEMORY_MANAGER.allocate_n(Size4KiB::frames_needed(mem::size_of::<BootInfo>())).start.start;
+        let identity_boot_info_ptr = usize::from(boot_info_physical_start) as *mut BootInfo;
+        unsafe {
+            ptr::write(identity_boot_info_ptr, BootInfo::default());
+        }
+        // TODO: map the boot info into the kernel address space and pass it to the kernel
+        // XXX: at the moment this points into the physical map. This will obvs work but I think it'd be nicer to
+        // map it for real
+        (PHYSICAL_MAP_BASE + usize::from(boot_info_physical_start), unsafe { &mut *identity_boot_info_ptr })
+    };
+    boot_info.magic = seed::boot_info::BOOT_INFO_MAGIC;
+    boot_info.fdt_address = Some(PAddr::new(fdt_ptr as usize).unwrap());
+
     /*
      * Construct the direct physical memory map.
      * TODO: we should probably do this properly by walking the FDT (you need RAM + devices) but we currently just
      * map 32GiB.
      */
-    // This is the start of the 511th P4 entry - the very start of kernel space
-    // TODO: put this constant somewhere better once we've laid everything out properly
-    const PHYSICAL_MAP_BASE: VAddr = VAddr::new(0xffff_ff80_0000_0000);
     kernel_page_table
         .map_area(
             PHYSICAL_MAP_BASE,
@@ -136,7 +156,6 @@ pub fn seed_main(hart_id: u64, fdt_ptr: *const u8) -> ! {
             &MEMORY_MANAGER,
         )
         .unwrap();
-
 
     /*
      * Jump into the kernel by setting up the required state, and then moving to the new kernel page tables.
@@ -155,6 +174,7 @@ pub fn seed_main(hart_id: u64, fdt_ptr: *const u8) -> ! {
             ",
             new_satp = in(reg) kernel_page_table.satp().raw(),
             new_sp = in(reg) usize::from(kernel.stack_top),
+            in("a0") usize::from(boot_info_kernel_address),
             options(nostack, noreturn)
         )
     }

@@ -35,7 +35,7 @@ SECTIONS {
         *(.bss .bss.*)
 
         PROVIDE(_stack_bottom = .);
-        . += 64K;
+        . += 256K;
         PROVIDE(_stack_top = .);
     }
 

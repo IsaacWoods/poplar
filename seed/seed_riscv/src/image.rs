@@ -5,15 +5,13 @@
 
 use crate::memory::{self, MemoryManager, MemoryRegions, Region};
 use core::{ptr, slice};
-use hal::{
-    boot_info::Segment,
-    memory::{Flags, FrameAllocator, FrameSize, PAddr, Page, PageTable, Size4KiB, VAddr},
-};
+use hal::memory::{Flags, FrameAllocator, FrameSize, PAddr, Page, PageTable, Size4KiB, VAddr};
 use mer::{
     program::{ProgramHeader, SegmentType},
     Elf,
 };
 use poplar_util::math::align_up;
+use seed::boot_info::Segment;
 use tracing::info;
 
 pub fn extract_kernel(memory_regions: &mut MemoryRegions) -> Elf<'static> {

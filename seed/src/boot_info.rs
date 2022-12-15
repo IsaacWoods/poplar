@@ -12,7 +12,7 @@ use heapless::{String, Vec};
 
 pub const BOOT_INFO_MAGIC: u32 = 0xcafebabe;
 pub const MAX_MEMORY_MAP_ENTRIES: usize = 256;
-pub const MAX_LOADED_IMAGES: usize = 256;
+pub const MAX_LOADED_IMAGES: usize = 32;
 pub const MAX_IMAGE_NAME_LENGTH: usize = 32;
 pub const MAX_IMAGE_LOADED_SEGMENTS: usize = 3;
 pub const MAX_CAPABILITY_STREAM_LENGTH: usize = 32;
@@ -34,6 +34,9 @@ pub struct BootInfo {
 
     /// The physical address of the RSDP, the first ACPI table, if one is present.
     pub rsdp_address: Option<PAddr>,
+
+    /// The physical address of the device tree, if one is present.
+    pub fdt_address: Option<PAddr>,
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, Default, Debug)]
@@ -46,6 +49,10 @@ pub enum MemoryType {
     /// Memory that contains ACPI tables. After the OS has finished with them, this may be treated as conventional
     /// memory.
     AcpiReclaimable,
+
+    /// Memory that contains the Flattened Device Tree (FDT). After the OS has finished with the device tree, this
+    /// memory can be treated as conventional.
+    FdtReclaimable,
 
     /// Memory occupied by images that the loader has been asked to load from disk. If the kernel can determine
     /// that an image is no longer needed, it may use this memory.
