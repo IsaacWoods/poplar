@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"mod":[["boot_info","The “boot info” refers to a data structure passed from Seed to the kernel, telling it about the platform it’s running on, memory it can use, and about other objects Seed has been asked to load into memory."]]};

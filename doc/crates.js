@@ -1,1 +1,1 @@
-window.ALL_CRATES = ["bit_field","bitflags","cfg_if","hal","kernel","lock_api","log","num_traits","pci_types","poplar","poplar_util","proc_macro2","ptah","ptah_derive","quote","scopeguard","spin","syn","unicode_xid"];
+window.ALL_CRATES = ["bit_field","bitflags","byteorder","cfg_if","hal","hash32","heapless","kernel","lock_api","log","num_traits","pci_types","poplar","poplar_util","proc_macro2","ptah","ptah_derive","quote","scopeguard","seed","spin","stable_deref_trait","syn","unicode_xid"];
