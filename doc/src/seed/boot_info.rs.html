@@ -142,6 +142,13 @@
 <a href="#142" id="142">142</a>
 <a href="#143" id="143">143</a>
 <a href="#144" id="144">144</a>
+<a href="#145" id="145">145</a>
+<a href="#146" id="146">146</a>
+<a href="#147" id="147">147</a>
+<a href="#148" id="148">148</a>
+<a href="#149" id="149">149</a>
+<a href="#150" id="150">150</a>
+<a href="#151" id="151">151</a>
 </pre><pre class="rust"><code><span class="doccomment">//! The &quot;boot info&quot; refers to a data structure passed from Seed to the kernel, telling it about the platform it&#39;s
 //! running on, memory it can use, and about other objects Seed has been asked to load into memory.
 //!
@@ -156,7 +163,7 @@
 
 <span class="kw">pub const </span>BOOT_INFO_MAGIC: u32 = <span class="number">0xcafebabe</span>;
 <span class="kw">pub const </span>MAX_MEMORY_MAP_ENTRIES: usize = <span class="number">256</span>;
-<span class="kw">pub const </span>MAX_LOADED_IMAGES: usize = <span class="number">256</span>;
+<span class="kw">pub const </span>MAX_LOADED_IMAGES: usize = <span class="number">32</span>;
 <span class="kw">pub const </span>MAX_IMAGE_NAME_LENGTH: usize = <span class="number">32</span>;
 <span class="kw">pub const </span>MAX_IMAGE_LOADED_SEGMENTS: usize = <span class="number">3</span>;
 <span class="kw">pub const </span>MAX_CAPABILITY_STREAM_LENGTH: usize = <span class="number">32</span>;
@@ -178,6 +185,9 @@
 
     <span class="doccomment">/// The physical address of the RSDP, the first ACPI table, if one is present.
     </span><span class="kw">pub </span>rsdp_address: <span class="prelude-ty">Option</span>&lt;PAddr&gt;,
+
+    <span class="doccomment">/// The physical address of the device tree, if one is present.
+    </span><span class="kw">pub </span>fdt_address: <span class="prelude-ty">Option</span>&lt;PAddr&gt;,
 }
 
 <span class="attr">#[derive(Clone, Copy, PartialEq, Eq, Default, Debug)]
@@ -190,6 +200,10 @@
     <span class="doccomment">/// Memory that contains ACPI tables. After the OS has finished with them, this may be treated as conventional
     /// memory.
     </span>AcpiReclaimable,
+
+    <span class="doccomment">/// Memory that contains the Flattened Device Tree (FDT). After the OS has finished with the device tree, this
+    /// memory can be treated as conventional.
+    </span>FdtReclaimable,
 
     <span class="doccomment">/// Memory occupied by images that the loader has been asked to load from disk. If the kernel can determine
     /// that an image is no longer needed, it may use this memory.
