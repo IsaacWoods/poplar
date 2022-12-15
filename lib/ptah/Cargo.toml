@@ -11,6 +11,7 @@ license = "MIT OR Apache-2.0"
 
 [dependencies]
 ptah_derive = { version = "0.1.0", optional = true }
+heapless = { version = "0.7.16", optional = true }
 
 [patch.crates-io]
 ptah_derive = { path = "ptah_derive" }

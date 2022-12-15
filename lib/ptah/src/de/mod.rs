@@ -1,5 +1,8 @@
 mod impls;
 
+#[cfg(feature = "heapless")]
+mod heapless;
+
 use crate::Handle;
 use core::{convert::TryInto, str};
 

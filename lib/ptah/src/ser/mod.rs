@@ -1,5 +1,8 @@
 mod impls;
 
+#[cfg(feature = "heapless")]
+mod heapless;
+
 use crate::Writer;
 
 /// Errors that can occur during serialization.
