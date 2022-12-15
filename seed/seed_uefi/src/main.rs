@@ -84,7 +84,7 @@ fn efi_main(image_handle: Handle, mut system_table: SystemTable<Boot>) -> Status
             .boot_services()
             .allocate_pages(AllocateType::AnyPages, BOOT_INFO_MEMORY_TYPE, boot_info_needed_frames)
             .unwrap();
-        let identity_boot_info_ptr = VAddr::new(boot_info_physical_start as usize).mut_ptr() as *mut BootInfo;
+        let identity_boot_info_ptr = boot_info_physical_start as *mut BootInfo;
         unsafe {
             ptr::write(identity_boot_info_ptr, BootInfo::default());
         }
