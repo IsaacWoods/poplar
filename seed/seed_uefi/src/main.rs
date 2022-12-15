@@ -8,13 +8,11 @@ mod logger;
 
 use allocator::BootFrameAllocator;
 use core::{arch::asm, fmt::Write, mem, mem::MaybeUninit, panic::PanicInfo, ptr, slice};
-use hal::{
-    boot_info::{BootInfo, VideoModeInfo},
-    memory::{kibibytes, Bytes, Flags, FrameAllocator, FrameSize, PAddr, Page, PageTable, Size4KiB, VAddr},
-};
+use hal::memory::{kibibytes, Bytes, Flags, FrameAllocator, FrameSize, PAddr, Page, PageTable, Size4KiB, VAddr};
 use hal_x86_64::paging::PageTableImpl;
 use log::{error, info};
 use logger::Logger;
+use seed::boot_info::{BootInfo, VideoModeInfo};
 use uefi::{
     prelude::*,
     proto::{console::gop::GraphicsOutput, loaded_image::LoadedImage},
@@ -108,7 +106,7 @@ fn efi_main(image_handle: Handle, mut system_table: SystemTable<Boot>) -> Status
             .unwrap();
         (boot_info_virtual_address, unsafe { &mut *identity_boot_info_ptr })
     };
-    boot_info.magic = hal::boot_info::BOOT_INFO_MAGIC;
+    boot_info.magic = seed::boot_info::BOOT_INFO_MAGIC;
     boot_info.video_mode = Some(video_mode);
     boot_info.rsdp_address = find_rsdp(&system_table);
 
@@ -130,7 +128,7 @@ fn efi_main(image_handle: Handle, mut system_table: SystemTable<Boot>) -> Status
      */
     // boot_info
     //     .loaded_images
-    //     .add_image(image::load_image(
+    //     .push(image::load_image(
     //         system_table.boot_services(),
     //         loaded_image_protocol.device(),
     //         "test_syscalls",
@@ -139,7 +137,7 @@ fn efi_main(image_handle: Handle, mut system_table: SystemTable<Boot>) -> Status
     //     .unwrap();
     // boot_info
     //     .loaded_images
-    //     .add_image(image::load_image(
+    //     .push(image::load_image(
     //         system_table.boot_services(),
     //         loaded_image_protocol.device(),
     //         "test1",
@@ -148,7 +146,7 @@ fn efi_main(image_handle: Handle, mut system_table: SystemTable<Boot>) -> Status
     //     .unwrap();
     boot_info
         .loaded_images
-        .add_image(image::load_image(
+        .push(image::load_image(
             system_table.boot_services(),
             loaded_image_protocol.device(),
             "simple_fb",
@@ -157,7 +155,7 @@ fn efi_main(image_handle: Handle, mut system_table: SystemTable<Boot>) -> Status
         .unwrap();
     boot_info
         .loaded_images
-        .add_image(image::load_image(
+        .push(image::load_image(
             system_table.boot_services(),
             loaded_image_protocol.device(),
             "platform_bus",
@@ -166,7 +164,7 @@ fn efi_main(image_handle: Handle, mut system_table: SystemTable<Boot>) -> Status
         .unwrap();
     boot_info
         .loaded_images
-        .add_image(image::load_image(
+        .push(image::load_image(
             system_table.boot_services(),
             loaded_image_protocol.device(),
             "pci_bus",
@@ -175,7 +173,7 @@ fn efi_main(image_handle: Handle, mut system_table: SystemTable<Boot>) -> Status
         .unwrap();
     boot_info
         .loaded_images
-        .add_image(image::load_image(
+        .push(image::load_image(
             system_table.boot_services(),
             loaded_image_protocol.device(),
             "usb_bus_xhci",
@@ -291,7 +289,7 @@ fn process_memory_map<'a, A, P>(
     A: FrameAllocator<Size4KiB>,
     P: PageTable<Size4KiB>,
 {
-    use hal::boot_info::{MemoryMapEntry, MemoryType as BootInfoMemoryType};
+    use seed::boot_info::{MemoryMapEntry, MemoryType as BootInfoMemoryType};
 
     /*
      * To know how much physical memory to map, we keep track of the largest physical address that appears in
@@ -350,7 +348,7 @@ fn process_memory_map<'a, A, P>(
             ($type: expr) => {{
                 boot_info
                     .memory_map
-                    .add_entry(MemoryMapEntry {
+                    .push(MemoryMapEntry {
                         start: PAddr::new(entry.phys_start as usize).unwrap(),
                         size: entry.page_count as usize * Size4KiB::SIZE,
                         memory_type: $type,
@@ -443,7 +441,7 @@ fn create_framebuffer(
     requested_width: usize,
     requested_height: usize,
 ) -> VideoModeInfo {
-    use hal::boot_info::PixelFormat;
+    use seed::boot_info::PixelFormat;
     use uefi::proto::console::gop::PixelFormat as GopFormat;
 
     // Make an initial call to find how many handles we need to search

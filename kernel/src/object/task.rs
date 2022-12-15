@@ -78,7 +78,7 @@ where
     pub fn from_boot_info(
         owner: KernelObjectId,
         address_space: Arc<AddressSpace<P>>,
-        image: &hal::boot_info::LoadedImage,
+        image: &seed::boot_info::LoadedImage,
         allocator: &PhysicalMemoryManager,
         kernel_page_table: &mut P::PageTable,
         kernel_stack_allocator: &mut KernelStackAllocator<P>,
@@ -98,7 +98,7 @@ where
         Ok(Arc::new(Task {
             id,
             owner,
-            name: String::from(image.name()),
+            name: String::from(image.name.as_str()),
             address_space,
             state: Mutex::new(TaskState::Ready),
             capabilities: decode_capabilities(&image.capability_stream)?,

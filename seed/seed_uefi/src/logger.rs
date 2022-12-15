@@ -1,8 +1,8 @@
 use core::fmt;
 use gfxconsole::{Bgr32, Format, Framebuffer, GfxConsole, Pixel, Rgb32};
-use hal::boot_info::VideoModeInfo;
 use hal_x86_64::hw::serial::SerialPort;
 use log::{LevelFilter, Log, Metadata, Record};
+use seed::boot_info::VideoModeInfo;
 use spin::Mutex;
 
 pub static LOGGER: Mutex<Logger> = Mutex::new(Logger::Uninit);
@@ -39,7 +39,7 @@ impl Logger {
     pub fn initialize(video_mode: &VideoModeInfo) {
         match video_mode {
             VideoModeInfo { framebuffer_address, pixel_format, width, height, stride } => match pixel_format {
-                hal::boot_info::PixelFormat::Rgb32 => {
+                seed::boot_info::PixelFormat::Rgb32 => {
                     let framebuffer = Framebuffer {
                         ptr: usize::from(*framebuffer_address) as *mut Pixel<Rgb32>,
                         width: *width,
@@ -55,7 +55,7 @@ impl Logger {
                         ),
                     };
                 }
-                hal::boot_info::PixelFormat::Bgr32 => {
+                seed::boot_info::PixelFormat::Bgr32 => {
                     let framebuffer = Framebuffer {
                         ptr: usize::from(*framebuffer_address) as *mut Pixel<Bgr32>,
                         width: *width,

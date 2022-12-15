@@ -9,6 +9,7 @@ rlibc = "1"
 kernel = { path = "../" }
 hal = { path = "../../lib/hal" }
 hal_x86_64 = { path = "../../lib/hal_x86_64" }
+seed = { path = "../../seed" }
 spin = "0.9.2"
 log = "0.4"
 bit_field = "0.10"

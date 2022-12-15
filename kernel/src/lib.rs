@@ -25,10 +25,7 @@ pub mod syscall;
 use crate::memory::Stack;
 use alloc::{boxed::Box, sync::Arc};
 use core::pin::Pin;
-use hal::{
-    boot_info::LoadedImage,
-    memory::{FrameSize, PageTable, VAddr},
-};
+use hal::memory::{FrameSize, PageTable, VAddr};
 use heap_allocator::LockedHoleAllocator;
 use memory::{KernelStackAllocator, PhysicalMemoryManager};
 use object::{address_space::AddressSpace, memory_object::MemoryObject, task::Task, KernelObject, KernelObjectId};
@@ -37,6 +34,7 @@ use pci_types::ConfigRegionAccess as PciConfigRegionAccess;
 use per_cpu::PerCpu;
 use poplar_util::InitGuard;
 use scheduler::Scheduler;
+use seed::boot_info::LoadedImage;
 use spin::{Mutex, RwLock};
 
 #[cfg(not(test))]
@@ -101,7 +99,7 @@ pub fn load_task<P>(
     )
     .expect("Failed to load initial task");
 
-    for segment in image.segments() {
+    for segment in &image.segments {
         let memory_object = MemoryObject::from_boot_info(task.id(), segment);
         address_space.map_memory_object(memory_object, None, allocator).unwrap();
     }
@@ -109,12 +107,10 @@ pub fn load_task<P>(
     scheduler.add_task(task);
 }
 
-pub fn create_framebuffer(video_info: &hal::boot_info::VideoModeInfo) {
-    use hal::{
-        boot_info::PixelFormat as BootPixelFormat,
-        memory::{Flags, Size4KiB},
-    };
+pub fn create_framebuffer(video_info: &seed::boot_info::VideoModeInfo) {
+    use hal::memory::{Flags, Size4KiB};
     use poplar::syscall::{FramebufferInfo, PixelFormat};
+    use seed::boot_info::PixelFormat as BootPixelFormat;
 
     // We only support RGB32 and BGR32 pixel formats so BPP will always be 4 for now.
     const BPP: usize = 4;

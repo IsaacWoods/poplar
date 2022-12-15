@@ -5,6 +5,7 @@ authors = ["Isaac Woods"]
 edition = "2021"
 
 [dependencies]
+seed = { path = ".." }
 hal = { path = "../../lib/hal/" }
 hal_riscv = { path = "../../lib/hal_riscv/" }
 poplar_util = { path = "../../lib/poplar_util/" }

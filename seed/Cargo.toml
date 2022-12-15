@@ -5,6 +5,8 @@ authors = ["Isaac Woods"]
 edition = "2021"
 
 [dependencies]
+hal = { path = "../lib/hal" }
+heapless = "0.7.16"
 
 [workspace]
 members = ["seed_uefi", "seed_riscv"]

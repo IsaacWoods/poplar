@@ -7,10 +7,8 @@ pub use slab_allocator::SlabAllocator;
 
 use buddy_allocator::BuddyAllocator;
 use core::ops::Range;
-use hal::{
-    boot_info::BootInfo,
-    memory::{Frame, FrameAllocator, FrameSize, PAddr, VAddr},
-};
+use hal::memory::{Frame, FrameAllocator, FrameSize, PAddr, VAddr};
+use seed::boot_info::BootInfo;
 use spin::Mutex;
 
 pub struct PhysicalMemoryManager {
@@ -21,8 +19,8 @@ impl PhysicalMemoryManager {
     pub fn new(boot_info: &BootInfo) -> PhysicalMemoryManager {
         let mut buddy_allocator = BuddyAllocator::new();
 
-        for entry in boot_info.memory_map.entries() {
-            if entry.memory_type == hal::boot_info::MemoryType::Conventional {
+        for entry in &boot_info.memory_map {
+            if entry.memory_type == seed::boot_info::MemoryType::Conventional {
                 buddy_allocator.add_range(entry.frame_range());
             }
         }

@@ -1,9 +1,7 @@
 use super::{alloc_kernel_object_id, KernelObject, KernelObjectId};
 use alloc::sync::Arc;
-use hal::{
-    boot_info::Segment,
-    memory::{Flags, PAddr, VAddr},
-};
+use hal::memory::{Flags, PAddr, VAddr};
+use seed::boot_info::Segment;
 
 pub struct MemoryObject {
     pub id: KernelObjectId,

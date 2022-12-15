@@ -18,10 +18,7 @@ use acpi_handler::{AmlHandler, PoplarAcpiHandler};
 use alloc::{alloc::Global, boxed::Box, sync::Arc};
 use aml::AmlContext;
 use core::{panic::PanicInfo, pin::Pin, time::Duration};
-use hal::{
-    boot_info::BootInfo,
-    memory::{Frame, PAddr, VAddr},
-};
+use hal::memory::{Frame, PAddr, VAddr};
 use hal_x86_64::{hw::registers::read_control_reg, kernel_map, paging::PageTableImpl};
 use interrupts::InterruptController;
 use kernel::{
@@ -33,6 +30,7 @@ use kernel::{
 use log::{error, info};
 use pci::PciResolver;
 use per_cpu::PerCpuImpl;
+use seed::boot_info::BootInfo;
 use spin::Mutex;
 use topo::Topology;
 
@@ -78,7 +76,7 @@ pub extern "C" fn kentry(boot_info: &BootInfo) -> ! {
     log::set_max_level(log::LevelFilter::Trace);
     info!("Poplar kernel is running");
 
-    if boot_info.magic != hal::boot_info::BOOT_INFO_MAGIC {
+    if boot_info.magic != seed::boot_info::BOOT_INFO_MAGIC {
         panic!("Boot info magic is not correct!");
     }
 
@@ -224,8 +222,8 @@ pub extern "C" fn kentry(boot_info: &BootInfo) -> ! {
     /*
      * Create kernel objects from loaded images and schedule them.
      */
-    info!("Loading {} initial tasks to the ready queue", boot_info.loaded_images.num_images);
-    for image in boot_info.loaded_images.images() {
+    info!("Loading {} initial tasks to the ready queue", boot_info.loaded_images.len());
+    for image in &boot_info.loaded_images {
         kernel::load_task(
             &mut PlatformImpl::per_cpu().scheduler(),
             image,

@@ -1,8 +1,5 @@
 use core::{ptr, slice, str};
-use hal::{
-    boot_info::{LoadedImage, Segment, MAX_CAPABILITY_STREAM_LENGTH},
-    memory::{Flags, FrameAllocator, FrameSize, PAddr, Page, PageTable, Size4KiB, VAddr},
-};
+use hal::memory::{Flags, FrameAllocator, FrameSize, PAddr, Page, PageTable, Size4KiB, VAddr};
 use hal_x86_64::kernel_map;
 use log::info;
 use mer::{
@@ -10,6 +7,7 @@ use mer::{
     Elf,
 };
 use poplar_util::math;
+use seed::boot_info::{LoadedImage, Segment, MAX_CAPABILITY_STREAM_LENGTH};
 use uefi::{
     proto::media::{
         file::{File, FileAttribute, FileInfo, FileMode, FileType},
@@ -107,22 +105,16 @@ pub fn load_image(boot_services: &BootServices, volume_handle: Handle, name: &st
 
     let mut image_data = LoadedImage::default();
     image_data.entry_point = VAddr::new(elf.entry_point());
-
-    let name_bytes = name.as_bytes();
-    if name_bytes.len() > hal::boot_info::MAX_IMAGE_NAME_LENGTH {
-        panic!("Image's name is too long: '{}'!", name);
-    }
-    image_data.name_length = name_bytes.len() as u8;
-    (&mut image_data.name[0..name_bytes.len()]).copy_from_slice(name_bytes);
+    image_data.name = heapless::String::from(name);
 
     for segment in elf.segments() {
         match segment.segment_type() {
             SegmentType::Load if segment.mem_size > 0 => {
                 let segment = load_segment(boot_services, segment, crate::IMAGE_MEMORY_TYPE, &elf, true);
 
-                match image_data.add_segment(segment) {
+                match image_data.segments.push(segment) {
                     Ok(()) => (),
-                    Err(()) => panic!("Image at '{}' has too many load segments!", path),
+                    Err(_) => panic!("Image at '{}' has too many load segments!", path),
                 }
             }
 

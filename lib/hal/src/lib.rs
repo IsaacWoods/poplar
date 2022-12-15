@@ -5,5 +5,4 @@
 #[macro_use]
 extern crate std;
 
-pub mod boot_info;
 pub mod memory;
