@@ -202,6 +202,8 @@ impl MemoryManager {
 
             prev = Some(node_ptr);
         }
+
+        inner.regions = Some(regions);
     }
 
     pub fn walk_usable_memory(&self) {
@@ -215,6 +217,57 @@ impl MemoryManager {
             current_node = inner_node.next;
         }
         trace!("Finished tracing usable memory");
+    }
+
+    pub fn populate_memory_map(&self, memory_map: &mut seed::boot_info::MemoryMap) {
+        use seed::boot_info::{MemoryMapEntry, MemoryType};
+
+        trace!("Populating memory map from gathered regions");
+        let mut inner = self.0.lock();
+
+        for region in &inner.regions.as_ref().unwrap().0 {
+            trace!("Considering region: {:?}", region);
+
+            /*
+             * First, we walk the region map.
+             */
+            match region.typ {
+                // For usable regions, we need to check if any of it has already been allocated. We ignore these
+                // regions here and instead walk the free list.
+                RegionType::Usable => (),
+                RegionType::Reserved(Usage::Firmware) => (),
+                RegionType::Reserved(Usage::DeviceTree) => memory_map
+                    .push(MemoryMapEntry::new(MemoryType::FdtReclaimable, region.address, region.size))
+                    .unwrap(),
+                RegionType::Reserved(Usage::Seed) => memory_map
+                    .push(MemoryMapEntry::new(MemoryType::Conventional, region.address, region.size))
+                    .unwrap(),
+                RegionType::Reserved(Usage::KernelImage) => (),
+                RegionType::Reserved(Usage::Unknown) => (),
+            }
+        }
+
+        /*
+         * We now walk the free list to reconstruct a map of usable memory.
+         */
+        let mut current_node = inner.usable_head;
+        while let Some(node) = current_node {
+            let inner_node = unsafe { *node.as_ptr() };
+            trace!("Found some usable memory at {:#x}, {} bytes of it!", node.as_ptr().addr(), inner_node.size);
+            memory_map.push(MemoryMapEntry::new(
+                MemoryType::Conventional,
+                PAddr::new(node.as_ptr().addr()).unwrap(),
+                inner_node.size,
+            ));
+            current_node = inner_node.next;
+        }
+
+        /*
+         * From this point, we don't want the bootloader to make any more allocations. We prevent this by removing
+         * all allocatable memory.
+         */
+        inner.usable_head = None;
+        inner.usable_tail = None;
     }
 }
 
