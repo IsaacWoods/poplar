@@ -348,11 +348,11 @@ fn process_memory_map<'a, A, P>(
             ($type: expr) => {{
                 boot_info
                     .memory_map
-                    .push(MemoryMapEntry {
-                        start: PAddr::new(entry.phys_start as usize).unwrap(),
-                        size: entry.page_count as usize * Size4KiB::SIZE,
-                        memory_type: $type,
-                    })
+                    .push(MemoryMapEntry::new(
+                        $type,
+                        PAddr::new(entry.phys_start as usize).unwrap(),
+                        entry.page_count as usize * Size4KiB::SIZE,
+                    ))
                     .expect("Run out of memory entry slots in boot info");
             }};
         }

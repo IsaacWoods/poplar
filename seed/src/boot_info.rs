@@ -17,6 +17,8 @@ pub const MAX_IMAGE_NAME_LENGTH: usize = 32;
 pub const MAX_IMAGE_LOADED_SEGMENTS: usize = 3;
 pub const MAX_CAPABILITY_STREAM_LENGTH: usize = 32;
 
+pub type MemoryMap = Vec<MemoryMapEntry, MAX_MEMORY_MAP_ENTRIES>;
+
 #[derive(Default, Debug)]
 #[repr(C)]
 pub struct BootInfo {
@@ -24,8 +26,8 @@ pub struct BootInfo {
 
     /// Map of available memory that the kernel. This only includes ranges of memory that can be freely used at
     /// some point, and so memory used for e.g. UEFI runtime services are simply not included. The kernel must
-    /// assume that memory not features in this map is not available for use.
-    pub memory_map: Vec<MemoryMapEntry, MAX_MEMORY_MAP_ENTRIES>,
+    /// assume that memory not featured in this map is not available for use.
+    pub memory_map: MemoryMap,
 
     pub loaded_images: Vec<LoadedImage, MAX_LOADED_IMAGES>,
     pub video_mode: Option<VideoModeInfo>,
@@ -79,12 +81,16 @@ pub enum MemoryType {
 #[derive(Clone, Copy, Default)]
 #[repr(C)]
 pub struct MemoryMapEntry {
-    pub memory_type: MemoryType,
+    pub typ: MemoryType,
     pub start: PAddr,
-    pub size: usize,
+    pub size: Bytes,
 }
 
 impl MemoryMapEntry {
+    pub fn new(typ: MemoryType, start: PAddr, size: Bytes) -> MemoryMapEntry {
+        MemoryMapEntry { typ, start, size }
+    }
+
     pub fn address_range(&self) -> Range<PAddr> {
         self.start..(self.start + self.size)
     }
@@ -96,7 +102,7 @@ impl MemoryMapEntry {
 
 impl fmt::Debug for MemoryMapEntry {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "({:#x?}..{:#x?}) => {:?}", self.start, self.start + self.size, self.memory_type)
+        write!(f, "({:#x?}..{:#x?}) => {:?}", self.start, self.start + self.size, self.typ)
     }
 }
 

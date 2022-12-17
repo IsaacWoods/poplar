@@ -20,7 +20,7 @@ impl PhysicalMemoryManager {
         let mut buddy_allocator = BuddyAllocator::new();
 
         for entry in &boot_info.memory_map {
-            if entry.memory_type == seed::boot_info::MemoryType::Conventional {
+            if entry.typ == seed::boot_info::MemoryType::Conventional {
                 buddy_allocator.add_range(entry.frame_range());
             }
         }
