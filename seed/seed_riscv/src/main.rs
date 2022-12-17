@@ -119,9 +119,11 @@ pub fn seed_main(hart_id: u64, fdt_ptr: *const u8) -> ! {
 
     let mut kernel_page_table = PageTableImpl::new(MEMORY_MANAGER.allocate(), VAddr::new(0x0));
     let kernel = image::load_kernel(kernel_elf, &mut kernel_page_table, &MEMORY_MANAGER);
+    let mut next_available_address_after_kernel = kernel.next_available_address;
 
     /*
-     * Allocate memory for the boot info and start filling it out.
+     * Allocate memory for the boot info and start filling it out. We dynamically map the boot info into the
+     * address space after the kernel.
      */
     use hal_riscv::kernel_map::PHYSICAL_MAP_BASE;
     let (boot_info_kernel_address, boot_info) = {
@@ -131,10 +133,21 @@ pub fn seed_main(hart_id: u64, fdt_ptr: *const u8) -> ! {
         unsafe {
             ptr::write(identity_boot_info_ptr, BootInfo::default());
         }
-        // TODO: map the boot info into the kernel address space and pass it to the kernel
-        // XXX: at the moment this points into the physical map. This will obvs work but I think it'd be nicer to
-        // map it for real
-        (PHYSICAL_MAP_BASE + usize::from(boot_info_physical_start), unsafe { &mut *identity_boot_info_ptr })
+
+        let boot_info_kernel_address = next_available_address_after_kernel;
+        next_available_address_after_kernel += align_up(mem::size_of::<BootInfo>(), Size4KiB::SIZE);
+
+        kernel_page_table
+            .map_area(
+                boot_info_kernel_address,
+                boot_info_physical_start,
+                align_up(mem::size_of::<BootInfo>(), Size4KiB::SIZE),
+                Flags::default(),
+                &MEMORY_MANAGER,
+            )
+            .unwrap();
+
+        (boot_info_kernel_address, unsafe { &mut *identity_boot_info_ptr })
     };
     boot_info.magic = seed::boot_info::BOOT_INFO_MAGIC;
     boot_info.fdt_address = Some(PAddr::new(fdt_ptr as usize).unwrap());

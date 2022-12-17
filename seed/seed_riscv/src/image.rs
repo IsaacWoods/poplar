@@ -6,6 +6,7 @@
 use crate::memory::{self, MemoryManager, MemoryRegions, Region};
 use core::{ptr, slice};
 use hal::memory::{Flags, FrameAllocator, FrameSize, PAddr, Page, PageTable, Size4KiB, VAddr};
+use hal_riscv::kernel_map;
 use mer::{
     program::{ProgramHeader, SegmentType},
     Elf,
@@ -41,6 +42,10 @@ pub fn extract_kernel(memory_regions: &mut MemoryRegions) -> Elf<'static> {
 pub struct LoadedKernel {
     pub entry_point: VAddr,
     pub stack_top: VAddr,
+
+    /// The kernel is loaded to the base of the kernel address space, and then we dynamically map stuff into the
+    /// space after it. This is the address of the first available page after the loaded kernel.
+    pub next_available_address: VAddr,
 }
 
 pub fn load_kernel<P>(elf: Elf<'_>, page_table: &mut P, memory_manager: &MemoryManager) -> LoadedKernel
@@ -48,12 +53,20 @@ where
     P: PageTable<Size4KiB>,
 {
     let entry_point = VAddr::new(elf.entry_point());
+    let mut next_available_address = kernel_map::KERNEL_BASE;
 
     for segment in elf.segments() {
         match segment.segment_type() {
             SegmentType::Load if segment.mem_size > 0 => {
-                info!("Load segment at {:#x}", segment.virtual_address);
                 let segment = load_segment(segment, &elf, false, memory_manager);
+
+                /*
+                 * If this segment loads past `next_available_address`, update it.
+                 */
+                if (segment.virtual_address + segment.size) > next_available_address {
+                    next_available_address =
+                        (Page::<Size4KiB>::contains(segment.virtual_address + segment.size) + 1).start;
+                }
 
                 assert!(
                     segment.virtual_address.is_aligned(Size4KiB::SIZE),
@@ -92,7 +105,7 @@ where
     assert!(guard_page_address.is_aligned(Size4KiB::SIZE), "Guard page address is not page aligned");
     page_table.unmap::<Size4KiB>(Page::starts_with(guard_page_address));
 
-    LoadedKernel { entry_point, stack_top }
+    LoadedKernel { entry_point, stack_top, next_available_address }
 }
 
 fn load_segment(
