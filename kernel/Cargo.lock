@@ -180,6 +180,7 @@ dependencies = [
 name = "kernel_riscv"
 version = "0.1.0"
 dependencies = [
+ "hal",
  "hal_riscv",
  "seed",
 ]

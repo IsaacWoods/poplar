@@ -120,13 +120,10 @@ pub fn seed_main(hart_id: u64, fdt_ptr: *const u8) -> ! {
     let mut kernel_page_table = PageTableImpl::new(MEMORY_MANAGER.allocate(), VAddr::new(0x0));
     let kernel = image::load_kernel(kernel_elf, &mut kernel_page_table, &MEMORY_MANAGER);
 
-    // This is the start of the 511th P4 entry - the very start of kernel space
-    // TODO: put this constant somewhere better once we've laid everything out properly
-    const PHYSICAL_MAP_BASE: VAddr = VAddr::new(0xffff_ff80_0000_0000);
-
     /*
      * Allocate memory for the boot info and start filling it out.
      */
+    use hal_riscv::kernel_map::PHYSICAL_MAP_BASE;
     let (boot_info_kernel_address, boot_info) = {
         let boot_info_physical_start =
             MEMORY_MANAGER.allocate_n(Size4KiB::frames_needed(mem::size_of::<BootInfo>())).start.start;

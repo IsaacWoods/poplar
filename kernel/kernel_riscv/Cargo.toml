@@ -5,5 +5,6 @@ authors = ["Isaac Woods"]
 edition = "2021"
 
 [dependencies]
+hal = { path = "../../lib/hal" }
 hal_riscv = { path = "../../lib/hal_riscv" }
 seed = { path = "../../seed" }

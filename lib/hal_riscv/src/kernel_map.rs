@@ -1,11 +1,14 @@
-//! This module contains constants that define how the kernel address space is laid out on x86_64. The 511th P4
-//! entry (virtual addresses `0xffff_ff80_0000_0000` through `0xffff_ffff_ffff_ffff`) is always mapped to the
-//! kernel P3. The rest of the virtual address space (virtual addresses `0x0000_0000_0000_0000` through
+//! This module contains constants that define how the kernel address space is laid out on RISC-V (specifically
+//! using the Sv48 paging model). It is very similar to the layout on `x86_64`, as the structure of the page tables
+//! are almost identical on the two architectures.
+//!
+//! The 511th P4 entry (virtual addresses `0xffff_ff80_0000_0000` through `0xffff_ffff_ffff_ffff`) is always mapped
+//! to the kernel P3. The rest of the virtual address space (virtual addresses `0x0000_0000_0000_0000` through
 //! `0xffff_ff7f_ffff_ffff`) are free for userspace to use.
 //!
-//! This gives us 512 GiB of kernel space. The kernel itself is built with the `kernel` mc-model, and so must lie
-//! in the -2GiB of the address space (the top two entries of the kernel P3). The remaining 510 GiB of the kernel
-//! P3 is used to map the entirety of physical memory into the kernel address space, and for task kernel stacks.
+//! This gives us 512 GiB of kernel space. The kernel itself lies within the top 2GiB of the address space (the top
+//! two entries of the kernel P3). The remaining 510 GiB of the kernel P3 is used to map the entirety of physical
+//! memory into the kernel address space, and for task kernel stacks.
 //!
 //! Directly below the base of the kernel, we reserve 128GiB for task kernel stacks, which gives us a maximum of
 //! 65536 tasks if each one has the default stack size.
@@ -18,7 +21,7 @@ use hal::memory::{mebibytes, Bytes, PAddr, VAddr};
 pub const KERNEL_P4_ENTRY: usize = 511;
 pub const KERNEL_ADDRESS_SPACE_START: VAddr = VAddr::new(0xffff_ff80_0000_0000);
 
-pub const PHYSICAL_MAPPING_BASE: VAddr = KERNEL_ADDRESS_SPACE_START;
+pub const PHYSICAL_MAP_BASE: VAddr = KERNEL_ADDRESS_SPACE_START;
 
 /// Access a given physical address through the physical mapping. This cannot be used until the kernel page tables
 /// have been switched to.
@@ -27,7 +30,7 @@ pub const PHYSICAL_MAPPING_BASE: VAddr = KERNEL_ADDRESS_SPACE_START;
 /// This itself is safe, because to cause memory unsafety a raw pointer must be created and accessed from the
 /// `VAddr`, which is unsafe.
 pub fn physical_to_virtual(address: PAddr) -> VAddr {
-    PHYSICAL_MAPPING_BASE + usize::from(address)
+    PHYSICAL_MAP_BASE + usize::from(address)
 }
 
 pub const KERNEL_STACKS_BASE: VAddr = VAddr::new(0xffff_ffdf_8000_0000);
