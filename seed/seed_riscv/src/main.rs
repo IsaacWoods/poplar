@@ -168,6 +168,24 @@ pub fn seed_main(hart_id: u64, fdt_ptr: *const u8) -> ! {
         .unwrap();
 
     /*
+     * Allocate the kernel heap and dynamically map it into the kernel address space.
+     */
+    const KERNEL_HEAP_SIZE: hal::memory::Bytes = hal::memory::kibibytes(800);
+    boot_info.heap_address = next_available_address_after_kernel;
+    next_available_address_after_kernel += KERNEL_HEAP_SIZE;
+    let kernel_heap_physical_start =
+        MEMORY_MANAGER.allocate_n(Size4KiB::frames_needed(KERNEL_HEAP_SIZE)).start.start;
+    kernel_page_table
+        .map_area(
+            boot_info.heap_address,
+            kernel_heap_physical_start,
+            KERNEL_HEAP_SIZE,
+            Flags { writable: true, ..Default::default() },
+            &MEMORY_MANAGER,
+        )
+        .unwrap();
+
+    /*
      * Now that we've finished allocating memory, we can create the memory map we pass to the kernel. From here, we
      * can't allocate physical memory from the bootloader.
      */
