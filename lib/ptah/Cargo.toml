@@ -5,7 +5,7 @@ members = ["ptah_derive"]
 name = "ptah"
 version = "0.2.0"
 authors = ["Isaac Woods"]
-edition = "2018"
+edition = "2021"
 description = "Rust implementation of Ptah, Poplar's message-passing format"
 license = "MIT OR Apache-2.0"
 
