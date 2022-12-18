@@ -6,7 +6,7 @@ sensitive resources (such as the raw framebuffer) to only select tasks.
 
 ### Encoding capabilities in the ELF image
 Capabilities are encoded in an entry of a `PT_NOTE` segment of the ELF image of a task. This entry will have an
-owner (sometimes referred to in documentation as the 'name') of `PEBBLE` and a type of `0`. The descriptor will be
+owner (sometimes referred to in documentation as the 'name') of `POPLAR` and a type of `0`. The descriptor will be
 an encoding of the capabilities as described by the 'Format' section. The descriptor must be padded such that the
 next descriptor is 4-byte aligned, and so a value of `0x00` is reserved to be used as padding.
 

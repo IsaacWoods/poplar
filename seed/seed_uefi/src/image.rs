@@ -123,7 +123,7 @@ pub fn load_image(boot_services: &BootServices, volume_handle: Handle, name: &st
                  * We want to search the note entries for one containing the task's capabilities (if this is an
                  * initial task). If there is one, we want to copy it into the info we pass to the kenrel.
                  */
-                const CAPABILITY_OWNER_STR: &str = "PEBBLE";
+                const CAPABILITY_OWNER_STR: &str = "POPLAR";
                 const CAPABILITY_ENTRY_TYPE: u32 = 0;
 
                 let caps = segment.iterate_note_entries(&elf).unwrap().find(|entry| {

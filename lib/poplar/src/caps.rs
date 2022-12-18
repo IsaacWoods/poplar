@@ -40,7 +40,7 @@ impl<const N: usize> CapabilitiesRepr<{ N }> {
             name_size: 6,
             desc_size: N as u32,
             entry_type: 0,
-            name: [b'P', b'E', b'B', b'B', b'L', b'E', b'\0', 0x00],
+            name: [b'P', b'O', b'P', b'L', b'A', b'R', 0x00, 0x00],
             desc: caps,
         }
     }
