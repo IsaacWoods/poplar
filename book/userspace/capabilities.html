@@ -148,7 +148,7 @@ move parts of the kernel into discrete userspace tasks by creating specialised c
 sensitive resources (such as the raw framebuffer) to only select tasks.</p>
 <h3 id="encoding-capabilities-in-the-elf-image"><a class="header" href="#encoding-capabilities-in-the-elf-image">Encoding capabilities in the ELF image</a></h3>
 <p>Capabilities are encoded in an entry of a <code>PT_NOTE</code> segment of the ELF image of a task. This entry will have an
-owner (sometimes referred to in documentation as the 'name') of <code>PEBBLE</code> and a type of <code>0</code>. The descriptor will be
+owner (sometimes referred to in documentation as the 'name') of <code>POPLAR</code> and a type of <code>0</code>. The descriptor will be
 an encoding of the capabilities as described by the 'Format' section. The descriptor must be padded such that the
 next descriptor is 4-byte aligned, and so a value of <code>0x00</code> is reserved to be used as padding.</p>
 <p>Initial images (tasks loaded by the bootloader before filesystem drivers are working) are limited to a capabilities
