@@ -172,6 +172,7 @@ pub fn seed_main(hart_id: u64, fdt_ptr: *const u8) -> ! {
      */
     const KERNEL_HEAP_SIZE: hal::memory::Bytes = hal::memory::kibibytes(800);
     boot_info.heap_address = next_available_address_after_kernel;
+    boot_info.heap_size = KERNEL_HEAP_SIZE;
     next_available_address_after_kernel += KERNEL_HEAP_SIZE;
     let kernel_heap_physical_start =
         MEMORY_MANAGER.allocate_n(Size4KiB::frames_needed(KERNEL_HEAP_SIZE)).start.start;

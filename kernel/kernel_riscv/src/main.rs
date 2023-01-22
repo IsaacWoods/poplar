@@ -7,8 +7,11 @@
 #![no_main]
 #![feature(panic_info_message, const_mut_refs, const_option)]
 
+extern crate alloc;
+
 mod logger;
 
+use alloc::vec::Vec;
 use seed::boot_info::BootInfo;
 use tracing::info;
 
@@ -21,6 +24,20 @@ pub extern "C" fn kentry(boot_info: &BootInfo) -> ! {
         panic!("Boot info has incorrect magic!");
     }
     info!("Boot info: {:#?}", boot_info);
+
+    /*
+     * Initialise the heap allocator. After this, the kernel is free to use collections etc. that
+     * can allocate on the heap through the global allocator.
+     */
+    info!("Initializing heap at {:#x} of size {} bytes", boot_info.heap_address, boot_info.heap_size);
+    unsafe {
+        kernel::ALLOCATOR.lock().init(boot_info.heap_address, boot_info.heap_size);
+    }
+
+    let foo = alloc::vec![1, 2, 4, 5, 6, 7, 9, 14];
+    for i in foo {
+        info!("Thing in foo: {}", i);
+    }
 
     loop {}
 }
