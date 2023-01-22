@@ -182,7 +182,11 @@ version = "0.1.0"
 dependencies = [
  "hal",
  "hal_riscv",
+ "poplar_util",
  "seed",
+ "spinning_top",
+ "tracing",
+ "tracing-core",
 ]
 
 [[package]]
