@@ -13,8 +13,11 @@ cfg_if::cfg_if! {
     if #[cfg(target_arch = "x86_64")] {
         pub mod raw_x86_64;
         pub use raw_x86_64 as raw;
+    } else if #[cfg(target_arch = "riscv64")] {
+        pub mod raw_riscv;
+        pub use raw_riscv as raw;
     } else {
-        compile_error!("poplar does not support this target architecture!");
+        compile_error!("Poplar does not support this target architecture!");
     }
 }
 

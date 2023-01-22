@@ -7,6 +7,7 @@ edition = "2021"
 [dependencies]
 hal = { path = "../../lib/hal" }
 hal_riscv = { path = "../../lib/hal_riscv" }
+kernel = { path = "../" }
 seed = { path = "../../seed" }
 tracing = { git = "https://github.com/tokio-rs/tracing", default-features = false }
 tracing-core = { git = "https://github.com/tokio-rs/tracing", default-features = false }
