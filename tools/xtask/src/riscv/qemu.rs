@@ -7,6 +7,7 @@ pub struct RunQemuRiscV {
     pub kernel: PathBuf,
 
     pub open_display: bool,
+    pub debug_int_firehose: bool,
 }
 
 impl RunQemuRiscV {
@@ -17,6 +18,7 @@ impl RunQemuRiscV {
             kernel,
 
             open_display: false,
+            debug_int_firehose: false,
         }
     }
 
@@ -28,6 +30,10 @@ impl RunQemuRiscV {
         Self { open_display, ..self }
     }
 
+    pub fn debug_int_firehose(self, enabled: bool) -> Self {
+        Self { debug_int_firehose: enabled, ..self }
+    }
+
     pub fn run(self) -> Result<()> {
         let mut qemu = Command::new("qemu-system-riscv64");
 
@@ -35,7 +41,9 @@ impl RunQemuRiscV {
         qemu.args(&["-m", "1G"]);
         qemu.args(&["-bios", self.opensbi.to_str().unwrap()]);
         qemu.args(&["-kernel", self.seed.to_str().unwrap()]);
-        qemu.args(&["-d", "int"]);
+        if self.debug_int_firehose {
+            qemu.args(&["-d", "int"]);
+        }
         // qemu.args(&["-fw_cfg", &format!("opt/poplar.kernel,file={}", self.kernel.to_str().unwrap())]);
         let kernel_size =
             File::open(self.kernel.clone()).expect("Failed to open kernel ELF").metadata().unwrap().len();
