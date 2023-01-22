@@ -215,11 +215,6 @@ pub fn seed_main(hart_id: u64, fdt_ptr: *const u8) -> ! {
     MEMORY_MANAGER.populate_memory_map(&mut boot_info.memory_map);
 
     /*
-     * Jump into the kernel by setting up the required state, and then moving to the new kernel page tables.
-     * Because we don't have Seed's code mapped, this causes a page-fault, and so we trap. We set the trap handler
-     * to the kernel's entry point, so this jumps us into the kernel.
-     */
-    /*
      * Jump into the kernel by setting the required state, moving to the new kernel page table, and then jumping to
      * the kernel's entry point.
      * TODO: before, we were trying to do this using a trick where we set the trap handler to the entry point, and
