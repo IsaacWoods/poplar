@@ -15,11 +15,11 @@ use bit_field::BitField;
 use core::{arch::asm, mem, ptr};
 use fdt::Fdt;
 use hal::memory::{Flags, FrameAllocator, FrameSize, PAddr, PageTable, Size4KiB, VAddr};
-use hal_riscv::{hw::csr::Stvec, paging::PageTableImpl};
+use hal_riscv::paging::PageTableImpl;
 use memory::{MemoryManager, MemoryRegions, Region};
 use poplar_util::{linker::LinkerSymbol, math::align_up};
 use seed::boot_info::BootInfo;
-use tracing::{info, trace};
+use tracing::info;
 
 /*
  * This is the entry-point jumped to from OpenSBI. It needs to be at the very start of the ELF, so we put it in its
@@ -186,6 +186,28 @@ pub fn seed_main(hart_id: u64, fdt_ptr: *const u8) -> ! {
         .unwrap();
 
     /*
+     * Identity-map all of Seed into the kernel's page tables, so we don't page fault when switching to them.
+     * TODO: this could maybe be reduced to just a tiny trampoline, maybe with linker symbols plus a custom section
+     * so we don't have to map as much, or removed entirely with the trick we talk about below.
+     */
+    let seed_size = align_up(unsafe { _seed_end.ptr() as usize - _seed_start.ptr() as usize }, Size4KiB::SIZE);
+    info!(
+        "Mapping seed: {:#x} to {:#x} ({} bytes)",
+        PAddr::new(unsafe { _seed_start.ptr() as usize }).unwrap(),
+        PAddr::new(unsafe { _seed_end.ptr() as usize }).unwrap(),
+        seed_size,
+    );
+    kernel_page_table
+        .map_area(
+            VAddr::new(unsafe { _seed_start.ptr() as usize }),
+            PAddr::new(unsafe { _seed_start.ptr() as usize }).unwrap(),
+            seed_size,
+            Flags { writable: false, executable: true, ..Default::default() },
+            &MEMORY_MANAGER,
+        )
+        .unwrap();
+
+    /*
      * Now that we've finished allocating memory, we can create the memory map we pass to the kernel. From here, we
      * can't allocate physical memory from the bootloader.
      */
@@ -196,7 +218,13 @@ pub fn seed_main(hart_id: u64, fdt_ptr: *const u8) -> ! {
      * Because we don't have Seed's code mapped, this causes a page-fault, and so we trap. We set the trap handler
      * to the kernel's entry point, so this jumps us into the kernel.
      */
-    Stvec::set(kernel.entry_point);
+    /*
+     * Jump into the kernel by setting the required state, moving to the new kernel page table, and then jumping to
+     * the kernel's entry point.
+     * TODO: before, we were trying to do this using a trick where we set the trap handler to the entry point, and
+     * then page fault to bounce into the kernel, but this wasn't working for unidentified reasons. Try again?
+     */
+    info!("Jumping into the kernel!");
     unsafe {
         asm!(
             "
@@ -205,11 +233,12 @@ pub fn seed_main(hart_id: u64, fdt_ptr: *const u8) -> ! {
 
                 csrw satp, {new_satp}
                 sfence.vma
-                unimp
+                jr {entry_point}
             ",
             new_satp = in(reg) kernel_page_table.satp().raw(),
             new_sp = in(reg) usize::from(kernel.stack_top),
             new_gp = in(reg) usize::from(kernel.global_pointer),
+            entry_point = in(reg) usize::from(kernel.entry_point),
             in("a0") usize::from(boot_info_kernel_address),
             options(nostack, noreturn)
         )

@@ -254,11 +254,13 @@ impl MemoryManager {
         while let Some(node) = current_node {
             let inner_node = unsafe { *node.as_ptr() };
             trace!("Found some usable memory at {:#x}, {} bytes of it!", node.as_ptr().addr(), inner_node.size);
-            memory_map.push(MemoryMapEntry::new(
-                MemoryType::Conventional,
-                PAddr::new(node.as_ptr().addr()).unwrap(),
-                inner_node.size,
-            ));
+            memory_map
+                .push(MemoryMapEntry::new(
+                    MemoryType::Conventional,
+                    PAddr::new(node.as_ptr().addr()).unwrap(),
+                    inner_node.size,
+                ))
+                .unwrap();
             current_node = inner_node.next;
         }
 
