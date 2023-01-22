@@ -42,6 +42,7 @@ pub fn extract_kernel(memory_regions: &mut MemoryRegions) -> Elf<'static> {
 pub struct LoadedKernel {
     pub entry_point: VAddr,
     pub stack_top: VAddr,
+    pub global_pointer: VAddr,
 
     /// The kernel is loaded to the base of the kernel address space, and then we dynamically map stuff into the
     /// space after it. This is the address of the first available page after the loaded kernel.
@@ -97,6 +98,11 @@ where
         None => panic!("Kernel does not have a '_stack_top' symbol!"),
     };
 
+    let global_pointer = match elf.symbols().find(|symbol| symbol.name(&elf) == Some("__global_pointer$")) {
+        Some(symbol) => VAddr::new(symbol.value as usize),
+        None => panic!("Kernel does not have a '__global_pointer$' symbol!"),
+    };
+
     // Unmap the stack guard page
     let guard_page_address = match elf.symbols().find(|symbol| symbol.name(&elf) == Some("_guard_page")) {
         Some(symbol) => VAddr::new(symbol.value as usize),
@@ -105,7 +111,7 @@ where
     assert!(guard_page_address.is_aligned(Size4KiB::SIZE), "Guard page address is not page aligned");
     page_table.unmap::<Size4KiB>(Page::starts_with(guard_page_address));
 
-    LoadedKernel { entry_point, stack_top, next_available_address }
+    LoadedKernel { entry_point, stack_top, global_pointer, next_available_address }
 }
 
 fn load_segment(

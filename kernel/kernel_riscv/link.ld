@@ -37,7 +37,7 @@ SECTIONS {
         *(.sdata .sdata.*)
     } :data
 
-    PROVIDE(_global_pointer$ = .);
+    __global_pointer$ = .;
     PROVIDE(_bss_start = .);
 
     .sbss : ALIGN(16) {

@@ -24,7 +24,7 @@ SECTIONS {
         *(.sdata .sdata.*)
     }
 
-    PROVIDE(_global_pointer$ = .);
+    PROVIDE(__global_pointer$ = .);
     PROVIDE(_bss_start = .);
 
     .sbss : ALIGN(16) {

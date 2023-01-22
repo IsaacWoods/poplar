@@ -201,6 +201,7 @@ pub fn seed_main(hart_id: u64, fdt_ptr: *const u8) -> ! {
         asm!(
             "
                 mv sp, {new_sp}
+                mv gp, {new_gp}
 
                 csrw satp, {new_satp}
                 sfence.vma
@@ -208,6 +209,7 @@ pub fn seed_main(hart_id: u64, fdt_ptr: *const u8) -> ! {
             ",
             new_satp = in(reg) kernel_page_table.satp().raw(),
             new_sp = in(reg) usize::from(kernel.stack_top),
+            new_gp = in(reg) usize::from(kernel.global_pointer),
             in("a0") usize::from(boot_info_kernel_address),
             options(nostack, noreturn)
         )
