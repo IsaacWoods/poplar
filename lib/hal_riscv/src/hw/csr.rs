@@ -128,10 +128,9 @@ impl Scause {
             asm!("csrr {}, scause", out(reg) value);
         }
 
-        // TODO: this is a bit iffy as it's the last bit, rather than the 63rd always yaknow
-        if value.get_bit(63) {
+        if value.get_bit(usize::BITS as usize - 1) {
             // It's an interrupt
-            match value.get_bits(0..63) {
+            match value.get_bits(0..(usize::BITS as usize - 1)) {
                 0 => panic!("Reserved interrupt!"),
                 1 => Scause::SupervisorSoftware,
                 2..=4 => panic!("Reserved interrupt!"),
@@ -143,7 +142,7 @@ impl Scause {
             }
         } else {
             // It's an exception
-            match value.get_bits(0..63) {
+            match value.get_bits(0..(usize::BITS as usize - 1)) {
                 0 => Scause::InstructionAddressMisaligned,
                 1 => Scause::InstructionAccessFault,
                 2 => Scause::IllegalInstruction,
