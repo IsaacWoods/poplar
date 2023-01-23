@@ -83,8 +83,101 @@ pub struct Stvec;
 
 impl Stvec {
     pub fn set(trap_address: VAddr) {
+        // Trap handlers on RISC-V must be aligned to `4`.
+        assert!(usize::from(trap_address) % 4 == 0);
+
         unsafe {
             asm!("csrw stvec, {}", in(reg) usize::from(trap_address));
         }
+    }
+}
+
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+pub enum Scause {
+    /*
+     * Interrupts
+     */
+    SupervisorSoftware,
+    SupervisorTimer,
+    SupervisorExternal,
+    PlatformInterrupt(usize),
+
+    /*
+     * Exceptions
+     */
+    InstructionAddressMisaligned,
+    InstructionAccessFault,
+    IllegalInstruction,
+    Breakpoint,
+    LoadAddressMisaligned,
+    LoadAccessFault,
+    StoreAddressMisaligned,
+    StoreAccessFault,
+    UEnvironmentCall,
+    SEnvironmentCall,
+    InstructionPageFault,
+    LoadPageFault,
+    StorePageFault,
+    CustomException(usize),
+}
+
+impl Scause {
+    pub fn read() -> Scause {
+        let value: usize;
+        unsafe {
+            asm!("csrr {}, scause", out(reg) value);
+        }
+
+        // TODO: this is a bit iffy as it's the last bit, rather than the 63rd always yaknow
+        if value.get_bit(63) {
+            // It's an interrupt
+            match value.get_bits(0..63) {
+                0 => panic!("Reserved interrupt!"),
+                1 => Scause::SupervisorSoftware,
+                2..=4 => panic!("Reserved interrupt!"),
+                5 => Scause::SupervisorTimer,
+                6..=7 => panic!("Reserved interrupt!"),
+                8 => Scause::SupervisorExternal,
+                10..=15 => panic!("Reserved interrupt!"),
+                platform => Scause::PlatformInterrupt(platform),
+            }
+        } else {
+            // It's an exception
+            match value.get_bits(0..63) {
+                0 => Scause::InstructionAddressMisaligned,
+                1 => Scause::InstructionAccessFault,
+                2 => Scause::IllegalInstruction,
+                3 => Scause::Breakpoint,
+                4 => Scause::LoadAddressMisaligned,
+                5 => Scause::LoadAccessFault,
+                6 => Scause::StoreAddressMisaligned,
+                7 => Scause::StoreAccessFault,
+                8 => Scause::UEnvironmentCall,
+                9 => Scause::SEnvironmentCall,
+                10..=11 => panic!("Reserved exception!"),
+                12 => Scause::InstructionPageFault,
+                13 => Scause::LoadPageFault,
+                14 => panic!("Reserved exception!"),
+                15 => Scause::StorePageFault,
+                16..=23 => panic!("Reserved exception!"),
+                custom @ 24..=31 => Scause::CustomException(custom),
+                32..=47 => panic!("Reserved exception!"),
+                custom @ 48..=63 => Scause::CustomException(custom),
+                _ => panic!("Reserved exception!"),
+            }
+        }
+    }
+}
+
+#[derive(Clone, Copy, Debug)]
+pub struct Sepc(VAddr);
+
+impl Sepc {
+    pub fn read() -> Sepc {
+        let value: usize;
+        unsafe {
+            asm!("csrr {}, sepc", out(reg) value);
+        }
+        Sepc(VAddr::new(value))
     }
 }
