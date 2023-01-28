@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":[["Attributes","Attributes provided to a collector describing a new span when it is created."],["Current","Indicates what the collector considers the “current” span."],["Id","Identifies a span within the context of a collector."],["Record","A set of fields recorded by a span."]]};

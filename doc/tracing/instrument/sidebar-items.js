@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":[["Instrumented","A `Future` that has been instrumented with a `tracing` `Span`."]],"trait":[["Instrument","Attaches spans to a [`std::future::Future`]."]]};
