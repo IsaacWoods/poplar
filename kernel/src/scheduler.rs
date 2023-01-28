@@ -5,7 +5,7 @@ use crate::{
 };
 use alloc::{collections::VecDeque, sync::Arc, vec::Vec};
 use hal::memory::VAddr;
-use log::trace;
+use tracing::trace;
 
 pub struct Scheduler<P>
 where

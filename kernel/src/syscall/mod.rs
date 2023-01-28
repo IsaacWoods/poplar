@@ -15,7 +15,6 @@ use alloc::{collections::BTreeMap, string::String, sync::Arc};
 use bit_field::BitField;
 use core::convert::TryFrom;
 use hal::memory::{Flags, PAddr, VAddr};
-use log::{info, trace, warn};
 use poplar::{
     caps::Capability,
     syscall::{
@@ -37,6 +36,7 @@ use poplar::{
     ZERO_HANDLE,
 };
 use spin::Mutex;
+use tracing::{info, trace, warn};
 use validation::{UserPointer, UserSlice, UserString};
 
 /// Maps the name of a service to the channel used to register new service users.

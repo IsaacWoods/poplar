@@ -4,9 +4,9 @@ use alloc::{
     sync::{Arc, Weak},
     vec::Vec,
 };
-use log::warn;
 use poplar::syscall::{GetMessageError, SendMessageError, CHANNEL_MAX_NUM_HANDLES};
 use spin::Mutex;
+use tracing::warn;
 
 pub struct ChannelEnd {
     pub id: KernelObjectId,

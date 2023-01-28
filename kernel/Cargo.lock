@@ -167,13 +167,13 @@ dependencies = [
  "bitflags",
  "cfg-if 0.1.10",
  "hal",
- "log",
  "pci_types",
  "poplar",
  "poplar_util",
  "ptah",
  "seed",
  "spin",
+ "tracing",
 ]
 
 [[package]]
