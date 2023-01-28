@@ -49,7 +49,7 @@ use hal::memory::{Bytes, Frame, FrameSize, PAddr, Size4KiB};
 use poplar_util::math::flooring_log2;
 
 /// The largest block stored by the buddy allocator is `2^MAX_ORDER`.
-const MAX_ORDER: usize = 10;
+const MAX_ORDER: usize = 12;
 const NUM_BINS: usize = MAX_ORDER + 1;
 
 /// The "base" block size - the smallest block size this allocator tracks. This is chosen at the moment to be
