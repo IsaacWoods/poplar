@@ -11,9 +11,9 @@ extern crate alloc;
 
 mod logger;
 
-use core::arch::asm;
 use hal::memory::VAddr;
 use hal_riscv::hw::csr::Stvec;
+use kernel::memory::PhysicalMemoryManager;
 use seed::boot_info::BootInfo;
 use tracing::info;
 
@@ -38,9 +38,9 @@ pub extern "C" fn kentry(boot_info: &BootInfo) -> ! {
         kernel::ALLOCATOR.lock().init(boot_info.heap_address, boot_info.heap_size);
     }
 
-    unsafe {
-        asm!(".word 0");
-    }
+    kernel::PHYSICAL_MEMORY_MANAGER.initialize(PhysicalMemoryManager::new(boot_info));
+
+    info!("Kernel done. Looping.");
     loop {}
 }
 
