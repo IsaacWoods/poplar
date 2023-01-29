@@ -3,7 +3,7 @@ use alloc::{boxed::Box, vec, vec::Vec};
 use core::{fmt, pin::Pin};
 use hal_x86_64::hw::{cpu::CpuInfo, gdt::SegmentSelector};
 use kernel::scheduler::Scheduler;
-use log::{info, warn};
+use tracing::{info, warn};
 
 pub type CpuId = u32;
 pub const BOOT_CPU_ID: CpuId = 0;

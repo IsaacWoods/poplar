@@ -201,11 +201,13 @@ dependencies = [
  "hal",
  "hal_x86_64",
  "kernel",
- "log",
  "pci_types",
  "poplar_util",
  "seed",
  "spin",
+ "spinning_top",
+ "tracing",
+ "tracing-core",
 ]
 
 [[package]]

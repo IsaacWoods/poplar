@@ -4,8 +4,8 @@ use core::ptr;
 use hal::memory::PAddr;
 use hal_x86_64::kernel_map;
 use kernel::pci::{PciDevice, PciInfo};
-use log::info;
 use pci_types::{Bar, ConfigRegionAccess, EndpointHeader, PciAddress, PciHeader};
+use tracing::info;
 
 pub struct EcamAccess<'a>(PciConfigRegions<'a, Global>);
 

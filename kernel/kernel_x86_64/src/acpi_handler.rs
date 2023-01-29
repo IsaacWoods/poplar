@@ -4,9 +4,9 @@ use bit_field::BitField;
 use core::ptr::NonNull;
 use hal::memory::PAddr;
 use hal_x86_64::hw::port::Port;
-use log::debug;
 use pci_types::{ConfigRegionAccess, PciAddress};
 use poplar_util::math::align_down;
+use tracing::debug;
 
 #[derive(Clone)]
 pub struct PoplarAcpiHandler;

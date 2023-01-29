@@ -48,7 +48,7 @@ impl SerialPort {
         }
     }
 
-    pub unsafe fn initialise(&mut self) {
+    pub unsafe fn initialize(&mut self) {
         unsafe {
             // Disable IRQs
             self.interrupt_enable_register.write(0x00);

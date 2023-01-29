@@ -1,6 +1,11 @@
+/*
+ * Copyright 2022, Isaac Woods
+ * SPDX-License-Identifier: MPL-2.0
+ */
+
 #![no_std]
 #![no_main]
-#![feature(decl_macro, naked_functions, allocator_api)]
+#![feature(decl_macro, naked_functions, allocator_api, panic_info_message)]
 
 extern crate alloc;
 
@@ -26,12 +31,12 @@ use kernel::{
     scheduler::Scheduler,
     Platform,
 };
-use log::{error, info};
 use pci::PciResolver;
 use per_cpu::PerCpuImpl;
 use seed::boot_info::BootInfo;
 use spin::Mutex;
 use topo::Topology;
+use tracing::{error, info};
 
 // TODO: store the PciInfo in here and allow access from the common kernel
 pub struct PlatformImpl {
@@ -71,8 +76,7 @@ impl Platform for PlatformImpl {
 
 #[no_mangle]
 pub extern "C" fn kentry(boot_info: &BootInfo) -> ! {
-    log::set_logger(&logger::KernelLogger).unwrap();
-    log::set_max_level(log::LevelFilter::Trace);
+    logger::init();
     info!("Poplar kernel is running");
 
     if boot_info.magic != seed::boot_info::BOOT_INFO_MAGIC {
@@ -240,25 +244,4 @@ pub extern "C" fn kentry(boot_info: &BootInfo) -> ! {
      */
     info!("Dropping into usermode");
     PlatformImpl::per_cpu().scheduler().drop_to_userspace()
-}
-
-#[cfg(not(test))]
-#[panic_handler]
-fn panic(info: &PanicInfo) -> ! {
-    error!("KERNEL PANIC: {}", info);
-
-    /*
-     * If the `qemu_exit` feature is set, we use the debug port to exit.
-     */
-    #[cfg(feature = "qemu_exit")]
-    {
-        use hal_x86_64::hw::qemu::{ExitCode, ExitPort};
-        unsafe { ExitPort::new() }.exit(ExitCode::Failed)
-    }
-
-    loop {
-        unsafe {
-            core::arch::asm!("hlt");
-        }
-    }
 }
