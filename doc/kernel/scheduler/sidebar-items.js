@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"struct":[["Scheduler",""]]};
+window.SIDEBAR_ITEMS = {"static":[["CALLSITE",""],["META",""],["REG",""]],"struct":[["Scheduler",""]]};
