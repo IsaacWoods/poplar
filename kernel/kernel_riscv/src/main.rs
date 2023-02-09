@@ -11,8 +11,12 @@ extern crate alloc;
 
 mod logger;
 
-use hal::memory::VAddr;
-use hal_riscv::hw::csr::Stvec;
+use hal::memory::{Frame, VAddr};
+use hal_riscv::{
+    hw::csr::{Satp, Stvec},
+    kernel_map,
+    paging::PageTableImpl,
+};
 use kernel::memory::PhysicalMemoryManager;
 use seed::boot_info::BootInfo;
 use tracing::info;
@@ -39,6 +43,15 @@ pub extern "C" fn kentry(boot_info: &BootInfo) -> ! {
     }
 
     kernel::PHYSICAL_MEMORY_MANAGER.initialize(PhysicalMemoryManager::new(boot_info));
+
+    let kernel_page_table = unsafe {
+        match Satp::read() {
+            Satp::Sv48 { root, .. } => {
+                PageTableImpl::from_frame(Frame::starts_with(root), kernel_map::PHYSICAL_MAP_BASE)
+            }
+            _ => panic!("Kernel booted in a weird paging mode! Expected Sv48!"),
+        }
+    };
 
     info!("Kernel done. Looping.");
     loop {}
