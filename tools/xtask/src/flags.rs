@@ -1,3 +1,6 @@
+use crate::config::Arch;
+use std::path::PathBuf;
+
 xflags::xflags! {
     src "./src/flags.rs"
 
@@ -7,6 +10,7 @@ xflags::xflags! {
         }
 
         cmd dist {
+            optional --config config_path: PathBuf
             optional --release
             optional -a,--arch arch: Arch
             optional --kernel_features kernel_features: String
@@ -14,6 +18,7 @@ xflags::xflags! {
 
         cmd qemu {
             // XXX: shared with dist command. Should be the same.
+            optional --config config_path: PathBuf
             optional --release
             optional -a,--arch arch: Arch
             optional --kernel_features kernel_features: String
@@ -28,34 +33,9 @@ xflags::xflags! {
     }
 }
 
-#[allow(dead_code)]
-#[derive(Clone, Copy, Debug)]
-pub enum Arch {
-    X64,
-    RiscV,
-}
-
-impl Default for Arch {
-    fn default() -> Self {
-        Arch::RiscV
-    }
-}
-
-impl std::str::FromStr for Arch {
-    type Err = &'static str;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match s.as_ref() {
-            "x64" => Ok(Arch::X64),
-            "riscv" => Ok(Arch::RiscV),
-            _ => Err("Unrecognised arch string. Accepted values are `x64` and `riscv`."),
-        }
-    }
-}
-
 pub struct DistOptions {
-    // TODO: method to set persistent default and control this from flags
-    pub arch: Arch,
+    pub config_path: PathBuf,
+    pub arch: Option<Arch>,
     pub release: bool,
     pub kernel_features: Option<String>,
 }
@@ -63,9 +43,10 @@ pub struct DistOptions {
 impl From<&Dist> for DistOptions {
     fn from(flags: &Dist) -> DistOptions {
         DistOptions {
+            config_path: flags.config.clone().unwrap_or(PathBuf::from("Poplar.toml")),
             release: flags.release,
             kernel_features: flags.kernel_features.clone(),
-            arch: flags.arch.unwrap_or(Arch::default()),
+            arch: flags.arch,
         }
     }
 }
@@ -73,9 +54,10 @@ impl From<&Dist> for DistOptions {
 impl From<&Qemu> for DistOptions {
     fn from(flags: &Qemu) -> DistOptions {
         DistOptions {
+            config_path: flags.config.clone().unwrap_or(PathBuf::from("Poplar.toml")),
             release: flags.release,
             kernel_features: flags.kernel_features.clone(),
-            arch: flags.arch.unwrap_or(Arch::default()),
+            arch: flags.arch,
         }
     }
 }
@@ -103,6 +85,7 @@ pub struct Help {
 
 #[derive(Debug)]
 pub struct Dist {
+    pub config: Option<PathBuf>,
     pub release: bool,
     pub arch: Option<Arch>,
     pub kernel_features: Option<String>,
@@ -110,6 +93,7 @@ pub struct Dist {
 
 #[derive(Debug)]
 pub struct Qemu {
+    pub config: Option<PathBuf>,
     pub release: bool,
     pub arch: Option<Arch>,
     pub kernel_features: Option<String>,

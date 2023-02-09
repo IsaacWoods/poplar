@@ -1,13 +1,15 @@
 #![feature(type_ascription)]
 
 mod cargo;
+mod config;
 mod flags;
 mod riscv;
 mod x64;
 
 use cargo::Target;
+use config::{Arch, Config};
 use eyre::{eyre, Result, WrapErr};
-use flags::{Arch, DistOptions, TaskCmd};
+use flags::{DistOptions, TaskCmd};
 use riscv::qemu::RunQemuRiscV;
 use std::{
     env,
@@ -28,25 +30,26 @@ fn main() -> Result<()> {
             Ok(())
         }
 
-        TaskCmd::Dist(dist_flags) => {
-            dist(&dist_flags)?;
+        TaskCmd::Dist(flags) => {
+            let config = config::Config::new(&DistOptions::from(&flags));
+            dist(&config)?;
             Ok(())
         }
 
-        TaskCmd::Qemu(qemu) => {
-            let options = DistOptions::from(&qemu);
-            let dist_result = dist(&qemu)?;
-            match options.arch {
+        TaskCmd::Qemu(flags) => {
+            let config = config::Config::new(&DistOptions::from(&flags));
+            let dist_result = dist(&config)?;
+            match config.arch {
                 Arch::X64 => RunQemuX64::new(dist_result.disk_image.unwrap())
-                    .open_display(qemu.display)
-                    .debug_int_firehose(qemu.debug_int_firehose)
-                    .debug_mmu_firehose(qemu.debug_mmu_firehose)
-                    .debug_cpu_firehose(qemu.debug_cpu_firehose)
+                    .open_display(flags.display)
+                    .debug_int_firehose(flags.debug_int_firehose)
+                    .debug_mmu_firehose(flags.debug_mmu_firehose)
+                    .debug_cpu_firehose(flags.debug_cpu_firehose)
                     .run(),
                 Arch::RiscV => RunQemuRiscV::new(dist_result.kernel_path, dist_result.disk_image.unwrap())
                     .opensbi(PathBuf::from("lib/opensbi/build/platform/generic/firmware/fw_jump.elf"))
-                    .open_display(qemu.display)
-                    .debug_int_firehose(qemu.debug_int_firehose)
+                    .open_display(flags.display)
+                    .debug_int_firehose(flags.debug_int_firehose)
                     .run(),
             }
         }
@@ -69,11 +72,10 @@ fn main() -> Result<()> {
     }
 }
 
-fn dist<O: Into<DistOptions>>(options: O) -> Result<DistResult> {
-    let options = options.into();
+fn dist(config: &Config) -> Result<DistResult> {
     let dist = Dist::new()
-        .release(options.release)
-        .kernel_features_from_cli(options.kernel_features)
+        .release(config.release)
+        .kernel_features_from_cli(config.kernel_features.clone())
         .user_task("simple_fb")
         .user_task("platform_bus")
         .user_task("pci_bus")
@@ -81,7 +83,7 @@ fn dist<O: Into<DistOptions>>(options: O) -> Result<DistResult> {
         .user_task_in_dir("test_syscalls", PathBuf::from("user/tests"))
         .user_task_in_dir("test1", PathBuf::from("user/tests"));
 
-    match options.arch {
+    match config.arch {
         Arch::X64 => dist.build_x64(),
         Arch::RiscV => dist.build_riscv(),
     }
