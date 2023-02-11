@@ -5,8 +5,9 @@
 
 use arrayvec::ArrayVec;
 use core::{fmt, ops::Range, ptr::NonNull};
+use fdt::Fdt;
 use hal::memory::{Frame, FrameAllocator, FrameSize, PAddr, Size4KiB};
-use poplar_util::ranges::RangeIntersect;
+use poplar_util::{math::align_up, ranges::RangeIntersect};
 use spinning_top::Spinlock;
 use tracing::trace;
 
@@ -67,8 +68,50 @@ const MAX_REGIONS: usize = 32;
 pub struct MemoryRegions(ArrayVec<Region, MAX_REGIONS>);
 
 impl MemoryRegions {
-    pub fn new() -> MemoryRegions {
-        MemoryRegions(ArrayVec::new())
+    pub fn new(fdt: &Fdt, fdt_address: PAddr) -> MemoryRegions {
+        use crate::{_seed_end, _seed_start};
+        use tracing::info;
+
+        let mut regions = MemoryRegions(ArrayVec::new());
+
+        for region in fdt.memory().regions() {
+            info!("Memory region: {:?}", region);
+            regions.add_region(Region::usable(
+                PAddr::new(region.starting_address as usize).unwrap(),
+                region.size.unwrap(),
+            ));
+        }
+        if let Some(reservations) = fdt.find_node("/reserved-memory") {
+            for reservation in reservations.children() {
+                let reg = reservation.reg().unwrap().next().unwrap();
+                info!("Memory reservation with name {}. Reg = {:?}", reservation.name, reg);
+                let usage =
+                    if reservation.name.starts_with("mmode_resv") { Usage::Firmware } else { Usage::Unknown };
+                regions.add_region(Region::reserved(
+                    usage,
+                    PAddr::new(reg.starting_address as usize).unwrap(),
+                    reg.size.unwrap(),
+                ));
+            }
+        } else {
+            info!("No memory reservations found");
+        }
+
+        let seed_start = unsafe { _seed_start.ptr() as usize };
+        let seed_end = unsafe { _seed_end.ptr() as usize };
+        regions.add_region(Region::reserved(
+            Usage::Seed,
+            PAddr::new(unsafe { _seed_start.ptr() as usize }).unwrap(),
+            align_up(seed_end - seed_start, Size4KiB::SIZE),
+        ));
+        regions.add_region(Region::reserved(
+            Usage::DeviceTree,
+            // PAddr::new((fdt as *const Fdt as *const u8).addr()).unwrap(),
+            fdt_address,
+            align_up(fdt.total_size(), Size4KiB::SIZE),
+        ));
+
+        regions
     }
 
     /// Add a region of memory to the manager, merging and handling intersecting regions as needed.

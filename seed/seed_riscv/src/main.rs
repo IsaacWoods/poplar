@@ -11,12 +11,11 @@ mod image;
 mod logger;
 mod memory;
 
-use bit_field::BitField;
 use core::{arch::asm, mem, ptr};
 use fdt::Fdt;
 use hal::memory::{Flags, FrameAllocator, FrameSize, PAddr, PageTable, Size4KiB, VAddr};
 use hal_riscv::paging::PageTableImpl;
-use memory::{MemoryManager, MemoryRegions, Region};
+use memory::{MemoryManager, MemoryRegions};
 use poplar_util::{linker::LinkerSymbol, math::align_up};
 use seed::boot_info::BootInfo;
 use tracing::info;
@@ -63,6 +62,11 @@ static MEMORY_MANAGER: MemoryManager = MemoryManager::new();
 #[no_mangle]
 pub fn seed_main(hart_id: u64, fdt_ptr: *const u8) -> ! {
     assert!(fdt_ptr.is_aligned_to(8));
+    /*
+     * We extract the address of the device tree before we do anything with it. Once we've used the pointer, we
+     * shouldn't turn it back into an address afaiu due to strict provenance.
+     */
+    let fdt_address = PAddr::new(fdt_ptr.addr()).unwrap();
 
     logger::init();
     info!("Hello, World!");
@@ -70,48 +74,22 @@ pub fn seed_main(hart_id: u64, fdt_ptr: *const u8) -> ! {
     info!("FDT address: {:?}", fdt_ptr);
 
     let fdt = unsafe { Fdt::from_ptr(fdt_ptr).expect("Failed to parse FDT") };
-    let mut memory_regions = MemoryRegions::new();
+    info!("FDT: {:?}", fdt);
 
-    for region in fdt.memory().regions() {
-        info!("Memory region: {:?}", region);
-        memory_regions.add_region(Region::usable(
-            PAddr::new(region.starting_address as usize).unwrap(),
-            region.size.unwrap(),
-        ));
-    }
-    if let Some(reservations) = fdt.find_node("/reserved-memory") {
-        for reservation in reservations.children() {
-            let reg = reservation.reg().unwrap().next().unwrap();
-            info!("Memory reservation with name {}. Reg = {:?}", reservation.name, reg);
-            let usage = if reservation.name.starts_with("mmode_resv") {
-                memory::Usage::Firmware
-            } else {
-                memory::Usage::Unknown
-            };
-            memory_regions.add_region(Region::reserved(
-                usage,
-                PAddr::new(reg.starting_address as usize).unwrap(),
-                reg.size.unwrap(),
-            ));
-        }
-    } else {
-        info!("No memory reservations :(");
-    }
-    let seed_start = unsafe { _seed_start.ptr() as usize };
-    let seed_end = unsafe { _seed_end.ptr() as usize };
-    memory_regions.add_region(Region::reserved(
-        memory::Usage::Seed,
-        PAddr::new(unsafe { _seed_start.ptr() as usize }).unwrap(),
-        align_up(seed_end - seed_start, Size4KiB::SIZE),
-    ));
-    memory_regions.add_region(Region::reserved(
-        memory::Usage::DeviceTree,
-        PAddr::new(fdt_ptr.addr()).unwrap(),
-        align_up(fdt.total_size(), Size4KiB::SIZE),
-    ));
-
+    /*
+     * Construct an initial map of memory - a series of usable and reserved regions and what is in each of them. At
+     * the moment, this includes finding the kernel ELF we're artificially loading into memory, and marking it as
+     * reserved.
+     * XXX: revise comment once we're not doing this.
+     */
+    let mut memory_regions = MemoryRegions::new(&fdt, fdt_address);
     let kernel_elf = image::extract_kernel(&mut memory_regions);
     info!("Memory regions: {:#?}", memory_regions);
+
+    /*
+     * We can then use this mapping of memory regions to initialise the physical memory manager so we can allocate
+     * out of the usable regions.
+     */
     MEMORY_MANAGER.init(memory_regions);
     MEMORY_MANAGER.walk_usable_memory();
 

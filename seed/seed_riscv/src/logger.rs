@@ -32,6 +32,7 @@ impl SerialWriter {
     }
 
     fn init(&mut self) {
+        // TODO: read the address of the UART out of the device tree
         let serial = unsafe { &mut *(0x1000_0000 as *mut Uart16550) };
         self.serial.initialize(serial);
     }
