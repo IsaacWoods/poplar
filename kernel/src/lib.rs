@@ -8,7 +8,6 @@
     type_ascription,
     naked_functions,
     box_syntax,
-    const_btree_new,
     get_mut_unchecked
 )]
 #[macro_use]

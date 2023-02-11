@@ -1,6 +1,6 @@
 #![no_std]
 #![no_main]
-#![feature(panic_info_message, abi_efiapi, cell_update, never_type)]
+#![feature(panic_info_message, cell_update, never_type)]
 
 mod allocator;
 mod image;
