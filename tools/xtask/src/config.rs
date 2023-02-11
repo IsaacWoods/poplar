@@ -2,7 +2,6 @@
 
 use crate::DistOptions;
 use serde::{Deserialize, Serialize};
-use std::path::Path;
 
 #[derive(Clone, Debug)]
 pub struct Config {
