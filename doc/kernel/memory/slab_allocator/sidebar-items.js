@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"struct":[["SlabAllocator",""]]};
+window.SIDEBAR_ITEMS = {"struct":["SlabAllocator"]};

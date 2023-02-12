@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"struct":[["EarlyLogger",""]]};
+window.SIDEBAR_ITEMS = {"struct":["EarlyLogger"]};

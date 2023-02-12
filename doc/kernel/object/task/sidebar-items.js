@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"enum":[["TaskBlock",""],["TaskCreationError",""],["TaskState",""]],"fn":[["decode_capabilities","Decode a capability stream (as found in a task’s image) into a set of capabilities as they’re represented in the kernel. For the format that’s being decoded here, refer to the `(3.1) Userspace/Capabilities` section of the Book."]],"macro":[["one_byte_cap",""]],"struct":[["Task",""]]};
+window.SIDEBAR_ITEMS = {"enum":["TaskBlock","TaskCreationError","TaskState"],"fn":["decode_capabilities"],"macro":["one_byte_cap"],"struct":["Task"]};

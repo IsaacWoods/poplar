@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"enum":[["DeviceType","Combines the Base Class and the Sub-class of a device to classify it into a `DeviceType`. Combined with the device’s Interface, this can be enough to know how to drive the device."],["UsbType","The different register-level programming interfaces defined for USB controllers (devices of type `DeviceType::UsbController`)."]]};
+window.SIDEBAR_ITEMS = {"enum":["DeviceType","UsbType"]};

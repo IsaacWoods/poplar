@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"trait":[["BitArray",""],["BitField","A generic trait which provides methods for extracting and setting specific bits or ranges of bits."]]};
+window.SIDEBAR_ITEMS = {"trait":["BitArray","BitField"]};

@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"foreigntype":[["LinkerSymbol","`LinkerSymbol` is an extern type that represents a symbol defined by the linker. It is entirely opaque to the Rust type system, and cannot be instantiated, which aims to avoid mistakes where it is taken by value instead of by reference."]]};
+window.SIDEBAR_ITEMS = {"foreigntype":["LinkerSymbol"]};

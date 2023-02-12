@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"struct":[["KernelStackAllocator",""]]};
+window.SIDEBAR_ITEMS = {"struct":["KernelStackAllocator"]};

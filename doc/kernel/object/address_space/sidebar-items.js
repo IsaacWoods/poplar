@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"constant":[["MAX_TASKS",""],["USER_STACK_BOTTOM",""],["USER_STACK_SLOT_SIZE",""],["USER_STACK_TOP",""]],"enum":[["State",""]],"struct":[["AddressSpace",""],["TaskSlot",""]]};
+window.SIDEBAR_ITEMS = {"constant":["MAX_TASKS","USER_STACK_BOTTOM","USER_STACK_SLOT_SIZE","USER_STACK_TOP"],"enum":["State"],"struct":["AddressSpace","TaskSlot"]};

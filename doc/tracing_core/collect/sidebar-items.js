@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"struct":[["Interest","Indicates a `Collect`’s interest in a particular callsite."],["NoCollector","A no-op collector."]],"trait":[["Collect","Trait representing the functions required to collect trace data."]]};
+window.SIDEBAR_ITEMS = {"struct":["Interest","NoCollector"],"trait":["Collect"]};

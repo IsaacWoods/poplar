@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"trait":[["RangeIntersect",""]]};
+window.SIDEBAR_ITEMS = {"trait":["RangeIntersect"]};

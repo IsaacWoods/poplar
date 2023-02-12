@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"trait":[["PerCpu",""]]};
+window.SIDEBAR_ITEMS = {"trait":["PerCpu"]};

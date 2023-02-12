@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"struct":[["MemoryObject",""]]};
+window.SIDEBAR_ITEMS = {"struct":["MemoryObject"]};
