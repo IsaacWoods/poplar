@@ -4,7 +4,7 @@ use core::ptr;
 use hal::memory::PAddr;
 use hal_x86_64::kernel_map;
 use kernel::pci::{PciDevice, PciInfo};
-use pci_types::{Bar, ConfigRegionAccess, EndpointHeader, PciAddress, PciHeader};
+use pci_types::{Bar, ConfigRegionAccess, EndpointHeader, HeaderType, PciAddress, PciHeader};
 use tracing::info;
 
 pub struct EcamAccess<'a>(PciConfigRegions<'a, Global>);
@@ -113,7 +113,7 @@ where
             );
 
             match header.header_type(&self.access) {
-                pci_types::HEADER_TYPE_ENDPOINT => {
+                HeaderType::Endpoint => {
                     let endpoint_header = EndpointHeader::from_header(header, &self.access).unwrap();
                     let bars = {
                         let mut bars = [None; 6];
@@ -141,17 +141,17 @@ where
                     );
                 }
 
-                pci_types::HEADER_TYPE_PCI_PCI_BRIDGE => {
+                HeaderType::PciPciBridge => {
                     // TODO: call check_bus on the bridge's secondary bus number
                     todo!()
                 }
 
-                pci_types::HEADER_TYPE_CARDBUS_BRIDGE => {
+                HeaderType::CardBusBridge => {
                     // TODO: what do we even do with these?
                     todo!()
                 }
 
-                reserved => panic!("PCI function has reserved header type: {:#x}", reserved),
+                reserved => panic!("PCI function has reserved header type: {:?}", reserved),
             }
         }
     }
