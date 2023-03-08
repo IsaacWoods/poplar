@@ -172,6 +172,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "pci_types"
+version = "0.3.0"
+dependencies = [
+ "bit_field",
+]
+
+[[package]]
 name = "pin-project-lite"
 version = "0.2.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -257,6 +264,7 @@ dependencies = [
  "hal",
  "hal_riscv",
  "mer",
+ "pci_types",
  "poplar_util",
  "seed",
  "spinning_top",

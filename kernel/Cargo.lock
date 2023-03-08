@@ -7,12 +7,13 @@ name = "acpi"
 version = "4.1.1"
 dependencies = [
  "bit_field",
+ "log",
  "rsdp",
 ]
 
 [[package]]
 name = "aml"
-version = "0.16.2"
+version = "0.16.3"
 dependencies = [
  "bit_field",
  "bitvec",
@@ -239,7 +240,7 @@ dependencies = [
 
 [[package]]
 name = "pci_types"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "bit_field",
 ]

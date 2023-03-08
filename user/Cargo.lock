@@ -90,7 +90,7 @@ version = "0.1.0"
 dependencies = [
  "linked_list_allocator",
  "log",
- "pci_types 0.2.0",
+ "pci_types",
  "platform_bus",
  "poplar",
  "ptah",
@@ -98,16 +98,7 @@ dependencies = [
 
 [[package]]
 name = "pci_types"
-version = "0.2.0"
-dependencies = [
- "bit_field",
-]
-
-[[package]]
-name = "pci_types"
-version = "0.2.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b0543761ad4cb3a4aa1ad9d3082cb40253e69b2ec288dbd4bcb4492e8de6fb07"
+version = "0.3.0"
 dependencies = [
  "bit_field",
 ]
@@ -128,7 +119,7 @@ version = "0.1.0"
 dependencies = [
  "cfg-if 0.1.10",
  "log",
- "pci_types 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "pci_types",
  "ptah",
 ]
 

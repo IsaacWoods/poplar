@@ -11,7 +11,7 @@ description = "Rust interace to the Poplar kernel from userspace"
 [dependencies]
 cfg-if = "0.1"
 log = { version = "0.4", optional = true }
-pci_types = { version = "0.2.0", optional = true }
+pci_types = { path = "../pci_types", optional = true }
 #ptah = { version = "0.2.0", optional = true, default-features = false }
 ptah = { path = "../ptah", optional = true, default-features = false }
 
@@ -19,10 +19,6 @@ ptah = { path = "../ptah", optional = true, default-features = false }
 core = { version = "1.0.0", optional = true, package = "rustc-std-workspace-core" }
 compiler_builtins = { version = "0.1.35", optional = true }
 alloc = { version = "1.0.0", optional = true, package = "rustc-std-workspace-alloc" }
-
-[patch.crates-io]
-pci_types = { path = "../pci_types" }
-ptah = { path = "../ptah" }
 
 [features]
 default = ["can_alloc", "pci"]
