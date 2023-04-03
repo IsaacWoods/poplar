@@ -172,13 +172,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "pci_types"
-version = "0.3.0"
-dependencies = [
- "bit_field",
-]
-
-[[package]]
 name = "pin-project-lite"
 version = "0.2.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -264,7 +257,6 @@ dependencies = [
  "hal",
  "hal_riscv",
  "mer",
- "pci_types",
  "poplar_util",
  "seed",
  "spinning_top",
@@ -297,9 +289,9 @@ checksum = "e25dfac463d778e353db5be2449d1cce89bd6fd23c9f1ea21310ce6e5a1b29c4"
 
 [[package]]
 name = "spin"
-version = "0.9.4"
+version = "0.9.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7f6002a767bff9e83f8eeecf883ecb8011875a21ae8da43bffb817a57e78cc09"
+checksum = "6980e8d7511241f8acf4aebddbb1ff938df5eebe98691418c4468d0b72a96a67"
 dependencies = [
  "lock_api",
 ]

@@ -9,7 +9,7 @@ seed = { path = ".." }
 hal = { path = "../../lib/hal" }
 hal_x86_64 = { path = "../../lib/hal_x86_64" }
 log = "0.4"
-spin = "0.9.2"
+spin = "0.9.8"
 uefi = { path = "../../lib/uefi-rs" }
 mer = { path = "../../lib/mer" }
 gfxconsole = { path = "../../lib/gfxconsole" }
