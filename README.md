@@ -2,11 +2,8 @@
 [![Build](https://github.com/IsaacWoods/poplar/actions/workflows/build.yml/badge.svg)](https://github.com/IsaacWoods/poplar/actions/workflows/build.yml)
 [![License: MPL-2.0](https://img.shields.io/badge/license-MPL--2.0-blue.svg)](https://opensource.org/licenses/MPL-2.0)
 
-**Poplar was previously called Pebble. It was renamed to avoid confusion with the OS that runs on the [defunct
-Pebble smartwatches](https://en.wikipedia.org/wiki/Pebble_(watch))**
-
 Poplar is a microkernel and userspace written in Rust, exploring modern ideas. It is not a UNIX, and does not aim
-for compatibility with existing software.
+for compatibility with existing software. It currently supports x86_64 and RISC-V.
 
 The best way to learn about Poplar is to read [the book](https://isaacwoods.github.io/poplar/book/).
 [The website](https://isaacwoods.github.io/poplar) also hosts some other useful resources.
@@ -37,10 +34,14 @@ To compile userspace programs, you'll need to build our custom Rust toolchain:
 **You don't need this toolchain to build the bootloaders, kernel, or `no_std` user programs, so you can get started
 without it!**
 
+**The requirement for this custom toolchain will be removed at some point, due to maintenance burden.**
+
 ### Building
 This repository includes an [`xtask`-based](https://github.com/matklad/cargo-xtask) build tool to simplify building and running Poplar.
+The tool can be configured in `Poplar.toml` - this can, for example,  be used to set whether to build using the
+release profile, and the architecture to build for.
 
-* Running `cargo xtask dist` will build a disk image for x86_64
-* Running `cargo xtask qemu` will build a disk image for x86_64, and then start emulating it in QEMU
+* Running `cargo xtask dist` will build a disk image
+* Running `cargo xtask qemu` will build a disk image, and then start emulating it in QEMU
 
 See `cargo xtask --help` for more information about how to invoke the build system.
