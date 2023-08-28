@@ -34,7 +34,7 @@ impl MakeGptImage {
             .arg("if=/dev/zero")
             .arg(format!("of={}", self.image_path.to_str().unwrap()))
             .arg("bs=512")
-            .arg(format!("count={}", self.image_size / (LBA_SIZE.into(): u64)))
+            .arg(format!("count={}", self.image_size / u64::from(LBA_SIZE)))
             .status()
             .wrap_err("Failed to invoke dd")?
             .success()
@@ -67,7 +67,8 @@ impl MakeGptImage {
          * EFI System Partition.
          */
         disk.update_partitions(BTreeMap::new())?;
-        let efi_partition_id = disk.add_partition("EFI", self.efi_partition_size, gpt::partition_types::EFI, 0)?;
+        let efi_partition_id =
+            disk.add_partition("EFI", self.efi_partition_size, gpt::partition_types::EFI, 0, None)?;
 
         /*
          * Next, populate the blocks of that partition with a FAT32 filesystem.

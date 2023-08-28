@@ -7,7 +7,6 @@
     trait_alias,
     type_ascription,
     naked_functions,
-    box_syntax,
     get_mut_unchecked
 )]
 #[macro_use]

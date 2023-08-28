@@ -73,15 +73,13 @@ fn main() -> Result<()> {
 }
 
 fn dist(config: &Config) -> Result<DistResult> {
-    let dist = Dist::new()
-        .release(config.release)
-        .kernel_features_from_cli(config.kernel_features.clone())
-        .user_task("simple_fb")
-        .user_task("platform_bus")
-        .user_task("pci_bus")
-        .user_task("usb_bus_xhci")
-        .user_task_in_dir("test_syscalls", PathBuf::from("user/tests"))
-        .user_task_in_dir("test1", PathBuf::from("user/tests"));
+    let dist = Dist::new().release(config.release).kernel_features_from_cli(config.kernel_features.clone());
+    // .user_task("simple_fb")
+    // .user_task("platform_bus")
+    // .user_task("pci_bus")
+    // .user_task("usb_bus_xhci")
+    // .user_task_in_dir("test_syscalls", PathBuf::from("user/tests"))
+    // .user_task_in_dir("test1", PathBuf::from("user/tests"));
 
     match config.arch {
         Arch::X64 => dist.build_x64(),

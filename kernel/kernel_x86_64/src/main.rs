@@ -137,7 +137,7 @@ pub extern "C" fn kentry(boot_info: &BootInfo) -> ! {
             Ok(acpi_tables) => acpi_tables,
             Err(err) => panic!("Failed to discover ACPI tables: {:?}", err),
         };
-    let acpi_platform_info = acpi_tables.platform_info_in(&Global).unwrap();
+    let acpi_platform_info = acpi_tables.platform_info_in(Global).unwrap();
 
     /*
      * Create a topology and add the boot processor to it.
@@ -165,7 +165,7 @@ pub extern "C" fn kentry(boot_info: &BootInfo) -> ! {
         });
     };
 
-    let pci_access = pci::EcamAccess::new(PciConfigRegions::new_in(&acpi_tables, &Global).unwrap());
+    let pci_access = pci::EcamAccess::new(PciConfigRegions::new_in(&acpi_tables, Global).unwrap());
 
     /*
      * Parse the DSDT.

@@ -13,7 +13,7 @@ dependencies = [
 
 [[package]]
 name = "aml"
-version = "0.16.3"
+version = "0.16.4"
 dependencies = [
  "bit_field",
  "bitvec",
@@ -240,7 +240,7 @@ dependencies = [
 
 [[package]]
 name = "pci_types"
-version = "0.3.0"
+version = "0.5.0"
 dependencies = [
  "bit_field",
 ]

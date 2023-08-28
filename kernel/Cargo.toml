@@ -19,3 +19,4 @@ tracing = { git = "https://github.com/tokio-rs/tracing", default-features = fals
 
 [workspace]
 members = ["kernel_x86_64", "kernel_riscv"]
+resolver = "2"
