@@ -1,12 +1,6 @@
 [submodule "lib/acpi"]
 	path = lib/acpi
 	url = https://github.com/IsaacWoods/acpi
-[submodule "lib/uefi-rs"]
-	path = lib/uefi-rs
-	url = https://github.com/IsaacWoods/uefi-rs
-[submodule "lib/ucs2-rs"]
-	path = lib/ucs2-rs
-	url = https://github.com/IsaacWoods/ucs2-rs
 [submodule "lib/pci_types"]
 	path = lib/pci_types
 	url = git@github.com:rust-osdev/pci_types

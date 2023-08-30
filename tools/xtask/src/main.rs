@@ -65,8 +65,6 @@ fn main() -> Result<()> {
             clean(PathBuf::from("lib/pci_types"))?;
             clean(PathBuf::from("lib/poplar_util"))?;
             clean(PathBuf::from("lib/ptah"))?;
-            clean(PathBuf::from("lib/ucs2-rs"))?;
-            clean(PathBuf::from("lib/uefi-rs"))?;
             Ok(())
         }
     }
