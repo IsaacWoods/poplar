@@ -7,7 +7,7 @@ mod image;
 mod logger;
 
 use allocator::BootFrameAllocator;
-use core::{arch::asm, fmt::Write, mem, mem::MaybeUninit, panic::PanicInfo, ptr, slice};
+use core::{arch::asm, fmt::Write, mem, panic::PanicInfo, ptr};
 use hal::memory::{kibibytes, Bytes, Flags, FrameAllocator, FrameSize, PAddr, Page, PageTable, Size4KiB, VAddr};
 use hal_x86_64::paging::PageTableImpl;
 use log::{error, info};
@@ -16,14 +16,7 @@ use seed::boot_info::{BootInfo, VideoModeInfo};
 use uefi::{
     prelude::*,
     proto::{console::gop::GraphicsOutput, loaded_image::LoadedImage},
-    table::boot::{
-        AllocateType,
-        MemoryDescriptor,
-        MemoryType,
-        OpenProtocolAttributes,
-        OpenProtocolParams,
-        SearchType,
-    },
+    table::boot::{AllocateType, MemoryType, SearchType},
 };
 
 /*
@@ -41,19 +34,11 @@ const KERNEL_HEAP_SIZE: Bytes = kibibytes(800);
 
 #[entry]
 fn efi_main(image_handle: Handle, mut system_table: SystemTable<Boot>) -> Status {
-    writeln!(system_table.stdout(), "Hello, World!").unwrap();
-
-    let video_mode = create_framebuffer(system_table.boot_services(), image_handle, 800, 600);
-    Logger::initialize(&video_mode);
+    Logger::init();
     info!("Hello, World!");
 
-    let loaded_image_protocol = unsafe {
-        &mut *system_table
-            .boot_services()
-            .handle_protocol::<LoadedImage>(image_handle)
-            .expect("Failed to open LoadedImage protocol")
-            .get()
-    };
+    let video_mode = create_framebuffer(system_table.boot_services(), 800, 600);
+    Logger::switch_to_graphical(&video_mode);
 
     /*
      * We create a set of page tables for the kernel. Because memory is identity-mapped in UEFI, we can act as
@@ -62,13 +47,22 @@ fn efi_main(image_handle: Handle, mut system_table: SystemTable<Boot>) -> Status
     let allocator = BootFrameAllocator::new(system_table.boot_services(), 64);
     let mut page_table = PageTableImpl::new(allocator.allocate(), VAddr::new(0x0));
 
-    let kernel_info = image::load_kernel(
-        system_table.boot_services(),
-        loaded_image_protocol.device(),
-        "kernel.elf",
-        &mut page_table,
-        &allocator,
-    );
+    /*
+     * Get the handle of the volume that the loader's image was loaded off. This will allow us to get access to the
+     * filesystem that contains the kernel and other files.
+     */
+    let loader_image_device =
+        system_table.boot_services().open_protocol_exclusive::<LoadedImage>(image_handle).unwrap().device();
+
+    let kernel_info = {
+        image::load_kernel(
+            system_table.boot_services(),
+            loader_image_device,
+            "kernel.elf",
+            &mut page_table,
+            &allocator,
+        )
+    };
     let mut next_safe_address = kernel_info.next_safe_address;
 
     /*
@@ -124,93 +118,24 @@ fn efi_main(image_handle: Handle, mut system_table: SystemTable<Boot>) -> Status
 
     /*
      * Load some images for early tasks.
-     * TODO: don't hardcode the images to load
+     * TODO: this should be configurable when we've decided how to do that
      */
-    // boot_info
-    //     .loaded_images
-    //     .push(image::load_image(
-    //         system_table.boot_services(),
-    //         loaded_image_protocol.device(),
-    //         "test_syscalls",
-    //         "test_syscalls.elf",
-    //     ))
-    //     .unwrap();
-    // boot_info
-    //     .loaded_images
-    //     .push(image::load_image(
-    //         system_table.boot_services(),
-    //         loaded_image_protocol.device(),
-    //         "test1",
-    //         "test1.elf",
-    //     ))
-    //     .unwrap();
-    // boot_info
-    //     .loaded_images
-    //     .push(image::load_image(
-    //         system_table.boot_services(),
-    //         loaded_image_protocol.device(),
-    //         "simple_fb",
-    //         "simple_fb.elf",
-    //     ))
-    //     .unwrap();
-    // boot_info
-    //     .loaded_images
-    //     .push(image::load_image(
-    //         system_table.boot_services(),
-    //         loaded_image_protocol.device(),
-    //         "platform_bus",
-    //         "platform_bus.elf",
-    //     ))
-    //     .unwrap();
-    // boot_info
-    //     .loaded_images
-    //     .push(image::load_image(
-    //         system_table.boot_services(),
-    //         loaded_image_protocol.device(),
-    //         "pci_bus",
-    //         "pci_bus.elf",
-    //     ))
-    //     .unwrap();
-    // boot_info
-    //     .loaded_images
-    //     .push(image::load_image(
-    //         system_table.boot_services(),
-    //         loaded_image_protocol.device(),
-    //         "usb_bus_xhci",
-    //         "usb_bus_xhci.elf",
-    //     ))
-    //     .unwrap();
-
-    // TEMP XXX: pause until key pressed before switching to graphics mode
-    // info!("Waiting for key press. Will switch to graphics mode next.");
-    // system_table.boot_services().wait_for_event(&mut [system_table.stdin().wait_for_key_event()]);
-
-    let memory_map_size = {
-        let memory_map_size = system_table.boot_services().memory_map_size();
-        /*
-         * Allocate memory to hold the memory map. We ask UEFI how much it thinks it needs, and then add a bit, as the
-         * allocation for the memory map can itself change how much space the memory map will take.
-         */
-        memory_map_size.map_size + 4 * memory_map_size.entry_size
-    };
-    let memory_map_frames = Size4KiB::frames_needed(memory_map_size);
-    info!(
-        "Memory map will apparently be {} bytes. Allocating {}.",
-        memory_map_size,
-        memory_map_frames * Size4KiB::SIZE
-    );
-    let memory_map_address = system_table
-        .boot_services()
-        .allocate_pages(AllocateType::AnyPages, MEMORY_MAP_MEMORY_TYPE, memory_map_frames)
-        .unwrap();
-    unsafe {
-        system_table.boot_services().set_mem(memory_map_address as *mut u8, memory_map_frames * Size4KiB::SIZE, 0);
+    let images_to_load: &[(&'static str, &'static str)] = &[
+        // ("test_syscalls", "test_syscalls.elf"),
+        // ("test1", "test1.elf"),
+        // ("simple_fb", "simple_fb.elf"),
+        // ("platform_bus", "platform_bus.elf"),
+        // ("pci_bus", "pci_bus.elf"),
+        // ("usb_bus_xhci", "usb_bus_xhci.elf"),
+    ];
+    for (name, path) in images_to_load {
+        boot_info
+            .loaded_images
+            .push(image::load_image(system_table.boot_services(), loader_image_device, name, path))
+            .unwrap();
     }
-    let memory_map_buffer =
-        unsafe { slice::from_raw_parts_mut(memory_map_address as *mut u8, memory_map_frames * Size4KiB::SIZE) };
 
-    let (_system_table, memory_map) =
-        system_table.exit_boot_services(image_handle, memory_map_buffer).expect("Failed to exit boot services");
+    let (_system_table, memory_map) = system_table.exit_boot_services();
     process_memory_map(memory_map, boot_info, &mut page_table, &allocator);
 
     /*
@@ -272,16 +197,12 @@ fn find_rsdp(system_table: &SystemTable<Boot>) -> Option<PAddr> {
         })
 }
 
-/// Process the final UEFI memory map when after we've exited boot services. We need to do three things with it:
-///     * We need to identity-map anything that UEFI expects to stay in the same place, including the loader image
-///       (the code that's currently running), and the UEFI runtime services. We also map the boot services, as
-///       many implementations don't actually stop using them after the call to `ExitBootServices` as they should.
-///     * We construct the memory map that will be passed to the kernel, which it uses to initialize its physical
-///       memory manager. This is added directly to the already-allocated boot info.
-///     * Construct the physical memory mapping - we map the entirity of physical memory into the kernel address
-///       space to make it easy for the kernel to access any address it needs to.
+/// Process the final UEFI memory map when after we've exited boot services:
+///    * Identity-map the loader, so it doesn't disappear from under us.
+///    * Construct the memory map passed to the kernel, and add it to the boot info.
+///    * Construct the physical memory mapping by mapping all of physical memory into the kernel address space.
 fn process_memory_map<'a, A, P>(
-    memory_map: impl Iterator<Item = &'a MemoryDescriptor>,
+    memory_map: uefi::table::boot::MemoryMap<'a>,
     boot_info: &mut BootInfo,
     mapper: &mut P,
     allocator: &A,
@@ -291,21 +212,7 @@ fn process_memory_map<'a, A, P>(
 {
     use seed::boot_info::{MemoryMapEntry, MemoryType as BootInfoMemoryType};
 
-    /*
-     * To know how much physical memory to map, we keep track of the largest physical address that appears in
-     * the memory map.
-     */
-    let mut max_physical_address = 0x0;
-
-    for entry in memory_map {
-        /*
-         * If this is the largest physical address we've seen, update it.
-         */
-        max_physical_address = usize::max(
-            max_physical_address,
-            entry.phys_start as usize + entry.page_count as usize * Size4KiB::SIZE,
-        );
-
+    for entry in memory_map.entries() {
         /*
          * Keep the loader identity-mapped, or it will disappear out from under us when we switch to the kernel's
          * page tables. We won't be using the runtime services, so don't bother mapping them.
@@ -343,29 +250,24 @@ fn process_memory_map<'a, A, P>(
          * be processed after we've left the loader, so we can include memory currently used by the
          * loader as free.
          */
-        // TODO: move this to a decl_macro when hygiene-opt-out is implemented
-        macro_rules! add_entry {
-            ($type: expr) => {{
-                boot_info
-                    .memory_map
-                    .push(MemoryMapEntry::new(
-                        $type,
-                        PAddr::new(entry.phys_start as usize).unwrap(),
-                        entry.page_count as usize * Size4KiB::SIZE,
-                    ))
-                    .expect("Run out of memory entry slots in boot info");
-            }};
-        }
+        let mut add_entry = |typ| {
+            let start = PAddr::new(entry.phys_start as usize).unwrap();
+            let size = entry.page_count as usize * Size4KiB::SIZE;
+            boot_info
+                .memory_map
+                .push(MemoryMapEntry::new(typ, start, size))
+                .expect("Run out of memory entry slots in boot info!");
+        };
         match entry.ty {
             MemoryType::CONVENTIONAL
             | MemoryType::BOOT_SERVICES_CODE
             | MemoryType::BOOT_SERVICES_DATA
-            | MEMORY_MAP_MEMORY_TYPE => add_entry!(BootInfoMemoryType::Conventional),
+            | MEMORY_MAP_MEMORY_TYPE => add_entry(BootInfoMemoryType::Conventional),
 
-            MemoryType::ACPI_RECLAIM => add_entry!(BootInfoMemoryType::AcpiReclaimable),
+            MemoryType::ACPI_RECLAIM => add_entry(BootInfoMemoryType::AcpiReclaimable),
 
-            BOOT_INFO_MEMORY_TYPE => add_entry!(BootInfoMemoryType::BootInfo),
-            MemoryType::LOADER_CODE | MemoryType::LOADER_DATA => add_entry!(BootInfoMemoryType::Loader),
+            BOOT_INFO_MEMORY_TYPE => add_entry(BootInfoMemoryType::BootInfo),
+            MemoryType::LOADER_CODE | MemoryType::LOADER_DATA => add_entry(BootInfoMemoryType::Loader),
 
             // IMAGE_MEMORY_TYPE => add_entry!(BootInfoMemoryType::LoadedImage),
             // PAGE_TABLE_MEMORY_TYPE => add_entry!(BootInfoMemoryType::KernelPageTables),
@@ -380,6 +282,11 @@ fn process_memory_map<'a, A, P>(
      * Construct the physical memory mapping. We find the maximum physical address that the memory map contains,
      * and map that much physical memory.
      */
+    let max_physical_address = memory_map
+        .entries()
+        .map(|entry| entry.phys_start as usize + entry.page_count as usize * Size4KiB::SIZE)
+        .max()
+        .unwrap();
     info!(
         "Constructing physical mapping 0x0..{:#x} at {:#x}",
         max_physical_address,
@@ -437,60 +344,34 @@ fn allocate_and_map_heap<A, P>(
 
 fn create_framebuffer(
     boot_services: &BootServices,
-    image_handle: Handle,
     requested_width: usize,
     requested_height: usize,
 ) -> VideoModeInfo {
     use seed::boot_info::PixelFormat;
     use uefi::proto::console::gop::PixelFormat as GopFormat;
 
-    // Make an initial call to find how many handles we need to search
-    let num_handles = boot_services
-        .locate_handle(SearchType::from_proto::<GraphicsOutput>(), None)
-        .expect("Failed to get list of GOP devices");
+    // Get a list of all the devices that support the `GraphicsOutput` protocol
+    let handles = boot_services
+        .locate_handle_buffer(SearchType::from_proto::<GraphicsOutput>())
+        .expect("Failed to get list of graphics devices");
 
-    // Allocate a pool of the needed size
-    let pool_addr = boot_services
-        .allocate_pool(MemoryType::LOADER_DATA, mem::size_of::<Handle>() * num_handles)
-        .expect("Failed to allocate pool for GOP handles");
-    let handle_slice: &mut [MaybeUninit<Handle>] =
-        unsafe { slice::from_raw_parts_mut(pool_addr as *mut MaybeUninit<Handle>, num_handles) };
+    for handle in handles.iter() {
+        info!("Considering graphics device: {:?}", handle);
+        let mut proto = boot_services.open_protocol_exclusive::<GraphicsOutput>(*handle).unwrap();
 
-    // Actually fetch the handles
-    boot_services
-        .locate_handle(SearchType::from_proto::<GraphicsOutput>(), Some(handle_slice))
-        .expect("Failed to get list of graphics output devices");
-
-    for &mut handle in handle_slice {
-        let proto = boot_services
-            .open_protocol::<GraphicsOutput>(
-                OpenProtocolParams {
-                    handle: unsafe { handle.assume_init() },
-                    agent: image_handle,
-                    controller: None,
-                },
-                OpenProtocolAttributes::GetProtocol,
-            )
-            .unwrap();
-        let interface = unsafe { &mut *proto.interface.get() };
-
-        let chosen_mode = interface.modes().find(|mode| {
+        let chosen_mode = proto.modes().find(|mode| {
             let (width, height) = mode.info().resolution();
             let pixel_format = mode.info().pixel_format();
 
-            /*
-             * TODO: we currently assume that the command line provides both a width and a height. In the future,
-             * it would be better to just apply the filters the user actually cares about
-             */
             (width == requested_width)
                 && (height == requested_height)
                 && (pixel_format == GopFormat::Rgb || pixel_format == GopFormat::Bgr)
         });
 
         if let Some(mode) = chosen_mode {
-            interface.set_mode(&mode).expect("Failed to switch to new video mode");
+            proto.set_mode(&mode).expect("Failed to switch to new video mode");
 
-            let framebuffer_address = PAddr::new(interface.frame_buffer().as_mut_ptr() as usize).unwrap();
+            let framebuffer_address = PAddr::new(proto.frame_buffer().as_mut_ptr() as usize).unwrap();
             let mode_info = mode.info();
             let (width, height) = mode_info.resolution();
             let pixel_format = match mode_info.pixel_format() {

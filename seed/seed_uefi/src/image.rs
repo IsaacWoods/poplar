@@ -160,11 +160,11 @@ pub fn load_image(boot_services: &BootServices, volume_handle: Handle, name: &st
 /// free the pool themselves. When pools is made safer, we need to rework how this all works to tie the lifetime of
 /// the elf to the pool.
 fn load_elf<'a>(boot_services: &BootServices, volume_handle: Handle, path: &str) -> (Elf<'a>, *mut u8) {
-    let mut root_file_protocol = unsafe {
-        &mut *boot_services.handle_protocol::<SimpleFileSystem>(volume_handle).expect("Failed to get volume").get()
-    }
-    .open_volume()
-    .expect("Failed to open volume");
+    let mut root_file_protocol = boot_services
+        .open_protocol_exclusive::<SimpleFileSystem>(volume_handle)
+        .expect("Failed to get volume")
+        .open_volume()
+        .expect("Failed to open volume");
 
     // TODO: custom match and print path on failure
     // TODO: make the path handling less brittle

@@ -36,6 +36,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "bef38d45163c2f1dde094a7dfd33ccf595c92905c8f8f4fdc18d06fb1037718a"
 
 [[package]]
+name = "bitflags"
+version = "2.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b4682ae6287fcf752ecaabbfcc7b6f9b72aa33933dc23a554d853aea8eea8635"
+
+[[package]]
 name = "byteorder"
 version = "1.4.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -93,7 +99,7 @@ name = "hal_riscv"
 version = "0.1.0"
 dependencies = [
  "bit_field",
- "bitflags",
+ "bitflags 1.3.2",
  "hal",
  "poplar_util",
  "tracing",
@@ -105,7 +111,7 @@ name = "hal_x86_64"
 version = "0.1.0"
 dependencies = [
  "bit_field",
- "bitflags",
+ "bitflags 1.3.2",
  "hal",
  "log",
  "poplar_util",
@@ -195,18 +201,38 @@ dependencies = [
 
 [[package]]
 name = "proc-macro2"
-version = "1.0.40"
+version = "1.0.66"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "dd96a1e8ed2596c337f8eae5f24924ec83f5ad5ab21ea8e455d3566c69fbcaf7"
+checksum = "18fb31db3f9bddb2ea821cde30a9f70117e3f119938b5ee630b7403aa6e2ead9"
 dependencies = [
  "unicode-ident",
 ]
 
 [[package]]
-name = "quote"
-version = "1.0.20"
+name = "ptr_meta"
+version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3bcdf212e9776fbcb2d23ab029360416bb1706b1aea2d1a5ba002727cbcab804"
+checksum = "bcada80daa06c42ed5f48c9a043865edea5dc44cbf9ac009fda3b89526e28607"
+dependencies = [
+ "ptr_meta_derive",
+]
+
+[[package]]
+name = "ptr_meta_derive"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "bca9224df2e20e7c5548aeb5f110a0f3b77ef05f8585139b7148b59056168ed2"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 1.0.98",
+]
+
+[[package]]
+name = "quote"
+version = "1.0.33"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5267fca4496028628a95160fc423a33e8b2e6af8a5302579e322e4b520293cae"
 dependencies = [
  "proc-macro2",
 ]
@@ -243,7 +269,7 @@ checksum = "aaaae8f38bb311444cfb7f1979af0bc9240d95795f75f9ceddf6a59b79ceffa0"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn",
+ "syn 1.0.98",
 ]
 
 [[package]]
@@ -331,6 +357,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "syn"
+version = "2.0.29"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c324c494eba9d92503e6f1ef2e6df781e78f6a7705a0202d9801b198807d518a"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "unicode-ident",
+]
+
+[[package]]
 name = "tracing"
 version = "0.2.0"
 source = "git+https://github.com/tokio-rs/tracing#f09bc43c3f13e6df856b809d47544e7e846a6192"
@@ -356,24 +393,46 @@ dependencies = [
 
 [[package]]
 name = "uefi"
-version = "0.15.2"
+version = "0.24.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3b63e82686b4bdb0db74f18b2abbd60a0470354fb640aa69e115598d714d0a10"
 dependencies = [
- "bitflags",
+ "bitflags 2.4.0",
  "log",
+ "ptr_meta",
  "ucs2",
  "uefi-macros",
+ "uefi-raw",
+ "uguid",
 ]
 
 [[package]]
 name = "uefi-macros"
-version = "0.6.1"
+version = "0.12.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a9271b66bf83671563773e54b178f1022ac2dab87dc197f80be51885a5e1a2f4"
+checksum = "023d94ef8e135d068b9a3bd94614ef2610b2b0419ade0a9d8f3501fa9cd08e95"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn",
+ "syn 2.0.29",
 ]
+
+[[package]]
+name = "uefi-raw"
+version = "0.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "62642516099c6441a5f41b0da8486d5fc3515a0603b0fdaea67b31600e22082e"
+dependencies = [
+ "bitflags 2.4.0",
+ "ptr_meta",
+ "uguid",
+]
+
+[[package]]
+name = "uguid"
+version = "2.0.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "16dfbd255defbd727b3a30e8950695d2e6d045841ee250ff0f1f7ced17917f8d"
 
 [[package]]
 name = "unicode-ident"
