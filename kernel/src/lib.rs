@@ -42,7 +42,7 @@ pub static ALLOCATOR: LockedHoleAllocator = LockedHoleAllocator::new_uninitializ
 pub static PHYSICAL_MEMORY_MANAGER: InitGuard<PhysicalMemoryManager> = InitGuard::uninit();
 pub static FRAMEBUFFER: InitGuard<(poplar::syscall::FramebufferInfo, Arc<MemoryObject>)> = InitGuard::uninit();
 pub static PCI_INFO: RwLock<Option<PciInfo>> = RwLock::new(None);
-pub static PCI_ACCESS: InitGuard<Option<Mutex<Box<dyn PciConfigRegionAccess>>>> = InitGuard::uninit();
+pub static PCI_ACCESS: InitGuard<Option<Mutex<Box<dyn PciConfigRegionAccess + Send>>>> = InitGuard::uninit();
 
 pub trait Platform: Sized + 'static {
     type PageTableSize: FrameSize;

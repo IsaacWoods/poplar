@@ -45,7 +45,7 @@ where
 
 impl<A> aml::Handler for AmlHandler<A>
 where
-    A: ConfigRegionAccess + Sync,
+    A: ConfigRegionAccess + Send + Sync,
 {
     fn read_u8(&self, address: usize) -> u8 {
         debug!("AML: Reading byte from {:#x}", address);
