@@ -10,12 +10,14 @@
 mod image;
 mod logger;
 mod memory;
+mod pci;
 
 use core::{arch::asm, mem, ptr};
 use fdt::Fdt;
 use hal::memory::{Flags, FrameAllocator, FrameSize, PAddr, PageTable, Size4KiB, VAddr};
 use hal_riscv::paging::PageTableImpl;
 use memory::{MemoryManager, MemoryRegions};
+use pci::PciAccess;
 use poplar_util::{linker::LinkerSymbol, math::align_up};
 use seed::boot_info::BootInfo;
 use tracing::info;
@@ -74,7 +76,6 @@ pub fn seed_main(hart_id: u64, fdt_ptr: *const u8) -> ! {
     info!("FDT address: {:?}", fdt_ptr);
 
     let fdt = unsafe { Fdt::from_ptr(fdt_ptr).expect("Failed to parse FDT") };
-    info!("FDT: {:?}", fdt);
 
     /*
      * Construct an initial map of memory - a series of usable and reserved regions and what is in each of them. At
@@ -85,6 +86,15 @@ pub fn seed_main(hart_id: u64, fdt_ptr: *const u8) -> ! {
     let mut memory_regions = MemoryRegions::new(&fdt, fdt_address);
     let kernel_elf = image::extract_kernel(&mut memory_regions);
     info!("Memory regions: {:#?}", memory_regions);
+
+    /*
+     * Enumerate PCI devices.
+     */
+    let pci_access = PciAccess::new(&fdt);
+    pci::PciResolver::resolve(pci_access);
+
+    // TODO: find and read the kernel and task images from a Virtio disk driver. The `virtio-drivers` crate looks
+    // fairly high quality and an easy way to do this.
 
     /*
      * We can then use this mapping of memory regions to initialise the physical memory manager so we can allocate

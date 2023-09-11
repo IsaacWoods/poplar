@@ -17,3 +17,4 @@ tracing = { git = "https://github.com/tokio-rs/tracing", default-features = fals
 tracing-core = { git = "https://github.com/tokio-rs/tracing", default-features = false }
 arrayvec = { version = "0.7.2", default-features = false }
 mer = { path = "../../lib/mer/" }
+pci_types = { path = "../../lib/pci_types" }
