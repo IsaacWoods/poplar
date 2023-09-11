@@ -1,2 +1,4 @@
 arch = "riscv"
+# Whether to build for a release (true) or `debug` (false) profile. The `release` profile is heavily recommended
+# for software-emulated targets (e.g. RiscV on an x86_64 host) to achieve reasonable speeds.
 release = true
