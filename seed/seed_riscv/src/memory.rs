@@ -97,6 +97,7 @@ impl MemoryRegions {
             info!("No memory reservations found");
         }
 
+        // Reserve the memory `seed` has been loaded into
         let seed_start = unsafe { _seed_start.ptr() as usize };
         let seed_end = unsafe { _seed_end.ptr() as usize };
         regions.add_region(Region::reserved(
@@ -104,9 +105,10 @@ impl MemoryRegions {
             PAddr::new(unsafe { _seed_start.ptr() as usize }).unwrap(),
             align_up(seed_end - seed_start, Size4KiB::SIZE),
         ));
+
+        // Reserve the memory the FDT is in
         regions.add_region(Region::reserved(
             Usage::DeviceTree,
-            // PAddr::new((fdt as *const Fdt as *const u8).addr()).unwrap(),
             fdt_address,
             align_up(fdt.total_size(), Size4KiB::SIZE),
         ));
@@ -118,7 +120,7 @@ impl MemoryRegions {
     pub fn add_region(&mut self, region: Region) {
         let mut added = false;
 
-        for mut existing in &mut self.0 {
+        for existing in &mut self.0 {
             if region.typ == existing.typ {
                 /*
                  * The new region is the same type as the existing region - see if the new region is contained
@@ -306,6 +308,10 @@ impl MemoryManager {
                 .unwrap();
             current_node = inner_node.next;
         }
+
+        // Sort the entries by address to make it more readable. This is probably not necessary but makes debugging
+        // easier.
+        memory_map.sort_unstable_by_key(|entry| entry.start);
 
         /*
          * From this point, we don't want the bootloader to make any more allocations. We prevent this by removing
