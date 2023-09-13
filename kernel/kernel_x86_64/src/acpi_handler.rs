@@ -170,4 +170,12 @@ where
         debug!("AML: Writing dword to PCI config space (segment={:#x},bus={:#x},device={:#x},function={:#x},offset={:#x}): {:#x}", segment, bus, device, function, offset, value);
         unsafe { self.pci_access.write(PciAddress::new(segment, bus, device, function), offset, value) }
     }
+
+    fn stall(&self, microseconds: u64) {
+        todo!()
+    }
+
+    fn sleep(&self, milliseconds: u64) {
+        todo!()
+    }
 }
