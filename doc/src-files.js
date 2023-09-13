@@ -8,7 +8,7 @@ var srcIndex = JSON.parse('{\
 "heapless":["",[["pool",[["singleton",[],["arc.rs"]]],["cas.rs","mod.rs","singleton.rs"]]],["binary_heap.rs","deque.rs","histbuf.rs","indexmap.rs","indexset.rs","lib.rs","linear_map.rs","mpmc.rs","sealed.rs","sorted_linked_list.rs","spsc.rs","string.rs","vec.rs"]],\
 "kernel":["",[["memory",[],["buddy_allocator.rs","kernel_stack_allocator.rs","mod.rs","slab_allocator.rs"]],["object",[],["address_space.rs","channel.rs","memory_object.rs","mod.rs","task.rs"]],["syscall",[],["mod.rs","validation.rs"]]],["heap_allocator.rs","lib.rs","pci.rs","per_cpu.rs","scheduler.rs"]],\
 "lock_api":["",[],["lib.rs","mutex.rs","remutex.rs","rwlock.rs"]],\
-"log":["",[],["lib.rs","macros.rs"]],\
+"log":["",[],["__private_api.rs","lib.rs","macros.rs"]],\
 "num_traits":["",[["ops",[],["checked.rs","inv.rs","mod.rs","mul_add.rs","overflowing.rs","saturating.rs","wrapping.rs"]]],["bounds.rs","cast.rs","float.rs","identities.rs","int.rs","lib.rs","macros.rs","pow.rs","sign.rs"]],\
 "pci_types":["",[["capability",[],["mod.rs","msi.rs"]]],["device_type.rs","lib.rs","register.rs"]],\
 "pin_project_lite":["",[],["lib.rs"]],\

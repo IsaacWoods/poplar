@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/log-0.4.14/src/lib.rs`."><title>lib.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Bold-a2c9cd1067f8b328.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-47e7ab555ef2818a.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="log" data-themes="" data-resource-suffix="" data-rustdoc-version="1.74.0-nightly (62ebe3a2b 2023-09-08)" data-channel="nightly" data-search-js="search-5d3eaacf19ebf04f.js" data-settings-js="settings-de11bff964e9d4e5.js" data-settings-css="settings-8c76f75bfb6bd192.css" data-theme-light-css="light-f194925aa375ae96.css" data-theme-dark-css="dark-1dd4d1ce031e15de.css" data-theme-ayu-css="ayu-49e58d069f567085.css" ><script src="../../static.files/storage-db41da1a38ea3cb8.js"></script><script defer src="../../static.files/src-script-3280b574d94e47b4.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-ef3a2de404864b0b.js"></script><noscript><link rel="stylesheet" media="(prefers-color-scheme:light)" href="../../static.files/light-f194925aa375ae96.css"><link rel="stylesheet" media="(prefers-color-scheme:dark)" href="../../static.files/dark-1dd4d1ce031e15de.css"><link rel="stylesheet" href="../../static.files/noscript-cffde32267a19fd6.css"></noscript><link rel="icon" href="https://www.rust-lang.org/favicon.ico"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><a class="sub-logo-container" href="../../log/index.html"><img src="https://www.rust-lang.org/logos/rust-logo-128x128-blk-v2.png" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/log-0.4.20/src/lib.rs`."><title>lib.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Bold-a2c9cd1067f8b328.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-47e7ab555ef2818a.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="log" data-themes="" data-resource-suffix="" data-rustdoc-version="1.74.0-nightly (d9c8274fb 2023-09-12)" data-channel="nightly" data-search-js="search-5d3eaacf19ebf04f.js" data-settings-js="settings-74424d7eec62a23e.js" data-settings-css="settings-8c76f75bfb6bd192.css" data-theme-light-css="light-f194925aa375ae96.css" data-theme-dark-css="dark-1dd4d1ce031e15de.css" data-theme-ayu-css="ayu-49e58d069f567085.css" ><script src="../../static.files/storage-db41da1a38ea3cb8.js"></script><script defer src="../../static.files/src-script-3280b574d94e47b4.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-8d035c8cea6edbc4.js"></script><noscript><link rel="stylesheet" media="(prefers-color-scheme:light)" href="../../static.files/light-f194925aa375ae96.css"><link rel="stylesheet" media="(prefers-color-scheme:dark)" href="../../static.files/dark-1dd4d1ce031e15de.css"><link rel="stylesheet" href="../../static.files/noscript-cffde32267a19fd6.css"></noscript><link rel="icon" href="https://www.rust-lang.org/favicon.ico"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><a class="sub-logo-container" href="../../log/index.html"><img src="https://www.rust-lang.org/logos/rust-logo-128x128-blk-v2.png" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -1773,6 +1773,58 @@
 <a href="#1773" id="1773">1773</a>
 <a href="#1774" id="1774">1774</a>
 <a href="#1775" id="1775">1775</a>
+<a href="#1776" id="1776">1776</a>
+<a href="#1777" id="1777">1777</a>
+<a href="#1778" id="1778">1778</a>
+<a href="#1779" id="1779">1779</a>
+<a href="#1780" id="1780">1780</a>
+<a href="#1781" id="1781">1781</a>
+<a href="#1782" id="1782">1782</a>
+<a href="#1783" id="1783">1783</a>
+<a href="#1784" id="1784">1784</a>
+<a href="#1785" id="1785">1785</a>
+<a href="#1786" id="1786">1786</a>
+<a href="#1787" id="1787">1787</a>
+<a href="#1788" id="1788">1788</a>
+<a href="#1789" id="1789">1789</a>
+<a href="#1790" id="1790">1790</a>
+<a href="#1791" id="1791">1791</a>
+<a href="#1792" id="1792">1792</a>
+<a href="#1793" id="1793">1793</a>
+<a href="#1794" id="1794">1794</a>
+<a href="#1795" id="1795">1795</a>
+<a href="#1796" id="1796">1796</a>
+<a href="#1797" id="1797">1797</a>
+<a href="#1798" id="1798">1798</a>
+<a href="#1799" id="1799">1799</a>
+<a href="#1800" id="1800">1800</a>
+<a href="#1801" id="1801">1801</a>
+<a href="#1802" id="1802">1802</a>
+<a href="#1803" id="1803">1803</a>
+<a href="#1804" id="1804">1804</a>
+<a href="#1805" id="1805">1805</a>
+<a href="#1806" id="1806">1806</a>
+<a href="#1807" id="1807">1807</a>
+<a href="#1808" id="1808">1808</a>
+<a href="#1809" id="1809">1809</a>
+<a href="#1810" id="1810">1810</a>
+<a href="#1811" id="1811">1811</a>
+<a href="#1812" id="1812">1812</a>
+<a href="#1813" id="1813">1813</a>
+<a href="#1814" id="1814">1814</a>
+<a href="#1815" id="1815">1815</a>
+<a href="#1816" id="1816">1816</a>
+<a href="#1817" id="1817">1817</a>
+<a href="#1818" id="1818">1818</a>
+<a href="#1819" id="1819">1819</a>
+<a href="#1820" id="1820">1820</a>
+<a href="#1821" id="1821">1821</a>
+<a href="#1822" id="1822">1822</a>
+<a href="#1823" id="1823">1823</a>
+<a href="#1824" id="1824">1824</a>
+<a href="#1825" id="1825">1825</a>
+<a href="#1826" id="1826">1826</a>
+<a href="#1827" id="1827">1827</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2015 The Rust Project Developers. See the COPYRIGHT
 // file at the top-level directory of this distribution and at
 // http://rust-lang.org/COPYRIGHT.
@@ -1799,7 +1851,7 @@
 //! though that default may be overridden. Logger implementations typically use
 //! the target to filter requests based on some user configuration.
 //!
-//! # Use
+//! # Usage
 //!
 //! The basic use of the log crate is through the five logging macros: [`error!`],
 //! [`warn!`], [`info!`], [`debug!`] and [`trace!`]
@@ -1861,6 +1913,42 @@
 //!
 //! The logging system may only be initialized once.
 //!
+//! ## Structured logging
+//!
+//! If you enable the `kv_unstable` feature you can associate structured values
+//! with your log records. If we take the example from before, we can include
+//! some additional context besides what&#39;s in the formatted message:
+//!
+//! ```edition2018
+//! # #[macro_use] extern crate serde;
+//! # #[derive(Debug, Serialize)] pub struct Yak(String);
+//! # impl Yak { fn shave(&amp;mut self, _: u32) {} }
+//! # fn find_a_razor() -&gt; Result&lt;u32, std::io::Error&gt; { Ok(1) }
+//! # #[cfg(feature = &quot;kv_unstable_serde&quot;)]
+//! # fn main() {
+//! use log::{info, warn, as_serde, as_error};
+//!
+//! pub fn shave_the_yak(yak: &amp;mut Yak) {
+//!     info!(target: &quot;yak_events&quot;, yak = as_serde!(yak); &quot;Commencing yak shaving&quot;);
+//!
+//!     loop {
+//!         match find_a_razor() {
+//!             Ok(razor) =&gt; {
+//!                 info!(razor = razor; &quot;Razor located&quot;);
+//!                 yak.shave(razor);
+//!                 break;
+//!             }
+//!             Err(err) =&gt; {
+//!                 warn!(err = as_error!(err); &quot;Unable to locate a razor, retrying&quot;);
+//!             }
+//!         }
+//!     }
+//! }
+//! # }
+//! # #[cfg(not(feature = &quot;kv_unstable_serde&quot;))]
+//! # fn main() {}
+//! ```
+//!
 //! # Available logging implementations
 //!
 //! In order to produce log output executables have to use
@@ -1875,12 +1963,23 @@
 //!     * [pretty_env_logger]
 //!     * [stderrlog]
 //!     * [flexi_logger]
+//!     * [call_logger]
+//!     * [structured-logger]
 //! * Complex configurable frameworks:
 //!     * [log4rs]
 //!     * [fern]
 //! * Adaptors for other facilities:
 //!     * [syslog]
 //!     * [slog-stdlog]
+//!     * [systemd-journal-logger]
+//!     * [android_log]
+//!     * [win_dbg_logger]
+//!     * [db_logger]
+//!     * [log-to-defmt]
+//! * For WebAssembly binaries:
+//!     * [console_log]
+//! * For dynamic libraries:
+//!     * You may need to construct an FFI-safe wrapper over `log` to initialize in your libraries
 //!
 //! # Implementing a Logger
 //!
@@ -2033,18 +2132,26 @@
 //! [pretty_env_logger]: https://docs.rs/pretty_env_logger/*/pretty_env_logger/
 //! [stderrlog]: https://docs.rs/stderrlog/*/stderrlog/
 //! [flexi_logger]: https://docs.rs/flexi_logger/*/flexi_logger/
+//! [call_logger]: https://docs.rs/call_logger/*/call_logger/
 //! [syslog]: https://docs.rs/syslog/*/syslog/
 //! [slog-stdlog]: https://docs.rs/slog-stdlog/*/slog_stdlog/
 //! [log4rs]: https://docs.rs/log4rs/*/log4rs/
 //! [fern]: https://docs.rs/fern/*/fern/
+//! [systemd-journal-logger]: https://docs.rs/systemd-journal-logger/*/systemd_journal_logger/
+//! [android_log]: https://docs.rs/android_log/*/android_log/
+//! [win_dbg_logger]: https://docs.rs/win_dbg_logger/*/win_dbg_logger/
+//! [db_logger]: https://docs.rs/db_logger/*/db_logger/
+//! [log-to-defmt]: https://docs.rs/log-to-defmt/*/log_to_defmt/
+//! [console_log]: https://docs.rs/console_log/*/console_log/
+//! [structured-logger]: https://docs.rs/structured-logger/latest/structured_logger/
 
 </span><span class="attr">#![doc(
     html_logo_url = <span class="string">&quot;https://www.rust-lang.org/logos/rust-logo-128x128-blk-v2.png&quot;</span>,
     html_favicon_url = <span class="string">&quot;https://www.rust-lang.org/favicon.ico&quot;</span>,
-    html_root_url = <span class="string">&quot;https://docs.rs/log/0.4.14&quot;
+    html_root_url = <span class="string">&quot;https://docs.rs/log/0.4.20&quot;
 </span>)]
 #![warn(missing_docs)]
-#![deny(missing_debug_implementations)]
+#![deny(missing_debug_implementations, unconditional_recursion)]
 #![cfg_attr(all(not(feature = <span class="string">&quot;std&quot;</span>), not(test)), no_std)]
 </span><span class="comment">// When compiled for the rustc compiler itself we want to make sure that this is
 // an unstable crate
@@ -2053,9 +2160,6 @@
 
 #[cfg(all(not(feature = <span class="string">&quot;std&quot;</span>), not(test)))]
 </span><span class="kw">extern crate </span>core <span class="kw">as </span>std;
-
-<span class="attr">#[macro_use]
-</span><span class="kw">extern crate </span>cfg_if;
 
 <span class="kw">use </span>std::cmp;
 <span class="attr">#[cfg(feature = <span class="string">&quot;std&quot;</span>)]
@@ -2071,20 +2175,20 @@
 <span class="attr">#[cfg(feature = <span class="string">&quot;kv_unstable&quot;</span>)]
 </span><span class="kw">pub mod </span>kv;
 
-<span class="attr">#[cfg(has_atomics)]
+<span class="attr">#[cfg(target_has_atomic = <span class="string">&quot;ptr&quot;</span>)]
 </span><span class="kw">use </span>std::sync::atomic::{AtomicUsize, Ordering};
 
-<span class="attr">#[cfg(not(has_atomics))]
+<span class="attr">#[cfg(not(target_has_atomic = <span class="string">&quot;ptr&quot;</span>))]
 </span><span class="kw">use </span>std::cell::Cell;
-<span class="attr">#[cfg(not(has_atomics))]
+<span class="attr">#[cfg(not(target_has_atomic = <span class="string">&quot;ptr&quot;</span>))]
 </span><span class="kw">use </span>std::sync::atomic::Ordering;
 
-<span class="attr">#[cfg(not(has_atomics))]
+<span class="attr">#[cfg(not(target_has_atomic = <span class="string">&quot;ptr&quot;</span>))]
 </span><span class="kw">struct </span>AtomicUsize {
     v: Cell&lt;usize&gt;,
 }
 
-<span class="attr">#[cfg(not(has_atomics))]
+<span class="attr">#[cfg(not(target_has_atomic = <span class="string">&quot;ptr&quot;</span>))]
 </span><span class="kw">impl </span>AtomicUsize {
     <span class="kw">const fn </span>new(v: usize) -&gt; AtomicUsize {
         AtomicUsize { v: Cell::new(v) }
@@ -2098,7 +2202,7 @@
         <span class="self">self</span>.v.set(val)
     }
 
-    <span class="attr">#[cfg(atomic_cas)]
+    <span class="attr">#[cfg(target_has_atomic = <span class="string">&quot;ptr&quot;</span>)]
     </span><span class="kw">fn </span>compare_exchange(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         current: usize,
@@ -2116,7 +2220,7 @@
 
 <span class="comment">// Any platform without atomics is unlikely to have multiple cores, so
 // writing via Cell will not be a race condition.
-</span><span class="attr">#[cfg(not(has_atomics))]
+</span><span class="attr">#[cfg(not(target_has_atomic = <span class="string">&quot;ptr&quot;</span>))]
 </span><span class="kw">unsafe impl </span>Sync <span class="kw">for </span>AtomicUsize {}
 
 <span class="comment">// The LOGGER static holds a pointer to the global logger. It is protected by
@@ -2148,7 +2252,7 @@
 /// [`log!`](macro.log.html), and comparing a `Level` directly to a
 /// [`LevelFilter`](enum.LevelFilter.html).
 </span><span class="attr">#[repr(usize)]
-#[derive(Copy, Eq, Debug, Hash)]
+#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Debug, Hash)]
 </span><span class="kw">pub enum </span>Level {
     <span class="doccomment">/// The &quot;error&quot; level.
     ///
@@ -2175,20 +2279,6 @@
     </span>Trace,
 }
 
-<span class="kw">impl </span>Clone <span class="kw">for </span>Level {
-    <span class="attr">#[inline]
-    </span><span class="kw">fn </span>clone(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Level {
-        <span class="kw-2">*</span><span class="self">self
-    </span>}
-}
-
-<span class="kw">impl </span>PartialEq <span class="kw">for </span>Level {
-    <span class="attr">#[inline]
-    </span><span class="kw">fn </span>eq(<span class="kw-2">&amp;</span><span class="self">self</span>, other: <span class="kw-2">&amp;</span>Level) -&gt; bool {
-        <span class="kw-2">*</span><span class="self">self </span><span class="kw">as </span>usize == <span class="kw-2">*</span>other <span class="kw">as </span>usize
-    }
-}
-
 <span class="kw">impl </span>PartialEq&lt;LevelFilter&gt; <span class="kw">for </span>Level {
     <span class="attr">#[inline]
     </span><span class="kw">fn </span>eq(<span class="kw-2">&amp;</span><span class="self">self</span>, other: <span class="kw-2">&amp;</span>LevelFilter) -&gt; bool {
@@ -2196,64 +2286,10 @@
     }
 }
 
-<span class="kw">impl </span>PartialOrd <span class="kw">for </span>Level {
-    <span class="attr">#[inline]
-    </span><span class="kw">fn </span>partial_cmp(<span class="kw-2">&amp;</span><span class="self">self</span>, other: <span class="kw-2">&amp;</span>Level) -&gt; <span class="prelude-ty">Option</span>&lt;cmp::Ordering&gt; {
-        <span class="prelude-val">Some</span>(<span class="self">self</span>.cmp(other))
-    }
-
-    <span class="attr">#[inline]
-    </span><span class="kw">fn </span>lt(<span class="kw-2">&amp;</span><span class="self">self</span>, other: <span class="kw-2">&amp;</span>Level) -&gt; bool {
-        (<span class="kw-2">*</span><span class="self">self </span><span class="kw">as </span>usize) &lt; <span class="kw-2">*</span>other <span class="kw">as </span>usize
-    }
-
-    <span class="attr">#[inline]
-    </span><span class="kw">fn </span>le(<span class="kw-2">&amp;</span><span class="self">self</span>, other: <span class="kw-2">&amp;</span>Level) -&gt; bool {
-        <span class="kw-2">*</span><span class="self">self </span><span class="kw">as </span>usize &lt;= <span class="kw-2">*</span>other <span class="kw">as </span>usize
-    }
-
-    <span class="attr">#[inline]
-    </span><span class="kw">fn </span>gt(<span class="kw-2">&amp;</span><span class="self">self</span>, other: <span class="kw-2">&amp;</span>Level) -&gt; bool {
-        <span class="kw-2">*</span><span class="self">self </span><span class="kw">as </span>usize &gt; <span class="kw-2">*</span>other <span class="kw">as </span>usize
-    }
-
-    <span class="attr">#[inline]
-    </span><span class="kw">fn </span>ge(<span class="kw-2">&amp;</span><span class="self">self</span>, other: <span class="kw-2">&amp;</span>Level) -&gt; bool {
-        <span class="kw-2">*</span><span class="self">self </span><span class="kw">as </span>usize &gt;= <span class="kw-2">*</span>other <span class="kw">as </span>usize
-    }
-}
-
 <span class="kw">impl </span>PartialOrd&lt;LevelFilter&gt; <span class="kw">for </span>Level {
     <span class="attr">#[inline]
     </span><span class="kw">fn </span>partial_cmp(<span class="kw-2">&amp;</span><span class="self">self</span>, other: <span class="kw-2">&amp;</span>LevelFilter) -&gt; <span class="prelude-ty">Option</span>&lt;cmp::Ordering&gt; {
         <span class="prelude-val">Some</span>((<span class="kw-2">*</span><span class="self">self </span><span class="kw">as </span>usize).cmp(<span class="kw-2">&amp;</span>(<span class="kw-2">*</span>other <span class="kw">as </span>usize)))
-    }
-
-    <span class="attr">#[inline]
-    </span><span class="kw">fn </span>lt(<span class="kw-2">&amp;</span><span class="self">self</span>, other: <span class="kw-2">&amp;</span>LevelFilter) -&gt; bool {
-        (<span class="kw-2">*</span><span class="self">self </span><span class="kw">as </span>usize) &lt; <span class="kw-2">*</span>other <span class="kw">as </span>usize
-    }
-
-    <span class="attr">#[inline]
-    </span><span class="kw">fn </span>le(<span class="kw-2">&amp;</span><span class="self">self</span>, other: <span class="kw-2">&amp;</span>LevelFilter) -&gt; bool {
-        <span class="kw-2">*</span><span class="self">self </span><span class="kw">as </span>usize &lt;= <span class="kw-2">*</span>other <span class="kw">as </span>usize
-    }
-
-    <span class="attr">#[inline]
-    </span><span class="kw">fn </span>gt(<span class="kw-2">&amp;</span><span class="self">self</span>, other: <span class="kw-2">&amp;</span>LevelFilter) -&gt; bool {
-        <span class="kw-2">*</span><span class="self">self </span><span class="kw">as </span>usize &gt; <span class="kw-2">*</span>other <span class="kw">as </span>usize
-    }
-
-    <span class="attr">#[inline]
-    </span><span class="kw">fn </span>ge(<span class="kw-2">&amp;</span><span class="self">self</span>, other: <span class="kw-2">&amp;</span>LevelFilter) -&gt; bool {
-        <span class="kw-2">*</span><span class="self">self </span><span class="kw">as </span>usize &gt;= <span class="kw-2">*</span>other <span class="kw">as </span>usize
-    }
-}
-
-<span class="kw">impl </span>Ord <span class="kw">for </span>Level {
-    <span class="attr">#[inline]
-    </span><span class="kw">fn </span>cmp(<span class="kw-2">&amp;</span><span class="self">self</span>, other: <span class="kw-2">&amp;</span>Level) -&gt; cmp::Ordering {
-        (<span class="kw-2">*</span><span class="self">self </span><span class="kw">as </span>usize).cmp(<span class="kw-2">&amp;</span>(<span class="kw-2">*</span>other <span class="kw">as </span>usize))
     }
 }
 
@@ -2264,32 +2300,13 @@
     }
 }
 
-<span class="comment">// Reimplemented here because std::ascii is not available in libcore
-</span><span class="kw">fn </span>eq_ignore_ascii_case(a: <span class="kw-2">&amp;</span>str, b: <span class="kw-2">&amp;</span>str) -&gt; bool {
-    <span class="kw">fn </span>to_ascii_uppercase(c: u8) -&gt; u8 {
-        <span class="kw">if </span>c &gt;= <span class="string">b&#39;a&#39; </span>&amp;&amp; c &lt;= <span class="string">b&#39;z&#39; </span>{
-            c - <span class="string">b&#39;a&#39; </span>+ <span class="string">b&#39;A&#39;
-        </span>} <span class="kw">else </span>{
-            c
-        }
-    }
-
-    <span class="kw">if </span>a.len() == b.len() {
-        a.bytes()
-            .zip(b.bytes())
-            .all(|(a, b)| to_ascii_uppercase(a) == to_ascii_uppercase(b))
-    } <span class="kw">else </span>{
-        <span class="bool-val">false
-    </span>}
-}
-
 <span class="kw">impl </span>FromStr <span class="kw">for </span>Level {
     <span class="kw">type </span><span class="prelude-val">Err </span>= ParseLevelError;
     <span class="kw">fn </span>from_str(level: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Result</span>&lt;Level, <span class="self">Self</span>::Err&gt; {
         ok_or(
             LOG_LEVEL_NAMES
                 .iter()
-                .position(|<span class="kw-2">&amp;</span>name| eq_ignore_ascii_case(name, level))
+                .position(|<span class="kw-2">&amp;</span>name| name.eq_ignore_ascii_case(level))
                 .into_iter()
                 .filter(|<span class="kw-2">&amp;</span>idx| idx != <span class="number">0</span>)
                 .map(|idx| Level::from_usize(idx).unwrap())
@@ -2335,6 +2352,24 @@
     </span><span class="kw">pub fn </span>as_str(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>str {
         LOG_LEVEL_NAMES[<span class="kw-2">*</span><span class="self">self </span><span class="kw">as </span>usize]
     }
+
+    <span class="doccomment">/// Iterate through all supported logging levels.
+    ///
+    /// The order of iteration is from more severe to less severe log messages.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use log::Level;
+    ///
+    /// let mut levels = Level::iter();
+    ///
+    /// assert_eq!(Some(Level::Error), levels.next());
+    /// assert_eq!(Some(Level::Trace), levels.last());
+    /// ```
+    </span><span class="kw">pub fn </span>iter() -&gt; <span class="kw">impl </span>Iterator&lt;Item = <span class="self">Self</span>&gt; {
+        (<span class="number">1</span>..<span class="number">6</span>).map(|i| <span class="self">Self</span>::from_usize(i).unwrap())
+    }
 }
 
 <span class="doccomment">/// An enum representing the available verbosity level filters of the logger.
@@ -2346,7 +2381,7 @@
 /// [`max_level()`]: fn.max_level.html
 /// [`set_max_level`]: fn.set_max_level.html
 </span><span class="attr">#[repr(usize)]
-#[derive(Copy, Eq, Debug, Hash)]
+#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Debug, Hash)]
 </span><span class="kw">pub enum </span>LevelFilter {
     <span class="doccomment">/// A level lower than all log levels.
     </span>Off,
@@ -2362,22 +2397,6 @@
     </span>Trace,
 }
 
-<span class="comment">// Deriving generates terrible impls of these traits
-
-</span><span class="kw">impl </span>Clone <span class="kw">for </span>LevelFilter {
-    <span class="attr">#[inline]
-    </span><span class="kw">fn </span>clone(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; LevelFilter {
-        <span class="kw-2">*</span><span class="self">self
-    </span>}
-}
-
-<span class="kw">impl </span>PartialEq <span class="kw">for </span>LevelFilter {
-    <span class="attr">#[inline]
-    </span><span class="kw">fn </span>eq(<span class="kw-2">&amp;</span><span class="self">self</span>, other: <span class="kw-2">&amp;</span>LevelFilter) -&gt; bool {
-        <span class="kw-2">*</span><span class="self">self </span><span class="kw">as </span>usize == <span class="kw-2">*</span>other <span class="kw">as </span>usize
-    }
-}
-
 <span class="kw">impl </span>PartialEq&lt;Level&gt; <span class="kw">for </span>LevelFilter {
     <span class="attr">#[inline]
     </span><span class="kw">fn </span>eq(<span class="kw-2">&amp;</span><span class="self">self</span>, other: <span class="kw-2">&amp;</span>Level) -&gt; bool {
@@ -2385,64 +2404,10 @@
     }
 }
 
-<span class="kw">impl </span>PartialOrd <span class="kw">for </span>LevelFilter {
-    <span class="attr">#[inline]
-    </span><span class="kw">fn </span>partial_cmp(<span class="kw-2">&amp;</span><span class="self">self</span>, other: <span class="kw-2">&amp;</span>LevelFilter) -&gt; <span class="prelude-ty">Option</span>&lt;cmp::Ordering&gt; {
-        <span class="prelude-val">Some</span>(<span class="self">self</span>.cmp(other))
-    }
-
-    <span class="attr">#[inline]
-    </span><span class="kw">fn </span>lt(<span class="kw-2">&amp;</span><span class="self">self</span>, other: <span class="kw-2">&amp;</span>LevelFilter) -&gt; bool {
-        (<span class="kw-2">*</span><span class="self">self </span><span class="kw">as </span>usize) &lt; <span class="kw-2">*</span>other <span class="kw">as </span>usize
-    }
-
-    <span class="attr">#[inline]
-    </span><span class="kw">fn </span>le(<span class="kw-2">&amp;</span><span class="self">self</span>, other: <span class="kw-2">&amp;</span>LevelFilter) -&gt; bool {
-        <span class="kw-2">*</span><span class="self">self </span><span class="kw">as </span>usize &lt;= <span class="kw-2">*</span>other <span class="kw">as </span>usize
-    }
-
-    <span class="attr">#[inline]
-    </span><span class="kw">fn </span>gt(<span class="kw-2">&amp;</span><span class="self">self</span>, other: <span class="kw-2">&amp;</span>LevelFilter) -&gt; bool {
-        <span class="kw-2">*</span><span class="self">self </span><span class="kw">as </span>usize &gt; <span class="kw-2">*</span>other <span class="kw">as </span>usize
-    }
-
-    <span class="attr">#[inline]
-    </span><span class="kw">fn </span>ge(<span class="kw-2">&amp;</span><span class="self">self</span>, other: <span class="kw-2">&amp;</span>LevelFilter) -&gt; bool {
-        <span class="kw-2">*</span><span class="self">self </span><span class="kw">as </span>usize &gt;= <span class="kw-2">*</span>other <span class="kw">as </span>usize
-    }
-}
-
 <span class="kw">impl </span>PartialOrd&lt;Level&gt; <span class="kw">for </span>LevelFilter {
     <span class="attr">#[inline]
     </span><span class="kw">fn </span>partial_cmp(<span class="kw-2">&amp;</span><span class="self">self</span>, other: <span class="kw-2">&amp;</span>Level) -&gt; <span class="prelude-ty">Option</span>&lt;cmp::Ordering&gt; {
         <span class="prelude-val">Some</span>((<span class="kw-2">*</span><span class="self">self </span><span class="kw">as </span>usize).cmp(<span class="kw-2">&amp;</span>(<span class="kw-2">*</span>other <span class="kw">as </span>usize)))
-    }
-
-    <span class="attr">#[inline]
-    </span><span class="kw">fn </span>lt(<span class="kw-2">&amp;</span><span class="self">self</span>, other: <span class="kw-2">&amp;</span>Level) -&gt; bool {
-        (<span class="kw-2">*</span><span class="self">self </span><span class="kw">as </span>usize) &lt; <span class="kw-2">*</span>other <span class="kw">as </span>usize
-    }
-
-    <span class="attr">#[inline]
-    </span><span class="kw">fn </span>le(<span class="kw-2">&amp;</span><span class="self">self</span>, other: <span class="kw-2">&amp;</span>Level) -&gt; bool {
-        <span class="kw-2">*</span><span class="self">self </span><span class="kw">as </span>usize &lt;= <span class="kw-2">*</span>other <span class="kw">as </span>usize
-    }
-
-    <span class="attr">#[inline]
-    </span><span class="kw">fn </span>gt(<span class="kw-2">&amp;</span><span class="self">self</span>, other: <span class="kw-2">&amp;</span>Level) -&gt; bool {
-        <span class="kw-2">*</span><span class="self">self </span><span class="kw">as </span>usize &gt; <span class="kw-2">*</span>other <span class="kw">as </span>usize
-    }
-
-    <span class="attr">#[inline]
-    </span><span class="kw">fn </span>ge(<span class="kw-2">&amp;</span><span class="self">self</span>, other: <span class="kw-2">&amp;</span>Level) -&gt; bool {
-        <span class="kw-2">*</span><span class="self">self </span><span class="kw">as </span>usize &gt;= <span class="kw-2">*</span>other <span class="kw">as </span>usize
-    }
-}
-
-<span class="kw">impl </span>Ord <span class="kw">for </span>LevelFilter {
-    <span class="attr">#[inline]
-    </span><span class="kw">fn </span>cmp(<span class="kw-2">&amp;</span><span class="self">self</span>, other: <span class="kw-2">&amp;</span>LevelFilter) -&gt; cmp::Ordering {
-        (<span class="kw-2">*</span><span class="self">self </span><span class="kw">as </span>usize).cmp(<span class="kw-2">&amp;</span>(<span class="kw-2">*</span>other <span class="kw">as </span>usize))
     }
 }
 
@@ -2452,7 +2417,7 @@
         ok_or(
             LOG_LEVEL_NAMES
                 .iter()
-                .position(|<span class="kw-2">&amp;</span>name| eq_ignore_ascii_case(name, level))
+                .position(|<span class="kw-2">&amp;</span>name| name.eq_ignore_ascii_case(level))
                 .map(|p| LevelFilter::from_usize(p).unwrap()),
             ParseLevelError(()),
         )
@@ -2477,6 +2442,7 @@
             <span class="kw">_ </span>=&gt; <span class="prelude-val">None</span>,
         }
     }
+
     <span class="doccomment">/// Returns the most verbose logging level filter.
     </span><span class="attr">#[inline]
     </span><span class="kw">pub fn </span>max() -&gt; LevelFilter {
@@ -2496,6 +2462,24 @@
     /// This returns the same string as the `fmt::Display` implementation.
     </span><span class="kw">pub fn </span>as_str(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>str {
         LOG_LEVEL_NAMES[<span class="kw-2">*</span><span class="self">self </span><span class="kw">as </span>usize]
+    }
+
+    <span class="doccomment">/// Iterate through all supported filtering levels.
+    ///
+    /// The order of iteration is from less to more verbose filtering.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use log::LevelFilter;
+    ///
+    /// let mut levels = LevelFilter::iter();
+    ///
+    /// assert_eq!(Some(LevelFilter::Off), levels.next());
+    /// assert_eq!(Some(LevelFilter::Trace), levels.last());
+    /// ```
+    </span><span class="kw">pub fn </span>iter() -&gt; <span class="kw">impl </span>Iterator&lt;Item = <span class="self">Self</span>&gt; {
+        (<span class="number">0</span>..<span class="number">6</span>).map(|i| <span class="self">Self</span>::from_usize(i).unwrap())
     }
 }
 
@@ -2537,7 +2521,7 @@
 /// struct SimpleLogger;
 ///
 /// impl log::Log for SimpleLogger {
-///    fn enabled(&amp;self, metadata: &amp;log::Metadata) -&gt; bool {
+///    fn enabled(&amp;self, _metadata: &amp;log::Metadata) -&gt; bool {
 ///        true
 ///    }
 ///
@@ -2655,7 +2639,7 @@
         <span class="self">self</span>.line
     }
 
-    <span class="doccomment">/// The structued key-value pairs associated with the message.
+    <span class="doccomment">/// The structured key-value pairs associated with the message.
     </span><span class="attr">#[cfg(feature = <span class="string">&quot;kv_unstable&quot;</span>)]
     #[inline]
     </span><span class="kw">pub fn </span>key_values(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="kw">dyn </span>kv::Source {
@@ -2689,7 +2673,6 @@
 /// the created object when `build` is called.
 ///
 /// # Examples
-///
 ///
 /// ```edition2018
 /// use log::{Level, Record};
@@ -2833,6 +2816,12 @@
     }
 }
 
+<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>&gt; Default <span class="kw">for </span>RecordBuilder&lt;<span class="lifetime">&#39;a</span>&gt; {
+    <span class="kw">fn </span>default() -&gt; <span class="self">Self </span>{
+        <span class="self">Self</span>::new()
+    }
+}
+
 <span class="doccomment">/// Metadata about a log message.
 ///
 /// # Use
@@ -2956,6 +2945,12 @@
     }
 }
 
+<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>&gt; Default <span class="kw">for </span>MetadataBuilder&lt;<span class="lifetime">&#39;a</span>&gt; {
+    <span class="kw">fn </span>default() -&gt; <span class="self">Self </span>{
+        <span class="self">Self</span>::new()
+    }
+}
+
 <span class="doccomment">/// A trait encapsulating the operations required of a logger.
 </span><span class="kw">pub trait </span>Log: Sync + Send {
     <span class="doccomment">/// Determines if a log message with the specified metadata would be
@@ -2964,9 +2959,17 @@
     /// This is used by the `log_enabled!` macro to allow callers to avoid
     /// expensive computation of log message arguments if the message would be
     /// discarded anyway.
+    ///
+    /// # For implementors
+    ///
+    /// This method isn&#39;t called automatically by the `log!` macros.
+    /// It&#39;s up to an implementation of the `Log` trait to call `enabled` in its own
+    /// `log` method implementation to guarantee that filtering is applied.
     </span><span class="kw">fn </span>enabled(<span class="kw-2">&amp;</span><span class="self">self</span>, metadata: <span class="kw-2">&amp;</span>Metadata) -&gt; bool;
 
     <span class="doccomment">/// Logs the `Record`.
+    ///
+    /// # For implementors
     ///
     /// Note that `enabled` is *not* necessarily called before this method.
     /// Implementations of `log` should perform all necessary filtering
@@ -2989,8 +2992,41 @@
     <span class="kw">fn </span>flush(<span class="kw-2">&amp;</span><span class="self">self</span>) {}
 }
 
+<span class="kw">impl</span>&lt;T&gt; Log <span class="kw">for </span><span class="kw-2">&amp;</span><span class="lifetime">&#39;_ </span>T
+<span class="kw">where
+    </span>T: <span class="question-mark">?</span>Sized + Log,
+{
+    <span class="kw">fn </span>enabled(<span class="kw-2">&amp;</span><span class="self">self</span>, metadata: <span class="kw-2">&amp;</span>Metadata) -&gt; bool {
+        (<span class="kw-2">**</span><span class="self">self</span>).enabled(metadata)
+    }
+
+    <span class="kw">fn </span>log(<span class="kw-2">&amp;</span><span class="self">self</span>, record: <span class="kw-2">&amp;</span>Record) {
+        (<span class="kw-2">**</span><span class="self">self</span>).log(record);
+    }
+    <span class="kw">fn </span>flush(<span class="kw-2">&amp;</span><span class="self">self</span>) {
+        (<span class="kw-2">**</span><span class="self">self</span>).flush();
+    }
+}
+
 <span class="attr">#[cfg(feature = <span class="string">&quot;std&quot;</span>)]
 </span><span class="kw">impl</span>&lt;T&gt; Log <span class="kw">for </span>std::boxed::Box&lt;T&gt;
+<span class="kw">where
+    </span>T: <span class="question-mark">?</span>Sized + Log,
+{
+    <span class="kw">fn </span>enabled(<span class="kw-2">&amp;</span><span class="self">self</span>, metadata: <span class="kw-2">&amp;</span>Metadata) -&gt; bool {
+        <span class="self">self</span>.as_ref().enabled(metadata)
+    }
+
+    <span class="kw">fn </span>log(<span class="kw-2">&amp;</span><span class="self">self</span>, record: <span class="kw-2">&amp;</span>Record) {
+        <span class="self">self</span>.as_ref().log(record)
+    }
+    <span class="kw">fn </span>flush(<span class="kw-2">&amp;</span><span class="self">self</span>) {
+        <span class="self">self</span>.as_ref().flush()
+    }
+}
+
+<span class="attr">#[cfg(feature = <span class="string">&quot;std&quot;</span>)]
+</span><span class="kw">impl</span>&lt;T&gt; Log <span class="kw">for </span>std::sync::Arc&lt;T&gt;
 <span class="kw">where
     </span>T: <span class="question-mark">?</span>Sized + Log,
 {
@@ -3009,9 +3045,39 @@
 <span class="doccomment">/// Sets the global maximum log level.
 ///
 /// Generally, this should only be called by the active logging implementation.
+///
+/// Note that `Trace` is the maximum level, because it provides the maximum amount of detail in the emitted logs.
 </span><span class="attr">#[inline]
+#[cfg(target_has_atomic = <span class="string">&quot;ptr&quot;</span>)]
 </span><span class="kw">pub fn </span>set_max_level(level: LevelFilter) {
-    MAX_LOG_LEVEL_FILTER.store(level <span class="kw">as </span>usize, Ordering::SeqCst)
+    MAX_LOG_LEVEL_FILTER.store(level <span class="kw">as </span>usize, Ordering::Relaxed);
+}
+
+<span class="doccomment">/// A thread-unsafe version of [`set_max_level`].
+///
+/// This function is available on all platforms, even those that do not have
+/// support for atomics that is needed by [`set_max_level`].
+///
+/// In almost all cases, [`set_max_level`] should be preferred.
+///
+/// # Safety
+///
+/// This function is only safe to call when no other level setting function is
+/// called while this function still executes.
+///
+/// This can be upheld by (for example) making sure that **there are no other
+/// threads**, and (on embedded) that **interrupts are disabled**.
+///
+/// Is is safe to use all other logging functions while this function runs
+/// (including all logging macros).
+///
+/// [`set_max_level`]: fn.set_max_level.html
+</span><span class="attr">#[inline]
+</span><span class="kw">pub unsafe fn </span>set_max_level_racy(level: LevelFilter) {
+    <span class="comment">// `MAX_LOG_LEVEL_FILTER` uses a `Cell` as the underlying primitive when a
+    // platform doesn&#39;t support `target_has_atomic = &quot;ptr&quot;`, so even though this looks the same
+    // as `set_max_level` it may have different safety properties.
+    </span>MAX_LOG_LEVEL_FILTER.store(level <span class="kw">as </span>usize, Ordering::Relaxed);
 }
 
 <span class="doccomment">/// Returns the current maximum log level.
@@ -3051,7 +3117,7 @@
 /// An error is returned if a logger has already been set.
 ///
 /// [`set_logger`]: fn.set_logger.html
-</span><span class="attr">#[cfg(all(feature = <span class="string">&quot;std&quot;</span>, atomic_cas))]
+</span><span class="attr">#[cfg(all(feature = <span class="string">&quot;std&quot;</span>, target_has_atomic = <span class="string">&quot;ptr&quot;</span>))]
 </span><span class="kw">pub fn </span>set_boxed_logger(logger: Box&lt;<span class="kw">dyn </span>Log&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;(), SetLoggerError&gt; {
     set_logger_inner(|| Box::leak(logger))
 }
@@ -3109,12 +3175,12 @@
 /// ```
 ///
 /// [`set_logger_racy`]: fn.set_logger_racy.html
-</span><span class="attr">#[cfg(atomic_cas)]
+</span><span class="attr">#[cfg(target_has_atomic = <span class="string">&quot;ptr&quot;</span>)]
 </span><span class="kw">pub fn </span>set_logger(logger: <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span><span class="kw">dyn </span>Log) -&gt; <span class="prelude-ty">Result</span>&lt;(), SetLoggerError&gt; {
     set_logger_inner(|| logger)
 }
 
-<span class="attr">#[cfg(atomic_cas)]
+<span class="attr">#[cfg(target_has_atomic = <span class="string">&quot;ptr&quot;</span>)]
 </span><span class="kw">fn </span>set_logger_inner&lt;F&gt;(make_logger: F) -&gt; <span class="prelude-ty">Result</span>&lt;(), SetLoggerError&gt;
 <span class="kw">where
     </span>F: FnOnce() -&gt; <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span><span class="kw">dyn </span>Log,
@@ -3137,7 +3203,9 @@
         }
         INITIALIZING =&gt; {
             <span class="kw">while </span>STATE.load(Ordering::SeqCst) == INITIALIZING {
-                std::sync::atomic::spin_loop_hint();
+                <span class="comment">// TODO: replace with `hint::spin_loop` once MSRV is 1.49.0.
+                </span><span class="attr">#[allow(deprecated)]
+                </span>std::sync::atomic::spin_loop_hint();
             }
             <span class="prelude-val">Err</span>(SetLoggerError(()))
         }
@@ -3200,7 +3268,7 @@
 ///
 /// [`from_str`]: https://doc.rust-lang.org/std/str/trait.FromStr.html#tymethod.from_str
 </span><span class="attr">#[allow(missing_copy_implementations)]
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Eq)]
 </span><span class="kw">pub struct </span>ParseLevelError(());
 
 <span class="kw">impl </span>fmt::Display <span class="kw">for </span>ParseLevelError {
@@ -3227,28 +3295,7 @@
 
 <span class="comment">// WARNING: this is not part of the crate&#39;s public API and is subject to change at any time
 </span><span class="attr">#[doc(hidden)]
-</span><span class="kw">pub fn </span>__private_api_log(
-    args: fmt::Arguments,
-    level: Level,
-    <span class="kw-2">&amp;</span>(target, module_path, file, line): <span class="kw-2">&amp;</span>(<span class="kw-2">&amp;</span>str, <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>str, <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>str, u32),
-) {
-    logger().log(
-        <span class="kw-2">&amp;</span>Record::builder()
-            .args(args)
-            .level(level)
-            .target(target)
-            .module_path_static(<span class="prelude-val">Some</span>(module_path))
-            .file_static(<span class="prelude-val">Some</span>(file))
-            .line(<span class="prelude-val">Some</span>(line))
-            .build(),
-    );
-}
-
-<span class="comment">// WARNING: this is not part of the crate&#39;s public API and is subject to change at any time
-</span><span class="attr">#[doc(hidden)]
-</span><span class="kw">pub fn </span>__private_api_enabled(level: Level, target: <span class="kw-2">&amp;</span>str) -&gt; bool {
-    logger().enabled(<span class="kw-2">&amp;</span>Metadata::builder().level(level).target(target).build())
-}
+</span><span class="kw">pub mod </span>__private_api;
 
 <span class="doccomment">/// The statically resolved maximum log level.
 ///
@@ -3261,31 +3308,57 @@
 /// [`logger`]: fn.logger.html
 </span><span class="kw">pub const </span>STATIC_MAX_LEVEL: LevelFilter = MAX_LEVEL_INNER;
 
-<span class="macro">cfg_if! </span>{
-    <span class="kw">if </span><span class="attr">#[cfg(all(not(debug_assertions), feature = <span class="string">&quot;release_max_level_off&quot;</span>))] </span>{
-        <span class="kw">const </span>MAX_LEVEL_INNER: LevelFilter = LevelFilter::Off;
-    } <span class="kw">else if </span><span class="attr">#[cfg(all(not(debug_assertions), feature = <span class="string">&quot;release_max_level_error&quot;</span>))] </span>{
-        <span class="kw">const </span>MAX_LEVEL_INNER: LevelFilter = LevelFilter::Error;
-    } <span class="kw">else if </span><span class="attr">#[cfg(all(not(debug_assertions), feature = <span class="string">&quot;release_max_level_warn&quot;</span>))] </span>{
-        <span class="kw">const </span>MAX_LEVEL_INNER: LevelFilter = LevelFilter::Warn;
-    } <span class="kw">else if </span><span class="attr">#[cfg(all(not(debug_assertions), feature = <span class="string">&quot;release_max_level_info&quot;</span>))] </span>{
-        <span class="kw">const </span>MAX_LEVEL_INNER: LevelFilter = LevelFilter::Info;
-    } <span class="kw">else if </span><span class="attr">#[cfg(all(not(debug_assertions), feature = <span class="string">&quot;release_max_level_debug&quot;</span>))] </span>{
-        <span class="kw">const </span>MAX_LEVEL_INNER: LevelFilter = LevelFilter::Debug;
-    } <span class="kw">else if </span><span class="attr">#[cfg(all(not(debug_assertions), feature = <span class="string">&quot;release_max_level_trace&quot;</span>))] </span>{
-        <span class="kw">const </span>MAX_LEVEL_INNER: LevelFilter = LevelFilter::Trace;
-    } <span class="kw">else if </span><span class="attr">#[cfg(feature = <span class="string">&quot;max_level_off&quot;</span>)] </span>{
-        <span class="kw">const </span>MAX_LEVEL_INNER: LevelFilter = LevelFilter::Off;
-    } <span class="kw">else if </span><span class="attr">#[cfg(feature = <span class="string">&quot;max_level_error&quot;</span>)] </span>{
-        <span class="kw">const </span>MAX_LEVEL_INNER: LevelFilter = LevelFilter::Error;
-    } <span class="kw">else if </span><span class="attr">#[cfg(feature = <span class="string">&quot;max_level_warn&quot;</span>)] </span>{
-        <span class="kw">const </span>MAX_LEVEL_INNER: LevelFilter = LevelFilter::Warn;
-    } <span class="kw">else if </span><span class="attr">#[cfg(feature = <span class="string">&quot;max_level_info&quot;</span>)] </span>{
-        <span class="kw">const </span>MAX_LEVEL_INNER: LevelFilter = LevelFilter::Info;
-    } <span class="kw">else if </span><span class="attr">#[cfg(feature = <span class="string">&quot;max_level_debug&quot;</span>)] </span>{
-        <span class="kw">const </span>MAX_LEVEL_INNER: LevelFilter = LevelFilter::Debug;
-    } <span class="kw">else </span>{
-        <span class="kw">const </span>MAX_LEVEL_INNER: LevelFilter = LevelFilter::Trace;
+<span class="kw">const </span>MAX_LEVEL_INNER: LevelFilter = get_max_level_inner();
+
+<span class="kw">const fn </span>get_max_level_inner() -&gt; LevelFilter {
+    <span class="attr">#[allow(unreachable_code)]
+    </span>{
+        <span class="attr">#[cfg(all(not(debug_assertions), feature = <span class="string">&quot;release_max_level_off&quot;</span>))]
+        </span>{
+            <span class="kw">return </span>LevelFilter::Off;
+        }
+        <span class="attr">#[cfg(all(not(debug_assertions), feature = <span class="string">&quot;release_max_level_error&quot;</span>))]
+        </span>{
+            <span class="kw">return </span>LevelFilter::Error;
+        }
+        <span class="attr">#[cfg(all(not(debug_assertions), feature = <span class="string">&quot;release_max_level_warn&quot;</span>))]
+        </span>{
+            <span class="kw">return </span>LevelFilter::Warn;
+        }
+        <span class="attr">#[cfg(all(not(debug_assertions), feature = <span class="string">&quot;release_max_level_info&quot;</span>))]
+        </span>{
+            <span class="kw">return </span>LevelFilter::Info;
+        }
+        <span class="attr">#[cfg(all(not(debug_assertions), feature = <span class="string">&quot;release_max_level_debug&quot;</span>))]
+        </span>{
+            <span class="kw">return </span>LevelFilter::Debug;
+        }
+        <span class="attr">#[cfg(all(not(debug_assertions), feature = <span class="string">&quot;release_max_level_trace&quot;</span>))]
+        </span>{
+            <span class="kw">return </span>LevelFilter::Trace;
+        }
+        <span class="attr">#[cfg(feature = <span class="string">&quot;max_level_off&quot;</span>)]
+        </span>{
+            <span class="kw">return </span>LevelFilter::Off;
+        }
+        <span class="attr">#[cfg(feature = <span class="string">&quot;max_level_error&quot;</span>)]
+        </span>{
+            <span class="kw">return </span>LevelFilter::Error;
+        }
+        <span class="attr">#[cfg(feature = <span class="string">&quot;max_level_warn&quot;</span>)]
+        </span>{
+            <span class="kw">return </span>LevelFilter::Warn;
+        }
+        <span class="attr">#[cfg(feature = <span class="string">&quot;max_level_info&quot;</span>)]
+        </span>{
+            <span class="kw">return </span>LevelFilter::Info;
+        }
+        <span class="attr">#[cfg(feature = <span class="string">&quot;max_level_debug&quot;</span>)]
+        </span>{
+            <span class="kw">return </span>LevelFilter::Debug;
+        }
+
+        LevelFilter::Trace
     }
 }
 
@@ -3546,6 +3619,37 @@
                 .to_borrowed_str()
                 .expect(<span class="string">&quot;invalid value&quot;</span>)
         );
+    }
+
+    <span class="comment">// Test that the `impl Log for Foo` blocks work
+    // This test mostly operates on a type level, so failures will be compile errors
+    </span><span class="attr">#[test]
+    </span><span class="kw">fn </span>test_foreign_impl() {
+        <span class="kw">use </span><span class="kw">super</span>::Log;
+        <span class="attr">#[cfg(feature = <span class="string">&quot;std&quot;</span>)]
+        </span><span class="kw">use </span>std::sync::Arc;
+
+        <span class="kw">fn </span>assert_is_log&lt;T: Log + <span class="question-mark">?</span>Sized&gt;() {}
+
+        assert_is_log::&lt;<span class="kw-2">&amp;</span><span class="kw">dyn </span>Log&gt;();
+
+        <span class="attr">#[cfg(feature = <span class="string">&quot;std&quot;</span>)]
+        </span>assert_is_log::&lt;Box&lt;<span class="kw">dyn </span>Log&gt;&gt;();
+
+        <span class="attr">#[cfg(feature = <span class="string">&quot;std&quot;</span>)]
+        </span>assert_is_log::&lt;Arc&lt;<span class="kw">dyn </span>Log&gt;&gt;();
+
+        <span class="comment">// Assert these statements for all T: Log + ?Sized
+        </span><span class="attr">#[allow(unused)]
+        </span><span class="kw">fn </span>forall&lt;T: Log + <span class="question-mark">?</span>Sized&gt;() {
+            <span class="attr">#[cfg(feature = <span class="string">&quot;std&quot;</span>)]
+            </span>assert_is_log::&lt;Box&lt;T&gt;&gt;();
+
+            assert_is_log::&lt;<span class="kw-2">&amp;</span>T&gt;();
+
+            <span class="attr">#[cfg(feature = <span class="string">&quot;std&quot;</span>)]
+            </span>assert_is_log::&lt;Arc&lt;T&gt;&gt;();
+        }
     }
 }
 </code></pre></div></section></main></body></html>
