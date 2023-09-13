@@ -7,7 +7,7 @@ mod image;
 mod logger;
 
 use allocator::BootFrameAllocator;
-use core::{arch::asm, fmt::Write, mem, panic::PanicInfo, ptr};
+use core::{arch::asm, mem, panic::PanicInfo, ptr};
 use hal::memory::{kibibytes, Bytes, Flags, FrameAllocator, FrameSize, PAddr, Page, PageTable, Size4KiB, VAddr};
 use hal_x86_64::paging::PageTableImpl;
 use log::{error, info};
@@ -33,7 +33,7 @@ pub const KERNEL_HEAP_MEMORY_TYPE: MemoryType = MemoryType::custom(0x80000005);
 const KERNEL_HEAP_SIZE: Bytes = kibibytes(800);
 
 #[entry]
-fn efi_main(image_handle: Handle, mut system_table: SystemTable<Boot>) -> Status {
+fn efi_main(image_handle: Handle, system_table: SystemTable<Boot>) -> Status {
     Logger::init();
     info!("Hello, World!");
 
