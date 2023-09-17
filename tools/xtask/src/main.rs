@@ -12,6 +12,7 @@ mod riscv;
 mod x64;
 
 use cargo::Target;
+use colored::Colorize;
 use config::{Arch, Config};
 use eyre::{eyre, Result, WrapErr};
 use flags::{DistOptions, TaskCmd};
@@ -133,6 +134,7 @@ impl Dist {
     pub fn build_riscv(self) -> Result<DistResult> {
         use cargo::RunCargo;
 
+        println!("{}", "[*] Building Seed for RISC-V".bold().magenta());
         let seed_riscv = RunCargo::new("seed_riscv", PathBuf::from("seed/seed_riscv/"))
             .workspace(PathBuf::from("seed/"))
             .target(Target::Triple("riscv64imac-unknown-none-elf".to_string()))
@@ -141,6 +143,7 @@ impl Dist {
             .rustflags("-Clink-arg=-Tseed_riscv/link.ld")
             .run()?;
 
+        println!("{}", "[*] Building the kernel for RISC-V".bold().magenta());
         let kernel = RunCargo::new("kernel_riscv", PathBuf::from("kernel/kernel_riscv/"))
             .workspace(PathBuf::from("kernel/"))
             .target(Target::Triple("riscv64imac-unknown-none-elf".to_string()))
@@ -157,6 +160,7 @@ impl Dist {
         use cargo::RunCargo;
         use x64::image::MakeGptImage;
 
+        println!("{}", "[*] Building Seed for x86_64".bold().magenta());
         let seed_uefi = RunCargo::new("seed_uefi.efi", PathBuf::from("seed/seed_uefi/"))
             .workspace(PathBuf::from("seed/"))
             .target(Target::Triple("x86_64-unknown-uefi".to_string()))
@@ -165,6 +169,7 @@ impl Dist {
             .std_features(vec!["compiler-builtins-mem".to_string()])
             .run()?;
 
+        println!("{}", "[*] Building the kernel for x86_64".bold().magenta());
         let kernel = RunCargo::new("kernel_x86_64", PathBuf::from("kernel/kernel_x86_64/"))
             .workspace(PathBuf::from("kernel/"))
             .target(Target::Custom {
@@ -193,6 +198,7 @@ impl Dist {
             })
             .collect::<Result<Vec<(String, PathBuf)>>>()?;
 
+        println!("{}", "[*] Building disk image".bold().magenta());
         let image_path = PathBuf::from("poplar_x64.img");
         let mut image = MakeGptImage::new(image_path.clone(), 40 * 1024 * 1024, 35 * 1024 * 1024)
             .add_efi_file("efi/boot/bootx64.efi", seed_uefi)
@@ -207,6 +213,7 @@ impl Dist {
 
     fn build_userspace_task(&self, name: &str, dir: Option<PathBuf>, target: Target) -> Result<PathBuf> {
         use cargo::RunCargo;
+        println!("{}", format!("[*] Building user task '{}'", name).bold().magenta());
 
         let path = if let Some(dir) = dir { dir.join(name) } else { PathBuf::from("user/").join(name) };
         RunCargo::new(name.to_string(), path)

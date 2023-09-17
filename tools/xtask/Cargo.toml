@@ -14,3 +14,4 @@ fatfs = "0.3.5"
 fscommon = "0.1.1"
 serde = { version = "1.0.152", features = ["derive"] }
 toml = "0.7.2"
+colored = "2.0.4"
