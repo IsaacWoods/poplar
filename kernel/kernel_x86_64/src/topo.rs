@@ -1,23 +1,26 @@
-use alloc::{vec, vec::Vec};
+use acpi::platform::ProcessorState;
+use alloc::vec::Vec;
 use hal_x86_64::hw::cpu::CpuInfo;
-use tracing::info;
+use tracing::{info, warn};
 
-pub type CpuId = u32;
-pub const BOOT_CPU_ID: CpuId = 0;
+pub type ProcessorId = u32;
+pub const BOOT_PROCESSOR_ID: ProcessorId = 0;
 
-pub struct Cpu {
-    pub id: CpuId,
+#[derive(Clone, Copy, Debug)]
+pub struct Processor {
+    pub id: ProcessorId,
     pub local_apic_id: u32,
 }
 
+#[derive(Clone, Debug)]
 pub struct Topology {
     pub cpu_info: CpuInfo,
-    pub boot_cpu: Option<Cpu>,
-    pub application_cpus: Vec<Cpu>,
+    pub boot_processor: Processor,
+    pub application_processors: Vec<Processor>,
 }
 
 impl Topology {
-    pub fn new() -> Topology {
+    pub fn new(acpi_info: &acpi::PlatformInfo<alloc::alloc::Global>) -> Topology {
         let cpu_info = CpuInfo::new();
         info!(
             "We're running on an {:?} processor. The microarchitecture is: {:?}",
@@ -30,67 +33,42 @@ impl Topology {
 
         check_support_and_enable_features(&cpu_info);
 
-        Topology { cpu_info, boot_cpu: None, application_cpus: vec![] }
-    }
+        let processor_info = acpi_info.processor_info.as_ref().unwrap();
+        let boot_processor = {
+            let acpi = processor_info.boot_processor;
+            assert_eq!(acpi.state, ProcessorState::Running);
+            assert!(!acpi.is_ap);
+            Processor { id: BOOT_PROCESSOR_ID, local_apic_id: acpi.local_apic_id }
+        };
 
-    pub fn add_boot_processor(&mut self, cpu: Cpu) {
-        assert!(self.boot_cpu.is_none());
-        self.boot_cpu = Some(cpu);
+        let mut id = 1;
+        let application_processors = processor_info
+            .application_processors
+            .iter()
+            .filter_map(|info| match info.state {
+                ProcessorState::WaitingForSipi => {
+                    assert!(info.is_ap);
+                    let processor = Processor { id, local_apic_id: info.local_apic_id };
+                    id += 1;
+                    Some(processor)
+                }
+                ProcessorState::Disabled => {
+                    warn!(
+                        "Processor with local APIC id {} is disabled by firmware. Ignoring.",
+                        info.local_apic_id
+                    );
+                    None
+                }
+                ProcessorState::Running => {
+                    panic!("Application processor is already running; how have you managed that?")
+                }
+            })
+            .collect::<Vec<_>>();
+        info!("Located {} application processors to attempt bring-up on", application_processors.len());
+
+        Topology { cpu_info, boot_processor, application_processors }
     }
 }
-
-// pub fn build_topology(acpi_platform_info: &acpi::PlatformInfo) -> Topology {
-//     let processor_info = acpi_platform_info.processor_info.as_ref().unwrap();
-//     let mut boot_cpu = {
-//         assert_eq!(processor_info.boot_processor.state, ProcessorState::Running);
-//         assert!(!processor_info.boot_processor.is_ap);
-//         Cpu::new(0, processor_info.boot_processor.local_apic_id)
-//     };
-
-//     /*
-//      * Create a `Cpu` for each application processor that can be brought up. This maintains the order that the
-//      * processors appear in the MADT, which is the order that they should be brought up in.
-//      */
-//     let application_cpus = Vec::new();
-//     // let mut id = 1;
-//     // let application_cpus = processor_info
-//     //     .application_processors
-//     //     .iter()
-//     //     .filter_map(|processor| match processor.state {
-//     //         ProcessorState::WaitingForSipi => {
-//     //             assert!(processor.is_ap);
-//     //             let cpu = Cpu::new(id, processor.local_apic_id);
-//     //             id += 1;
-//     //             Some(cpu)
-//     //         }
-//     //         ProcessorState::Disabled => {
-//     //             warn!(
-//     //                 "Processor with local APIC id {} is disabled by firmware. Ignoring.",
-//     //                 processor.local_apic_id
-//     //             );
-//     //             None
-//     //         }
-//     //         ProcessorState::Running => {
-//     //             panic!("Application processor is already running; how have you managed that?")
-//     //         }
-//     //     })
-//     //     .collect::<Vec<_>>();
-//     // info!("Located {} application processors to attempt bring-up on", application_cpus.len());
-
-//     /*
-//      * This code runs on the boot processor, so we can load the GDT with the boot processor's TSS and the boot
-//      * processor's per-CPU data here.
-//      * XXX: per-CPU data must be installed after the GDT, as we zero `gs` when the GDT is loaded.
-//      */
-//     // TODO: we no longer need to load the GDT on the boot processor, but we do need to create a TSS descriptor in
-//     // the correct slot, and then call `ltr`, as this is no longer done as part of GDT creation.
-//     unsafe {
-//         // hal_x86_64::hw::gdt::GDT.lock().load(boot_cpu.tss_selector);
-//     }
-//     boot_cpu.per_cpu.as_mut().install();
-
-//     Topology { cpu_info, boot_cpu, application_cpus }
-// }
 
 /// We rely on certain processor features to be present for simplicity and sanity-retention. This
 /// function checks that we support everything we need to, and enable features that we need.

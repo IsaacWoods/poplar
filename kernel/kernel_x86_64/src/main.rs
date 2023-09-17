@@ -17,7 +17,7 @@ mod per_cpu;
 mod task;
 mod topo;
 
-use acpi::{platform::ProcessorState, AcpiTables, PciConfigRegions};
+use acpi::{AcpiTables, PciConfigRegions};
 use acpi_handler::{AmlHandler, PoplarAcpiHandler};
 use alloc::{alloc::Global, boxed::Box};
 use aml::AmlContext;
@@ -150,18 +150,7 @@ pub extern "C" fn kentry(boot_info: &BootInfo) -> ! {
             Err(err) => panic!("Failed to discover ACPI tables: {:?}", err),
         };
     let acpi_platform_info = acpi_tables.platform_info_in(Global).unwrap();
-
-    /*
-     * Create a topology and add the boot processor to it.
-     */
-    let mut topology = Topology::new();
-    {
-        let acpi_info = acpi_platform_info.processor_info.as_ref().unwrap().boot_processor;
-        assert_eq!(acpi_info.state, ProcessorState::Running);
-        assert!(!acpi_info.is_ap);
-
-        topology.add_boot_processor(topo::Cpu { id: topo::BOOT_CPU_ID, local_apic_id: acpi_info.local_apic_id });
-    }
+    let topology = Topology::new(&acpi_platform_info);
 
     let pci_access = pci::EcamAccess::new(PciConfigRegions::new_in(&acpi_tables, Global).unwrap());
 
