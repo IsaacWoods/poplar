@@ -24,18 +24,6 @@ git submodule update --init --recursive
 - The `rust-src` component (install with `rustup component add rust-src`)
 - A working QEMU installation (one that provides `qemu-system-{arch}`)
 
-To compile userspace programs, you'll need to build our custom Rust toolchain:
-- Clone [`IsaacWoods/rust`](https://github.com/IsaacWoods/rust/tree/poplar) and checkout the `poplar` branch
-- (Optional) rebase against `rust-lang/rust` to get the latest chages
-- Copy `isaacs_config.toml` to `config.toml` (or use your own)
-- Run `./x.py build -i library/std` to build a stage-1 compiler and `libstd`
-- Create a toolchain with `rustup toolchain link poplar build/{host triple}/stage1` (e.g. `rustup toolchain link poplar build/x86_64-unknown-linux-gnu/stage1`)
-
-**You don't need this toolchain to build the bootloaders, kernel, or `no_std` user programs, so you can get started
-without it!**
-
-**The requirement for this custom toolchain will be removed at some point, due to maintenance burden.**
-
 ### Building
 This repository includes an [`xtask`-based](https://github.com/matklad/cargo-xtask) build tool to simplify building and running Poplar.
 The tool can be configured in `Poplar.toml` - this can, for example,  be used to set whether to build using the

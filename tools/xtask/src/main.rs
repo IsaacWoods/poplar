@@ -176,9 +176,15 @@ impl Dist {
             .user_tasks
             .iter()
             .map(|(name, dir)| {
-                let artifact_path =
-                    self.build_userspace_task(&name, dir.clone(), Target::Triple("x86_64-poplar".to_string()))?;
-                Ok((name.clone(), artifact_path))
+                let artifact = self.build_userspace_task(
+                    &name,
+                    dir.clone(),
+                    Target::Custom {
+                        triple: "x86_64-poplar".to_string(),
+                        spec: PathBuf::from("user/x86_64-poplar.json"),
+                    },
+                )?;
+                Ok((name.clone(), artifact))
             })
             .collect::<Result<Vec<(String, PathBuf)>>>()?;
 
@@ -200,11 +206,11 @@ impl Dist {
         let path = if let Some(dir) = dir { dir.join(name) } else { PathBuf::from("user/").join(name) };
         RunCargo::new(name.to_string(), path)
             .workspace(PathBuf::from("user/"))
-            .toolchain("poplar")
             .target(target)
             .release(self.release)
             .std_components(vec!["core".to_string(), "alloc".to_string()])
             .std_features(vec!["compiler-builtins-mem".to_string()])
+            .rustflags("-C link-arg=-Tlink.ld")
             .run()
     }
 }

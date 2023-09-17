@@ -5,6 +5,7 @@ authors = ["Isaac Woods"]
 edition = "2018"
 
 [dependencies]
+std = { path = "../../lib/std" }
 poplar = { path = "../../lib/poplar", features = ["can_alloc"] }
 linked_list_allocator = "0.10.2"
 log = "0.4"
