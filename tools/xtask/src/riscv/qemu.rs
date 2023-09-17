@@ -5,17 +5,19 @@ pub struct RunQemuRiscV {
     pub opensbi: PathBuf,
     pub seed: PathBuf,
     pub kernel: PathBuf,
+    pub disk_image: Option<PathBuf>,
 
     pub open_display: bool,
     pub debug_int_firehose: bool,
 }
 
 impl RunQemuRiscV {
-    pub fn new(seed: PathBuf, kernel: PathBuf) -> RunQemuRiscV {
+    pub fn new(seed: PathBuf, kernel: PathBuf, disk_image: Option<PathBuf>) -> RunQemuRiscV {
         RunQemuRiscV {
             opensbi: PathBuf::from("lib/opensbi/build/platform/generic/firmware/fw_jump.elf"),
             seed,
             kernel,
+            disk_image,
 
             open_display: false,
             debug_int_firehose: false,
@@ -48,6 +50,7 @@ impl RunQemuRiscV {
         let kernel_size =
             File::open(self.kernel.clone()).expect("Failed to open kernel ELF").metadata().unwrap().len();
         qemu.args(&["-device", &format!("loader,addr=0xb0000000,data={},data-len=4", kernel_size)]);
+        // TODO: get rid of this and the infra once we can load the kernel from the disk image
         qemu.args(&[
             "-device",
             &format!("loader,file={},addr=0xb0000004,force-raw=on", self.kernel.to_str().unwrap()),
@@ -56,6 +59,15 @@ impl RunQemuRiscV {
         // Emit serial on both stdio and to a file
         qemu.args(&["-chardev", "stdio,id=char0,logfile=qemu_serial_riscv.log"]);
         qemu.args(&["-serial", "chardev:char0"]);
+
+        if let Some(disk_image) = self.disk_image {
+            // Add the disk image as an NVME device
+            qemu.args(&[
+                "-drive",
+                &format!("id=disk0,format=raw,if=none,file=fat:rw:{}", disk_image.to_str().unwrap()),
+            ]);
+            qemu.args(&["-device", "nvme,serial=deadbeef,drive=disk0"]);
+        }
 
         if !self.open_display {
             qemu.args(&["-display", "none"]);

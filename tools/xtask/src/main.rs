@@ -1,4 +1,3 @@
-#![feature(type_ascription)]
 /*
  * Seeing warnings from the `xtask` is annoying, and we have some stuff hanging around that
  * might be useful in the future.
@@ -52,11 +51,13 @@ fn main() -> Result<()> {
                     .debug_mmu_firehose(flags.debug_mmu_firehose)
                     .debug_cpu_firehose(flags.debug_cpu_firehose)
                     .run(),
-                Arch::RiscV => RunQemuRiscV::new(dist_result.kernel_path, dist_result.disk_image.unwrap())
-                    .opensbi(PathBuf::from("lib/opensbi/build/platform/generic/firmware/fw_jump.elf"))
-                    .open_display(flags.display)
-                    .debug_int_firehose(flags.debug_int_firehose)
-                    .run(),
+                Arch::RiscV => {
+                    RunQemuRiscV::new(dist_result.bootloader_path, dist_result.kernel_path, dist_result.disk_image)
+                        .opensbi(PathBuf::from("lib/opensbi/build/platform/generic/firmware/fw_jump.elf"))
+                        .open_display(flags.display)
+                        .debug_int_firehose(flags.debug_int_firehose)
+                        .run()
+                }
             }
         }
 
@@ -77,8 +78,10 @@ fn main() -> Result<()> {
 }
 
 fn dist(config: &Config) -> Result<DistResult> {
-    let dist = Dist::new().release(config.release).kernel_features_from_cli(config.kernel_features.clone());
-    // .user_task("simple_fb")
+    let dist = Dist::new()
+        .release(config.release)
+        .kernel_features_from_cli(config.kernel_features.clone())
+        .user_task("simple_fb");
     // .user_task("platform_bus")
     // .user_task("pci_bus")
     // .user_task("usb_bus_xhci")
@@ -98,8 +101,8 @@ struct Dist {
 }
 
 struct DistResult {
+    bootloader_path: PathBuf,
     kernel_path: PathBuf,
-    // Only produced by some architectures
     disk_image: Option<PathBuf>,
 }
 
@@ -153,7 +156,7 @@ impl Dist {
             .rustflags("-Clink-arg=-Tkernel_riscv/link.ld")
             .run()?;
 
-        Ok(DistResult { kernel_path: seed_riscv, disk_image: Some(kernel) })
+        Ok(DistResult { bootloader_path: seed_riscv, kernel_path: kernel, disk_image: None })
     }
 
     pub fn build_x64(self) -> Result<DistResult> {
@@ -201,14 +204,14 @@ impl Dist {
         println!("{}", "[*] Building disk image".bold().magenta());
         let image_path = PathBuf::from("poplar_x64.img");
         let mut image = MakeGptImage::new(image_path.clone(), 40 * 1024 * 1024, 35 * 1024 * 1024)
-            .add_efi_file("efi/boot/bootx64.efi", seed_uefi)
+            .add_efi_file("efi/boot/bootx64.efi", seed_uefi.clone())
             .add_efi_file("kernel.elf", kernel.clone());
         for (name, artifact_path) in user_task_paths {
             image = image.add_efi_file(format!("{}.elf", name), artifact_path);
         }
         image.build()?;
 
-        Ok(DistResult { kernel_path: kernel, disk_image: Some(image_path) })
+        Ok(DistResult { bootloader_path: seed_uefi, kernel_path: kernel, disk_image: Some(image_path) })
     }
 
     fn build_userspace_task(&self, name: &str, dir: Option<PathBuf>, target: Target) -> Result<PathBuf> {
