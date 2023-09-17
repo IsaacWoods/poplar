@@ -11,7 +11,6 @@ pub const BOOT_CPU_ID: CpuId = 0;
 pub struct Cpu {
     pub id: CpuId,
     pub local_apic_id: u32,
-    pub per_cpu: Pin<Box<PerCpuImpl>>,
 }
 
 pub struct Topology {

@@ -1,27 +1,31 @@
 use alloc::boxed::Box;
-use core::{arch::asm, marker::PhantomPinned, mem, pin::Pin};
+use core::{arch::asm, ptr};
 use hal::memory::VAddr;
-use hal_x86_64::hw::{
-    gdt::{SegmentSelector, TssSegment},
-    tss::Tss,
-};
+use hal_x86_64::hw::tss::Tss;
 use kernel::{per_cpu::PerCpu, scheduler::Scheduler};
-use poplar_util::{unsafe_pinned, unsafe_unpinned};
 
 /// Get a mutable reference to the per-CPU data of the running CPU. This is unsafe because it is the caller's
 /// responsibility to ensure that only one mutable reference to the per-CPU data exists at any one time. It is also
 /// unsafe to call this before the per-CPU data has been installed.
-pub unsafe fn get_per_cpu_data<'a>() -> Pin<&'a mut PerCpuImpl> {
+pub unsafe fn get_per_cpu_data<'a>() -> &'a mut PerCpuImpl {
     let mut ptr: usize;
     asm!("mov {}, gs:0x0", out(reg) ptr);
-    Pin::new_unchecked(&mut *(ptr as *mut PerCpuImpl))
+    tracing::info!("Reading per-cpu data from {:#x}", ptr);
+    &mut *(ptr as *mut PerCpuImpl)
 }
 
+/// Represents data that is held individually for each CPU.
+///
+/// Per-CPU data on x86_64 is accessed by reading a pointer to itself from the start of the structure. Various
+/// fields of this structure are accessed directly from assembly, and so it is essential that field padding and
+/// reordering are avoided (and so we use `repr(C)`).
+// TODO: this structure is self-referential, and so should be really be pinned, but this was a pain so we avoided
+// it. Maybe review this at some point / if it ends up causing UB.
+#[repr(C)]
 pub struct PerCpuImpl {
     /// The first field of the per-cpu structure must be a pointer to itself. This is used to access the info by
-    /// reading from `gs:0x0`. This means the structure must be pinned, as it is self-referential.
+    /// reading from `gs:0x0`. This means the structure is self-referential.
     _self_pointer: *mut PerCpuImpl,
-    _pin: PhantomPinned,
 
     /// The next field must then be the current task's kernel stack pointer. We access this manually from assembly
     /// with `gs:0x8`, so it must remain at a fixed offset within this struct.
@@ -29,21 +33,17 @@ pub struct PerCpuImpl {
     /// This field must remain at `gs:0x10`, and so cannot be moved.
     current_task_user_rsp: VAddr,
 
-    pub tss: Pin<Box<Tss>>,
+    pub tss: Box<Tss>,
 
     scheduler: Scheduler<crate::PlatformImpl>,
 }
 
 impl PerCpuImpl {
-    unsafe_unpinned!(current_task_kernel_rsp: VAddr);
-    unsafe_unpinned!(current_task_user_rsp: VAddr);
-    unsafe_unpinned!(tss: Pin<Box<Tss>>);
-    unsafe_pinned!(pub scheduler: Scheduler<crate::PlatformImpl>);
+    pub fn install(tss: Box<Tss>, scheduler: Scheduler<crate::PlatformImpl>) {
+        use hal_x86_64::hw::registers::{write_msr, IA32_GS_BASE};
 
-    pub fn new(tss: Pin<Box<Tss>>, scheduler: Scheduler<crate::PlatformImpl>) -> Pin<Box<PerCpuImpl>> {
-        let mut per_cpu = Box::pin(PerCpuImpl {
+        let per_cpu = Box::new(PerCpuImpl {
             _self_pointer: 0x0 as *mut PerCpuImpl,
-            _pin: PhantomPinned,
 
             current_task_kernel_rsp: VAddr::new(0x0),
             current_task_user_rsp: VAddr::new(0x0),
@@ -51,43 +51,35 @@ impl PerCpuImpl {
 
             scheduler,
         });
+        let address = Box::into_raw(per_cpu) as usize;
 
-        /*
-         * Now we know the address of the structure, fill in the self-pointer.
-         */
+        // Now we know the address of the structure, fill in the self-pointer.
         unsafe {
-            let address: *mut PerCpuImpl = mem::transmute(per_cpu.as_ref());
-            Pin::get_unchecked_mut(per_cpu.as_mut())._self_pointer = address;
+            ptr::write(address as *mut usize, address as usize);
         }
 
-        per_cpu
-    }
-
-    pub fn install(self: Pin<&mut Self>) {
-        use hal_x86_64::hw::registers::{write_msr, IA32_GS_BASE};
-
         unsafe {
-            write_msr(IA32_GS_BASE, self.as_ref()._self_pointer as usize as u64);
+            write_msr(IA32_GS_BASE, address as u64);
         }
     }
 }
 
 impl PerCpu<crate::PlatformImpl> for PerCpuImpl {
-    fn scheduler(self: Pin<&mut Self>) -> Pin<&mut Scheduler<crate::PlatformImpl>> {
-        self.scheduler()
+    fn scheduler(&mut self) -> &mut Scheduler<crate::PlatformImpl> {
+        &mut self.scheduler
     }
 
-    fn set_kernel_stack_pointer(mut self: Pin<&mut Self>, stack_pointer: VAddr) {
-        *self.as_mut().current_task_kernel_rsp() = stack_pointer;
-        self.as_mut().tss().as_mut().set_kernel_stack(stack_pointer);
+    fn set_kernel_stack_pointer(&mut self, stack_pointer: VAddr) {
+        self.current_task_kernel_rsp = stack_pointer;
+        self.tss.set_kernel_stack(stack_pointer);
     }
 
-    fn get_user_stack_pointer(mut self: Pin<&mut Self>) -> VAddr {
-        *self.as_mut().current_task_user_rsp()
+    fn user_stack_pointer(&self) -> VAddr {
+        self.current_task_user_rsp
     }
 
-    fn set_user_stack_pointer(mut self: Pin<&mut Self>, stack_pointer: VAddr) {
-        *self.as_mut().current_task_user_rsp() = stack_pointer;
+    fn set_user_stack_pointer(&mut self, stack_pointer: VAddr) {
+        self.current_task_user_rsp = stack_pointer;
     }
 }
 

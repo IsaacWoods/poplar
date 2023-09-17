@@ -23,11 +23,16 @@ use alloc::{alloc::Global, boxed::Box, sync::Arc};
 use aml::AmlContext;
 use core::{panic::PanicInfo, pin::Pin, time::Duration};
 use hal::memory::{Frame, PAddr, VAddr};
-use hal_x86_64::{hw::registers::read_control_reg, kernel_map, paging::PageTableImpl};
+use hal_x86_64::{
+    hw::{registers::read_control_reg, tss::Tss},
+    kernel_map,
+    paging::PageTableImpl,
+};
 use interrupts::InterruptController;
 use kernel::{
     memory::{KernelStackAllocator, PhysicalMemoryManager, Stack},
     object::{memory_object::MemoryObject, KernelObjectId},
+    per_cpu::PerCpu,
     scheduler::Scheduler,
     Platform,
 };
@@ -53,7 +58,7 @@ impl Platform for PlatformImpl {
         &mut self.kernel_page_table
     }
 
-    fn per_cpu<'a>() -> Pin<&'a mut Self::PerCpu> {
+    unsafe fn per_cpu<'a>() -> &'a mut Self::PerCpu {
         unsafe { per_cpu::get_per_cpu_data() }
     }
 
@@ -127,6 +132,16 @@ pub extern "C" fn kentry(boot_info: &BootInfo) -> ! {
     InterruptController::install_exception_handlers();
 
     /*
+     * Install a TSS for this processor. This then allows us to set up the per-CPU data structures.
+     */
+    let tss = Box::new(Tss::new());
+    let tss_selector = hal_x86_64::hw::gdt::GDT.lock().add_tss(0, tss.as_ref() as *const Tss);
+    unsafe {
+        core::arch::asm!("ltr ax", in("ax") tss_selector.0);
+    }
+    PerCpuImpl::install(tss, Scheduler::new());
+
+    /*
      * Parse the static ACPI tables.
      */
     if boot_info.rsdp_address.is_none() {
@@ -144,25 +159,11 @@ pub extern "C" fn kentry(boot_info: &BootInfo) -> ! {
      */
     let mut topology = Topology::new();
     let boot_cpu = {
-        use hal_x86_64::hw::tss::Tss;
-
         let acpi_info = acpi_platform_info.processor_info.as_ref().unwrap().boot_processor;
         assert_eq!(acpi_info.state, ProcessorState::Running);
         assert!(!acpi_info.is_ap);
 
-        let tss = Box::pin(Tss::new());
-        let tss_selector = hal_x86_64::hw::gdt::GDT.lock().add_tss(0, tss.as_ref());
-        unsafe {
-            core::arch::asm!("ltr ax", in("ax") tss_selector.0);
-        }
-
-        let mut per_cpu = PerCpuImpl::new(tss, Scheduler::new());
-        per_cpu.as_mut().install();
-        topology.add_boot_processor(topo::Cpu {
-            id: topo::BOOT_CPU_ID,
-            local_apic_id: acpi_info.local_apic_id,
-            per_cpu,
-        });
+        topology.add_boot_processor(topo::Cpu { id: topo::BOOT_CPU_ID, local_apic_id: acpi_info.local_apic_id });
     };
 
     let pci_access = pci::EcamAccess::new(PciConfigRegions::new_in(&acpi_tables, Global).unwrap());
@@ -228,7 +229,7 @@ pub extern "C" fn kentry(boot_info: &BootInfo) -> ! {
     info!("Loading {} initial tasks to the ready queue", boot_info.loaded_images.len());
     for image in &boot_info.loaded_images {
         kernel::load_task(
-            &mut PlatformImpl::per_cpu().scheduler(),
+            &mut unsafe { PlatformImpl::per_cpu() }.scheduler(),
             image,
             platform.kernel_page_table(),
             &kernel::PHYSICAL_MEMORY_MANAGER.get(),
@@ -243,5 +244,5 @@ pub extern "C" fn kentry(boot_info: &BootInfo) -> ! {
      * Drop into userspace!
      */
     info!("Dropping into usermode");
-    PlatformImpl::per_cpu().scheduler().drop_to_userspace()
+    unsafe { PlatformImpl::per_cpu() }.scheduler().drop_to_userspace()
 }

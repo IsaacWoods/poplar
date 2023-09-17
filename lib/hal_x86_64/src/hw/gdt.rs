@@ -1,6 +1,6 @@
 use super::{tss::Tss, DescriptorTablePointer};
 use bit_field::BitField;
-use core::{arch::asm, mem, ops::Deref, pin::Pin};
+use core::{arch::asm, mem};
 use hal::memory::VAddr;
 use spin::Mutex;
 
@@ -67,13 +67,12 @@ impl TssSegment {
         TssSegment(0, 0)
     }
 
-    pub fn new(tss: Pin<&Tss>) -> TssSegment {
-        // Get the address of the *underlying TSS*
-        let tss_address = (tss.deref() as *const _) as u64;
+    pub fn new(tss: *const Tss) -> TssSegment {
         let mut low = PRESENT;
         let mut high = 0;
 
         // Base address
+        let tss_address = tss as u64;
         low.set_bits(16..40, tss_address.get_bits(0..24));
         low.set_bits(56..64, tss_address.get_bits(24..32));
         high.set_bits(0..32, tss_address.get_bits(32..64));
@@ -142,7 +141,7 @@ impl Gdt {
     ///
     /// ### Panics
     /// Panics if we have already added as many TSSs as this GDT can hold.
-    pub fn add_tss(&mut self, id: usize, tss: Pin<&Tss>) -> SegmentSelector {
+    pub fn add_tss(&mut self, id: usize, tss: *const Tss) -> SegmentSelector {
         assert!(!self.tsss[id].present(), "Tried to install a TSS for a CPU that already has one!");
 
         let offset = OFFSET_TO_FIRST_TSS + id * mem::size_of::<TssSegment>();

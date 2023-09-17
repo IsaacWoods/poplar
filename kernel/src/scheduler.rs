@@ -113,7 +113,7 @@ where
             let new_user_stack = unsafe { *self.running_task.as_ref().unwrap().user_stack_pointer.get() };
 
             unsafe {
-                *old_task.user_stack_pointer.get() = P::per_cpu().get_user_stack_pointer();
+                *old_task.user_stack_pointer.get() = P::per_cpu().user_stack_pointer();
                 trace!("Setting stacks - kernel: {:#x}, user: {:#x}", new_kernel_stack, new_user_stack);
                 P::per_cpu().set_kernel_stack_pointer(new_kernel_stack);
                 P::per_cpu().set_user_stack_pointer(new_user_stack);

@@ -22,7 +22,6 @@ pub mod syscall;
 
 use crate::memory::Stack;
 use alloc::{boxed::Box, sync::Arc};
-use core::pin::Pin;
 use hal::memory::{FrameSize, PageTable, VAddr};
 use heap_allocator::LockedHoleAllocator;
 use memory::{KernelStackAllocator, PhysicalMemoryManager};
@@ -52,8 +51,9 @@ pub trait Platform: Sized + 'static {
     fn kernel_page_table(&mut self) -> &mut Self::PageTable;
 
     /// Get the per-CPU info for the current CPU. To make this safe, the per-CPU info must be installed before the
-    /// `Platform` implementation is created.
-    fn per_cpu<'a>() -> Pin<&'a mut Self::PerCpu>;
+    /// `Platform` implementation is created, and the user must be careful to maintain only one live mutable
+    /// reference to the per-CPU data at a time.
+    unsafe fn per_cpu<'a>() -> &'a mut Self::PerCpu;
 
     /// Often, the platform will need to put stuff on either the kernel or the user stack before a task is run for
     /// the first time. `task_entry_point` is the virtual address that should be jumped to in usermode when the

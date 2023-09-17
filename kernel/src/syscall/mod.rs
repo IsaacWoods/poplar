@@ -56,7 +56,7 @@ where
     P: Platform,
 {
     info!("Syscall! number = {}, a = {}, b = {}, c = {}, d = {}, e = {}", number, a, b, c, d, e);
-    let task = P::per_cpu().scheduler().get_mut().running_task.as_ref().unwrap();
+    let task = unsafe { P::per_cpu() }.scheduler().running_task.as_ref().unwrap();
 
     match number {
         syscall::SYSCALL_YIELD => yield_syscall::<P>(),
@@ -85,7 +85,7 @@ where
     P: Platform,
 {
     info!("Process yielded!");
-    P::per_cpu().scheduler().switch_to_next(TaskState::Ready);
+    unsafe { P::per_cpu() }.scheduler().switch_to_next(TaskState::Ready);
     0
 }
 
