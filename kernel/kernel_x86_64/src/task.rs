@@ -1,10 +1,7 @@
 use core::{arch::global_asm, mem, ptr};
 use hal::memory::VAddr;
 use hal_x86_64::hw::registers::{write_msr, CpuFlags};
-use kernel::{
-    memory::Stack,
-    object::{memory_object::MemoryObject, KernelObjectId},
-};
+use kernel::memory::Stack;
 
 global_asm!(include_str!("task.s"));
 global_asm!(include_str!("syscall.s"));
@@ -75,7 +72,7 @@ pub unsafe fn initialize_stacks(
      */
     const REQUIRED_INITIAL_STACK_ALIGNMENT: usize = 16;
     let mut kernel_stack_pointer = kernel_stack.top.align_down(REQUIRED_INITIAL_STACK_ALIGNMENT);
-    let mut user_stack_pointer = user_stack.top.align_down(REQUIRED_INITIAL_STACK_ALIGNMENT);
+    let user_stack_pointer = user_stack.top.align_down(REQUIRED_INITIAL_STACK_ALIGNMENT);
 
     /*
      * Start off with a zero return address to terminate backtraces at task entry.

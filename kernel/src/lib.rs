@@ -25,7 +25,7 @@ use alloc::{boxed::Box, sync::Arc};
 use hal::memory::{FrameSize, PageTable, VAddr};
 use heap_allocator::LockedHoleAllocator;
 use memory::{KernelStackAllocator, PhysicalMemoryManager};
-use object::{address_space::AddressSpace, memory_object::MemoryObject, task::Task, KernelObject, KernelObjectId};
+use object::{address_space::AddressSpace, memory_object::MemoryObject, task::Task, KernelObject};
 use pci::PciInfo;
 use pci_types::ConfigRegionAccess as PciConfigRegionAccess;
 use per_cpu::PerCpu;

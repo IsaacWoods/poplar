@@ -19,9 +19,9 @@ mod topo;
 
 use acpi::{platform::ProcessorState, AcpiTables, PciConfigRegions};
 use acpi_handler::{AmlHandler, PoplarAcpiHandler};
-use alloc::{alloc::Global, boxed::Box, sync::Arc};
+use alloc::{alloc::Global, boxed::Box};
 use aml::AmlContext;
-use core::{panic::PanicInfo, pin::Pin, time::Duration};
+use core::time::Duration;
 use hal::memory::{Frame, PAddr, VAddr};
 use hal_x86_64::{
     hw::{registers::read_control_reg, tss::Tss},
@@ -31,17 +31,14 @@ use hal_x86_64::{
 use interrupts::InterruptController;
 use kernel::{
     memory::{KernelStackAllocator, PhysicalMemoryManager, Stack},
-    object::{memory_object::MemoryObject, KernelObjectId},
     per_cpu::PerCpu,
     scheduler::Scheduler,
     Platform,
 };
-use pci::PciResolver;
 use per_cpu::PerCpuImpl;
 use seed::boot_info::BootInfo;
-use spin::Mutex;
 use topo::Topology;
-use tracing::{error, info};
+use tracing::info;
 
 // TODO: store the PciInfo in here and allow access from the common kernel
 pub struct PlatformImpl {
@@ -158,22 +155,20 @@ pub extern "C" fn kentry(boot_info: &BootInfo) -> ! {
      * Create a topology and add the boot processor to it.
      */
     let mut topology = Topology::new();
-    let boot_cpu = {
+    {
         let acpi_info = acpi_platform_info.processor_info.as_ref().unwrap().boot_processor;
         assert_eq!(acpi_info.state, ProcessorState::Running);
         assert!(!acpi_info.is_ap);
 
         topology.add_boot_processor(topo::Cpu { id: topo::BOOT_CPU_ID, local_apic_id: acpi_info.local_apic_id });
-    };
+    }
 
     let pci_access = pci::EcamAccess::new(PciConfigRegions::new_in(&acpi_tables, Global).unwrap());
 
     /*
      * Parse the DSDT.
      */
-    // TODO: if we're on ACPI 1.0 - pass true as legacy mode.
     let mut aml_context = AmlContext::new(Box::new(AmlHandler::new(pci_access)), aml::DebugVerbosity::None);
-    // TODO: match on this to differentiate between there being no DSDT vs real error
     if let Ok(ref dsdt) = acpi_tables.dsdt() {
         let virtual_address = kernel_map::physical_to_virtual(PAddr::new(dsdt.address).unwrap());
         info!(

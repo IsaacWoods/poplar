@@ -52,24 +52,21 @@ impl InterruptController {
     /// like page faults and kernel stack overflows nicely.
     pub fn install_exception_handlers() {
         let mut idt = IDT.lock();
-        unsafe {
-            idt.nmi().set_handler(wrap_handler!(exception::nmi_handler), KERNEL_CODE_SELECTOR);
-            idt.breakpoint()
-                .set_handler(wrap_handler!(exception::breakpoint_handler), KERNEL_CODE_SELECTOR)
-                .set_privilege_level(PrivilegeLevel::Ring3);
-            idt.invalid_opcode()
-                .set_handler(wrap_handler!(exception::invalid_opcode_handler), KERNEL_CODE_SELECTOR);
-            idt.general_protection_fault().set_handler(
-                wrap_handler_with_error_code!(exception::general_protection_fault_handler),
-                KERNEL_CODE_SELECTOR,
-            );
-            idt.page_fault()
-                .set_handler(wrap_handler_with_error_code!(exception::page_fault_handler), KERNEL_CODE_SELECTOR);
-            idt.double_fault()
-                .set_handler(wrap_handler_with_error_code!(exception::double_fault_handler), KERNEL_CODE_SELECTOR);
+        idt.nmi().set_handler(wrap_handler!(exception::nmi_handler), KERNEL_CODE_SELECTOR);
+        idt.breakpoint()
+            .set_handler(wrap_handler!(exception::breakpoint_handler), KERNEL_CODE_SELECTOR)
+            .set_privilege_level(PrivilegeLevel::Ring3);
+        idt.invalid_opcode().set_handler(wrap_handler!(exception::invalid_opcode_handler), KERNEL_CODE_SELECTOR);
+        idt.general_protection_fault().set_handler(
+            wrap_handler_with_error_code!(exception::general_protection_fault_handler),
+            KERNEL_CODE_SELECTOR,
+        );
+        idt.page_fault()
+            .set_handler(wrap_handler_with_error_code!(exception::page_fault_handler), KERNEL_CODE_SELECTOR);
+        idt.double_fault()
+            .set_handler(wrap_handler_with_error_code!(exception::double_fault_handler), KERNEL_CODE_SELECTOR);
 
-            idt.load();
-        }
+        idt.load();
     }
 
     pub fn init(interrupt_model: &InterruptModel<Global>, aml_context: &mut AmlContext) -> InterruptController {

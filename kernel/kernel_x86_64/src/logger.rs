@@ -8,7 +8,6 @@ use core::{
     fmt::Write,
     sync::atomic::{AtomicU64, Ordering},
 };
-use hal::memory::PAddr;
 use hal_x86_64::hw::serial::SerialPort;
 use poplar_util::InitGuard;
 use spinning_top::Spinlock;

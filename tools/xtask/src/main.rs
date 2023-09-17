@@ -1,4 +1,9 @@
 #![feature(type_ascription)]
+/*
+ * Seeing warnings from the `xtask` is annoying, and we have some stuff hanging around that
+ * might be useful in the future.
+ */
+#![allow(dead_code)]
 
 mod cargo;
 mod config;

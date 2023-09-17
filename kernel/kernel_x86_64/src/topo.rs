@@ -1,9 +1,6 @@
-use crate::per_cpu::PerCpuImpl;
-use alloc::{boxed::Box, vec, vec::Vec};
-use core::{fmt, pin::Pin};
-use hal_x86_64::hw::{cpu::CpuInfo, gdt::SegmentSelector};
-use kernel::scheduler::Scheduler;
-use tracing::{info, warn};
+use alloc::{vec, vec::Vec};
+use hal_x86_64::hw::cpu::CpuInfo;
+use tracing::info;
 
 pub type CpuId = u32;
 pub const BOOT_CPU_ID: CpuId = 0;

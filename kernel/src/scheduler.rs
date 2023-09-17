@@ -35,6 +35,12 @@ where
         }
     }
 
+    /// Choose the next task to be run. Returns `None` if no suitable task could be found to be run.
+    fn choose_next(&mut self) -> Option<Arc<Task<P>>> {
+        // TODO: in the future, this should consider task priorities etc.
+        self.ready_queue.pop_front()
+    }
+
     /// Performs the first transistion from the kernel into userspace. On some platforms, this has
     /// to be done in a different way to how we'd replace the currently running task if we'd
     /// yielded or pre-empted out of an existing userspace context, and so this is handled
@@ -75,10 +81,6 @@ where
     pub fn switch_to_next(&mut self, new_state: TaskState) {
         assert!(self.running_task.is_some());
 
-        /*
-         * Select the next task to run.
-         * NOTE: in the future, this could be more complex, e.g. by taking priority into account.
-         */
         if let Some(next_task) = self.choose_next() {
             /*
              * We're switching task! We sort out the internal scheduler state, and then ask the
@@ -127,9 +129,5 @@ where
              */
             trace!("No more schedulable tasks. Returning to current one!");
         }
-    }
-
-    fn choose_next(&mut self) -> Option<Arc<Task<P>>> {
-        self.ready_queue.pop_front()
     }
 }

@@ -3,8 +3,8 @@ use hal::memory::VAddr;
 use poplar_util::{bitmap::BitmapSlice, math::ceiling_integer_divide};
 
 pub struct SlabAllocator {
-    bottom: VAddr,
-    top: VAddr,
+    pub bottom: VAddr,
+    pub top: VAddr,
     slab_size: usize,
     bitmap: Vec<u8>,
 }

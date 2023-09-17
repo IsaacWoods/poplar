@@ -171,11 +171,11 @@ where
         unsafe { self.pci_access.write(PciAddress::new(segment, bus, device, function), offset, value) }
     }
 
-    fn stall(&self, microseconds: u64) {
+    fn stall(&self, _microseconds: u64) {
         todo!()
     }
 
-    fn sleep(&self, milliseconds: u64) {
+    fn sleep(&self, _milliseconds: u64) {
         todo!()
     }
 }

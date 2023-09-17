@@ -1,7 +1,6 @@
 use super::{
     address_space::{AddressSpace, TaskSlot},
     alloc_kernel_object_id,
-    memory_object::MemoryObject,
     KernelObject,
     KernelObjectId,
 };
