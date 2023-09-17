@@ -6,11 +6,13 @@
 use bit_field::BitField;
 use core::{arch::x86_64::CpuidResult, str};
 
+#[derive(Clone, Copy, Debug)]
 pub struct SupportedFeatures {
     pub xsave: bool,
 }
 
 /// Describes information we know about the system we're running on.
+#[derive(Clone, Debug)]
 pub struct CpuInfo {
     pub max_supported_standard_level: u32,
     pub vendor: Vendor,
@@ -122,7 +124,7 @@ impl CpuInfo {
     }
 }
 
-#[derive(PartialEq, Eq, Debug)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum Vendor {
     Unknown,
     Intel,
@@ -132,7 +134,7 @@ pub enum Vendor {
 /// Intel and AMD microarchitectures we can expect processors we're running on to be. This doesn't include Intel
 /// Atom microarchs, or microarches we consider (slightly arbitrarily in some cases) to be die shrinks or process
 /// changes.
-#[derive(Debug)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum Microarch {
     /*
      * Intel
@@ -159,7 +161,7 @@ pub enum Microarch {
     Zen3,
 }
 
-#[derive(Debug)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub struct ModelInfo {
     pub family: u8,
     pub model: u8,
@@ -169,14 +171,14 @@ pub struct ModelInfo {
     pub extended_model: u8,
 }
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum HypervisorVendor {
     Unknown,
     Kvm,
     Tcg,
 }
 
-#[derive(Debug)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub struct HypervisorInfo {
     pub vendor: HypervisorVendor,
     pub max_leaf: u32,
