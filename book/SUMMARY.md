@@ -4,12 +4,11 @@
 
 - [The Kernel](./kernel/index.md)
     - [Platforms](./kernel/platforms.md)
-    - [Efiloader](./kernel/efiloader.md)
+    - [Seed](./kernel/seed.md)
     - [Kernel Objects](./kernel/kernel_objects.md)
-    - [System calls](./kernel/syscalls.md)
     - [Debugging the kernel](./kernel/debugging.md)
 
-- [Syscalls](./syscalls/index.md)
+- [System calls](./syscalls/index.md)
     - [`yield`](./syscalls/yield.md)
     - [`early_log`](./syscalls/early_log.md)
     - [`get_framebuffer`](./syscalls/get_framebuffer.md)

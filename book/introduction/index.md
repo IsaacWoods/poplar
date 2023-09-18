@@ -2,11 +2,8 @@
 Welcome to the Poplar Book, which serves as the main source of documentation for [Poplar](https://github.com/IsaacWoods/poplar).
 The Book aims to be both a 10,000-meter overview of Poplar for the interested observer, and a definitive reference for the inner workings of the kernel and userspace. 
 
-Please note that this book (like the rest of the OS!) is still very early in development and not at all complete.
-If anything is unclear, please [file an issue](https://github.com/IsaacWoods/poplar/issues)!
-
-**This book is not always up to date, and needs to document a lot more to be very useful. If you have questions not covered by the book, please don't hesitate to contact me through other channels
-and I'll do my best to answer them. I aim to keep this book up to date, but I do not have enough time to make that a reality at the moment - sorry.**
+Please note that this book (like the rest of the OS!) is still very early in development and may lag behind the
+state of the code. If anything is unclear, please [file an issue](https://github.com/IsaacWoods/poplar/issues)!
 
 ### What is Poplar?
 At heart, Poplar is a microkernel written in the [Rust programming language](https://rust-lang.org).
