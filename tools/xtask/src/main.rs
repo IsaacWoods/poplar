@@ -12,7 +12,7 @@ mod x64;
 
 use cargo::Target;
 use colored::Colorize;
-use config::{Arch, Config};
+use config::{Config, Platform};
 use eyre::{eyre, Result, WrapErr};
 use flags::{DistOptions, TaskCmd};
 use riscv::qemu::RunQemuRiscV;
@@ -44,14 +44,14 @@ fn main() -> Result<()> {
         TaskCmd::Qemu(flags) => {
             let config = config::Config::new(&DistOptions::from(&flags));
             let dist_result = dist(&config)?;
-            match config.arch {
-                Arch::X64 => RunQemuX64::new(dist_result.disk_image.unwrap())
+            match config.platform {
+                Platform::X64 => RunQemuX64::new(dist_result.disk_image.unwrap())
                     .open_display(flags.display)
                     .debug_int_firehose(flags.debug_int_firehose)
                     .debug_mmu_firehose(flags.debug_mmu_firehose)
                     .debug_cpu_firehose(flags.debug_cpu_firehose)
                     .run(),
-                Arch::RiscV => {
+                Platform::RiscV => {
                     RunQemuRiscV::new(dist_result.bootloader_path, dist_result.kernel_path, dist_result.disk_image)
                         .opensbi(PathBuf::from("lib/opensbi/build/platform/generic/firmware/fw_jump.elf"))
                         .open_display(flags.display)
@@ -88,9 +88,9 @@ fn dist(config: &Config) -> Result<DistResult> {
     // .user_task_in_dir("test_syscalls", PathBuf::from("user/tests"))
     // .user_task_in_dir("test1", PathBuf::from("user/tests"));
 
-    match config.arch {
-        Arch::X64 => dist.build_x64(),
-        Arch::RiscV => dist.build_riscv(),
+    match config.platform {
+        Platform::X64 => dist.build_x64(),
+        Platform::RiscV => dist.build_riscv(),
     }
 }
 

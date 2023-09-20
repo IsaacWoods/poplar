@@ -1,4 +1,4 @@
-use crate::config::Arch;
+use crate::config::Platform;
 use std::path::PathBuf;
 
 xflags::xflags! {
@@ -12,7 +12,7 @@ xflags::xflags! {
         cmd dist {
             optional --config config_path: PathBuf
             optional --release
-            optional -a,--arch arch: Arch
+            optional -p, --platform platform: Platform
             optional --kernel_features kernel_features: String
         }
 
@@ -20,7 +20,7 @@ xflags::xflags! {
             // XXX: shared with dist command. Should be the same.
             optional --config config_path: PathBuf
             optional --release
-            optional -a,--arch arch: Arch
+            optional -p,--platform platform: Platform
             optional --kernel_features kernel_features: String
 
             optional --display
@@ -35,7 +35,7 @@ xflags::xflags! {
 
 pub struct DistOptions {
     pub config_path: PathBuf,
-    pub arch: Option<Arch>,
+    pub platform: Option<Platform>,
     pub release: bool,
     pub kernel_features: Option<String>,
 }
@@ -46,7 +46,7 @@ impl From<&Dist> for DistOptions {
             config_path: flags.config.clone().unwrap_or(PathBuf::from("Poplar.toml")),
             release: flags.release,
             kernel_features: flags.kernel_features.clone(),
-            arch: flags.arch,
+            platform: flags.platform,
         }
     }
 }
@@ -57,7 +57,7 @@ impl From<&Qemu> for DistOptions {
             config_path: flags.config.clone().unwrap_or(PathBuf::from("Poplar.toml")),
             release: flags.release,
             kernel_features: flags.kernel_features.clone(),
-            arch: flags.arch,
+            platform: flags.platform,
         }
     }
 }
@@ -87,7 +87,7 @@ pub struct Help {
 pub struct Dist {
     pub config: Option<PathBuf>,
     pub release: bool,
-    pub arch: Option<Arch>,
+    pub platform: Option<Platform>,
     pub kernel_features: Option<String>,
 }
 
@@ -95,7 +95,7 @@ pub struct Dist {
 pub struct Qemu {
     pub config: Option<PathBuf>,
     pub release: bool,
-    pub arch: Option<Arch>,
+    pub platform: Option<Platform>,
     pub kernel_features: Option<String>,
     pub display: bool,
     pub debug_int_firehose: bool,
