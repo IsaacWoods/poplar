@@ -17,6 +17,7 @@ use uefi::{
     prelude::*,
     proto::{console::gop::GraphicsOutput, loaded_image::LoadedImage},
     table::boot::{AllocateType, MemoryType, SearchType},
+    CStr16,
 };
 
 /*
@@ -40,6 +41,10 @@ fn efi_main(image_handle: Handle, system_table: SystemTable<Boot>) -> Status {
     let video_mode = create_framebuffer(system_table.boot_services(), 800, 600);
     Logger::switch_to_graphical(&video_mode);
 
+    unsafe {
+        uefi::allocator::init(system_table.boot_services());
+    }
+
     /*
      * We create a set of page tables for the kernel. Because memory is identity-mapped in UEFI, we can act as
      * if we've placed the physical mapping at 0x0.
@@ -53,6 +58,18 @@ fn efi_main(image_handle: Handle, system_table: SystemTable<Boot>) -> Status {
      */
     let loader_image_device =
         system_table.boot_services().open_protocol_exclusive::<LoadedImage>(image_handle).unwrap().device();
+
+    {
+        use core::convert::TryFrom;
+        use uefi::{data_types::CString16, fs::Path, proto::media::fs::SimpleFileSystem};
+        let mut root_file_protocol = system_table
+            .boot_services()
+            .open_protocol_exclusive::<SimpleFileSystem>(loader_image_device)
+            .expect("Failed to get volume");
+        let mut filesystem = uefi::fs::FileSystem::new(root_file_protocol);
+        let config = filesystem.read(Path::new(&CString16::try_from("config.toml").unwrap())).unwrap();
+        info!("Config: {}", core::str::from_utf8(&config).unwrap());
+    }
 
     let kernel_info = {
         image::load_kernel(
@@ -135,6 +152,7 @@ fn efi_main(image_handle: Handle, system_table: SystemTable<Boot>) -> Status {
             .unwrap();
     }
 
+    uefi::allocator::exit_boot_services();
     let (_system_table, memory_map) = system_table.exit_boot_services();
     process_memory_map(memory_map, boot_info, &mut page_table, &allocator);
 

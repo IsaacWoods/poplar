@@ -160,6 +160,7 @@ pub fn load_image(boot_services: &BootServices, volume_handle: Handle, name: &st
 /// free the pool themselves. When pools is made safer, we need to rework how this all works to tie the lifetime of
 /// the elf to the pool.
 fn load_elf<'a>(boot_services: &BootServices, volume_handle: Handle, path: &str) -> (Elf<'a>, *mut u8) {
+    // TODO: rewrite to use `uefi`'s FS stuff now we've caved and added a heap
     let mut root_file_protocol = boot_services
         .open_protocol_exclusive::<SimpleFileSystem>(volume_handle)
         .expect("Failed to get volume")

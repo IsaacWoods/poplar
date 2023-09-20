@@ -7,24 +7,38 @@ pub struct MakeGptImage {
     pub image_size: u64,
     /// Size of the FAT partition for EFI to make, in bytes.
     pub efi_partition_size: u64,
+    /// A list of files to create on the EFI system partitions, with directly supplied data. The first element is
+    /// the path on the FAT, and the second is the desired contents of the file.
+    pub efi_part_files: Vec<(String, String)>,
     /// A list of files to create on the EFI system partition. The first element is the path on the FAT to put it
     /// at, and the second is the file to read out of on the host filesystem.
-    pub efi_part_files: Vec<(String, PathBuf)>,
+    pub copied_efi_part_files: Vec<(String, PathBuf)>,
 }
 
 impl MakeGptImage {
     pub fn new(path: PathBuf, size: u64, efi_partition_size: u64) -> MakeGptImage {
-        MakeGptImage { image_path: path, image_size: size, efi_partition_size, efi_part_files: vec![] }
+        MakeGptImage {
+            image_path: path,
+            image_size: size,
+            efi_partition_size,
+            copied_efi_part_files: vec![],
+            efi_part_files: vec![],
+        }
     }
 
-    pub fn add_efi_file<S: Into<String>>(mut self, efi_path: S, host_path: PathBuf) -> MakeGptImage {
-        self.efi_part_files.push((efi_path.into(), host_path));
+    pub fn add_efi_file<S: Into<String>, C: Into<String>>(mut self, efi_path: S, contents: C) -> MakeGptImage {
+        self.efi_part_files.push((efi_path.into(), contents.into()));
+        self
+    }
+
+    pub fn copy_efi_file<S: Into<String>>(mut self, efi_path: S, host_path: PathBuf) -> MakeGptImage {
+        self.copied_efi_part_files.push((efi_path.into(), host_path));
         self
     }
 
     pub fn build(self) -> Result<()> {
         use gpt::{disk::LogicalBlockSize, mbr::ProtectiveMBR, GptConfig};
-        use std::convert::TryFrom;
+        use std::{convert::TryFrom, io::Write};
 
         // TODO: Blocks of 512 bytes are hardcoded in a few places for now. We probably want to allow both LBA
         // sizes in the future.
@@ -92,14 +106,15 @@ impl MakeGptImage {
             .wrap_err("Failed to construct FAT filesystem from formatted partition")?;
 
         /*
-         * Put the requested files into the EFI system partition.
+         * Generate the EFI filesystem, copying the requested files over from the host filesystem, and generating
+         * the rest from the given contents.
          */
         {
             let root_dir = fat.root_dir();
             root_dir.create_dir("efi").unwrap();
             root_dir.create_dir("efi/boot").unwrap();
 
-            for (fat_path, host_path) in self.efi_part_files {
+            for (fat_path, host_path) in self.copied_efi_part_files {
                 let mut host_file = File::open(host_path.clone()).wrap_err_with(|| {
                     format!("Failed to open host file to put on EFI system partition: {:?}", host_path)
                 })?;
@@ -109,6 +124,14 @@ impl MakeGptImage {
                 std::io::copy(&mut host_file, &mut fat_file).wrap_err_with(|| {
                     format!("Failed to copy host file onto FAT partition: {:?} -> {}", host_path, fat_path)
                 })?;
+            }
+
+            for (fat_path, contents) in self.efi_part_files {
+                let mut fat_file = root_dir
+                    .create_file(&fat_path)
+                    .wrap_err_with(|| format!("Failed to create file on EFI system partition at: {}", fat_path))?;
+                fat_file.truncate()?;
+                fat_file.write_all(contents.as_bytes())?;
             }
         }
 

@@ -16,6 +16,7 @@ use config::{Config, Platform};
 use eyre::{eyre, Result, WrapErr};
 use flags::{DistOptions, TaskCmd};
 use riscv::qemu::RunQemuRiscV;
+use serde::Serialize;
 use std::{
     env,
     path::{Path, PathBuf},
@@ -102,6 +103,11 @@ struct DistResult {
     disk_image: Option<PathBuf>,
 }
 
+#[derive(Clone, Serialize)]
+struct SeedConfig {
+    user_tasks: Vec<String>,
+}
+
 impl Dist {
     pub fn build_riscv(self) -> Result<DistResult> {
         use cargo::RunCargo;
@@ -137,7 +143,7 @@ impl Dist {
             .workspace(PathBuf::from("seed/"))
             .target(Target::Triple("x86_64-unknown-uefi".to_string()))
             .release(self.release)
-            .std_components(vec!["core".to_string()])
+            .std_components(vec!["core".to_string(), "alloc".to_string()])
             .std_features(vec!["compiler-builtins-mem".to_string()])
             .run()?;
 
@@ -170,13 +176,17 @@ impl Dist {
             })
             .collect::<Result<Vec<(String, PathBuf)>>>()?;
 
+        // Generate a file telling Seed how to load us
+        let seed_config = self.generate_seed_config();
+
         println!("{}", "[*] Building disk image".bold().magenta());
         let image_path = PathBuf::from("poplar_x64.img");
         let mut image = MakeGptImage::new(image_path.clone(), 40 * 1024 * 1024, 35 * 1024 * 1024)
-            .add_efi_file("efi/boot/bootx64.efi", seed_uefi.clone())
-            .add_efi_file("kernel.elf", kernel.clone());
+            .copy_efi_file("efi/boot/bootx64.efi", seed_uefi.clone())
+            .copy_efi_file("kernel.elf", kernel.clone())
+            .add_efi_file("config.toml", toml::to_string(&seed_config).unwrap());
         for (name, artifact_path) in user_tasks {
-            image = image.add_efi_file(format!("{}.elf", name), artifact_path);
+            image = image.copy_efi_file(format!("{}.elf", name), artifact_path);
         }
         image.build()?;
 
@@ -195,6 +205,11 @@ impl Dist {
             .std_features(vec!["compiler-builtins-mem".to_string()])
             .rustflags("-C link-arg=-Tlink.ld")
             .run()
+    }
+
+    fn generate_seed_config(&self) -> SeedConfig {
+        let user_tasks = self.user_tasks.iter().map(|task| task.name.clone()).collect();
+        SeedConfig { user_tasks }
     }
 }
 
