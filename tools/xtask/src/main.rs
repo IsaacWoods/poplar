@@ -78,15 +78,11 @@ fn main() -> Result<()> {
 }
 
 fn dist(config: &Config) -> Result<DistResult> {
-    let dist = Dist::new()
-        .release(config.release)
-        .kernel_features_from_cli(config.kernel_features.clone())
-        .user_task("simple_fb");
-    // .user_task("platform_bus")
-    // .user_task("pci_bus")
-    // .user_task("usb_bus_xhci")
-    // .user_task_in_dir("test_syscalls", PathBuf::from("user/tests"))
-    // .user_task_in_dir("test1", PathBuf::from("user/tests"));
+    let dist = Dist {
+        release: config.release,
+        kernel_features: config.kernel_features.clone(),
+        user_tasks: config.user_tasks.clone(),
+    };
 
     match config.platform {
         Platform::X64 => dist.build_x64(),
@@ -97,7 +93,7 @@ fn dist(config: &Config) -> Result<DistResult> {
 struct Dist {
     release: bool,
     kernel_features: Vec<String>,
-    user_tasks: Vec<(String, Option<PathBuf>)>,
+    user_tasks: Vec<config::UserTask>,
 }
 
 struct DistResult {
@@ -107,33 +103,6 @@ struct DistResult {
 }
 
 impl Dist {
-    pub fn new() -> Dist {
-        Dist { release: false, kernel_features: vec![], user_tasks: vec![] }
-    }
-
-    pub fn release(self, release: bool) -> Dist {
-        Dist { release, ..self }
-    }
-
-    pub fn kernel_features_from_cli(self, features: Option<String>) -> Dist {
-        Dist {
-            kernel_features: features
-                .map(|features| features.split(',').map(str::to_string).collect())
-                .unwrap_or(vec![]),
-            ..self
-        }
-    }
-
-    pub fn user_task<S: Into<String>>(mut self, name: S) -> Dist {
-        self.user_tasks.push((name.into(), None));
-        self
-    }
-
-    pub fn user_task_in_dir<S: Into<String>, P: Into<PathBuf>>(mut self, name: S, dir: P) -> Dist {
-        self.user_tasks.push((name.into(), Some(dir.into())));
-        self
-    }
-
     pub fn build_riscv(self) -> Result<DistResult> {
         use cargo::RunCargo;
 
@@ -185,19 +154,19 @@ impl Dist {
             .std_features(vec!["compiler-builtins-mem".to_string()])
             .run()?;
 
-        let user_task_paths = self
+        let user_tasks = self
             .user_tasks
             .iter()
-            .map(|(name, dir)| {
+            .map(|task| {
                 let artifact = self.build_userspace_task(
-                    &name,
-                    dir.clone(),
+                    &task.name,
+                    task.source_dir.clone(),
                     Target::Custom {
                         triple: "x86_64-poplar".to_string(),
                         spec: PathBuf::from("user/x86_64-poplar.json"),
                     },
                 )?;
-                Ok((name.clone(), artifact))
+                Ok((task.name.clone(), artifact))
             })
             .collect::<Result<Vec<(String, PathBuf)>>>()?;
 
@@ -206,7 +175,7 @@ impl Dist {
         let mut image = MakeGptImage::new(image_path.clone(), 40 * 1024 * 1024, 35 * 1024 * 1024)
             .add_efi_file("efi/boot/bootx64.efi", seed_uefi.clone())
             .add_efi_file("kernel.elf", kernel.clone());
-        for (name, artifact_path) in user_task_paths {
+        for (name, artifact_path) in user_tasks {
             image = image.add_efi_file(format!("{}.elf", name), artifact_path);
         }
         image.build()?;
@@ -214,13 +183,12 @@ impl Dist {
         Ok(DistResult { bootloader_path: seed_uefi, kernel_path: kernel, disk_image: Some(image_path) })
     }
 
-    fn build_userspace_task(&self, name: &str, dir: Option<PathBuf>, target: Target) -> Result<PathBuf> {
+    fn build_userspace_task(&self, name: &str, source_dir: PathBuf, target: Target) -> Result<PathBuf> {
         use cargo::RunCargo;
         println!("{}", format!("[*] Building user task '{}'", name).bold().magenta());
 
-        let path = if let Some(dir) = dir { dir.join(name) } else { PathBuf::from("user/").join(name) };
-        RunCargo::new(name.to_string(), path)
-            .workspace(PathBuf::from("user/"))
+        RunCargo::new(name.to_string(), source_dir)
+            .workspace(PathBuf::from("user/")) // TODO: we probably need to provide control over this too
             .target(target)
             .release(self.release)
             .std_components(vec!["core".to_string(), "alloc".to_string()])

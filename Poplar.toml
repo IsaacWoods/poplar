@@ -2,6 +2,9 @@ platform = "x64"
 
 [x64]
 release = false
+user_tasks = [
+    "simple_fb user/simple_fb"
+]
 
 [riscv]
 # The release profile is heavily recommended for software-emulated targets to achieve reasonable speeds

@@ -3,13 +3,20 @@
 
 use crate::DistOptions;
 use serde::{Deserialize, Serialize};
+use std::path::PathBuf;
 
 #[derive(Clone, Debug)]
 pub struct Config {
     pub platform: Platform,
     pub release: bool,
-    // TODO: how is `None` handled by the building logic?
-    pub kernel_features: Option<String>,
+    pub kernel_features: Vec<String>,
+    pub user_tasks: Vec<UserTask>,
+}
+
+#[derive(Clone, Debug)]
+pub struct UserTask {
+    pub name: String,
+    pub source_dir: PathBuf,
 }
 
 /// This represents the options that are read out of the persistent config file. These are then merged with the CLI
@@ -24,7 +31,8 @@ struct ConfigFile {
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct PlatformInfo {
     pub release: Option<bool>,
-    pub kernel_features: Option<String>,
+    pub kernel_features: Option<Vec<String>>,
+    pub user_tasks: Option<Vec<String>>,
 }
 
 impl Config {
@@ -40,10 +48,28 @@ impl Config {
         };
         let release =
             cli_options.release || platform_info.map(|info| info.release.unwrap_or(false)).unwrap_or(false);
-        let kernel_features =
-            cli_options.kernel_features.clone().or(platform_info.and_then(|info| info.kernel_features.clone()));
+        let kernel_features: Vec<String> = {
+            if let Some(from_cli) = cli_options.kernel_features.as_ref() {
+                from_cli.split(',').map(str::to_string).collect()
+            } else {
+                platform_info.map(|info| info.kernel_features.clone().unwrap_or(vec![])).unwrap_or(vec![])
+            }
+        };
+        let user_tasks: Vec<String> =
+            platform_info.map(|info| info.user_tasks.clone().unwrap_or(vec![])).unwrap_or(vec![]);
+        let user_tasks = user_tasks
+            .into_iter()
+            .map(|entry| {
+                let mut split = entry.split_whitespace();
+                let name = split.next().unwrap().to_string();
+                let source_dir = PathBuf::from(split.next().unwrap());
+                assert_eq!(split.next(), None);
 
-        Config { platform, release, kernel_features }
+                UserTask { name, source_dir }
+            })
+            .collect();
+
+        Config { platform, release, kernel_features, user_tasks }
     }
 }
 
