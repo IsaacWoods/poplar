@@ -15,3 +15,5 @@ mer = { path = "../../lib/mer" }
 gfxconsole = { path = "../../lib/gfxconsole" }
 poplar_util = { path = "../../lib/poplar_util" }
 heapless = "0.7.16"
+serde = { version = "1.0.188", default-features = false, features = ["derive", "alloc"] }
+picotoml = { path = "../../lib/picotoml" }

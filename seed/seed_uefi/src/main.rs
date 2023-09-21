@@ -2,10 +2,13 @@
 #![no_main]
 #![feature(panic_info_message, cell_update, never_type)]
 
+extern crate alloc;
+
 mod allocator;
 mod image;
 mod logger;
 
+use alloc::{string::String, vec::Vec};
 use allocator::BootFrameAllocator;
 use core::{arch::asm, mem, panic::PanicInfo, ptr};
 use hal::memory::{kibibytes, Bytes, Flags, FrameAllocator, FrameSize, PAddr, Page, PageTable, Size4KiB, VAddr};
@@ -13,11 +16,11 @@ use hal_x86_64::paging::PageTableImpl;
 use log::{error, info};
 use logger::Logger;
 use seed::boot_info::{BootInfo, VideoModeInfo};
+use serde::Deserialize;
 use uefi::{
     prelude::*,
     proto::{console::gop::GraphicsOutput, loaded_image::LoadedImage},
     table::boot::{AllocateType, MemoryType, SearchType},
-    CStr16,
 };
 
 /*
@@ -32,6 +35,11 @@ pub const BOOT_INFO_MEMORY_TYPE: MemoryType = MemoryType::custom(0x80000004);
 pub const KERNEL_HEAP_MEMORY_TYPE: MemoryType = MemoryType::custom(0x80000005);
 
 const KERNEL_HEAP_SIZE: Bytes = kibibytes(800);
+
+#[derive(Clone, Debug, Deserialize)]
+struct SeedConfig {
+    pub user_tasks: Vec<String>,
+}
 
 #[entry]
 fn efi_main(image_handle: Handle, system_table: SystemTable<Boot>) -> Status {
@@ -69,6 +77,8 @@ fn efi_main(image_handle: Handle, system_table: SystemTable<Boot>) -> Status {
         let mut filesystem = uefi::fs::FileSystem::new(root_file_protocol);
         let config = filesystem.read(Path::new(&CString16::try_from("config.toml").unwrap())).unwrap();
         info!("Config: {}", core::str::from_utf8(&config).unwrap());
+        let config_deser: SeedConfig = picotoml::from_str(core::str::from_utf8(&config).unwrap()).unwrap();
+        info!("Config deser: {:?}", config_deser);
     }
 
     let kernel_info = {
