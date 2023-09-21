@@ -3,7 +3,7 @@
     <head>
         <!-- Book generated using mdBook -->
         <meta charset="UTF-8">
-        <title>Syscalls - Poplar</title>
+        <title>System calls - Poplar</title>
 
 
         <!-- Custom HTML head -->
@@ -83,7 +83,7 @@
 
         <nav id="sidebar" class="sidebar" aria-label="Table of contents">
             <div class="sidebar-scrollbox">
-                <ol class="chapter"><li class="chapter-item expanded "><a href="../introduction/index.html"><strong aria-hidden="true">1.</strong> Introduction</a></li><li class="chapter-item expanded "><a href="../kernel/index.html"><strong aria-hidden="true">2.</strong> The Kernel</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../kernel/platforms.html"><strong aria-hidden="true">2.1.</strong> Platforms</a></li><li class="chapter-item expanded "><a href="../kernel/efiloader.html"><strong aria-hidden="true">2.2.</strong> Efiloader</a></li><li class="chapter-item expanded "><a href="../kernel/kernel_objects.html"><strong aria-hidden="true">2.3.</strong> Kernel Objects</a></li><li class="chapter-item expanded "><a href="../kernel/syscalls.html"><strong aria-hidden="true">2.4.</strong> System calls</a></li><li class="chapter-item expanded "><a href="../kernel/debugging.html"><strong aria-hidden="true">2.5.</strong> Debugging the kernel</a></li></ol></li><li class="chapter-item expanded "><a href="../syscalls/index.html" class="active"><strong aria-hidden="true">3.</strong> Syscalls</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../syscalls/yield.html"><strong aria-hidden="true">3.1.</strong> yield</a></li><li class="chapter-item expanded "><a href="../syscalls/early_log.html"><strong aria-hidden="true">3.2.</strong> early_log</a></li><li class="chapter-item expanded "><a href="../syscalls/get_framebuffer.html"><strong aria-hidden="true">3.3.</strong> get_framebuffer</a></li><li class="chapter-item expanded "><a href="../syscalls/create_memory_object.html"><strong aria-hidden="true">3.4.</strong> create_memory_object</a></li><li class="chapter-item expanded "><a href="../syscalls/map_memory_object.html"><strong aria-hidden="true">3.5.</strong> map_memory_object</a></li><li class="chapter-item expanded "><a href="../syscalls/create_channel.html"><strong aria-hidden="true">3.6.</strong> create_channel</a></li><li class="chapter-item expanded "><a href="../syscalls/send_message.html"><strong aria-hidden="true">3.7.</strong> send_message</a></li><li class="chapter-item expanded "><a href="../syscalls/get_message.html"><strong aria-hidden="true">3.8.</strong> get_message</a></li><li class="chapter-item expanded "><a href="../syscalls/register_service.html"><strong aria-hidden="true">3.9.</strong> register_service</a></li><li class="chapter-item expanded "><a href="../syscalls/subscribe_to_service.html"><strong aria-hidden="true">3.10.</strong> subscribe_to_service</a></li><li class="chapter-item expanded "><a href="../syscalls/pci_get_info.html"><strong aria-hidden="true">3.11.</strong> pci_get_info</a></li></ol></li><li class="chapter-item expanded "><a href="../userspace/index.html"><strong aria-hidden="true">4.</strong> Userspace</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../userspace/capabilities.html"><strong aria-hidden="true">4.1.</strong> Capabilities</a></li><li class="chapter-item expanded "><a href="../userspace/memory_map_x86_64.html"><strong aria-hidden="true">4.2.</strong> Memory map (x86_64)</a></li></ol></li><li class="chapter-item expanded "><a href="../message_passing/index.html"><strong aria-hidden="true">5.</strong> Message Passing</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../message_passing/wire_format.html"><strong aria-hidden="true">5.1.</strong> Ptah wire format</a></li></ol></li><li class="chapter-item expanded "><a href="../journal/index.html"><strong aria-hidden="true">6.</strong> Journal</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../journal/rustc_target.html"><strong aria-hidden="true">6.1.</strong> Building a rustc target for Poplar</a></li><li class="chapter-item expanded "><a href="../journal/usb.html"><strong aria-hidden="true">6.2.</strong> USB</a></li><li class="chapter-item expanded "><a href="../journal/riscv.html"><strong aria-hidden="true">6.3.</strong> RISC-V</a></li></ol></li></ol>
+                <ol class="chapter"><li class="chapter-item expanded "><a href="../introduction/index.html"><strong aria-hidden="true">1.</strong> Introduction</a></li><li class="chapter-item expanded "><a href="../kernel/index.html"><strong aria-hidden="true">2.</strong> The Kernel</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../kernel/platforms.html"><strong aria-hidden="true">2.1.</strong> Platforms</a></li><li class="chapter-item expanded "><a href="../kernel/seed.html"><strong aria-hidden="true">2.2.</strong> Seed</a></li><li class="chapter-item expanded "><a href="../kernel/kernel_objects.html"><strong aria-hidden="true">2.3.</strong> Kernel Objects</a></li><li class="chapter-item expanded "><a href="../kernel/debugging.html"><strong aria-hidden="true">2.4.</strong> Debugging the kernel</a></li></ol></li><li class="chapter-item expanded "><a href="../syscalls/index.html" class="active"><strong aria-hidden="true">3.</strong> System calls</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../syscalls/yield.html"><strong aria-hidden="true">3.1.</strong> yield</a></li><li class="chapter-item expanded "><a href="../syscalls/early_log.html"><strong aria-hidden="true">3.2.</strong> early_log</a></li><li class="chapter-item expanded "><a href="../syscalls/get_framebuffer.html"><strong aria-hidden="true">3.3.</strong> get_framebuffer</a></li><li class="chapter-item expanded "><a href="../syscalls/create_memory_object.html"><strong aria-hidden="true">3.4.</strong> create_memory_object</a></li><li class="chapter-item expanded "><a href="../syscalls/map_memory_object.html"><strong aria-hidden="true">3.5.</strong> map_memory_object</a></li><li class="chapter-item expanded "><a href="../syscalls/create_channel.html"><strong aria-hidden="true">3.6.</strong> create_channel</a></li><li class="chapter-item expanded "><a href="../syscalls/send_message.html"><strong aria-hidden="true">3.7.</strong> send_message</a></li><li class="chapter-item expanded "><a href="../syscalls/get_message.html"><strong aria-hidden="true">3.8.</strong> get_message</a></li><li class="chapter-item expanded "><a href="../syscalls/register_service.html"><strong aria-hidden="true">3.9.</strong> register_service</a></li><li class="chapter-item expanded "><a href="../syscalls/subscribe_to_service.html"><strong aria-hidden="true">3.10.</strong> subscribe_to_service</a></li><li class="chapter-item expanded "><a href="../syscalls/pci_get_info.html"><strong aria-hidden="true">3.11.</strong> pci_get_info</a></li></ol></li><li class="chapter-item expanded "><a href="../userspace/index.html"><strong aria-hidden="true">4.</strong> Userspace</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../userspace/capabilities.html"><strong aria-hidden="true">4.1.</strong> Capabilities</a></li><li class="chapter-item expanded "><a href="../userspace/memory_map_x86_64.html"><strong aria-hidden="true">4.2.</strong> Memory map (x86_64)</a></li></ol></li><li class="chapter-item expanded "><a href="../message_passing/index.html"><strong aria-hidden="true">5.</strong> Message Passing</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../message_passing/wire_format.html"><strong aria-hidden="true">5.1.</strong> Ptah wire format</a></li></ol></li><li class="chapter-item expanded "><a href="../journal/index.html"><strong aria-hidden="true">6.</strong> Journal</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../journal/rustc_target.html"><strong aria-hidden="true">6.1.</strong> Building a rustc target for Poplar</a></li><li class="chapter-item expanded "><a href="../journal/usb.html"><strong aria-hidden="true">6.2.</strong> USB</a></li><li class="chapter-item expanded "><a href="../journal/riscv.html"><strong aria-hidden="true">6.3.</strong> RISC-V</a></li></ol></li></ol>
             </div>
             <div id="sidebar-resize-handle" class="sidebar-resize-handle"></div>
         </nav>
@@ -166,7 +166,58 @@
 
                 <div id="content" class="content">
                     <main>
-                        
+                        <h1 id="system-calls"><a class="header" href="#system-calls">System calls</a></h1>
+<p>Userspace code can interact with the kernel through system calls. Poplar's system call interface is based around
+'kernel objects', and so many of the system calls are to create, destroy, or modify the state of various types of
+kernel object. Because of Poplar's microkernel design, many traditional system calls (e.g. <code>open</code>) are not present,
+their functionality instead being provided by userspace.</p>
+<p>Each system call has a unique number that is used to identify it. A system call can then take up to five
+parameters, each a maximum in size of the system's register width. It can return a single value, also the size of
+a register.</p>
+<h3 id="overview-of-system-calls"><a class="header" href="#overview-of-system-calls">Overview of system calls</a></h3>
+<div class="table-wrapper"><table><thead><tr><th>Number</th><th>System call</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>0</code></td><td><code>yield</code></td><td>Yield to the kernel.</td></tr>
+<tr><td><code>1</code></td><td><code>early_log</code></td><td>Log a message. Designed to be used from early processes.</td></tr>
+<tr><td><code>2</code></td><td><code>get_framebuffer</code></td><td>Get the framebuffer that the kernel has created, if it has.</td></tr>
+<tr><td><code>3</code></td><td><code>create_memory_object</code></td><td>Create a MemoryObject kernel object.</td></tr>
+<tr><td><code>4</code></td><td><code>map_memory_object</code></td><td>Map a MemoryObject into an AddressSpace.</td></tr>
+<tr><td><code>5</code></td><td><code>create_channel</code></td><td>Create a channel, returning handles to the two ends.</td></tr>
+<tr><td><code>6</code></td><td><code>send_message</code></td><td>Send a message down a channel.</td></tr>
+<tr><td><code>7</code></td><td><code>get_message</code></td><td>Receive the next message, if there is one.</td></tr>
+<tr><td><code>8</code></td><td><code>wait_for_message</code></td><td>Yield to the kernel until a message arrives on the given channel (WIP)</td></tr>
+<tr><td><code>9</code></td><td><code>register_service</code></td><td>Register yourself as a service.</td></tr>
+<tr><td><code>10</code></td><td><code>subscribe_to_service</code></td><td>Create a channel to a particular service provider.</td></tr>
+<tr><td><code>11</code></td><td><code>pci_get_info</code></td><td>Get information about the PCI devices on the platform.</td></tr>
+</tbody></table>
+</div>
+<h3 id="making-a-system-call-on-x86_64"><a class="header" href="#making-a-system-call-on-x86_64">Making a system call on x86_64</a></h3>
+<p>To make a system call on x86_64, populate these registers:</p>
+<div class="table-wrapper"><table><thead><tr><th><code>rdi</code></th><th><code>rsi</code></th><th><code>rdx</code></th><th><code>r10</code></th><th><code>r8</code></th><th><code>r9</code></th></tr></thead><tbody>
+<tr><td>System call number</td><td><code>a</code></td><td><code>b</code></td><td><code>c</code></td><td><code>d</code></td><td><code>e</code></td></tr>
+</tbody></table>
+</div>
+<p>The only way in which these registers deviate from the x86_64 Sys-V ABI is that <code>c</code> is passed in <code>r10</code> instead of
+<code>rcx</code>, because <code>rcx</code> is used by the <code>syscall</code> instruction.  You can then make the system call by executing
+<code>syscall</code>. Before the kernel returns to userspace, it will put the result of the system call (if there is one) in
+<code>rax</code>. If a system call takes less than five parameters, the unused parameter registers will be preserved across
+the system call.</p>
+<h3 id="return-values"><a class="header" href="#return-values">Return values</a></h3>
+<p>Often, a system call will need to return a status, plus one or more handles. The first handle a system call needs
+to return (often the only handle returned) can be returned in the upper bits of the status value:</p>
+<ul>
+<li>Bits <code>0..32</code> contain the status:
+<ul>
+<li><code>0</code> means that the system call succeeded, and the rest of the return value is valid</li>
+<li><code>&gt;0</code> means that the system call errored. The meaning of the value is system-call specific.</li>
+</ul>
+</li>
+<li>Bits <code>32..64</code> contain the value of the first returned handle, if applicable</li>
+</ul>
+<p>A return value of <code>0xffffffffffffffff</code> (the maximum value of <code>u64</code>) is reserved for when a system call is made with
+a number that does not correspond to a system call. This is defined as a normal error code (as opposed to, for
+example, terminating the task that tried to make the system call) to provide a mechanism for tasks to detect kernel
+support for a system call (so they can use a fallback method on older kernels, for example).</p>
+
                     </main>
 
                     <nav class="nav-wrapper" aria-label="Page navigation">
