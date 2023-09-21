@@ -1,0 +1,9 @@
+[package]
+name = "picotoml"
+version = "0.1.0"
+authors = ["Isaac Woods"]
+edition = "2021"
+
+[dependencies]
+logos = { version = "0.13.0", default-features = false, features = ["export_derive"] }
+serde = { version = "1.0.188", default-features = false }
