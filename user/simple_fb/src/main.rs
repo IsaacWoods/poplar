@@ -1,7 +1,3 @@
-#![no_std]
-#![no_main]
-#![feature(alloc_error_handler)]
-
 extern crate alloc;
 
 use alloc::{
@@ -9,7 +5,7 @@ use alloc::{
     string::{String, ToString},
     vec::Vec,
 };
-use core::{mem::MaybeUninit, panic::PanicInfo};
+use core::mem::MaybeUninit;
 use gfxconsole::{Bgr32, Format, Framebuffer, Pixel};
 use linked_list_allocator::LockedHeap;
 use log::info;
@@ -30,8 +26,7 @@ struct TestMessage {
 #[global_allocator]
 static ALLOCATOR: LockedHeap = LockedHeap::empty();
 
-#[no_mangle]
-pub extern "C" fn _start() -> ! {
+pub fn main() {
     syscall::early_log("Hello from FB").unwrap();
     // Initialise the heap
     const HEAP_START: usize = 0x600000000;
@@ -115,17 +110,6 @@ fn make_framebuffer() -> Framebuffer<Bgr32> {
         height: framebuffer_info.height as usize,
         stride: framebuffer_info.stride as usize,
     }
-}
-
-#[panic_handler]
-pub fn handle_panic(info: &PanicInfo) -> ! {
-    log::error!("PANIC: {}", info);
-    loop {}
-}
-
-#[alloc_error_handler]
-fn alloc_error(layout: core::alloc::Layout) -> ! {
-    panic!("Alloc error: {:?}", layout);
 }
 
 #[used]

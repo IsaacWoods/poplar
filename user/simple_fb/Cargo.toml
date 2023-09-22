@@ -2,7 +2,7 @@
 name = "simple_fb"
 version = "0.1.0"
 authors = ["Isaac Woods"]
-edition = "2018"
+edition = "2021"
 
 [dependencies]
 std = { path = "../../lib/std" }
