@@ -10,7 +10,7 @@ mod logger;
 
 use alloc::{string::String, vec::Vec};
 use allocator::BootFrameAllocator;
-use core::{arch::asm, mem, panic::PanicInfo, ptr};
+use core::{arch::asm, convert::TryFrom, mem, panic::PanicInfo, ptr};
 use hal::memory::{kibibytes, Bytes, Flags, FrameAllocator, FrameSize, PAddr, Page, PageTable, Size4KiB, VAddr};
 use hal_x86_64::paging::PageTableImpl;
 use log::{error, info};
@@ -18,9 +18,11 @@ use logger::Logger;
 use seed::boot_info::{BootInfo, VideoModeInfo};
 use serde::Deserialize;
 use uefi::{
+    fs::Path,
     prelude::*,
     proto::{console::gop::GraphicsOutput, loaded_image::LoadedImage},
     table::boot::{AllocateType, MemoryType, SearchType},
+    CString16,
 };
 
 /*
@@ -67,25 +69,25 @@ fn efi_main(image_handle: Handle, system_table: SystemTable<Boot>) -> Status {
     let loader_image_device =
         system_table.boot_services().open_protocol_exclusive::<LoadedImage>(image_handle).unwrap().device();
 
-    {
+    let config = {
         use core::convert::TryFrom;
         use uefi::{data_types::CString16, fs::Path, proto::media::fs::SimpleFileSystem};
-        let mut root_file_protocol = system_table
+        let root_file_protocol = system_table
             .boot_services()
             .open_protocol_exclusive::<SimpleFileSystem>(loader_image_device)
             .expect("Failed to get volume");
         let mut filesystem = uefi::fs::FileSystem::new(root_file_protocol);
         let config = filesystem.read(Path::new(&CString16::try_from("config.toml").unwrap())).unwrap();
-        info!("Config: {}", core::str::from_utf8(&config).unwrap());
-        let config_deser: SeedConfig = picotoml::from_str(core::str::from_utf8(&config).unwrap()).unwrap();
-        info!("Config deser: {:?}", config_deser);
-    }
+        picotoml::from_str::<SeedConfig>(core::str::from_utf8(&config).unwrap()).unwrap()
+    };
+    info!("Config: {:?}", config);
 
+    let kernel_path = CString16::try_from("kernel.elf").unwrap();
     let kernel_info = {
         image::load_kernel(
             system_table.boot_services(),
             loader_image_device,
-            "kernel.elf",
+            Path::new(&kernel_path),
             &mut page_table,
             &allocator,
         )
@@ -144,22 +146,16 @@ fn efi_main(image_handle: Handle, system_table: SystemTable<Boot>) -> Status {
     );
 
     /*
-     * Load some images for early tasks.
-     * TODO: this should be configurable when we've decided how to do that
+     * Load the requested images for early tasks.
      */
-    let images_to_load: &[(&'static str, &'static str)] = &[
-        // ("test_syscalls", "test_syscalls.elf"),
-        // ("test1", "test1.elf"),
-        // ("simple_fb", "simple_fb.elf"),
-        // ("platform_bus", "platform_bus.elf"),
-        // ("pci_bus", "pci_bus.elf"),
-        // ("usb_bus_xhci", "usb_bus_xhci.elf"),
-    ];
-    for (name, path) in images_to_load {
-        boot_info
-            .loaded_images
-            .push(image::load_image(system_table.boot_services(), loader_image_device, name, path))
-            .unwrap();
+    for name in &config.user_tasks {
+        let path = {
+            let mut path = CString16::try_from(name.as_str()).unwrap();
+            path.push_str(&CString16::try_from(".elf").unwrap());
+            path
+        };
+        let info = image::load_image(system_table.boot_services(), loader_image_device, name, Path::new(&path));
+        boot_info.loaded_images.push(info).unwrap();
     }
 
     uefi::allocator::exit_boot_services();

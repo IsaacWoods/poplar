@@ -9,12 +9,12 @@ use mer::{
 use poplar_util::math;
 use seed::boot_info::{LoadedImage, Segment, MAX_CAPABILITY_STREAM_LENGTH};
 use uefi::{
+    fs::Path,
     proto::media::{
         file::{File, FileAttribute, FileInfo, FileMode, FileType},
         fs::SimpleFileSystem,
     },
     table::boot::{AllocateType, BootServices, MemoryType},
-    CStr16,
     Handle,
 };
 
@@ -31,7 +31,7 @@ pub struct KernelInfo {
 pub fn load_kernel<A, P>(
     boot_services: &BootServices,
     volume_handle: Handle,
-    path: &str,
+    path: &Path,
     page_table: &mut P,
     allocator: &A,
 ) -> KernelInfo
@@ -99,7 +99,7 @@ where
     KernelInfo { entry_point, stack_top, next_safe_address }
 }
 
-pub fn load_image(boot_services: &BootServices, volume_handle: Handle, name: &str, path: &str) -> LoadedImage {
+pub fn load_image(boot_services: &BootServices, volume_handle: Handle, name: &str, path: &Path) -> LoadedImage {
     info!("Loading requested '{}' image from: {}", name, path);
     let (elf, pool_addr) = load_elf(boot_services, volume_handle, path);
 
@@ -159,7 +159,7 @@ pub fn load_image(boot_services: &BootServices, volume_handle: Handle, name: &st
 /// TODO: This returns the elf file, and also the pool addr. When the caller is done with the elf, they need to
 /// free the pool themselves. When pools is made safer, we need to rework how this all works to tie the lifetime of
 /// the elf to the pool.
-fn load_elf<'a>(boot_services: &BootServices, volume_handle: Handle, path: &str) -> (Elf<'a>, *mut u8) {
+fn load_elf<'a>(boot_services: &BootServices, volume_handle: Handle, path: &Path) -> (Elf<'a>, *mut u8) {
     // TODO: rewrite to use `uefi`'s FS stuff now we've caved and added a heap
     let mut root_file_protocol = boot_services
         .open_protocol_exclusive::<SimpleFileSystem>(volume_handle)
@@ -167,12 +167,9 @@ fn load_elf<'a>(boot_services: &BootServices, volume_handle: Handle, path: &str)
         .open_volume()
         .expect("Failed to open volume");
 
-    // TODO: custom match and print path on failure
-    // TODO: make the path handling less brittle
-    let mut path_buf = [0; 256];
-    let path = CStr16::from_str_with_buf(path, &mut path_buf).unwrap();
-    let mut file =
-        root_file_protocol.open(path, FileMode::Read, FileAttribute::READ_ONLY).expect("Failed to open file");
+    let mut file = root_file_protocol
+        .open(path.to_cstr16(), FileMode::Read, FileAttribute::READ_ONLY)
+        .expect("Failed to open file");
     let mut info_buffer = [0u8; 128];
     let info = file.get_info::<FileInfo>(&mut info_buffer).unwrap();
 
