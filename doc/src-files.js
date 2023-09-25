@@ -1,6 +1,6 @@
 var srcIndex = JSON.parse('{\
 "bit_field":["",[],["lib.rs"]],\
-"bitflags":["",[],["lib.rs"]],\
+"bitflags":["",[],["external.rs","internal.rs","iter.rs","lib.rs","parser.rs","public.rs","traits.rs"]],\
 "byteorder":["",[],["lib.rs"]],\
 "cfg_if":["",[],["lib.rs"]],\
 "hal":["",[["memory",[],["frame.rs","mod.rs","page.rs","paging.rs","physical_address.rs","virtual_address.rs"]]],["lib.rs"]],\
@@ -12,7 +12,7 @@ var srcIndex = JSON.parse('{\
 "num_traits":["",[["ops",[],["checked.rs","inv.rs","mod.rs","mul_add.rs","overflowing.rs","saturating.rs","wrapping.rs"]]],["bounds.rs","cast.rs","float.rs","identities.rs","int.rs","lib.rs","macros.rs","pow.rs","sign.rs"]],\
 "pci_types":["",[["capability",[],["mod.rs","msi.rs"]]],["device_type.rs","lib.rs","register.rs"]],\
 "pin_project_lite":["",[],["lib.rs"]],\
-"poplar":["",[["syscall",[],["get_framebuffer.rs","mod.rs","pci.rs","raw_x86_64.rs","result.rs"]]],["bit_field.rs","caps.rs","channel.rs","early_logger.rs","lib.rs"]],\
+"poplar":["",[["syscall",[],["get_framebuffer.rs","mod.rs","pci.rs","raw_x86_64.rs","result.rs"]]],["caps.rs","channel.rs","early_logger.rs","lib.rs"]],\
 "poplar_util":["",[],["binary_pretty_print.rs","bitmap.rs","downcast.rs","init_guard.rs","lib.rs","linker.rs","math.rs","pin.rs","ranges.rs"]],\
 "proc_macro2":["",[],["detection.rs","fallback.rs","lib.rs","marker.rs","parse.rs","wrapper.rs"]],\
 "ptah":["",[["de",[],["impls.rs","mod.rs"]],["ser",[],["impls.rs","mod.rs"]]],["lib.rs"]],\
