@@ -1,5 +1,6 @@
 use super::{raw, SYSCALL_PCI_GET_INFO};
-use crate::{bit_field::BitField, Handle};
+use crate::Handle;
+use bit_field::BitField;
 use core::convert::TryFrom;
 use pci_types::{BaseClass, DeviceId, DeviceRevision, Interface, PciAddress, SubClass, VendorId};
 

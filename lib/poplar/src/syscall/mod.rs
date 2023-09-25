@@ -21,7 +21,8 @@ cfg_if::cfg_if! {
     }
 }
 
-use crate::{bit_field::BitField, Handle};
+use crate::Handle;
+use bit_field::BitField;
 use result::{define_error_type, handle_from_syscall_repr, status_from_syscall_repr};
 
 pub const SYSCALL_YIELD: usize = 0;

@@ -2,7 +2,6 @@
 #![feature(decl_macro, never_type)]
 #![deny(unsafe_op_in_unsafe_fn)]
 
-mod bit_field;
 pub mod caps;
 #[cfg(feature = "can_alloc")]
 pub mod channel;
@@ -52,21 +51,20 @@ impl<'de> ptah::Deserialize<'de> for Handle {
     }
 }
 
-// TODO: we can't bring `bitflags` in because of std :(
-// bitflags::bitflags! {
-//     struct HandleRights: u32 {
-//         /// Whether the handle's owner can use it to modify the kernel object it points to. What is means to
-//         /// "modify" a kernel object differs depending on the type of the kernel object.
-//         const MODIFY = 0b1;
-//         /// Whether the handle can be duplicated.
-//         const DUPLICATE = 0b10;
-//         /// Whether the handle can be transferred over a `Channel`.
-//         const TRANSFER = 0b100;
-//         /// For `MemoryObject`s, whether the memory can be mapped into the handle owner's `AddressSpace`.
-//         const MAP = 0x1000;
-//         /// For `Channel` ends, whether the `send_message` system call can be used on this `Channel` end.
-//         const SEND = 0x1_0000;
-//         /// For `Channel` ends, whether the `receive_message` & co. system calls can be used on this `Channel` end.
-//         const RECEIVE = 0x10_0000;
-//     }
-// }
+bitflags::bitflags! {
+    struct HandleRights: u32 {
+        /// Whether the handle's owner can use it to modify the kernel object it points to. What is means to
+        /// "modify" a kernel object differs depending on the type of the kernel object.
+        const MODIFY = 0b1;
+        /// Whether the handle can be duplicated.
+        const DUPLICATE = 0b10;
+        /// Whether the handle can be transferred over a `Channel`.
+        const TRANSFER = 0b100;
+        /// For `MemoryObject`s, whether the memory can be mapped into the handle owner's `AddressSpace`.
+        const MAP = 0x1000;
+        /// For `Channel` ends, whether the `send_message` system call can be used on this `Channel` end.
+        const SEND = 0x1_0000;
+        /// For `Channel` ends, whether the `receive_message` & co. system calls can be used on this `Channel` end.
+        const RECEIVE = 0x10_0000;
+    }
+}

@@ -6,22 +6,15 @@ edition = "2018"
 license = "MIT OR Apache-2.0"
 description = "Rust interace to the Poplar kernel from userspace"
 
-# NOTE: dependencies that aren't designed for use from `std` can't be used here unless they're behind optional
-# features we don't need from `std`
 [dependencies]
+bit_field = "0.10.2"
+bitflags = "2.4.0"
 cfg-if = "0.1"
 log = { version = "0.4", optional = true }
 pci_types = { path = "../pci_types", optional = true }
-#ptah = { version = "0.2.0", optional = true, default-features = false }
 ptah = { path = "../ptah", optional = true, default-features = false }
-
-# This is a weird hack needed to make this usable from Rust's `std`
-core = { version = "1.0.0", optional = true, package = "rustc-std-workspace-core" }
-compiler_builtins = { version = "0.1.35", optional = true }
-alloc = { version = "1.0.0", optional = true, package = "rustc-std-workspace-alloc" }
 
 [features]
 default = ["can_alloc", "pci"]
 can_alloc = ["log", "ptah", "ptah/alloc", "ptah/derive"]
 pci = ["pci_types"]
-rustc-dep-of-std = ["core", "compiler_builtins", "alloc"]
