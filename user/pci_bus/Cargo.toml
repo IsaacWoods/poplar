@@ -2,11 +2,10 @@
 name = "pci_bus"
 version = "0.1.0"
 authors = ["Isaac Woods"]
-edition = "2018"
+edition = "2021"
 
 [dependencies]
-poplar = { path = "../../lib/poplar", features = ["can_alloc"] }
-linked_list_allocator = "0.10.2"
+std = { path = "../../lib/std" }
 log = "0.4"
 pci_types = { path = "../../lib/pci_types" }
 platform_bus = { path = "../platform_bus" }

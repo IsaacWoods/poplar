@@ -1,45 +1,29 @@
-#![no_std]
-#![no_main]
-#![feature(alloc_error_handler, never_type)]
+#![feature(never_type)]
 
-extern crate alloc;
-
-use alloc::{collections::BTreeMap, format, string::ToString};
-use core::{convert::TryFrom, panic::PanicInfo};
-use linked_list_allocator::LockedHeap;
 use log::info;
 use pci_types::device_type::{DeviceType, UsbType};
 use platform_bus::{BusDriverMessage, DeviceInfo, Property};
-use poplar::{
-    caps::{CapabilitiesRepr, CAP_EARLY_LOGGING, CAP_PADDING, CAP_PCI_BUS_DRIVER, CAP_SERVICE_USER},
-    channel::Channel,
-    early_logger::EarlyLogger,
-    syscall,
-    syscall::pci::Bar,
+use std::{
+    collections::BTreeMap,
+    convert::TryFrom,
+    poplar::{
+        caps::{CapabilitiesRepr, CAP_EARLY_LOGGING, CAP_PADDING, CAP_PCI_BUS_DRIVER, CAP_SERVICE_USER},
+        channel::Channel,
+        early_logger::EarlyLogger,
+        syscall,
+        syscall::pci::Bar,
+    },
 };
 
-#[global_allocator]
-static ALLOCATOR: LockedHeap = LockedHeap::empty();
-
-#[no_mangle]
-pub extern "C" fn _start() -> ! {
-    syscall::early_log("Hello from pci_bus!!").unwrap();
-    // Initialise the heap
-    const HEAP_START: usize = 0x600000000;
-    const HEAP_SIZE: usize = 0x4000;
-    let heap_memory_object =
-        syscall::create_memory_object(HEAP_START, HEAP_SIZE, true, false, 0x0 as *mut usize).unwrap();
-    unsafe {
-        syscall::map_memory_object(&heap_memory_object, &poplar::ZERO_HANDLE, None, 0x0 as *mut usize).unwrap();
-        ALLOCATOR.lock().init(HEAP_START as *mut u8, HEAP_SIZE);
-    }
-
+pub fn main() {
     log::set_logger(&EarlyLogger).unwrap();
     log::set_max_level(log::LevelFilter::Trace);
     info!("PCI bus driver is running!");
 
-    let platform_bus_channel: Channel<BusDriverMessage, !> =
-        Channel::from_handle(syscall::subscribe_to_service("platform_bus.bus_driver").unwrap());
+    let platform_bus_channel: Channel<BusDriverMessage, !> = Channel::from_handle(
+        syscall::subscribe_to_service("platform_bus.bus_driver")
+            .expect("Couldn't subscribe to platform_bus.bus_driver service!"),
+    );
 
     let mut descriptors = syscall::pci_get_info_vec().expect("Failed to get PCI descriptors");
     for descriptor in descriptors.drain(..) {
@@ -71,7 +55,7 @@ pub extern "C" fn _start() -> ! {
             properties.insert("pci.sub_class".to_string(), Property::Integer(descriptor.sub_class as u64));
             properties.insert("pci.interface".to_string(), Property::Integer(descriptor.interface as u64));
 
-            for (i, bar) in core::array::IntoIter::new(descriptor.bars).enumerate() {
+            for (i, bar) in descriptor.bars.into_iter().enumerate() {
                 if let Some(bar) = bar {
                     match bar {
                         Bar::Memory32 { memory_object, size } => {
@@ -96,17 +80,6 @@ pub extern "C" fn _start() -> ! {
     loop {
         syscall::yield_to_kernel();
     }
-}
-
-#[panic_handler]
-pub fn handle_panic(info: &PanicInfo) -> ! {
-    log::error!("PANIC: {}", info);
-    loop {}
-}
-
-#[alloc_error_handler]
-fn alloc_error(layout: core::alloc::Layout) -> ! {
-    panic!("Alloc error: {:?}", layout);
 }
 
 #[used]
