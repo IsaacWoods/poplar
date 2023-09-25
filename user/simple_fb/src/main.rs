@@ -25,19 +25,13 @@ pub fn main() {
     /*
      * Test out the service stuff. We want the echo service.
      */
-    // let echo_channel = Channel::<TestMessage, TestMessage>::from_handle(
-    //     syscall::subscribe_to_service("echo.echo").expect("Failed to subscribe to echo service :("),
-    // );
-    // echo_channel.send(&TestMessage { id: 42, message: "Hello, World!".to_string() }).unwrap();
-    // loop {
-    //     match echo_channel.try_receive().expect("Failed to receive message") {
-    //         Some(message) => {
-    //             info!("Echo sent message back: {:?}", message);
-    //             break;
-    //         }
-    //         None => syscall::yield_to_kernel(),
-    //     }
-    // }
+    let echo_channel = Channel::<TestMessage, TestMessage>::from_handle(
+        std::poplar::syscall::subscribe_to_service("echo.echo").expect("Failed to subscribe to echo service :("),
+    );
+    echo_channel.send(&TestMessage { id: 42, message: "Hello, World!".to_string() }).unwrap();
+    while let Some(message) = echo_channel.try_receive().expect("Failed to receive message") {
+        info!("Echo sent message back: {:?}", message);
+    }
 
     let framebuffer = make_framebuffer();
     let mut yields = 0;

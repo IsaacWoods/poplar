@@ -37,7 +37,7 @@ name = "echo"
 version = "0.1.0"
 dependencies = [
  "log",
- "poplar",
+ "std",
 ]
 
 [[package]]
@@ -95,12 +95,11 @@ dependencies = [
 name = "pci_bus"
 version = "0.1.0"
 dependencies = [
- "linked_list_allocator",
  "log",
  "pci_types",
  "platform_bus",
- "poplar",
  "ptah",
+ "std",
 ]
 
 [[package]]
@@ -114,10 +113,9 @@ dependencies = [
 name = "platform_bus"
 version = "0.1.0"
 dependencies = [
- "linked_list_allocator",
  "log",
- "poplar",
  "ptah",
+ "std",
 ]
 
 [[package]]
