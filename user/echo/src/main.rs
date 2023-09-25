@@ -1,15 +1,14 @@
-#![feature(const_generics)]
-
 use log::info;
-use poplar::{
-    caps::{CapabilitiesRepr, CAP_EARLY_LOGGING, CAP_PADDING, CAP_SERVICE_PROVIDER},
-    channel::Channel,
-    early_logger::EarlyLogger,
-    syscall,
-    syscall::GetMessageError,
-    Handle,
+use std::{
+    poplar::{
+        caps::{CapabilitiesRepr, CAP_EARLY_LOGGING, CAP_PADDING, CAP_SERVICE_PROVIDER},
+        channel::Channel,
+        early_logger::EarlyLogger,
+        syscall,
+        syscall::GetMessageError,
+    },
+    vec::Vec,
 };
-use std::vec::Vec;
 
 pub fn main() {
     log::set_logger(&EarlyLogger).unwrap();

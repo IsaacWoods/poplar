@@ -2,8 +2,8 @@
 name = "echo"
 version = "0.1.0"
 authors = ["Isaac Woods"]
-edition = "2018"
+edition = "2021"
 
 [dependencies]
-poplar = { path = "../../lib/poplar", features = ["can_alloc"] }
+std = { path = "../../lib/std" }
 log = "0.4"
