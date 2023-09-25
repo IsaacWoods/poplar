@@ -11,7 +11,7 @@ use linked_list_allocator::LockedHeap;
  * Public re-exports. Most of this is copied from real `std`, plus our `poplar` library.
  * NOTE: deprecated re-exports, such as `std::i32` (and friends), are not included.
  */
-pub use alloc::{borrow, boxed, fmt, format, rc, slice, str, string, vec};
+pub use alloc::{borrow, boxed, collections, fmt, format, rc, slice, str, string, vec};
 pub use core::{
     any,
     array,
