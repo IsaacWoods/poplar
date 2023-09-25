@@ -6,8 +6,6 @@ edition = "2021"
 
 [dependencies]
 std = { path = "../../lib/std" }
-poplar = { path = "../../lib/poplar", features = ["can_alloc"] }
-linked_list_allocator = "0.10.2"
 log = "0.4"
 gfxconsole = { path = "../../lib/gfxconsole" }
 ptah = { path = "../../lib/ptah" }

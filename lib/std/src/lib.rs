@@ -5,6 +5,7 @@
 extern crate alloc;
 
 use core::panic::PanicInfo;
+use linked_list_allocator::LockedHeap;
 
 /*
  * Public re-exports. Most of this is copied from real `std`, plus our `poplar` library.
@@ -65,16 +66,31 @@ pub mod prelude {
     }
 }
 
+#[global_allocator]
+static ALLOCATOR: LockedHeap = LockedHeap::empty();
+
 #[no_mangle]
 unsafe extern "C" fn _start() -> ! {
     extern "C" {
         fn main(argc: isize, argv: *const *const u8) -> isize;
     }
 
+    // Initialize the heap
+    const HEAP_START: usize = 0x600000000;
+    const HEAP_SIZE: usize = 0x4000;
+    let heap_memory_object =
+        poplar::syscall::create_memory_object(HEAP_START, HEAP_SIZE, true, false, 0x0 as *mut usize).unwrap();
+    unsafe {
+        poplar::syscall::map_memory_object(&heap_memory_object, &poplar::ZERO_HANDLE, None, 0x0 as *mut usize)
+            .unwrap();
+        ALLOCATOR.lock().init(HEAP_START as *mut u8, HEAP_SIZE);
+    }
+
     main(0, core::ptr::null());
 
+    poplar::syscall::early_log("Returned from main. Looping.").unwrap();
     loop {
-        // TODO: yield here idk
+        poplar::syscall::yield_to_kernel();
         // TODO: actually this should call an exit system call or something
     }
 }
@@ -88,5 +104,6 @@ fn lang_start<T>(main: fn() -> T, _argc: isize, _argv: *const *const u8, _sigpip
 #[panic_handler]
 pub fn handle_panic(info: &PanicInfo) -> ! {
     // TODO: print a panic message
+    let _ = poplar::syscall::early_log("Panicked!");
     loop {}
 }
