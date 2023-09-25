@@ -419,9 +419,9 @@ fn create_framebuffer(
 fn panic_handler(info: &PanicInfo) -> ! {
     if let Some(message) = info.message() {
         if let Some(location) = info.location() {
-            error!("Panic message: {} ({} - {}:{})", message, location.file(), location.line(), location.column());
+            error!("PANIC: {} ({} - {}:{})", message, location.file(), location.line(), location.column());
         } else {
-            error!("Panic message: {} (no location info)", message);
+            error!("PANIC: {} (no location info)", message);
         }
     }
     loop {}

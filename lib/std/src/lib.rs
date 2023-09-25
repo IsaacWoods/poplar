@@ -1,5 +1,5 @@
 #![allow(internal_features)]
-#![feature(lang_items, prelude_import, async_iterator, core_intrinsics)]
+#![feature(lang_items, prelude_import, async_iterator, core_intrinsics, panic_info_message)]
 #![no_std]
 
 extern crate alloc;
@@ -103,7 +103,19 @@ fn lang_start<T>(main: fn() -> T, _argc: isize, _argv: *const *const u8, _sigpip
 
 #[panic_handler]
 pub fn handle_panic(info: &PanicInfo) -> ! {
-    // TODO: print a panic message
-    let _ = poplar::syscall::early_log("Panicked!");
+    use core::fmt::Write;
+
+    // TODO: this isn't an ideal approach - if the allocator stops working we may not get a good error
+    let mut s = String::new();
+    if let Some(message) = info.message() {
+        if let Some(location) = info.location() {
+            let _ =
+                write!(s, "PANIC: {} ({} - {}:{})", message, location.file(), location.line(), location.column());
+        } else {
+            let _ = write!(s, "PANIC: {} (no location info)", message);
+        }
+    }
+    let _ = poplar::syscall::early_log(&s);
+
     loop {}
 }
