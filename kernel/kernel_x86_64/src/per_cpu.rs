@@ -10,7 +10,6 @@ use kernel::{per_cpu::PerCpu, scheduler::Scheduler};
 pub unsafe fn get_per_cpu_data<'a>() -> &'a mut PerCpuImpl {
     let mut ptr: usize;
     asm!("mov {}, gs:0x0", out(reg) ptr);
-    tracing::info!("Reading per-cpu data from {:#x}", ptr);
     &mut *(ptr as *mut PerCpuImpl)
 }
 
