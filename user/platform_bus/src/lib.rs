@@ -10,13 +10,8 @@
 //! `vendor_id` and `device_id` properties to select a specific device (e.g. useful for a graphics driver for a
 //! specific graphics card).
 
-#![no_std]
-
-extern crate alloc;
-
-use alloc::{collections::BTreeMap, string::String, vec::Vec};
-use poplar::Handle;
 use ptah::{Deserialize, Serialize};
+use std::{collections::BTreeMap, poplar::Handle};
 
 type DeviceName = String;
 type PropertyName = String;
@@ -102,7 +97,7 @@ impl Filter {
     pub fn match_against(&self, properties: &BTreeMap<PropertyName, Property>) -> bool {
         match self {
             Filter::Matches(ref name, ref property) => match properties.get(name) {
-                Some(property_to_match) => (property == property_to_match),
+                Some(property_to_match) => property == property_to_match,
                 None => false,
             },
         }

@@ -1,25 +1,18 @@
-#![no_std]
-#![no_main]
-#![feature(alloc_error_handler)]
-
-extern crate alloc;
-
-use alloc::{collections::BTreeMap, rc::Rc, string::String, vec::Vec};
-use core::{convert::TryFrom, mem, panic::PanicInfo};
-use linked_list_allocator::LockedHeap;
 use log::{info, warn};
 use platform_bus::{BusDriverMessage, DeviceDriverMessage, DeviceDriverRequest, DeviceInfo, Filter, Property};
-use poplar::{
-    caps::{CapabilitiesRepr, CAP_EARLY_LOGGING, CAP_PADDING, CAP_SERVICE_PROVIDER},
-    channel::Channel,
-    early_logger::EarlyLogger,
-    syscall,
-    syscall::GetMessageError,
-    Handle,
+use std::{
+    collections::BTreeMap,
+    mem,
+    poplar::{
+        caps::{CapabilitiesRepr, CAP_EARLY_LOGGING, CAP_PADDING, CAP_SERVICE_PROVIDER},
+        channel::Channel,
+        early_logger::EarlyLogger,
+        syscall,
+        syscall::GetMessageError,
+        Handle,
+    },
+    rc::Rc,
 };
-
-#[global_allocator]
-static ALLOCATOR: LockedHeap = LockedHeap::empty();
 
 type BusDriverIndex = usize;
 type DeviceDriverIndex = usize;
@@ -45,19 +38,7 @@ struct DeviceDriver {
     channel: Channel<DeviceDriverRequest, DeviceDriverMessage>,
 }
 
-#[no_mangle]
-pub extern "C" fn _start() -> ! {
-    syscall::early_log("Hello from platform_bus!").unwrap();
-    // Initialise the heap
-    const HEAP_START: usize = 0x600000000;
-    const HEAP_SIZE: usize = 0x4000;
-    let heap_memory_object =
-        syscall::create_memory_object(HEAP_START, HEAP_SIZE, true, false, 0x0 as *mut usize).unwrap();
-    unsafe {
-        syscall::map_memory_object(&heap_memory_object, &poplar::ZERO_HANDLE, None, 0x0 as *mut usize).unwrap();
-        ALLOCATOR.lock().init(HEAP_START as *mut u8, HEAP_SIZE);
-    }
-
+pub fn main() {
     log::set_logger(&EarlyLogger).unwrap();
     log::set_max_level(log::LevelFilter::Trace);
     info!("PlatformBus is running!");
@@ -190,17 +171,6 @@ pub extern "C" fn _start() -> ! {
             }
         }
     }
-}
-
-#[panic_handler]
-pub fn handle_panic(info: &PanicInfo) -> ! {
-    log::error!("PANIC: {}", info);
-    loop {}
-}
-
-#[alloc_error_handler]
-fn alloc_error(layout: core::alloc::Layout) -> ! {
-    panic!("Alloc error: {:?}", layout);
 }
 
 #[used]
