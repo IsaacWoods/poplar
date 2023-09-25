@@ -53,7 +53,7 @@ pub mod prelude {
             string::{String, ToString},
             vec::Vec,
         };
-        pub use core::{assert_eq, panic, prelude::rust_2018::*};
+        pub use core::{assert_eq, panic, prelude::rust_2018::*, unreachable};
     }
     pub mod rust_2021 {
         pub use alloc::{
@@ -62,7 +62,7 @@ pub mod prelude {
             string::{String, ToString},
             vec::Vec,
         };
-        pub use core::{assert_eq, panic, prelude::rust_2021::*};
+        pub use core::{assert_eq, panic, prelude::rust_2021::*, unreachable};
     }
 }
 
