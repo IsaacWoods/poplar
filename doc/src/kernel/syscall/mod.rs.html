@@ -1088,7 +1088,7 @@
                             device_descriptor.bars[i] =
                                 <span class="prelude-val">Some</span>(poplar::syscall::pci::Bar::Memory64 { memory_object: handle, size });
                         }
-                        <span class="prelude-val">Some</span>(Bar::Io { .. }) =&gt; <span class="macro">warn!</span>(<span class="string">&quot;PCI device at {} has an I/O BAR. We don&#39;t support these, and so they&#39;re not passed out to userspace&quot;</span>, address),
+                        <span class="prelude-val">Some</span>(Bar::Io { .. }) =&gt; <span class="macro">warn!</span>(<span class="string">&quot;PCI device at {} has an I/O BAR. We don&#39;t support these, and so they&#39;re not passed out to userspace.&quot;</span>, address),
                         <span class="prelude-val">None </span>=&gt; (),
                     }
                 }

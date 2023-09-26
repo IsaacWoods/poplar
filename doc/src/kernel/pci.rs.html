@@ -14,10 +14,13 @@
 <a href="#14" id="14">14</a>
 <a href="#15" id="15">15</a>
 <a href="#16" id="16">16</a>
+<a href="#17" id="17">17</a>
+<a href="#18" id="18">18</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>alloc::collections::BTreeMap;
 <span class="kw">use </span>pci_types::{Bar, BaseClass, DeviceId, DeviceRevision, Interface, PciAddress, SubClass, VendorId, MAX_BARS};
 
-<span class="kw">pub struct </span>PciDevice {
+<span class="attr">#[derive(Clone, Debug)]
+</span><span class="kw">pub struct </span>PciDevice {
     <span class="kw">pub </span>vendor_id: VendorId,
     <span class="kw">pub </span>device_id: DeviceId,
     <span class="kw">pub </span>revision: DeviceRevision,
@@ -27,7 +30,8 @@
     <span class="kw">pub </span>bars: [<span class="prelude-ty">Option</span>&lt;Bar&gt;; MAX_BARS],
 }
 
-<span class="kw">pub struct </span>PciInfo {
+<span class="attr">#[derive(Clone, Debug)]
+</span><span class="kw">pub struct </span>PciInfo {
     <span class="kw">pub </span>devices: BTreeMap&lt;PciAddress, PciDevice&gt;,
 }
 </code></pre></div></section></main></body></html>
