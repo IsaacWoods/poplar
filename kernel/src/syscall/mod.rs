@@ -530,7 +530,7 @@ where
                             device_descriptor.bars[i] =
                                 Some(poplar::syscall::pci::Bar::Memory64 { memory_object: handle, size });
                         }
-                        Some(Bar::Io { .. }) => warn!("PCI device at {} has an I/O BAR. We don't support these, and so they're not passed out to userspace", address),
+                        Some(Bar::Io { .. }) => warn!("PCI device at {} has an I/O BAR. We don't support these, and so they're not passed out to userspace.", address),
                         None => (),
                     }
                 }

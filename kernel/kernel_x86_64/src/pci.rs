@@ -1,5 +1,5 @@
 use acpi::PciConfigRegions;
-use alloc::{alloc::Global, collections::BTreeMap};
+use alloc::{alloc::Global, collections::BTreeMap, sync::Arc};
 use core::ptr;
 use hal::memory::PAddr;
 use hal_x86_64::kernel_map;
@@ -7,11 +7,12 @@ use kernel::pci::{PciDevice, PciInfo};
 use pci_types::{Bar, ConfigRegionAccess, EndpointHeader, HeaderType, PciAddress, PciHeader};
 use tracing::info;
 
-pub struct EcamAccess<'a>(PciConfigRegions<'a, Global>);
+#[derive(Clone)]
+pub struct EcamAccess<'a>(Arc<PciConfigRegions<'a, Global>>);
 
 impl<'a> EcamAccess<'a> {
     pub fn new(regions: PciConfigRegions<'a, Global>) -> EcamAccess<'a> {
-        EcamAccess(regions)
+        EcamAccess(Arc::new(regions))
     }
 }
 

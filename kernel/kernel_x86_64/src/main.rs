@@ -35,12 +35,12 @@ use kernel::{
     scheduler::Scheduler,
     Platform,
 };
+use pci::PciResolver;
 use per_cpu::PerCpuImpl;
 use seed::boot_info::BootInfo;
 use topo::Topology;
 use tracing::info;
 
-// TODO: store the PciInfo in here and allow access from the common kernel
 pub struct PlatformImpl {
     kernel_page_table: PageTableImpl,
     topology: Topology,
@@ -157,7 +157,8 @@ pub extern "C" fn kentry(boot_info: &BootInfo) -> ! {
     /*
      * Parse the DSDT.
      */
-    let mut aml_context = AmlContext::new(Box::new(AmlHandler::new(pci_access)), aml::DebugVerbosity::None);
+    let mut aml_context =
+        AmlContext::new(Box::new(AmlHandler::new(pci_access.clone())), aml::DebugVerbosity::None);
     if let Ok(ref dsdt) = acpi_tables.dsdt() {
         let virtual_address = kernel_map::physical_to_virtual(PAddr::new(dsdt.address).unwrap());
         info!(
@@ -175,11 +176,8 @@ pub extern "C" fn kentry(boot_info: &BootInfo) -> ! {
 
     /*
      * Resolve all the PCI info.
-     * XXX: not sure this is the right place to do this just yet.
      */
-    // TODO: this whole situation is a bit gross and needs more thought I think
-    // FIXME: this is broken by the new version of `acpi` for now
-    // *kernel::PCI_INFO.write() = Some(PciResolver::resolve(pci_access.clone()));
+    *kernel::PCI_INFO.write() = Some(PciResolver::resolve(pci_access));
     // kernel::PCI_ACCESS.initialize(Some(Mutex::new(Box::new(pci_access))));
 
     // TODO: if we need to route PCI interrupts, this might be useful at some point?
