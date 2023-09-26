@@ -1,5 +1,5 @@
 use bit_field::BitField;
-use core::ptr;
+use std::ptr;
 
 /// Allows access to the controller's Operational Registers. The `base` of these registers is dword-aligned and
 /// found by adding the length of the Capability Registers to Capability Base.

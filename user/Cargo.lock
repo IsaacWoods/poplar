@@ -273,10 +273,9 @@ name = "usb_bus_xhci"
 version = "0.1.0"
 dependencies = [
  "bit_field",
- "linked_list_allocator",
  "log",
  "platform_bus",
- "poplar",
  "poplar_util",
  "ptah",
+ "std",
 ]

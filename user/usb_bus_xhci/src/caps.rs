@@ -1,5 +1,5 @@
 use bit_field::BitField;
-use core::ptr;
+use std::ptr;
 
 #[derive(Debug)]
 pub struct Capabilities {

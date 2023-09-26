@@ -1,46 +1,24 @@
-#![no_std]
-#![no_main]
-#![feature(alloc_error_handler, never_type, exclusive_range_pattern)]
+#![feature(never_type, exclusive_range_pattern)]
 #![deny(unsafe_op_in_unsafe_fn)]
-
-extern crate alloc;
 
 mod caps;
 mod memory;
 mod operational;
 mod trb;
 
-use alloc::{string::String, vec};
 use caps::Capabilities;
-use core::panic::PanicInfo;
-use linked_list_allocator::LockedHeap;
 use log::info;
 use memory::MemoryArea;
 use operational::OperationRegisters;
 use platform_bus::{BusDriverMessage, DeviceDriverMessage, DeviceDriverRequest, Filter, Property};
-use poplar::{
+use std::poplar::{
     caps::{CapabilitiesRepr, CAP_EARLY_LOGGING, CAP_PADDING, CAP_SERVICE_USER},
     channel::Channel,
     early_logger::EarlyLogger,
     syscall,
 };
 
-#[global_allocator]
-static ALLOCATOR: LockedHeap = LockedHeap::empty();
-
-#[no_mangle]
-pub extern "C" fn _start() -> ! {
-    syscall::early_log("Hello from usb_bus_xhci!").unwrap();
-    // Initialise the heap
-    const HEAP_START: usize = 0x600000000;
-    const HEAP_SIZE: usize = 0x4000;
-    let heap_memory_object =
-        syscall::create_memory_object(HEAP_START, HEAP_SIZE, true, false, 0x0 as *mut usize).unwrap();
-    unsafe {
-        syscall::map_memory_object(&heap_memory_object, &poplar::ZERO_HANDLE, None, 0x0 as *mut usize).unwrap();
-        ALLOCATOR.lock().init(HEAP_START as *mut u8, HEAP_SIZE);
-    }
-
+pub fn main() {
     log::set_logger(&EarlyLogger).unwrap();
     log::set_max_level(log::LevelFilter::Trace);
     info!("XHCI USB Bus Driver is running!");
@@ -78,7 +56,7 @@ pub extern "C" fn _start() -> ! {
     unsafe {
         syscall::map_memory_object(
             controller_device.properties.get("pci.bar0.handle").as_ref().unwrap().as_memory_object().unwrap(),
-            &poplar::ZERO_HANDLE,
+            &std::poplar::ZERO_HANDLE,
             Some(REGISTER_SPACE_ADDRESS),
             0x0 as *mut usize,
         )
@@ -103,7 +81,7 @@ pub extern "C" fn _start() -> ! {
     initialize_controller(&mut operational, &capabilities, &memory_area);
 
     loop {
-        syscall::yield_to_kernel()
+        std::poplar::syscall::yield_to_kernel()
     }
 }
 
@@ -130,17 +108,6 @@ fn initialize_controller(
     );
 
     // todo!()
-}
-
-#[panic_handler]
-pub fn handle_panic(info: &PanicInfo) -> ! {
-    log::error!("PANIC: {}", info);
-    loop {}
-}
-
-#[alloc_error_handler]
-fn alloc_error(layout: core::alloc::Layout) -> ! {
-    panic!("Alloc error: {:?}", layout);
 }
 
 #[used]
