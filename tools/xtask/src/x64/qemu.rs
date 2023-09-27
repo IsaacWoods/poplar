@@ -84,14 +84,18 @@ impl RunQemuX64 {
         if self.wait_for_gdb_connection {
             qemu.args(&["-s", "-S"]);
         }
-        if self.debug_int_firehose {
-            qemu.args(&["-d", "int"]);
-        }
-        if self.debug_mmu_firehose {
-            qemu.args(&["-d", "mmu"]);
-        }
-        if self.debug_cpu_firehose {
-            qemu.args(&["-d", "cpu"]);
+        if self.debug_int_firehose || self.debug_mmu_firehose || self.debug_cpu_firehose {
+            let mut options = Vec::new();
+            if self.debug_int_firehose {
+                options.push("int");
+            }
+            if self.debug_mmu_firehose {
+                options.push("mmu");
+            }
+            if self.debug_cpu_firehose {
+                options.push("cpu");
+            }
+            qemu.args(&["-d", &options.join(",")]);
         }
         qemu.args(&["-machine", "q35"]);
         qemu.args(&["-cpu", "max,vmware-cpuid-freq,invtsc"]);
