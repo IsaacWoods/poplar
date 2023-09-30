@@ -9,3 +9,10 @@ extern crate std;
 pub mod hw;
 pub mod kernel_map;
 pub mod paging;
+
+#[inline(always)]
+pub fn breakpoint() {
+    unsafe {
+        core::arch::asm!("int3");
+    }
+}
