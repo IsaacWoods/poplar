@@ -2,7 +2,7 @@ use eyre::{eyre, Result, WrapErr};
 use std::{fs::File, path::PathBuf, process::Command};
 
 pub struct RunQemuRiscV {
-    pub opensbi: PathBuf,
+    pub opensbi: Option<PathBuf>,
     pub seed: PathBuf,
     pub kernel: PathBuf,
     pub disk_image: Option<PathBuf>,
@@ -13,19 +13,12 @@ pub struct RunQemuRiscV {
 
 impl RunQemuRiscV {
     pub fn new(seed: PathBuf, kernel: PathBuf, disk_image: Option<PathBuf>) -> RunQemuRiscV {
-        RunQemuRiscV {
-            opensbi: PathBuf::from("lib/opensbi/build/platform/generic/firmware/fw_jump.elf"),
-            seed,
-            kernel,
-            disk_image,
-
-            open_display: false,
-            debug_int_firehose: false,
-        }
+        RunQemuRiscV { opensbi: None, seed, kernel, disk_image, open_display: false, debug_int_firehose: false }
     }
 
+    /// Provide a custom version of OpenSBI to use. This will be passed to QEMU using the `-bios` flag.
     pub fn opensbi(self, opensbi: PathBuf) -> Self {
-        Self { opensbi, ..self }
+        Self { opensbi: Some(opensbi), ..self }
     }
 
     pub fn open_display(self, open_display: bool) -> Self {
@@ -41,7 +34,6 @@ impl RunQemuRiscV {
 
         qemu.args(&["-M", "virt"]);
         qemu.args(&["-m", "1G"]);
-        qemu.args(&["-bios", self.opensbi.to_str().unwrap()]);
         qemu.args(&["-kernel", self.seed.to_str().unwrap()]);
         if self.debug_int_firehose {
             qemu.args(&["-d", "int"]);
@@ -55,6 +47,10 @@ impl RunQemuRiscV {
             "-device",
             &format!("loader,file={},addr=0xb0000004,force-raw=on", self.kernel.to_str().unwrap()),
         ]);
+
+        if let Some(opensbi) = self.opensbi {
+            qemu.args(&["-bios", opensbi.to_str().unwrap()]);
+        }
 
         // Emit serial on both stdio and to a file
         qemu.args(&["-chardev", "stdio,id=char0,logfile=qemu_serial_riscv.log"]);

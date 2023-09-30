@@ -54,7 +54,6 @@ fn main() -> Result<()> {
                     .run(),
                 Platform::RiscV => {
                     RunQemuRiscV::new(dist_result.bootloader_path, dist_result.kernel_path, dist_result.disk_image)
-                        .opensbi(PathBuf::from("lib/opensbi/build/platform/generic/firmware/fw_jump.elf"))
                         .open_display(flags.display)
                         .debug_int_firehose(flags.debug_int_firehose)
                         .run()

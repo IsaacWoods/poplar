@@ -4,6 +4,3 @@
 [submodule "lib/pci_types"]
 	path = lib/pci_types
 	url = git@github.com:rust-osdev/pci_types
-[submodule "lib/opensbi"]
-	path = lib/opensbi
-	url = https://github.com/riscv-software-src/opensbi
