@@ -138,6 +138,8 @@ pub extern "C" fn kentry(boot_info: &BootInfo) -> ! {
     }
     PerCpuImpl::install(tss, Scheduler::new());
 
+    // TODO: go back and set the #PF handler to use a separate kernel stack via the TSS
+
     /*
      * Parse the static ACPI tables.
      */

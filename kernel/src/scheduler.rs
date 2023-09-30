@@ -64,7 +64,6 @@ where
         unsafe {
             let kernel_stack_pointer: VAddr = *task.kernel_stack_pointer.get();
             let user_stack_pointer: VAddr = *task.user_stack_pointer.get();
-            trace!("Setting stacks - kernel: {:#x}, user: {:#x}", kernel_stack_pointer, user_stack_pointer);
 
             P::per_cpu().set_kernel_stack_pointer(kernel_stack_pointer);
             P::per_cpu().set_user_stack_pointer(user_stack_pointer);
@@ -87,8 +86,8 @@ where
              * platform to perform the context switch for us!
              * NOTE: This temporarily allows `running_task` to be `None`.
              */
-            trace!("Switching to task: {}", next_task.name);
             let old_task = self.running_task.take().unwrap();
+            trace!("Switching from task {} to task: {}", old_task.name, next_task.name);
             assert_eq!(*old_task.state.lock(), TaskState::Running);
             assert_eq!(*next_task.state.lock(), TaskState::Ready);
 
@@ -116,7 +115,6 @@ where
 
             unsafe {
                 *old_task.user_stack_pointer.get() = P::per_cpu().user_stack_pointer();
-                trace!("Setting stacks - kernel: {:#x}, user: {:#x}", new_kernel_stack, new_user_stack);
                 P::per_cpu().set_kernel_stack_pointer(new_kernel_stack);
                 P::per_cpu().set_user_stack_pointer(new_user_stack);
                 P::context_switch(old_kernel_stack, new_kernel_stack);

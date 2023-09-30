@@ -55,7 +55,7 @@ pub fn handle_syscall<P>(number: usize, a: usize, b: usize, c: usize, d: usize, 
 where
     P: Platform,
 {
-    info!("Syscall! number = {}, a = {}, b = {}, c = {}, d = {}, e = {}", number, a, b, c, d, e);
+    // info!("Syscall! number = {}, a = {}, b = {}, c = {}, d = {}, e = {}", number, a, b, c, d, e);
     let task = unsafe { P::per_cpu() }.scheduler().running_task.as_ref().unwrap();
 
     match number {

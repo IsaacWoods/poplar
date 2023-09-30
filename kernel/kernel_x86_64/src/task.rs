@@ -35,7 +35,7 @@ extern "C" fn rust_syscall_entry(number: usize, a: usize, b: usize, c: usize, d:
 /// This is the layout of the stack that we expect to be present when we switch to a task. It is
 /// created both in preparation for initial task entry, and when we're switching away from a task.
 /// We use the C ABI here because we access this structure from assembly.
-#[derive(Default, Debug)]
+#[derive(Clone, Copy, Default, Debug)]
 #[repr(C)]
 pub struct ContextSwitchFrame {
     pub flags: u64,

@@ -3,7 +3,11 @@ platform = "x64"
 [x64]
 release = false
 user_tasks = [
-    "simple_fb user/simple_fb"
+    "platform_bus user/platform_bus",
+    "pci_bus user/pci_bus",
+    "usb_bus_xhci user/usb_bus_xhci",
+    "simple_fb user/simple_fb",
+    "echo user/echo",
 ]
 
 [riscv]

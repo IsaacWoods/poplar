@@ -60,7 +60,7 @@ do_drop_to_usermode:
     mov rsp, gs:0x10
 
     /*
-     * Zero all registers that weren't zerod as part of the context load, except rcx and r11, as they're needed by
+     * Zero all registers that weren't zeroed as part of the context load, except rcx and r11, as they're needed by
      * `sysret`. We also zero `r14` and `r15`, which would normally be loaded from the saved context but weren't
      * because we use them to populate `r11` and `rcx` instead.
      */
