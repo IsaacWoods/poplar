@@ -38,7 +38,6 @@ impl RunQemuRiscV {
         if self.debug_int_firehose {
             qemu.args(&["-d", "int"]);
         }
-        // qemu.args(&["-fw_cfg", &format!("opt/poplar.kernel,file={}", self.kernel.to_str().unwrap())]);
         let kernel_size =
             File::open(self.kernel.clone()).expect("Failed to open kernel ELF").metadata().unwrap().len();
         qemu.args(&["-device", &format!("loader,addr=0xb0000000,data={},data-len=4", kernel_size)]);
@@ -56,13 +55,12 @@ impl RunQemuRiscV {
         qemu.args(&["-chardev", "stdio,id=char0,logfile=qemu_serial_riscv.log"]);
         qemu.args(&["-serial", "chardev:char0"]);
 
+        qemu.args(&["-global", "virtio-mmio.force-legacy=false"]);
+
         if let Some(disk_image) = self.disk_image {
             // Add the disk image as an NVME device
-            qemu.args(&[
-                "-drive",
-                &format!("id=disk0,format=raw,if=none,file=fat:rw:{}", disk_image.to_str().unwrap()),
-            ]);
-            qemu.args(&["-device", "nvme,serial=deadbeef,drive=disk0"]);
+            qemu.args(&["-drive", &format!("id=disk0,format=raw,if=none,file={}", disk_image.to_str().unwrap())]);
+            qemu.args(&["-device", "virtio-blk-device,drive=disk0"]);
         }
 
         if !self.open_display {

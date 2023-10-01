@@ -73,6 +73,7 @@ fn main() -> Result<()> {
             clean(PathBuf::from("lib/pci_types"))?;
             clean(PathBuf::from("lib/poplar_util"))?;
             clean(PathBuf::from("lib/ptah"))?;
+            clean(PathBuf::from("lib/virtio"))?;
             Ok(())
         }
     }
@@ -111,6 +112,7 @@ struct SeedConfig {
 impl Dist {
     pub fn build_riscv(self) -> Result<DistResult> {
         use cargo::RunCargo;
+        use image::MakeGptImage;
 
         println!("{}", "[*] Building Seed for RISC-V".bold().magenta());
         let seed_riscv = RunCargo::new("seed_riscv", PathBuf::from("seed/seed_riscv/"))
@@ -131,7 +133,13 @@ impl Dist {
             .rustflags("-Clink-arg=-Tkernel_riscv/link.ld")
             .run()?;
 
-        Ok(DistResult { bootloader_path: seed_riscv, kernel_path: kernel, disk_image: None })
+        println!("{}", "[*] Building disk image".bold().magenta());
+        let image_path = PathBuf::from("poplar_riscv.img");
+        let image = MakeGptImage::new(image_path.clone(), 40 * 1024 * 1024, 35 * 1024 * 1024)
+            .copy_efi_file("kernel.elf", kernel.clone());
+        image.build()?;
+
+        Ok(DistResult { bootloader_path: seed_riscv, kernel_path: kernel, disk_image: Some(image_path) })
     }
 
     pub fn build_x64(self) -> Result<DistResult> {
