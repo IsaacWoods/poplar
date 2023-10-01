@@ -354,6 +354,7 @@ dependencies = [
  "spinning_top",
  "tracing",
  "tracing-core",
+ "virtio",
  "volatile",
 ]
 
@@ -519,6 +520,13 @@ name = "unicode-ident"
 version = "1.0.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "15c61ba63f9235225a22310255a29b806b907c9b8c964bcbd0a2c70f3f2deea7"
+
+[[package]]
+name = "virtio"
+version = "0.1.0"
+dependencies = [
+ "volatile",
+]
 
 [[package]]
 name = "volatile"
