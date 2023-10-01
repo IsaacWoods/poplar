@@ -7,6 +7,7 @@
 mod cargo;
 mod config;
 mod flags;
+mod image;
 mod riscv;
 mod x64;
 
@@ -135,7 +136,7 @@ impl Dist {
 
     pub fn build_x64(self) -> Result<DistResult> {
         use cargo::RunCargo;
-        use x64::image::MakeGptImage;
+        use image::MakeGptImage;
 
         println!("{}", "[*] Building Seed for x86_64".bold().magenta());
         let seed_uefi = RunCargo::new("seed_uefi.efi", PathBuf::from("seed/seed_uefi/"))
