@@ -15,6 +15,7 @@ bit_field = "0.10.1"
 fdt = { version = "0.1.5", features = ["pretty-printing"] }
 tracing = { git = "https://github.com/tokio-rs/tracing", default-features = false }
 tracing-core = { git = "https://github.com/tokio-rs/tracing", default-features = false }
+linked_list_allocator = "0.10.5"
 arrayvec = { version = "0.7.2", default-features = false }
 mer = { path = "../../lib/mer/" }
 pci_types = { path = "../../lib/pci_types" }

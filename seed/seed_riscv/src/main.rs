@@ -7,6 +7,8 @@
 #![no_main]
 #![feature(pointer_is_aligned, panic_info_message, const_mut_refs, strict_provenance)]
 
+extern crate alloc;
+
 mod image;
 mod logger;
 mod memory;
@@ -16,6 +18,7 @@ use core::{arch::asm, mem, ptr};
 use fdt::Fdt;
 use hal::memory::{Flags, FrameAllocator, FrameSize, PAddr, PageTable, Size4KiB, VAddr};
 use hal_riscv::paging::PageTableImpl;
+use linked_list_allocator::LockedHeap;
 use memory::{MemoryManager, MemoryRegions};
 use pci::PciAccess;
 use poplar_util::{linker::LinkerSymbol, math::align_up};
@@ -61,6 +64,9 @@ extern "C" {
 
 static MEMORY_MANAGER: MemoryManager = MemoryManager::new();
 
+#[global_allocator]
+static ALLOCATOR: LockedHeap = LockedHeap::empty();
+
 #[no_mangle]
 pub fn seed_main(hart_id: u64, fdt_ptr: *const u8) -> ! {
     assert!(fdt_ptr.is_aligned_to(8));
@@ -102,6 +108,15 @@ pub fn seed_main(hart_id: u64, fdt_ptr: *const u8) -> ! {
      */
     MEMORY_MANAGER.init(memory_regions);
     MEMORY_MANAGER.walk_usable_memory();
+
+    /*
+     * Allocate memory for and initialize Seed's heap.
+     */
+    const HEAP_SIZE: usize = hal::memory::kibibytes(200);
+    let heap_memory = MEMORY_MANAGER.allocate_n(Size4KiB::frames_needed(HEAP_SIZE));
+    unsafe {
+        ALLOCATOR.lock().init(usize::from(heap_memory.start.start) as *mut u8, HEAP_SIZE);
+    }
 
     let mut kernel_page_table = PageTableImpl::new(MEMORY_MANAGER.allocate(), VAddr::new(0x0));
     let kernel = image::load_kernel(kernel_elf, &mut kernel_page_table, &MEMORY_MANAGER);
