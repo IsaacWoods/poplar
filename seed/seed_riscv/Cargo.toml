@@ -19,3 +19,4 @@ linked_list_allocator = "0.10.5"
 arrayvec = { version = "0.7.2", default-features = false }
 mer = { path = "../../lib/mer/" }
 pci_types = { path = "../../lib/pci_types" }
+virtio = { path = "../../lib/virtio" }

@@ -23,7 +23,8 @@ use memory::{MemoryManager, MemoryRegions};
 use pci::PciAccess;
 use poplar_util::{linker::LinkerSymbol, math::align_up};
 use seed::boot_info::BootInfo;
-use tracing::info;
+use tracing::{error, info, warn};
+use virtio::{block::BlockDeviceConfig, DeviceType, VirtioMmioHeader};
 
 /*
  * This is the entry-point jumped to from OpenSBI. It needs to be at the very start of the ELF, so we put it in its
@@ -94,15 +95,6 @@ pub fn seed_main(hart_id: u64, fdt_ptr: *const u8) -> ! {
     info!("Memory regions: {:#?}", memory_regions);
 
     /*
-     * Enumerate PCI devices.
-     */
-    let pci_access = PciAccess::new(&fdt);
-    pci::PciResolver::resolve(pci_access);
-
-    // TODO: find and read the kernel and task images from a Virtio disk driver. The `virtio-drivers` crate looks
-    // fairly high quality and an easy way to do this.
-
-    /*
      * We can then use this mapping of memory regions to initialise the physical memory manager so we can allocate
      * out of the usable regions.
      */
@@ -121,6 +113,60 @@ pub fn seed_main(hart_id: u64, fdt_ptr: *const u8) -> ! {
     let mut kernel_page_table = PageTableImpl::new(MEMORY_MANAGER.allocate(), VAddr::new(0x0));
     let kernel = image::load_kernel(kernel_elf, &mut kernel_page_table, &MEMORY_MANAGER);
     let mut next_available_kernel_address = kernel.next_available_address;
+
+    /*
+     * Enumerate PCI devices.
+     */
+    let pci_access = PciAccess::new(&fdt);
+    pci::PciResolver::resolve(pci_access);
+
+    /*
+     * Find attached Virtio devices from the device tree.
+     */
+    for virtio_node in
+        fdt.all_nodes().filter(|node| node.compatible().map_or(false, |c| c.all().any(|c| c == "virtio,mmio")))
+    {
+        let reg = virtio_node.reg().unwrap().next().unwrap();
+        let header = unsafe { &*(reg.starting_address as *const VirtioMmioHeader) };
+
+        if header.magic.read() == u32::from_le_bytes(*b"virt") {
+            let device_type = DeviceType::try_from(header.device_id.read()).unwrap();
+            match device_type {
+                DeviceType::Invalid => (),
+                DeviceType::BlockDevice => {
+                    let config = unsafe { &mut *(reg.starting_address as *mut BlockDeviceConfig) };
+                    info!("Found Virtio block device with capacity: {} bytes", config.capacity() * 512);
+
+                    let queue = virtio::virtqueue::Virtqueue::new(64, &MEMORY_MANAGER);
+
+                    // Init the device
+                    config.header.reset();
+                    config.header.set_status_flag(virtio::StatusFlags::Acknowledge);
+                    config.header.set_status_flag(virtio::StatusFlags::Driver);
+
+                    // TODO: actually negotiate needed features
+                    config.header.set_status_flag(virtio::StatusFlags::FeaturesOk);
+                    assert!(config.header.is_status_flag_set(virtio::StatusFlags::FeaturesOk));
+
+                    config.header.queue_select.write(0);
+                    config.header.queue_size.write(64);
+                    config.header.set_queue_descriptor(queue.descriptor_table.physical as u64);
+                    config.header.set_queue_driver(queue.available_ring.physical as u64);
+                    config.header.set_queue_device(queue.used_ring.physical as u64);
+                    config.header.mark_queue_ready();
+
+                    config.header.set_status_flag(virtio::StatusFlags::DriverOk);
+
+                    if config.header.is_status_flag_set(virtio::StatusFlags::Failed) {
+                        error!("Virtio device initialization failed");
+                    }
+                }
+                other => info!("Unsupported Virtio device of type {:?}. Ignoring.", other),
+            }
+        } else {
+            warn!("Header of Virtio FDT node '{}' has invalid magic. Ignoring.", virtio_node.name);
+        }
+    }
 
     /*
      * Allocate memory for the boot info and start filling it out.

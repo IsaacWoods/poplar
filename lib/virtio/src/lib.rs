@@ -6,6 +6,7 @@ extern crate alloc;
 pub mod block;
 pub mod virtqueue;
 
+use bit_field::BitField;
 use volatile::{Read, ReadWrite, Volatile, Write};
 
 #[repr(C)]
@@ -21,8 +22,8 @@ pub struct VirtioMmioHeader {
     pub driver_feature_select: Volatile<u32, Write>,
     _reserved1: [u32; 2],
     pub queue_select: Volatile<u32, Write>,
-    pub queue_num_max: Volatile<u32, Read>,
-    pub queue_num: Volatile<u32, Read>,
+    pub queue_size_max: Volatile<u32, Read>,
+    pub queue_size: Volatile<u32, ReadWrite>,
     _reserved2: [u32; 2],
     pub queue_ready: Volatile<u32, ReadWrite>,
     _reserved3: [u32; 2],
@@ -33,11 +34,11 @@ pub struct VirtioMmioHeader {
     _reserved5: [u32; 2],
     pub status: Volatile<u32, ReadWrite>,
     _reserved6: [u32; 3],
-    pub queue_descriptor: Volatile<[u32; 2], Write>,
+    pub queue_descriptor: Volatile<[u32; 2], ReadWrite>,
     _reserved7: [u32; 2],
-    pub queue_driver: Volatile<[u32; 2], Write>,
+    pub queue_driver: Volatile<[u32; 2], ReadWrite>,
     _reserved8: [u32; 2],
-    pub queue_device: Volatile<[u32; 2], Write>,
+    pub queue_device: Volatile<[u32; 2], ReadWrite>,
     _reserved9: u32,
     pub shared_memory_select: Volatile<u32, Write>,
     pub shared_memory_len: Volatile<[u32; 2], Read>,
@@ -45,6 +46,43 @@ pub struct VirtioMmioHeader {
     pub queue_reset: Volatile<u32, ReadWrite>,
     _reserved10: [u32; 14],
     pub config_generation: Volatile<u32, Read>,
+}
+
+impl VirtioMmioHeader {
+    pub fn reset(&mut self) {
+        self.status.write(0);
+    }
+
+    pub fn set_status_flag(&mut self, flag: StatusFlags) {
+        self.status.write(self.status.read() | flag as u32);
+        // TODO: this should probably not just be inline assembly lmao (this is a write fence)
+        unsafe {
+            core::arch::asm!("fence ow, ow");
+        }
+    }
+
+    pub fn is_status_flag_set(&self, flag: StatusFlags) -> bool {
+        self.status.read() & flag as u32 == flag as u32
+    }
+
+    pub fn set_queue_descriptor(&mut self, physical: u64) {
+        self.queue_descriptor[0].write(physical.get_bits(0..32) as u32);
+        self.queue_descriptor[1].write(physical.get_bits(32..64) as u32);
+    }
+
+    pub fn set_queue_driver(&mut self, physical: u64) {
+        self.queue_driver[0].write(physical.get_bits(0..32) as u32);
+        self.queue_driver[1].write(physical.get_bits(32..64) as u32);
+    }
+
+    pub fn set_queue_device(&mut self, physical: u64) {
+        self.queue_device[0].write(physical.get_bits(0..32) as u32);
+        self.queue_device[1].write(physical.get_bits(32..64) as u32);
+    }
+
+    pub fn mark_queue_ready(&mut self) {
+        self.queue_ready.write(1);
+    }
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
@@ -142,54 +180,13 @@ impl core::convert::TryFrom<u32> for DeviceType {
     }
 }
 
-#[repr(C)]
-pub struct BlockDeviceConfig {
-    pub header: VirtioMmioHeader,
-    pub capacity: Volatile<[u32; 2], Read>,
-    pub size_max: Volatile<u32, Read>,
-    pub seg_max: Volatile<u32, Read>,
-    pub geometry: Volatile<Geometry, Read>,
-    pub block_size: Volatile<u32, Read>,
-    pub topology: Volatile<Topology, Read>,
-    pub writeback: Volatile<u8, Read>,
-    _reserved0: u8,
-    pub num_queues: Volatile<u16, Read>,
-    pub max_discard_sectors: Volatile<u32, Read>,
-    pub max_discard_seg: Volatile<u32, Read>,
-    pub discard_sector_alignment: Volatile<u32, Read>,
-    pub max_write_zeroes_sectors: Volatile<u32, Read>,
-    pub max_write_zeroes_seg: Volatile<u32, Read>,
-    pub write_zeroes_may_unmap: Volatile<u8, Read>,
-    _reserved1: [u8; 3],
-    pub max_secure_erase_sectors: Volatile<u32, Read>,
-    pub max_secure_erase_seg: Volatile<u32, Read>,
-    pub secure_erase_sector_alignment: Volatile<u32, Read>,
-}
-
-impl BlockDeviceConfig {
-    pub fn capacity(&self) -> u64 {
-        let [lo, hi] = self.capacity.read();
-        (u64::from(hi) << 32) + u64::from(lo)
-    }
-}
-
-#[derive(Clone, Copy, Debug)]
-#[repr(C)]
-pub struct Geometry {
-    pub cylinders: u16,
-    pub heads: u8,
-    pub sectors: u8,
-}
-
-#[derive(Clone, Copy, Debug)]
-#[repr(C)]
-pub struct Topology {
-    /// The number of logical blocks per physical block (log2)
-    pub physical_block_log2: u8,
-    /// The offset of the first aligned logical block
-    pub alignment_offset: u8,
-    /// The minimum I/O size (in blocks)
-    pub min_io_size: u16,
-    /// The optimal (and suggested maximum) I/O size (in blocks)
-    pub optimal_io_size: u32,
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+#[repr(u32)]
+pub enum StatusFlags {
+    Acknowledge = 1,
+    Driver = 2,
+    DriverOk = 4,
+    FeaturesOk = 8,
+    NeedsReset = 64,
+    Failed = 128,
 }

@@ -3,6 +3,8 @@ use volatile::{Read, Volatile};
 
 #[repr(C)]
 pub struct BlockDeviceConfig {
+    // TODO: how to abstract over both MMIO and PCI Virtio devices?
+    pub header: VirtioMmioHeader,
     pub capacity: Volatile<[u32; 2], Read>,
     pub size_max: Volatile<u32, Read>,
     pub seg_max: Volatile<u32, Read>,
