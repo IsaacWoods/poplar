@@ -1,6 +1,10 @@
 #![no_std]
+#![feature(slice_ptr_get, layout_for_ptr, ptr_metadata)]
+
+extern crate alloc;
 
 pub mod block;
+pub mod virtqueue;
 
 use volatile::{Read, ReadWrite, Volatile, Write};
 
