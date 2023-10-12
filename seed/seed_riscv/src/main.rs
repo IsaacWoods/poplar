@@ -13,6 +13,7 @@ mod image;
 mod logger;
 mod memory;
 mod pci;
+mod virtio_block;
 
 use core::{arch::asm, mem, ptr};
 use fdt::Fdt;
@@ -23,7 +24,7 @@ use memory::{MemoryManager, MemoryRegions};
 use pci::PciAccess;
 use poplar_util::{linker::LinkerSymbol, math::align_up};
 use seed::boot_info::BootInfo;
-use tracing::{error, info, warn};
+use tracing::{info, warn};
 use virtio::{block::BlockDeviceConfig, DeviceType, VirtioMmioHeader};
 
 /*
@@ -135,31 +136,11 @@ pub fn seed_main(hart_id: u64, fdt_ptr: *const u8) -> ! {
                 DeviceType::Invalid => (),
                 DeviceType::BlockDevice => {
                     let config = unsafe { &mut *(reg.starting_address as *mut BlockDeviceConfig) };
-                    info!("Found Virtio block device with capacity: {} bytes", config.capacity() * 512);
+                    let mut device = virtio_block::VirtioBlockDevice::init(config, &MEMORY_MANAGER);
 
-                    let queue = virtio::virtqueue::Virtqueue::new(64, &MEMORY_MANAGER);
-
-                    // Init the device
-                    config.header.reset();
-                    config.header.set_status_flag(virtio::StatusFlags::Acknowledge);
-                    config.header.set_status_flag(virtio::StatusFlags::Driver);
-
-                    // TODO: actually negotiate needed features
-                    config.header.set_status_flag(virtio::StatusFlags::FeaturesOk);
-                    assert!(config.header.is_status_flag_set(virtio::StatusFlags::FeaturesOk));
-
-                    config.header.queue_select.write(0);
-                    config.header.queue_size.write(64);
-                    config.header.set_queue_descriptor(queue.descriptor_table.physical as u64);
-                    config.header.set_queue_driver(queue.available_ring.physical as u64);
-                    config.header.set_queue_device(queue.used_ring.physical as u64);
-                    config.header.mark_queue_ready();
-
-                    config.header.set_status_flag(virtio::StatusFlags::DriverOk);
-
-                    if config.header.is_status_flag_set(virtio::StatusFlags::Failed) {
-                        error!("Virtio device initialization failed");
-                    }
+                    let gpt_header = unsafe { device.read(1).cast::<gpt::GptHeader>().as_ref() }.clone();
+                    gpt_header.validate().unwrap();
+                    info!("GPT header: {:#?}", gpt_header);
                 }
                 other => info!("Unsupported Virtio device of type {:?}. Ignoring.", other),
             }

@@ -98,6 +98,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "gpt"
+version = "0.1.0"
+
+[[package]]
 name = "hal"
 version = "0.1.0"
 dependencies = [
@@ -354,6 +358,7 @@ dependencies = [
  "arrayvec",
  "bit_field",
  "fdt",
+ "gpt",
  "hal",
  "hal_riscv",
  "linked_list_allocator",

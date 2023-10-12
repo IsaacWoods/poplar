@@ -353,10 +353,16 @@ impl FrameAllocator<Size4KiB> for MemoryManager {
 
 impl virtio::virtqueue::Mapper for MemoryManager {
     fn alloc(&self, size: usize) -> (usize, usize) {
-        // TODO: this wastes a bunch of memory but whatevs for now. Just alloc a frame to avoid breaking the
+        // TODO: this wastes a bunch of memory but whatevs for now. Just alloc some whole frames to avoid breaking the
         // allocator
-        let frame = self.allocate();
-        let addr = usize::from(frame.start);
+        let frames = self.allocate_n(Size4KiB::frames_needed(size));
+        let addr = usize::from(frames.start.start);
+
+        // Zero the memory (TODO: this is probably an unsound way of doing it, technically)
+        unsafe {
+            core::slice::from_raw_parts_mut(addr as *mut u8, size).fill(0);
+        }
+
         (addr, addr)
     }
 }
