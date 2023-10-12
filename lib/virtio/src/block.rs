@@ -53,3 +53,40 @@ pub struct Topology {
     /// The optimal (and suggested maximum) I/O size (in blocks)
     pub optimal_io_size: u32,
 }
+
+#[derive(Clone, Copy, Debug)]
+#[repr(C)]
+pub struct Request {
+    pub typ: RequestType,
+    _reserved0: u32,
+    pub sector: u64,
+    // XXX: various request types have a variable-size data field here. Not sure how to model that tbh.
+    pub status: RequestStatus,
+}
+
+impl Request {
+    pub fn read(sector: u64) -> Request {
+        Request { typ: RequestType::Read, _reserved0: 0, sector, status: RequestStatus::Ok }
+    }
+}
+
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+#[repr(u32)]
+pub enum RequestType {
+    Read = 0,
+    Write = 1,
+    Flush = 4,
+    GetId = 8,
+    GetLifetime = 10,
+    Discard = 11,
+    WriteZeroes = 13,
+    SecureErase = 14,
+}
+
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+#[repr(u8)]
+pub enum RequestStatus {
+    Ok = 0,
+    Error = 1,
+    Unsupported = 2,
+}

@@ -18,6 +18,7 @@ use core::{
 ///    - The Used Ring (of size `6 + 8 * Queue Size`)
 /// The queue size is found in a transport-specific way (and is a maximum of `32768`).
 pub struct Virtqueue {
+    size: u16,
     free_entries: VecDeque<u16>,
     pub descriptor_table: Mapped<[Descriptor]>,
     pub available_ring: Mapped<AvailableRing>,
@@ -31,15 +32,64 @@ impl Virtqueue {
         M: Mapper,
     {
         let free_entries = (0..queue_size).collect();
-        let queue_size = queue_size as usize;
-        // let descriptor_table = mapper.create_slice(queue_size, 16 * queue_size);
-        // let available_ring = mapper.create_slice(queue_size, 6 + 2 * queue_size);
-        // let used_ring = mapper.create_slice(queue_size, 7 + 8 * queue_size);
         let descriptor_table = unsafe { Mapped::new_slice(queue_size as usize, mapper).assume_init() };
         let available_ring = unsafe { Mapped::new(queue_size as usize, mapper) };
         let used_ring = unsafe { Mapped::new(queue_size as usize, mapper) };
 
-        Virtqueue { free_entries, descriptor_table, available_ring, used_ring, used_ring_last_seen: 0 }
+        Virtqueue {
+            size: queue_size,
+            free_entries,
+            descriptor_table,
+            available_ring,
+            used_ring,
+            used_ring_last_seen: 0,
+        }
+    }
+
+    /// Push a descriptor into the descriptor table, returning its index. Returns `None` if there is no space left
+    /// in the table.
+    pub fn push_descriptor(&mut self, index: u16, descriptor: Descriptor) {
+        let (_, virt) = self.descriptor_table.get(index as usize).unwrap();
+        unsafe {
+            ptr::write_volatile(virt.as_ptr(), descriptor);
+        }
+    }
+
+    /// Make the descriptor chain starting at `index` available to the device, allowing it to start servicing the
+    /// described request.
+    pub fn make_descriptor_available(&mut self, index: u16) {
+        // TODO: can we find a less hideous way to write this???
+        let ring_index_ptr = unsafe {
+            self.available_ring.mapped.as_ptr().byte_add(mem::offset_of!(AvailableRing, index)) as *const u16
+        };
+        let mut ring_index = unsafe { ptr::read_volatile(ring_index_ptr) };
+        ring_index %= self.size;
+
+        // Write into the correct entry of the ring
+        unsafe {
+            // TODO: we can't use `offset_of` on `ring` bc its dyn-sized.
+            let ring = self.available_ring.mapped.as_ptr().byte_add(4) as *mut u16;
+            let address = ring.add(ring_index as usize);
+            ptr::write_volatile(address, index);
+        }
+
+        // Do a fence to make sure the device sees the update to the ring before we increment the index
+        unsafe {
+            core::arch::asm!("fence ow, ow");
+        }
+
+        // Update the ring's index
+        unsafe {
+            ptr::write_volatile(ring_index_ptr as *mut u16, ring_index.wrapping_add(1));
+        }
+    }
+
+    pub fn alloc_descriptor(&mut self) -> Option<u16> {
+        self.free_entries.pop_back()
+    }
+
+    pub fn free_descriptor(&mut self, index: u16) {
+        self.free_entries.push_back(index);
     }
 }
 
@@ -135,18 +185,21 @@ impl<T> Mapped<[MaybeUninit<T>]> {
 }
 
 impl<T> Mapped<[T]> {
-    pub fn get(&mut self, index: usize) -> Option<NonNull<T>> {
+    /// Get the physical and virtual addresses of the element at `index`.
+    pub fn get(&mut self, index: usize) -> Option<(usize, NonNull<T>)> {
         if index >= self.mapped.len() {
             return None;
         }
 
-        Some(unsafe { NonNull::new_unchecked(self.mapped.as_ptr().get_unchecked_mut(index)) })
+        let physical = self.physical + index * mem::size_of::<T>();
+        let virt = unsafe { NonNull::new_unchecked(self.mapped.as_ptr().get_unchecked_mut(index)) };
+        Some((physical, virt))
     }
 }
 
 pub trait Mapper {
-    // fn create_slice<T>(&self, num_elements: usize, size: usize) -> Mapped<[MaybeUninit<T>]>;
-
-    /// Allocate `size` bytes of **zeroed** memory, returning its physical and virtual addresses.
+    /// Allocate `size` bytes of **zeroed** memory, and return the physical and virtual addresses.
+    // TODO: a real future API should provide control over whether the memory is manually zeroed - some devices
+    // don't want you to randomly write zeroes to its precious MMIO
     fn alloc(&self, size: usize) -> (usize, usize);
 }
