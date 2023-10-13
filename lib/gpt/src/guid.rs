@@ -19,57 +19,48 @@ impl Guid {
             return None;
         }
 
-        // Check that there are hyphens in the places we expect there to be
-        match (bytes[8], bytes[13], bytes[18], bytes[23]) {
-            (b'-', b'-', b'-', b'-') => (),
-            _ => return None,
+        const fn decode_hex(byte: u8) -> Option<u8> {
+            match byte {
+                b'0'..=b'9' => Some(byte - b'0'),
+                b'a'..=b'f' => Some(0xa + byte - b'a'),
+                b'A'..=b'F' => Some(0xa + byte - b'A'),
+                _ => None,
+            }
         }
 
         /*
-         * Decode pairs of hex-encoded bytes using a lookup table. We do this because it's the smallest unit to appear in
-         * the GUID.
-         *
-         * GUID     aabbccdd-eeff-gghh-iijj-kkllmmnnoopp
-         * Index       0   4    9   14   19   24  28  32
+         * Decode each pair of chars into a byte.
+         * XXX: I can't seem to figure out why the ordering seems to change halfway through, but I've now spent
+         * longer thinking about GUIDs than I ever wanted to, so if it works, it works.
          */
-        const HEX_TABLE: &[u8; 256] = &{
-            let mut table = [0; 256];
-            let mut i: u8 = 0;
-
-            loop {
-                table[i as usize] = match i {
-                    b'0'..=b'9' => i - b'0',
-                    b'a'..=b'f' => i - b'a' + 0xa,
-                    b'A'..=b'F' => i - b'A' + 0xa,
-                    _ => 0xff,
-                };
-
-                if i == 255 {
-                    break table;
-                }
-
-                i += 1
-            }
-        };
-        let indices: [u8; 8] = [0, 4, 9, 14, 19, 24, 28, 32];
+        let mut i = 0;
         let mut buf: [u8; 16] = [0; 16];
-        let mut group = 0;
-
-        while group < 8 {
-            let i = indices[group];
-
-            let h1 = HEX_TABLE[bytes[i as usize] as usize];
-            let h2 = HEX_TABLE[bytes[(i + 1) as usize] as usize];
-            let h3 = HEX_TABLE[bytes[(i + 2) as usize] as usize];
-            let h4 = HEX_TABLE[bytes[(i + 3) as usize] as usize];
-
-            if h1 | h2 | h3 | h4 == 0xff {
-                return None;
+        while i < bytes.len() {
+            match i {
+                8 | 13 | 18 | 23 => {
+                    if bytes[i] != b'-' {
+                        return None;
+                    }
+                }
+                0 | 1 => buf[3] = (buf[3] << 4) | decode_hex(bytes[i]).unwrap(),
+                2 | 3 => buf[2] = (buf[2] << 4) | decode_hex(bytes[i]).unwrap(),
+                4 | 5 => buf[1] = (buf[1] << 4) | decode_hex(bytes[i]).unwrap(),
+                6 | 7 => buf[0] = (buf[0] << 4) | decode_hex(bytes[i]).unwrap(),
+                9 | 10 => buf[5] = (buf[5] << 4) | decode_hex(bytes[i]).unwrap(),
+                11 | 12 => buf[4] = (buf[4] << 4) | decode_hex(bytes[i]).unwrap(),
+                14 | 15 => buf[7] = (buf[7] << 4) | decode_hex(bytes[i]).unwrap(),
+                16 | 17 => buf[6] = (buf[6] << 4) | decode_hex(bytes[i]).unwrap(),
+                19 | 20 => buf[8] = (buf[8] << 4) | decode_hex(bytes[i]).unwrap(),
+                21 | 22 => buf[9] = (buf[9] << 4) | decode_hex(bytes[i]).unwrap(),
+                24 | 25 => buf[10] = (buf[10] << 4) | decode_hex(bytes[i]).unwrap(),
+                26 | 27 => buf[11] = (buf[11] << 4) | decode_hex(bytes[i]).unwrap(),
+                28 | 29 => buf[12] = (buf[12] << 4) | decode_hex(bytes[i]).unwrap(),
+                30 | 31 => buf[13] = (buf[13] << 4) | decode_hex(bytes[i]).unwrap(),
+                32 | 33 => buf[14] = (buf[14] << 4) | decode_hex(bytes[i]).unwrap(),
+                34 | 35 => buf[15] = (buf[15] << 4) | decode_hex(bytes[i]).unwrap(),
+                _ => unreachable!(),
             }
-
-            buf[group * 2] = h1.wrapping_shl(4) | h2;
-            buf[group * 2 + 1] = h3.wrapping_shl(4) | h4;
-            group += 1;
+            i += 1;
         }
 
         Some(Self(buf))
@@ -81,9 +72,9 @@ impl fmt::Debug for Guid {
         write!(
             f,
             "Guid({:0<8x}-{:0<4x}-{:0<4x}-{:0<2x}{:0<2x}-{:0<2x}{:0<2x}{:0<2x}{:0<2x}{:0<2x}{:0<2x})",
-            u32::from_be_bytes(self.0[0..4].try_into().unwrap()),
-            u16::from_be_bytes(self.0[4..6].try_into().unwrap()),
-            u16::from_be_bytes(self.0[6..8].try_into().unwrap()),
+            u32::from_le_bytes(self.0[0..4].try_into().unwrap()),
+            u16::from_le_bytes(self.0[4..6].try_into().unwrap()),
+            u16::from_le_bytes(self.0[6..8].try_into().unwrap()),
             self.0[8],
             self.0[9],
             self.0[10],
