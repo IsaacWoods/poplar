@@ -5,7 +5,7 @@
 
 #![no_std]
 #![no_main]
-#![feature(pointer_is_aligned, panic_info_message, const_mut_refs, strict_provenance)]
+#![feature(pointer_is_aligned, panic_info_message, const_mut_refs, strict_provenance, fn_align)]
 
 extern crate alloc;
 
@@ -18,7 +18,7 @@ mod virtio_block;
 use core::{arch::asm, mem, ptr};
 use fdt::Fdt;
 use hal::memory::{Flags, FrameAllocator, FrameSize, PAddr, PageTable, Size4KiB, VAddr};
-use hal_riscv::paging::PageTableImpl;
+use hal_riscv::{hw::csr::Stvec, paging::PageTableImpl};
 use linked_list_allocator::LockedHeap;
 use memory::{MemoryManager, MemoryRegions};
 use pci::PciAccess;
@@ -82,6 +82,8 @@ pub fn seed_main(hart_id: u64, fdt_ptr: *const u8) -> ! {
     info!("Hello, World!");
     info!("HART ID: {}", hart_id);
     info!("FDT address: {:?}", fdt_ptr);
+
+    Stvec::set(VAddr::new(trap_handler as extern "C" fn() as usize));
 
     let fdt = unsafe { Fdt::from_ptr(fdt_ptr).expect("Failed to parse FDT") };
 
@@ -292,4 +294,12 @@ fn alloc_and_map_kernel_heap(
             &MEMORY_MANAGER,
         )
         .unwrap();
+}
+
+#[repr(align(4))]
+pub extern "C" fn trap_handler() {
+    use hal_riscv::hw::csr::{Scause, Sepc};
+    let scause = Scause::read();
+    let sepc = Sepc::read();
+    panic!("Trap! Scause = {:?}, sepc = {:?}", scause, sepc);
 }
