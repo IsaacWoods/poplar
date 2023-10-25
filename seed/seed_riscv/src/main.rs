@@ -129,6 +129,8 @@ pub fn seed_main(hart_id: u64, fdt_ptr: *const u8) -> ! {
     {
         let reg = virtio_node.reg().unwrap().next().unwrap();
         let header = unsafe { &*(reg.starting_address as *const VirtioMmioHeader) };
+        // XXX: not sure how brittle this is, but each device seems to only have one interrupt
+        let interrupt = virtio_node.interrupts().unwrap().next().unwrap();
 
         if header.magic.read() == u32::from_le_bytes(*b"virt") {
             let device_type = DeviceType::try_from(header.device_id.read()).unwrap();
@@ -138,9 +140,17 @@ pub fn seed_main(hart_id: u64, fdt_ptr: *const u8) -> ! {
                     let config = unsafe { &mut *(reg.starting_address as *mut BlockDeviceConfig) };
                     let mut device = virtio_block::VirtioBlockDevice::init(config, &MEMORY_MANAGER);
 
-                    let gpt_header = unsafe { device.read(1).cast::<gpt::GptHeader>().as_ref() }.clone();
+                    let gpt_header = unsafe { device.read(1).data.cast::<gpt::GptHeader>().as_ref() };
                     gpt_header.validate().unwrap();
                     info!("GPT header: {:#?}", gpt_header);
+
+                    // TODO: at some point we should iterate all parition entries properly
+                    // (including reading multiple sectors if needed)
+                    let partition_table = unsafe {
+                        device.read(gpt_header.partition_entry_lba).data.cast::<gpt::PartitionEntry>().as_ref()
+                    };
+                    info!("First partition entry: {:#?}", partition_table);
+                    assert_eq!(partition_table.partition_type_guid, gpt::Guid::EFI_SYSTEM_PARTITION);
                 }
                 other => info!("Unsupported Virtio device of type {:?}. Ignoring.", other),
             }

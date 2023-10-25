@@ -1,4 +1,5 @@
 use crate::memory::MemoryManager;
+use alloc::collections::VecDeque;
 use core::{ptr, ptr::NonNull};
 use tracing::error;
 use virtio::{
@@ -10,7 +11,9 @@ pub struct VirtioBlockDevice<'a> {
     device: &'a mut BlockDeviceConfig,
     queue: Virtqueue,
     request_buffer: Mapped<[virtio::block::Request]>,
+    free_request_slots: VecDeque<u16>,
     data_buffer: Mapped<[[u8; 512]]>,
+    free_data_slots: VecDeque<u16>,
 }
 
 impl<'a> VirtioBlockDevice<'a> {
@@ -19,7 +22,9 @@ impl<'a> VirtioBlockDevice<'a> {
         // need to reset it too)
         let queue = Virtqueue::new(64, memory_manager);
         let request_buffer = unsafe { Mapped::<[virtio::block::Request]>::new(64, memory_manager) };
+        let free_request_slots = (0..64).collect();
         let data_buffer = unsafe { Mapped::<[[u8; 512]]>::new(512, memory_manager) };
+        let free_data_slots = (0..512).collect();
 
         device.header.reset();
         device.header.set_status_flag(virtio::StatusFlags::Acknowledge);
@@ -42,17 +47,19 @@ impl<'a> VirtioBlockDevice<'a> {
             error!("Virtio device initialization failed");
         }
 
-        VirtioBlockDevice { device, queue, request_buffer, data_buffer }
+        VirtioBlockDevice { device, queue, request_buffer, free_request_slots, data_buffer, free_data_slots }
     }
 
-    pub fn read(&mut self, sector: u64) -> NonNull<[u8; 512]> {
-        // TODO: actually manage free request slots etc. - this just overwrites the last-read sector atm lmao
-        let (request_phys, request_virt) = self.request_buffer.get(0).unwrap();
+    pub fn read(&mut self, sector: u64) -> ReadToken {
+        let request_slot = self.alloc_request_slot();
+        let (request_phys, request_virt) = self.request_buffer.get(request_slot as usize).unwrap();
         unsafe {
             ptr::write_volatile(request_virt.as_ptr(), virtio::block::Request::read(sector));
         }
 
-        let (data_phys, data_virt) = self.data_buffer.get(0).unwrap();
+        let data_slot = self.alloc_data_slot();
+        tracing::trace!("Request_slot: {}, data_slot: {}", request_slot, data_slot);
+        let (data_phys, data_virt) = self.data_buffer.get(data_slot as usize).unwrap();
 
         use virtio::virtqueue::{Descriptor, DescriptorFlags};
         let descriptor_0 = self.queue.alloc_descriptor().unwrap();
@@ -84,7 +91,33 @@ impl<'a> VirtioBlockDevice<'a> {
         }
         self.device.header.queue_notify.write(0);
 
+        // XXX: this is a load-bearing print. We don't actually check that the request has been serviced before
+        // returning the data - this uses enough cycles that it's probably done before we return.
+        tracing::info!("Read data: {:?}", unsafe { data_virt.as_ref() });
         // TODO: read the status of the request before assuming data is good
-        data_virt
+        ReadToken { data: data_virt, data_slot, request_slot }
     }
+
+    fn alloc_request_slot(&mut self) -> u16 {
+        self.free_request_slots.pop_back().expect("Too many requests in-flight!")
+    }
+
+    fn free_request_slot(&mut self, slot: u16) {
+        self.free_request_slots.push_back(slot);
+    }
+
+    fn alloc_data_slot(&mut self) -> u16 {
+        self.free_data_slots.pop_back().expect("Too many data sectors loaded atm!")
+    }
+
+    fn free_data_slot(&mut self, slot: u16) {
+        self.free_data_slots.push_back(slot);
+    }
+}
+
+/// Represents some data that has been read from the device.
+pub struct ReadToken {
+    pub data: NonNull<[u8; 512]>,
+    data_slot: u16,
+    request_slot: u16,
 }

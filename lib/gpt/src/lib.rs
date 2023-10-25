@@ -47,12 +47,12 @@ impl GptHeader {
 #[derive(Clone, Debug)]
 #[repr(C)]
 pub struct PartitionEntry {
-    partition_type_guid: Guid,
-    unique_partition_guid: Guid,
-    starting_lba: u64,
-    ending_lba: u64,
-    attributes: PartitionAttributes,
-    partition_name: [u8; 72],
+    pub partition_type_guid: Guid,
+    pub unique_partition_guid: Guid,
+    pub starting_lba: u64,
+    pub ending_lba: u64,
+    pub attributes: PartitionAttributes,
+    pub partition_name: [u8; 72],
 }
 
 impl PartitionEntry {
