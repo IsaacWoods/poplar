@@ -11,6 +11,13 @@ env:
 
 jobs:
   build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - PLATFORM: x64
+          - PLATFORM: riscv
+
     runs-on: ubuntu-latest
 
     steps:
@@ -26,19 +33,5 @@ jobs:
         profile: minimal
         components: rust-src
         
-    - name: Install dependencies
-      run: |
-        sudo apt-get install mtools
-        sudo apt-get install qemu
-        
     - name: Build
-      run: cargo xtask dist --kernel_features qemu_exit
-      
-    # TODO: run tests
-    # - name: Run tests
-    #   run: make test
-
-    - name: Emulate
-      run: |
-        qemu-system-x86_64 --version
-        cargo xtask qemu --kernel_features qemu_exit
+      run: cargo xtask dist -p ${{ matrix.platform }}
