@@ -3,7 +3,8 @@
 - [Introduction](./introduction/index.md)
 
 - [The Kernel](./kernel/index.md)
-    - [Platforms](./kernel/platforms.md)
+    - [Platforms](./kernel/platforms/index.md)
+        - [MangoPi MQ-Pro](./kernel/platforms/mqpro.md)
     - [Seed](./kernel/seed.md)
     - [Kernel Objects](./kernel/kernel_objects.md)
     - [Debugging the kernel](./kernel/debugging.md)
