@@ -124,6 +124,14 @@ impl Dist {
         use cargo::RunCargo;
         use image::MakeGptImage;
 
+        println!("{}", "[*] Building D1 boot0".bold().magenta());
+        let d1_boot0 = RunCargo::new("d1_boot0", PathBuf::from("seed/d1_boot0/"))
+            .workspace(PathBuf::from("seed/"))
+            .target(Target::Triple("riscv64imac-unknown-none-elf".to_string()))
+            .release(self.release)
+            .std_components(vec!["core".to_string()])
+            .rustflags("-Clink-arg=-Td1_boot0/link.ld")
+            .run()?;
         println!("{}", "[*] Building Seed for RISC-V".bold().magenta());
         let seed_riscv = RunCargo::new("seed_riscv", PathBuf::from("seed/seed_riscv/"))
             .workspace(PathBuf::from("seed/"))

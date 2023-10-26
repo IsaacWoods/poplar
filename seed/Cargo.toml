@@ -9,4 +9,4 @@ hal = { path = "../lib/hal" }
 heapless = "0.7.16"
 
 [workspace]
-members = ["seed_uefi", "seed_riscv"]
+members = ["seed_uefi", "seed_riscv", "d1_boot0"]
