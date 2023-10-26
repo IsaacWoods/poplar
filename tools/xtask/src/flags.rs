@@ -29,6 +29,10 @@ xflags::xflags! {
             optional --debug_cpu_firehose
         }
 
+        cmd opensbi {
+            optional -p, --platform platform: Platform
+        }
+
         cmd clean {}
     }
 }
@@ -75,6 +79,7 @@ pub enum TaskCmd {
     Help(Help),
     Dist(Dist),
     Qemu(Qemu),
+    Opensbi(Opensbi),
     Clean(Clean),
 }
 
@@ -101,6 +106,11 @@ pub struct Qemu {
     pub debug_int_firehose: bool,
     pub debug_mmu_firehose: bool,
     pub debug_cpu_firehose: bool,
+}
+
+#[derive(Debug)]
+pub struct Opensbi {
+    pub platform: Option<Platform>,
 }
 
 #[derive(Debug)]

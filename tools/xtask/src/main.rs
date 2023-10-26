@@ -20,6 +20,7 @@ use riscv::qemu::RunQemuRiscV;
 use serde::Serialize;
 use std::{
     env,
+    io::Write,
     path::{Path, PathBuf},
     process::Command,
 };
@@ -59,6 +60,15 @@ fn main() -> Result<()> {
                         .debug_int_firehose(flags.debug_int_firehose)
                         .run()
                 }
+            }
+        }
+
+        TaskCmd::Opensbi(flags) => {
+            match flags.platform.unwrap_or(Platform::default()) {
+                Platform::RiscV => {
+                    build_opensbi("generic")
+                }
+                _ => Err(eyre!("OpenSBI is only needed for RISC-V platforms!")),
             }
         }
 
@@ -219,6 +229,21 @@ impl Dist {
         let user_tasks = self.user_tasks.iter().map(|task| task.name.clone()).collect();
         SeedConfig { user_tasks }
     }
+}
+
+pub fn build_opensbi(platform: &str) -> Result<()> {
+    println!("{}", format!("[*] Building OpenSBI for platform '{}'", platform).bold().magenta());
+    let _dir = pushd("bundled/opensbi")?;
+    let output = Command::new("make")
+        .arg("LLVM=1")
+        .arg(format!("PLATFORM={}", platform))
+        .output().unwrap();
+    std::io::stdout().write_all(&output.stdout).unwrap();
+    std::io::stderr().write_all(&output.stderr).unwrap();
+    if !output.status.success() {
+        return Err(eyre!("Building OpenSBI failed!"));
+    }
+    Ok(())
 }
 
 fn clean(manifest_dir: PathBuf) -> Result<()> {
