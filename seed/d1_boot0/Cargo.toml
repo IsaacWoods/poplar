@@ -5,3 +5,4 @@ authors = ["Isaac Woods"]
 edition = "2021"
 
 [dependencies]
+volatile = { path = "../../lib/volatile" }
