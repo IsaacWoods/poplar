@@ -5,10 +5,6 @@ xflags::xflags! {
     src "./src/flags.rs"
 
     cmd task {
-        default cmd help {
-            optional -h,--help
-        }
-
         cmd dist {
             optional --config config_path: PathBuf
             optional --release
@@ -76,16 +72,10 @@ pub struct Task {
 
 #[derive(Debug)]
 pub enum TaskCmd {
-    Help(Help),
     Dist(Dist),
     Qemu(Qemu),
     Opensbi(Opensbi),
     Clean(Clean),
-}
-
-#[derive(Debug)]
-pub struct Help {
-    pub help: bool,
 }
 
 #[derive(Debug)]
@@ -117,7 +107,10 @@ pub struct Opensbi {
 pub struct Clean;
 
 impl Task {
-    pub const HELP: &'static str = Self::HELP_;
+    #[allow(dead_code)]
+    pub fn from_env_or_exit() -> Self {
+        Self::from_env_or_exit_()
+    }
 
     #[allow(dead_code)]
     pub fn from_env() -> xflags::Result<Self> {

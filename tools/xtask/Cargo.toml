@@ -5,7 +5,7 @@ authors = ["Isaac Woods"]
 edition = "2018"
 
 [dependencies]
-xflags = "0.2"
+xflags = "0.3.1"
 xshell = "0.1.14"
 eyre = "0.6.5"
 color-eyre = "0.5.11"

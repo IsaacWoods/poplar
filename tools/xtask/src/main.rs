@@ -33,11 +33,6 @@ fn main() -> Result<()> {
 
     let flags = flags::Task::from_env()?;
     match flags.subcommand {
-        TaskCmd::Help(_) => {
-            println!("{}", flags::Task::HELP);
-            Ok(())
-        }
-
         TaskCmd::Dist(flags) => {
             let config = config::Config::new(&DistOptions::from(&flags));
             dist(&config)?;
