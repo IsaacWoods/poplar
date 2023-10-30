@@ -29,6 +29,10 @@ xflags::xflags! {
             optional -p, --platform platform: Platform
         }
 
+        cmd devicetree {
+            required path: PathBuf
+        }
+
         cmd clean {}
     }
 }
@@ -75,6 +79,7 @@ pub enum TaskCmd {
     Dist(Dist),
     Qemu(Qemu),
     Opensbi(Opensbi),
+    Devicetree(Devicetree),
     Clean(Clean),
 }
 
@@ -101,6 +106,11 @@ pub struct Qemu {
 #[derive(Debug)]
 pub struct Opensbi {
     pub platform: Option<Platform>,
+}
+
+#[derive(Debug)]
+pub struct Devicetree {
+    pub path: PathBuf,
 }
 
 #[derive(Debug)]
