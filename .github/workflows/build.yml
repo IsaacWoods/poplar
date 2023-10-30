@@ -16,7 +16,7 @@ jobs:
       matrix:
         include:
           - PLATFORM: x64
-          - PLATFORM: riscv
+          - PLATFORM: rv64_virt
 
     runs-on: ubuntu-latest
 
