@@ -25,7 +25,8 @@ pub struct UserTask {
 struct ConfigFile {
     platform: Option<Platform>,
     x64: Option<PlatformInfo>,
-    riscv: Option<PlatformInfo>,
+    rv64_virt: Option<PlatformInfo>,
+    mq_pro: Option<PlatformInfo>,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -44,7 +45,8 @@ impl Config {
         let platform = cli_options.platform.unwrap_or(file.platform.unwrap_or(Platform::default()));
         let platform_info = match platform {
             Platform::X64 => file.x64.as_ref(),
-            Platform::RiscV => file.riscv.as_ref(),
+            Platform::Rv64Virt => file.rv64_virt.as_ref(),
+            Platform::MqPro => file.mq_pro.as_ref(),
         };
         let release =
             cli_options.release || platform_info.map(|info| info.release.unwrap_or(false)).unwrap_or(false);
@@ -77,13 +79,15 @@ impl Config {
 pub enum Platform {
     #[serde(alias = "x64")]
     X64,
-    #[serde(alias = "riscv")]
-    RiscV,
+    #[serde(alias = "rv64_virt")]
+    Rv64Virt,
+    #[serde(alias = "mq_pro")]
+    MqPro,
 }
 
 impl Default for Platform {
     fn default() -> Self {
-        Platform::RiscV
+        Platform::Rv64Virt
     }
 }
 
@@ -93,7 +97,8 @@ impl std::str::FromStr for Platform {
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s.to_lowercase().as_ref() {
             "x64" => Ok(Platform::X64),
-            "riscv" => Ok(Platform::RiscV),
+            "rv64_virt" => Ok(Platform::Rv64Virt),
+            "mq_pro" => Ok(Platform::MqPro),
             _ => Err("Unrecognised platform string. Accepted values are `x64` and `riscv`."),
         }
     }

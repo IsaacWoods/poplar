@@ -1,4 +1,4 @@
-platform = "riscv"
+platform = "rv64_virt"
 
 [x64]
 release = false
@@ -10,6 +10,9 @@ user_tasks = [
     "echo user/echo",
 ]
 
-[riscv]
+[rv64_virt]
 # The release profile is heavily recommended for software-emulated targets to achieve reasonable speeds
+release = true
+
+[mq_pro]
 release = true

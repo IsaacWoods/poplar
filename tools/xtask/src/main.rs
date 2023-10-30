@@ -54,23 +54,22 @@ fn main() -> Result<()> {
                     .debug_mmu_firehose(flags.debug_mmu_firehose)
                     .debug_cpu_firehose(flags.debug_cpu_firehose)
                     .run(),
-                Platform::RiscV => {
+                Platform::Rv64Virt => {
                     RunQemuRiscV::new(dist_result.bootloader_path, dist_result.kernel_path, dist_result.disk_image)
                         .open_display(flags.display)
                         .debug_int_firehose(flags.debug_int_firehose)
                         .run()
                 }
+                Platform::MqPro => {
+                    panic!("MQ-Pro does not support running in QEMU");
+                }
             }
         }
 
-        TaskCmd::Opensbi(flags) => {
-            match flags.platform.unwrap_or(Platform::default()) {
-                Platform::RiscV => {
-                    build_opensbi("generic")
-                }
-                _ => Err(eyre!("OpenSBI is only needed for RISC-V platforms!")),
-            }
-        }
+        TaskCmd::Opensbi(flags) => match flags.platform.unwrap_or(Platform::default()) {
+            Platform::Rv64Virt | Platform::MqPro => build_opensbi("generic"),
+            _ => Err(eyre!("OpenSBI is only needed for RISC-V platforms!")),
+        },
 
         TaskCmd::Clean(_) => {
             clean(PathBuf::from("seed/"))?;
@@ -98,7 +97,8 @@ fn dist(config: &Config) -> Result<DistResult> {
 
     match config.platform {
         Platform::X64 => dist.build_x64(),
-        Platform::RiscV => dist.build_riscv(),
+        Platform::Rv64Virt => dist.build_rv64_virt(),
+        Platform::MqPro => dist.build_mq_pro(),
     }
 }
 
@@ -120,18 +120,10 @@ struct SeedConfig {
 }
 
 impl Dist {
-    pub fn build_riscv(self) -> Result<DistResult> {
+    pub fn build_rv64_virt(self) -> Result<DistResult> {
         use cargo::RunCargo;
         use image::MakeGptImage;
 
-        println!("{}", "[*] Building D1 boot0".bold().magenta());
-        let d1_boot0 = RunCargo::new("d1_boot0", PathBuf::from("seed/d1_boot0/"))
-            .workspace(PathBuf::from("seed/"))
-            .target(Target::Triple("riscv64imac-unknown-none-elf".to_string()))
-            .release(self.release)
-            .std_components(vec!["core".to_string()])
-            .rustflags("-Clink-arg=-Td1_boot0/link.ld")
-            .run()?;
         println!("{}", "[*] Building Seed for RISC-V".bold().magenta());
         let seed_riscv = RunCargo::new("seed_riscv", PathBuf::from("seed/seed_riscv/"))
             .workspace(PathBuf::from("seed/"))
@@ -158,6 +150,34 @@ impl Dist {
         image.build()?;
 
         Ok(DistResult { bootloader_path: seed_riscv, kernel_path: kernel, disk_image: Some(image_path) })
+    }
+
+    pub fn build_mq_pro(self) -> Result<DistResult> {
+        use cargo::RunCargo;
+
+        println!("{}", "[*] Building D1 boot0".bold().magenta());
+        let _d1_boot0 = RunCargo::new("d1_boot0", PathBuf::from("seed/d1_boot0/"))
+            .workspace(PathBuf::from("seed/"))
+            .target(Target::Triple("riscv64imac-unknown-none-elf".to_string()))
+            .release(self.release)
+            .std_components(vec!["core".to_string()])
+            .rustflags("-Clink-arg=-Td1_boot0/link.ld")
+            .run()?;
+        // TODO: we're currently manually using `llvm-objcopy` - can't seem to get `cargo objcopy`
+        // to find the binary, but have another look.
+        // let d1_boot0_bin = Command::new("cargo").arg("objcopy").arg()
+
+        println!("{}", "[*] Building Seed for RISC-V".bold().magenta());
+        let seed_riscv = RunCargo::new("seed_riscv", PathBuf::from("seed/seed_riscv/"))
+            .workspace(PathBuf::from("seed/"))
+            .target(Target::Triple("riscv64imac-unknown-none-elf".to_string()))
+            .release(self.release)
+            .std_components(vec!["core".to_string(), "alloc".to_string()])
+            .rustflags("-Clink-arg=-Tseed_riscv/link.ld")
+            .run()?;
+
+        // TODO: no kernel yet so bodged path
+        Ok(DistResult { bootloader_path: seed_riscv, kernel_path: PathBuf::new(), disk_image: None })
     }
 
     pub fn build_x64(self) -> Result<DistResult> {
@@ -242,10 +262,7 @@ impl Dist {
 pub fn build_opensbi(platform: &str) -> Result<()> {
     println!("{}", format!("[*] Building OpenSBI for platform '{}'", platform).bold().magenta());
     let _dir = pushd("bundled/opensbi")?;
-    let output = Command::new("make")
-        .arg("LLVM=1")
-        .arg(format!("PLATFORM={}", platform))
-        .output().unwrap();
+    let output = Command::new("make").arg("LLVM=1").arg(format!("PLATFORM={}", platform)).output().unwrap();
     std::io::stdout().write_all(&output.stdout).unwrap();
     std::io::stderr().write_all(&output.stderr).unwrap();
     if !output.status.success() {
