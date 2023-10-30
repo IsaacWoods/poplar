@@ -66,6 +66,8 @@ fn main() -> Result<()> {
             _ => Err(eyre!("OpenSBI is only needed for RISC-V platforms!")),
         },
 
+        TaskCmd::Devicetree(flags) => compile_device_tree(&flags.path),
+
         TaskCmd::Clean(_) => {
             clean(PathBuf::from("seed/"))?;
             clean(PathBuf::from("kernel"))?;
@@ -263,6 +265,32 @@ pub fn build_opensbi(platform: &str) -> Result<()> {
     if !output.status.success() {
         return Err(eyre!("Building OpenSBI failed!"));
     }
+    Ok(())
+}
+
+/// Compile the device tree source (`.dts`) at `path` into a device tree blob (`.dtb`). This
+/// requires `dtc` to be installed, as well as `cpp` (the C preprocessor) as many device tree
+/// sources make use of preprocessor directives.
+// TODO: we don't yet correctly handle preprocessor include paths - our current DTs have been
+// manually concatenated but in the future we'll probably want to handle this properly.
+pub fn compile_device_tree(path: &Path) -> Result<()> {
+    use std::process::Stdio;
+
+    println!("{}", format!("[*] Compiling device tree at '{}'", path.display()).bold().magenta());
+
+    let preprocessor = Command::new("cpp")
+        .args(&["-x", "assembler-with-cpp"])
+        .arg("-nostdinc")
+        .arg(path)
+        .stdout(Stdio::piped())
+        .spawn()
+        .unwrap();
+    let _compiler = Command::new("dtc")
+        .args(&["-O", "dtb"])
+        .args(&["-o", path.with_extension("dtb").to_str().unwrap()])
+        .stdin(Stdio::from(preprocessor.stdout.unwrap()))
+        .status()
+        .unwrap();
     Ok(())
 }
 
