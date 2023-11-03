@@ -24,7 +24,7 @@ pub fn init() {
 }
 
 struct SerialWriter {
-    serial: InitGuard<&'static mut Uart16550>,
+    serial: InitGuard<Uart16550<'static>>,
 }
 
 impl SerialWriter {
@@ -33,8 +33,9 @@ impl SerialWriter {
     }
 
     fn init(&mut self) {
+        // TODO: get address and reg width out of FDT
         let serial_mapped_address = physical_to_virtual(PAddr::new(0x1000_0000).unwrap());
-        let serial = unsafe { &mut *(serial_mapped_address.mut_ptr() as *mut Uart16550) };
+        let serial = unsafe { Uart16550::new(usize::from(serial_mapped_address), 1) };
         self.serial.initialize(serial);
     }
 }
