@@ -23,7 +23,7 @@ pub fn init() {
 }
 
 struct SerialWriter {
-    serial: InitGuard<&'static mut Uart16550>,
+    serial: InitGuard<Uart16550<'static>>,
 }
 
 impl SerialWriter {
@@ -32,8 +32,8 @@ impl SerialWriter {
     }
 
     fn init(&mut self) {
-        // TODO: read the address of the UART out of the device tree
-        let serial = unsafe { &mut *(0x1000_0000 as *mut Uart16550) };
+        // TODO: read the address and register width of the UART out of the device tree
+        let serial = unsafe { Uart16550::new(0x0250_0000, 4) };
         self.serial.initialize(serial);
     }
 }
