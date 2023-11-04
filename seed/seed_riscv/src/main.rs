@@ -77,15 +77,14 @@ pub fn seed_main(hart_id: u64, fdt_ptr: *const u8) -> ! {
      * shouldn't turn it back into an address afaiu due to strict provenance.
      */
     let fdt_address = PAddr::new(fdt_ptr.addr()).unwrap();
+    let fdt = unsafe { Fdt::from_ptr(fdt_ptr).expect("Failed to parse FDT") };
 
-    logger::init();
+    logger::init(&fdt);
     info!("Hello, World!");
     info!("HART ID: {}", hart_id);
     info!("FDT address: {:?}", fdt_ptr);
 
     Stvec::set(VAddr::new(trap_handler as extern "C" fn() as usize));
-
-    let fdt = unsafe { Fdt::from_ptr(fdt_ptr).expect("Failed to parse FDT") };
 
     /*
      * Construct an initial map of memory - a series of usable and reserved regions and what is in each of them. At

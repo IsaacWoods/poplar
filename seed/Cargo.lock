@@ -74,12 +74,21 @@ checksum = "6548a0ad5d2549e111e1f6a11a6c2e2d00ce6a3dafe22948d67c2b443f775e52"
 [[package]]
 name = "d1_boot0"
 version = "0.1.0"
+dependencies = [
+ "fdt 0.1.5",
+ "volatile",
+]
 
 [[package]]
 name = "fdt"
 version = "0.1.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "784a4df722dc6267a04af36895398f59d21d07dce47232adf31ec0ff2fa45e67"
+
+[[package]]
+name = "fdt"
+version = "0.2.0-alpha1"
+source = "git+https://github.com/repnop/fdt#58b94fa4591a5731bf6deffd31a501b0303515c4"
 
 [[package]]
 name = "fnv"
@@ -361,7 +370,7 @@ version = "0.1.0"
 dependencies = [
  "arrayvec",
  "bit_field",
- "fdt",
+ "fdt 0.2.0-alpha1",
  "gpt",
  "hal",
  "hal_riscv",

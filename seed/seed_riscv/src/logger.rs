@@ -8,6 +8,7 @@ use core::{
     fmt::Write,
     sync::atomic::{AtomicU64, Ordering},
 };
+use fdt::Fdt;
 use hal_riscv::hw::uart16550::Uart16550;
 use poplar_util::InitGuard;
 use spinning_top::Spinlock;
@@ -16,8 +17,22 @@ use tracing_core::span::Current as CurrentSpan;
 
 static LOGGER: Logger = Logger::new();
 
-pub fn init() {
-    LOGGER.serial.lock().init();
+pub fn init(fdt: &Fdt) {
+    let Some(stdout) = fdt.chosen().stdout() else {
+        // TODO: not sure the point of this as we won't be able to print the message? Can we report
+        // the error through an SBI call or something instead?
+        panic!("FDT must contain a chosen stdout node!");
+    };
+    // TODO: check the compatible to make sure it's something we support
+    // TODO: technically reg-shift could place the registers further apart than their width. Maybe
+    // need to support this at some point?
+    let addr = stdout.node().reg().unwrap().next().unwrap().starting_address as usize;
+    let reg_width = match stdout.node().property("reg-io-width") {
+        Some(property) => property.as_usize().unwrap_or(1),
+        None => 1,
+    };
+
+    LOGGER.serial.lock().init(addr, reg_width);
     tracing::dispatch::set_global_default(tracing::dispatch::Dispatch::from_static(&LOGGER))
         .expect("Failed to set default tracing dispatch");
 }
@@ -31,9 +46,8 @@ impl SerialWriter {
         SerialWriter { serial: InitGuard::uninit() }
     }
 
-    fn init(&mut self) {
-        // TODO: read the address and register width of the UART out of the device tree
-        let serial = unsafe { Uart16550::new(0x0250_0000, 4) };
+    fn init(&mut self, addr: usize, reg_width: usize) {
+        let serial = unsafe { Uart16550::new(addr, reg_width) };
         self.serial.initialize(serial);
     }
 }
