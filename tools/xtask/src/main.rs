@@ -171,6 +171,7 @@ impl Dist {
             .release(self.release)
             .std_components(vec!["core".to_string(), "alloc".to_string()])
             .rustflags("-Clink-arg=-Tseed_riscv/mq_pro.ld")
+            .flatten_result(true)
             .run()?;
 
         // TODO: no kernel yet so bodged path
