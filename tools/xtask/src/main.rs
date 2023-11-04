@@ -127,7 +127,7 @@ impl Dist {
             .target(Target::Triple("riscv64imac-unknown-none-elf".to_string()))
             .release(self.release)
             .std_components(vec!["core".to_string(), "alloc".to_string()])
-            .rustflags("-Clink-arg=-Tseed_riscv/link.ld")
+            .rustflags("-Clink-arg=-Tseed_riscv/rv64_virt.ld")
             .run()?;
 
         println!("{}", "[*] Building the kernel for RISC-V".bold().magenta());
@@ -170,7 +170,7 @@ impl Dist {
             .target(Target::Triple("riscv64imac-unknown-none-elf".to_string()))
             .release(self.release)
             .std_components(vec!["core".to_string(), "alloc".to_string()])
-            .rustflags("-Clink-arg=-Tseed_riscv/link.ld")
+            .rustflags("-Clink-arg=-Tseed_riscv/mq_pro.ld")
             .run()?;
 
         // TODO: no kernel yet so bodged path
