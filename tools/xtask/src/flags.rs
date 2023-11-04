@@ -25,6 +25,14 @@ xflags::xflags! {
             optional --debug_cpu_firehose
         }
 
+        cmd boot {
+            // XXX: shared with dist command. Should be the same.
+            optional --config config_path: PathBuf
+            optional --release
+            optional -p,--platform platform: Platform
+            optional --kernel_features kernel_features: String
+        }
+
         cmd opensbi {
             optional -p, --platform platform: Platform
         }
@@ -46,6 +54,17 @@ pub struct DistOptions {
 
 impl From<&Dist> for DistOptions {
     fn from(flags: &Dist) -> DistOptions {
+        DistOptions {
+            config_path: flags.config.clone().unwrap_or(PathBuf::from("Poplar.toml")),
+            release: flags.release,
+            kernel_features: flags.kernel_features.clone(),
+            platform: flags.platform,
+        }
+    }
+}
+
+impl From<&Boot> for DistOptions {
+    fn from(flags: &Boot) -> DistOptions {
         DistOptions {
             config_path: flags.config.clone().unwrap_or(PathBuf::from("Poplar.toml")),
             release: flags.release,
@@ -78,6 +97,7 @@ pub struct Task {
 pub enum TaskCmd {
     Dist(Dist),
     Qemu(Qemu),
+    Boot(Boot),
     Opensbi(Opensbi),
     Devicetree(Devicetree),
     Clean(Clean),
@@ -101,6 +121,14 @@ pub struct Qemu {
     pub debug_int_firehose: bool,
     pub debug_mmu_firehose: bool,
     pub debug_cpu_firehose: bool,
+}
+
+#[derive(Debug)]
+pub struct Boot {
+    pub config: Option<PathBuf>,
+    pub release: bool,
+    pub platform: Option<Platform>,
+    pub kernel_features: Option<String>,
 }
 
 #[derive(Debug)]

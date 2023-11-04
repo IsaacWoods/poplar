@@ -61,12 +61,35 @@ fn main() -> Result<()> {
             }
         }
 
+        TaskCmd::Boot(flags) => {
+            let config = config::Config::new(&DistOptions::from(&flags));
+            let dist_result = dist(&config)?;
+
+            match config.platform {
+                Platform::MqPro => {
+                    // TODO: probs should check status of `xfel` commands
+                    println!("{}", format!("[*] Uploading and running code on device").bold().magenta());
+                    Command::new("xfel").arg("ddr").arg("d1").status().unwrap();
+                    Command::new("xfel").arg("write").arg("0x40000000").arg("bundled/opensbi/build/platform/generic/firmware/fw_jump.bin").status().unwrap();
+                    Command::new("xfel").arg("write").arg("0x40080000").arg(&dist_result.bootloader_path).status().unwrap();
+                    Command::new("xfel").arg("exec").arg("0x40000000").status().unwrap();
+                }
+                other => panic!("Platform '{:?}' does not support booting directly to a device (use `qemu` to emulate in QEMU instead?)!", other),
+            }
+        }
+
         TaskCmd::Opensbi(flags) => match flags.platform.unwrap_or(Platform::default()) {
-            Platform::Rv64Virt | Platform::MqPro => build_opensbi("generic"),
+            Platform::MqPro => {
+                let fdt_path = compile_device_tree(Path::new("bundled/device_tree/d1_mangopi_mq_pro.dts"))
+                    .unwrap()
+                    .canonicalize()
+                    .unwrap();
+                build_opensbi("generic", &fdt_path, 0x4000_0000, 0x4008_0000)
+            }
             _ => Err(eyre!("OpenSBI is only needed for RISC-V platforms!")),
         },
 
-        TaskCmd::Devicetree(flags) => compile_device_tree(&flags.path),
+        TaskCmd::Devicetree(flags) => compile_device_tree(&flags.path).map(|_| ()),
 
         TaskCmd::Clean(_) => {
             clean(PathBuf::from("seed/"))?;
@@ -257,10 +280,17 @@ impl Dist {
     }
 }
 
-pub fn build_opensbi(platform: &str) -> Result<()> {
+pub fn build_opensbi(platform: &str, fdt: &Path, load_addr: u64, jump_addr: u64) -> Result<()> {
     println!("{}", format!("[*] Building OpenSBI for platform '{}'", platform).bold().magenta());
     let _dir = pushd("bundled/opensbi")?;
-    let output = Command::new("make").arg("LLVM=1").arg(format!("PLATFORM={}", platform)).output().unwrap();
+    let output = Command::new("make")
+        .arg("LLVM=1")
+        .arg(format!("PLATFORM={}", platform))
+        .arg(format!("FW_FDT_PATH={}", fdt.display()))
+        .arg(format!("FW_TEXT_START={:#x}", load_addr))
+        .arg(format!("FW_JUMP_ADDR={:#x}", jump_addr))
+        .output()
+        .unwrap();
     std::io::stdout().write_all(&output.stdout).unwrap();
     std::io::stderr().write_all(&output.stderr).unwrap();
     if !output.status.success() {
@@ -274,7 +304,9 @@ pub fn build_opensbi(platform: &str) -> Result<()> {
 /// sources make use of preprocessor directives.
 // TODO: we don't yet correctly handle preprocessor include paths - our current DTs have been
 // manually concatenated but in the future we'll probably want to handle this properly.
-pub fn compile_device_tree(path: &Path) -> Result<()> {
+// TODO: this should probably check if the source file is newer than the blob before re-compiling
+// every time (included files though?)
+pub fn compile_device_tree(path: &Path) -> Result<PathBuf> {
     use std::process::Stdio;
 
     println!("{}", format!("[*] Compiling device tree at '{}'", path.display()).bold().magenta());
@@ -286,13 +318,14 @@ pub fn compile_device_tree(path: &Path) -> Result<()> {
         .stdout(Stdio::piped())
         .spawn()
         .unwrap();
+    let blob_path = path.with_extension("dtb");
     let _compiler = Command::new("dtc")
         .args(&["-O", "dtb"])
-        .args(&["-o", path.with_extension("dtb").to_str().unwrap()])
+        .args(&["-o", blob_path.to_str().unwrap()])
         .stdin(Stdio::from(preprocessor.stdout.unwrap()))
         .status()
         .unwrap();
-    Ok(())
+    Ok(blob_path)
 }
 
 fn clean(manifest_dir: PathBuf) -> Result<()> {
