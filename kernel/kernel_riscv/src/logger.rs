@@ -8,6 +8,7 @@ use core::{
     fmt::Write,
     sync::atomic::{AtomicU64, Ordering},
 };
+use fdt::Fdt;
 use hal::memory::PAddr;
 use hal_riscv::{hw::uart16550::Uart16550, kernel_map::physical_to_virtual};
 use poplar_util::InitGuard;
@@ -17,8 +18,22 @@ use tracing_core::span::Current as CurrentSpan;
 
 static LOGGER: Logger = Logger::new();
 
-pub fn init() {
-    LOGGER.serial.lock().init();
+pub fn init(fdt: &Fdt) {
+    let Some(stdout) = fdt.chosen().stdout() else {
+        // TODO: not sure the point of this as we won't be able to print the message? Can we report
+        // the error through an SBI call or something instead?
+        panic!("FDT must contain a chosen stdout node!");
+    };
+    // TODO: check the compatible to make sure it's something we support
+    // TODO: technically reg-shift could place the registers further apart than their width. Maybe
+    // need to support this at some point?
+    let addr = stdout.node().reg().unwrap().next().unwrap().starting_address as usize;
+    let reg_width = match stdout.node().property("reg-io-width") {
+        Some(property) => property.as_usize().unwrap_or(1),
+        None => 1,
+    };
+
+    LOGGER.serial.lock().init(addr, reg_width);
     tracing::dispatch::set_global_default(tracing::dispatch::Dispatch::from_static(&LOGGER))
         .expect("Failed to set default tracing dispatch");
 }
@@ -32,10 +47,9 @@ impl SerialWriter {
         SerialWriter { serial: InitGuard::uninit() }
     }
 
-    fn init(&mut self) {
-        // TODO: get address and reg width out of FDT
-        let serial_mapped_address = physical_to_virtual(PAddr::new(0x1000_0000).unwrap());
-        let serial = unsafe { Uart16550::new(usize::from(serial_mapped_address), 1) };
+    fn init(&mut self, addr: usize, reg_width: usize) {
+        let serial_mapped_address = physical_to_virtual(PAddr::new(addr).unwrap());
+        let serial = unsafe { Uart16550::new(usize::from(serial_mapped_address), reg_width) };
         self.serial.initialize(serial);
     }
 }

@@ -23,7 +23,11 @@ use tracing::info;
 
 #[no_mangle]
 pub extern "C" fn kentry(boot_info: &BootInfo) -> ! {
-    logger::init();
+    let fdt = {
+        let address = hal_riscv::kernel_map::physical_to_virtual(boot_info.fdt_address.unwrap());
+        unsafe { fdt::Fdt::from_ptr(address.ptr()).unwrap() }
+    };
+    logger::init(&fdt);
     info!("Hello from the kernel");
 
     Stvec::set(VAddr::new(trap_handler as extern "C" fn() as usize));
