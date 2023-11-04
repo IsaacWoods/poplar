@@ -23,8 +23,12 @@ pub struct RunCargo {
     pub std_components: Vec<String>,
     pub std_features: Vec<String>,
     pub toolchain: Option<String>,
-    // These are passed in the `RUSTFLAGS` environment variable
+    /// These are passed in the `RUSTFLAGS` environment variable
     pub rustflags: Option<String>,
+    /// If `true`, the resulting artifact will be flattened into a flat binary and the path to that
+    /// binary returned as the artifact. The artifact will be placed in Cargo's `target` directory
+    /// with the same name as the original artifact, but with an extension of `bin`.
+    pub flatten_result: bool,
 }
 
 impl RunCargo {
@@ -40,6 +44,7 @@ impl RunCargo {
             std_features: vec![],
             toolchain: None,
             rustflags: None,
+            flatten_result: false,
         }
     }
 
@@ -73,6 +78,10 @@ impl RunCargo {
 
     pub fn rustflags<S: Into<String>>(self, rustflags: S) -> RunCargo {
         RunCargo { rustflags: Some(rustflags.into()), ..self }
+    }
+
+    pub fn flatten_result(self, flatten_result: bool) -> RunCargo {
+        RunCargo { flatten_result, ..self }
     }
 
     /// Run the Cargo invocation. Returns the path at which to find the built artifact.
@@ -127,8 +136,8 @@ impl RunCargo {
             .then_some(())
             .ok_or(eyre!("Cargo invocation for crate {:?} failed", self.manifest_dir))?;
 
-        if let Some(workspace) = self.workspace {
-            Ok(workspace
+        let artifact_path = if let Some(workspace) = self.workspace {
+            workspace
                 .join("target")
                 .join(match self.target {
                     Target::Host => todo!(),
@@ -136,10 +145,9 @@ impl RunCargo {
                     Target::Custom { triple, spec: _spec } => triple,
                 })
                 .join(if self.release { "release" } else { "debug" })
-                .join(self.artifact_name))
+                .join(self.artifact_name)
         } else {
-            Ok(self
-                .manifest_dir
+            self.manifest_dir
                 .join("target")
                 .join(match self.target {
                     Target::Host => todo!(),
@@ -147,7 +155,18 @@ impl RunCargo {
                     Target::Custom { triple, spec: _spec } => triple,
                 })
                 .join(if self.release { "release" } else { "debug" })
-                .join(self.artifact_name))
+                .join(self.artifact_name)
+        };
+
+        if self.flatten_result {
+            let binary_path = artifact_path.with_extension("bin");
+            // TODO: `cargo-binutils` does more complex logic to find this binary from the
+            // `llvm-tools` component. It's in our path for some reason, but that might not be true
+            // for everyone?
+            Command::new("llvm-objcopy").args(&["-O", "binary"]).arg(&artifact_path).arg(&binary_path).status()?;
+            Ok(binary_path)
+        } else {
+            Ok(artifact_path)
         }
     }
 }
