@@ -9,6 +9,7 @@ mod config;
 mod flags;
 mod image;
 mod riscv;
+mod serial;
 mod x64;
 
 use cargo::Target;
@@ -42,6 +43,7 @@ fn main() -> Result<()> {
         TaskCmd::Qemu(flags) => {
             let config = config::Config::new(&DistOptions::from(&flags));
             let dist_result = dist(&config)?;
+
             match config.platform {
                 Platform::X64 => RunQemuX64::new(dist_result.disk_image.unwrap())
                     .open_display(flags.display)
@@ -67,12 +69,17 @@ fn main() -> Result<()> {
 
             match config.platform {
                 Platform::MqPro => {
+                    let serial = serial::Serial::new(&Path::new("/dev/ttyUSB0"), 115200);
+
                     // TODO: probs should check status of `xfel` commands
                     println!("{}", format!("[*] Uploading and running code on device").bold().magenta());
                     Command::new("xfel").arg("ddr").arg("d1").status().unwrap();
                     Command::new("xfel").arg("write").arg("0x40000000").arg("bundled/opensbi/build/platform/generic/firmware/fw_jump.bin").status().unwrap();
                     Command::new("xfel").arg("write").arg("0x40080000").arg(&dist_result.bootloader_path).status().unwrap();
                     Command::new("xfel").arg("exec").arg("0x40000000").status().unwrap();
+
+                    println!("{}", format!("[*] Listening to serial").bold().magenta());
+                    serial.listen();
                 }
                 other => panic!("Platform '{:?}' does not support booting directly to a device (use `qemu` to emulate in QEMU instead?)!", other),
             }
