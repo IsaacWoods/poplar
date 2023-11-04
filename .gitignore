@@ -7,6 +7,7 @@
 *.o
 *.bin
 *.elf
+*.dtb
 
 # These are built on CI and should never be committed
 /doc_target/
