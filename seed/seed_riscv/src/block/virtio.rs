@@ -1,10 +1,16 @@
-use crate::memory::MemoryManager;
+use crate::{
+    block::{BlockDevice, ReadToken},
+    memory::MemoryManager,
+};
 use alloc::collections::VecDeque;
-use core::{ptr, ptr::NonNull};
+use core::ptr;
+use fdt::Fdt;
 use tracing::error;
 use virtio::{
     block::BlockDeviceConfig,
     virtqueue::{Mapped, Virtqueue},
+    DeviceType,
+    VirtioMmioHeader,
 };
 
 pub struct VirtioBlockDevice<'a> {
@@ -17,7 +23,36 @@ pub struct VirtioBlockDevice<'a> {
 }
 
 impl<'a> VirtioBlockDevice<'a> {
-    pub fn init(device: &'a mut BlockDeviceConfig, memory_manager: &MemoryManager) -> VirtioBlockDevice<'a> {
+    /// Find a Virtio block device, if present, and initialize it.
+    pub fn init(fdt: &Fdt, memory_manager: &MemoryManager) -> Option<VirtioBlockDevice<'a>> {
+        /*
+         * Find the Virtio block device's config space and interrupt from the FDT
+         * This shortcircuits if there isn't a Virtio block device present.
+         */
+        // XXX: this assumes that there is only ever one Virtio block device
+        let (config_ptr, _interrupt) = fdt
+            .all_nodes()
+            .filter(|node| node.compatible().map_or(false, |c| c.all().any(|c| c == "virtio,mmio")))
+            .find_map(|node| {
+                let reg = node.reg().unwrap().next().unwrap();
+                let header = unsafe { &*(reg.starting_address as *const VirtioMmioHeader) };
+
+                if !header.is_magic_valid() {
+                    return None;
+                }
+
+                match header.device_type() {
+                    Ok(DeviceType::BlockDevice) => {
+                        // XXX: not sure how brittle this is, but each device seems to only have one interrupt
+                        let interrupt = node.interrupts().unwrap().next().unwrap();
+                        Some((reg.starting_address as *mut BlockDeviceConfig, interrupt))
+                    }
+                    _ => None,
+                }
+            })?;
+
+        let mut device = unsafe { &mut *config_ptr };
+
         // TODO: deal with freeing this memory somehow once we're done with the device (probably
         // need to reset it too)
         let queue = Virtqueue::new(64, memory_manager);
@@ -47,14 +82,39 @@ impl<'a> VirtioBlockDevice<'a> {
             error!("Virtio device initialization failed");
         }
 
-        VirtioBlockDevice { device, queue, request_buffer, free_request_slots, data_buffer, free_data_slots }
+        Some(VirtioBlockDevice { device, queue, request_buffer, free_request_slots, data_buffer, free_data_slots })
     }
 
-    pub fn read(&mut self, sector: u64) -> ReadToken {
+    fn alloc_request_slot(&mut self) -> u16 {
+        self.free_request_slots.pop_back().expect("Too many requests in-flight!")
+    }
+
+    fn free_request_slot(&mut self, slot: u16) {
+        self.free_request_slots.push_back(slot);
+    }
+
+    fn alloc_data_slot(&mut self) -> u16 {
+        self.free_data_slots.pop_back().expect("Too many data sectors loaded atm!")
+    }
+
+    fn free_data_slot(&mut self, slot: u16) {
+        self.free_data_slots.push_back(slot);
+    }
+}
+
+pub struct ReadTokenMeta {
+    data_slot: u16,
+    request_slot: u16,
+}
+
+impl<'a> BlockDevice for VirtioBlockDevice<'a> {
+    type ReadTokenMetadata = ReadTokenMeta;
+
+    fn read(&mut self, block: u64) -> ReadToken<Self::ReadTokenMetadata> {
         let request_slot = self.alloc_request_slot();
         let (request_phys, request_virt) = self.request_buffer.get(request_slot as usize).unwrap();
         unsafe {
-            ptr::write_volatile(request_virt.as_ptr(), virtio::block::Request::read(sector));
+            ptr::write_volatile(request_virt.as_ptr(), virtio::block::Request::read(block));
         }
 
         let data_slot = self.alloc_data_slot();
@@ -95,29 +155,11 @@ impl<'a> VirtioBlockDevice<'a> {
         // returning the data - this uses enough cycles that it's probably done before we return.
         tracing::info!("Read data: {:?}", unsafe { data_virt.as_ref() });
         // TODO: read the status of the request before assuming data is good
-        ReadToken { data: data_virt, data_slot, request_slot }
+        ReadToken { data: data_virt, meta: ReadTokenMeta { data_slot, request_slot } }
     }
 
-    fn alloc_request_slot(&mut self) -> u16 {
-        self.free_request_slots.pop_back().expect("Too many requests in-flight!")
+    fn free_read_block(&mut self, token: ReadToken<Self::ReadTokenMetadata>) {
+        self.free_data_slot(token.meta.data_slot);
+        self.free_request_slot(token.meta.request_slot);
     }
-
-    fn free_request_slot(&mut self, slot: u16) {
-        self.free_request_slots.push_back(slot);
-    }
-
-    fn alloc_data_slot(&mut self) -> u16 {
-        self.free_data_slots.pop_back().expect("Too many data sectors loaded atm!")
-    }
-
-    fn free_data_slot(&mut self, slot: u16) {
-        self.free_data_slots.push_back(slot);
-    }
-}
-
-/// Represents some data that has been read from the device.
-pub struct ReadToken {
-    pub data: NonNull<[u8; 512]>,
-    data_slot: u16,
-    request_slot: u16,
 }
