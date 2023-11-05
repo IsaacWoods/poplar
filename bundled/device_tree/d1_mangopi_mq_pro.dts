@@ -261,6 +261,9 @@
 /dts-v1/;
 
 / {
+    #address-cells = <1>;
+    #size-cells = <1>;
+
 	model = "MangoPi MQ Pro";
 	compatible = "widora,mangopi-mq-pro", "allwinner,sun20i-d1";
 
@@ -272,6 +275,13 @@
 	chosen {
 		stdout-path = "serial0:115200n8";
 	};
+
+    // TODO: this was added by us. I have no idea where it's supposed to come from yet (ie. why it's not in the original DT?)
+    // TODO: I think we should be able to tell it there are multiple models (512MiB vs 1GiB). This just hardcodes 1GiB for now.
+    memory@40000000 {
+        device_type = "memory";
+        reg = <0x40000000 0x40000000>;   // 1GiB starting at 0x4000_0000
+    };
 
 	leds {
 		compatible = "gpio-leds";
@@ -619,18 +629,18 @@
 			status = "reserved";
 		};
 
-		uart0: serial@2500000 {
-			compatible = "snps,dw-apb-uart";
-			reg = <0x2500000 0x400>;
-			reg-io-width = <4>;
-			reg-shift = <2>;
-			interrupts = <SOC_PERIPHERAL_IRQ(2) IRQ_TYPE_LEVEL_HIGH>;
-			clocks = <&ccu CLK_BUS_UART0>;
-			resets = <&ccu RST_BUS_UART0>;
-			dmas = <&dma 14>, <&dma 14>;
-			dma-names = "tx", "rx";
-			status = "disabled";
-		};
+        uart0: serial@2500000 {
+            compatible = "snps,dw-apb-uart";
+            reg = <0x2500000 0x400>;
+            reg-io-width = <4>;
+            reg-shift = <2>;
+            interrupts = <SOC_PERIPHERAL_IRQ(2) IRQ_TYPE_LEVEL_HIGH>;
+            clocks = <&ccu CLK_BUS_UART0>;
+            resets = <&ccu RST_BUS_UART0>;
+            dmas = <&dma 14>, <&dma 14>;
+            dma-names = "tx", "rx";
+            status = "disabled";
+        };
 
 		uart1: serial@2500400 {
 			compatible = "snps,dw-apb-uart";
