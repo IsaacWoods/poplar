@@ -9,12 +9,13 @@
 
 extern crate alloc;
 
+mod block;
 mod image;
 mod logger;
 mod memory;
 mod pci;
-mod virtio_block;
 
+use crate::block::virtio::VirtioBlockDevice;
 use core::{arch::asm, mem, ptr};
 use fdt::Fdt;
 use hal::memory::{Flags, FrameAllocator, FrameSize, PAddr, PageTable, Size4KiB, VAddr};
@@ -25,7 +26,6 @@ use pci::PciAccess;
 use poplar_util::{linker::LinkerSymbol, math::align_up};
 use seed::boot_info::BootInfo;
 use tracing::{info, warn};
-use virtio::{block::BlockDeviceConfig, DeviceType, VirtioMmioHeader};
 
 /*
  * This is the entry-point jumped to from OpenSBI. It needs to be at the very start of the ELF, so we put it in its
@@ -123,41 +123,22 @@ pub fn seed_main(hart_id: u64, fdt_ptr: *const u8) -> ! {
     pci::PciResolver::resolve(pci_access);
 
     /*
-     * Find attached Virtio devices from the device tree.
+     * Find the initialize a Virtio block device if one is present.
      */
-    for virtio_node in
-        fdt.all_nodes().filter(|node| node.compatible().map_or(false, |c| c.all().any(|c| c == "virtio,mmio")))
-    {
-        let reg = virtio_node.reg().unwrap().next().unwrap();
-        let header = unsafe { &*(reg.starting_address as *const VirtioMmioHeader) };
-        // XXX: not sure how brittle this is, but each device seems to only have one interrupt
-        let interrupt = virtio_node.interrupts().unwrap().next().unwrap();
+    let mut virtio_block = VirtioBlockDevice::init(&fdt, &MEMORY_MANAGER);
+    if let Some(mut device) = virtio_block {
+        use block::BlockDevice;
 
-        if header.magic.read() == u32::from_le_bytes(*b"virt") {
-            let device_type = DeviceType::try_from(header.device_id.read()).unwrap();
-            match device_type {
-                DeviceType::Invalid => (),
-                DeviceType::BlockDevice => {
-                    let config = unsafe { &mut *(reg.starting_address as *mut BlockDeviceConfig) };
-                    let mut device = virtio_block::VirtioBlockDevice::init(config, &MEMORY_MANAGER);
+        let gpt_header = unsafe { device.read(1).data.cast::<gpt::GptHeader>().as_ref() };
+        gpt_header.validate().unwrap();
+        info!("GPT header: {:#?}", gpt_header);
 
-                    let gpt_header = unsafe { device.read(1).data.cast::<gpt::GptHeader>().as_ref() };
-                    gpt_header.validate().unwrap();
-                    info!("GPT header: {:#?}", gpt_header);
-
-                    // TODO: at some point we should iterate all parition entries properly
-                    // (including reading multiple sectors if needed)
-                    let partition_table = unsafe {
-                        device.read(gpt_header.partition_entry_lba).data.cast::<gpt::PartitionEntry>().as_ref()
-                    };
-                    info!("First partition entry: {:#?}", partition_table);
-                    assert_eq!(partition_table.partition_type_guid, gpt::Guid::EFI_SYSTEM_PARTITION);
-                }
-                other => info!("Unsupported Virtio device of type {:?}. Ignoring.", other),
-            }
-        } else {
-            warn!("Header of Virtio FDT node '{}' has invalid magic. Ignoring.", virtio_node.name);
-        }
+        // TODO: at some point we should iterate all parition entries properly
+        // (including reading multiple sectors if needed)
+        let partition_table =
+            unsafe { device.read(gpt_header.partition_entry_lba).data.cast::<gpt::PartitionEntry>().as_ref() };
+        info!("First partition entry: {:#?}", partition_table);
+        assert_eq!(partition_table.partition_type_guid, gpt::Guid::EFI_SYSTEM_PARTITION);
     }
 
     /*

@@ -61,6 +61,14 @@ impl VirtioMmioHeader {
         }
     }
 
+    pub fn is_magic_valid(&self) -> bool {
+        self.magic.read() == u32::from_le_bytes(*b"virt")
+    }
+
+    pub fn device_type(&self) -> Result<DeviceType, ()> {
+        DeviceType::try_from(self.device_id.read())
+    }
+
     pub fn is_status_flag_set(&self, flag: StatusFlags) -> bool {
         self.status.read() & flag as u32 == flag as u32
     }
