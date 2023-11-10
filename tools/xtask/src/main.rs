@@ -21,7 +21,6 @@ use riscv::qemu::RunQemuRiscV;
 use serde::Serialize;
 use std::{
     env,
-    io::Write,
     path::{Path, PathBuf},
     process::Command,
 };
@@ -290,17 +289,15 @@ impl Dist {
 pub fn build_opensbi(platform: &str, fdt: &Path, load_addr: u64, jump_addr: u64) -> Result<()> {
     println!("{}", format!("[*] Building OpenSBI for platform '{}'", platform).bold().magenta());
     let _dir = pushd("bundled/opensbi")?;
-    let output = Command::new("make")
+    let status = Command::new("make")
         .arg("LLVM=1")
         .arg(format!("PLATFORM={}", platform))
         .arg(format!("FW_FDT_PATH={}", fdt.display()))
         .arg(format!("FW_TEXT_START={:#x}", load_addr))
         .arg(format!("FW_JUMP_ADDR={:#x}", jump_addr))
-        .output()
+        .status()
         .unwrap();
-    std::io::stdout().write_all(&output.stdout).unwrap();
-    std::io::stderr().write_all(&output.stderr).unwrap();
-    if !output.status.success() {
+    if !status.success() {
         return Err(eyre!("Building OpenSBI failed!"));
     }
     Ok(())
