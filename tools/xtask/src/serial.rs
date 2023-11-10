@@ -23,7 +23,7 @@ impl Serial {
 
                 &mut buffer[0..bytes_read]
             };
-            print!("{}", std::str::from_utf8(read_buffer).unwrap());
+            print!("{}", String::from_utf8_lossy(read_buffer));
         }
     }
 }
