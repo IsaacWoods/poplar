@@ -26,10 +26,29 @@ core::arch::global_asm!(
 "
 );
 
+/*
+ * TODO:
+ * We originally thought we'd need this boot shim to load OpenSBI even when booting over FEL.
+ * However, we've managed to do that without one - this is left over and committed because we'll
+ * need it at some point to load from persistent media on the D1. It'll need plenty more work,
+ * including code to initialize DRAM, special headers to be loaded by the BROM, and a small SDHC
+ * driver to load OpenSBI and Seed from the SD card.
+ *
+ * For now, it should basically be ignored, and is just in-tree to prevent me from having to do the
+ * work of setting it up again when we work on the next bit.
+ */
+
 #[no_mangle]
 pub fn main() -> ! {
     let serial = unsafe { &mut *(0x0250_0000 as *mut Uart) };
     writeln!(serial, "Poplar's boot0 is running!").unwrap();
+
+    let hart_id = unsafe {
+        let value: usize;
+        core::arch::asm!("csrr {}, mhartid", out(reg) value);
+        value
+    };
+    writeln!(serial, "HART id: {}", hart_id).unwrap();
 
     loop {}
 }
@@ -60,13 +79,7 @@ impl Uart {
 impl core::fmt::Write for Uart {
     fn write_str(&mut self, s: &str) -> core::fmt::Result {
         for byte in s.bytes() {
-            match byte {
-                b'\n' => {
-                    self.write(b'\n');
-                    self.write(b'\r');
-                }
-                other => self.write(other),
-            }
+            self.write(byte);
         }
         Ok(())
     }
@@ -76,19 +89,5 @@ impl core::fmt::Write for Uart {
 pub fn panic(_: &core::panic::PanicInfo) -> ! {
     let serial = unsafe { &mut *(0x0250_0000 as *mut Uart) };
     let _ = write!(serial, "boot0: PANIC!");
-    // if let Some(message) = info.message() {
-    //     if let Some(location) = info.location() {
-    //         let _ = writeln!(
-    //             LOGGER.serial.lock(),
-    //             "PANIC: {} ({} - {}:{})",
-    //             message,
-    //             location.file(),
-    //             location.line(),
-    //             location.column()
-    //         );
-    //     } else {
-    //         let _ = writeln!(LOGGER.serial.lock(), "PANIC: {} (no location info)", message);
-    //     }
-    // }
     loop {}
 }
