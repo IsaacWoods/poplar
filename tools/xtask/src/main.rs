@@ -34,13 +34,13 @@ fn main() -> Result<()> {
     let flags = flags::Task::from_env()?;
     match flags.subcommand {
         TaskCmd::Dist(flags) => {
-            let config = config::Config::new(&DistOptions::from(&flags));
+            let config = config::Config::new(Some(&DistOptions::from(&flags)));
             dist(&config)?;
             Ok(())
         }
 
         TaskCmd::Qemu(flags) => {
-            let config = config::Config::new(&DistOptions::from(&flags));
+            let config = config::Config::new(Some(&DistOptions::from(&flags)));
             let dist_result = dist(&config)?;
 
             match config.platform {
@@ -63,7 +63,7 @@ fn main() -> Result<()> {
         }
 
         TaskCmd::Boot(flags) => {
-            let config = config::Config::new(&DistOptions::from(&flags));
+            let config = config::Config::new(Some(&DistOptions::from(&flags)));
             let dist_result = dist(&config)?;
 
             match config.platform {
@@ -84,16 +84,19 @@ fn main() -> Result<()> {
             }
         }
 
-        TaskCmd::Opensbi(flags) => match flags.platform.unwrap_or(Platform::default()) {
-            Platform::MqPro => {
-                let fdt_path = compile_device_tree(Path::new("bundled/device_tree/d1_mangopi_mq_pro.dts"))
-                    .unwrap()
-                    .canonicalize()
-                    .unwrap();
-                build_opensbi("generic", &fdt_path, 0x4000_0000, 0x4008_0000)
+        TaskCmd::Opensbi(flags) => {
+            let config = config::Config::new(Some(&DistOptions::from(&flags)));
+            match config.platform {
+                Platform::MqPro => {
+                    let fdt_path = compile_device_tree(Path::new("bundled/device_tree/d1_mangopi_mq_pro.dts"))
+                        .unwrap()
+                        .canonicalize()
+                        .unwrap();
+                    build_opensbi("generic", &fdt_path, 0x4000_0000, 0x4008_0000)
+                }
+                _ => Err(eyre!("OpenSBI is only needed for RISC-V platforms!")),
             }
-            _ => Err(eyre!("OpenSBI is only needed for RISC-V platforms!")),
-        },
+        }
 
         TaskCmd::Devicetree(flags) => compile_device_tree(&flags.path).map(|_| ()),
 
