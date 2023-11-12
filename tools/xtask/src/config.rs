@@ -3,7 +3,7 @@
 
 use crate::DistOptions;
 use serde::{Deserialize, Serialize};
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 #[derive(Clone, Debug)]
 pub struct Config {
@@ -37,21 +37,26 @@ pub struct PlatformInfo {
 }
 
 impl Config {
-    pub fn new(cli_options: &DistOptions) -> Config {
+    pub fn new(cli_options: Option<&DistOptions>) -> Config {
+        let config_path = match cli_options {
+            Some(options) => &options.config_path,
+            None => Path::new("Poplar.toml"),
+        };
         // TODO: present error message from TOML parsing more nicely
-        let file: ConfigFile =
-            toml::from_str(&std::fs::read_to_string(&cli_options.config_path).unwrap()).unwrap();
+        let file: ConfigFile = toml::from_str(&std::fs::read_to_string(config_path).unwrap()).unwrap();
 
-        let platform = cli_options.platform.unwrap_or(file.platform.unwrap_or(Platform::default()));
+        let platform = cli_options
+            .and_then(|options| options.platform)
+            .unwrap_or(file.platform.unwrap_or(Platform::default()));
         let platform_info = match platform {
             Platform::X64 => file.x64.as_ref(),
             Platform::Rv64Virt => file.rv64_virt.as_ref(),
             Platform::MqPro => file.mq_pro.as_ref(),
         };
-        let release =
-            cli_options.release || platform_info.map(|info| info.release.unwrap_or(false)).unwrap_or(false);
+        let release = cli_options.map_or(false, |options| options.release)
+            || platform_info.map_or(false, |info| info.release.unwrap_or(false));
         let kernel_features: Vec<String> = {
-            if let Some(from_cli) = cli_options.kernel_features.as_ref() {
+            if let Some(from_cli) = cli_options.and_then(|options| options.kernel_features.as_ref()) {
                 from_cli.split(',').map(str::to_string).collect()
             } else {
                 platform_info.map(|info| info.kernel_features.clone().unwrap_or(vec![])).unwrap_or(vec![])
