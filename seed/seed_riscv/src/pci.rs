@@ -17,7 +17,7 @@ pub struct PciAccess {
 }
 
 impl PciAccess {
-    pub fn new(fdt: &Fdt) -> PciAccess {
+    pub fn new(fdt: &Fdt) -> Option<PciAccess> {
         let pci_node = fdt
             .all_nodes()
             .filter(|node| {
@@ -25,13 +25,12 @@ impl PciAccess {
                     c.all().any(|c| ["pci-host-ecam-generic", "pci-host-cam-generic"].contains(&c))
                 })
             })
-            .next()
-            .unwrap();
+            .next()?;
         let ecam_window = pci_node.reg().expect("PCI entry doesn't have a reg property").next().unwrap();
 
         // TODO: parse `ranges` node
 
-        PciAccess { start: ecam_window.starting_address, size: ecam_window.size.unwrap() }
+        Some(PciAccess { start: ecam_window.starting_address, size: ecam_window.size.unwrap() })
     }
 
     fn address_for(&self, pci_address: PciAddress) -> *const u8 {
