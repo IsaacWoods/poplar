@@ -119,8 +119,10 @@ pub fn seed_main(hart_id: u64, fdt_ptr: *const u8) -> ! {
     /*
      * Enumerate PCI devices.
      */
-    let pci_access = PciAccess::new(&fdt);
-    pci::PciResolver::resolve(pci_access);
+    let pci_access = match PciAccess::new(&fdt) {
+        Some(access) => Some(pci::PciResolver::resolve(access)),
+        None => None,
+    };
 
     /*
      * Find the initialize a Virtio block device if one is present.
