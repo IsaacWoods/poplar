@@ -241,8 +241,10 @@ where
     }
 }
 
+// TODO: make generic over which level of table is the top
 pub struct PageTableImpl {
-    p4_frame: Frame,
+    /// The frame that holds the top-level table.
+    frame: Frame,
     /// The virtual address at which physical memory is mapped in the environment that these page
     /// tables are being constructed in. This is **not** a property of the set of page tables being
     /// mapped, but of the context the tables are being modified from.
@@ -250,9 +252,9 @@ pub struct PageTableImpl {
 }
 
 impl PageTableImpl {
-    pub fn new(p4_frame: Frame, physical_base: VAddr) -> PageTableImpl {
-        let mut table = PageTableImpl { p4_frame, physical_base };
-        table.p4_mut().zero();
+    pub fn new(frame: Frame, physical_base: VAddr) -> PageTableImpl {
+        let mut table = PageTableImpl { frame, physical_base };
+        table.top_mut().zero();
         table
     }
 
@@ -260,26 +262,28 @@ impl PageTableImpl {
     /// it assumes that the frame contains a valid page table, and that no other `PageTableImpl`s
     /// currently exist that use this same backing frame (as calling `mapper` on both could lead to
     /// two mutable references aliasing the same data to exist, which is UB).
-    pub unsafe fn from_frame(p4_frame: Frame, physical_base: VAddr) -> PageTableImpl {
-        PageTableImpl { p4_frame, physical_base }
+    pub unsafe fn from_frame(frame: Frame, physical_base: VAddr) -> PageTableImpl {
+        PageTableImpl { frame, physical_base }
     }
 
-    pub fn p4(&self) -> &Table<Level4> {
-        unsafe { &*((self.physical_base + usize::from(self.p4_frame.start)).ptr()) }
+    pub fn top(&self) -> &Table<Level4> {
+        unsafe { &*((self.physical_base + usize::from(self.frame.start)).ptr()) }
     }
 
-    pub fn p4_mut(&mut self) -> &mut Table<Level4> {
-        unsafe { &mut *((self.physical_base + usize::from(self.p4_frame.start)).mut_ptr()) }
+    pub fn top_mut(&mut self) -> &mut Table<Level4> {
+        unsafe { &mut *((self.physical_base + usize::from(self.frame.start)).mut_ptr()) }
     }
 
     pub fn satp(&self) -> Satp {
-        Satp::Sv48 { asid: 0, root: self.p4_frame.start }
+        Satp::Sv48 { asid: 0, root: self.frame.start }
     }
 
+    // TODO: somehow make this generic over the number of levels (maybe call recursively or
+    // something?)
     pub fn walk(&self) {
         use tracing::trace;
         trace!("Starting page table walk");
-        let p4 = self.p4();
+        let p4 = self.top();
         for i in 0..512 {
             if p4[i].is_valid() {
                 trace!("P4 entry {}: {:?}", i, p4[i]);
@@ -343,7 +347,7 @@ impl PageTable<Size4KiB> for PageTableImpl {
         // TODO: handle huge pages at the P3 level as well
 
         let p2 = self
-            .p4()
+            .top()
             .next_table(address.p4_index(), self.physical_base)
             .and_then(|p3| p3.next_table(address.p3_index(), self.physical_base))?;
 
@@ -365,7 +369,7 @@ impl PageTable<Size4KiB> for PageTableImpl {
 
         if S::SIZE == Size4KiB::SIZE {
             let p1 = self
-                .p4_mut()
+                .top_mut()
                 .next_table_create(page.start.p4_index(), allocator, physical_base)?
                 .next_table_create(page.start.p3_index(), allocator, physical_base)?
                 .next_table_create(page.start.p2_index(), allocator, physical_base)?;
@@ -377,7 +381,7 @@ impl PageTable<Size4KiB> for PageTableImpl {
             p1[page.start.p1_index()].set(Some((frame.start, EntryFlags::from(flags))));
         } else if S::SIZE == Size2MiB::SIZE {
             let p2 = self
-                .p4_mut()
+                .top_mut()
                 .next_table_create(page.start.p4_index(), allocator, physical_base)?
                 .next_table_create(page.start.p3_index(), allocator, physical_base)?;
 
@@ -389,7 +393,7 @@ impl PageTable<Size4KiB> for PageTableImpl {
         } else {
             assert_eq!(S::SIZE, Size1GiB::SIZE);
 
-            let p3 = self.p4_mut().next_table_create(page.start.p4_index(), allocator, physical_base)?;
+            let p3 = self.top_mut().next_table_create(page.start.p4_index(), allocator, physical_base)?;
 
             if p3[page.start.p3_index()].is_valid() {
                 return Err(PagingError::AlreadyMapped);
@@ -505,7 +509,7 @@ impl PageTable<Size4KiB> for PageTableImpl {
         match S::SIZE {
             Size4KiB::SIZE => {
                 let p1 = self
-                    .p4_mut()
+                    .top_mut()
                     .next_table_mut(page.start.p4_index(), physical_base)?
                     .next_table_mut(page.start.p3_index(), physical_base)?
                     .next_table_mut(page.start.p2_index(), physical_base)?;
