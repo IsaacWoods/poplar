@@ -60,8 +60,11 @@ impl RunCargo {
         RunCargo { release, ..self }
     }
 
-    pub fn features(self, features: Vec<String>) -> RunCargo {
-        RunCargo { features, ..self }
+    /// Pass the given crate features to Cargo. This is additive - multiple calls to this method
+    /// result in all of the features being passed.
+    pub fn features(mut self, mut features: Vec<String>) -> RunCargo {
+        self.features.append(&mut features);
+        self
     }
 
     pub fn std_components(self, std_components: Vec<String>) -> RunCargo {
