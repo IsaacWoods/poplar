@@ -10,7 +10,7 @@ use core::{
 };
 use fdt::Fdt;
 use hal::memory::PAddr;
-use hal_riscv::{hw::uart16550::Uart16550, kernel_map::physical_to_virtual};
+use hal_riscv::{hw::uart16550::Uart16550, platform::kernel_map::physical_to_virtual};
 use poplar_util::InitGuard;
 use spinning_top::Spinlock;
 use tracing::{span, Collect, Event, Level, Metadata};

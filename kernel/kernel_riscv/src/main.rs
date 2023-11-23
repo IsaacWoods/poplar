@@ -14,8 +14,7 @@ mod logger;
 use hal::memory::{Frame, VAddr};
 use hal_riscv::{
     hw::csr::{Satp, Stvec},
-    kernel_map,
-    paging::PageTableImpl,
+    platform::{kernel_map, PageTableImpl},
 };
 use kernel::memory::PhysicalMemoryManager;
 use seed::boot_info::BootInfo;
@@ -24,7 +23,7 @@ use tracing::info;
 #[no_mangle]
 pub extern "C" fn kentry(boot_info: &BootInfo) -> ! {
     let fdt = {
-        let address = hal_riscv::kernel_map::physical_to_virtual(boot_info.fdt_address.unwrap());
+        let address = hal_riscv::platform::kernel_map::physical_to_virtual(boot_info.fdt_address.unwrap());
         unsafe { fdt::Fdt::from_ptr(address.ptr()).unwrap() }
     };
     logger::init(&fdt);
@@ -50,10 +49,17 @@ pub extern "C" fn kentry(boot_info: &BootInfo) -> ! {
 
     let kernel_page_table = unsafe {
         match Satp::read() {
-            Satp::Sv48 { root, .. } => {
+            Satp::Sv39 { root, .. } => {
+                assert!(hal_riscv::platform::VIRTUAL_ADDRESS_BITS == 39);
                 PageTableImpl::from_frame(Frame::starts_with(root), kernel_map::PHYSICAL_MAP_BASE)
             }
-            _ => panic!("Kernel booted in a weird paging mode! Expected Sv48!"),
+            Satp::Sv48 { root, .. } => {
+                assert!(hal_riscv::platform::VIRTUAL_ADDRESS_BITS == 48);
+                PageTableImpl::from_frame(Frame::starts_with(root), kernel_map::PHYSICAL_MAP_BASE)
+            }
+            _ => {
+                panic!("Kernel booted in an unexpected paging mode! Have we been built for the correct platform?");
+            }
         }
     };
 

@@ -14,3 +14,7 @@ tracing-core = { git = "https://github.com/tokio-rs/tracing", default-features =
 spinning_top = { version = "0.2.4", features = ["nightly"] }
 poplar_util = { path = "../../lib/poplar_util/" }
 fdt = { git = "https://github.com/repnop/fdt" }
+
+[features]
+platform_rv64_virt = ["hal_riscv/platform_rv64_virt"]
+platform_mq_pro = ["hal_riscv/platform_mq_pro"]

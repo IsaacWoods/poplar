@@ -19,7 +19,7 @@ use crate::block::virtio::VirtioBlockDevice;
 use core::{arch::asm, mem, ptr};
 use fdt::Fdt;
 use hal::memory::{Flags, FrameAllocator, FrameSize, PAddr, PageTable, Size4KiB, VAddr};
-use hal_riscv::{hw::csr::Stvec, paging::PageTableImpl};
+use hal_riscv::{hw::csr::Stvec, platform::PageTableImpl};
 use linked_list_allocator::LockedHeap;
 use memory::{MemoryManager, MemoryRegions};
 use pci::PciAccess;
@@ -156,12 +156,13 @@ pub fn seed_main(hart_id: u64, fdt_ptr: *const u8) -> ! {
      * TODO: we should probably do this properly by walking the FDT (you need RAM + devices) but we currently just
      * map 32GiB.
      */
-    use hal_riscv::kernel_map::PHYSICAL_MAP_BASE;
+    use hal_riscv::platform::kernel_map::PHYSICAL_MAP_BASE;
+    const PHYSICAL_MAP_SIZE: usize = hal::memory::gibibytes(16);
     kernel_page_table
         .map_area(
             PHYSICAL_MAP_BASE,
             PAddr::new(0x0).unwrap(),
-            hal::memory::gibibytes(32),
+            PHYSICAL_MAP_SIZE,
             Flags { writable: true, ..Default::default() },
             &MEMORY_MANAGER,
         )
@@ -176,7 +177,7 @@ pub fn seed_main(hart_id: u64, fdt_ptr: *const u8) -> ! {
      */
     let seed_size = align_up(unsafe { _seed_end.ptr() as usize - _seed_start.ptr() as usize }, Size4KiB::SIZE);
     info!(
-        "Mapping seed: {:#x} to {:#x} ({} bytes)",
+        "Mapping Seed: {:#x} to {:#x} ({} bytes)",
         PAddr::new(unsafe { _seed_start.ptr() as usize }).unwrap(),
         PAddr::new(unsafe { _seed_end.ptr() as usize }).unwrap(),
         seed_size,

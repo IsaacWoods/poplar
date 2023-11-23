@@ -158,6 +158,7 @@ impl Dist {
             .workspace(PathBuf::from("seed/"))
             .target(Target::Triple("riscv64imac-unknown-none-elf".to_string()))
             .release(self.release)
+            .features(vec!["platform_rv64_virt".to_string()])
             .std_components(vec!["core".to_string(), "alloc".to_string()])
             .rustflags("-Clink-arg=-Tseed_riscv/rv64_virt.ld")
             .run()?;
@@ -167,6 +168,7 @@ impl Dist {
             .workspace(PathBuf::from("kernel/"))
             .target(Target::Triple("riscv64imac-unknown-none-elf".to_string()))
             .release(self.release)
+            .features(vec!["platform_rv64_virt".to_string()])
             .features(self.kernel_features.clone())
             .std_components(vec!["core".to_string(), "alloc".to_string()])
             .rustflags("-Clink-arg=-Tkernel_riscv/link.ld")
@@ -198,6 +200,7 @@ impl Dist {
             .workspace(PathBuf::from("seed/"))
             .target(Target::Triple("riscv64imac-unknown-none-elf".to_string()))
             .release(self.release)
+            .features(vec!["platform_mq_pro".to_string()])
             .std_components(vec!["core".to_string(), "alloc".to_string()])
             .rustflags("-Clink-arg=-Tseed_riscv/mq_pro.ld")
             .flatten_result(true)

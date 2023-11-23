@@ -22,3 +22,7 @@ mer = { path = "../../lib/mer/" }
 pci_types = { path = "../../lib/pci_types" }
 virtio = { path = "../../lib/virtio" }
 gpt = { path = "../../lib/gpt" }
+
+[features]
+platform_rv64_virt = ["hal_riscv/platform_rv64_virt"]
+platform_mq_pro = ["hal_riscv/platform_mq_pro"]
