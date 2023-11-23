@@ -149,6 +149,12 @@
 <a href="#149" id="149">149</a>
 <a href="#150" id="150">150</a>
 <a href="#151" id="151">151</a>
+<a href="#152" id="152">152</a>
+<a href="#153" id="153">153</a>
+<a href="#154" id="154">154</a>
+<a href="#155" id="155">155</a>
+<a href="#156" id="156">156</a>
+<a href="#157" id="157">157</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>cfg_if::cfg_if;
 <span class="kw">use </span>core::{
     fmt,
@@ -180,13 +186,19 @@
      * simpler to use. We enforce whatever requirements are needed for the target architecture.
      */
     </span><span class="macro">cfg_if! </span>{
-        <span class="kw">if </span><span class="attr">#[cfg(any(target_arch = <span class="string">&quot;x86_64&quot;</span>, target_arch = <span class="string">&quot;riscv64&quot;</span>))] </span>{
-            <span class="doccomment">/// Canonicalise this virtual address. On x86_64 and RV64-Sv48, that involves making sure that bits 48..63 match the
-            /// sign extension expected from the value of bit 47.
+        <span class="kw">if </span><span class="attr">#[cfg(any(target_arch = <span class="string">&quot;x86_64&quot;</span>, feature = <span class="string">&quot;platform_rv64_virt&quot;</span>))] </span>{
+            <span class="doccomment">/// Canonicalise this virtual address. On x86_64 and RV64-Sv48, that involves making
+            /// sure that bits 48..64 are sign extended from bit 47.
             </span><span class="kw">pub const fn </span>canonicalise(<span class="self">self</span>) -&gt; VAddr {
                 <span class="kw">const </span>SIGN_EXTENSION: usize = <span class="number">0o177777_000_000_000_000_0000</span>;
-
                 VAddr((SIGN_EXTENSION * ((<span class="self">self</span>.<span class="number">0 </span>&gt;&gt; <span class="number">47</span>) &amp; <span class="number">0b1</span>)) | (<span class="self">self</span>.<span class="number">0 </span>&amp; ((<span class="number">1 </span>&lt;&lt; <span class="number">48</span>) - <span class="number">1</span>)))
+            }
+        } <span class="kw">else if </span><span class="attr">#[cfg(feature = <span class="string">&quot;platform_mq_pro&quot;</span>)] </span>{
+            <span class="doccomment">/// Canonicalise this virtual address. On RV64-Sv39, that involves making
+            /// sure that bits 39..64 are sign extended from bit 38.
+            </span><span class="kw">pub const fn </span>canonicalise(<span class="self">self</span>) -&gt; VAddr {
+                <span class="kw">const </span>SIGN_EXTENSION: usize = <span class="number">0o177777_777_000_000_000_0000</span>;
+                VAddr((SIGN_EXTENSION * ((<span class="self">self</span>.<span class="number">0 </span>&gt;&gt; <span class="number">38</span>) &amp; <span class="number">0b1</span>)) | (<span class="self">self</span>.<span class="number">0 </span>&amp; ((<span class="number">1 </span>&lt;&lt; <span class="number">39</span>) - <span class="number">1</span>)))
             }
         } <span class="kw">else </span>{
             <span class="doccomment">/// Canonicalise this virtual address. On this architecture, there are no extra requirements, and so we
