@@ -171,7 +171,7 @@ impl Dist {
             .features(vec!["platform_rv64_virt".to_string()])
             .features(self.kernel_features.clone())
             .std_components(vec!["core".to_string(), "alloc".to_string()])
-            .rustflags("-Clink-arg=-Tkernel_riscv/link.ld")
+            .rustflags("-Clink-arg=-Tkernel_riscv/rv64_virt.ld")
             .run()?;
 
         println!("{}", "[*] Building disk image".bold().magenta());
