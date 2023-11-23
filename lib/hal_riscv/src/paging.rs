@@ -247,44 +247,52 @@ where
 }
 
 // TODO: make generic over which level of table is the top
-pub struct PageTableImpl {
+pub struct PageTableImpl<T: HierarchicalLevel> {
     /// The frame that holds the top-level table.
     frame: Frame,
     /// The virtual address at which physical memory is mapped in the environment that these page
     /// tables are being constructed in. This is **not** a property of the set of page tables being
     /// mapped, but of the context the tables are being modified from.
     physical_base: VAddr,
+    _phantom: PhantomData<T>,
 }
 
-impl PageTableImpl {
-    pub fn new(frame: Frame, physical_base: VAddr) -> PageTableImpl {
-        let mut table = PageTableImpl { frame, physical_base };
+impl<T> PageTableImpl<T>
+where
+    T: HierarchicalLevel,
+{
+    pub fn new(frame: Frame, physical_base: VAddr) -> PageTableImpl<T> {
+        let mut table = PageTableImpl { frame, physical_base, _phantom: PhantomData };
         table.top_mut().zero();
         table
     }
 
-    /// Create a `PageTableImpl` from a `Frame` that already contains a P4. This is very unsafe because
-    /// it assumes that the frame contains a valid page table, and that no other `PageTableImpl`s
-    /// currently exist that use this same backing frame (as calling `mapper` on both could lead to
-    /// two mutable references aliasing the same data to exist, which is UB).
-    pub unsafe fn from_frame(frame: Frame, physical_base: VAddr) -> PageTableImpl {
-        PageTableImpl { frame, physical_base }
+    /// Create a `PageTableImpl` from a `Frame` that already contains a top-level table. This is
+    /// very unsafe because it assumes that the frame contains a valid page table, and that no
+    /// other `PageTableImpl`s currently exist that use this same backing frame (as calling
+    /// `mapper` on both could lead to two mutable references aliasing the same data to exist,
+    /// which is UB).
+    pub unsafe fn from_frame(frame: Frame, physical_base: VAddr) -> PageTableImpl<T> {
+        PageTableImpl { frame, physical_base, _phantom: PhantomData }
     }
 
-    pub fn top(&self) -> &Table<Level4> {
+    pub fn top(&self) -> &Table<T> {
         unsafe { &*((self.physical_base + usize::from(self.frame.start)).ptr()) }
     }
 
-    pub fn top_mut(&mut self) -> &mut Table<Level4> {
+    pub fn top_mut(&mut self) -> &mut Table<T> {
         unsafe { &mut *((self.physical_base + usize::from(self.frame.start)).mut_ptr()) }
     }
+}
 
+/*
+ * Implementation for `Sv48` systems, which support four levels of tables.
+ */
+impl PageTableImpl<Level4> {
     pub fn satp(&self) -> Satp {
         Satp::Sv48 { asid: 0, root: self.frame.start }
     }
 
-    // TODO: somehow make this generic over the number of levels (maybe call recursively or
-    // something?)
     pub fn walk(&self) {
         use tracing::trace;
         trace!("Starting page table walk");
@@ -324,7 +332,7 @@ impl PageTableImpl {
     }
 }
 
-impl PageTable<Size4KiB> for PageTableImpl {
+impl PageTable<Size4KiB> for PageTableImpl<Level4> {
     fn new_with_kernel_mapped<A>(_kernel_page_table: &Self, _allocator: &A) -> Self
     where
         A: FrameAllocator<Size4KiB>,
@@ -516,6 +524,244 @@ impl PageTable<Size4KiB> for PageTableImpl {
                 let p1 = self
                     .top_mut()
                     .next_table_mut(page.start.p4_index(), physical_base)?
+                    .next_table_mut(page.start.p3_index(), physical_base)?
+                    .next_table_mut(page.start.p2_index(), physical_base)?;
+                let frame = Frame::starts_with(p1[page.start.p1_index()].address()?);
+                p1[page.start.p1_index()].set(None, true);
+                sfence_vma(None, page.start);
+
+                Some(frame)
+            }
+            Size2MiB::SIZE => unimplemented!(),
+            Size1GiB::SIZE => unimplemented!(),
+
+            _ => panic!("Unimplemented page size!"),
+        }
+    }
+}
+
+/*
+ * Implementation for `Sv39` systems, which support three levels of tables.
+ */
+impl PageTableImpl<Level3> {
+    pub fn satp(&self) -> Satp {
+        Satp::Sv39 { asid: 0, root: self.frame.start }
+    }
+
+    pub fn walk(&self) {
+        use tracing::trace;
+        trace!("Starting page table walk");
+        let p3 = self.top();
+        for i in 0..512 {
+            if p3[i].is_valid() {
+                trace!("P3 entry {}: {:?}", i, p3[i]);
+                if p3[i].is_leaf() {
+                    continue;
+                }
+                let p2 = p3.next_table(i, self.physical_base).unwrap();
+                for j in 0..512 {
+                    if p2[j].is_valid() {
+                        trace!("    P2 entry {}: {:?}", j, p2[j]);
+                        if p2[j].is_leaf() {
+                            continue;
+                        }
+                        let p1 = p2.next_table(j, self.physical_base).unwrap();
+                        for k in 0..512 {
+                            if p1[k].is_valid() {
+                                trace!("        P1 entry {}: {:?}", k, p1[k]);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+impl PageTable<Size4KiB> for PageTableImpl<Level3> {
+    fn new_with_kernel_mapped<A>(_kernel_page_table: &Self, _allocator: &A) -> Self
+    where
+        A: FrameAllocator<Size4KiB>,
+    {
+        todo!()
+        // let mut page_table = PageTableImpl::new(allocator.allocate(), crate::kernel_map::PHYSICAL_MAPPING_BASE);
+
+        // /*
+        //  * Install the address of the kernel's P3 in every address space, so that the kernel is always mapped.
+        //  * It's safe to unwrap the kernel P3 address, as we wouldn't be able to fetch these instructions
+        //  * if it wasn't there.
+        //  */
+        // let kernel_p3_address = kernel_page_table.p4()[crate::kernel_map::KERNEL_P4_ENTRY].address().unwrap();
+        // page_table.p4_mut()[crate::kernel_map::KERNEL_P4_ENTRY]
+        //     .set(Some((kernel_p3_address, EntryFlags::WRITABLE)));
+
+        // page_table
+    }
+
+    unsafe fn switch_to(&self) {
+        unsafe { self.satp().write() }
+    }
+
+    fn translate(&self, address: VAddr) -> Option<PAddr> {
+        // TODO: handle huge pages at the P3 level as well
+
+        let p2 = self.top().next_table(address.p3_index(), self.physical_base)?;
+
+        let p2_entry = p2[address.p2_index()];
+        if p2_entry.is_leaf() {
+            return Some(p2_entry.address()? + (usize::from(address) % Size2MiB::SIZE));
+        }
+
+        let p1 = p2.next_table(address.p2_index(), self.physical_base)?;
+        Some(p1[address.p1_index()].address()? + (usize::from(address) % Size4KiB::SIZE))
+    }
+
+    fn map<S, A>(&mut self, page: Page<S>, frame: Frame<S>, flags: Flags, allocator: &A) -> Result<(), PagingError>
+    where
+        S: FrameSize,
+        A: FrameAllocator<Size4KiB>,
+    {
+        let physical_base = self.physical_base;
+
+        if S::SIZE == Size4KiB::SIZE {
+            let p1 = self
+                .top_mut()
+                .next_table_create(page.start.p3_index(), allocator, physical_base)?
+                .next_table_create(page.start.p2_index(), allocator, physical_base)?;
+
+            if p1[page.start.p1_index()].is_valid() {
+                return Err(PagingError::AlreadyMapped);
+            }
+
+            p1[page.start.p1_index()].set(Some((frame.start, EntryFlags::from(flags))), true);
+        } else if S::SIZE == Size2MiB::SIZE {
+            let p2 = self.top_mut().next_table_create(page.start.p3_index(), allocator, physical_base)?;
+
+            if p2[page.start.p2_index()].is_valid() {
+                return Err(PagingError::AlreadyMapped);
+            }
+
+            p2[page.start.p2_index()].set(Some((frame.start, EntryFlags::from(flags))), true);
+        } else {
+            assert_eq!(S::SIZE, Size1GiB::SIZE);
+
+            let p3 = self.top_mut();
+
+            if p3[page.start.p3_index()].is_valid() {
+                return Err(PagingError::AlreadyMapped);
+            }
+
+            p3[page.start.p3_index()].set(Some((frame.start, EntryFlags::from(flags))), true);
+        }
+
+        // TODO: replace this with a returned 'token' or whatever to batch changes before a flush if possible
+        sfence_vma(None, page.start);
+        Ok(())
+    }
+
+    fn map_area<A>(
+        &mut self,
+        virtual_start: VAddr,
+        physical_start: PAddr,
+        size: usize,
+        flags: Flags,
+        allocator: &A,
+    ) -> Result<(), PagingError>
+    where
+        A: FrameAllocator<Size4KiB>,
+    {
+        use poplar_util::math::{abs_difference, align_down};
+
+        assert!(virtual_start.is_aligned(Size4KiB::SIZE));
+        assert!(physical_start.is_aligned(Size4KiB::SIZE));
+        assert!(size % Size4KiB::SIZE == 0);
+
+        /*
+         * If the area is smaller than a single 2MiB page, or if the virtual and physical starts are "out of
+         * phase" such that we'll never be able to use larger pages, just use 4KiB pages.
+         */
+        let align_mismatch =
+            abs_difference(usize::from(physical_start), usize::from(virtual_start)) % Size2MiB::SIZE != 0;
+        if size < Size2MiB::SIZE || align_mismatch {
+            let pages = Page::starts_with(virtual_start)..Page::starts_with(virtual_start + size);
+            let frames = Frame::starts_with(physical_start)..Frame::starts_with(physical_start + size);
+            return self.map_range::<Size4KiB, A>(pages, frames, flags, allocator);
+        }
+
+        let mut cursor = virtual_start;
+        let virtual_end: VAddr = virtual_start + size;
+
+        while cursor < virtual_end {
+            let cursor_physical =
+                PAddr::new(usize::from(physical_start) + usize::from(cursor) - usize::from(virtual_start))
+                    .unwrap();
+            let bytes_left = usize::from(virtual_end) - usize::from(cursor);
+
+            if cursor.is_aligned(Size1GiB::SIZE)
+                && cursor_physical.is_aligned(Size1GiB::SIZE)
+                && bytes_left >= Size1GiB::SIZE
+            {
+                /*
+                 * We can fit at least 1GiB page in, and both virtual and physical cursors have the correct
+                 * alignment. Map as much as we can with 1GiB pages.
+                 */
+                let bytes_to_map = align_down(bytes_left, Size1GiB::SIZE);
+                let pages = Page::starts_with(cursor)..Page::starts_with(cursor + bytes_to_map);
+                let frames =
+                    Frame::starts_with(cursor_physical)..Frame::starts_with(cursor_physical + bytes_to_map);
+                self.map_range::<Size1GiB, A>(pages, frames, flags, allocator)?;
+                cursor += bytes_to_map;
+            } else if cursor.is_aligned(Size2MiB::SIZE)
+                && cursor_physical.is_aligned(Size2MiB::SIZE)
+                && bytes_left >= Size2MiB::SIZE
+            {
+                /*
+                 * We couldn't use a 1GiB page, but we can use 2MiB pages! Map as much as we can.
+                 *
+                 * TODO: we could do a similar thing to below to check if we can use 1GiB pages further in, but
+                 * it's probably unlikely enough that it's not really worth it.
+                 */
+                let bytes_to_map = align_down(bytes_left, Size2MiB::SIZE);
+                let pages = Page::starts_with(cursor)..Page::starts_with(cursor + bytes_to_map);
+                let frames =
+                    Frame::starts_with(cursor_physical)..Frame::starts_with(cursor_physical + bytes_to_map);
+                self.map_range::<Size2MiB, A>(pages, frames, flags, allocator)?;
+                cursor += bytes_to_map;
+            } else {
+                /*
+                 * We can't use any larger pages, but we might be able to further in, if the data becomes more
+                 * aligned. If the next 2MiB-aligned address is still inside the range, stop there to have another
+                 * go.
+                 * NOTE: `cursor` might be 2MiB-aligned at this location, so we start from the next address so we don't get stuck here.
+                 */
+                let next_boundary = (cursor + 1).align_up(Size2MiB::SIZE);
+                // Make sure not to go past the end of the region
+                let bytes_to_map = cmp::min(
+                    usize::from(next_boundary) - usize::from(cursor),
+                    usize::from(virtual_end) - usize::from(cursor),
+                );
+                let pages = Page::starts_with(cursor)..Page::starts_with(cursor + bytes_to_map);
+                let frames =
+                    Frame::starts_with(cursor_physical)..Frame::starts_with(cursor_physical + bytes_to_map);
+                self.map_range::<Size4KiB, A>(pages, frames, flags, allocator)?;
+                cursor += bytes_to_map;
+            }
+        }
+
+        assert_eq!(cursor, virtual_end);
+        Ok(())
+    }
+
+    fn unmap<S>(&mut self, page: Page<S>) -> Option<Frame<S>>
+    where
+        S: FrameSize,
+    {
+        let physical_base = self.physical_base;
+
+        match S::SIZE {
+            Size4KiB::SIZE => {
+                let p1 = self
+                    .top_mut()
                     .next_table_mut(page.start.p3_index(), physical_base)?
                     .next_table_mut(page.start.p2_index(), physical_base)?;
                 let frame = Frame::starts_with(p1[page.start.p1_index()].address()?);

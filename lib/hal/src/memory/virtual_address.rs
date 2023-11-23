@@ -29,13 +29,19 @@ impl VAddr {
      * simpler to use. We enforce whatever requirements are needed for the target architecture.
      */
     cfg_if! {
-        if #[cfg(any(target_arch = "x86_64", target_arch = "riscv64"))] {
-            /// Canonicalise this virtual address. On x86_64 and RV64-Sv48, that involves making sure that bits 48..63 match the
-            /// sign extension expected from the value of bit 47.
+        if #[cfg(any(target_arch = "x86_64", feature = "platform_rv64_virt"))] {
+            /// Canonicalise this virtual address. On x86_64 and RV64-Sv48, that involves making
+            /// sure that bits 48..64 are sign extended from bit 47.
             pub const fn canonicalise(self) -> VAddr {
                 const SIGN_EXTENSION: usize = 0o177777_000_000_000_000_0000;
-
                 VAddr((SIGN_EXTENSION * ((self.0 >> 47) & 0b1)) | (self.0 & ((1 << 48) - 1)))
+            }
+        } else if #[cfg(feature = "platform_mq_pro")] {
+            /// Canonicalise this virtual address. On RV64-Sv39, that involves making
+            /// sure that bits 39..64 are sign extended from bit 38.
+            pub const fn canonicalise(self) -> VAddr {
+                const SIGN_EXTENSION: usize = 0o177777_777_000_000_000_0000;
+                VAddr((SIGN_EXTENSION * ((self.0 >> 38) & 0b1)) | (self.0 & ((1 << 39) - 1)))
             }
         } else {
             /// Canonicalise this virtual address. On this architecture, there are no extra requirements, and so we
