@@ -21,6 +21,7 @@ use riscv::qemu::RunQemuRiscV;
 use serde::Serialize;
 use std::{
     env,
+    fs::File,
     path::{Path, PathBuf},
     process::Command,
 };
@@ -70,11 +71,14 @@ fn main() -> Result<()> {
                 Platform::MqPro => {
                     let serial = serial::Serial::new(&Path::new("/dev/ttyUSB0"), 115200);
 
-                    // TODO: probs should check status of `xfel` commands
+                    let kernel_size = File::open(&dist_result.kernel_path).unwrap().metadata().unwrap().len();
+
                     println!("{}", format!("[*] Uploading and running code on device").bold().magenta());
                     Command::new("xfel").arg("ddr").arg("d1").status().unwrap();
                     Command::new("xfel").arg("write").arg("0x40000000").arg("bundled/opensbi/build/platform/generic/firmware/fw_jump.bin").status().unwrap();
                     Command::new("xfel").arg("write").arg("0x40080000").arg(&dist_result.bootloader_path).status().unwrap();
+                    Command::new("xfel").arg("write32").arg("0x40100000").arg(format!("{}", kernel_size)).status().unwrap();
+                    Command::new("xfel").arg("write").arg("0x40100004").arg(&dist_result.kernel_path).status().unwrap();
                     Command::new("xfel").arg("exec").arg("0x40000000").status().unwrap();
 
                     println!("{}", format!("[*] Listening to serial").bold().magenta());
@@ -206,8 +210,18 @@ impl Dist {
             .flatten_result(true)
             .run()?;
 
-        // TODO: no kernel yet so bodged path
-        Ok(DistResult { bootloader_path: seed_riscv, kernel_path: PathBuf::new(), disk_image: None })
+        println!("{}", "[*] Building the kernel for RISC-V".bold().magenta());
+        let kernel = RunCargo::new("kernel_riscv", PathBuf::from("kernel/kernel_riscv/"))
+            .workspace(PathBuf::from("kernel/"))
+            .target(Target::Triple("riscv64imac-unknown-none-elf".to_string()))
+            .release(self.release)
+            .features(vec!["platform_mq_pro".to_string()])
+            .features(self.kernel_features.clone())
+            .std_components(vec!["core".to_string(), "alloc".to_string()])
+            .rustflags("-Clink-arg=-Tkernel_riscv/mq_pro.ld")
+            .run()?;
+
+        Ok(DistResult { bootloader_path: seed_riscv, kernel_path: kernel, disk_image: None })
     }
 
     pub fn build_x64(self) -> Result<DistResult> {
