@@ -88,9 +88,14 @@ impl Entry {
         }
     }
 
-    pub fn set(&mut self, entry: Option<(PAddr, EntryFlags)>) {
+    pub fn set(&mut self, entry: Option<(PAddr, EntryFlags)>, is_leaf: bool) {
         self.0 = match entry {
-            Some((address, flags)) => (usize::from(address) as u64 >> 2) | (flags | EntryFlags::VALID).bits(),
+            Some((address, flags)) => {
+                let flags = flags
+                    | EntryFlags::VALID
+                    | if is_leaf { EntryFlags::ACCESSED | EntryFlags::DIRTY } else { EntryFlags::empty() };
+                (usize::from(address) as u64 >> 2) | flags.bits()
+            }
             None => 0,
         };
     }
@@ -180,7 +185,7 @@ where
 {
     pub fn zero(&mut self) {
         for entry in self.entries.iter_mut() {
-            entry.set(None);
+            entry.set(None, false);
         }
     }
 }
@@ -220,7 +225,7 @@ where
             /*
              * This entry is empty, so we create a new page table, zero it, and return that.
              */
-            self.entries[index].set(Some((allocator.allocate().start, EntryFlags::VALID)));
+            self.entries[index].set(Some((allocator.allocate().start, EntryFlags::VALID)), false);
             let table = self.next_table_mut(index, physical_base).unwrap();
             table.zero();
             Ok(table)
@@ -378,7 +383,7 @@ impl PageTable<Size4KiB> for PageTableImpl {
                 return Err(PagingError::AlreadyMapped);
             }
 
-            p1[page.start.p1_index()].set(Some((frame.start, EntryFlags::from(flags))));
+            p1[page.start.p1_index()].set(Some((frame.start, EntryFlags::from(flags))), true);
         } else if S::SIZE == Size2MiB::SIZE {
             let p2 = self
                 .top_mut()
@@ -389,7 +394,7 @@ impl PageTable<Size4KiB> for PageTableImpl {
                 return Err(PagingError::AlreadyMapped);
             }
 
-            p2[page.start.p2_index()].set(Some((frame.start, EntryFlags::from(flags))));
+            p2[page.start.p2_index()].set(Some((frame.start, EntryFlags::from(flags))), true);
         } else {
             assert_eq!(S::SIZE, Size1GiB::SIZE);
 
@@ -399,7 +404,7 @@ impl PageTable<Size4KiB> for PageTableImpl {
                 return Err(PagingError::AlreadyMapped);
             }
 
-            p3[page.start.p3_index()].set(Some((frame.start, EntryFlags::from(flags))));
+            p3[page.start.p3_index()].set(Some((frame.start, EntryFlags::from(flags))), true);
         }
 
         // TODO: replace this with a returned 'token' or whatever to batch changes before a flush if possible
@@ -514,7 +519,7 @@ impl PageTable<Size4KiB> for PageTableImpl {
                     .next_table_mut(page.start.p3_index(), physical_base)?
                     .next_table_mut(page.start.p2_index(), physical_base)?;
                 let frame = Frame::starts_with(p1[page.start.p1_index()].address()?);
-                p1[page.start.p1_index()].set(None);
+                p1[page.start.p1_index()].set(None, true);
                 sfence_vma(None, page.start);
 
                 Some(frame)
