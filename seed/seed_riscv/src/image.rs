@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: MPL-2.0
  */
 
-use crate::memory::{self, MemoryManager, MemoryRegions, Region};
+use crate::memory::MemoryManager;
 use core::{ptr, slice};
 use hal::memory::{Flags, FrameAllocator, FrameSize, PAddr, Page, PageTable, Size4KiB, VAddr};
 use hal_riscv::platform::kernel_map;
@@ -13,29 +13,6 @@ use mer::{
 };
 use poplar_util::math::align_up;
 use seed::boot_info::Segment;
-use tracing::info;
-
-pub fn extract_kernel(memory_regions: &mut MemoryRegions) -> Elf<'static> {
-    use hal_riscv::platform::memory::RAMDISK_ADDR;
-
-    let kernel_elf_size = unsafe { *(usize::from(RAMDISK_ADDR) as *const u32) } as usize;
-    info!("Kernel elf size: {}", kernel_elf_size);
-
-    // Reserve the kernel ELF in the memory ranges, so we don't trample over it
-    memory_regions.add_region(Region::reserved(
-        memory::Usage::KernelImage,
-        RAMDISK_ADDR,
-        align_up(kernel_elf_size + 4, Size4KiB::SIZE),
-    ));
-
-    assert_eq!(
-        unsafe { &*((usize::from(RAMDISK_ADDR) + 4) as *const [u8; 4]) },
-        b"\x7fELF",
-        "Kernel ELF magic isn't correct"
-    );
-    Elf::new(unsafe { core::slice::from_raw_parts((usize::from(RAMDISK_ADDR) + 4) as *const u8, kernel_elf_size) })
-        .expect("Failed to read kernel ELF :(")
-}
 
 #[derive(Clone, Debug)]
 pub struct LoadedKernel {

@@ -10,12 +10,13 @@
 extern crate alloc;
 
 mod block;
+mod fs;
 mod image;
 mod logger;
 mod memory;
 mod pci;
 
-use crate::block::virtio::VirtioBlockDevice;
+use crate::{block::virtio::VirtioBlockDevice, fs::ramdisk::Ramdisk, memory::Region};
 use core::{arch::asm, mem, ptr};
 use fdt::Fdt;
 use hal::memory::{Flags, FrameAllocator, FrameSize, PAddr, PageTable, Size4KiB, VAddr};
@@ -87,19 +88,31 @@ pub fn seed_main(hart_id: u64, fdt_ptr: *const u8) -> ! {
     Stvec::set(VAddr::new(trap_handler as extern "C" fn() as usize));
 
     /*
-     * Construct an initial map of memory - a series of usable and reserved regions and what is in each of them. At
-     * the moment, this includes finding the kernel ELF we're artificially loading into memory, and marking it as
-     * reserved.
-     * XXX: revise comment once we're not doing this.
+     * Construct an initial map of memory - a series of usable and reserved regions, and what is in
+     * each of them.
      */
     let mut memory_regions = MemoryRegions::new(&fdt, fdt_address);
-    let kernel_elf = image::extract_kernel(&mut memory_regions);
-    info!("Memory regions: {:#?}", memory_regions);
+
+    /*
+     * Find the loaded ramdisk (if there is one) and mark it as a reserved region before we
+     * initialize the physical memory manager (it is not otherwise described as a not-usable region).
+     */
+    let ramdisk = unsafe { Ramdisk::new(usize::from(hal_riscv::platform::memory::RAMDISK_ADDR)) };
+    if let Some(ramdisk) = ramdisk {
+        info!("Found the ramdisk!");
+        let (address, size) = ramdisk.memory_region();
+        memory_regions.add_region(Region::reserved(
+            memory::Usage::Ramdisk,
+            address,
+            align_up(size, Size4KiB::SIZE),
+        ));
+    }
 
     /*
      * We can then use this mapping of memory regions to initialise the physical memory manager so we can allocate
      * out of the usable regions.
      */
+    info!("Memory regions: {:#?}", memory_regions);
     MEMORY_MANAGER.init(memory_regions);
     MEMORY_MANAGER.walk_usable_memory();
 
@@ -113,7 +126,7 @@ pub fn seed_main(hart_id: u64, fdt_ptr: *const u8) -> ! {
     }
 
     let mut kernel_page_table = PageTableImpl::new(MEMORY_MANAGER.allocate(), VAddr::new(0x0));
-    let kernel = image::load_kernel(kernel_elf, &mut kernel_page_table, &MEMORY_MANAGER);
+    let kernel: image::LoadedKernel = todo!();
     let mut next_available_kernel_address = kernel.next_available_address;
 
     /*

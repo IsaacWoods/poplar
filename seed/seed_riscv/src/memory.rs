@@ -23,7 +23,7 @@ pub enum Usage {
     Firmware,
     DeviceTree,
     Seed,
-    KernelImage,
+    Ramdisk,
     Unknown,
 }
 
@@ -287,7 +287,9 @@ impl MemoryManager {
                 RegionType::Reserved(Usage::Seed) => memory_map
                     .push(MemoryMapEntry::new(MemoryType::Conventional, region.address, region.size))
                     .unwrap(),
-                RegionType::Reserved(Usage::KernelImage) => (),
+                RegionType::Reserved(Usage::Ramdisk) => memory_map
+                    .push(MemoryMapEntry::new(MemoryType::Conventional, region.address, region.size))
+                    .unwrap(),
                 RegionType::Reserved(Usage::Unknown) => (),
             }
         }
