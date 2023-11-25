@@ -16,7 +16,11 @@ mod logger;
 mod memory;
 mod pci;
 
-use crate::{block::virtio::VirtioBlockDevice, fs::ramdisk::Ramdisk, memory::Region};
+use crate::{
+    block::virtio::VirtioBlockDevice,
+    fs::{ramdisk::Ramdisk, Filesystem},
+    memory::Region,
+};
 use core::{arch::asm, mem, ptr};
 use fdt::Fdt;
 use hal::memory::{Flags, FrameAllocator, FrameSize, PAddr, PageTable, Size4KiB, VAddr};
@@ -97,9 +101,8 @@ pub fn seed_main(hart_id: u64, fdt_ptr: *const u8) -> ! {
      * Find the loaded ramdisk (if there is one) and mark it as a reserved region before we
      * initialize the physical memory manager (it is not otherwise described as a not-usable region).
      */
-    let ramdisk = unsafe { Ramdisk::new(usize::from(hal_riscv::platform::memory::RAMDISK_ADDR)) };
-    if let Some(ramdisk) = ramdisk {
-        info!("Found the ramdisk!");
+    let mut ramdisk = unsafe { Ramdisk::new(usize::from(hal_riscv::platform::memory::RAMDISK_ADDR)) };
+    if let Some(ref ramdisk) = ramdisk {
         let (address, size) = ramdisk.memory_region();
         memory_regions.add_region(Region::reserved(
             memory::Usage::Ramdisk,
@@ -126,7 +129,12 @@ pub fn seed_main(hart_id: u64, fdt_ptr: *const u8) -> ! {
     }
 
     let mut kernel_page_table = PageTableImpl::new(MEMORY_MANAGER.allocate(), VAddr::new(0x0));
-    let kernel: image::LoadedKernel = todo!();
+    let kernel_file = if let Some(ref mut ramdisk) = ramdisk {
+        ramdisk.load("kernel.elf").unwrap()
+    } else {
+        panic!("No kernel source is present!");
+    };
+    let kernel = image::load_kernel(&kernel_file, &mut kernel_page_table, &MEMORY_MANAGER);
     let mut next_available_kernel_address = kernel.next_available_address;
 
     /*

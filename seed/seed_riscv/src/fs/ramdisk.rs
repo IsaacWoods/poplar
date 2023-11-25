@@ -1,4 +1,5 @@
-use alloc::slice;
+use super::{File, Filesystem};
+use alloc::{slice, string::ToString};
 use core::mem;
 use hal::memory::PAddr;
 use seed::ramdisk::{RamdiskEntry, RamdiskHeader};
@@ -48,4 +49,12 @@ impl Ramdisk {
     pub fn memory_region(&self) -> (PAddr, usize) {
         (PAddr::new(self.base as usize).unwrap(), self.header().size as usize)
     }
+}
+
+impl Filesystem for Ramdisk {
+    fn load(&mut self, path: &str) -> Result<super::File, ()> {
+        self.entry_data(path).map(|data| File { path: path.to_string(), data }).ok_or(())
+    }
+
+    fn close(&mut self, _file: super::File) {}
 }

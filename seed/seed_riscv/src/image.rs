@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: MPL-2.0
  */
 
-use crate::memory::MemoryManager;
+use crate::{fs::File, memory::MemoryManager};
 use core::{ptr, slice};
 use hal::memory::{Flags, FrameAllocator, FrameSize, PAddr, Page, PageTable, Size4KiB, VAddr};
 use hal_riscv::platform::kernel_map;
@@ -25,10 +25,12 @@ pub struct LoadedKernel {
     pub next_available_address: VAddr,
 }
 
-pub fn load_kernel<P>(elf: Elf<'_>, page_table: &mut P, memory_manager: &MemoryManager) -> LoadedKernel
+pub fn load_kernel<P>(file: &File<'_>, page_table: &mut P, memory_manager: &MemoryManager) -> LoadedKernel
 where
     P: PageTable<Size4KiB>,
 {
+    let elf = Elf::new(file.data).expect("Failed to parse kernel ELF");
+
     let entry_point = VAddr::new(elf.entry_point());
     let mut next_available_address = kernel_map::KERNEL_BASE;
 
