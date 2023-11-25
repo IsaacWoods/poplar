@@ -8,10 +8,12 @@ mod cargo;
 mod config;
 mod flags;
 mod image;
+mod ramdisk;
 mod riscv;
 mod serial;
 mod x64;
 
+use crate::ramdisk::Ramdisk;
 use cargo::Target;
 use colored::Colorize;
 use config::{Config, Platform};
@@ -51,12 +53,11 @@ fn main() -> Result<()> {
                     .debug_mmu_firehose(flags.debug_mmu_firehose)
                     .debug_cpu_firehose(flags.debug_cpu_firehose)
                     .run(),
-                Platform::Rv64Virt => {
-                    RunQemuRiscV::new(dist_result.bootloader_path, dist_result.kernel_path, dist_result.disk_image)
-                        .open_display(flags.display)
-                        .debug_int_firehose(flags.debug_int_firehose)
-                        .run()
-                }
+                Platform::Rv64Virt => RunQemuRiscV::new(dist_result.bootloader_path, dist_result.disk_image)
+                    .ramdisk(dist_result.ramdisk)
+                    .open_display(flags.display)
+                    .debug_int_firehose(flags.debug_int_firehose)
+                    .run(),
                 Platform::MqPro => {
                     panic!("MQ-Pro does not support running in QEMU");
                 }
@@ -144,6 +145,7 @@ struct Dist {
 struct DistResult {
     bootloader_path: PathBuf,
     kernel_path: PathBuf,
+    ramdisk: Option<Ramdisk>,
     disk_image: Option<PathBuf>,
 }
 
@@ -178,13 +180,22 @@ impl Dist {
             .rustflags("-Clink-arg=-Tkernel_riscv/rv64_virt.ld")
             .run()?;
 
+        println!("{}", "[*] Building ramdisk".bold().magenta());
+        let mut ramdisk = Ramdisk::new(Platform::Rv64Virt);
+        ramdisk.add("kernel.elf", &kernel);
+
         println!("{}", "[*] Building disk image".bold().magenta());
         let image_path = PathBuf::from("poplar_riscv.img");
         let image = MakeGptImage::new(image_path.clone(), 40 * 1024 * 1024, 35 * 1024 * 1024)
             .copy_efi_file("kernel.elf", kernel.clone());
         image.build()?;
 
-        Ok(DistResult { bootloader_path: seed_riscv, kernel_path: kernel, disk_image: Some(image_path) })
+        Ok(DistResult {
+            bootloader_path: seed_riscv,
+            kernel_path: kernel,
+            ramdisk: Some(ramdisk),
+            disk_image: Some(image_path),
+        })
     }
 
     pub fn build_mq_pro(self) -> Result<DistResult> {
@@ -221,7 +232,16 @@ impl Dist {
             .rustflags("-Clink-arg=-Tkernel_riscv/mq_pro.ld")
             .run()?;
 
-        Ok(DistResult { bootloader_path: seed_riscv, kernel_path: kernel, disk_image: None })
+        println!("{}", "[*] Building ramdisk".bold().magenta());
+        let mut ramdisk = Ramdisk::new(Platform::Rv64Virt);
+        ramdisk.add("kernel.elf", &kernel);
+
+        Ok(DistResult {
+            bootloader_path: seed_riscv,
+            kernel_path: kernel,
+            ramdisk: Some(ramdisk),
+            disk_image: None,
+        })
     }
 
     pub fn build_x64(self) -> Result<DistResult> {
@@ -280,7 +300,12 @@ impl Dist {
         }
         image.build()?;
 
-        Ok(DistResult { bootloader_path: seed_uefi, kernel_path: kernel, disk_image: Some(image_path) })
+        Ok(DistResult {
+            bootloader_path: seed_uefi,
+            kernel_path: kernel,
+            ramdisk: None,
+            disk_image: Some(image_path),
+        })
     }
 
     fn build_userspace_task(&self, name: &str, source_dir: PathBuf, target: Target) -> Result<PathBuf> {

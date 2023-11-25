@@ -1,10 +1,11 @@
+use crate::ramdisk::Ramdisk;
 use eyre::{eyre, Result, WrapErr};
-use std::{fs::File, path::PathBuf, process::Command};
+use std::{path::PathBuf, process::Command};
 
 pub struct RunQemuRiscV {
     pub opensbi: Option<PathBuf>,
     pub seed: PathBuf,
-    pub kernel: PathBuf,
+    pub ramdisk: Option<Ramdisk>,
     pub disk_image: Option<PathBuf>,
 
     pub open_display: bool,
@@ -12,13 +13,24 @@ pub struct RunQemuRiscV {
 }
 
 impl RunQemuRiscV {
-    pub fn new(seed: PathBuf, kernel: PathBuf, disk_image: Option<PathBuf>) -> RunQemuRiscV {
-        RunQemuRiscV { opensbi: None, seed, kernel, disk_image, open_display: false, debug_int_firehose: false }
+    pub fn new(seed: PathBuf, disk_image: Option<PathBuf>) -> RunQemuRiscV {
+        RunQemuRiscV {
+            opensbi: None,
+            seed,
+            ramdisk: None,
+            disk_image,
+            open_display: false,
+            debug_int_firehose: false,
+        }
     }
 
     /// Provide a custom version of OpenSBI to use. This will be passed to QEMU using the `-bios` flag.
     pub fn opensbi(self, opensbi: PathBuf) -> Self {
         Self { opensbi: Some(opensbi), ..self }
+    }
+
+    pub fn ramdisk(self, ramdisk: Option<Ramdisk>) -> Self {
+        Self { ramdisk, ..self }
     }
 
     pub fn open_display(self, open_display: bool) -> Self {
@@ -38,17 +50,28 @@ impl RunQemuRiscV {
         if self.debug_int_firehose {
             qemu.args(&["-d", "int"]);
         }
-        let kernel_size =
-            File::open(self.kernel.clone()).expect("Failed to open kernel ELF").metadata().unwrap().len();
-        qemu.args(&["-device", &format!("loader,addr=0xb0000000,data={},data-len=4", kernel_size)]);
-        // TODO: get rid of this and the infra once we can load the kernel from the disk image
-        qemu.args(&[
-            "-device",
-            &format!("loader,file={},addr=0xb0000004,force-raw=on", self.kernel.to_str().unwrap()),
-        ]);
 
         if let Some(opensbi) = self.opensbi {
             qemu.args(&["-bios", opensbi.to_str().unwrap()]);
+        }
+
+        if let Some(ramdisk) = self.ramdisk {
+            const RAMDISK_BASE_ADDR: u64 = 0xb000_0000;
+            let (header, entries) = ramdisk.create();
+            qemu.args(&[
+                "-device",
+                &format!("loader,addr={},file={},force-raw=on", RAMDISK_BASE_ADDR, header.display()),
+            ]);
+            for (offset, source) in entries {
+                qemu.args(&[
+                    "-device",
+                    &format!(
+                        "loader,addr={},file={},force-raw=on",
+                        RAMDISK_BASE_ADDR + offset as u64,
+                        source.display()
+                    ),
+                ]);
+            }
         }
 
         // Emit serial on both stdio and to a file

@@ -16,3 +16,4 @@ serde = { version = "1.0.152", features = ["derive"] }
 toml = "0.7.2"
 colored = "2.0.4"
 serialport = "4.2.2"
+seed = { path = "../../seed/" }

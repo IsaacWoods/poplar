@@ -2,6 +2,7 @@
 //! final set of config values.
 
 use crate::DistOptions;
+use core::fmt;
 use serde::{Deserialize, Serialize};
 use std::path::{Path, PathBuf};
 
@@ -93,6 +94,16 @@ pub enum Platform {
 impl Default for Platform {
     fn default() -> Self {
         Platform::Rv64Virt
+    }
+}
+
+impl fmt::Display for Platform {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::X64 => write!(f, "x64"),
+            Self::Rv64Virt => write!(f, "rv64_virt"),
+            Self::MqPro => write!(f, "mq_pro"),
+        }
     }
 }
 
