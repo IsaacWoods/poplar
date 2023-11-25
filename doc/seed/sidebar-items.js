@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"mod":["boot_info"]};
+window.SIDEBAR_ITEMS = {"mod":["boot_info","ramdisk"]};
