@@ -31,7 +31,6 @@ use hal_x86_64::{
 use interrupts::InterruptController;
 use kernel::{
     memory::{KernelStackAllocator, PhysicalMemoryManager, Stack},
-    per_cpu::PerCpu,
     scheduler::Scheduler,
     Platform,
 };
@@ -49,14 +48,9 @@ pub struct PlatformImpl {
 impl Platform for PlatformImpl {
     type PageTableSize = hal::memory::Size4KiB;
     type PageTable = PageTableImpl;
-    type PerCpu = per_cpu::PerCpuImpl;
 
     fn kernel_page_table(&mut self) -> &mut Self::PageTable {
         &mut self.kernel_page_table
-    }
-
-    unsafe fn per_cpu<'a>() -> &'a mut Self::PerCpu {
-        unsafe { per_cpu::get_per_cpu_data() }
     }
 
     unsafe fn initialize_task_stacks(
@@ -67,11 +61,21 @@ impl Platform for PlatformImpl {
         task::initialize_stacks(kernel_stack, user_stack, task_entry_point)
     }
 
+    unsafe fn switch_user_stack_pointer(new_user_stack_pointer: VAddr) -> VAddr {
+        let per_cpu = unsafe { per_cpu::get_per_cpu_data() };
+        let old_user_rsp = per_cpu.user_stack_pointer();
+        per_cpu.set_user_stack_pointer(new_user_stack_pointer);
+        old_user_rsp
+    }
+
     unsafe fn context_switch(current_kernel_stack: *mut VAddr, new_kernel_stack: VAddr) {
         task::context_switch(current_kernel_stack, new_kernel_stack)
     }
 
-    unsafe fn drop_into_userspace() -> ! {
+    unsafe fn drop_into_userspace(kernel_stack_pointer: VAddr, user_stack_pointer: VAddr) -> ! {
+        let per_cpu = unsafe { per_cpu::get_per_cpu_data() };
+        per_cpu.set_kernel_stack_pointer(kernel_stack_pointer);
+        per_cpu.set_user_stack_pointer(user_stack_pointer);
         task::drop_into_userspace()
     }
 }
@@ -213,7 +217,7 @@ pub extern "C" fn kentry(boot_info: &BootInfo) -> ! {
     info!("Loading {} initial tasks to the ready queue", boot_info.loaded_images.len());
     for image in &boot_info.loaded_images {
         kernel::load_task(
-            &mut unsafe { PlatformImpl::per_cpu() }.scheduler(),
+            &mut unsafe { per_cpu::get_per_cpu_data() }.scheduler(),
             image,
             platform.kernel_page_table(),
             &kernel::PHYSICAL_MEMORY_MANAGER.get(),
@@ -228,5 +232,5 @@ pub extern "C" fn kentry(boot_info: &BootInfo) -> ! {
      * Drop into userspace!
      */
     info!("Dropping into usermode");
-    unsafe { PlatformImpl::per_cpu() }.scheduler().drop_to_userspace()
+    unsafe { per_cpu::get_per_cpu_data() }.scheduler().drop_to_userspace()
 }

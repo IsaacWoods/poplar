@@ -1,6 +1,5 @@
 use crate::{
     object::task::{Task, TaskState},
-    per_cpu::PerCpu,
     Platform,
 };
 use alloc::{collections::VecDeque, sync::Arc, vec::Vec};
@@ -64,10 +63,7 @@ where
         unsafe {
             let kernel_stack_pointer: VAddr = *task.kernel_stack_pointer.get();
             let user_stack_pointer: VAddr = *task.user_stack_pointer.get();
-
-            P::per_cpu().set_kernel_stack_pointer(kernel_stack_pointer);
-            P::per_cpu().set_user_stack_pointer(user_stack_pointer);
-            P::drop_into_userspace()
+            P::drop_into_userspace(kernel_stack_pointer, user_stack_pointer)
         }
     }
 
@@ -114,9 +110,7 @@ where
             let new_user_stack = unsafe { *self.running_task.as_ref().unwrap().user_stack_pointer.get() };
 
             unsafe {
-                *old_task.user_stack_pointer.get() = P::per_cpu().user_stack_pointer();
-                P::per_cpu().set_kernel_stack_pointer(new_kernel_stack);
-                P::per_cpu().set_user_stack_pointer(new_user_stack);
+                *old_task.user_stack_pointer.get() = P::switch_user_stack_pointer(new_user_stack);
                 P::context_switch(old_kernel_stack, new_kernel_stack);
             }
         } else {

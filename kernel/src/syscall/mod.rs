@@ -8,7 +8,7 @@ use crate::{
         task::{Task, TaskState},
         KernelObject,
     },
-    per_cpu::PerCpu,
+    scheduler::Scheduler,
     Platform,
 };
 use alloc::{collections::BTreeMap, string::String, sync::Arc};
@@ -51,15 +51,23 @@ const NONE_BAR: Option<poplar::syscall::pci::Bar> = None;
 /// receives the syscall (each architecture is free to do this however it wishes). The only
 /// parameter that is guaranteed to be valid is `number`; the meaning of the rest may be undefined
 /// depending on how many parameters the specific system call takes.
-pub fn handle_syscall<P>(number: usize, a: usize, b: usize, c: usize, d: usize, e: usize) -> usize
+pub fn handle_syscall<P>(
+    scheduler: &mut Scheduler<P>,
+    number: usize,
+    a: usize,
+    b: usize,
+    c: usize,
+    d: usize,
+    e: usize,
+) -> usize
 where
     P: Platform,
 {
     // info!("Syscall! number = {}, a = {}, b = {}, c = {}, d = {}, e = {}", number, a, b, c, d, e);
-    let task = unsafe { P::per_cpu() }.scheduler().running_task.as_ref().unwrap();
+    let task = scheduler.running_task.as_ref().unwrap();
 
     match number {
-        syscall::SYSCALL_YIELD => yield_syscall::<P>(),
+        syscall::SYSCALL_YIELD => yield_syscall(scheduler),
         syscall::SYSCALL_EARLY_LOG => status_to_syscall_repr(early_log(task, a, b)),
         syscall::SYSCALL_GET_FRAMEBUFFER => handle_to_syscall_repr(get_framebuffer(task, a)),
         syscall::SYSCALL_CREATE_MEMORY_OBJECT => handle_to_syscall_repr(create_memory_object(task, a, b, c, d)),
@@ -80,12 +88,12 @@ where
     }
 }
 
-fn yield_syscall<P>() -> usize
+fn yield_syscall<P>(scheduler: &mut Scheduler<P>) -> usize
 where
     P: Platform,
 {
     info!("Process yielded!");
-    unsafe { P::per_cpu() }.scheduler().switch_to_next(TaskState::Ready);
+    scheduler.switch_to_next(TaskState::Ready);
     0
 }
 

@@ -2,7 +2,7 @@ use alloc::boxed::Box;
 use core::{arch::asm, ptr};
 use hal::memory::VAddr;
 use hal_x86_64::hw::tss::Tss;
-use kernel::{per_cpu::PerCpu, scheduler::Scheduler};
+use kernel::scheduler::Scheduler;
 
 /// Get a mutable reference to the per-CPU data of the running CPU. This is unsafe because it is the caller's
 /// responsibility to ensure that only one mutable reference to the per-CPU data exists at any one time. It is also
@@ -61,23 +61,21 @@ impl PerCpuImpl {
             write_msr(IA32_GS_BASE, address as u64);
         }
     }
-}
 
-impl PerCpu<crate::PlatformImpl> for PerCpuImpl {
-    fn scheduler(&mut self) -> &mut Scheduler<crate::PlatformImpl> {
+    pub fn scheduler(&mut self) -> &mut Scheduler<crate::PlatformImpl> {
         &mut self.scheduler
     }
 
-    fn set_kernel_stack_pointer(&mut self, stack_pointer: VAddr) {
+    pub fn set_kernel_stack_pointer(&mut self, stack_pointer: VAddr) {
         self.current_task_kernel_rsp = stack_pointer;
         self.tss.set_kernel_stack(stack_pointer);
     }
 
-    fn user_stack_pointer(&self) -> VAddr {
+    pub fn user_stack_pointer(&self) -> VAddr {
         self.current_task_user_rsp
     }
 
-    fn set_user_stack_pointer(&mut self, stack_pointer: VAddr) {
+    pub fn set_user_stack_pointer(&mut self, stack_pointer: VAddr) {
         self.current_task_user_rsp = stack_pointer;
     }
 }

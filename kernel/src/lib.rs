@@ -16,7 +16,6 @@ mod heap_allocator;
 pub mod memory;
 pub mod object;
 pub mod pci;
-pub mod per_cpu;
 pub mod scheduler;
 pub mod syscall;
 
@@ -28,7 +27,6 @@ use memory::{KernelStackAllocator, PhysicalMemoryManager};
 use object::{address_space::AddressSpace, memory_object::MemoryObject, task::Task, KernelObject};
 use pci::PciInfo;
 use pci_types::ConfigRegionAccess as PciConfigRegionAccess;
-use per_cpu::PerCpu;
 use poplar_util::InitGuard;
 use scheduler::Scheduler;
 use seed::boot_info::LoadedImage;
@@ -46,14 +44,8 @@ pub static PCI_ACCESS: InitGuard<Option<Mutex<Box<dyn PciConfigRegionAccess + Se
 pub trait Platform: Sized + 'static {
     type PageTableSize: FrameSize;
     type PageTable: PageTable<Self::PageTableSize> + Send;
-    type PerCpu: PerCpu<Self>;
 
     fn kernel_page_table(&mut self) -> &mut Self::PageTable;
-
-    /// Get the per-CPU info for the current CPU. To make this safe, the per-CPU info must be installed before the
-    /// `Platform` implementation is created, and the user must be careful to maintain only one live mutable
-    /// reference to the per-CPU data at a time.
-    unsafe fn per_cpu<'a>() -> &'a mut Self::PerCpu;
 
     /// Often, the platform will need to put stuff on either the kernel or the user stack before a task is run for
     /// the first time. `task_entry_point` is the virtual address that should be jumped to in usermode when the
@@ -66,13 +58,15 @@ pub trait Platform: Sized + 'static {
         task_entry_point: VAddr,
     ) -> (VAddr, VAddr);
 
+    unsafe fn switch_user_stack_pointer(new_user_stack_pointer: VAddr) -> VAddr;
+
     /// Do the final part of a context switch: save all the state that needs to be to the current kernel stack,
     /// switch to a new kernel stack, and restore all the state from that stack.
     unsafe fn context_switch(current_kernel_stack: *mut VAddr, new_kernel_stack: VAddr);
 
     /// Do the actual drop into usermode. This assumes that the task's page tables have already been installed,
     /// and that an initial frame has been put into the task's kernel stack that this will use to enter userspace.
-    unsafe fn drop_into_userspace() -> !;
+    unsafe fn drop_into_userspace(kernel_stack_pointer: VAddr, user_stack_pointer: VAddr) -> !;
 }
 
 pub fn load_task<P>(
