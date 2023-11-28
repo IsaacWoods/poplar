@@ -34,6 +34,10 @@ cfg_if::cfg_if! {
             pub mod kernel_map {
                 use hal::memory::{PAddr, VAddr};
 
+                /// Platforms using `Level4` paging schemes define this to set which P4 entry is
+                /// duplicated across all page tables as the kernel's entry.
+                pub const KERNEL_P4_ENTRY: usize = 0;
+
                 pub const KERNEL_ADDRESS_SPACE_START: VAddr = VAddr::new(0xffff_ff80_0000_0000);
                 pub const PHYSICAL_MAP_BASE: VAddr = KERNEL_ADDRESS_SPACE_START;
 
