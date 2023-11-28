@@ -1,5 +1,5 @@
 #![allow(internal_features)]
-#![feature(lang_items, prelude_import, async_iterator, core_intrinsics, panic_info_message)]
+#![feature(lang_items, prelude_import, async_iterator, core_intrinsics, panic_info_message, naked_functions)]
 #![no_std]
 
 extern crate alloc;
@@ -69,8 +69,31 @@ pub mod prelude {
 #[global_allocator]
 static ALLOCATOR: LockedHeap = LockedHeap::empty();
 
+#[cfg(target_arch = "x86_64")]
 #[no_mangle]
+#[naked]
 unsafe extern "C" fn _start() -> ! {
+    core::arch::asm!("jmp rust_entry", options(noreturn))
+}
+
+#[cfg(target_arch = "riscv64")]
+#[no_mangle]
+#[naked]
+unsafe extern "C" fn _start() -> ! {
+    core::arch::asm!(
+        "
+        .option push
+        .option norelax
+        lla gp, __global_pointer$
+        .option pop
+        j rust_entry
+        ",
+        options(noreturn)
+    )
+}
+
+#[no_mangle]
+unsafe extern "C" fn rust_entry() -> ! {
     extern "C" {
         fn main(argc: isize, argv: *const *const u8) -> isize;
     }
