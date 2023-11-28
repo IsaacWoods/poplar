@@ -17,7 +17,6 @@ mod memory;
 mod pci;
 
 use crate::{
-    block::virtio::VirtioBlockDevice,
     fs::{ramdisk::Ramdisk, Filesystem},
     memory::Region,
 };
@@ -30,7 +29,7 @@ use memory::{MemoryManager, MemoryRegions};
 use pci::PciAccess;
 use poplar_util::{linker::LinkerSymbol, math::align_up};
 use seed::boot_info::BootInfo;
-use tracing::{info, warn};
+use tracing::info;
 
 /*
  * This is the entry-point jumped to from OpenSBI. It needs to be at the very start of the ELF, so we put it in its
@@ -57,7 +56,7 @@ core::arch::global_asm!(
 
         jal seed_main
         unimp
-"
+    "
 );
 
 extern "C" {
@@ -130,7 +129,7 @@ pub fn seed_main(hart_id: u64, fdt_ptr: *const u8) -> ! {
 
     let mut kernel_page_table = PageTableImpl::new(MEMORY_MANAGER.allocate(), VAddr::new(0x0));
     let kernel_file = if let Some(ref mut ramdisk) = ramdisk {
-        ramdisk.load("kernel.elf").unwrap()
+        ramdisk.load("kernel").unwrap()
     } else {
         panic!("No kernel source is present!");
     };
@@ -171,6 +170,20 @@ pub fn seed_main(hart_id: u64, fdt_ptr: *const u8) -> ! {
         create_boot_info(&mut next_available_kernel_address, &mut kernel_page_table);
     boot_info.magic = seed::boot_info::BOOT_INFO_MAGIC;
     boot_info.fdt_address = Some(PAddr::new(fdt_ptr as usize).unwrap());
+
+    /*
+     * Load desired early tasks.
+     */
+    // TODO: load from config file
+    for name in &["hello_world"] {
+        let file = if let Some(ref mut ramdisk) = ramdisk {
+            ramdisk.load(&name).unwrap()
+        } else {
+            panic!("No user tasks source is present!");
+        };
+        let info = image::load_image(&file, name, &MEMORY_MANAGER);
+        boot_info.loaded_images.push(info).unwrap();
+    }
 
     /*
      * Construct the direct physical memory map.

@@ -22,6 +22,7 @@ mer = { path = "../../lib/mer/" }
 pci_types = { path = "../../lib/pci_types" }
 virtio = { path = "../../lib/virtio" }
 gpt = { path = "../../lib/gpt" }
+heapless = "0.8.0"
 
 [features]
 platform_rv64_virt = ["hal_riscv/platform_rv64_virt"]

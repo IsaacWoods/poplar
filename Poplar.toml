@@ -13,6 +13,9 @@ user_tasks = [
 [rv64_virt]
 # The release profile is heavily recommended for software-emulated targets to achieve reasonable speeds
 release = true
+user_tasks = [
+    "hello_world user/hello_world",
+]
 
 [mq_pro]
 release = true

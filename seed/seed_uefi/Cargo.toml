@@ -14,6 +14,6 @@ uefi = { version = "0.24.0", features = ["alloc", "global_allocator"] }
 mer = { path = "../../lib/mer" }
 gfxconsole = { path = "../../lib/gfxconsole" }
 poplar_util = { path = "../../lib/poplar_util" }
-heapless = "0.7.16"
+heapless = "0.8.0"
 serde = { version = "1.0.188", default-features = false, features = ["derive", "alloc"] }
 picotoml = { path = "../../lib/picotoml" }

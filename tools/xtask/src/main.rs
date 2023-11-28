@@ -180,9 +180,25 @@ impl Dist {
             .rustflags("-Clink-arg=-Tkernel_riscv/rv64_virt.ld")
             .run()?;
 
+        let user_tasks = self
+            .user_tasks
+            .iter()
+            .map(|task| {
+                let artifact = self.build_userspace_task(
+                    &task.name,
+                    task.source_dir.clone(),
+                    Target::Triple("riscv64gc-unknown-none-elf".to_string()),
+                )?;
+                Ok((task.name.clone(), artifact))
+            })
+            .collect::<Result<Vec<(String, PathBuf)>>>()?;
+
         println!("{}", "[*] Building ramdisk".bold().magenta());
         let mut ramdisk = Ramdisk::new(Platform::Rv64Virt);
-        ramdisk.add("kernel.elf", &kernel);
+        ramdisk.add("kernel", &kernel);
+        for (name, source) in &user_tasks {
+            ramdisk.add(name, source);
+        }
 
         println!("{}", "[*] Building disk image".bold().magenta());
         let image_path = PathBuf::from("poplar_riscv.img");
@@ -234,7 +250,7 @@ impl Dist {
 
         println!("{}", "[*] Building ramdisk".bold().magenta());
         let mut ramdisk = Ramdisk::new(Platform::Rv64Virt);
-        ramdisk.add("kernel.elf", &kernel);
+        ramdisk.add("kernel", &kernel);
 
         Ok(DistResult {
             bootloader_path: seed_riscv,
