@@ -417,7 +417,7 @@ impl PageTable<Size4KiB> for PageTableImpl<Level4> {
         }
 
         // TODO: replace this with a returned 'token' or whatever to batch changes before a flush if possible
-        sfence_vma(None, page.start);
+        sfence_vma(None, Some(page.start));
         Ok(())
     }
 
@@ -529,7 +529,7 @@ impl PageTable<Size4KiB> for PageTableImpl<Level4> {
                     .next_table_mut(page.start.p2_index(), physical_base)?;
                 let frame = Frame::starts_with(p1[page.start.p1_index()].address()?);
                 p1[page.start.p1_index()].set(None, true);
-                sfence_vma(None, page.start);
+                sfence_vma(None, Some(page.start));
 
                 Some(frame)
             }
@@ -658,7 +658,7 @@ impl PageTable<Size4KiB> for PageTableImpl<Level3> {
         }
 
         // TODO: replace this with a returned 'token' or whatever to batch changes before a flush if possible
-        sfence_vma(None, page.start);
+        sfence_vma(None, Some(page.start));
         Ok(())
     }
 
@@ -769,7 +769,7 @@ impl PageTable<Size4KiB> for PageTableImpl<Level3> {
                     .next_table_mut(page.start.p2_index(), physical_base)?;
                 let frame = Frame::starts_with(p1[page.start.p1_index()].address()?);
                 p1[page.start.p1_index()].set(None, true);
-                sfence_vma(None, page.start);
+                sfence_vma(None, Some(page.start));
 
                 Some(frame)
             }
@@ -807,9 +807,11 @@ impl VAddrIndices for VAddr {
 }
 
 #[inline(always)]
-pub fn sfence_vma(asid: Option<usize>, addr: VAddr) {
-    match asid {
-        Some(asid) => unsafe { asm!("sfence.vma {}, {}", in(reg) usize::from(addr), in(reg) asid) },
-        None => unsafe { asm!("sfence.vma {}, zero", in(reg) usize::from(addr)) },
+pub fn sfence_vma(asid: Option<usize>, addr: Option<VAddr>) {
+    match (asid, addr) {
+        (Some(asid), Some(addr)) => unsafe { asm!("sfence.vma {}, {}", in(reg) usize::from(addr), in(reg) asid) },
+        (Some(asid), None) => unsafe { asm!("sfence.vma zero, {}", in(reg) asid) },
+        (None, Some(addr)) => unsafe { asm!("sfence.vma {}, zero", in(reg) usize::from(addr)) },
+        (None, None) => unsafe { asm!("sfence.vma") },
     }
 }
