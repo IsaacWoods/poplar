@@ -348,7 +348,7 @@ impl PageTable<Size4KiB> for PageTableImpl<Level4> {
         let kernel_p3_address =
             kernel_page_table.top()[crate::platform::kernel_map::KERNEL_P4_ENTRY].address().unwrap();
         page_table.top_mut()[crate::platform::kernel_map::KERNEL_P4_ENTRY]
-            .set(Some((kernel_p3_address, EntryFlags::WRITABLE)), false);
+            .set(Some((kernel_p3_address, EntryFlags::empty())), false);
 
         page_table
     }
