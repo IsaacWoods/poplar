@@ -160,7 +160,7 @@
 <span class="kw">use </span>poplar_util::InitGuard;
 <span class="kw">use </span>scheduler::Scheduler;
 <span class="kw">use </span>seed::boot_info::LoadedImage;
-<span class="kw">use </span>spin::{Mutex, RwLock};
+<span class="kw">use </span>spinning_top::{RwSpinlock, Spinlock};
 
 <span class="attr">#[cfg(not(test))]
 #[global_allocator]
@@ -168,8 +168,8 @@
 
 <span class="kw">pub static </span>PHYSICAL_MEMORY_MANAGER: InitGuard&lt;PhysicalMemoryManager&gt; = InitGuard::uninit();
 <span class="kw">pub static </span>FRAMEBUFFER: InitGuard&lt;(poplar::syscall::FramebufferInfo, Arc&lt;MemoryObject&gt;)&gt; = InitGuard::uninit();
-<span class="kw">pub static </span>PCI_INFO: RwLock&lt;<span class="prelude-ty">Option</span>&lt;PciInfo&gt;&gt; = RwLock::new(<span class="prelude-val">None</span>);
-<span class="kw">pub static </span>PCI_ACCESS: InitGuard&lt;<span class="prelude-ty">Option</span>&lt;Mutex&lt;Box&lt;<span class="kw">dyn </span>PciConfigRegionAccess + Send&gt;&gt;&gt;&gt; = InitGuard::uninit();
+<span class="kw">pub static </span>PCI_INFO: RwSpinlock&lt;<span class="prelude-ty">Option</span>&lt;PciInfo&gt;&gt; = RwSpinlock::new(<span class="prelude-val">None</span>);
+<span class="kw">pub static </span>PCI_ACCESS: InitGuard&lt;<span class="prelude-ty">Option</span>&lt;Spinlock&lt;Box&lt;<span class="kw">dyn </span>PciConfigRegionAccess + Send&gt;&gt;&gt;&gt; = InitGuard::uninit();
 
 <span class="kw">pub trait </span>Platform: Sized + <span class="lifetime">&#39;static </span>{
     <span class="kw">type </span>PageTableSize: FrameSize;

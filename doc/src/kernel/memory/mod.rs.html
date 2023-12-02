@@ -75,10 +75,10 @@
 <span class="kw">use </span>core::ops::Range;
 <span class="kw">use </span>hal::memory::{Frame, FrameAllocator, FrameSize, PAddr, VAddr};
 <span class="kw">use </span>seed::boot_info::BootInfo;
-<span class="kw">use </span>spin::Mutex;
+<span class="kw">use </span>spinning_top::Spinlock;
 
 <span class="kw">pub struct </span>PhysicalMemoryManager {
-    buddy: Mutex&lt;BuddyAllocator&gt;,
+    buddy: Spinlock&lt;BuddyAllocator&gt;,
 }
 
 <span class="kw">impl </span>PhysicalMemoryManager {
@@ -91,7 +91,7 @@
             }
         }
 
-        PhysicalMemoryManager { buddy: Mutex::new(buddy_allocator) }
+        PhysicalMemoryManager { buddy: Spinlock::new(buddy_allocator) }
     }
 
     <span class="kw">pub fn </span>alloc_bytes(<span class="kw-2">&amp;</span><span class="self">self</span>, num_bytes: usize) -&gt; PAddr {

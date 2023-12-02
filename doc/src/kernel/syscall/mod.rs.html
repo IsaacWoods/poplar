@@ -602,12 +602,12 @@
     Handle,
     ZERO_HANDLE,
 };
-<span class="kw">use </span>spin::Mutex;
+<span class="kw">use </span>spinning_top::Spinlock;
 <span class="kw">use </span>tracing::{info, trace, warn};
 <span class="kw">use </span>validation::{UserPointer, UserSlice, UserString};
 
 <span class="doccomment">/// Maps the name of a service to the channel used to register new service users.
-</span><span class="kw">static </span>SERVICE_MAP: Mutex&lt;BTreeMap&lt;String, Arc&lt;ChannelEnd&gt;&gt;&gt; = Mutex::new(BTreeMap::new());
+</span><span class="kw">static </span>SERVICE_MAP: Spinlock&lt;BTreeMap&lt;String, Arc&lt;ChannelEnd&gt;&gt;&gt; = Spinlock::new(BTreeMap::new());
 
 <span class="comment">// TODO: these shouldn&#39;t be needed. Use-sites should be able to read `[None; MAX_WHATEVER]`, but can&#39;t because
 // the const_in_array_repeat_expression feature got removed. This works around that for now.

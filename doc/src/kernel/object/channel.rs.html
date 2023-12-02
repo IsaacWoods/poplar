@@ -118,13 +118,13 @@
     vec::Vec,
 };
 <span class="kw">use </span>poplar::syscall::{GetMessageError, SendMessageError, CHANNEL_MAX_NUM_HANDLES};
-<span class="kw">use </span>spin::Mutex;
+<span class="kw">use </span>spinning_top::Spinlock;
 <span class="kw">use </span>tracing::warn;
 
 <span class="kw">pub struct </span>ChannelEnd {
     <span class="kw">pub </span>id: KernelObjectId,
     <span class="kw">pub </span>owner: KernelObjectId,
-    messages: Mutex&lt;VecDeque&lt;Message&gt;&gt;,
+    messages: Spinlock&lt;VecDeque&lt;Message&gt;&gt;,
     <span class="doccomment">/// The other end of the channel. If this is `None`, the channel&#39;s messages come from the kernel.
     </span>other_end: <span class="prelude-ty">Option</span>&lt;Weak&lt;ChannelEnd&gt;&gt;,
 }
@@ -134,14 +134,14 @@
         <span class="kw">let </span><span class="kw-2">mut </span>end_a = Arc::new(ChannelEnd {
             id: alloc_kernel_object_id(),
             owner,
-            messages: Mutex::new(VecDeque::new()),
+            messages: Spinlock::new(VecDeque::new()),
             other_end: <span class="prelude-val">Some</span>(Weak::default()),
         });
 
         <span class="kw">let </span>end_b = Arc::new(ChannelEnd {
             id: alloc_kernel_object_id(),
             owner,
-            messages: Mutex::new(VecDeque::new()),
+            messages: Spinlock::new(VecDeque::new()),
             other_end: <span class="prelude-val">Some</span>(Arc::downgrade(<span class="kw-2">&amp;</span>end_a)),
         });
 
@@ -157,7 +157,7 @@
         Arc::new(ChannelEnd {
             id: alloc_kernel_object_id(),
             owner,
-            messages: Mutex::new(VecDeque::new()),
+            messages: Spinlock::new(VecDeque::new()),
             other_end: <span class="prelude-val">None</span>,
         })
     }

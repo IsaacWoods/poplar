@@ -55,13 +55,13 @@
 <span class="kw">use </span><span class="kw">crate</span>::Platform;
 <span class="kw">use </span>core::marker::PhantomData;
 <span class="kw">use </span>hal::memory::VAddr;
-<span class="kw">use </span>spin::Mutex;
+<span class="kw">use </span>spinning_top::Spinlock;
 
 <span class="kw">pub struct </span>KernelStackAllocator&lt;P&gt;
 <span class="kw">where
     </span>P: Platform,
 {
-    kernel_stack_slots: Mutex&lt;SlabAllocator&gt;,
+    kernel_stack_slots: Spinlock&lt;SlabAllocator&gt;,
     slot_size: usize,
     _phantom: PhantomData&lt;P&gt;,
 }
@@ -72,7 +72,7 @@
 {
     <span class="kw">pub fn </span>new(stacks_bottom: VAddr, stacks_top: VAddr, slot_size: usize) -&gt; KernelStackAllocator&lt;P&gt; {
         KernelStackAllocator {
-            kernel_stack_slots: Mutex::new(SlabAllocator::new(stacks_bottom, stacks_top, slot_size)),
+            kernel_stack_slots: Spinlock::new(SlabAllocator::new(stacks_bottom, stacks_top, slot_size)),
             slot_size,
             _phantom: PhantomData,
         }

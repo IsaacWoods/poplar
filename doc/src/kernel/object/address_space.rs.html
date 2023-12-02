@@ -155,7 +155,7 @@
 <span class="kw">use </span>hal::memory::{mebibytes, Bytes, FrameAllocator, PageTable, VAddr};
 <span class="kw">use </span>poplar::syscall::MapMemoryObjectError;
 <span class="kw">use </span>poplar_util::bitmap::Bitmap;
-<span class="kw">use </span>spin::Mutex;
+<span class="kw">use </span>spinning_top::Spinlock;
 
 <span class="kw">const </span>MAX_TASKS: usize = <span class="number">64</span>;
 
@@ -182,10 +182,10 @@
 {
     <span class="kw">pub </span>id: KernelObjectId,
     <span class="kw">pub </span>owner: KernelObjectId,
-    <span class="kw">pub </span>state: Mutex&lt;State&gt;,
-    <span class="kw">pub </span>memory_objects: Mutex&lt;Vec&lt;Arc&lt;MemoryObject&gt;&gt;&gt;,
-    page_table: Mutex&lt;P::PageTable&gt;,
-    slot_bitmap: Mutex&lt;u64&gt;,
+    <span class="kw">pub </span>state: Spinlock&lt;State&gt;,
+    <span class="kw">pub </span>memory_objects: Spinlock&lt;Vec&lt;Arc&lt;MemoryObject&gt;&gt;&gt;,
+    page_table: Spinlock&lt;P::PageTable&gt;,
+    slot_bitmap: Spinlock&lt;u64&gt;,
 }
 
 <span class="kw">impl</span>&lt;P&gt; AddressSpace&lt;P&gt;
@@ -199,10 +199,10 @@
         Arc::new(AddressSpace {
             id: alloc_kernel_object_id(),
             owner,
-            state: Mutex::new(State::NotActive),
-            memory_objects: Mutex::new(<span class="macro">vec!</span>[]),
-            page_table: Mutex::new(P::PageTable::new_with_kernel_mapped(kernel_page_table, allocator)),
-            slot_bitmap: Mutex::new(<span class="number">0</span>),
+            state: Spinlock::new(State::NotActive),
+            memory_objects: Spinlock::new(<span class="macro">vec!</span>[]),
+            page_table: Spinlock::new(P::PageTable::new_with_kernel_mapped(kernel_page_table, allocator)),
+            slot_bitmap: Spinlock::new(<span class="number">0</span>),
         })
     }
 

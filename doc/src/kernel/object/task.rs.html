@@ -178,7 +178,7 @@
 };
 <span class="kw">use </span>hal::memory::VAddr;
 <span class="kw">use </span>poplar::{caps::Capability, Handle};
-<span class="kw">use </span>spin::{Mutex, RwLock};
+<span class="kw">use </span>spinning_top::{RwSpinlock, Spinlock};
 
 <span class="attr">#[derive(Clone, PartialEq, Eq, Debug)]
 </span><span class="kw">pub enum </span>TaskBlock {}
@@ -213,15 +213,15 @@
     owner: KernelObjectId,
     <span class="kw">pub </span>name: String,
     <span class="kw">pub </span>address_space: Arc&lt;AddressSpace&lt;P&gt;&gt;,
-    <span class="kw">pub </span>state: Mutex&lt;TaskState&gt;,
+    <span class="kw">pub </span>state: Spinlock&lt;TaskState&gt;,
     <span class="kw">pub </span>capabilities: Vec&lt;Capability&gt;,
 
-    <span class="kw">pub </span>user_slot: Mutex&lt;TaskSlot&gt;,
-    <span class="kw">pub </span>kernel_stack: Mutex&lt;Stack&gt;,
+    <span class="kw">pub </span>user_slot: Spinlock&lt;TaskSlot&gt;,
+    <span class="kw">pub </span>kernel_stack: Spinlock&lt;Stack&gt;,
     <span class="kw">pub </span>kernel_stack_pointer: UnsafeCell&lt;VAddr&gt;,
     <span class="kw">pub </span>user_stack_pointer: UnsafeCell&lt;VAddr&gt;,
 
-    <span class="kw">pub </span>handles: RwLock&lt;BTreeMap&lt;Handle, Arc&lt;<span class="kw">dyn </span>KernelObject&gt;&gt;&gt;,
+    <span class="kw">pub </span>handles: RwSpinlock&lt;BTreeMap&lt;Handle, Arc&lt;<span class="kw">dyn </span>KernelObject&gt;&gt;&gt;,
     next_handle: AtomicU32,
 }
 
@@ -262,13 +262,13 @@
             owner,
             name: String::from(image.name.as_str()),
             address_space,
-            state: Mutex::new(TaskState::Ready),
+            state: Spinlock::new(TaskState::Ready),
             capabilities: decode_capabilities(<span class="kw-2">&amp;</span>image.capability_stream)<span class="question-mark">?</span>,
-            user_slot: Mutex::new(task_slot),
-            kernel_stack: Mutex::new(kernel_stack),
+            user_slot: Spinlock::new(task_slot),
+            kernel_stack: Spinlock::new(kernel_stack),
             kernel_stack_pointer: UnsafeCell::new(kernel_stack_pointer),
             user_stack_pointer: UnsafeCell::new(user_stack_pointer),
-            handles: RwLock::new(BTreeMap::new()),
+            handles: RwSpinlock::new(BTreeMap::new()),
             <span class="comment">// XXX: 0 is a special handle value, so start at 1
             </span>next_handle: AtomicU32::new(<span class="number">1</span>),
         }))

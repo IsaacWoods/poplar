@@ -321,7 +321,7 @@
 };
 <span class="kw">use </span>hal::memory::VAddr;
 <span class="kw">use </span>poplar_util::math::align_up;
-<span class="kw">use </span>spin::Mutex;
+<span class="kw">use </span>spinning_top::Spinlock;
 
 <span class="kw">pub struct </span>HoleAllocator {
     heap_bottom: VAddr,
@@ -346,18 +346,18 @@
     }
 }
 
-<span class="kw">pub struct </span>LockedHoleAllocator(Mutex&lt;HoleAllocator&gt;);
+<span class="kw">pub struct </span>LockedHoleAllocator(Spinlock&lt;HoleAllocator&gt;);
 
 <span class="kw">impl </span>LockedHoleAllocator {
     <span class="kw">pub const fn </span>new_uninitialized() -&gt; LockedHoleAllocator {
-        LockedHoleAllocator(Mutex::new(HoleAllocator::new_uninitialized()))
+        LockedHoleAllocator(Spinlock::new(HoleAllocator::new_uninitialized()))
     }
 }
 
 <span class="kw">impl </span>Deref <span class="kw">for </span>LockedHoleAllocator {
-    <span class="kw">type </span>Target = Mutex&lt;HoleAllocator&gt;;
+    <span class="kw">type </span>Target = Spinlock&lt;HoleAllocator&gt;;
 
-    <span class="kw">fn </span>deref(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>Mutex&lt;HoleAllocator&gt; {
+    <span class="kw">fn </span>deref(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>Spinlock&lt;HoleAllocator&gt; {
         <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="number">0
     </span>}
 }
