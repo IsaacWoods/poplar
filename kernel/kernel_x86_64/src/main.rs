@@ -36,6 +36,7 @@ use kernel::{
 };
 use pci::PciResolver;
 use per_cpu::PerCpuImpl;
+use poplar_util::InitGuard;
 use seed::boot_info::BootInfo;
 use topo::Topology;
 use tracing::info;
@@ -79,6 +80,8 @@ impl Platform for PlatformImpl {
         task::drop_into_userspace()
     }
 }
+
+pub static SCHEDULER: InitGuard<Scheduler<PlatformImpl>> = InitGuard::uninit();
 
 #[no_mangle]
 pub extern "C" fn kentry(boot_info: &BootInfo) -> ! {
@@ -140,7 +143,7 @@ pub extern "C" fn kentry(boot_info: &BootInfo) -> ! {
     unsafe {
         core::arch::asm!("ltr ax", in("ax") tss_selector.0);
     }
-    PerCpuImpl::install(tss, Scheduler::new());
+    PerCpuImpl::install(tss);
 
     // TODO: go back and set the #PF handler to use a separate kernel stack via the TSS
 
@@ -211,13 +214,15 @@ pub extern "C" fn kentry(boot_info: &BootInfo) -> ! {
 
     let mut platform = PlatformImpl { kernel_page_table, topology };
 
+    SCHEDULER.initialize(Scheduler::new());
+
     /*
      * Create kernel objects from loaded images and schedule them.
      */
     info!("Loading {} initial tasks to the ready queue", boot_info.loaded_images.len());
     for image in &boot_info.loaded_images {
         kernel::load_task(
-            &mut unsafe { per_cpu::get_per_cpu_data() }.scheduler(),
+            SCHEDULER.get(),
             image,
             platform.kernel_page_table(),
             &kernel::PHYSICAL_MEMORY_MANAGER.get(),
@@ -232,5 +237,5 @@ pub extern "C" fn kentry(boot_info: &BootInfo) -> ! {
      * Drop into userspace!
      */
     info!("Dropping into usermode");
-    unsafe { per_cpu::get_per_cpu_data() }.scheduler().drop_to_userspace()
+    SCHEDULER.get().drop_to_userspace();
 }

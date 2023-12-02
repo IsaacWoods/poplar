@@ -70,7 +70,7 @@ pub trait Platform: Sized + 'static {
 }
 
 pub fn load_task<P>(
-    scheduler: &mut Scheduler<P>,
+    scheduler: &Scheduler<P>,
     image: &LoadedImage,
     kernel_page_table: &mut P::PageTable,
     allocator: &PhysicalMemoryManager,

@@ -18,14 +18,14 @@ dependencies = [
  "bitvec",
  "byteorder",
  "log",
- "spinning_top",
+ "spinning_top 0.2.4",
 ]
 
 [[package]]
 name = "autocfg"
-version = "1.0.1"
+version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "cdb031dd78e28731d87d56cc8ffef4a8f36ca26c38fe2de700543e627f8a464a"
+checksum = "d468802bab17cbc0cc575e9b053f41e72aa36bfa6b7f55e3529ffa43161b97fa"
 
 [[package]]
 name = "bit_field"
@@ -167,6 +167,7 @@ dependencies = [
  "ptah",
  "seed",
  "spin",
+ "spinning_top 0.3.0",
  "tracing",
 ]
 
@@ -180,7 +181,7 @@ dependencies = [
  "kernel",
  "poplar_util",
  "seed",
- "spinning_top",
+ "spinning_top 0.2.4",
  "tracing",
  "tracing-core",
 ]
@@ -200,17 +201,18 @@ dependencies = [
  "poplar_util",
  "seed",
  "spin",
- "spinning_top",
+ "spinning_top 0.2.4",
  "tracing",
  "tracing-core",
 ]
 
 [[package]]
 name = "lock_api"
-version = "0.4.5"
+version = "0.4.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "712a4d093c9976e24e7dbca41db895dabcbac38eb5f4045393d17a95bdfb1109"
+checksum = "3c168f8615b12bc01f9c17e2eb0cc07dcae1940121185446edc3744920e8ef45"
 dependencies = [
+ "autocfg",
  "scopeguard",
 ]
 
@@ -333,6 +335,15 @@ name = "spinning_top"
 version = "0.2.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "75adad84ee84b521fb2cca2d4fd0f1dab1d8d026bda3c5bea4ca63b5f9f9293c"
+dependencies = [
+ "lock_api",
+]
+
+[[package]]
+name = "spinning_top"
+version = "0.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d96d2d1d716fb500937168cc09353ffdc7a012be8475ac7308e1bdf0e3923300"
 dependencies = [
  "lock_api",
 ]

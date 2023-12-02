@@ -52,7 +52,7 @@ const NONE_BAR: Option<poplar::syscall::pci::Bar> = None;
 /// parameter that is guaranteed to be valid is `number`; the meaning of the rest may be undefined
 /// depending on how many parameters the specific system call takes.
 pub fn handle_syscall<P>(
-    scheduler: &mut Scheduler<P>,
+    scheduler: &Scheduler<P>,
     number: usize,
     a: usize,
     b: usize,
@@ -64,7 +64,8 @@ where
     P: Platform,
 {
     // info!("Syscall! number = {}, a = {}, b = {}, c = {}, d = {}, e = {}", number, a, b, c, d, e);
-    let task = scheduler.running_task.as_ref().unwrap();
+    let cpu_scheduler = scheduler.for_this_cpu();
+    let task = cpu_scheduler.running_task.as_ref().unwrap();
 
     match number {
         syscall::SYSCALL_YIELD => yield_syscall(scheduler),
@@ -88,7 +89,7 @@ where
     }
 }
 
-fn yield_syscall<P>(scheduler: &mut Scheduler<P>) -> usize
+fn yield_syscall<P>(scheduler: &Scheduler<P>) -> usize
 where
     P: Platform,
 {
