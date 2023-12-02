@@ -15,6 +15,9 @@ pub trait Filesystem {
     fn close(&mut self, file: File);
 }
 
+// TODO: some filesystems will need to allocate memory for this (real ones) and others wont (the
+// ramdisk). We probably need a way to represent both scenarios. (this could be another trait with
+// a `data` method? And then the concrete type an associated type of the FS?)
 pub struct File<'a> {
     pub path: String,
     pub data: &'a [u8],

@@ -51,7 +51,7 @@ impl<'a> VirtioBlockDevice<'a> {
                 }
             })?;
 
-        let mut device = unsafe { &mut *config_ptr };
+        let device = unsafe { &mut *config_ptr };
 
         // TODO: deal with freeing this memory somehow once we're done with the device (probably
         // need to reset it too)

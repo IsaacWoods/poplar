@@ -147,21 +147,21 @@ pub fn seed_main(hart_id: u64, fdt_ptr: *const u8) -> ! {
     /*
      * Find the initialize a Virtio block device if one is present.
      */
-    let mut virtio_block = VirtioBlockDevice::init(&fdt, &MEMORY_MANAGER);
-    if let Some(mut device) = virtio_block {
-        use block::BlockDevice;
-
-        let gpt_header = unsafe { device.read(1).data.cast::<gpt::GptHeader>().as_ref() };
-        gpt_header.validate().unwrap();
-        info!("GPT header: {:#?}", gpt_header);
-
-        // TODO: at some point we should iterate all parition entries properly
-        // (including reading multiple sectors if needed)
-        let partition_table =
-            unsafe { device.read(gpt_header.partition_entry_lba).data.cast::<gpt::PartitionEntry>().as_ref() };
-        info!("First partition entry: {:#?}", partition_table);
-        assert_eq!(partition_table.partition_type_guid, gpt::Guid::EFI_SYSTEM_PARTITION);
-    }
+    // let mut virtio_block = VirtioBlockDevice::init(&fdt, &MEMORY_MANAGER);
+    // if let Some(mut device) = virtio_block {
+    //     use block::BlockDevice;
+    //
+    //     let gpt_header = unsafe { device.read(1).data.cast::<gpt::GptHeader>().as_ref() };
+    //     gpt_header.validate().unwrap();
+    //     info!("GPT header: {:#?}", gpt_header);
+    //
+    //     // TODO: at some point we should iterate all parition entries properly
+    //     // (including reading multiple sectors if needed)
+    //     let partition_table =
+    //         unsafe { device.read(gpt_header.partition_entry_lba).data.cast::<gpt::PartitionEntry>().as_ref() };
+    //     info!("First partition entry: {:#?}", partition_table);
+    //     assert_eq!(partition_table.partition_type_guid, gpt::Guid::EFI_SYSTEM_PARTITION);
+    // }
 
     /*
      * Allocate memory for the boot info and start filling it out.
