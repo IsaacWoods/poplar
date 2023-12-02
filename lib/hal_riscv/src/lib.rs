@@ -32,7 +32,7 @@ cfg_if::cfg_if! {
             pub type PageTableImpl = crate::paging::PageTableImpl<crate::paging::Level3>;
 
             pub mod kernel_map {
-                use hal::memory::{PAddr, VAddr};
+                use hal::memory::{PAddr, VAddr, Bytes};
 
                 /// Platforms using `Level4` paging schemes define this to set which P4 entry is
                 /// duplicated across all page tables as the kernel's entry.
@@ -50,6 +50,14 @@ cfg_if::cfg_if! {
                 pub fn physical_to_virtual(address: PAddr) -> VAddr {
                     PHYSICAL_MAP_BASE + usize::from(address)
                 }
+
+                pub const KERNEL_STACKS_BASE: VAddr = VAddr::new(0x0);
+                /*
+                 * There is an imposed maximum number of tasks because of the simple way we're allocating task kernel stacks.
+                 * This is currently 65536 with a task kernel stack size of 2MiB.
+                 */
+                pub const STACK_SLOT_SIZE: Bytes = 0;
+                pub const MAX_TASKS: usize = 0;
 
                 /// The kernel starts at -2GiB. The kernel image is loaded directly at this address, and the following space until
                 /// the top of memory is managed dynamically and contains the boot info structures, memory map, and kernel heap.
