@@ -1,4 +1,8 @@
-use core::{ptr, slice, str};
+use core::{
+    ptr,
+    slice,
+    str::{self, FromStr},
+};
 use hal::memory::{Flags, FrameAllocator, FrameSize, PAddr, Page, PageTable, Size4KiB, VAddr};
 use hal_x86_64::kernel_map;
 use log::info;
@@ -105,7 +109,7 @@ pub fn load_image(boot_services: &BootServices, volume_handle: Handle, name: &st
 
     let mut image_data = LoadedImage::default();
     image_data.entry_point = VAddr::new(elf.entry_point());
-    image_data.name = heapless::String::from(name);
+    image_data.name = heapless::String::from_str(name).unwrap();
 
     for segment in elf.segments() {
         match segment.segment_type() {
