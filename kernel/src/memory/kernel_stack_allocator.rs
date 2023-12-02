@@ -2,13 +2,13 @@ use super::{PhysicalMemoryManager, SlabAllocator, Stack};
 use crate::Platform;
 use core::marker::PhantomData;
 use hal::memory::VAddr;
-use spin::Mutex;
+use spinning_top::Spinlock;
 
 pub struct KernelStackAllocator<P>
 where
     P: Platform,
 {
-    kernel_stack_slots: Mutex<SlabAllocator>,
+    kernel_stack_slots: Spinlock<SlabAllocator>,
     slot_size: usize,
     _phantom: PhantomData<P>,
 }
@@ -19,7 +19,7 @@ where
 {
     pub fn new(stacks_bottom: VAddr, stacks_top: VAddr, slot_size: usize) -> KernelStackAllocator<P> {
         KernelStackAllocator {
-            kernel_stack_slots: Mutex::new(SlabAllocator::new(stacks_bottom, stacks_top, slot_size)),
+            kernel_stack_slots: Spinlock::new(SlabAllocator::new(stacks_bottom, stacks_top, slot_size)),
             slot_size,
             _phantom: PhantomData,
         }

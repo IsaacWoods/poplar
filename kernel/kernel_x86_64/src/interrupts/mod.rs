@@ -16,7 +16,7 @@ use hal_x86_64::{
     kernel_map,
 };
 use poplar_util::InitGuard;
-use spin::Mutex;
+use spinning_top::Spinlock;
 use tracing::warn;
 
 /// This should only be accessed directly by the bootstrap processor.
@@ -32,7 +32,7 @@ use tracing::warn;
 /// |        fe        | Local APIC timer            |
 /// |        ff        | APIC spurious interrupt     |
 /// |------------------|-----------------------------|
-static IDT: Mutex<Idt> = Mutex::new(Idt::empty());
+static IDT: Spinlock<Idt> = Spinlock::new(Idt::empty());
 
 static LOCAL_APIC: InitGuard<LocalApic> = InitGuard::uninit();
 

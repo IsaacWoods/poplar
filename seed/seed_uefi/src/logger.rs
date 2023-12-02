@@ -3,9 +3,9 @@ use gfxconsole::{Bgr32, Format, Framebuffer, GfxConsole, Pixel, Rgb32};
 use hal_x86_64::hw::serial::SerialPort;
 use log::{LevelFilter, Log, Metadata, Record};
 use seed::boot_info::VideoModeInfo;
-use spin::Mutex;
+use spinning_top::Spinlock;
 
-pub static LOGGER: Mutex<Logger> = Mutex::new(Logger::Uninit);
+pub static LOGGER: Spinlock<Logger> = Spinlock::new(Logger::Uninit);
 
 struct LogWrapper;
 

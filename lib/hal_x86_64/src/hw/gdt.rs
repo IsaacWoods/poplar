@@ -2,9 +2,9 @@ use super::{tss::Tss, DescriptorTablePointer};
 use bit_field::BitField;
 use core::{arch::asm, mem};
 use hal::memory::VAddr;
-use spin::Mutex;
+use spinning_top::Spinlock;
 
-pub static GDT: Mutex<Gdt> = Mutex::new(Gdt::new());
+pub static GDT: Spinlock<Gdt> = Spinlock::new(Gdt::new());
 
 #[derive(Clone, Copy, PartialEq, Eq)]
 #[repr(u8)]

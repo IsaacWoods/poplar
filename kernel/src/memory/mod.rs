@@ -9,10 +9,10 @@ use buddy_allocator::BuddyAllocator;
 use core::ops::Range;
 use hal::memory::{Frame, FrameAllocator, FrameSize, PAddr, VAddr};
 use seed::boot_info::BootInfo;
-use spin::Mutex;
+use spinning_top::Spinlock;
 
 pub struct PhysicalMemoryManager {
-    buddy: Mutex<BuddyAllocator>,
+    buddy: Spinlock<BuddyAllocator>,
 }
 
 impl PhysicalMemoryManager {
@@ -25,7 +25,7 @@ impl PhysicalMemoryManager {
             }
         }
 
-        PhysicalMemoryManager { buddy: Mutex::new(buddy_allocator) }
+        PhysicalMemoryManager { buddy: Spinlock::new(buddy_allocator) }
     }
 
     pub fn alloc_bytes(&self, num_bytes: usize) -> PAddr {

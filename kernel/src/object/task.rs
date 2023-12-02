@@ -15,7 +15,7 @@ use core::{
 };
 use hal::memory::VAddr;
 use poplar::{caps::Capability, Handle};
-use spin::{Mutex, RwLock};
+use spinning_top::{RwSpinlock, Spinlock};
 
 #[derive(Clone, PartialEq, Eq, Debug)]
 pub enum TaskBlock {}
@@ -50,15 +50,15 @@ where
     owner: KernelObjectId,
     pub name: String,
     pub address_space: Arc<AddressSpace<P>>,
-    pub state: Mutex<TaskState>,
+    pub state: Spinlock<TaskState>,
     pub capabilities: Vec<Capability>,
 
-    pub user_slot: Mutex<TaskSlot>,
-    pub kernel_stack: Mutex<Stack>,
+    pub user_slot: Spinlock<TaskSlot>,
+    pub kernel_stack: Spinlock<Stack>,
     pub kernel_stack_pointer: UnsafeCell<VAddr>,
     pub user_stack_pointer: UnsafeCell<VAddr>,
 
-    pub handles: RwLock<BTreeMap<Handle, Arc<dyn KernelObject>>>,
+    pub handles: RwSpinlock<BTreeMap<Handle, Arc<dyn KernelObject>>>,
     next_handle: AtomicU32,
 }
 
@@ -99,13 +99,13 @@ where
             owner,
             name: String::from(image.name.as_str()),
             address_space,
-            state: Mutex::new(TaskState::Ready),
+            state: Spinlock::new(TaskState::Ready),
             capabilities: decode_capabilities(&image.capability_stream)?,
-            user_slot: Mutex::new(task_slot),
-            kernel_stack: Mutex::new(kernel_stack),
+            user_slot: Spinlock::new(task_slot),
+            kernel_stack: Spinlock::new(kernel_stack),
             kernel_stack_pointer: UnsafeCell::new(kernel_stack_pointer),
             user_stack_pointer: UnsafeCell::new(user_stack_pointer),
-            handles: RwLock::new(BTreeMap::new()),
+            handles: RwSpinlock::new(BTreeMap::new()),
             // XXX: 0 is a special handle value, so start at 1
             next_handle: AtomicU32::new(1),
         }))

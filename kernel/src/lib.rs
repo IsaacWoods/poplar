@@ -30,7 +30,7 @@ use pci_types::ConfigRegionAccess as PciConfigRegionAccess;
 use poplar_util::InitGuard;
 use scheduler::Scheduler;
 use seed::boot_info::LoadedImage;
-use spin::{Mutex, RwLock};
+use spinning_top::{RwSpinlock, Spinlock};
 
 #[cfg(not(test))]
 #[global_allocator]
@@ -38,8 +38,8 @@ pub static ALLOCATOR: LockedHoleAllocator = LockedHoleAllocator::new_uninitializ
 
 pub static PHYSICAL_MEMORY_MANAGER: InitGuard<PhysicalMemoryManager> = InitGuard::uninit();
 pub static FRAMEBUFFER: InitGuard<(poplar::syscall::FramebufferInfo, Arc<MemoryObject>)> = InitGuard::uninit();
-pub static PCI_INFO: RwLock<Option<PciInfo>> = RwLock::new(None);
-pub static PCI_ACCESS: InitGuard<Option<Mutex<Box<dyn PciConfigRegionAccess + Send>>>> = InitGuard::uninit();
+pub static PCI_INFO: RwSpinlock<Option<PciInfo>> = RwSpinlock::new(None);
+pub static PCI_ACCESS: InitGuard<Option<Spinlock<Box<dyn PciConfigRegionAccess + Send>>>> = InitGuard::uninit();
 
 pub trait Platform: Sized + 'static {
     type PageTableSize: FrameSize;

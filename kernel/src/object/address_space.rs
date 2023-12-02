@@ -7,7 +7,7 @@ use alloc::{sync::Arc, vec::Vec};
 use hal::memory::{mebibytes, Bytes, FrameAllocator, PageTable, VAddr};
 use poplar::syscall::MapMemoryObjectError;
 use poplar_util::bitmap::Bitmap;
-use spin::Mutex;
+use spinning_top::Spinlock;
 
 const MAX_TASKS: usize = 64;
 
@@ -34,10 +34,10 @@ where
 {
     pub id: KernelObjectId,
     pub owner: KernelObjectId,
-    pub state: Mutex<State>,
-    pub memory_objects: Mutex<Vec<Arc<MemoryObject>>>,
-    page_table: Mutex<P::PageTable>,
-    slot_bitmap: Mutex<u64>,
+    pub state: Spinlock<State>,
+    pub memory_objects: Spinlock<Vec<Arc<MemoryObject>>>,
+    page_table: Spinlock<P::PageTable>,
+    slot_bitmap: Spinlock<u64>,
 }
 
 impl<P> AddressSpace<P>
@@ -51,10 +51,10 @@ where
         Arc::new(AddressSpace {
             id: alloc_kernel_object_id(),
             owner,
-            state: Mutex::new(State::NotActive),
-            memory_objects: Mutex::new(vec![]),
-            page_table: Mutex::new(P::PageTable::new_with_kernel_mapped(kernel_page_table, allocator)),
-            slot_bitmap: Mutex::new(0),
+            state: Spinlock::new(State::NotActive),
+            memory_objects: Spinlock::new(vec![]),
+            page_table: Spinlock::new(P::PageTable::new_with_kernel_mapped(kernel_page_table, allocator)),
+            slot_bitmap: Spinlock::new(0),
         })
     }
 

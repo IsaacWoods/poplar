@@ -6,7 +6,7 @@ use core::{
 };
 use hal::memory::VAddr;
 use poplar_util::math::align_up;
-use spin::Mutex;
+use spinning_top::Spinlock;
 
 pub struct HoleAllocator {
     heap_bottom: VAddr,
@@ -31,18 +31,18 @@ impl HoleAllocator {
     }
 }
 
-pub struct LockedHoleAllocator(Mutex<HoleAllocator>);
+pub struct LockedHoleAllocator(Spinlock<HoleAllocator>);
 
 impl LockedHoleAllocator {
     pub const fn new_uninitialized() -> LockedHoleAllocator {
-        LockedHoleAllocator(Mutex::new(HoleAllocator::new_uninitialized()))
+        LockedHoleAllocator(Spinlock::new(HoleAllocator::new_uninitialized()))
     }
 }
 
 impl Deref for LockedHoleAllocator {
-    type Target = Mutex<HoleAllocator>;
+    type Target = Spinlock<HoleAllocator>;
 
-    fn deref(&self) -> &Mutex<HoleAllocator> {
+    fn deref(&self) -> &Spinlock<HoleAllocator> {
         &self.0
     }
 }

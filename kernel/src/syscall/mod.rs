@@ -35,12 +35,12 @@ use poplar::{
     Handle,
     ZERO_HANDLE,
 };
-use spin::Mutex;
+use spinning_top::Spinlock;
 use tracing::{info, trace, warn};
 use validation::{UserPointer, UserSlice, UserString};
 
 /// Maps the name of a service to the channel used to register new service users.
-static SERVICE_MAP: Mutex<BTreeMap<String, Arc<ChannelEnd>>> = Mutex::new(BTreeMap::new());
+static SERVICE_MAP: Spinlock<BTreeMap<String, Arc<ChannelEnd>>> = Spinlock::new(BTreeMap::new());
 
 // TODO: these shouldn't be needed. Use-sites should be able to read `[None; MAX_WHATEVER]`, but can't because
 // the const_in_array_repeat_expression feature got removed. This works around that for now.

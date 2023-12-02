@@ -5,13 +5,13 @@ use alloc::{
     vec::Vec,
 };
 use poplar::syscall::{GetMessageError, SendMessageError, CHANNEL_MAX_NUM_HANDLES};
-use spin::Mutex;
+use spinning_top::Spinlock;
 use tracing::warn;
 
 pub struct ChannelEnd {
     pub id: KernelObjectId,
     pub owner: KernelObjectId,
-    messages: Mutex<VecDeque<Message>>,
+    messages: Spinlock<VecDeque<Message>>,
     /// The other end of the channel. If this is `None`, the channel's messages come from the kernel.
     other_end: Option<Weak<ChannelEnd>>,
 }
@@ -21,14 +21,14 @@ impl ChannelEnd {
         let mut end_a = Arc::new(ChannelEnd {
             id: alloc_kernel_object_id(),
             owner,
-            messages: Mutex::new(VecDeque::new()),
+            messages: Spinlock::new(VecDeque::new()),
             other_end: Some(Weak::default()),
         });
 
         let end_b = Arc::new(ChannelEnd {
             id: alloc_kernel_object_id(),
             owner,
-            messages: Mutex::new(VecDeque::new()),
+            messages: Spinlock::new(VecDeque::new()),
             other_end: Some(Arc::downgrade(&end_a)),
         });
 
@@ -44,7 +44,7 @@ impl ChannelEnd {
         Arc::new(ChannelEnd {
             id: alloc_kernel_object_id(),
             owner,
-            messages: Mutex::new(VecDeque::new()),
+            messages: Spinlock::new(VecDeque::new()),
             other_end: None,
         })
     }
