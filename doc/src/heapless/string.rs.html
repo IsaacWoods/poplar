@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/heapless-0.7.16/src/string.rs`."><title>string.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-9ee3a5e31a2afa3e.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="heapless" data-themes="" data-resource-suffix="" data-rustdoc-version="1.76.0-nightly (37b2813a7 2023-11-24)" data-channel="nightly" data-search-js="search-f4028ef4dd0903c7.js" data-settings-js="settings-74424d7eec62a23e.js" ><script src="../../static.files/storage-fec3eaa3851e447d.js"></script><script defer src="../../static.files/src-script-3280b574d94e47b4.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-f06f02fd918e3bb3.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-5d8b3c7633ad77ba.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/heapless-0.8.0/src/string.rs`."><title>string.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-c67e44d78ab2db17.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="heapless" data-themes="" data-resource-suffix="" data-rustdoc-version="1.76.0-nightly (8c2b57721 2023-12-01)" data-channel="nightly" data-search-js="search-5a66c239c06b3a66.js" data-settings-js="settings-fe03fdc259827cd2.js" ><script src="../../static.files/storage-fec3eaa3851e447d.js"></script><script defer src="../../static.files/src-script-3280b574d94e47b4.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-77dede896d6ac08e.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-5d8b3c7633ad77ba.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -718,9 +718,149 @@
 <a href="#718" id="718">718</a>
 <a href="#719" id="719">719</a>
 <a href="#720" id="720">720</a>
-</pre></div><pre class="rust"><code><span class="kw">use </span>core::{cmp::Ordering, fmt, fmt::Write, hash, iter, ops, str};
-
-<span class="kw">use </span>hash32;
+<a href="#721" id="721">721</a>
+<a href="#722" id="722">722</a>
+<a href="#723" id="723">723</a>
+<a href="#724" id="724">724</a>
+<a href="#725" id="725">725</a>
+<a href="#726" id="726">726</a>
+<a href="#727" id="727">727</a>
+<a href="#728" id="728">728</a>
+<a href="#729" id="729">729</a>
+<a href="#730" id="730">730</a>
+<a href="#731" id="731">731</a>
+<a href="#732" id="732">732</a>
+<a href="#733" id="733">733</a>
+<a href="#734" id="734">734</a>
+<a href="#735" id="735">735</a>
+<a href="#736" id="736">736</a>
+<a href="#737" id="737">737</a>
+<a href="#738" id="738">738</a>
+<a href="#739" id="739">739</a>
+<a href="#740" id="740">740</a>
+<a href="#741" id="741">741</a>
+<a href="#742" id="742">742</a>
+<a href="#743" id="743">743</a>
+<a href="#744" id="744">744</a>
+<a href="#745" id="745">745</a>
+<a href="#746" id="746">746</a>
+<a href="#747" id="747">747</a>
+<a href="#748" id="748">748</a>
+<a href="#749" id="749">749</a>
+<a href="#750" id="750">750</a>
+<a href="#751" id="751">751</a>
+<a href="#752" id="752">752</a>
+<a href="#753" id="753">753</a>
+<a href="#754" id="754">754</a>
+<a href="#755" id="755">755</a>
+<a href="#756" id="756">756</a>
+<a href="#757" id="757">757</a>
+<a href="#758" id="758">758</a>
+<a href="#759" id="759">759</a>
+<a href="#760" id="760">760</a>
+<a href="#761" id="761">761</a>
+<a href="#762" id="762">762</a>
+<a href="#763" id="763">763</a>
+<a href="#764" id="764">764</a>
+<a href="#765" id="765">765</a>
+<a href="#766" id="766">766</a>
+<a href="#767" id="767">767</a>
+<a href="#768" id="768">768</a>
+<a href="#769" id="769">769</a>
+<a href="#770" id="770">770</a>
+<a href="#771" id="771">771</a>
+<a href="#772" id="772">772</a>
+<a href="#773" id="773">773</a>
+<a href="#774" id="774">774</a>
+<a href="#775" id="775">775</a>
+<a href="#776" id="776">776</a>
+<a href="#777" id="777">777</a>
+<a href="#778" id="778">778</a>
+<a href="#779" id="779">779</a>
+<a href="#780" id="780">780</a>
+<a href="#781" id="781">781</a>
+<a href="#782" id="782">782</a>
+<a href="#783" id="783">783</a>
+<a href="#784" id="784">784</a>
+<a href="#785" id="785">785</a>
+<a href="#786" id="786">786</a>
+<a href="#787" id="787">787</a>
+<a href="#788" id="788">788</a>
+<a href="#789" id="789">789</a>
+<a href="#790" id="790">790</a>
+<a href="#791" id="791">791</a>
+<a href="#792" id="792">792</a>
+<a href="#793" id="793">793</a>
+<a href="#794" id="794">794</a>
+<a href="#795" id="795">795</a>
+<a href="#796" id="796">796</a>
+<a href="#797" id="797">797</a>
+<a href="#798" id="798">798</a>
+<a href="#799" id="799">799</a>
+<a href="#800" id="800">800</a>
+<a href="#801" id="801">801</a>
+<a href="#802" id="802">802</a>
+<a href="#803" id="803">803</a>
+<a href="#804" id="804">804</a>
+<a href="#805" id="805">805</a>
+<a href="#806" id="806">806</a>
+<a href="#807" id="807">807</a>
+<a href="#808" id="808">808</a>
+<a href="#809" id="809">809</a>
+<a href="#810" id="810">810</a>
+<a href="#811" id="811">811</a>
+<a href="#812" id="812">812</a>
+<a href="#813" id="813">813</a>
+<a href="#814" id="814">814</a>
+<a href="#815" id="815">815</a>
+<a href="#816" id="816">816</a>
+<a href="#817" id="817">817</a>
+<a href="#818" id="818">818</a>
+<a href="#819" id="819">819</a>
+<a href="#820" id="820">820</a>
+<a href="#821" id="821">821</a>
+<a href="#822" id="822">822</a>
+<a href="#823" id="823">823</a>
+<a href="#824" id="824">824</a>
+<a href="#825" id="825">825</a>
+<a href="#826" id="826">826</a>
+<a href="#827" id="827">827</a>
+<a href="#828" id="828">828</a>
+<a href="#829" id="829">829</a>
+<a href="#830" id="830">830</a>
+<a href="#831" id="831">831</a>
+<a href="#832" id="832">832</a>
+<a href="#833" id="833">833</a>
+<a href="#834" id="834">834</a>
+<a href="#835" id="835">835</a>
+<a href="#836" id="836">836</a>
+<a href="#837" id="837">837</a>
+<a href="#838" id="838">838</a>
+<a href="#839" id="839">839</a>
+<a href="#840" id="840">840</a>
+<a href="#841" id="841">841</a>
+<a href="#842" id="842">842</a>
+<a href="#843" id="843">843</a>
+<a href="#844" id="844">844</a>
+<a href="#845" id="845">845</a>
+<a href="#846" id="846">846</a>
+<a href="#847" id="847">847</a>
+<a href="#848" id="848">848</a>
+<a href="#849" id="849">849</a>
+<a href="#850" id="850">850</a>
+<a href="#851" id="851">851</a>
+<a href="#852" id="852">852</a>
+<a href="#853" id="853">853</a>
+<a href="#854" id="854">854</a>
+<a href="#855" id="855">855</a>
+<a href="#856" id="856">856</a>
+</pre></div><pre class="rust"><code><span class="kw">use </span>core::{
+    cmp::Ordering,
+    fmt,
+    fmt::Write,
+    hash, iter, ops,
+    str::{<span class="self">self</span>, Utf8Error},
+};
 
 <span class="kw">use </span><span class="kw">crate</span>::Vec;
 
@@ -750,6 +890,68 @@
         <span class="self">Self </span>{ vec: Vec::new() }
     }
 
+    <span class="doccomment">/// Convert UTF-8 bytes into a `String`.
+    ///
+    /// # Examples
+    ///
+    /// Basic usage:
+    ///
+    /// ```
+    /// use heapless::{String, Vec};
+    ///
+    /// let mut sparkle_heart = Vec::&lt;u8, 4&gt;::new();
+    /// sparkle_heart.extend_from_slice(&amp;[240, 159, 146, 150]);
+    ///
+    /// let sparkle_heart: String&lt;4&gt; = String::from_utf8(sparkle_heart)?;
+    /// assert_eq!(&quot;💖&quot;, sparkle_heart);
+    /// # Ok::&lt;(), core::str::Utf8Error&gt;(())
+    /// ```
+    ///
+    /// Invalid UTF-8:
+    ///
+    /// ```
+    /// use core::str::Utf8Error;
+    /// use heapless::{String, Vec};
+    ///
+    /// let mut vec = Vec::&lt;u8, 4&gt;::new();
+    /// vec.extend_from_slice(&amp;[0, 159, 146, 150]);
+    ///
+    /// let e: Utf8Error = String::from_utf8(vec).unwrap_err();
+    /// assert_eq!(e.valid_up_to(), 1);
+    /// # Ok::&lt;(), core::str::Utf8Error&gt;(())
+    /// ```
+    </span><span class="attr">#[inline]
+    </span><span class="kw">pub fn </span>from_utf8(vec: Vec&lt;u8, N&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, Utf8Error&gt; {
+        core::str::from_utf8(<span class="kw-2">&amp;</span>vec)<span class="question-mark">?</span>;
+        <span class="prelude-val">Ok</span>(<span class="self">Self </span>{ vec })
+    }
+
+    <span class="doccomment">/// Convert UTF-8 bytes into a `String`, without checking that the string
+    /// contains valid UTF-8.
+    ///
+    /// # Safety
+    ///
+    /// The bytes passed in must be valid UTF-8.
+    ///
+    /// # Examples
+    ///
+    /// Basic usage:
+    ///
+    /// ```
+    /// use heapless::{String, Vec};
+    ///
+    /// let mut sparkle_heart = Vec::&lt;u8, 4&gt;::new();
+    /// sparkle_heart.extend_from_slice(&amp;[240, 159, 146, 150]);
+    ///
+    /// // Safety: `sparkle_heart` Vec is known to contain valid UTF-8
+    /// let sparkle_heart: String&lt;4&gt; = unsafe { String::from_utf8_unchecked(sparkle_heart) };
+    /// assert_eq!(&quot;💖&quot;, sparkle_heart);
+    /// ```
+    </span><span class="attr">#[inline]
+    </span><span class="kw">pub unsafe fn </span>from_utf8_unchecked(vec: Vec&lt;u8, N&gt;) -&gt; <span class="self">Self </span>{
+        <span class="self">Self </span>{ vec }
+    }
+
     <span class="doccomment">/// Converts a `String` into a byte vector.
     ///
     /// This consumes the `String`, so we do not need to copy its contents.
@@ -761,11 +963,12 @@
     /// ```
     /// use heapless::String;
     ///
-    /// let s: String&lt;4&gt; = String::from(&quot;ab&quot;);
+    /// let s: String&lt;4&gt; = String::try_from(&quot;ab&quot;)?;
     /// let b = s.into_bytes();
     /// assert!(b.len() == 2);
     ///
     /// assert_eq!(&amp;[&#39;a&#39; as u8, &#39;b&#39; as u8], &amp;b[..]);
+    /// # Ok::&lt;(), ()&gt;(())
     /// ```
     </span><span class="attr">#[inline]
     </span><span class="kw">pub fn </span>into_bytes(<span class="self">self</span>) -&gt; Vec&lt;u8, N&gt; {
@@ -781,11 +984,12 @@
     /// ```
     /// use heapless::String;
     ///
-    /// let mut s: String&lt;4&gt; = String::from(&quot;ab&quot;);
+    /// let mut s: String&lt;4&gt; = String::try_from(&quot;ab&quot;)?;
     /// assert!(s.as_str() == &quot;ab&quot;);
     ///
     /// let _s = s.as_str();
     /// // s.push(&#39;c&#39;); // &lt;- cannot borrow `s` as mutable because it is also borrowed as immutable
+    /// # Ok::&lt;(), ()&gt;(())
     /// ```
     </span><span class="attr">#[inline]
     </span><span class="kw">pub fn </span>as_str(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>str {
@@ -801,9 +1005,10 @@
     /// ```
     /// use heapless::String;
     ///
-    /// let mut s: String&lt;4&gt; = String::from(&quot;ab&quot;);
+    /// let mut s: String&lt;4&gt; = String::try_from(&quot;ab&quot;)?;
     /// let s = s.as_mut_str();
     /// s.make_ascii_uppercase();
+    /// # Ok::&lt;(), ()&gt;(())
     /// ```
     </span><span class="attr">#[inline]
     </span><span class="kw">pub fn </span>as_mut_str(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;mut </span>str {
@@ -824,7 +1029,9 @@
     /// Basic usage:
     ///
     /// ```
-    /// let mut s = String::from(&quot;hello&quot;);
+    /// use heapless::String;
+    ///
+    /// let mut s: String&lt;8&gt; = String::try_from(&quot;hello&quot;)?;
     ///
     /// unsafe {
     ///     let vec = s.as_mut_vec();
@@ -833,6 +1040,7 @@
     ///     vec.reverse();
     /// }
     /// assert_eq!(s, &quot;olleh&quot;);
+    /// # Ok::&lt;(), ()&gt;(())
     /// ```
     </span><span class="kw">pub unsafe fn </span>as_mut_vec(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;mut </span>Vec&lt;u8, N&gt; {
         <span class="kw-2">&amp;mut </span><span class="self">self</span>.vec
@@ -847,13 +1055,14 @@
     /// ```
     /// use heapless::String;
     ///
-    /// let mut s: String&lt;8&gt; = String::from(&quot;foo&quot;);
+    /// let mut s: String&lt;8&gt; = String::try_from(&quot;foo&quot;)?;
     ///
     /// assert!(s.push_str(&quot;bar&quot;).is_ok());
     ///
     /// assert_eq!(&quot;foobar&quot;, s);
     ///
     /// assert!(s.push_str(&quot;tender&quot;).is_err());
+    /// # Ok::&lt;(), ()&gt;(())
     /// ```
     </span><span class="attr">#[inline]
     </span><span class="kw">pub fn </span>push_str(<span class="kw-2">&amp;mut </span><span class="self">self</span>, string: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Result</span>&lt;(), ()&gt; {
@@ -879,8 +1088,6 @@
 
     <span class="doccomment">/// Appends the given [`char`] to the end of this `String`.
     ///
-    /// [`char`]: ../../std/primitive.char.html
-    ///
     /// # Examples
     ///
     /// Basic usage:
@@ -888,7 +1095,7 @@
     /// ```
     /// use heapless::String;
     ///
-    /// let mut s: String&lt;8&gt; = String::from(&quot;abc&quot;);
+    /// let mut s: String&lt;8&gt; = String::try_from(&quot;abc&quot;)?;
     ///
     /// s.push(&#39;1&#39;).unwrap();
     /// s.push(&#39;2&#39;).unwrap();
@@ -897,6 +1104,7 @@
     /// assert!(&quot;abc123&quot; == s.as_str());
     ///
     /// assert_eq!(&quot;abc123&quot;, s);
+    /// # Ok::&lt;(), ()&gt;(())
     /// ```
     </span><span class="attr">#[inline]
     </span><span class="kw">pub fn </span>push(<span class="kw-2">&amp;mut </span><span class="self">self</span>, c: char) -&gt; <span class="prelude-ty">Result</span>&lt;(), ()&gt; {
@@ -920,8 +1128,6 @@
     ///
     /// Panics if `new_len` does not lie on a [`char`] boundary.
     ///
-    /// [`char`]: ../../std/primitive.char.html
-    ///
     /// # Examples
     ///
     /// Basic usage:
@@ -929,11 +1135,12 @@
     /// ```
     /// use heapless::String;
     ///
-    /// let mut s: String&lt;8&gt; = String::from(&quot;hello&quot;);
+    /// let mut s: String&lt;8&gt; = String::try_from(&quot;hello&quot;)?;
     ///
     /// s.truncate(2);
     ///
     /// assert_eq!(&quot;he&quot;, s);
+    /// # Ok::&lt;(), ()&gt;(())
     /// ```
     </span><span class="attr">#[inline]
     </span><span class="kw">pub fn </span>truncate(<span class="kw-2">&amp;mut </span><span class="self">self</span>, new_len: usize) {
@@ -947,8 +1154,6 @@
     ///
     /// Returns [`None`] if this `String` is empty.
     ///
-    /// [`None`]: ../../std/option/enum.Option.html#variant.None
-    ///
     /// # Examples
     ///
     /// Basic usage:
@@ -956,13 +1161,14 @@
     /// ```
     /// use heapless::String;
     ///
-    /// let mut s: String&lt;8&gt; = String::from(&quot;foo&quot;);
+    /// let mut s: String&lt;8&gt; = String::try_from(&quot;foo&quot;)?;
     ///
     /// assert_eq!(s.pop(), Some(&#39;o&#39;));
     /// assert_eq!(s.pop(), Some(&#39;o&#39;));
     /// assert_eq!(s.pop(), Some(&#39;f&#39;));
     ///
     /// assert_eq!(s.pop(), None);
+    /// Ok::&lt;(), ()&gt;(())
     /// ```
     </span><span class="kw">pub fn </span>pop(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;char&gt; {
         <span class="kw">let </span>ch = <span class="self">self</span>.chars().rev().next()<span class="question-mark">?</span>;
@@ -977,6 +1183,46 @@
         <span class="prelude-val">Some</span>(ch)
     }
 
+    <span class="doccomment">/// Removes a [`char`] from this `String` at a byte position and returns it.
+    ///
+    /// Note: Because this shifts over the remaining elements, it has a
+    /// worst-case performance of *O*(*n*).
+    ///
+    /// # Panics
+    ///
+    /// Panics if `idx` is larger than or equal to the `String`&#39;s length,
+    /// or if it does not lie on a [`char`] boundary.
+    ///
+    /// # Examples
+    ///
+    /// Basic usage:
+    ///
+    /// ```
+    /// use heapless::String;
+    ///
+    /// let mut s: String&lt;8&gt; = String::try_from(&quot;foo&quot;).unwrap();
+    ///
+    /// assert_eq!(s.remove(0), &#39;f&#39;);
+    /// assert_eq!(s.remove(1), &#39;o&#39;);
+    /// assert_eq!(s.remove(0), &#39;o&#39;);
+    /// ```
+    </span><span class="attr">#[inline]
+    </span><span class="kw">pub fn </span>remove(<span class="kw-2">&amp;mut </span><span class="self">self</span>, index: usize) -&gt; char {
+        <span class="kw">let </span>ch = <span class="kw">match </span><span class="self">self</span>[index..].chars().next() {
+            <span class="prelude-val">Some</span>(ch) =&gt; ch,
+            <span class="prelude-val">None </span>=&gt; <span class="macro">panic!</span>(<span class="string">&quot;cannot remove a char from the end of a string&quot;</span>),
+        };
+
+        <span class="kw">let </span>next = index + ch.len_utf8();
+        <span class="kw">let </span>len = <span class="self">self</span>.len();
+        <span class="kw">let </span>ptr = <span class="self">self</span>.vec.as_mut_ptr();
+        <span class="kw">unsafe </span>{
+            core::ptr::copy(ptr.add(next), ptr.add(index), len - next);
+            <span class="self">self</span>.vec.set_len(len - (next - index));
+        }
+        ch
+    }
+
     <span class="doccomment">/// Truncates this `String`, removing all contents.
     ///
     /// While this means the `String` will have a length of zero, it does not
@@ -989,13 +1235,14 @@
     /// ```
     /// use heapless::String;
     ///
-    /// let mut s: String&lt;8&gt; = String::from(&quot;foo&quot;);
+    /// let mut s: String&lt;8&gt; = String::try_from(&quot;foo&quot;)?;
     ///
     /// s.clear();
     ///
     /// assert!(s.is_empty());
     /// assert_eq!(0, s.len());
     /// assert_eq!(8, s.capacity());
+    /// Ok::&lt;(), ()&gt;(())
     /// ```
     </span><span class="attr">#[inline]
     </span><span class="kw">pub fn </span>clear(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {
@@ -1009,11 +1256,12 @@
     }
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>, <span class="kw">const </span>N: usize&gt; From&lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>str&gt; <span class="kw">for </span>String&lt;N&gt; {
-    <span class="kw">fn </span>from(s: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>str) -&gt; <span class="self">Self </span>{
+<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>, <span class="kw">const </span>N: usize&gt; TryFrom&lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>str&gt; <span class="kw">for </span>String&lt;N&gt; {
+    <span class="kw">type </span>Error = ();
+    <span class="kw">fn </span>try_from(s: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>str) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, <span class="self">Self</span>::Error&gt; {
         <span class="kw">let </span><span class="kw-2">mut </span>new = String::new();
-        new.push_str(s).unwrap();
-        new
+        new.push_str(s)<span class="question-mark">?</span>;
+        <span class="prelude-val">Ok</span>(new)
     }
 }
 
@@ -1081,13 +1329,6 @@
     <span class="attr">#[inline]
     </span><span class="kw">fn </span>hash&lt;H: hash::Hasher&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, hasher: <span class="kw-2">&amp;mut </span>H) {
         &lt;str <span class="kw">as </span>hash::Hash&gt;::hash(<span class="self">self</span>, hasher)
-    }
-}
-
-<span class="kw">impl</span>&lt;<span class="kw">const </span>N: usize&gt; hash32::Hash <span class="kw">for </span>String&lt;N&gt; {
-    <span class="attr">#[inline]
-    </span><span class="kw">fn </span>hash&lt;H: hash32::Hasher&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, hasher: <span class="kw-2">&amp;mut </span>H) {
-        &lt;str <span class="kw">as </span>hash32::Hash&gt;::hash(<span class="self">self</span>, hasher)
     }
 }
 
@@ -1203,31 +1444,33 @@
     }
 }
 
-<span class="macro">macro_rules! </span>impl_from_num {
+<span class="macro">macro_rules! </span>impl_try_from_num {
     (<span class="macro-nonterminal">$num</span>:ty, <span class="macro-nonterminal">$size</span>:expr) =&gt; {
-        <span class="kw">impl</span>&lt;<span class="kw">const </span>N: usize&gt; From&lt;<span class="macro-nonterminal">$num</span>&gt; <span class="kw">for </span>String&lt;N&gt; {
-            <span class="kw">fn </span>from(s: <span class="macro-nonterminal">$num</span>) -&gt; <span class="self">Self </span>{
+        <span class="kw">impl</span>&lt;<span class="kw">const </span>N: usize&gt; core::convert::TryFrom&lt;<span class="macro-nonterminal">$num</span>&gt; <span class="kw">for </span>String&lt;N&gt; {
+            <span class="kw">type </span>Error = ();
+            <span class="kw">fn </span>try_from(s: <span class="macro-nonterminal">$num</span>) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, <span class="self">Self</span>::Error&gt; {
                 <span class="kw">let </span><span class="kw-2">mut </span>new = String::new();
-                <span class="macro">write!</span>(<span class="kw-2">&amp;mut </span>new, <span class="string">&quot;{}&quot;</span>, s).unwrap();
-                new
+                <span class="macro">write!</span>(<span class="kw-2">&amp;mut </span>new, <span class="string">&quot;{}&quot;</span>, s).map_err(|<span class="kw">_</span>| ())<span class="question-mark">?</span>;
+                <span class="prelude-val">Ok</span>(new)
             }
         }
     };
 }
 
-<span class="macro">impl_from_num!</span>(i8, <span class="number">4</span>);
-<span class="macro">impl_from_num!</span>(i16, <span class="number">6</span>);
-<span class="macro">impl_from_num!</span>(i32, <span class="number">11</span>);
-<span class="macro">impl_from_num!</span>(i64, <span class="number">20</span>);
+<span class="macro">impl_try_from_num!</span>(i8, <span class="number">4</span>);
+<span class="macro">impl_try_from_num!</span>(i16, <span class="number">6</span>);
+<span class="macro">impl_try_from_num!</span>(i32, <span class="number">11</span>);
+<span class="macro">impl_try_from_num!</span>(i64, <span class="number">20</span>);
 
-<span class="macro">impl_from_num!</span>(u8, <span class="number">3</span>);
-<span class="macro">impl_from_num!</span>(u16, <span class="number">5</span>);
-<span class="macro">impl_from_num!</span>(u32, <span class="number">10</span>);
-<span class="macro">impl_from_num!</span>(u64, <span class="number">20</span>);
+<span class="macro">impl_try_from_num!</span>(u8, <span class="number">3</span>);
+<span class="macro">impl_try_from_num!</span>(u16, <span class="number">5</span>);
+<span class="macro">impl_try_from_num!</span>(u32, <span class="number">10</span>);
+<span class="macro">impl_try_from_num!</span>(u64, <span class="number">20</span>);
 
 <span class="attr">#[cfg(test)]
 </span><span class="kw">mod </span>tests {
     <span class="kw">use crate</span>::{String, Vec};
+    <span class="kw">use </span>core::convert::TryFrom;
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>static_new() {
@@ -1236,7 +1479,7 @@
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>clone() {
-        <span class="kw">let </span>s1: String&lt;<span class="number">20</span>&gt; = String::from(<span class="string">&quot;abcd&quot;</span>);
+        <span class="kw">let </span>s1: String&lt;<span class="number">20</span>&gt; = String::try_from(<span class="string">&quot;abcd&quot;</span>).unwrap();
         <span class="kw">let </span><span class="kw-2">mut </span>s2 = s1.clone();
         s2.push_str(<span class="string">&quot; efgh&quot;</span>).unwrap();
 
@@ -1246,16 +1489,16 @@
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>cmp() {
-        <span class="kw">let </span>s1: String&lt;<span class="number">4</span>&gt; = String::from(<span class="string">&quot;abcd&quot;</span>);
-        <span class="kw">let </span>s2: String&lt;<span class="number">4</span>&gt; = String::from(<span class="string">&quot;zzzz&quot;</span>);
+        <span class="kw">let </span>s1: String&lt;<span class="number">4</span>&gt; = String::try_from(<span class="string">&quot;abcd&quot;</span>).unwrap();
+        <span class="kw">let </span>s2: String&lt;<span class="number">4</span>&gt; = String::try_from(<span class="string">&quot;zzzz&quot;</span>).unwrap();
 
         <span class="macro">assert!</span>(s1 &lt; s2);
     }
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>cmp_heterogenous_size() {
-        <span class="kw">let </span>s1: String&lt;<span class="number">4</span>&gt; = String::from(<span class="string">&quot;abcd&quot;</span>);
-        <span class="kw">let </span>s2: String&lt;<span class="number">8</span>&gt; = String::from(<span class="string">&quot;zzzz&quot;</span>);
+        <span class="kw">let </span>s1: String&lt;<span class="number">4</span>&gt; = String::try_from(<span class="string">&quot;abcd&quot;</span>).unwrap();
+        <span class="kw">let </span>s2: String&lt;<span class="number">8</span>&gt; = String::try_from(<span class="string">&quot;zzzz&quot;</span>).unwrap();
 
         <span class="macro">assert!</span>(s1 &lt; s2);
     }
@@ -1264,7 +1507,7 @@
     </span><span class="kw">fn </span>debug() {
         <span class="kw">use </span>core::fmt::Write;
 
-        <span class="kw">let </span>s: String&lt;<span class="number">8</span>&gt; = String::from(<span class="string">&quot;abcd&quot;</span>);
+        <span class="kw">let </span>s: String&lt;<span class="number">8</span>&gt; = String::try_from(<span class="string">&quot;abcd&quot;</span>).unwrap();
         <span class="kw">let </span><span class="kw-2">mut </span>std_s = std::string::String::new();
         <span class="macro">write!</span>(std_s, <span class="string">&quot;{:?}&quot;</span>, s).unwrap();
         <span class="macro">assert_eq!</span>(<span class="string">&quot;\&quot;abcd\&quot;&quot;</span>, std_s);
@@ -1274,7 +1517,7 @@
     </span><span class="kw">fn </span>display() {
         <span class="kw">use </span>core::fmt::Write;
 
-        <span class="kw">let </span>s: String&lt;<span class="number">8</span>&gt; = String::from(<span class="string">&quot;abcd&quot;</span>);
+        <span class="kw">let </span>s: String&lt;<span class="number">8</span>&gt; = String::try_from(<span class="string">&quot;abcd&quot;</span>).unwrap();
         <span class="kw">let </span><span class="kw-2">mut </span>std_s = std::string::String::new();
         <span class="macro">write!</span>(std_s, <span class="string">&quot;{}&quot;</span>, s).unwrap();
         <span class="macro">assert_eq!</span>(<span class="string">&quot;abcd&quot;</span>, std_s);
@@ -1290,10 +1533,13 @@
     }
 
     <span class="attr">#[test]
-    </span><span class="kw">fn </span>from() {
-        <span class="kw">let </span>s: String&lt;<span class="number">4</span>&gt; = String::from(<span class="string">&quot;123&quot;</span>);
+    </span><span class="kw">fn </span>try_from() {
+        <span class="kw">let </span>s: String&lt;<span class="number">4</span>&gt; = String::try_from(<span class="string">&quot;123&quot;</span>).unwrap();
         <span class="macro">assert!</span>(s.len() == <span class="number">3</span>);
         <span class="macro">assert_eq!</span>(s, <span class="string">&quot;123&quot;</span>);
+
+        <span class="kw">let </span>e: () = String::&lt;<span class="number">2</span>&gt;::try_from(<span class="string">&quot;123&quot;</span>).unwrap_err();
+        <span class="macro">assert_eq!</span>(e, ());
     }
 
     <span class="attr">#[test]
@@ -1325,18 +1571,21 @@
     <span class="attr">#[test]
     #[should_panic]
     </span><span class="kw">fn </span>from_panic() {
-        <span class="kw">let _</span>: String&lt;<span class="number">4</span>&gt; = String::from(<span class="string">&quot;12345&quot;</span>);
+        <span class="kw">let _</span>: String&lt;<span class="number">4</span>&gt; = String::try_from(<span class="string">&quot;12345&quot;</span>).unwrap();
     }
 
     <span class="attr">#[test]
-    </span><span class="kw">fn </span>from_num() {
-        <span class="kw">let </span>v: String&lt;<span class="number">20</span>&gt; = String::from(<span class="number">18446744073709551615 </span><span class="kw">as </span>u64);
+    </span><span class="kw">fn </span>try_from_num() {
+        <span class="kw">let </span>v: String&lt;<span class="number">20</span>&gt; = String::try_from(<span class="number">18446744073709551615 </span><span class="kw">as </span>u64).unwrap();
         <span class="macro">assert_eq!</span>(v, <span class="string">&quot;18446744073709551615&quot;</span>);
+
+        <span class="kw">let </span>e: () = String::&lt;<span class="number">2</span>&gt;::try_from(<span class="number">18446744073709551615 </span><span class="kw">as </span>u64).unwrap_err();
+        <span class="macro">assert_eq!</span>(e, ());
     }
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>into_bytes() {
-        <span class="kw">let </span>s: String&lt;<span class="number">4</span>&gt; = String::from(<span class="string">&quot;ab&quot;</span>);
+        <span class="kw">let </span>s: String&lt;<span class="number">4</span>&gt; = String::try_from(<span class="string">&quot;ab&quot;</span>).unwrap();
         <span class="kw">let </span>b: Vec&lt;u8, <span class="number">4</span>&gt; = s.into_bytes();
         <span class="macro">assert_eq!</span>(b.len(), <span class="number">2</span>);
         <span class="macro">assert_eq!</span>(<span class="kw-2">&amp;</span>[<span class="string">&#39;a&#39; </span><span class="kw">as </span>u8, <span class="string">&#39;b&#39; </span><span class="kw">as </span>u8], <span class="kw-2">&amp;</span>b[..]);
@@ -1344,7 +1593,7 @@
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>as_str() {
-        <span class="kw">let </span>s: String&lt;<span class="number">4</span>&gt; = String::from(<span class="string">&quot;ab&quot;</span>);
+        <span class="kw">let </span>s: String&lt;<span class="number">4</span>&gt; = String::try_from(<span class="string">&quot;ab&quot;</span>).unwrap();
 
         <span class="macro">assert_eq!</span>(s.as_str(), <span class="string">&quot;ab&quot;</span>);
         <span class="comment">// should be moved to fail test
@@ -1354,7 +1603,7 @@
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>as_mut_str() {
-        <span class="kw">let </span><span class="kw-2">mut </span>s: String&lt;<span class="number">4</span>&gt; = String::from(<span class="string">&quot;ab&quot;</span>);
+        <span class="kw">let </span><span class="kw-2">mut </span>s: String&lt;<span class="number">4</span>&gt; = String::try_from(<span class="string">&quot;ab&quot;</span>).unwrap();
         <span class="kw">let </span>s = s.as_mut_str();
         s.make_ascii_uppercase();
         <span class="macro">assert_eq!</span>(s, <span class="string">&quot;AB&quot;</span>);
@@ -1362,7 +1611,7 @@
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>push_str() {
-        <span class="kw">let </span><span class="kw-2">mut </span>s: String&lt;<span class="number">8</span>&gt; = String::from(<span class="string">&quot;foo&quot;</span>);
+        <span class="kw">let </span><span class="kw-2">mut </span>s: String&lt;<span class="number">8</span>&gt; = String::try_from(<span class="string">&quot;foo&quot;</span>).unwrap();
         <span class="macro">assert!</span>(s.push_str(<span class="string">&quot;bar&quot;</span>).is_ok());
         <span class="macro">assert_eq!</span>(<span class="string">&quot;foobar&quot;</span>, s);
         <span class="macro">assert_eq!</span>(s, <span class="string">&quot;foobar&quot;</span>);
@@ -1373,7 +1622,7 @@
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>push() {
-        <span class="kw">let </span><span class="kw-2">mut </span>s: String&lt;<span class="number">6</span>&gt; = String::from(<span class="string">&quot;abc&quot;</span>);
+        <span class="kw">let </span><span class="kw-2">mut </span>s: String&lt;<span class="number">6</span>&gt; = String::try_from(<span class="string">&quot;abc&quot;</span>).unwrap();
         <span class="macro">assert!</span>(s.push(<span class="string">&#39;1&#39;</span>).is_ok());
         <span class="macro">assert!</span>(s.push(<span class="string">&#39;2&#39;</span>).is_ok());
         <span class="macro">assert!</span>(s.push(<span class="string">&#39;3&#39;</span>).is_ok());
@@ -1383,13 +1632,13 @@
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>as_bytes() {
-        <span class="kw">let </span>s: String&lt;<span class="number">8</span>&gt; = String::from(<span class="string">&quot;hello&quot;</span>);
+        <span class="kw">let </span>s: String&lt;<span class="number">8</span>&gt; = String::try_from(<span class="string">&quot;hello&quot;</span>).unwrap();
         <span class="macro">assert_eq!</span>(<span class="kw-2">&amp;</span>[<span class="number">104</span>, <span class="number">101</span>, <span class="number">108</span>, <span class="number">108</span>, <span class="number">111</span>], s.as_bytes());
     }
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>truncate() {
-        <span class="kw">let </span><span class="kw-2">mut </span>s: String&lt;<span class="number">8</span>&gt; = String::from(<span class="string">&quot;hello&quot;</span>);
+        <span class="kw">let </span><span class="kw-2">mut </span>s: String&lt;<span class="number">8</span>&gt; = String::try_from(<span class="string">&quot;hello&quot;</span>).unwrap();
         s.truncate(<span class="number">6</span>);
         <span class="macro">assert_eq!</span>(s.len(), <span class="number">5</span>);
         s.truncate(<span class="number">2</span>);
@@ -1400,7 +1649,7 @@
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>pop() {
-        <span class="kw">let </span><span class="kw-2">mut </span>s: String&lt;<span class="number">8</span>&gt; = String::from(<span class="string">&quot;foo&quot;</span>);
+        <span class="kw">let </span><span class="kw-2">mut </span>s: String&lt;<span class="number">8</span>&gt; = String::try_from(<span class="string">&quot;foo&quot;</span>).unwrap();
         <span class="macro">assert_eq!</span>(s.pop(), <span class="prelude-val">Some</span>(<span class="string">&#39;o&#39;</span>));
         <span class="macro">assert_eq!</span>(s.pop(), <span class="prelude-val">Some</span>(<span class="string">&#39;o&#39;</span>));
         <span class="macro">assert_eq!</span>(s.pop(), <span class="prelude-val">Some</span>(<span class="string">&#39;f&#39;</span>));
@@ -1409,7 +1658,7 @@
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>pop_uenc() {
-        <span class="kw">let </span><span class="kw-2">mut </span>s: String&lt;<span class="number">8</span>&gt; = String::from(<span class="string">&quot;é&quot;</span>);
+        <span class="kw">let </span><span class="kw-2">mut </span>s: String&lt;<span class="number">8</span>&gt; = String::try_from(<span class="string">&quot;é&quot;</span>).unwrap();
         <span class="macro">assert_eq!</span>(s.len(), <span class="number">3</span>);
         <span class="kw">match </span>s.pop() {
             <span class="prelude-val">Some</span>(c) =&gt; {
@@ -1431,11 +1680,34 @@
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>clear() {
-        <span class="kw">let </span><span class="kw-2">mut </span>s: String&lt;<span class="number">8</span>&gt; = String::from(<span class="string">&quot;foo&quot;</span>);
+        <span class="kw">let </span><span class="kw-2">mut </span>s: String&lt;<span class="number">8</span>&gt; = String::try_from(<span class="string">&quot;foo&quot;</span>).unwrap();
         s.clear();
         <span class="macro">assert!</span>(s.is_empty());
         <span class="macro">assert_eq!</span>(<span class="number">0</span>, s.len());
         <span class="macro">assert_eq!</span>(<span class="number">8</span>, s.capacity());
+    }
+
+    <span class="attr">#[test]
+    </span><span class="kw">fn </span>remove() {
+        <span class="kw">let </span><span class="kw-2">mut </span>s: String&lt;<span class="number">8</span>&gt; = String::try_from(<span class="string">&quot;foo&quot;</span>).unwrap();
+        <span class="macro">assert_eq!</span>(s.remove(<span class="number">0</span>), <span class="string">&#39;f&#39;</span>);
+        <span class="macro">assert_eq!</span>(s.as_str(), <span class="string">&quot;oo&quot;</span>);
+    }
+
+    <span class="attr">#[test]
+    </span><span class="kw">fn </span>remove_uenc() {
+        <span class="kw">let </span><span class="kw-2">mut </span>s: String&lt;<span class="number">8</span>&gt; = String::try_from(<span class="string">&quot;ĝėēƶ&quot;</span>).unwrap();
+        <span class="macro">assert_eq!</span>(s.remove(<span class="number">2</span>), <span class="string">&#39;ė&#39;</span>);
+        <span class="macro">assert_eq!</span>(s.remove(<span class="number">2</span>), <span class="string">&#39;ē&#39;</span>);
+        <span class="macro">assert_eq!</span>(s.remove(<span class="number">2</span>), <span class="string">&#39;ƶ&#39;</span>);
+        <span class="macro">assert_eq!</span>(s.as_str(), <span class="string">&quot;ĝ&quot;</span>);
+    }
+
+    <span class="attr">#[test]
+    </span><span class="kw">fn </span>remove_uenc_combo_characters() {
+        <span class="kw">let </span><span class="kw-2">mut </span>s: String&lt;<span class="number">8</span>&gt; = String::try_from(<span class="string">&quot;héy&quot;</span>).unwrap();
+        <span class="macro">assert_eq!</span>(s.remove(<span class="number">2</span>), <span class="string">&#39;\u{0301}&#39;</span>);
+        <span class="macro">assert_eq!</span>(s.as_str(), <span class="string">&quot;hey&quot;</span>);
     }
 }
 </code></pre></div></section></main></body></html>

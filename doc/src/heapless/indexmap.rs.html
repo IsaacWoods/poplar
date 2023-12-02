@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/heapless-0.7.16/src/indexmap.rs`."><title>indexmap.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-9ee3a5e31a2afa3e.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="heapless" data-themes="" data-resource-suffix="" data-rustdoc-version="1.76.0-nightly (37b2813a7 2023-11-24)" data-channel="nightly" data-search-js="search-f4028ef4dd0903c7.js" data-settings-js="settings-74424d7eec62a23e.js" ><script src="../../static.files/storage-fec3eaa3851e447d.js"></script><script defer src="../../static.files/src-script-3280b574d94e47b4.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-f06f02fd918e3bb3.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-5d8b3c7633ad77ba.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/heapless-0.8.0/src/indexmap.rs`."><title>indexmap.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-c67e44d78ab2db17.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="heapless" data-themes="" data-resource-suffix="" data-rustdoc-version="1.76.0-nightly (8c2b57721 2023-12-01)" data-channel="nightly" data-search-js="search-5a66c239c06b3a66.js" data-settings-js="settings-fe03fdc259827cd2.js" ><script src="../../static.files/storage-fec3eaa3851e447d.js"></script><script defer src="../../static.files/src-script-3280b574d94e47b4.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-77dede896d6ac08e.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-5d8b3c7633ad77ba.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -1379,16 +1379,198 @@
 <a href="#1379" id="1379">1379</a>
 <a href="#1380" id="1380">1380</a>
 <a href="#1381" id="1381">1381</a>
-</pre></div><pre class="rust"><code><span class="kw">use </span>core::{borrow::Borrow, fmt, iter::FromIterator, mem, num::NonZeroU32, ops, slice};
+<a href="#1382" id="1382">1382</a>
+<a href="#1383" id="1383">1383</a>
+<a href="#1384" id="1384">1384</a>
+<a href="#1385" id="1385">1385</a>
+<a href="#1386" id="1386">1386</a>
+<a href="#1387" id="1387">1387</a>
+<a href="#1388" id="1388">1388</a>
+<a href="#1389" id="1389">1389</a>
+<a href="#1390" id="1390">1390</a>
+<a href="#1391" id="1391">1391</a>
+<a href="#1392" id="1392">1392</a>
+<a href="#1393" id="1393">1393</a>
+<a href="#1394" id="1394">1394</a>
+<a href="#1395" id="1395">1395</a>
+<a href="#1396" id="1396">1396</a>
+<a href="#1397" id="1397">1397</a>
+<a href="#1398" id="1398">1398</a>
+<a href="#1399" id="1399">1399</a>
+<a href="#1400" id="1400">1400</a>
+<a href="#1401" id="1401">1401</a>
+<a href="#1402" id="1402">1402</a>
+<a href="#1403" id="1403">1403</a>
+<a href="#1404" id="1404">1404</a>
+<a href="#1405" id="1405">1405</a>
+<a href="#1406" id="1406">1406</a>
+<a href="#1407" id="1407">1407</a>
+<a href="#1408" id="1408">1408</a>
+<a href="#1409" id="1409">1409</a>
+<a href="#1410" id="1410">1410</a>
+<a href="#1411" id="1411">1411</a>
+<a href="#1412" id="1412">1412</a>
+<a href="#1413" id="1413">1413</a>
+<a href="#1414" id="1414">1414</a>
+<a href="#1415" id="1415">1415</a>
+<a href="#1416" id="1416">1416</a>
+<a href="#1417" id="1417">1417</a>
+<a href="#1418" id="1418">1418</a>
+<a href="#1419" id="1419">1419</a>
+<a href="#1420" id="1420">1420</a>
+<a href="#1421" id="1421">1421</a>
+<a href="#1422" id="1422">1422</a>
+<a href="#1423" id="1423">1423</a>
+<a href="#1424" id="1424">1424</a>
+<a href="#1425" id="1425">1425</a>
+<a href="#1426" id="1426">1426</a>
+<a href="#1427" id="1427">1427</a>
+<a href="#1428" id="1428">1428</a>
+<a href="#1429" id="1429">1429</a>
+<a href="#1430" id="1430">1430</a>
+<a href="#1431" id="1431">1431</a>
+<a href="#1432" id="1432">1432</a>
+<a href="#1433" id="1433">1433</a>
+<a href="#1434" id="1434">1434</a>
+<a href="#1435" id="1435">1435</a>
+<a href="#1436" id="1436">1436</a>
+<a href="#1437" id="1437">1437</a>
+<a href="#1438" id="1438">1438</a>
+<a href="#1439" id="1439">1439</a>
+<a href="#1440" id="1440">1440</a>
+<a href="#1441" id="1441">1441</a>
+<a href="#1442" id="1442">1442</a>
+<a href="#1443" id="1443">1443</a>
+<a href="#1444" id="1444">1444</a>
+<a href="#1445" id="1445">1445</a>
+<a href="#1446" id="1446">1446</a>
+<a href="#1447" id="1447">1447</a>
+<a href="#1448" id="1448">1448</a>
+<a href="#1449" id="1449">1449</a>
+<a href="#1450" id="1450">1450</a>
+<a href="#1451" id="1451">1451</a>
+<a href="#1452" id="1452">1452</a>
+<a href="#1453" id="1453">1453</a>
+<a href="#1454" id="1454">1454</a>
+<a href="#1455" id="1455">1455</a>
+<a href="#1456" id="1456">1456</a>
+<a href="#1457" id="1457">1457</a>
+<a href="#1458" id="1458">1458</a>
+<a href="#1459" id="1459">1459</a>
+<a href="#1460" id="1460">1460</a>
+<a href="#1461" id="1461">1461</a>
+<a href="#1462" id="1462">1462</a>
+<a href="#1463" id="1463">1463</a>
+<a href="#1464" id="1464">1464</a>
+<a href="#1465" id="1465">1465</a>
+<a href="#1466" id="1466">1466</a>
+<a href="#1467" id="1467">1467</a>
+<a href="#1468" id="1468">1468</a>
+<a href="#1469" id="1469">1469</a>
+<a href="#1470" id="1470">1470</a>
+<a href="#1471" id="1471">1471</a>
+<a href="#1472" id="1472">1472</a>
+<a href="#1473" id="1473">1473</a>
+<a href="#1474" id="1474">1474</a>
+<a href="#1475" id="1475">1475</a>
+<a href="#1476" id="1476">1476</a>
+<a href="#1477" id="1477">1477</a>
+<a href="#1478" id="1478">1478</a>
+<a href="#1479" id="1479">1479</a>
+<a href="#1480" id="1480">1480</a>
+<a href="#1481" id="1481">1481</a>
+<a href="#1482" id="1482">1482</a>
+<a href="#1483" id="1483">1483</a>
+<a href="#1484" id="1484">1484</a>
+<a href="#1485" id="1485">1485</a>
+<a href="#1486" id="1486">1486</a>
+<a href="#1487" id="1487">1487</a>
+<a href="#1488" id="1488">1488</a>
+<a href="#1489" id="1489">1489</a>
+<a href="#1490" id="1490">1490</a>
+<a href="#1491" id="1491">1491</a>
+<a href="#1492" id="1492">1492</a>
+<a href="#1493" id="1493">1493</a>
+<a href="#1494" id="1494">1494</a>
+<a href="#1495" id="1495">1495</a>
+<a href="#1496" id="1496">1496</a>
+<a href="#1497" id="1497">1497</a>
+<a href="#1498" id="1498">1498</a>
+<a href="#1499" id="1499">1499</a>
+<a href="#1500" id="1500">1500</a>
+<a href="#1501" id="1501">1501</a>
+<a href="#1502" id="1502">1502</a>
+<a href="#1503" id="1503">1503</a>
+<a href="#1504" id="1504">1504</a>
+<a href="#1505" id="1505">1505</a>
+<a href="#1506" id="1506">1506</a>
+<a href="#1507" id="1507">1507</a>
+<a href="#1508" id="1508">1508</a>
+<a href="#1509" id="1509">1509</a>
+<a href="#1510" id="1510">1510</a>
+<a href="#1511" id="1511">1511</a>
+<a href="#1512" id="1512">1512</a>
+<a href="#1513" id="1513">1513</a>
+<a href="#1514" id="1514">1514</a>
+<a href="#1515" id="1515">1515</a>
+<a href="#1516" id="1516">1516</a>
+<a href="#1517" id="1517">1517</a>
+<a href="#1518" id="1518">1518</a>
+<a href="#1519" id="1519">1519</a>
+<a href="#1520" id="1520">1520</a>
+<a href="#1521" id="1521">1521</a>
+<a href="#1522" id="1522">1522</a>
+<a href="#1523" id="1523">1523</a>
+<a href="#1524" id="1524">1524</a>
+<a href="#1525" id="1525">1525</a>
+<a href="#1526" id="1526">1526</a>
+<a href="#1527" id="1527">1527</a>
+<a href="#1528" id="1528">1528</a>
+<a href="#1529" id="1529">1529</a>
+<a href="#1530" id="1530">1530</a>
+<a href="#1531" id="1531">1531</a>
+<a href="#1532" id="1532">1532</a>
+<a href="#1533" id="1533">1533</a>
+<a href="#1534" id="1534">1534</a>
+<a href="#1535" id="1535">1535</a>
+<a href="#1536" id="1536">1536</a>
+<a href="#1537" id="1537">1537</a>
+<a href="#1538" id="1538">1538</a>
+<a href="#1539" id="1539">1539</a>
+<a href="#1540" id="1540">1540</a>
+<a href="#1541" id="1541">1541</a>
+<a href="#1542" id="1542">1542</a>
+<a href="#1543" id="1543">1543</a>
+<a href="#1544" id="1544">1544</a>
+<a href="#1545" id="1545">1545</a>
+<a href="#1546" id="1546">1546</a>
+<a href="#1547" id="1547">1547</a>
+<a href="#1548" id="1548">1548</a>
+<a href="#1549" id="1549">1549</a>
+<a href="#1550" id="1550">1550</a>
+<a href="#1551" id="1551">1551</a>
+<a href="#1552" id="1552">1552</a>
+<a href="#1553" id="1553">1553</a>
+<a href="#1554" id="1554">1554</a>
+<a href="#1555" id="1555">1555</a>
+</pre></div><pre class="rust"><code><span class="kw">use </span>core::{
+    borrow::Borrow,
+    fmt,
+    hash::{BuildHasher, Hash, Hasher <span class="kw">as _</span>},
+    iter::FromIterator,
+    mem,
+    num::NonZeroU32,
+    ops, slice,
+};
 
-<span class="kw">use </span>hash32::{BuildHasher, BuildHasherDefault, FnvHasher, Hash, Hasher};
+<span class="kw">use </span>hash32::{BuildHasherDefault, FnvHasher};
 
 <span class="kw">use </span><span class="kw">crate</span>::Vec;
 
-<span class="doccomment">/// A [`heapless::IndexMap`](./struct.IndexMap.html) using the default FNV hasher
+<span class="doccomment">/// A [`IndexMap`] using the default FNV hasher
 ///
 /// A list of all Methods and Traits available for `FnvIndexMap` can be found in
-/// the [`heapless::IndexMap`](./struct.IndexMap.html) documentation.
+/// the [`IndexMap`] documentation.
 ///
 /// # Examples
 /// ```
@@ -1582,8 +1764,9 @@
                     <span class="comment">// robin hood: steal the spot if it&#39;s better for us
                     </span><span class="kw">let </span>index = <span class="self">self</span>.entries.len();
                     <span class="kw">unsafe </span>{ <span class="self">self</span>.entries.push_unchecked(Bucket { hash, key, value }) };
+                    <span class="self">Self</span>::insert_phase_2(<span class="kw-2">&amp;mut </span><span class="self">self</span>.indices, probe, Pos::new(index, hash));
                     <span class="kw">return </span>Insert::Success(Inserted {
-                        index: <span class="self">self</span>.insert_phase_2(probe, Pos::new(index, hash)),
+                        index,
                         old_value: <span class="prelude-val">None</span>,
                     });
                 } <span class="kw">else if </span>entry_hash == hash &amp;&amp; <span class="kw">unsafe </span>{ <span class="self">self</span>.entries.get_unchecked(i).key == key }
@@ -1614,9 +1797,9 @@
     }
 
     <span class="comment">// phase 2 is post-insert where we forward-shift `Pos` in the indices.
-    </span><span class="kw">fn </span>insert_phase_2(<span class="kw-2">&amp;mut </span><span class="self">self</span>, <span class="kw-2">mut </span>probe: usize, <span class="kw-2">mut </span>old_pos: Pos) -&gt; usize {
-        <span class="macro">probe_loop!</span>(probe &lt; <span class="self">self</span>.indices.len(), {
-            <span class="kw">let </span>pos = <span class="kw">unsafe </span>{ <span class="self">self</span>.indices.get_unchecked_mut(probe) };
+    </span><span class="kw">fn </span>insert_phase_2(indices: <span class="kw-2">&amp;mut </span>[<span class="prelude-ty">Option</span>&lt;Pos&gt;; N], <span class="kw-2">mut </span>probe: usize, <span class="kw-2">mut </span>old_pos: Pos) -&gt; usize {
+        <span class="macro">probe_loop!</span>(probe &lt; indices.len(), {
+            <span class="kw">let </span>pos = <span class="kw">unsafe </span>{ indices.get_unchecked_mut(probe) };
 
             <span class="kw">let </span><span class="kw-2">mut </span>is_none = <span class="bool-val">true</span>; <span class="comment">// work around lack of NLL
             </span><span class="kw">if let </span><span class="prelude-val">Some</span>(pos) = pos.as_mut() {
@@ -1660,6 +1843,50 @@
         (entry.key, entry.value)
     }
 
+    <span class="kw">fn </span>retain_in_order&lt;F&gt;(<span class="kw-2">&amp;mut </span><span class="self">self</span>, <span class="kw-2">mut </span>keep: F)
+    <span class="kw">where
+        </span>F: FnMut(<span class="kw-2">&amp;mut </span>K, <span class="kw-2">&amp;mut </span>V) -&gt; bool,
+    {
+        <span class="kw">const </span>INIT: <span class="prelude-ty">Option</span>&lt;Pos&gt; = <span class="prelude-val">None</span>;
+
+        <span class="self">self</span>.entries
+            .retain_mut(|entry| keep(<span class="kw-2">&amp;mut </span>entry.key, <span class="kw-2">&amp;mut </span>entry.value));
+
+        <span class="kw">if </span><span class="self">self</span>.entries.len() &lt; <span class="self">self</span>.indices.len() {
+            <span class="kw">for </span>index <span class="kw">in </span><span class="self">self</span>.indices.iter_mut() {
+                <span class="kw-2">*</span>index = INIT;
+            }
+
+            <span class="kw">for </span>(index, entry) <span class="kw">in </span><span class="self">self</span>.entries.iter().enumerate() {
+                <span class="kw">let </span><span class="kw-2">mut </span>probe = entry.hash.desired_pos(<span class="self">Self</span>::mask());
+                <span class="kw">let </span><span class="kw-2">mut </span>dist = <span class="number">0</span>;
+
+                <span class="macro">probe_loop!</span>(probe &lt; <span class="self">self</span>.indices.len(), {
+                    <span class="kw">let </span>pos = <span class="kw-2">&amp;mut </span><span class="self">self</span>.indices[probe];
+
+                    <span class="kw">if let </span><span class="prelude-val">Some</span>(pos) = <span class="kw-2">*</span>pos {
+                        <span class="kw">let </span>entry_hash = pos.hash();
+
+                        <span class="comment">// robin hood: steal the spot if it&#39;s better for us
+                        </span><span class="kw">let </span>their_dist = entry_hash.probe_distance(<span class="self">Self</span>::mask(), probe);
+                        <span class="kw">if </span>their_dist &lt; dist {
+                            <span class="self">Self</span>::insert_phase_2(
+                                <span class="kw-2">&amp;mut </span><span class="self">self</span>.indices,
+                                probe,
+                                Pos::new(index, entry.hash),
+                            );
+                            <span class="kw">break</span>;
+                        }
+                    } <span class="kw">else </span>{
+                        <span class="kw-2">*</span>pos = <span class="prelude-val">Some</span>(Pos::new(index, entry.hash));
+                        <span class="kw">break</span>;
+                    }
+                    dist += <span class="number">1</span>;
+                });
+            }
+        }
+    }
+
     <span class="kw">fn </span>backward_shift_after_removal(<span class="kw-2">&amp;mut </span><span class="self">self</span>, probe_at_remove: usize) {
         <span class="comment">// backward shift deletion in self.indices
         // after probe, shift all non-ideally placed indices backward
@@ -1686,7 +1913,7 @@
 
 <span class="kw">impl</span>&lt;K, V, <span class="kw">const </span>N: usize&gt; Clone <span class="kw">for </span>CoreMap&lt;K, V, N&gt;
 <span class="kw">where
-    </span>K: Eq + Hash + Clone,
+    </span>K: Clone,
     V: Clone,
 {
     <span class="kw">fn </span>clone(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="self">Self </span>{
@@ -1806,15 +2033,16 @@
     }
 }
 
-<span class="doccomment">/// Fixed capacity [`IndexMap`](https://docs.rs/indexmap/1/indexmap/map/struct.IndexMap.html)
+<span class="doccomment">/// Fixed capacity [`IndexMap`](https://docs.rs/indexmap/2/indexmap/map/struct.IndexMap.html)
 ///
 /// Note that you cannot use `IndexMap` directly, since it is generic around the hashing algorithm
-/// in use. Pick a concrete instantiation like [`FnvIndexMap`](./type.FnvIndexMap.html) instead
+/// in use. Pick a concrete instantiation like [`FnvIndexMap`] instead
 /// or create your own.
 ///
 /// Note that the capacity of the `IndexMap` must be a power of 2.
 ///
 /// # Examples
+///
 /// Since `IndexMap` cannot be used directly, we&#39;re using its `FnvIndexMap` instantiation
 /// for this example.
 ///
@@ -1872,18 +2100,13 @@
     }
 }
 
-<span class="kw">impl</span>&lt;K, V, S, <span class="kw">const </span>N: usize&gt; IndexMap&lt;K, V, S, N&gt;
-<span class="kw">where
-    </span>K: Eq + Hash,
-    S: BuildHasher,
-{
-    <span class="comment">/* Public API */
-    </span><span class="doccomment">/// Returns the number of elements the map can hold
+<span class="kw">impl</span>&lt;K, V, S, <span class="kw">const </span>N: usize&gt; IndexMap&lt;K, V, S, N&gt; {
+    <span class="doccomment">/// Returns the number of elements the map can hold
     </span><span class="kw">pub fn </span>capacity(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; usize {
         N
     }
 
-    <span class="doccomment">/// Return an iterator over the keys of the map, in their order
+    <span class="doccomment">/// Return an iterator over the keys of the map, in insertion order
     ///
     /// ```
     /// use heapless::FnvIndexMap;
@@ -1897,11 +2120,13 @@
     ///     println!(&quot;{}&quot;, key);
     /// }
     /// ```
-    </span><span class="kw">pub fn </span>keys(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw">impl </span>Iterator&lt;Item = <span class="kw-2">&amp;</span>K&gt; {
-        <span class="self">self</span>.core.entries.iter().map(|bucket| <span class="kw-2">&amp;</span>bucket.key)
+    </span><span class="kw">pub fn </span>keys(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Keys&lt;<span class="lifetime">&#39;_</span>, K, V&gt; {
+        Keys {
+            iter: <span class="self">self</span>.core.entries.iter(),
+        }
     }
 
-    <span class="doccomment">/// Return an iterator over the values of the map, in their order
+    <span class="doccomment">/// Return an iterator over the values of the map, in insertion order
     ///
     /// ```
     /// use heapless::FnvIndexMap;
@@ -1915,11 +2140,13 @@
     ///     println!(&quot;{}&quot;, val);
     /// }
     /// ```
-    </span><span class="kw">pub fn </span>values(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw">impl </span>Iterator&lt;Item = <span class="kw-2">&amp;</span>V&gt; {
-        <span class="self">self</span>.core.entries.iter().map(|bucket| <span class="kw-2">&amp;</span>bucket.value)
+    </span><span class="kw">pub fn </span>values(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Values&lt;<span class="lifetime">&#39;_</span>, K, V&gt; {
+        Values {
+            iter: <span class="self">self</span>.core.entries.iter(),
+        }
     }
 
-    <span class="doccomment">/// Return an iterator over mutable references to the the values of the map, in their order
+    <span class="doccomment">/// Return an iterator over mutable references to the the values of the map, in insertion order
     ///
     /// ```
     /// use heapless::FnvIndexMap;
@@ -1937,11 +2164,13 @@
     ///     println!(&quot;{}&quot;, val);
     /// }
     /// ```
-    </span><span class="kw">pub fn </span>values_mut(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="kw">impl </span>Iterator&lt;Item = <span class="kw-2">&amp;mut </span>V&gt; {
-        <span class="self">self</span>.core.entries.iter_mut().map(|bucket| <span class="kw-2">&amp;mut </span>bucket.value)
+    </span><span class="kw">pub fn </span>values_mut(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; ValuesMut&lt;<span class="lifetime">&#39;_</span>, K, V&gt; {
+        ValuesMut {
+            iter: <span class="self">self</span>.core.entries.iter_mut(),
+        }
     }
 
-    <span class="doccomment">/// Return an iterator over the key-value pairs of the map, in their order
+    <span class="doccomment">/// Return an iterator over the key-value pairs of the map, in insertion order
     ///
     /// ```
     /// use heapless::FnvIndexMap;
@@ -1961,7 +2190,7 @@
         }
     }
 
-    <span class="doccomment">/// Return an iterator over the key-value pairs of the map, in their order
+    <span class="doccomment">/// Return an iterator over the key-value pairs of the map, in insertion order
     ///
     /// ```
     /// use heapless::FnvIndexMap;
@@ -2025,39 +2254,6 @@
             .map(|bucket| (<span class="kw-2">&amp;</span>bucket.key, <span class="kw-2">&amp;mut </span>bucket.value))
     }
 
-    <span class="doccomment">/// Returns an entry for the corresponding key
-    /// ```
-    /// use heapless::FnvIndexMap;
-    /// use heapless::Entry;
-    /// let mut map = FnvIndexMap::&lt;_, _, 16&gt;::new();
-    /// if let Entry::Vacant(v) = map.entry(&quot;a&quot;) {
-    ///     v.insert(1).unwrap();
-    /// }
-    /// if let Entry::Occupied(mut o) = map.entry(&quot;a&quot;) {
-    ///     println!(&quot;found {}&quot;, *o.get()); // Prints 1
-    ///     o.insert(2);
-    /// }
-    /// // Prints 2
-    /// println!(&quot;val: {}&quot;, *map.get(&quot;a&quot;).unwrap());
-    /// ```
-    </span><span class="kw">pub fn </span>entry(<span class="kw-2">&amp;mut </span><span class="self">self</span>, key: K) -&gt; Entry&lt;<span class="lifetime">&#39;_</span>, K, V, N&gt; {
-        <span class="kw">let </span>hash_val = hash_with(<span class="kw-2">&amp;</span>key, <span class="kw-2">&amp;</span><span class="self">self</span>.build_hasher);
-        <span class="kw">if let </span><span class="prelude-val">Some</span>((probe, pos)) = <span class="self">self</span>.core.find(hash_val, <span class="kw-2">&amp;</span>key) {
-            Entry::Occupied(OccupiedEntry {
-                key,
-                probe,
-                pos,
-                core: <span class="kw-2">&amp;mut </span><span class="self">self</span>.core,
-            })
-        } <span class="kw">else </span>{
-            Entry::Vacant(VacantEntry {
-                key,
-                hash_val,
-                core: <span class="kw-2">&amp;mut </span><span class="self">self</span>.core,
-            })
-        }
-    }
-
     <span class="doccomment">/// Return the number of key-value pairs in the map.
     ///
     /// Computes in **O(1)** time.
@@ -2106,6 +2302,46 @@
         <span class="self">self</span>.core.entries.clear();
         <span class="kw">for </span>pos <span class="kw">in </span><span class="self">self</span>.core.indices.iter_mut() {
             <span class="kw-2">*</span>pos = <span class="prelude-val">None</span>;
+        }
+    }
+}
+
+<span class="kw">impl</span>&lt;K, V, S, <span class="kw">const </span>N: usize&gt; IndexMap&lt;K, V, S, N&gt;
+<span class="kw">where
+    </span>K: Eq + Hash,
+    S: BuildHasher,
+{
+    <span class="comment">/* Public API */
+    </span><span class="doccomment">/// Returns an entry for the corresponding key
+    /// ```
+    /// use heapless::FnvIndexMap;
+    /// use heapless::Entry;
+    /// let mut map = FnvIndexMap::&lt;_, _, 16&gt;::new();
+    /// if let Entry::Vacant(v) = map.entry(&quot;a&quot;) {
+    ///     v.insert(1).unwrap();
+    /// }
+    /// if let Entry::Occupied(mut o) = map.entry(&quot;a&quot;) {
+    ///     println!(&quot;found {}&quot;, *o.get()); // Prints 1
+    ///     o.insert(2);
+    /// }
+    /// // Prints 2
+    /// println!(&quot;val: {}&quot;, *map.get(&quot;a&quot;).unwrap());
+    /// ```
+    </span><span class="kw">pub fn </span>entry(<span class="kw-2">&amp;mut </span><span class="self">self</span>, key: K) -&gt; Entry&lt;<span class="lifetime">&#39;_</span>, K, V, N&gt; {
+        <span class="kw">let </span>hash_val = hash_with(<span class="kw-2">&amp;</span>key, <span class="kw-2">&amp;</span><span class="self">self</span>.build_hasher);
+        <span class="kw">if let </span><span class="prelude-val">Some</span>((probe, pos)) = <span class="self">self</span>.core.find(hash_val, <span class="kw-2">&amp;</span>key) {
+            Entry::Occupied(OccupiedEntry {
+                key,
+                probe,
+                pos,
+                core: <span class="kw-2">&amp;mut </span><span class="self">self</span>.core,
+            })
+        } <span class="kw">else </span>{
+            Entry::Vacant(VacantEntry {
+                key,
+                hash_val,
+                core: <span class="kw-2">&amp;mut </span><span class="self">self</span>.core,
+            })
         }
     }
 
@@ -2224,7 +2460,7 @@
         }
     }
 
-    <span class="doccomment">/// Same as [`swap_remove`](struct.IndexMap.html#method.swap_remove)
+    <span class="doccomment">/// Same as [`swap_remove`](Self::swap_remove)
     ///
     /// Computes in **O(1)** time (average).
     ///
@@ -2261,6 +2497,16 @@
     {
         <span class="self">self</span>.find(key)
             .map(|(probe, found)| <span class="self">self</span>.core.remove_found(probe, found).<span class="number">1</span>)
+    }
+
+    <span class="doccomment">/// Retains only the elements specified by the predicate.
+    ///
+    /// In other words, remove all pairs `(k, v)` for which `f(&amp;k, &amp;mut v)` returns `false`.
+    </span><span class="kw">pub fn </span>retain&lt;F&gt;(<span class="kw-2">&amp;mut </span><span class="self">self</span>, <span class="kw-2">mut </span>f: F)
+    <span class="kw">where
+        </span>F: FnMut(<span class="kw-2">&amp;</span>K, <span class="kw-2">&amp;mut </span>V) -&gt; bool,
+    {
+        <span class="self">self</span>.core.retain_in_order(<span class="kw">move </span>|k, v| f(k, v));
     }
 
     <span class="comment">/* Private API */
@@ -2304,7 +2550,7 @@
 
 <span class="kw">impl</span>&lt;K, V, S, <span class="kw">const </span>N: usize&gt; Clone <span class="kw">for </span>IndexMap&lt;K, V, S, N&gt;
 <span class="kw">where
-    </span>K: Eq + Hash + Clone,
+    </span>K: Clone,
     V: Clone,
     S: Clone,
 {
@@ -2318,9 +2564,8 @@
 
 <span class="kw">impl</span>&lt;K, V, S, <span class="kw">const </span>N: usize&gt; fmt::Debug <span class="kw">for </span>IndexMap&lt;K, V, S, N&gt;
 <span class="kw">where
-    </span>K: Eq + Hash + fmt::Debug,
+    </span>K: fmt::Debug,
     V: fmt::Debug,
-    S: BuildHasher,
 {
     <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; fmt::Result {
         f.debug_map().entries(<span class="self">self</span>.iter()).finish()
@@ -2329,8 +2574,7 @@
 
 <span class="kw">impl</span>&lt;K, V, S, <span class="kw">const </span>N: usize&gt; Default <span class="kw">for </span>IndexMap&lt;K, V, S, N&gt;
 <span class="kw">where
-    </span>K: Eq + Hash,
-    S: BuildHasher + Default,
+    </span>S: Default,
 {
     <span class="kw">fn </span>default() -&gt; <span class="self">Self </span>{
         <span class="comment">// Const assert
@@ -2425,11 +2669,7 @@
     }
 }
 
-<span class="kw">impl</span>&lt;K, V, S, <span class="kw">const </span>N: usize&gt; IntoIterator <span class="kw">for </span>IndexMap&lt;K, V, S, N&gt;
-<span class="kw">where
-    </span>K: Eq + Hash,
-    S: BuildHasher,
-{
+<span class="kw">impl</span>&lt;K, V, S, <span class="kw">const </span>N: usize&gt; IntoIterator <span class="kw">for </span>IndexMap&lt;K, V, S, N&gt; {
     <span class="kw">type </span>Item = (K, V);
     <span class="kw">type </span>IntoIter = IntoIter&lt;K, V, N&gt;;
 
@@ -2440,11 +2680,7 @@
     }
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>, K, V, S, <span class="kw">const </span>N: usize&gt; IntoIterator <span class="kw">for </span><span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>IndexMap&lt;K, V, S, N&gt;
-<span class="kw">where
-    </span>K: Eq + Hash,
-    S: BuildHasher,
-{
+<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>, K, V, S, <span class="kw">const </span>N: usize&gt; IntoIterator <span class="kw">for </span><span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>IndexMap&lt;K, V, S, N&gt; {
     <span class="kw">type </span>Item = (<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>K, <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>V);
     <span class="kw">type </span>IntoIter = Iter&lt;<span class="lifetime">&#39;a</span>, K, V&gt;;
 
@@ -2453,11 +2689,7 @@
     }
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>, K, V, S, <span class="kw">const </span>N: usize&gt; IntoIterator <span class="kw">for </span><span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span><span class="kw-2">mut </span>IndexMap&lt;K, V, S, N&gt;
-<span class="kw">where
-    </span>K: Eq + Hash,
-    S: BuildHasher,
-{
+<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>, K, V, S, <span class="kw">const </span>N: usize&gt; IntoIterator <span class="kw">for </span><span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span><span class="kw-2">mut </span>IndexMap&lt;K, V, S, N&gt; {
     <span class="kw">type </span>Item = (<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>K, <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span><span class="kw-2">mut </span>V);
     <span class="kw">type </span>IntoIter = IterMut&lt;<span class="lifetime">&#39;a</span>, K, V&gt;;
 
@@ -2466,7 +2698,11 @@
     }
 }
 
-<span class="kw">pub struct </span>Iter&lt;<span class="lifetime">&#39;a</span>, K, V&gt; {
+<span class="doccomment">/// An iterator over the items of a [`IndexMap`].
+///
+/// This `struct` is created by the [`iter`](IndexMap::iter) method on [`IndexMap`]. See its
+/// documentation for more.
+</span><span class="kw">pub struct </span>Iter&lt;<span class="lifetime">&#39;a</span>, K, V&gt; {
     iter: slice::Iter&lt;<span class="lifetime">&#39;a</span>, Bucket&lt;K, V&gt;&gt;,
 }
 
@@ -2486,7 +2722,11 @@
     }
 }
 
-<span class="kw">pub struct </span>IterMut&lt;<span class="lifetime">&#39;a</span>, K, V&gt; {
+<span class="doccomment">/// A mutable iterator over the items of a [`IndexMap`].
+///
+/// This `struct` is created by the [`iter_mut`](IndexMap::iter_mut) method on [`IndexMap`]. See its
+/// documentation for more.
+</span><span class="kw">pub struct </span>IterMut&lt;<span class="lifetime">&#39;a</span>, K, V&gt; {
     iter: slice::IterMut&lt;<span class="lifetime">&#39;a</span>, Bucket&lt;K, V&gt;&gt;,
 }
 
@@ -2497,6 +2737,54 @@
         <span class="self">self</span>.iter
             .next()
             .map(|bucket| (<span class="kw-2">&amp;</span>bucket.key, <span class="kw-2">&amp;mut </span>bucket.value))
+    }
+}
+
+<span class="doccomment">/// An iterator over the keys of a [`IndexMap`].
+///
+/// This `struct` is created by the [`keys`](IndexMap::keys) method on [`IndexMap`]. See its
+/// documentation for more.
+</span><span class="kw">pub struct </span>Keys&lt;<span class="lifetime">&#39;a</span>, K, V&gt; {
+    iter: slice::Iter&lt;<span class="lifetime">&#39;a</span>, Bucket&lt;K, V&gt;&gt;,
+}
+
+<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>, K, V&gt; Iterator <span class="kw">for </span>Keys&lt;<span class="lifetime">&#39;a</span>, K, V&gt; {
+    <span class="kw">type </span>Item = <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>K;
+
+    <span class="kw">fn </span>next(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="self">Self</span>::Item&gt; {
+        <span class="self">self</span>.iter.next().map(|bucket| <span class="kw-2">&amp;</span>bucket.key)
+    }
+}
+
+<span class="doccomment">/// An iterator over the values of a [`IndexMap`].
+///
+/// This `struct` is created by the [`values`](IndexMap::values) method on [`IndexMap`]. See its
+/// documentation for more.
+</span><span class="kw">pub struct </span>Values&lt;<span class="lifetime">&#39;a</span>, K, V&gt; {
+    iter: slice::Iter&lt;<span class="lifetime">&#39;a</span>, Bucket&lt;K, V&gt;&gt;,
+}
+
+<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>, K, V&gt; Iterator <span class="kw">for </span>Values&lt;<span class="lifetime">&#39;a</span>, K, V&gt; {
+    <span class="kw">type </span>Item = <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>V;
+
+    <span class="kw">fn </span>next(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="self">Self</span>::Item&gt; {
+        <span class="self">self</span>.iter.next().map(|bucket| <span class="kw-2">&amp;</span>bucket.value)
+    }
+}
+
+<span class="doccomment">/// A mutable iterator over the values of a [`IndexMap`].
+///
+/// This `struct` is created by the [`values_mut`](IndexMap::values_mut) method on [`IndexMap`]. See its
+/// documentation for more.
+</span><span class="kw">pub struct </span>ValuesMut&lt;<span class="lifetime">&#39;a</span>, K, V&gt; {
+    iter: slice::IterMut&lt;<span class="lifetime">&#39;a</span>, Bucket&lt;K, V&gt;&gt;,
+}
+
+<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>, K, V&gt; Iterator <span class="kw">for </span>ValuesMut&lt;<span class="lifetime">&#39;a</span>, K, V&gt; {
+    <span class="kw">type </span>Item = <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span><span class="kw-2">mut </span>V;
+
+    <span class="kw">fn </span>next(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="self">Self</span>::Item&gt; {
+        <span class="self">self</span>.iter.next().map(|bucket| <span class="kw-2">&amp;mut </span>bucket.value)
     }
 }
 
@@ -2581,7 +2869,12 @@
         <span class="macro">assert_eq!</span>(a.get(<span class="string">&quot;k1&quot;</span>), a.get(<span class="string">&quot;k2&quot;</span>));
     }
 
-    <span class="kw">const </span>MAP_SLOTS: usize = <span class="number">4096</span>;
+    <span class="comment">// tests that use this constant take too long to run under miri, specially on CI, with a map of
+    // this size so make the map smaller when using miri
+    </span><span class="attr">#[cfg(not(miri))]
+    </span><span class="kw">const </span>MAP_SLOTS: usize = <span class="number">4096</span>;
+    <span class="attr">#[cfg(miri)]
+    </span><span class="kw">const </span>MAP_SLOTS: usize = <span class="number">64</span>;
     <span class="kw">fn </span>almost_filled_map() -&gt; FnvIndexMap&lt;usize, usize, MAP_SLOTS&gt; {
         <span class="kw">let </span><span class="kw-2">mut </span>almost_filled = FnvIndexMap::new();
         <span class="kw">for </span>i <span class="kw">in </span><span class="number">1</span>..MAP_SLOTS {
@@ -2632,7 +2925,7 @@
                 <span class="macro">panic!</span>(<span class="string">&quot;Entry found when empty&quot;</span>);
             }
             Entry::Vacant(v) =&gt; {
-                v.insert(value).unwrap();
+                <span class="macro">assert_eq!</span>(value, <span class="kw-2">*</span>v.insert(value).unwrap());
             }
         };
         <span class="macro">assert_eq!</span>(value, <span class="kw-2">*</span>src.get(<span class="kw-2">&amp;</span>key).unwrap())
@@ -2697,6 +2990,33 @@
     }
 
     <span class="attr">#[test]
+    </span><span class="kw">fn </span>retain() {
+        <span class="kw">let </span><span class="kw-2">mut </span>none = almost_filled_map();
+        none.retain(|<span class="kw">_</span>, <span class="kw">_</span>| <span class="bool-val">false</span>);
+        <span class="macro">assert!</span>(none.is_empty());
+
+        <span class="kw">let </span><span class="kw-2">mut </span>all = almost_filled_map();
+        all.retain(|<span class="kw">_</span>, <span class="kw">_</span>| <span class="bool-val">true</span>);
+        <span class="macro">assert_eq!</span>(all.len(), MAP_SLOTS - <span class="number">1</span>);
+
+        <span class="kw">let </span><span class="kw-2">mut </span>even = almost_filled_map();
+        even.retain(|<span class="kw">_</span>, <span class="kw-2">&amp;mut </span>v| v % <span class="number">2 </span>== <span class="number">0</span>);
+        <span class="macro">assert_eq!</span>(even.len(), (MAP_SLOTS - <span class="number">1</span>) / <span class="number">2</span>);
+        <span class="kw">for </span><span class="kw-2">&amp;</span>v <span class="kw">in </span>even.values() {
+            <span class="macro">assert_eq!</span>(v % <span class="number">2</span>, <span class="number">0</span>);
+        }
+
+        <span class="kw">let </span><span class="kw-2">mut </span>odd = almost_filled_map();
+        odd.retain(|<span class="kw">_</span>, <span class="kw-2">&amp;mut </span>v| v % <span class="number">2 </span>!= <span class="number">0</span>);
+        <span class="macro">assert_eq!</span>(odd.len(), MAP_SLOTS / <span class="number">2</span>);
+        <span class="kw">for </span><span class="kw-2">&amp;</span>v <span class="kw">in </span>odd.values() {
+            <span class="macro">assert_ne!</span>(v % <span class="number">2</span>, <span class="number">0</span>);
+        }
+        <span class="macro">assert_eq!</span>(odd.insert(<span class="number">2</span>, <span class="number">2</span>), <span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>));
+        <span class="macro">assert_eq!</span>(odd.len(), (MAP_SLOTS / <span class="number">2</span>) + <span class="number">1</span>);
+    }
+
+    <span class="attr">#[test]
     </span><span class="kw">fn </span>entry_roll_through_all() {
         <span class="kw">let </span><span class="kw-2">mut </span>src: FnvIndexMap&lt;usize, usize, MAP_SLOTS&gt; = FnvIndexMap::new();
         <span class="kw">for </span>i <span class="kw">in </span><span class="number">0</span>..MAP_SLOTS {
@@ -2705,7 +3025,7 @@
                     <span class="macro">panic!</span>(<span class="string">&quot;Entry found before insert&quot;</span>);
                 }
                 Entry::Vacant(v) =&gt; {
-                    v.insert(i).unwrap();
+                    <span class="macro">assert_eq!</span>(i, <span class="kw-2">*</span>v.insert(i).unwrap());
                 }
             }
         }
@@ -2758,6 +3078,34 @@
 
         <span class="macro">assert_eq!</span>(<span class="prelude-val">Some</span>((<span class="kw-2">&amp;</span><span class="number">0</span>, <span class="kw-2">&amp;</span><span class="number">1</span>)), map.first());
         <span class="macro">assert_eq!</span>(<span class="prelude-val">Some</span>((<span class="kw-2">&amp;</span><span class="number">1</span>, <span class="kw-2">&amp;</span><span class="number">2</span>)), map.last());
+    }
+
+    <span class="attr">#[test]
+    </span><span class="kw">fn </span>keys_iter() {
+        <span class="kw">let </span>map = almost_filled_map();
+        <span class="kw">for </span>(<span class="kw-2">&amp;</span>key, i) <span class="kw">in </span>map.keys().zip(<span class="number">1</span>..MAP_SLOTS) {
+            <span class="macro">assert_eq!</span>(key, i);
+        }
+    }
+
+    <span class="attr">#[test]
+    </span><span class="kw">fn </span>values_iter() {
+        <span class="kw">let </span>map = almost_filled_map();
+        <span class="kw">for </span>(<span class="kw-2">&amp;</span>value, i) <span class="kw">in </span>map.values().zip(<span class="number">1</span>..MAP_SLOTS) {
+            <span class="macro">assert_eq!</span>(value, i);
+        }
+    }
+
+    <span class="attr">#[test]
+    </span><span class="kw">fn </span>values_mut_iter() {
+        <span class="kw">let </span><span class="kw-2">mut </span>map = almost_filled_map();
+        <span class="kw">for </span>value <span class="kw">in </span>map.values_mut() {
+            <span class="kw-2">*</span>value += <span class="number">1</span>;
+        }
+
+        <span class="kw">for </span>(<span class="kw-2">&amp;</span>value, i) <span class="kw">in </span>map.values().zip(<span class="number">1</span>..MAP_SLOTS) {
+            <span class="macro">assert_eq!</span>(value, i + <span class="number">1</span>);
+        }
     }
 }
 </code></pre></div></section></main></body></html>

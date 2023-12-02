@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/heapless-0.7.16/src/spsc.rs`."><title>spsc.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-9ee3a5e31a2afa3e.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="heapless" data-themes="" data-resource-suffix="" data-rustdoc-version="1.76.0-nightly (37b2813a7 2023-11-24)" data-channel="nightly" data-search-js="search-f4028ef4dd0903c7.js" data-settings-js="settings-74424d7eec62a23e.js" ><script src="../../static.files/storage-fec3eaa3851e447d.js"></script><script defer src="../../static.files/src-script-3280b574d94e47b4.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-f06f02fd918e3bb3.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-5d8b3c7633ad77ba.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/heapless-0.8.0/src/spsc.rs`."><title>spsc.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-c67e44d78ab2db17.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="heapless" data-themes="" data-resource-suffix="" data-rustdoc-version="1.76.0-nightly (8c2b57721 2023-12-01)" data-channel="nightly" data-search-js="search-5a66c239c06b3a66.js" data-settings-js="settings-fe03fdc259827cd2.js" ><script src="../../static.files/storage-fec3eaa3851e447d.js"></script><script defer src="../../static.files/src-script-3280b574d94e47b4.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-77dede896d6ac08e.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-5d8b3c7633ad77ba.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -905,12 +905,18 @@
 <a href="#905" id="905">905</a>
 <a href="#906" id="906">906</a>
 <a href="#907" id="907">907</a>
+<a href="#908" id="908">908</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! Fixed capacity Single Producer Single Consumer (SPSC) queue
 //!
 //! Implementation based on &lt;https://www.codeproject.com/Articles/43510/Lock-Free-Single-Producer-Single-Consumer-Circular&gt;
 //!
-//! NOTE: This module is not available on targets that do *not* support atomic loads and are not
-//! supported by [`atomic_polyfill`](https://crates.io/crates/atomic-polyfill). (e.g., MSP430).
+//! # Portability
+//!
+//! This module requires CAS atomic instructions which are not available on all architectures
+//! (e.g.  ARMv6-M (`thumbv6m-none-eabi`) and MSP430 (`msp430-none-elf`)). These atomics can be
+//! emulated however with [`portable-atomic`](https://crates.io/crates/portable-atomic), which is
+//! enabled with the `cas` feature and is enabled by default for `thumbv6m-none-eabi` and `riscv32`
+//! targets.
 //!
 //! # Examples
 //!
@@ -929,23 +935,30 @@
 //! assert_eq!(rb.dequeue(), Some(0));
 //! ```
 //!
-//! - `Queue` can be `split` and then be used in Single Producer Single Consumer mode
+//! - `Queue` can be `split` and then be used in Single Producer Single Consumer mode.
+//!
+//! &quot;no alloc&quot; applications can create a `&amp;&#39;static mut` reference to a `Queue` -- using a static
+//! variable -- and then `split` it: this consumes the static reference. The resulting `Consumer`
+//! and `Producer` can then be moved into different execution contexts (threads, interrupt handlers,
+//! etc.)
 //!
 //! ```
-//! use heapless::spsc::Queue;
-//!
-//! // Notice, type signature needs to be explicit for now.
-//! // (min_const_eval, does not allow for default type assignments)
-//! static mut Q: Queue&lt;Event, 4&gt; = Queue::new();
+//! use heapless::spsc::{Producer, Queue};
 //!
 //! enum Event { A, B }
 //!
 //! fn main() {
-//!     // NOTE(unsafe) beware of aliasing the `consumer` end point
-//!     let mut consumer = unsafe { Q.split().1 };
+//!     let queue: &amp;&#39;static mut Queue&lt;Event, 4&gt; = {
+//!         static mut Q: Queue&lt;Event, 4&gt; = Queue::new();
+//!         unsafe { &amp;mut Q }
+//!     };
+//!
+//!     let (producer, mut consumer) = queue.split();
+//!
+//!     // `producer` can be moved into `interrupt_handler` using a static mutex or the mechanism
+//!     // provided by the concurrency framework you are using (e.g. a resource in RTIC)
 //!
 //!     loop {
-//!         // `dequeue` is a lockless operation
 //!         match consumer.dequeue() {
 //!             Some(Event::A) =&gt; { /* .. */ },
 //!             Some(Event::B) =&gt; { /* .. */ },
@@ -956,9 +969,7 @@
 //! }
 //!
 //! // this is a different execution context that can preempt `main`
-//! fn interrupt_handler() {
-//!     // NOTE(unsafe) beware of aliasing the `producer` end point
-//!     let mut producer = unsafe { Q.split().0 };
+//! fn interrupt_handler(producer: &amp;mut Producer&lt;&#39;static, Event, 4&gt;) {
 //! #   let condition = true;
 //!
 //!     // ..
@@ -993,10 +1004,12 @@
 
 </span><span class="kw">use </span>core::{cell::UnsafeCell, fmt, hash, mem::MaybeUninit, ptr};
 
-<span class="attr">#[cfg(full_atomic_polyfill)]
-</span><span class="kw">use </span>atomic_polyfill::{AtomicUsize, Ordering};
-<span class="attr">#[cfg(not(full_atomic_polyfill))]
-</span><span class="kw">use </span>core::sync::atomic::{AtomicUsize, Ordering};
+<span class="attr">#[cfg(not(feature = <span class="string">&quot;portable-atomic&quot;</span>))]
+</span><span class="kw">use </span>core::sync::atomic;
+<span class="attr">#[cfg(feature = <span class="string">&quot;portable-atomic&quot;</span>)]
+</span><span class="kw">use </span>portable_atomic <span class="kw">as </span>atomic;
+
+<span class="kw">use </span>atomic::{AtomicUsize, Ordering};
 
 <span class="doccomment">/// A statically allocated single producer single consumer queue with a capacity of `N - 1` elements
 ///
@@ -1358,18 +1371,6 @@
     }
 }
 
-<span class="kw">impl</span>&lt;T, <span class="kw">const </span>N: usize&gt; hash32::Hash <span class="kw">for </span>Queue&lt;T, N&gt;
-<span class="kw">where
-    </span>T: hash32::Hash,
-{
-    <span class="kw">fn </span>hash&lt;H: hash32::Hasher&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, state: <span class="kw-2">&amp;mut </span>H) {
-        <span class="comment">// iterate over self in order
-        </span><span class="kw">for </span>t <span class="kw">in </span><span class="self">self</span>.iter() {
-            hash32::Hash::hash(t, state);
-        }
-    }
-}
-
 <span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>, T, <span class="kw">const </span>N: usize&gt; IntoIterator <span class="kw">for </span><span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>Queue&lt;T, N&gt; {
     <span class="kw">type </span>Item = <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>T;
     <span class="kw">type </span>IntoIter = Iter&lt;<span class="lifetime">&#39;a</span>, T, N&gt;;
@@ -1497,8 +1498,9 @@
 
 <span class="attr">#[cfg(test)]
 </span><span class="kw">mod </span>tests {
+    <span class="kw">use </span>std::hash::{Hash, Hasher};
+
     <span class="kw">use </span><span class="kw">crate</span>::spsc::Queue;
-    <span class="kw">use </span>hash32::Hasher;
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>full() {
@@ -1799,13 +1801,13 @@
         };
         <span class="kw">let </span>hash1 = {
             <span class="kw">let </span><span class="kw-2">mut </span>hasher1 = hash32::FnvHasher::default();
-            hash32::Hash::hash(<span class="kw-2">&amp;</span>rb1, <span class="kw-2">&amp;mut </span>hasher1);
+            rb1.hash(<span class="kw-2">&amp;mut </span>hasher1);
             <span class="kw">let </span>hash1 = hasher1.finish();
             hash1
         };
         <span class="kw">let </span>hash2 = {
             <span class="kw">let </span><span class="kw-2">mut </span>hasher2 = hash32::FnvHasher::default();
-            hash32::Hash::hash(<span class="kw-2">&amp;</span>rb2, <span class="kw-2">&amp;mut </span>hasher2);
+            rb2.hash(<span class="kw-2">&amp;mut </span>hasher2);
             <span class="kw">let </span>hash2 = hasher2.finish();
             hash2
         };

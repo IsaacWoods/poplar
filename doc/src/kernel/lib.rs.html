@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/lib.rs`."><title>lib.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-9ee3a5e31a2afa3e.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="kernel" data-themes="" data-resource-suffix="" data-rustdoc-version="1.76.0-nightly (37b2813a7 2023-11-24)" data-channel="nightly" data-search-js="search-f4028ef4dd0903c7.js" data-settings-js="settings-74424d7eec62a23e.js" ><script src="../../static.files/storage-fec3eaa3851e447d.js"></script><script defer src="../../static.files/src-script-3280b574d94e47b4.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-f06f02fd918e3bb3.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-5d8b3c7633ad77ba.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/lib.rs`."><title>lib.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-c67e44d78ab2db17.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="kernel" data-themes="" data-resource-suffix="" data-rustdoc-version="1.76.0-nightly (8c2b57721 2023-12-01)" data-channel="nightly" data-search-js="search-5a66c239c06b3a66.js" data-settings-js="settings-fe03fdc259827cd2.js" ><script src="../../static.files/storage-fec3eaa3851e447d.js"></script><script defer src="../../static.files/src-script-3280b574d94e47b4.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-77dede896d6ac08e.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-5d8b3c7633ad77ba.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -128,12 +128,6 @@
 <a href="#128" id="128">128</a>
 <a href="#129" id="129">129</a>
 <a href="#130" id="130">130</a>
-<a href="#131" id="131">131</a>
-<a href="#132" id="132">132</a>
-<a href="#133" id="133">133</a>
-<a href="#134" id="134">134</a>
-<a href="#135" id="135">135</a>
-<a href="#136" id="136">136</a>
 </pre></div><pre class="rust"><code><span class="attr">#![no_std]
 #![feature(
     decl_macro,
@@ -152,7 +146,6 @@
 <span class="kw">pub mod </span>memory;
 <span class="kw">pub mod </span>object;
 <span class="kw">pub mod </span>pci;
-<span class="kw">pub mod </span>per_cpu;
 <span class="kw">pub mod </span>scheduler;
 <span class="kw">pub mod </span>syscall;
 
@@ -164,7 +157,6 @@
 <span class="kw">use </span>object::{address_space::AddressSpace, memory_object::MemoryObject, task::Task, KernelObject};
 <span class="kw">use </span>pci::PciInfo;
 <span class="kw">use </span>pci_types::ConfigRegionAccess <span class="kw">as </span>PciConfigRegionAccess;
-<span class="kw">use </span>per_cpu::PerCpu;
 <span class="kw">use </span>poplar_util::InitGuard;
 <span class="kw">use </span>scheduler::Scheduler;
 <span class="kw">use </span>seed::boot_info::LoadedImage;
@@ -182,14 +174,8 @@
 <span class="kw">pub trait </span>Platform: Sized + <span class="lifetime">&#39;static </span>{
     <span class="kw">type </span>PageTableSize: FrameSize;
     <span class="kw">type </span>PageTable: PageTable&lt;<span class="self">Self</span>::PageTableSize&gt; + Send;
-    <span class="kw">type </span>PerCpu: PerCpu&lt;<span class="self">Self</span>&gt;;
 
     <span class="kw">fn </span>kernel_page_table(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;mut </span><span class="self">Self</span>::PageTable;
-
-    <span class="doccomment">/// Get the per-CPU info for the current CPU. To make this safe, the per-CPU info must be installed before the
-    /// `Platform` implementation is created, and the user must be careful to maintain only one live mutable
-    /// reference to the per-CPU data at a time.
-    </span><span class="kw">unsafe fn </span>per_cpu&lt;<span class="lifetime">&#39;a</span>&gt;() -&gt; <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span><span class="kw-2">mut </span><span class="self">Self</span>::PerCpu;
 
     <span class="doccomment">/// Often, the platform will need to put stuff on either the kernel or the user stack before a task is run for
     /// the first time. `task_entry_point` is the virtual address that should be jumped to in usermode when the
@@ -202,17 +188,19 @@
         task_entry_point: VAddr,
     ) -&gt; (VAddr, VAddr);
 
+    <span class="kw">unsafe fn </span>switch_user_stack_pointer(new_user_stack_pointer: VAddr) -&gt; VAddr;
+
     <span class="doccomment">/// Do the final part of a context switch: save all the state that needs to be to the current kernel stack,
     /// switch to a new kernel stack, and restore all the state from that stack.
     </span><span class="kw">unsafe fn </span>context_switch(current_kernel_stack: <span class="kw-2">*mut </span>VAddr, new_kernel_stack: VAddr);
 
     <span class="doccomment">/// Do the actual drop into usermode. This assumes that the task&#39;s page tables have already been installed,
     /// and that an initial frame has been put into the task&#39;s kernel stack that this will use to enter userspace.
-    </span><span class="kw">unsafe fn </span>drop_into_userspace() -&gt; !;
+    </span><span class="kw">unsafe fn </span>drop_into_userspace(kernel_stack_pointer: VAddr, user_stack_pointer: VAddr) -&gt; !;
 }
 
 <span class="kw">pub fn </span>load_task&lt;P&gt;(
-    scheduler: <span class="kw-2">&amp;mut </span>Scheduler&lt;P&gt;,
+    scheduler: <span class="kw-2">&amp;</span>Scheduler&lt;P&gt;,
     image: <span class="kw-2">&amp;</span>LoadedImage,
     kernel_page_table: <span class="kw-2">&amp;mut </span>P::PageTable,
     allocator: <span class="kw-2">&amp;</span>PhysicalMemoryManager,

@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/lock_api-0.4.5/src/mutex.rs`."><title>mutex.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-9ee3a5e31a2afa3e.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="lock_api" data-themes="" data-resource-suffix="" data-rustdoc-version="1.76.0-nightly (37b2813a7 2023-11-24)" data-channel="nightly" data-search-js="search-f4028ef4dd0903c7.js" data-settings-js="settings-74424d7eec62a23e.js" ><script src="../../static.files/storage-fec3eaa3851e447d.js"></script><script defer src="../../static.files/src-script-3280b574d94e47b4.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-f06f02fd918e3bb3.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-5d8b3c7633ad77ba.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/lock_api-0.4.11/src/mutex.rs`."><title>mutex.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-c67e44d78ab2db17.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="lock_api" data-themes="" data-resource-suffix="" data-rustdoc-version="1.76.0-nightly (8c2b57721 2023-12-01)" data-channel="nightly" data-search-js="search-5a66c239c06b3a66.js" data-settings-js="settings-fe03fdc259827cd2.js" ><script src="../../static.files/storage-fec3eaa3851e447d.js"></script><script defer src="../../static.files/src-script-3280b574d94e47b4.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-77dede896d6ac08e.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-5d8b3c7633ad77ba.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -911,6 +911,53 @@
 <a href="#911" id="911">911</a>
 <a href="#912" id="912">912</a>
 <a href="#913" id="913">913</a>
+<a href="#914" id="914">914</a>
+<a href="#915" id="915">915</a>
+<a href="#916" id="916">916</a>
+<a href="#917" id="917">917</a>
+<a href="#918" id="918">918</a>
+<a href="#919" id="919">919</a>
+<a href="#920" id="920">920</a>
+<a href="#921" id="921">921</a>
+<a href="#922" id="922">922</a>
+<a href="#923" id="923">923</a>
+<a href="#924" id="924">924</a>
+<a href="#925" id="925">925</a>
+<a href="#926" id="926">926</a>
+<a href="#927" id="927">927</a>
+<a href="#928" id="928">928</a>
+<a href="#929" id="929">929</a>
+<a href="#930" id="930">930</a>
+<a href="#931" id="931">931</a>
+<a href="#932" id="932">932</a>
+<a href="#933" id="933">933</a>
+<a href="#934" id="934">934</a>
+<a href="#935" id="935">935</a>
+<a href="#936" id="936">936</a>
+<a href="#937" id="937">937</a>
+<a href="#938" id="938">938</a>
+<a href="#939" id="939">939</a>
+<a href="#940" id="940">940</a>
+<a href="#941" id="941">941</a>
+<a href="#942" id="942">942</a>
+<a href="#943" id="943">943</a>
+<a href="#944" id="944">944</a>
+<a href="#945" id="945">945</a>
+<a href="#946" id="946">946</a>
+<a href="#947" id="947">947</a>
+<a href="#948" id="948">948</a>
+<a href="#949" id="949">949</a>
+<a href="#950" id="950">950</a>
+<a href="#951" id="951">951</a>
+<a href="#952" id="952">952</a>
+<a href="#953" id="953">953</a>
+<a href="#954" id="954">954</a>
+<a href="#955" id="955">955</a>
+<a href="#956" id="956">956</a>
+<a href="#957" id="957">957</a>
+<a href="#958" id="958">958</a>
+<a href="#959" id="959">959</a>
+<a href="#960" id="960">960</a>
 </pre></div><pre class="rust"><code><span class="comment">// Copyright 2018 Amanieu d&#39;Antras
 //
 // Licensed under the Apache License, Version 2.0, &lt;LICENSE-APACHE or
@@ -1062,7 +1109,7 @@
 
 <span class="kw">impl</span>&lt;R: RawMutex, T&gt; Mutex&lt;R, T&gt; {
     <span class="doccomment">/// Creates a new mutex in an unlocked state ready for use.
-    </span><span class="attr">#[cfg(feature = <span class="string">&quot;nightly&quot;</span>)]
+    </span><span class="attr">#[cfg(has_const_fn_trait_bound)]
     #[inline]
     </span><span class="kw">pub const fn </span>new(val: T) -&gt; Mutex&lt;R, T&gt; {
         Mutex {
@@ -1072,7 +1119,7 @@
     }
 
     <span class="doccomment">/// Creates a new mutex in an unlocked state ready for use.
-    </span><span class="attr">#[cfg(not(feature = <span class="string">&quot;nightly&quot;</span>))]
+    </span><span class="attr">#[cfg(not(has_const_fn_trait_bound))]
     #[inline]
     </span><span class="kw">pub fn </span>new(val: T) -&gt; Mutex&lt;R, T&gt; {
         Mutex {
@@ -1102,11 +1149,16 @@
 }
 
 <span class="kw">impl</span>&lt;R: RawMutex, T: <span class="question-mark">?</span>Sized&gt; Mutex&lt;R, T&gt; {
-    <span class="doccomment">/// # Safety
+    <span class="doccomment">/// Creates a new `MutexGuard` without checking if the mutex is locked.
     ///
-    /// The lock must be held when calling this method.
+    /// # Safety
+    ///
+    /// This method must only be called if the thread logically holds the lock.
+    ///
+    /// Calling this function when a guard has already been produced is undefined behaviour unless
+    /// the guard was forgotten with `mem::forget`.
     </span><span class="attr">#[inline]
-    </span><span class="kw">unsafe fn </span>guard(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; MutexGuard&lt;<span class="lifetime">&#39;_</span>, R, T&gt; {
+    </span><span class="kw">pub unsafe fn </span>make_guard_unchecked(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; MutexGuard&lt;<span class="lifetime">&#39;_</span>, R, T&gt; {
         MutexGuard {
             mutex: <span class="self">self</span>,
             marker: PhantomData,
@@ -1126,7 +1178,7 @@
     </span><span class="kw">pub fn </span>lock(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; MutexGuard&lt;<span class="lifetime">&#39;_</span>, R, T&gt; {
         <span class="self">self</span>.raw.lock();
         <span class="comment">// SAFETY: The lock is held, as required.
-        </span><span class="kw">unsafe </span>{ <span class="self">self</span>.guard() }
+        </span><span class="kw">unsafe </span>{ <span class="self">self</span>.make_guard_unchecked() }
     }
 
     <span class="doccomment">/// Attempts to acquire this lock.
@@ -1140,7 +1192,7 @@
     </span><span class="kw">pub fn </span>try_lock(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;MutexGuard&lt;<span class="lifetime">&#39;_</span>, R, T&gt;&gt; {
         <span class="kw">if </span><span class="self">self</span>.raw.try_lock() {
             <span class="comment">// SAFETY: The lock is held, as required.
-            </span><span class="prelude-val">Some</span>(<span class="kw">unsafe </span>{ <span class="self">self</span>.guard() })
+            </span><span class="prelude-val">Some</span>(<span class="kw">unsafe </span>{ <span class="self">self</span>.make_guard_unchecked() })
         } <span class="kw">else </span>{
             <span class="prelude-val">None
         </span>}
@@ -1170,7 +1222,7 @@
     /// # Safety
     ///
     /// This method must only be called if the current thread logically owns a
-    /// `MutexGuard` but that guard has be discarded using `mem::forget`.
+    /// `MutexGuard` but that guard has been discarded using `mem::forget`.
     /// Behavior is undefined if a mutex is unlocked when not locked.
     </span><span class="attr">#[inline]
     </span><span class="kw">pub unsafe fn </span>force_unlock(<span class="kw-2">&amp;</span><span class="self">self</span>) {
@@ -1207,12 +1259,17 @@
         <span class="self">self</span>.data.get()
     }
 
-    <span class="doccomment">/// # Safety
+    <span class="doccomment">/// Creates a new `ArcMutexGuard` without checking if the mutex is locked.
     ///
-    /// The lock needs to be held for the behavior of this function to be defined.
+    /// # Safety
+    ///
+    /// This method must only be called if the thread logically holds the lock.
+    ///
+    /// Calling this function when a guard has already been produced is undefined behaviour unless
+    /// the guard was forgotten with `mem::forget`.
     </span><span class="attr">#[cfg(feature = <span class="string">&quot;arc_lock&quot;</span>)]
     #[inline]
-    </span><span class="kw">unsafe fn </span>guard_arc(<span class="self">self</span>: <span class="kw-2">&amp;</span>Arc&lt;<span class="self">Self</span>&gt;) -&gt; ArcMutexGuard&lt;R, T&gt; {
+    </span><span class="kw">unsafe fn </span>make_arc_guard_unchecked(<span class="self">self</span>: <span class="kw-2">&amp;</span>Arc&lt;<span class="self">Self</span>&gt;) -&gt; ArcMutexGuard&lt;R, T&gt; {
         ArcMutexGuard {
             mutex: <span class="self">self</span>.clone(),
             marker: PhantomData,
@@ -1228,7 +1285,7 @@
     </span><span class="kw">pub fn </span>lock_arc(<span class="self">self</span>: <span class="kw-2">&amp;</span>Arc&lt;<span class="self">Self</span>&gt;) -&gt; ArcMutexGuard&lt;R, T&gt; {
         <span class="self">self</span>.raw.lock();
         <span class="comment">// SAFETY: the locking guarantee is upheld
-        </span><span class="kw">unsafe </span>{ <span class="self">self</span>.guard_arc() }
+        </span><span class="kw">unsafe </span>{ <span class="self">self</span>.make_arc_guard_unchecked() }
     }
 
     <span class="doccomment">/// Attempts to acquire a lock through an `Arc`.
@@ -1240,7 +1297,7 @@
     </span><span class="kw">pub fn </span>try_lock_arc(<span class="self">self</span>: <span class="kw-2">&amp;</span>Arc&lt;<span class="self">Self</span>&gt;) -&gt; <span class="prelude-ty">Option</span>&lt;ArcMutexGuard&lt;R, T&gt;&gt; {
         <span class="kw">if </span><span class="self">self</span>.raw.try_lock() {
             <span class="comment">// SAFETY: locking guarantee is upheld
-            </span><span class="prelude-val">Some</span>(<span class="kw">unsafe </span>{ <span class="self">self</span>.guard_arc() })
+            </span><span class="prelude-val">Some</span>(<span class="kw">unsafe </span>{ <span class="self">self</span>.make_arc_guard_unchecked() })
         } <span class="kw">else </span>{
             <span class="prelude-val">None
         </span>}
@@ -1257,7 +1314,7 @@
     /// # Safety
     ///
     /// This method must only be called if the current thread logically owns a
-    /// `MutexGuard` but that guard has be discarded using `mem::forget`.
+    /// `MutexGuard` but that guard has been discarded using `mem::forget`.
     /// Behavior is undefined if a mutex is unlocked when not locked.
     </span><span class="attr">#[inline]
     </span><span class="kw">pub unsafe fn </span>force_unlock_fair(<span class="kw-2">&amp;</span><span class="self">self</span>) {
@@ -1275,7 +1332,7 @@
     </span><span class="kw">pub fn </span>try_lock_for(<span class="kw-2">&amp;</span><span class="self">self</span>, timeout: R::Duration) -&gt; <span class="prelude-ty">Option</span>&lt;MutexGuard&lt;<span class="lifetime">&#39;_</span>, R, T&gt;&gt; {
         <span class="kw">if </span><span class="self">self</span>.raw.try_lock_for(timeout) {
             <span class="comment">// SAFETY: The lock is held, as required.
-            </span><span class="prelude-val">Some</span>(<span class="kw">unsafe </span>{ <span class="self">self</span>.guard() })
+            </span><span class="prelude-val">Some</span>(<span class="kw">unsafe </span>{ <span class="self">self</span>.make_guard_unchecked() })
         } <span class="kw">else </span>{
             <span class="prelude-val">None
         </span>}
@@ -1290,7 +1347,7 @@
     </span><span class="kw">pub fn </span>try_lock_until(<span class="kw-2">&amp;</span><span class="self">self</span>, timeout: R::Instant) -&gt; <span class="prelude-ty">Option</span>&lt;MutexGuard&lt;<span class="lifetime">&#39;_</span>, R, T&gt;&gt; {
         <span class="kw">if </span><span class="self">self</span>.raw.try_lock_until(timeout) {
             <span class="comment">// SAFETY: The lock is held, as required.
-            </span><span class="prelude-val">Some</span>(<span class="kw">unsafe </span>{ <span class="self">self</span>.guard() })
+            </span><span class="prelude-val">Some</span>(<span class="kw">unsafe </span>{ <span class="self">self</span>.make_guard_unchecked() })
         } <span class="kw">else </span>{
             <span class="prelude-val">None
         </span>}
@@ -1305,7 +1362,7 @@
     </span><span class="kw">pub fn </span>try_lock_arc_for(<span class="self">self</span>: <span class="kw-2">&amp;</span>Arc&lt;<span class="self">Self</span>&gt;, timeout: R::Duration) -&gt; <span class="prelude-ty">Option</span>&lt;ArcMutexGuard&lt;R, T&gt;&gt; {
         <span class="kw">if </span><span class="self">self</span>.raw.try_lock_for(timeout) {
             <span class="comment">// SAFETY: locking guarantee is upheld
-            </span><span class="prelude-val">Some</span>(<span class="kw">unsafe </span>{ <span class="self">self</span>.guard_arc() })
+            </span><span class="prelude-val">Some</span>(<span class="kw">unsafe </span>{ <span class="self">self</span>.make_arc_guard_unchecked() })
         } <span class="kw">else </span>{
             <span class="prelude-val">None
         </span>}
@@ -1323,7 +1380,7 @@
     ) -&gt; <span class="prelude-ty">Option</span>&lt;ArcMutexGuard&lt;R, T&gt;&gt; {
         <span class="kw">if </span><span class="self">self</span>.raw.try_lock_until(timeout) {
             <span class="comment">// SAFETY: locking guarantee is upheld
-            </span><span class="prelude-val">Some</span>(<span class="kw">unsafe </span>{ <span class="self">self</span>.guard_arc() })
+            </span><span class="prelude-val">Some</span>(<span class="kw">unsafe </span>{ <span class="self">self</span>.make_arc_guard_unchecked() })
         } <span class="kw">else </span>{
             <span class="prelude-val">None
         </span>}
@@ -1398,7 +1455,8 @@
 ///
 /// The data protected by the mutex can be accessed through this guard via its
 /// `Deref` and `DerefMut` implementations.
-</span><span class="attr">#[must_use = <span class="string">&quot;if unused the Mutex will immediately unlock&quot;</span>]
+</span><span class="attr">#[clippy::has_significant_drop]
+#[must_use = <span class="string">&quot;if unused the Mutex will immediately unlock&quot;</span>]
 </span><span class="kw">pub struct </span>MutexGuard&lt;<span class="lifetime">&#39;a</span>, R: RawMutex, T: <span class="question-mark">?</span>Sized&gt; {
     mutex: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>Mutex&lt;R, T&gt;,
     marker: PhantomData&lt;(<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span><span class="kw-2">mut </span>T, R::GuardMarker)&gt;,
@@ -1477,6 +1535,17 @@
         }
         <span class="macro">defer!</span>(s.mutex.raw.lock());
         f()
+    }
+
+    <span class="doccomment">/// Leaks the mutex guard and returns a mutable reference to the data
+    /// protected by the mutex.
+    ///
+    /// This will leave the `Mutex` in a locked state.
+    </span><span class="attr">#[inline]
+    </span><span class="kw">pub fn </span>leak(s: <span class="self">Self</span>) -&gt; <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span><span class="kw-2">mut </span>T {
+        <span class="kw">let </span>r = <span class="kw">unsafe </span>{ <span class="kw-2">&amp;mut *</span>s.mutex.data.get() };
+        mem::forget(s);
+        r
     }
 }
 
@@ -1576,22 +1645,46 @@
 </span><span class="kw">unsafe impl</span>&lt;<span class="lifetime">&#39;a</span>, R: RawMutex + <span class="lifetime">&#39;a</span>, T: <span class="question-mark">?</span>Sized + <span class="lifetime">&#39;a</span>&gt; StableAddress <span class="kw">for </span>MutexGuard&lt;<span class="lifetime">&#39;a</span>, R, T&gt; {}
 
 <span class="doccomment">/// An RAII mutex guard returned by the `Arc` locking operations on `Mutex`.
-/// 
-/// This is similar to the `MutexGuard` struct, except instead of using a reference to unlock the `Mutex` it 
+///
+/// This is similar to the `MutexGuard` struct, except instead of using a reference to unlock the `Mutex` it
 /// uses an `Arc&lt;Mutex&gt;`. This has several advantages, most notably that it has an `&#39;static` lifetime.
 </span><span class="attr">#[cfg(feature = <span class="string">&quot;arc_lock&quot;</span>)]
+#[clippy::has_significant_drop]
 #[must_use = <span class="string">&quot;if unused the Mutex will immediately unlock&quot;</span>]
 </span><span class="kw">pub struct </span>ArcMutexGuard&lt;R: RawMutex, T: <span class="question-mark">?</span>Sized&gt; {
     mutex: Arc&lt;Mutex&lt;R, T&gt;&gt;,
-    marker: PhantomData&lt;R::GuardMarker&gt;,
+    marker: PhantomData&lt;<span class="kw-2">*const </span>()&gt;,
+}
+
+<span class="attr">#[cfg(feature = <span class="string">&quot;arc_lock&quot;</span>)]
+</span><span class="kw">unsafe impl</span>&lt;R: RawMutex + Send + Sync, T: Send + <span class="question-mark">?</span>Sized&gt; Send <span class="kw">for </span>ArcMutexGuard&lt;R, T&gt; <span class="kw">where
+    </span>R::GuardMarker: Send
+{
+}
+<span class="attr">#[cfg(feature = <span class="string">&quot;arc_lock&quot;</span>)]
+</span><span class="kw">unsafe impl</span>&lt;R: RawMutex + Sync, T: Sync + <span class="question-mark">?</span>Sized&gt; Sync <span class="kw">for </span>ArcMutexGuard&lt;R, T&gt; <span class="kw">where
+    </span>R::GuardMarker: Sync
+{
 }
 
 <span class="attr">#[cfg(feature = <span class="string">&quot;arc_lock&quot;</span>)]
 </span><span class="kw">impl</span>&lt;R: RawMutex, T: <span class="question-mark">?</span>Sized&gt; ArcMutexGuard&lt;R, T&gt; {
     <span class="doccomment">/// Returns a reference to the `Mutex` this is guarding, contained in its `Arc`.
     </span><span class="attr">#[inline]
-    </span><span class="kw">pub fn </span>mutex(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>Arc&lt;Mutex&lt;R, T&gt;&gt; {
-        <span class="kw-2">&amp;</span><span class="self">self</span>.mutex
+    </span><span class="kw">pub fn </span>mutex(s: <span class="kw-2">&amp;</span><span class="self">Self</span>) -&gt; <span class="kw-2">&amp;</span>Arc&lt;Mutex&lt;R, T&gt;&gt; {
+        <span class="kw-2">&amp;</span>s.mutex
+    }
+
+    <span class="doccomment">/// Unlocks the mutex and returns the `Arc` that was held by the [`ArcMutexGuard`].
+    </span><span class="attr">#[inline]
+    </span><span class="kw">pub fn </span>into_arc(s: <span class="self">Self</span>) -&gt; Arc&lt;Mutex&lt;R, T&gt;&gt; {
+        <span class="comment">// Safety: Skip our Drop impl and manually unlock the mutex.
+        </span><span class="kw">let </span>arc = <span class="kw">unsafe </span>{ ptr::read(<span class="kw-2">&amp;</span>s.mutex) };
+        mem::forget(s);
+        <span class="kw">unsafe </span>{
+            arc.raw.unlock();
+        }
+        arc
     }
 
     <span class="doccomment">/// Temporarily unlocks the mutex to execute the given function.
@@ -1626,7 +1719,7 @@
 
         <span class="comment">// SAFETY: make sure the Arc gets it reference decremented
         </span><span class="kw">let </span><span class="kw-2">mut </span>s = ManuallyDrop::new(s);
-        <span class="kw">unsafe </span>{ ptr::drop_in_place(<span class="kw-2">&amp;mut </span>s.mutex) }; 
+        <span class="kw">unsafe </span>{ ptr::drop_in_place(<span class="kw-2">&amp;mut </span>s.mutex) };
     }
 
     <span class="doccomment">/// Temporarily unlocks the mutex to execute the given function.
@@ -1692,7 +1785,8 @@
 /// former doesn&#39;t support temporarily unlocking and re-locking, since that
 /// could introduce soundness issues if the locked object is modified by another
 /// thread.
-</span><span class="attr">#[must_use = <span class="string">&quot;if unused the Mutex will immediately unlock&quot;</span>]
+</span><span class="attr">#[clippy::has_significant_drop]
+#[must_use = <span class="string">&quot;if unused the Mutex will immediately unlock&quot;</span>]
 </span><span class="kw">pub struct </span>MappedMutexGuard&lt;<span class="lifetime">&#39;a</span>, R: RawMutex, T: <span class="question-mark">?</span>Sized&gt; {
     raw: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>R,
     data: <span class="kw-2">*mut </span>T,

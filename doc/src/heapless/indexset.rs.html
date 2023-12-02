@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/heapless-0.7.16/src/indexset.rs`."><title>indexset.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-9ee3a5e31a2afa3e.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="heapless" data-themes="" data-resource-suffix="" data-rustdoc-version="1.76.0-nightly (37b2813a7 2023-11-24)" data-channel="nightly" data-search-js="search-f4028ef4dd0903c7.js" data-settings-js="settings-74424d7eec62a23e.js" ><script src="../../static.files/storage-fec3eaa3851e447d.js"></script><script defer src="../../static.files/src-script-3280b574d94e47b4.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-f06f02fd918e3bb3.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-5d8b3c7633ad77ba.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/heapless-0.8.0/src/indexset.rs`."><title>indexset.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-c67e44d78ab2db17.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="heapless" data-themes="" data-resource-suffix="" data-rustdoc-version="1.76.0-nightly (8c2b57721 2023-12-01)" data-channel="nightly" data-search-js="search-5a66c239c06b3a66.js" data-settings-js="settings-fe03fdc259827cd2.js" ><script src="../../static.files/storage-fec3eaa3851e447d.js"></script><script defer src="../../static.files/src-script-3280b574d94e47b4.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-77dede896d6ac08e.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-5d8b3c7633ad77ba.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -637,14 +637,38 @@
 <a href="#637" id="637">637</a>
 <a href="#638" id="638">638</a>
 <a href="#639" id="639">639</a>
+<a href="#640" id="640">640</a>
+<a href="#641" id="641">641</a>
+<a href="#642" id="642">642</a>
+<a href="#643" id="643">643</a>
+<a href="#644" id="644">644</a>
+<a href="#645" id="645">645</a>
+<a href="#646" id="646">646</a>
+<a href="#647" id="647">647</a>
+<a href="#648" id="648">648</a>
+<a href="#649" id="649">649</a>
+<a href="#650" id="650">650</a>
+<a href="#651" id="651">651</a>
+<a href="#652" id="652">652</a>
+<a href="#653" id="653">653</a>
+<a href="#654" id="654">654</a>
+<a href="#655" id="655">655</a>
+<a href="#656" id="656">656</a>
+<a href="#657" id="657">657</a>
+<a href="#658" id="658">658</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span><span class="kw">crate</span>::indexmap::{<span class="self">self</span>, IndexMap};
-<span class="kw">use </span>core::{borrow::Borrow, fmt, iter::FromIterator};
-<span class="kw">use </span>hash32::{BuildHasher, BuildHasherDefault, FnvHasher, Hash};
+<span class="kw">use </span>core::{
+    borrow::Borrow,
+    fmt,
+    hash::{BuildHasher, Hash},
+    iter::FromIterator,
+};
+<span class="kw">use </span>hash32::{BuildHasherDefault, FnvHasher};
 
-<span class="doccomment">/// A [`heapless::IndexSet`](./struct.IndexSet.html) using the
+<span class="doccomment">/// A [`IndexSet`] using the
 /// default FNV hasher.
 /// A list of all Methods and Traits available for `FnvIndexSet` can be found in
-/// the [`heapless::IndexSet`](./struct.IndexSet.html) documentation.
+/// the [`IndexSet`] documentation.
 ///
 /// # Examples
 /// ```
@@ -675,10 +699,10 @@
 /// ```
 </span><span class="kw">pub type </span>FnvIndexSet&lt;T, <span class="kw">const </span>N: usize&gt; = IndexSet&lt;T, BuildHasherDefault&lt;FnvHasher&gt;, N&gt;;
 
-<span class="doccomment">/// Fixed capacity [`IndexSet`](https://docs.rs/indexmap/1/indexmap/set/struct.IndexSet.html).
+<span class="doccomment">/// Fixed capacity [`IndexSet`](https://docs.rs/indexmap/2/indexmap/set/struct.IndexSet.html).
 ///
 /// Note that you cannot use `IndexSet` directly, since it is generic around the hashing algorithm
-/// in use. Pick a concrete instantiation like [`FnvIndexSet`](./type.FnvIndexSet.html) instead
+/// in use. Pick a concrete instantiation like [`FnvIndexSet`] instead
 /// or create your own.
 ///
 /// Note that the capacity of the `IndexSet` must be a power of 2.
@@ -726,11 +750,7 @@
     }
 }
 
-<span class="kw">impl</span>&lt;T, S, <span class="kw">const </span>N: usize&gt; IndexSet&lt;T, S, N&gt;
-<span class="kw">where
-    </span>T: Eq + Hash,
-    S: BuildHasher,
-{
+<span class="kw">impl</span>&lt;T, S, <span class="kw">const </span>N: usize&gt; IndexSet&lt;T, S, N&gt; {
     <span class="doccomment">/// Returns the number of elements the set can hold
     ///
     /// # Examples
@@ -745,7 +765,7 @@
         <span class="self">self</span>.map.capacity()
     }
 
-    <span class="doccomment">/// Return an iterator over the values of the set, in their order
+    <span class="doccomment">/// Return an iterator over the values of the set, in insertion order
     ///
     /// # Examples
     ///
@@ -756,7 +776,7 @@
     /// set.insert(&quot;a&quot;).unwrap();
     /// set.insert(&quot;b&quot;).unwrap();
     ///
-    /// // Will print in an arbitrary order.
+    /// // Will print in insertion order: a, b
     /// for x in set.iter() {
     ///     println!(&quot;{}&quot;, x);
     /// }
@@ -781,6 +801,60 @@
         <span class="self">self</span>.map.last().map(|(k, _v)| k)
     }
 
+    <span class="doccomment">/// Returns the number of elements in the set.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use heapless::FnvIndexSet;
+    ///
+    /// let mut v: FnvIndexSet&lt;_, 16&gt; = FnvIndexSet::new();
+    /// assert_eq!(v.len(), 0);
+    /// v.insert(1).unwrap();
+    /// assert_eq!(v.len(), 1);
+    /// ```
+    </span><span class="kw">pub fn </span>len(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; usize {
+        <span class="self">self</span>.map.len()
+    }
+
+    <span class="doccomment">/// Returns `true` if the set contains no elements.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use heapless::FnvIndexSet;
+    ///
+    /// let mut v: FnvIndexSet&lt;_, 16&gt; = FnvIndexSet::new();
+    /// assert!(v.is_empty());
+    /// v.insert(1).unwrap();
+    /// assert!(!v.is_empty());
+    /// ```
+    </span><span class="kw">pub fn </span>is_empty(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool {
+        <span class="self">self</span>.map.is_empty()
+    }
+
+    <span class="doccomment">/// Clears the set, removing all values.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use heapless::FnvIndexSet;
+    ///
+    /// let mut v: FnvIndexSet&lt;_, 16&gt; = FnvIndexSet::new();
+    /// v.insert(1).unwrap();
+    /// v.clear();
+    /// assert!(v.is_empty());
+    /// ```
+    </span><span class="kw">pub fn </span>clear(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {
+        <span class="self">self</span>.map.clear()
+    }
+}
+
+<span class="kw">impl</span>&lt;T, S, <span class="kw">const </span>N: usize&gt; IndexSet&lt;T, S, N&gt;
+<span class="kw">where
+    </span>T: Eq + Hash,
+    S: BuildHasher,
+{
     <span class="doccomment">/// Visits the values representing the difference, i.e. the values that are in `self` but not in
     /// `other`.
     ///
@@ -829,7 +903,7 @@
     /// let mut a: FnvIndexSet&lt;_, 16&gt; = [1, 2, 3].iter().cloned().collect();
     /// let mut b: FnvIndexSet&lt;_, 16&gt; = [4, 2, 3, 4].iter().cloned().collect();
     ///
-    /// // Print 1, 4 in that order order.
+    /// // Print 1, 4 in that order.
     /// for x in a.symmetric_difference(&amp;b) {
     ///     println!(&quot;{}&quot;, x);
     /// }
@@ -909,54 +983,6 @@
         </span>S2: BuildHasher,
     {
         <span class="self">self</span>.iter().chain(other.difference(<span class="self">self</span>))
-    }
-
-    <span class="doccomment">/// Returns the number of elements in the set.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use heapless::FnvIndexSet;
-    ///
-    /// let mut v: FnvIndexSet&lt;_, 16&gt; = FnvIndexSet::new();
-    /// assert_eq!(v.len(), 0);
-    /// v.insert(1).unwrap();
-    /// assert_eq!(v.len(), 1);
-    /// ```
-    </span><span class="kw">pub fn </span>len(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; usize {
-        <span class="self">self</span>.map.len()
-    }
-
-    <span class="doccomment">/// Returns `true` if the set contains no elements.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use heapless::FnvIndexSet;
-    ///
-    /// let mut v: FnvIndexSet&lt;_, 16&gt; = FnvIndexSet::new();
-    /// assert!(v.is_empty());
-    /// v.insert(1).unwrap();
-    /// assert!(!v.is_empty());
-    /// ```
-    </span><span class="kw">pub fn </span>is_empty(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool {
-        <span class="self">self</span>.map.is_empty()
-    }
-
-    <span class="doccomment">/// Clears the set, removing all values.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use heapless::FnvIndexSet;
-    ///
-    /// let mut v: FnvIndexSet&lt;_, 16&gt; = FnvIndexSet::new();
-    /// v.insert(1).unwrap();
-    /// v.clear();
-    /// assert!(v.is_empty());
-    /// ```
-    </span><span class="kw">pub fn </span>clear(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {
-        <span class="self">self</span>.map.clear()
     }
 
     <span class="doccomment">/// Returns `true` if the set contains a value.
@@ -1103,11 +1129,21 @@
     {
         <span class="self">self</span>.map.remove(value).is_some()
     }
+
+    <span class="doccomment">/// Retains only the elements specified by the predicate.
+    ///
+    /// In other words, remove all elements `e` for which `f(&amp;e)` returns `false`.
+    </span><span class="kw">pub fn </span>retain&lt;F&gt;(<span class="kw-2">&amp;mut </span><span class="self">self</span>, <span class="kw-2">mut </span>f: F)
+    <span class="kw">where
+        </span>F: FnMut(<span class="kw-2">&amp;</span>T) -&gt; bool,
+    {
+        <span class="self">self</span>.map.retain(<span class="kw">move </span>|k, <span class="kw">_</span>| f(k));
+    }
 }
 
 <span class="kw">impl</span>&lt;T, S, <span class="kw">const </span>N: usize&gt; Clone <span class="kw">for </span>IndexSet&lt;T, S, N&gt;
 <span class="kw">where
-    </span>T: Eq + Hash + Clone,
+    </span>T: Clone,
     S: Clone,
 {
     <span class="kw">fn </span>clone(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="self">Self </span>{
@@ -1119,8 +1155,7 @@
 
 <span class="kw">impl</span>&lt;T, S, <span class="kw">const </span>N: usize&gt; fmt::Debug <span class="kw">for </span>IndexSet&lt;T, S, N&gt;
 <span class="kw">where
-    </span>T: Eq + Hash + fmt::Debug,
-    S: BuildHasher,
+    </span>T: fmt::Debug,
 {
     <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; fmt::Result {
         f.debug_set().entries(<span class="self">self</span>.iter()).finish()
@@ -1129,8 +1164,7 @@
 
 <span class="kw">impl</span>&lt;T, S, <span class="kw">const </span>N: usize&gt; Default <span class="kw">for </span>IndexSet&lt;T, S, N&gt;
 <span class="kw">where
-    </span>T: Eq + Hash,
-    S: BuildHasher + Default,
+    </span>S: Default,
 {
     <span class="kw">fn </span>default() -&gt; <span class="self">Self </span>{
         IndexSet {
@@ -1205,7 +1239,11 @@
     }
 }
 
-<span class="kw">pub struct </span>Iter&lt;<span class="lifetime">&#39;a</span>, T&gt; {
+<span class="doccomment">/// An iterator over the items of a [`IndexSet`].
+///
+/// This `struct` is created by the [`iter`](IndexSet::iter) method on [`IndexSet`]. See its
+/// documentation for more.
+</span><span class="kw">pub struct </span>Iter&lt;<span class="lifetime">&#39;a</span>, T&gt; {
     iter: indexmap::Iter&lt;<span class="lifetime">&#39;a</span>, T, ()&gt;,
 }
 
