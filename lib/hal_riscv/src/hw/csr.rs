@@ -7,6 +7,37 @@ use bit_field::BitField;
 use core::arch::asm;
 use hal::memory::{PAddr, VAddr};
 
+pub struct Sstatus;
+
+impl Sstatus {
+    pub fn enable_interrupts() {
+        unsafe {
+            asm!("csrsi sstatus, 2");
+        }
+    }
+
+    pub fn disable_interrupts() {
+        unsafe {
+            asm!("csrci status, 2");
+        }
+    }
+
+    /// Set the `SUM` bit of `sstatus`, allowing kernel code to access user-accessible memory.
+    pub fn enable_user_memory_access() {
+        unsafe {
+            asm!("csrs sstatus, {}", in(reg) 1 << 18);
+        }
+    }
+
+    /// Clear the `SUM` bit of `sstatus`, denying kernel code access to user-accessible memory.
+    /// Kernel code accessing user-accessible memory will fault.
+    pub fn disable_user_memory_access() {
+        unsafe {
+            asm!("csrc sstatus, {}", in(reg) 1 << 18);
+        }
+    }
+}
+
 /// The Supervisor Address Translation and Protection (`satp`) register controls supervisor-mode address
 /// translation and protection. It contains the physical address of the root page table, plus an associated Address
 /// Space Identified (ASID), which allows translation fences on an per-address-space basis.
@@ -97,9 +128,9 @@ pub enum Scause {
     /*
      * Interrupts
      */
-    SupervisorSoftware,
-    SupervisorTimer,
-    SupervisorExternal,
+    SupervisorSoftwareInterrupt,
+    SupervisorTimerInterrupt,
+    SupervisorExternalInterrupt,
     PlatformInterrupt(usize),
 
     /*
@@ -121,50 +152,56 @@ pub enum Scause {
     CustomException(usize),
 }
 
+impl TryFrom<usize> for Scause {
+    type Error = ();
+
+    fn try_from(value: usize) -> Result<Self, Self::Error> {
+        let is_interrupt = value.get_bit(usize::BITS as usize - 1);
+        if is_interrupt {
+            match value.get_bits(0..(usize::BITS as usize)) {
+                0 => Err(()),
+                1 => Ok(Self::SupervisorSoftwareInterrupt),
+                2..=4 => Err(()),
+                5 => Ok(Self::SupervisorTimerInterrupt),
+                6..=8 => Err(()),
+                9 => Ok(Self::SupervisorExternalInterrupt),
+                10..=15 => Err(()),
+                interrupt @ 16.. => Ok(Self::PlatformInterrupt(interrupt)),
+            }
+        } else {
+            match value.get_bits(0..(usize::BITS as usize)) {
+                0 => Ok(Self::InstructionAddressMisaligned),
+                1 => Ok(Self::InstructionAccessFault),
+                2 => Ok(Self::IllegalInstruction),
+                3 => Ok(Self::Breakpoint),
+                4 => Ok(Self::LoadAddressMisaligned),
+                5 => Ok(Self::LoadAccessFault),
+                6 => Ok(Self::StoreAddressMisaligned),
+                7 => Ok(Self::StoreAccessFault),
+                8 => Ok(Self::UEnvironmentCall),
+                9 => Ok(Self::SEnvironmentCall),
+                10..=11 => Err(()),
+                12 => Ok(Self::InstructionPageFault),
+                13 => Ok(Self::LoadPageFault),
+                14 => Err(()),
+                15 => Ok(Self::StorePageFault),
+                16..=23 => Err(()),
+                exception @ 24..=31 => Ok(Self::CustomException(exception)),
+                32..=47 => Err(()),
+                exception @ 48..=63 => Ok(Self::CustomException(exception)),
+                64.. => Err(()),
+            }
+        }
+    }
+}
+
 impl Scause {
     pub fn read() -> Scause {
         let value: usize;
         unsafe {
             asm!("csrr {}, scause", out(reg) value);
         }
-
-        if value.get_bit(usize::BITS as usize - 1) {
-            // It's an interrupt
-            match value.get_bits(0..(usize::BITS as usize - 1)) {
-                0 => panic!("Reserved interrupt!"),
-                1 => Scause::SupervisorSoftware,
-                2..=4 => panic!("Reserved interrupt!"),
-                5 => Scause::SupervisorTimer,
-                6..=7 => panic!("Reserved interrupt!"),
-                8 => Scause::SupervisorExternal,
-                10..=15 => panic!("Reserved interrupt!"),
-                platform => Scause::PlatformInterrupt(platform),
-            }
-        } else {
-            // It's an exception
-            match value.get_bits(0..(usize::BITS as usize - 1)) {
-                0 => Scause::InstructionAddressMisaligned,
-                1 => Scause::InstructionAccessFault,
-                2 => Scause::IllegalInstruction,
-                3 => Scause::Breakpoint,
-                4 => Scause::LoadAddressMisaligned,
-                5 => Scause::LoadAccessFault,
-                6 => Scause::StoreAddressMisaligned,
-                7 => Scause::StoreAccessFault,
-                8 => Scause::UEnvironmentCall,
-                9 => Scause::SEnvironmentCall,
-                10..=11 => panic!("Reserved exception!"),
-                12 => Scause::InstructionPageFault,
-                13 => Scause::LoadPageFault,
-                14 => panic!("Reserved exception!"),
-                15 => Scause::StorePageFault,
-                16..=23 => panic!("Reserved exception!"),
-                custom @ 24..=31 => Scause::CustomException(custom),
-                32..=47 => panic!("Reserved exception!"),
-                custom @ 48..=63 => Scause::CustomException(custom),
-                _ => panic!("Reserved exception!"),
-            }
-        }
+        Scause::try_from(value).unwrap()
     }
 }
 

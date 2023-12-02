@@ -11,10 +11,11 @@ extern crate alloc;
 
 mod logger;
 mod task;
+mod trap;
 
 use hal::memory::{Frame, VAddr};
 use hal_riscv::{
-    hw::csr::{Satp, Stvec},
+    hw::csr::Satp,
     platform::{kernel_map, PageTableImpl},
 };
 use kernel::{
@@ -70,7 +71,7 @@ pub extern "C" fn kentry(boot_info: &BootInfo) -> ! {
     logger::init(&fdt);
     info!("Hello from the kernel");
 
-    Stvec::set(VAddr::new(trap_handler as extern "C" fn() as usize));
+    trap::install_early_handler();
 
     if boot_info.magic != seed::boot_info::BOOT_INFO_MAGIC {
         panic!("Boot info has incorrect magic!");
@@ -128,12 +129,13 @@ pub extern "C" fn kentry(boot_info: &BootInfo) -> ! {
         );
     }
 
-#[repr(align(4))]
-pub extern "C" fn trap_handler() {
-    use hal_riscv::hw::csr::{Scause, Sepc};
-    let scause = Scause::read();
-    let sepc = Sepc::read();
-    panic!("Trap! Scause = {:?}, sepc = {:?}", scause, sepc);
+    /*
+     * Move to a trap handler that can handle traps from both S-mode and U-mode. We can only do
+     * this now because we need a `sscratch` context installed (which hasn't technically happened
+     * yet but will very soon).
+     */
+    trap::install_full_handler();
+
     /*
      * Drop into userspace!
      */
