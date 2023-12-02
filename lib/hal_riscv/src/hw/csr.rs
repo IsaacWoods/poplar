@@ -180,3 +180,25 @@ impl Sepc {
         Sepc(VAddr::new(value))
     }
 }
+
+/// A dedicated register for the supervisor to hold whatever data it would like to. Generally used
+/// to hold a pointer to a hart-local supervisor context - it can be swapped with a user register
+/// at the beginning of a trap handler to provide an initial working register.
+#[derive(Clone, Copy, Debug)]
+pub struct Sscratch(VAddr);
+
+impl Sscratch {
+    pub fn read() -> Sscratch {
+        let value: usize;
+        unsafe {
+            asm!("csrr {}, sscratch", out(reg) value);
+        }
+        Sscratch(VAddr::new(value))
+    }
+
+    pub unsafe fn write(addr: VAddr) {
+        unsafe {
+            asm!("csrw sscratch, {}", in(reg) usize::from(addr));
+        }
+    }
+}

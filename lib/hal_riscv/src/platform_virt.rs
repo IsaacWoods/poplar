@@ -33,7 +33,7 @@ pub type PageTableImpl = crate::paging::PageTableImpl<Level4>;
 /// This leaves us 382GiB for the physical memory map, which should be sufficient for any system I
 /// can imagine us running on (famous last words).
 pub mod kernel_map {
-    use hal::memory::{PAddr, VAddr};
+    use hal::memory::{PAddr, VAddr, Bytes, mebibytes};
 
     pub const KERNEL_P4_ENTRY: usize = 511;
     pub const KERNEL_ADDRESS_SPACE_START: VAddr = VAddr::new(0xffff_ff80_0000_0000);
@@ -49,6 +49,14 @@ pub mod kernel_map {
     pub fn physical_to_virtual(address: PAddr) -> VAddr {
         PHYSICAL_MAP_BASE + usize::from(address)
     }
+
+    pub const KERNEL_STACKS_BASE: VAddr = VAddr::new(0xffff_ffdf_8000_0000);
+    /*
+     * There is an imposed maximum number of tasks because of the simple way we're allocating task kernel stacks.
+     * This is currently 65536 with a task kernel stack size of 2MiB.
+     */
+    pub const STACK_SLOT_SIZE: Bytes = mebibytes(2);
+    pub const MAX_TASKS: usize = 65536;
 
     /// The kernel starts at -2GiB. The kernel image is loaded directly at this address, and the following space until
     /// the top of memory is managed dynamically and contains the boot info structures, memory map, and kernel heap.
