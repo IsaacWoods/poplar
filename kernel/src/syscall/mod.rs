@@ -64,23 +64,27 @@ where
     P: Platform,
 {
     // info!("Syscall! number = {}, a = {}, b = {}, c = {}, d = {}, e = {}", number, a, b, c, d, e);
-    let cpu_scheduler = scheduler.for_this_cpu();
-    let task = cpu_scheduler.running_task.as_ref().unwrap();
+
+    // Clone the current task out of the scheduler as we can't hold a lock on the scheduler
+    let task = {
+        let cpu_scheduler = scheduler.for_this_cpu();
+        cpu_scheduler.running_task.as_ref().unwrap().clone()
+    };
 
     match number {
         syscall::SYSCALL_YIELD => yield_syscall(scheduler),
-        syscall::SYSCALL_EARLY_LOG => status_to_syscall_repr(early_log(task, a, b)),
-        syscall::SYSCALL_GET_FRAMEBUFFER => handle_to_syscall_repr(get_framebuffer(task, a)),
-        syscall::SYSCALL_CREATE_MEMORY_OBJECT => handle_to_syscall_repr(create_memory_object(task, a, b, c, d)),
-        syscall::SYSCALL_MAP_MEMORY_OBJECT => status_to_syscall_repr(map_memory_object(task, a, b, c, d)),
+        syscall::SYSCALL_EARLY_LOG => status_to_syscall_repr(early_log(&task, a, b)),
+        syscall::SYSCALL_GET_FRAMEBUFFER => handle_to_syscall_repr(get_framebuffer(&task, a)),
+        syscall::SYSCALL_CREATE_MEMORY_OBJECT => handle_to_syscall_repr(create_memory_object(&task, a, b, c, d)),
+        syscall::SYSCALL_MAP_MEMORY_OBJECT => status_to_syscall_repr(map_memory_object(&task, a, b, c, d)),
         syscall::SYSCALL_CREATE_CHANNEL => todo!(),
-        syscall::SYSCALL_SEND_MESSAGE => status_to_syscall_repr(send_message(task, a, b, c, d, e)),
-        syscall::SYSCALL_GET_MESSAGE => status_with_payload_to_syscall_repr(get_message(task, a, b, c, d, e)),
+        syscall::SYSCALL_SEND_MESSAGE => status_to_syscall_repr(send_message(&task, a, b, c, d, e)),
+        syscall::SYSCALL_GET_MESSAGE => status_with_payload_to_syscall_repr(get_message(&task, a, b, c, d, e)),
         syscall::SYSCALL_WAIT_FOR_MESSAGE => todo!(),
-        syscall::SYSCALL_REGISTER_SERVICE => handle_to_syscall_repr(register_service(task, a, b)),
-        syscall::SYSCALL_SUBSCRIBE_TO_SERVICE => handle_to_syscall_repr(subscribe_to_service(task, a, b)),
-        syscall::SYSCALL_PCI_GET_INFO => status_with_payload_to_syscall_repr(pci_get_info(task, a, b)),
-        syscall::SYSCALL_TEST => test_syscall(task, a, b, c, d, e),
+        syscall::SYSCALL_REGISTER_SERVICE => handle_to_syscall_repr(register_service(&task, a, b)),
+        syscall::SYSCALL_SUBSCRIBE_TO_SERVICE => handle_to_syscall_repr(subscribe_to_service(&task, a, b)),
+        syscall::SYSCALL_PCI_GET_INFO => status_with_payload_to_syscall_repr(pci_get_info(&task, a, b)),
+        syscall::SYSCALL_TEST => test_syscall(&task, a, b, c, d, e),
 
         _ => {
             warn!("Process made system call with invalid syscall number: {}", number);
