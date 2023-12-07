@@ -1,7 +1,6 @@
-use alloc::boxed::Box;
 use core::{
     arch::{asm, global_asm},
-    mem,
+    cell::Cell,
     ptr,
 };
 use hal::memory::VAddr;
@@ -12,7 +11,20 @@ global_asm!(include_str!("task.s"));
 extern "C" {
     fn task_entry_trampoline() -> !;
     fn do_drop_to_userspace(context: *const ContextSwitchFrame) -> !;
+    fn do_context_switch(from_context: *mut ContextSwitchFrame, to_context: *const ContextSwitchFrame);
 }
+
+// TODO: this is definitely pretty bad and probably a LLVM crime. Plan in the future is to use
+// `thread_local` for HART-local data so this can be a `Cell` directly.
+pub struct NotGreatCell<T>(pub Cell<T>);
+unsafe impl<T> Sync for NotGreatCell<T> {}
+
+static SCRATCH: NotGreatCell<Scratch> = NotGreatCell(Cell::new(Scratch {
+    kernel_stack_pointer: VAddr::new(0x0),
+    kernel_thread_pointer: VAddr::new(0x0),
+    kernel_global_pointer: VAddr::new(0x0),
+    scratch_stack_pointer: VAddr::new(0x0),
+}));
 
 /*
  * XXX: the offsets of fields in this struct are used in assembly, so care must be taken when
@@ -71,6 +83,31 @@ pub struct ContextSwitchFrame {
     pub s11: usize,
 }
 
+impl ContextSwitchFrame {
+    pub fn new(
+        kernel_stack_pointer: VAddr,
+        user_stack_pointer: VAddr,
+        task_entry_point: VAddr,
+    ) -> ContextSwitchFrame {
+        ContextSwitchFrame {
+            ra: task_entry_trampoline as usize,
+            sp: usize::from(kernel_stack_pointer),
+            s0: usize::from(task_entry_point),
+            s1: usize::from(user_stack_pointer),
+            s2: 0,
+            s3: 0,
+            s4: 0,
+            s5: 0,
+            s6: 0,
+            s7: 0,
+            s8: 0,
+            s9: 0,
+            s10: 0,
+            s11: 0,
+        }
+    }
+}
+
 /// Returns `(kernel_stack_pointer, user_stack_pointer)`.
 pub unsafe fn initialize_stacks(
     kernel_stack: &Stack,
@@ -91,39 +128,22 @@ pub unsafe fn initialize_stacks(
     kernel_stack_pointer -= 8;
     ptr::write(kernel_stack_pointer.mut_ptr() as *mut u64, 0x0);
 
-    kernel_stack_pointer -= mem::size_of::<ContextSwitchFrame>();
-    ptr::write(
-        kernel_stack_pointer.mut_ptr() as *mut ContextSwitchFrame,
-        ContextSwitchFrame {
-            ra: task_entry_trampoline as usize,
-            sp: usize::from(kernel_stack_pointer),
-            s0: usize::from(task_entry_point),
-            s1: usize::from(user_stack_pointer),
-            s2: 0,
-            s3: 0,
-            s4: 0,
-            s5: 0,
-            s6: 0,
-            s7: 0,
-            s8: 0,
-            s9: 0,
-            s10: 0,
-            s11: 0,
-        },
-    );
-
     (kernel_stack_pointer, user_stack_pointer)
 }
 
-pub unsafe fn context_switch(current_kernel_stack: *mut VAddr, new_kernel_stack: VAddr) {
-    todo!()
+pub unsafe fn context_switch(
+    new_kernel_stack_pointer: VAddr,
+    from_context: *mut ContextSwitchFrame,
+    to_context: *const ContextSwitchFrame,
+) {
+    SCRATCH.0.set(Scratch::new(new_kernel_stack_pointer));
+    do_context_switch(from_context, to_context);
 }
 
-pub unsafe fn drop_into_userspace(kernel_stack_pointer: VAddr) -> ! {
+pub unsafe fn drop_into_userspace(context: *const ContextSwitchFrame, kernel_stack_pointer: VAddr) -> ! {
     // Initialize this HART's `sscratch` area
-    let scratch = Box::leak(Box::new(Scratch::new(kernel_stack_pointer))) as *const Scratch;
-    Sscratch::write(VAddr::from(scratch));
+    SCRATCH.0.set(Scratch::new(kernel_stack_pointer));
+    Sscratch::write(VAddr::from(SCRATCH.0.as_ptr()));
 
-    let context = kernel_stack_pointer.ptr();
     unsafe { do_drop_to_userspace(context) }
 }

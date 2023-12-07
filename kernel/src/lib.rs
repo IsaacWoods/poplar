@@ -44,6 +44,7 @@ pub static PCI_ACCESS: InitGuard<Option<Spinlock<Box<dyn PciConfigRegionAccess +
 pub trait Platform: Sized + 'static {
     type PageTableSize: FrameSize;
     type PageTable: PageTable<Self::PageTableSize> + Send;
+    type TaskContext;
 
     fn kernel_page_table(&mut self) -> &mut Self::PageTable;
 
@@ -58,15 +59,37 @@ pub trait Platform: Sized + 'static {
         task_entry_point: VAddr,
     ) -> (VAddr, VAddr);
 
+    fn new_task_context(
+        kernel_stack_pointer: VAddr,
+        user_stack_pointer: VAddr,
+        task_entry_point: VAddr,
+    ) -> Self::TaskContext;
+
     unsafe fn switch_user_stack_pointer(new_user_stack_pointer: VAddr) -> VAddr;
 
-    /// Do the final part of a context switch: save all the state that needs to be to the current kernel stack,
-    /// switch to a new kernel stack, and restore all the state from that stack.
-    unsafe fn context_switch(current_kernel_stack: *mut VAddr, new_kernel_stack: VAddr);
+    /// Do the final part of a context switch: save all the state that needs to be for the
+    /// currently running task, switch to the new kernel stack, and restore the state of the next
+    /// task.
+    ///
+    /// This function takes both kernel stacks for the current and new tasks, and also the
+    /// platform-specific task context held in the task. This is because we use various methods of
+    /// doing context switches on different platforms, according to the easiest / most performant
+    /// for the architecture. A pointer to the current kernel stack is provided so that it can be
+    /// updated if state is pushed onto it.
+    unsafe fn context_switch(
+        current_kernel_stack_pointer: *mut VAddr,
+        new_kernel_stack_pointer: VAddr,
+        from_context: *mut Self::TaskContext,
+        to_context: *const Self::TaskContext,
+    );
 
     /// Do the actual drop into usermode. This assumes that the task's page tables have already been installed,
     /// and that an initial frame has been put into the task's kernel stack that this will use to enter userspace.
-    unsafe fn drop_into_userspace(kernel_stack_pointer: VAddr, user_stack_pointer: VAddr) -> !;
+    unsafe fn drop_into_userspace(
+        context: *const Self::TaskContext,
+        kernel_stack_pointer: VAddr,
+        user_stack_pointer: VAddr,
+    ) -> !;
 }
 
 pub fn load_task<P>(

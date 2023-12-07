@@ -7,15 +7,11 @@ task_entry_trampoline:
     li t6, 1<<5
     csrs sstatus, t6
 
-    // Load registers off the stack
-    ld ra, 0(sp)
-    // Skip `sp` til we've loaded the rest of the registers
-    // TODO: for some reason I'm confused lol - work this out later
-
     // Load `sepc` to userspace's entry point
     csrw sepc, s0
 
-    // 
+    // Switch to the user's stack
+    mv sp, s1
 
     sret
 
@@ -34,15 +30,15 @@ do_drop_to_userspace:
     ld s0, 16(a0)
     ld s1, 24(a0)
     ld s2, 32(a0)
-    ld s3, 48(a0)
-    ld s4, 56(a0)
-    ld s5, 64(a0)
-    ld s6, 72(a0)
-    ld s7, 80(a0)
-    ld s8, 88(a0)
-    ld s9, 96(a0)
-    ld s10, 104(a0)
-    ld s11, 112(a0)
+    ld s3, 40(a0)
+    ld s4, 48(a0)
+    ld s5, 56(a0)
+    ld s6, 64(a0)
+    ld s7, 72(a0)
+    ld s8, 80(a0)
+    ld s9, 88(a0)
+    ld s10, 96(a0)
+    ld s11, 104(a0)
 
     // TODO: load other registers with zero/known-values to avoid leaking stuff to userspace?
 
@@ -53,3 +49,37 @@ do_drop_to_userspace:
     mv sp, s1
 
     sret
+
+.global do_context_switch
+do_context_switch:
+    sd ra, 0(a0)
+    sd sp, 8(a0)
+    sd s0, 16(a0)
+    sd s1, 24(a0)
+    sd s2, 32(a0)
+    sd s3, 40(a0)
+    sd s4, 48(a0)
+    sd s5, 56(a0)
+    sd s6, 64(a0)
+    sd s7, 72(a0)
+    sd s8, 80(a0)
+    sd s9, 88(a0)
+    sd s10, 96(a0)
+    sd s11, 104(a0)
+
+    ld ra, 0(a1)
+    ld sp, 8(a1)
+    ld s0, 16(a1)
+    ld s1, 24(a1)
+    ld s2, 32(a1)
+    ld s3, 40(a1)
+    ld s4, 48(a1)
+    ld s5, 56(a1)
+    ld s6, 64(a1)
+    ld s7, 72(a1)
+    ld s8, 80(a1)
+    ld s9, 88(a1)
+    ld s10, 96(a1)
+    ld s11, 104(a1)
+
+    ret

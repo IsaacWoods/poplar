@@ -34,6 +34,7 @@ pub struct PlatformImpl {
 impl Platform for PlatformImpl {
     type PageTableSize = hal::memory::Size4KiB;
     type PageTable = hal_riscv::platform::PageTableImpl;
+    type TaskContext = task::ContextSwitchFrame;
 
     fn kernel_page_table(&mut self) -> &mut Self::PageTable {
         &mut self.kernel_page_table
@@ -47,16 +48,34 @@ impl Platform for PlatformImpl {
         task::initialize_stacks(kernel_stack, user_stack, task_entry_point)
     }
 
+    fn new_task_context(
+        kernel_stack_pointer: VAddr,
+        user_stack_pointer: VAddr,
+        task_entry_point: VAddr,
+    ) -> Self::TaskContext {
+        task::ContextSwitchFrame::new(kernel_stack_pointer, user_stack_pointer, task_entry_point)
+    }
+
     unsafe fn switch_user_stack_pointer(new_user_stack_pointer: VAddr) -> VAddr {
-        todo!()
+        // TODO: we don't track user stacks in the same way on RISC-V - not sure what to do here...
+        VAddr::new(0x0)
     }
 
-    unsafe fn context_switch(current_kernel_stack: *mut VAddr, new_kernel_stack: VAddr) {
-        task::context_switch(current_kernel_stack, new_kernel_stack)
+    unsafe fn context_switch(
+        _current_kernel_stack_pointer: *mut VAddr,
+        new_kernel_stack_pointer: VAddr,
+        from_context: *mut Self::TaskContext,
+        to_context: *const Self::TaskContext,
+    ) {
+        task::context_switch(new_kernel_stack_pointer, from_context, to_context);
     }
 
-    unsafe fn drop_into_userspace(kernel_stack_pointer: VAddr, user_stack_pointer: VAddr) -> ! {
-        task::drop_into_userspace(kernel_stack_pointer)
+    unsafe fn drop_into_userspace(
+        context: *const Self::TaskContext,
+        kernel_stack_pointer: VAddr,
+        _user_stack_pointer: VAddr,
+    ) -> ! {
+        task::drop_into_userspace(context, kernel_stack_pointer)
     }
 }
 

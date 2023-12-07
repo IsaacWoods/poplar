@@ -58,6 +58,8 @@ where
     pub kernel_stack_pointer: UnsafeCell<VAddr>,
     pub user_stack_pointer: UnsafeCell<VAddr>,
 
+    pub context: UnsafeCell<P::TaskContext>,
+
     pub handles: RwSpinlock<BTreeMap<Handle, Arc<dyn KernelObject>>>,
     next_handle: AtomicU32,
 }
@@ -94,6 +96,8 @@ where
         let (kernel_stack_pointer, user_stack_pointer) =
             unsafe { P::initialize_task_stacks(&kernel_stack, &task_slot.user_stack, image.entry_point) };
 
+        let context = P::new_task_context(kernel_stack_pointer, user_stack_pointer, image.entry_point);
+
         Ok(Arc::new(Task {
             id,
             owner,
@@ -101,10 +105,14 @@ where
             address_space,
             state: Spinlock::new(TaskState::Ready),
             capabilities: decode_capabilities(&image.capability_stream)?,
+
             user_slot: Spinlock::new(task_slot),
             kernel_stack: Spinlock::new(kernel_stack),
             kernel_stack_pointer: UnsafeCell::new(kernel_stack_pointer),
             user_stack_pointer: UnsafeCell::new(user_stack_pointer),
+
+            context: UnsafeCell::new(context),
+
             handles: RwSpinlock::new(BTreeMap::new()),
             // XXX: 0 is a special handle value, so start at 1
             next_handle: AtomicU32::new(1),

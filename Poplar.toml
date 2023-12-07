@@ -15,6 +15,7 @@ user_tasks = [
 release = true
 user_tasks = [
     "hello_world user/hello_world",
+    "platform_bus user/platform_bus",
 ]
 
 [mq_pro]

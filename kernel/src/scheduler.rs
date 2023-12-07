@@ -90,9 +90,10 @@ where
         drop(scheduler);
 
         unsafe {
+            let context = task.context.get() as *const P::TaskContext;
             let kernel_stack_pointer: VAddr = *task.kernel_stack_pointer.get();
             let user_stack_pointer: VAddr = *task.user_stack_pointer.get();
-            P::drop_into_userspace(kernel_stack_pointer, user_stack_pointer)
+            P::drop_into_userspace(context, kernel_stack_pointer, user_stack_pointer)
         }
     }
 
@@ -112,9 +113,9 @@ where
              * platform to perform the context switch for us!
              * NOTE: This temporarily allows `running_task` to be `None`.
              */
-            let old_task = scheduler.running_task.take().unwrap();
-            trace!("Switching from task {} to task: {}", old_task.name, next_task.name);
-            assert_eq!(*old_task.state.lock(), TaskState::Running);
+            let current_task = scheduler.running_task.take().unwrap();
+            trace!("Switching from task '{}' to task '{}'", current_task.name, next_task.name);
+            assert_eq!(*current_task.state.lock(), TaskState::Running);
             assert_eq!(*next_task.state.lock(), TaskState::Ready);
 
             scheduler.running_task = Some(next_task.clone());
@@ -122,28 +123,31 @@ where
             match new_state {
                 TaskState::Running => panic!("Tried to switch away from a task to state of Running!"),
                 TaskState::Ready => {
-                    *old_task.state.lock() = TaskState::Ready;
-                    scheduler.ready_queue.push_back(old_task.clone());
+                    *current_task.state.lock() = TaskState::Ready;
+                    scheduler.ready_queue.push_back(current_task.clone());
                 }
                 TaskState::Blocked(block) => {
-                    trace!("Blocking task: {}", old_task.name);
-                    *old_task.state.lock() = TaskState::Blocked(block);
-                    scheduler.blocked_queue.push(old_task.clone());
+                    trace!("Blocking task: {}", current_task.name);
+                    *current_task.state.lock() = TaskState::Blocked(block);
+                    scheduler.blocked_queue.push(current_task.clone());
                 }
             }
 
-            old_task.address_space.switch_from();
+            current_task.address_space.switch_from();
             next_task.address_space.switch_to();
 
-            let old_kernel_stack: *mut VAddr = old_task.kernel_stack_pointer.get();
+            let current_kernel_stack: *mut VAddr = current_task.kernel_stack_pointer.get();
             let new_kernel_stack = unsafe { *scheduler.running_task.as_ref().unwrap().kernel_stack_pointer.get() };
             let new_user_stack = unsafe { *scheduler.running_task.as_ref().unwrap().user_stack_pointer.get() };
+
+            let from_context = current_task.context.get();
+            let to_context = scheduler.running_task.as_ref().unwrap().context.get() as *const P::TaskContext;
 
             drop(scheduler);
 
             unsafe {
-                *old_task.user_stack_pointer.get() = P::switch_user_stack_pointer(new_user_stack);
-                P::context_switch(old_kernel_stack, new_kernel_stack);
+                *current_task.user_stack_pointer.get() = P::switch_user_stack_pointer(new_user_stack);
+                P::context_switch(current_kernel_stack, new_kernel_stack, from_context, to_context);
             }
         } else {
             /*
