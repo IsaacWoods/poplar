@@ -198,7 +198,7 @@
 <span class="kw">where
     </span>A: ConfigRegionAccess,
 {
-    <span class="kw">pub fn </span>resolve(access: A) -&gt; PciInfo {
+    <span class="kw">pub fn </span>resolve(access: A) -&gt; (A, PciInfo) {
         <span class="kw">let </span><span class="kw-2">mut </span>resolver = <span class="self">Self </span>{ access, info: PciInfo { devices: BTreeMap::new() } };
 
         <span class="comment">/*
@@ -213,7 +213,7 @@
             resolver.check_bus(<span class="number">0</span>);
         }
 
-        resolver.info
+        (resolver.access, resolver.info)
     }
 
     <span class="kw">fn </span>check_bus(<span class="kw-2">&amp;mut </span><span class="self">self</span>, bus: u8) {

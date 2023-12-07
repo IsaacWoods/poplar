@@ -151,6 +151,15 @@
 <a href="#151" id="151">151</a>
 <a href="#152" id="152">152</a>
 <a href="#153" id="153">153</a>
+<a href="#154" id="154">154</a>
+<a href="#155" id="155">155</a>
+<a href="#156" id="156">156</a>
+<a href="#157" id="157">157</a>
+<a href="#158" id="158">158</a>
+<a href="#159" id="159">159</a>
+<a href="#160" id="160">160</a>
+<a href="#161" id="161">161</a>
+<a href="#162" id="162">162</a>
 </pre></div><pre class="rust"><code><span class="attr">#![no_std]
 #![feature(
     decl_macro,
@@ -178,7 +187,7 @@
 <span class="kw">use </span>heap_allocator::LockedHoleAllocator;
 <span class="kw">use </span>memory::{KernelStackAllocator, PhysicalMemoryManager};
 <span class="kw">use </span>object::{address_space::AddressSpace, memory_object::MemoryObject, task::Task, KernelObject};
-<span class="kw">use </span>pci::PciInfo;
+<span class="kw">use </span>pci::{PciInfo, PciResolver};
 <span class="kw">use </span>pci_types::ConfigRegionAccess <span class="kw">as </span>PciConfigRegionAccess;
 <span class="kw">use </span>poplar_util::InitGuard;
 <span class="kw">use </span>scheduler::Scheduler;
@@ -303,5 +312,14 @@
     };
 
     FRAMEBUFFER.initialize((info, memory_object));
+}
+
+<span class="kw">pub fn </span>initialize_pci&lt;A&gt;(access: A)
+<span class="kw">where
+    </span>A: PciConfigRegionAccess + Send + <span class="lifetime">'static</span>,
+{
+    <span class="kw">let </span>(access, info) = PciResolver::resolve(access);
+    <span class="kw-2">*</span>PCI_INFO.write() = <span class="prelude-val">Some</span>(info);
+    PCI_ACCESS.initialize(<span class="prelude-val">Some</span>(Spinlock::new(Box::new(access))));
 }
 </code></pre></div></section></main></body></html>
