@@ -204,11 +204,7 @@ pub extern "C" fn kentry(boot_info: &BootInfo) -> ! {
         // info!("----- Finished AML namespace -----");
     }
 
-    /*
-     * Resolve all the PCI info.
-     */
-    *kernel::PCI_INFO.write() = Some(PciResolver::resolve(pci_access));
-    // kernel::PCI_ACCESS.initialize(Some(Mutex::new(Box::new(pci_access))));
+    kernel::initialize_pci(pci_access);
 
     // TODO: if we need to route PCI interrupts, this might be useful at some point?
     // let routing_table =

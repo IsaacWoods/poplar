@@ -45,7 +45,7 @@ impl<A> PciResolver<A>
 where
     A: ConfigRegionAccess,
 {
-    pub fn resolve(access: A) -> PciInfo {
+    pub fn resolve(access: A) -> (A, PciInfo) {
         let mut resolver = Self { access, info: PciInfo { devices: BTreeMap::new() } };
 
         /*
@@ -60,7 +60,7 @@ where
             resolver.check_bus(0);
         }
 
-        resolver.info
+        (resolver.access, resolver.info)
     }
 
     fn check_bus(&mut self, bus: u8) {

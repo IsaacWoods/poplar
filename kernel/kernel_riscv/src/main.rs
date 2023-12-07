@@ -125,7 +125,9 @@ pub extern "C" fn kentry(boot_info: &BootInfo) -> ! {
         }
     };
 
-    let pci = pci::PciAccess::new(&fdt).map(|access| kernel::pci::PciResolver::resolve(access));
+    if let Some(access) = pci::PciAccess::new(&fdt) {
+        kernel::initialize_pci(access);
+    }
 
     let mut platform = PlatformImpl { kernel_page_table };
 
