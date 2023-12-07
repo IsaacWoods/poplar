@@ -84,7 +84,6 @@ where
         syscall::SYSCALL_REGISTER_SERVICE => handle_to_syscall_repr(register_service(&task, a, b)),
         syscall::SYSCALL_SUBSCRIBE_TO_SERVICE => handle_to_syscall_repr(subscribe_to_service(&task, a, b)),
         syscall::SYSCALL_PCI_GET_INFO => status_with_payload_to_syscall_repr(pci_get_info(&task, a, b)),
-        syscall::SYSCALL_TEST => test_syscall(&task, a, b, c, d, e),
 
         _ => {
             warn!("Process made system call with invalid syscall number: {}", number);
@@ -97,7 +96,6 @@ fn yield_syscall<P>(scheduler: &Scheduler<P>) -> usize
 where
     P: Platform,
 {
-    info!("Process yielded!");
     scheduler.switch_to_next(TaskState::Ready);
     0
 }
@@ -560,12 +558,4 @@ where
     } else {
         Err(PciGetInfoError::PlatformDoesNotSupportPci)
     }
-}
-
-fn test_syscall<P>(task: &Arc<Task<P>>, a: usize, b: usize, c: usize, d: usize, e: usize) -> usize
-where
-    P: Platform,
-{
-    info!("Task '{}' made a test system call. a = {}, b = {}, c = {}, d = {}, e = {}", task.name, a, b, c, d, e);
-    963
 }
