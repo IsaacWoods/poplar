@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/num-traits-0.2.14/src/float.rs`."><title>float.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-c67e44d78ab2db17.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="num_traits" data-themes="" data-resource-suffix="" data-rustdoc-version="1.76.0-nightly (90e321d82 2023-12-02)" data-channel="nightly" data-search-js="search-5a66c239c06b3a66.js" data-settings-js="settings-fe03fdc259827cd2.js" ><script src="../../static.files/storage-fec3eaa3851e447d.js"></script><script defer src="../../static.files/src-script-3280b574d94e47b4.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-77dede896d6ac08e.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-5d8b3c7633ad77ba.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/num-traits-0.2.14/src/float.rs`."><title>float.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-c67e44d78ab2db17.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="num_traits" data-themes="" data-resource-suffix="" data-rustdoc-version="1.76.0-nightly (e9013ac0e 2023-12-05)" data-channel="nightly" data-search-js="search-5a66c239c06b3a66.js" data-settings-js="settings-fe03fdc259827cd2.js" ><script src="../../static.files/storage-fec3eaa3851e447d.js"></script><script defer src="../../static.files/src-script-3280b574d94e47b4.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-77dede896d6ac08e.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-5d8b3c7633ad77ba.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -2397,7 +2397,7 @@
 
 <span class="kw">use </span>{Num, NumCast, ToPrimitive};
 
-<span class="attr">#[cfg(all(not(feature = <span class="string">&quot;std&quot;</span>), feature = <span class="string">&quot;libm&quot;</span>))]
+<span class="attr">#[cfg(all(not(feature = <span class="string">"std"</span>), feature = <span class="string">"libm"</span>))]
 </span><span class="kw">use </span>libm;
 
 <span class="doccomment">/// Generic trait for floating point numbers that works with `no_std`.
@@ -2750,7 +2750,7 @@
     </span><span class="attr">#[inline]
     </span><span class="kw">fn </span>round(<span class="self">self</span>) -&gt; <span class="self">Self </span>{
         <span class="kw">let </span>one = <span class="self">Self</span>::one();
-        <span class="kw">let </span>h = <span class="self">Self</span>::from(<span class="number">0.5</span>).expect(<span class="string">&quot;Unable to cast from 0.5&quot;</span>);
+        <span class="kw">let </span>h = <span class="self">Self</span>::from(<span class="number">0.5</span>).expect(<span class="string">"Unable to cast from 0.5"</span>);
         <span class="kw">let </span>f = <span class="self">self</span>.fract();
         <span class="kw">if </span>f.is_nan() || f.is_zero() {
             <span class="self">self
@@ -3154,7 +3154,7 @@
     }
 
     <span class="attr">#[inline]
-    #[cfg(not(feature = <span class="string">&quot;std&quot;</span>))]
+    #[cfg(not(feature = <span class="string">"std"</span>))]
     </span><span class="kw">fn </span>classify(<span class="self">self</span>) -&gt; FpCategory {
         <span class="kw">const </span>EXP_MASK: u32 = <span class="number">0x7f800000</span>;
         <span class="kw">const </span>MAN_MASK: u32 = <span class="number">0x007fffff</span>;
@@ -3172,7 +3172,7 @@
     }
 
     <span class="attr">#[inline]
-    #[cfg(not(feature = <span class="string">&quot;std&quot;</span>))]
+    #[cfg(not(feature = <span class="string">"std"</span>))]
     </span><span class="kw">fn </span>to_degrees(<span class="self">self</span>) -&gt; <span class="self">Self </span>{
         <span class="comment">// Use a constant for better precision.
         </span><span class="kw">const </span>PIS_IN_180: f32 = <span class="number">57.2957795130823208767981548141051703_f32</span>;
@@ -3180,12 +3180,12 @@
     }
 
     <span class="attr">#[inline]
-    #[cfg(not(feature = <span class="string">&quot;std&quot;</span>))]
+    #[cfg(not(feature = <span class="string">"std"</span>))]
     </span><span class="kw">fn </span>to_radians(<span class="self">self</span>) -&gt; <span class="self">Self </span>{
         <span class="self">self </span>* (f32::consts::PI / <span class="number">180.0</span>)
     }
 
-    <span class="attr">#[cfg(feature = <span class="string">&quot;std&quot;</span>)]
+    <span class="attr">#[cfg(feature = <span class="string">"std"</span>)]
     </span><span class="macro">forward! </span>{
         <span class="self">Self</span>::is_nan(<span class="self">self</span>) -&gt; bool;
         <span class="self">Self</span>::is_infinite(<span class="self">self</span>) -&gt; bool;
@@ -3228,7 +3228,7 @@
     }
 
     <span class="attr">#[inline]
-    #[cfg(not(feature = <span class="string">&quot;std&quot;</span>))]
+    #[cfg(not(feature = <span class="string">"std"</span>))]
     </span><span class="kw">fn </span>classify(<span class="self">self</span>) -&gt; FpCategory {
         <span class="kw">const </span>EXP_MASK: u64 = <span class="number">0x7ff0000000000000</span>;
         <span class="kw">const </span>MAN_MASK: u64 = <span class="number">0x000fffffffffffff</span>;
@@ -3246,7 +3246,7 @@
     }
 
     <span class="attr">#[inline]
-    #[cfg(not(feature = <span class="string">&quot;std&quot;</span>))]
+    #[cfg(not(feature = <span class="string">"std"</span>))]
     </span><span class="kw">fn </span>to_degrees(<span class="self">self</span>) -&gt; <span class="self">Self </span>{
         <span class="comment">// The division here is correctly rounded with respect to the true
         // value of 180/π. (This differs from f32, where a constant must be
@@ -3255,12 +3255,12 @@
     }
 
     <span class="attr">#[inline]
-    #[cfg(not(feature = <span class="string">&quot;std&quot;</span>))]
+    #[cfg(not(feature = <span class="string">"std"</span>))]
     </span><span class="kw">fn </span>to_radians(<span class="self">self</span>) -&gt; <span class="self">Self </span>{
         <span class="self">self </span>* (f64::consts::PI / <span class="number">180.0</span>)
     }
 
-    <span class="attr">#[cfg(feature = <span class="string">&quot;std&quot;</span>)]
+    <span class="attr">#[cfg(feature = <span class="string">"std"</span>)]
     </span><span class="macro">forward! </span>{
         <span class="self">Self</span>::is_nan(<span class="self">self</span>) -&gt; bool;
         <span class="self">Self</span>::is_infinite(<span class="self">self</span>) -&gt; bool;
@@ -3285,13 +3285,13 @@
     }
 }
 
-<span class="comment">// FIXME: these doctests aren&#39;t actually helpful, because they&#39;re using and
+<span class="comment">// FIXME: these doctests aren't actually helpful, because they're using and
 // testing the inherent methods directly, not going through `Float`.
 
 </span><span class="doccomment">/// Generic trait for floating point numbers
 ///
 /// This trait is only available with the `std` feature, or with the `libm` feature otherwise.
-</span><span class="attr">#[cfg(any(feature = <span class="string">&quot;std&quot;</span>, feature = <span class="string">&quot;libm&quot;</span>))]
+</span><span class="attr">#[cfg(any(feature = <span class="string">"std"</span>, feature = <span class="string">"libm"</span>))]
 </span><span class="kw">pub trait </span>Float: Num + Copy + NumCast + PartialOrd + Neg&lt;Output = <span class="self">Self</span>&gt; {
     <span class="doccomment">/// Returns the `NaN` value.
     ///
@@ -3384,7 +3384,7 @@
     /// The default implementation will panic if `f32::EPSILON` cannot
     /// be cast to `Self`.
     </span><span class="kw">fn </span>epsilon() -&gt; <span class="self">Self </span>{
-        <span class="self">Self</span>::from(f32::EPSILON).expect(<span class="string">&quot;Unable to cast from f32::EPSILON&quot;</span>)
+        <span class="self">Self</span>::from(f32::EPSILON).expect(<span class="string">"Unable to cast from f32::EPSILON"</span>)
     }
 
     <span class="doccomment">/// Returns the largest finite value that this type can represent.
@@ -4198,7 +4198,7 @@
     </span><span class="kw">fn </span>integer_decode(<span class="self">self</span>) -&gt; (u64, i16, i8);
 }
 
-<span class="attr">#[cfg(feature = <span class="string">&quot;std&quot;</span>)]
+<span class="attr">#[cfg(feature = <span class="string">"std"</span>)]
 </span><span class="macro">macro_rules! </span>float_impl_std {
     (<span class="macro-nonterminal">$T</span>:ident <span class="macro-nonterminal">$decode</span>:ident) =&gt; {
         <span class="kw">impl </span>Float <span class="kw">for </span><span class="macro-nonterminal">$T </span>{
@@ -4277,7 +4277,7 @@
     };
 }
 
-<span class="attr">#[cfg(all(not(feature = <span class="string">&quot;std&quot;</span>), feature = <span class="string">&quot;libm&quot;</span>))]
+<span class="attr">#[cfg(all(not(feature = <span class="string">"std"</span>), feature = <span class="string">"libm"</span>))]
 </span><span class="macro">macro_rules! </span>float_impl_libm {
     (<span class="macro-nonterminal">$T</span>:ident <span class="macro-nonterminal">$decode</span>:ident) =&gt; {
         <span class="macro">constant! </span>{
@@ -4357,12 +4357,12 @@
     (mantissa, exponent, sign)
 }
 
-<span class="attr">#[cfg(feature = <span class="string">&quot;std&quot;</span>)]
+<span class="attr">#[cfg(feature = <span class="string">"std"</span>)]
 </span><span class="macro">float_impl_std!</span>(f32 integer_decode_f32);
-<span class="attr">#[cfg(feature = <span class="string">&quot;std&quot;</span>)]
+<span class="attr">#[cfg(feature = <span class="string">"std"</span>)]
 </span><span class="macro">float_impl_std!</span>(f64 integer_decode_f64);
 
-<span class="attr">#[cfg(all(not(feature = <span class="string">&quot;std&quot;</span>), feature = <span class="string">&quot;libm&quot;</span>))]
+<span class="attr">#[cfg(all(not(feature = <span class="string">"std"</span>), feature = <span class="string">"libm"</span>))]
 </span><span class="kw">impl </span>Float <span class="kw">for </span>f32 {
     <span class="macro">float_impl_libm!</span>(f32 integer_decode_f32);
 
@@ -4497,7 +4497,7 @@
     }
 }
 
-<span class="attr">#[cfg(all(not(feature = <span class="string">&quot;std&quot;</span>), feature = <span class="string">&quot;libm&quot;</span>))]
+<span class="attr">#[cfg(all(not(feature = <span class="string">"std"</span>), feature = <span class="string">"libm"</span>))]
 </span><span class="kw">impl </span>Float <span class="kw">for </span>f64 {
     <span class="macro">float_impl_libm!</span>(f64 integer_decode_f64);
 
@@ -4637,17 +4637,17 @@
         <span class="attr">#[allow(non_snake_case)]
         </span><span class="kw">pub trait </span>FloatConst {
             $(<span class="attr">#[<span class="macro-nonterminal">$doc</span>] </span><span class="kw">fn </span><span class="macro-nonterminal">$constant</span>() -&gt; <span class="self">Self</span>;)+
-            <span class="attr">#[doc = <span class="string">&quot;Return the full circle constant `τ`.&quot;</span>]
+            <span class="attr">#[doc = <span class="string">"Return the full circle constant `τ`."</span>]
             #[inline]
             </span><span class="kw">fn </span>TAU() -&gt; <span class="self">Self </span><span class="kw">where </span><span class="self">Self</span>: Sized + Add&lt;<span class="self">Self</span>, Output = <span class="self">Self</span>&gt; {
                 <span class="self">Self</span>::PI() + <span class="self">Self</span>::PI()
             }
-            <span class="attr">#[doc = <span class="string">&quot;Return `log10(2.0)`.&quot;</span>]
+            <span class="attr">#[doc = <span class="string">"Return `log10(2.0)`."</span>]
             #[inline]
             </span><span class="kw">fn </span>LOG10_2() -&gt; <span class="self">Self </span><span class="kw">where </span><span class="self">Self</span>: Sized + Div&lt;<span class="self">Self</span>, Output = <span class="self">Self</span>&gt; {
                 <span class="self">Self</span>::LN_2() / <span class="self">Self</span>::LN_10()
             }
-            <span class="attr">#[doc = <span class="string">&quot;Return `log2(10.0)`.&quot;</span>]
+            <span class="attr">#[doc = <span class="string">"Return `log2(10.0)`."</span>]
             #[inline]
             </span><span class="kw">fn </span>LOG2_10() -&gt; <span class="self">Self </span><span class="kw">where </span><span class="self">Self</span>: Sized + Div&lt;<span class="self">Self</span>, Output = <span class="self">Self</span>&gt; {
                 <span class="self">Self</span>::LN_10() / <span class="self">Self</span>::LN_2()
@@ -4669,37 +4669,37 @@
 }
 
 <span class="macro">float_const_impl! </span>{
-    <span class="attr">#[doc = <span class="string">&quot;Return Euler’s number.&quot;</span>]
+    <span class="attr">#[doc = <span class="string">"Return Euler’s number."</span>]
     </span>E,
-    <span class="attr">#[doc = <span class="string">&quot;Return `1.0 / π`.&quot;</span>]
+    <span class="attr">#[doc = <span class="string">"Return `1.0 / π`."</span>]
     </span>FRAC_1_PI,
-    <span class="attr">#[doc = <span class="string">&quot;Return `1.0 / sqrt(2.0)`.&quot;</span>]
+    <span class="attr">#[doc = <span class="string">"Return `1.0 / sqrt(2.0)`."</span>]
     </span>FRAC_1_SQRT_2,
-    <span class="attr">#[doc = <span class="string">&quot;Return `2.0 / π`.&quot;</span>]
+    <span class="attr">#[doc = <span class="string">"Return `2.0 / π`."</span>]
     </span>FRAC_2_PI,
-    <span class="attr">#[doc = <span class="string">&quot;Return `2.0 / sqrt(π)`.&quot;</span>]
+    <span class="attr">#[doc = <span class="string">"Return `2.0 / sqrt(π)`."</span>]
     </span>FRAC_2_SQRT_PI,
-    <span class="attr">#[doc = <span class="string">&quot;Return `π / 2.0`.&quot;</span>]
+    <span class="attr">#[doc = <span class="string">"Return `π / 2.0`."</span>]
     </span>FRAC_PI_2,
-    <span class="attr">#[doc = <span class="string">&quot;Return `π / 3.0`.&quot;</span>]
+    <span class="attr">#[doc = <span class="string">"Return `π / 3.0`."</span>]
     </span>FRAC_PI_3,
-    <span class="attr">#[doc = <span class="string">&quot;Return `π / 4.0`.&quot;</span>]
+    <span class="attr">#[doc = <span class="string">"Return `π / 4.0`."</span>]
     </span>FRAC_PI_4,
-    <span class="attr">#[doc = <span class="string">&quot;Return `π / 6.0`.&quot;</span>]
+    <span class="attr">#[doc = <span class="string">"Return `π / 6.0`."</span>]
     </span>FRAC_PI_6,
-    <span class="attr">#[doc = <span class="string">&quot;Return `π / 8.0`.&quot;</span>]
+    <span class="attr">#[doc = <span class="string">"Return `π / 8.0`."</span>]
     </span>FRAC_PI_8,
-    <span class="attr">#[doc = <span class="string">&quot;Return `ln(10.0)`.&quot;</span>]
+    <span class="attr">#[doc = <span class="string">"Return `ln(10.0)`."</span>]
     </span>LN_10,
-    <span class="attr">#[doc = <span class="string">&quot;Return `ln(2.0)`.&quot;</span>]
+    <span class="attr">#[doc = <span class="string">"Return `ln(2.0)`."</span>]
     </span>LN_2,
-    <span class="attr">#[doc = <span class="string">&quot;Return `log10(e)`.&quot;</span>]
+    <span class="attr">#[doc = <span class="string">"Return `log10(e)`."</span>]
     </span>LOG10_E,
-    <span class="attr">#[doc = <span class="string">&quot;Return `log2(e)`.&quot;</span>]
+    <span class="attr">#[doc = <span class="string">"Return `log2(e)`."</span>]
     </span>LOG2_E,
-    <span class="attr">#[doc = <span class="string">&quot;Return Archimedes’ constant `π`.&quot;</span>]
+    <span class="attr">#[doc = <span class="string">"Return Archimedes’ constant `π`."</span>]
     </span>PI,
-    <span class="attr">#[doc = <span class="string">&quot;Return `sqrt(2.0)`.&quot;</span>]
+    <span class="attr">#[doc = <span class="string">"Return `sqrt(2.0)`."</span>]
     </span>SQRT_2,
 }
 
@@ -4731,7 +4731,7 @@
         }
     }
 
-    <span class="attr">#[cfg(any(feature = <span class="string">&quot;std&quot;</span>, feature = <span class="string">&quot;libm&quot;</span>))]
+    <span class="attr">#[cfg(any(feature = <span class="string">"std"</span>, feature = <span class="string">"libm"</span>))]
     #[test]
     </span><span class="kw">fn </span>convert_deg_rad_std() {
         <span class="kw">for </span><span class="kw-2">&amp;</span>(deg, rad) <span class="kw">in </span><span class="kw-2">&amp;</span>DEG_RAD_PAIRS {
@@ -4749,7 +4749,7 @@
     <span class="attr">#[test]
     </span><span class="comment">// This fails with the forwarded `std` implementation in Rust 1.8.
     // To avoid the failure, the test is limited to `no_std` builds.
-    </span><span class="attr">#[cfg(not(feature = <span class="string">&quot;std&quot;</span>))]
+    </span><span class="attr">#[cfg(not(feature = <span class="string">"std"</span>))]
     </span><span class="kw">fn </span>to_degrees_rounding() {
         <span class="kw">use </span>float::FloatCore;
 
@@ -4760,7 +4760,7 @@
     }
 
     <span class="attr">#[test]
-    #[cfg(any(feature = <span class="string">&quot;std&quot;</span>, feature = <span class="string">&quot;libm&quot;</span>))]
+    #[cfg(any(feature = <span class="string">"std"</span>, feature = <span class="string">"libm"</span>))]
     </span><span class="kw">fn </span>extra_logs() {
         <span class="kw">use </span>float::{Float, FloatConst};
 

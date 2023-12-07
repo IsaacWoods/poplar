@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/git/checkouts/tracing-e9bbb56ea31f0c18/60c60be/tracing-core/src/field.rs`."><title>field.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-c67e44d78ab2db17.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="tracing_core" data-themes="" data-resource-suffix="" data-rustdoc-version="1.76.0-nightly (90e321d82 2023-12-02)" data-channel="nightly" data-search-js="search-5a66c239c06b3a66.js" data-settings-js="settings-fe03fdc259827cd2.js" ><script src="../../static.files/storage-fec3eaa3851e447d.js"></script><script defer src="../../static.files/src-script-3280b574d94e47b4.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-77dede896d6ac08e.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-5d8b3c7633ad77ba.css"></noscript><link rel="icon" href="https://raw.githubusercontent.com/tokio-rs/tracing/master/assets/favicon.ico"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><a class="sub-logo-container" href="../../tracing_core/index.html"><img src="https://raw.githubusercontent.com/tokio-rs/tracing/master/assets/logo-type.png" alt="tracing_core"></a><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/git/checkouts/tracing-e9bbb56ea31f0c18/60c60be/tracing-core/src/field.rs`."><title>field.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-c67e44d78ab2db17.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="tracing_core" data-themes="" data-resource-suffix="" data-rustdoc-version="1.76.0-nightly (e9013ac0e 2023-12-05)" data-channel="nightly" data-search-js="search-5a66c239c06b3a66.js" data-settings-js="settings-fe03fdc259827cd2.js" ><script src="../../static.files/storage-fec3eaa3851e447d.js"></script><script defer src="../../static.files/src-script-3280b574d94e47b4.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-77dede896d6ac08e.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-5d8b3c7633ad77ba.css"></noscript><link rel="icon" href="https://raw.githubusercontent.com/tokio-rs/tracing/master/assets/favicon.ico"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><a class="sub-logo-container" href="../../tracing_core/index.html"><img src="https://raw.githubusercontent.com/tokio-rs/tracing/master/assets/logo-type.png" alt="tracing_core"></a><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -1136,11 +1136,11 @@
 //!
 //! Collectors consume `Value`s as fields attached to [span]s or [`Event`]s.
 //! The set of field keys on a given span or is defined on its [`Metadata`].
-//! When a span is created, it provides [`Attributes`] to the collector&#39;s
+//! When a span is created, it provides [`Attributes`] to the collector's
 //! [`new_span`] method, containing any fields whose values were provided when
-//! the span was created; and may call the collector&#39;s [`record`] method
+//! the span was created; and may call the collector's [`record`] method
 //! with additional [`Record`]s if values are added for more of its fields.
-//! Similarly, the [`Event`] type passed to the collector&#39;s [`event`] method
+//! Similarly, the [`Event`] type passed to the collector's [`event`] method
 //! will contain any fields attached to each event.
 //!
 //! `tracing` represents values as either one of a set of Rust primitives
@@ -1174,7 +1174,7 @@
 
 <span class="kw">use </span><span class="self">self</span>::private::ValidLen;
 
-<span class="doccomment">/// An opaque key allowing _O_(1) access to a field in a `Span`&#39;s key-value
+<span class="doccomment">/// An opaque key allowing _O_(1) access to a field in a `Span`'s key-value
 /// data.
 ///
 /// As keys are defined by the _metadata_ of a span, rather than by an
@@ -1193,7 +1193,7 @@
 /// This can be used to indicate that the value of a field is not currently
 /// present but will be recorded later.
 ///
-/// When a field&#39;s value is `Empty`. it will not be recorded.
+/// When a field's value is `Empty`. it will not be recorded.
 </span><span class="attr">#[derive(Debug, Eq, PartialEq)]
 </span><span class="kw">pub struct </span>Empty;
 
@@ -1210,15 +1210,15 @@
 /// [callsite identifiers]: callsite::Identifier
 </span><span class="kw">pub struct </span>FieldSet {
     <span class="doccomment">/// The names of each field on the described span.
-    </span>names: <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>[<span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>str],
+    </span>names: <span class="kw-2">&amp;</span><span class="lifetime">'static </span>[<span class="kw-2">&amp;</span><span class="lifetime">'static </span>str],
     <span class="doccomment">/// The callsite where the described span originates.
     </span>callsite: callsite::Identifier,
 }
 
 <span class="doccomment">/// A set of fields and values for a span.
-</span><span class="kw">pub struct </span>ValueSet&lt;<span class="lifetime">&#39;a</span>&gt; {
-    values: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>[(<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>Field, <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>(<span class="kw">dyn </span>Value + <span class="lifetime">&#39;a</span>)&gt;)],
-    fields: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>FieldSet,
+</span><span class="kw">pub struct </span>ValueSet&lt;<span class="lifetime">'a</span>&gt; {
+    values: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>[(<span class="kw-2">&amp;</span><span class="lifetime">'a </span>Field, <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span><span class="lifetime">'a </span>(<span class="kw">dyn </span>Value + <span class="lifetime">'a</span>)&gt;)],
+    fields: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>FieldSet,
 }
 
 <span class="doccomment">/// An iterator over a set of fields.
@@ -1230,7 +1230,7 @@
 
 <span class="doccomment">/// Visits typed values.
 ///
-/// An instance of `Visit` (&quot;a visitor&quot;) represents the logic necessary to
+/// An instance of `Visit` ("a visitor") represents the logic necessary to
 /// record field values of various types. When an implementor of [`Value`] is
 /// [recorded], it calls the appropriate method on the provided visitor to
 /// indicate the type that value should be recorded as.
@@ -1248,13 +1248,13 @@
 /// # extern crate tracing_core as tracing;
 /// use std::fmt::{self, Write};
 /// use tracing::field::{Value, Visit, Field};
-/// pub struct StringVisitor&lt;&#39;a&gt; {
-///     string: &amp;&#39;a mut String,
+/// pub struct StringVisitor&lt;'a&gt; {
+///     string: &amp;'a mut String,
 /// }
 ///
-/// impl&lt;&#39;a&gt; Visit for StringVisitor&lt;&#39;a&gt; {
+/// impl&lt;'a&gt; Visit for StringVisitor&lt;'a&gt; {
 ///     fn record_debug(&amp;mut self, field: &amp;Field, value: &amp;dyn fmt::Debug) {
-///         write!(self.string, &quot;{} = {:?}; &quot;, field.name(), value).unwrap();
+///         write!(self.string, "{} = {:?}; ", field.name(), value).unwrap();
 ///     }
 /// }
 /// ```
@@ -1304,8 +1304,8 @@
 /// `examples/counters.rs`, which demonstrates a very simple metrics system
 /// implemented using `tracing`.
 ///
-/// &lt;div class=&quot;example-wrap&quot; style=&quot;display:inline-block&quot;&gt;
-/// &lt;pre class=&quot;ignore&quot; style=&quot;white-space:normal;font:inherit;&quot;&gt;
+/// &lt;div class="example-wrap" style="display:inline-block"&gt;
+/// &lt;pre class="ignore" style="white-space:normal;font:inherit;"&gt;
 /// &lt;strong&gt;Note&lt;/strong&gt;: The &lt;code&gt;record_error&lt;/code&gt; trait method is only
 /// available when the Rust standard library is present, as it requires the
 /// &lt;code&gt;std::error::Error&lt;/code&gt; trait.
@@ -1354,15 +1354,15 @@
 
     <span class="doccomment">/// Records a type implementing `Error`.
     ///
-    /// &lt;div class=&quot;example-wrap&quot; style=&quot;display:inline-block&quot;&gt;
-    /// &lt;pre class=&quot;ignore&quot; style=&quot;white-space:normal;font:inherit;&quot;&gt;
+    /// &lt;div class="example-wrap" style="display:inline-block"&gt;
+    /// &lt;pre class="ignore" style="white-space:normal;font:inherit;"&gt;
     /// &lt;strong&gt;Note&lt;/strong&gt;: This is only enabled when the Rust standard library is
     /// present.
     /// &lt;/pre&gt;
     /// &lt;/div&gt;
-    </span><span class="attr">#[cfg(feature = <span class="string">&quot;std&quot;</span>)]
-    #[cfg_attr(docsrs, doc(cfg(feature = <span class="string">&quot;std&quot;</span>)))]
-    </span><span class="kw">fn </span>record_error(<span class="kw-2">&amp;mut </span><span class="self">self</span>, field: <span class="kw-2">&amp;</span>Field, value: <span class="kw-2">&amp;</span>(<span class="kw">dyn </span>std::error::Error + <span class="lifetime">&#39;static</span>)) {
+    </span><span class="attr">#[cfg(feature = <span class="string">"std"</span>)]
+    #[cfg_attr(docsrs, doc(cfg(feature = <span class="string">"std"</span>)))]
+    </span><span class="kw">fn </span>record_error(<span class="kw-2">&amp;mut </span><span class="self">self</span>, field: <span class="kw-2">&amp;</span>Field, value: <span class="kw-2">&amp;</span>(<span class="kw">dyn </span>std::error::Error + <span class="lifetime">'static</span>)) {
         <span class="self">self</span>.record_debug(field, <span class="kw-2">&amp;</span>DisplayValue(value))
     }
 
@@ -1413,15 +1413,15 @@
 
 <span class="comment">// ===== impl Visit =====
 
-</span><span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>, <span class="lifetime">&#39;b</span>&gt; Visit <span class="kw">for </span>fmt::DebugStruct&lt;<span class="lifetime">&#39;a</span>, <span class="lifetime">&#39;b</span>&gt; {
+</span><span class="kw">impl</span>&lt;<span class="lifetime">'a</span>, <span class="lifetime">'b</span>&gt; Visit <span class="kw">for </span>fmt::DebugStruct&lt;<span class="lifetime">'a</span>, <span class="lifetime">'b</span>&gt; {
     <span class="kw">fn </span>record_debug(<span class="kw-2">&amp;mut </span><span class="self">self</span>, field: <span class="kw-2">&amp;</span>Field, value: <span class="kw-2">&amp;</span><span class="kw">dyn </span>fmt::Debug) {
         <span class="self">self</span>.field(field.name(), value);
     }
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>, <span class="lifetime">&#39;b</span>&gt; Visit <span class="kw">for </span>fmt::DebugMap&lt;<span class="lifetime">&#39;a</span>, <span class="lifetime">&#39;b</span>&gt; {
+<span class="kw">impl</span>&lt;<span class="lifetime">'a</span>, <span class="lifetime">'b</span>&gt; Visit <span class="kw">for </span>fmt::DebugMap&lt;<span class="lifetime">'a</span>, <span class="lifetime">'b</span>&gt; {
     <span class="kw">fn </span>record_debug(<span class="kw-2">&amp;mut </span><span class="self">self</span>, field: <span class="kw-2">&amp;</span>Field, value: <span class="kw-2">&amp;</span><span class="kw">dyn </span>fmt::Debug) {
-        <span class="self">self</span>.entry(<span class="kw-2">&amp;</span><span class="macro">format_args!</span>(<span class="string">&quot;{}&quot;</span>, field), value);
+        <span class="self">self</span>.entry(<span class="kw-2">&amp;</span><span class="macro">format_args!</span>(<span class="string">"{}"</span>, field), value);
     }
 }
 
@@ -1509,7 +1509,7 @@
         <span class="comment">// This `use num::*;` is reported as unused because it gets emitted
         // for every single invocation of this macro, so there are multiple `use`s.
         // All but the first are useless indeed.
-        // We need this import because we can&#39;t write a path where one part is
+        // We need this import because we can't write a path where one part is
         // the `ty_to_nonzero!($value_ty)` invocation.
         </span><span class="attr">#[allow(clippy::useless_attribute, unused)]
         </span><span class="kw">use </span>num::<span class="kw-2">*</span>;
@@ -1563,87 +1563,87 @@
     }
 }
 
-<span class="attr">#[cfg(feature = <span class="string">&quot;std&quot;</span>)]
-</span><span class="kw">impl </span><span class="kw">crate</span>::sealed::Sealed <span class="kw">for dyn </span>std::error::Error + <span class="lifetime">&#39;static </span>{}
+<span class="attr">#[cfg(feature = <span class="string">"std"</span>)]
+</span><span class="kw">impl </span><span class="kw">crate</span>::sealed::Sealed <span class="kw">for dyn </span>std::error::Error + <span class="lifetime">'static </span>{}
 
-<span class="attr">#[cfg(feature = <span class="string">&quot;std&quot;</span>)]
-#[cfg_attr(docsrs, doc(cfg(feature = <span class="string">&quot;std&quot;</span>)))]
-</span><span class="kw">impl </span>Value <span class="kw">for dyn </span>std::error::Error + <span class="lifetime">&#39;static </span>{
+<span class="attr">#[cfg(feature = <span class="string">"std"</span>)]
+#[cfg_attr(docsrs, doc(cfg(feature = <span class="string">"std"</span>)))]
+</span><span class="kw">impl </span>Value <span class="kw">for dyn </span>std::error::Error + <span class="lifetime">'static </span>{
     <span class="kw">fn </span>record(<span class="kw-2">&amp;</span><span class="self">self</span>, key: <span class="kw-2">&amp;</span>Field, visitor: <span class="kw-2">&amp;mut </span><span class="kw">dyn </span>Visit) {
         visitor.record_error(key, <span class="self">self</span>)
     }
 }
 
-<span class="attr">#[cfg(feature = <span class="string">&quot;std&quot;</span>)]
-</span><span class="kw">impl </span><span class="kw">crate</span>::sealed::Sealed <span class="kw">for dyn </span>std::error::Error + Send + <span class="lifetime">&#39;static </span>{}
+<span class="attr">#[cfg(feature = <span class="string">"std"</span>)]
+</span><span class="kw">impl </span><span class="kw">crate</span>::sealed::Sealed <span class="kw">for dyn </span>std::error::Error + Send + <span class="lifetime">'static </span>{}
 
-<span class="attr">#[cfg(feature = <span class="string">&quot;std&quot;</span>)]
-#[cfg_attr(docsrs, doc(cfg(feature = <span class="string">&quot;std&quot;</span>)))]
-</span><span class="kw">impl </span>Value <span class="kw">for dyn </span>std::error::Error + Send + <span class="lifetime">&#39;static </span>{
+<span class="attr">#[cfg(feature = <span class="string">"std"</span>)]
+#[cfg_attr(docsrs, doc(cfg(feature = <span class="string">"std"</span>)))]
+</span><span class="kw">impl </span>Value <span class="kw">for dyn </span>std::error::Error + Send + <span class="lifetime">'static </span>{
     <span class="kw">fn </span>record(<span class="kw-2">&amp;</span><span class="self">self</span>, key: <span class="kw-2">&amp;</span>Field, visitor: <span class="kw-2">&amp;mut </span><span class="kw">dyn </span>Visit) {
         (<span class="self">self </span><span class="kw">as </span><span class="kw-2">&amp;</span><span class="kw">dyn </span>std::error::Error).record(key, visitor)
     }
 }
 
-<span class="attr">#[cfg(feature = <span class="string">&quot;std&quot;</span>)]
-</span><span class="kw">impl </span><span class="kw">crate</span>::sealed::Sealed <span class="kw">for dyn </span>std::error::Error + Sync + <span class="lifetime">&#39;static </span>{}
+<span class="attr">#[cfg(feature = <span class="string">"std"</span>)]
+</span><span class="kw">impl </span><span class="kw">crate</span>::sealed::Sealed <span class="kw">for dyn </span>std::error::Error + Sync + <span class="lifetime">'static </span>{}
 
-<span class="attr">#[cfg(feature = <span class="string">&quot;std&quot;</span>)]
-#[cfg_attr(docsrs, doc(cfg(feature = <span class="string">&quot;std&quot;</span>)))]
-</span><span class="kw">impl </span>Value <span class="kw">for dyn </span>std::error::Error + Sync + <span class="lifetime">&#39;static </span>{
+<span class="attr">#[cfg(feature = <span class="string">"std"</span>)]
+#[cfg_attr(docsrs, doc(cfg(feature = <span class="string">"std"</span>)))]
+</span><span class="kw">impl </span>Value <span class="kw">for dyn </span>std::error::Error + Sync + <span class="lifetime">'static </span>{
     <span class="kw">fn </span>record(<span class="kw-2">&amp;</span><span class="self">self</span>, key: <span class="kw-2">&amp;</span>Field, visitor: <span class="kw-2">&amp;mut </span><span class="kw">dyn </span>Visit) {
         (<span class="self">self </span><span class="kw">as </span><span class="kw-2">&amp;</span><span class="kw">dyn </span>std::error::Error).record(key, visitor)
     }
 }
 
-<span class="attr">#[cfg(feature = <span class="string">&quot;std&quot;</span>)]
-</span><span class="kw">impl </span><span class="kw">crate</span>::sealed::Sealed <span class="kw">for dyn </span>std::error::Error + Send + Sync + <span class="lifetime">&#39;static </span>{}
+<span class="attr">#[cfg(feature = <span class="string">"std"</span>)]
+</span><span class="kw">impl </span><span class="kw">crate</span>::sealed::Sealed <span class="kw">for dyn </span>std::error::Error + Send + Sync + <span class="lifetime">'static </span>{}
 
-<span class="attr">#[cfg(feature = <span class="string">&quot;std&quot;</span>)]
-#[cfg_attr(docsrs, doc(cfg(feature = <span class="string">&quot;std&quot;</span>)))]
-</span><span class="kw">impl </span>Value <span class="kw">for dyn </span>std::error::Error + Send + Sync + <span class="lifetime">&#39;static </span>{
+<span class="attr">#[cfg(feature = <span class="string">"std"</span>)]
+#[cfg_attr(docsrs, doc(cfg(feature = <span class="string">"std"</span>)))]
+</span><span class="kw">impl </span>Value <span class="kw">for dyn </span>std::error::Error + Send + Sync + <span class="lifetime">'static </span>{
     <span class="kw">fn </span>record(<span class="kw-2">&amp;</span><span class="self">self</span>, key: <span class="kw-2">&amp;</span>Field, visitor: <span class="kw-2">&amp;mut </span><span class="kw">dyn </span>Visit) {
         (<span class="self">self </span><span class="kw">as </span><span class="kw-2">&amp;</span><span class="kw">dyn </span>std::error::Error).record(key, visitor)
     }
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>, T: <span class="question-mark">?</span>Sized&gt; <span class="kw">crate</span>::sealed::Sealed <span class="kw">for </span><span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>T <span class="kw">where </span>T: Value + <span class="kw">crate</span>::sealed::Sealed + <span class="lifetime">&#39;a </span>{}
+<span class="kw">impl</span>&lt;<span class="lifetime">'a</span>, T: <span class="question-mark">?</span>Sized&gt; <span class="kw">crate</span>::sealed::Sealed <span class="kw">for </span><span class="kw-2">&amp;</span><span class="lifetime">'a </span>T <span class="kw">where </span>T: Value + <span class="kw">crate</span>::sealed::Sealed + <span class="lifetime">'a </span>{}
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>, T: <span class="question-mark">?</span>Sized&gt; Value <span class="kw">for </span><span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>T
+<span class="kw">impl</span>&lt;<span class="lifetime">'a</span>, T: <span class="question-mark">?</span>Sized&gt; Value <span class="kw">for </span><span class="kw-2">&amp;</span><span class="lifetime">'a </span>T
 <span class="kw">where
-    </span>T: Value + <span class="lifetime">&#39;a</span>,
+    </span>T: Value + <span class="lifetime">'a</span>,
 {
     <span class="kw">fn </span>record(<span class="kw-2">&amp;</span><span class="self">self</span>, key: <span class="kw-2">&amp;</span>Field, visitor: <span class="kw-2">&amp;mut </span><span class="kw">dyn </span>Visit) {
         (<span class="kw-2">*</span><span class="self">self</span>).record(key, visitor)
     }
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>, T: <span class="question-mark">?</span>Sized&gt; <span class="kw">crate</span>::sealed::Sealed <span class="kw">for </span><span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span><span class="kw-2">mut </span>T <span class="kw">where </span>T: Value + <span class="kw">crate</span>::sealed::Sealed + <span class="lifetime">&#39;a </span>{}
+<span class="kw">impl</span>&lt;<span class="lifetime">'a</span>, T: <span class="question-mark">?</span>Sized&gt; <span class="kw">crate</span>::sealed::Sealed <span class="kw">for </span><span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="kw-2">mut </span>T <span class="kw">where </span>T: Value + <span class="kw">crate</span>::sealed::Sealed + <span class="lifetime">'a </span>{}
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>, T: <span class="question-mark">?</span>Sized&gt; Value <span class="kw">for </span><span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span><span class="kw-2">mut </span>T
+<span class="kw">impl</span>&lt;<span class="lifetime">'a</span>, T: <span class="question-mark">?</span>Sized&gt; Value <span class="kw">for </span><span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="kw-2">mut </span>T
 <span class="kw">where
-    </span>T: Value + <span class="lifetime">&#39;a</span>,
+    </span>T: Value + <span class="lifetime">'a</span>,
 {
     <span class="kw">fn </span>record(<span class="kw-2">&amp;</span><span class="self">self</span>, key: <span class="kw-2">&amp;</span>Field, visitor: <span class="kw-2">&amp;mut </span><span class="kw">dyn </span>Visit) {
-        <span class="comment">// Don&#39;t use `(*self).record(key, visitor)`, otherwise would
+        <span class="comment">// Don't use `(*self).record(key, visitor)`, otherwise would
         // cause stack overflow due to `unconditional_recursion`.
         </span>T::record(<span class="self">self</span>, key, visitor)
     }
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>&gt; <span class="kw">crate</span>::sealed::Sealed <span class="kw">for </span>fmt::Arguments&lt;<span class="lifetime">&#39;a</span>&gt; {}
+<span class="kw">impl</span>&lt;<span class="lifetime">'a</span>&gt; <span class="kw">crate</span>::sealed::Sealed <span class="kw">for </span>fmt::Arguments&lt;<span class="lifetime">'a</span>&gt; {}
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>&gt; Value <span class="kw">for </span>fmt::Arguments&lt;<span class="lifetime">&#39;a</span>&gt; {
+<span class="kw">impl</span>&lt;<span class="lifetime">'a</span>&gt; Value <span class="kw">for </span>fmt::Arguments&lt;<span class="lifetime">'a</span>&gt; {
     <span class="kw">fn </span>record(<span class="kw-2">&amp;</span><span class="self">self</span>, key: <span class="kw-2">&amp;</span>Field, visitor: <span class="kw-2">&amp;mut </span><span class="kw">dyn </span>Visit) {
         visitor.record_debug(key, <span class="self">self</span>)
     }
 }
 
-<span class="attr">#[cfg(feature = <span class="string">&quot;alloc&quot;</span>)]
+<span class="attr">#[cfg(feature = <span class="string">"alloc"</span>)]
 </span><span class="kw">impl</span>&lt;T: <span class="question-mark">?</span>Sized&gt; <span class="kw">crate</span>::sealed::Sealed <span class="kw">for </span>alloc::boxed::Box&lt;T&gt; <span class="kw">where </span>T: Value {}
 
-<span class="attr">#[cfg(feature = <span class="string">&quot;alloc&quot;</span>)]
-#[cfg_attr(docsrs, doc(cfg(feature = <span class="string">&quot;alloc&quot;</span>)))]
+<span class="attr">#[cfg(feature = <span class="string">"alloc"</span>)]
+#[cfg_attr(docsrs, doc(cfg(feature = <span class="string">"alloc"</span>)))]
 </span><span class="kw">impl</span>&lt;T: <span class="question-mark">?</span>Sized&gt; Value <span class="kw">for </span>alloc::boxed::Box&lt;T&gt;
 <span class="kw">where
     </span>T: Value,
@@ -1654,12 +1654,12 @@
     }
 }
 
-<span class="attr">#[cfg(feature = <span class="string">&quot;alloc&quot;</span>)]
-#[cfg_attr(docsrs, doc(cfg(feature = <span class="string">&quot;alloc&quot;</span>)))]
+<span class="attr">#[cfg(feature = <span class="string">"alloc"</span>)]
+#[cfg_attr(docsrs, doc(cfg(feature = <span class="string">"alloc"</span>)))]
 </span><span class="kw">impl </span><span class="kw">crate</span>::sealed::Sealed <span class="kw">for </span>alloc::string::String {}
 
-<span class="attr">#[cfg(feature = <span class="string">&quot;alloc&quot;</span>)]
-#[cfg_attr(docsrs, doc(cfg(feature = <span class="string">&quot;alloc&quot;</span>)))]
+<span class="attr">#[cfg(feature = <span class="string">"alloc"</span>)]
+#[cfg_attr(docsrs, doc(cfg(feature = <span class="string">"alloc"</span>)))]
 </span><span class="kw">impl </span>Value <span class="kw">for </span>alloc::string::String {
     <span class="kw">fn </span>record(<span class="kw-2">&amp;</span><span class="self">self</span>, key: <span class="kw-2">&amp;</span>Field, visitor: <span class="kw-2">&amp;mut </span><span class="kw">dyn </span>Visit) {
         visitor.record_str(key, <span class="self">self</span>.as_str())
@@ -1667,18 +1667,18 @@
 }
 
 <span class="kw">impl </span>fmt::Debug <span class="kw">for dyn </span>Value {
-    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; fmt::Result {
-        <span class="comment">// We are only going to be recording the field value, so we don&#39;t
+    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter&lt;<span class="lifetime">'_</span>&gt;) -&gt; fmt::Result {
+        <span class="comment">// We are only going to be recording the field value, so we don't
         // actually care about the field name here.
         </span><span class="kw">struct </span>NullCallsite;
         <span class="kw">static </span>NULL_CALLSITE: NullCallsite = NullCallsite;
         <span class="kw">impl </span><span class="kw">crate</span>::callsite::Callsite <span class="kw">for </span>NullCallsite {
             <span class="kw">fn </span>set_interest(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="kw">_</span>: <span class="kw">crate</span>::collect::Interest) {
-                <span class="macro">unreachable!</span>(<span class="string">&quot;you somehow managed to register the null callsite?&quot;</span>)
+                <span class="macro">unreachable!</span>(<span class="string">"you somehow managed to register the null callsite?"</span>)
             }
 
-            <span class="kw">fn </span>metadata(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="kw">crate</span>::Metadata&lt;<span class="lifetime">&#39;_</span>&gt; {
-                <span class="macro">unreachable!</span>(<span class="string">&quot;you somehow managed to access the null callsite?&quot;</span>)
+            <span class="kw">fn </span>metadata(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="kw">crate</span>::Metadata&lt;<span class="lifetime">'_</span>&gt; {
+                <span class="macro">unreachable!</span>(<span class="string">"you somehow managed to access the null callsite?"</span>)
             }
         }
 
@@ -1689,14 +1689,14 @@
 
         <span class="kw">let </span><span class="kw-2">mut </span>res = <span class="prelude-val">Ok</span>(());
         <span class="self">self</span>.record(<span class="kw-2">&amp;</span>FIELD, <span class="kw-2">&amp;mut </span>|<span class="kw">_</span>: <span class="kw-2">&amp;</span>Field, val: <span class="kw-2">&amp;</span><span class="kw">dyn </span>fmt::Debug| {
-            res = <span class="macro">write!</span>(f, <span class="string">&quot;{:?}&quot;</span>, val);
+            res = <span class="macro">write!</span>(f, <span class="string">"{:?}"</span>, val);
         });
         res
     }
 }
 
 <span class="kw">impl </span>fmt::Display <span class="kw">for dyn </span>Value {
-    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; fmt::Result {
+    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter&lt;<span class="lifetime">'_</span>&gt;) -&gt; fmt::Result {
         fmt::Debug::fmt(<span class="self">self</span>, f)
     }
 }
@@ -1715,13 +1715,13 @@
 }
 
 <span class="kw">impl</span>&lt;T: fmt::Display&gt; fmt::Debug <span class="kw">for </span>DisplayValue&lt;T&gt; {
-    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; fmt::Result {
+    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter&lt;<span class="lifetime">'_</span>&gt;) -&gt; fmt::Result {
         fmt::Display::fmt(<span class="self">self</span>, f)
     }
 }
 
 <span class="kw">impl</span>&lt;T: fmt::Display&gt; fmt::Display <span class="kw">for </span>DisplayValue&lt;T&gt; {
-    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; fmt::Result {
+    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter&lt;<span class="lifetime">'_</span>&gt;) -&gt; fmt::Result {
         <span class="self">self</span>.<span class="number">0</span>.fmt(f)
     }
 }
@@ -1740,7 +1740,7 @@
 }
 
 <span class="kw">impl</span>&lt;T: fmt::Debug&gt; fmt::Debug <span class="kw">for </span>DebugValue&lt;T&gt; {
-    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; fmt::Result {
+    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter&lt;<span class="lifetime">'_</span>&gt;) -&gt; fmt::Result {
         <span class="self">self</span>.<span class="number">0</span>.fmt(f)
     }
 }
@@ -1765,13 +1765,13 @@
     }
 
     <span class="doccomment">/// Returns a string representing the name of the field.
-    </span><span class="kw">pub fn </span>name(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>str {
+    </span><span class="kw">pub fn </span>name(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="lifetime">'static </span>str {
         <span class="self">self</span>.fields.names[<span class="self">self</span>.i]
     }
 }
 
 <span class="kw">impl </span>fmt::Display <span class="kw">for </span>Field {
-    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; fmt::Result {
+    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter&lt;<span class="lifetime">'_</span>&gt;) -&gt; fmt::Result {
         f.pad(<span class="self">self</span>.name())
     }
 }
@@ -1816,7 +1816,7 @@
 
 </span><span class="kw">impl </span>FieldSet {
     <span class="doccomment">/// Constructs a new `FieldSet` with the given array of field names and callsite.
-    </span><span class="kw">pub const fn </span>new(names: <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>[<span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>str], callsite: callsite::Identifier) -&gt; <span class="self">Self </span>{
+    </span><span class="kw">pub const fn </span>new(names: <span class="kw-2">&amp;</span><span class="lifetime">'static </span>[<span class="kw-2">&amp;</span><span class="lifetime">'static </span>str], callsite: callsite::Identifier) -&gt; <span class="self">Self </span>{
         <span class="self">Self </span>{ names, callsite }
     }
 
@@ -1848,13 +1848,13 @@
 
     <span class="doccomment">/// Returns `true` if `self` contains the given `field`.
     ///
-    /// &lt;div class=&quot;example-wrap&quot; style=&quot;display:inline-block&quot;&gt;
-    /// &lt;pre class=&quot;ignore&quot; style=&quot;white-space:normal;font:inherit;&quot;&gt;
+    /// &lt;div class="example-wrap" style="display:inline-block"&gt;
+    /// &lt;pre class="ignore" style="white-space:normal;font:inherit;"&gt;
     /// &lt;strong&gt;Note&lt;/strong&gt;: If &lt;code&gt;field&lt;/code&gt; shares a name with a field
     /// in this &lt;code&gt;FieldSet&lt;/code&gt;, but was created by a &lt;code&gt;FieldSet&lt;/code&gt;
     /// with a different callsite, this &lt;code&gt;FieldSet&lt;/code&gt; does &lt;em&gt;not&lt;/em&gt;
     /// contain it. This is so that if two separate span callsites define a field
-    /// named &quot;foo&quot;, the &lt;code&gt;Field&lt;/code&gt; corresponding to &quot;foo&quot; for each
+    /// named "foo", the &lt;code&gt;Field&lt;/code&gt; corresponding to "foo" for each
     /// of those callsites are not equivalent.
     /// &lt;/pre&gt;&lt;/div&gt;
     </span><span class="kw">pub fn </span>contains(<span class="kw-2">&amp;</span><span class="self">self</span>, field: <span class="kw-2">&amp;</span>Field) -&gt; bool {
@@ -1873,14 +1873,14 @@
         }
     }
 
-    <span class="doccomment">/// Returns a new `ValueSet` with entries for this `FieldSet`&#39;s values.
+    <span class="doccomment">/// Returns a new `ValueSet` with entries for this `FieldSet`'s values.
     ///
     /// Note that a `ValueSet` may not be constructed with arrays of over 32
     /// elements.
     </span><span class="attr">#[doc(hidden)]
-    </span><span class="kw">pub fn </span>value_set&lt;<span class="lifetime">&#39;v</span>, V&gt;(<span class="kw-2">&amp;</span><span class="lifetime">&#39;v </span><span class="self">self</span>, values: <span class="kw-2">&amp;</span><span class="lifetime">&#39;v </span>V) -&gt; ValueSet&lt;<span class="lifetime">&#39;v</span>&gt;
+    </span><span class="kw">pub fn </span>value_set&lt;<span class="lifetime">'v</span>, V&gt;(<span class="kw-2">&amp;</span><span class="lifetime">'v </span><span class="self">self</span>, values: <span class="kw-2">&amp;</span><span class="lifetime">'v </span>V) -&gt; ValueSet&lt;<span class="lifetime">'v</span>&gt;
     <span class="kw">where
-        </span>V: ValidLen&lt;<span class="lifetime">&#39;v</span>&gt;,
+        </span>V: ValidLen&lt;<span class="lifetime">'v</span>&gt;,
     {
         ValueSet {
             fields: <span class="self">self</span>,
@@ -1901,7 +1901,7 @@
     }
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>&gt; IntoIterator <span class="kw">for </span><span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>FieldSet {
+<span class="kw">impl</span>&lt;<span class="lifetime">'a</span>&gt; IntoIterator <span class="kw">for </span><span class="kw-2">&amp;</span><span class="lifetime">'a </span>FieldSet {
     <span class="kw">type </span>IntoIter = Iter;
     <span class="kw">type </span>Item = Field;
     <span class="attr">#[inline]
@@ -1911,16 +1911,16 @@
 }
 
 <span class="kw">impl </span>fmt::Debug <span class="kw">for </span>FieldSet {
-    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; fmt::Result {
-        f.debug_struct(<span class="string">&quot;FieldSet&quot;</span>)
-            .field(<span class="string">&quot;names&quot;</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.names)
-            .field(<span class="string">&quot;callsite&quot;</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.callsite)
+    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter&lt;<span class="lifetime">'_</span>&gt;) -&gt; fmt::Result {
+        f.debug_struct(<span class="string">"FieldSet"</span>)
+            .field(<span class="string">"names"</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.names)
+            .field(<span class="string">"callsite"</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.callsite)
             .finish()
     }
 }
 
 <span class="kw">impl </span>fmt::Display <span class="kw">for </span>FieldSet {
-    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; fmt::Result {
+    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter&lt;<span class="lifetime">'_</span>&gt;) -&gt; fmt::Result {
         f.debug_set()
             .entries(<span class="self">self</span>.names.iter().map(display))
             .finish()
@@ -1979,7 +1979,7 @@
 
 <span class="comment">// ===== impl ValueSet =====
 
-</span><span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>&gt; ValueSet&lt;<span class="lifetime">&#39;a</span>&gt; {
+</span><span class="kw">impl</span>&lt;<span class="lifetime">'a</span>&gt; ValueSet&lt;<span class="lifetime">'a</span>&gt; {
     <span class="doccomment">/// Returns an [`Identifier`] that uniquely identifies the [`Callsite`]
     /// defining the fields this `ValueSet` refers to.
     ///
@@ -2027,23 +2027,23 @@
     }
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>&gt; fmt::Debug <span class="kw">for </span>ValueSet&lt;<span class="lifetime">&#39;a</span>&gt; {
-    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; fmt::Result {
+<span class="kw">impl</span>&lt;<span class="lifetime">'a</span>&gt; fmt::Debug <span class="kw">for </span>ValueSet&lt;<span class="lifetime">'a</span>&gt; {
+    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter&lt;<span class="lifetime">'_</span>&gt;) -&gt; fmt::Result {
         <span class="self">self</span>.values
             .iter()
-            .fold(<span class="kw-2">&amp;mut </span>f.debug_struct(<span class="string">&quot;ValueSet&quot;</span>), |dbg, (key, v)| {
+            .fold(<span class="kw-2">&amp;mut </span>f.debug_struct(<span class="string">"ValueSet"</span>), |dbg, (key, v)| {
                 <span class="kw">if let </span><span class="prelude-val">Some</span>(val) = v {
                     val.record(key, dbg);
                 }
                 dbg
             })
-            .field(<span class="string">&quot;callsite&quot;</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.callsite())
+            .field(<span class="string">"callsite"</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.callsite())
             .finish()
     }
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>&gt; fmt::Display <span class="kw">for </span>ValueSet&lt;<span class="lifetime">&#39;a</span>&gt; {
-    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; fmt::Result {
+<span class="kw">impl</span>&lt;<span class="lifetime">'a</span>&gt; fmt::Display <span class="kw">for </span>ValueSet&lt;<span class="lifetime">'a</span>&gt; {
+    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter&lt;<span class="lifetime">'_</span>&gt;) -&gt; fmt::Result {
         <span class="self">self</span>.values
             .iter()
             .fold(<span class="kw-2">&amp;mut </span>f.debug_map(), |dbg, (key, v)| {
@@ -2068,14 +2068,14 @@
     /// elements, to ensure the array is small enough to always be allocated on the
     /// stack. This trait is only implemented by arrays of an appropriate length,
     /// ensuring that the correct size arrays are used at compile-time.
-    </span><span class="kw">pub trait </span>ValidLen&lt;<span class="lifetime">&#39;a</span>&gt;: Borrow&lt;[(<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>Field, <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>(<span class="kw">dyn </span>Value + <span class="lifetime">&#39;a</span>)&gt;)]&gt; {}
+    </span><span class="kw">pub trait </span>ValidLen&lt;<span class="lifetime">'a</span>&gt;: Borrow&lt;[(<span class="kw-2">&amp;</span><span class="lifetime">'a </span>Field, <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span><span class="lifetime">'a </span>(<span class="kw">dyn </span>Value + <span class="lifetime">'a</span>)&gt;)]&gt; {}
 }
 
 <span class="macro">macro_rules! </span>impl_valid_len {
     ( $( <span class="macro-nonterminal">$len</span>:tt ),+ ) =&gt; {
         $(
-            <span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>&gt; private::ValidLen&lt;<span class="lifetime">&#39;a</span>&gt; <span class="kw">for
-                </span>[(<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>Field, <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>(<span class="kw">dyn </span>Value + <span class="lifetime">&#39;a</span>)&gt;); <span class="macro-nonterminal">$len</span>] {}
+            <span class="kw">impl</span>&lt;<span class="lifetime">'a</span>&gt; private::ValidLen&lt;<span class="lifetime">'a</span>&gt; <span class="kw">for
+                </span>[(<span class="kw-2">&amp;</span><span class="lifetime">'a </span>Field, <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span><span class="lifetime">'a </span>(<span class="kw">dyn </span>Value + <span class="lifetime">'a</span>)&gt;); <span class="macro-nonterminal">$len</span>] {}
         )+
     }
 }
@@ -2092,11 +2092,11 @@
 
     <span class="kw">struct </span>TestCallsite1;
     <span class="kw">static </span>TEST_CALLSITE_1: TestCallsite1 = TestCallsite1;
-    <span class="kw">static </span>TEST_META_1: Metadata&lt;<span class="lifetime">&#39;static</span>&gt; = <span class="macro">metadata! </span>{
-        name: <span class="string">&quot;field_test1&quot;</span>,
+    <span class="kw">static </span>TEST_META_1: Metadata&lt;<span class="lifetime">'static</span>&gt; = <span class="macro">metadata! </span>{
+        name: <span class="string">"field_test1"</span>,
         target: <span class="macro">module_path!</span>(),
         level: Level::INFO,
-        fields: <span class="kw-2">&amp;</span>[<span class="string">&quot;foo&quot;</span>, <span class="string">&quot;bar&quot;</span>, <span class="string">&quot;baz&quot;</span>],
+        fields: <span class="kw-2">&amp;</span>[<span class="string">"foo"</span>, <span class="string">"bar"</span>, <span class="string">"baz"</span>],
         callsite: <span class="kw-2">&amp;</span>TEST_CALLSITE_1,
         kind: Kind::SPAN,
     };
@@ -2106,18 +2106,18 @@
             <span class="macro">unimplemented!</span>()
         }
 
-        <span class="kw">fn </span>metadata(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>Metadata&lt;<span class="lifetime">&#39;_</span>&gt; {
+        <span class="kw">fn </span>metadata(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>Metadata&lt;<span class="lifetime">'_</span>&gt; {
             <span class="kw-2">&amp;</span>TEST_META_1
         }
     }
 
     <span class="kw">struct </span>TestCallsite2;
     <span class="kw">static </span>TEST_CALLSITE_2: TestCallsite2 = TestCallsite2;
-    <span class="kw">static </span>TEST_META_2: Metadata&lt;<span class="lifetime">&#39;static</span>&gt; = <span class="macro">metadata! </span>{
-        name: <span class="string">&quot;field_test2&quot;</span>,
+    <span class="kw">static </span>TEST_META_2: Metadata&lt;<span class="lifetime">'static</span>&gt; = <span class="macro">metadata! </span>{
+        name: <span class="string">"field_test2"</span>,
         target: <span class="macro">module_path!</span>(),
         level: Level::INFO,
-        fields: <span class="kw-2">&amp;</span>[<span class="string">&quot;foo&quot;</span>, <span class="string">&quot;bar&quot;</span>, <span class="string">&quot;baz&quot;</span>],
+        fields: <span class="kw-2">&amp;</span>[<span class="string">"foo"</span>, <span class="string">"bar"</span>, <span class="string">"baz"</span>],
         callsite: <span class="kw-2">&amp;</span>TEST_CALLSITE_2,
         kind: Kind::SPAN,
     };
@@ -2127,7 +2127,7 @@
             <span class="macro">unimplemented!</span>()
         }
 
-        <span class="kw">fn </span>metadata(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>Metadata&lt;<span class="lifetime">&#39;_</span>&gt; {
+        <span class="kw">fn </span>metadata(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>Metadata&lt;<span class="lifetime">'_</span>&gt; {
             <span class="kw-2">&amp;</span>TEST_META_2
         }
     }
@@ -2136,9 +2136,9 @@
     </span><span class="kw">fn </span>value_set_with_no_values_is_empty() {
         <span class="kw">let </span>fields = TEST_META_1.fields();
         <span class="kw">let </span>values = <span class="kw-2">&amp;</span>[
-            (<span class="kw-2">&amp;</span>fields.field(<span class="string">&quot;foo&quot;</span>).unwrap(), <span class="prelude-val">None</span>),
-            (<span class="kw-2">&amp;</span>fields.field(<span class="string">&quot;bar&quot;</span>).unwrap(), <span class="prelude-val">None</span>),
-            (<span class="kw-2">&amp;</span>fields.field(<span class="string">&quot;baz&quot;</span>).unwrap(), <span class="prelude-val">None</span>),
+            (<span class="kw-2">&amp;</span>fields.field(<span class="string">"foo"</span>).unwrap(), <span class="prelude-val">None</span>),
+            (<span class="kw-2">&amp;</span>fields.field(<span class="string">"bar"</span>).unwrap(), <span class="prelude-val">None</span>),
+            (<span class="kw-2">&amp;</span>fields.field(<span class="string">"baz"</span>).unwrap(), <span class="prelude-val">None</span>),
         ];
         <span class="kw">let </span>valueset = fields.value_set(values);
         <span class="macro">assert!</span>(valueset.is_empty());
@@ -2155,9 +2155,9 @@
     </span><span class="kw">fn </span>value_sets_with_fields_from_other_callsites_are_empty() {
         <span class="kw">let </span>fields = TEST_META_1.fields();
         <span class="kw">let </span>values = <span class="kw-2">&amp;</span>[
-            (<span class="kw-2">&amp;</span>fields.field(<span class="string">&quot;foo&quot;</span>).unwrap(), <span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span><span class="number">1 </span><span class="kw">as </span><span class="kw-2">&amp;</span><span class="kw">dyn </span>Value)),
-            (<span class="kw-2">&amp;</span>fields.field(<span class="string">&quot;bar&quot;</span>).unwrap(), <span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span><span class="number">2 </span><span class="kw">as </span><span class="kw-2">&amp;</span><span class="kw">dyn </span>Value)),
-            (<span class="kw-2">&amp;</span>fields.field(<span class="string">&quot;baz&quot;</span>).unwrap(), <span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span><span class="number">3 </span><span class="kw">as </span><span class="kw-2">&amp;</span><span class="kw">dyn </span>Value)),
+            (<span class="kw-2">&amp;</span>fields.field(<span class="string">"foo"</span>).unwrap(), <span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span><span class="number">1 </span><span class="kw">as </span><span class="kw-2">&amp;</span><span class="kw">dyn </span>Value)),
+            (<span class="kw-2">&amp;</span>fields.field(<span class="string">"bar"</span>).unwrap(), <span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span><span class="number">2 </span><span class="kw">as </span><span class="kw-2">&amp;</span><span class="kw">dyn </span>Value)),
+            (<span class="kw-2">&amp;</span>fields.field(<span class="string">"baz"</span>).unwrap(), <span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span><span class="number">3 </span><span class="kw">as </span><span class="kw-2">&amp;</span><span class="kw">dyn </span>Value)),
         ];
         <span class="kw">let </span>valueset = TEST_META_2.fields().value_set(values);
         <span class="macro">assert!</span>(valueset.is_empty())
@@ -2167,9 +2167,9 @@
     </span><span class="kw">fn </span>sparse_value_sets_are_not_empty() {
         <span class="kw">let </span>fields = TEST_META_1.fields();
         <span class="kw">let </span>values = <span class="kw-2">&amp;</span>[
-            (<span class="kw-2">&amp;</span>fields.field(<span class="string">&quot;foo&quot;</span>).unwrap(), <span class="prelude-val">None</span>),
-            (<span class="kw-2">&amp;</span>fields.field(<span class="string">&quot;bar&quot;</span>).unwrap(), <span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span><span class="number">57 </span><span class="kw">as </span><span class="kw-2">&amp;</span><span class="kw">dyn </span>Value)),
-            (<span class="kw-2">&amp;</span>fields.field(<span class="string">&quot;baz&quot;</span>).unwrap(), <span class="prelude-val">None</span>),
+            (<span class="kw-2">&amp;</span>fields.field(<span class="string">"foo"</span>).unwrap(), <span class="prelude-val">None</span>),
+            (<span class="kw-2">&amp;</span>fields.field(<span class="string">"bar"</span>).unwrap(), <span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span><span class="number">57 </span><span class="kw">as </span><span class="kw-2">&amp;</span><span class="kw">dyn </span>Value)),
+            (<span class="kw-2">&amp;</span>fields.field(<span class="string">"baz"</span>).unwrap(), <span class="prelude-val">None</span>),
         ];
         <span class="kw">let </span>valueset = fields.value_set(values);
         <span class="macro">assert!</span>(!valueset.is_empty());
@@ -2179,12 +2179,12 @@
     </span><span class="kw">fn </span>fields_from_other_callsets_are_skipped() {
         <span class="kw">let </span>fields = TEST_META_1.fields();
         <span class="kw">let </span>values = <span class="kw-2">&amp;</span>[
-            (<span class="kw-2">&amp;</span>fields.field(<span class="string">&quot;foo&quot;</span>).unwrap(), <span class="prelude-val">None</span>),
+            (<span class="kw-2">&amp;</span>fields.field(<span class="string">"foo"</span>).unwrap(), <span class="prelude-val">None</span>),
             (
-                <span class="kw-2">&amp;</span>TEST_META_2.fields().field(<span class="string">&quot;bar&quot;</span>).unwrap(),
+                <span class="kw-2">&amp;</span>TEST_META_2.fields().field(<span class="string">"bar"</span>).unwrap(),
                 <span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span><span class="number">57 </span><span class="kw">as </span><span class="kw-2">&amp;</span><span class="kw">dyn </span>Value),
             ),
-            (<span class="kw-2">&amp;</span>fields.field(<span class="string">&quot;baz&quot;</span>).unwrap(), <span class="prelude-val">None</span>),
+            (<span class="kw-2">&amp;</span>fields.field(<span class="string">"baz"</span>).unwrap(), <span class="prelude-val">None</span>),
         ];
 
         <span class="kw">struct </span>MyVisitor;
@@ -2201,15 +2201,15 @@
     </span><span class="kw">fn </span>empty_fields_are_skipped() {
         <span class="kw">let </span>fields = TEST_META_1.fields();
         <span class="kw">let </span>values = <span class="kw-2">&amp;</span>[
-            (<span class="kw-2">&amp;</span>fields.field(<span class="string">&quot;foo&quot;</span>).unwrap(), <span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span>Empty <span class="kw">as </span><span class="kw-2">&amp;</span><span class="kw">dyn </span>Value)),
-            (<span class="kw-2">&amp;</span>fields.field(<span class="string">&quot;bar&quot;</span>).unwrap(), <span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span><span class="number">57 </span><span class="kw">as </span><span class="kw-2">&amp;</span><span class="kw">dyn </span>Value)),
-            (<span class="kw-2">&amp;</span>fields.field(<span class="string">&quot;baz&quot;</span>).unwrap(), <span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span>Empty <span class="kw">as </span><span class="kw-2">&amp;</span><span class="kw">dyn </span>Value)),
+            (<span class="kw-2">&amp;</span>fields.field(<span class="string">"foo"</span>).unwrap(), <span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span>Empty <span class="kw">as </span><span class="kw-2">&amp;</span><span class="kw">dyn </span>Value)),
+            (<span class="kw-2">&amp;</span>fields.field(<span class="string">"bar"</span>).unwrap(), <span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span><span class="number">57 </span><span class="kw">as </span><span class="kw-2">&amp;</span><span class="kw">dyn </span>Value)),
+            (<span class="kw-2">&amp;</span>fields.field(<span class="string">"baz"</span>).unwrap(), <span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span>Empty <span class="kw">as </span><span class="kw-2">&amp;</span><span class="kw">dyn </span>Value)),
         ];
 
         <span class="kw">struct </span>MyVisitor;
         <span class="kw">impl </span>Visit <span class="kw">for </span>MyVisitor {
             <span class="kw">fn </span>record_debug(<span class="kw-2">&amp;mut </span><span class="self">self</span>, field: <span class="kw-2">&amp;</span>Field, <span class="kw">_</span>: <span class="kw-2">&amp;</span><span class="kw">dyn </span>(core::fmt::Debug)) {
-                <span class="macro">assert_eq!</span>(field.name(), <span class="string">&quot;bar&quot;</span>)
+                <span class="macro">assert_eq!</span>(field.name(), <span class="string">"bar"</span>)
             }
         }
         <span class="kw">let </span>valueset = fields.value_set(values);
@@ -2217,41 +2217,41 @@
     }
 
     <span class="attr">#[test]
-    #[cfg(feature = <span class="string">&quot;std&quot;</span>)]
+    #[cfg(feature = <span class="string">"std"</span>)]
     </span><span class="kw">fn </span>record_debug_fn() {
         <span class="kw">let </span>fields = TEST_META_1.fields();
         <span class="kw">let </span>values = <span class="kw-2">&amp;</span>[
-            (<span class="kw-2">&amp;</span>fields.field(<span class="string">&quot;foo&quot;</span>).unwrap(), <span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span><span class="number">1 </span><span class="kw">as </span><span class="kw-2">&amp;</span><span class="kw">dyn </span>Value)),
-            (<span class="kw-2">&amp;</span>fields.field(<span class="string">&quot;bar&quot;</span>).unwrap(), <span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span><span class="number">2 </span><span class="kw">as </span><span class="kw-2">&amp;</span><span class="kw">dyn </span>Value)),
-            (<span class="kw-2">&amp;</span>fields.field(<span class="string">&quot;baz&quot;</span>).unwrap(), <span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span><span class="number">3 </span><span class="kw">as </span><span class="kw-2">&amp;</span><span class="kw">dyn </span>Value)),
+            (<span class="kw-2">&amp;</span>fields.field(<span class="string">"foo"</span>).unwrap(), <span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span><span class="number">1 </span><span class="kw">as </span><span class="kw-2">&amp;</span><span class="kw">dyn </span>Value)),
+            (<span class="kw-2">&amp;</span>fields.field(<span class="string">"bar"</span>).unwrap(), <span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span><span class="number">2 </span><span class="kw">as </span><span class="kw-2">&amp;</span><span class="kw">dyn </span>Value)),
+            (<span class="kw-2">&amp;</span>fields.field(<span class="string">"baz"</span>).unwrap(), <span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span><span class="number">3 </span><span class="kw">as </span><span class="kw-2">&amp;</span><span class="kw">dyn </span>Value)),
         ];
         <span class="kw">let </span>valueset = fields.value_set(values);
         <span class="kw">let </span><span class="kw-2">mut </span>result = String::new();
         valueset.record(<span class="kw-2">&amp;mut </span>|<span class="kw">_</span>: <span class="kw-2">&amp;</span>Field, value: <span class="kw-2">&amp;</span><span class="kw">dyn </span>fmt::Debug| {
             <span class="kw">use </span>core::fmt::Write;
-            <span class="macro">write!</span>(<span class="kw-2">&amp;mut </span>result, <span class="string">&quot;{:?}&quot;</span>, value).unwrap();
+            <span class="macro">write!</span>(<span class="kw-2">&amp;mut </span>result, <span class="string">"{:?}"</span>, value).unwrap();
         });
-        <span class="macro">assert_eq!</span>(result, String::from(<span class="string">&quot;123&quot;</span>));
+        <span class="macro">assert_eq!</span>(result, String::from(<span class="string">"123"</span>));
     }
 
     <span class="attr">#[test]
-    #[cfg(feature = <span class="string">&quot;std&quot;</span>)]
+    #[cfg(feature = <span class="string">"std"</span>)]
     </span><span class="kw">fn </span>record_error() {
         <span class="kw">let </span>fields = TEST_META_1.fields();
-        <span class="kw">let </span>err: Box&lt;<span class="kw">dyn </span>std::error::Error + Send + Sync + <span class="lifetime">&#39;static</span>&gt; =
-            std::io::Error::new(std::io::ErrorKind::Other, <span class="string">&quot;lol&quot;</span>).into();
+        <span class="kw">let </span>err: Box&lt;<span class="kw">dyn </span>std::error::Error + Send + Sync + <span class="lifetime">'static</span>&gt; =
+            std::io::Error::new(std::io::ErrorKind::Other, <span class="string">"lol"</span>).into();
         <span class="kw">let </span>values = <span class="kw-2">&amp;</span>[
-            (<span class="kw-2">&amp;</span>fields.field(<span class="string">&quot;foo&quot;</span>).unwrap(), <span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span>err <span class="kw">as </span><span class="kw-2">&amp;</span><span class="kw">dyn </span>Value)),
-            (<span class="kw-2">&amp;</span>fields.field(<span class="string">&quot;bar&quot;</span>).unwrap(), <span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span>Empty <span class="kw">as </span><span class="kw-2">&amp;</span><span class="kw">dyn </span>Value)),
-            (<span class="kw-2">&amp;</span>fields.field(<span class="string">&quot;baz&quot;</span>).unwrap(), <span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span>Empty <span class="kw">as </span><span class="kw-2">&amp;</span><span class="kw">dyn </span>Value)),
+            (<span class="kw-2">&amp;</span>fields.field(<span class="string">"foo"</span>).unwrap(), <span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span>err <span class="kw">as </span><span class="kw-2">&amp;</span><span class="kw">dyn </span>Value)),
+            (<span class="kw-2">&amp;</span>fields.field(<span class="string">"bar"</span>).unwrap(), <span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span>Empty <span class="kw">as </span><span class="kw-2">&amp;</span><span class="kw">dyn </span>Value)),
+            (<span class="kw-2">&amp;</span>fields.field(<span class="string">"baz"</span>).unwrap(), <span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span>Empty <span class="kw">as </span><span class="kw-2">&amp;</span><span class="kw">dyn </span>Value)),
         ];
         <span class="kw">let </span>valueset = fields.value_set(values);
         <span class="kw">let </span><span class="kw-2">mut </span>result = String::new();
         valueset.record(<span class="kw-2">&amp;mut </span>|<span class="kw">_</span>: <span class="kw-2">&amp;</span>Field, value: <span class="kw-2">&amp;</span><span class="kw">dyn </span>fmt::Debug| {
             <span class="kw">use </span>core::fmt::Write;
-            <span class="macro">write!</span>(<span class="kw-2">&amp;mut </span>result, <span class="string">&quot;{:?}&quot;</span>, value).unwrap();
+            <span class="macro">write!</span>(<span class="kw-2">&amp;mut </span>result, <span class="string">"{:?}"</span>, value).unwrap();
         });
-        <span class="macro">assert_eq!</span>(result, <span class="macro">format!</span>(<span class="string">&quot;{}&quot;</span>, err));
+        <span class="macro">assert_eq!</span>(result, <span class="macro">format!</span>(<span class="string">"{}"</span>, err));
     }
 }
 </code></pre></div></section></main></body></html>

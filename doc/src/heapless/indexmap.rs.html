@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/heapless-0.8.0/src/indexmap.rs`."><title>indexmap.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-c67e44d78ab2db17.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="heapless" data-themes="" data-resource-suffix="" data-rustdoc-version="1.76.0-nightly (90e321d82 2023-12-02)" data-channel="nightly" data-search-js="search-5a66c239c06b3a66.js" data-settings-js="settings-fe03fdc259827cd2.js" ><script src="../../static.files/storage-fec3eaa3851e447d.js"></script><script defer src="../../static.files/src-script-3280b574d94e47b4.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-77dede896d6ac08e.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-5d8b3c7633ad77ba.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/heapless-0.8.0/src/indexmap.rs`."><title>indexmap.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-c67e44d78ab2db17.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="heapless" data-themes="" data-resource-suffix="" data-rustdoc-version="1.76.0-nightly (e9013ac0e 2023-12-05)" data-channel="nightly" data-search-js="search-5a66c239c06b3a66.js" data-settings-js="settings-fe03fdc259827cd2.js" ><script src="../../static.files/storage-fec3eaa3851e447d.js"></script><script defer src="../../static.files/src-script-3280b574d94e47b4.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-77dede896d6ac08e.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-5d8b3c7633ad77ba.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -1580,32 +1580,32 @@
 /// let mut book_reviews = FnvIndexMap::&lt;_, _, 16&gt;::new();
 ///
 /// // review some books.
-/// book_reviews.insert(&quot;Adventures of Huckleberry Finn&quot;,    &quot;My favorite book.&quot;).unwrap();
-/// book_reviews.insert(&quot;Grimms&#39; Fairy Tales&quot;,               &quot;Masterpiece.&quot;).unwrap();
-/// book_reviews.insert(&quot;Pride and Prejudice&quot;,               &quot;Very enjoyable.&quot;).unwrap();
-/// book_reviews.insert(&quot;The Adventures of Sherlock Holmes&quot;, &quot;Eye lyked it alot.&quot;).unwrap();
+/// book_reviews.insert("Adventures of Huckleberry Finn",    "My favorite book.").unwrap();
+/// book_reviews.insert("Grimms' Fairy Tales",               "Masterpiece.").unwrap();
+/// book_reviews.insert("Pride and Prejudice",               "Very enjoyable.").unwrap();
+/// book_reviews.insert("The Adventures of Sherlock Holmes", "Eye lyked it alot.").unwrap();
 ///
 /// // check for a specific one.
-/// if !book_reviews.contains_key(&quot;Les Misérables&quot;) {
-///     println!(&quot;We&#39;ve got {} reviews, but Les Misérables ain&#39;t one.&quot;,
+/// if !book_reviews.contains_key("Les Misérables") {
+///     println!("We've got {} reviews, but Les Misérables ain't one.",
 ///              book_reviews.len());
 /// }
 ///
-/// // oops, this review has a lot of spelling mistakes, let&#39;s delete it.
-/// book_reviews.remove(&quot;The Adventures of Sherlock Holmes&quot;);
+/// // oops, this review has a lot of spelling mistakes, let's delete it.
+/// book_reviews.remove("The Adventures of Sherlock Holmes");
 ///
 /// // look up the values associated with some keys.
-/// let to_find = [&quot;Pride and Prejudice&quot;, &quot;Alice&#39;s Adventure in Wonderland&quot;];
+/// let to_find = ["Pride and Prejudice", "Alice's Adventure in Wonderland"];
 /// for book in &amp;to_find {
 ///     match book_reviews.get(book) {
-///         Some(review) =&gt; println!(&quot;{}: {}&quot;, book, review),
-///         None =&gt; println!(&quot;{} is unreviewed.&quot;, book)
+///         Some(review) =&gt; println!("{}: {}", book, review),
+///         None =&gt; println!("{} is unreviewed.", book)
 ///     }
 /// }
 ///
 /// // iterate over everything.
 /// for (book, review) in &amp;book_reviews {
-///     println!(&quot;{}: \&quot;{}\&quot;&quot;, book, review);
+///     println!("{}: \"{}\"", book, review);
 /// }
 /// ```
 </span><span class="kw">pub type </span>FnvIndexMap&lt;K, V, <span class="kw">const </span>N: usize&gt; = IndexMap&lt;K, V, BuildHasherDefault&lt;FnvHasher&gt;, N&gt;;
@@ -1761,7 +1761,7 @@
                     <span class="kw">if </span><span class="self">self</span>.entries.is_full() {
                         <span class="kw">return </span>Insert::Full((key, value));
                     }
-                    <span class="comment">// robin hood: steal the spot if it&#39;s better for us
+                    <span class="comment">// robin hood: steal the spot if it's better for us
                     </span><span class="kw">let </span>index = <span class="self">self</span>.entries.len();
                     <span class="kw">unsafe </span>{ <span class="self">self</span>.entries.push_unchecked(Bucket { hash, key, value }) };
                     <span class="self">Self</span>::insert_phase_2(<span class="kw-2">&amp;mut </span><span class="self">self</span>.indices, probe, Pos::new(index, hash));
@@ -1867,7 +1867,7 @@
                     <span class="kw">if let </span><span class="prelude-val">Some</span>(pos) = <span class="kw-2">*</span>pos {
                         <span class="kw">let </span>entry_hash = pos.hash();
 
-                        <span class="comment">// robin hood: steal the spot if it&#39;s better for us
+                        <span class="comment">// robin hood: steal the spot if it's better for us
                         </span><span class="kw">let </span>their_dist = entry_hash.probe_distance(<span class="self">Self</span>::mask(), probe);
                         <span class="kw">if </span>their_dist &lt; dist {
                             <span class="self">Self</span>::insert_phase_2(
@@ -1925,22 +1925,22 @@
 }
 
 <span class="doccomment">/// A view into an entry in the map
-</span><span class="kw">pub enum </span>Entry&lt;<span class="lifetime">&#39;a</span>, K, V, <span class="kw">const </span>N: usize&gt; {
+</span><span class="kw">pub enum </span>Entry&lt;<span class="lifetime">'a</span>, K, V, <span class="kw">const </span>N: usize&gt; {
     <span class="doccomment">/// The entry corresponding to the key `K` exists in the map
-    </span>Occupied(OccupiedEntry&lt;<span class="lifetime">&#39;a</span>, K, V, N&gt;),
+    </span>Occupied(OccupiedEntry&lt;<span class="lifetime">'a</span>, K, V, N&gt;),
     <span class="doccomment">/// The entry corresponding to the key `K` does not exist in the map
-    </span>Vacant(VacantEntry&lt;<span class="lifetime">&#39;a</span>, K, V, N&gt;),
+    </span>Vacant(VacantEntry&lt;<span class="lifetime">'a</span>, K, V, N&gt;),
 }
 
 <span class="doccomment">/// An occupied entry which can be manipulated
-</span><span class="kw">pub struct </span>OccupiedEntry&lt;<span class="lifetime">&#39;a</span>, K, V, <span class="kw">const </span>N: usize&gt; {
+</span><span class="kw">pub struct </span>OccupiedEntry&lt;<span class="lifetime">'a</span>, K, V, <span class="kw">const </span>N: usize&gt; {
     key: K,
     probe: usize,
     pos: usize,
-    core: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span><span class="kw-2">mut </span>CoreMap&lt;K, V, N&gt;,
+    core: <span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="kw-2">mut </span>CoreMap&lt;K, V, N&gt;,
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>, K, V, <span class="kw">const </span>N: usize&gt; OccupiedEntry&lt;<span class="lifetime">&#39;a</span>, K, V, N&gt;
+<span class="kw">impl</span>&lt;<span class="lifetime">'a</span>, K, V, <span class="kw">const </span>N: usize&gt; OccupiedEntry&lt;<span class="lifetime">'a</span>, K, V, N&gt;
 <span class="kw">where
     </span>K: Eq + Hash,
 {
@@ -1969,13 +1969,13 @@
     }
 
     <span class="doccomment">/// Consumes this entry and yields a reference to the underlying value
-    </span><span class="kw">pub fn </span>into_mut(<span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span><span class="kw-2">mut </span>V {
+    </span><span class="kw">pub fn </span>into_mut(<span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="kw-2">mut </span>V {
         <span class="comment">// SAFETY: Already checked existence at instantiation and the only mutable reference
         // to the map is internally held.
         </span><span class="kw">unsafe </span>{ <span class="kw-2">&amp;mut </span><span class="self">self</span>.core.entries.get_unchecked_mut(<span class="self">self</span>.pos).value }
     }
 
-    <span class="doccomment">/// Overwrites the underlying map&#39;s value with this entry&#39;s value
+    <span class="doccomment">/// Overwrites the underlying map's value with this entry's value
     </span><span class="kw">pub fn </span>insert(<span class="self">self</span>, value: V) -&gt; V {
         <span class="comment">// SAFETY: Already checked existence at instantiation and the only mutable reference
         // to the map is internally held.
@@ -1994,12 +1994,12 @@
 }
 
 <span class="doccomment">/// A view into an empty slot in the underlying map
-</span><span class="kw">pub struct </span>VacantEntry&lt;<span class="lifetime">&#39;a</span>, K, V, <span class="kw">const </span>N: usize&gt; {
+</span><span class="kw">pub struct </span>VacantEntry&lt;<span class="lifetime">'a</span>, K, V, <span class="kw">const </span>N: usize&gt; {
     key: K,
     hash_val: HashValue,
-    core: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span><span class="kw-2">mut </span>CoreMap&lt;K, V, N&gt;,
+    core: <span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="kw-2">mut </span>CoreMap&lt;K, V, N&gt;,
 }
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>, K, V, <span class="kw">const </span>N: usize&gt; VacantEntry&lt;<span class="lifetime">&#39;a</span>, K, V, N&gt;
+<span class="kw">impl</span>&lt;<span class="lifetime">'a</span>, K, V, <span class="kw">const </span>N: usize&gt; VacantEntry&lt;<span class="lifetime">'a</span>, K, V, N&gt;
 <span class="kw">where
     </span>K: Eq + Hash,
 {
@@ -2015,7 +2015,7 @@
 
     <span class="doccomment">/// Inserts this entry into to underlying map, yields a mutable reference to the inserted value.
     /// If the map is at capacity the value is returned instead.
-    </span><span class="kw">pub fn </span>insert(<span class="self">self</span>, value: V) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span><span class="kw-2">mut </span>V, V&gt; {
+    </span><span class="kw">pub fn </span>insert(<span class="self">self</span>, value: V) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="kw-2">mut </span>V, V&gt; {
         <span class="kw">if </span><span class="self">self</span>.core.entries.is_full() {
             <span class="prelude-val">Err</span>(value)
         } <span class="kw">else </span>{
@@ -2043,7 +2043,7 @@
 ///
 /// # Examples
 ///
-/// Since `IndexMap` cannot be used directly, we&#39;re using its `FnvIndexMap` instantiation
+/// Since `IndexMap` cannot be used directly, we're using its `FnvIndexMap` instantiation
 /// for this example.
 ///
 /// ```
@@ -2053,32 +2053,32 @@
 /// let mut book_reviews = FnvIndexMap::&lt;_, _, 16&gt;::new();
 ///
 /// // review some books.
-/// book_reviews.insert(&quot;Adventures of Huckleberry Finn&quot;,    &quot;My favorite book.&quot;).unwrap();
-/// book_reviews.insert(&quot;Grimms&#39; Fairy Tales&quot;,               &quot;Masterpiece.&quot;).unwrap();
-/// book_reviews.insert(&quot;Pride and Prejudice&quot;,               &quot;Very enjoyable.&quot;).unwrap();
-/// book_reviews.insert(&quot;The Adventures of Sherlock Holmes&quot;, &quot;Eye lyked it alot.&quot;).unwrap();
+/// book_reviews.insert("Adventures of Huckleberry Finn",    "My favorite book.").unwrap();
+/// book_reviews.insert("Grimms' Fairy Tales",               "Masterpiece.").unwrap();
+/// book_reviews.insert("Pride and Prejudice",               "Very enjoyable.").unwrap();
+/// book_reviews.insert("The Adventures of Sherlock Holmes", "Eye lyked it alot.").unwrap();
 ///
 /// // check for a specific one.
-/// if !book_reviews.contains_key(&quot;Les Misérables&quot;) {
-///     println!(&quot;We&#39;ve got {} reviews, but Les Misérables ain&#39;t one.&quot;,
+/// if !book_reviews.contains_key("Les Misérables") {
+///     println!("We've got {} reviews, but Les Misérables ain't one.",
 ///              book_reviews.len());
 /// }
 ///
-/// // oops, this review has a lot of spelling mistakes, let&#39;s delete it.
-/// book_reviews.remove(&quot;The Adventures of Sherlock Holmes&quot;);
+/// // oops, this review has a lot of spelling mistakes, let's delete it.
+/// book_reviews.remove("The Adventures of Sherlock Holmes");
 ///
 /// // look up the values associated with some keys.
-/// let to_find = [&quot;Pride and Prejudice&quot;, &quot;Alice&#39;s Adventure in Wonderland&quot;];
+/// let to_find = ["Pride and Prejudice", "Alice's Adventure in Wonderland"];
 /// for book in &amp;to_find {
 ///     match book_reviews.get(book) {
-///         Some(review) =&gt; println!(&quot;{}: {}&quot;, book, review),
-///         None =&gt; println!(&quot;{} is unreviewed.&quot;, book)
+///         Some(review) =&gt; println!("{}: {}", book, review),
+///         None =&gt; println!("{} is unreviewed.", book)
 ///     }
 /// }
 ///
 /// // iterate over everything.
 /// for (book, review) in &amp;book_reviews {
-///     println!(&quot;{}: \&quot;{}\&quot;&quot;, book, review);
+///     println!("{}: \"{}\"", book, review);
 /// }
 /// ```
 </span><span class="kw">pub struct </span>IndexMap&lt;K, V, S, <span class="kw">const </span>N: usize&gt; {
@@ -2112,15 +2112,15 @@
     /// use heapless::FnvIndexMap;
     ///
     /// let mut map = FnvIndexMap::&lt;_, _, 16&gt;::new();
-    /// map.insert(&quot;a&quot;, 1).unwrap();
-    /// map.insert(&quot;b&quot;, 2).unwrap();
-    /// map.insert(&quot;c&quot;, 3).unwrap();
+    /// map.insert("a", 1).unwrap();
+    /// map.insert("b", 2).unwrap();
+    /// map.insert("c", 3).unwrap();
     ///
     /// for key in map.keys() {
-    ///     println!(&quot;{}&quot;, key);
+    ///     println!("{}", key);
     /// }
     /// ```
-    </span><span class="kw">pub fn </span>keys(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Keys&lt;<span class="lifetime">&#39;_</span>, K, V&gt; {
+    </span><span class="kw">pub fn </span>keys(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Keys&lt;<span class="lifetime">'_</span>, K, V&gt; {
         Keys {
             iter: <span class="self">self</span>.core.entries.iter(),
         }
@@ -2132,15 +2132,15 @@
     /// use heapless::FnvIndexMap;
     ///
     /// let mut map = FnvIndexMap::&lt;_, _, 16&gt;::new();
-    /// map.insert(&quot;a&quot;, 1).unwrap();
-    /// map.insert(&quot;b&quot;, 2).unwrap();
-    /// map.insert(&quot;c&quot;, 3).unwrap();
+    /// map.insert("a", 1).unwrap();
+    /// map.insert("b", 2).unwrap();
+    /// map.insert("c", 3).unwrap();
     ///
     /// for val in map.values() {
-    ///     println!(&quot;{}&quot;, val);
+    ///     println!("{}", val);
     /// }
     /// ```
-    </span><span class="kw">pub fn </span>values(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Values&lt;<span class="lifetime">&#39;_</span>, K, V&gt; {
+    </span><span class="kw">pub fn </span>values(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Values&lt;<span class="lifetime">'_</span>, K, V&gt; {
         Values {
             iter: <span class="self">self</span>.core.entries.iter(),
         }
@@ -2152,19 +2152,19 @@
     /// use heapless::FnvIndexMap;
     ///
     /// let mut map = FnvIndexMap::&lt;_, _, 16&gt;::new();
-    /// map.insert(&quot;a&quot;, 1).unwrap();
-    /// map.insert(&quot;b&quot;, 2).unwrap();
-    /// map.insert(&quot;c&quot;, 3).unwrap();
+    /// map.insert("a", 1).unwrap();
+    /// map.insert("b", 2).unwrap();
+    /// map.insert("c", 3).unwrap();
     ///
     /// for val in map.values_mut() {
     ///     *val += 10;
     /// }
     ///
     /// for val in map.values() {
-    ///     println!(&quot;{}&quot;, val);
+    ///     println!("{}", val);
     /// }
     /// ```
-    </span><span class="kw">pub fn </span>values_mut(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; ValuesMut&lt;<span class="lifetime">&#39;_</span>, K, V&gt; {
+    </span><span class="kw">pub fn </span>values_mut(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; ValuesMut&lt;<span class="lifetime">'_</span>, K, V&gt; {
         ValuesMut {
             iter: <span class="self">self</span>.core.entries.iter_mut(),
         }
@@ -2176,15 +2176,15 @@
     /// use heapless::FnvIndexMap;
     ///
     /// let mut map = FnvIndexMap::&lt;_, _, 16&gt;::new();
-    /// map.insert(&quot;a&quot;, 1).unwrap();
-    /// map.insert(&quot;b&quot;, 2).unwrap();
-    /// map.insert(&quot;c&quot;, 3).unwrap();
+    /// map.insert("a", 1).unwrap();
+    /// map.insert("b", 2).unwrap();
+    /// map.insert("c", 3).unwrap();
     ///
     /// for (key, val) in map.iter() {
-    ///     println!(&quot;key: {} val: {}&quot;, key, val);
+    ///     println!("key: {} val: {}", key, val);
     /// }
     /// ```
-    </span><span class="kw">pub fn </span>iter(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Iter&lt;<span class="lifetime">&#39;_</span>, K, V&gt; {
+    </span><span class="kw">pub fn </span>iter(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Iter&lt;<span class="lifetime">'_</span>, K, V&gt; {
         Iter {
             iter: <span class="self">self</span>.core.entries.iter(),
         }
@@ -2196,19 +2196,19 @@
     /// use heapless::FnvIndexMap;
     ///
     /// let mut map = FnvIndexMap::&lt;_, _, 16&gt;::new();
-    /// map.insert(&quot;a&quot;, 1).unwrap();
-    /// map.insert(&quot;b&quot;, 2).unwrap();
-    /// map.insert(&quot;c&quot;, 3).unwrap();
+    /// map.insert("a", 1).unwrap();
+    /// map.insert("b", 2).unwrap();
+    /// map.insert("c", 3).unwrap();
     ///
     /// for (_, val) in map.iter_mut() {
     ///     *val = 2;
     /// }
     ///
     /// for (key, val) in &amp;map {
-    ///     println!(&quot;key: {} val: {}&quot;, key, val);
+    ///     println!("key: {} val: {}", key, val);
     /// }
     /// ```
-    </span><span class="kw">pub fn </span>iter_mut(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; IterMut&lt;<span class="lifetime">&#39;_</span>, K, V&gt; {
+    </span><span class="kw">pub fn </span>iter_mut(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; IterMut&lt;<span class="lifetime">'_</span>, K, V&gt; {
         IterMut {
             iter: <span class="self">self</span>.core.entries.iter_mut(),
         }
@@ -2263,7 +2263,7 @@
     ///
     /// let mut a = FnvIndexMap::&lt;_, _, 16&gt;::new();
     /// assert_eq!(a.len(), 0);
-    /// a.insert(1, &quot;a&quot;).unwrap();
+    /// a.insert(1, "a").unwrap();
     /// assert_eq!(a.len(), 1);
     /// ```
     </span><span class="kw">pub fn </span>len(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; usize {
@@ -2279,7 +2279,7 @@
     ///
     /// let mut a = FnvIndexMap::&lt;_, _, 16&gt;::new();
     /// assert!(a.is_empty());
-    /// a.insert(1, &quot;a&quot;);
+    /// a.insert(1, "a");
     /// assert!(!a.is_empty());
     /// ```
     </span><span class="kw">pub fn </span>is_empty(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool {
@@ -2294,7 +2294,7 @@
     /// use heapless::FnvIndexMap;
     ///
     /// let mut a = FnvIndexMap::&lt;_, _, 16&gt;::new();
-    /// a.insert(1, &quot;a&quot;);
+    /// a.insert(1, "a");
     /// a.clear();
     /// assert!(a.is_empty());
     /// ```
@@ -2317,17 +2317,17 @@
     /// use heapless::FnvIndexMap;
     /// use heapless::Entry;
     /// let mut map = FnvIndexMap::&lt;_, _, 16&gt;::new();
-    /// if let Entry::Vacant(v) = map.entry(&quot;a&quot;) {
+    /// if let Entry::Vacant(v) = map.entry("a") {
     ///     v.insert(1).unwrap();
     /// }
-    /// if let Entry::Occupied(mut o) = map.entry(&quot;a&quot;) {
-    ///     println!(&quot;found {}&quot;, *o.get()); // Prints 1
+    /// if let Entry::Occupied(mut o) = map.entry("a") {
+    ///     println!("found {}", *o.get()); // Prints 1
     ///     o.insert(2);
     /// }
     /// // Prints 2
-    /// println!(&quot;val: {}&quot;, *map.get(&quot;a&quot;).unwrap());
+    /// println!("val: {}", *map.get("a").unwrap());
     /// ```
-    </span><span class="kw">pub fn </span>entry(<span class="kw-2">&amp;mut </span><span class="self">self</span>, key: K) -&gt; Entry&lt;<span class="lifetime">&#39;_</span>, K, V, N&gt; {
+    </span><span class="kw">pub fn </span>entry(<span class="kw-2">&amp;mut </span><span class="self">self</span>, key: K) -&gt; Entry&lt;<span class="lifetime">'_</span>, K, V, N&gt; {
         <span class="kw">let </span>hash_val = hash_with(<span class="kw-2">&amp;</span>key, <span class="kw-2">&amp;</span><span class="self">self</span>.build_hasher);
         <span class="kw">if let </span><span class="prelude-val">Some</span>((probe, pos)) = <span class="self">self</span>.core.find(hash_val, <span class="kw-2">&amp;</span>key) {
             Entry::Occupied(OccupiedEntry {
@@ -2347,7 +2347,7 @@
 
     <span class="doccomment">/// Returns a reference to the value corresponding to the key.
     ///
-    /// The key may be any borrowed form of the map&#39;s key type, but `Hash` and `Eq` on the borrowed
+    /// The key may be any borrowed form of the map's key type, but `Hash` and `Eq` on the borrowed
     /// form *must* match those for the key type.
     ///
     /// Computes in **O(1)** time (average).
@@ -2356,8 +2356,8 @@
     /// use heapless::FnvIndexMap;
     ///
     /// let mut map = FnvIndexMap::&lt;_, _, 16&gt;::new();
-    /// map.insert(1, &quot;a&quot;).unwrap();
-    /// assert_eq!(map.get(&amp;1), Some(&amp;&quot;a&quot;));
+    /// map.insert(1, "a").unwrap();
+    /// assert_eq!(map.get(&amp;1), Some(&amp;"a"));
     /// assert_eq!(map.get(&amp;2), None);
     /// ```
     </span><span class="kw">pub fn </span>get&lt;Q&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, key: <span class="kw-2">&amp;</span>Q) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>V&gt;
@@ -2371,7 +2371,7 @@
 
     <span class="doccomment">/// Returns true if the map contains a value for the specified key.
     ///
-    /// The key may be any borrowed form of the map&#39;s key type, but `Hash` and `Eq` on the borrowed
+    /// The key may be any borrowed form of the map's key type, but `Hash` and `Eq` on the borrowed
     /// form *must* match those for the key type.
     ///
     /// Computes in **O(1)** time (average).
@@ -2382,7 +2382,7 @@
     /// use heapless::FnvIndexMap;
     ///
     /// let mut map = FnvIndexMap::&lt;_, _, 8&gt;::new();
-    /// map.insert(1, &quot;a&quot;).unwrap();
+    /// map.insert(1, "a").unwrap();
     /// assert_eq!(map.contains_key(&amp;1), true);
     /// assert_eq!(map.contains_key(&amp;2), false);
     /// ```
@@ -2396,7 +2396,7 @@
 
     <span class="doccomment">/// Returns a mutable reference to the value corresponding to the key.
     ///
-    /// The key may be any borrowed form of the map&#39;s key type, but `Hash` and `Eq` on the borrowed
+    /// The key may be any borrowed form of the map's key type, but `Hash` and `Eq` on the borrowed
     /// form *must* match those for the key type.
     ///
     /// Computes in **O(1)** time (average).
@@ -2407,13 +2407,13 @@
     /// use heapless::FnvIndexMap;
     ///
     /// let mut map = FnvIndexMap::&lt;_, _, 8&gt;::new();
-    /// map.insert(1, &quot;a&quot;).unwrap();
+    /// map.insert(1, "a").unwrap();
     /// if let Some(x) = map.get_mut(&amp;1) {
-    ///     *x = &quot;b&quot;;
+    ///     *x = "b";
     /// }
-    /// assert_eq!(map[&amp;1], &quot;b&quot;);
+    /// assert_eq!(map[&amp;1], "b");
     /// ```
-    </span><span class="kw">pub fn </span>get_mut&lt;<span class="lifetime">&#39;v</span>, Q&gt;(<span class="kw-2">&amp;</span><span class="lifetime">&#39;v </span><span class="kw-2">mut </span><span class="self">self</span>, key: <span class="kw-2">&amp;</span>Q) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;v </span><span class="kw-2">mut </span>V&gt;
+    </span><span class="kw">pub fn </span>get_mut&lt;<span class="lifetime">'v</span>, Q&gt;(<span class="kw-2">&amp;</span><span class="lifetime">'v </span><span class="kw-2">mut </span><span class="self">self</span>, key: <span class="kw-2">&amp;</span>Q) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span><span class="lifetime">'v </span><span class="kw-2">mut </span>V&gt;
     <span class="kw">where
         </span>K: Borrow&lt;Q&gt;,
         Q: <span class="question-mark">?</span>Sized + Hash + Eq,
@@ -2445,12 +2445,12 @@
     /// use heapless::FnvIndexMap;
     ///
     /// let mut map = FnvIndexMap::&lt;_, _, 8&gt;::new();
-    /// assert_eq!(map.insert(37, &quot;a&quot;), Ok(None));
+    /// assert_eq!(map.insert(37, "a"), Ok(None));
     /// assert_eq!(map.is_empty(), false);
     ///
-    /// map.insert(37, &quot;b&quot;);
-    /// assert_eq!(map.insert(37, &quot;c&quot;), Ok(Some(&quot;b&quot;)));
-    /// assert_eq!(map[&amp;37], &quot;c&quot;);
+    /// map.insert(37, "b");
+    /// assert_eq!(map.insert(37, "c"), Ok(Some("b")));
+    /// assert_eq!(map[&amp;37], "c");
     /// ```
     </span><span class="kw">pub fn </span>insert(<span class="kw-2">&amp;mut </span><span class="self">self</span>, key: K, value: V) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;V&gt;, (K, V)&gt; {
         <span class="kw">let </span>hash = hash_with(<span class="kw-2">&amp;</span>key, <span class="kw-2">&amp;</span><span class="self">self</span>.build_hasher);
@@ -2470,8 +2470,8 @@
     /// use heapless::FnvIndexMap;
     ///
     /// let mut map = FnvIndexMap::&lt;_, _, 8&gt;::new();
-    /// map.insert(1, &quot;a&quot;).unwrap();
-    /// assert_eq!(map.remove(&amp;1), Some(&quot;a&quot;));
+    /// map.insert(1, "a").unwrap();
+    /// assert_eq!(map.remove(&amp;1), Some("a"));
     /// assert_eq!(map.remove(&amp;1), None);
     /// ```
     </span><span class="kw">pub fn </span>remove&lt;Q&gt;(<span class="kw-2">&amp;mut </span><span class="self">self</span>, key: <span class="kw-2">&amp;</span>Q) -&gt; <span class="prelude-ty">Option</span>&lt;V&gt;
@@ -2524,7 +2524,7 @@
     }
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>, K, Q, V, S, <span class="kw">const </span>N: usize&gt; ops::Index&lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>Q&gt; <span class="kw">for </span>IndexMap&lt;K, V, S, N&gt;
+<span class="kw">impl</span>&lt;<span class="lifetime">'a</span>, K, Q, V, S, <span class="kw">const </span>N: usize&gt; ops::Index&lt;<span class="kw-2">&amp;</span><span class="lifetime">'a </span>Q&gt; <span class="kw">for </span>IndexMap&lt;K, V, S, N&gt;
 <span class="kw">where
     </span>K: Eq + Hash + Borrow&lt;Q&gt;,
     Q: <span class="question-mark">?</span>Sized + Eq + Hash,
@@ -2533,18 +2533,18 @@
     <span class="kw">type </span>Output = V;
 
     <span class="kw">fn </span>index(<span class="kw-2">&amp;</span><span class="self">self</span>, key: <span class="kw-2">&amp;</span>Q) -&gt; <span class="kw-2">&amp;</span>V {
-        <span class="self">self</span>.get(key).expect(<span class="string">&quot;key not found&quot;</span>)
+        <span class="self">self</span>.get(key).expect(<span class="string">"key not found"</span>)
     }
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>, K, Q, V, S, <span class="kw">const </span>N: usize&gt; ops::IndexMut&lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>Q&gt; <span class="kw">for </span>IndexMap&lt;K, V, S, N&gt;
+<span class="kw">impl</span>&lt;<span class="lifetime">'a</span>, K, Q, V, S, <span class="kw">const </span>N: usize&gt; ops::IndexMut&lt;<span class="kw-2">&amp;</span><span class="lifetime">'a </span>Q&gt; <span class="kw">for </span>IndexMap&lt;K, V, S, N&gt;
 <span class="kw">where
     </span>K: Eq + Hash + Borrow&lt;Q&gt;,
     Q: <span class="question-mark">?</span>Sized + Eq + Hash,
     S: BuildHasher,
 {
     <span class="kw">fn </span>index_mut(<span class="kw-2">&amp;mut </span><span class="self">self</span>, key: <span class="kw-2">&amp;</span>Q) -&gt; <span class="kw-2">&amp;mut </span>V {
-        <span class="self">self</span>.get_mut(key).expect(<span class="string">&quot;key not found&quot;</span>)
+        <span class="self">self</span>.get_mut(key).expect(<span class="string">"key not found"</span>)
     }
 }
 
@@ -2567,7 +2567,7 @@
     </span>K: fmt::Debug,
     V: fmt::Debug,
 {
-    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; fmt::Result {
+    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter&lt;<span class="lifetime">'_</span>&gt;) -&gt; fmt::Result {
         f.debug_map().entries(<span class="self">self</span>.iter()).finish()
     }
 }
@@ -2627,7 +2627,7 @@
     }
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>, K, V, S, <span class="kw">const </span>N: usize&gt; Extend&lt;(<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>K, <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>V)&gt; <span class="kw">for </span>IndexMap&lt;K, V, S, N&gt;
+<span class="kw">impl</span>&lt;<span class="lifetime">'a</span>, K, V, S, <span class="kw">const </span>N: usize&gt; Extend&lt;(<span class="kw-2">&amp;</span><span class="lifetime">'a </span>K, <span class="kw-2">&amp;</span><span class="lifetime">'a </span>V)&gt; <span class="kw">for </span>IndexMap&lt;K, V, S, N&gt;
 <span class="kw">where
     </span>K: Eq + Hash + Copy,
     V: Copy,
@@ -2635,7 +2635,7 @@
 {
     <span class="kw">fn </span>extend&lt;I&gt;(<span class="kw-2">&amp;mut </span><span class="self">self</span>, iterable: I)
     <span class="kw">where
-        </span>I: IntoIterator&lt;Item = (<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>K, <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>V)&gt;,
+        </span>I: IntoIterator&lt;Item = (<span class="kw-2">&amp;</span><span class="lifetime">'a </span>K, <span class="kw-2">&amp;</span><span class="lifetime">'a </span>V)&gt;,
     {
         <span class="self">self</span>.extend(iterable.into_iter().map(|(<span class="kw-2">&amp;</span>key, <span class="kw-2">&amp;</span>value)| (key, value)))
     }
@@ -2680,18 +2680,18 @@
     }
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>, K, V, S, <span class="kw">const </span>N: usize&gt; IntoIterator <span class="kw">for </span><span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>IndexMap&lt;K, V, S, N&gt; {
-    <span class="kw">type </span>Item = (<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>K, <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>V);
-    <span class="kw">type </span>IntoIter = Iter&lt;<span class="lifetime">&#39;a</span>, K, V&gt;;
+<span class="kw">impl</span>&lt;<span class="lifetime">'a</span>, K, V, S, <span class="kw">const </span>N: usize&gt; IntoIterator <span class="kw">for </span><span class="kw-2">&amp;</span><span class="lifetime">'a </span>IndexMap&lt;K, V, S, N&gt; {
+    <span class="kw">type </span>Item = (<span class="kw-2">&amp;</span><span class="lifetime">'a </span>K, <span class="kw-2">&amp;</span><span class="lifetime">'a </span>V);
+    <span class="kw">type </span>IntoIter = Iter&lt;<span class="lifetime">'a</span>, K, V&gt;;
 
     <span class="kw">fn </span>into_iter(<span class="self">self</span>) -&gt; <span class="self">Self</span>::IntoIter {
         <span class="self">self</span>.iter()
     }
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>, K, V, S, <span class="kw">const </span>N: usize&gt; IntoIterator <span class="kw">for </span><span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span><span class="kw-2">mut </span>IndexMap&lt;K, V, S, N&gt; {
-    <span class="kw">type </span>Item = (<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>K, <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span><span class="kw-2">mut </span>V);
-    <span class="kw">type </span>IntoIter = IterMut&lt;<span class="lifetime">&#39;a</span>, K, V&gt;;
+<span class="kw">impl</span>&lt;<span class="lifetime">'a</span>, K, V, S, <span class="kw">const </span>N: usize&gt; IntoIterator <span class="kw">for </span><span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="kw-2">mut </span>IndexMap&lt;K, V, S, N&gt; {
+    <span class="kw">type </span>Item = (<span class="kw-2">&amp;</span><span class="lifetime">'a </span>K, <span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="kw-2">mut </span>V);
+    <span class="kw">type </span>IntoIter = IterMut&lt;<span class="lifetime">'a</span>, K, V&gt;;
 
     <span class="kw">fn </span>into_iter(<span class="self">self</span>) -&gt; <span class="self">Self</span>::IntoIter {
         <span class="self">self</span>.iter_mut()
@@ -2702,19 +2702,19 @@
 ///
 /// This `struct` is created by the [`iter`](IndexMap::iter) method on [`IndexMap`]. See its
 /// documentation for more.
-</span><span class="kw">pub struct </span>Iter&lt;<span class="lifetime">&#39;a</span>, K, V&gt; {
-    iter: slice::Iter&lt;<span class="lifetime">&#39;a</span>, Bucket&lt;K, V&gt;&gt;,
+</span><span class="kw">pub struct </span>Iter&lt;<span class="lifetime">'a</span>, K, V&gt; {
+    iter: slice::Iter&lt;<span class="lifetime">'a</span>, Bucket&lt;K, V&gt;&gt;,
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>, K, V&gt; Iterator <span class="kw">for </span>Iter&lt;<span class="lifetime">&#39;a</span>, K, V&gt; {
-    <span class="kw">type </span>Item = (<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>K, <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>V);
+<span class="kw">impl</span>&lt;<span class="lifetime">'a</span>, K, V&gt; Iterator <span class="kw">for </span>Iter&lt;<span class="lifetime">'a</span>, K, V&gt; {
+    <span class="kw">type </span>Item = (<span class="kw-2">&amp;</span><span class="lifetime">'a </span>K, <span class="kw-2">&amp;</span><span class="lifetime">'a </span>V);
 
     <span class="kw">fn </span>next(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="self">Self</span>::Item&gt; {
         <span class="self">self</span>.iter.next().map(|bucket| (<span class="kw-2">&amp;</span>bucket.key, <span class="kw-2">&amp;</span>bucket.value))
     }
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>, K, V&gt; Clone <span class="kw">for </span>Iter&lt;<span class="lifetime">&#39;a</span>, K, V&gt; {
+<span class="kw">impl</span>&lt;<span class="lifetime">'a</span>, K, V&gt; Clone <span class="kw">for </span>Iter&lt;<span class="lifetime">'a</span>, K, V&gt; {
     <span class="kw">fn </span>clone(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="self">Self </span>{
         <span class="self">Self </span>{
             iter: <span class="self">self</span>.iter.clone(),
@@ -2726,12 +2726,12 @@
 ///
 /// This `struct` is created by the [`iter_mut`](IndexMap::iter_mut) method on [`IndexMap`]. See its
 /// documentation for more.
-</span><span class="kw">pub struct </span>IterMut&lt;<span class="lifetime">&#39;a</span>, K, V&gt; {
-    iter: slice::IterMut&lt;<span class="lifetime">&#39;a</span>, Bucket&lt;K, V&gt;&gt;,
+</span><span class="kw">pub struct </span>IterMut&lt;<span class="lifetime">'a</span>, K, V&gt; {
+    iter: slice::IterMut&lt;<span class="lifetime">'a</span>, Bucket&lt;K, V&gt;&gt;,
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>, K, V&gt; Iterator <span class="kw">for </span>IterMut&lt;<span class="lifetime">&#39;a</span>, K, V&gt; {
-    <span class="kw">type </span>Item = (<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>K, <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span><span class="kw-2">mut </span>V);
+<span class="kw">impl</span>&lt;<span class="lifetime">'a</span>, K, V&gt; Iterator <span class="kw">for </span>IterMut&lt;<span class="lifetime">'a</span>, K, V&gt; {
+    <span class="kw">type </span>Item = (<span class="kw-2">&amp;</span><span class="lifetime">'a </span>K, <span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="kw-2">mut </span>V);
 
     <span class="kw">fn </span>next(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="self">Self</span>::Item&gt; {
         <span class="self">self</span>.iter
@@ -2744,12 +2744,12 @@
 ///
 /// This `struct` is created by the [`keys`](IndexMap::keys) method on [`IndexMap`]. See its
 /// documentation for more.
-</span><span class="kw">pub struct </span>Keys&lt;<span class="lifetime">&#39;a</span>, K, V&gt; {
-    iter: slice::Iter&lt;<span class="lifetime">&#39;a</span>, Bucket&lt;K, V&gt;&gt;,
+</span><span class="kw">pub struct </span>Keys&lt;<span class="lifetime">'a</span>, K, V&gt; {
+    iter: slice::Iter&lt;<span class="lifetime">'a</span>, Bucket&lt;K, V&gt;&gt;,
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>, K, V&gt; Iterator <span class="kw">for </span>Keys&lt;<span class="lifetime">&#39;a</span>, K, V&gt; {
-    <span class="kw">type </span>Item = <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>K;
+<span class="kw">impl</span>&lt;<span class="lifetime">'a</span>, K, V&gt; Iterator <span class="kw">for </span>Keys&lt;<span class="lifetime">'a</span>, K, V&gt; {
+    <span class="kw">type </span>Item = <span class="kw-2">&amp;</span><span class="lifetime">'a </span>K;
 
     <span class="kw">fn </span>next(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="self">Self</span>::Item&gt; {
         <span class="self">self</span>.iter.next().map(|bucket| <span class="kw-2">&amp;</span>bucket.key)
@@ -2760,12 +2760,12 @@
 ///
 /// This `struct` is created by the [`values`](IndexMap::values) method on [`IndexMap`]. See its
 /// documentation for more.
-</span><span class="kw">pub struct </span>Values&lt;<span class="lifetime">&#39;a</span>, K, V&gt; {
-    iter: slice::Iter&lt;<span class="lifetime">&#39;a</span>, Bucket&lt;K, V&gt;&gt;,
+</span><span class="kw">pub struct </span>Values&lt;<span class="lifetime">'a</span>, K, V&gt; {
+    iter: slice::Iter&lt;<span class="lifetime">'a</span>, Bucket&lt;K, V&gt;&gt;,
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>, K, V&gt; Iterator <span class="kw">for </span>Values&lt;<span class="lifetime">&#39;a</span>, K, V&gt; {
-    <span class="kw">type </span>Item = <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>V;
+<span class="kw">impl</span>&lt;<span class="lifetime">'a</span>, K, V&gt; Iterator <span class="kw">for </span>Values&lt;<span class="lifetime">'a</span>, K, V&gt; {
+    <span class="kw">type </span>Item = <span class="kw-2">&amp;</span><span class="lifetime">'a </span>V;
 
     <span class="kw">fn </span>next(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="self">Self</span>::Item&gt; {
         <span class="self">self</span>.iter.next().map(|bucket| <span class="kw-2">&amp;</span>bucket.value)
@@ -2776,12 +2776,12 @@
 ///
 /// This `struct` is created by the [`values_mut`](IndexMap::values_mut) method on [`IndexMap`]. See its
 /// documentation for more.
-</span><span class="kw">pub struct </span>ValuesMut&lt;<span class="lifetime">&#39;a</span>, K, V&gt; {
-    iter: slice::IterMut&lt;<span class="lifetime">&#39;a</span>, Bucket&lt;K, V&gt;&gt;,
+</span><span class="kw">pub struct </span>ValuesMut&lt;<span class="lifetime">'a</span>, K, V&gt; {
+    iter: slice::IterMut&lt;<span class="lifetime">'a</span>, Bucket&lt;K, V&gt;&gt;,
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>, K, V&gt; Iterator <span class="kw">for </span>ValuesMut&lt;<span class="lifetime">&#39;a</span>, K, V&gt; {
-    <span class="kw">type </span>Item = <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span><span class="kw-2">mut </span>V;
+<span class="kw">impl</span>&lt;<span class="lifetime">'a</span>, K, V&gt; Iterator <span class="kw">for </span>ValuesMut&lt;<span class="lifetime">'a</span>, K, V&gt; {
+    <span class="kw">type </span>Item = <span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="kw-2">mut </span>V;
 
     <span class="kw">fn </span>next(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="self">Self</span>::Item&gt; {
         <span class="self">self</span>.iter.next().map(|bucket| <span class="kw-2">&amp;mut </span>bucket.value)
@@ -2822,26 +2822,26 @@
     </span><span class="kw">fn </span>partial_eq() {
         {
             <span class="kw">let </span><span class="kw-2">mut </span>a: FnvIndexMap&lt;<span class="kw">_</span>, <span class="kw">_</span>, <span class="number">4</span>&gt; = FnvIndexMap::new();
-            a.insert(<span class="string">&quot;k1&quot;</span>, <span class="string">&quot;v1&quot;</span>).unwrap();
+            a.insert(<span class="string">"k1"</span>, <span class="string">"v1"</span>).unwrap();
 
             <span class="kw">let </span><span class="kw-2">mut </span>b: FnvIndexMap&lt;<span class="kw">_</span>, <span class="kw">_</span>, <span class="number">4</span>&gt; = FnvIndexMap::new();
-            b.insert(<span class="string">&quot;k1&quot;</span>, <span class="string">&quot;v1&quot;</span>).unwrap();
+            b.insert(<span class="string">"k1"</span>, <span class="string">"v1"</span>).unwrap();
 
             <span class="macro">assert!</span>(a == b);
 
-            b.insert(<span class="string">&quot;k2&quot;</span>, <span class="string">&quot;v2&quot;</span>).unwrap();
+            b.insert(<span class="string">"k2"</span>, <span class="string">"v2"</span>).unwrap();
 
             <span class="macro">assert!</span>(a != b);
         }
 
         {
             <span class="kw">let </span><span class="kw-2">mut </span>a: FnvIndexMap&lt;<span class="kw">_</span>, <span class="kw">_</span>, <span class="number">4</span>&gt; = FnvIndexMap::new();
-            a.insert(<span class="string">&quot;k1&quot;</span>, <span class="string">&quot;v1&quot;</span>).unwrap();
-            a.insert(<span class="string">&quot;k2&quot;</span>, <span class="string">&quot;v2&quot;</span>).unwrap();
+            a.insert(<span class="string">"k1"</span>, <span class="string">"v1"</span>).unwrap();
+            a.insert(<span class="string">"k2"</span>, <span class="string">"v2"</span>).unwrap();
 
             <span class="kw">let </span><span class="kw-2">mut </span>b: FnvIndexMap&lt;<span class="kw">_</span>, <span class="kw">_</span>, <span class="number">4</span>&gt; = FnvIndexMap::new();
-            b.insert(<span class="string">&quot;k2&quot;</span>, <span class="string">&quot;v2&quot;</span>).unwrap();
-            b.insert(<span class="string">&quot;k1&quot;</span>, <span class="string">&quot;v1&quot;</span>).unwrap();
+            b.insert(<span class="string">"k2"</span>, <span class="string">"v2"</span>).unwrap();
+            b.insert(<span class="string">"k1"</span>, <span class="string">"v1"</span>).unwrap();
 
             <span class="macro">assert!</span>(a == b);
         }
@@ -2850,10 +2850,10 @@
     <span class="attr">#[test]
     </span><span class="kw">fn </span>into_iter() {
         <span class="kw">let </span><span class="kw-2">mut </span>src: FnvIndexMap&lt;<span class="kw">_</span>, <span class="kw">_</span>, <span class="number">4</span>&gt; = FnvIndexMap::new();
-        src.insert(<span class="string">&quot;k1&quot;</span>, <span class="string">&quot;v1&quot;</span>).unwrap();
-        src.insert(<span class="string">&quot;k2&quot;</span>, <span class="string">&quot;v2&quot;</span>).unwrap();
-        src.insert(<span class="string">&quot;k3&quot;</span>, <span class="string">&quot;v3&quot;</span>).unwrap();
-        src.insert(<span class="string">&quot;k4&quot;</span>, <span class="string">&quot;v4&quot;</span>).unwrap();
+        src.insert(<span class="string">"k1"</span>, <span class="string">"v1"</span>).unwrap();
+        src.insert(<span class="string">"k2"</span>, <span class="string">"v2"</span>).unwrap();
+        src.insert(<span class="string">"k3"</span>, <span class="string">"v3"</span>).unwrap();
+        src.insert(<span class="string">"k4"</span>, <span class="string">"v4"</span>).unwrap();
         <span class="kw">let </span>clone = src.clone();
         <span class="kw">for </span>(k, v) <span class="kw">in </span>clone.into_iter() {
             <span class="macro">assert_eq!</span>(v, <span class="kw-2">*</span>src.get(k).unwrap());
@@ -2863,10 +2863,10 @@
     <span class="attr">#[test]
     </span><span class="kw">fn </span>insert_replaces_on_full_map() {
         <span class="kw">let </span><span class="kw-2">mut </span>a: FnvIndexMap&lt;<span class="kw">_</span>, <span class="kw">_</span>, <span class="number">2</span>&gt; = FnvIndexMap::new();
-        a.insert(<span class="string">&quot;k1&quot;</span>, <span class="string">&quot;v1&quot;</span>).unwrap();
-        a.insert(<span class="string">&quot;k2&quot;</span>, <span class="string">&quot;v2&quot;</span>).unwrap();
-        a.insert(<span class="string">&quot;k1&quot;</span>, <span class="string">&quot;v2&quot;</span>).unwrap();
-        <span class="macro">assert_eq!</span>(a.get(<span class="string">&quot;k1&quot;</span>), a.get(<span class="string">&quot;k2&quot;</span>));
+        a.insert(<span class="string">"k1"</span>, <span class="string">"v1"</span>).unwrap();
+        a.insert(<span class="string">"k2"</span>, <span class="string">"v2"</span>).unwrap();
+        a.insert(<span class="string">"k1"</span>, <span class="string">"v2"</span>).unwrap();
+        <span class="macro">assert_eq!</span>(a.get(<span class="string">"k1"</span>), a.get(<span class="string">"k2"</span>));
     }
 
     <span class="comment">// tests that use this constant take too long to run under miri, specially on CI, with a map of
@@ -2891,7 +2891,7 @@
         <span class="kw">let </span>entry = src.entry(key);
         <span class="kw">match </span>entry {
             Entry::Occupied(<span class="kw">_</span>) =&gt; {
-                <span class="macro">panic!</span>(<span class="string">&quot;Found entry without inserting&quot;</span>);
+                <span class="macro">panic!</span>(<span class="string">"Found entry without inserting"</span>);
             }
             Entry::Vacant(v) =&gt; {
                 <span class="macro">assert_eq!</span>(<span class="kw-2">&amp;</span>key, v.key());
@@ -2908,7 +2908,7 @@
                 <span class="macro">assert_eq!</span>(<span class="kw-2">&amp;</span>value, o.into_mut());
             }
             Entry::Vacant(<span class="kw">_</span>) =&gt; {
-                <span class="macro">panic!</span>(<span class="string">&quot;Entry not found&quot;</span>);
+                <span class="macro">panic!</span>(<span class="string">"Entry not found"</span>);
             }
         }
     }
@@ -2922,7 +2922,7 @@
         <span class="kw">let </span>entry = src.entry(key);
         <span class="kw">match </span>entry {
             Entry::Occupied(<span class="kw">_</span>) =&gt; {
-                <span class="macro">panic!</span>(<span class="string">&quot;Entry found when empty&quot;</span>);
+                <span class="macro">panic!</span>(<span class="string">"Entry found when empty"</span>);
             }
             Entry::Vacant(v) =&gt; {
                 <span class="macro">assert_eq!</span>(value, <span class="kw-2">*</span>v.insert(value).unwrap());
@@ -2945,7 +2945,7 @@
                 <span class="macro">assert_eq!</span>(value, o.insert(value2));
             }
             Entry::Vacant(<span class="kw">_</span>) =&gt; {
-                <span class="macro">panic!</span>(<span class="string">&quot;Entry not found&quot;</span>);
+                <span class="macro">panic!</span>(<span class="string">"Entry not found"</span>);
             }
         };
         <span class="macro">assert_eq!</span>(value2, <span class="kw-2">*</span>src.get(<span class="kw-2">&amp;</span>key).unwrap())
@@ -2964,7 +2964,7 @@
                 <span class="macro">assert_eq!</span>((key, value), o.remove_entry());
             }
             Entry::Vacant(<span class="kw">_</span>) =&gt; {
-                <span class="macro">panic!</span>(<span class="string">&quot;Entry not found&quot;</span>)
+                <span class="macro">panic!</span>(<span class="string">"Entry not found"</span>)
             }
         };
         <span class="macro">assert_eq!</span>(MAP_SLOTS - <span class="number">1</span>, src.len());
@@ -2983,7 +2983,7 @@
                 <span class="macro">assert_eq!</span>(value, o.remove());
             }
             Entry::Vacant(<span class="kw">_</span>) =&gt; {
-                <span class="macro">panic!</span>(<span class="string">&quot;Entry not found&quot;</span>);
+                <span class="macro">panic!</span>(<span class="string">"Entry not found"</span>);
             }
         };
         <span class="macro">assert_eq!</span>(MAP_SLOTS - <span class="number">1</span>, src.len());
@@ -3022,7 +3022,7 @@
         <span class="kw">for </span>i <span class="kw">in </span><span class="number">0</span>..MAP_SLOTS {
             <span class="kw">match </span>src.entry(i) {
                 Entry::Occupied(<span class="kw">_</span>) =&gt; {
-                    <span class="macro">panic!</span>(<span class="string">&quot;Entry found before insert&quot;</span>);
+                    <span class="macro">panic!</span>(<span class="string">"Entry found before insert"</span>);
                 }
                 Entry::Vacant(v) =&gt; {
                     <span class="macro">assert_eq!</span>(i, <span class="kw-2">*</span>v.insert(i).unwrap());
@@ -3036,7 +3036,7 @@
                     <span class="macro">assert_eq!</span>(i, o.insert(i + add_mod));
                 }
                 Entry::Vacant(<span class="kw">_</span>) =&gt; {
-                    <span class="macro">panic!</span>(<span class="string">&quot;Entry not found after insert&quot;</span>);
+                    <span class="macro">panic!</span>(<span class="string">"Entry not found after insert"</span>);
                 }
             }
         }
@@ -3046,7 +3046,7 @@
                     <span class="macro">assert_eq!</span>((i, i + add_mod), o.remove_entry());
                 }
                 Entry::Vacant(<span class="kw">_</span>) =&gt; {
-                    <span class="macro">panic!</span>(<span class="string">&quot;Entry not found after insert&quot;</span>);
+                    <span class="macro">panic!</span>(<span class="string">"Entry not found after insert"</span>);
                 }
             }
         }

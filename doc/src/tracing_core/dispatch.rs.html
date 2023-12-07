@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/git/checkouts/tracing-e9bbb56ea31f0c18/60c60be/tracing-core/src/dispatch.rs`."><title>dispatch.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-c67e44d78ab2db17.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="tracing_core" data-themes="" data-resource-suffix="" data-rustdoc-version="1.76.0-nightly (90e321d82 2023-12-02)" data-channel="nightly" data-search-js="search-5a66c239c06b3a66.js" data-settings-js="settings-fe03fdc259827cd2.js" ><script src="../../static.files/storage-fec3eaa3851e447d.js"></script><script defer src="../../static.files/src-script-3280b574d94e47b4.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-77dede896d6ac08e.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-5d8b3c7633ad77ba.css"></noscript><link rel="icon" href="https://raw.githubusercontent.com/tokio-rs/tracing/master/assets/favicon.ico"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><a class="sub-logo-container" href="../../tracing_core/index.html"><img src="https://raw.githubusercontent.com/tokio-rs/tracing/master/assets/logo-type.png" alt="tracing_core"></a><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/git/checkouts/tracing-e9bbb56ea31f0c18/60c60be/tracing-core/src/dispatch.rs`."><title>dispatch.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-c67e44d78ab2db17.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="tracing_core" data-themes="" data-resource-suffix="" data-rustdoc-version="1.76.0-nightly (e9013ac0e 2023-12-05)" data-channel="nightly" data-search-js="search-5a66c239c06b3a66.js" data-settings-js="settings-fe03fdc259827cd2.js" ><script src="../../static.files/storage-fec3eaa3851e447d.js"></script><script defer src="../../static.files/src-script-3280b574d94e47b4.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-77dede896d6ac08e.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-5d8b3c7633ad77ba.css"></noscript><link rel="icon" href="https://raw.githubusercontent.com/tokio-rs/tracing/master/assets/favicon.ico"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><a class="sub-logo-container" href="../../tracing_core/index.html"><img src="https://raw.githubusercontent.com/tokio-rs/tracing/master/assets/logo-type.png" alt="tracing_core"></a><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -1246,13 +1246,13 @@
 //! # Using the Trace Dispatcher
 //!
 //! Every thread in a program using `tracing` has a _default collector_. When
-//! events occur, or spans are created, they are dispatched to the thread&#39;s
+//! events occur, or spans are created, they are dispatched to the thread's
 //! current collector.
 //!
 //! ## Setting the Default Collector
 //!
 //! By default, the current collector is an empty implementation that does
-//! nothing. Trace data provided to this &quot;do nothing&quot; implementation is
+//! nothing. Trace data provided to this "do nothing" implementation is
 //! immediately discarded, and is not available for any purpose.
 //!
 //! To use another collector implementation, it must be set as the default.
@@ -1281,12 +1281,12 @@
 //! #   fn current_span(&amp;self) -&gt; Current { Current::unknown() }
 //! # }
 //! # impl FooCollector { fn new() -&gt; Self { FooCollector } }
-//! # #[cfg(feature = &quot;alloc&quot;)]
+//! # #[cfg(feature = "alloc")]
 //! use dispatch::Dispatch;
 //!
-//! # #[cfg(feature = &quot;alloc&quot;)]
+//! # #[cfg(feature = "alloc")]
 //! let my_collector = FooCollector::new();
-//! # #[cfg(feature = &quot;alloc&quot;)]
+//! # #[cfg(feature = "alloc")]
 //! let my_dispatch = Dispatch::new(my_collector);
 //! ```
 //! Then, we can use [`with_default`] to set our `Dispatch` as the default for
@@ -1309,19 +1309,19 @@
 //! # }
 //! # impl FooCollector { fn new() -&gt; Self { FooCollector } }
 //! # let _my_collector = FooCollector::new();
-//! # #[cfg(feature = &quot;std&quot;)]
+//! # #[cfg(feature = "std")]
 //! # let my_dispatch = dispatch::Dispatch::new(_my_collector);
 //! // no default collector
 //!
-//! # #[cfg(feature = &quot;std&quot;)]
+//! # #[cfg(feature = "std")]
 //! dispatch::with_default(&amp;my_dispatch, || {
 //!     // my_collector is the default
 //! });
 //!
 //! // no default collector again
 //! ```
-//! It&#39;s important to note that `with_default` will not propagate the current
-//! thread&#39;s default collector to any threads spawned within the `with_default`
+//! It's important to note that `with_default` will not propagate the current
+//! thread's default collector to any threads spawned within the `with_default`
 //! block. To propagate the default collector to new threads, either use
 //! `with_default` from the new thread, or use `set_global_default`.
 //!
@@ -1345,23 +1345,23 @@
 //! #   fn current_span(&amp;self) -&gt; Current { Current::unknown() }
 //! # }
 //! # impl FooCollector { fn new() -&gt; Self { FooCollector } }
-//! # #[cfg(feature = &quot;std&quot;)]
+//! # #[cfg(feature = "std")]
 //! # let my_collector = FooCollector::new();
-//! # #[cfg(feature = &quot;std&quot;)]
+//! # #[cfg(feature = "std")]
 //! # let my_dispatch = dispatch::Dispatch::new(my_collector);
 //! // no default collector
 //!
-//! # #[cfg(feature = &quot;std&quot;)]
+//! # #[cfg(feature = "std")]
 //! dispatch::set_global_default(my_dispatch)
 //!     // `set_global_default` will return an error if the global default
 //!     // collector has already been set.
-//!     .expect(&quot;global default was already set!&quot;);
+//!     .expect("global default was already set!");
 //!
 //! // `my_collector` is now the default
 //! ```
 //!
-//! &lt;div class=&quot;example-wrap&quot; style=&quot;display:inline-block&quot;&gt;
-//! &lt;pre class=&quot;ignore&quot; style=&quot;white-space:normal;font:inherit;&quot;&gt;
+//! &lt;div class="example-wrap" style="display:inline-block"&gt;
+//! &lt;pre class="ignore" style="white-space:normal;font:inherit;"&gt;
 //!
 //! **Note**: the thread-local scoped dispatcher ([`with_default`]) requires the
 //! Rust standard library. `no_std` users should use [`set_global_default`] instead.
@@ -1370,7 +1370,7 @@
 //!
 //! ## Accessing the Default Collector
 //!
-//! A thread&#39;s current default collector can be accessed using the
+//! A thread's current default collector can be accessed using the
 //! [`get_default`] function, which executes a closure with a reference to the
 //! currently default `Dispatch`. This is used primarily by `tracing`
 //! instrumentation.
@@ -1385,26 +1385,26 @@
     sync::atomic::{AtomicBool, AtomicUsize, Ordering},
 };
 
-<span class="attr">#[cfg(feature = <span class="string">&quot;std&quot;</span>)]
+<span class="attr">#[cfg(feature = <span class="string">"std"</span>)]
 </span><span class="kw">use </span>std::{
     cell::{Cell, RefCell, RefMut},
     error,
 };
 
-<span class="attr">#[cfg(feature = <span class="string">&quot;alloc&quot;</span>)]
+<span class="attr">#[cfg(feature = <span class="string">"alloc"</span>)]
 </span><span class="kw">use </span>alloc::sync::{Arc, Weak};
 
-<span class="attr">#[cfg(feature = <span class="string">&quot;alloc&quot;</span>)]
+<span class="attr">#[cfg(feature = <span class="string">"alloc"</span>)]
 </span><span class="kw">use </span>core::ops::Deref;
 
 <span class="doccomment">/// `Dispatch` trace data to a [`Collect`].
 </span><span class="attr">#[derive(Clone)]
 </span><span class="kw">pub struct </span>Dispatch {
-    <span class="attr">#[cfg(feature = <span class="string">&quot;alloc&quot;</span>)]
+    <span class="attr">#[cfg(feature = <span class="string">"alloc"</span>)]
     </span>collector: Kind&lt;Arc&lt;<span class="kw">dyn </span>Collect + Send + Sync&gt;&gt;,
 
-    <span class="attr">#[cfg(not(feature = <span class="string">&quot;alloc&quot;</span>))]
-    </span>collector: <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>(<span class="kw">dyn </span>Collect + Send + Sync),
+    <span class="attr">#[cfg(not(feature = <span class="string">"alloc"</span>))]
+    </span>collector: <span class="kw-2">&amp;</span><span class="lifetime">'static </span>(<span class="kw">dyn </span>Collect + Send + Sync),
 }
 
 <span class="doccomment">/// `WeakDispatch` is a version of [`Dispatch`] that holds a non-owning reference
@@ -1428,21 +1428,21 @@
 /// [here]: Collect#avoiding-memory-leaks
 </span><span class="attr">#[derive(Clone)]
 </span><span class="kw">pub struct </span>WeakDispatch {
-    <span class="attr">#[cfg(feature = <span class="string">&quot;alloc&quot;</span>)]
+    <span class="attr">#[cfg(feature = <span class="string">"alloc"</span>)]
     </span>collector: Kind&lt;Weak&lt;<span class="kw">dyn </span>Collect + Send + Sync&gt;&gt;,
 
-    <span class="attr">#[cfg(not(feature = <span class="string">&quot;alloc&quot;</span>))]
-    </span>collector: <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>(<span class="kw">dyn </span>Collect + Send + Sync),
+    <span class="attr">#[cfg(not(feature = <span class="string">"alloc"</span>))]
+    </span>collector: <span class="kw-2">&amp;</span><span class="lifetime">'static </span>(<span class="kw">dyn </span>Collect + Send + Sync),
 }
 
-<span class="attr">#[cfg(feature = <span class="string">&quot;alloc&quot;</span>)]
+<span class="attr">#[cfg(feature = <span class="string">"alloc"</span>)]
 #[derive(Clone)]
 </span><span class="kw">enum </span>Kind&lt;T&gt; {
-    Global(<span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>(<span class="kw">dyn </span>Collect + Send + Sync)),
+    Global(<span class="kw-2">&amp;</span><span class="lifetime">'static </span>(<span class="kw">dyn </span>Collect + Send + Sync)),
     Scoped(T),
 }
 
-<span class="attr">#[cfg(feature = <span class="string">&quot;std&quot;</span>)]
+<span class="attr">#[cfg(feature = <span class="string">"std"</span>)]
 </span><span class="macro">thread_local! </span>{
     <span class="kw">static </span>CURRENT_STATE: State = State {
         default: RefCell::new(<span class="prelude-val">None</span>),
@@ -1453,7 +1453,7 @@
 <span class="kw">static </span>EXISTS: AtomicBool = AtomicBool::new(<span class="bool-val">false</span>);
 <span class="kw">static </span>GLOBAL_INIT: AtomicUsize = AtomicUsize::new(UNINITIALIZED);
 
-<span class="attr">#[cfg(feature = <span class="string">&quot;std&quot;</span>)]
+<span class="attr">#[cfg(feature = <span class="string">"std"</span>)]
 </span><span class="kw">static </span>SCOPED_COUNT: AtomicUsize = AtomicUsize::new(<span class="number">0</span>);
 
 <span class="kw">const </span>UNINITIALIZED: usize = <span class="number">0</span>;
@@ -1461,28 +1461,28 @@
 <span class="kw">const </span>INITIALIZED: usize = <span class="number">2</span>;
 
 <span class="kw">static </span><span class="kw-2">mut </span>GLOBAL_DISPATCH: Dispatch = Dispatch {
-    <span class="attr">#[cfg(feature = <span class="string">&quot;alloc&quot;</span>)]
+    <span class="attr">#[cfg(feature = <span class="string">"alloc"</span>)]
     </span>collector: Kind::Global(<span class="kw-2">&amp;</span>NO_COLLECTOR),
-    <span class="attr">#[cfg(not(feature = <span class="string">&quot;alloc&quot;</span>))]
+    <span class="attr">#[cfg(not(feature = <span class="string">"alloc"</span>))]
     </span>collector: <span class="kw-2">&amp;</span>NO_COLLECTOR,
 };
 <span class="kw">static </span>NONE: Dispatch = Dispatch {
-    <span class="attr">#[cfg(feature = <span class="string">&quot;alloc&quot;</span>)]
+    <span class="attr">#[cfg(feature = <span class="string">"alloc"</span>)]
     </span>collector: Kind::Global(<span class="kw-2">&amp;</span>NO_COLLECTOR),
-    <span class="attr">#[cfg(not(feature = <span class="string">&quot;alloc&quot;</span>))]
+    <span class="attr">#[cfg(not(feature = <span class="string">"alloc"</span>))]
     </span>collector: <span class="kw-2">&amp;</span>NO_COLLECTOR,
 };
 <span class="kw">static </span>NO_COLLECTOR: NoCollector = NoCollector::new();
 
 <span class="doccomment">/// The dispatch state of a thread.
-</span><span class="attr">#[cfg(feature = <span class="string">&quot;std&quot;</span>)]
+</span><span class="attr">#[cfg(feature = <span class="string">"std"</span>)]
 </span><span class="kw">struct </span>State {
-    <span class="doccomment">/// This thread&#39;s current default dispatcher.
+    <span class="doccomment">/// This thread's current default dispatcher.
     </span>default: RefCell&lt;<span class="prelude-ty">Option</span>&lt;Dispatch&gt;&gt;,
     <span class="doccomment">/// Whether or not we can currently begin dispatching a trace event.
     ///
     /// This is set to `false` when functions such as `enter`, `exit`, `event`,
-    /// and `new_span` are called on this thread&#39;s default dispatcher, to
+    /// and `new_span` are called on this thread's default dispatcher, to
     /// prevent further trace events triggered inside those functions from
     /// creating an infinite recursion. When we finish handling a dispatch, this
     /// is set back to `true`.
@@ -1492,13 +1492,13 @@
 <span class="doccomment">/// While this guard is active, additional calls to collector functions on
 /// the default dispatcher will not be able to access the dispatch context.
 /// Dropping the guard will allow the dispatch context to be re-entered.
-</span><span class="attr">#[cfg(feature = <span class="string">&quot;std&quot;</span>)]
-</span><span class="kw">struct </span>Entered&lt;<span class="lifetime">&#39;a</span>&gt;(<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>State);
+</span><span class="attr">#[cfg(feature = <span class="string">"std"</span>)]
+</span><span class="kw">struct </span>Entered&lt;<span class="lifetime">'a</span>&gt;(<span class="kw-2">&amp;</span><span class="lifetime">'a </span>State);
 
 <span class="doccomment">/// A guard that resets the current default dispatcher to the prior
 /// default dispatcher when dropped.
-</span><span class="attr">#[cfg(feature = <span class="string">&quot;std&quot;</span>)]
-#[cfg_attr(docsrs, doc(cfg(feature = <span class="string">&quot;std&quot;</span>)))]
+</span><span class="attr">#[cfg(feature = <span class="string">"std"</span>)]
+#[cfg_attr(docsrs, doc(cfg(feature = <span class="string">"std"</span>)))]
 #[derive(Debug)]
 </span><span class="kw">pub struct </span>DefaultGuard(<span class="prelude-ty">Option</span>&lt;Dispatch&gt;);
 
@@ -1507,8 +1507,8 @@
 /// The default dispatcher is used when creating a new [span] or
 /// [`Event`].
 ///
-/// &lt;div class=&quot;example-wrap&quot; style=&quot;display:inline-block&quot;&gt;
-/// &lt;pre class=&quot;ignore&quot; style=&quot;white-space:normal;font:inherit;&quot;&gt;
+/// &lt;div class="example-wrap" style="display:inline-block"&gt;
+/// &lt;pre class="ignore" style="white-space:normal;font:inherit;"&gt;
 /// &lt;strong&gt;Note&lt;/strong&gt;: This function required the Rust standard library.
 /// &lt;!-- hack: this whitespace makes rustdoc interpret the next line as markdown again --&gt;
 ///
@@ -1518,8 +1518,8 @@
 ///
 /// [span]: super::span
 /// [`Event`]: super::event::Event
-</span><span class="attr">#[cfg(feature = <span class="string">&quot;std&quot;</span>)]
-#[cfg_attr(docsrs, doc(cfg(feature = <span class="string">&quot;std&quot;</span>)))]
+</span><span class="attr">#[cfg(feature = <span class="string">"std"</span>)]
+#[cfg_attr(docsrs, doc(cfg(feature = <span class="string">"std"</span>)))]
 </span><span class="kw">pub fn </span>with_default&lt;T&gt;(dispatcher: <span class="kw-2">&amp;</span>Dispatch, f: <span class="kw">impl </span>FnOnce() -&gt; T) -&gt; T {
     <span class="comment">// When this guard is dropped, the default dispatcher will be reset to the
     // prior default. Using this (rather than simply resetting after calling
@@ -1532,16 +1532,16 @@
 <span class="doccomment">/// Sets the dispatch as the default dispatch for the duration of the lifetime
 /// of the returned DefaultGuard
 ///
-/// &lt;div class=&quot;example-wrap&quot; style=&quot;display:inline-block&quot;&gt;
-/// &lt;pre class=&quot;ignore&quot; style=&quot;white-space:normal;font:inherit;&quot;&gt;
+/// &lt;div class="example-wrap" style="display:inline-block"&gt;
+/// &lt;pre class="ignore" style="white-space:normal;font:inherit;"&gt;
 ///
 /// **Note**: This function required the Rust standard library.
 /// `no_std` users should use [`set_global_default`] instead.
 ///
 /// &lt;/pre&gt;&lt;/div&gt;
-</span><span class="attr">#[cfg(feature = <span class="string">&quot;std&quot;</span>)]
-#[cfg_attr(docsrs, doc(cfg(feature = <span class="string">&quot;std&quot;</span>)))]
-#[must_use = <span class="string">&quot;Dropping the guard unregisters the dispatcher.&quot;</span>]
+</span><span class="attr">#[cfg(feature = <span class="string">"std"</span>)]
+#[cfg_attr(docsrs, doc(cfg(feature = <span class="string">"std"</span>)))]
+#[must_use = <span class="string">"Dropping the guard unregisters the dispatcher."</span>]
 </span><span class="kw">pub fn </span>set_default(dispatcher: <span class="kw-2">&amp;</span>Dispatch) -&gt; DefaultGuard {
     <span class="comment">// When this guard is dropped, the default dispatcher will be reset to the
     // prior default. Using this ensures that we always reset to the prior
@@ -1557,7 +1557,7 @@
 /// Returns `Err` if the global default has already been set.
 ///
 ///
-/// &lt;div class=&quot;example-wrap&quot; style=&quot;display:inline-block&quot;&gt;&lt;pre class=&quot;compile_fail&quot; style=&quot;white-space:normal;font:inherit;&quot;&gt;
+/// &lt;div class="example-wrap" style="display:inline-block"&gt;&lt;pre class="compile_fail" style="white-space:normal;font:inherit;"&gt;
 /// &lt;strong&gt;Warning&lt;/strong&gt;: In general, libraries should &lt;em&gt;not&lt;/em&gt; call
 /// &lt;code&gt;set_global_default()&lt;/code&gt;! Doing so will cause conflicts when
 /// executables that depend on the library try to set the default collector later.
@@ -1577,7 +1577,7 @@
         )
         .is_ok()
     {
-        <span class="attr">#[cfg(feature = <span class="string">&quot;alloc&quot;</span>)]
+        <span class="attr">#[cfg(feature = <span class="string">"alloc"</span>)]
         </span><span class="kw">let </span>collector = {
             <span class="kw">let </span>collector = <span class="kw">match </span>dispatcher.collector {
                 Kind::Global(s) =&gt; s,
@@ -1590,7 +1590,7 @@
             Kind::Global(collector)
         };
 
-        <span class="attr">#[cfg(not(feature = <span class="string">&quot;alloc&quot;</span>))]
+        <span class="attr">#[cfg(not(feature = <span class="string">"alloc"</span>))]
         </span><span class="kw">let </span>collector = dispatcher.collector;
 
         <span class="kw">unsafe </span>{
@@ -1620,35 +1620,35 @@
 }
 
 <span class="kw">impl </span>fmt::Debug <span class="kw">for </span>SetGlobalDefaultError {
-    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; fmt::Result {
-        f.debug_tuple(<span class="string">&quot;SetGlobalDefaultError&quot;</span>)
+    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter&lt;<span class="lifetime">'_</span>&gt;) -&gt; fmt::Result {
+        f.debug_tuple(<span class="string">"SetGlobalDefaultError"</span>)
             .field(<span class="kw-2">&amp;</span><span class="self">Self</span>::MESSAGE)
             .finish()
     }
 }
 
 <span class="kw">impl </span>fmt::Display <span class="kw">for </span>SetGlobalDefaultError {
-    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; fmt::Result {
+    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter&lt;<span class="lifetime">'_</span>&gt;) -&gt; fmt::Result {
         f.pad(<span class="self">Self</span>::MESSAGE)
     }
 }
 
-<span class="attr">#[cfg(feature = <span class="string">&quot;std&quot;</span>)]
-#[cfg_attr(docsrs, doc(cfg(feature = <span class="string">&quot;std&quot;</span>)))]
+<span class="attr">#[cfg(feature = <span class="string">"std"</span>)]
+#[cfg_attr(docsrs, doc(cfg(feature = <span class="string">"std"</span>)))]
 </span><span class="kw">impl </span>error::Error <span class="kw">for </span>SetGlobalDefaultError {}
 
 <span class="kw">impl </span>SetGlobalDefaultError {
-    <span class="kw">const </span>MESSAGE: <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>str = <span class="string">&quot;a global default trace dispatcher has already been set&quot;</span>;
+    <span class="kw">const </span>MESSAGE: <span class="kw-2">&amp;</span><span class="lifetime">'static </span>str = <span class="string">"a global default trace dispatcher has already been set"</span>;
 }
 
-<span class="doccomment">/// Executes a closure with a reference to this thread&#39;s current [dispatcher].
+<span class="doccomment">/// Executes a closure with a reference to this thread's current [dispatcher].
 ///
 /// Note that calls to `get_default` should not be nested; if this function is
 /// called while inside of another `get_default`, that closure will be provided
 /// with `Dispatch::none` rather than the previously set dispatcher.
 ///
 /// [dispatcher]: super::dispatch::Dispatch
-</span><span class="attr">#[cfg(feature = <span class="string">&quot;std&quot;</span>)]
+</span><span class="attr">#[cfg(feature = <span class="string">"std"</span>)]
 #[inline(always)]
 </span><span class="kw">pub fn </span>get_default&lt;T, F&gt;(<span class="kw-2">mut </span>f: F) -&gt; T
 <span class="kw">where
@@ -1663,7 +1663,7 @@
     get_default_slow(f)
 }
 
-<span class="attr">#[cfg(feature = <span class="string">&quot;std&quot;</span>)]
+<span class="attr">#[cfg(feature = <span class="string">"std"</span>)]
 #[inline(never)]
 </span><span class="kw">fn </span>get_default_slow&lt;T, F&gt;(<span class="kw-2">mut </span>f: F) -&gt; T
 <span class="kw">where
@@ -1672,8 +1672,8 @@
     <span class="comment">// While this guard is active, additional calls to collector functions on
     // the default dispatcher will not be able to access the dispatch context.
     // Dropping the guard will allow the dispatch context to be re-entered.
-    </span><span class="kw">struct </span>Entered&lt;<span class="lifetime">&#39;a</span>&gt;(<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>Cell&lt;bool&gt;);
-    <span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>&gt; Drop <span class="kw">for </span>Entered&lt;<span class="lifetime">&#39;a</span>&gt; {
+    </span><span class="kw">struct </span>Entered&lt;<span class="lifetime">'a</span>&gt;(<span class="kw-2">&amp;</span><span class="lifetime">'a </span>Cell&lt;bool&gt;);
+    <span class="kw">impl</span>&lt;<span class="lifetime">'a</span>&gt; Drop <span class="kw">for </span>Entered&lt;<span class="lifetime">'a</span>&gt; {
         <span class="attr">#[inline]
         </span><span class="kw">fn </span>drop(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {
             <span class="self">self</span>.<span class="number">0</span>.set(<span class="bool-val">true</span>);
@@ -1688,7 +1688,7 @@
                 <span class="kw">let </span><span class="kw-2">mut </span>default = state.default.borrow_mut();
                 <span class="kw">let </span>default = default
                     <span class="comment">// if the local default for this thread has never been set,
-                    // populate it with the global default, so we don&#39;t have to
+                    // populate it with the global default, so we don't have to
                     // keep getting the global on every `get_default_slow` call.
                     </span>.get_or_insert_with(|| get_global().clone());
 
@@ -1700,14 +1700,14 @@
         .unwrap_or_else(|<span class="kw">_</span>| f(<span class="kw-2">&amp;</span>Dispatch::none()))
 }
 
-<span class="doccomment">/// Executes a closure with a reference to this thread&#39;s current [dispatcher].
+<span class="doccomment">/// Executes a closure with a reference to this thread's current [dispatcher].
 ///
 /// Note that calls to `get_default` should not be nested; if this function is
 /// called while inside of another `get_default`, that closure will be provided
 /// with `Dispatch::none` rather than the previously set dispatcher.
 ///
 /// [dispatcher]: super::dispatcher::Dispatch
-</span><span class="attr">#[cfg(feature = <span class="string">&quot;std&quot;</span>)]
+</span><span class="attr">#[cfg(feature = <span class="string">"std"</span>)]
 #[doc(hidden)]
 #[inline(never)]
 </span><span class="kw">pub fn </span>get_current&lt;T&gt;(f: <span class="kw">impl </span>FnOnce(<span class="kw-2">&amp;</span>Dispatch) -&gt; T) -&gt; <span class="prelude-ty">Option</span>&lt;T&gt; {
@@ -1722,7 +1722,7 @@
 <span class="doccomment">/// Executes a closure with a reference to the current [dispatcher].
 ///
 /// [dispatcher]: super::dispatcher::Dispatch
-</span><span class="attr">#[cfg(not(feature = <span class="string">&quot;std&quot;</span>))]
+</span><span class="attr">#[cfg(not(feature = <span class="string">"std"</span>))]
 #[doc(hidden)]
 </span><span class="kw">pub fn </span>get_current&lt;T&gt;(f: <span class="kw">impl </span>FnOnce(<span class="kw-2">&amp;</span>Dispatch) -&gt; T) -&gt; <span class="prelude-ty">Option</span>&lt;T&gt; {
     <span class="prelude-val">Some</span>(f(<span class="kw-2">&amp;</span>get_global()))
@@ -1731,7 +1731,7 @@
 <span class="doccomment">/// Executes a closure with a reference to the current [dispatcher].
 ///
 /// [dispatcher]: super::dispatcher::Dispatch
-</span><span class="attr">#[cfg(not(feature = <span class="string">&quot;std&quot;</span>))]
+</span><span class="attr">#[cfg(not(feature = <span class="string">"std"</span>))]
 </span><span class="kw">pub fn </span>get_default&lt;T, F&gt;(<span class="kw-2">mut </span>f: F) -&gt; T
 <span class="kw">where
     </span>F: FnMut(<span class="kw-2">&amp;</span>Dispatch) -&gt; T,
@@ -1740,7 +1740,7 @@
 }
 
 <span class="attr">#[inline(always)]
-</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>get_global() -&gt; <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>Dispatch {
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>get_global() -&gt; <span class="kw-2">&amp;</span><span class="lifetime">'static </span>Dispatch {
     <span class="kw">if </span>GLOBAL_INIT.load(Ordering::Acquire) != INITIALIZED {
         <span class="kw">return </span><span class="kw-2">&amp;</span>NONE;
     }
@@ -1751,7 +1751,7 @@
     }
 }
 
-<span class="attr">#[cfg(feature = <span class="string">&quot;std&quot;</span>)]
+<span class="attr">#[cfg(feature = <span class="string">"std"</span>)]
 </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">struct </span>Registrar(Kind&lt;Weak&lt;<span class="kw">dyn </span>Collect + Send + Sync&gt;&gt;);
 
 <span class="kw">impl </span>Dispatch {
@@ -1759,9 +1759,9 @@
     </span><span class="attr">#[inline]
     </span><span class="kw">pub fn </span>none() -&gt; <span class="self">Self </span>{
         Dispatch {
-            <span class="attr">#[cfg(feature = <span class="string">&quot;alloc&quot;</span>)]
+            <span class="attr">#[cfg(feature = <span class="string">"alloc"</span>)]
             </span>collector: Kind::Global(<span class="kw-2">&amp;</span>NO_COLLECTOR),
-            <span class="attr">#[cfg(not(feature = <span class="string">&quot;alloc&quot;</span>))]
+            <span class="attr">#[cfg(not(feature = <span class="string">"alloc"</span>))]
             </span>collector: <span class="kw-2">&amp;</span>NO_COLLECTOR,
         }
     }
@@ -1769,11 +1769,11 @@
     <span class="doccomment">/// Returns a `Dispatch` that forwards to the given [`Collect`].
     ///
     /// [`Collect`]: super::collect::Collect
-    </span><span class="attr">#[cfg(feature = <span class="string">&quot;alloc&quot;</span>)]
-    #[cfg_attr(docsrs, doc(cfg(any(feature = <span class="string">&quot;std&quot;</span>, feature = <span class="string">&quot;alloc&quot;</span>))))]
+    </span><span class="attr">#[cfg(feature = <span class="string">"alloc"</span>)]
+    #[cfg_attr(docsrs, doc(cfg(any(feature = <span class="string">"std"</span>, feature = <span class="string">"alloc"</span>))))]
     </span><span class="kw">pub fn </span>new&lt;C&gt;(collector: C) -&gt; <span class="self">Self
     </span><span class="kw">where
-        </span>C: Collect + Send + Sync + <span class="lifetime">&#39;static</span>,
+        </span>C: Collect + Send + Sync + <span class="lifetime">'static</span>,
     {
         <span class="kw">let </span>me = Dispatch {
             collector: Kind::Scoped(Arc::new(collector)),
@@ -1818,7 +1818,7 @@
     ///     let dispatch = Dispatch::from_static(&amp;COLLECTOR);
     ///
     ///     dispatch::set_global_default(dispatch)
-    ///         .expect(&quot;no global default collector should have been set previously!&quot;);
+    ///         .expect("no global default collector should have been set previously!");
     /// }
     /// ```
     ///
@@ -1832,12 +1832,12 @@
     ///
     /// [collector]: super::collect::Collect
     /// [`once_cell`]: https://crates.io/crates/once_cell
-    </span><span class="kw">pub fn </span>from_static(collector: <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>(<span class="kw">dyn </span>Collect + Send + Sync)) -&gt; <span class="self">Self </span>{
-        <span class="attr">#[cfg(feature = <span class="string">&quot;alloc&quot;</span>)]
+    </span><span class="kw">pub fn </span>from_static(collector: <span class="kw-2">&amp;</span><span class="lifetime">'static </span>(<span class="kw">dyn </span>Collect + Send + Sync)) -&gt; <span class="self">Self </span>{
+        <span class="attr">#[cfg(feature = <span class="string">"alloc"</span>)]
         </span><span class="kw">let </span>me = <span class="self">Self </span>{
             collector: Kind::Global(collector),
         };
-        <span class="attr">#[cfg(not(feature = <span class="string">&quot;alloc&quot;</span>))]
+        <span class="attr">#[cfg(not(feature = <span class="string">"alloc"</span>))]
         </span><span class="kw">let </span>me = <span class="self">Self </span>{ collector };
         <span class="kw">crate</span>::callsite::register_dispatch(<span class="kw-2">&amp;</span>me);
         me
@@ -1848,7 +1848,7 @@
     /// A [`WeakDispatch`] is similar to a [`Dispatch`], but it does not prevent
     /// the underlying [collector] from being dropped. Instead, it only permits
     /// access while other references to the collector exist. This is equivalent
-    /// to the standard library&#39;s [`Arc::downgrade`] method, but for `Dispatch`
+    /// to the standard library's [`Arc::downgrade`] method, but for `Dispatch`
     /// rather than `Arc`.
     ///
     /// The primary use for creating a [`WeakDispatch`] is to allow a collector
@@ -1859,18 +1859,18 @@
     /// [`Arc::downgrade`]: std::sync::Arc::downgrade
     /// [here]: Collect#avoiding-memory-leaks
     </span><span class="kw">pub fn </span>downgrade(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; WeakDispatch {
-        <span class="attr">#[cfg(feature = <span class="string">&quot;alloc&quot;</span>)]
+        <span class="attr">#[cfg(feature = <span class="string">"alloc"</span>)]
         </span><span class="kw">let </span>collector = <span class="kw">match </span><span class="kw-2">&amp;</span><span class="self">self</span>.collector {
             Kind::Global(dispatch) =&gt; Kind::Global(<span class="kw-2">*</span>dispatch),
             Kind::Scoped(dispatch) =&gt; Kind::Scoped(Arc::downgrade(dispatch)),
         };
-        <span class="attr">#[cfg(not(feature = <span class="string">&quot;alloc&quot;</span>))]
+        <span class="attr">#[cfg(not(feature = <span class="string">"alloc"</span>))]
         </span><span class="kw">let </span>collector = <span class="self">self</span>.collector;
 
         WeakDispatch { collector }
     }
 
-    <span class="attr">#[cfg(feature = <span class="string">&quot;std&quot;</span>)]
+    <span class="attr">#[cfg(feature = <span class="string">"std"</span>)]
     </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>registrar(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Registrar {
         Registrar(<span class="kw">match </span><span class="self">self</span>.collector {
             Kind::Scoped(<span class="kw-2">ref </span>s) =&gt; Kind::Scoped(Arc::downgrade(s)),
@@ -1879,7 +1879,7 @@
     }
 
     <span class="attr">#[inline(always)]
-    #[cfg(feature = <span class="string">&quot;alloc&quot;</span>)]
+    #[cfg(feature = <span class="string">"alloc"</span>)]
     </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>collector(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>(<span class="kw">dyn </span>Collect + Send + Sync) {
         <span class="kw">match </span><span class="self">self</span>.collector {
             Kind::Scoped(<span class="kw-2">ref </span>s) =&gt; Arc::deref(s),
@@ -1888,7 +1888,7 @@
     }
 
     <span class="attr">#[inline(always)]
-    #[cfg(not(feature = <span class="string">&quot;alloc&quot;</span>))]
+    #[cfg(not(feature = <span class="string">"alloc"</span>))]
     </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>collector(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>(<span class="kw">dyn </span>Collect + Send + Sync) {
         <span class="self">self</span>.collector
     }
@@ -1902,7 +1902,7 @@
     /// [`Collect`]: super::collect::Collect
     /// [`register_callsite`]: super::collect::Collect::register_callsite
     </span><span class="attr">#[inline]
-    </span><span class="kw">pub fn </span>register_callsite(<span class="kw-2">&amp;</span><span class="self">self</span>, metadata: <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>Metadata&lt;<span class="lifetime">&#39;static</span>&gt;) -&gt; collect::Interest {
+    </span><span class="kw">pub fn </span>register_callsite(<span class="kw-2">&amp;</span><span class="self">self</span>, metadata: <span class="kw-2">&amp;</span><span class="lifetime">'static </span>Metadata&lt;<span class="lifetime">'static</span>&gt;) -&gt; collect::Interest {
         <span class="self">self</span>.collector().register_callsite(metadata)
     }
 
@@ -1933,7 +1933,7 @@
     /// [`Collect`]: super::collect::Collect
     /// [`new_span`]: super::collect::Collect::new_span
     </span><span class="attr">#[inline]
-    </span><span class="kw">pub fn </span>new_span(<span class="kw-2">&amp;</span><span class="self">self</span>, span: <span class="kw-2">&amp;</span>span::Attributes&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; span::Id {
+    </span><span class="kw">pub fn </span>new_span(<span class="kw-2">&amp;</span><span class="self">self</span>, span: <span class="kw-2">&amp;</span>span::Attributes&lt;<span class="lifetime">'_</span>&gt;) -&gt; span::Id {
         <span class="self">self</span>.collector().new_span(span)
     }
 
@@ -1945,7 +1945,7 @@
     /// [`Collect`]: super::collect::Collect
     /// [`record`]: super::collect::Collect::record
     </span><span class="attr">#[inline]
-    </span><span class="kw">pub fn </span>record(<span class="kw-2">&amp;</span><span class="self">self</span>, span: <span class="kw-2">&amp;</span>span::Id, values: <span class="kw-2">&amp;</span>span::Record&lt;<span class="lifetime">&#39;_</span>&gt;) {
+    </span><span class="kw">pub fn </span>record(<span class="kw-2">&amp;</span><span class="self">self</span>, span: <span class="kw-2">&amp;</span>span::Id, values: <span class="kw-2">&amp;</span>span::Record&lt;<span class="lifetime">'_</span>&gt;) {
         <span class="self">self</span>.collector().record(span, values)
     }
 
@@ -1972,7 +1972,7 @@
     /// [`Collect`]: super::collect::Collect
     /// [`enabled`]: super::collect::Collect::enabled
     </span><span class="attr">#[inline]
-    </span><span class="kw">pub fn </span>enabled(<span class="kw-2">&amp;</span><span class="self">self</span>, metadata: <span class="kw-2">&amp;</span>Metadata&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; bool {
+    </span><span class="kw">pub fn </span>enabled(<span class="kw-2">&amp;</span><span class="self">self</span>, metadata: <span class="kw-2">&amp;</span>Metadata&lt;<span class="lifetime">'_</span>&gt;) -&gt; bool {
         <span class="self">self</span>.collector().enabled(metadata)
     }
 
@@ -1985,7 +1985,7 @@
     /// [`Collect`]: super::collect::Collect
     /// [`event`]: super::collect::Collect::event
     </span><span class="attr">#[inline]
-    </span><span class="kw">pub fn </span>event(<span class="kw-2">&amp;</span><span class="self">self</span>, event: <span class="kw-2">&amp;</span>Event&lt;<span class="lifetime">&#39;_</span>&gt;) {
+    </span><span class="kw">pub fn </span>event(<span class="kw-2">&amp;</span><span class="self">self</span>, event: <span class="kw-2">&amp;</span>Event&lt;<span class="lifetime">'_</span>&gt;) {
         <span class="kw">let </span>collector = <span class="self">self</span>.collector();
         <span class="kw">if </span>collector.event_enabled(event) {
             collector.event(event);
@@ -2017,7 +2017,7 @@
     <span class="doccomment">/// Notifies the [collector] that a [span ID] has been cloned.
     ///
     /// This function must only be called with span IDs that were returned by
-    /// this `Dispatch`&#39;s [`new_span`] function. The `tracing` crate upholds
+    /// this `Dispatch`'s [`new_span`] function. The `tracing` crate upholds
     /// this guarantee and any other libraries implementing instrumentation APIs
     /// must as well.
     ///
@@ -2036,14 +2036,14 @@
     <span class="doccomment">/// Notifies the collector that a [span ID] has been dropped.
     ///
     /// This function must only be called with span IDs that were returned by
-    /// this `Dispatch`&#39;s [`new_span`] function. The `tracing` crate upholds
+    /// this `Dispatch`'s [`new_span`] function. The `tracing` crate upholds
     /// this guarantee and any other libraries implementing instrumentation APIs
     /// must as well.
     ///
     /// This calls the [`drop_span`] function on the [`Collect`] that this
     ///  `Dispatch` forwards to.
     ///
-    /// &lt;div class=&quot;example-wrap&quot; style=&quot;display:inline-block&quot;&gt;&lt;pre class=&quot;compile_fail&quot; style=&quot;white-space:normal;font:inherit;&quot;&gt;
+    /// &lt;div class="example-wrap" style="display:inline-block"&gt;&lt;pre class="compile_fail" style="white-space:normal;font:inherit;"&gt;
     ///
     /// **Deprecated**: The [`try_close`] method is functionally identical, but returns `true` if the span is now closed.
     /// It should be used instead of this method.
@@ -2056,7 +2056,7 @@
     /// [`new_span`]: super::collect::Collect::new_span
     /// [`try_close`]: Self::try_close
     </span><span class="attr">#[inline]
-    #[deprecated(since = <span class="string">&quot;0.1.2&quot;</span>, note = <span class="string">&quot;use `Dispatch::try_close` instead&quot;</span>)]
+    #[deprecated(since = <span class="string">"0.1.2"</span>, note = <span class="string">"use `Dispatch::try_close` instead"</span>)]
     </span><span class="kw">pub fn </span>drop_span(<span class="kw-2">&amp;</span><span class="self">self</span>, id: span::Id) {
         <span class="attr">#[allow(deprecated)]
         </span><span class="self">self</span>.collector().drop_span(id);
@@ -2066,7 +2066,7 @@
     /// `true` if there are now 0 IDs referring to that span.
     ///
     /// This function must only be called with span IDs that were returned by
-    /// this `Dispatch`&#39;s [`new_span`] function. The `tracing` crate upholds
+    /// this `Dispatch`'s [`new_span`] function. The `tracing` crate upholds
     /// this guarantee and any other libraries implementing instrumentation APIs
     /// must as well.
     ///
@@ -2081,7 +2081,7 @@
         <span class="self">self</span>.collector().try_close(id)
     }
 
-    <span class="doccomment">/// Returns a type representing this collector&#39;s view of the current span.
+    <span class="doccomment">/// Returns a type representing this collector's view of the current span.
     ///
     /// This calls the [`current`] function on the [`Collect`] that this
     /// `Dispatch` forwards to.
@@ -2101,7 +2101,7 @@
     }
 
     <span class="doccomment">/// Returns some reference to the [`Collect`] this `Dispatch` forwards to
-    /// if it is of type `T`, or `None` if it isn&#39;t.
+    /// if it is of type `T`, or `None` if it isn't.
     ///
     /// [`Collect`]: super::collect::Collect
     </span><span class="attr">#[inline]
@@ -2118,33 +2118,33 @@
 }
 
 <span class="kw">impl </span>fmt::Debug <span class="kw">for </span>Dispatch {
-    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; fmt::Result {
+    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter&lt;<span class="lifetime">'_</span>&gt;) -&gt; fmt::Result {
         <span class="kw">match </span><span class="kw-2">&amp;</span><span class="self">self</span>.collector {
-            <span class="attr">#[cfg(feature = <span class="string">&quot;alloc&quot;</span>)]
+            <span class="attr">#[cfg(feature = <span class="string">"alloc"</span>)]
             </span>Kind::Global(collector) =&gt; f
-                .debug_tuple(<span class="string">&quot;Dispatch::Global&quot;</span>)
-                .field(<span class="kw-2">&amp;</span><span class="macro">format_args!</span>(<span class="string">&quot;{:p}&quot;</span>, collector))
+                .debug_tuple(<span class="string">"Dispatch::Global"</span>)
+                .field(<span class="kw-2">&amp;</span><span class="macro">format_args!</span>(<span class="string">"{:p}"</span>, collector))
                 .finish(),
 
-            <span class="attr">#[cfg(feature = <span class="string">&quot;alloc&quot;</span>)]
+            <span class="attr">#[cfg(feature = <span class="string">"alloc"</span>)]
             </span>Kind::Scoped(collector) =&gt; f
-                .debug_tuple(<span class="string">&quot;Dispatch::Scoped&quot;</span>)
-                .field(<span class="kw-2">&amp;</span><span class="macro">format_args!</span>(<span class="string">&quot;{:p}&quot;</span>, collector))
+                .debug_tuple(<span class="string">"Dispatch::Scoped"</span>)
+                .field(<span class="kw-2">&amp;</span><span class="macro">format_args!</span>(<span class="string">"{:p}"</span>, collector))
                 .finish(),
 
-            <span class="attr">#[cfg(not(feature = <span class="string">&quot;alloc&quot;</span>))]
+            <span class="attr">#[cfg(not(feature = <span class="string">"alloc"</span>))]
             </span>collector =&gt; f
-                .debug_tuple(<span class="string">&quot;Dispatch::Global&quot;</span>)
-                .field(<span class="kw-2">&amp;</span><span class="macro">format_args!</span>(<span class="string">&quot;{:p}&quot;</span>, collector))
+                .debug_tuple(<span class="string">"Dispatch::Global"</span>)
+                .field(<span class="kw-2">&amp;</span><span class="macro">format_args!</span>(<span class="string">"{:p}"</span>, collector))
                 .finish(),
         }
     }
 }
 
-<span class="attr">#[cfg(feature = <span class="string">&quot;std&quot;</span>)]
+<span class="attr">#[cfg(feature = <span class="string">"std"</span>)]
 </span><span class="kw">impl</span>&lt;C&gt; From&lt;C&gt; <span class="kw">for </span>Dispatch
 <span class="kw">where
-    </span>C: Collect + Send + Sync + <span class="lifetime">&#39;static</span>,
+    </span>C: Collect + Send + Sync + <span class="lifetime">'static</span>,
 {
     <span class="attr">#[inline]
     </span><span class="kw">fn </span>from(collector: C) -&gt; <span class="self">Self </span>{
@@ -2173,12 +2173,12 @@
     /// assert!(weak.upgrade().is_none());
     /// ```
     </span><span class="kw">pub fn </span>upgrade(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;Dispatch&gt; {
-        <span class="attr">#[cfg(feature = <span class="string">&quot;alloc&quot;</span>)]
+        <span class="attr">#[cfg(feature = <span class="string">"alloc"</span>)]
         </span><span class="kw">let </span>collector = <span class="kw">match </span><span class="kw-2">&amp;</span><span class="self">self</span>.collector {
             Kind::Global(dispatch) =&gt; <span class="prelude-val">Some</span>(Kind::Global(<span class="kw-2">*</span>dispatch)),
             Kind::Scoped(dispatch) =&gt; dispatch.upgrade().map(Kind::Scoped),
         };
-        <span class="attr">#[cfg(not(feature = <span class="string">&quot;alloc&quot;</span>))]
+        <span class="attr">#[cfg(not(feature = <span class="string">"alloc"</span>))]
         </span><span class="kw">let </span>collector = <span class="prelude-val">Some</span>(<span class="self">self</span>.collector);
 
         collector.map(|collector| Dispatch { collector })
@@ -2186,30 +2186,30 @@
 }
 
 <span class="kw">impl </span>fmt::Debug <span class="kw">for </span>WeakDispatch {
-    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; fmt::Result {
+    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter&lt;<span class="lifetime">'_</span>&gt;) -&gt; fmt::Result {
         <span class="kw">match </span><span class="kw-2">&amp;</span><span class="self">self</span>.collector {
-            <span class="attr">#[cfg(feature = <span class="string">&quot;alloc&quot;</span>)]
+            <span class="attr">#[cfg(feature = <span class="string">"alloc"</span>)]
             </span>Kind::Global(collector) =&gt; f
-                .debug_tuple(<span class="string">&quot;WeakDispatch::Global&quot;</span>)
-                .field(<span class="kw-2">&amp;</span><span class="macro">format_args!</span>(<span class="string">&quot;{:p}&quot;</span>, collector))
+                .debug_tuple(<span class="string">"WeakDispatch::Global"</span>)
+                .field(<span class="kw-2">&amp;</span><span class="macro">format_args!</span>(<span class="string">"{:p}"</span>, collector))
                 .finish(),
 
-            <span class="attr">#[cfg(feature = <span class="string">&quot;alloc&quot;</span>)]
+            <span class="attr">#[cfg(feature = <span class="string">"alloc"</span>)]
             </span>Kind::Scoped(collector) =&gt; f
-                .debug_tuple(<span class="string">&quot;WeakDispatch::Scoped&quot;</span>)
-                .field(<span class="kw-2">&amp;</span><span class="macro">format_args!</span>(<span class="string">&quot;{:p}&quot;</span>, collector))
+                .debug_tuple(<span class="string">"WeakDispatch::Scoped"</span>)
+                .field(<span class="kw-2">&amp;</span><span class="macro">format_args!</span>(<span class="string">"{:p}"</span>, collector))
                 .finish(),
 
-            <span class="attr">#[cfg(not(feature = <span class="string">&quot;alloc&quot;</span>))]
+            <span class="attr">#[cfg(not(feature = <span class="string">"alloc"</span>))]
             </span>collector =&gt; f
-                .debug_tuple(<span class="string">&quot;WeakDispatch::Global&quot;</span>)
-                .field(<span class="kw-2">&amp;</span><span class="macro">format_args!</span>(<span class="string">&quot;{:p}&quot;</span>, collector))
+                .debug_tuple(<span class="string">"WeakDispatch::Global"</span>)
+                .field(<span class="kw-2">&amp;</span><span class="macro">format_args!</span>(<span class="string">"{:p}"</span>, collector))
                 .finish(),
         }
     }
 }
 
-<span class="attr">#[cfg(feature = <span class="string">&quot;std&quot;</span>)]
+<span class="attr">#[cfg(feature = <span class="string">"std"</span>)]
 </span><span class="kw">impl </span>Registrar {
     <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>upgrade(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;Dispatch&gt; {
         <span class="kw">match </span><span class="self">self</span>.<span class="number">0 </span>{
@@ -2225,7 +2225,7 @@
 
 <span class="comment">// ===== impl State =====
 
-</span><span class="attr">#[cfg(feature = <span class="string">&quot;std&quot;</span>)]
+</span><span class="attr">#[cfg(feature = <span class="string">"std"</span>)]
 </span><span class="kw">impl </span>State {
     <span class="doccomment">/// Replaces the current default dispatcher on this thread with the provided
     /// dispatcher.
@@ -2252,7 +2252,7 @@
     }
 
     <span class="attr">#[inline]
-    </span><span class="kw">fn </span>enter(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;Entered&lt;<span class="lifetime">&#39;_</span>&gt;&gt; {
+    </span><span class="kw">fn </span>enter(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;Entered&lt;<span class="lifetime">'_</span>&gt;&gt; {
         <span class="kw">if </span><span class="self">self</span>.can_enter.replace(<span class="bool-val">false</span>) {
             <span class="prelude-val">Some</span>(Entered(<span class="self">self</span>))
         } <span class="kw">else </span>{
@@ -2263,10 +2263,10 @@
 
 <span class="comment">// ===== impl Entered =====
 
-</span><span class="attr">#[cfg(feature = <span class="string">&quot;std&quot;</span>)]
-</span><span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>&gt; Entered&lt;<span class="lifetime">&#39;a</span>&gt; {
+</span><span class="attr">#[cfg(feature = <span class="string">"std"</span>)]
+</span><span class="kw">impl</span>&lt;<span class="lifetime">'a</span>&gt; Entered&lt;<span class="lifetime">'a</span>&gt; {
     <span class="attr">#[inline]
-    </span><span class="kw">fn </span>current(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; RefMut&lt;<span class="lifetime">&#39;a</span>, Dispatch&gt; {
+    </span><span class="kw">fn </span>current(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; RefMut&lt;<span class="lifetime">'a</span>, Dispatch&gt; {
         <span class="kw">let </span>default = <span class="self">self</span>.<span class="number">0</span>.default.borrow_mut();
         RefMut::map(default, |default| {
             default.get_or_insert_with(|| get_global().clone())
@@ -2274,8 +2274,8 @@
     }
 }
 
-<span class="attr">#[cfg(feature = <span class="string">&quot;std&quot;</span>)]
-</span><span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>&gt; Drop <span class="kw">for </span>Entered&lt;<span class="lifetime">&#39;a</span>&gt; {
+<span class="attr">#[cfg(feature = <span class="string">"std"</span>)]
+</span><span class="kw">impl</span>&lt;<span class="lifetime">'a</span>&gt; Drop <span class="kw">for </span>Entered&lt;<span class="lifetime">'a</span>&gt; {
     <span class="attr">#[inline]
     </span><span class="kw">fn </span>drop(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {
         <span class="self">self</span>.<span class="number">0</span>.can_enter.set(<span class="bool-val">true</span>);
@@ -2284,7 +2284,7 @@
 
 <span class="comment">// ===== impl DefaultGuard =====
 
-</span><span class="attr">#[cfg(feature = <span class="string">&quot;std&quot;</span>)]
+</span><span class="attr">#[cfg(feature = <span class="string">"std"</span>)]
 </span><span class="kw">impl </span>Drop <span class="kw">for </span>DefaultGuard {
     <span class="attr">#[inline]
     </span><span class="kw">fn </span>drop(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {
@@ -2325,8 +2325,8 @@
 
     <span class="kw">struct </span>TestCallsite;
     <span class="kw">static </span>TEST_CALLSITE: TestCallsite = TestCallsite;
-    <span class="kw">static </span>TEST_META: Metadata&lt;<span class="lifetime">&#39;static</span>&gt; = <span class="macro">metadata! </span>{
-        name: <span class="string">&quot;test&quot;</span>,
+    <span class="kw">static </span>TEST_META: Metadata&lt;<span class="lifetime">'static</span>&gt; = <span class="macro">metadata! </span>{
+        name: <span class="string">"test"</span>,
         target: <span class="macro">module_path!</span>(),
         level: Level::DEBUG,
         fields: <span class="kw-2">&amp;</span>[],
@@ -2336,36 +2336,36 @@
 
     <span class="kw">impl </span>Callsite <span class="kw">for </span>TestCallsite {
         <span class="kw">fn </span>set_interest(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="kw">_</span>: Interest) {}
-        <span class="kw">fn </span>metadata(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>Metadata&lt;<span class="lifetime">&#39;_</span>&gt; {
+        <span class="kw">fn </span>metadata(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>Metadata&lt;<span class="lifetime">'_</span>&gt; {
             <span class="kw-2">&amp;</span>TEST_META
         }
     }
 
     <span class="attr">#[test]
-    #[cfg(feature = <span class="string">&quot;std&quot;</span>)]
+    #[cfg(feature = <span class="string">"std"</span>)]
     </span><span class="kw">fn </span>events_dont_infinite_loop() {
         <span class="comment">// This test ensures that an event triggered within a collector
-        // won&#39;t cause an infinite loop of events.
+        // won't cause an infinite loop of events.
         </span><span class="kw">struct </span>TestCollector;
         <span class="kw">impl </span>Collect <span class="kw">for </span>TestCollector {
-            <span class="kw">fn </span>enabled(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="kw">_</span>: <span class="kw-2">&amp;</span>Metadata&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; bool {
+            <span class="kw">fn </span>enabled(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="kw">_</span>: <span class="kw-2">&amp;</span>Metadata&lt;<span class="lifetime">'_</span>&gt;) -&gt; bool {
                 <span class="bool-val">true
             </span>}
 
-            <span class="kw">fn </span>new_span(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="kw">_</span>: <span class="kw-2">&amp;</span>span::Attributes&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; span::Id {
+            <span class="kw">fn </span>new_span(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="kw">_</span>: <span class="kw-2">&amp;</span>span::Attributes&lt;<span class="lifetime">'_</span>&gt;) -&gt; span::Id {
                 span::Id::from_u64(<span class="number">0xAAAA</span>)
             }
 
-            <span class="kw">fn </span>record(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="kw">_</span>: <span class="kw-2">&amp;</span>span::Id, <span class="kw">_</span>: <span class="kw-2">&amp;</span>span::Record&lt;<span class="lifetime">&#39;_</span>&gt;) {}
+            <span class="kw">fn </span>record(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="kw">_</span>: <span class="kw-2">&amp;</span>span::Id, <span class="kw">_</span>: <span class="kw-2">&amp;</span>span::Record&lt;<span class="lifetime">'_</span>&gt;) {}
 
             <span class="kw">fn </span>record_follows_from(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="kw">_</span>: <span class="kw-2">&amp;</span>span::Id, <span class="kw">_</span>: <span class="kw-2">&amp;</span>span::Id) {}
 
-            <span class="kw">fn </span>event(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="kw">_</span>: <span class="kw-2">&amp;</span>Event&lt;<span class="lifetime">&#39;_</span>&gt;) {
+            <span class="kw">fn </span>event(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="kw">_</span>: <span class="kw-2">&amp;</span>Event&lt;<span class="lifetime">'_</span>&gt;) {
                 <span class="kw">static </span>EVENTS: AtomicUsize = AtomicUsize::new(<span class="number">0</span>);
                 <span class="macro">assert_eq!</span>(
                     EVENTS.fetch_add(<span class="number">1</span>, Ordering::Relaxed),
                     <span class="number">0</span>,
-                    <span class="string">&quot;event method called twice!&quot;
+                    <span class="string">"event method called twice!"
                 </span>);
                 Event::dispatch(<span class="kw-2">&amp;</span>TEST_META, <span class="kw-2">&amp;</span>TEST_META.fields().value_set(<span class="kw-2">&amp;</span>[]))
             }
@@ -2385,10 +2385,10 @@
     }
 
     <span class="attr">#[test]
-    #[cfg(feature = <span class="string">&quot;std&quot;</span>)]
+    #[cfg(feature = <span class="string">"std"</span>)]
     </span><span class="kw">fn </span>spans_dont_infinite_loop() {
         <span class="comment">// This test ensures that a span created within a collector
-        // won&#39;t cause an infinite loop of new spans.
+        // won't cause an infinite loop of new spans.
 
         </span><span class="kw">fn </span>mk_span() {
             get_default(|current| {
@@ -2401,26 +2401,26 @@
 
         <span class="kw">struct </span>TestCollector;
         <span class="kw">impl </span>Collect <span class="kw">for </span>TestCollector {
-            <span class="kw">fn </span>enabled(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="kw">_</span>: <span class="kw-2">&amp;</span>Metadata&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; bool {
+            <span class="kw">fn </span>enabled(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="kw">_</span>: <span class="kw-2">&amp;</span>Metadata&lt;<span class="lifetime">'_</span>&gt;) -&gt; bool {
                 <span class="bool-val">true
             </span>}
 
-            <span class="kw">fn </span>new_span(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="kw">_</span>: <span class="kw-2">&amp;</span>span::Attributes&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; span::Id {
+            <span class="kw">fn </span>new_span(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="kw">_</span>: <span class="kw-2">&amp;</span>span::Attributes&lt;<span class="lifetime">'_</span>&gt;) -&gt; span::Id {
                 <span class="kw">static </span>NEW_SPANS: AtomicUsize = AtomicUsize::new(<span class="number">0</span>);
                 <span class="macro">assert_eq!</span>(
                     NEW_SPANS.fetch_add(<span class="number">1</span>, Ordering::Relaxed),
                     <span class="number">0</span>,
-                    <span class="string">&quot;new_span method called twice!&quot;
+                    <span class="string">"new_span method called twice!"
                 </span>);
                 mk_span();
                 span::Id::from_u64(<span class="number">0xAAAA</span>)
             }
 
-            <span class="kw">fn </span>record(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="kw">_</span>: <span class="kw-2">&amp;</span>span::Id, <span class="kw">_</span>: <span class="kw-2">&amp;</span>span::Record&lt;<span class="lifetime">&#39;_</span>&gt;) {}
+            <span class="kw">fn </span>record(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="kw">_</span>: <span class="kw-2">&amp;</span>span::Id, <span class="kw">_</span>: <span class="kw-2">&amp;</span>span::Record&lt;<span class="lifetime">'_</span>&gt;) {}
 
             <span class="kw">fn </span>record_follows_from(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="kw">_</span>: <span class="kw-2">&amp;</span>span::Id, <span class="kw">_</span>: <span class="kw-2">&amp;</span>span::Id) {}
 
-            <span class="kw">fn </span>event(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="kw">_</span>: <span class="kw-2">&amp;</span>Event&lt;<span class="lifetime">&#39;_</span>&gt;) {}
+            <span class="kw">fn </span>event(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="kw">_</span>: <span class="kw-2">&amp;</span>Event&lt;<span class="lifetime">'_</span>&gt;) {}
 
             <span class="kw">fn </span>enter(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="kw">_</span>: <span class="kw-2">&amp;</span>span::Id) {}
 
@@ -2440,24 +2440,24 @@
         <span class="macro">assert!</span>(default_dispatcher.is::&lt;NoCollector&gt;());
     }
 
-    <span class="attr">#[cfg(feature = <span class="string">&quot;std&quot;</span>)]
+    <span class="attr">#[cfg(feature = <span class="string">"std"</span>)]
     #[test]
     </span><span class="kw">fn </span>default_dispatch() {
         <span class="kw">struct </span>TestCollector;
         <span class="kw">impl </span>Collect <span class="kw">for </span>TestCollector {
-            <span class="kw">fn </span>enabled(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="kw">_</span>: <span class="kw-2">&amp;</span>Metadata&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; bool {
+            <span class="kw">fn </span>enabled(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="kw">_</span>: <span class="kw-2">&amp;</span>Metadata&lt;<span class="lifetime">'_</span>&gt;) -&gt; bool {
                 <span class="bool-val">true
             </span>}
 
-            <span class="kw">fn </span>new_span(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="kw">_</span>: <span class="kw-2">&amp;</span>span::Attributes&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; span::Id {
+            <span class="kw">fn </span>new_span(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="kw">_</span>: <span class="kw-2">&amp;</span>span::Attributes&lt;<span class="lifetime">'_</span>&gt;) -&gt; span::Id {
                 span::Id::from_u64(<span class="number">0xAAAA</span>)
             }
 
-            <span class="kw">fn </span>record(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="kw">_</span>: <span class="kw-2">&amp;</span>span::Id, <span class="kw">_</span>: <span class="kw-2">&amp;</span>span::Record&lt;<span class="lifetime">&#39;_</span>&gt;) {}
+            <span class="kw">fn </span>record(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="kw">_</span>: <span class="kw-2">&amp;</span>span::Id, <span class="kw">_</span>: <span class="kw-2">&amp;</span>span::Record&lt;<span class="lifetime">'_</span>&gt;) {}
 
             <span class="kw">fn </span>record_follows_from(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="kw">_</span>: <span class="kw-2">&amp;</span>span::Id, <span class="kw">_</span>: <span class="kw-2">&amp;</span>span::Id) {}
 
-            <span class="kw">fn </span>event(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="kw">_</span>: <span class="kw-2">&amp;</span>Event&lt;<span class="lifetime">&#39;_</span>&gt;) {}
+            <span class="kw">fn </span>event(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="kw">_</span>: <span class="kw-2">&amp;</span>Event&lt;<span class="lifetime">'_</span>&gt;) {}
 
             <span class="kw">fn </span>enter(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="kw">_</span>: <span class="kw-2">&amp;</span>span::Id) {}
 

@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/syn-1.0.91/src/parse.rs`."><title>parse.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-c67e44d78ab2db17.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="syn" data-themes="" data-resource-suffix="" data-rustdoc-version="1.76.0-nightly (90e321d82 2023-12-02)" data-channel="nightly" data-search-js="search-5a66c239c06b3a66.js" data-settings-js="settings-fe03fdc259827cd2.js" ><script src="../../static.files/storage-fec3eaa3851e447d.js"></script><script defer src="../../static.files/src-script-3280b574d94e47b4.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-77dede896d6ac08e.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-5d8b3c7633ad77ba.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/syn-1.0.91/src/parse.rs`."><title>parse.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-c67e44d78ab2db17.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="syn" data-themes="" data-resource-suffix="" data-rustdoc-version="1.76.0-nightly (e9013ac0e 2023-12-05)" data-channel="nightly" data-search-js="search-5a66c239c06b3a66.js" data-settings-js="settings-fe03fdc259827cd2.js" ><script src="../../static.files/storage-fec3eaa3851e447d.js"></script><script defer src="../../static.files/src-script-3280b574d94e47b4.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-77dede896d6ac08e.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-5d8b3c7633ad77ba.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -1399,7 +1399,7 @@
 //!     let input = parse_macro_input!(tokens as Item);
 //!
 //!     /* ... */
-//! #   &quot;&quot;.parse().unwrap()
+//! #   "".parse().unwrap()
 //! }
 //! ```
 //!
@@ -1418,7 +1418,7 @@
 //! use syn::Type;
 //!
 //! # fn run_parser() -&gt; syn::Result&lt;()&gt; {
-//! let t: Type = syn::parse_str(&quot;std::collections::HashMap&lt;String, Value&gt;&quot;)?;
+//! let t: Type = syn::parse_str("std::collections::HashMap&lt;String, Value&gt;")?;
 //! #     Ok(())
 //! # }
 //! #
@@ -1432,7 +1432,7 @@
 //! # The `Parser` trait
 //!
 //! Some types can be parsed in several ways depending on context. For example
-//! an [`Attribute`] can be either &quot;outer&quot; like `#[...]` or &quot;inner&quot; like
+//! an [`Attribute`] can be either "outer" like `#[...]` or "inner" like
 //! `#![...]` and parsing the wrong one would be a bug. Similarly [`Punctuated`]
 //! may or may not allow trailing punctuation, and parsing it the wrong way
 //! would either reject valid input or accept invalid input.
@@ -1451,7 +1451,7 @@
 //! #
 //! # fn f(tokens: proc_macro::TokenStream) -&gt; Result&lt;()&gt; {
 //! #
-//! // Can&#39;t parse `Punctuated` without knowing whether trailing punctuation
+//! // Can't parse `Punctuated` without knowing whether trailing punctuation
 //! // should be allowed in this context.
 //! let path: Punctuated&lt;PathSegment, Token![::]&gt; = syn::parse(tokens)?;
 //! #
@@ -1496,17 +1496,17 @@
 //!
 //! ---
 //!
-//! *This module is available only if Syn is built with the `&quot;parsing&quot;` feature.*
+//! *This module is available only if Syn is built with the `"parsing"` feature.*
 
-</span><span class="attr">#[path = <span class="string">&quot;discouraged.rs&quot;</span>]
+</span><span class="attr">#[path = <span class="string">"discouraged.rs"</span>]
 </span><span class="kw">pub mod </span>discouraged;
 
 <span class="kw">use </span><span class="kw">crate</span>::buffer::{Cursor, TokenBuffer};
 <span class="kw">use </span><span class="kw">crate</span>::error;
 <span class="kw">use </span><span class="kw">crate</span>::lookahead;
 <span class="attr">#[cfg(all(
-    not(all(target_arch = <span class="string">&quot;wasm32&quot;</span>, any(target_os = <span class="string">&quot;unknown&quot;</span>, target_os = <span class="string">&quot;wasi&quot;</span>))),
-    feature = <span class="string">&quot;proc-macro&quot;
+    not(all(target_arch = <span class="string">"wasm32"</span>, any(target_os = <span class="string">"unknown"</span>, target_os = <span class="string">"wasi"</span>))),
+    feature = <span class="string">"proc-macro"
 </span>))]
 </span><span class="kw">use </span><span class="kw">crate</span>::proc_macro;
 <span class="kw">use </span><span class="kw">crate</span>::punctuated::Punctuated;
@@ -1514,7 +1514,7 @@
 <span class="kw">use </span>proc_macro2::{<span class="self">self</span>, Delimiter, Group, Literal, Punct, Span, TokenStream, TokenTree};
 <span class="kw">use </span>std::cell::Cell;
 <span class="kw">use </span>std::fmt::{<span class="self">self</span>, Debug, Display};
-<span class="attr">#[cfg(feature = <span class="string">&quot;extra-traits&quot;</span>)]
+<span class="attr">#[cfg(feature = <span class="string">"extra-traits"</span>)]
 </span><span class="kw">use </span>std::hash::{Hash, Hasher};
 <span class="kw">use </span>std::marker::PhantomData;
 <span class="kw">use </span>std::mem;
@@ -1542,7 +1542,7 @@
 /// an overview of parsing in Syn, refer to the [module documentation].
 ///
 /// [module documentation]: self
-</span><span class="kw">pub type </span>ParseStream&lt;<span class="lifetime">&#39;a</span>&gt; = <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>ParseBuffer&lt;<span class="lifetime">&#39;a</span>&gt;;
+</span><span class="kw">pub type </span>ParseStream&lt;<span class="lifetime">'a</span>&gt; = <span class="kw-2">&amp;</span><span class="lifetime">'a </span>ParseBuffer&lt;<span class="lifetime">'a</span>&gt;;
 
 <span class="doccomment">/// Cursor position within a buffered token stream.
 ///
@@ -1563,25 +1563,25 @@
 /// - A method of the [`Parser`] trait.
 ///
 /// [syn-parse]: self#the-synparse-functions
-</span><span class="kw">pub struct </span>ParseBuffer&lt;<span class="lifetime">&#39;a</span>&gt; {
+</span><span class="kw">pub struct </span>ParseBuffer&lt;<span class="lifetime">'a</span>&gt; {
     scope: Span,
-    <span class="comment">// Instead of Cell&lt;Cursor&lt;&#39;a&gt;&gt; so that ParseBuffer&lt;&#39;a&gt; is covariant in &#39;a.
+    <span class="comment">// Instead of Cell&lt;Cursor&lt;'a&gt;&gt; so that ParseBuffer&lt;'a&gt; is covariant in 'a.
     // The rest of the code in this module needs to be careful that only a
     // cursor derived from this `cell` is ever assigned to this `cell`.
     //
-    // Cell&lt;Cursor&lt;&#39;a&gt;&gt; cannot be covariant in &#39;a because then we could take a
-    // ParseBuffer&lt;&#39;a&gt;, upcast to ParseBuffer&lt;&#39;short&gt; for some lifetime shorter
-    // than &#39;a, and then assign a Cursor&lt;&#39;short&gt; into the Cell.
+    // Cell&lt;Cursor&lt;'a&gt;&gt; cannot be covariant in 'a because then we could take a
+    // ParseBuffer&lt;'a&gt;, upcast to ParseBuffer&lt;'short&gt; for some lifetime shorter
+    // than 'a, and then assign a Cursor&lt;'short&gt; into the Cell.
     //
     // By extension, it would not be safe to expose an API that accepts a
-    // Cursor&lt;&#39;a&gt; and trusts that it lives as long as the cursor currently in
+    // Cursor&lt;'a&gt; and trusts that it lives as long as the cursor currently in
     // the cell.
-    </span>cell: Cell&lt;Cursor&lt;<span class="lifetime">&#39;static</span>&gt;&gt;,
-    marker: PhantomData&lt;Cursor&lt;<span class="lifetime">&#39;a</span>&gt;&gt;,
+    </span>cell: Cell&lt;Cursor&lt;<span class="lifetime">'static</span>&gt;&gt;,
+    marker: PhantomData&lt;Cursor&lt;<span class="lifetime">'a</span>&gt;&gt;,
     unexpected: Cell&lt;<span class="prelude-ty">Option</span>&lt;Rc&lt;Cell&lt;Unexpected&gt;&gt;&gt;&gt;,
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>&gt; Drop <span class="kw">for </span>ParseBuffer&lt;<span class="lifetime">&#39;a</span>&gt; {
+<span class="kw">impl</span>&lt;<span class="lifetime">'a</span>&gt; Drop <span class="kw">for </span>ParseBuffer&lt;<span class="lifetime">'a</span>&gt; {
     <span class="kw">fn </span>drop(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {
         <span class="kw">if let </span><span class="prelude-val">Some</span>(unexpected_span) = span_of_unexpected_ignoring_nones(<span class="self">self</span>.cursor()) {
             <span class="kw">let </span>(inner, old_span) = inner_unexpected(<span class="self">self</span>);
@@ -1592,13 +1592,13 @@
     }
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>&gt; Display <span class="kw">for </span>ParseBuffer&lt;<span class="lifetime">&#39;a</span>&gt; {
+<span class="kw">impl</span>&lt;<span class="lifetime">'a</span>&gt; Display <span class="kw">for </span>ParseBuffer&lt;<span class="lifetime">'a</span>&gt; {
     <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter) -&gt; fmt::Result {
         Display::fmt(<span class="kw-2">&amp;</span><span class="self">self</span>.cursor().token_stream(), f)
     }
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>&gt; Debug <span class="kw">for </span>ParseBuffer&lt;<span class="lifetime">&#39;a</span>&gt; {
+<span class="kw">impl</span>&lt;<span class="lifetime">'a</span>&gt; Debug <span class="kw">for </span>ParseBuffer&lt;<span class="lifetime">'a</span>&gt; {
     <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter) -&gt; fmt::Result {
         Debug::fmt(<span class="kw-2">&amp;</span><span class="self">self</span>.cursor().token_stream(), f)
     }
@@ -1625,13 +1625,13 @@
 ///         let mut rest = *cursor;
 ///         while let Some((tt, next)) = rest.token_tree() {
 ///             match &amp;tt {
-///                 TokenTree::Punct(punct) if punct.as_char() == &#39;@&#39; =&gt; {
+///                 TokenTree::Punct(punct) if punct.as_char() == '@' =&gt; {
 ///                     return Ok(((), next));
 ///                 }
 ///                 _ =&gt; rest = next,
 ///             }
 ///         }
-///         Err(cursor.error(&quot;no `@` was found after this point&quot;))
+///         Err(cursor.error("no `@` was found after this point"))
 ///     })
 /// }
 /// #
@@ -1644,42 +1644,42 @@
 /// #
 /// # use syn::parse::Parser;
 /// # let remainder = remainder_after_skipping_past_next_at
-/// #     .parse_str(&quot;a @ b c&quot;)
+/// #     .parse_str("a @ b c")
 /// #     .unwrap();
-/// # assert_eq!(remainder.to_string(), &quot;b c&quot;);
+/// # assert_eq!(remainder.to_string(), "b c");
 /// ```
-</span><span class="kw">pub struct </span>StepCursor&lt;<span class="lifetime">&#39;c</span>, <span class="lifetime">&#39;a</span>&gt; {
+</span><span class="kw">pub struct </span>StepCursor&lt;<span class="lifetime">'c</span>, <span class="lifetime">'a</span>&gt; {
     scope: Span,
-    <span class="comment">// This field is covariant in &#39;c.
-    </span>cursor: Cursor&lt;<span class="lifetime">&#39;c</span>&gt;,
-    <span class="comment">// This field is contravariant in &#39;c. Together these make StepCursor
-    // invariant in &#39;c. Also covariant in &#39;a. The user cannot cast &#39;c to a
+    <span class="comment">// This field is covariant in 'c.
+    </span>cursor: Cursor&lt;<span class="lifetime">'c</span>&gt;,
+    <span class="comment">// This field is contravariant in 'c. Together these make StepCursor
+    // invariant in 'c. Also covariant in 'a. The user cannot cast 'c to a
     // different lifetime but can upcast into a StepCursor with a shorter
-    // lifetime &#39;a.
+    // lifetime 'a.
     //
-    // As long as we only ever construct a StepCursor for which &#39;c outlives &#39;a,
-    // this means if ever a StepCursor&lt;&#39;c, &#39;a&gt; exists we are guaranteed that &#39;c
-    // outlives &#39;a.
-    </span>marker: PhantomData&lt;<span class="kw">fn</span>(Cursor&lt;<span class="lifetime">&#39;c</span>&gt;) -&gt; Cursor&lt;<span class="lifetime">&#39;a</span>&gt;&gt;,
+    // As long as we only ever construct a StepCursor for which 'c outlives 'a,
+    // this means if ever a StepCursor&lt;'c, 'a&gt; exists we are guaranteed that 'c
+    // outlives 'a.
+    </span>marker: PhantomData&lt;<span class="kw">fn</span>(Cursor&lt;<span class="lifetime">'c</span>&gt;) -&gt; Cursor&lt;<span class="lifetime">'a</span>&gt;&gt;,
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;c</span>, <span class="lifetime">&#39;a</span>&gt; Deref <span class="kw">for </span>StepCursor&lt;<span class="lifetime">&#39;c</span>, <span class="lifetime">&#39;a</span>&gt; {
-    <span class="kw">type </span>Target = Cursor&lt;<span class="lifetime">&#39;c</span>&gt;;
+<span class="kw">impl</span>&lt;<span class="lifetime">'c</span>, <span class="lifetime">'a</span>&gt; Deref <span class="kw">for </span>StepCursor&lt;<span class="lifetime">'c</span>, <span class="lifetime">'a</span>&gt; {
+    <span class="kw">type </span>Target = Cursor&lt;<span class="lifetime">'c</span>&gt;;
 
     <span class="kw">fn </span>deref(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="self">Self</span>::Target {
         <span class="kw-2">&amp;</span><span class="self">self</span>.cursor
     }
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;c</span>, <span class="lifetime">&#39;a</span>&gt; Copy <span class="kw">for </span>StepCursor&lt;<span class="lifetime">&#39;c</span>, <span class="lifetime">&#39;a</span>&gt; {}
+<span class="kw">impl</span>&lt;<span class="lifetime">'c</span>, <span class="lifetime">'a</span>&gt; Copy <span class="kw">for </span>StepCursor&lt;<span class="lifetime">'c</span>, <span class="lifetime">'a</span>&gt; {}
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;c</span>, <span class="lifetime">&#39;a</span>&gt; Clone <span class="kw">for </span>StepCursor&lt;<span class="lifetime">&#39;c</span>, <span class="lifetime">&#39;a</span>&gt; {
+<span class="kw">impl</span>&lt;<span class="lifetime">'c</span>, <span class="lifetime">'a</span>&gt; Clone <span class="kw">for </span>StepCursor&lt;<span class="lifetime">'c</span>, <span class="lifetime">'a</span>&gt; {
     <span class="kw">fn </span>clone(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="self">Self </span>{
         <span class="kw-2">*</span><span class="self">self
     </span>}
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;c</span>, <span class="lifetime">&#39;a</span>&gt; StepCursor&lt;<span class="lifetime">&#39;c</span>, <span class="lifetime">&#39;a</span>&gt; {
+<span class="kw">impl</span>&lt;<span class="lifetime">'c</span>, <span class="lifetime">'a</span>&gt; StepCursor&lt;<span class="lifetime">'c</span>, <span class="lifetime">'a</span>&gt; {
     <span class="doccomment">/// Triggers an error at the current position of the parse stream.
     ///
     /// The `ParseStream::step` invocation will return this same error without
@@ -1689,13 +1689,13 @@
     }
 }
 
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>advance_step_cursor&lt;<span class="lifetime">&#39;c</span>, <span class="lifetime">&#39;a</span>&gt;(proof: StepCursor&lt;<span class="lifetime">&#39;c</span>, <span class="lifetime">&#39;a</span>&gt;, to: Cursor&lt;<span class="lifetime">&#39;c</span>&gt;) -&gt; Cursor&lt;<span class="lifetime">&#39;a</span>&gt; {
+<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>advance_step_cursor&lt;<span class="lifetime">'c</span>, <span class="lifetime">'a</span>&gt;(proof: StepCursor&lt;<span class="lifetime">'c</span>, <span class="lifetime">'a</span>&gt;, to: Cursor&lt;<span class="lifetime">'c</span>&gt;) -&gt; Cursor&lt;<span class="lifetime">'a</span>&gt; {
     <span class="comment">// Refer to the comments within the StepCursor definition. We use the
-    // fact that a StepCursor&lt;&#39;c, &#39;a&gt; exists as proof that &#39;c outlives &#39;a.
+    // fact that a StepCursor&lt;'c, 'a&gt; exists as proof that 'c outlives 'a.
     // Cursor is covariant in its lifetime parameter so we can cast a
-    // Cursor&lt;&#39;c&gt; to one with the shorter lifetime Cursor&lt;&#39;a&gt;.
+    // Cursor&lt;'c&gt; to one with the shorter lifetime Cursor&lt;'a&gt;.
     </span><span class="kw">let _ </span>= proof;
-    <span class="kw">unsafe </span>{ mem::transmute::&lt;Cursor&lt;<span class="lifetime">&#39;c</span>&gt;, Cursor&lt;<span class="lifetime">&#39;a</span>&gt;&gt;(to) }
+    <span class="kw">unsafe </span>{ mem::transmute::&lt;Cursor&lt;<span class="lifetime">'c</span>&gt;, Cursor&lt;<span class="lifetime">'a</span>&gt;&gt;(to) }
 }
 
 <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>new_parse_buffer(
@@ -1706,7 +1706,7 @@
     ParseBuffer {
         scope,
         <span class="comment">// See comment on `cell` in the struct definition.
-        </span>cell: Cell::new(<span class="kw">unsafe </span>{ mem::transmute::&lt;Cursor, Cursor&lt;<span class="lifetime">&#39;static</span>&gt;&gt;(cursor) }),
+        </span>cell: Cell::new(<span class="kw">unsafe </span>{ mem::transmute::&lt;Cursor, Cursor&lt;<span class="lifetime">'static</span>&gt;&gt;(cursor) }),
         marker: PhantomData,
         unexpected: Cell::new(<span class="prelude-val">Some</span>(unexpected)),
     }
@@ -1775,7 +1775,7 @@
     }
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>&gt; ParseBuffer&lt;<span class="lifetime">&#39;a</span>&gt; {
+<span class="kw">impl</span>&lt;<span class="lifetime">'a</span>&gt; ParseBuffer&lt;<span class="lifetime">'a</span>&gt; {
     <span class="doccomment">/// Parses a syntax tree node of type `T`, advancing the position of our
     /// parse stream past it.
     </span><span class="kw">pub fn </span>parse&lt;T: Parse&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;T&gt; {
@@ -1798,7 +1798,7 @@
     ///
     /// // Parses a unit struct with attributes.
     /// //
-    /// //     #[path = &quot;s.tmpl&quot;]
+    /// //     #[path = "s.tmpl"]
     /// //     struct S;
     /// struct UnitStruct {
     ///     attrs: Vec&lt;Attribute&gt;,
@@ -1851,7 +1851,7 @@
     ///
     /// // Parses a trait definition containing no associated items.
     /// //
-    /// //     trait Marker&lt;&#39;de, T&gt;: A + B&lt;&#39;de&gt; where Box&lt;T&gt;: Clone {}
+    /// //     trait Marker&lt;'de, T&gt;: A + B&lt;'de&gt; where Box&lt;T&gt;: Clone {}
     /// struct MarkerTrait {
     ///     trait_token: Token![trait],
     ///     ident: Ident,
@@ -1906,7 +1906,7 @@
     /// # Example
     ///
     /// This example needs to use `peek2` because the symbol `union` is not a
-    /// keyword in Rust. We can&#39;t use just `peek` and decide to parse a union if
+    /// keyword in Rust. We can't use just `peek` and decide to parse a union if
     /// the very next token is `union`, because someone is free to write a `mod
     /// union` and a macro invocation that looks like `union::some_macro! { ...
     /// }`. In other words `union` is a contextual keyword.
@@ -2070,7 +2070,7 @@
     /// // A generic parameter, a single one of the comma-separated elements inside
     /// // angle brackets in:
     /// //
-    /// //     fn f&lt;T: Clone, &#39;a, &#39;b: &#39;a, const N: usize&gt;() { ... }
+    /// //     fn f&lt;T: Clone, 'a, 'b: 'a, const N: usize&gt;() { ... }
     /// //
     /// // On invalid input, lookahead gives us a reasonable error message.
     /// //
@@ -2099,7 +2099,7 @@
     ///     }
     /// }
     /// ```
-    </span><span class="kw">pub fn </span>lookahead1(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Lookahead1&lt;<span class="lifetime">&#39;a</span>&gt; {
+    </span><span class="kw">pub fn </span>lookahead1(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Lookahead1&lt;<span class="lifetime">'a</span>&gt; {
         lookahead::new(<span class="self">self</span>.scope, <span class="self">self</span>.cursor())
     }
 
@@ -2132,7 +2132,7 @@
     ///
     /// When complex speculative parsing against the forked stream is
     /// unavoidable, use [`parse::discouraged::Speculative`] to advance the
-    /// original stream once the fork&#39;s parse is determined to have been
+    /// original stream once the fork's parse is determined to have been
     /// successful.
     ///
     /// For a lower level way to perform speculative parsing at the token level,
@@ -2234,7 +2234,7 @@
             scope: <span class="self">self</span>.scope,
             cell: <span class="self">self</span>.cell.clone(),
             marker: PhantomData,
-            <span class="comment">// Not the parent&#39;s unexpected. Nothing cares whether the clone
+            <span class="comment">// Not the parent's unexpected. Nothing cares whether the clone
             // parses all the way unless we `advance_to`.
             </span>unexpected: Cell::new(<span class="prelude-val">Some</span>(Rc::new(Cell::new(Unexpected::None)))),
         }
@@ -2263,7 +2263,7 @@
     ///                 expr: input.parse()?,
     ///             })
     ///         } else {
-    ///             Err(input.error(&quot;expected some kind of loop&quot;))
+    ///             Err(input.error("expected some kind of loop"))
     ///         }
     ///     }
     /// }
@@ -2294,13 +2294,13 @@
     ///         let mut rest = *cursor;
     ///         while let Some((tt, next)) = rest.token_tree() {
     ///             match &amp;tt {
-    ///                 TokenTree::Punct(punct) if punct.as_char() == &#39;@&#39; =&gt; {
+    ///                 TokenTree::Punct(punct) if punct.as_char() == '@' =&gt; {
     ///                     return Ok(((), next));
     ///                 }
     ///                 _ =&gt; rest = next,
     ///             }
     ///         }
-    ///         Err(cursor.error(&quot;no `@` was found after this point&quot;))
+    ///         Err(cursor.error("no `@` was found after this point"))
     ///     })
     /// }
     /// #
@@ -2313,30 +2313,30 @@
     /// #
     /// # use syn::parse::Parser;
     /// # let remainder = remainder_after_skipping_past_next_at
-    /// #     .parse_str(&quot;a @ b c&quot;)
+    /// #     .parse_str("a @ b c")
     /// #     .unwrap();
-    /// # assert_eq!(remainder.to_string(), &quot;b c&quot;);
+    /// # assert_eq!(remainder.to_string(), "b c");
     /// ```
     </span><span class="kw">pub fn </span>step&lt;F, R&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, function: F) -&gt; <span class="prelude-ty">Result</span>&lt;R&gt;
     <span class="kw">where
-        </span>F: <span class="kw">for</span>&lt;<span class="lifetime">&#39;c</span>&gt; FnOnce(StepCursor&lt;<span class="lifetime">&#39;c</span>, <span class="lifetime">&#39;a</span>&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;(R, Cursor&lt;<span class="lifetime">&#39;c</span>&gt;)&gt;,
+        </span>F: <span class="kw">for</span>&lt;<span class="lifetime">'c</span>&gt; FnOnce(StepCursor&lt;<span class="lifetime">'c</span>, <span class="lifetime">'a</span>&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;(R, Cursor&lt;<span class="lifetime">'c</span>&gt;)&gt;,
     {
-        <span class="comment">// Since the user&#39;s function is required to work for any &#39;c, we know
-        // that the Cursor&lt;&#39;c&gt; they return is either derived from the input
-        // StepCursor&lt;&#39;c, &#39;a&gt; or from a Cursor&lt;&#39;static&gt;.
+        <span class="comment">// Since the user's function is required to work for any 'c, we know
+        // that the Cursor&lt;'c&gt; they return is either derived from the input
+        // StepCursor&lt;'c, 'a&gt; or from a Cursor&lt;'static&gt;.
         //
         // It would not be legal to write this function without the invariant
-        // lifetime &#39;c in StepCursor&lt;&#39;c, &#39;a&gt;. If this function were written only
-        // in terms of &#39;a, the user could take our ParseBuffer&lt;&#39;a&gt;, upcast it to
-        // a ParseBuffer&lt;&#39;short&gt; which some shorter lifetime than &#39;a, invoke
-        // `step` on their ParseBuffer&lt;&#39;short&gt; with a closure that returns
-        // Cursor&lt;&#39;short&gt;, and we would wrongly write that Cursor&lt;&#39;short&gt; into
-        // the Cell intended to hold Cursor&lt;&#39;a&gt;.
+        // lifetime 'c in StepCursor&lt;'c, 'a&gt;. If this function were written only
+        // in terms of 'a, the user could take our ParseBuffer&lt;'a&gt;, upcast it to
+        // a ParseBuffer&lt;'short&gt; which some shorter lifetime than 'a, invoke
+        // `step` on their ParseBuffer&lt;'short&gt; with a closure that returns
+        // Cursor&lt;'short&gt;, and we would wrongly write that Cursor&lt;'short&gt; into
+        // the Cell intended to hold Cursor&lt;'a&gt;.
         //
-        // In some cases it may be necessary for R to contain a Cursor&lt;&#39;a&gt;.
+        // In some cases it may be necessary for R to contain a Cursor&lt;'a&gt;.
         // Within Syn we solve this using `advance_step_cursor` which uses the
-        // existence of a StepCursor&lt;&#39;c, &#39;a&gt; as proof that it is safe to cast
-        // from Cursor&lt;&#39;c&gt; to Cursor&lt;&#39;a&gt;. If needed outside of Syn, it would be
+        // existence of a StepCursor&lt;'c, 'a&gt; as proof that it is safe to cast
+        // from Cursor&lt;'c&gt; to Cursor&lt;'a&gt;. If needed outside of Syn, it would be
         // safe to expose that API as a method on StepCursor.
         </span><span class="kw">let </span>(node, rest) = function(StepCursor {
             scope: <span class="self">self</span>.scope,
@@ -2364,26 +2364,26 @@
     ///
     /// Cursors are immutable so no operations you perform against the cursor
     /// will affect the state of this parse stream.
-    </span><span class="kw">pub fn </span>cursor(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Cursor&lt;<span class="lifetime">&#39;a</span>&gt; {
+    </span><span class="kw">pub fn </span>cursor(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Cursor&lt;<span class="lifetime">'a</span>&gt; {
         <span class="self">self</span>.cell.get()
     }
 
     <span class="kw">fn </span>check_unexpected(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
         <span class="kw">match </span>inner_unexpected(<span class="self">self</span>).<span class="number">1 </span>{
-            <span class="prelude-val">Some</span>(span) =&gt; <span class="prelude-val">Err</span>(Error::new(span, <span class="string">&quot;unexpected token&quot;</span>)),
+            <span class="prelude-val">Some</span>(span) =&gt; <span class="prelude-val">Err</span>(Error::new(span, <span class="string">"unexpected token"</span>)),
             <span class="prelude-val">None </span>=&gt; <span class="prelude-val">Ok</span>(()),
         }
     }
 }
 
-<span class="attr">#[cfg_attr(doc_cfg, doc(cfg(feature = <span class="string">&quot;parsing&quot;</span>)))]
+<span class="attr">#[cfg_attr(doc_cfg, doc(cfg(feature = <span class="string">"parsing"</span>)))]
 </span><span class="kw">impl</span>&lt;T: Parse&gt; Parse <span class="kw">for </span>Box&lt;T&gt; {
     <span class="kw">fn </span>parse(input: ParseStream) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>&gt; {
         input.parse().map(Box::new)
     }
 }
 
-<span class="attr">#[cfg_attr(doc_cfg, doc(cfg(feature = <span class="string">&quot;parsing&quot;</span>)))]
+<span class="attr">#[cfg_attr(doc_cfg, doc(cfg(feature = <span class="string">"parsing"</span>)))]
 </span><span class="kw">impl</span>&lt;T: Parse + Token&gt; Parse <span class="kw">for </span><span class="prelude-ty">Option</span>&lt;T&gt; {
     <span class="kw">fn </span>parse(input: ParseStream) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>&gt; {
         <span class="kw">if </span>T::peek(input.cursor()) {
@@ -2394,24 +2394,24 @@
     }
 }
 
-<span class="attr">#[cfg_attr(doc_cfg, doc(cfg(feature = <span class="string">&quot;parsing&quot;</span>)))]
+<span class="attr">#[cfg_attr(doc_cfg, doc(cfg(feature = <span class="string">"parsing"</span>)))]
 </span><span class="kw">impl </span>Parse <span class="kw">for </span>TokenStream {
     <span class="kw">fn </span>parse(input: ParseStream) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>&gt; {
         input.step(|cursor| <span class="prelude-val">Ok</span>((cursor.token_stream(), Cursor::empty())))
     }
 }
 
-<span class="attr">#[cfg_attr(doc_cfg, doc(cfg(feature = <span class="string">&quot;parsing&quot;</span>)))]
+<span class="attr">#[cfg_attr(doc_cfg, doc(cfg(feature = <span class="string">"parsing"</span>)))]
 </span><span class="kw">impl </span>Parse <span class="kw">for </span>TokenTree {
     <span class="kw">fn </span>parse(input: ParseStream) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>&gt; {
         input.step(|cursor| <span class="kw">match </span>cursor.token_tree() {
             <span class="prelude-val">Some</span>((tt, rest)) =&gt; <span class="prelude-val">Ok</span>((tt, rest)),
-            <span class="prelude-val">None </span>=&gt; <span class="prelude-val">Err</span>(cursor.error(<span class="string">&quot;expected token tree&quot;</span>)),
+            <span class="prelude-val">None </span>=&gt; <span class="prelude-val">Err</span>(cursor.error(<span class="string">"expected token tree"</span>)),
         })
     }
 }
 
-<span class="attr">#[cfg_attr(doc_cfg, doc(cfg(feature = <span class="string">&quot;parsing&quot;</span>)))]
+<span class="attr">#[cfg_attr(doc_cfg, doc(cfg(feature = <span class="string">"parsing"</span>)))]
 </span><span class="kw">impl </span>Parse <span class="kw">for </span>Group {
     <span class="kw">fn </span>parse(input: ParseStream) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>&gt; {
         input.step(|cursor| {
@@ -2422,27 +2422,27 @@
                     <span class="kw">return </span><span class="prelude-val">Ok</span>((group, rest));
                 }
             }
-            <span class="prelude-val">Err</span>(cursor.error(<span class="string">&quot;expected group token&quot;</span>))
+            <span class="prelude-val">Err</span>(cursor.error(<span class="string">"expected group token"</span>))
         })
     }
 }
 
-<span class="attr">#[cfg_attr(doc_cfg, doc(cfg(feature = <span class="string">&quot;parsing&quot;</span>)))]
+<span class="attr">#[cfg_attr(doc_cfg, doc(cfg(feature = <span class="string">"parsing"</span>)))]
 </span><span class="kw">impl </span>Parse <span class="kw">for </span>Punct {
     <span class="kw">fn </span>parse(input: ParseStream) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>&gt; {
         input.step(|cursor| <span class="kw">match </span>cursor.punct() {
             <span class="prelude-val">Some</span>((punct, rest)) =&gt; <span class="prelude-val">Ok</span>((punct, rest)),
-            <span class="prelude-val">None </span>=&gt; <span class="prelude-val">Err</span>(cursor.error(<span class="string">&quot;expected punctuation token&quot;</span>)),
+            <span class="prelude-val">None </span>=&gt; <span class="prelude-val">Err</span>(cursor.error(<span class="string">"expected punctuation token"</span>)),
         })
     }
 }
 
-<span class="attr">#[cfg_attr(doc_cfg, doc(cfg(feature = <span class="string">&quot;parsing&quot;</span>)))]
+<span class="attr">#[cfg_attr(doc_cfg, doc(cfg(feature = <span class="string">"parsing"</span>)))]
 </span><span class="kw">impl </span>Parse <span class="kw">for </span>Literal {
     <span class="kw">fn </span>parse(input: ParseStream) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>&gt; {
         input.step(|cursor| <span class="kw">match </span>cursor.literal() {
             <span class="prelude-val">Some</span>((literal, rest)) =&gt; <span class="prelude-val">Ok</span>((literal, rest)),
-            <span class="prelude-val">None </span>=&gt; <span class="prelude-val">Err</span>(cursor.error(<span class="string">&quot;expected literal token&quot;</span>)),
+            <span class="prelude-val">None </span>=&gt; <span class="prelude-val">Err</span>(cursor.error(<span class="string">"expected literal token"</span>)),
         })
     }
 }
@@ -2453,7 +2453,7 @@
 ///
 /// [module documentation]: self
 ///
-/// *This trait is available only if Syn is built with the `&quot;parsing&quot;` feature.*
+/// *This trait is available only if Syn is built with the `"parsing"` feature.*
 </span><span class="kw">pub trait </span>Parser: Sized {
     <span class="kw">type </span>Output;
 
@@ -2468,11 +2468,11 @@
     /// This function will check that the input is fully parsed. If there are
     /// any unparsed tokens at the end of the stream, an error is returned.
     ///
-    /// *This method is available only if Syn is built with both the `&quot;parsing&quot;` and
-    /// `&quot;proc-macro&quot;` features.*
+    /// *This method is available only if Syn is built with both the `"parsing"` and
+    /// `"proc-macro"` features.*
     </span><span class="attr">#[cfg(all(
-        not(all(target_arch = <span class="string">&quot;wasm32&quot;</span>, any(target_os = <span class="string">&quot;unknown&quot;</span>, target_os = <span class="string">&quot;wasi&quot;</span>))),
-        feature = <span class="string">&quot;proc-macro&quot;
+        not(all(target_arch = <span class="string">"wasm32"</span>, any(target_os = <span class="string">"unknown"</span>, target_os = <span class="string">"wasi"</span>))),
+        feature = <span class="string">"proc-macro"
     </span>))]
     </span><span class="kw">fn </span>parse(<span class="self">self</span>, tokens: proc_macro::TokenStream) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>::Output&gt; {
         <span class="self">self</span>.parse2(proc_macro2::TokenStream::from(tokens))
@@ -2493,7 +2493,7 @@
 
     <span class="comment">// Not public API.
     </span><span class="attr">#[doc(hidden)]
-    #[cfg(any(feature = <span class="string">&quot;full&quot;</span>, feature = <span class="string">&quot;derive&quot;</span>))]
+    #[cfg(any(feature = <span class="string">"full"</span>, feature = <span class="string">"derive"</span>))]
     </span><span class="kw">fn </span>__parse_scoped(<span class="self">self</span>, scope: Span, tokens: TokenStream) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>::Output&gt; {
         <span class="kw">let _ </span>= scope;
         <span class="self">self</span>.parse2(tokens)
@@ -2501,7 +2501,7 @@
 
     <span class="comment">// Not public API.
     </span><span class="attr">#[doc(hidden)]
-    #[cfg(any(feature = <span class="string">&quot;full&quot;</span>, feature = <span class="string">&quot;derive&quot;</span>))]
+    #[cfg(any(feature = <span class="string">"full"</span>, feature = <span class="string">"derive"</span>))]
     </span><span class="kw">fn </span>__parse_stream(<span class="self">self</span>, input: ParseStream) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>::Output&gt; {
         input.parse().and_then(|tokens| <span class="self">self</span>.parse2(tokens))
     }
@@ -2526,14 +2526,14 @@
         <span class="kw">let </span>node = <span class="self">self</span>(<span class="kw-2">&amp;</span>state)<span class="question-mark">?</span>;
         state.check_unexpected()<span class="question-mark">?</span>;
         <span class="kw">if let </span><span class="prelude-val">Some</span>(unexpected_span) = span_of_unexpected_ignoring_nones(state.cursor()) {
-            <span class="prelude-val">Err</span>(Error::new(unexpected_span, <span class="string">&quot;unexpected token&quot;</span>))
+            <span class="prelude-val">Err</span>(Error::new(unexpected_span, <span class="string">"unexpected token"</span>))
         } <span class="kw">else </span>{
             <span class="prelude-val">Ok</span>(node)
         }
     }
 
     <span class="attr">#[doc(hidden)]
-    #[cfg(any(feature = <span class="string">&quot;full&quot;</span>, feature = <span class="string">&quot;derive&quot;</span>))]
+    #[cfg(any(feature = <span class="string">"full"</span>, feature = <span class="string">"derive"</span>))]
     </span><span class="kw">fn </span>__parse_scoped(<span class="self">self</span>, scope: Span, tokens: TokenStream) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>::Output&gt; {
         <span class="kw">let </span>buf = TokenBuffer::new2(tokens);
         <span class="kw">let </span>cursor = buf.begin();
@@ -2542,25 +2542,25 @@
         <span class="kw">let </span>node = <span class="self">self</span>(<span class="kw-2">&amp;</span>state)<span class="question-mark">?</span>;
         state.check_unexpected()<span class="question-mark">?</span>;
         <span class="kw">if let </span><span class="prelude-val">Some</span>(unexpected_span) = span_of_unexpected_ignoring_nones(state.cursor()) {
-            <span class="prelude-val">Err</span>(Error::new(unexpected_span, <span class="string">&quot;unexpected token&quot;</span>))
+            <span class="prelude-val">Err</span>(Error::new(unexpected_span, <span class="string">"unexpected token"</span>))
         } <span class="kw">else </span>{
             <span class="prelude-val">Ok</span>(node)
         }
     }
 
     <span class="attr">#[doc(hidden)]
-    #[cfg(any(feature = <span class="string">&quot;full&quot;</span>, feature = <span class="string">&quot;derive&quot;</span>))]
+    #[cfg(any(feature = <span class="string">"full"</span>, feature = <span class="string">"derive"</span>))]
     </span><span class="kw">fn </span>__parse_stream(<span class="self">self</span>, input: ParseStream) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>::Output&gt; {
         <span class="self">self</span>(input)
     }
 }
 
-<span class="attr">#[cfg(any(feature = <span class="string">&quot;full&quot;</span>, feature = <span class="string">&quot;derive&quot;</span>))]
+<span class="attr">#[cfg(any(feature = <span class="string">"full"</span>, feature = <span class="string">"derive"</span>))]
 </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>parse_scoped&lt;F: Parser&gt;(f: F, scope: Span, tokens: TokenStream) -&gt; <span class="prelude-ty">Result</span>&lt;F::Output&gt; {
     f.__parse_scoped(scope, tokens)
 }
 
-<span class="attr">#[cfg(any(feature = <span class="string">&quot;full&quot;</span>, feature = <span class="string">&quot;derive&quot;</span>))]
+<span class="attr">#[cfg(any(feature = <span class="string">"full"</span>, feature = <span class="string">"derive"</span>))]
 </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>parse_stream&lt;F: Parser&gt;(f: F, input: ParseStream) -&gt; <span class="prelude-ty">Result</span>&lt;F::Output&gt; {
     f.__parse_stream(input)
 }
@@ -2584,7 +2584,7 @@
 ///     parse_macro_input!(args as Nothing);
 ///
 ///     /* ... */
-/// #   &quot;&quot;.parse().unwrap()
+/// #   "".parse().unwrap()
 /// }
 /// ```
 ///
@@ -2603,28 +2603,28 @@
     }
 }
 
-<span class="attr">#[cfg(feature = <span class="string">&quot;extra-traits&quot;</span>)]
-#[cfg_attr(doc_cfg, doc(cfg(feature = <span class="string">&quot;extra-traits&quot;</span>)))]
+<span class="attr">#[cfg(feature = <span class="string">"extra-traits"</span>)]
+#[cfg_attr(doc_cfg, doc(cfg(feature = <span class="string">"extra-traits"</span>)))]
 </span><span class="kw">impl </span>Debug <span class="kw">for </span>Nothing {
     <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter) -&gt; fmt::Result {
-        f.write_str(<span class="string">&quot;Nothing&quot;</span>)
+        f.write_str(<span class="string">"Nothing"</span>)
     }
 }
 
-<span class="attr">#[cfg(feature = <span class="string">&quot;extra-traits&quot;</span>)]
-#[cfg_attr(doc_cfg, doc(cfg(feature = <span class="string">&quot;extra-traits&quot;</span>)))]
+<span class="attr">#[cfg(feature = <span class="string">"extra-traits"</span>)]
+#[cfg_attr(doc_cfg, doc(cfg(feature = <span class="string">"extra-traits"</span>)))]
 </span><span class="kw">impl </span>Eq <span class="kw">for </span>Nothing {}
 
-<span class="attr">#[cfg(feature = <span class="string">&quot;extra-traits&quot;</span>)]
-#[cfg_attr(doc_cfg, doc(cfg(feature = <span class="string">&quot;extra-traits&quot;</span>)))]
+<span class="attr">#[cfg(feature = <span class="string">"extra-traits"</span>)]
+#[cfg_attr(doc_cfg, doc(cfg(feature = <span class="string">"extra-traits"</span>)))]
 </span><span class="kw">impl </span>PartialEq <span class="kw">for </span>Nothing {
     <span class="kw">fn </span>eq(<span class="kw-2">&amp;</span><span class="self">self</span>, _other: <span class="kw-2">&amp;</span><span class="self">Self</span>) -&gt; bool {
         <span class="bool-val">true
     </span>}
 }
 
-<span class="attr">#[cfg(feature = <span class="string">&quot;extra-traits&quot;</span>)]
-#[cfg_attr(doc_cfg, doc(cfg(feature = <span class="string">&quot;extra-traits&quot;</span>)))]
+<span class="attr">#[cfg(feature = <span class="string">"extra-traits"</span>)]
+#[cfg_attr(doc_cfg, doc(cfg(feature = <span class="string">"extra-traits"</span>)))]
 </span><span class="kw">impl </span>Hash <span class="kw">for </span>Nothing {
     <span class="kw">fn </span>hash&lt;H: Hasher&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, _state: <span class="kw-2">&amp;mut </span>H) {}
 }

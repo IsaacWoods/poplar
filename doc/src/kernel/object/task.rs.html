@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/object/task.rs`."><title>task.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-c67e44d78ab2db17.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="kernel" data-themes="" data-resource-suffix="" data-rustdoc-version="1.76.0-nightly (90e321d82 2023-12-02)" data-channel="nightly" data-search-js="search-5a66c239c06b3a66.js" data-settings-js="settings-fe03fdc259827cd2.js" ><script src="../../../static.files/storage-fec3eaa3851e447d.js"></script><script defer src="../../../static.files/src-script-3280b574d94e47b4.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-77dede896d6ac08e.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-5d8b3c7633ad77ba.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/object/task.rs`."><title>task.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-c67e44d78ab2db17.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="kernel" data-themes="" data-resource-suffix="" data-rustdoc-version="1.76.0-nightly (e9013ac0e 2023-12-05)" data-channel="nightly" data-search-js="search-5a66c239c06b3a66.js" data-settings-js="settings-fe03fdc259827cd2.js" ><script src="../../../static.files/storage-fec3eaa3851e447d.js"></script><script defer src="../../../static.files/src-script-3280b574d94e47b4.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-77dede896d6ac08e.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-5d8b3c7633ad77ba.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -161,6 +161,14 @@
 <a href="#161" id="161">161</a>
 <a href="#162" id="162">162</a>
 <a href="#163" id="163">163</a>
+<a href="#164" id="164">164</a>
+<a href="#165" id="165">165</a>
+<a href="#166" id="166">166</a>
+<a href="#167" id="167">167</a>
+<a href="#168" id="168">168</a>
+<a href="#169" id="169">169</a>
+<a href="#170" id="170">170</a>
+<a href="#171" id="171">171</a>
 </pre></div><pre class="rust"><code><span class="kw">use super</span>::{
     address_space::{AddressSpace, TaskSlot},
     alloc_kernel_object_id,
@@ -195,7 +203,7 @@
     <span class="doccomment">/// The task name is not valid UTF-8.
     </span>InvalidName,
     <span class="doccomment">/// The loader can only load tasks that have a name that can be encoded in 32 bytes of UTF-8. This one is too
-    /// long (so probably means that something hasn&#39;t been loaded correctly).
+    /// long (so probably means that something hasn't been loaded correctly).
     </span>NameTooLong,
     <span class="doccomment">/// The byte stream describing the capabilities of an image is invalid.
     </span>InvalidCapabilityEncoding,
@@ -221,13 +229,15 @@
     <span class="kw">pub </span>kernel_stack_pointer: UnsafeCell&lt;VAddr&gt;,
     <span class="kw">pub </span>user_stack_pointer: UnsafeCell&lt;VAddr&gt;,
 
+    <span class="kw">pub </span>context: UnsafeCell&lt;P::TaskContext&gt;,
+
     <span class="kw">pub </span>handles: RwSpinlock&lt;BTreeMap&lt;Handle, Arc&lt;<span class="kw">dyn </span>KernelObject&gt;&gt;&gt;,
     next_handle: AtomicU32,
 }
 
 <span class="comment">/*
- * XXX: this is needed to make `Task` Sync because there&#39;s that UnsafeCell in there. We should actually have
- * some sort of synchronization primitive that says &quot;only this scheduler can access me&quot; instead (I think) and
+ * XXX: this is needed to make `Task` Sync because there's that UnsafeCell in there. We should actually have
+ * some sort of synchronization primitive that says "only this scheduler can access me" instead (I think) and
  * then unsafe impl these traits on that instead.
  */
 </span><span class="kw">unsafe impl</span>&lt;P&gt; Send <span class="kw">for </span>Task&lt;P&gt; <span class="kw">where </span>P: Platform {}
@@ -257,6 +267,8 @@
         <span class="kw">let </span>(kernel_stack_pointer, user_stack_pointer) =
             <span class="kw">unsafe </span>{ P::initialize_task_stacks(<span class="kw-2">&amp;</span>kernel_stack, <span class="kw-2">&amp;</span>task_slot.user_stack, image.entry_point) };
 
+        <span class="kw">let </span>context = P::new_task_context(kernel_stack_pointer, user_stack_pointer, image.entry_point);
+
         <span class="prelude-val">Ok</span>(Arc::new(Task {
             id,
             owner,
@@ -264,10 +276,14 @@
             address_space,
             state: Spinlock::new(TaskState::Ready),
             capabilities: decode_capabilities(<span class="kw-2">&amp;</span>image.capability_stream)<span class="question-mark">?</span>,
+
             user_slot: Spinlock::new(task_slot),
             kernel_stack: Spinlock::new(kernel_stack),
             kernel_stack_pointer: UnsafeCell::new(kernel_stack_pointer),
             user_stack_pointer: UnsafeCell::new(user_stack_pointer),
+
+            context: UnsafeCell::new(context),
+
             handles: RwSpinlock::new(BTreeMap::new()),
             <span class="comment">// XXX: 0 is a special handle value, so start at 1
             </span>next_handle: AtomicU32::new(<span class="number">1</span>),
@@ -290,8 +306,8 @@
     }
 }
 
-<span class="doccomment">/// Decode a capability stream (as found in a task&#39;s image) into a set of capabilities as they&#39;re
-/// represented in the kernel. For the format that&#39;s being decoded here, refer to the
+<span class="doccomment">/// Decode a capability stream (as found in a task's image) into a set of capabilities as they're
+/// represented in the kernel. For the format that's being decoded here, refer to the
 /// `(3.1) Userspace/Capabilities` section of the Book.
 </span><span class="kw">fn </span>decode_capabilities(<span class="kw-2">mut </span>cap_stream: <span class="kw-2">&amp;</span>[u8]) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;Capability&gt;, TaskCreationError&gt; {
     <span class="kw">use </span>poplar::caps::<span class="kw-2">*</span>;

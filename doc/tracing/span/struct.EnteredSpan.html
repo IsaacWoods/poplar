@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="An owned version of `Entered`, a guard representing a span which has been entered and is currently executing."><title>EnteredSpan in tracing::span - Rust</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-c67e44d78ab2db17.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="tracing" data-themes="" data-resource-suffix="" data-rustdoc-version="1.76.0-nightly (90e321d82 2023-12-02)" data-channel="nightly" data-search-js="search-5a66c239c06b3a66.js" data-settings-js="settings-fe03fdc259827cd2.js" ><script src="../../static.files/storage-fec3eaa3851e447d.js"></script><script defer src="sidebar-items.js"></script><script defer src="../../static.files/main-77dede896d6ac08e.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-5d8b3c7633ad77ba.css"></noscript><link rel="icon" href="https://raw.githubusercontent.com/tokio-rs/tracing/master/assets/favicon.ico"></head><body class="rustdoc struct"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="logo-container" href="../../tracing/index.html"><img src="https://raw.githubusercontent.com/tokio-rs/tracing/master/assets/logo-type.png" alt=""></a></nav><nav class="sidebar"><div class="sidebar-crate"><a class="logo-container" href="../../tracing/index.html"><img src="https://raw.githubusercontent.com/tokio-rs/tracing/master/assets/logo-type.png" alt="logo"></a><h2><a href="../../tracing/index.html">tracing</a><span class="version">0.2.0</span></h2></div><h2 class="location"><a href="#">EnteredSpan</a></h2><div class="sidebar-elems"><section><h3><a href="#implementations">Methods</a></h3><ul class="block method"><li><a href="#method.exit">exit</a></li><li><a href="#method.id">id</a></li></ul><h3><a href="#deref-methods-Span">Methods from Deref&lt;Target=Span&gt;</a></h3><ul class="block deref-methods"><li><a href="#method.enter">enter</a></li><li><a href="#method.field">field</a></li><li><a href="#method.follows_from">follows_from</a></li><li><a href="#method.has_field">has_field</a></li><li><a href="#method.id-1">id</a></li><li><a href="#method.in_scope">in_scope</a></li><li><a href="#method.is_disabled">is_disabled</a></li><li><a href="#method.is_none">is_none</a></li><li><a href="#method.metadata">metadata</a></li><li><a href="#method.record">record</a></li><li><a href="#method.record_all">record_all</a></li><li><a href="#method.with_collector">with_collector</a></li></ul><h3><a href="#trait-implementations">Trait Implementations</a></h3><ul class="block trait-implementation"><li><a href="#impl-Debug-for-EnteredSpan">Debug</a></li><li><a href="#impl-Deref-for-EnteredSpan">Deref</a></li><li><a href="#impl-Drop-for-EnteredSpan">Drop</a></li><li><a href="#impl-From%3C%26EnteredSpan%3E-for-Option%3C%26Id%3E">From&lt;&amp;&#x27;a EnteredSpan&gt;</a></li><li><a href="#impl-From%3C%26EnteredSpan%3E-for-Option%3CId%3E">From&lt;&amp;&#x27;a EnteredSpan&gt;</a></li></ul><h3><a href="#synthetic-implementations">Auto Trait Implementations</a></h3><ul class="block synthetic-implementation"><li><a href="#impl-RefUnwindSafe-for-EnteredSpan">!RefUnwindSafe</a></li><li><a href="#impl-Send-for-EnteredSpan">!Send</a></li><li><a href="#impl-UnwindSafe-for-EnteredSpan">!UnwindSafe</a></li><li><a href="#impl-Sync-for-EnteredSpan">Sync</a></li><li><a href="#impl-Unpin-for-EnteredSpan">Unpin</a></li></ul><h3><a href="#blanket-implementations">Blanket Implementations</a></h3><ul class="block blanket-implementation"><li><a href="#impl-Any-for-T">Any</a></li><li><a href="#impl-Borrow%3CT%3E-for-T">Borrow&lt;T&gt;</a></li><li><a href="#impl-BorrowMut%3CT%3E-for-T">BorrowMut&lt;T&gt;</a></li><li><a href="#impl-From%3CT%3E-for-T">From&lt;T&gt;</a></li><li><a href="#impl-Instrument-for-T">Instrument</a></li><li><a href="#impl-Into%3CU%3E-for-T">Into&lt;U&gt;</a></li><li><a href="#impl-TryFrom%3CU%3E-for-T">TryFrom&lt;U&gt;</a></li><li><a href="#impl-TryInto%3CU%3E-for-T">TryInto&lt;U&gt;</a></li></ul></section><h2><a href="index.html">In tracing::span</a></h2></div></nav><main><div class="width-limiter"><nav class="sub"><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="main-heading"><h1>Struct <a href="../index.html">tracing</a>::<wbr><a href="index.html">span</a>::<wbr><a class="struct" href="#">EnteredSpan</a><button id="copy-path" title="Copy item path to clipboard"><img src="../../static.files/clipboard-7571035ce49a181d.svg" width="19" height="18" alt="Copy item path"></button></h1><span class="out-of-band"><a class="src" href="../../src/tracing/span.rs.html#392-402">source</a> · <button id="toggle-all-docs" title="collapse all docs">[<span>&#x2212;</span>]</button></span></div><pre class="rust item-decl"><code>pub struct EnteredSpan { /* private fields */ }</code></pre><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>An owned version of <a href="struct.Entered.html" title="struct tracing::span::Entered"><code>Entered</code></a>, a guard representing a span which has been
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="An owned version of `Entered`, a guard representing a span which has been entered and is currently executing."><title>EnteredSpan in tracing::span - Rust</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-c67e44d78ab2db17.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="tracing" data-themes="" data-resource-suffix="" data-rustdoc-version="1.76.0-nightly (e9013ac0e 2023-12-05)" data-channel="nightly" data-search-js="search-5a66c239c06b3a66.js" data-settings-js="settings-fe03fdc259827cd2.js" ><script src="../../static.files/storage-fec3eaa3851e447d.js"></script><script defer src="sidebar-items.js"></script><script defer src="../../static.files/main-77dede896d6ac08e.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-5d8b3c7633ad77ba.css"></noscript><link rel="icon" href="https://raw.githubusercontent.com/tokio-rs/tracing/master/assets/favicon.ico"></head><body class="rustdoc struct"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="logo-container" href="../../tracing/index.html"><img src="https://raw.githubusercontent.com/tokio-rs/tracing/master/assets/logo-type.png" alt=""></a></nav><nav class="sidebar"><div class="sidebar-crate"><a class="logo-container" href="../../tracing/index.html"><img src="https://raw.githubusercontent.com/tokio-rs/tracing/master/assets/logo-type.png" alt="logo"></a><h2><a href="../../tracing/index.html">tracing</a><span class="version">0.2.0</span></h2></div><h2 class="location"><a href="#">EnteredSpan</a></h2><div class="sidebar-elems"><section><h3><a href="#implementations">Methods</a></h3><ul class="block method"><li><a href="#method.exit">exit</a></li><li><a href="#method.id">id</a></li></ul><h3><a href="#deref-methods-Span">Methods from Deref&lt;Target=Span&gt;</a></h3><ul class="block deref-methods"><li><a href="#method.enter">enter</a></li><li><a href="#method.field">field</a></li><li><a href="#method.follows_from">follows_from</a></li><li><a href="#method.has_field">has_field</a></li><li><a href="#method.id-1">id</a></li><li><a href="#method.in_scope">in_scope</a></li><li><a href="#method.is_disabled">is_disabled</a></li><li><a href="#method.is_none">is_none</a></li><li><a href="#method.metadata">metadata</a></li><li><a href="#method.record">record</a></li><li><a href="#method.record_all">record_all</a></li><li><a href="#method.with_collector">with_collector</a></li></ul><h3><a href="#trait-implementations">Trait Implementations</a></h3><ul class="block trait-implementation"><li><a href="#impl-Debug-for-EnteredSpan">Debug</a></li><li><a href="#impl-Deref-for-EnteredSpan">Deref</a></li><li><a href="#impl-Drop-for-EnteredSpan">Drop</a></li><li><a href="#impl-From%3C%26EnteredSpan%3E-for-Option%3C%26Id%3E">From&lt;&amp;&#x27;a EnteredSpan&gt;</a></li><li><a href="#impl-From%3C%26EnteredSpan%3E-for-Option%3CId%3E">From&lt;&amp;&#x27;a EnteredSpan&gt;</a></li></ul><h3><a href="#synthetic-implementations">Auto Trait Implementations</a></h3><ul class="block synthetic-implementation"><li><a href="#impl-RefUnwindSafe-for-EnteredSpan">!RefUnwindSafe</a></li><li><a href="#impl-Send-for-EnteredSpan">!Send</a></li><li><a href="#impl-UnwindSafe-for-EnteredSpan">!UnwindSafe</a></li><li><a href="#impl-Sync-for-EnteredSpan">Sync</a></li><li><a href="#impl-Unpin-for-EnteredSpan">Unpin</a></li></ul><h3><a href="#blanket-implementations">Blanket Implementations</a></h3><ul class="block blanket-implementation"><li><a href="#impl-Any-for-T">Any</a></li><li><a href="#impl-Borrow%3CT%3E-for-T">Borrow&lt;T&gt;</a></li><li><a href="#impl-BorrowMut%3CT%3E-for-T">BorrowMut&lt;T&gt;</a></li><li><a href="#impl-From%3CT%3E-for-T">From&lt;T&gt;</a></li><li><a href="#impl-Instrument-for-T">Instrument</a></li><li><a href="#impl-Into%3CU%3E-for-T">Into&lt;U&gt;</a></li><li><a href="#impl-TryFrom%3CU%3E-for-T">TryFrom&lt;U&gt;</a></li><li><a href="#impl-TryInto%3CU%3E-for-T">TryInto&lt;U&gt;</a></li></ul></section><h2><a href="index.html">In tracing::span</a></h2></div></nav><main><div class="width-limiter"><nav class="sub"><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="main-heading"><h1>Struct <a href="../index.html">tracing</a>::<wbr><a href="index.html">span</a>::<wbr><a class="struct" href="#">EnteredSpan</a><button id="copy-path" title="Copy item path to clipboard"><img src="../../static.files/clipboard-7571035ce49a181d.svg" width="19" height="18" alt="Copy item path"></button></h1><span class="out-of-band"><a class="src" href="../../src/tracing/span.rs.html#392-402">source</a> · <button id="toggle-all-docs" title="collapse all docs">[<span>&#x2212;</span>]</button></span></div><pre class="rust item-decl"><code>pub struct EnteredSpan { <span class="comment">/* private fields */</span> }</code></pre><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>An owned version of <a href="struct.Entered.html" title="struct tracing::span::Entered"><code>Entered</code></a>, a guard representing a span which has been
 entered and is currently executing.</p>
 <p>When the guard is dropped, the span will be exited.</p>
 <p>This is returned by the <a href="../struct.Span.html#method.entered" title="method tracing::Span::entered"><code>Span::entered</code></a> function.</p>
@@ -23,7 +23,7 @@ the drop guard returned by <code>Span::enter</code> across <code>.await</code> p
 result in incorrect traces. For example,</p>
 
 <div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">async fn </span>my_async_function() {
-    <span class="kw">let </span>span = <span class="macro">info_span!</span>(<span class="string">&quot;my_async_function&quot;</span>);
+    <span class="kw">let </span>span = <span class="macro">info_span!</span>(<span class="string">"my_async_function"</span>);
 
     <span class="comment">// WARNING: This span will remain entered until this
     // guard is dropped...
@@ -52,7 +52,7 @@ synchronous closure and exits the span when the closure returns, the
 span will always be exited before the next await point. For example:</p>
 
 <div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">async fn </span>my_async_function() {
-    <span class="kw">let </span>span = <span class="macro">info_span!</span>(<span class="string">&quot;my_async_function&quot;</span>);
+    <span class="kw">let </span>span = <span class="macro">info_span!</span>(<span class="string">"my_async_function"</span>);
 
     <span class="kw">let </span>some_value = span.in_scope(|| {
         <span class="comment">// run some synchronous code inside the span...
@@ -76,7 +76,7 @@ the future yields.</p>
 <div class="example-wrap ignore"><a href="#" class="tooltip" title="This example is not tested">ⓘ</a><pre class="rust rust-example-rendered"><code><span class="kw">use </span>tracing::Instrument;
 
 <span class="kw">async fn </span>my_async_function() {
-    <span class="kw">let </span>span = <span class="macro">info_span!</span>(<span class="string">&quot;my_async_function&quot;</span>);
+    <span class="kw">let </span>span = <span class="macro">info_span!</span>(<span class="string">"my_async_function"</span>);
     <span class="kw">async move </span>{
        <span class="comment">// This is correct! If we yield here, the span will be exited,
        // and re-entered when we resume.
@@ -97,7 +97,7 @@ callsite:</p>
 
 <span class="kw">async fn </span>my_async_function() {
     <span class="kw">let </span>some_value = some_other_async_function()
-       .instrument(<span class="macro">debug_span!</span>(<span class="string">&quot;some_other_async_function&quot;</span>))
+       .instrument(<span class="macro">debug_span!</span>(<span class="string">"some_other_async_function"</span>))
        .<span class="kw">await</span>;
 
     <span class="comment">// ...
@@ -107,7 +107,7 @@ callsite:</p>
 <p>The <a href="macro@crate::instrument"><code>#[instrument]</code> attribute macro</a> can automatically generate
 correct code when used on an async function:</p>
 
-<div class="example-wrap ignore"><a href="#" class="tooltip" title="This example is not tested">ⓘ</a><pre class="rust rust-example-rendered"><code><span class="attr">#[tracing::instrument(level = <span class="string">&quot;info&quot;</span>)]
+<div class="example-wrap ignore"><a href="#" class="tooltip" title="This example is not tested">ⓘ</a><pre class="rust rust-example-rendered"><code><span class="attr">#[tracing::instrument(level = <span class="string">"info"</span>)]
 </span><span class="kw">async fn </span>my_async_function() {
 
     <span class="comment">// This is correct! If we yield here, the span will be exited,
@@ -120,7 +120,7 @@ correct code when used on an async function:</p>
 </li>
 </ul>
 <h5 id="examples"><a href="#examples">Examples</a></h5>
-<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">let </span>span = <span class="macro">span!</span>(Level::INFO, <span class="string">&quot;my_span&quot;</span>);
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">let </span>span = <span class="macro">span!</span>(Level::INFO, <span class="string">"my_span"</span>);
 <span class="kw">let </span>guard = span.enter();
 
 <span class="comment">// code here is within the span
@@ -133,14 +133,14 @@ correct code when used on an async function:</p>
 
 <div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">fn </span>my_function() -&gt; String {
     <span class="comment">// enter a span for the duration of this function.
-    </span><span class="kw">let </span>span = <span class="macro">trace_span!</span>(<span class="string">&quot;my_function&quot;</span>);
+    </span><span class="kw">let </span>span = <span class="macro">trace_span!</span>(<span class="string">"my_function"</span>);
     <span class="kw">let </span>_enter = span.enter();
 
     <span class="comment">// anything happening in functions we call is still inside the span...
     </span>my_other_function();
 
     <span class="comment">// returning from the function drops the guard, exiting the span.
-    </span><span class="kw">return </span><span class="string">&quot;Hello world&quot;</span>.to_owned();
+    </span><span class="kw">return </span><span class="string">"Hello world"</span>.to_owned();
 }
 
 <span class="kw">fn </span>my_other_function() {
@@ -149,19 +149,19 @@ correct code when used on an async function:</p>
 <p>Sub-scopes may be created to limit the duration for which the span is
 entered:</p>
 
-<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">let </span>span = <span class="macro">info_span!</span>(<span class="string">&quot;my_great_span&quot;</span>);
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">let </span>span = <span class="macro">info_span!</span>(<span class="string">"my_great_span"</span>);
 
 {
     <span class="kw">let </span>_enter = span.enter();
 
     <span class="comment">// this event occurs inside the span.
-    </span><span class="macro">info!</span>(<span class="string">&quot;i&#39;m in the span!&quot;</span>);
+    </span><span class="macro">info!</span>(<span class="string">"i'm in the span!"</span>);
 
     <span class="comment">// exiting the scope drops the guard, exiting the span.
 </span>}
 
 <span class="comment">// this event is not inside the span.
-</span><span class="macro">info!</span>(<span class="string">&quot;i&#39;m outside the span!&quot;</span>)</code></pre></div>
+</span><span class="macro">info!</span>(<span class="string">"i'm outside the span!"</span>)</code></pre></div>
 </div></details><details class="toggle method-toggle" open><summary><section id="method.in_scope" class="method"><a class="src rightside" href="../../src/tracing/span.rs.html#1101-1104">source</a><h4 class="code-header">pub fn <a href="#method.in_scope" class="fn">in_scope</a>&lt;F: <a class="trait" href="https://doc.rust-lang.org/nightly/core/ops/function/trait.FnOnce.html" title="trait core::ops::function::FnOnce">FnOnce</a>() -&gt; T, T&gt;(&amp;self, f: F) -&gt; T</h4></section></summary><div class="docblock"><p>Executes the given function in the context of this span.</p>
 <p>If this span is enabled, then this function enters the span, invokes <code>f</code>
 and then exits the span. If the span is disabled, <code>f</code> will still be
@@ -169,22 +169,22 @@ invoked, but in the context of the currently-executing span (if there is
 one).</p>
 <p>Returns the result of evaluating <code>f</code>.</p>
 <h5 id="examples-1"><a href="#examples-1">Examples</a></h5>
-<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">let </span>my_span = <span class="macro">span!</span>(Level::TRACE, <span class="string">&quot;my_span&quot;</span>);
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">let </span>my_span = <span class="macro">span!</span>(Level::TRACE, <span class="string">"my_span"</span>);
 
 my_span.in_scope(|| {
     <span class="comment">// this event occurs within the span.
-    </span><span class="macro">trace!</span>(<span class="string">&quot;i&#39;m in the span!&quot;</span>);
+    </span><span class="macro">trace!</span>(<span class="string">"i'm in the span!"</span>);
 });
 
 <span class="comment">// this event occurs outside the span.
-</span><span class="macro">trace!</span>(<span class="string">&quot;i&#39;m not in the span!&quot;</span>);</code></pre></div>
+</span><span class="macro">trace!</span>(<span class="string">"i'm not in the span!"</span>);</code></pre></div>
 <p>Calling a function and returning the result:</p>
 
 <div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">fn </span>hello_world() -&gt; String {
-    <span class="string">&quot;Hello world!&quot;</span>.to_owned()
+    <span class="string">"Hello world!"</span>.to_owned()
 }
 
-<span class="kw">let </span>span = <span class="macro">info_span!</span>(<span class="string">&quot;hello_world&quot;</span>);
+<span class="kw">let </span>span = <span class="macro">info_span!</span>(<span class="string">"hello_world"</span>);
 <span class="comment">// the span will be entered for the duration of the call to
 // `hello_world`.
 </span><span class="kw">let </span>a_string = span.in_scope(hello_world);</code></pre></div>
@@ -202,22 +202,22 @@ are not known when the span is created, and record them later:</p>
 
 <div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>tracing::{trace_span, field};
 
-<span class="comment">// Create a span with two fields: `greeting`, with the value &quot;hello world&quot;, and
+<span class="comment">// Create a span with two fields: `greeting`, with the value "hello world", and
 // `parting`, without a value.
-</span><span class="kw">let </span>span = <span class="macro">trace_span!</span>(<span class="string">&quot;my_span&quot;</span>, greeting = <span class="string">&quot;hello world&quot;</span>, parting = field::Empty);
+</span><span class="kw">let </span>span = <span class="macro">trace_span!</span>(<span class="string">"my_span"</span>, greeting = <span class="string">"hello world"</span>, parting = field::Empty);
 
 <span class="comment">// ...
 
 // Now, record a value for parting as well.
 // (note that the field name is passed as a string slice)
-</span>span.record(<span class="string">&quot;parting&quot;</span>, <span class="string">&quot;goodbye world!&quot;</span>);</code></pre></div>
+</span>span.record(<span class="string">"parting"</span>, <span class="string">"goodbye world!"</span>);</code></pre></div>
 <p>However, it may also be used to record a <em>new</em> value for a field whose
 value was already recorded:</p>
 
 <div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>tracing::info_span;
 
-<span class="comment">// Initially, let&#39;s assume that our attempt to do something is going okay...
-</span><span class="kw">let </span>span = <span class="macro">info_span!</span>(<span class="string">&quot;doing_something&quot;</span>, is_okay = <span class="bool-val">true</span>);
+<span class="comment">// Initially, let's assume that our attempt to do something is going okay...
+</span><span class="kw">let </span>span = <span class="macro">info_span!</span>(<span class="string">"doing_something"</span>, is_okay = <span class="bool-val">true</span>);
 <span class="kw">let </span>_e = span.enter();
 
 <span class="kw">match </span>do_something() {
@@ -226,7 +226,7 @@ value was already recorded:</p>
     </span>}
     <span class="prelude-val">Err</span>(<span class="kw">_</span>) =&gt; {
         <span class="comment">// Things are no longer okay!
-        </span>span.record(<span class="string">&quot;is_okay&quot;</span>, <span class="bool-val">false</span>);
+        </span>span.record(<span class="string">"is_okay"</span>, <span class="bool-val">false</span>);
     }
 }</code></pre></div>
 <div class="example-wrap" style="display:inline-block">
@@ -240,21 +240,21 @@ when the span was created:</p>
 
 <div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>tracing::{trace_span, field};
 
-<span class="comment">// Create a span with two fields: `greeting`, with the value &quot;hello world&quot;, and
+<span class="comment">// Create a span with two fields: `greeting`, with the value "hello world", and
 // `parting`, without a value.
-</span><span class="kw">let </span>span = <span class="macro">trace_span!</span>(<span class="string">&quot;my_span&quot;</span>, greeting = <span class="string">&quot;hello world&quot;</span>, parting = field::Empty);
+</span><span class="kw">let </span>span = <span class="macro">trace_span!</span>(<span class="string">"my_span"</span>, greeting = <span class="string">"hello world"</span>, parting = field::Empty);
 
 <span class="comment">// ...
 
 // Now, you try to record a value for a new field, `new_field`, which was not
 // declared as `Empty` or populated when you created `span`.
-// You won&#39;t get any error, but the assignment will have no effect!
-</span>span.record(<span class="string">&quot;new_field&quot;</span>, <span class="string">&quot;interesting_value_you_really_need&quot;</span>);
+// You won't get any error, but the assignment will have no effect!
+</span>span.record(<span class="string">"new_field"</span>, <span class="string">"interesting_value_you_really_need"</span>);
 
 <span class="comment">// Instead, all fields that may be recorded after span creation should be declared up front,
 // using field::Empty when a value is not known, as we did for `parting`.
-// This `record` call will indeed replace field::Empty with &quot;you will be remembered&quot;.
-</span>span.record(<span class="string">&quot;parting&quot;</span>, <span class="string">&quot;you will be remembered&quot;</span>);</code></pre></div>
+// This `record` call will indeed replace field::Empty with "you will be remembered".
+</span>span.record(<span class="string">"parting"</span>, <span class="string">"you will be remembered"</span>);</code></pre></div>
 </div></details><details class="toggle method-toggle" open><summary><section id="method.record_all" class="method"><a class="src rightside" href="../../src/tracing/span.rs.html#1215-1237">source</a><h4 class="code-header">pub fn <a href="#method.record_all" class="fn">record_all</a>(&amp;self, values: &amp;<a class="struct" href="../field/struct.ValueSet.html" title="struct tracing::field::ValueSet">ValueSet</a>&lt;'_&gt;) -&gt; <a class="primitive" href="https://doc.rust-lang.org/nightly/core/primitive.reference.html">&amp;Self</a></h4></section></summary><div class="docblock"><p>Records all the fields in the provided <code>ValueSet</code>.</p>
 </div></details><details class="toggle method-toggle" open><summary><section id="method.is_disabled" class="method"><a class="src rightside" href="../../src/tracing/span.rs.html#1246-1248">source</a><h4 class="code-header">pub fn <a href="#method.is_disabled" class="fn">is_disabled</a>(&amp;self) -&gt; <a class="primitive" href="https://doc.rust-lang.org/nightly/core/primitive.bool.html">bool</a></h4></section></summary><div class="docblock"><p>Returns <code>true</code> if this span was disabled by the collector and does not
 exist.</p>
@@ -280,16 +280,16 @@ would be invalid, this function will do nothing.</p>
 <h5 id="examples-2"><a href="#examples-2">Examples</a></h5>
 <p>Setting a <code>follows_from</code> relationship with a <code>Span</code>:</p>
 
-<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">let </span>span1 = <span class="macro">span!</span>(Level::INFO, <span class="string">&quot;span_1&quot;</span>);
-<span class="kw">let </span>span2 = <span class="macro">span!</span>(Level::DEBUG, <span class="string">&quot;span_2&quot;</span>);
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">let </span>span1 = <span class="macro">span!</span>(Level::INFO, <span class="string">"span_1"</span>);
+<span class="kw">let </span>span2 = <span class="macro">span!</span>(Level::DEBUG, <span class="string">"span_2"</span>);
 span2.follows_from(<span class="kw-2">&amp;</span>span1);</code></pre></div>
 <p>Setting a <code>follows_from</code> relationship with the current span:</p>
 
-<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">let </span>span = <span class="macro">span!</span>(Level::INFO, <span class="string">&quot;hello!&quot;</span>);
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">let </span>span = <span class="macro">span!</span>(Level::INFO, <span class="string">"hello!"</span>);
 span.follows_from(<span class="kw-2">&amp;</span>Span::current());</code></pre></div>
 <p>Setting a <code>follows_from</code> relationship with an <code>Id</code>:</p>
 
-<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">let </span>span = <span class="macro">span!</span>(Level::INFO, <span class="string">&quot;hello!&quot;</span>);
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">let </span>span = <span class="macro">span!</span>(Level::INFO, <span class="string">"hello!"</span>);
 <span class="kw">let </span>id = span.id();
 span.follows_from(id);</code></pre></div>
 </div></details><details class="toggle method-toggle" open><summary><section id="method.id-1" class="method"><a class="src rightside" href="../../src/tracing/span.rs.html#1313-1315">source</a><h4 class="code-header">pub fn <a href="#method.id-1" class="fn">id</a>(&amp;self) -&gt; <a class="enum" href="https://doc.rust-lang.org/nightly/core/option/enum.Option.html" title="enum core::option::Option">Option</a>&lt;<a class="struct" href="struct.Id.html" title="struct tracing::span::Id">Id</a>&gt;</h4></section></summary><div class="docblock"><p>Returns this span’s <code>Id</code>, if it is enabled.</p>
@@ -312,5 +312,5 @@ instead.</p>
 <p>That is, this conversion is whatever the implementation of
 <code><a href="https://doc.rust-lang.org/nightly/core/convert/trait.From.html" title="trait core::convert::From">From</a>&lt;T&gt; for U</code> chooses to do.</p>
 </div></details></div></details><details class="toggle implementors-toggle"><summary><section id="impl-TryFrom%3CU%3E-for-T" class="impl"><a class="src rightside" href="https://doc.rust-lang.org/nightly/src/core/convert/mod.rs.html#803-805">source</a><a href="#impl-TryFrom%3CU%3E-for-T" class="anchor">§</a><h3 class="code-header">impl&lt;T, U&gt; <a class="trait" href="https://doc.rust-lang.org/nightly/core/convert/trait.TryFrom.html" title="trait core::convert::TryFrom">TryFrom</a>&lt;U&gt; for T<div class="where">where
-    U: <a class="trait" href="https://doc.rust-lang.org/nightly/core/convert/trait.Into.html" title="trait core::convert::Into">Into</a>&lt;T&gt;,</div></h3></section></summary><div class="impl-items"><details class="toggle" open><summary><section id="associatedtype.Error" class="associatedtype trait-impl"><a href="#associatedtype.Error" class="anchor">§</a><h4 class="code-header">type <a href="https://doc.rust-lang.org/nightly/core/convert/trait.TryFrom.html#associatedtype.Error" class="associatedtype">Error</a> = <a class="enum" href="https://doc.rust-lang.org/nightly/core/convert/enum.Infallible.html" title="enum core::convert::Infallible">Infallible</a></h4></section></summary><div class='docblock'>The type returned in the event of a conversion error.</div></details><details class="toggle method-toggle" open><summary><section id="method.try_from" class="method trait-impl"><a class="src rightside" href="https://doc.rust-lang.org/nightly/src/core/convert/mod.rs.html#810">source</a><a href="#method.try_from" class="anchor">§</a><h4 class="code-header">fn <a href="https://doc.rust-lang.org/nightly/core/convert/trait.TryFrom.html#tymethod.try_from" class="fn">try_from</a>(value: U) -&gt; <a class="enum" href="https://doc.rust-lang.org/nightly/core/result/enum.Result.html" title="enum core::result::Result">Result</a>&lt;T, &lt;T as <a class="trait" href="https://doc.rust-lang.org/nightly/core/convert/trait.TryFrom.html" title="trait core::convert::TryFrom">TryFrom</a>&lt;U&gt;&gt;::<a class="associatedtype" href="https://doc.rust-lang.org/nightly/core/convert/trait.TryFrom.html#associatedtype.Error" title="type core::convert::TryFrom::Error">Error</a>&gt;</h4></section></summary><div class='docblock'>Performs the conversion.</div></details></div></details><details class="toggle implementors-toggle"><summary><section id="impl-TryInto%3CU%3E-for-T" class="impl"><a class="src rightside" href="https://doc.rust-lang.org/nightly/src/core/convert/mod.rs.html#788-790">source</a><a href="#impl-TryInto%3CU%3E-for-T" class="anchor">§</a><h3 class="code-header">impl&lt;T, U&gt; <a class="trait" href="https://doc.rust-lang.org/nightly/core/convert/trait.TryInto.html" title="trait core::convert::TryInto">TryInto</a>&lt;U&gt; for T<div class="where">where
-    U: <a class="trait" href="https://doc.rust-lang.org/nightly/core/convert/trait.TryFrom.html" title="trait core::convert::TryFrom">TryFrom</a>&lt;T&gt;,</div></h3></section></summary><div class="impl-items"><details class="toggle" open><summary><section id="associatedtype.Error-1" class="associatedtype trait-impl"><a href="#associatedtype.Error-1" class="anchor">§</a><h4 class="code-header">type <a href="https://doc.rust-lang.org/nightly/core/convert/trait.TryInto.html#associatedtype.Error" class="associatedtype">Error</a> = &lt;U as <a class="trait" href="https://doc.rust-lang.org/nightly/core/convert/trait.TryFrom.html" title="trait core::convert::TryFrom">TryFrom</a>&lt;T&gt;&gt;::<a class="associatedtype" href="https://doc.rust-lang.org/nightly/core/convert/trait.TryFrom.html#associatedtype.Error" title="type core::convert::TryFrom::Error">Error</a></h4></section></summary><div class='docblock'>The type returned in the event of a conversion error.</div></details><details class="toggle method-toggle" open><summary><section id="method.try_into" class="method trait-impl"><a class="src rightside" href="https://doc.rust-lang.org/nightly/src/core/convert/mod.rs.html#795">source</a><a href="#method.try_into" class="anchor">§</a><h4 class="code-header">fn <a href="https://doc.rust-lang.org/nightly/core/convert/trait.TryInto.html#tymethod.try_into" class="fn">try_into</a>(self) -&gt; <a class="enum" href="https://doc.rust-lang.org/nightly/core/result/enum.Result.html" title="enum core::result::Result">Result</a>&lt;U, &lt;U as <a class="trait" href="https://doc.rust-lang.org/nightly/core/convert/trait.TryFrom.html" title="trait core::convert::TryFrom">TryFrom</a>&lt;T&gt;&gt;::<a class="associatedtype" href="https://doc.rust-lang.org/nightly/core/convert/trait.TryFrom.html#associatedtype.Error" title="type core::convert::TryFrom::Error">Error</a>&gt;</h4></section></summary><div class='docblock'>Performs the conversion.</div></details></div></details></div><script type="text/json" id="notable-traits-data">{"Instrumented<Self>":"<h3>Notable traits for <code><a class=\"struct\" href=\"../instrument/struct.Instrumented.html\" title=\"struct tracing::instrument::Instrumented\">Instrumented</a>&lt;T&gt;</code></h3><pre><code><div class=\"where\">impl&lt;T: <a class=\"trait\" href=\"https://doc.rust-lang.org/nightly/core/future/future/trait.Future.html\" title=\"trait core::future::future::Future\">Future</a>&gt; <a class=\"trait\" href=\"https://doc.rust-lang.org/nightly/core/future/future/trait.Future.html\" title=\"trait core::future::future::Future\">Future</a> for <a class=\"struct\" href=\"../instrument/struct.Instrumented.html\" title=\"struct tracing::instrument::Instrumented\">Instrumented</a>&lt;T&gt;</div><div class=\"where\">    type <a href=\"https://doc.rust-lang.org/nightly/core/future/future/trait.Future.html#associatedtype.Output\" class=\"associatedtype\">Output</a> = T::<a class=\"associatedtype\" href=\"https://doc.rust-lang.org/nightly/core/future/future/trait.Future.html#associatedtype.Output\" title=\"type core::future::future::Future::Output\">Output</a>;</div>"}</script></section></div></main></body></html>
+    U: <a class="trait" href="https://doc.rust-lang.org/nightly/core/convert/trait.Into.html" title="trait core::convert::Into">Into</a>&lt;T&gt;,</div></h3></section></summary><div class="impl-items"><details class="toggle" open><summary><section id="associatedtype.Error-1" class="associatedtype trait-impl"><a href="#associatedtype.Error-1" class="anchor">§</a><h4 class="code-header">type <a href="https://doc.rust-lang.org/nightly/core/convert/trait.TryFrom.html#associatedtype.Error" class="associatedtype">Error</a> = <a class="enum" href="https://doc.rust-lang.org/nightly/core/convert/enum.Infallible.html" title="enum core::convert::Infallible">Infallible</a></h4></section></summary><div class='docblock'>The type returned in the event of a conversion error.</div></details><details class="toggle method-toggle" open><summary><section id="method.try_from" class="method trait-impl"><a class="src rightside" href="https://doc.rust-lang.org/nightly/src/core/convert/mod.rs.html#810">source</a><a href="#method.try_from" class="anchor">§</a><h4 class="code-header">fn <a href="https://doc.rust-lang.org/nightly/core/convert/trait.TryFrom.html#tymethod.try_from" class="fn">try_from</a>(value: U) -&gt; <a class="enum" href="https://doc.rust-lang.org/nightly/core/result/enum.Result.html" title="enum core::result::Result">Result</a>&lt;T, &lt;T as <a class="trait" href="https://doc.rust-lang.org/nightly/core/convert/trait.TryFrom.html" title="trait core::convert::TryFrom">TryFrom</a>&lt;U&gt;&gt;::<a class="associatedtype" href="https://doc.rust-lang.org/nightly/core/convert/trait.TryFrom.html#associatedtype.Error" title="type core::convert::TryFrom::Error">Error</a>&gt;</h4></section></summary><div class='docblock'>Performs the conversion.</div></details></div></details><details class="toggle implementors-toggle"><summary><section id="impl-TryInto%3CU%3E-for-T" class="impl"><a class="src rightside" href="https://doc.rust-lang.org/nightly/src/core/convert/mod.rs.html#788-790">source</a><a href="#impl-TryInto%3CU%3E-for-T" class="anchor">§</a><h3 class="code-header">impl&lt;T, U&gt; <a class="trait" href="https://doc.rust-lang.org/nightly/core/convert/trait.TryInto.html" title="trait core::convert::TryInto">TryInto</a>&lt;U&gt; for T<div class="where">where
+    U: <a class="trait" href="https://doc.rust-lang.org/nightly/core/convert/trait.TryFrom.html" title="trait core::convert::TryFrom">TryFrom</a>&lt;T&gt;,</div></h3></section></summary><div class="impl-items"><details class="toggle" open><summary><section id="associatedtype.Error" class="associatedtype trait-impl"><a href="#associatedtype.Error" class="anchor">§</a><h4 class="code-header">type <a href="https://doc.rust-lang.org/nightly/core/convert/trait.TryInto.html#associatedtype.Error" class="associatedtype">Error</a> = &lt;U as <a class="trait" href="https://doc.rust-lang.org/nightly/core/convert/trait.TryFrom.html" title="trait core::convert::TryFrom">TryFrom</a>&lt;T&gt;&gt;::<a class="associatedtype" href="https://doc.rust-lang.org/nightly/core/convert/trait.TryFrom.html#associatedtype.Error" title="type core::convert::TryFrom::Error">Error</a></h4></section></summary><div class='docblock'>The type returned in the event of a conversion error.</div></details><details class="toggle method-toggle" open><summary><section id="method.try_into" class="method trait-impl"><a class="src rightside" href="https://doc.rust-lang.org/nightly/src/core/convert/mod.rs.html#795">source</a><a href="#method.try_into" class="anchor">§</a><h4 class="code-header">fn <a href="https://doc.rust-lang.org/nightly/core/convert/trait.TryInto.html#tymethod.try_into" class="fn">try_into</a>(self) -&gt; <a class="enum" href="https://doc.rust-lang.org/nightly/core/result/enum.Result.html" title="enum core::result::Result">Result</a>&lt;U, &lt;U as <a class="trait" href="https://doc.rust-lang.org/nightly/core/convert/trait.TryFrom.html" title="trait core::convert::TryFrom">TryFrom</a>&lt;T&gt;&gt;::<a class="associatedtype" href="https://doc.rust-lang.org/nightly/core/convert/trait.TryFrom.html#associatedtype.Error" title="type core::convert::TryFrom::Error">Error</a>&gt;</h4></section></summary><div class='docblock'>Performs the conversion.</div></details></div></details></div><script type="text/json" id="notable-traits-data">{"Instrumented<Self>":"<h3>Notable traits for <code><a class=\"struct\" href=\"../instrument/struct.Instrumented.html\" title=\"struct tracing::instrument::Instrumented\">Instrumented</a>&lt;T&gt;</code></h3><pre><code><div class=\"where\">impl&lt;T: <a class=\"trait\" href=\"https://doc.rust-lang.org/nightly/core/future/future/trait.Future.html\" title=\"trait core::future::future::Future\">Future</a>&gt; <a class=\"trait\" href=\"https://doc.rust-lang.org/nightly/core/future/future/trait.Future.html\" title=\"trait core::future::future::Future\">Future</a> for <a class=\"struct\" href=\"../instrument/struct.Instrumented.html\" title=\"struct tracing::instrument::Instrumented\">Instrumented</a>&lt;T&gt;</div><div class=\"where\">    type <a href=\"https://doc.rust-lang.org/nightly/core/future/future/trait.Future.html#associatedtype.Output\" class=\"associatedtype\">Output</a> = T::<a class=\"associatedtype\" href=\"https://doc.rust-lang.org/nightly/core/future/future/trait.Future.html#associatedtype.Output\" title=\"type core::future::future::Future::Output\">Output</a>;</div>"}</script></section></div></main></body></html>

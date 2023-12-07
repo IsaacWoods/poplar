@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/unicode-xid-0.2.2/src/lib.rs`."><title>lib.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-c67e44d78ab2db17.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="unicode_xid" data-themes="" data-resource-suffix="" data-rustdoc-version="1.76.0-nightly (90e321d82 2023-12-02)" data-channel="nightly" data-search-js="search-5a66c239c06b3a66.js" data-settings-js="settings-fe03fdc259827cd2.js" ><script src="../../static.files/storage-fec3eaa3851e447d.js"></script><script defer src="../../static.files/src-script-3280b574d94e47b4.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-77dede896d6ac08e.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-5d8b3c7633ad77ba.css"></noscript><link rel="icon" href="https://unicode-rs.github.io/unicode-rs_sm.png"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><a class="sub-logo-container" href="../../unicode_xid/index.html"><img src="https://unicode-rs.github.io/unicode-rs_sm.png" alt="unicode_xid"></a><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/unicode-xid-0.2.2/src/lib.rs`."><title>lib.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-c67e44d78ab2db17.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="unicode_xid" data-themes="" data-resource-suffix="" data-rustdoc-version="1.76.0-nightly (e9013ac0e 2023-12-05)" data-channel="nightly" data-search-js="search-5a66c239c06b3a66.js" data-settings-js="settings-fe03fdc259827cd2.js" ><script src="../../static.files/storage-fec3eaa3851e447d.js"></script><script defer src="../../static.files/src-script-3280b574d94e47b4.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-77dede896d6ac08e.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-5d8b3c7633ad77ba.css"></noscript><link rel="icon" href="https://unicode-rs.github.io/unicode-rs_sm.png"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><a class="sub-logo-container" href="../../unicode_xid/index.html"><img src="https://unicode-rs.github.io/unicode-rs_sm.png" alt="unicode_xid"></a><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -109,8 +109,8 @@
 //! use unicode_xid::UnicodeXID;
 //!
 //! fn main() {
-//!     let ch = &#39;a&#39;;
-//!     println!(&quot;Is {} a valid start of an identifier? {}&quot;, ch, UnicodeXID::is_xid_start(ch));
+//!     let ch = 'a';
+//!     println!("Is {} a valid start of an identifier? {}", ch, UnicodeXID::is_xid_start(ch));
 //! }
 //! ```
 //!
@@ -123,17 +123,17 @@
 </span><span class="attr">#![forbid(unsafe_code)]
 #![deny(missing_docs)]
 #![doc(
-    html_logo_url = <span class="string">&quot;https://unicode-rs.github.io/unicode-rs_sm.png&quot;</span>,
-    html_favicon_url = <span class="string">&quot;https://unicode-rs.github.io/unicode-rs_sm.png&quot;
+    html_logo_url = <span class="string">"https://unicode-rs.github.io/unicode-rs_sm.png"</span>,
+    html_favicon_url = <span class="string">"https://unicode-rs.github.io/unicode-rs_sm.png"
 </span>)]
 #![no_std]
-#![cfg_attr(feature = <span class="string">&quot;bench&quot;</span>, feature(test, unicode_internals))]
+#![cfg_attr(feature = <span class="string">"bench"</span>, feature(test, unicode_internals))]
 
 #[cfg(test)]
 #[macro_use]
 </span><span class="kw">extern crate </span>std;
 
-<span class="attr">#[cfg(feature = <span class="string">&quot;bench&quot;</span>)]
+<span class="attr">#[cfg(feature = <span class="string">"bench"</span>)]
 </span><span class="kw">extern crate </span>test;
 
 <span class="kw">use </span>tables::derived_property;
@@ -146,20 +146,20 @@
 
 <span class="doccomment">/// Methods for determining if a character is a valid identifier character.
 </span><span class="kw">pub trait </span>UnicodeXID {
-    <span class="doccomment">/// Returns whether the specified character satisfies the &#39;XID_Start&#39;
+    <span class="doccomment">/// Returns whether the specified character satisfies the 'XID_Start'
     /// Unicode property.
     ///
-    /// &#39;XID_Start&#39; is a Unicode Derived Property specified in
+    /// 'XID_Start' is a Unicode Derived Property specified in
     /// [UAX #31](http://unicode.org/reports/tr31/#NFKC_Modifications),
     /// mostly similar to ID_Start but modified for closure under NFKx.
     </span><span class="kw">fn </span>is_xid_start(<span class="self">self</span>) -&gt; bool;
 
-    <span class="doccomment">/// Returns whether the specified `char` satisfies the &#39;XID_Continue&#39;
+    <span class="doccomment">/// Returns whether the specified `char` satisfies the 'XID_Continue'
     /// Unicode property.
     ///
-    /// &#39;XID_Continue&#39; is a Unicode Derived Property specified in
+    /// 'XID_Continue' is a Unicode Derived Property specified in
     /// [UAX #31](http://unicode.org/reports/tr31/#NFKC_Modifications),
-    /// mostly similar to &#39;ID_Continue&#39; but modified for closure under NFKx.
+    /// mostly similar to 'ID_Continue' but modified for closure under NFKx.
     </span><span class="kw">fn </span>is_xid_continue(<span class="self">self</span>) -&gt; bool;
 }
 
@@ -167,19 +167,19 @@
     <span class="attr">#[inline]
     </span><span class="kw">fn </span>is_xid_start(<span class="self">self</span>) -&gt; bool {
         <span class="comment">// Fast-path for ascii idents
-        </span>(<span class="string">&#39;a&#39; </span>&lt;= <span class="self">self </span>&amp;&amp; <span class="self">self </span>&lt;= <span class="string">&#39;z&#39;</span>)
-            || (<span class="string">&#39;A&#39; </span>&lt;= <span class="self">self </span>&amp;&amp; <span class="self">self </span>&lt;= <span class="string">&#39;Z&#39;</span>)
-            || (<span class="self">self </span>&gt; <span class="string">&#39;\x7f&#39; </span>&amp;&amp; derived_property::XID_Start(<span class="self">self</span>))
+        </span>(<span class="string">'a' </span>&lt;= <span class="self">self </span>&amp;&amp; <span class="self">self </span>&lt;= <span class="string">'z'</span>)
+            || (<span class="string">'A' </span>&lt;= <span class="self">self </span>&amp;&amp; <span class="self">self </span>&lt;= <span class="string">'Z'</span>)
+            || (<span class="self">self </span>&gt; <span class="string">'\x7f' </span>&amp;&amp; derived_property::XID_Start(<span class="self">self</span>))
     }
 
     <span class="attr">#[inline]
     </span><span class="kw">fn </span>is_xid_continue(<span class="self">self</span>) -&gt; bool {
         <span class="comment">// Fast-path for ascii idents
-        </span>(<span class="string">&#39;a&#39; </span>&lt;= <span class="self">self </span>&amp;&amp; <span class="self">self </span>&lt;= <span class="string">&#39;z&#39;</span>)
-            || (<span class="string">&#39;A&#39; </span>&lt;= <span class="self">self </span>&amp;&amp; <span class="self">self </span>&lt;= <span class="string">&#39;Z&#39;</span>)
-            || (<span class="string">&#39;0&#39; </span>&lt;= <span class="self">self </span>&amp;&amp; <span class="self">self </span>&lt;= <span class="string">&#39;9&#39;</span>)
-            || <span class="self">self </span>== <span class="string">&#39;_&#39;
-            </span>|| (<span class="self">self </span>&gt; <span class="string">&#39;\x7f&#39; </span>&amp;&amp; derived_property::XID_Continue(<span class="self">self</span>))
+        </span>(<span class="string">'a' </span>&lt;= <span class="self">self </span>&amp;&amp; <span class="self">self </span>&lt;= <span class="string">'z'</span>)
+            || (<span class="string">'A' </span>&lt;= <span class="self">self </span>&amp;&amp; <span class="self">self </span>&lt;= <span class="string">'Z'</span>)
+            || (<span class="string">'0' </span>&lt;= <span class="self">self </span>&amp;&amp; <span class="self">self </span>&lt;= <span class="string">'9'</span>)
+            || <span class="self">self </span>== <span class="string">'_'
+            </span>|| (<span class="self">self </span>&gt; <span class="string">'\x7f' </span>&amp;&amp; derived_property::XID_Continue(<span class="self">self</span>))
     }
 }
 </code></pre></div></section></main></body></html>

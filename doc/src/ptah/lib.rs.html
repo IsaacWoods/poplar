@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/work/poplar/poplar/lib/ptah/src/lib.rs`."><title>lib.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-c67e44d78ab2db17.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="ptah" data-themes="" data-resource-suffix="" data-rustdoc-version="1.76.0-nightly (90e321d82 2023-12-02)" data-channel="nightly" data-search-js="search-5a66c239c06b3a66.js" data-settings-js="settings-fe03fdc259827cd2.js" ><script src="../../static.files/storage-fec3eaa3851e447d.js"></script><script defer src="../../static.files/src-script-3280b574d94e47b4.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-77dede896d6ac08e.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-5d8b3c7633ad77ba.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/work/poplar/poplar/lib/ptah/src/lib.rs`."><title>lib.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-c67e44d78ab2db17.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="ptah" data-themes="" data-resource-suffix="" data-rustdoc-version="1.76.0-nightly (e9013ac0e 2023-12-05)" data-channel="nightly" data-search-js="search-5a66c239c06b3a66.js" data-settings-js="settings-fe03fdc259827cd2.js" ><script src="../../static.files/storage-fec3eaa3851e447d.js"></script><script defer src="../../static.files/src-script-3280b574d94e47b4.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-77dede896d6ac08e.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-5d8b3c7633ad77ba.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -168,12 +168,12 @@
 </pre></div><pre class="rust"><code><span class="attr">#![no_std]
 #![feature(decl_macro, maybe_uninit_uninit_array, maybe_uninit_slice, never_type)]
 
-#[cfg(feature = <span class="string">&quot;alloc&quot;</span>)]
+#[cfg(feature = <span class="string">"alloc"</span>)]
 </span><span class="kw">extern crate </span>alloc;
 
-<span class="attr">#[cfg(feature = <span class="string">&quot;derive&quot;</span>)]
+<span class="attr">#[cfg(feature = <span class="string">"derive"</span>)]
 </span><span class="kw">extern crate </span>ptah_derive;
-<span class="attr">#[cfg(feature = <span class="string">&quot;derive&quot;</span>)]
+<span class="attr">#[cfg(feature = <span class="string">"derive"</span>)]
 #[doc(hidden)]
 </span><span class="kw">pub use </span>ptah_derive::<span class="kw-2">*</span>;
 
@@ -184,7 +184,7 @@
 <span class="kw">pub use </span>ser::{Serialize, Serializer};
 
 <span class="doccomment">/// It can sometimes be useful to know the size of a value in its serialized form (e.g. to reserve space for it in
-/// a ring buffer). This calculates the number of bytes taken to serialize some `value` of `T` into Ptah&#39;s wire
+/// a ring buffer). This calculates the number of bytes taken to serialize some `value` of `T` into Ptah's wire
 /// format. Note that this size is for the specific `value`, and may differ between values of `T`.
 </span><span class="kw">pub fn </span>serialized_size&lt;T&gt;(value: <span class="kw-2">&amp;</span>T) -&gt; ser::Result&lt;usize&gt;
 <span class="kw">where
@@ -197,7 +197,7 @@
     <span class="prelude-val">Ok</span>(size)
 }
 
-<span class="kw">pub fn </span>to_wire&lt;<span class="lifetime">&#39;w</span>, T, W&gt;(value: <span class="kw-2">&amp;</span>T, writer: W) -&gt; ser::Result&lt;()&gt;
+<span class="kw">pub fn </span>to_wire&lt;<span class="lifetime">'w</span>, T, W&gt;(value: <span class="kw-2">&amp;</span>T, writer: W) -&gt; ser::Result&lt;()&gt;
 <span class="kw">where
     </span>T: Serialize,
     W: Writer,
@@ -210,10 +210,10 @@
 
 <span class="doccomment">/// Deserialize a `T` from some bytes and, optionally, some handles. If the wire is not able to transport handles,
 /// it is fine to produce `&amp;[]` (as long as `T` does not contain any handles, that is).
-</span><span class="kw">pub fn </span>from_wire&lt;<span class="lifetime">&#39;a</span>, <span class="lifetime">&#39;de</span>, T&gt;(bytes: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>[u8], handles: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>[Handle]) -&gt; de::Result&lt;T&gt;
+</span><span class="kw">pub fn </span>from_wire&lt;<span class="lifetime">'a</span>, <span class="lifetime">'de</span>, T&gt;(bytes: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>[u8], handles: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>[Handle]) -&gt; de::Result&lt;T&gt;
 <span class="kw">where
-    </span><span class="lifetime">&#39;a</span>: <span class="lifetime">&#39;de</span>,
-    T: Deserialize&lt;<span class="lifetime">&#39;de</span>&gt;,
+    </span><span class="lifetime">'a</span>: <span class="lifetime">'de</span>,
+    T: Deserialize&lt;<span class="lifetime">'de</span>&gt;,
 {
     <span class="kw">let </span><span class="kw-2">mut </span>deserializer = Deserializer::from_wire(bytes, handles);
     <span class="kw">let </span>value = T::deserialize(<span class="kw-2">&amp;mut </span>deserializer)<span class="question-mark">?</span>;
@@ -246,7 +246,7 @@
         <span class="number">1 </span>=&gt; HANDLE_SLOT_1,
         <span class="number">2 </span>=&gt; HANDLE_SLOT_2,
         <span class="number">3 </span>=&gt; HANDLE_SLOT_3,
-        <span class="kw">_ </span>=&gt; <span class="macro">panic!</span>(<span class="string">&quot;Invalid handle slot index!&quot;</span>),
+        <span class="kw">_ </span>=&gt; <span class="macro">panic!</span>(<span class="string">"Invalid handle slot index!"</span>),
     }
 }
 
@@ -256,7 +256,7 @@
         HANDLE_SLOT_1 =&gt; <span class="number">1</span>,
         HANDLE_SLOT_2 =&gt; <span class="number">2</span>,
         HANDLE_SLOT_3 =&gt; <span class="number">3</span>,
-        <span class="kw">_ </span>=&gt; <span class="macro">panic!</span>(<span class="string">&quot;Invalid handle slot!&quot;</span>),
+        <span class="kw">_ </span>=&gt; <span class="macro">panic!</span>(<span class="string">"Invalid handle slot!"</span>),
     }
 }
 
@@ -269,18 +269,18 @@
 }
 
 <span class="doccomment">/// This is a `Writer` that can be used to serialize a value into a pre-allocated byte buffer.
-</span><span class="kw">pub struct </span>CursorWriter&lt;<span class="lifetime">&#39;a</span>&gt; {
-    buffer: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span><span class="kw-2">mut </span>[u8],
+</span><span class="kw">pub struct </span>CursorWriter&lt;<span class="lifetime">'a</span>&gt; {
+    buffer: <span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="kw-2">mut </span>[u8],
     position: usize,
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>&gt; CursorWriter&lt;<span class="lifetime">&#39;a</span>&gt; {
-    <span class="kw">pub fn </span>new(buffer: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span><span class="kw-2">mut </span>[u8]) -&gt; CursorWriter&lt;<span class="lifetime">&#39;a</span>&gt; {
+<span class="kw">impl</span>&lt;<span class="lifetime">'a</span>&gt; CursorWriter&lt;<span class="lifetime">'a</span>&gt; {
+    <span class="kw">pub fn </span>new(buffer: <span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="kw-2">mut </span>[u8]) -&gt; CursorWriter&lt;<span class="lifetime">'a</span>&gt; {
         CursorWriter { buffer, position: <span class="number">0 </span>}
     }
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>&gt; Writer <span class="kw">for </span>CursorWriter&lt;<span class="lifetime">&#39;a</span>&gt; {
+<span class="kw">impl</span>&lt;<span class="lifetime">'a</span>&gt; Writer <span class="kw">for </span>CursorWriter&lt;<span class="lifetime">'a</span>&gt; {
     <span class="kw">fn </span>write(<span class="kw-2">&amp;mut </span><span class="self">self</span>, buf: <span class="kw-2">&amp;</span>[u8]) -&gt; ser::Result&lt;()&gt; {
         <span class="comment">/*
          * Detect if the write will overflow the buffer.
@@ -299,8 +299,8 @@
     }
 }
 
-<span class="attr">#[cfg(feature = <span class="string">&quot;alloc&quot;</span>)]
-</span><span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>&gt; Writer <span class="kw">for </span><span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span><span class="kw-2">mut </span>alloc::vec::Vec&lt;u8&gt; {
+<span class="attr">#[cfg(feature = <span class="string">"alloc"</span>)]
+</span><span class="kw">impl</span>&lt;<span class="lifetime">'a</span>&gt; Writer <span class="kw">for </span><span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="kw-2">mut </span>alloc::vec::Vec&lt;u8&gt; {
     <span class="kw">fn </span>write(<span class="kw-2">&amp;mut </span><span class="self">self</span>, buf: <span class="kw-2">&amp;</span>[u8]) -&gt; ser::Result&lt;()&gt; {
         <span class="self">self</span>.extend_from_slice(buf);
         <span class="prelude-val">Ok</span>(())
@@ -311,14 +311,14 @@
     }
 }
 
-<span class="doccomment">/// This is a writer that can be used to calculate the size of a serialized value. It doesn&#39;t actually write the
+<span class="doccomment">/// This is a writer that can be used to calculate the size of a serialized value. It doesn't actually write the
 /// serialized bytes anywhere - it simply tracks how are produced. Because the `Serializer` takes the `Writer` by
 /// value, this stores a reference back to the size, so it can be accessed after serialization is complete.
-</span><span class="kw">struct </span>SizeCalculator&lt;<span class="lifetime">&#39;a</span>&gt; {
-    size: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span><span class="kw-2">mut </span>usize,
+</span><span class="kw">struct </span>SizeCalculator&lt;<span class="lifetime">'a</span>&gt; {
+    size: <span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="kw-2">mut </span>usize,
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>&gt; Writer <span class="kw">for </span>SizeCalculator&lt;<span class="lifetime">&#39;a</span>&gt; {
+<span class="kw">impl</span>&lt;<span class="lifetime">'a</span>&gt; Writer <span class="kw">for </span>SizeCalculator&lt;<span class="lifetime">'a</span>&gt; {
     <span class="kw">fn </span>write(<span class="kw-2">&amp;mut </span><span class="self">self</span>, buf: <span class="kw-2">&amp;</span>[u8]) -&gt; ser::Result&lt;()&gt; {
         <span class="kw-2">*</span><span class="self">self</span>.size += buf.len();
         <span class="prelude-val">Ok</span>(())
@@ -326,8 +326,8 @@
 
     <span class="kw">fn </span>push_handle(<span class="kw-2">&amp;mut </span><span class="self">self</span>, _handle: Handle) -&gt; ser::Result&lt;HandleSlot&gt; {
         <span class="comment">/*
-         * When calculating the size, we simply accept as many handles as we&#39;re passed. The encoded slot is always
-         * the same size, so it doesn&#39;t matter what we return.
+         * When calculating the size, we simply accept as many handles as we're passed. The encoded slot is always
+         * the same size, so it doesn't matter what we return.
          */
         </span><span class="prelude-val">Ok</span>(HANDLE_SLOT_0)
     }

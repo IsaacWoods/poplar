@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/git/checkouts/tracing-e9bbb56ea31f0c18/60c60be/tracing/src/lib.rs`."><title>lib.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-c67e44d78ab2db17.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="tracing" data-themes="" data-resource-suffix="" data-rustdoc-version="1.76.0-nightly (90e321d82 2023-12-02)" data-channel="nightly" data-search-js="search-5a66c239c06b3a66.js" data-settings-js="settings-fe03fdc259827cd2.js" ><script src="../../static.files/storage-fec3eaa3851e447d.js"></script><script defer src="../../static.files/src-script-3280b574d94e47b4.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-77dede896d6ac08e.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-5d8b3c7633ad77ba.css"></noscript><link rel="icon" href="https://raw.githubusercontent.com/tokio-rs/tracing/master/assets/favicon.ico"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><a class="sub-logo-container" href="../../tracing/index.html"><img src="https://raw.githubusercontent.com/tokio-rs/tracing/master/assets/logo-type.png" alt="tracing"></a><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/git/checkouts/tracing-e9bbb56ea31f0c18/60c60be/tracing/src/lib.rs`."><title>lib.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-c67e44d78ab2db17.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="tracing" data-themes="" data-resource-suffix="" data-rustdoc-version="1.76.0-nightly (e9013ac0e 2023-12-05)" data-channel="nightly" data-search-js="search-5a66c239c06b3a66.js" data-settings-js="settings-fe03fdc259827cd2.js" ><script src="../../static.files/storage-fec3eaa3851e447d.js"></script><script defer src="../../static.files/src-script-3280b574d94e47b4.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-77dede896d6ac08e.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-5d8b3c7633ad77ba.css"></noscript><link rel="icon" href="https://raw.githubusercontent.com/tokio-rs/tracing/master/assets/favicon.ico"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><a class="sub-logo-container" href="../../tracing/index.html"><img src="https://raw.githubusercontent.com/tokio-rs/tracing/master/assets/logo-type.png" alt="tracing"></a><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -1233,8 +1233,8 @@
 //! [msrv]: #supported-rust-versions
 //! # Core Concepts
 //!
-//! The core of `tracing`&#39;s API is composed of _spans_, _events_ and
-//! _collectors_. We&#39;ll cover these in turn.
+//! The core of `tracing`'s API is composed of _spans_, _events_ and
+//! _collectors_. We'll cover these in turn.
 //!
 //! ## Spans
 //!
@@ -1242,15 +1242,15 @@
 //! concept of [spans]. Unlike a log line that represents a _moment in
 //! time_, a span represents a _period of time_ with a beginning and an end. When a
 //! program begins executing in a context or performing a unit of work, it
-//! _enters_ that context&#39;s span, and when it stops executing in that context,
+//! _enters_ that context's span, and when it stops executing in that context,
 //! it _exits_ the span. The span in which a thread is currently executing is
-//! referred to as that thread&#39;s _current_ span.
+//! referred to as that thread's _current_ span.
 //!
 //! For example:
 //! ```
 //! use tracing::{span, Level};
 //! # fn main() {
-//! let span = span!(Level::TRACE, &quot;my_span&quot;);
+//! let span = span!(Level::TRACE, "my_span");
 //! // `enter` returns a RAII guard which, when dropped, exits the span. this
 //! // indicates that we are in the span for the current lexical scope.
 //! let _enter = span.enter();
@@ -1258,10 +1258,10 @@
 //! # }
 //!```
 //!
-//! The [`span` module][mod@span]&#39;s documentation provides further details on how to
+//! The [`span` module][mod@span]'s documentation provides further details on how to
 //! use spans.
 //!
-//! &lt;div class=&quot;example-wrap&quot; style=&quot;display:inline-block&quot;&gt;&lt;pre class=&quot;compile_fail&quot; style=&quot;white-space:normal;font:inherit;&quot;&gt;
+//! &lt;div class="example-wrap" style="display:inline-block"&gt;&lt;pre class="compile_fail" style="white-space:normal;font:inherit;"&gt;
 //!
 //!  **Warning**: In asynchronous code that uses async/await syntax,
 //!  `Span::enter` may produce incorrect traces if the returned drop
@@ -1283,13 +1283,13 @@
 //!
 //! # fn main() {
 //! // records an event outside of any span context:
-//! event!(Level::INFO, &quot;something happened&quot;);
+//! event!(Level::INFO, "something happened");
 //!
-//! let span = span!(Level::INFO, &quot;my_span&quot;);
+//! let span = span!(Level::INFO, "my_span");
 //! let _guard = span.enter();
 //!
-//! // records an event within &quot;my_span&quot;.
-//! event!(Level::DEBUG, &quot;something happened inside my_span&quot;);
+//! // records an event within "my_span".
+//! event!(Level::DEBUG, "something happened inside my_span");
 //! # }
 //!```
 //!
@@ -1325,7 +1325,7 @@
 //!
 //! ```toml
 //! [dependencies]
-//! tracing = &quot;0.1&quot;
+//! tracing = "0.1"
 //! ```
 //!
 //! ## Recording Spans and Events
@@ -1344,8 +1344,8 @@
 //! ```rust
 //! use tracing::{span, Level};
 //! # fn main() {
-//! // Construct a new span named &quot;my span&quot; with trace log level.
-//! let span = span!(Level::TRACE, &quot;my span&quot;);
+//! // Construct a new span named "my span" with trace log level.
+//! let span = span!(Level::TRACE, "my span");
 //!
 //! // Enter the span, returning a guard object.
 //! let _enter = span.enter();
@@ -1359,27 +1359,27 @@
 //!
 //! The [`#[instrument]`][instrument] attribute provides an easy way to
 //! add `tracing` spans to functions. A function annotated with `#[instrument]`
-//! will create and enter a span with that function&#39;s name every time the
+//! will create and enter a span with that function's name every time the
 //! function is called, with arguments to that function will be recorded as
 //! fields using `fmt::Debug`.
 //!
 //! For example:
 //! ```ignore
-//! # // this doctest is ignored because we don&#39;t have a way to say
-//! # // that it should only be run with cfg(feature = &quot;attributes&quot;)
+//! # // this doctest is ignored because we don't have a way to say
+//! # // that it should only be run with cfg(feature = "attributes")
 //! use tracing::{Level, event, instrument};
 //!
 //! #[instrument]
 //! pub fn my_function(my_arg: usize) {
 //!     // This event will be recorded inside a span named `my_function` with the
 //!     // field `my_arg`.
-//!     event!(Level::INFO, &quot;inside my_function!&quot;);
+//!     event!(Level::INFO, "inside my_function!");
 //!     // ...
 //! }
 //! # fn main() {}
 //! ```
 //!
-//! For functions which don&#39;t have built-in tracing support and can&#39;t have
+//! For functions which don't have built-in tracing support and can't have
 //! the `#[instrument]` attribute applied (such as from an external crate),
 //! the [`Span` struct][`Span`] has a [`in_scope()` method][`in_scope`]
 //! which can be used to easily wrap synchonous code in a span.
@@ -1393,7 +1393,7 @@
 //! #    pub(crate) fn from_slice(buf: &amp;[u8]) -&gt; Result&lt;(), ()&gt; { Ok(()) }
 //! # }
 //! # let buf: [u8; 0] = [];
-//! let json = info_span!(&quot;json.parse&quot;).in_scope(|| serde_json::from_slice(&amp;buf))?;
+//! let json = info_span!("json.parse").in_scope(|| serde_json::from_slice(&amp;buf))?;
 //! # let _ = json; // suppress unused variable warning
 //! # Ok(())
 //! # }
@@ -1411,7 +1411,7 @@
 //! ```rust
 //! # fn main() {
 //! use tracing::{event, Level};
-//! event!(Level::INFO, &quot;something has happened!&quot;);
+//! event!(Level::INFO, "something has happened!");
 //! # }
 //! ```
 //!
@@ -1433,15 +1433,15 @@
 //! ```
 //! # use tracing::{span, event, Level};
 //! # fn main() {
-//! span!(target: &quot;app_spans&quot;, Level::TRACE, &quot;my span&quot;);
-//! event!(target: &quot;app_events&quot;, Level::INFO, &quot;something has happened!&quot;);
+//! span!(target: "app_spans", Level::TRACE, "my span");
+//! event!(target: "app_events", Level::INFO, "something has happened!");
 //! # }
 //! ```
 //! ```
 //! # use tracing::{span, event, Level};
 //! # fn main() {
-//! let span = span!(Level::TRACE, &quot;my span&quot;);
-//! event!(parent: &amp;span, Level::INFO, &quot;something has happened!&quot;);
+//! let span = span!(Level::TRACE, "my span");
+//! event!(parent: &amp;span, Level::INFO, "something has happened!");
 //! # }
 //! ```
 //!
@@ -1457,9 +1457,9 @@
 //! # use tracing::{event, Level};
 //! # fn main() {
 //! // records an event with two fields:
-//! //  - &quot;answer&quot;, with the value 42
-//! //  - &quot;question&quot;, with the value &quot;life, the universe and everything&quot;
-//! event!(Level::INFO, answer = 42, question = &quot;life, the universe, and everything&quot;);
+//! //  - "answer", with the value 42
+//! //  - "question", with the value "life, the universe and everything"
+//! event!(Level::INFO, answer = 42, question = "life, the universe, and everything");
 //! # }
 //! ```
 //!
@@ -1469,11 +1469,11 @@
 //! ```
 //! # use tracing::{span, Level};
 //! # fn main() {
-//! let user = &quot;ferris&quot;;
+//! let user = "ferris";
 //!
-//! span!(Level::TRACE, &quot;login&quot;, user);
+//! span!(Level::TRACE, "login", user);
 //! // is equivalent to:
-//! span!(Level::TRACE, &quot;login&quot;, user = user);
+//! span!(Level::TRACE, "login", user = user);
 //! # }
 //!```
 //!
@@ -1481,9 +1481,9 @@
 //! ```
 //! # use tracing::{span, Level};
 //! # fn main() {
-//! let user = &quot;ferris&quot;;
-//! let email = &quot;ferris@rust-lang.org&quot;;
-//! span!(Level::TRACE, &quot;login&quot;, user, user.email = email);
+//! let user = "ferris";
+//! let email = "ferris@rust-lang.org";
+//! span!(Level::TRACE, "login", user, user.email = email);
 //! # }
 //!```
 //!
@@ -1493,16 +1493,16 @@
 //! # use tracing::{span, Level};
 //! # fn main() {
 //! # struct User {
-//! #    name: &amp;&#39;static str,
-//! #    email: &amp;&#39;static str,
+//! #    name: &amp;'static str,
+//! #    email: &amp;'static str,
 //! # }
 //! let user = User {
-//!     name: &quot;ferris&quot;,
-//!     email: &quot;ferris@rust-lang.org&quot;,
+//!     name: "ferris",
+//!     email: "ferris@rust-lang.org",
 //! };
-//! // the span will have the fields `user.name = &quot;ferris&quot;` and
-//! // `user.email = &quot;ferris@rust-lang.org&quot;`.
-//! span!(Level::TRACE, &quot;login&quot;, user.name, user.email);
+//! // the span will have the fields `user.name = "ferris"` and
+//! // `user.email = "ferris@rust-lang.org"`.
+//! span!(Level::TRACE, "login", user.name, user.email);
 //! # }
 //!```
 //!
@@ -1513,9 +1513,9 @@
 //! # use tracing::{span, Level};
 //! # fn main() {
 //! // records an event with fields whose names are not Rust identifiers
-//! //  - &quot;guid:x-request-id&quot;, containing a `:`, with the value &quot;abcdef&quot;
-//! //  - &quot;type&quot;, which is a reserved word, with the value &quot;request&quot;
-//! span!(Level::TRACE, &quot;api&quot;, &quot;guid:x-request-id&quot; = &quot;abcdef&quot;, &quot;type&quot; = &quot;request&quot;);
+//! //  - "guid:x-request-id", containing a `:`, with the value "abcdef"
+//! //  - "type", which is a reserved word, with the value "request"
+//! span!(Level::TRACE, "api", "guid:x-request-id" = "abcdef", "type" = "request");
 //! # }
 //!```
 //!
@@ -1526,11 +1526,11 @@
 //! # fn main() {
 //! #[derive(Debug)]
 //! struct MyStruct {
-//!     field: &amp;&#39;static str,
+//!     field: &amp;'static str,
 //! }
 //!
 //! let my_struct = MyStruct {
-//!     field: &quot;Hello world!&quot;
+//!     field: "Hello world!"
 //! };
 //!
 //! // `my_struct` will be recorded using its `fmt::Debug` implementation.
@@ -1547,11 +1547,11 @@
 //! # fn main() {
 //! # #[derive(Debug)]
 //! # struct MyStruct {
-//! #     field: &amp;&#39;static str,
+//! #     field: &amp;'static str,
 //! # }
 //! #
 //! # let my_struct = MyStruct {
-//! #     field: &quot;Hello world!&quot;
+//! #     field: "Hello world!"
 //! # };
 //! // `my_struct.field` will be recorded using its `fmt::Display` implementation.
 //! event!(Level::TRACE, greeting = %my_struct.field);
@@ -1567,11 +1567,11 @@
 //! # fn main() {
 //! # #[derive(Debug)]
 //! # struct MyStruct {
-//! #     field: &amp;&#39;static str,
+//! #     field: &amp;'static str,
 //! # }
 //! #
 //! # let my_struct = MyStruct {
-//! #     field: &quot;Hello world!&quot;
+//! #     field: "Hello world!"
 //! # };
 //! // `my_struct.field` will be recorded using its `fmt::Display` implementation.
 //! event!(Level::TRACE, %my_struct.field);
@@ -1585,14 +1585,14 @@
 //! ```
 //! use tracing::{trace_span, field};
 //!
-//! // Create a span with two fields: `greeting`, with the value &quot;hello world&quot;, and
+//! // Create a span with two fields: `greeting`, with the value "hello world", and
 //! // `parting`, without a value.
-//! let span = trace_span!(&quot;my_span&quot;, greeting = &quot;hello world&quot;, parting = field::Empty);
+//! let span = trace_span!("my_span", greeting = "hello world", parting = field::Empty);
 //!
 //! // ...
 //!
 //! // Now, record a value for parting as well.
-//! span.record(&quot;parting&quot;, &amp;&quot;goodbye world!&quot;);
+//! span.record("parting", &amp;"goodbye world!");
 //! ```
 //!
 //! Note that a span may have up to 32 fields. The following will not compile:
@@ -1602,7 +1602,7 @@
 //! # fn main() {
 //! let bad_span = span!(
 //!     Level::TRACE,
-//!     &quot;too many fields!&quot;,
+//!     "too many fields!",
 //!     a = 1, b = 2, c = 3, d = 4, e = 5, f = 6, g = 7, h = 8, i = 9,
 //!     j = 10, k = 11, l = 12, m = 13, n = 14, o = 15, p = 16, q = 17,
 //!     r = 18, s = 19, t = 20, u = 21, v = 22, w = 23, x = 24, y = 25,
@@ -1612,7 +1612,7 @@
 //! ```
 //!
 //! Finally, events may also include human-readable messages, in the form of a
-//! [format string][fmt] and (optional) arguments, **after** the event&#39;s
+//! [format string][fmt] and (optional) arguments, **after** the event's
 //! key-value fields. If a format string and arguments are provided,
 //! they will implicitly create a new field named `message` whose value is the
 //! provided set of format arguments.
@@ -1622,18 +1622,18 @@
 //! ```
 //! # use tracing::{event, Level};
 //! # fn main() {
-//! let question = &quot;the ultimate question of life, the universe, and everything&quot;;
+//! let question = "the ultimate question of life, the universe, and everything";
 //! let answer = 42;
 //! // records an event with the following fields:
 //! // - `question.answer` with the value 42,
 //! // - `question.tricky` with the value `true`,
-//! // - &quot;message&quot;, with the value &quot;the answer to the ultimate question of life, the
-//! //    universe, and everything is 42.&quot;
+//! // - "message", with the value "the answer to the ultimate question of life, the
+//! //    universe, and everything is 42."
 //! event!(
 //!     Level::DEBUG,
 //!     question.answer = answer,
 //!     question.tricky = true,
-//!     &quot;the answer to {} is {}.&quot;, question, answer
+//!     "the answer to {} is {}.", question, answer
 //! );
 //! # }
 //! ```
@@ -1682,7 +1682,7 @@
 //! macros from the `log` crate. Often, the process of converting a project to
 //! use `tracing` can begin with a simple drop-in replacement.
 //!
-//! Let&#39;s consider the `log` crate&#39;s yak-shaving example:
+//! Let's consider the `log` crate's yak-shaving example:
 //!
 //! ```rust,ignore
 //! use std::{error::Error, io};
@@ -1692,37 +1692,37 @@
 //! // every time the instrumented function is called. The span is named after
 //! // the function or method. Parameters passed to the function are recorded as fields.
 //! #[tracing::instrument]
-//! pub fn shave(yak: usize) -&gt; Result&lt;(), Box&lt;dyn Error + &#39;static&gt;&gt; {
+//! pub fn shave(yak: usize) -&gt; Result&lt;(), Box&lt;dyn Error + 'static&gt;&gt; {
 //!     // this creates an event at the DEBUG level with two fields:
-//!     // - `excitement`, with the key &quot;excitement&quot; and the value &quot;yay!&quot;
-//!     // - `message`, with the key &quot;message&quot; and the value &quot;hello! I&#39;m gonna shave a yak.&quot;
+//!     // - `excitement`, with the key "excitement" and the value "yay!"
+//!     // - `message`, with the key "message" and the value "hello! I'm gonna shave a yak."
 //!     //
-//!     // unlike other fields, `message`&#39;s shorthand initialization is just the string itself.
-//!     debug!(excitement = &quot;yay!&quot;, &quot;hello! I&#39;m gonna shave a yak.&quot;);
+//!     // unlike other fields, `message`'s shorthand initialization is just the string itself.
+//!     debug!(excitement = "yay!", "hello! I'm gonna shave a yak.");
 //!     if yak == 3 {
-//!         warn!(&quot;could not locate yak!&quot;);
-//!         // note that this is intended to demonstrate `tracing`&#39;s features, not idiomatic
+//!         warn!("could not locate yak!");
+//!         // note that this is intended to demonstrate `tracing`'s features, not idiomatic
 //!         // error handling! in a library or application, you should consider returning
 //!         // a dedicated `YakError`. libraries like snafu or thiserror make this easy.
-//!         return Err(io::Error::new(io::ErrorKind::Other, &quot;shaving yak failed!&quot;).into());
+//!         return Err(io::Error::new(io::ErrorKind::Other, "shaving yak failed!").into());
 //!     } else {
-//!         debug!(&quot;yak shaved successfully&quot;);
+//!         debug!("yak shaved successfully");
 //!     }
 //!     Ok(())
 //! }
 //!
 //! pub fn shave_all(yaks: usize) -&gt; usize {
-//!     // Constructs a new span named &quot;shaving_yaks&quot; at the TRACE level,
-//!     // and a field whose key is &quot;yaks&quot;. This is equivalent to writing:
+//!     // Constructs a new span named "shaving_yaks" at the TRACE level,
+//!     // and a field whose key is "yaks". This is equivalent to writing:
 //!     //
-//!     // let span = span!(Level::TRACE, &quot;shaving_yaks&quot;, yaks = yaks);
+//!     // let span = span!(Level::TRACE, "shaving_yaks", yaks = yaks);
 //!     //
 //!     // local variables (`yaks`) can be used as field values
 //!     // without an assignment, similar to struct initializers.
-//!     let span = span!(Level::TRACE, &quot;shaving_yaks&quot;, yaks);
+//!     let span = span!(Level::TRACE, "shaving_yaks", yaks);
 //!     let _enter = span.enter();
 //!
-//!     info!(&quot;shaving yaks&quot;);
+//!     info!("shaving yaks");
 //!
 //!     let mut yaks_shaved = 0;
 //!     for yak in 1..=yaks {
@@ -1732,7 +1732,7 @@
 //!         if let Err(ref error) = res {
 //!             // Like spans, events can also use the field initialization shorthand.
 //!             // In this instance, `yak` is the field being initialized.
-//!             error!(yak, error = error.as_ref(), &quot;failed to shave yak!&quot;);
+//!             error!(yak, error = error.as_ref(), "failed to shave yak!");
 //!         } else {
 //!             yaks_shaved += 1;
 //!         }
@@ -1780,16 +1780,16 @@
 //! # }
 //! # fn main() {
 //!
-//! # #[cfg(feature = &quot;alloc&quot;)]
+//! # #[cfg(feature = "alloc")]
 //! let my_collector = FooCollector::new();
-//! # #[cfg(feature = &quot;alloc&quot;)]
+//! # #[cfg(feature = "alloc")]
 //! tracing::collect::set_global_default(my_collector)
-//!     .expect(&quot;setting tracing default failed&quot;);
+//!     .expect("setting tracing default failed");
 //! # }
 //! ```
 //!
-//! &lt;div class=&quot;information&quot;&gt;
-//! &lt;/div&gt;&lt;div class=&quot;example-wrap&quot; style=&quot;display:inline-block&quot;&gt;&lt;pre class=&quot;compile_fail&quot; style=&quot;white-space:normal;font:inherit;&quot;&gt;
+//! &lt;div class="information"&gt;
+//! &lt;/div&gt;&lt;div class="example-wrap" style="display:inline-block"&gt;&lt;pre class="compile_fail" style="white-space:normal;font:inherit;"&gt;
 //! &lt;strong&gt;Warning&lt;/strong&gt;: In general, libraries should &lt;em&gt;not&lt;/em&gt; call
 //! &lt;code&gt;set_global_default()&lt;/code&gt;! Doing so will cause conflicts when
 //! executables that depend on the library try to set the default later.
@@ -1824,7 +1824,7 @@
 //! # fn main() {
 //!
 //! let my_collector = FooCollector::new();
-//! # #[cfg(feature = &quot;std&quot;)]
+//! # #[cfg(feature = "std")]
 //! tracing::collect::with_default(my_collector, || {
 //!     // Any trace events generated in this closure or by functions it calls
 //!     // will be collected by `my_collector`.
@@ -1839,14 +1839,14 @@
 //! Any trace events generated outside the context of a collector will not be collected.
 //!
 //! Once a collector has been set, instrumentation points may be added to the
-//! executable using the `tracing` crate&#39;s macros.
+//! executable using the `tracing` crate's macros.
 //!
 //! ## `log` Compatibility
 //!
 //! The [`log`] crate provides a simple, lightweight logging facade for Rust.
-//! While `tracing` builds upon `log`&#39;s foundation with richer structured
-//! diagnostic data, `log`&#39;s simplicity and ubiquity make it the &quot;lowest common
-//! denominator&quot; for text-based logging in Rust — a vast majority of Rust
+//! While `tracing` builds upon `log`'s foundation with richer structured
+//! diagnostic data, `log`'s simplicity and ubiquity make it the "lowest common
+//! denominator" for text-based logging in Rust — a vast majority of Rust
 //! libraries and applications either emit or consume `log` records. Therefore,
 //! `tracing` provides multiple forms of interoperability with `log`: `tracing`
 //! instrumentation can emit `log` records, and a compatibility layer enables
@@ -1854,8 +1854,8 @@
 //!
 //! ### Emitting `log` Records
 //!
-//! This crate provides two feature flags, &quot;log&quot; and &quot;log-always&quot;, which will
-//! cause [spans] and [events] to emit `log` records. When the &quot;log&quot; feature is
+//! This crate provides two feature flags, "log" and "log-always", which will
+//! cause [spans] and [events] to emit `log` records. When the "log" feature is
 //! enabled, if no `tracing` collector is active, invoking an event macro or
 //! creating a span with fields will emit a `log` record. This is intended
 //! primarily for use in libraries which wish to emit diagnostics that can be
@@ -1863,26 +1863,26 @@
 //! additional overhead of emitting both forms of diagnostics when `tracing` is
 //! in use.
 //!
-//! Enabling the &quot;log-always&quot; feature will cause `log` records to be emitted
+//! Enabling the "log-always" feature will cause `log` records to be emitted
 //! even if a `tracing` collector _is_ set. This is intended to be used in
 //! applications where a `log` `Logger` is being used to record a textual log,
 //! and `tracing` is used only to record other forms of diagnostics (such as
-//! metrics, profiling, or distributed tracing data). Unlike the &quot;log&quot; feature,
-//! libraries generally should **not** enable the &quot;log-always&quot; feature, as doing
+//! metrics, profiling, or distributed tracing data). Unlike the "log" feature,
+//! libraries generally should **not** enable the "log-always" feature, as doing
 //! so will prevent applications from being able to opt out of the `log` records.
 //!
-//! See [here][flags] for more details on this crate&#39;s feature flags.
+//! See [here][flags] for more details on this crate's feature flags.
 //!
-//! The generated `log` records&#39; messages will be a string representation of the
-//! span or event&#39;s fields, and all additional information recorded by `log`
+//! The generated `log` records' messages will be a string representation of the
+//! span or event's fields, and all additional information recorded by `log`
 //! (target, verbosity level, module path, file, and line number) will also be
 //! populated. Additionally, `log` records are also generated when spans are
 //! entered, exited, and closed. Since these additional span lifecycle logs have
-//! the potential to be very verbose, and don&#39;t include additional fields, they
+//! the potential to be very verbose, and don't include additional fields, they
 //! will always be emitted at the `Trace` level, rather than inheriting the
 //! level of the span that generated them. Furthermore, they are categorized
-//! under a separate `log` target, &quot;tracing::span&quot; (and its sub-target,
-//! &quot;tracing::span::active&quot;, for the logs on entering and exiting a span), which
+//! under a separate `log` target, "tracing::span" (and its sub-target,
+//! "tracing::span::active", for the logs on entering and exiting a span), which
 //! may be enabled or disabled separately from other `log` records emitted by
 //! `tracing`.
 //!
@@ -1892,7 +1892,7 @@
 //! allows a `tracing` collector to consume `log` records as though they
 //! were `tracing` [events]. This allows applications using `tracing` to record
 //! the logs emitted by dependencies using `log` as events within the context of
-//! the application&#39;s trace tree. See [that crate&#39;s documentation][log-tracer]
+//! the application's trace tree. See [that crate's documentation][log-tracer]
 //! for details.
 //!
 //! [log-tracer]: https://docs.rs/tracing-log/latest/tracing_log/#convert-log-records-to-tracing-events
@@ -1904,34 +1904,34 @@
 //! disabled.
 //!
 //! The dependency on the standard library is controlled by two crate feature
-//! flags, &quot;std&quot;, which enables the dependency on [`libstd`], and &quot;alloc&quot;, which
-//! enables the dependency on [`liballoc`] (and is enabled by the &quot;std&quot;
+//! flags, "std", which enables the dependency on [`libstd`], and "alloc", which
+//! enables the dependency on [`liballoc`] (and is enabled by the "std"
 //! feature). These features are enabled by default, but `no_std` users can
 //! disable them using:
 //!
 //! ```toml
 //! # Cargo.toml
-//! tracing = { version = &quot;0.2&quot;, default-features = false }
+//! tracing = { version = "0.2", default-features = false }
 //! ```
 //!
 //! To enable `liballoc` but not `std`, use:
 //!
 //! ```toml
 //! # Cargo.toml
-//! tracing = { version = &quot;0.2&quot;, default-features = false, features = [&quot;alloc&quot;] }
+//! tracing = { version = "0.2", default-features = false, features = ["alloc"] }
 //! ```
 //!
-//! When both the &quot;std&quot; and &quot;alloc&quot; feature flags are disabled, `tracing-core`
+//! When both the "std" and "alloc" feature flags are disabled, `tracing-core`
 //! will not make any dynamic memory allocations at runtime, and does not
 //! require a global memory allocator.
 //!
-//! The &quot;alloc&quot; feature is required to enable the [`Dispatch::new`] function,
+//! The "alloc" feature is required to enable the [`Dispatch::new`] function,
 //! which requires dynamic memory allocation to construct a collect trait
 //! object at runtime. When liballoc is disabled, new `Dispatch`s may still be
-//! created from `&amp;&#39;static dyn Collector` references, using
+//! created from `&amp;'static dyn Collector` references, using
 //! [`Dispatch::from_static`].
 //!
-//! The &quot;std&quot; feature is required to enable the following features:
+//! The "std" feature is required to enable the following features:
 //!
 //! * Per-thread scoped trace dispatchers ([`Dispatch::set_default`] and
 //!   [`with_default`]. Since setting a thread-local dispatcher inherently
@@ -1939,7 +1939,7 @@
 //!   without the standard library.
 //! * Support for [constructing `Value`s from types implementing
 //!   `std::error::Error`][err]. Since the `Error` trait is defined in `std`,
-//!   it&#39;s not possible to provide this feature without `std`.
+//!   it's not possible to provide this feature without `std`.
 //!
 //! All other features of `tracing` should behave identically with and
 //! without `std` and `alloc`.
@@ -1970,8 +1970,8 @@
 //!  - [`tracing-log`] provides a compatibility layer with the [`log`] crate,
 //!    allowing log messages to be recorded as `tracing` `Event`s within the
 //!    trace tree. This is useful when a project using `tracing` have
-//!    dependencies which use `log`. Note that if you&#39;re using
-//!    `tracing-subscriber`&#39;s `FmtSubscriber`, you don&#39;t need to depend on
+//!    dependencies which use `log`. Note that if you're using
+//!    `tracing-subscriber`'s `FmtSubscriber`, you don't need to depend on
 //!    `tracing-log` directly.
 //!  - [`tracing-appender`] provides utilities for outputting tracing data,
 //!     including a file appender and non blocking writer.
@@ -1998,7 +1998,7 @@
 //!  - [`tracing-wasm`] provides a `Collect`/`Subscribe` implementation that reports
 //!    events and spans via browser `console.log` and [User Timing API (`window.performance`)].
 //!  - [`tracing-web`] provides a layer implementation of level-aware logging of events
-//!    to web browsers&#39; `console.*` and span events to the [User Timing API (`window.performance`)].
+//!    to web browsers' `console.*` and span events to the [User Timing API (`window.performance`)].
 //!  - [`tide-tracing`] provides a [tide] middleware to trace all incoming requests and responses.
 //!  - [`test-log`] takes care of initializing `tracing` for tests, based on
 //!    environment variables with an `env_logger` compatible syntax.
@@ -2018,8 +2018,8 @@
 //!  - [`tracing-logfmt`] provides a layer that formats events and spans into the logfmt format.
 //!  - [`reqwest-tracing`] provides a middleware to trace [`reqwest`] HTTP requests.
 //!
-//! If you&#39;re the maintainer of a `tracing` ecosystem crate not listed above,
-//! please let us know! We&#39;d love to add your project to the list!
+//! If you're the maintainer of a `tracing` ecosystem crate not listed above,
+//! please let us know! We'd love to add your project to the list!
 //!
 //! [`tracing-opentelemetry`]: https://crates.io/crates/tracing-opentelemetry
 //! [OpenTelemetry]: https://opentelemetry.io/
@@ -2058,8 +2058,8 @@
 //! [`reqwest-tracing`]: https://crates.io/crates/reqwest-tracing
 //! [`reqwest`]: https://crates.io/crates/reqwest
 //!
-//! &lt;div class=&quot;example-wrap&quot; style=&quot;display:inline-block&quot;&gt;
-//! &lt;pre class=&quot;ignore&quot; style=&quot;white-space:normal;font:inherit;&quot;&gt;
+//! &lt;div class="example-wrap" style="display:inline-block"&gt;
+//! &lt;pre class="ignore" style="white-space:normal;font:inherit;"&gt;
 //! &lt;strong&gt;Note&lt;/strong&gt;: Some of these ecosystem crates are currently
 //! unreleased and/or in earlier stages of development. They may be less stable
 //! than &lt;code&gt;tracing&lt;/code&gt; and &lt;code&gt;tracing-core&lt;/code&gt;.
@@ -2083,7 +2083,7 @@
 //!   This is on by default, but does bring in the `syn` crate as a dependency,
 //!   which may add to the compile time of crates that do not already use it.
 //! * `std`: Depend on the Rust standard library (enabled by default).
-//! * `alloc`: Depend on [`liballoc`] (enabled by &quot;std&quot;).
+//! * `alloc`: Depend on [`liballoc`] (enabled by "std").
 //!
 //! [`liballoc`]: https://doc.rust-lang.org/alloc/index.html
 //! ## Supported Rust Versions
@@ -2125,12 +2125,12 @@
 //! [static verbosity level]: level_filters#compile-time-filters
 //! [instrument]: tracing_attributes::instrument
 //! [flags]: #crate-feature-flags
-</span><span class="attr">#![cfg_attr(not(feature = <span class="string">&quot;std&quot;</span>), no_std)]
+</span><span class="attr">#![cfg_attr(not(feature = <span class="string">"std"</span>), no_std)]
 #![cfg_attr(docsrs, feature(doc_cfg))]
 #![doc(
-    html_logo_url = <span class="string">&quot;https://raw.githubusercontent.com/tokio-rs/tracing/master/assets/logo-type.png&quot;</span>,
-    html_favicon_url = <span class="string">&quot;https://raw.githubusercontent.com/tokio-rs/tracing/master/assets/favicon.ico&quot;</span>,
-    issue_tracker_base_url = <span class="string">&quot;https://github.com/tokio-rs/tracing/issues/&quot;
+    html_logo_url = <span class="string">"https://raw.githubusercontent.com/tokio-rs/tracing/master/assets/logo-type.png"</span>,
+    html_favicon_url = <span class="string">"https://raw.githubusercontent.com/tokio-rs/tracing/master/assets/favicon.ico"</span>,
+    issue_tracker_base_url = <span class="string">"https://github.com/tokio-rs/tracing/issues/"
 </span>)]
 #![warn(
     missing_debug_implementations,
@@ -2155,7 +2155,7 @@
 )]
 
 </span><span class="comment">// Somehow this `use` statement is necessary for us to re-export the `core`
-// macros on Rust 1.26.0. I&#39;m not sure how this makes it work, but it does.
+// macros on Rust 1.26.0. I'm not sure how this makes it work, but it does.
 </span><span class="attr">#[allow(unused_imports)]
 #[doc(hidden)]
 </span><span class="kw">use </span>tracing_core::<span class="kw-2">*</span>;
@@ -2176,8 +2176,8 @@
 
 <span class="attr">#[doc(inline)]
 </span><span class="kw">pub use </span><span class="self">self</span>::span::Span;
-<span class="attr">#[cfg(feature = <span class="string">&quot;attributes&quot;</span>)]
-#[cfg_attr(docsrs, doc(cfg(feature = <span class="string">&quot;attributes&quot;</span>)))]
+<span class="attr">#[cfg(feature = <span class="string">"attributes"</span>)]
+#[cfg_attr(docsrs, doc(cfg(feature = <span class="string">"attributes"</span>)))]
 #[doc(inline)]
 </span><span class="kw">pub use </span>tracing_attributes::instrument;
 
@@ -2208,17 +2208,17 @@
     /// by the `tracing` macros, but it is not part of the stable versioned API.
     /// Breaking changes to this module may occur in small-numbered versions
     /// without warning.
-    </span><span class="kw">pub struct </span>MacroCallsite&lt;T = <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span><span class="kw">dyn </span>Callsite&gt;
+    </span><span class="kw">pub struct </span>MacroCallsite&lt;T = <span class="kw-2">&amp;</span><span class="lifetime">'static </span><span class="kw">dyn </span>Callsite&gt;
     <span class="kw">where
-        </span>T: <span class="lifetime">&#39;static</span>,
+        </span>T: <span class="lifetime">'static</span>,
     {
         interest: AtomicUsize,
-        meta: <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>Metadata&lt;<span class="lifetime">&#39;static</span>&gt;,
+        meta: <span class="kw-2">&amp;</span><span class="lifetime">'static </span>Metadata&lt;<span class="lifetime">'static</span>&gt;,
         register: Once,
-        registration: <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>Registration&lt;T&gt;,
+        registration: <span class="kw-2">&amp;</span><span class="lifetime">'static </span>Registration&lt;T&gt;,
     }
 
-    <span class="kw">impl</span>&lt;T: <span class="lifetime">&#39;static</span>&gt; MacroCallsite&lt;T&gt; {
+    <span class="kw">impl</span>&lt;T: <span class="lifetime">'static</span>&gt; MacroCallsite&lt;T&gt; {
         <span class="doccomment">/// Returns a new `MacroCallsite` with the specified `Metadata`.
         ///
         /// /!\ WARNING: This is *not* a stable API! /!\
@@ -2228,8 +2228,8 @@
         /// Breaking changes to this module may occur in small-numbered versions
         /// without warning.
         </span><span class="kw">pub const fn </span>new(
-            meta: <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>Metadata&lt;<span class="lifetime">&#39;static</span>&gt;,
-            registration: <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>Registration&lt;T&gt;,
+            meta: <span class="kw-2">&amp;</span><span class="lifetime">'static </span>Metadata&lt;<span class="lifetime">'static</span>&gt;,
+            registration: <span class="kw-2">&amp;</span><span class="lifetime">'static </span>Registration&lt;T&gt;,
         ) -&gt; <span class="self">Self </span>{
             <span class="self">Self </span>{
                 interest: AtomicUsize::new(<span class="number">0xDEADFACED</span>),
@@ -2240,7 +2240,7 @@
         }
     }
 
-    <span class="kw">impl </span>MacroCallsite&lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span><span class="kw">dyn </span>Callsite&gt; {
+    <span class="kw">impl </span>MacroCallsite&lt;<span class="kw-2">&amp;</span><span class="lifetime">'static </span><span class="kw">dyn </span>Callsite&gt; {
         <span class="doccomment">/// Registers this callsite with the global callsite registry.
         ///
         /// If the callsite is already registered, this does nothing.
@@ -2254,7 +2254,7 @@
         </span><span class="attr">#[inline(never)]
         </span><span class="comment">// This only happens once (or if the cached interest value was corrupted).
         </span><span class="attr">#[cold]
-        </span><span class="kw">pub fn </span>register(<span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span><span class="self">self</span>) -&gt; Interest {
+        </span><span class="kw">pub fn </span>register(<span class="kw-2">&amp;</span><span class="lifetime">'static </span><span class="self">self</span>) -&gt; Interest {
             <span class="self">self</span>.register
                 .call_once(|| <span class="kw">crate</span>::callsite::register(<span class="self">self</span>.registration));
             <span class="kw">match </span><span class="self">self</span>.interest.load(Ordering::Relaxed) {
@@ -2264,7 +2264,7 @@
             }
         }
 
-        <span class="doccomment">/// Returns the callsite&#39;s cached Interest, or registers it for the
+        <span class="doccomment">/// Returns the callsite's cached Interest, or registers it for the
         /// first time if it has not yet been registered.
         ///
         /// /!\ WARNING: This is *not* a stable API! /!\
@@ -2274,7 +2274,7 @@
         /// Breaking changes to this module may occur in small-numbered versions
         /// without warning.
         </span><span class="attr">#[inline]
-        </span><span class="kw">pub fn </span>interest(<span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span><span class="self">self</span>) -&gt; Interest {
+        </span><span class="kw">pub fn </span>interest(<span class="kw-2">&amp;</span><span class="lifetime">'static </span><span class="self">self</span>) -&gt; Interest {
             <span class="kw">match </span><span class="self">self</span>.interest.load(Ordering::Relaxed) {
                 <span class="number">0 </span>=&gt; Interest::never(),
                 <span class="number">1 </span>=&gt; Interest::sometimes(),
@@ -2289,23 +2289,23 @@
         }
 
         <span class="attr">#[inline]
-        #[cfg(feature = <span class="string">&quot;log&quot;</span>)]
+        #[cfg(feature = <span class="string">"log"</span>)]
         </span><span class="kw">pub fn </span>disabled_span(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw">crate</span>::Span {
             <span class="kw">crate</span>::Span::new_disabled(<span class="self">self</span>.meta)
         }
 
         <span class="attr">#[inline]
-        #[cfg(not(feature = <span class="string">&quot;log&quot;</span>))]
+        #[cfg(not(feature = <span class="string">"log"</span>))]
         </span><span class="kw">pub fn </span>disabled_span(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw">crate</span>::Span {
             <span class="kw">crate</span>::Span::none()
         }
 
-        <span class="attr">#[cfg(feature = <span class="string">&quot;log&quot;</span>)]
+        <span class="attr">#[cfg(feature = <span class="string">"log"</span>)]
         </span><span class="kw">pub fn </span>log(
             <span class="kw-2">&amp;</span><span class="self">self</span>,
-            logger: <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span><span class="kw">dyn </span>log::Log,
-            log_meta: log::Metadata&lt;<span class="lifetime">&#39;_</span>&gt;,
-            values: <span class="kw-2">&amp;</span>tracing_core::field::ValueSet&lt;<span class="lifetime">&#39;_</span>&gt;,
+            logger: <span class="kw-2">&amp;</span><span class="lifetime">'static </span><span class="kw">dyn </span>log::Log,
+            log_meta: log::Metadata&lt;<span class="lifetime">'_</span>&gt;,
+            values: <span class="kw-2">&amp;</span>tracing_core::field::ValueSet&lt;<span class="lifetime">'_</span>&gt;,
         ) {
             <span class="kw">let </span>meta = <span class="self">self</span>.metadata();
             logger.log(
@@ -2315,7 +2315,7 @@
                     .line(meta.line())
                     .metadata(log_meta)
                     .args(<span class="macro">format_args!</span>(
-                        <span class="string">&quot;{}&quot;</span>,
+                        <span class="string">"{}"</span>,
                         <span class="kw">crate</span>::log::LogValueSet {
                             values,
                             is_first: <span class="bool-val">true
@@ -2337,24 +2337,24 @@
         }
 
         <span class="attr">#[inline(always)]
-        </span><span class="kw">fn </span>metadata(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>Metadata&lt;<span class="lifetime">&#39;static</span>&gt; {
+        </span><span class="kw">fn </span>metadata(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>Metadata&lt;<span class="lifetime">'static</span>&gt; {
             <span class="self">self</span>.meta
         }
     }
 
     <span class="kw">impl </span>fmt::Debug <span class="kw">for </span>MacroCallsite {
-        <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; fmt::Result {
-            f.debug_struct(<span class="string">&quot;MacroCallsite&quot;</span>)
-                .field(<span class="string">&quot;interest&quot;</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.interest)
-                .field(<span class="string">&quot;meta&quot;</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.meta)
-                .field(<span class="string">&quot;register&quot;</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.register)
-                .field(<span class="string">&quot;registration&quot;</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.registration)
+        <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter&lt;<span class="lifetime">'_</span>&gt;) -&gt; fmt::Result {
+            f.debug_struct(<span class="string">"MacroCallsite"</span>)
+                .field(<span class="string">"interest"</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.interest)
+                .field(<span class="string">"meta"</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.meta)
+                .field(<span class="string">"register"</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.register)
+                .field(<span class="string">"registration"</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.registration)
                 .finish()
         }
     }
 }
 
-<span class="attr">#[cfg(feature = <span class="string">&quot;log&quot;</span>)]
+<span class="attr">#[cfg(feature = <span class="string">"log"</span>)]
 #[doc(hidden)]
 </span><span class="kw">pub mod </span>log {
     <span class="kw">use </span>core::fmt;
@@ -2362,31 +2362,31 @@
     <span class="kw">use </span>tracing_core::field::{Field, ValueSet, Visit};
 
     <span class="doccomment">/// Utility to format [`ValueSet`]s for logging.
-    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">struct </span>LogValueSet&lt;<span class="lifetime">&#39;a</span>&gt; {
-        <span class="kw">pub</span>(<span class="kw">crate</span>) values: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>ValueSet&lt;<span class="lifetime">&#39;a</span>&gt;,
+    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">struct </span>LogValueSet&lt;<span class="lifetime">'a</span>&gt; {
+        <span class="kw">pub</span>(<span class="kw">crate</span>) values: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>ValueSet&lt;<span class="lifetime">'a</span>&gt;,
         <span class="kw">pub</span>(<span class="kw">crate</span>) is_first: bool,
     }
 
-    <span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>&gt; fmt::Display <span class="kw">for </span>LogValueSet&lt;<span class="lifetime">&#39;a</span>&gt; {
+    <span class="kw">impl</span>&lt;<span class="lifetime">'a</span>&gt; fmt::Display <span class="kw">for </span>LogValueSet&lt;<span class="lifetime">'a</span>&gt; {
         <span class="attr">#[inline]
-        </span><span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; fmt::Result {
-            <span class="kw">struct </span>LogVisitor&lt;<span class="lifetime">&#39;a</span>, <span class="lifetime">&#39;b</span>&gt; {
-                f: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span><span class="kw-2">mut </span>fmt::Formatter&lt;<span class="lifetime">&#39;b</span>&gt;,
+        </span><span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter&lt;<span class="lifetime">'_</span>&gt;) -&gt; fmt::Result {
+            <span class="kw">struct </span>LogVisitor&lt;<span class="lifetime">'a</span>, <span class="lifetime">'b</span>&gt; {
+                f: <span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="kw-2">mut </span>fmt::Formatter&lt;<span class="lifetime">'b</span>&gt;,
                 is_first: bool,
                 result: fmt::Result,
             }
 
-            <span class="kw">impl </span>Visit <span class="kw">for </span>LogVisitor&lt;<span class="lifetime">&#39;_</span>, <span class="lifetime">&#39;_</span>&gt; {
+            <span class="kw">impl </span>Visit <span class="kw">for </span>LogVisitor&lt;<span class="lifetime">'_</span>, <span class="lifetime">'_</span>&gt; {
                 <span class="kw">fn </span>record_debug(<span class="kw-2">&amp;mut </span><span class="self">self</span>, field: <span class="kw-2">&amp;</span>Field, value: <span class="kw-2">&amp;</span><span class="kw">dyn </span>fmt::Debug) {
                     <span class="kw">let </span>res = <span class="kw">if </span><span class="self">self</span>.is_first {
                         <span class="self">self</span>.is_first = <span class="bool-val">false</span>;
-                        <span class="kw">if </span>field.name() == <span class="string">&quot;message&quot; </span>{
-                            <span class="macro">write!</span>(<span class="self">self</span>.f, <span class="string">&quot;{:?}&quot;</span>, value)
+                        <span class="kw">if </span>field.name() == <span class="string">"message" </span>{
+                            <span class="macro">write!</span>(<span class="self">self</span>.f, <span class="string">"{:?}"</span>, value)
                         } <span class="kw">else </span>{
-                            <span class="macro">write!</span>(<span class="self">self</span>.f, <span class="string">&quot;{}={:?}&quot;</span>, field.name(), value)
+                            <span class="macro">write!</span>(<span class="self">self</span>.f, <span class="string">"{}={:?}"</span>, field.name(), value)
                         }
                     } <span class="kw">else </span>{
-                        <span class="macro">write!</span>(<span class="self">self</span>.f, <span class="string">&quot; {}={:?}&quot;</span>, field.name(), value)
+                        <span class="macro">write!</span>(<span class="self">self</span>.f, <span class="string">" {}={:?}"</span>, field.name(), value)
                     };
                     <span class="kw">if let </span><span class="prelude-val">Err</span>(err) = res {
                         <span class="self">self</span>.result = <span class="self">self</span>.result.and(<span class="prelude-val">Err</span>(err));
@@ -2394,8 +2394,8 @@
                 }
 
                 <span class="kw">fn </span>record_str(<span class="kw-2">&amp;mut </span><span class="self">self</span>, field: <span class="kw-2">&amp;</span>Field, value: <span class="kw-2">&amp;</span>str) {
-                    <span class="kw">if </span>field.name() == <span class="string">&quot;message&quot; </span>{
-                        <span class="self">self</span>.record_debug(field, <span class="kw-2">&amp;</span><span class="macro">format_args!</span>(<span class="string">&quot;{}&quot;</span>, value))
+                    <span class="kw">if </span>field.name() == <span class="string">"message" </span>{
+                        <span class="self">self</span>.record_debug(field, <span class="kw-2">&amp;</span><span class="macro">format_args!</span>(<span class="string">"{}"</span>, value))
                     } <span class="kw">else </span>{
                         <span class="self">self</span>.record_debug(field, <span class="kw-2">&amp;</span>value)
                     }

@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/syscall/validation.rs`."><title>validation.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-c67e44d78ab2db17.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="kernel" data-themes="" data-resource-suffix="" data-rustdoc-version="1.76.0-nightly (90e321d82 2023-12-02)" data-channel="nightly" data-search-js="search-5a66c239c06b3a66.js" data-settings-js="settings-fe03fdc259827cd2.js" ><script src="../../../static.files/storage-fec3eaa3851e447d.js"></script><script defer src="../../../static.files/src-script-3280b574d94e47b4.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-77dede896d6ac08e.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-5d8b3c7633ad77ba.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/syscall/validation.rs`."><title>validation.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-c67e44d78ab2db17.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="kernel" data-themes="" data-resource-suffix="" data-rustdoc-version="1.76.0-nightly (e9013ac0e 2023-12-05)" data-channel="nightly" data-search-js="search-5a66c239c06b3a66.js" data-settings-js="settings-fe03fdc259827cd2.js" ><script src="../../../static.files/storage-fec3eaa3851e447d.js"></script><script defer src="../../../static.files/src-script-3280b574d94e47b4.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-77dede896d6ac08e.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-5d8b3c7633ad77ba.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -81,10 +81,10 @@
 <a href="#81" id="81">81</a>
 <a href="#82" id="82">82</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! This module contains functions that help us validate the inputs to system calls that try to
-//! make sure userspace can&#39;t crash or exploit the kernel in any way. For example, if we take an
-//! address from userspace, we should make sure it&#39;s mapped (so we don&#39;t page-fault) and an address
+//! make sure userspace can't crash or exploit the kernel in any way. For example, if we take an
+//! address from userspace, we should make sure it's mapped (so we don't page-fault) and an address
 //! that userspace could ordinarily access itself (otherwise, we could leak information to a
-//! userspace task that it shouldn&#39;t be able to access).
+//! userspace task that it shouldn't be able to access).
 
 </span><span class="kw">use </span>core::{marker::PhantomData, ptr, slice, str};
 
@@ -100,7 +100,7 @@
         //  - the address is in user-space
         //  - the address is actually mapped for a size of `T`
         //  - the address is correctly aligned for `T`
-        //  - if we&#39;re writing, that the mapping is writable
+        //  - if we're writing, that the mapping is writable
         </span>UserPointer { ptr, can_write: needs_write }
     }
 
@@ -115,9 +115,9 @@
 
         <span class="comment">/*
          * This has two subtleties:
-         *    - Using `write_volatile` instead of `write` makes sure the compiler doesn&#39;t think it can elide the
+         *    - Using `write_volatile` instead of `write` makes sure the compiler doesn't think it can elide the
          *      write, as the data is read and written to from both the kernel and userspace.
-         *    - Using `ptr::write_volatile(x, ...)` instead of `*x = ...` makes sure we don&#39;t attempt to drop
+         *    - Using `ptr::write_volatile(x, ...)` instead of `*x = ...` makes sure we don't attempt to drop
          *      the existing value, which could read uninitialized memory.
          */
         </span><span class="kw">unsafe </span>{ ptr::write_volatile(<span class="self">self</span>.ptr, value) }
@@ -126,18 +126,18 @@
 }
 
 <span class="doccomment">/// Represents a slice of `T`s in userspace.
-</span><span class="kw">pub struct </span>UserSlice&lt;<span class="lifetime">&#39;a</span>, T&gt; {
+</span><span class="kw">pub struct </span>UserSlice&lt;<span class="lifetime">'a</span>, T&gt; {
     ptr: <span class="kw-2">*mut </span>T,
     length: usize,
-    _phantom: PhantomData&lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>()&gt;,
+    _phantom: PhantomData&lt;<span class="kw-2">&amp;</span><span class="lifetime">'a </span>()&gt;,
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>, T&gt; UserSlice&lt;<span class="lifetime">&#39;a</span>, T&gt; {
-    <span class="kw">pub fn </span>new(ptr: <span class="kw-2">*mut </span>T, length: usize) -&gt; UserSlice&lt;<span class="lifetime">&#39;a</span>, T&gt; {
+<span class="kw">impl</span>&lt;<span class="lifetime">'a</span>, T&gt; UserSlice&lt;<span class="lifetime">'a</span>, T&gt; {
+    <span class="kw">pub fn </span>new(ptr: <span class="kw-2">*mut </span>T, length: usize) -&gt; UserSlice&lt;<span class="lifetime">'a</span>, T&gt; {
         UserSlice { ptr, length, _phantom: PhantomData }
     }
 
-    <span class="kw">pub fn </span>validate_read(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>[T], ()&gt; {
+    <span class="kw">pub fn </span>validate_read(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="kw-2">&amp;</span><span class="lifetime">'a </span>[T], ()&gt; {
         <span class="comment">// TODO: validate access is valid
         </span><span class="prelude-val">Ok</span>(<span class="kw">unsafe </span>{ slice::from_raw_parts(<span class="self">self</span>.ptr, <span class="self">self</span>.length) })
     }
@@ -145,20 +145,20 @@
     <span class="doccomment">/// Validate this slice for a write, BUT DOES NOT ACTUALLY WRITE ANYTHING INTO IT. You must write into the
     /// returned mutable reference, generally using either `copy_from_slice` if `T: Copy`, or `clone_from_slice`
     /// otherwise.
-    </span><span class="kw">pub fn </span>validate_write(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span><span class="kw-2">mut </span>[T], ()&gt; {
+    </span><span class="kw">pub fn </span>validate_write(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="kw-2">mut </span>[T], ()&gt; {
         <span class="comment">// TODO: validate access is valid
         </span><span class="prelude-val">Ok</span>(<span class="kw">unsafe </span>{ slice::from_raw_parts_mut(<span class="self">self</span>.ptr, <span class="self">self</span>.length) })
     }
 }
 
-<span class="kw">pub struct </span>UserString&lt;<span class="lifetime">&#39;a</span>&gt;(UserSlice&lt;<span class="lifetime">&#39;a</span>, u8&gt;);
+<span class="kw">pub struct </span>UserString&lt;<span class="lifetime">'a</span>&gt;(UserSlice&lt;<span class="lifetime">'a</span>, u8&gt;);
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>&gt; UserString&lt;<span class="lifetime">&#39;a</span>&gt; {
-    <span class="kw">pub fn </span>new(ptr: <span class="kw-2">*mut </span>u8, length: usize) -&gt; UserString&lt;<span class="lifetime">&#39;a</span>&gt; {
+<span class="kw">impl</span>&lt;<span class="lifetime">'a</span>&gt; UserString&lt;<span class="lifetime">'a</span>&gt; {
+    <span class="kw">pub fn </span>new(ptr: <span class="kw-2">*mut </span>u8, length: usize) -&gt; UserString&lt;<span class="lifetime">'a</span>&gt; {
         UserString(UserSlice::new(ptr, length))
     }
 
-    <span class="kw">pub fn </span>validate(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>str, ()&gt; {
+    <span class="kw">pub fn </span>validate(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="kw-2">&amp;</span><span class="lifetime">'a </span>str, ()&gt; {
         str::from_utf8(<span class="self">self</span>.<span class="number">0</span>.validate_read()<span class="question-mark">?</span>).map_err(|<span class="kw">_</span>| ())
     }
 }

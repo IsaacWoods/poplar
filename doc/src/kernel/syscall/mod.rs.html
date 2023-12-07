@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/syscall/mod.rs`."><title>mod.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-c67e44d78ab2db17.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="kernel" data-themes="" data-resource-suffix="" data-rustdoc-version="1.76.0-nightly (90e321d82 2023-12-02)" data-channel="nightly" data-search-js="search-5a66c239c06b3a66.js" data-settings-js="settings-fe03fdc259827cd2.js" ><script src="../../../static.files/storage-fec3eaa3851e447d.js"></script><script defer src="../../../static.files/src-script-3280b574d94e47b4.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-77dede896d6ac08e.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-5d8b3c7633ad77ba.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/syscall/mod.rs`."><title>mod.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-c67e44d78ab2db17.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="kernel" data-themes="" data-resource-suffix="" data-rustdoc-version="1.76.0-nightly (e9013ac0e 2023-12-05)" data-channel="nightly" data-search-js="search-5a66c239c06b3a66.js" data-settings-js="settings-fe03fdc259827cd2.js" ><script src="../../../static.files/storage-fec3eaa3851e447d.js"></script><script defer src="../../../static.files/src-script-3280b574d94e47b4.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-77dede896d6ac08e.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-5d8b3c7633ad77ba.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -559,16 +559,6 @@
 <a href="#559" id="559">559</a>
 <a href="#560" id="560">560</a>
 <a href="#561" id="561">561</a>
-<a href="#562" id="562">562</a>
-<a href="#563" id="563">563</a>
-<a href="#564" id="564">564</a>
-<a href="#565" id="565">565</a>
-<a href="#566" id="566">566</a>
-<a href="#567" id="567">567</a>
-<a href="#568" id="568">568</a>
-<a href="#569" id="569">569</a>
-<a href="#570" id="570">570</a>
-<a href="#571" id="571">571</a>
 </pre></div><pre class="rust"><code><span class="kw">mod </span>validation;
 
 <span class="kw">use crate</span>::{
@@ -613,7 +603,7 @@
 <span class="doccomment">/// Maps the name of a service to the channel used to register new service users.
 </span><span class="kw">static </span>SERVICE_MAP: Spinlock&lt;BTreeMap&lt;String, Arc&lt;ChannelEnd&gt;&gt;&gt; = Spinlock::new(BTreeMap::new());
 
-<span class="comment">// TODO: these shouldn&#39;t be needed. Use-sites should be able to read `[None; MAX_WHATEVER]`, but can&#39;t because
+<span class="comment">// TODO: these shouldn't be needed. Use-sites should be able to read `[None; MAX_WHATEVER]`, but can't because
 // the const_in_array_repeat_expression feature got removed. This works around that for now.
 </span><span class="kw">const </span>NONE_OBJECT: <span class="prelude-ty">Option</span>&lt;Arc&lt;<span class="kw">dyn </span>KernelObject&gt;&gt; = <span class="prelude-val">None</span>;
 <span class="kw">const </span>NONE_BAR: <span class="prelude-ty">Option</span>&lt;poplar::syscall::pci::Bar&gt; = <span class="prelude-val">None</span>;
@@ -634,9 +624,9 @@
 <span class="kw">where
     </span>P: Platform,
 {
-    <span class="comment">// info!(&quot;Syscall! number = {}, a = {}, b = {}, c = {}, d = {}, e = {}&quot;, number, a, b, c, d, e);
+    <span class="comment">// info!("Syscall! number = {}, a = {}, b = {}, c = {}, d = {}, e = {}", number, a, b, c, d, e);
 
-    // Clone the current task out of the scheduler as we can&#39;t hold a lock on the scheduler
+    // Clone the current task out of the scheduler as we can't hold a lock on the scheduler
     </span><span class="kw">let </span>task = {
         <span class="kw">let </span>cpu_scheduler = scheduler.for_this_cpu();
         cpu_scheduler.running_task.as_ref().unwrap().clone()
@@ -655,10 +645,9 @@
         syscall::SYSCALL_REGISTER_SERVICE =&gt; handle_to_syscall_repr(register_service(<span class="kw-2">&amp;</span>task, a, b)),
         syscall::SYSCALL_SUBSCRIBE_TO_SERVICE =&gt; handle_to_syscall_repr(subscribe_to_service(<span class="kw-2">&amp;</span>task, a, b)),
         syscall::SYSCALL_PCI_GET_INFO =&gt; status_with_payload_to_syscall_repr(pci_get_info(<span class="kw-2">&amp;</span>task, a, b)),
-        syscall::SYSCALL_TEST =&gt; test_syscall(<span class="kw-2">&amp;</span>task, a, b, c, d, e),
 
         <span class="kw">_ </span>=&gt; {
-            <span class="macro">warn!</span>(<span class="string">&quot;Process made system call with invalid syscall number: {}&quot;</span>, number);
+            <span class="macro">warn!</span>(<span class="string">"Process made system call with invalid syscall number: {}"</span>, number);
             usize::MAX
         }
     }
@@ -668,7 +657,6 @@
 <span class="kw">where
     </span>P: Platform,
 {
-    <span class="macro">info!</span>(<span class="string">&quot;Process yielded!&quot;</span>);
     scheduler.switch_to_next(TaskState::Ready);
     <span class="number">0
 </span>}
@@ -692,7 +680,7 @@
         .validate()
         .map_err(|<span class="kw">_</span>| EarlyLogError::MessageNotValidUtf8)<span class="question-mark">?</span>;
 
-    <span class="macro">trace!</span>(<span class="string">&quot;Early log message from {}: {}&quot;</span>, task.name, message);
+    <span class="macro">trace!</span>(<span class="string">"Early log message from {}: {}"</span>, task.name, message);
     <span class="prelude-val">Ok</span>(())
 }
 
@@ -736,7 +724,7 @@
     <span class="comment">// TODO: should we require that the size be multiple of the page size, or just up it here?
     </span><span class="kw">let </span>size = align_up(size, Size4KiB::SIZE);
 
-    <span class="comment">// TODO: do something more sensible with this when we have a concept of physical memory &quot;ownership&quot;
+    <span class="comment">// TODO: do something more sensible with this when we have a concept of physical memory "ownership"
     </span><span class="kw">let </span>physical_start = <span class="kw">crate</span>::PHYSICAL_MEMORY_MANAGER.get().alloc_bytes(size);
 
     <span class="kw">let </span>memory_object = MemoryObject::new(
@@ -796,7 +784,7 @@
 
     <span class="kw">if </span>address_space_handle == ZERO_HANDLE {
         <span class="comment">/*
-         * If the AddressSpace handle is the zero handle, we map the MemoryObject into the calling task&#39;s
+         * If the AddressSpace handle is the zero handle, we map the MemoryObject into the calling task's
          * address space.
          */
         </span>task.address_space.map_memory_object(
@@ -822,7 +810,7 @@
 
     <span class="comment">/*
      * An address pointer of `0` signals to the kernel that the caller does not need to know the virtual
-     * address, so don&#39;t bother writing it back.
+     * address, so don't bother writing it back.
      */
     </span><span class="kw">if </span>address_ptr != <span class="number">0x0 </span>{
         <span class="kw">let </span><span class="kw-2">mut </span>address_ptr = UserPointer::new(address_ptr <span class="kw">as </span><span class="kw-2">*mut </span>VAddr, <span class="bool-val">true</span>);
@@ -878,7 +866,7 @@
             };
 
             <span class="comment">/*
-             * We&#39;re transferring the handle&#39;s object, so we remove the handle to it from the sending task.
+             * We're transferring the handle's object, so we remove the handle to it from the sending task.
              */
             </span>task.handles.write().remove(<span class="kw-2">&amp;</span>handle);
         }
@@ -980,9 +968,9 @@
         .validate()
         .map_err(|()| RegisterServiceError::NamePointerNotValid)<span class="question-mark">?</span>;
 
-    <span class="macro">info!</span>(<span class="string">&quot;Task {} has registered a service called {}&quot;</span>, task.name, service_name);
+    <span class="macro">info!</span>(<span class="string">"Task {} has registered a service called {}"</span>, task.name, service_name);
     <span class="kw">let </span>channel = ChannelEnd::new_kernel_channel(task.id());
-    SERVICE_MAP.lock().insert(task.name.clone() + <span class="string">&quot;.&quot; </span>+ service_name, channel.clone());
+    SERVICE_MAP.lock().insert(task.name.clone() + <span class="string">"." </span>+ service_name, channel.clone());
 
     <span class="prelude-val">Ok</span>(task.add_handle(channel))
 }
@@ -1017,7 +1005,7 @@
 
         <span class="comment">/*
          * Send a message down `register_channel` to tell it about its new service user, transferring the
-         * provider&#39;s half of the created service channel.
+         * provider's half of the created service channel.
          *
          * XXX: we manually construct a Ptah message here so userspace can use the `poplar::Channel` type if it
          * wants to, but without having to pull that in here.
@@ -1026,7 +1014,7 @@
         handle_objects[<span class="number">0</span>] = <span class="prelude-val">Some</span>(provider_end <span class="kw">as </span>Arc&lt;<span class="kw">dyn </span>KernelObject&gt;);
         register_channel.add_message(Message { bytes: [ptah::make_handle_slot(<span class="number">0</span>)].to_vec(), handle_objects });
 
-        <span class="comment">// Return the user&#39;s end of the new channel to it
+        <span class="comment">// Return the user's end of the new channel to it
         </span><span class="prelude-val">Ok</span>(task.add_handle(user_end))
     } <span class="kw">else </span>{
         <span class="prelude-val">Err</span>(SubscribeToServiceError::NoServiceWithThatName)
@@ -1044,7 +1032,7 @@
     <span class="kw">use </span>pci_types::{Bar, MAX_BARS};
     <span class="kw">use </span>poplar::syscall::PciDeviceInfo;
 
-    <span class="comment">// Check that the task has the &#39;PciBusDriver&#39; capability
+    <span class="comment">// Check that the task has the 'PciBusDriver' capability
     </span><span class="kw">if </span>!task.capabilities.contains(<span class="kw-2">&amp;</span>Capability::PciBusDriver) {
         <span class="kw">return </span><span class="prelude-val">Err</span>(PciGetInfoError::TaskDoesNotHaveCorrectCapability);
     }
@@ -1114,7 +1102,7 @@
                             device_descriptor.bars[i] =
                                 <span class="prelude-val">Some</span>(poplar::syscall::pci::Bar::Memory64 { memory_object: handle, size });
                         }
-                        <span class="prelude-val">Some</span>(Bar::Io { .. }) =&gt; <span class="macro">warn!</span>(<span class="string">&quot;PCI device at {} has an I/O BAR. We don&#39;t support these, and so they&#39;re not passed out to userspace.&quot;</span>, address),
+                        <span class="prelude-val">Some</span>(Bar::Io { .. }) =&gt; <span class="macro">warn!</span>(<span class="string">"PCI device at {} has an I/O BAR. We don't support these, and so they're not passed out to userspace."</span>, address),
                         <span class="prelude-val">None </span>=&gt; (),
                     }
                 }
@@ -1132,12 +1120,4 @@
         <span class="prelude-val">Err</span>(PciGetInfoError::PlatformDoesNotSupportPci)
     }
 }
-
-<span class="kw">fn </span>test_syscall&lt;P&gt;(task: <span class="kw-2">&amp;</span>Arc&lt;Task&lt;P&gt;&gt;, a: usize, b: usize, c: usize, d: usize, e: usize) -&gt; usize
-<span class="kw">where
-    </span>P: Platform,
-{
-    <span class="macro">info!</span>(<span class="string">&quot;Task &#39;{}&#39; made a test system call. a = {}, b = {}, c = {}, d = {}, e = {}&quot;</span>, task.name, a, b, c, d, e);
-    <span class="number">963
-</span>}
 </code></pre></div></section></main></body></html>

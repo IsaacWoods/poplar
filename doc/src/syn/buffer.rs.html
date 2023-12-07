@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/syn-1.0.91/src/buffer.rs`."><title>buffer.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-c67e44d78ab2db17.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="syn" data-themes="" data-resource-suffix="" data-rustdoc-version="1.76.0-nightly (90e321d82 2023-12-02)" data-channel="nightly" data-search-js="search-5a66c239c06b3a66.js" data-settings-js="settings-fe03fdc259827cd2.js" ><script src="../../static.files/storage-fec3eaa3851e447d.js"></script><script defer src="../../static.files/src-script-3280b574d94e47b4.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-77dede896d6ac08e.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-5d8b3c7633ad77ba.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/syn-1.0.91/src/buffer.rs`."><title>buffer.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-c67e44d78ab2db17.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="syn" data-themes="" data-resource-suffix="" data-rustdoc-version="1.76.0-nightly (e9013ac0e 2023-12-05)" data-channel="nightly" data-search-js="search-5a66c239c06b3a66.js" data-settings-js="settings-fe03fdc259827cd2.js" ><script src="../../static.files/storage-fec3eaa3851e447d.js"></script><script defer src="../../static.files/src-script-3280b574d94e47b4.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-77dede896d6ac08e.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-5d8b3c7633ad77ba.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -414,15 +414,15 @@
 </pre></div><pre class="rust"><code><span class="doccomment">//! A stably addressed token buffer supporting efficient traversal based on a
 //! cheaply copyable cursor.
 //!
-//! *This module is available only if Syn is built with the `&quot;parsing&quot;` feature.*
+//! *This module is available only if Syn is built with the `"parsing"` feature.*
 
 </span><span class="comment">// This module is heavily commented as it contains most of the unsafe code in
 // Syn, and caution should be used when editing it. The public-facing interface
 // is 100% safe but the implementation is fragile internally.
 
 </span><span class="attr">#[cfg(all(
-    not(all(target_arch = <span class="string">&quot;wasm32&quot;</span>, any(target_os = <span class="string">&quot;unknown&quot;</span>, target_os = <span class="string">&quot;wasi&quot;</span>))),
-    feature = <span class="string">&quot;proc-macro&quot;
+    not(all(target_arch = <span class="string">"wasm32"</span>, any(target_os = <span class="string">"unknown"</span>, target_os = <span class="string">"wasi"</span>))),
+    feature = <span class="string">"proc-macro"
 </span>))]
 </span><span class="kw">use </span><span class="kw">crate</span>::proc_macro <span class="kw">as </span>pm;
 <span class="kw">use </span><span class="kw">crate</span>::Lifetime;
@@ -448,11 +448,11 @@
 /// `TokenStream` which requires a deep copy in order to traverse more than
 /// once.
 ///
-/// *This type is available only if Syn is built with the `&quot;parsing&quot;` feature.*
+/// *This type is available only if Syn is built with the `"parsing"` feature.*
 </span><span class="kw">pub struct </span>TokenBuffer {
     <span class="comment">// NOTE: Do not implement clone on this - there are raw pointers inside
     // these entries which will be messed up. Moving the `TokenBuffer` itself is
-    // safe as the data pointed to won&#39;t be moved.
+    // safe as the data pointed to won't be moved.
     </span>ptr: <span class="kw-2">*const </span>Entry,
     len: usize,
 }
@@ -497,7 +497,7 @@
         // stream which was passed in.
         </span>entries.push(Entry::End(up));
 
-        <span class="comment">// NOTE: This is done to ensure that we don&#39;t accidentally modify the
+        <span class="comment">// NOTE: This is done to ensure that we don't accidentally modify the
         // length of the backing buffer. The backing buffer must remain at a
         // constant address after this point, as we are going to store a raw
         // pointer into it.
@@ -525,11 +525,11 @@
     <span class="doccomment">/// Creates a `TokenBuffer` containing all the tokens from the input
     /// `proc_macro::TokenStream`.
     ///
-    /// *This method is available only if Syn is built with both the `&quot;parsing&quot;` and
-    /// `&quot;proc-macro&quot;` features.*
+    /// *This method is available only if Syn is built with both the `"parsing"` and
+    /// `"proc-macro"` features.*
     </span><span class="attr">#[cfg(all(
-        not(all(target_arch = <span class="string">&quot;wasm32&quot;</span>, any(target_os = <span class="string">&quot;unknown&quot;</span>, target_os = <span class="string">&quot;wasi&quot;</span>))),
-        feature = <span class="string">&quot;proc-macro&quot;
+        not(all(target_arch = <span class="string">"wasm32"</span>, any(target_os = <span class="string">"unknown"</span>, target_os = <span class="string">"wasi"</span>))),
+        feature = <span class="string">"proc-macro"
     </span>))]
     </span><span class="kw">pub fn </span>new(stream: pm::TokenStream) -&gt; <span class="self">Self </span>{
         <span class="self">Self</span>::new2(stream.into())
@@ -560,22 +560,22 @@
 /// Two cursors are equal if they have the same location in the same input
 /// stream, and have the same scope.
 ///
-/// *This type is available only if Syn is built with the `&quot;parsing&quot;` feature.*
-</span><span class="kw">pub struct </span>Cursor&lt;<span class="lifetime">&#39;a</span>&gt; {
+/// *This type is available only if Syn is built with the `"parsing"` feature.*
+</span><span class="kw">pub struct </span>Cursor&lt;<span class="lifetime">'a</span>&gt; {
     <span class="comment">// The current entry which the `Cursor` is pointing at.
     </span>ptr: <span class="kw-2">*const </span>Entry,
     <span class="comment">// This is the only `Entry::End(..)` object which this cursor is allowed to
     // point at. All other `End` objects are skipped over in `Cursor::create`.
     </span>scope: <span class="kw-2">*const </span>Entry,
-    <span class="comment">// Cursor is covariant in &#39;a. This field ensures that our pointers are still
+    <span class="comment">// Cursor is covariant in 'a. This field ensures that our pointers are still
     // valid.
-    </span>marker: PhantomData&lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>Entry&gt;,
+    </span>marker: PhantomData&lt;<span class="kw-2">&amp;</span><span class="lifetime">'a </span>Entry&gt;,
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>&gt; Cursor&lt;<span class="lifetime">&#39;a</span>&gt; {
+<span class="kw">impl</span>&lt;<span class="lifetime">'a</span>&gt; Cursor&lt;<span class="lifetime">'a</span>&gt; {
     <span class="doccomment">/// Creates a cursor referencing a static empty TokenStream.
     </span><span class="kw">pub fn </span>empty() -&gt; <span class="self">Self </span>{
-        <span class="comment">// It&#39;s safe in this situation for us to put an `Entry` object in global
+        <span class="comment">// It's safe in this situation for us to put an `Entry` object in global
         // storage, despite it not actually being safe to send across threads
         // (`Ident` is a reference into a thread-local table). This is because
         // this entry never includes a `Ident` object.
@@ -597,9 +597,9 @@
     /// `None`-delimited scopes when the cursor reaches the end of them,
     /// allowing for them to be treated transparently.
     </span><span class="kw">unsafe fn </span>create(<span class="kw-2">mut </span>ptr: <span class="kw-2">*const </span>Entry, scope: <span class="kw-2">*const </span>Entry) -&gt; <span class="self">Self </span>{
-        <span class="comment">// NOTE: If we&#39;re looking at a `End(..)`, we want to advance the cursor
-        // past it, unless `ptr == scope`, which means that we&#39;re at the edge of
-        // our cursor&#39;s scope. We should only have `ptr != scope` at the exit
+        <span class="comment">// NOTE: If we're looking at a `End(..)`, we want to advance the cursor
+        // past it, unless `ptr == scope`, which means that we're at the edge of
+        // our cursor's scope. We should only have `ptr != scope` at the exit
         // from None-delimited groups entered with `ignore_none`.
         </span><span class="kw">while let </span>Entry::End(exit) = <span class="kw-2">*</span>ptr {
             <span class="kw">if </span>ptr == scope {
@@ -616,14 +616,14 @@
     }
 
     <span class="doccomment">/// Get the current entry.
-    </span><span class="kw">fn </span>entry(<span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>Entry {
+    </span><span class="kw">fn </span>entry(<span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="lifetime">'a </span>Entry {
         <span class="kw">unsafe </span>{ <span class="kw-2">&amp;*</span><span class="self">self</span>.ptr }
     }
 
     <span class="doccomment">/// Bump the cursor to point at the next token after the current one. This
     /// is undefined behavior if the cursor is currently looking at an
     /// `Entry::End`.
-    </span><span class="kw">unsafe fn </span>bump(<span class="self">self</span>) -&gt; Cursor&lt;<span class="lifetime">&#39;a</span>&gt; {
+    </span><span class="kw">unsafe fn </span>bump(<span class="self">self</span>) -&gt; Cursor&lt;<span class="lifetime">'a</span>&gt; {
         Cursor::create(<span class="self">self</span>.ptr.offset(<span class="number">1</span>), <span class="self">self</span>.scope)
     }
 
@@ -650,14 +650,14 @@
     <span class="doccomment">/// Checks whether the cursor is currently pointing at the end of its valid
     /// scope.
     </span><span class="kw">pub fn </span>eof(<span class="self">self</span>) -&gt; bool {
-        <span class="comment">// We&#39;re at eof if we&#39;re at the end of our scope.
+        <span class="comment">// We're at eof if we're at the end of our scope.
         </span><span class="self">self</span>.ptr == <span class="self">self</span>.scope
     }
 
     <span class="doccomment">/// If the cursor is pointing at a `Group` with the given delimiter, returns
     /// a cursor into that group and one pointing to the next `TokenTree`.
-    </span><span class="kw">pub fn </span>group(<span class="kw-2">mut </span><span class="self">self</span>, delim: Delimiter) -&gt; <span class="prelude-ty">Option</span>&lt;(Cursor&lt;<span class="lifetime">&#39;a</span>&gt;, Span, Cursor&lt;<span class="lifetime">&#39;a</span>&gt;)&gt; {
-        <span class="comment">// If we&#39;re not trying to enter a none-delimited group, we want to
+    </span><span class="kw">pub fn </span>group(<span class="kw-2">mut </span><span class="self">self</span>, delim: Delimiter) -&gt; <span class="prelude-ty">Option</span>&lt;(Cursor&lt;<span class="lifetime">'a</span>&gt;, Span, Cursor&lt;<span class="lifetime">'a</span>&gt;)&gt; {
+        <span class="comment">// If we're not trying to enter a none-delimited group, we want to
         // ignore them. We have to make sure to _not_ ignore them when we want
         // to enter them, of course. For obvious reasons.
         </span><span class="kw">if </span>delim != Delimiter::None {
@@ -675,7 +675,7 @@
 
     <span class="doccomment">/// If the cursor is pointing at a `Ident`, returns it along with a cursor
     /// pointing at the next `TokenTree`.
-    </span><span class="kw">pub fn </span>ident(<span class="kw-2">mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;(Ident, Cursor&lt;<span class="lifetime">&#39;a</span>&gt;)&gt; {
+    </span><span class="kw">pub fn </span>ident(<span class="kw-2">mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;(Ident, Cursor&lt;<span class="lifetime">'a</span>&gt;)&gt; {
         <span class="self">self</span>.ignore_none();
         <span class="kw">match </span><span class="self">self</span>.entry() {
             Entry::Ident(ident) =&gt; <span class="prelude-val">Some</span>((ident.clone(), <span class="kw">unsafe </span>{ <span class="self">self</span>.bump() })),
@@ -685,17 +685,17 @@
 
     <span class="doccomment">/// If the cursor is pointing at a `Punct`, returns it along with a cursor
     /// pointing at the next `TokenTree`.
-    </span><span class="kw">pub fn </span>punct(<span class="kw-2">mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;(Punct, Cursor&lt;<span class="lifetime">&#39;a</span>&gt;)&gt; {
+    </span><span class="kw">pub fn </span>punct(<span class="kw-2">mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;(Punct, Cursor&lt;<span class="lifetime">'a</span>&gt;)&gt; {
         <span class="self">self</span>.ignore_none();
         <span class="kw">match </span><span class="self">self</span>.entry() {
-            Entry::Punct(op) <span class="kw">if </span>op.as_char() != <span class="string">&#39;\&#39;&#39; </span>=&gt; <span class="prelude-val">Some</span>((op.clone(), <span class="kw">unsafe </span>{ <span class="self">self</span>.bump() })),
+            Entry::Punct(op) <span class="kw">if </span>op.as_char() != <span class="string">'\'' </span>=&gt; <span class="prelude-val">Some</span>((op.clone(), <span class="kw">unsafe </span>{ <span class="self">self</span>.bump() })),
             <span class="kw">_ </span>=&gt; <span class="prelude-val">None</span>,
         }
     }
 
     <span class="doccomment">/// If the cursor is pointing at a `Literal`, return it along with a cursor
     /// pointing at the next `TokenTree`.
-    </span><span class="kw">pub fn </span>literal(<span class="kw-2">mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;(Literal, Cursor&lt;<span class="lifetime">&#39;a</span>&gt;)&gt; {
+    </span><span class="kw">pub fn </span>literal(<span class="kw-2">mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;(Literal, Cursor&lt;<span class="lifetime">'a</span>&gt;)&gt; {
         <span class="self">self</span>.ignore_none();
         <span class="kw">match </span><span class="self">self</span>.entry() {
             Entry::Literal(lit) =&gt; <span class="prelude-val">Some</span>((lit.clone(), <span class="kw">unsafe </span>{ <span class="self">self</span>.bump() })),
@@ -705,10 +705,10 @@
 
     <span class="doccomment">/// If the cursor is pointing at a `Lifetime`, returns it along with a
     /// cursor pointing at the next `TokenTree`.
-    </span><span class="kw">pub fn </span>lifetime(<span class="kw-2">mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;(Lifetime, Cursor&lt;<span class="lifetime">&#39;a</span>&gt;)&gt; {
+    </span><span class="kw">pub fn </span>lifetime(<span class="kw-2">mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;(Lifetime, Cursor&lt;<span class="lifetime">'a</span>&gt;)&gt; {
         <span class="self">self</span>.ignore_none();
         <span class="kw">match </span><span class="self">self</span>.entry() {
-            Entry::Punct(op) <span class="kw">if </span>op.as_char() == <span class="string">&#39;\&#39;&#39; </span>&amp;&amp; op.spacing() == Spacing::Joint =&gt; {
+            Entry::Punct(op) <span class="kw">if </span>op.as_char() == <span class="string">'\'' </span>&amp;&amp; op.spacing() == Spacing::Joint =&gt; {
                 <span class="kw">let </span>next = <span class="kw">unsafe </span>{ <span class="self">self</span>.bump() };
                 <span class="kw">match </span>next.ident() {
                     <span class="prelude-val">Some</span>((ident, rest)) =&gt; {
@@ -744,7 +744,7 @@
     ///
     /// This method does not treat `None`-delimited groups as transparent, and
     /// will return a `Group(None, ..)` if the cursor is looking at one.
-    </span><span class="kw">pub fn </span>token_tree(<span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;(TokenTree, Cursor&lt;<span class="lifetime">&#39;a</span>&gt;)&gt; {
+    </span><span class="kw">pub fn </span>token_tree(<span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;(TokenTree, Cursor&lt;<span class="lifetime">'a</span>&gt;)&gt; {
         <span class="kw">let </span>tree = <span class="kw">match </span><span class="self">self</span>.entry() {
             Entry::Group(group, <span class="kw">_</span>) =&gt; group.clone().into(),
             Entry::Literal(lit) =&gt; lit.clone().into(),
@@ -771,13 +771,13 @@
     <span class="doccomment">/// Skip over the next token without cloning it. Returns `None` if this
     /// cursor points to eof.
     ///
-    /// This method treats `&#39;lifetimes` as a single token.
-    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>skip(<span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;Cursor&lt;<span class="lifetime">&#39;a</span>&gt;&gt; {
+    /// This method treats `'lifetimes` as a single token.
+    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>skip(<span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;Cursor&lt;<span class="lifetime">'a</span>&gt;&gt; {
         <span class="kw">match </span><span class="self">self</span>.entry() {
             Entry::End(..) =&gt; <span class="prelude-val">None</span>,
 
-            <span class="comment">// Treat lifetimes as a single tt for the purposes of &#39;skip&#39;.
-            </span>Entry::Punct(op) <span class="kw">if </span>op.as_char() == <span class="string">&#39;\&#39;&#39; </span>&amp;&amp; op.spacing() == Spacing::Joint =&gt; {
+            <span class="comment">// Treat lifetimes as a single tt for the purposes of 'skip'.
+            </span>Entry::Punct(op) <span class="kw">if </span>op.as_char() == <span class="string">'\'' </span>&amp;&amp; op.spacing() == Spacing::Joint =&gt; {
                 <span class="kw">let </span>next = <span class="kw">unsafe </span>{ <span class="self">self</span>.bump() };
                 <span class="kw">match </span>next.entry() {
                     Entry::Ident(<span class="kw">_</span>) =&gt; <span class="prelude-val">Some</span>(<span class="kw">unsafe </span>{ next.bump() }),
@@ -789,17 +789,17 @@
     }
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>&gt; Copy <span class="kw">for </span>Cursor&lt;<span class="lifetime">&#39;a</span>&gt; {}
+<span class="kw">impl</span>&lt;<span class="lifetime">'a</span>&gt; Copy <span class="kw">for </span>Cursor&lt;<span class="lifetime">'a</span>&gt; {}
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>&gt; Clone <span class="kw">for </span>Cursor&lt;<span class="lifetime">&#39;a</span>&gt; {
+<span class="kw">impl</span>&lt;<span class="lifetime">'a</span>&gt; Clone <span class="kw">for </span>Cursor&lt;<span class="lifetime">'a</span>&gt; {
     <span class="kw">fn </span>clone(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="self">Self </span>{
         <span class="kw-2">*</span><span class="self">self
     </span>}
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>&gt; Eq <span class="kw">for </span>Cursor&lt;<span class="lifetime">&#39;a</span>&gt; {}
+<span class="kw">impl</span>&lt;<span class="lifetime">'a</span>&gt; Eq <span class="kw">for </span>Cursor&lt;<span class="lifetime">'a</span>&gt; {}
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>&gt; PartialEq <span class="kw">for </span>Cursor&lt;<span class="lifetime">&#39;a</span>&gt; {
+<span class="kw">impl</span>&lt;<span class="lifetime">'a</span>&gt; PartialEq <span class="kw">for </span>Cursor&lt;<span class="lifetime">'a</span>&gt; {
     <span class="kw">fn </span>eq(<span class="kw-2">&amp;</span><span class="self">self</span>, other: <span class="kw-2">&amp;</span><span class="self">Self</span>) -&gt; bool {
         <span class="kw">let </span>Cursor { ptr, scope, marker } = <span class="self">self</span>;
         <span class="kw">let _ </span>= marker;

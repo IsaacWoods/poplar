@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/syn-1.0.91/src/mac.rs`."><title>mac.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-c67e44d78ab2db17.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="syn" data-themes="" data-resource-suffix="" data-rustdoc-version="1.76.0-nightly (90e321d82 2023-12-02)" data-channel="nightly" data-search-js="search-5a66c239c06b3a66.js" data-settings-js="settings-fe03fdc259827cd2.js" ><script src="../../static.files/storage-fec3eaa3851e447d.js"></script><script defer src="../../static.files/src-script-3280b574d94e47b4.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-77dede896d6ac08e.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-5d8b3c7633ad77ba.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/syn-1.0.91/src/mac.rs`."><title>mac.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-c67e44d78ab2db17.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="syn" data-themes="" data-resource-suffix="" data-rustdoc-version="1.76.0-nightly (e9013ac0e 2023-12-05)" data-channel="nightly" data-search-js="search-5a66c239c06b3a66.js" data-settings-js="settings-fe03fdc259827cd2.js" ><script src="../../static.files/storage-fec3eaa3851e447d.js"></script><script defer src="../../static.files/src-script-3280b574d94e47b4.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-77dede896d6ac08e.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-5d8b3c7633ad77ba.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -220,18 +220,18 @@
 </pre></div><pre class="rust"><code><span class="kw">use super</span>::<span class="kw-2">*</span>;
 <span class="kw">use </span><span class="kw">crate</span>::token::{Brace, Bracket, Paren};
 <span class="kw">use </span>proc_macro2::TokenStream;
-<span class="attr">#[cfg(feature = <span class="string">&quot;parsing&quot;</span>)]
+<span class="attr">#[cfg(feature = <span class="string">"parsing"</span>)]
 </span><span class="kw">use </span>proc_macro2::{Delimiter, Group, Span, TokenTree};
 
-<span class="attr">#[cfg(feature = <span class="string">&quot;parsing&quot;</span>)]
+<span class="attr">#[cfg(feature = <span class="string">"parsing"</span>)]
 </span><span class="kw">use </span><span class="kw">crate</span>::parse::{Parse, ParseStream, Parser, <span class="prelude-ty">Result</span>};
 
 <span class="macro">ast_struct! </span>{
-    <span class="doccomment">/// A macro invocation: `println!(&quot;{}&quot;, mac)`.
+    <span class="doccomment">/// A macro invocation: `println!("{}", mac)`.
     ///
-    /// *This type is available only if Syn is built with the `&quot;derive&quot;` or `&quot;full&quot;`
+    /// *This type is available only if Syn is built with the `"derive"` or `"full"`
     /// feature.*
-    </span><span class="attr">#[cfg_attr(doc_cfg, doc(cfg(any(feature = <span class="string">&quot;full&quot;</span>, feature = <span class="string">&quot;derive&quot;</span>))))]
+    </span><span class="attr">#[cfg_attr(doc_cfg, doc(cfg(any(feature = <span class="string">"full"</span>, feature = <span class="string">"derive"</span>))))]
     </span><span class="kw">pub struct </span>Macro {
         <span class="kw">pub </span>path: Path,
         <span class="kw">pub </span>bang_token: <span class="macro">Token!</span>[!],
@@ -243,9 +243,9 @@
 <span class="macro">ast_enum! </span>{
     <span class="doccomment">/// A grouping token that surrounds a macro body: `m!(...)` or `m!{...}` or `m![...]`.
     ///
-    /// *This type is available only if Syn is built with the `&quot;derive&quot;` or `&quot;full&quot;`
+    /// *This type is available only if Syn is built with the `"derive"` or `"full"`
     /// feature.*
-    </span><span class="attr">#[cfg_attr(doc_cfg, doc(cfg(any(feature = <span class="string">&quot;full&quot;</span>, feature = <span class="string">&quot;derive&quot;</span>))))]
+    </span><span class="attr">#[cfg_attr(doc_cfg, doc(cfg(any(feature = <span class="string">"full"</span>, feature = <span class="string">"derive"</span>))))]
     </span><span class="kw">pub enum </span>MacroDelimiter {
         Paren(Paren),
         Brace(Brace),
@@ -253,7 +253,7 @@
     }
 }
 
-<span class="attr">#[cfg(feature = <span class="string">&quot;parsing&quot;</span>)]
+<span class="attr">#[cfg(feature = <span class="string">"parsing"</span>)]
 </span><span class="kw">fn </span>delimiter_span_close(macro_delimiter: <span class="kw-2">&amp;</span>MacroDelimiter) -&gt; Span {
     <span class="kw">let </span>delimiter = <span class="kw">match </span>macro_delimiter {
         MacroDelimiter::Paren(<span class="kw">_</span>) =&gt; Delimiter::Parenthesis,
@@ -270,7 +270,7 @@
 }
 
 <span class="kw">impl </span>Macro {
-    <span class="doccomment">/// Parse the tokens within the macro invocation&#39;s delimiters into a syntax
+    <span class="doccomment">/// Parse the tokens within the macro invocation's delimiters into a syntax
     /// tree.
     ///
     /// This is equivalent to `syn::parse2::&lt;T&gt;(mac.tokens)` except that it
@@ -284,10 +284,10 @@
     /// use syn::parse::{Error, Parse, ParseStream, Result};
     /// use syn::punctuated::Punctuated;
     ///
-    /// // The arguments expected by libcore&#39;s format_args macro, and as a
+    /// // The arguments expected by libcore's format_args macro, and as a
     /// // result most other formatting and printing macros like println.
     /// //
-    /// //     println!(&quot;{} is {number:.prec$}&quot;, &quot;x&quot;, prec=5, number=0.01)
+    /// //     println!("{} is {number:.prec$}", "x", prec=5, number=0.01)
     /// struct FormatArgs {
     ///     format_string: Expr,
     ///     positional_args: Vec&lt;Expr&gt;,
@@ -339,36 +339,36 @@
     ///         other =&gt; {
     ///             // First argument was not a string literal expression.
     ///             // Maybe something like: println!(concat!(...), ...)
-    ///             Err(Error::new_spanned(other, &quot;format string must be a string literal&quot;))
+    ///             Err(Error::new_spanned(other, "format string must be a string literal"))
     ///         }
     ///     }
     /// }
     ///
     /// fn main() {
     ///     let invocation = parse_quote! {
-    ///         println!(&quot;{:?}&quot;, Instant::now())
+    ///         println!("{:?}", Instant::now())
     ///     };
     ///     let lit = get_format_string(&amp;invocation).unwrap();
-    ///     assert_eq!(lit.value(), &quot;{:?}&quot;);
+    ///     assert_eq!(lit.value(), "{:?}");
     /// }
     /// ```
-    </span><span class="attr">#[cfg(feature = <span class="string">&quot;parsing&quot;</span>)]
-    #[cfg_attr(doc_cfg, doc(cfg(feature = <span class="string">&quot;parsing&quot;</span>)))]
+    </span><span class="attr">#[cfg(feature = <span class="string">"parsing"</span>)]
+    #[cfg_attr(doc_cfg, doc(cfg(feature = <span class="string">"parsing"</span>)))]
     </span><span class="kw">pub fn </span>parse_body&lt;T: Parse&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;T&gt; {
         <span class="self">self</span>.parse_body_with(T::parse)
     }
 
-    <span class="doccomment">/// Parse the tokens within the macro invocation&#39;s delimiters using the
+    <span class="doccomment">/// Parse the tokens within the macro invocation's delimiters using the
     /// given parser.
-    </span><span class="attr">#[cfg(feature = <span class="string">&quot;parsing&quot;</span>)]
-    #[cfg_attr(doc_cfg, doc(cfg(feature = <span class="string">&quot;parsing&quot;</span>)))]
+    </span><span class="attr">#[cfg(feature = <span class="string">"parsing"</span>)]
+    #[cfg_attr(doc_cfg, doc(cfg(feature = <span class="string">"parsing"</span>)))]
     </span><span class="kw">pub fn </span>parse_body_with&lt;F: Parser&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, parser: F) -&gt; <span class="prelude-ty">Result</span>&lt;F::Output&gt; {
         <span class="kw">let </span>scope = delimiter_span_close(<span class="kw-2">&amp;</span><span class="self">self</span>.delimiter);
         <span class="kw">crate</span>::parse::parse_scoped(parser, scope, <span class="self">self</span>.tokens.clone())
     }
 }
 
-<span class="attr">#[cfg(feature = <span class="string">&quot;parsing&quot;</span>)]
+<span class="attr">#[cfg(feature = <span class="string">"parsing"</span>)]
 </span><span class="kw">pub fn </span>parse_delimiter(input: ParseStream) -&gt; <span class="prelude-ty">Result</span>&lt;(MacroDelimiter, TokenStream)&gt; {
     input.step(|cursor| {
         <span class="kw">if let </span><span class="prelude-val">Some</span>((TokenTree::Group(g), rest)) = cursor.token_tree() {
@@ -378,22 +378,22 @@
                 Delimiter::Brace =&gt; MacroDelimiter::Brace(Brace(span)),
                 Delimiter::Bracket =&gt; MacroDelimiter::Bracket(Bracket(span)),
                 Delimiter::None =&gt; {
-                    <span class="kw">return </span><span class="prelude-val">Err</span>(cursor.error(<span class="string">&quot;expected delimiter&quot;</span>));
+                    <span class="kw">return </span><span class="prelude-val">Err</span>(cursor.error(<span class="string">"expected delimiter"</span>));
                 }
             };
             <span class="prelude-val">Ok</span>(((delimiter, g.stream()), rest))
         } <span class="kw">else </span>{
-            <span class="prelude-val">Err</span>(cursor.error(<span class="string">&quot;expected delimiter&quot;</span>))
+            <span class="prelude-val">Err</span>(cursor.error(<span class="string">"expected delimiter"</span>))
         }
     })
 }
 
-<span class="attr">#[cfg(feature = <span class="string">&quot;parsing&quot;</span>)]
+<span class="attr">#[cfg(feature = <span class="string">"parsing"</span>)]
 </span><span class="kw">pub mod </span>parsing {
     <span class="kw">use super</span>::<span class="kw-2">*</span>;
     <span class="kw">use </span><span class="kw">crate</span>::parse::{Parse, ParseStream, <span class="prelude-ty">Result</span>};
 
-    <span class="attr">#[cfg_attr(doc_cfg, doc(cfg(feature = <span class="string">&quot;parsing&quot;</span>)))]
+    <span class="attr">#[cfg_attr(doc_cfg, doc(cfg(feature = <span class="string">"parsing"</span>)))]
     </span><span class="kw">impl </span>Parse <span class="kw">for </span>Macro {
         <span class="kw">fn </span>parse(input: ParseStream) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>&gt; {
             <span class="kw">let </span>tokens;
@@ -411,13 +411,13 @@
     }
 }
 
-<span class="attr">#[cfg(feature = <span class="string">&quot;printing&quot;</span>)]
+<span class="attr">#[cfg(feature = <span class="string">"printing"</span>)]
 </span><span class="kw">mod </span>printing {
     <span class="kw">use super</span>::<span class="kw-2">*</span>;
     <span class="kw">use </span>proc_macro2::TokenStream;
     <span class="kw">use </span>quote::ToTokens;
 
-    <span class="attr">#[cfg_attr(doc_cfg, doc(cfg(feature = <span class="string">&quot;printing&quot;</span>)))]
+    <span class="attr">#[cfg_attr(doc_cfg, doc(cfg(feature = <span class="string">"printing"</span>)))]
     </span><span class="kw">impl </span>ToTokens <span class="kw">for </span>Macro {
         <span class="kw">fn </span>to_tokens(<span class="kw-2">&amp;</span><span class="self">self</span>, tokens: <span class="kw-2">&amp;mut </span>TokenStream) {
             <span class="self">self</span>.path.to_tokens(tokens);
