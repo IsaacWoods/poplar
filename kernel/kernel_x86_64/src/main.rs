@@ -31,10 +31,10 @@ use hal_x86_64::{
 use interrupts::InterruptController;
 use kernel::{
     memory::{KernelStackAllocator, PhysicalMemoryManager, Stack},
+    pci::PciResolver,
     scheduler::Scheduler,
     Platform,
 };
-use pci::PciResolver;
 use per_cpu::PerCpuImpl;
 use poplar_util::InitGuard;
 use seed::boot_info::BootInfo;

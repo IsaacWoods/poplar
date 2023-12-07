@@ -178,6 +178,7 @@ dependencies = [
  "hal",
  "hal_riscv",
  "kernel",
+ "pci_types",
  "poplar_util",
  "seed",
  "spinning_top 0.2.4",

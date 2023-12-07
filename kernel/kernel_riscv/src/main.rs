@@ -10,6 +10,7 @@
 extern crate alloc;
 
 mod logger;
+mod pci;
 mod task;
 mod trap;
 
@@ -123,6 +124,8 @@ pub extern "C" fn kentry(boot_info: &BootInfo) -> ! {
             }
         }
     };
+
+    let pci = pci::PciAccess::new(&fdt).map(|access| kernel::pci::PciResolver::resolve(access));
 
     let mut platform = PlatformImpl { kernel_page_table };
 

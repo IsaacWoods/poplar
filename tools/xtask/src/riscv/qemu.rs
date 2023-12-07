@@ -86,6 +86,11 @@ impl RunQemuRiscV {
             qemu.args(&["-device", "virtio-blk-device,drive=disk0"]);
         }
 
+        // Add an EHCI controller and test devices. We use EHCI on RV because hardware we're
+        // interested in actually uses it.
+        qemu.args(&["-device", "usb-ehci,id=ehci"]);
+        qemu.args(&["-device", "usb-kbd,bus=ehci.0"]);
+
         if !self.open_display {
             qemu.args(&["-display", "none"]);
             // If we're not opening a display, allow connections to the monitor over TCP (open with `nc 127.0.0.1 55555`)
