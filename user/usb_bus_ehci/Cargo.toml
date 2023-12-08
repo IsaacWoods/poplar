@@ -1,0 +1,13 @@
+[package]
+name = "usb_bus_ehci"
+version = "0.1.0"
+authors = ["Isaac Woods"]
+edition = "2021"
+
+[dependencies]
+std = { path = "../../lib/std" }
+log = "0.4"
+platform_bus = { path = "../platform_bus" }
+ptah = { path = "../../lib/ptah" }
+bit_field = "0.10"
+poplar_util = { path = "../../lib/poplar_util" }
