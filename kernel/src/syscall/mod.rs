@@ -36,7 +36,7 @@ use poplar::{
     ZERO_HANDLE,
 };
 use spinning_top::Spinlock;
-use tracing::{info, trace, warn};
+use tracing::{info, warn};
 use validation::{UserPointer, UserSlice, UserString};
 
 /// Maps the name of a service to the channel used to register new service users.
@@ -106,6 +106,8 @@ where
 {
     // Check the current task has the `EarlyLogging` capability
     if !task.capabilities.contains(&Capability::EarlyLogging) {
+        // Log a warning because otherwise it's difficult to debug a task (it can't log...)
+        warn!("Task '{}' tried to use early logging but does not have the correct capability!", task.name);
         return Err(EarlyLogError::TaskDoesNotHaveCorrectCapability);
     }
 
@@ -119,7 +121,7 @@ where
         .validate()
         .map_err(|_| EarlyLogError::MessageNotValidUtf8)?;
 
-    trace!("Early log message from {}: {}", task.name, message);
+    info!("Early log message from {}: {}", task.name, message);
     Ok(())
 }
 

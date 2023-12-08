@@ -6,6 +6,8 @@
 
 use core::{marker::PhantomData, ptr, slice, str};
 
+use alloc::{borrow::Cow, string::String};
+
 pub struct UserPointer<T> {
     ptr: *mut T,
     can_write: bool,
@@ -78,5 +80,9 @@ impl<'a> UserString<'a> {
 
     pub fn validate(&self) -> Result<&'a str, ()> {
         str::from_utf8(self.0.validate_read()?).map_err(|_| ())
+    }
+
+    pub fn validate_lossy(&self) -> Result<Cow<'a, str>, ()> {
+        Ok(String::from_utf8_lossy(self.0.validate_read()?))
     }
 }
