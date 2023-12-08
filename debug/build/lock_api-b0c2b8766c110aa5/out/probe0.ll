@@ -1,5 +1,5 @@
-; ModuleID = 'probe0.9db7c28112aa74a7-cgu.0'
-source_filename = "probe0.9db7c28112aa74a7-cgu.0"
+; ModuleID = 'probe0.8dea23ce4d43cee1-cgu.0'
+source_filename = "probe0.8dea23ce4d43cee1-cgu.0"
 target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-f80:128-n8:16:32:64-S128"
 target triple = "x86_64-unknown-linux-gnu"
 
@@ -8,4 +8,4 @@ target triple = "x86_64-unknown-linux-gnu"
 
 !0 = !{i32 8, !"PIC Level", i32 2}
 !1 = !{i32 2, !"RtLibUseGOT", i32 1}
-!2 = !{!"rustc version 1.76.0-nightly (1fdfe1234 2023-12-06)"}
+!2 = !{!"rustc version 1.76.0-nightly (503e12932 2023-12-07)"}
