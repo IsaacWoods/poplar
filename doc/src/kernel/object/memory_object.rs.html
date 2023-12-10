@@ -50,12 +50,14 @@
 <a href="#50" id="50">50</a>
 <a href="#51" id="51">51</a>
 <a href="#52" id="52">52</a>
+<a href="#53" id="53">53</a>
 </pre></div><pre class="rust"><code><span class="kw">use super</span>::{alloc_kernel_object_id, KernelObject, KernelObjectId};
 <span class="kw">use </span>alloc::sync::Arc;
 <span class="kw">use </span>hal::memory::{Flags, PAddr, VAddr};
 <span class="kw">use </span>seed::boot_info::Segment;
 
-<span class="kw">pub struct </span>MemoryObject {
+<span class="attr">#[derive(Debug)]
+</span><span class="kw">pub struct </span>MemoryObject {
     <span class="kw">pub </span>id: KernelObjectId,
     <span class="kw">pub </span>owner: KernelObjectId,
     <span class="doccomment">/// The virtual address to map this MemoryObject at. If this is `None`, the mapping task can choose to map it

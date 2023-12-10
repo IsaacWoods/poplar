@@ -146,6 +146,8 @@
 <a href="#146" id="146">146</a>
 <a href="#147" id="147">147</a>
 <a href="#148" id="148">148</a>
+<a href="#149" id="149">149</a>
+<a href="#150" id="150">150</a>
 </pre></div><pre class="rust"><code><span class="kw">use super</span>::{alloc_kernel_object_id, memory_object::MemoryObject, KernelObject, KernelObjectId};
 <span class="kw">use crate</span>::{
     memory::{PhysicalMemoryManager, Stack},
@@ -171,12 +173,14 @@
     Active,
 }
 
-<span class="kw">pub struct </span>TaskSlot {
+<span class="attr">#[derive(Debug)]
+</span><span class="kw">pub struct </span>TaskSlot {
     <span class="kw">pub </span>index: usize,
     <span class="kw">pub </span>user_stack: Stack,
 }
 
-<span class="kw">pub struct </span>AddressSpace&lt;P&gt;
+<span class="attr">#[derive(Debug)]
+</span><span class="kw">pub struct </span>AddressSpace&lt;P&gt;
 <span class="kw">where
     </span>P: Platform,
 {

@@ -111,9 +111,18 @@
 <a href="#111" id="111">111</a>
 <a href="#112" id="112">112</a>
 <a href="#113" id="113">113</a>
+<a href="#114" id="114">114</a>
+<a href="#115" id="115">115</a>
+<a href="#116" id="116">116</a>
+<a href="#117" id="117">117</a>
+<a href="#118" id="118">118</a>
+<a href="#119" id="119">119</a>
+<a href="#120" id="120">120</a>
+<a href="#121" id="121">121</a>
 </pre></div><pre class="rust"><code><span class="kw">use super</span>::{alloc_kernel_object_id, KernelObject, KernelObjectId};
 <span class="kw">use </span>alloc::{
     collections::VecDeque,
+    fmt,
     sync::{Arc, Weak},
     vec::Vec,
 };
@@ -121,7 +130,8 @@
 <span class="kw">use </span>spinning_top::Spinlock;
 <span class="kw">use </span>tracing::warn;
 
-<span class="kw">pub struct </span>ChannelEnd {
+<span class="attr">#[derive(Debug)]
+</span><span class="kw">pub struct </span>ChannelEnd {
     <span class="kw">pub </span>id: KernelObjectId,
     <span class="kw">pub </span>owner: KernelObjectId,
     messages: Spinlock&lt;VecDeque&lt;Message&gt;&gt;,
@@ -217,6 +227,12 @@
     /// these objects are added to that task, and the new handles are put into the message. The non-`None` entries
     /// of this array must be contiguous - there cannot be a `None` entry before more non-`None` entries.
     </span><span class="kw">pub </span>handle_objects: [<span class="prelude-ty">Option</span>&lt;Arc&lt;<span class="kw">dyn </span>KernelObject&gt;&gt;; CHANNEL_MAX_NUM_HANDLES],
+}
+
+<span class="kw">impl </span>fmt::Debug <span class="kw">for </span>Message {
+    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter&lt;<span class="lifetime">'_</span>&gt;) -&gt; fmt::Result {
+        f.debug_struct(<span class="string">"Message"</span>).field(<span class="string">"bytes"</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.bytes).finish_non_exhaustive()
+    }
 }
 
 <span class="kw">impl </span>Message {
