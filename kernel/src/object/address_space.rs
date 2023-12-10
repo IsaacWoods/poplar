@@ -23,11 +23,13 @@ pub enum State {
     Active,
 }
 
+#[derive(Debug)]
 pub struct TaskSlot {
     pub index: usize,
     pub user_stack: Stack,
 }
 
+#[derive(Debug)]
 pub struct AddressSpace<P>
 where
     P: Platform,

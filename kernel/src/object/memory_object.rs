@@ -3,6 +3,7 @@ use alloc::sync::Arc;
 use hal::memory::{Flags, PAddr, VAddr};
 use seed::boot_info::Segment;
 
+#[derive(Debug)]
 pub struct MemoryObject {
     pub id: KernelObjectId,
     pub owner: KernelObjectId,

@@ -1,6 +1,7 @@
 use super::{alloc_kernel_object_id, KernelObject, KernelObjectId};
 use alloc::{
     collections::VecDeque,
+    fmt,
     sync::{Arc, Weak},
     vec::Vec,
 };
@@ -8,6 +9,7 @@ use poplar::syscall::{GetMessageError, SendMessageError, CHANNEL_MAX_NUM_HANDLES
 use spinning_top::Spinlock;
 use tracing::warn;
 
+#[derive(Debug)]
 pub struct ChannelEnd {
     pub id: KernelObjectId,
     pub owner: KernelObjectId,
@@ -104,6 +106,12 @@ pub struct Message {
     /// these objects are added to that task, and the new handles are put into the message. The non-`None` entries
     /// of this array must be contiguous - there cannot be a `None` entry before more non-`None` entries.
     pub handle_objects: [Option<Arc<dyn KernelObject>>; CHANNEL_MAX_NUM_HANDLES],
+}
+
+impl fmt::Debug for Message {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("Message").field("bytes", &self.bytes).finish_non_exhaustive()
+    }
 }
 
 impl Message {
