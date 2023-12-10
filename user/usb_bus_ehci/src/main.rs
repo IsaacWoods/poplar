@@ -1,14 +1,16 @@
 #![feature(never_type)]
 
+mod caps;
+
+use crate::caps::Capabilities;
+use log::info;
+use platform_bus::{BusDriverMessage, DeviceDriverMessage, DeviceDriverRequest, Filter, Property};
 use std::poplar::{
     caps::{CapabilitiesRepr, CAP_EARLY_LOGGING, CAP_PADDING, CAP_SERVICE_USER},
     channel::Channel,
     early_logger::EarlyLogger,
     syscall,
 };
-
-use log::info;
-use platform_bus::{BusDriverMessage, DeviceDriverMessage, DeviceDriverRequest, Filter, Property};
 
 fn main() {
     log::set_logger(&EarlyLogger).unwrap();
@@ -42,6 +44,21 @@ fn main() {
             None => syscall::yield_to_kernel(),
         }
     };
+
+    let register_space_size = controller_device.properties.get("pci.bar0.size").unwrap().as_integer().unwrap();
+    const REGISTER_SPACE_ADDRESS: usize = 0x00000005_00000000;
+    unsafe {
+        syscall::map_memory_object(
+            controller_device.properties.get("pci.bar0.handle").as_ref().unwrap().as_memory_object().unwrap(),
+            &std::poplar::ZERO_HANDLE,
+            Some(REGISTER_SPACE_ADDRESS),
+            0x0 as *mut usize,
+        )
+        .unwrap();
+    }
+
+    let capabilities = unsafe { Capabilities::read_from_registers(REGISTER_SPACE_ADDRESS) };
+    info!("Capabilites: {:#?}", capabilities);
 
     loop {
         std::poplar::syscall::yield_to_kernel();
