@@ -23,8 +23,6 @@ impl PciAccess {
             PAddr::new(ecam_window.starting_address as usize).unwrap(),
         );
 
-        // TODO: parse `ranges` node
-
         Some(PciAccess { start: ecam_address.ptr(), size: ecam_window.size.unwrap() })
     }
 

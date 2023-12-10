@@ -26,7 +26,7 @@ use hal::memory::{Flags, FrameAllocator, FrameSize, PAddr, PageTable, Size4KiB, 
 use hal_riscv::{hw::csr::Stvec, platform::PageTableImpl};
 use linked_list_allocator::LockedHeap;
 use memory::{MemoryManager, MemoryRegions};
-use pci::PciAccess;
+use pci::PciResolver;
 use poplar_util::{linker::LinkerSymbol, math::align_up};
 use seed::boot_info::BootInfo;
 use tracing::info;
@@ -137,12 +137,10 @@ pub fn seed_main(hart_id: u64, fdt_ptr: *const u8) -> ! {
     let mut next_available_kernel_address = kernel.next_available_address;
 
     /*
-     * Enumerate PCI devices.
+     * Enumerate and initialize PCI devices, if present. Even if Seed doesn't end up using them,
+     * we're responsible for allocating BAR memory etc.
      */
-    let pci_access = match PciAccess::new(&fdt) {
-        Some(access) => Some(pci::PciResolver::resolve(access)),
-        None => None,
-    };
+    PciResolver::initialize(&fdt);
 
     /*
      * Find the initialize a Virtio block device if one is present.
