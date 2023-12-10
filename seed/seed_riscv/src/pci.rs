@@ -182,7 +182,7 @@ impl PciResolver {
                                 })
                                 .expect("Failed to allocate memory for BAR");
                             unsafe {
-                                endpoint_header.write_bar(i as u8, self, address);
+                                endpoint_header.write_bar(i as u8, self, address).unwrap();
                             }
                         }
                     }
