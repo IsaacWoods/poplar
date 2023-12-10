@@ -7,3 +7,6 @@
 [submodule "bundled/opensbi"]
 	path = bundled/opensbi
 	url = https://github.com/riscv-software-src/opensbi
+[submodule "lib/fdt"]
+	path = lib/fdt
+	url = https://github.com/IsaacWoods/fdt.git

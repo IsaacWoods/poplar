@@ -13,7 +13,7 @@ tracing = { git = "https://github.com/tokio-rs/tracing", default-features = fals
 tracing-core = { git = "https://github.com/tokio-rs/tracing", default-features = false }
 spinning_top = { version = "0.2.4", features = ["nightly"] }
 poplar_util = { path = "../../lib/poplar_util/" }
-fdt = { git = "https://github.com/repnop/fdt", features = ["pretty-printing"] }
+fdt = { path = "../../lib/fdt/", features = ["pretty-printing"] }
 pci_types = { path = "../../lib/pci_types/" }
 
 [features]
