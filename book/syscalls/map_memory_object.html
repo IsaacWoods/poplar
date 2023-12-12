@@ -179,9 +179,12 @@
 <ul>
 <li><code>a</code> - a handle to the MemoryObject.</li>
 <li><code>b</code> - a handle to the AddressSpace. The zero handle indicates to map the memory object into the task's AddressSpace.</li>
-<li><code>c</code> - the virtual address to map the MemoryObject at, if it does not need to be mapped at a specific address.
-Should be null if the MemoryObject supplies the address.</li>
-<li><code>d</code> - a pointer to which the kernel will write the virtual address at which the MemoryObject was mapped. Ignored if null.</li>
+<li><code>c</code> - the virtual address to map the MemoryObject at, if it should be mapped at a specific address. If <code>null</code>,
+the kernel will attempt to find a suitable address to map it at, and write that address to the pointer
+supplied in <code>d</code>.</li>
+<li><code>d</code> - the pointer at which the virtual address the object is mapped at will be written to, if <code>c</code> is <code>null</code>. If
+an address is supplied in <code>c</code>, this pointer does not need to be valid, and will not be accessed. If this
+pointer is <code>null</code>, the address will not be written, even if the kernel allocated memory for the object.</li>
 </ul>
 <h3 id="returns"><a class="header" href="#returns">Returns</a></h3>
 <ul>
@@ -190,9 +193,7 @@ Should be null if the MemoryObject supplies the address.</li>
 <li><code>2</code> if the portion of the AddressSpace that would be mapped is already occupied by another MemoryObject</li>
 <li><code>3</code> if the supplied MemoryObject handle does not point to a MemoryHandle</li>
 <li><code>4</code> if the supplied AddressSpace handle does not point to an AddressSpace</li>
-<li><code>5</code> if the pointer to write the virtual address back to is invalid</li>
-<li><code>6</code> if a virtual address to map at was supplied, but the MemoryObject needs to be mapped at a specific address.</li>
-<li><code>7</code> if a virtual address was not supplied, but the MemoryObject does not specify the address to map it at.</li>
+<li><code>5</code> if the supplied pointer in <code>d</code> is invalid, and <code>c</code> is <code>null</code></li>
 </ul>
 <h3 id="capabilities-needed"><a class="header" href="#capabilities-needed">Capabilities needed</a></h3>
 <p>None (this may change in the future).</p>

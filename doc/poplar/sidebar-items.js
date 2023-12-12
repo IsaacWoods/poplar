@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"constant":["ZERO_HANDLE"],"mod":["caps","channel","early_logger","syscall"],"struct":["Handle"]};
+window.SIDEBAR_ITEMS = {"mod":["caps","channel","early_logger","memory_object","syscall"],"struct":["Handle"]};
