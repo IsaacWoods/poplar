@@ -4,12 +4,11 @@ conventional physical memory). MemoryObjects that point to special objects (e.g.
 configuration spaces) must be created by the kernel.
 
 ### Parameters
-- `a` - the virtual address to map the MemoryObject at
-- `b` - the size of the MemoryObject's memory area (in bytes)
-- `c` - flags:
+- `a` - the size of the MemoryObject's memory area (in bytes)
+- `b` - flags:
     - Bit `0`: set if the memory should be writable
     - Bit `1`: set if the memory should be executable
-- `d` - a pointer to which the kernel will write the physical address to which the MemoryObject was allocated. Ignored if null.
+- `c` - a pointer to which the kernel will write the physical address to which the MemoryObject was allocated. Ignored if null.
 
 ### Returns
 Uses the standard representation to return a `Result<Handle, MemoryObjectError>` method. Error status

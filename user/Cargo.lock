@@ -281,6 +281,7 @@ name = "usb_bus_ehci"
 version = "0.1.0"
 dependencies = [
  "bit_field",
+ "bitflags",
  "log",
  "platform_bus",
  "poplar_util",

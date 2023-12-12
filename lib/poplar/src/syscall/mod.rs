@@ -63,21 +63,23 @@ define_error_type!(CreateMemoryObjectError {
     InvalidPhysicalAddressPointer => 4,
 });
 
-/// Create a MemoryObject kernel object at the given virtual address, with the given size (in bytes). Returns a
-/// handle to the new MemoryObject, if the call was successful.
-pub fn create_memory_object(
-    virtual_address: usize,
+bitflags::bitflags! {
+    #[derive(Clone, Copy, PartialEq, Eq, Debug)]
+    pub struct MemoryObjectFlags: u32 {
+        const WRITABLE = 1 << 0;
+        const EXECUTABLE = 1 << 1;
+    }
+}
+
+/// Create a MemoryObject kernel object of the given size (in bytes). Returns a handle to the new
+/// MemoryObject, if the call was successful.
+pub unsafe fn create_memory_object(
     size: usize,
-    writable: bool,
-    executable: bool,
+    flags: MemoryObjectFlags,
     physical_address_ptr: *mut usize,
 ) -> Result<Handle, CreateMemoryObjectError> {
-    let mut flags = 0usize;
-    flags.set_bit(0, writable);
-    flags.set_bit(1, executable);
-
     handle_from_syscall_repr(unsafe {
-        raw::syscall4(SYSCALL_CREATE_MEMORY_OBJECT, virtual_address, size, flags, physical_address_ptr as usize)
+        raw::syscall3(SYSCALL_CREATE_MEMORY_OBJECT, size, flags.bits() as usize, physical_address_ptr as usize)
     })
 }
 
@@ -87,8 +89,6 @@ define_error_type!(MapMemoryObjectError {
     NotAMemoryObject => 3,
     NotAnAddressSpace => 4,
     AddressPointerInvalid => 5,
-    VirtualAddressNotSupplied => 6,
-    VirtualAddressShouldNotBeSupplied => 7,
 });
 
 pub unsafe fn map_memory_object(

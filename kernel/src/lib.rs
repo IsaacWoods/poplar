@@ -116,7 +116,7 @@ pub fn load_task<P>(
 
     for segment in &image.segments {
         let memory_object = MemoryObject::from_boot_info(task.id(), segment);
-        address_space.map_memory_object(memory_object, None, allocator).unwrap();
+        address_space.map_memory_object(memory_object, segment.virtual_address, allocator).unwrap();
     }
 
     scheduler.add_task(task);
@@ -133,7 +133,6 @@ pub fn create_framebuffer(video_info: &seed::boot_info::VideoModeInfo) {
     let size_in_bytes = video_info.stride * video_info.height * BPP;
     let memory_object = MemoryObject::new(
         object::SENTINEL_KERNEL_ID,
-        None,
         video_info.framebuffer_address,
         poplar_util::math::align_up(size_in_bytes, Size4KiB::SIZE),
         Flags { writable: true, user_accessible: true, cached: false, ..Default::default() },

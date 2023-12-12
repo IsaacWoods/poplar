@@ -15,20 +15,25 @@ pub struct UserPointer<T> {
 
 impl<T> UserPointer<T> {
     pub fn new(ptr: *mut T, needs_write: bool) -> UserPointer<T> {
+        UserPointer { ptr, can_write: needs_write }
+    }
+
+    pub fn validate_read(&self) -> Result<T, ()> {
         // TODO: validate that this is a valid pointer:
         //  - the address is canonical
         //  - the address is in user-space
         //  - the address is actually mapped for a size of `T`
         //  - the address is correctly aligned for `T`
-        //  - if we're writing, that the mapping is writable
-        UserPointer { ptr, can_write: needs_write }
-    }
-
-    pub fn read(&self) -> Result<T, ()> {
         Ok(unsafe { ptr::read_volatile(self.ptr) })
     }
 
-    pub fn write(&mut self, value: T) -> Result<(), ()> {
+    pub fn validate_write(&mut self, value: T) -> Result<(), ()> {
+        // TODO: validate that this is a valid pointer:
+        //  - the address is canonical
+        //  - the address is in user-space
+        //  - the address is actually mapped for a size of `T`
+        //  - the address is correctly aligned for `T`
+        //  - that the mapping is writable
         if !self.can_write {
             return Err(());
         }
