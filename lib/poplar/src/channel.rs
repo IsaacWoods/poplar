@@ -42,7 +42,7 @@ where
     /// messages to be received.
     pub fn try_receive(&self) -> Result<Option<R>, ChannelReceiveError> {
         let mut byte_buffer = [0u8; BYTES_BUFFER_SIZE];
-        let mut handle_buffer = [crate::ZERO_HANDLE; CHANNEL_MAX_NUM_HANDLES];
+        let mut handle_buffer = [Handle::ZERO; CHANNEL_MAX_NUM_HANDLES];
 
         match syscall::get_message(&self.0, &mut byte_buffer, &mut handle_buffer) {
             Ok((bytes, handles)) => {
@@ -79,7 +79,7 @@ impl ChannelWriter {
     pub fn new() -> ChannelWriter {
         ChannelWriter {
             byte_buffer: [0u8; BYTES_BUFFER_SIZE],
-            handle_buffer: [crate::ZERO_HANDLE; CHANNEL_MAX_NUM_HANDLES],
+            handle_buffer: [Handle::ZERO; CHANNEL_MAX_NUM_HANDLES],
             num_bytes: 0,
             num_handles: 0,
         }

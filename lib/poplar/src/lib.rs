@@ -20,7 +20,9 @@ use core::{convert::TryFrom, num::TryFromIntError};
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Debug)]
 pub struct Handle(pub u32);
 
-pub const ZERO_HANDLE: Handle = Handle(0);
+impl Handle {
+    pub const ZERO: Handle = Handle(0);
+}
 
 /*
  * Often, handles are passed in single syscall parameters, and need to be turned into `Handle`s fallibly.

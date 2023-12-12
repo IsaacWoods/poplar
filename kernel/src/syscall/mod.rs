@@ -33,7 +33,6 @@ use poplar::{
         CHANNEL_MAX_NUM_HANDLES,
     },
     Handle,
-    ZERO_HANDLE,
 };
 use spinning_top::Spinlock;
 use tracing::{info, warn};
@@ -223,7 +222,7 @@ where
         Some(VAddr::new(virtual_address))
     };
 
-    if address_space_handle == ZERO_HANDLE {
+    if address_space_handle == Handle::ZERO {
         /*
          * If the AddressSpace handle is the zero handle, we map the MemoryObject into the calling task's
          * address space.
