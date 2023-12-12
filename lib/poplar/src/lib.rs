@@ -17,7 +17,7 @@ use core::{convert::TryFrom, num::TryFromIntError};
 /// A `Handle` is used to represent a task's access to a kernel object. It is allocated by the kernel and is unique
 /// to the task to which it is issued - a kernel object can have handles in multiple tasks (and the numbers will
 /// not be shared between those tasks).
-#[derive(PartialEq, Eq, PartialOrd, Ord, Debug)]
+#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Debug)]
 pub struct Handle(pub u32);
 
 pub const ZERO_HANDLE: Handle = Handle(0);

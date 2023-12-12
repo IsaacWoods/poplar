@@ -57,9 +57,9 @@ impl Property {
         }
     }
 
-    pub fn as_memory_object(&self) -> Option<&Handle> {
+    pub fn as_memory_object(&self) -> Option<Handle> {
         match self {
-            Property::MemoryObject(ref value) => Some(value),
+            Property::MemoryObject(value) => Some(*value),
             _ => None,
         }
     }
