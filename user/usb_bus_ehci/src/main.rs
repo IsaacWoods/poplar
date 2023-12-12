@@ -5,11 +5,15 @@ mod caps;
 use crate::caps::Capabilities;
 use log::info;
 use platform_bus::{BusDriverMessage, DeviceDriverMessage, DeviceDriverRequest, Filter, Property};
-use std::poplar::{
-    caps::{CapabilitiesRepr, CAP_EARLY_LOGGING, CAP_PADDING, CAP_SERVICE_USER},
-    channel::Channel,
-    early_logger::EarlyLogger,
-    syscall,
+use std::{
+    mem,
+    poplar::{
+        caps::{CapabilitiesRepr, CAP_EARLY_LOGGING, CAP_PADDING, CAP_SERVICE_USER},
+        channel::Channel,
+        early_logger::EarlyLogger,
+        memory_object::MemoryObject,
+        syscall::{self, MemoryObjectFlags},
+    },
 };
 
 fn main() {
@@ -45,16 +49,21 @@ fn main() {
         }
     };
 
-    let register_space_size = controller_device.properties.get("pci.bar0.size").unwrap().as_integer().unwrap();
+    let register_space_size =
+        controller_device.properties.get("pci.bar0.size").unwrap().as_integer().unwrap() as usize;
+
+    // TODO: let the kernel choose the address when it can - we don't care
+    // TODO: this trusts the data from the platform_bus. Maybe we shouldn't do that? One
+    // idea would be a syscall for querying info about the object?
+    let register_space = MemoryObject {
+        handle: controller_device.properties.get("pci.bar0.handle").as_ref().unwrap().as_memory_object().unwrap(),
+        size: register_space_size,
+        flags: MemoryObjectFlags::WRITABLE,
+        phys_address: None,
+    };
     const REGISTER_SPACE_ADDRESS: usize = 0x00000005_00000000;
     unsafe {
-        syscall::map_memory_object(
-            controller_device.properties.get("pci.bar0.handle").as_ref().unwrap().as_memory_object().unwrap(),
-            &std::poplar::ZERO_HANDLE,
-            Some(REGISTER_SPACE_ADDRESS),
-            0x0 as *mut usize,
-        )
-        .unwrap();
+        register_space.map_at(REGISTER_SPACE_ADDRESS).unwrap();
     }
 
     let capabilities = unsafe { Capabilities::read_from_registers(REGISTER_SPACE_ADDRESS) };

@@ -36,6 +36,7 @@ pub use core::{
     result,
 };
 pub use poplar;
+use poplar::{memory_object::MemoryObject, syscall::MemoryObjectFlags};
 
 // Import our own prelude for this crate
 #[prelude_import]
@@ -101,13 +102,9 @@ unsafe extern "C" fn rust_entry() -> ! {
     // Initialize the heap
     const HEAP_START: usize = 0x600000000;
     const HEAP_SIZE: usize = 0x4000;
-    let heap_memory_object =
-        poplar::syscall::create_memory_object(HEAP_START, HEAP_SIZE, true, false, 0x0 as *mut usize).unwrap();
-    unsafe {
-        poplar::syscall::map_memory_object(&heap_memory_object, &poplar::ZERO_HANDLE, None, 0x0 as *mut usize)
-            .unwrap();
-        ALLOCATOR.lock().init(HEAP_START as *mut u8, HEAP_SIZE);
-    }
+    let heap = MemoryObject::create(HEAP_SIZE, MemoryObjectFlags::WRITABLE).unwrap();
+    let mapped_heap = heap.map_at(HEAP_START).unwrap();
+    ALLOCATOR.lock().init(HEAP_START as *mut u8, HEAP_SIZE);
 
     main(0, core::ptr::null());
 
