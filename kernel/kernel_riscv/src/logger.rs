@@ -50,6 +50,7 @@ impl SerialWriter {
     fn init(&mut self, addr: usize, reg_width: usize) {
         let serial_mapped_address = physical_to_virtual(PAddr::new(addr).unwrap());
         let serial = unsafe { Uart16550::new(usize::from(serial_mapped_address), reg_width) };
+        serial.init();
         self.serial.initialize(serial);
     }
 }
