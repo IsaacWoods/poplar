@@ -158,7 +158,7 @@ impl TryFrom<usize> for Scause {
     fn try_from(value: usize) -> Result<Self, Self::Error> {
         let is_interrupt = value.get_bit(usize::BITS as usize - 1);
         if is_interrupt {
-            match value.get_bits(0..(usize::BITS as usize)) {
+            match value.get_bits(0..(usize::BITS as usize - 1)) {
                 0 => Err(()),
                 1 => Ok(Self::SupervisorSoftwareInterrupt),
                 2..=4 => Err(()),
@@ -169,7 +169,7 @@ impl TryFrom<usize> for Scause {
                 interrupt @ 16.. => Ok(Self::PlatformInterrupt(interrupt)),
             }
         } else {
-            match value.get_bits(0..(usize::BITS as usize)) {
+            match value.get_bits(0..(usize::BITS as usize - 1)) {
                 0 => Ok(Self::InstructionAddressMisaligned),
                 1 => Ok(Self::InstructionAccessFault),
                 2 => Ok(Self::IllegalInstruction),
