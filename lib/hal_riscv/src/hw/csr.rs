@@ -7,6 +7,18 @@ use bit_field::BitField;
 use core::arch::asm;
 use hal::memory::{PAddr, VAddr};
 
+pub struct Time;
+
+impl Time {
+    pub fn read() -> usize {
+        let value: usize;
+        unsafe {
+            asm!("csrr {}, time", out(reg) value);
+        }
+        value
+    }
+}
+
 pub struct Sstatus;
 
 impl Sstatus {
@@ -34,6 +46,48 @@ impl Sstatus {
     pub fn disable_user_memory_access() {
         unsafe {
             asm!("csrc sstatus, {}", in(reg) 1 << 18);
+        }
+    }
+}
+
+pub struct Sip(usize);
+
+impl Sip {
+    pub fn read() -> Self {
+        let value: usize;
+        unsafe {
+            asm!("csrr {}, sip", out(reg) value);
+        }
+        Sip(value)
+    }
+
+    pub unsafe fn write(self) {
+        unsafe {
+            asm!("csrw sip, {}", in(reg) self.0);
+        }
+    }
+}
+
+pub struct Sie(usize);
+
+impl Sie {
+    pub fn read() -> Self {
+        let value: usize;
+        unsafe {
+            asm!("csrr {}, sie", out(reg) value);
+        }
+        Sie(value)
+    }
+
+    pub unsafe fn write(self) {
+        unsafe {
+            asm!("csrw sie, {}", in(reg) self.0);
+        }
+    }
+
+    pub unsafe fn enable_all() {
+        unsafe {
+            asm!("csrw sie, {}", in(reg) (1 << 1) | (1 << 5) | (1 << 9));
         }
     }
 }
