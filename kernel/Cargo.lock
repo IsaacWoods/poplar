@@ -179,6 +179,7 @@ dependencies = [
  "kernel",
  "pci_types",
  "poplar_util",
+ "sbi",
  "seed",
  "spinning_top 0.2.4",
  "tracing",
@@ -305,6 +306,12 @@ name = "radium"
 version = "0.7.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "dc33ff2d4973d518d823d61aa239014831e521c75da58e3df4840d3f47749d09"
+
+[[package]]
+name = "sbi"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "29cb0870400aca7e4487e8ec1e93f9d4288da763cb1da2cedc5102e62b6522ad"
 
 [[package]]
 name = "scopeguard"

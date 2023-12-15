@@ -14,6 +14,7 @@ tracing-core = { git = "https://github.com/tokio-rs/tracing", default-features =
 spinning_top = { version = "0.2.4", features = ["nightly"] }
 poplar_util = { path = "../../lib/poplar_util/" }
 fdt = { path = "../../lib/fdt/", features = ["pretty-printing"] }
+sbi = "0.2.0"
 pci_types = { path = "../../lib/pci_types/" }
 
 [features]

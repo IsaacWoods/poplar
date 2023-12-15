@@ -1,8 +1,8 @@
+use crate::interrupts;
 use core::arch::asm;
-
 use hal::memory::VAddr;
 use hal_riscv::hw::csr::{Scause, Sepc, Stvec};
-use tracing::info;
+use tracing::{info, trace};
 
 /// Install the proper trap handler. This handler is able to take traps from both S-mode and
 /// U-mode, but requires the `sscratch` context to be correctly installed to facilitate switching
@@ -30,6 +30,10 @@ extern "C" fn trap_handler(trap_frame: &mut TrapFrame, scause: usize, stval: usi
             );
             hal_riscv::hw::csr::Sstatus::disable_user_memory_access();
             trap_frame.sepc += 4;
+        }
+        Ok(Scause::SupervisorTimerInterrupt) => {
+            trace!("Timer goes ping!");
+            sbi::timer::set_timer(hal_riscv::hw::csr::Time::read() as u64 + 0x989680 * 3).unwrap();
         }
         Ok(other) => {
             info!("Trap! Cause = {:?}. Stval = {:#x?}", other, stval);

@@ -125,6 +125,13 @@ pub extern "C" fn kentry(boot_info: &BootInfo) -> ! {
         }
     };
 
+    unsafe {
+        hal_riscv::hw::csr::Sie::enable_all();
+        hal_riscv::hw::csr::Sstatus::enable_interrupts();
+    }
+    // TODO: global function for getting number of ticks per us or whatever from the device tree
+    sbi::timer::set_timer(hal_riscv::hw::csr::Time::read() as u64 + 0x989680 * 3).unwrap();
+
     if let Some(access) = pci::PciAccess::new(&fdt) {
         kernel::initialize_pci(access);
     }
