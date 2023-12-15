@@ -16,6 +16,7 @@ use spinning_top::Spinlock;
 use tracing::{span, Collect, Event, Level, Metadata};
 use tracing_core::span::Current as CurrentSpan;
 
+pub static SERIAL: InitGuard<Uart16550<'static>> = InitGuard::uninit();
 static LOGGER: Logger = Logger::new();
 
 pub fn init(fdt: &Fdt) {
@@ -33,31 +34,20 @@ pub fn init(fdt: &Fdt) {
         None => 1,
     };
 
-    LOGGER.serial.lock().init(addr, reg_width);
+    let serial_mapped_address = physical_to_virtual(PAddr::new(addr).unwrap());
+    let serial = unsafe { Uart16550::new(usize::from(serial_mapped_address), reg_width) };
+    serial.init();
+    SERIAL.initialize(serial);
+
     tracing::dispatch::set_global_default(tracing::dispatch::Dispatch::from_static(&LOGGER))
         .expect("Failed to set default tracing dispatch");
 }
 
-struct SerialWriter {
-    serial: InitGuard<Uart16550<'static>>,
-}
-
-impl SerialWriter {
-    const fn new() -> SerialWriter {
-        SerialWriter { serial: InitGuard::uninit() }
-    }
-
-    fn init(&mut self, addr: usize, reg_width: usize) {
-        let serial_mapped_address = physical_to_virtual(PAddr::new(addr).unwrap());
-        let serial = unsafe { Uart16550::new(usize::from(serial_mapped_address), reg_width) };
-        serial.init();
-        self.serial.initialize(serial);
-    }
-}
+struct SerialWriter;
 
 impl fmt::Write for SerialWriter {
     fn write_str(&mut self, s: &str) -> fmt::Result {
-        let serial = self.serial.get_mut();
+        let serial = SERIAL.get();
         for byte in s.bytes() {
             serial.write(byte);
         }
@@ -68,12 +58,12 @@ impl fmt::Write for SerialWriter {
 
 struct Logger {
     next_id: AtomicU64,
-    serial: Spinlock<SerialWriter>,
+    pub serial: Spinlock<SerialWriter>,
 }
 
 impl Logger {
     const fn new() -> Logger {
-        Logger { next_id: AtomicU64::new(0), serial: Spinlock::new(SerialWriter::new()) }
+        Logger { next_id: AtomicU64::new(0), serial: Spinlock::new(SerialWriter) }
     }
 }
 
