@@ -39,6 +39,7 @@ pub use poplar;
 use poplar::{memory_object::MemoryObject, syscall::MemoryObjectFlags};
 
 // Import our own prelude for this crate
+#[allow(unused_imports)] // Not sure why this counts as unused but the compiler thinks it is.
 #[prelude_import]
 pub use prelude::rust_2021::*;
 
@@ -103,7 +104,7 @@ unsafe extern "C" fn rust_entry() -> ! {
     const HEAP_START: usize = 0x600000000;
     const HEAP_SIZE: usize = 0x4000;
     let heap = MemoryObject::create(HEAP_SIZE, MemoryObjectFlags::WRITABLE).unwrap();
-    let mapped_heap = heap.map_at(HEAP_START).unwrap();
+    let _mapped_heap = heap.map_at(HEAP_START).unwrap();
     ALLOCATOR.lock().init(HEAP_START as *mut u8, HEAP_SIZE);
 
     main(0, core::ptr::null());
