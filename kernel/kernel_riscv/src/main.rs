@@ -9,6 +9,7 @@
 
 extern crate alloc;
 
+mod interrupts;
 mod logger;
 mod pci;
 mod task;
@@ -125,6 +126,7 @@ pub extern "C" fn kentry(boot_info: &BootInfo) -> ! {
         }
     };
 
+    interrupts::init(&fdt);
     unsafe {
         hal_riscv::hw::csr::Sie::enable_all();
         hal_riscv::hw::csr::Sstatus::enable_interrupts();

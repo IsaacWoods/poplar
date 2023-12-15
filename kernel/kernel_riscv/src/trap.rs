@@ -31,6 +31,9 @@ extern "C" fn trap_handler(trap_frame: &mut TrapFrame, scause: usize, stval: usi
             hal_riscv::hw::csr::Sstatus::disable_user_memory_access();
             trap_frame.sepc += 4;
         }
+        Ok(Scause::SupervisorExternalInterrupt) => {
+            interrupts::handle_external_interrupt();
+        }
         Ok(Scause::SupervisorTimerInterrupt) => {
             trace!("Timer goes ping!");
             sbi::timer::set_timer(hal_riscv::hw::csr::Time::read() as u64 + 0x989680 * 3).unwrap();

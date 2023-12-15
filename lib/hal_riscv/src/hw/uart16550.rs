@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MPL-2.0
 // Copyright 2022, Isaac Woods
 
+use bit_field::BitField as _;
 use volatile::Volatile;
 
 /// The register block of a UART16550-compatible serial device. The usage of the registers are
@@ -78,10 +79,21 @@ impl<'a> Uart16550<'a> {
     }
 
     pub fn write(&self, data: u8) {
-        while (self.line_status() & 0x20) == 0 {}
+        while !self.line_status().get_bit(5) {}
         match self {
             Self::One(registers) => registers.data.write(data),
             Self::Four(registers) => registers.data.write(data as u32),
+        }
+    }
+
+    pub fn read(&self) -> Option<u8> {
+        if self.line_status().get_bit(0) {
+            match self {
+                Self::One(registers) => Some(registers.data.read()),
+                Self::Four(registers) => Some(registers.data.read() as u8),
+            }
+        } else {
+            None
         }
     }
 }
