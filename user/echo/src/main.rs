@@ -28,10 +28,10 @@ pub fn main() {
         for subscriber in subscribers.iter() {
             let mut bytes = [0u8; 256];
             loop {
-                match syscall::get_message(subscriber, &mut bytes, &mut []) {
+                match syscall::get_message(*subscriber, &mut bytes, &mut []) {
                     Ok((bytes, _handles)) => {
                         info!("Echoing message: {:x?}", bytes);
-                        syscall::send_message(subscriber, bytes, &[]).unwrap();
+                        syscall::send_message(*subscriber, bytes, &[]).unwrap();
                     }
                     Err(GetMessageError::NoMessage) => break,
                     Err(err) => panic!("Error while echoing message: {:?}", err),

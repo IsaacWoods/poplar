@@ -44,9 +44,9 @@ impl MemoryObject {
 }
 
 pub struct MappedMemoryObject {
-    inner: MemoryObject,
+    pub inner: MemoryObject,
     /// The virtual address (address in the task's address space) the object has been mapped at.
-    mapped_at: usize,
+    pub mapped_at: usize,
 }
 
 impl MappedMemoryObject {

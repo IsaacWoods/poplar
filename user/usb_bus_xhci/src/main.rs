@@ -15,7 +15,8 @@ use std::poplar::{
     caps::{CapabilitiesRepr, CAP_EARLY_LOGGING, CAP_PADDING, CAP_SERVICE_USER},
     channel::Channel,
     early_logger::EarlyLogger,
-    syscall,
+    memory_object::MemoryObject,
+    syscall::{self, MemoryObjectFlags},
 };
 
 pub fn main() {
@@ -51,16 +52,17 @@ pub fn main() {
         }
     };
 
-    let register_space_size = controller_device.properties.get("pci.bar0.size").unwrap().as_integer().unwrap();
+    let register_space_size =
+        controller_device.properties.get("pci.bar0.size").unwrap().as_integer().unwrap() as usize;
+    let register_space = MemoryObject {
+        handle: controller_device.properties.get("pci.bar0.handle").as_ref().unwrap().as_memory_object().unwrap(),
+        size: register_space_size,
+        flags: MemoryObjectFlags::WRITABLE,
+        phys_address: None,
+    };
     const REGISTER_SPACE_ADDRESS: usize = 0x00000005_00000000;
     unsafe {
-        syscall::map_memory_object(
-            controller_device.properties.get("pci.bar0.handle").as_ref().unwrap().as_memory_object().unwrap(),
-            &std::poplar::ZERO_HANDLE,
-            Some(REGISTER_SPACE_ADDRESS),
-            0x0 as *mut usize,
-        )
-        .unwrap();
+        register_space.map_at(REGISTER_SPACE_ADDRESS).unwrap();
     }
 
     let capabilities = unsafe { Capabilities::read_from_registers(REGISTER_SPACE_ADDRESS) };

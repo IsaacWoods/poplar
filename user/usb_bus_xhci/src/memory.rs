@@ -2,7 +2,11 @@ use log::info;
 use std::{
     mem,
     mem::MaybeUninit,
-    poplar::{syscall, Handle},
+    poplar::{
+        memory_object::{MappedMemoryObject, MemoryObject},
+        syscall::{self, MemoryObjectFlags},
+        Handle,
+    },
     ptr,
 };
 
@@ -46,8 +50,7 @@ const TRB_SIZE: usize = 16;
 /// The physical address of this structure should be loaded into the `Device Context Base Address Array Pointer
 /// Register (DCBAAP)` register in the Operational Registers block.
 pub struct MemoryArea {
-    memory_object: Handle,
-    physical_address: usize,
+    memory_object: MappedMemoryObject,
     num_ports: u8,
     command_ring_offset: usize,
 }
@@ -61,30 +64,22 @@ impl MemoryArea {
         let command_ring_head_padding = align_up(bytes_for_device_context_base_address_array, 16);
         let bytes_for_command_ring = COMMAND_RING_NUM_ENTRIES * TRB_SIZE;
 
-        let (memory_object, physical_address) = {
+        let memory_object = {
             let size =
                 bytes_for_device_context_base_address_array + command_ring_head_padding + bytes_for_command_ring;
             let mut physical_address: MaybeUninit<usize> = MaybeUninit::uninit();
 
-            let handle = syscall::create_memory_object(
-                MEMORY_AREA_VIRTUAL_ADDRESS,
-                size,
-                true,
-                false,
-                physical_address.as_mut_ptr(),
-            )
-            .unwrap();
             unsafe {
-                syscall::map_memory_object(&handle, &std::poplar::ZERO_HANDLE, None, 0x0 as *mut usize).unwrap();
+                MemoryObject::create_physical(size, MemoryObjectFlags::WRITABLE)
+                    .unwrap()
+                    .map_at(MEMORY_AREA_VIRTUAL_ADDRESS)
+                    .unwrap()
             }
-
-            (handle, unsafe { physical_address.assume_init() })
         };
-        info!("Memory area is at physical address {:#x}", physical_address);
+        info!("Memory area is at physical address {:#x}", memory_object.inner.phys_address.unwrap());
 
         let mut area = MemoryArea {
             memory_object,
-            physical_address,
             num_ports,
             command_ring_offset: bytes_for_device_context_base_address_array + command_ring_head_padding,
         };
@@ -105,12 +100,16 @@ impl MemoryArea {
         }
     }
 
+    pub fn physical_base(&self) -> usize {
+        self.memory_object.inner.phys_address.unwrap()
+    }
+
     pub fn physical_address_of_device_context_base_address_array(&self) -> usize {
         // Device Context Base Address Array is at the start of the area
-        self.physical_address
+        self.physical_base()
     }
 
     pub fn physical_address_of_command_ring(&self) -> usize {
-        self.physical_address + self.command_ring_offset
+        self.physical_base() + self.command_ring_offset
     }
 }

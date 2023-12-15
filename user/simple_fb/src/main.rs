@@ -8,6 +8,7 @@ use std::{
         channel::Channel,
         early_logger::EarlyLogger,
         syscall::{self, FramebufferInfo, PixelFormat},
+        Handle,
     },
 };
 
@@ -68,13 +69,8 @@ fn make_framebuffer() -> Framebuffer<Bgr32> {
     };
 
     unsafe {
-        syscall::map_memory_object(
-            &framebuffer_handle,
-            &std::poplar::ZERO_HANDLE,
-            Some(FRAMEBUFFER_ADDRESS),
-            0x0 as *mut _,
-        )
-        .unwrap();
+        syscall::map_memory_object(framebuffer_handle, Handle::ZERO, Some(FRAMEBUFFER_ADDRESS), 0x0 as *mut _)
+            .unwrap();
     }
     assert_eq!(framebuffer_info.pixel_format, PixelFormat::Bgr32);
 
