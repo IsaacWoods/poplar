@@ -33,7 +33,7 @@ pub type PageTableImpl = crate::paging::PageTableImpl<Level4>;
 /// This leaves us 382GiB for the physical memory map, which should be sufficient for any system I
 /// can imagine us running on (famous last words).
 pub mod kernel_map {
-    use hal::memory::{PAddr, VAddr, Bytes, mebibytes};
+    use hal::memory::{mebibytes, Bytes, PAddr, VAddr};
 
     pub const KERNEL_P4_ENTRY: usize = 511;
     pub const KERNEL_ADDRESS_SPACE_START: VAddr = VAddr::new(0xffff_ff80_0000_0000);
@@ -61,4 +61,8 @@ pub mod kernel_map {
     /// The kernel starts at -2GiB. The kernel image is loaded directly at this address, and the following space until
     /// the top of memory is managed dynamically and contains the boot info structures, memory map, and kernel heap.
     pub const KERNEL_BASE: VAddr = VAddr::new(0xffff_ffff_8000_0000);
+}
+
+pub fn hart_to_plic_context_id(hart_id: usize) -> usize {
+    return 1 + 2 * hart_id;
 }

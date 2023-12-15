@@ -63,6 +63,13 @@ cfg_if::cfg_if! {
                 /// the top of memory is managed dynamically and contains the boot info structures, memory map, and kernel heap.
                 pub const KERNEL_BASE: VAddr = VAddr::new(0xffff_ffff_8000_0000);
             }
+
+            /// Get the ID of the PLIC context corresponding to the S-mode interrupt target for the
+            /// given HART ID. The mapping between these IDs is platform-specific, but might have a
+            /// better conversion mechanism in the future.
+            pub fn hart_to_plic_context_id(_hart_id: usize) -> usize {
+                0
+            }
         }
     }
 }
