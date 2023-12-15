@@ -26,6 +26,7 @@ use poplar::{
         GetFramebufferError,
         GetMessageError,
         MapMemoryObjectError,
+        MemoryObjectFlags,
         PciGetInfoError,
         RegisterServiceError,
         SendMessageError,
@@ -62,7 +63,7 @@ pub fn handle_syscall<P>(
 where
     P: Platform,
 {
-    // info!("Syscall! number = {}, a = {}, b = {}, c = {}, d = {}, e = {}", number, a, b, c, d, e);
+    // info!("Syscall! number = {}, a = {:#x}, b = {:#x}, c = {:#x}, d = {:#x}, e = {:#x}", number, a, b, c, d, e);
 
     // Clone the current task out of the scheduler as we can't hold a lock on the scheduler
     let task = {
@@ -157,11 +158,9 @@ where
     use hal::memory::{FrameSize, Size4KiB};
     use poplar_util::math::align_up;
 
-    let writable = flags.get_bit(0);
-    let executable = flags.get_bit(1);
-
     // TODO: should we require that the size be multiple of the page size, or just up it here?
     let size = align_up(size, Size4KiB::SIZE);
+    let flags = MemoryObjectFlags::from_bits_truncate(flags as u32);
 
     // TODO: do something more sensible with this when we have a concept of physical memory "ownership"
     let physical_start = crate::PHYSICAL_MEMORY_MANAGER.get().alloc_bytes(size);
@@ -170,7 +169,12 @@ where
         task.id(),
         physical_start,
         size,
-        Flags { writable, executable, user_accessible: true, ..Default::default() },
+        Flags {
+            writable: flags.contains(MemoryObjectFlags::WRITABLE),
+            executable: flags.contains(MemoryObjectFlags::EXECUTABLE),
+            user_accessible: true,
+            ..Default::default()
+        },
     );
 
     if physical_address_ptr != 0x0 {
