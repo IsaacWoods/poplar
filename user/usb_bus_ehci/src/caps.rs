@@ -2,21 +2,21 @@ use bit_field::BitField;
 
 #[derive(Debug)]
 pub struct Capabilities {
-    cap_length: u8,
-    hci_major_version: u8,
-    hci_minor_version: u8,
-    num_ports: u8,
-    port_power_control: bool,
-    port_routing_rule: bool,
-    num_ports_per_companion: u8,
-    num_companions: u8,
-    port_indicators: bool,
-    debug_port: Option<u8>,
-    can_address_64bit: bool,
-    programmable_frame_list: bool,
-    asynchronous_schedule_park: bool,
-    isochronous_schedule_threshold: u8,
-    extended_caps_offset: u8,
+    pub cap_length: u8,
+    pub hci_major_version: u8,
+    pub hci_minor_version: u8,
+    pub num_ports: u8,
+    pub port_power_control: bool,
+    pub port_routing_rule: bool,
+    pub num_ports_per_companion: u8,
+    pub num_companions: u8,
+    pub port_indicators: bool,
+    pub debug_port: Option<u8>,
+    pub can_address_64bit: bool,
+    pub programmable_frame_list: bool,
+    pub asynchronous_schedule_park: bool,
+    pub isochronous_schedule_threshold: u8,
+    pub extended_caps_offset: u8,
 }
 
 impl Capabilities {
