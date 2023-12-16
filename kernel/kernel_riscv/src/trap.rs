@@ -35,7 +35,6 @@ extern "C" fn trap_handler(trap_frame: &mut TrapFrame, scause: usize, stval: usi
             interrupts::handle_external_interrupt();
         }
         Ok(Scause::SupervisorTimerInterrupt) => {
-            trace!("Timer goes ping!");
             sbi::timer::set_timer(hal_riscv::hw::csr::Time::read() as u64 + 0x989680 * 3).unwrap();
         }
         Ok(other) => {

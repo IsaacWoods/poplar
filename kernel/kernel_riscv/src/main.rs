@@ -97,7 +97,9 @@ pub extern "C" fn kentry(boot_info: &BootInfo) -> ! {
     if boot_info.magic != seed::boot_info::BOOT_INFO_MAGIC {
         panic!("Boot info has incorrect magic!");
     }
-    info!("Boot info: {:#?}", boot_info);
+
+    // info!("Boot info: {:#?}", boot_info);
+    // info!("FDT: {:#?}", fdt);
 
     /*
      * Initialise the heap allocator. After this, the kernel is free to use collections etc. that

@@ -114,7 +114,7 @@ where
              * NOTE: This temporarily allows `running_task` to be `None`.
              */
             let current_task = scheduler.running_task.take().unwrap();
-            trace!("Switching from task '{}' to task '{}'", current_task.name, next_task.name);
+            // trace!("Switching from task '{}' to task '{}'", current_task.name, next_task.name);
             assert_eq!(*current_task.state.lock(), TaskState::Running);
             assert_eq!(*next_task.state.lock(), TaskState::Ready);
 
