@@ -1,4 +1,4 @@
-const srcIndex = new Map(JSON.parse('[\
+var srcIndex = new Map(JSON.parse('[\
 ["bit_field",["",[],["lib.rs"]]],\
 ["bitflags",["",[],["external.rs","internal.rs","iter.rs","lib.rs","parser.rs","public.rs","traits.rs"]]],\
 ["byteorder",["",[],["lib.rs"]]],\
