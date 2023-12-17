@@ -1,9 +1,12 @@
+use bipqueue::BipQueue;
 use fdt::Fdt;
 use hal::memory::PAddr;
 use hal_riscv::hw::plic::Plic;
 use poplar_util::InitGuard;
 
 pub static PLIC: InitGuard<&'static Plic> = InitGuard::uninit();
+
+pub static SERIAL_BUFFER: BipQueue<64> = BipQueue::new();
 
 pub fn init(fdt: &Fdt) {
     if let Some(plic_node) = fdt.find_compatible(&["riscv,plic0"]) {
@@ -24,14 +27,15 @@ pub fn init(fdt: &Fdt) {
 
 pub fn handle_external_interrupt() {
     let interrupt = PLIC.get().claim_interrupt(1);
-    tracing::info!("Claimed interrupt from PLIC: {}", interrupt);
     // TODO: better way of registering and dispatching ISRs
     match interrupt {
         0xa => {
             // It's the UART
             let serial = crate::logger::SERIAL.get();
             while let Some(byte) = serial.read() {
-                tracing::info!("Recieved byte from serial: {}", byte);
+                let write = SERIAL_BUFFER.grant(1).unwrap();
+                write.buffer[0] = byte;
+                write.commit(1);
             }
         }
         _ => (),
