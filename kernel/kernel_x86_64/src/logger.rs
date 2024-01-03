@@ -60,7 +60,7 @@ struct Logger {
 
 impl Logger {
     const fn new() -> Logger {
-        Logger { next_id: AtomicU64::new(0), serial: Spinlock::new(SerialWriter::new()) }
+        Logger { next_id: AtomicU64::new(1), serial: Spinlock::new(SerialWriter::new()) }
     }
 }
 
