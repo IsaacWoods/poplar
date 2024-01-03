@@ -4,7 +4,7 @@
  */
 
 #![no_std]
-#![feature(decl_macro, type_ascription, core_intrinsics, extern_types)]
+#![feature(decl_macro, type_ascription, extern_types)]
 
 #[cfg(test)]
 #[macro_use]

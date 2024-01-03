@@ -50,7 +50,7 @@ pub fn flooring_log2(x: usize) -> usize {
      * number of bits in the type (64 for a `u64`). This gets the first bit set, which is
      * the largest power-of-2 component of the value.
      */
-    return NUM_BITS - core::intrinsics::ctlz(x) - 1;
+    NUM_BITS - x.leading_zeros() as usize - 1
 }
 
 #[test]

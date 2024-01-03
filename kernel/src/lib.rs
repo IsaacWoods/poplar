@@ -3,7 +3,6 @@
     decl_macro,
     allocator_api,
     alloc_error_handler,
-    core_intrinsics,
     trait_alias,
     type_ascription,
     naked_functions,
