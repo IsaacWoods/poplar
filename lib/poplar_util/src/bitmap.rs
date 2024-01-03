@@ -86,10 +86,10 @@ impl BitmapSlice for &mut [u8] {
 
 #[test]
 fn test_bitmap() {
-    assert_eq!((0b10001: u16).alloc(3), Some(1));
-    assert_eq!((0b11_0000_1_000_111: u16).alloc(4), Some(7));
-    assert_eq!((0b1111_1111: u8).alloc(1), None);
-    assert_eq!((0b0110_1010: u8).alloc(2), None);
+    assert_eq!((0b10001u16).alloc(3), Some(1));
+    assert_eq!((0b11_0000_1_000_111u16).alloc(4), Some(7));
+    assert_eq!((0b1111_1111u8).alloc(1), None);
+    assert_eq!((0b0110_1010u8).alloc(2), None);
 }
 
 #[test]
