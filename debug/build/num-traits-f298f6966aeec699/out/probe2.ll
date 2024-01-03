@@ -1,20 +1,20 @@
-; ModuleID = 'probe2.e0f8345f49bcdff7-cgu.0'
-source_filename = "probe2.e0f8345f49bcdff7-cgu.0"
+; ModuleID = 'probe2.e3009cf2fd93e923-cgu.0'
+source_filename = "probe2.e3009cf2fd93e923-cgu.0"
 target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-f80:128-n8:16:32:64-S128"
 target triple = "x86_64-unknown-linux-gnu"
 
 ; core::f64::<impl f64>::to_int_unchecked
 ; Function Attrs: inlinehint nonlazybind uwtable
-define i32 @"_ZN4core3f6421_$LT$impl$u20$f64$GT$16to_int_unchecked17hb14bd6383c678ab5E"(double %self) unnamed_addr #0 {
+define i32 @"_ZN4core3f6421_$LT$impl$u20$f64$GT$16to_int_unchecked17h2980706504e93d98E"(double %self) unnamed_addr #0 {
 start:
 ; call <f64 as core::convert::num::FloatToInt<i32>>::to_int_unchecked
-  %_0 = call i32 @"_ZN65_$LT$f64$u20$as$u20$core..convert..num..FloatToInt$LT$i32$GT$$GT$16to_int_unchecked17ha1367dc97f463473E"(double %self)
+  %_0 = call i32 @"_ZN65_$LT$f64$u20$as$u20$core..convert..num..FloatToInt$LT$i32$GT$$GT$16to_int_unchecked17hd8a6ad3c3005926aE"(double %self)
   ret i32 %_0
 }
 
 ; <f64 as core::convert::num::FloatToInt<i32>>::to_int_unchecked
 ; Function Attrs: inlinehint nonlazybind uwtable
-define internal i32 @"_ZN65_$LT$f64$u20$as$u20$core..convert..num..FloatToInt$LT$i32$GT$$GT$16to_int_unchecked17ha1367dc97f463473E"(double %self) unnamed_addr #0 {
+define internal i32 @"_ZN65_$LT$f64$u20$as$u20$core..convert..num..FloatToInt$LT$i32$GT$$GT$16to_int_unchecked17hd8a6ad3c3005926aE"(double %self) unnamed_addr #0 {
 start:
   %0 = alloca i32, align 4
   %1 = fptosi double %self to i32
@@ -25,10 +25,10 @@ start:
 
 ; probe2::probe
 ; Function Attrs: nonlazybind uwtable
-define void @_ZN6probe25probe17h6707cc15ee16c3aeE() unnamed_addr #1 {
+define void @_ZN6probe25probe17h9469cb5ef3d0b9f7E() unnamed_addr #1 {
 start:
 ; call core::f64::<impl f64>::to_int_unchecked
-  %_1 = call i32 @"_ZN4core3f6421_$LT$impl$u20$f64$GT$16to_int_unchecked17hb14bd6383c678ab5E"(double 1.000000e+00)
+  %_1 = call i32 @"_ZN4core3f6421_$LT$impl$u20$f64$GT$16to_int_unchecked17h2980706504e93d98E"(double 1.000000e+00)
   ret void
 }
 
@@ -40,5 +40,5 @@ attributes #1 = { nonlazybind uwtable "probe-stack"="inline-asm" "target-cpu"="x
 
 !0 = !{i32 8, !"PIC Level", i32 2}
 !1 = !{i32 2, !"RtLibUseGOT", i32 1}
-!2 = !{!"rustc version 1.76.0-nightly (445177724 2023-12-16)"}
+!2 = !{!"rustc version 1.77.0-nightly (e51e98dde 2023-12-31)"}
 !3 = !{}
