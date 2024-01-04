@@ -6,6 +6,7 @@
 use core::{
     fmt,
     fmt::Write,
+    panic::PanicInfo,
     sync::atomic::{AtomicU64, Ordering},
 };
 use fdt::Fdt;
@@ -76,9 +77,7 @@ impl Collect for Logger {
         true
     }
 
-    fn enter(&self, _span: &span::Id) {
-        todo!()
-    }
+    fn enter(&self, _span: &span::Id) {}
 
     fn event(&self, event: &Event) {
         use core::ops::DerefMut;
@@ -99,9 +98,7 @@ impl Collect for Logger {
         }
     }
 
-    fn exit(&self, _span: &span::Id) {
-        todo!()
-    }
+    fn exit(&self, _span: &span::Id) {}
 
     fn new_span(&self, _span: &span::Attributes) -> span::Id {
         let id = self.next_id.fetch_add(1, Ordering::Acquire);
@@ -132,7 +129,7 @@ where
         Visitor { writer }
     }
 
-    fn record(&mut self, field: &tracing::field::Field, value: &dyn core::fmt::Debug) {
+    fn record(&mut self, field: &tracing::field::Field, value: &dyn fmt::Debug) {
         // Handle the `message` field explicitly to declutter the output
         if field.name() == "message" {
             write!(self.writer, "{:?}", value).unwrap();
@@ -162,13 +159,13 @@ where
         self.record(field, &value);
     }
 
-    fn record_debug(&mut self, field: &tracing::field::Field, value: &dyn core::fmt::Debug) {
+    fn record_debug(&mut self, field: &tracing::field::Field, value: &dyn fmt::Debug) {
         self.record(field, &value);
     }
 }
 
 #[panic_handler]
-pub fn panic(info: &core::panic::PanicInfo) -> ! {
+pub fn panic(info: &PanicInfo) -> ! {
     if let Some(message) = info.message() {
         if let Some(location) = info.location() {
             let _ = writeln!(
