@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["Poll"],"struct":["BoxStorage","Builder","Context","JoinError","JoinHandle","Task","TaskId","TaskRef","Waker"],"trait":["Storage"]};

@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/quote-1.0.17/src/lib.rs`."><title>lib.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-bf502f66ec635d5d.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="quote" data-themes="" data-resource-suffix="" data-rustdoc-version="1.77.0-nightly (e51e98dde 2023-12-31)" data-channel="nightly" data-search-js="search-c17e98913a53b3b7.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../static.files/storage-f2adc0d6ca4d09fb.js"></script><script defer src="../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-0b2e2def73e61cbe.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-04d5337699b92874.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title">
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/quote-1.0.35/src/lib.rs`."><title>lib.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-4e54bb2b497cc83f.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="quote" data-themes="" data-resource-suffix="" data-rustdoc-version="1.77.0-nightly (f688dd684 2024-01-04)" data-channel="nightly" data-search-js="search-c17e98913a53b3b7.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../static.files/storage-f2adc0d6ca4d09fb.js"></script><script defer src="../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-0b2e2def73e61cbe.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-04d5337699b92874.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title">
             <h2>Files</h2></div></nav><div class="sidebar-resizer"></div>
     <main><nav class="sub"><form class="search-form"><span></span><div id="sidebar-button" tabindex="-1"><a href="../../quote/all.html" title="show sidebar"></a></div><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
@@ -1369,11 +1369,86 @@
 <a href="#1367" id="1367">1367</a>
 <a href="#1368" id="1368">1368</a>
 <a href="#1369" id="1369">1369</a>
+<a href="#1370" id="1370">1370</a>
+<a href="#1371" id="1371">1371</a>
+<a href="#1372" id="1372">1372</a>
+<a href="#1373" id="1373">1373</a>
+<a href="#1374" id="1374">1374</a>
+<a href="#1375" id="1375">1375</a>
+<a href="#1376" id="1376">1376</a>
+<a href="#1377" id="1377">1377</a>
+<a href="#1378" id="1378">1378</a>
+<a href="#1379" id="1379">1379</a>
+<a href="#1380" id="1380">1380</a>
+<a href="#1381" id="1381">1381</a>
+<a href="#1382" id="1382">1382</a>
+<a href="#1383" id="1383">1383</a>
+<a href="#1384" id="1384">1384</a>
+<a href="#1385" id="1385">1385</a>
+<a href="#1386" id="1386">1386</a>
+<a href="#1387" id="1387">1387</a>
+<a href="#1388" id="1388">1388</a>
+<a href="#1389" id="1389">1389</a>
+<a href="#1390" id="1390">1390</a>
+<a href="#1391" id="1391">1391</a>
+<a href="#1392" id="1392">1392</a>
+<a href="#1393" id="1393">1393</a>
+<a href="#1394" id="1394">1394</a>
+<a href="#1395" id="1395">1395</a>
+<a href="#1396" id="1396">1396</a>
+<a href="#1397" id="1397">1397</a>
+<a href="#1398" id="1398">1398</a>
+<a href="#1399" id="1399">1399</a>
+<a href="#1400" id="1400">1400</a>
+<a href="#1401" id="1401">1401</a>
+<a href="#1402" id="1402">1402</a>
+<a href="#1403" id="1403">1403</a>
+<a href="#1404" id="1404">1404</a>
+<a href="#1405" id="1405">1405</a>
+<a href="#1406" id="1406">1406</a>
+<a href="#1407" id="1407">1407</a>
+<a href="#1408" id="1408">1408</a>
+<a href="#1409" id="1409">1409</a>
+<a href="#1410" id="1410">1410</a>
+<a href="#1411" id="1411">1411</a>
+<a href="#1412" id="1412">1412</a>
+<a href="#1413" id="1413">1413</a>
+<a href="#1414" id="1414">1414</a>
+<a href="#1415" id="1415">1415</a>
+<a href="#1416" id="1416">1416</a>
+<a href="#1417" id="1417">1417</a>
+<a href="#1418" id="1418">1418</a>
+<a href="#1419" id="1419">1419</a>
+<a href="#1420" id="1420">1420</a>
+<a href="#1421" id="1421">1421</a>
+<a href="#1422" id="1422">1422</a>
+<a href="#1423" id="1423">1423</a>
+<a href="#1424" id="1424">1424</a>
+<a href="#1425" id="1425">1425</a>
+<a href="#1426" id="1426">1426</a>
+<a href="#1427" id="1427">1427</a>
+<a href="#1428" id="1428">1428</a>
+<a href="#1429" id="1429">1429</a>
+<a href="#1430" id="1430">1430</a>
+<a href="#1431" id="1431">1431</a>
+<a href="#1432" id="1432">1432</a>
+<a href="#1433" id="1433">1433</a>
+<a href="#1434" id="1434">1434</a>
+<a href="#1435" id="1435">1435</a>
+<a href="#1436" id="1436">1436</a>
+<a href="#1437" id="1437">1437</a>
+<a href="#1438" id="1438">1438</a>
+<a href="#1439" id="1439">1439</a>
+<a href="#1440" id="1440">1440</a>
+<a href="#1441" id="1441">1441</a>
+<a href="#1442" id="1442">1442</a>
+<a href="#1443" id="1443">1443</a>
+<a href="#1444" id="1444">1444</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! [![github]](https://github.com/dtolnay/quote)&amp;ensp;[![crates-io]](https://crates.io/crates/quote)&amp;ensp;[![docs-rs]](https://docs.rs/quote)
 //!
 //! [github]: https://img.shields.io/badge/github-8da0cb?style=for-the-badge&amp;labelColor=555555&amp;logo=github
 //! [crates-io]: https://img.shields.io/badge/crates.io-fc8d62?style=for-the-badge&amp;labelColor=555555&amp;logo=rust
-//! [docs-rs]: https://img.shields.io/badge/docs.rs-66c2a5?style=for-the-badge&amp;labelColor=555555&amp;logoColor=white&amp;logo=data:image/svg+xml;base64,PHN2ZyByb2xlPSJpbWciIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgdmlld0JveD0iMCAwIDUxMiA1MTIiPjxwYXRoIGZpbGw9IiNmNWY1ZjUiIGQ9Ik00ODguNiAyNTAuMkwzOTIgMjE0VjEwNS41YzAtMTUtOS4zLTI4LjQtMjMuNC0zMy43bC0xMDAtMzcuNWMtOC4xLTMuMS0xNy4xLTMuMS0yNS4zIDBsLTEwMCAzNy41Yy0xNC4xIDUuMy0yMy40IDE4LjctMjMuNCAzMy43VjIxNGwtOTYuNiAzNi4yQzkuMyAyNTUuNSAwIDI2OC45IDAgMjgzLjlWMzk0YzAgMTMuNiA3LjcgMjYuMSAxOS45IDMyLjJsMTAwIDUwYzEwLjEgNS4xIDIyLjEgNS4xIDMyLjIgMGwxMDMuOS01MiAxMDMuOSA1MmMxMC4xIDUuMSAyMi4xIDUuMSAzMi4yIDBsMTAwLTUwYzEyLjItNi4xIDE5LjktMTguNiAxOS45LTMyLjJWMjgzLjljMC0xNS05LjMtMjguNC0yMy40LTMzLjd6TTM1OCAyMTQuOGwtODUgMzEuOXYtNjguMmw4NS0zN3Y3My4zek0xNTQgMTA0LjFsMTAyLTM4LjIgMTAyIDM4LjJ2LjZsLTEwMiA0MS40LTEwMi00MS40di0uNnptODQgMjkxLjFsLTg1IDQyLjV2LTc5LjFsODUtMzguOHY3NS40em0wLTExMmwtMTAyIDQxLjQtMTAyLTQxLjR2LS42bDEwMi0zOC4yIDEwMiAzOC4ydi42em0yNDAgMTEybC04NSA0Mi41di03OS4xbDg1LTM4Ljh2NzUuNHptMC0xMTJsLTEwMiA0MS40LTEwMi00MS40di0uNmwxMDItMzguMiAxMDIgMzguMnYuNnoiPjwvcGF0aD48L3N2Zz4K
+//! [docs-rs]: https://img.shields.io/badge/docs.rs-66c2a5?style=for-the-badge&amp;labelColor=555555&amp;logo=docs.rs
 //!
 //! &lt;br&gt;
 //!
@@ -1450,9 +1525,20 @@
 //!     }
 //! };
 //! ```
+//!
+//! &lt;br&gt;
+//!
+//! # Non-macro code generators
+//!
+//! When using `quote` in a build.rs or main.rs and writing the output out to a
+//! file, consider having the code generator pass the tokens through
+//! [prettyplease] before writing. This way if an error occurs in the generated
+//! code it is convenient for a human to read and debug.
+//!
+//! [prettyplease]: https://github.com/dtolnay/prettyplease
 
 </span><span class="comment">// Quote types in rustdoc of other crates get linked to here.
-</span><span class="attr">#![doc(html_root_url = <span class="string">"https://docs.rs/quote/1.0.17"</span>)]
+</span><span class="attr">#![doc(html_root_url = <span class="string">"https://docs.rs/quote/1.0.35"</span>)]
 #![allow(
     clippy::doc_markdown,
     clippy::missing_errors_doc,
@@ -1462,10 +1548,9 @@
     </span>clippy::wrong_self_convention,
 )]
 
-#[cfg(all(
-    not(all(target_arch = <span class="string">"wasm32"</span>, target_os = <span class="string">"unknown"</span>)),
-    feature = <span class="string">"proc-macro"
-</span>))]
+</span><span class="kw">extern crate </span>alloc;
+
+<span class="attr">#[cfg(feature = <span class="string">"proc-macro"</span>)]
 </span><span class="kw">extern crate </span>proc_macro;
 
 <span class="kw">mod </span>ext;
@@ -1789,7 +1874,7 @@
 /// appears suffixed as integer literals by interpolating them as [`syn::Index`]
 /// instead.
 ///
-/// [`syn::Index`]: https://docs.rs/syn/1.0/syn/struct.Index.html
+/// [`syn::Index`]: https://docs.rs/syn/2.0/syn/struct.Index.html
 ///
 /// ```compile_fail
 /// let i = 0usize..self.fields.len();
@@ -1839,14 +1924,45 @@
 /// #     }
 /// # }
 /// ```
-</span><span class="attr">#[macro_export]
+</span><span class="attr">#[cfg(doc)]
+#[macro_export]
+</span><span class="macro">macro_rules! </span>quote {
+    ($(<span class="macro-nonterminal">$tt</span>:tt)<span class="kw-2">*</span>) =&gt; {
+        ...
+    };
+}
+
+<span class="attr">#[cfg(not(doc))]
+#[macro_export]
 </span><span class="macro">macro_rules! </span>quote {
     () =&gt; {
         <span class="macro-nonterminal">$crate::__private::TokenStream::new</span>()
     };
-    ($(<span class="macro-nonterminal">$tt</span>:tt)<span class="kw-2">*</span>) =&gt; {{
+
+    <span class="comment">// Special case rule for a single tt, for performance.
+    </span>(<span class="macro-nonterminal">$tt</span>:tt) =&gt; {{
         <span class="kw">let </span><span class="kw-2">mut </span>_s = <span class="macro-nonterminal">$crate::__private::TokenStream::new</span>();
-        <span class="macro-nonterminal">$</span><span class="macro">crate::quote_each_token!</span>(<span class="macro-nonterminal">_s </span>$(<span class="macro-nonterminal">$tt</span>)<span class="kw-2">*</span>);
+        <span class="macro-nonterminal">$</span><span class="macro">crate::quote_token!</span>{<span class="macro-nonterminal">$tt </span>_s}
+        _s
+    }};
+
+    <span class="comment">// Special case rules for two tts, for performance.
+    </span>(# <span class="macro-nonterminal">$var</span>:ident) =&gt; {{
+        <span class="kw">let </span><span class="kw-2">mut </span>_s = <span class="macro-nonterminal">$crate::__private::TokenStream::new</span>();
+        <span class="macro-nonterminal">$crate::ToTokens::to_tokens</span>(<span class="kw-2">&amp;</span><span class="macro-nonterminal">$var</span>, <span class="kw-2">&amp;mut </span>_s);
+        _s
+    }};
+    (<span class="macro-nonterminal">$tt1</span>:tt <span class="macro-nonterminal">$tt2</span>:tt) =&gt; {{
+        <span class="kw">let </span><span class="kw-2">mut </span>_s = <span class="macro-nonterminal">$crate::__private::TokenStream::new</span>();
+        <span class="macro-nonterminal">$</span><span class="macro">crate::quote_token!</span>{<span class="macro-nonterminal">$tt1 </span>_s}
+        <span class="macro-nonterminal">$</span><span class="macro">crate::quote_token!</span>{<span class="macro-nonterminal">$tt2 </span>_s}
+        _s
+    }};
+
+    <span class="comment">// Rule for any other number of tokens.
+    </span>($(<span class="macro-nonterminal">$tt</span>:tt)<span class="kw-2">*</span>) =&gt; {{
+        <span class="kw">let </span><span class="kw-2">mut </span>_s = <span class="macro-nonterminal">$crate::__private::TokenStream::new</span>();
+        <span class="macro-nonterminal">$</span><span class="macro">crate::quote_each_token!</span>{<span class="macro-nonterminal">_s </span>$(<span class="macro-nonterminal">$tt</span>)<span class="kw-2">*</span>}
         _s
     }};
 }
@@ -1947,16 +2063,50 @@
 /// In this example it is important for the where-clause to be spanned with the
 /// line/column information of the user's input type so that error messages are
 /// placed appropriately by the compiler.
-</span><span class="attr">#[macro_export]
+</span><span class="attr">#[cfg(doc)]
+#[macro_export]
+</span><span class="macro">macro_rules! </span>quote_spanned {
+    (<span class="macro-nonterminal">$span</span>:expr=&gt; $(<span class="macro-nonterminal">$tt</span>:tt)<span class="kw-2">*</span>) =&gt; {
+        ...
+    };
+}
+
+<span class="attr">#[cfg(not(doc))]
+#[macro_export]
 </span><span class="macro">macro_rules! </span>quote_spanned {
     (<span class="macro-nonterminal">$span</span>:expr=&gt;) =&gt; {{
-        <span class="kw">let _</span>: <span class="macro-nonterminal">$crate::__private::Span </span>= <span class="macro-nonterminal">$span</span>;
+        <span class="kw">let _</span>: <span class="macro-nonterminal">$crate::__private::Span </span>= <span class="macro-nonterminal">$crate::__private::get_span</span>(<span class="macro-nonterminal">$span</span>).__into_span();
         <span class="macro-nonterminal">$crate::__private::TokenStream::new</span>()
     }};
-    (<span class="macro-nonterminal">$span</span>:expr=&gt; $(<span class="macro-nonterminal">$tt</span>:tt)<span class="kw-2">*</span>) =&gt; {{
+
+    <span class="comment">// Special case rule for a single tt, for performance.
+    </span>(<span class="macro-nonterminal">$span</span>:expr=&gt; <span class="macro-nonterminal">$tt</span>:tt) =&gt; {{
         <span class="kw">let </span><span class="kw-2">mut </span>_s = <span class="macro-nonterminal">$crate::__private::TokenStream::new</span>();
-        <span class="kw">let </span>_span: <span class="macro-nonterminal">$crate::__private::Span </span>= <span class="macro-nonterminal">$span</span>;
-        <span class="macro-nonterminal">$</span><span class="macro">crate::quote_each_token_spanned!</span>(<span class="macro-nonterminal">_s </span>_span $(<span class="macro-nonterminal">$tt</span>)<span class="kw-2">*</span>);
+        <span class="kw">let </span>_span: <span class="macro-nonterminal">$crate::__private::Span </span>= <span class="macro-nonterminal">$crate::__private::get_span</span>(<span class="macro-nonterminal">$span</span>).__into_span();
+        <span class="macro-nonterminal">$</span><span class="macro">crate::quote_token_spanned!</span>{<span class="macro-nonterminal">$tt </span>_s _span}
+        _s
+    }};
+
+    <span class="comment">// Special case rules for two tts, for performance.
+    </span>(<span class="macro-nonterminal">$span</span>:expr=&gt; # <span class="macro-nonterminal">$var</span>:ident) =&gt; {{
+        <span class="kw">let </span><span class="kw-2">mut </span>_s = <span class="macro-nonterminal">$crate::__private::TokenStream::new</span>();
+        <span class="kw">let _</span>: <span class="macro-nonterminal">$crate::__private::Span </span>= <span class="macro-nonterminal">$crate::__private::get_span</span>(<span class="macro-nonterminal">$span</span>).__into_span();
+        <span class="macro-nonterminal">$crate::ToTokens::to_tokens</span>(<span class="kw-2">&amp;</span><span class="macro-nonterminal">$var</span>, <span class="kw-2">&amp;mut </span>_s);
+        _s
+    }};
+    (<span class="macro-nonterminal">$span</span>:expr=&gt; <span class="macro-nonterminal">$tt1</span>:tt <span class="macro-nonterminal">$tt2</span>:tt) =&gt; {{
+        <span class="kw">let </span><span class="kw-2">mut </span>_s = <span class="macro-nonterminal">$crate::__private::TokenStream::new</span>();
+        <span class="kw">let </span>_span: <span class="macro-nonterminal">$crate::__private::Span </span>= <span class="macro-nonterminal">$crate::__private::get_span</span>(<span class="macro-nonterminal">$span</span>).__into_span();
+        <span class="macro-nonterminal">$</span><span class="macro">crate::quote_token_spanned!</span>{<span class="macro-nonterminal">$tt1 </span>_s _span}
+        <span class="macro-nonterminal">$</span><span class="macro">crate::quote_token_spanned!</span>{<span class="macro-nonterminal">$tt2 </span>_s _span}
+        _s
+    }};
+
+    <span class="comment">// Rule for any other number of tokens.
+    </span>(<span class="macro-nonterminal">$span</span>:expr=&gt; $(<span class="macro-nonterminal">$tt</span>:tt)<span class="kw-2">*</span>) =&gt; {{
+        <span class="kw">let </span><span class="kw-2">mut </span>_s = <span class="macro-nonterminal">$crate::__private::TokenStream::new</span>();
+        <span class="kw">let </span>_span: <span class="macro-nonterminal">$crate::__private::Span </span>= <span class="macro-nonterminal">$crate::__private::get_span</span>(<span class="macro-nonterminal">$span</span>).__into_span();
+        <span class="macro-nonterminal">$</span><span class="macro">crate::quote_each_token_spanned!</span>{<span class="macro-nonterminal">_s </span>_span $(<span class="macro-nonterminal">$tt</span>)<span class="kw-2">*</span>}
         _s
     }};
 }
@@ -1971,10 +2121,10 @@
 #[doc(hidden)]
 </span><span class="macro">macro_rules! </span>pounded_var_names {
     (<span class="macro-nonterminal">$call</span>:<span class="macro">ident! </span><span class="macro-nonterminal">$extra</span>:tt $(<span class="macro-nonterminal">$tts</span>:tt)<span class="kw-2">*</span>) =&gt; {
-        <span class="macro-nonterminal">$</span><span class="macro">crate::pounded_var_names_with_context!</span>(<span class="macro-nonterminal">$</span><span class="macro">call! </span><span class="macro-nonterminal">$extra
+        <span class="macro-nonterminal">$</span><span class="macro">crate::pounded_var_names_with_context!</span>{<span class="macro-nonterminal">$</span><span class="macro">call! </span><span class="macro-nonterminal">$extra
             </span>(@ $(<span class="macro-nonterminal">$tts</span>)<span class="kw-2">*</span>)
             ($(<span class="macro-nonterminal">$tts</span>)* @)
-        )
+        }
     };
 }
 
@@ -1983,7 +2133,7 @@
 </span><span class="macro">macro_rules! </span>pounded_var_names_with_context {
     (<span class="macro-nonterminal">$call</span>:<span class="macro">ident! </span><span class="macro-nonterminal">$extra</span>:tt ($(<span class="macro-nonterminal">$b1</span>:tt)<span class="kw-2">*</span>) ($(<span class="macro-nonterminal">$curr</span>:tt)<span class="kw-2">*</span>)) =&gt; {
         $(
-            <span class="macro-nonterminal">$</span><span class="macro">crate::pounded_var_with_context!</span>(<span class="macro-nonterminal">$</span><span class="macro">call! </span><span class="macro-nonterminal">$extra $b1 $curr</span>);
+            <span class="macro-nonterminal">$</span><span class="macro">crate::pounded_var_with_context!</span>{<span class="macro-nonterminal">$</span><span class="macro">call! </span><span class="macro-nonterminal">$extra $b1 $curr</span>}
         )*
     };
 }
@@ -1992,15 +2142,15 @@
 #[doc(hidden)]
 </span><span class="macro">macro_rules! </span>pounded_var_with_context {
     (<span class="macro-nonterminal">$call</span>:<span class="macro">ident! </span><span class="macro-nonterminal">$extra</span>:tt <span class="macro-nonterminal">$b1</span>:tt ( $(<span class="macro-nonterminal">$inner</span>:tt)* )) =&gt; {
-        <span class="macro-nonterminal">$</span><span class="macro">crate::pounded_var_names!</span>(<span class="macro-nonterminal">$</span><span class="macro">call! </span><span class="macro-nonterminal">$extra </span>$(<span class="macro-nonterminal">$inner</span>)<span class="kw-2">*</span>);
+        <span class="macro-nonterminal">$</span><span class="macro">crate::pounded_var_names!</span>{<span class="macro-nonterminal">$</span><span class="macro">call! </span><span class="macro-nonterminal">$extra </span>$(<span class="macro-nonterminal">$inner</span>)<span class="kw-2">*</span>}
     };
 
     (<span class="macro-nonterminal">$call</span>:<span class="macro">ident! </span><span class="macro-nonterminal">$extra</span>:tt <span class="macro-nonterminal">$b1</span>:tt [ $(<span class="macro-nonterminal">$inner</span>:tt)* ]) =&gt; {
-        <span class="macro-nonterminal">$</span><span class="macro">crate::pounded_var_names!</span>(<span class="macro-nonterminal">$</span><span class="macro">call! </span><span class="macro-nonterminal">$extra </span>$(<span class="macro-nonterminal">$inner</span>)<span class="kw-2">*</span>);
+        <span class="macro-nonterminal">$</span><span class="macro">crate::pounded_var_names!</span>{<span class="macro-nonterminal">$</span><span class="macro">call! </span><span class="macro-nonterminal">$extra </span>$(<span class="macro-nonterminal">$inner</span>)<span class="kw-2">*</span>}
     };
 
     (<span class="macro-nonterminal">$call</span>:<span class="macro">ident! </span><span class="macro-nonterminal">$extra</span>:tt <span class="macro-nonterminal">$b1</span>:tt { $(<span class="macro-nonterminal">$inner</span>:tt)* }) =&gt; {
-        <span class="macro-nonterminal">$</span><span class="macro">crate::pounded_var_names!</span>(<span class="macro-nonterminal">$</span><span class="macro">call! </span><span class="macro-nonterminal">$extra </span>$(<span class="macro-nonterminal">$inner</span>)<span class="kw-2">*</span>);
+        <span class="macro-nonterminal">$</span><span class="macro">crate::pounded_var_names!</span>{<span class="macro-nonterminal">$</span><span class="macro">call! </span><span class="macro-nonterminal">$extra </span>$(<span class="macro-nonterminal">$inner</span>)<span class="kw-2">*</span>}
     };
 
     (<span class="macro-nonterminal">$call</span>:<span class="macro">ident!</span>($(<span class="macro-nonterminal">$extra</span>:tt)<span class="kw-2">*</span>) # <span class="macro-nonterminal">$var</span>:ident) =&gt; {
@@ -2104,7 +2254,7 @@
 #[doc(hidden)]
 </span><span class="macro">macro_rules! </span>quote_each_token {
     (<span class="macro-nonterminal">$tokens</span>:ident $(<span class="macro-nonterminal">$tts</span>:tt)<span class="kw-2">*</span>) =&gt; {
-        <span class="macro-nonterminal">$</span><span class="macro">crate::quote_tokens_with_context!</span>(<span class="macro-nonterminal">$tokens
+        <span class="macro-nonterminal">$</span><span class="macro">crate::quote_tokens_with_context!</span>{<span class="macro-nonterminal">$tokens
             </span>(@ @ @ @ @ @ $(<span class="macro-nonterminal">$tts</span>)<span class="kw-2">*</span>)
             (@ @ @ @ @ $(<span class="macro-nonterminal">$tts</span>)* @)
             (@ @ @ @ $(<span class="macro-nonterminal">$tts</span>)* @ @)
@@ -2112,7 +2262,7 @@
             (@ @ $(<span class="macro-nonterminal">$tts</span>)* @ @ @ @)
             (@ $(<span class="macro-nonterminal">$tts</span>)* @ @ @ @ @)
             ($(<span class="macro-nonterminal">$tts</span>)* @ @ @ @ @ @)
-        );
+        }
     };
 }
 
@@ -2121,7 +2271,7 @@
 #[doc(hidden)]
 </span><span class="macro">macro_rules! </span>quote_each_token_spanned {
     (<span class="macro-nonterminal">$tokens</span>:ident <span class="macro-nonterminal">$span</span>:ident $(<span class="macro-nonterminal">$tts</span>:tt)<span class="kw-2">*</span>) =&gt; {
-        <span class="macro-nonterminal">$</span><span class="macro">crate::quote_tokens_with_context_spanned!</span>(<span class="macro-nonterminal">$tokens $span
+        <span class="macro-nonterminal">$</span><span class="macro">crate::quote_tokens_with_context_spanned!</span>{<span class="macro-nonterminal">$tokens $span
             </span>(@ @ @ @ @ @ $(<span class="macro-nonterminal">$tts</span>)<span class="kw-2">*</span>)
             (@ @ @ @ @ $(<span class="macro-nonterminal">$tts</span>)* @)
             (@ @ @ @ $(<span class="macro-nonterminal">$tts</span>)* @ @)
@@ -2129,7 +2279,7 @@
             (@ @ $(<span class="macro-nonterminal">$tts</span>)* @ @ @ @)
             (@ $(<span class="macro-nonterminal">$tts</span>)* @ @ @ @ @)
             ($(<span class="macro-nonterminal">$tts</span>)* @ @ @ @ @ @)
-        );
+        }
     };
 }
 
@@ -2143,7 +2293,7 @@
         ($(<span class="macro-nonterminal">$a1</span>:tt)<span class="kw-2">*</span>) ($(<span class="macro-nonterminal">$a2</span>:tt)<span class="kw-2">*</span>) ($(<span class="macro-nonterminal">$a3</span>:tt)<span class="kw-2">*</span>)
     ) =&gt; {
         $(
-            <span class="macro-nonterminal">$</span><span class="macro">crate::quote_token_with_context!</span>(<span class="macro-nonterminal">$tokens $b3 $b2 $b1 $curr $a1 $a2 $a3</span>);
+            <span class="macro-nonterminal">$</span><span class="macro">crate::quote_token_with_context!</span>{<span class="macro-nonterminal">$tokens $b3 $b2 $b1 $curr $a1 $a2 $a3</span>}
         )*
     };
 }
@@ -2158,7 +2308,7 @@
         ($(<span class="macro-nonterminal">$a1</span>:tt)<span class="kw-2">*</span>) ($(<span class="macro-nonterminal">$a2</span>:tt)<span class="kw-2">*</span>) ($(<span class="macro-nonterminal">$a3</span>:tt)<span class="kw-2">*</span>)
     ) =&gt; {
         $(
-            <span class="macro-nonterminal">$</span><span class="macro">crate::quote_token_with_context_spanned!</span>(<span class="macro-nonterminal">$tokens $span $b3 $b2 $b1 $curr $a1 $a2 $a3</span>);
+            <span class="macro-nonterminal">$</span><span class="macro">crate::quote_token_with_context_spanned!</span>{<span class="macro-nonterminal">$tokens $span $b3 $b2 $b1 $curr $a1 $a2 $a3</span>}
         )*
     };
 }
@@ -2175,7 +2325,7 @@
     </span>(<span class="macro-nonterminal">$tokens</span>:ident <span class="macro-nonterminal">$b3</span>:tt <span class="macro-nonterminal">$b2</span>:tt <span class="macro-nonterminal">$b1</span>:tt (#) ( $(<span class="macro-nonterminal">$inner</span>:tt)* ) * <span class="macro-nonterminal">$a3</span>:tt) =&gt; {{
         <span class="kw">use </span><span class="macro-nonterminal">$crate::__private::ext</span>::<span class="kw-2">*</span>;
         <span class="kw">let </span>has_iter = <span class="macro-nonterminal">$crate::__private::ThereIsNoIteratorInRepetition</span>;
-        <span class="macro-nonterminal">$</span><span class="macro">crate::pounded_var_names!</span>(<span class="macro">quote_bind_into_iter!</span>(<span class="macro-nonterminal">has_iter</span>) () $(<span class="macro-nonterminal">$inner</span>)<span class="kw-2">*</span>);
+        <span class="macro-nonterminal">$</span><span class="macro">crate::pounded_var_names!</span>{<span class="macro">quote_bind_into_iter!</span>(<span class="macro-nonterminal">has_iter</span>) () $(<span class="macro-nonterminal">$inner</span>)<span class="kw-2">*</span>}
         <span class="kw">let _</span>: <span class="macro-nonterminal">$crate::__private::HasIterator </span>= has_iter;
         <span class="comment">// This is `while true` instead of `loop` because if there are no
         // iterators used inside of this repetition then the body would not
@@ -2184,8 +2334,8 @@
         // fail to compile when there are no iterators, so here we just work
         // around the unneeded extra warning.
         </span><span class="kw">while </span><span class="bool-val">true </span>{
-            <span class="macro-nonterminal">$</span><span class="macro">crate::pounded_var_names!</span>(<span class="macro">quote_bind_next_or_break!</span>() () $(<span class="macro-nonterminal">$inner</span>)<span class="kw-2">*</span>);
-            <span class="macro-nonterminal">$</span><span class="macro">crate::quote_each_token!</span>(<span class="macro-nonterminal">$tokens </span>$(<span class="macro-nonterminal">$inner</span>)<span class="kw-2">*</span>);
+            <span class="macro-nonterminal">$</span><span class="macro">crate::pounded_var_names!</span>{<span class="macro">quote_bind_next_or_break!</span>() () $(<span class="macro-nonterminal">$inner</span>)<span class="kw-2">*</span>}
+            <span class="macro-nonterminal">$</span><span class="macro">crate::quote_each_token!</span>{<span class="macro-nonterminal">$tokens </span>$(<span class="macro-nonterminal">$inner</span>)<span class="kw-2">*</span>}
         }
     }};
     <span class="comment">// ... and one step later.
@@ -2198,15 +2348,15 @@
         <span class="kw">use </span><span class="macro-nonterminal">$crate::__private::ext</span>::<span class="kw-2">*</span>;
         <span class="kw">let </span><span class="kw-2">mut </span>_i = <span class="number">0usize</span>;
         <span class="kw">let </span>has_iter = <span class="macro-nonterminal">$crate::__private::ThereIsNoIteratorInRepetition</span>;
-        <span class="macro-nonterminal">$</span><span class="macro">crate::pounded_var_names!</span>(<span class="macro">quote_bind_into_iter!</span>(<span class="macro-nonterminal">has_iter</span>) () $(<span class="macro-nonterminal">$inner</span>)<span class="kw-2">*</span>);
+        <span class="macro-nonterminal">$</span><span class="macro">crate::pounded_var_names!</span>{<span class="macro">quote_bind_into_iter!</span>(<span class="macro-nonterminal">has_iter</span>) () $(<span class="macro-nonterminal">$inner</span>)<span class="kw-2">*</span>}
         <span class="kw">let _</span>: <span class="macro-nonterminal">$crate::__private::HasIterator </span>= has_iter;
         <span class="kw">while </span><span class="bool-val">true </span>{
-            <span class="macro-nonterminal">$</span><span class="macro">crate::pounded_var_names!</span>(<span class="macro">quote_bind_next_or_break!</span>() () $(<span class="macro-nonterminal">$inner</span>)<span class="kw-2">*</span>);
+            <span class="macro-nonterminal">$</span><span class="macro">crate::pounded_var_names!</span>{<span class="macro">quote_bind_next_or_break!</span>() () $(<span class="macro-nonterminal">$inner</span>)<span class="kw-2">*</span>}
             <span class="kw">if </span>_i &gt; <span class="number">0 </span>{
-                <span class="macro-nonterminal">$</span><span class="macro">crate::quote_token!</span>(<span class="macro-nonterminal">$sep $tokens</span>);
+                <span class="macro-nonterminal">$</span><span class="macro">crate::quote_token!</span>{<span class="macro-nonterminal">$sep $tokens</span>}
             }
             _i += <span class="number">1</span>;
-            <span class="macro-nonterminal">$</span><span class="macro">crate::quote_each_token!</span>(<span class="macro-nonterminal">$tokens </span>$(<span class="macro-nonterminal">$inner</span>)<span class="kw-2">*</span>);
+            <span class="macro-nonterminal">$</span><span class="macro">crate::quote_each_token!</span>{<span class="macro-nonterminal">$tokens </span>$(<span class="macro-nonterminal">$inner</span>)<span class="kw-2">*</span>}
         }
     }};
     <span class="comment">// ... and one step later.
@@ -2217,7 +2367,7 @@
     // repetition symbol and the second `*` is treated as an ordinary token.)
     </span>(<span class="macro-nonterminal">$tokens</span>:ident # ( $(<span class="macro-nonterminal">$inner</span>:tt)* ) * (<span class="kw-2">*</span>) <span class="macro-nonterminal">$a1</span>:tt <span class="macro-nonterminal">$a2</span>:tt <span class="macro-nonterminal">$a3</span>:tt) =&gt; {
         <span class="comment">// https://github.com/dtolnay/quote/issues/130
-        </span><span class="macro-nonterminal">$</span><span class="macro">crate::quote_token!</span>(* <span class="macro-nonterminal">$tokens</span>);
+        </span><span class="macro-nonterminal">$</span><span class="macro">crate::quote_token!</span>{* <span class="macro-nonterminal">$tokens</span>}
     };
     <span class="comment">// ... and one step later.
     </span>(<span class="macro-nonterminal">$tokens</span>:ident # ( $(<span class="macro-nonterminal">$inner</span>:tt)* ) <span class="macro-nonterminal">$sep</span>:tt (<span class="kw-2">*</span>) <span class="macro-nonterminal">$a1</span>:tt <span class="macro-nonterminal">$a2</span>:tt <span class="macro-nonterminal">$a3</span>:tt) =&gt; {};
@@ -2231,7 +2381,7 @@
 
     <span class="comment">// An ordinary token, not part of any interpolation.
     </span>(<span class="macro-nonterminal">$tokens</span>:ident <span class="macro-nonterminal">$b3</span>:tt <span class="macro-nonterminal">$b2</span>:tt <span class="macro-nonterminal">$b1</span>:tt (<span class="macro-nonterminal">$curr</span>:tt) <span class="macro-nonterminal">$a1</span>:tt <span class="macro-nonterminal">$a2</span>:tt <span class="macro-nonterminal">$a3</span>:tt) =&gt; {
-        <span class="macro-nonterminal">$</span><span class="macro">crate::quote_token!</span>(<span class="macro-nonterminal">$curr $tokens</span>);
+        <span class="macro-nonterminal">$</span><span class="macro">crate::quote_token!</span>{<span class="macro-nonterminal">$curr $tokens</span>}
     };
 }
 
@@ -2245,11 +2395,11 @@
     (<span class="macro-nonterminal">$tokens</span>:ident <span class="macro-nonterminal">$span</span>:ident <span class="macro-nonterminal">$b3</span>:tt <span class="macro-nonterminal">$b2</span>:tt <span class="macro-nonterminal">$b1</span>:tt (#) ( $(<span class="macro-nonterminal">$inner</span>:tt)* ) * <span class="macro-nonterminal">$a3</span>:tt) =&gt; {{
         <span class="kw">use </span><span class="macro-nonterminal">$crate::__private::ext</span>::<span class="kw-2">*</span>;
         <span class="kw">let </span>has_iter = <span class="macro-nonterminal">$crate::__private::ThereIsNoIteratorInRepetition</span>;
-        <span class="macro-nonterminal">$</span><span class="macro">crate::pounded_var_names!</span>(<span class="macro">quote_bind_into_iter!</span>(<span class="macro-nonterminal">has_iter</span>) () $(<span class="macro-nonterminal">$inner</span>)<span class="kw-2">*</span>);
+        <span class="macro-nonterminal">$</span><span class="macro">crate::pounded_var_names!</span>{<span class="macro">quote_bind_into_iter!</span>(<span class="macro-nonterminal">has_iter</span>) () $(<span class="macro-nonterminal">$inner</span>)<span class="kw-2">*</span>}
         <span class="kw">let _</span>: <span class="macro-nonterminal">$crate::__private::HasIterator </span>= has_iter;
         <span class="kw">while </span><span class="bool-val">true </span>{
-            <span class="macro-nonterminal">$</span><span class="macro">crate::pounded_var_names!</span>(<span class="macro">quote_bind_next_or_break!</span>() () $(<span class="macro-nonterminal">$inner</span>)<span class="kw-2">*</span>);
-            <span class="macro-nonterminal">$</span><span class="macro">crate::quote_each_token_spanned!</span>(<span class="macro-nonterminal">$tokens $span </span>$(<span class="macro-nonterminal">$inner</span>)<span class="kw-2">*</span>);
+            <span class="macro-nonterminal">$</span><span class="macro">crate::pounded_var_names!</span>{<span class="macro">quote_bind_next_or_break!</span>() () $(<span class="macro-nonterminal">$inner</span>)<span class="kw-2">*</span>}
+            <span class="macro-nonterminal">$</span><span class="macro">crate::quote_each_token_spanned!</span>{<span class="macro-nonterminal">$tokens $span </span>$(<span class="macro-nonterminal">$inner</span>)<span class="kw-2">*</span>}
         }
     }};
     (<span class="macro-nonterminal">$tokens</span>:ident <span class="macro-nonterminal">$span</span>:ident <span class="macro-nonterminal">$b3</span>:tt <span class="macro-nonterminal">$b2</span>:tt # (( $(<span class="macro-nonterminal">$inner</span>:tt)* )) * <span class="macro-nonterminal">$a2</span>:tt <span class="macro-nonterminal">$a3</span>:tt) =&gt; {};
@@ -2259,22 +2409,22 @@
         <span class="kw">use </span><span class="macro-nonterminal">$crate::__private::ext</span>::<span class="kw-2">*</span>;
         <span class="kw">let </span><span class="kw-2">mut </span>_i = <span class="number">0usize</span>;
         <span class="kw">let </span>has_iter = <span class="macro-nonterminal">$crate::__private::ThereIsNoIteratorInRepetition</span>;
-        <span class="macro-nonterminal">$</span><span class="macro">crate::pounded_var_names!</span>(<span class="macro">quote_bind_into_iter!</span>(<span class="macro-nonterminal">has_iter</span>) () $(<span class="macro-nonterminal">$inner</span>)<span class="kw-2">*</span>);
+        <span class="macro-nonterminal">$</span><span class="macro">crate::pounded_var_names!</span>{<span class="macro">quote_bind_into_iter!</span>(<span class="macro-nonterminal">has_iter</span>) () $(<span class="macro-nonterminal">$inner</span>)<span class="kw-2">*</span>}
         <span class="kw">let _</span>: <span class="macro-nonterminal">$crate::__private::HasIterator </span>= has_iter;
         <span class="kw">while </span><span class="bool-val">true </span>{
-            <span class="macro-nonterminal">$</span><span class="macro">crate::pounded_var_names!</span>(<span class="macro">quote_bind_next_or_break!</span>() () $(<span class="macro-nonterminal">$inner</span>)<span class="kw-2">*</span>);
+            <span class="macro-nonterminal">$</span><span class="macro">crate::pounded_var_names!</span>{<span class="macro">quote_bind_next_or_break!</span>() () $(<span class="macro-nonterminal">$inner</span>)<span class="kw-2">*</span>}
             <span class="kw">if </span>_i &gt; <span class="number">0 </span>{
-                <span class="macro-nonterminal">$</span><span class="macro">crate::quote_token_spanned!</span>(<span class="macro-nonterminal">$sep $tokens $span</span>);
+                <span class="macro-nonterminal">$</span><span class="macro">crate::quote_token_spanned!</span>{<span class="macro-nonterminal">$sep $tokens $span</span>}
             }
             _i += <span class="number">1</span>;
-            <span class="macro-nonterminal">$</span><span class="macro">crate::quote_each_token_spanned!</span>(<span class="macro-nonterminal">$tokens $span </span>$(<span class="macro-nonterminal">$inner</span>)<span class="kw-2">*</span>);
+            <span class="macro-nonterminal">$</span><span class="macro">crate::quote_each_token_spanned!</span>{<span class="macro-nonterminal">$tokens $span </span>$(<span class="macro-nonterminal">$inner</span>)<span class="kw-2">*</span>}
         }
     }};
     (<span class="macro-nonterminal">$tokens</span>:ident <span class="macro-nonterminal">$span</span>:ident <span class="macro-nonterminal">$b3</span>:tt <span class="macro-nonterminal">$b2</span>:tt # (( $(<span class="macro-nonterminal">$inner</span>:tt)* )) <span class="macro-nonterminal">$sep</span>:tt * <span class="macro-nonterminal">$a3</span>:tt) =&gt; {};
     (<span class="macro-nonterminal">$tokens</span>:ident <span class="macro-nonterminal">$span</span>:ident <span class="macro-nonterminal">$b3</span>:tt # ( $(<span class="macro-nonterminal">$inner</span>:tt)* ) (<span class="macro-nonterminal">$sep</span>:tt) * <span class="macro-nonterminal">$a2</span>:tt <span class="macro-nonterminal">$a3</span>:tt) =&gt; {};
     (<span class="macro-nonterminal">$tokens</span>:ident <span class="macro-nonterminal">$span</span>:ident # ( $(<span class="macro-nonterminal">$inner</span>:tt)* ) * (<span class="kw-2">*</span>) <span class="macro-nonterminal">$a1</span>:tt <span class="macro-nonterminal">$a2</span>:tt <span class="macro-nonterminal">$a3</span>:tt) =&gt; {
         <span class="comment">// https://github.com/dtolnay/quote/issues/130
-        </span><span class="macro-nonterminal">$</span><span class="macro">crate::quote_token_spanned!</span>(* <span class="macro-nonterminal">$tokens $span</span>);
+        </span><span class="macro-nonterminal">$</span><span class="macro">crate::quote_token_spanned!</span>{* <span class="macro-nonterminal">$tokens $span</span>}
     };
     (<span class="macro-nonterminal">$tokens</span>:ident <span class="macro-nonterminal">$span</span>:ident # ( $(<span class="macro-nonterminal">$inner</span>:tt)* ) <span class="macro-nonterminal">$sep</span>:tt (<span class="kw-2">*</span>) <span class="macro-nonterminal">$a1</span>:tt <span class="macro-nonterminal">$a2</span>:tt <span class="macro-nonterminal">$a3</span>:tt) =&gt; {};
 
@@ -2284,7 +2434,7 @@
     (<span class="macro-nonterminal">$tokens</span>:ident <span class="macro-nonterminal">$span</span>:ident <span class="macro-nonterminal">$b3</span>:tt <span class="macro-nonterminal">$b2</span>:tt # (<span class="macro-nonterminal">$var</span>:ident) <span class="macro-nonterminal">$a1</span>:tt <span class="macro-nonterminal">$a2</span>:tt <span class="macro-nonterminal">$a3</span>:tt) =&gt; {};
 
     (<span class="macro-nonterminal">$tokens</span>:ident <span class="macro-nonterminal">$span</span>:ident <span class="macro-nonterminal">$b3</span>:tt <span class="macro-nonterminal">$b2</span>:tt <span class="macro-nonterminal">$b1</span>:tt (<span class="macro-nonterminal">$curr</span>:tt) <span class="macro-nonterminal">$a1</span>:tt <span class="macro-nonterminal">$a2</span>:tt <span class="macro-nonterminal">$a3</span>:tt) =&gt; {
-        <span class="macro-nonterminal">$</span><span class="macro">crate::quote_token_spanned!</span>(<span class="macro-nonterminal">$curr $tokens $span</span>);
+        <span class="macro-nonterminal">$</span><span class="macro">crate::quote_token_spanned!</span>{<span class="macro-nonterminal">$curr $tokens $span</span>}
     };
 }
 

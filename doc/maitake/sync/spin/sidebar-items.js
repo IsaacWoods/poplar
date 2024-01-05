@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"mod":["once"],"struct":["InitOnce","Lazy","Mutex","MutexGuard"]};

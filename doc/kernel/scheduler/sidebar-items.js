@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"struct":["CpuScheduler","Scheduler"]};
+window.SIDEBAR_ITEMS = {"struct":["CpuScheduler","KernelScheduler","Scheduler"]};

@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["usize_const_checked_log","usize_const_log2","usize_const_log2_ceil"],"macro":["max","min"],"trait":["Logarithm"]};

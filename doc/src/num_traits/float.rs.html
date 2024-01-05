@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/num-traits-0.2.14/src/float.rs`."><title>float.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-bf502f66ec635d5d.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="num_traits" data-themes="" data-resource-suffix="" data-rustdoc-version="1.77.0-nightly (e51e98dde 2023-12-31)" data-channel="nightly" data-search-js="search-c17e98913a53b3b7.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../static.files/storage-f2adc0d6ca4d09fb.js"></script><script defer src="../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-0b2e2def73e61cbe.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-04d5337699b92874.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title">
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/num-traits-0.2.17/src/float.rs`."><title>float.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-4e54bb2b497cc83f.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="num_traits" data-themes="" data-resource-suffix="" data-rustdoc-version="1.77.0-nightly (f688dd684 2024-01-04)" data-channel="nightly" data-search-js="search-c17e98913a53b3b7.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../static.files/storage-f2adc0d6ca4d09fb.js"></script><script defer src="../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-0b2e2def73e61cbe.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-04d5337699b92874.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title">
             <h2>Files</h2></div></nav><div class="sidebar-resizer"></div>
     <main><nav class="sub"><form class="search-form"><span></span><div id="sidebar-button" tabindex="-1"><a href="../../num_traits/all.html" title="show sidebar"></a></div><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
@@ -2344,63 +2344,13 @@
 <a href="#2342" id="2342">2342</a>
 <a href="#2343" id="2343">2343</a>
 <a href="#2344" id="2344">2344</a>
-<a href="#2345" id="2345">2345</a>
-<a href="#2346" id="2346">2346</a>
-<a href="#2347" id="2347">2347</a>
-<a href="#2348" id="2348">2348</a>
-<a href="#2349" id="2349">2349</a>
-<a href="#2350" id="2350">2350</a>
-<a href="#2351" id="2351">2351</a>
-<a href="#2352" id="2352">2352</a>
-<a href="#2353" id="2353">2353</a>
-<a href="#2354" id="2354">2354</a>
-<a href="#2355" id="2355">2355</a>
-<a href="#2356" id="2356">2356</a>
-<a href="#2357" id="2357">2357</a>
-<a href="#2358" id="2358">2358</a>
-<a href="#2359" id="2359">2359</a>
-<a href="#2360" id="2360">2360</a>
-<a href="#2361" id="2361">2361</a>
-<a href="#2362" id="2362">2362</a>
-<a href="#2363" id="2363">2363</a>
-<a href="#2364" id="2364">2364</a>
-<a href="#2365" id="2365">2365</a>
-<a href="#2366" id="2366">2366</a>
-<a href="#2367" id="2367">2367</a>
-<a href="#2368" id="2368">2368</a>
-<a href="#2369" id="2369">2369</a>
-<a href="#2370" id="2370">2370</a>
-<a href="#2371" id="2371">2371</a>
-<a href="#2372" id="2372">2372</a>
-<a href="#2373" id="2373">2373</a>
-<a href="#2374" id="2374">2374</a>
-<a href="#2375" id="2375">2375</a>
-<a href="#2376" id="2376">2376</a>
-<a href="#2377" id="2377">2377</a>
-<a href="#2378" id="2378">2378</a>
-<a href="#2379" id="2379">2379</a>
-<a href="#2380" id="2380">2380</a>
-<a href="#2381" id="2381">2381</a>
-<a href="#2382" id="2382">2382</a>
-<a href="#2383" id="2383">2383</a>
-<a href="#2384" id="2384">2384</a>
-<a href="#2385" id="2385">2385</a>
-<a href="#2386" id="2386">2386</a>
-<a href="#2387" id="2387">2387</a>
-<a href="#2388" id="2388">2388</a>
-<a href="#2389" id="2389">2389</a>
-<a href="#2390" id="2390">2390</a>
-</pre></div><pre class="rust"><code><span class="kw">use </span>core::mem;
-<span class="kw">use </span>core::num::FpCategory;
+</pre></div><pre class="rust"><code><span class="kw">use </span>core::num::FpCategory;
 <span class="kw">use </span>core::ops::{Add, Div, Neg};
 
 <span class="kw">use </span>core::f32;
 <span class="kw">use </span>core::f64;
 
-<span class="kw">use </span>{Num, NumCast, ToPrimitive};
-
-<span class="attr">#[cfg(all(not(feature = <span class="string">"std"</span>), feature = <span class="string">"libm"</span>))]
-</span><span class="kw">use </span>libm;
+<span class="kw">use crate</span>::{Num, NumCast, ToPrimitive};
 
 <span class="doccomment">/// Generic trait for floating point numbers that works with `no_std`.
 ///
@@ -2562,6 +2512,7 @@
     /// check(0.0f64, false);
     /// ```
     </span><span class="attr">#[inline]
+    #[allow(clippy::eq_op)]
     </span><span class="kw">fn </span>is_nan(<span class="self">self</span>) -&gt; bool {
         <span class="self">self </span>!= <span class="self">self
     </span>}
@@ -2634,6 +2585,32 @@
     </span><span class="attr">#[inline]
     </span><span class="kw">fn </span>is_normal(<span class="self">self</span>) -&gt; bool {
         <span class="self">self</span>.classify() == FpCategory::Normal
+    }
+
+    <span class="doccomment">/// Returns `true` if the number is [subnormal].
+    ///
+    /// ```
+    /// use num_traits::float::FloatCore;
+    /// use std::f64;
+    ///
+    /// let min = f64::MIN_POSITIVE; // 2.2250738585072014e-308_f64
+    /// let max = f64::MAX;
+    /// let lower_than_min = 1.0e-308_f64;
+    /// let zero = 0.0_f64;
+    ///
+    /// assert!(!min.is_subnormal());
+    /// assert!(!max.is_subnormal());
+    ///
+    /// assert!(!zero.is_subnormal());
+    /// assert!(!f64::NAN.is_subnormal());
+    /// assert!(!f64::INFINITY.is_subnormal());
+    /// // Values between `0` and `min` are Subnormal.
+    /// assert!(lower_than_min.is_subnormal());
+    /// ```
+    /// [subnormal]: https://en.wikipedia.org/wiki/Subnormal_number
+    </span><span class="attr">#[inline]
+    </span><span class="kw">fn </span>is_subnormal(<span class="self">self</span>) -&gt; bool {
+        <span class="self">self</span>.classify() == FpCategory::Subnormal
     }
 
     <span class="doccomment">/// Returns the floating point category of the number. If only one property
@@ -2762,12 +2739,10 @@
             } <span class="kw">else </span>{
                 <span class="self">self </span>- f + one
             }
+        } <span class="kw">else if </span>-f &lt; h {
+            <span class="self">self </span>- f
         } <span class="kw">else </span>{
-            <span class="kw">if </span>-f &lt; h {
-                <span class="self">self </span>- f
-            } <span class="kw">else </span>{
-                <span class="self">self </span>- f - one
-            }
+            <span class="self">self </span>- f - one
         }
     }
 
@@ -2900,8 +2875,7 @@
     }
 
     <span class="doccomment">/// Returns `true` if `self` is positive, including `+0.0` and
-    /// `FloatCore::infinity()`, and since Rust 1.20 also
-    /// `FloatCore::nan()`.
+    /// `FloatCore::infinity()`, and `FloatCore::nan()`.
     ///
     /// # Examples
     ///
@@ -2919,6 +2893,7 @@
     /// check(-0.0f64, false);
     /// check(f64::NEG_INFINITY, false);
     /// check(f64::MIN_POSITIVE, true);
+    /// check(f64::NAN, true);
     /// check(-f64::NAN, false);
     /// ```
     </span><span class="attr">#[inline]
@@ -2927,8 +2902,7 @@
     }
 
     <span class="doccomment">/// Returns `true` if `self` is negative, including `-0.0` and
-    /// `FloatCore::neg_infinity()`, and since Rust 1.20 also
-    /// `-FloatCore::nan()`.
+    /// `FloatCore::neg_infinity()`, and `-FloatCore::nan()`.
     ///
     /// # Examples
     ///
@@ -2947,6 +2921,7 @@
     /// check(f64::NEG_INFINITY, true);
     /// check(f64::MIN_POSITIVE, false);
     /// check(f64::NAN, false);
+    /// check(-f64::NAN, true);
     /// ```
     </span><span class="attr">#[inline]
     </span><span class="kw">fn </span>is_sign_negative(<span class="self">self</span>) -&gt; bool {
@@ -3155,45 +3130,28 @@
         integer_decode_f32(<span class="self">self</span>)
     }
 
-    <span class="attr">#[inline]
-    #[cfg(not(feature = <span class="string">"std"</span>))]
-    </span><span class="kw">fn </span>classify(<span class="self">self</span>) -&gt; FpCategory {
-        <span class="kw">const </span>EXP_MASK: u32 = <span class="number">0x7f800000</span>;
-        <span class="kw">const </span>MAN_MASK: u32 = <span class="number">0x007fffff</span>;
-
-        <span class="comment">// Safety: this identical to the implementation of f32::to_bits(),
-        // which is only available starting at Rust 1.20
-        </span><span class="kw">let </span>bits: u32 = <span class="kw">unsafe </span>{ mem::transmute(<span class="self">self</span>) };
-        <span class="kw">match </span>(bits &amp; MAN_MASK, bits &amp; EXP_MASK) {
-            (<span class="number">0</span>, <span class="number">0</span>) =&gt; FpCategory::Zero,
-            (<span class="kw">_</span>, <span class="number">0</span>) =&gt; FpCategory::Subnormal,
-            (<span class="number">0</span>, EXP_MASK) =&gt; FpCategory::Infinite,
-            (<span class="kw">_</span>, EXP_MASK) =&gt; FpCategory::Nan,
-            <span class="kw">_ </span>=&gt; FpCategory::Normal,
-        }
-    }
-
-    <span class="attr">#[inline]
-    #[cfg(not(feature = <span class="string">"std"</span>))]
-    </span><span class="kw">fn </span>to_degrees(<span class="self">self</span>) -&gt; <span class="self">Self </span>{
-        <span class="comment">// Use a constant for better precision.
-        </span><span class="kw">const </span>PIS_IN_180: f32 = <span class="number">57.2957795130823208767981548141051703_f32</span>;
-        <span class="self">self </span>* PIS_IN_180
-    }
-
-    <span class="attr">#[inline]
-    #[cfg(not(feature = <span class="string">"std"</span>))]
-    </span><span class="kw">fn </span>to_radians(<span class="self">self</span>) -&gt; <span class="self">Self </span>{
-        <span class="self">self </span>* (f32::consts::PI / <span class="number">180.0</span>)
-    }
-
-    <span class="attr">#[cfg(feature = <span class="string">"std"</span>)]
-    </span><span class="macro">forward! </span>{
+    <span class="macro">forward! </span>{
         <span class="self">Self</span>::is_nan(<span class="self">self</span>) -&gt; bool;
         <span class="self">Self</span>::is_infinite(<span class="self">self</span>) -&gt; bool;
         <span class="self">Self</span>::is_finite(<span class="self">self</span>) -&gt; bool;
         <span class="self">Self</span>::is_normal(<span class="self">self</span>) -&gt; bool;
         <span class="self">Self</span>::classify(<span class="self">self</span>) -&gt; FpCategory;
+        <span class="self">Self</span>::is_sign_positive(<span class="self">self</span>) -&gt; bool;
+        <span class="self">Self</span>::is_sign_negative(<span class="self">self</span>) -&gt; bool;
+        <span class="self">Self</span>::min(<span class="self">self</span>, other: <span class="self">Self</span>) -&gt; <span class="self">Self</span>;
+        <span class="self">Self</span>::max(<span class="self">self</span>, other: <span class="self">Self</span>) -&gt; <span class="self">Self</span>;
+        <span class="self">Self</span>::recip(<span class="self">self</span>) -&gt; <span class="self">Self</span>;
+        <span class="self">Self</span>::to_degrees(<span class="self">self</span>) -&gt; <span class="self">Self</span>;
+        <span class="self">Self</span>::to_radians(<span class="self">self</span>) -&gt; <span class="self">Self</span>;
+    }
+
+    <span class="attr">#[cfg(has_is_subnormal)]
+    </span><span class="macro">forward! </span>{
+        <span class="self">Self</span>::is_subnormal(<span class="self">self</span>) -&gt; bool;
+    }
+
+    <span class="attr">#[cfg(feature = <span class="string">"std"</span>)]
+    </span><span class="macro">forward! </span>{
         <span class="self">Self</span>::floor(<span class="self">self</span>) -&gt; <span class="self">Self</span>;
         <span class="self">Self</span>::ceil(<span class="self">self</span>) -&gt; <span class="self">Self</span>;
         <span class="self">Self</span>::round(<span class="self">self</span>) -&gt; <span class="self">Self</span>;
@@ -3201,14 +3159,22 @@
         <span class="self">Self</span>::fract(<span class="self">self</span>) -&gt; <span class="self">Self</span>;
         <span class="self">Self</span>::abs(<span class="self">self</span>) -&gt; <span class="self">Self</span>;
         <span class="self">Self</span>::signum(<span class="self">self</span>) -&gt; <span class="self">Self</span>;
-        <span class="self">Self</span>::is_sign_positive(<span class="self">self</span>) -&gt; bool;
-        <span class="self">Self</span>::is_sign_negative(<span class="self">self</span>) -&gt; bool;
-        <span class="self">Self</span>::min(<span class="self">self</span>, other: <span class="self">Self</span>) -&gt; <span class="self">Self</span>;
-        <span class="self">Self</span>::max(<span class="self">self</span>, other: <span class="self">Self</span>) -&gt; <span class="self">Self</span>;
-        <span class="self">Self</span>::recip(<span class="self">self</span>) -&gt; <span class="self">Self</span>;
         <span class="self">Self</span>::powi(<span class="self">self</span>, n: i32) -&gt; <span class="self">Self</span>;
-        <span class="self">Self</span>::to_degrees(<span class="self">self</span>) -&gt; <span class="self">Self</span>;
-        <span class="self">Self</span>::to_radians(<span class="self">self</span>) -&gt; <span class="self">Self</span>;
+    }
+
+    <span class="attr">#[cfg(all(not(feature = <span class="string">"std"</span>), feature = <span class="string">"libm"</span>))]
+    </span><span class="macro">forward! </span>{
+        libm::floorf <span class="kw">as </span>floor(<span class="self">self</span>) -&gt; <span class="self">Self</span>;
+        libm::ceilf <span class="kw">as </span>ceil(<span class="self">self</span>) -&gt; <span class="self">Self</span>;
+        libm::roundf <span class="kw">as </span>round(<span class="self">self</span>) -&gt; <span class="self">Self</span>;
+        libm::truncf <span class="kw">as </span>trunc(<span class="self">self</span>) -&gt; <span class="self">Self</span>;
+        libm::fabsf <span class="kw">as </span>abs(<span class="self">self</span>) -&gt; <span class="self">Self</span>;
+    }
+
+    <span class="attr">#[cfg(all(not(feature = <span class="string">"std"</span>), feature = <span class="string">"libm"</span>))]
+    #[inline]
+    </span><span class="kw">fn </span>fract(<span class="self">self</span>) -&gt; <span class="self">Self </span>{
+        <span class="self">self </span>- libm::truncf(<span class="self">self</span>)
     }
 }
 
@@ -3229,46 +3195,28 @@
         integer_decode_f64(<span class="self">self</span>)
     }
 
-    <span class="attr">#[inline]
-    #[cfg(not(feature = <span class="string">"std"</span>))]
-    </span><span class="kw">fn </span>classify(<span class="self">self</span>) -&gt; FpCategory {
-        <span class="kw">const </span>EXP_MASK: u64 = <span class="number">0x7ff0000000000000</span>;
-        <span class="kw">const </span>MAN_MASK: u64 = <span class="number">0x000fffffffffffff</span>;
-
-        <span class="comment">// Safety: this identical to the implementation of f64::to_bits(),
-        // which is only available starting at Rust 1.20
-        </span><span class="kw">let </span>bits: u64 = <span class="kw">unsafe </span>{ mem::transmute(<span class="self">self</span>) };
-        <span class="kw">match </span>(bits &amp; MAN_MASK, bits &amp; EXP_MASK) {
-            (<span class="number">0</span>, <span class="number">0</span>) =&gt; FpCategory::Zero,
-            (<span class="kw">_</span>, <span class="number">0</span>) =&gt; FpCategory::Subnormal,
-            (<span class="number">0</span>, EXP_MASK) =&gt; FpCategory::Infinite,
-            (<span class="kw">_</span>, EXP_MASK) =&gt; FpCategory::Nan,
-            <span class="kw">_ </span>=&gt; FpCategory::Normal,
-        }
-    }
-
-    <span class="attr">#[inline]
-    #[cfg(not(feature = <span class="string">"std"</span>))]
-    </span><span class="kw">fn </span>to_degrees(<span class="self">self</span>) -&gt; <span class="self">Self </span>{
-        <span class="comment">// The division here is correctly rounded with respect to the true
-        // value of 180/π. (This differs from f32, where a constant must be
-        // used to ensure a correctly rounded result.)
-        </span><span class="self">self </span>* (<span class="number">180.0 </span>/ f64::consts::PI)
-    }
-
-    <span class="attr">#[inline]
-    #[cfg(not(feature = <span class="string">"std"</span>))]
-    </span><span class="kw">fn </span>to_radians(<span class="self">self</span>) -&gt; <span class="self">Self </span>{
-        <span class="self">self </span>* (f64::consts::PI / <span class="number">180.0</span>)
-    }
-
-    <span class="attr">#[cfg(feature = <span class="string">"std"</span>)]
-    </span><span class="macro">forward! </span>{
+    <span class="macro">forward! </span>{
         <span class="self">Self</span>::is_nan(<span class="self">self</span>) -&gt; bool;
         <span class="self">Self</span>::is_infinite(<span class="self">self</span>) -&gt; bool;
         <span class="self">Self</span>::is_finite(<span class="self">self</span>) -&gt; bool;
         <span class="self">Self</span>::is_normal(<span class="self">self</span>) -&gt; bool;
         <span class="self">Self</span>::classify(<span class="self">self</span>) -&gt; FpCategory;
+        <span class="self">Self</span>::is_sign_positive(<span class="self">self</span>) -&gt; bool;
+        <span class="self">Self</span>::is_sign_negative(<span class="self">self</span>) -&gt; bool;
+        <span class="self">Self</span>::min(<span class="self">self</span>, other: <span class="self">Self</span>) -&gt; <span class="self">Self</span>;
+        <span class="self">Self</span>::max(<span class="self">self</span>, other: <span class="self">Self</span>) -&gt; <span class="self">Self</span>;
+        <span class="self">Self</span>::recip(<span class="self">self</span>) -&gt; <span class="self">Self</span>;
+        <span class="self">Self</span>::to_degrees(<span class="self">self</span>) -&gt; <span class="self">Self</span>;
+        <span class="self">Self</span>::to_radians(<span class="self">self</span>) -&gt; <span class="self">Self</span>;
+    }
+
+    <span class="attr">#[cfg(has_is_subnormal)]
+    </span><span class="macro">forward! </span>{
+        <span class="self">Self</span>::is_subnormal(<span class="self">self</span>) -&gt; bool;
+    }
+
+    <span class="attr">#[cfg(feature = <span class="string">"std"</span>)]
+    </span><span class="macro">forward! </span>{
         <span class="self">Self</span>::floor(<span class="self">self</span>) -&gt; <span class="self">Self</span>;
         <span class="self">Self</span>::ceil(<span class="self">self</span>) -&gt; <span class="self">Self</span>;
         <span class="self">Self</span>::round(<span class="self">self</span>) -&gt; <span class="self">Self</span>;
@@ -3276,14 +3224,22 @@
         <span class="self">Self</span>::fract(<span class="self">self</span>) -&gt; <span class="self">Self</span>;
         <span class="self">Self</span>::abs(<span class="self">self</span>) -&gt; <span class="self">Self</span>;
         <span class="self">Self</span>::signum(<span class="self">self</span>) -&gt; <span class="self">Self</span>;
-        <span class="self">Self</span>::is_sign_positive(<span class="self">self</span>) -&gt; bool;
-        <span class="self">Self</span>::is_sign_negative(<span class="self">self</span>) -&gt; bool;
-        <span class="self">Self</span>::min(<span class="self">self</span>, other: <span class="self">Self</span>) -&gt; <span class="self">Self</span>;
-        <span class="self">Self</span>::max(<span class="self">self</span>, other: <span class="self">Self</span>) -&gt; <span class="self">Self</span>;
-        <span class="self">Self</span>::recip(<span class="self">self</span>) -&gt; <span class="self">Self</span>;
         <span class="self">Self</span>::powi(<span class="self">self</span>, n: i32) -&gt; <span class="self">Self</span>;
-        <span class="self">Self</span>::to_degrees(<span class="self">self</span>) -&gt; <span class="self">Self</span>;
-        <span class="self">Self</span>::to_radians(<span class="self">self</span>) -&gt; <span class="self">Self</span>;
+    }
+
+    <span class="attr">#[cfg(all(not(feature = <span class="string">"std"</span>), feature = <span class="string">"libm"</span>))]
+    </span><span class="macro">forward! </span>{
+        libm::floor <span class="kw">as </span>floor(<span class="self">self</span>) -&gt; <span class="self">Self</span>;
+        libm::ceil <span class="kw">as </span>ceil(<span class="self">self</span>) -&gt; <span class="self">Self</span>;
+        libm::round <span class="kw">as </span>round(<span class="self">self</span>) -&gt; <span class="self">Self</span>;
+        libm::trunc <span class="kw">as </span>trunc(<span class="self">self</span>) -&gt; <span class="self">Self</span>;
+        libm::fabs <span class="kw">as </span>abs(<span class="self">self</span>) -&gt; <span class="self">Self</span>;
+    }
+
+    <span class="attr">#[cfg(all(not(feature = <span class="string">"std"</span>), feature = <span class="string">"libm"</span>))]
+    #[inline]
+    </span><span class="kw">fn </span>fract(<span class="self">self</span>) -&gt; <span class="self">Self </span>{
+        <span class="self">self </span>- libm::trunc(<span class="self">self</span>)
     }
 }
 
@@ -3474,8 +3430,34 @@
     /// // Values between `0` and `min` are Subnormal.
     /// assert!(!lower_than_min.is_normal());
     /// ```
-    /// [subnormal]: http://en.wikipedia.org/wiki/Denormal_number
+    /// [subnormal]: http://en.wikipedia.org/wiki/Subnormal_number
     </span><span class="kw">fn </span>is_normal(<span class="self">self</span>) -&gt; bool;
+
+    <span class="doccomment">/// Returns `true` if the number is [subnormal].
+    ///
+    /// ```
+    /// use num_traits::Float;
+    /// use std::f64;
+    ///
+    /// let min = f64::MIN_POSITIVE; // 2.2250738585072014e-308_f64
+    /// let max = f64::MAX;
+    /// let lower_than_min = 1.0e-308_f64;
+    /// let zero = 0.0_f64;
+    ///
+    /// assert!(!min.is_subnormal());
+    /// assert!(!max.is_subnormal());
+    ///
+    /// assert!(!zero.is_subnormal());
+    /// assert!(!f64::NAN.is_subnormal());
+    /// assert!(!f64::INFINITY.is_subnormal());
+    /// // Values between `0` and `min` are Subnormal.
+    /// assert!(lower_than_min.is_subnormal());
+    /// ```
+    /// [subnormal]: https://en.wikipedia.org/wiki/Subnormal_number
+    </span><span class="attr">#[inline]
+    </span><span class="kw">fn </span>is_subnormal(<span class="self">self</span>) -&gt; bool {
+        <span class="self">self</span>.classify() == FpCategory::Subnormal
+    }
 
     <span class="doccomment">/// Returns the floating point category of the number. If only one property
     /// is going to be tested, it is generally faster to use the specific
@@ -3602,12 +3584,13 @@
     </span><span class="kw">fn </span>signum(<span class="self">self</span>) -&gt; <span class="self">Self</span>;
 
     <span class="doccomment">/// Returns `true` if `self` is positive, including `+0.0`,
-    /// `Float::infinity()`, and since Rust 1.20 also `Float::nan()`.
+    /// `Float::infinity()`, and `Float::nan()`.
     ///
     /// ```
     /// use num_traits::Float;
     /// use std::f64;
     ///
+    /// let nan: f64 = f64::NAN;
     /// let neg_nan: f64 = -f64::NAN;
     ///
     /// let f = 7.0;
@@ -3615,18 +3598,20 @@
     ///
     /// assert!(f.is_sign_positive());
     /// assert!(!g.is_sign_positive());
+    /// assert!(nan.is_sign_positive());
     /// assert!(!neg_nan.is_sign_positive());
     /// ```
     </span><span class="kw">fn </span>is_sign_positive(<span class="self">self</span>) -&gt; bool;
 
     <span class="doccomment">/// Returns `true` if `self` is negative, including `-0.0`,
-    /// `Float::neg_infinity()`, and since Rust 1.20 also `-Float::nan()`.
+    /// `Float::neg_infinity()`, and `-Float::nan()`.
     ///
     /// ```
     /// use num_traits::Float;
     /// use std::f64;
     ///
     /// let nan: f64 = f64::NAN;
+    /// let neg_nan: f64 = -f64::NAN;
     ///
     /// let f = 7.0;
     /// let g = -7.0;
@@ -3634,6 +3619,7 @@
     /// assert!(!f.is_sign_negative());
     /// assert!(g.is_sign_negative());
     /// assert!(!nan.is_sign_negative());
+    /// assert!(neg_nan.is_sign_negative());
     /// ```
     </span><span class="kw">fn </span>is_sign_negative(<span class="self">self</span>) -&gt; bool;
 
@@ -4198,6 +4184,35 @@
     /// assert!(abs_difference &lt; 1e-10);
     /// ```
     </span><span class="kw">fn </span>integer_decode(<span class="self">self</span>) -&gt; (u64, i16, i8);
+
+    <span class="doccomment">/// Returns a number composed of the magnitude of `self` and the sign of
+    /// `sign`.
+    ///
+    /// Equal to `self` if the sign of `self` and `sign` are the same, otherwise
+    /// equal to `-self`. If `self` is a `NAN`, then a `NAN` with the sign of
+    /// `sign` is returned.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use num_traits::Float;
+    ///
+    /// let f = 3.5_f32;
+    ///
+    /// assert_eq!(f.copysign(0.42), 3.5_f32);
+    /// assert_eq!(f.copysign(-0.42), -3.5_f32);
+    /// assert_eq!((-f).copysign(0.42), 3.5_f32);
+    /// assert_eq!((-f).copysign(-0.42), -3.5_f32);
+    ///
+    /// assert!(f32::nan().copysign(1.0).is_nan());
+    /// ```
+    </span><span class="kw">fn </span>copysign(<span class="self">self</span>, sign: <span class="self">Self</span>) -&gt; <span class="self">Self </span>{
+        <span class="kw">if </span><span class="self">self</span>.is_sign_negative() == sign.is_sign_negative() {
+            <span class="self">self
+        </span>} <span class="kw">else </span>{
+            <span class="self">self</span>.neg()
+        }
+    }
 }
 
 <span class="attr">#[cfg(feature = <span class="string">"std"</span>)]
@@ -4275,6 +4290,16 @@
                 <span class="self">Self</span>::acosh(<span class="self">self</span>) -&gt; <span class="self">Self</span>;
                 <span class="self">Self</span>::atanh(<span class="self">self</span>) -&gt; <span class="self">Self</span>;
             }
+
+            <span class="attr">#[cfg(has_copysign)]
+            </span><span class="macro">forward! </span>{
+                <span class="self">Self</span>::copysign(<span class="self">self</span>, sign: <span class="self">Self</span>) -&gt; <span class="self">Self</span>;
+            }
+
+            <span class="attr">#[cfg(has_is_subnormal)]
+            </span><span class="macro">forward! </span>{
+                <span class="self">Self</span>::is_subnormal(<span class="self">self</span>) -&gt; bool;
+            }
         }
     };
 }
@@ -4300,7 +4325,7 @@
 
         <span class="attr">#[inline]
         </span><span class="kw">fn </span>fract(<span class="self">self</span>) -&gt; <span class="self">Self </span>{
-            <span class="self">self </span>- FloatCore::trunc(<span class="self">self</span>)
+            <span class="self">self </span>- Float::trunc(<span class="self">self</span>)
         }
 
         <span class="attr">#[inline]
@@ -4309,28 +4334,34 @@
         }
 
         <span class="macro">forward! </span>{
-            FloatCore::is_nan(<span class="self">self</span>) -&gt; bool;
-            FloatCore::is_infinite(<span class="self">self</span>) -&gt; bool;
-            FloatCore::is_finite(<span class="self">self</span>) -&gt; bool;
-            FloatCore::is_normal(<span class="self">self</span>) -&gt; bool;
-            FloatCore::classify(<span class="self">self</span>) -&gt; FpCategory;
+            <span class="self">Self</span>::is_nan(<span class="self">self</span>) -&gt; bool;
+            <span class="self">Self</span>::is_infinite(<span class="self">self</span>) -&gt; bool;
+            <span class="self">Self</span>::is_finite(<span class="self">self</span>) -&gt; bool;
+            <span class="self">Self</span>::is_normal(<span class="self">self</span>) -&gt; bool;
+            <span class="self">Self</span>::classify(<span class="self">self</span>) -&gt; FpCategory;
+            <span class="self">Self</span>::is_sign_positive(<span class="self">self</span>) -&gt; bool;
+            <span class="self">Self</span>::is_sign_negative(<span class="self">self</span>) -&gt; bool;
+            <span class="self">Self</span>::min(<span class="self">self</span>, other: <span class="self">Self</span>) -&gt; <span class="self">Self</span>;
+            <span class="self">Self</span>::max(<span class="self">self</span>, other: <span class="self">Self</span>) -&gt; <span class="self">Self</span>;
+            <span class="self">Self</span>::recip(<span class="self">self</span>) -&gt; <span class="self">Self</span>;
+            <span class="self">Self</span>::to_degrees(<span class="self">self</span>) -&gt; <span class="self">Self</span>;
+            <span class="self">Self</span>::to_radians(<span class="self">self</span>) -&gt; <span class="self">Self</span>;
+        }
+
+        <span class="attr">#[cfg(has_is_subnormal)]
+        </span><span class="macro">forward! </span>{
+            <span class="self">Self</span>::is_subnormal(<span class="self">self</span>) -&gt; bool;
+        }
+
+        <span class="macro">forward! </span>{
             FloatCore::signum(<span class="self">self</span>) -&gt; <span class="self">Self</span>;
-            FloatCore::is_sign_positive(<span class="self">self</span>) -&gt; bool;
-            FloatCore::is_sign_negative(<span class="self">self</span>) -&gt; bool;
-            FloatCore::recip(<span class="self">self</span>) -&gt; <span class="self">Self</span>;
             FloatCore::powi(<span class="self">self</span>, n: i32) -&gt; <span class="self">Self</span>;
-            FloatCore::to_degrees(<span class="self">self</span>) -&gt; <span class="self">Self</span>;
-            FloatCore::to_radians(<span class="self">self</span>) -&gt; <span class="self">Self</span>;
-            FloatCore::max(<span class="self">self</span>, other: <span class="self">Self</span>) -&gt; <span class="self">Self</span>;
-            FloatCore::min(<span class="self">self</span>, other: <span class="self">Self</span>) -&gt; <span class="self">Self</span>;
         }
     };
 }
 
 <span class="kw">fn </span>integer_decode_f32(f: f32) -&gt; (u64, i16, i8) {
-    <span class="comment">// Safety: this identical to the implementation of f32::to_bits(),
-    // which is only available starting at Rust 1.20
-    </span><span class="kw">let </span>bits: u32 = <span class="kw">unsafe </span>{ mem::transmute(f) };
+    <span class="kw">let </span>bits: u32 = f.to_bits();
     <span class="kw">let </span>sign: i8 = <span class="kw">if </span>bits &gt;&gt; <span class="number">31 </span>== <span class="number">0 </span>{ <span class="number">1 </span>} <span class="kw">else </span>{ -<span class="number">1 </span>};
     <span class="kw">let </span><span class="kw-2">mut </span>exponent: i16 = ((bits &gt;&gt; <span class="number">23</span>) &amp; <span class="number">0xff</span>) <span class="kw">as </span>i16;
     <span class="kw">let </span>mantissa = <span class="kw">if </span>exponent == <span class="number">0 </span>{
@@ -4344,9 +4375,7 @@
 }
 
 <span class="kw">fn </span>integer_decode_f64(f: f64) -&gt; (u64, i16, i8) {
-    <span class="comment">// Safety: this identical to the implementation of f64::to_bits(),
-    // which is only available starting at Rust 1.20
-    </span><span class="kw">let </span>bits: u64 = <span class="kw">unsafe </span>{ mem::transmute(f) };
+    <span class="kw">let </span>bits: u64 = f.to_bits();
     <span class="kw">let </span>sign: i8 = <span class="kw">if </span>bits &gt;&gt; <span class="number">63 </span>== <span class="number">0 </span>{ <span class="number">1 </span>} <span class="kw">else </span>{ -<span class="number">1 </span>};
     <span class="kw">let </span><span class="kw-2">mut </span>exponent: i16 = ((bits &gt;&gt; <span class="number">52</span>) &amp; <span class="number">0x7ff</span>) <span class="kw">as </span>i16;
     <span class="kw">let </span>mantissa = <span class="kw">if </span>exponent == <span class="number">0 </span>{
@@ -4373,129 +4402,40 @@
     </span><span class="kw">fn </span>abs_sub(<span class="self">self</span>, other: <span class="self">Self</span>) -&gt; <span class="self">Self </span>{
         libm::fdimf(<span class="self">self</span>, other)
     }
-    <span class="attr">#[inline]
-    </span><span class="kw">fn </span>floor(<span class="self">self</span>) -&gt; <span class="self">Self </span>{
-        libm::floorf(<span class="self">self</span>)
-    }
-    <span class="attr">#[inline]
-    </span><span class="kw">fn </span>ceil(<span class="self">self</span>) -&gt; <span class="self">Self </span>{
-        libm::ceilf(<span class="self">self</span>)
-    }
-    <span class="attr">#[inline]
-    </span><span class="kw">fn </span>round(<span class="self">self</span>) -&gt; <span class="self">Self </span>{
-        libm::roundf(<span class="self">self</span>)
-    }
-    <span class="attr">#[inline]
-    </span><span class="kw">fn </span>trunc(<span class="self">self</span>) -&gt; <span class="self">Self </span>{
-        libm::truncf(<span class="self">self</span>)
-    }
-    <span class="attr">#[inline]
-    </span><span class="kw">fn </span>abs(<span class="self">self</span>) -&gt; <span class="self">Self </span>{
-        libm::fabsf(<span class="self">self</span>)
-    }
-    <span class="attr">#[inline]
-    </span><span class="kw">fn </span>mul_add(<span class="self">self</span>, a: <span class="self">Self</span>, b: <span class="self">Self</span>) -&gt; <span class="self">Self </span>{
-        libm::fmaf(<span class="self">self</span>, a, b)
-    }
-    <span class="attr">#[inline]
-    </span><span class="kw">fn </span>powf(<span class="self">self</span>, n: <span class="self">Self</span>) -&gt; <span class="self">Self </span>{
-        libm::powf(<span class="self">self</span>, n)
-    }
-    <span class="attr">#[inline]
-    </span><span class="kw">fn </span>sqrt(<span class="self">self</span>) -&gt; <span class="self">Self </span>{
-        libm::sqrtf(<span class="self">self</span>)
-    }
-    <span class="attr">#[inline]
-    </span><span class="kw">fn </span>exp(<span class="self">self</span>) -&gt; <span class="self">Self </span>{
-        libm::expf(<span class="self">self</span>)
-    }
-    <span class="attr">#[inline]
-    </span><span class="kw">fn </span>exp2(<span class="self">self</span>) -&gt; <span class="self">Self </span>{
-        libm::exp2f(<span class="self">self</span>)
-    }
-    <span class="attr">#[inline]
-    </span><span class="kw">fn </span>ln(<span class="self">self</span>) -&gt; <span class="self">Self </span>{
-        libm::logf(<span class="self">self</span>)
-    }
-    <span class="attr">#[inline]
-    </span><span class="kw">fn </span>log2(<span class="self">self</span>) -&gt; <span class="self">Self </span>{
-        libm::log2f(<span class="self">self</span>)
-    }
-    <span class="attr">#[inline]
-    </span><span class="kw">fn </span>log10(<span class="self">self</span>) -&gt; <span class="self">Self </span>{
-        libm::log10f(<span class="self">self</span>)
-    }
-    <span class="attr">#[inline]
-    </span><span class="kw">fn </span>cbrt(<span class="self">self</span>) -&gt; <span class="self">Self </span>{
-        libm::cbrtf(<span class="self">self</span>)
-    }
-    <span class="attr">#[inline]
-    </span><span class="kw">fn </span>hypot(<span class="self">self</span>, other: <span class="self">Self</span>) -&gt; <span class="self">Self </span>{
-        libm::hypotf(<span class="self">self</span>, other)
-    }
-    <span class="attr">#[inline]
-    </span><span class="kw">fn </span>sin(<span class="self">self</span>) -&gt; <span class="self">Self </span>{
-        libm::sinf(<span class="self">self</span>)
-    }
-    <span class="attr">#[inline]
-    </span><span class="kw">fn </span>cos(<span class="self">self</span>) -&gt; <span class="self">Self </span>{
-        libm::cosf(<span class="self">self</span>)
-    }
-    <span class="attr">#[inline]
-    </span><span class="kw">fn </span>tan(<span class="self">self</span>) -&gt; <span class="self">Self </span>{
-        libm::tanf(<span class="self">self</span>)
-    }
-    <span class="attr">#[inline]
-    </span><span class="kw">fn </span>asin(<span class="self">self</span>) -&gt; <span class="self">Self </span>{
-        libm::asinf(<span class="self">self</span>)
-    }
-    <span class="attr">#[inline]
-    </span><span class="kw">fn </span>acos(<span class="self">self</span>) -&gt; <span class="self">Self </span>{
-        libm::acosf(<span class="self">self</span>)
-    }
-    <span class="attr">#[inline]
-    </span><span class="kw">fn </span>atan(<span class="self">self</span>) -&gt; <span class="self">Self </span>{
-        libm::atanf(<span class="self">self</span>)
-    }
-    <span class="attr">#[inline]
-    </span><span class="kw">fn </span>atan2(<span class="self">self</span>, other: <span class="self">Self</span>) -&gt; <span class="self">Self </span>{
-        libm::atan2f(<span class="self">self</span>, other)
-    }
-    <span class="attr">#[inline]
-    </span><span class="kw">fn </span>sin_cos(<span class="self">self</span>) -&gt; (<span class="self">Self</span>, <span class="self">Self</span>) {
-        libm::sincosf(<span class="self">self</span>)
-    }
-    <span class="attr">#[inline]
-    </span><span class="kw">fn </span>exp_m1(<span class="self">self</span>) -&gt; <span class="self">Self </span>{
-        libm::expm1f(<span class="self">self</span>)
-    }
-    <span class="attr">#[inline]
-    </span><span class="kw">fn </span>ln_1p(<span class="self">self</span>) -&gt; <span class="self">Self </span>{
-        libm::log1pf(<span class="self">self</span>)
-    }
-    <span class="attr">#[inline]
-    </span><span class="kw">fn </span>sinh(<span class="self">self</span>) -&gt; <span class="self">Self </span>{
-        libm::sinhf(<span class="self">self</span>)
-    }
-    <span class="attr">#[inline]
-    </span><span class="kw">fn </span>cosh(<span class="self">self</span>) -&gt; <span class="self">Self </span>{
-        libm::coshf(<span class="self">self</span>)
-    }
-    <span class="attr">#[inline]
-    </span><span class="kw">fn </span>tanh(<span class="self">self</span>) -&gt; <span class="self">Self </span>{
-        libm::tanhf(<span class="self">self</span>)
-    }
-    <span class="attr">#[inline]
-    </span><span class="kw">fn </span>asinh(<span class="self">self</span>) -&gt; <span class="self">Self </span>{
-        libm::asinhf(<span class="self">self</span>)
-    }
-    <span class="attr">#[inline]
-    </span><span class="kw">fn </span>acosh(<span class="self">self</span>) -&gt; <span class="self">Self </span>{
-        libm::acoshf(<span class="self">self</span>)
-    }
-    <span class="attr">#[inline]
-    </span><span class="kw">fn </span>atanh(<span class="self">self</span>) -&gt; <span class="self">Self </span>{
-        libm::atanhf(<span class="self">self</span>)
+
+    <span class="macro">forward! </span>{
+        libm::floorf <span class="kw">as </span>floor(<span class="self">self</span>) -&gt; <span class="self">Self</span>;
+        libm::ceilf <span class="kw">as </span>ceil(<span class="self">self</span>) -&gt; <span class="self">Self</span>;
+        libm::roundf <span class="kw">as </span>round(<span class="self">self</span>) -&gt; <span class="self">Self</span>;
+        libm::truncf <span class="kw">as </span>trunc(<span class="self">self</span>) -&gt; <span class="self">Self</span>;
+        libm::fabsf <span class="kw">as </span>abs(<span class="self">self</span>) -&gt; <span class="self">Self</span>;
+        libm::fmaf <span class="kw">as </span>mul_add(<span class="self">self</span>, a: <span class="self">Self</span>, b: <span class="self">Self</span>) -&gt; <span class="self">Self</span>;
+        libm::powf <span class="kw">as </span>powf(<span class="self">self</span>, n: <span class="self">Self</span>) -&gt; <span class="self">Self</span>;
+        libm::sqrtf <span class="kw">as </span>sqrt(<span class="self">self</span>) -&gt; <span class="self">Self</span>;
+        libm::expf <span class="kw">as </span>exp(<span class="self">self</span>) -&gt; <span class="self">Self</span>;
+        libm::exp2f <span class="kw">as </span>exp2(<span class="self">self</span>) -&gt; <span class="self">Self</span>;
+        libm::logf <span class="kw">as </span>ln(<span class="self">self</span>) -&gt; <span class="self">Self</span>;
+        libm::log2f <span class="kw">as </span>log2(<span class="self">self</span>) -&gt; <span class="self">Self</span>;
+        libm::log10f <span class="kw">as </span>log10(<span class="self">self</span>) -&gt; <span class="self">Self</span>;
+        libm::cbrtf <span class="kw">as </span>cbrt(<span class="self">self</span>) -&gt; <span class="self">Self</span>;
+        libm::hypotf <span class="kw">as </span>hypot(<span class="self">self</span>, other: <span class="self">Self</span>) -&gt; <span class="self">Self</span>;
+        libm::sinf <span class="kw">as </span>sin(<span class="self">self</span>) -&gt; <span class="self">Self</span>;
+        libm::cosf <span class="kw">as </span>cos(<span class="self">self</span>) -&gt; <span class="self">Self</span>;
+        libm::tanf <span class="kw">as </span>tan(<span class="self">self</span>) -&gt; <span class="self">Self</span>;
+        libm::asinf <span class="kw">as </span>asin(<span class="self">self</span>) -&gt; <span class="self">Self</span>;
+        libm::acosf <span class="kw">as </span>acos(<span class="self">self</span>) -&gt; <span class="self">Self</span>;
+        libm::atanf <span class="kw">as </span>atan(<span class="self">self</span>) -&gt; <span class="self">Self</span>;
+        libm::atan2f <span class="kw">as </span>atan2(<span class="self">self</span>, other: <span class="self">Self</span>) -&gt; <span class="self">Self</span>;
+        libm::sincosf <span class="kw">as </span>sin_cos(<span class="self">self</span>) -&gt; (<span class="self">Self</span>, <span class="self">Self</span>);
+        libm::expm1f <span class="kw">as </span>exp_m1(<span class="self">self</span>) -&gt; <span class="self">Self</span>;
+        libm::log1pf <span class="kw">as </span>ln_1p(<span class="self">self</span>) -&gt; <span class="self">Self</span>;
+        libm::sinhf <span class="kw">as </span>sinh(<span class="self">self</span>) -&gt; <span class="self">Self</span>;
+        libm::coshf <span class="kw">as </span>cosh(<span class="self">self</span>) -&gt; <span class="self">Self</span>;
+        libm::tanhf <span class="kw">as </span>tanh(<span class="self">self</span>) -&gt; <span class="self">Self</span>;
+        libm::asinhf <span class="kw">as </span>asinh(<span class="self">self</span>) -&gt; <span class="self">Self</span>;
+        libm::acoshf <span class="kw">as </span>acosh(<span class="self">self</span>) -&gt; <span class="self">Self</span>;
+        libm::atanhf <span class="kw">as </span>atanh(<span class="self">self</span>) -&gt; <span class="self">Self</span>;
+        libm::copysignf <span class="kw">as </span>copysign(<span class="self">self</span>, other: <span class="self">Self</span>) -&gt; <span class="self">Self</span>;
     }
 }
 
@@ -4508,129 +4448,40 @@
     </span><span class="kw">fn </span>abs_sub(<span class="self">self</span>, other: <span class="self">Self</span>) -&gt; <span class="self">Self </span>{
         libm::fdim(<span class="self">self</span>, other)
     }
-    <span class="attr">#[inline]
-    </span><span class="kw">fn </span>floor(<span class="self">self</span>) -&gt; <span class="self">Self </span>{
-        libm::floor(<span class="self">self</span>)
-    }
-    <span class="attr">#[inline]
-    </span><span class="kw">fn </span>ceil(<span class="self">self</span>) -&gt; <span class="self">Self </span>{
-        libm::ceil(<span class="self">self</span>)
-    }
-    <span class="attr">#[inline]
-    </span><span class="kw">fn </span>round(<span class="self">self</span>) -&gt; <span class="self">Self </span>{
-        libm::round(<span class="self">self</span>)
-    }
-    <span class="attr">#[inline]
-    </span><span class="kw">fn </span>trunc(<span class="self">self</span>) -&gt; <span class="self">Self </span>{
-        libm::trunc(<span class="self">self</span>)
-    }
-    <span class="attr">#[inline]
-    </span><span class="kw">fn </span>abs(<span class="self">self</span>) -&gt; <span class="self">Self </span>{
-        libm::fabs(<span class="self">self</span>)
-    }
-    <span class="attr">#[inline]
-    </span><span class="kw">fn </span>mul_add(<span class="self">self</span>, a: <span class="self">Self</span>, b: <span class="self">Self</span>) -&gt; <span class="self">Self </span>{
-        libm::fma(<span class="self">self</span>, a, b)
-    }
-    <span class="attr">#[inline]
-    </span><span class="kw">fn </span>powf(<span class="self">self</span>, n: <span class="self">Self</span>) -&gt; <span class="self">Self </span>{
-        libm::pow(<span class="self">self</span>, n)
-    }
-    <span class="attr">#[inline]
-    </span><span class="kw">fn </span>sqrt(<span class="self">self</span>) -&gt; <span class="self">Self </span>{
-        libm::sqrt(<span class="self">self</span>)
-    }
-    <span class="attr">#[inline]
-    </span><span class="kw">fn </span>exp(<span class="self">self</span>) -&gt; <span class="self">Self </span>{
-        libm::exp(<span class="self">self</span>)
-    }
-    <span class="attr">#[inline]
-    </span><span class="kw">fn </span>exp2(<span class="self">self</span>) -&gt; <span class="self">Self </span>{
-        libm::exp2(<span class="self">self</span>)
-    }
-    <span class="attr">#[inline]
-    </span><span class="kw">fn </span>ln(<span class="self">self</span>) -&gt; <span class="self">Self </span>{
-        libm::log(<span class="self">self</span>)
-    }
-    <span class="attr">#[inline]
-    </span><span class="kw">fn </span>log2(<span class="self">self</span>) -&gt; <span class="self">Self </span>{
-        libm::log2(<span class="self">self</span>)
-    }
-    <span class="attr">#[inline]
-    </span><span class="kw">fn </span>log10(<span class="self">self</span>) -&gt; <span class="self">Self </span>{
-        libm::log10(<span class="self">self</span>)
-    }
-    <span class="attr">#[inline]
-    </span><span class="kw">fn </span>cbrt(<span class="self">self</span>) -&gt; <span class="self">Self </span>{
-        libm::cbrt(<span class="self">self</span>)
-    }
-    <span class="attr">#[inline]
-    </span><span class="kw">fn </span>hypot(<span class="self">self</span>, other: <span class="self">Self</span>) -&gt; <span class="self">Self </span>{
-        libm::hypot(<span class="self">self</span>, other)
-    }
-    <span class="attr">#[inline]
-    </span><span class="kw">fn </span>sin(<span class="self">self</span>) -&gt; <span class="self">Self </span>{
-        libm::sin(<span class="self">self</span>)
-    }
-    <span class="attr">#[inline]
-    </span><span class="kw">fn </span>cos(<span class="self">self</span>) -&gt; <span class="self">Self </span>{
-        libm::cos(<span class="self">self</span>)
-    }
-    <span class="attr">#[inline]
-    </span><span class="kw">fn </span>tan(<span class="self">self</span>) -&gt; <span class="self">Self </span>{
-        libm::tan(<span class="self">self</span>)
-    }
-    <span class="attr">#[inline]
-    </span><span class="kw">fn </span>asin(<span class="self">self</span>) -&gt; <span class="self">Self </span>{
-        libm::asin(<span class="self">self</span>)
-    }
-    <span class="attr">#[inline]
-    </span><span class="kw">fn </span>acos(<span class="self">self</span>) -&gt; <span class="self">Self </span>{
-        libm::acos(<span class="self">self</span>)
-    }
-    <span class="attr">#[inline]
-    </span><span class="kw">fn </span>atan(<span class="self">self</span>) -&gt; <span class="self">Self </span>{
-        libm::atan(<span class="self">self</span>)
-    }
-    <span class="attr">#[inline]
-    </span><span class="kw">fn </span>atan2(<span class="self">self</span>, other: <span class="self">Self</span>) -&gt; <span class="self">Self </span>{
-        libm::atan2(<span class="self">self</span>, other)
-    }
-    <span class="attr">#[inline]
-    </span><span class="kw">fn </span>sin_cos(<span class="self">self</span>) -&gt; (<span class="self">Self</span>, <span class="self">Self</span>) {
-        libm::sincos(<span class="self">self</span>)
-    }
-    <span class="attr">#[inline]
-    </span><span class="kw">fn </span>exp_m1(<span class="self">self</span>) -&gt; <span class="self">Self </span>{
-        libm::expm1(<span class="self">self</span>)
-    }
-    <span class="attr">#[inline]
-    </span><span class="kw">fn </span>ln_1p(<span class="self">self</span>) -&gt; <span class="self">Self </span>{
-        libm::log1p(<span class="self">self</span>)
-    }
-    <span class="attr">#[inline]
-    </span><span class="kw">fn </span>sinh(<span class="self">self</span>) -&gt; <span class="self">Self </span>{
-        libm::sinh(<span class="self">self</span>)
-    }
-    <span class="attr">#[inline]
-    </span><span class="kw">fn </span>cosh(<span class="self">self</span>) -&gt; <span class="self">Self </span>{
-        libm::cosh(<span class="self">self</span>)
-    }
-    <span class="attr">#[inline]
-    </span><span class="kw">fn </span>tanh(<span class="self">self</span>) -&gt; <span class="self">Self </span>{
-        libm::tanh(<span class="self">self</span>)
-    }
-    <span class="attr">#[inline]
-    </span><span class="kw">fn </span>asinh(<span class="self">self</span>) -&gt; <span class="self">Self </span>{
-        libm::asinh(<span class="self">self</span>)
-    }
-    <span class="attr">#[inline]
-    </span><span class="kw">fn </span>acosh(<span class="self">self</span>) -&gt; <span class="self">Self </span>{
-        libm::acosh(<span class="self">self</span>)
-    }
-    <span class="attr">#[inline]
-    </span><span class="kw">fn </span>atanh(<span class="self">self</span>) -&gt; <span class="self">Self </span>{
-        libm::atanh(<span class="self">self</span>)
+
+    <span class="macro">forward! </span>{
+        libm::floor <span class="kw">as </span>floor(<span class="self">self</span>) -&gt; <span class="self">Self</span>;
+        libm::ceil <span class="kw">as </span>ceil(<span class="self">self</span>) -&gt; <span class="self">Self</span>;
+        libm::round <span class="kw">as </span>round(<span class="self">self</span>) -&gt; <span class="self">Self</span>;
+        libm::trunc <span class="kw">as </span>trunc(<span class="self">self</span>) -&gt; <span class="self">Self</span>;
+        libm::fabs <span class="kw">as </span>abs(<span class="self">self</span>) -&gt; <span class="self">Self</span>;
+        libm::fma <span class="kw">as </span>mul_add(<span class="self">self</span>, a: <span class="self">Self</span>, b: <span class="self">Self</span>) -&gt; <span class="self">Self</span>;
+        libm::pow <span class="kw">as </span>powf(<span class="self">self</span>, n: <span class="self">Self</span>) -&gt; <span class="self">Self</span>;
+        libm::sqrt <span class="kw">as </span>sqrt(<span class="self">self</span>) -&gt; <span class="self">Self</span>;
+        libm::exp <span class="kw">as </span>exp(<span class="self">self</span>) -&gt; <span class="self">Self</span>;
+        libm::exp2 <span class="kw">as </span>exp2(<span class="self">self</span>) -&gt; <span class="self">Self</span>;
+        libm::log <span class="kw">as </span>ln(<span class="self">self</span>) -&gt; <span class="self">Self</span>;
+        libm::log2 <span class="kw">as </span>log2(<span class="self">self</span>) -&gt; <span class="self">Self</span>;
+        libm::log10 <span class="kw">as </span>log10(<span class="self">self</span>) -&gt; <span class="self">Self</span>;
+        libm::cbrt <span class="kw">as </span>cbrt(<span class="self">self</span>) -&gt; <span class="self">Self</span>;
+        libm::hypot <span class="kw">as </span>hypot(<span class="self">self</span>, other: <span class="self">Self</span>) -&gt; <span class="self">Self</span>;
+        libm::sin <span class="kw">as </span>sin(<span class="self">self</span>) -&gt; <span class="self">Self</span>;
+        libm::cos <span class="kw">as </span>cos(<span class="self">self</span>) -&gt; <span class="self">Self</span>;
+        libm::tan <span class="kw">as </span>tan(<span class="self">self</span>) -&gt; <span class="self">Self</span>;
+        libm::asin <span class="kw">as </span>asin(<span class="self">self</span>) -&gt; <span class="self">Self</span>;
+        libm::acos <span class="kw">as </span>acos(<span class="self">self</span>) -&gt; <span class="self">Self</span>;
+        libm::atan <span class="kw">as </span>atan(<span class="self">self</span>) -&gt; <span class="self">Self</span>;
+        libm::atan2 <span class="kw">as </span>atan2(<span class="self">self</span>, other: <span class="self">Self</span>) -&gt; <span class="self">Self</span>;
+        libm::sincos <span class="kw">as </span>sin_cos(<span class="self">self</span>) -&gt; (<span class="self">Self</span>, <span class="self">Self</span>);
+        libm::expm1 <span class="kw">as </span>exp_m1(<span class="self">self</span>) -&gt; <span class="self">Self</span>;
+        libm::log1p <span class="kw">as </span>ln_1p(<span class="self">self</span>) -&gt; <span class="self">Self</span>;
+        libm::sinh <span class="kw">as </span>sinh(<span class="self">self</span>) -&gt; <span class="self">Self</span>;
+        libm::cosh <span class="kw">as </span>cosh(<span class="self">self</span>) -&gt; <span class="self">Self</span>;
+        libm::tanh <span class="kw">as </span>tanh(<span class="self">self</span>) -&gt; <span class="self">Self</span>;
+        libm::asinh <span class="kw">as </span>asinh(<span class="self">self</span>) -&gt; <span class="self">Self</span>;
+        libm::acosh <span class="kw">as </span>acosh(<span class="self">self</span>) -&gt; <span class="self">Self</span>;
+        libm::atanh <span class="kw">as </span>atanh(<span class="self">self</span>) -&gt; <span class="self">Self</span>;
+        libm::copysign <span class="kw">as </span>copysign(<span class="self">self</span>, sign: <span class="self">Self</span>) -&gt; <span class="self">Self</span>;
     }
 }
 
@@ -4721,7 +4572,7 @@
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>convert_deg_rad() {
-        <span class="kw">use </span>float::FloatCore;
+        <span class="kw">use </span><span class="kw">crate</span>::float::FloatCore;
 
         <span class="kw">for </span><span class="kw-2">&amp;</span>(deg, rad) <span class="kw">in </span><span class="kw-2">&amp;</span>DEG_RAD_PAIRS {
             <span class="macro">assert!</span>((FloatCore::to_degrees(rad) - deg).abs() &lt; <span class="number">1e-6</span>);
@@ -4737,7 +4588,7 @@
     #[test]
     </span><span class="kw">fn </span>convert_deg_rad_std() {
         <span class="kw">for </span><span class="kw-2">&amp;</span>(deg, rad) <span class="kw">in </span><span class="kw-2">&amp;</span>DEG_RAD_PAIRS {
-            <span class="kw">use </span>Float;
+            <span class="kw">use </span><span class="kw">crate</span>::Float;
 
             <span class="macro">assert!</span>((Float::to_degrees(rad) - deg).abs() &lt; <span class="number">1e-6</span>);
             <span class="macro">assert!</span>((Float::to_radians(deg) - rad).abs() &lt; <span class="number">1e-6</span>);
@@ -4749,11 +4600,8 @@
     }
 
     <span class="attr">#[test]
-    </span><span class="comment">// This fails with the forwarded `std` implementation in Rust 1.8.
-    // To avoid the failure, the test is limited to `no_std` builds.
-    </span><span class="attr">#[cfg(not(feature = <span class="string">"std"</span>))]
     </span><span class="kw">fn </span>to_degrees_rounding() {
-        <span class="kw">use </span>float::FloatCore;
+        <span class="kw">use </span><span class="kw">crate</span>::float::FloatCore;
 
         <span class="macro">assert_eq!</span>(
             FloatCore::to_degrees(<span class="number">1_f32</span>),
@@ -4764,7 +4612,7 @@
     <span class="attr">#[test]
     #[cfg(any(feature = <span class="string">"std"</span>, feature = <span class="string">"libm"</span>))]
     </span><span class="kw">fn </span>extra_logs() {
-        <span class="kw">use </span>float::{Float, FloatConst};
+        <span class="kw">use </span><span class="kw">crate</span>::float::{Float, FloatConst};
 
         <span class="kw">fn </span>check&lt;F: Float + FloatConst&gt;(diff: F) {
             <span class="kw">let </span>_2 = F::from(<span class="number">2.0</span>).unwrap();
@@ -4778,6 +4626,66 @@
 
         check::&lt;f32&gt;(<span class="number">1e-6</span>);
         check::&lt;f64&gt;(<span class="number">1e-12</span>);
+    }
+
+    <span class="attr">#[test]
+    #[cfg(any(feature = <span class="string">"std"</span>, feature = <span class="string">"libm"</span>))]
+    </span><span class="kw">fn </span>copysign() {
+        <span class="kw">use </span><span class="kw">crate</span>::float::Float;
+        test_copysign_generic(<span class="number">2.0_f32</span>, -<span class="number">2.0_f32</span>, f32::nan());
+        test_copysign_generic(<span class="number">2.0_f64</span>, -<span class="number">2.0_f64</span>, f64::nan());
+        test_copysignf(<span class="number">2.0_f32</span>, -<span class="number">2.0_f32</span>, f32::nan());
+    }
+
+    <span class="attr">#[cfg(any(feature = <span class="string">"std"</span>, feature = <span class="string">"libm"</span>))]
+    </span><span class="kw">fn </span>test_copysignf(p: f32, n: f32, nan: f32) {
+        <span class="kw">use </span><span class="kw">crate</span>::float::Float;
+        <span class="kw">use </span>core::ops::Neg;
+
+        <span class="macro">assert!</span>(p.is_sign_positive());
+        <span class="macro">assert!</span>(n.is_sign_negative());
+        <span class="macro">assert!</span>(nan.is_nan());
+
+        <span class="macro">assert_eq!</span>(p, Float::copysign(p, p));
+        <span class="macro">assert_eq!</span>(p.neg(), Float::copysign(p, n));
+
+        <span class="macro">assert_eq!</span>(n, Float::copysign(n, n));
+        <span class="macro">assert_eq!</span>(n.neg(), Float::copysign(n, p));
+
+        <span class="macro">assert!</span>(Float::copysign(nan, p).is_sign_positive());
+        <span class="macro">assert!</span>(Float::copysign(nan, n).is_sign_negative());
+    }
+
+    <span class="attr">#[cfg(any(feature = <span class="string">"std"</span>, feature = <span class="string">"libm"</span>))]
+    </span><span class="kw">fn </span>test_copysign_generic&lt;F: <span class="kw">crate</span>::float::Float + ::core::fmt::Debug&gt;(p: F, n: F, nan: F) {
+        <span class="macro">assert!</span>(p.is_sign_positive());
+        <span class="macro">assert!</span>(n.is_sign_negative());
+        <span class="macro">assert!</span>(nan.is_nan());
+        <span class="macro">assert!</span>(!nan.is_subnormal());
+
+        <span class="macro">assert_eq!</span>(p, p.copysign(p));
+        <span class="macro">assert_eq!</span>(p.neg(), p.copysign(n));
+
+        <span class="macro">assert_eq!</span>(n, n.copysign(n));
+        <span class="macro">assert_eq!</span>(n.neg(), n.copysign(p));
+
+        <span class="macro">assert!</span>(nan.copysign(p).is_sign_positive());
+        <span class="macro">assert!</span>(nan.copysign(n).is_sign_negative());
+    }
+
+    <span class="attr">#[cfg(any(feature = <span class="string">"std"</span>, feature = <span class="string">"libm"</span>))]
+    </span><span class="kw">fn </span>test_subnormal&lt;F: <span class="kw">crate</span>::float::Float + ::core::fmt::Debug&gt;() {
+        <span class="kw">let </span>min_positive = F::min_positive_value();
+        <span class="kw">let </span>lower_than_min = min_positive / F::from(<span class="number">2.0f32</span>).unwrap();
+        <span class="macro">assert!</span>(!min_positive.is_subnormal());
+        <span class="macro">assert!</span>(lower_than_min.is_subnormal());
+    }
+
+    <span class="attr">#[test]
+    #[cfg(any(feature = <span class="string">"std"</span>, feature = <span class="string">"libm"</span>))]
+    </span><span class="kw">fn </span>subnormal() {
+        test_subnormal::&lt;f64&gt;();
+        test_subnormal::&lt;f32&gt;();
     }
 }
 </code></pre></div></section></main></body></html>

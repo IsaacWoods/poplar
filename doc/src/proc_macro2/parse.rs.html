@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/proc-macro2-1.0.36/src/parse.rs`."><title>parse.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-bf502f66ec635d5d.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="proc_macro2" data-themes="" data-resource-suffix="" data-rustdoc-version="1.77.0-nightly (e51e98dde 2023-12-31)" data-channel="nightly" data-search-js="search-c17e98913a53b3b7.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../static.files/storage-f2adc0d6ca4d09fb.js"></script><script defer src="../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-0b2e2def73e61cbe.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-04d5337699b92874.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title">
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/proc-macro2-1.0.74/src/parse.rs`."><title>parse.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-4e54bb2b497cc83f.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="proc_macro2" data-themes="" data-resource-suffix="" data-rustdoc-version="1.77.0-nightly (f688dd684 2024-01-04)" data-channel="nightly" data-search-js="search-c17e98913a53b3b7.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../static.files/storage-f2adc0d6ca4d09fb.js"></script><script defer src="../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-0b2e2def73e61cbe.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-04d5337699b92874.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title">
             <h2>Files</h2></div></nav><div class="sidebar-resizer"></div>
     <main><nav class="sub"><form class="search-form"><span></span><div id="sidebar-button" tabindex="-1"><a href="../../proc_macro2/all.html" title="show sidebar"></a></div><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
@@ -865,12 +865,144 @@
 <a href="#863" id="863">863</a>
 <a href="#864" id="864">864</a>
 <a href="#865" id="865">865</a>
+<a href="#866" id="866">866</a>
+<a href="#867" id="867">867</a>
+<a href="#868" id="868">868</a>
+<a href="#869" id="869">869</a>
+<a href="#870" id="870">870</a>
+<a href="#871" id="871">871</a>
+<a href="#872" id="872">872</a>
+<a href="#873" id="873">873</a>
+<a href="#874" id="874">874</a>
+<a href="#875" id="875">875</a>
+<a href="#876" id="876">876</a>
+<a href="#877" id="877">877</a>
+<a href="#878" id="878">878</a>
+<a href="#879" id="879">879</a>
+<a href="#880" id="880">880</a>
+<a href="#881" id="881">881</a>
+<a href="#882" id="882">882</a>
+<a href="#883" id="883">883</a>
+<a href="#884" id="884">884</a>
+<a href="#885" id="885">885</a>
+<a href="#886" id="886">886</a>
+<a href="#887" id="887">887</a>
+<a href="#888" id="888">888</a>
+<a href="#889" id="889">889</a>
+<a href="#890" id="890">890</a>
+<a href="#891" id="891">891</a>
+<a href="#892" id="892">892</a>
+<a href="#893" id="893">893</a>
+<a href="#894" id="894">894</a>
+<a href="#895" id="895">895</a>
+<a href="#896" id="896">896</a>
+<a href="#897" id="897">897</a>
+<a href="#898" id="898">898</a>
+<a href="#899" id="899">899</a>
+<a href="#900" id="900">900</a>
+<a href="#901" id="901">901</a>
+<a href="#902" id="902">902</a>
+<a href="#903" id="903">903</a>
+<a href="#904" id="904">904</a>
+<a href="#905" id="905">905</a>
+<a href="#906" id="906">906</a>
+<a href="#907" id="907">907</a>
+<a href="#908" id="908">908</a>
+<a href="#909" id="909">909</a>
+<a href="#910" id="910">910</a>
+<a href="#911" id="911">911</a>
+<a href="#912" id="912">912</a>
+<a href="#913" id="913">913</a>
+<a href="#914" id="914">914</a>
+<a href="#915" id="915">915</a>
+<a href="#916" id="916">916</a>
+<a href="#917" id="917">917</a>
+<a href="#918" id="918">918</a>
+<a href="#919" id="919">919</a>
+<a href="#920" id="920">920</a>
+<a href="#921" id="921">921</a>
+<a href="#922" id="922">922</a>
+<a href="#923" id="923">923</a>
+<a href="#924" id="924">924</a>
+<a href="#925" id="925">925</a>
+<a href="#926" id="926">926</a>
+<a href="#927" id="927">927</a>
+<a href="#928" id="928">928</a>
+<a href="#929" id="929">929</a>
+<a href="#930" id="930">930</a>
+<a href="#931" id="931">931</a>
+<a href="#932" id="932">932</a>
+<a href="#933" id="933">933</a>
+<a href="#934" id="934">934</a>
+<a href="#935" id="935">935</a>
+<a href="#936" id="936">936</a>
+<a href="#937" id="937">937</a>
+<a href="#938" id="938">938</a>
+<a href="#939" id="939">939</a>
+<a href="#940" id="940">940</a>
+<a href="#941" id="941">941</a>
+<a href="#942" id="942">942</a>
+<a href="#943" id="943">943</a>
+<a href="#944" id="944">944</a>
+<a href="#945" id="945">945</a>
+<a href="#946" id="946">946</a>
+<a href="#947" id="947">947</a>
+<a href="#948" id="948">948</a>
+<a href="#949" id="949">949</a>
+<a href="#950" id="950">950</a>
+<a href="#951" id="951">951</a>
+<a href="#952" id="952">952</a>
+<a href="#953" id="953">953</a>
+<a href="#954" id="954">954</a>
+<a href="#955" id="955">955</a>
+<a href="#956" id="956">956</a>
+<a href="#957" id="957">957</a>
+<a href="#958" id="958">958</a>
+<a href="#959" id="959">959</a>
+<a href="#960" id="960">960</a>
+<a href="#961" id="961">961</a>
+<a href="#962" id="962">962</a>
+<a href="#963" id="963">963</a>
+<a href="#964" id="964">964</a>
+<a href="#965" id="965">965</a>
+<a href="#966" id="966">966</a>
+<a href="#967" id="967">967</a>
+<a href="#968" id="968">968</a>
+<a href="#969" id="969">969</a>
+<a href="#970" id="970">970</a>
+<a href="#971" id="971">971</a>
+<a href="#972" id="972">972</a>
+<a href="#973" id="973">973</a>
+<a href="#974" id="974">974</a>
+<a href="#975" id="975">975</a>
+<a href="#976" id="976">976</a>
+<a href="#977" id="977">977</a>
+<a href="#978" id="978">978</a>
+<a href="#979" id="979">979</a>
+<a href="#980" id="980">980</a>
+<a href="#981" id="981">981</a>
+<a href="#982" id="982">982</a>
+<a href="#983" id="983">983</a>
+<a href="#984" id="984">984</a>
+<a href="#985" id="985">985</a>
+<a href="#986" id="986">986</a>
+<a href="#987" id="987">987</a>
+<a href="#988" id="988">988</a>
+<a href="#989" id="989">989</a>
+<a href="#990" id="990">990</a>
+<a href="#991" id="991">991</a>
+<a href="#992" id="992">992</a>
+<a href="#993" id="993">993</a>
+<a href="#994" id="994">994</a>
+<a href="#995" id="995">995</a>
+<a href="#996" id="996">996</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span><span class="kw">crate</span>::fallback::{
-    is_ident_continue, is_ident_start, Group, LexError, Literal, Span, TokenStream,
+    <span class="self">self</span>, is_ident_continue, is_ident_start, Group, LexError, Literal, Span, TokenStream,
+    TokenStreamBuilder,
 };
 <span class="kw">use crate</span>::{Delimiter, Punct, Spacing, TokenTree};
-<span class="kw">use </span>std::char;
-<span class="kw">use </span>std::str::{Bytes, CharIndices, Chars};
+<span class="kw">use </span>core::char;
+<span class="kw">use </span>core::str::{Bytes, CharIndices, Chars};
 
 <span class="attr">#[derive(Copy, Clone, Eq, PartialEq)]
 </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">struct </span>Cursor&lt;<span class="lifetime">'a</span>&gt; {
@@ -880,7 +1012,7 @@
 }
 
 <span class="kw">impl</span>&lt;<span class="lifetime">'a</span>&gt; Cursor&lt;<span class="lifetime">'a</span>&gt; {
-    <span class="kw">fn </span>advance(<span class="kw-2">&amp;</span><span class="self">self</span>, bytes: usize) -&gt; Cursor&lt;<span class="lifetime">'a</span>&gt; {
+    <span class="kw">pub fn </span>advance(<span class="kw-2">&amp;</span><span class="self">self</span>, bytes: usize) -&gt; Cursor&lt;<span class="lifetime">'a</span>&gt; {
         <span class="kw">let </span>(_front, rest) = <span class="self">self</span>.rest.split_at(bytes);
         Cursor {
             rest,
@@ -889,11 +1021,22 @@
         }
     }
 
-    <span class="kw">fn </span>starts_with(<span class="kw-2">&amp;</span><span class="self">self</span>, s: <span class="kw-2">&amp;</span>str) -&gt; bool {
+    <span class="kw">pub fn </span>starts_with(<span class="kw-2">&amp;</span><span class="self">self</span>, s: <span class="kw-2">&amp;</span>str) -&gt; bool {
         <span class="self">self</span>.rest.starts_with(s)
     }
 
-    <span class="kw">fn </span>is_empty(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool {
+    <span class="kw">pub fn </span>starts_with_char(<span class="kw-2">&amp;</span><span class="self">self</span>, ch: char) -&gt; bool {
+        <span class="self">self</span>.rest.starts_with(ch)
+    }
+
+    <span class="kw">pub fn </span>starts_with_fn&lt;Pattern&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, f: Pattern) -&gt; bool
+    <span class="kw">where
+        </span>Pattern: FnMut(char) -&gt; bool,
+    {
+        <span class="self">self</span>.rest.starts_with(f)
+    }
+
+    <span class="kw">pub fn </span>is_empty(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool {
         <span class="self">self</span>.rest.is_empty()
     }
 
@@ -963,7 +1106,7 @@
                 s = s.advance(<span class="number">1</span>);
                 <span class="kw">continue</span>;
             }
-            b <span class="kw">if </span>b &lt;= <span class="number">0x7f </span>=&gt; {}
+            b <span class="kw">if </span>b.is_ascii() =&gt; {}
             <span class="kw">_ </span>=&gt; {
                 <span class="kw">let </span>ch = s.chars().next().unwrap();
                 <span class="kw">if </span>is_whitespace(ch) {
@@ -982,9 +1125,9 @@
         <span class="kw">return </span><span class="prelude-val">Err</span>(Reject);
     }
 
-    <span class="kw">let </span><span class="kw-2">mut </span>depth = <span class="number">0</span>;
+    <span class="kw">let </span><span class="kw-2">mut </span>depth = <span class="number">0usize</span>;
     <span class="kw">let </span>bytes = input.as_bytes();
-    <span class="kw">let </span><span class="kw-2">mut </span>i = <span class="number">0</span>;
+    <span class="kw">let </span><span class="kw-2">mut </span>i = <span class="number">0usize</span>;
     <span class="kw">let </span>upper = bytes.len() - <span class="number">1</span>;
 
     <span class="kw">while </span>i &lt; upper {
@@ -1016,15 +1159,18 @@
     }
 }
 
+<span class="comment">// Rustc's representation of a macro expansion error in expression position or
+// type position.
+</span><span class="kw">const </span>ERROR: <span class="kw-2">&amp;</span>str = <span class="string">"(/*ERROR*/)"</span>;
+
 <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>token_stream(<span class="kw-2">mut </span>input: Cursor) -&gt; <span class="prelude-ty">Result</span>&lt;TokenStream, LexError&gt; {
-    <span class="kw">let </span><span class="kw-2">mut </span>trees = Vec::new();
+    <span class="kw">let </span><span class="kw-2">mut </span>trees = TokenStreamBuilder::new();
     <span class="kw">let </span><span class="kw-2">mut </span>stack = Vec::new();
 
     <span class="kw">loop </span>{
         input = skip_whitespace(input);
 
-        <span class="kw">if let </span><span class="prelude-val">Ok</span>((rest, tt)) = doc_comment(input) {
-            trees.extend(tt);
+        <span class="kw">if let </span><span class="prelude-val">Ok</span>((rest, ())) = doc_comment(input, <span class="kw-2">&amp;mut </span>trees) {
             input = rest;
             <span class="kw">continue</span>;
         }
@@ -1035,7 +1181,7 @@
         <span class="kw">let </span>first = <span class="kw">match </span>input.bytes().next() {
             <span class="prelude-val">Some</span>(first) =&gt; first,
             <span class="prelude-val">None </span>=&gt; <span class="kw">match </span>stack.last() {
-                <span class="prelude-val">None </span>=&gt; <span class="kw">return </span><span class="prelude-val">Ok</span>(TokenStream::from(trees)),
+                <span class="prelude-val">None </span>=&gt; <span class="kw">return </span><span class="prelude-val">Ok</span>(trees.build()),
                 <span class="attr">#[cfg(span_locations)]
                 </span><span class="prelude-val">Some</span>((lo, _frame)) =&gt; {
                     <span class="kw">return </span><span class="prelude-val">Err</span>(LexError {
@@ -1048,7 +1194,7 @@
         };
 
         <span class="kw">if let </span><span class="prelude-val">Some</span>(open_delimiter) = <span class="kw">match </span>first {
-            <span class="string">b'(' </span>=&gt; <span class="prelude-val">Some</span>(Delimiter::Parenthesis),
+            <span class="string">b'(' </span><span class="kw">if </span>!input.starts_with(ERROR) =&gt; <span class="prelude-val">Some</span>(Delimiter::Parenthesis),
             <span class="string">b'[' </span>=&gt; <span class="prelude-val">Some</span>(Delimiter::Bracket),
             <span class="string">b'{' </span>=&gt; <span class="prelude-val">Some</span>(Delimiter::Brace),
             <span class="kw">_ </span>=&gt; <span class="prelude-val">None</span>,
@@ -1058,7 +1204,7 @@
             <span class="attr">#[cfg(span_locations)]
             </span><span class="kw">let </span>frame = (lo, frame);
             stack.push(frame);
-            trees = Vec::new();
+            trees = TokenStreamBuilder::new();
         } <span class="kw">else if let </span><span class="prelude-val">Some</span>(close_delimiter) = <span class="kw">match </span>first {
             <span class="string">b')' </span>=&gt; <span class="prelude-val">Some</span>(Delimiter::Parenthesis),
             <span class="string">b']' </span>=&gt; <span class="prelude-val">Some</span>(Delimiter::Bracket),
@@ -1076,7 +1222,7 @@
                 <span class="kw">return </span><span class="prelude-val">Err</span>(lex_error(input));
             }
             input = input.advance(<span class="number">1</span>);
-            <span class="kw">let </span><span class="kw-2">mut </span>g = Group::new(open_delimiter, TokenStream::from(trees));
+            <span class="kw">let </span><span class="kw-2">mut </span>g = Group::new(open_delimiter, trees.build());
             g.set_span(Span {
                 <span class="attr">#[cfg(span_locations)]
                 </span>lo,
@@ -1084,19 +1230,19 @@
                 </span>hi: input.off,
             });
             trees = outer;
-            trees.push(TokenTree::Group(<span class="kw">crate</span>::Group::_new_stable(g)));
+            trees.push_token_from_parser(TokenTree::Group(<span class="kw">crate</span>::Group::_new_fallback(g)));
         } <span class="kw">else </span>{
             <span class="kw">let </span>(rest, <span class="kw-2">mut </span>tt) = <span class="kw">match </span>leaf_token(input) {
                 <span class="prelude-val">Ok</span>((rest, tt)) =&gt; (rest, tt),
                 <span class="prelude-val">Err</span>(Reject) =&gt; <span class="kw">return </span><span class="prelude-val">Err</span>(lex_error(input)),
             };
-            tt.set_span(<span class="kw">crate</span>::Span::_new_stable(Span {
+            tt.set_span(<span class="kw">crate</span>::Span::_new_fallback(Span {
                 <span class="attr">#[cfg(span_locations)]
                 </span>lo,
                 <span class="attr">#[cfg(span_locations)]
                 </span>hi: rest.off,
             }));
-            trees.push(tt);
+            trees.push_token_from_parser(tt);
             input = rest;
         }
     }
@@ -1118,20 +1264,26 @@
 <span class="kw">fn </span>leaf_token(input: Cursor) -&gt; PResult&lt;TokenTree&gt; {
     <span class="kw">if let </span><span class="prelude-val">Ok</span>((input, l)) = literal(input) {
         <span class="comment">// must be parsed before ident
-        </span><span class="prelude-val">Ok</span>((input, TokenTree::Literal(<span class="kw">crate</span>::Literal::_new_stable(l))))
+        </span><span class="prelude-val">Ok</span>((input, TokenTree::Literal(<span class="kw">crate</span>::Literal::_new_fallback(l))))
     } <span class="kw">else if let </span><span class="prelude-val">Ok</span>((input, p)) = punct(input) {
         <span class="prelude-val">Ok</span>((input, TokenTree::Punct(p)))
     } <span class="kw">else if let </span><span class="prelude-val">Ok</span>((input, i)) = ident(input) {
         <span class="prelude-val">Ok</span>((input, TokenTree::Ident(i)))
+    } <span class="kw">else if </span>input.starts_with(ERROR) {
+        <span class="kw">let </span>rest = input.advance(ERROR.len());
+        <span class="kw">let </span>repr = <span class="kw">crate</span>::Literal::_new_fallback(Literal::_new(ERROR.to_owned()));
+        <span class="prelude-val">Ok</span>((rest, TokenTree::Literal(repr)))
     } <span class="kw">else </span>{
         <span class="prelude-val">Err</span>(Reject)
     }
 }
 
 <span class="kw">fn </span>ident(input: Cursor) -&gt; PResult&lt;<span class="kw">crate</span>::Ident&gt; {
-    <span class="kw">if </span>[<span class="string">"r\""</span>, <span class="string">"r#\""</span>, <span class="string">"r##"</span>, <span class="string">"b\""</span>, <span class="string">"b\'"</span>, <span class="string">"br\""</span>, <span class="string">"br#"</span>]
-        .iter()
-        .any(|prefix| input.starts_with(prefix))
+    <span class="kw">if </span>[
+        <span class="string">"r\""</span>, <span class="string">"r#\""</span>, <span class="string">"r##"</span>, <span class="string">"b\""</span>, <span class="string">"b\'"</span>, <span class="string">"br\""</span>, <span class="string">"br#"</span>, <span class="string">"c\""</span>, <span class="string">"cr\""</span>, <span class="string">"cr#"</span>,
+    ]
+    .iter()
+    .any(|prefix| input.starts_with(prefix))
     {
         <span class="prelude-val">Err</span>(Reject)
     } <span class="kw">else </span>{
@@ -1146,15 +1298,22 @@
     <span class="kw">let </span>(rest, sym) = ident_not_raw(rest)<span class="question-mark">?</span>;
 
     <span class="kw">if </span>!raw {
-        <span class="kw">let </span>ident = <span class="kw">crate</span>::Ident::new(sym, <span class="kw">crate</span>::Span::call_site());
+        <span class="kw">let </span>ident = <span class="kw">crate</span>::Ident::_new(<span class="kw">crate</span>::imp::Ident::new_unchecked(
+            sym,
+            fallback::Span::call_site(),
+        ));
         <span class="kw">return </span><span class="prelude-val">Ok</span>((rest, ident));
     }
 
-    <span class="kw">if </span>sym == <span class="string">"_" </span>{
-        <span class="kw">return </span><span class="prelude-val">Err</span>(Reject);
+    <span class="kw">match </span>sym {
+        <span class="string">"_" </span>| <span class="string">"super" </span>| <span class="string">"self" </span>| <span class="string">"Self" </span>| <span class="string">"crate" </span>=&gt; <span class="kw">return </span><span class="prelude-val">Err</span>(Reject),
+        <span class="kw">_ </span>=&gt; {}
     }
 
-    <span class="kw">let </span>ident = <span class="kw">crate</span>::Ident::_new_raw(sym, <span class="kw">crate</span>::Span::call_site());
+    <span class="kw">let </span>ident = <span class="kw">crate</span>::Ident::_new(<span class="kw">crate</span>::imp::Ident::new_raw_unchecked(
+        sym,
+        fallback::Span::call_site(),
+    ));
     <span class="prelude-val">Ok</span>((rest, ident))
 }
 
@@ -1188,6 +1347,8 @@
         <span class="prelude-val">Ok</span>(ok)
     } <span class="kw">else if let </span><span class="prelude-val">Ok</span>(ok) = byte_string(input) {
         <span class="prelude-val">Ok</span>(ok)
+    } <span class="kw">else if let </span><span class="prelude-val">Ok</span>(ok) = c_string(input) {
+        <span class="prelude-val">Ok</span>(ok)
     } <span class="kw">else if let </span><span class="prelude-val">Ok</span>(ok) = byte(input) {
         <span class="prelude-val">Ok</span>(ok)
     } <span class="kw">else if let </span><span class="prelude-val">Ok</span>(ok) = character(input) {
@@ -1218,8 +1379,8 @@
     }
 }
 
-<span class="kw">fn </span>cooked_string(input: Cursor) -&gt; <span class="prelude-ty">Result</span>&lt;Cursor, Reject&gt; {
-    <span class="kw">let </span><span class="kw-2">mut </span>chars = input.char_indices().peekable();
+<span class="kw">fn </span>cooked_string(<span class="kw-2">mut </span>input: Cursor) -&gt; <span class="prelude-ty">Result</span>&lt;Cursor, Reject&gt; {
+    <span class="kw">let </span><span class="kw-2">mut </span>chars = input.char_indices();
 
     <span class="kw">while let </span><span class="prelude-val">Some</span>((i, ch)) = chars.next() {
         <span class="kw">match </span>ch {
@@ -1233,31 +1394,16 @@
             },
             <span class="string">'\\' </span>=&gt; <span class="kw">match </span>chars.next() {
                 <span class="prelude-val">Some</span>((<span class="kw">_</span>, <span class="string">'x'</span>)) =&gt; {
-                    <span class="kw">if </span>!backslash_x_char(<span class="kw-2">&amp;mut </span>chars) {
-                        <span class="kw">break</span>;
-                    }
+                    backslash_x_char(<span class="kw-2">&amp;mut </span>chars)<span class="question-mark">?</span>;
                 }
-                <span class="prelude-val">Some</span>((<span class="kw">_</span>, <span class="string">'n'</span>)) | <span class="prelude-val">Some</span>((<span class="kw">_</span>, <span class="string">'r'</span>)) | <span class="prelude-val">Some</span>((<span class="kw">_</span>, <span class="string">'t'</span>)) | <span class="prelude-val">Some</span>((<span class="kw">_</span>, <span class="string">'\\'</span>))
-                | <span class="prelude-val">Some</span>((<span class="kw">_</span>, <span class="string">'\''</span>)) | <span class="prelude-val">Some</span>((<span class="kw">_</span>, <span class="string">'"'</span>)) | <span class="prelude-val">Some</span>((<span class="kw">_</span>, <span class="string">'0'</span>)) =&gt; {}
+                <span class="prelude-val">Some</span>((<span class="kw">_</span>, <span class="string">'n' </span>| <span class="string">'r' </span>| <span class="string">'t' </span>| <span class="string">'\\' </span>| <span class="string">'\'' </span>| <span class="string">'"' </span>| <span class="string">'0'</span>)) =&gt; {}
                 <span class="prelude-val">Some</span>((<span class="kw">_</span>, <span class="string">'u'</span>)) =&gt; {
-                    <span class="kw">if </span>!backslash_u(<span class="kw-2">&amp;mut </span>chars) {
-                        <span class="kw">break</span>;
-                    }
+                    backslash_u(<span class="kw-2">&amp;mut </span>chars)<span class="question-mark">?</span>;
                 }
-                <span class="prelude-val">Some</span>((<span class="kw">_</span>, ch @ <span class="string">'\n'</span>)) | <span class="prelude-val">Some</span>((<span class="kw">_</span>, ch @ <span class="string">'\r'</span>)) =&gt; {
-                    <span class="kw">let </span><span class="kw-2">mut </span>last = ch;
-                    <span class="kw">loop </span>{
-                        <span class="kw">if </span>last == <span class="string">'\r' </span>&amp;&amp; chars.next().map_or(<span class="bool-val">true</span>, |(<span class="kw">_</span>, ch)| ch != <span class="string">'\n'</span>) {
-                            <span class="kw">return </span><span class="prelude-val">Err</span>(Reject);
-                        }
-                        <span class="kw">match </span>chars.peek() {
-                            <span class="prelude-val">Some</span>((<span class="kw">_</span>, ch)) <span class="kw">if </span>ch.is_whitespace() =&gt; {
-                                last = <span class="kw-2">*</span>ch;
-                                chars.next();
-                            }
-                            <span class="kw">_ </span>=&gt; <span class="kw">break</span>,
-                        }
-                    }
+                <span class="prelude-val">Some</span>((newline, ch @ (<span class="string">'\n' </span>| <span class="string">'\r'</span>))) =&gt; {
+                    input = input.advance(newline + <span class="number">1</span>);
+                    trailing_backslash(<span class="kw-2">&amp;mut </span>input, ch <span class="kw">as </span>u8)<span class="question-mark">?</span>;
+                    chars = input.char_indices();
                 }
                 <span class="kw">_ </span>=&gt; <span class="kw">break</span>,
             },
@@ -1267,11 +1413,30 @@
     <span class="prelude-val">Err</span>(Reject)
 }
 
+<span class="kw">fn </span>raw_string(input: Cursor) -&gt; <span class="prelude-ty">Result</span>&lt;Cursor, Reject&gt; {
+    <span class="kw">let </span>(input, delimiter) = delimiter_of_raw_string(input)<span class="question-mark">?</span>;
+    <span class="kw">let </span><span class="kw-2">mut </span>bytes = input.bytes().enumerate();
+    <span class="kw">while let </span><span class="prelude-val">Some</span>((i, byte)) = bytes.next() {
+        <span class="kw">match </span>byte {
+            <span class="string">b'"' </span><span class="kw">if </span>input.rest[i + <span class="number">1</span>..].starts_with(delimiter) =&gt; {
+                <span class="kw">let </span>rest = input.advance(i + <span class="number">1 </span>+ delimiter.len());
+                <span class="kw">return </span><span class="prelude-val">Ok</span>(literal_suffix(rest));
+            }
+            <span class="string">b'\r' </span>=&gt; <span class="kw">match </span>bytes.next() {
+                <span class="prelude-val">Some</span>((<span class="kw">_</span>, <span class="string">b'\n'</span>)) =&gt; {}
+                <span class="kw">_ </span>=&gt; <span class="kw">break</span>,
+            },
+            <span class="kw">_ </span>=&gt; {}
+        }
+    }
+    <span class="prelude-val">Err</span>(Reject)
+}
+
 <span class="kw">fn </span>byte_string(input: Cursor) -&gt; <span class="prelude-ty">Result</span>&lt;Cursor, Reject&gt; {
     <span class="kw">if let </span><span class="prelude-val">Ok</span>(input) = input.parse(<span class="string">"b\""</span>) {
         cooked_byte_string(input)
     } <span class="kw">else if let </span><span class="prelude-val">Ok</span>(input) = input.parse(<span class="string">"br"</span>) {
-        raw_string(input)
+        raw_byte_string(input)
     } <span class="kw">else </span>{
         <span class="prelude-val">Err</span>(Reject)
     }
@@ -1291,64 +1456,125 @@
             },
             <span class="string">b'\\' </span>=&gt; <span class="kw">match </span>bytes.next() {
                 <span class="prelude-val">Some</span>((<span class="kw">_</span>, <span class="string">b'x'</span>)) =&gt; {
-                    <span class="kw">if </span>!backslash_x_byte(<span class="kw-2">&amp;mut </span>bytes) {
-                        <span class="kw">break</span>;
-                    }
+                    backslash_x_byte(<span class="kw-2">&amp;mut </span>bytes)<span class="question-mark">?</span>;
                 }
-                <span class="prelude-val">Some</span>((<span class="kw">_</span>, <span class="string">b'n'</span>)) | <span class="prelude-val">Some</span>((<span class="kw">_</span>, <span class="string">b'r'</span>)) | <span class="prelude-val">Some</span>((<span class="kw">_</span>, <span class="string">b't'</span>)) | <span class="prelude-val">Some</span>((<span class="kw">_</span>, <span class="string">b'\\'</span>))
-                | <span class="prelude-val">Some</span>((<span class="kw">_</span>, <span class="string">b'0'</span>)) | <span class="prelude-val">Some</span>((<span class="kw">_</span>, <span class="string">b'\''</span>)) | <span class="prelude-val">Some</span>((<span class="kw">_</span>, <span class="string">b'"'</span>)) =&gt; {}
-                <span class="prelude-val">Some</span>((newline, b @ <span class="string">b'\n'</span>)) | <span class="prelude-val">Some</span>((newline, b @ <span class="string">b'\r'</span>)) =&gt; {
-                    <span class="kw">let </span><span class="kw-2">mut </span>last = b <span class="kw">as </span>char;
-                    <span class="kw">let </span>rest = input.advance(newline + <span class="number">1</span>);
-                    <span class="kw">let </span><span class="kw-2">mut </span>chars = rest.char_indices();
-                    <span class="kw">loop </span>{
-                        <span class="kw">if </span>last == <span class="string">'\r' </span>&amp;&amp; chars.next().map_or(<span class="bool-val">true</span>, |(<span class="kw">_</span>, ch)| ch != <span class="string">'\n'</span>) {
-                            <span class="kw">return </span><span class="prelude-val">Err</span>(Reject);
-                        }
-                        <span class="kw">match </span>chars.next() {
-                            <span class="prelude-val">Some</span>((<span class="kw">_</span>, ch)) <span class="kw">if </span>ch.is_whitespace() =&gt; last = ch,
-                            <span class="prelude-val">Some</span>((offset, <span class="kw">_</span>)) =&gt; {
-                                input = rest.advance(offset);
-                                bytes = input.bytes().enumerate();
-                                <span class="kw">break</span>;
-                            }
-                            <span class="prelude-val">None </span>=&gt; <span class="kw">return </span><span class="prelude-val">Err</span>(Reject),
-                        }
-                    }
+                <span class="prelude-val">Some</span>((<span class="kw">_</span>, <span class="string">b'n' </span>| <span class="string">b'r' </span>| <span class="string">b't' </span>| <span class="string">b'\\' </span>| <span class="string">b'0' </span>| <span class="string">b'\'' </span>| <span class="string">b'"'</span>)) =&gt; {}
+                <span class="prelude-val">Some</span>((newline, b @ (<span class="string">b'\n' </span>| <span class="string">b'\r'</span>))) =&gt; {
+                    input = input.advance(newline + <span class="number">1</span>);
+                    trailing_backslash(<span class="kw-2">&amp;mut </span>input, b)<span class="question-mark">?</span>;
+                    bytes = input.bytes().enumerate();
                 }
                 <span class="kw">_ </span>=&gt; <span class="kw">break</span>,
             },
-            b <span class="kw">if </span>b &lt; <span class="number">0x80 </span>=&gt; {}
+            b <span class="kw">if </span>b.is_ascii() =&gt; {}
             <span class="kw">_ </span>=&gt; <span class="kw">break</span>,
         }
     }
     <span class="prelude-val">Err</span>(Reject)
 }
 
-<span class="kw">fn </span>raw_string(input: Cursor) -&gt; <span class="prelude-ty">Result</span>&lt;Cursor, Reject&gt; {
-    <span class="kw">let </span><span class="kw-2">mut </span>chars = input.char_indices();
-    <span class="kw">let </span><span class="kw-2">mut </span>n = <span class="number">0</span>;
-    <span class="kw">for </span>(i, ch) <span class="kw">in </span><span class="kw-2">&amp;mut </span>chars {
-        <span class="kw">match </span>ch {
-            <span class="string">'"' </span>=&gt; {
-                n = i;
-                <span class="kw">break</span>;
+<span class="kw">fn </span>delimiter_of_raw_string(input: Cursor) -&gt; PResult&lt;<span class="kw-2">&amp;</span>str&gt; {
+    <span class="kw">for </span>(i, byte) <span class="kw">in </span>input.bytes().enumerate() {
+        <span class="kw">match </span>byte {
+            <span class="string">b'"' </span>=&gt; {
+                <span class="kw">if </span>i &gt; <span class="number">255 </span>{
+                    <span class="comment">// https://github.com/rust-lang/rust/pull/95251
+                    </span><span class="kw">return </span><span class="prelude-val">Err</span>(Reject);
+                }
+                <span class="kw">return </span><span class="prelude-val">Ok</span>((input.advance(i + <span class="number">1</span>), <span class="kw-2">&amp;</span>input.rest[..i]));
             }
-            <span class="string">'#' </span>=&gt; {}
-            <span class="kw">_ </span>=&gt; <span class="kw">return </span><span class="prelude-val">Err</span>(Reject),
+            <span class="string">b'#' </span>=&gt; {}
+            <span class="kw">_ </span>=&gt; <span class="kw">break</span>,
         }
     }
+    <span class="prelude-val">Err</span>(Reject)
+}
+
+<span class="kw">fn </span>raw_byte_string(input: Cursor) -&gt; <span class="prelude-ty">Result</span>&lt;Cursor, Reject&gt; {
+    <span class="kw">let </span>(input, delimiter) = delimiter_of_raw_string(input)<span class="question-mark">?</span>;
+    <span class="kw">let </span><span class="kw-2">mut </span>bytes = input.bytes().enumerate();
+    <span class="kw">while let </span><span class="prelude-val">Some</span>((i, byte)) = bytes.next() {
+        <span class="kw">match </span>byte {
+            <span class="string">b'"' </span><span class="kw">if </span>input.rest[i + <span class="number">1</span>..].starts_with(delimiter) =&gt; {
+                <span class="kw">let </span>rest = input.advance(i + <span class="number">1 </span>+ delimiter.len());
+                <span class="kw">return </span><span class="prelude-val">Ok</span>(literal_suffix(rest));
+            }
+            <span class="string">b'\r' </span>=&gt; <span class="kw">match </span>bytes.next() {
+                <span class="prelude-val">Some</span>((<span class="kw">_</span>, <span class="string">b'\n'</span>)) =&gt; {}
+                <span class="kw">_ </span>=&gt; <span class="kw">break</span>,
+            },
+            other =&gt; {
+                <span class="kw">if </span>!other.is_ascii() {
+                    <span class="kw">break</span>;
+                }
+            }
+        }
+    }
+    <span class="prelude-val">Err</span>(Reject)
+}
+
+<span class="kw">fn </span>c_string(input: Cursor) -&gt; <span class="prelude-ty">Result</span>&lt;Cursor, Reject&gt; {
+    <span class="kw">if let </span><span class="prelude-val">Ok</span>(input) = input.parse(<span class="string">"c\""</span>) {
+        cooked_c_string(input)
+    } <span class="kw">else if let </span><span class="prelude-val">Ok</span>(input) = input.parse(<span class="string">"cr"</span>) {
+        raw_c_string(input)
+    } <span class="kw">else </span>{
+        <span class="prelude-val">Err</span>(Reject)
+    }
+}
+
+<span class="kw">fn </span>raw_c_string(input: Cursor) -&gt; <span class="prelude-ty">Result</span>&lt;Cursor, Reject&gt; {
+    <span class="kw">let </span>(input, delimiter) = delimiter_of_raw_string(input)<span class="question-mark">?</span>;
+    <span class="kw">let </span><span class="kw-2">mut </span>bytes = input.bytes().enumerate();
+    <span class="kw">while let </span><span class="prelude-val">Some</span>((i, byte)) = bytes.next() {
+        <span class="kw">match </span>byte {
+            <span class="string">b'"' </span><span class="kw">if </span>input.rest[i + <span class="number">1</span>..].starts_with(delimiter) =&gt; {
+                <span class="kw">let </span>rest = input.advance(i + <span class="number">1 </span>+ delimiter.len());
+                <span class="kw">return </span><span class="prelude-val">Ok</span>(literal_suffix(rest));
+            }
+            <span class="string">b'\r' </span>=&gt; <span class="kw">match </span>bytes.next() {
+                <span class="prelude-val">Some</span>((<span class="kw">_</span>, <span class="string">b'\n'</span>)) =&gt; {}
+                <span class="kw">_ </span>=&gt; <span class="kw">break</span>,
+            },
+            <span class="string">b'\0' </span>=&gt; <span class="kw">break</span>,
+            <span class="kw">_ </span>=&gt; {}
+        }
+    }
+    <span class="prelude-val">Err</span>(Reject)
+}
+
+<span class="kw">fn </span>cooked_c_string(<span class="kw-2">mut </span>input: Cursor) -&gt; <span class="prelude-ty">Result</span>&lt;Cursor, Reject&gt; {
+    <span class="kw">let </span><span class="kw-2">mut </span>chars = input.char_indices();
+
     <span class="kw">while let </span><span class="prelude-val">Some</span>((i, ch)) = chars.next() {
         <span class="kw">match </span>ch {
-            <span class="string">'"' </span><span class="kw">if </span>input.rest[i + <span class="number">1</span>..].starts_with(<span class="kw-2">&amp;</span>input.rest[..n]) =&gt; {
-                <span class="kw">let </span>rest = input.advance(i + <span class="number">1 </span>+ n);
-                <span class="kw">return </span><span class="prelude-val">Ok</span>(literal_suffix(rest));
+            <span class="string">'"' </span>=&gt; {
+                <span class="kw">let </span>input = input.advance(i + <span class="number">1</span>);
+                <span class="kw">return </span><span class="prelude-val">Ok</span>(literal_suffix(input));
             }
             <span class="string">'\r' </span>=&gt; <span class="kw">match </span>chars.next() {
                 <span class="prelude-val">Some</span>((<span class="kw">_</span>, <span class="string">'\n'</span>)) =&gt; {}
                 <span class="kw">_ </span>=&gt; <span class="kw">break</span>,
             },
-            <span class="kw">_ </span>=&gt; {}
+            <span class="string">'\\' </span>=&gt; <span class="kw">match </span>chars.next() {
+                <span class="prelude-val">Some</span>((<span class="kw">_</span>, <span class="string">'x'</span>)) =&gt; {
+                    backslash_x_nonzero(<span class="kw-2">&amp;mut </span>chars)<span class="question-mark">?</span>;
+                }
+                <span class="prelude-val">Some</span>((<span class="kw">_</span>, <span class="string">'n' </span>| <span class="string">'r' </span>| <span class="string">'t' </span>| <span class="string">'\\' </span>| <span class="string">'\'' </span>| <span class="string">'"'</span>)) =&gt; {}
+                <span class="prelude-val">Some</span>((<span class="kw">_</span>, <span class="string">'u'</span>)) =&gt; {
+                    <span class="kw">if </span>backslash_u(<span class="kw-2">&amp;mut </span>chars)<span class="question-mark">? </span>== <span class="string">'\0' </span>{
+                        <span class="kw">break</span>;
+                    }
+                }
+                <span class="prelude-val">Some</span>((newline, ch @ (<span class="string">'\n' </span>| <span class="string">'\r'</span>))) =&gt; {
+                    input = input.advance(newline + <span class="number">1</span>);
+                    trailing_backslash(<span class="kw-2">&amp;mut </span>input, ch <span class="kw">as </span>u8)<span class="question-mark">?</span>;
+                    chars = input.char_indices();
+                }
+                <span class="kw">_ </span>=&gt; <span class="kw">break</span>,
+            },
+            <span class="string">'\0' </span>=&gt; <span class="kw">break</span>,
+            _ch =&gt; {}
         }
     }
     <span class="prelude-val">Err</span>(Reject)
@@ -1359,9 +1585,8 @@
     <span class="kw">let </span><span class="kw-2">mut </span>bytes = input.bytes().enumerate();
     <span class="kw">let </span>ok = <span class="kw">match </span>bytes.next().map(|(<span class="kw">_</span>, b)| b) {
         <span class="prelude-val">Some</span>(<span class="string">b'\\'</span>) =&gt; <span class="kw">match </span>bytes.next().map(|(<span class="kw">_</span>, b)| b) {
-            <span class="prelude-val">Some</span>(<span class="string">b'x'</span>) =&gt; backslash_x_byte(<span class="kw-2">&amp;mut </span>bytes),
-            <span class="prelude-val">Some</span>(<span class="string">b'n'</span>) | <span class="prelude-val">Some</span>(<span class="string">b'r'</span>) | <span class="prelude-val">Some</span>(<span class="string">b't'</span>) | <span class="prelude-val">Some</span>(<span class="string">b'\\'</span>) | <span class="prelude-val">Some</span>(<span class="string">b'0'</span>) | <span class="prelude-val">Some</span>(<span class="string">b'\''</span>)
-            | <span class="prelude-val">Some</span>(<span class="string">b'"'</span>) =&gt; <span class="bool-val">true</span>,
+            <span class="prelude-val">Some</span>(<span class="string">b'x'</span>) =&gt; backslash_x_byte(<span class="kw-2">&amp;mut </span>bytes).is_ok(),
+            <span class="prelude-val">Some</span>(<span class="string">b'n' </span>| <span class="string">b'r' </span>| <span class="string">b't' </span>| <span class="string">b'\\' </span>| <span class="string">b'0' </span>| <span class="string">b'\'' </span>| <span class="string">b'"'</span>) =&gt; <span class="bool-val">true</span>,
             <span class="kw">_ </span>=&gt; <span class="bool-val">false</span>,
         },
         b =&gt; b.is_some(),
@@ -1382,11 +1607,9 @@
     <span class="kw">let </span><span class="kw-2">mut </span>chars = input.char_indices();
     <span class="kw">let </span>ok = <span class="kw">match </span>chars.next().map(|(<span class="kw">_</span>, ch)| ch) {
         <span class="prelude-val">Some</span>(<span class="string">'\\'</span>) =&gt; <span class="kw">match </span>chars.next().map(|(<span class="kw">_</span>, ch)| ch) {
-            <span class="prelude-val">Some</span>(<span class="string">'x'</span>) =&gt; backslash_x_char(<span class="kw-2">&amp;mut </span>chars),
-            <span class="prelude-val">Some</span>(<span class="string">'u'</span>) =&gt; backslash_u(<span class="kw-2">&amp;mut </span>chars),
-            <span class="prelude-val">Some</span>(<span class="string">'n'</span>) | <span class="prelude-val">Some</span>(<span class="string">'r'</span>) | <span class="prelude-val">Some</span>(<span class="string">'t'</span>) | <span class="prelude-val">Some</span>(<span class="string">'\\'</span>) | <span class="prelude-val">Some</span>(<span class="string">'0'</span>) | <span class="prelude-val">Some</span>(<span class="string">'\''</span>) | <span class="prelude-val">Some</span>(<span class="string">'"'</span>) =&gt; {
-                <span class="bool-val">true
-            </span>}
+            <span class="prelude-val">Some</span>(<span class="string">'x'</span>) =&gt; backslash_x_char(<span class="kw-2">&amp;mut </span>chars).is_ok(),
+            <span class="prelude-val">Some</span>(<span class="string">'u'</span>) =&gt; backslash_u(<span class="kw-2">&amp;mut </span>chars).is_ok(),
+            <span class="prelude-val">Some</span>(<span class="string">'n' </span>| <span class="string">'r' </span>| <span class="string">'t' </span>| <span class="string">'\\' </span>| <span class="string">'0' </span>| <span class="string">'\'' </span>| <span class="string">'"'</span>) =&gt; <span class="bool-val">true</span>,
             <span class="kw">_ </span>=&gt; <span class="bool-val">false</span>,
         },
         ch =&gt; ch.is_some(),
@@ -1400,36 +1623,49 @@
 }
 
 <span class="macro">macro_rules! </span>next_ch {
-    (<span class="macro-nonterminal">$chars</span>:ident @ <span class="macro-nonterminal">$pat</span>:pat $(| <span class="macro-nonterminal">$rest</span>:pat)<span class="kw-2">*</span>) =&gt; {
+    (<span class="macro-nonterminal">$chars</span>:ident @ <span class="macro-nonterminal">$pat</span>:pat) =&gt; {
         <span class="kw">match </span><span class="macro-nonterminal">$chars</span>.next() {
             <span class="prelude-val">Some</span>((<span class="kw">_</span>, ch)) =&gt; <span class="kw">match </span>ch {
-                <span class="macro-nonterminal">$pat </span>$(| <span class="macro-nonterminal">$rest</span>)* =&gt; ch,
-                <span class="kw">_ </span>=&gt; <span class="kw">return </span><span class="bool-val">false</span>,
+                <span class="macro-nonterminal">$pat </span>=&gt; ch,
+                <span class="kw">_ </span>=&gt; <span class="kw">return </span><span class="prelude-val">Err</span>(Reject),
             },
-            <span class="prelude-val">None </span>=&gt; <span class="kw">return </span><span class="bool-val">false</span>,
+            <span class="prelude-val">None </span>=&gt; <span class="kw">return </span><span class="prelude-val">Err</span>(Reject),
         }
     };
 }
 
-<span class="kw">fn </span>backslash_x_char&lt;I&gt;(chars: <span class="kw-2">&amp;mut </span>I) -&gt; bool
+<span class="kw">fn </span>backslash_x_char&lt;I&gt;(chars: <span class="kw-2">&amp;mut </span>I) -&gt; <span class="prelude-ty">Result</span>&lt;(), Reject&gt;
 <span class="kw">where
     </span>I: Iterator&lt;Item = (usize, char)&gt;,
 {
     <span class="macro">next_ch!</span>(chars @ <span class="string">'0'</span>..=<span class="string">'7'</span>);
     <span class="macro">next_ch!</span>(chars @ <span class="string">'0'</span>..=<span class="string">'9' </span>| <span class="string">'a'</span>..=<span class="string">'f' </span>| <span class="string">'A'</span>..=<span class="string">'F'</span>);
-    <span class="bool-val">true
-</span>}
+    <span class="prelude-val">Ok</span>(())
+}
 
-<span class="kw">fn </span>backslash_x_byte&lt;I&gt;(chars: <span class="kw-2">&amp;mut </span>I) -&gt; bool
+<span class="kw">fn </span>backslash_x_byte&lt;I&gt;(chars: <span class="kw-2">&amp;mut </span>I) -&gt; <span class="prelude-ty">Result</span>&lt;(), Reject&gt;
 <span class="kw">where
     </span>I: Iterator&lt;Item = (usize, u8)&gt;,
 {
     <span class="macro">next_ch!</span>(chars @ <span class="string">b'0'</span>..=<span class="string">b'9' </span>| <span class="string">b'a'</span>..=<span class="string">b'f' </span>| <span class="string">b'A'</span>..=<span class="string">b'F'</span>);
     <span class="macro">next_ch!</span>(chars @ <span class="string">b'0'</span>..=<span class="string">b'9' </span>| <span class="string">b'a'</span>..=<span class="string">b'f' </span>| <span class="string">b'A'</span>..=<span class="string">b'F'</span>);
-    <span class="bool-val">true
-</span>}
+    <span class="prelude-val">Ok</span>(())
+}
 
-<span class="kw">fn </span>backslash_u&lt;I&gt;(chars: <span class="kw-2">&amp;mut </span>I) -&gt; bool
+<span class="kw">fn </span>backslash_x_nonzero&lt;I&gt;(chars: <span class="kw-2">&amp;mut </span>I) -&gt; <span class="prelude-ty">Result</span>&lt;(), Reject&gt;
+<span class="kw">where
+    </span>I: Iterator&lt;Item = (usize, char)&gt;,
+{
+    <span class="kw">let </span>first = <span class="macro">next_ch!</span>(chars @ <span class="string">'0'</span>..=<span class="string">'9' </span>| <span class="string">'a'</span>..=<span class="string">'f' </span>| <span class="string">'A'</span>..=<span class="string">'F'</span>);
+    <span class="kw">let </span>second = <span class="macro">next_ch!</span>(chars @ <span class="string">'0'</span>..=<span class="string">'9' </span>| <span class="string">'a'</span>..=<span class="string">'f' </span>| <span class="string">'A'</span>..=<span class="string">'F'</span>);
+    <span class="kw">if </span>first == <span class="string">'0' </span>&amp;&amp; second == <span class="string">'0' </span>{
+        <span class="prelude-val">Err</span>(Reject)
+    } <span class="kw">else </span>{
+        <span class="prelude-val">Ok</span>(())
+    }
+}
+
+<span class="kw">fn </span>backslash_u&lt;I&gt;(chars: <span class="kw-2">&amp;mut </span>I) -&gt; <span class="prelude-ty">Result</span>&lt;char, Reject&gt;
 <span class="kw">where
     </span>I: Iterator&lt;Item = (usize, char)&gt;,
 {
@@ -1442,18 +1678,37 @@
             <span class="string">'a'</span>..=<span class="string">'f' </span>=&gt; <span class="number">10 </span>+ ch <span class="kw">as </span>u8 - <span class="string">b'a'</span>,
             <span class="string">'A'</span>..=<span class="string">'F' </span>=&gt; <span class="number">10 </span>+ ch <span class="kw">as </span>u8 - <span class="string">b'A'</span>,
             <span class="string">'_' </span><span class="kw">if </span>len &gt; <span class="number">0 </span>=&gt; <span class="kw">continue</span>,
-            <span class="string">'}' </span><span class="kw">if </span>len &gt; <span class="number">0 </span>=&gt; <span class="kw">return </span>char::from_u32(value).is_some(),
-            <span class="kw">_ </span>=&gt; <span class="kw">return </span><span class="bool-val">false</span>,
+            <span class="string">'}' </span><span class="kw">if </span>len &gt; <span class="number">0 </span>=&gt; <span class="kw">return </span>char::from_u32(value).ok_or(Reject),
+            <span class="kw">_ </span>=&gt; <span class="kw">break</span>,
         };
         <span class="kw">if </span>len == <span class="number">6 </span>{
-            <span class="kw">return </span><span class="bool-val">false</span>;
+            <span class="kw">break</span>;
         }
         value <span class="kw-2">*</span>= <span class="number">0x10</span>;
         value += u32::from(digit);
         len += <span class="number">1</span>;
     }
-    <span class="bool-val">false
-</span>}
+    <span class="prelude-val">Err</span>(Reject)
+}
+
+<span class="kw">fn </span>trailing_backslash(input: <span class="kw-2">&amp;mut </span>Cursor, <span class="kw-2">mut </span>last: u8) -&gt; <span class="prelude-ty">Result</span>&lt;(), Reject&gt; {
+    <span class="kw">let </span><span class="kw-2">mut </span>whitespace = input.bytes().enumerate();
+    <span class="kw">loop </span>{
+        <span class="kw">if </span>last == <span class="string">b'\r' </span>&amp;&amp; whitespace.next().map_or(<span class="bool-val">true</span>, |(<span class="kw">_</span>, b)| b != <span class="string">b'\n'</span>) {
+            <span class="kw">return </span><span class="prelude-val">Err</span>(Reject);
+        }
+        <span class="kw">match </span>whitespace.next() {
+            <span class="prelude-val">Some</span>((<span class="kw">_</span>, b @ (<span class="string">b' ' </span>| <span class="string">b'\t' </span>| <span class="string">b'\n' </span>| <span class="string">b'\r'</span>))) =&gt; {
+                last = b;
+            }
+            <span class="prelude-val">Some</span>((offset, <span class="kw">_</span>)) =&gt; {
+                <span class="kw-2">*</span>input = input.advance(offset);
+                <span class="kw">return </span><span class="prelude-val">Ok</span>(());
+            }
+            <span class="prelude-val">None </span>=&gt; <span class="kw">return </span><span class="prelude-val">Err</span>(Reject),
+        }
+    }
+}
 
 <span class="kw">fn </span>float(input: Cursor) -&gt; <span class="prelude-ty">Result</span>&lt;Cursor, Reject&gt; {
     <span class="kw">let </span><span class="kw-2">mut </span>rest = float_digits(input)<span class="question-mark">?</span>;
@@ -1468,7 +1723,7 @@
 <span class="kw">fn </span>float_digits(input: Cursor) -&gt; <span class="prelude-ty">Result</span>&lt;Cursor, Reject&gt; {
     <span class="kw">let </span><span class="kw-2">mut </span>chars = input.chars().peekable();
     <span class="kw">match </span>chars.next() {
-        <span class="prelude-val">Some</span>(ch) <span class="kw">if </span>ch &gt;= <span class="string">'0' </span>&amp;&amp; ch &lt;= <span class="string">'9' </span>=&gt; {}
+        <span class="prelude-val">Some</span>(ch) <span class="kw">if </span><span class="string">'0' </span>&lt;= ch &amp;&amp; ch &lt;= <span class="string">'9' </span>=&gt; {}
         <span class="kw">_ </span>=&gt; <span class="kw">return </span><span class="prelude-val">Err</span>(Reject),
     }
 
@@ -1618,7 +1873,7 @@
 <span class="kw">fn </span>punct(input: Cursor) -&gt; PResult&lt;Punct&gt; {
     <span class="kw">let </span>(rest, ch) = punct_char(input)<span class="question-mark">?</span>;
     <span class="kw">if </span>ch == <span class="string">'\'' </span>{
-        <span class="kw">if </span>ident_any(rest)<span class="question-mark">?</span>.<span class="number">0</span>.starts_with(<span class="string">"'"</span>) {
+        <span class="kw">if </span>ident_any(rest)<span class="question-mark">?</span>.<span class="number">0</span>.starts_with_char(<span class="string">'\''</span>) {
             <span class="prelude-val">Err</span>(Reject)
         } <span class="kw">else </span>{
             <span class="prelude-val">Ok</span>((rest, Punct::new(<span class="string">'\''</span>, Spacing::Joint)))
@@ -1653,16 +1908,17 @@
     }
 }
 
-<span class="kw">fn </span>doc_comment(input: Cursor) -&gt; PResult&lt;Vec&lt;TokenTree&gt;&gt; {
+<span class="kw">fn </span>doc_comment&lt;<span class="lifetime">'a</span>&gt;(input: Cursor&lt;<span class="lifetime">'a</span>&gt;, trees: <span class="kw-2">&amp;mut </span>TokenStreamBuilder) -&gt; PResult&lt;<span class="lifetime">'a</span>, ()&gt; {
     <span class="attr">#[cfg(span_locations)]
     </span><span class="kw">let </span>lo = input.off;
     <span class="kw">let </span>(rest, (comment, inner)) = doc_comment_contents(input)<span class="question-mark">?</span>;
-    <span class="kw">let </span>span = <span class="kw">crate</span>::Span::_new_stable(Span {
+    <span class="kw">let </span>fallback_span = Span {
         <span class="attr">#[cfg(span_locations)]
         </span>lo,
         <span class="attr">#[cfg(span_locations)]
         </span>hi: rest.off,
-    });
+    };
+    <span class="kw">let </span>span = <span class="kw">crate</span>::Span::_new_fallback(fallback_span);
 
     <span class="kw">let </span><span class="kw-2">mut </span>scan_for_bare_cr = comment;
     <span class="kw">while let </span><span class="prelude-val">Some</span>(cr) = scan_for_bare_cr.find(<span class="string">'\r'</span>) {
@@ -1673,25 +1929,31 @@
         scan_for_bare_cr = rest;
     }
 
-    <span class="kw">let </span><span class="kw-2">mut </span>trees = Vec::new();
-    trees.push(TokenTree::Punct(Punct::new(<span class="string">'#'</span>, Spacing::Alone)));
+    <span class="kw">let </span><span class="kw-2">mut </span>pound = Punct::new(<span class="string">'#'</span>, Spacing::Alone);
+    pound.set_span(span);
+    trees.push_token_from_parser(TokenTree::Punct(pound));
+
     <span class="kw">if </span>inner {
-        trees.push(Punct::new(<span class="string">'!'</span>, Spacing::Alone).into());
+        <span class="kw">let </span><span class="kw-2">mut </span>bang = Punct::new(<span class="string">'!'</span>, Spacing::Alone);
+        bang.set_span(span);
+        trees.push_token_from_parser(TokenTree::Punct(bang));
     }
-    <span class="kw">let </span><span class="kw-2">mut </span>stream = <span class="macro">vec!</span>[
-        TokenTree::Ident(<span class="kw">crate</span>::Ident::new(<span class="string">"doc"</span>, span)),
-        TokenTree::Punct(Punct::new(<span class="string">'='</span>, Spacing::Alone)),
-        TokenTree::Literal(<span class="kw">crate</span>::Literal::string(comment)),
-    ];
-    <span class="kw">for </span>tt <span class="kw">in </span><span class="kw-2">&amp;mut </span>stream {
-        tt.set_span(span);
-    }
-    <span class="kw">let </span>group = Group::new(Delimiter::Bracket, TokenStream::from(stream));
-    trees.push(<span class="kw">crate</span>::Group::_new_stable(group).into());
-    <span class="kw">for </span>tt <span class="kw">in </span><span class="kw-2">&amp;mut </span>trees {
-        tt.set_span(span);
-    }
-    <span class="prelude-val">Ok</span>((rest, trees))
+
+    <span class="kw">let </span>doc_ident = <span class="kw">crate</span>::Ident::_new(<span class="kw">crate</span>::imp::Ident::new_unchecked(<span class="string">"doc"</span>, fallback_span));
+    <span class="kw">let </span><span class="kw-2">mut </span>equal = Punct::new(<span class="string">'='</span>, Spacing::Alone);
+    equal.set_span(span);
+    <span class="kw">let </span><span class="kw-2">mut </span>literal = <span class="kw">crate</span>::Literal::string(comment);
+    literal.set_span(span);
+    <span class="kw">let </span><span class="kw-2">mut </span>bracketed = TokenStreamBuilder::with_capacity(<span class="number">3</span>);
+    bracketed.push_token_from_parser(TokenTree::Ident(doc_ident));
+    bracketed.push_token_from_parser(TokenTree::Punct(equal));
+    bracketed.push_token_from_parser(TokenTree::Literal(literal));
+    <span class="kw">let </span>group = Group::new(Delimiter::Bracket, bracketed.build());
+    <span class="kw">let </span><span class="kw-2">mut </span>group = <span class="kw">crate</span>::Group::_new_fallback(group);
+    group.set_span(span);
+    trees.push_token_from_parser(TokenTree::Group(group));
+
+    <span class="prelude-val">Ok</span>((rest, ()))
 }
 
 <span class="kw">fn </span>doc_comment_contents(input: Cursor) -&gt; PResult&lt;(<span class="kw-2">&amp;</span>str, bool)&gt; {
@@ -1704,7 +1966,7 @@
         <span class="prelude-val">Ok</span>((input, (<span class="kw-2">&amp;</span>s[<span class="number">3</span>..s.len() - <span class="number">2</span>], <span class="bool-val">true</span>)))
     } <span class="kw">else if </span>input.starts_with(<span class="string">"///"</span>) {
         <span class="kw">let </span>input = input.advance(<span class="number">3</span>);
-        <span class="kw">if </span>input.starts_with(<span class="string">"/"</span>) {
+        <span class="kw">if </span>input.starts_with_char(<span class="string">'/'</span>) {
             <span class="kw">return </span><span class="prelude-val">Err</span>(Reject);
         }
         <span class="kw">let </span>(input, s) = take_until_newline_or_eof(input);

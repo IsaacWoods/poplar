@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"macro":["max","min","unreachable_unchecked"],"mod":["error","fmt","io","math","mem","sync"]};

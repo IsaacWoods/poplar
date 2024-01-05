@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"trait":["Bounded"]};
+window.SIDEBAR_ITEMS = {"trait":["Bounded","LowerBounded","UpperBounded"]};

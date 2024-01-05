@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"macro":["bitfield","enum_from_bits"],"mod":["pack"],"trait":["FromBits"]};

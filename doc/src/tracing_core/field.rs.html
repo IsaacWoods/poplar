@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/git/checkouts/tracing-e9bbb56ea31f0c18/60c60be/tracing-core/src/field.rs`."><title>field.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-bf502f66ec635d5d.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="tracing_core" data-themes="" data-resource-suffix="" data-rustdoc-version="1.77.0-nightly (e51e98dde 2023-12-31)" data-channel="nightly" data-search-js="search-c17e98913a53b3b7.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../static.files/storage-f2adc0d6ca4d09fb.js"></script><script defer src="../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-0b2e2def73e61cbe.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-04d5337699b92874.css"></noscript><link rel="icon" href="https://raw.githubusercontent.com/tokio-rs/tracing/master/assets/favicon.ico"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title">
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/git/checkouts/tracing-e9bbb56ea31f0c18/bac2508/tracing-core/src/field.rs`."><title>field.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-4e54bb2b497cc83f.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="tracing_core" data-themes="" data-resource-suffix="" data-rustdoc-version="1.77.0-nightly (f688dd684 2024-01-04)" data-channel="nightly" data-search-js="search-c17e98913a53b3b7.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../static.files/storage-f2adc0d6ca4d09fb.js"></script><script defer src="../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-0b2e2def73e61cbe.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-04d5337699b92874.css"></noscript><link rel="icon" href="https://raw.githubusercontent.com/tokio-rs/tracing/master/assets/favicon.ico"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title">
             <h2>Files</h2></div></nav><div class="sidebar-resizer"></div>
     <main><nav class="sub"><form class="search-form"><span></span><div id="sidebar-button" tabindex="-1"><a href="../../tracing_core/all.html" title="show sidebar"></a></div><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
@@ -1128,16 +1128,20 @@
 <a href="#1126" id="1126">1126</a>
 <a href="#1127" id="1127">1127</a>
 <a href="#1128" id="1128">1128</a>
+<a href="#1129" id="1129">1129</a>
+<a href="#1130" id="1130">1130</a>
+<a href="#1131" id="1131">1131</a>
+<a href="#1132" id="1132">1132</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! Span and `Event` key-value data.
 //!
-//! Spans and events may be annotated with key-value data, referred to as known
-//! as _fields_. These fields consist of a mapping from a key (corresponding to
-//! a `&amp;str` but represented internally as an array index) to a [`Value`].
+//! Spans and events may be annotated with key-value data, known as _fields_.
+//! These fields consist of a mapping from a key (corresponding to a `&amp;str` but
+//! represented internally as an array index) to a [`Value`].
 //!
 //! # `Value`s and `Collect`s
 //!
 //! Collectors consume `Value`s as fields attached to [span]s or [`Event`]s.
-//! The set of field keys on a given span or is defined on its [`Metadata`].
+//! The set of field keys on a given span or event is defined on its [`Metadata`].
 //! When a span is created, it provides [`Attributes`] to the collector's
 //! [`new_span`] method, containing any fields whose values were provided when
 //! the span was created; and may call the collector's [`record`] method
@@ -1503,7 +1507,11 @@
         <span class="kw">impl </span><span class="macro-nonterminal">$crate::sealed::Sealed </span><span class="kw">for </span><span class="macro-nonterminal">$value_ty </span>{}
         <span class="kw">impl </span><span class="macro-nonterminal">$crate::field::Value </span><span class="kw">for </span><span class="macro-nonterminal">$value_ty </span>{
             <span class="kw">fn </span>record(<span class="kw-2">&amp;</span><span class="self">self</span>, key: <span class="kw-2">&amp;</span><span class="macro-nonterminal">$crate::field::Field</span>, visitor: <span class="kw-2">&amp;mut </span><span class="kw">dyn </span><span class="macro-nonterminal">$crate::field::Visit</span>) {
-                visitor.<span class="macro-nonterminal">$record</span>(key, <span class="macro-nonterminal">$op</span>(<span class="kw-2">*</span><span class="self">self</span>))
+                <span class="comment">// `op` is always a function; the closure is used because
+                // sometimes there isn't a real function corresponding to that
+                // operation. the clippy warning is not that useful here.
+                </span><span class="attr">#[allow(clippy::redundant_closure_call)]
+                </span>visitor.<span class="macro-nonterminal">$record</span>(key, <span class="macro-nonterminal">$op</span>(<span class="kw-2">*</span><span class="self">self</span>))
             }
         }
     };
@@ -1518,7 +1526,11 @@
         <span class="kw">impl </span><span class="macro-nonterminal">$crate::sealed::Sealed </span><span class="kw">for </span><span class="macro">ty_to_nonzero!</span>(<span class="macro-nonterminal">$value_ty</span>) {}
         <span class="kw">impl </span><span class="macro-nonterminal">$crate::field::Value </span><span class="kw">for </span><span class="macro">ty_to_nonzero!</span>(<span class="macro-nonterminal">$value_ty</span>) {
             <span class="kw">fn </span>record(<span class="kw-2">&amp;</span><span class="self">self</span>, key: <span class="kw-2">&amp;</span><span class="macro-nonterminal">$crate::field::Field</span>, visitor: <span class="kw-2">&amp;mut </span><span class="kw">dyn </span><span class="macro-nonterminal">$crate::field::Visit</span>) {
-                visitor.<span class="macro-nonterminal">$record</span>(key, <span class="macro-nonterminal">$op</span>(<span class="self">self</span>.get()))
+                <span class="comment">// `op` is always a function; the closure is used because
+                // sometimes there isn't a real function corresponding to that
+                // operation. the clippy warning is not that useful here.
+                </span><span class="attr">#[allow(clippy::redundant_closure_call)]
+                </span>visitor.<span class="macro-nonterminal">$record</span>(key, <span class="macro-nonterminal">$op</span>(<span class="self">self</span>.get()))
             }
         }
     };
@@ -1827,6 +1839,7 @@
     ///
     /// [`Identifier`]: super::callsite::Identifier
     /// [`Callsite`]: super::callsite::Callsite
+    </span><span class="attr">#[inline]
     </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>callsite(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; callsite::Identifier {
         callsite::Identifier(<span class="self">self</span>.callsite.<span class="number">0</span>)
     }
@@ -1864,6 +1877,7 @@
     }
 
     <span class="doccomment">/// Returns an iterator over the `Field`s in this `FieldSet`.
+    </span><span class="attr">#[inline]
     </span><span class="kw">pub fn </span>iter(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Iter {
         <span class="kw">let </span>idxs = <span class="number">0</span>..<span class="self">self</span>.len();
         Iter {
@@ -1876,9 +1890,6 @@
     }
 
     <span class="doccomment">/// Returns a new `ValueSet` with entries for this `FieldSet`'s values.
-    ///
-    /// Note that a `ValueSet` may not be constructed with arrays of over 32
-    /// elements.
     </span><span class="attr">#[doc(hidden)]
     </span><span class="kw">pub fn </span>value_set&lt;<span class="lifetime">'v</span>, V&gt;(<span class="kw-2">&amp;</span><span class="lifetime">'v </span><span class="self">self</span>, values: <span class="kw-2">&amp;</span><span class="lifetime">'v </span>V) -&gt; ValueSet&lt;<span class="lifetime">'v</span>&gt;
     <span class="kw">where
@@ -1967,7 +1978,8 @@
 
 </span><span class="kw">impl </span>Iterator <span class="kw">for </span>Iter {
     <span class="kw">type </span>Item = Field;
-    <span class="kw">fn </span>next(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;Field&gt; {
+    <span class="attr">#[inline]
+    </span><span class="kw">fn </span>next(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;Field&gt; {
         <span class="kw">let </span>i = <span class="self">self</span>.idxs.next()<span class="question-mark">?</span>;
         <span class="prelude-val">Some</span>(Field {
             i,
@@ -2007,6 +2019,19 @@
         }
     }
 
+    <span class="doccomment">/// Returns the number of fields in this `ValueSet` that would be visited
+    /// by a given [visitor] to the [`ValueSet::record()`] method.
+    ///
+    /// [visitor]: Visit
+    /// [`ValueSet::record()`]: ValueSet::record()
+    </span><span class="kw">pub fn </span>len(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; usize {
+        <span class="kw">let </span>my_callsite = <span class="self">self</span>.callsite();
+        <span class="self">self</span>.values
+            .iter()
+            .filter(|(field, <span class="kw">_</span>)| field.callsite() == my_callsite)
+            .count()
+    }
+
     <span class="doccomment">/// Returns `true` if this `ValueSet` contains a value for the given `Field`.
     </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>contains(<span class="kw-2">&amp;</span><span class="self">self</span>, field: <span class="kw-2">&amp;</span>Field) -&gt; bool {
         field.callsite() == <span class="self">self</span>.callsite()
@@ -2017,7 +2042,7 @@
     }
 
     <span class="doccomment">/// Returns true if this `ValueSet` contains _no_ values.
-    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>is_empty(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool {
+    </span><span class="kw">pub fn </span>is_empty(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool {
         <span class="kw">let </span>my_callsite = <span class="self">self</span>.callsite();
         <span class="self">self</span>.values
             .iter()
@@ -2063,37 +2088,20 @@
 </span><span class="kw">mod </span>private {
     <span class="kw">use super</span>::<span class="kw-2">*</span>;
 
-    <span class="doccomment">/// Marker trait implemented by arrays which are of valid length to
-    /// construct a `ValueSet`.
-    ///
-    /// `ValueSet`s may only be constructed from arrays containing 32 or fewer
-    /// elements, to ensure the array is small enough to always be allocated on the
-    /// stack. This trait is only implemented by arrays of an appropriate length,
-    /// ensuring that the correct size arrays are used at compile-time.
+    <span class="doccomment">/// Restrictions on `ValueSet` lengths were removed in #2508 but this type remains for backwards compatibility.
     </span><span class="kw">pub trait </span>ValidLen&lt;<span class="lifetime">'a</span>&gt;: Borrow&lt;[(<span class="kw-2">&amp;</span><span class="lifetime">'a </span>Field, <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span><span class="lifetime">'a </span>(<span class="kw">dyn </span>Value + <span class="lifetime">'a</span>)&gt;)]&gt; {}
-}
 
-<span class="macro">macro_rules! </span>impl_valid_len {
-    ( $( <span class="macro-nonterminal">$len</span>:tt ),+ ) =&gt; {
-        $(
-            <span class="kw">impl</span>&lt;<span class="lifetime">'a</span>&gt; private::ValidLen&lt;<span class="lifetime">'a</span>&gt; <span class="kw">for
-                </span>[(<span class="kw-2">&amp;</span><span class="lifetime">'a </span>Field, <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span><span class="lifetime">'a </span>(<span class="kw">dyn </span>Value + <span class="lifetime">'a</span>)&gt;); <span class="macro-nonterminal">$len</span>] {}
-        )+
-    }
+    <span class="kw">impl</span>&lt;<span class="lifetime">'a</span>, <span class="kw">const </span>N: usize&gt; ValidLen&lt;<span class="lifetime">'a</span>&gt; <span class="kw">for </span>[(<span class="kw-2">&amp;</span><span class="lifetime">'a </span>Field, <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span><span class="lifetime">'a </span>(<span class="kw">dyn </span>Value + <span class="lifetime">'a</span>)&gt;); N] {}
 }
-
-<span class="macro">impl_valid_len! </span>{
-    <span class="number">0</span>, <span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>, <span class="number">5</span>, <span class="number">6</span>, <span class="number">7</span>, <span class="number">8</span>, <span class="number">9</span>, <span class="number">10</span>, <span class="number">11</span>, <span class="number">12</span>, <span class="number">13</span>, <span class="number">14</span>, <span class="number">15</span>, <span class="number">16</span>, <span class="number">17</span>, <span class="number">18</span>, <span class="number">19</span>, <span class="number">20</span>,
-    <span class="number">21</span>, <span class="number">22</span>, <span class="number">23</span>, <span class="number">24</span>, <span class="number">25</span>, <span class="number">26</span>, <span class="number">27</span>, <span class="number">28</span>, <span class="number">29</span>, <span class="number">30</span>, <span class="number">31</span>, <span class="number">32
-</span>}
 
 <span class="attr">#[cfg(test)]
 </span><span class="kw">mod </span>test {
     <span class="kw">use super</span>::<span class="kw-2">*</span>;
     <span class="kw">use </span><span class="kw">crate</span>::metadata::{Kind, Level, Metadata};
 
-    <span class="kw">struct </span>TestCallsite1;
-    <span class="kw">static </span>TEST_CALLSITE_1: TestCallsite1 = TestCallsite1;
+    <span class="comment">// Make sure TEST_CALLSITE_* have non-zero size, so they can't be located at the same address.
+    </span><span class="kw">struct </span>TestCallsite1(u8);
+    <span class="kw">static </span>TEST_CALLSITE_1: TestCallsite1 = TestCallsite1(<span class="number">0</span>);
     <span class="kw">static </span>TEST_META_1: Metadata&lt;<span class="lifetime">'static</span>&gt; = <span class="macro">metadata! </span>{
         name: <span class="string">"field_test1"</span>,
         target: <span class="macro">module_path!</span>(),
@@ -2113,8 +2121,8 @@
         }
     }
 
-    <span class="kw">struct </span>TestCallsite2;
-    <span class="kw">static </span>TEST_CALLSITE_2: TestCallsite2 = TestCallsite2;
+    <span class="kw">struct </span>TestCallsite2(u8);
+    <span class="kw">static </span>TEST_CALLSITE_2: TestCallsite2 = TestCallsite2(<span class="number">0</span>);
     <span class="kw">static </span>TEST_META_2: Metadata&lt;<span class="lifetime">'static</span>&gt; = <span class="macro">metadata! </span>{
         name: <span class="string">"field_test2"</span>,
         target: <span class="macro">module_path!</span>(),

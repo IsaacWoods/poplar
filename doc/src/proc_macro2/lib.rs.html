@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/proc-macro2-1.0.36/src/lib.rs`."><title>lib.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-bf502f66ec635d5d.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="proc_macro2" data-themes="" data-resource-suffix="" data-rustdoc-version="1.77.0-nightly (e51e98dde 2023-12-31)" data-channel="nightly" data-search-js="search-c17e98913a53b3b7.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../static.files/storage-f2adc0d6ca4d09fb.js"></script><script defer src="../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-0b2e2def73e61cbe.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-04d5337699b92874.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title">
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/proc-macro2-1.0.74/src/lib.rs`."><title>lib.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-4e54bb2b497cc83f.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="proc_macro2" data-themes="" data-resource-suffix="" data-rustdoc-version="1.77.0-nightly (f688dd684 2024-01-04)" data-channel="nightly" data-search-js="search-c17e98913a53b3b7.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../static.files/storage-f2adc0d6ca4d09fb.js"></script><script defer src="../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-0b2e2def73e61cbe.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-04d5337699b92874.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title">
             <h2>Files</h2></div></nav><div class="sidebar-resizer"></div>
     <main><nav class="sub"><form class="search-form"><span></span><div id="sidebar-button" tabindex="-1"><a href="../../proc_macro2/all.html" title="show sidebar"></a></div><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
@@ -1312,11 +1312,27 @@
 <a href="#1310" id="1310">1310</a>
 <a href="#1311" id="1311">1311</a>
 <a href="#1312" id="1312">1312</a>
+<a href="#1313" id="1313">1313</a>
+<a href="#1314" id="1314">1314</a>
+<a href="#1315" id="1315">1315</a>
+<a href="#1316" id="1316">1316</a>
+<a href="#1317" id="1317">1317</a>
+<a href="#1318" id="1318">1318</a>
+<a href="#1319" id="1319">1319</a>
+<a href="#1320" id="1320">1320</a>
+<a href="#1321" id="1321">1321</a>
+<a href="#1322" id="1322">1322</a>
+<a href="#1323" id="1323">1323</a>
+<a href="#1324" id="1324">1324</a>
+<a href="#1325" id="1325">1325</a>
+<a href="#1326" id="1326">1326</a>
+<a href="#1327" id="1327">1327</a>
+<a href="#1328" id="1328">1328</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! [![github]](https://github.com/dtolnay/proc-macro2)&amp;ensp;[![crates-io]](https://crates.io/crates/proc-macro2)&amp;ensp;[![docs-rs]](crate)
 //!
 //! [github]: https://img.shields.io/badge/github-8da0cb?style=for-the-badge&amp;labelColor=555555&amp;logo=github
 //! [crates-io]: https://img.shields.io/badge/crates.io-fc8d62?style=for-the-badge&amp;labelColor=555555&amp;logo=rust
-//! [docs-rs]: https://img.shields.io/badge/docs.rs-66c2a5?style=for-the-badge&amp;labelColor=555555&amp;logoColor=white&amp;logo=data:image/svg+xml;base64,PHN2ZyByb2xlPSJpbWciIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgdmlld0JveD0iMCAwIDUxMiA1MTIiPjxwYXRoIGZpbGw9IiNmNWY1ZjUiIGQ9Ik00ODguNiAyNTAuMkwzOTIgMjE0VjEwNS41YzAtMTUtOS4zLTI4LjQtMjMuNC0zMy43bC0xMDAtMzcuNWMtOC4xLTMuMS0xNy4xLTMuMS0yNS4zIDBsLTEwMCAzNy41Yy0xNC4xIDUuMy0yMy40IDE4LjctMjMuNCAzMy43VjIxNGwtOTYuNiAzNi4yQzkuMyAyNTUuNSAwIDI2OC45IDAgMjgzLjlWMzk0YzAgMTMuNiA3LjcgMjYuMSAxOS45IDMyLjJsMTAwIDUwYzEwLjEgNS4xIDIyLjEgNS4xIDMyLjIgMGwxMDMuOS01MiAxMDMuOSA1MmMxMC4xIDUuMSAyMi4xIDUuMSAzMi4yIDBsMTAwLTUwYzEyLjItNi4xIDE5LjktMTguNiAxOS45LTMyLjJWMjgzLjljMC0xNS05LjMtMjguNC0yMy40LTMzLjd6TTM1OCAyMTQuOGwtODUgMzEuOXYtNjguMmw4NS0zN3Y3My4zek0xNTQgMTA0LjFsMTAyLTM4LjIgMTAyIDM4LjJ2LjZsLTEwMiA0MS40LTEwMi00MS40di0uNnptODQgMjkxLjFsLTg1IDQyLjV2LTc5LjFsODUtMzguOHY3NS40em0wLTExMmwtMTAyIDQxLjQtMTAyLTQxLjR2LS42bDEwMi0zOC4yIDEwMiAzOC4ydi42em0yNDAgMTEybC04NSA0Mi41di03OS4xbDg1LTM4Ljh2NzUuNHptMC0xMTJsLTEwMiA0MS40LTEwMi00MS40di0uNmwxMDItMzguMiAxMDIgMzguMnYuNnoiPjwvcGF0aD48L3N2Zz4K
+//! [docs-rs]: https://img.shields.io/badge/docs.rs-66c2a5?style=for-the-badge&amp;labelColor=555555&amp;logo=docs.rs
 //!
 //! &lt;br&gt;
 //!
@@ -1369,7 +1385,7 @@
 //! If parsing with [Syn], you'll use [`parse_macro_input!`] instead to
 //! propagate parse errors correctly back to the compiler when parsing fails.
 //!
-//! [`parse_macro_input!`]: https://docs.rs/syn/1.0/syn/macro.parse_macro_input.html
+//! [`parse_macro_input!`]: https://docs.rs/syn/2.0/syn/macro.parse_macro_input.html
 //!
 //! # Unstable features
 //!
@@ -1379,7 +1395,7 @@
 //!
 //! To opt into the additional APIs available in the most recent nightly
 //! compiler, the `procmacro2_semver_exempt` config flag must be passed to
-//! rustc. We will polyfill those nightly-only APIs back to Rust 1.31.0. As
+//! rustc. We will polyfill those nightly-only APIs back to Rust 1.56.0. As
 //! these are unstable APIs that track the nightly compiler, minor versions of
 //! proc-macro2 may make breaking changes to them at any time.
 //!
@@ -1400,18 +1416,25 @@
 //! a different thread.
 
 </span><span class="comment">// Proc-macro2 types in rustdoc of other crates get linked to here.
-</span><span class="attr">#![doc(html_root_url = <span class="string">"https://docs.rs/proc-macro2/1.0.36"</span>)]
+</span><span class="attr">#![doc(html_root_url = <span class="string">"https://docs.rs/proc-macro2/1.0.74"</span>)]
 #![cfg_attr(any(proc_macro_span, super_unstable), feature(proc_macro_span))]
 #![cfg_attr(super_unstable, feature(proc_macro_def_site))]
 #![cfg_attr(doc_cfg, feature(doc_cfg))]
+#![deny(unsafe_op_in_unsafe_fn)]
 #![allow(
     clippy::cast_lossless,
     clippy::cast_possible_truncation,
+    clippy::checked_conversions,
     clippy::doc_markdown,
     clippy::items_after_statements,
+    clippy::iter_without_into_iter,
+    clippy::let_underscore_untyped,
     clippy::manual_assert,
+    clippy::manual_range_contains,
+    clippy::missing_safety_doc,
     clippy::must_use_candidate,
     clippy::needless_doctest_main,
+    clippy::new_without_default,
     clippy::return_self_not_must_use,
     clippy::shadow_unrelated,
     clippy::trivially_copy_pass_by_ref,
@@ -1429,11 +1452,23 @@
     build script as well.
 "</span>}
 
-<span class="attr">#[cfg(use_proc_macro)]
+<span class="attr">#[cfg(all(
+    procmacro2_nightly_testing,
+    feature = <span class="string">"proc-macro"</span>,
+    not(proc_macro_span)
+))]
+</span><span class="macro">compile_error! </span>{<span class="string">"\
+    Build script probe failed to compile.
+"</span>}
+
+<span class="kw">extern crate </span>alloc;
+
+<span class="attr">#[cfg(feature = <span class="string">"proc-macro"</span>)]
 </span><span class="kw">extern crate </span>proc_macro;
 
 <span class="kw">mod </span>marker;
 <span class="kw">mod </span>parse;
+<span class="kw">mod </span>rcvec;
 
 <span class="attr">#[cfg(wrap_proc_macro)]
 </span><span class="kw">mod </span>detection;
@@ -1443,22 +1478,31 @@
 </span><span class="attr">#[doc(hidden)]
 </span><span class="kw">pub mod </span>fallback;
 
+<span class="kw">pub mod </span>extra;
+
 <span class="attr">#[cfg(not(wrap_proc_macro))]
 </span><span class="kw">use </span><span class="kw">crate</span>::fallback <span class="kw">as </span>imp;
 <span class="attr">#[path = <span class="string">"wrapper.rs"</span>]
 #[cfg(wrap_proc_macro)]
 </span><span class="kw">mod </span>imp;
 
+<span class="attr">#[cfg(span_locations)]
+</span><span class="kw">mod </span>location;
+
+<span class="kw">use </span><span class="kw">crate</span>::extra::DelimSpan;
 <span class="kw">use </span><span class="kw">crate</span>::marker::Marker;
-<span class="kw">use </span>std::cmp::Ordering;
+<span class="kw">use </span>core::cmp::Ordering;
+<span class="kw">use </span>core::fmt::{<span class="self">self</span>, Debug, Display};
+<span class="kw">use </span>core::hash::{Hash, Hasher};
+<span class="kw">use </span>core::ops::RangeBounds;
+<span class="kw">use </span>core::str::FromStr;
 <span class="kw">use </span>std::error::Error;
-<span class="kw">use </span>std::fmt::{<span class="self">self</span>, Debug, Display};
-<span class="kw">use </span>std::hash::{Hash, Hasher};
-<span class="kw">use </span>std::iter::FromIterator;
-<span class="kw">use </span>std::ops::RangeBounds;
 <span class="attr">#[cfg(procmacro2_semver_exempt)]
 </span><span class="kw">use </span>std::path::PathBuf;
-<span class="kw">use </span>std::str::FromStr;
+
+<span class="attr">#[cfg(span_locations)]
+#[cfg_attr(doc_cfg, doc(cfg(feature = <span class="string">"span-locations"</span>)))]
+</span><span class="kw">pub use </span><span class="kw">crate</span>::location::LineColumn;
 
 <span class="doccomment">/// An abstract stream of tokens, or more concretely a sequence of token trees.
 ///
@@ -1487,7 +1531,7 @@
         }
     }
 
-    <span class="kw">fn </span>_new_stable(inner: fallback::TokenStream) -&gt; <span class="self">Self </span>{
+    <span class="kw">fn </span>_new_fallback(inner: fallback::TokenStream) -&gt; <span class="self">Self </span>{
         TokenStream {
             inner: inner.into(),
             _marker: Marker,
@@ -1533,16 +1577,18 @@
     }
 }
 
-<span class="attr">#[cfg(use_proc_macro)]
+<span class="attr">#[cfg(feature = <span class="string">"proc-macro"</span>)]
+#[cfg_attr(doc_cfg, doc(cfg(feature = <span class="string">"proc-macro"</span>)))]
 </span><span class="kw">impl </span>From&lt;proc_macro::TokenStream&gt; <span class="kw">for </span>TokenStream {
-    <span class="kw">fn </span>from(inner: proc_macro::TokenStream) -&gt; TokenStream {
+    <span class="kw">fn </span>from(inner: proc_macro::TokenStream) -&gt; <span class="self">Self </span>{
         TokenStream::_new(inner.into())
     }
 }
 
-<span class="attr">#[cfg(use_proc_macro)]
+<span class="attr">#[cfg(feature = <span class="string">"proc-macro"</span>)]
+#[cfg_attr(doc_cfg, doc(cfg(feature = <span class="string">"proc-macro"</span>)))]
 </span><span class="kw">impl </span>From&lt;TokenStream&gt; <span class="kw">for </span>proc_macro::TokenStream {
-    <span class="kw">fn </span>from(inner: TokenStream) -&gt; proc_macro::TokenStream {
+    <span class="kw">fn </span>from(inner: TokenStream) -&gt; <span class="self">Self </span>{
         inner.inner.into()
     }
 }
@@ -1666,37 +1712,6 @@
     }
 }
 
-<span class="doccomment">/// A line-column pair representing the start or end of a `Span`.
-///
-/// This type is semver exempt and not exposed by default.
-</span><span class="attr">#[cfg(span_locations)]
-#[cfg_attr(doc_cfg, doc(cfg(feature = <span class="string">"span-locations"</span>)))]
-#[derive(Copy, Clone, Debug, PartialEq, Eq)]
-</span><span class="kw">pub struct </span>LineColumn {
-    <span class="doccomment">/// The 1-indexed line in the source file on which the span starts or ends
-    /// (inclusive).
-    </span><span class="kw">pub </span>line: usize,
-    <span class="doccomment">/// The 0-indexed column (in UTF-8 characters) in the source file on which
-    /// the span starts or ends (inclusive).
-    </span><span class="kw">pub </span>column: usize,
-}
-
-<span class="attr">#[cfg(span_locations)]
-</span><span class="kw">impl </span>Ord <span class="kw">for </span>LineColumn {
-    <span class="kw">fn </span>cmp(<span class="kw-2">&amp;</span><span class="self">self</span>, other: <span class="kw-2">&amp;</span><span class="self">Self</span>) -&gt; Ordering {
-        <span class="self">self</span>.line
-            .cmp(<span class="kw-2">&amp;</span>other.line)
-            .then(<span class="self">self</span>.column.cmp(<span class="kw-2">&amp;</span>other.column))
-    }
-}
-
-<span class="attr">#[cfg(span_locations)]
-</span><span class="kw">impl </span>PartialOrd <span class="kw">for </span>LineColumn {
-    <span class="kw">fn </span>partial_cmp(<span class="kw-2">&amp;</span><span class="self">self</span>, other: <span class="kw-2">&amp;</span><span class="self">Self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;Ordering&gt; {
-        <span class="prelude-val">Some</span>(<span class="self">self</span>.cmp(other))
-    }
-}
-
 <span class="doccomment">/// A region of source code, along with macro expansion information.
 </span><span class="attr">#[derive(Copy, Clone)]
 </span><span class="kw">pub struct </span>Span {
@@ -1712,7 +1727,7 @@
         }
     }
 
-    <span class="kw">fn </span>_new_stable(inner: fallback::Span) -&gt; <span class="self">Self </span>{
+    <span class="kw">fn </span>_new_fallback(inner: fallback::Span) -&gt; <span class="self">Self </span>{
         Span {
             inner: inner.into(),
             _marker: Marker,
@@ -1731,9 +1746,6 @@
     <span class="doccomment">/// The span located at the invocation of the procedural macro, but with
     /// local variables, labels, and `$crate` resolved at the definition site
     /// of the macro. This is the same hygiene behavior as `macro_rules`.
-    ///
-    /// This function requires Rust 1.45 or later.
-    </span><span class="attr">#[cfg(not(no_hygiene))]
     </span><span class="kw">pub fn </span>mixed_site() -&gt; <span class="self">Self </span>{
         Span::_new(imp::Span::mixed_site())
     }
@@ -1802,8 +1814,7 @@
     </span><span class="attr">#[cfg(span_locations)]
     #[cfg_attr(doc_cfg, doc(cfg(feature = <span class="string">"span-locations"</span>)))]
     </span><span class="kw">pub fn </span>start(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; LineColumn {
-        <span class="kw">let </span>imp::LineColumn { line, column } = <span class="self">self</span>.inner.start();
-        LineColumn { line, column }
+        <span class="self">self</span>.inner.start()
     }
 
     <span class="doccomment">/// Get the ending line/column in the source file for this span.
@@ -1818,8 +1829,7 @@
     </span><span class="attr">#[cfg(span_locations)]
     #[cfg_attr(doc_cfg, doc(cfg(feature = <span class="string">"span-locations"</span>)))]
     </span><span class="kw">pub fn </span>end(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; LineColumn {
-        <span class="kw">let </span>imp::LineColumn { line, column } = <span class="self">self</span>.inner.end();
-        LineColumn { line, column }
+        <span class="self">self</span>.inner.end()
     }
 
     <span class="doccomment">/// Create a new span encompassing `self` and `other`.
@@ -1842,6 +1852,17 @@
     #[cfg_attr(doc_cfg, doc(cfg(procmacro2_semver_exempt)))]
     </span><span class="kw">pub fn </span>eq(<span class="kw-2">&amp;</span><span class="self">self</span>, other: <span class="kw-2">&amp;</span>Span) -&gt; bool {
         <span class="self">self</span>.inner.eq(<span class="kw-2">&amp;</span>other.inner)
+    }
+
+    <span class="doccomment">/// Returns the source text behind a span. This preserves the original
+    /// source code, including spaces and comments. It only returns a result if
+    /// the span corresponds to real source code.
+    ///
+    /// Note: The observable result of a macro should only rely on the tokens
+    /// and not on this source text. The result of this function is a best
+    /// effort to be used for diagnostics only.
+    </span><span class="kw">pub fn </span>source_text(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;String&gt; {
+        <span class="self">self</span>.inner.source_text()
     }
 }
 
@@ -1893,25 +1914,25 @@
 }
 
 <span class="kw">impl </span>From&lt;Group&gt; <span class="kw">for </span>TokenTree {
-    <span class="kw">fn </span>from(g: Group) -&gt; TokenTree {
+    <span class="kw">fn </span>from(g: Group) -&gt; <span class="self">Self </span>{
         TokenTree::Group(g)
     }
 }
 
 <span class="kw">impl </span>From&lt;Ident&gt; <span class="kw">for </span>TokenTree {
-    <span class="kw">fn </span>from(g: Ident) -&gt; TokenTree {
+    <span class="kw">fn </span>from(g: Ident) -&gt; <span class="self">Self </span>{
         TokenTree::Ident(g)
     }
 }
 
 <span class="kw">impl </span>From&lt;Punct&gt; <span class="kw">for </span>TokenTree {
-    <span class="kw">fn </span>from(g: Punct) -&gt; TokenTree {
+    <span class="kw">fn </span>from(g: Punct) -&gt; <span class="self">Self </span>{
         TokenTree::Punct(g)
     }
 }
 
 <span class="kw">impl </span>From&lt;Literal&gt; <span class="kw">for </span>TokenTree {
-    <span class="kw">fn </span>from(g: Literal) -&gt; TokenTree {
+    <span class="kw">fn </span>from(g: Literal) -&gt; <span class="self">Self </span>{
         TokenTree::Literal(g)
     }
 }
@@ -1983,7 +2004,7 @@
         Group { inner }
     }
 
-    <span class="kw">fn </span>_new_stable(inner: fallback::Group) -&gt; <span class="self">Self </span>{
+    <span class="kw">fn </span>_new_fallback(inner: fallback::Group) -&gt; <span class="self">Self </span>{
         Group {
             inner: inner.into(),
         }
@@ -2000,7 +2021,8 @@
         }
     }
 
-    <span class="doccomment">/// Returns the delimiter of this `Group`
+    <span class="doccomment">/// Returns the punctuation used as the delimiter for this group: a set of
+    /// parentheses, square brackets, or curly braces.
     </span><span class="kw">pub fn </span>delimiter(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Delimiter {
         <span class="self">self</span>.inner.delimiter()
     }
@@ -2042,6 +2064,13 @@
     /// ```
     </span><span class="kw">pub fn </span>span_close(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Span {
         Span::_new(<span class="self">self</span>.inner.span_close())
+    }
+
+    <span class="doccomment">/// Returns an object that holds this group's `span_open()` and
+    /// `span_close()` together (in a more compact representation than holding
+    /// those 2 spans individually).
+    </span><span class="kw">pub fn </span>delim_span(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; DelimSpan {
+        DelimSpan::new(<span class="kw-2">&amp;</span><span class="self">self</span>.inner)
     }
 
     <span class="doccomment">/// Configures the span for this `Group`'s delimiters, but not its internal
@@ -2167,7 +2196,7 @@
 /// Rust keywords. Use `input.call(Ident::parse_any)` when parsing to match the
 /// behaviour of `Ident::new`.
 ///
-/// [`Parse`]: https://docs.rs/syn/1.0/syn/parse/trait.Parse.html
+/// [`Parse`]: https://docs.rs/syn/2.0/syn/parse/trait.Parse.html
 ///
 /// # Examples
 ///
@@ -2258,25 +2287,23 @@
     /// Panics if the input string is neither a keyword nor a legal variable
     /// name. If you are not sure whether the string contains an identifier and
     /// need to handle an error case, use
-    /// &lt;a href="https://docs.rs/syn/1.0/syn/fn.parse_str.html"&gt;&lt;code
+    /// &lt;a href="https://docs.rs/syn/2.0/syn/fn.parse_str.html"&gt;&lt;code
     ///   style="padding-right:0;"&gt;syn::parse_str&lt;/code&gt;&lt;/a&gt;&lt;code
     ///   style="padding-left:0;"&gt;::&amp;lt;Ident&amp;gt;&lt;/code&gt;
     /// rather than `Ident::new`.
+    </span><span class="attr">#[track_caller]
     </span><span class="kw">pub fn </span>new(string: <span class="kw-2">&amp;</span>str, span: Span) -&gt; <span class="self">Self </span>{
-        Ident::_new(imp::Ident::new(string, span.inner))
+        Ident::_new(imp::Ident::new_checked(string, span.inner))
     }
 
-    <span class="doccomment">/// Same as `Ident::new`, but creates a raw identifier (`r#ident`).
-    ///
-    /// This method is semver exempt and not exposed by default.
-    </span><span class="attr">#[cfg(procmacro2_semver_exempt)]
-    #[cfg_attr(doc_cfg, doc(cfg(procmacro2_semver_exempt)))]
+    <span class="doccomment">/// Same as `Ident::new`, but creates a raw identifier (`r#ident`). The
+    /// `string` argument must be a valid identifier permitted by the language
+    /// (including keywords, e.g. `fn`). Keywords which are usable in path
+    /// segments (e.g. `self`, `super`) are not supported, and will cause a
+    /// panic.
+    </span><span class="attr">#[track_caller]
     </span><span class="kw">pub fn </span>new_raw(string: <span class="kw-2">&amp;</span>str, span: Span) -&gt; <span class="self">Self </span>{
-        Ident::_new_raw(string, span)
-    }
-
-    <span class="kw">fn </span>_new_raw(string: <span class="kw-2">&amp;</span>str, span: Span) -&gt; <span class="self">Self </span>{
-        Ident::_new(imp::Ident::new_raw(string, span.inner))
+        Ident::_new(imp::Ident::new_raw_checked(string, span.inner))
     }
 
     <span class="doccomment">/// Returns the span of this `Ident`.
@@ -2400,7 +2427,7 @@
         }
     }
 
-    <span class="kw">fn </span>_new_stable(inner: fallback::Literal) -&gt; <span class="self">Self </span>{
+    <span class="kw">fn </span>_new_fallback(inner: fallback::Literal) -&gt; <span class="self">Self </span>{
         Literal {
             inner: inner.into(),
             _marker: Marker,
@@ -2442,9 +2469,9 @@
     /// This constructor is similar to those like `Literal::i8_unsuffixed` where
     /// the float's value is emitted directly into the token but no suffix is
     /// used, so it may be inferred to be a `f64` later in the compiler.
-    /// Literals created from negative numbers may not survive rountrips through
-    /// `TokenStream` or strings and may be broken into two tokens (`-` and
-    /// positive literal).
+    /// Literals created from negative numbers may not survive round-trips
+    /// through `TokenStream` or strings and may be broken into two tokens (`-`
+    /// and positive literal).
     ///
     /// # Panics
     ///
@@ -2461,7 +2488,7 @@
     /// specified is the preceding part of the token and `f64` is the suffix of
     /// the token. This token will always be inferred to be an `f64` in the
     /// compiler. Literals created from negative numbers may not survive
-    /// rountrips through `TokenStream` or strings and may be broken into two
+    /// round-trips through `TokenStream` or strings and may be broken into two
     /// tokens (`-` and positive literal).
     ///
     /// # Panics
@@ -2478,9 +2505,9 @@
     /// This constructor is similar to those like `Literal::i8_unsuffixed` where
     /// the float's value is emitted directly into the token but no suffix is
     /// used, so it may be inferred to be a `f64` later in the compiler.
-    /// Literals created from negative numbers may not survive rountrips through
-    /// `TokenStream` or strings and may be broken into two tokens (`-` and
-    /// positive literal).
+    /// Literals created from negative numbers may not survive round-trips
+    /// through `TokenStream` or strings and may be broken into two tokens (`-`
+    /// and positive literal).
     ///
     /// # Panics
     ///
@@ -2497,7 +2524,7 @@
     /// specified is the preceding part of the token and `f32` is the suffix of
     /// the token. This token will always be inferred to be an `f32` in the
     /// compiler. Literals created from negative numbers may not survive
-    /// rountrips through `TokenStream` or strings and may be broken into two
+    /// round-trips through `TokenStream` or strings and may be broken into two
     /// tokens (`-` and positive literal).
     ///
     /// # Panics
@@ -2553,7 +2580,7 @@
     // representation. This is not public API other than for quote.
     </span><span class="attr">#[doc(hidden)]
     </span><span class="kw">pub unsafe fn </span>from_str_unchecked(repr: <span class="kw-2">&amp;</span>str) -&gt; <span class="self">Self </span>{
-        Literal::_new(imp::Literal::from_str_unchecked(repr))
+        Literal::_new(<span class="kw">unsafe </span>{ imp::Literal::from_str_unchecked(repr) })
     }
 }
 
@@ -2584,7 +2611,7 @@
 </span><span class="kw">pub mod </span>token_stream {
     <span class="kw">use </span><span class="kw">crate</span>::marker::Marker;
     <span class="kw">use crate</span>::{imp, TokenTree};
-    <span class="kw">use </span>std::fmt::{<span class="self">self</span>, Debug};
+    <span class="kw">use </span>core::fmt::{<span class="self">self</span>, Debug};
 
     <span class="kw">pub use </span><span class="kw">crate</span>::TokenStream;
 
@@ -2604,11 +2631,16 @@
         <span class="kw">fn </span>next(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;TokenTree&gt; {
             <span class="self">self</span>.inner.next()
         }
+
+        <span class="kw">fn </span>size_hint(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; (usize, <span class="prelude-ty">Option</span>&lt;usize&gt;) {
+            <span class="self">self</span>.inner.size_hint()
+        }
     }
 
     <span class="kw">impl </span>Debug <span class="kw">for </span>IntoIter {
         <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter) -&gt; fmt::Result {
-            Debug::fmt(<span class="kw-2">&amp;</span><span class="self">self</span>.inner, f)
+            f.write_str(<span class="string">"TokenStream "</span>)<span class="question-mark">?</span>;
+            f.debug_list().entries(<span class="self">self</span>.clone()).finish()
         }
     }
 

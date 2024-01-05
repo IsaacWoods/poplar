@@ -1,0 +1,97 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Packing spec types."><title>mycelium_bitfield::pack - Rust</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-4e54bb2b497cc83f.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="mycelium_bitfield" data-themes="" data-resource-suffix="" data-rustdoc-version="1.77.0-nightly (f688dd684 2024-01-04)" data-channel="nightly" data-search-js="search-c17e98913a53b3b7.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../static.files/storage-f2adc0d6ca4d09fb.js"></script><script defer src="../sidebar-items.js"></script><script defer src="../../static.files/main-0b2e2def73e61cbe.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-04d5337699b92874.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc mod"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle" title="show sidebar"></button></nav><nav class="sidebar"><div class="sidebar-crate"><h2><a href="../../mycelium_bitfield/index.html">mycelium_bitfield</a><span class="version">0.1.3</span></h2></div><h2 class="location"><a href="#">Module pack</a></h2><div class="sidebar-elems"><section><ul class="block"><li><a href="#structs">Structs</a></li></ul></section><h2><a href="../index.html">In crate mycelium_bitfield</a></h2></div></nav><div class="sidebar-resizer"></div>
+    <main><div class="width-limiter"><nav class="sub"><form class="search-form"><span></span><div id="sidebar-button" tabindex="-1"><a href="../../mycelium_bitfield/all.html" title="show sidebar"></a></div><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="main-heading"><h1>Module <a href="../index.html">mycelium_bitfield</a>::<wbr><a class="mod" href="#">pack</a><button id="copy-path" title="Copy item path to clipboard"><img src="../../static.files/clipboard-7571035ce49a181d.svg" width="19" height="18" alt="Copy item path"></button></h1><span class="out-of-band"><a class="src" href="../../src/mycelium_bitfield/pack.rs.html#1-1326">source</a> · <button id="toggle-all-docs" title="collapse all docs">[<span>&#x2212;</span>]</button></span></div><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>Packing spec types.</p>
+<p>This module provides a set of types to make packing bit ranges easier. These
+utilities can be used in <code>const fn</code>.</p>
+<p>The bit packing utilities consist of a type that defines a specification for
+a bit range to pack into, and a wrapper type for an unsigned integer
+defining methods to pack bit ranges into it. Packing specs are defined for
+<a href="https://doc.rust-lang.org/nightly/core/primitive.usize.html" title="primitive usize"><code>usize</code></a>, <a href="https://doc.rust-lang.org/nightly/core/primitive.u128.html" title="primitive u128"><code>u128</code></a>, <a href="https://doc.rust-lang.org/nightly/core/primitive.u64.html" title="primitive u64"><code>u64</code></a>, <a href="https://doc.rust-lang.org/nightly/core/primitive.u32.html" title="primitive u32"><code>u32</code></a>, <a href="https://doc.rust-lang.org/nightly/core/primitive.u16.html" title="primitive u16"><code>u16</code></a>, and <a href="https://doc.rust-lang.org/nightly/core/primitive.u8.html" title="primitive u8"><code>u8</code></a>, as
+<a href="struct.PackUsize.html" title="struct mycelium_bitfield::pack::PackUsize"><code>PackUsize</code></a>, <a href="struct.Pack128.html" title="struct mycelium_bitfield::pack::Pack128"><code>Pack128</code></a>, <a href="struct.Pack64.html" title="struct mycelium_bitfield::pack::Pack64"><code>Pack64</code></a>, <a href="struct.Pack32.html" title="struct mycelium_bitfield::pack::Pack32"><code>Pack32</code></a>, <a href="struct.Pack16.html" title="struct mycelium_bitfield::pack::Pack16"><code>Pack16</code></a>, and
+<a href="struct.Pack8.html" title="struct mycelium_bitfield::pack::Pack8"><code>Pack8</code></a>, respectively.</p>
+<p>Note that the bit packing utilities are generic using macros, rather than
+using generics and traits, because they are intended to be usable in
+const-eval, and trait methods cannot be <code>const fn</code>.</p>
+<h2 id="examples"><a href="#examples">Examples</a></h2>
+<p>Sorry there are no examples on the individual types, I didn’t want to figure
+out how to write doctests inside the macro :)</p>
+<p>Packing into the least-significant <em>n</em> bits:</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>mycelium_bitfield::Pack32;
+
+<span class="kw">const </span>LEAST_SIGNIFICANT_8: Pack32 = Pack32::least_significant(<span class="number">8</span>);
+
+<span class="comment">// the number we're going to pack bits into.
+</span><span class="kw">let </span>base = <span class="number">0xface_0000</span>;
+
+<span class="comment">// pack 0xed into the least significant 8 bits
+</span><span class="kw">let </span>val = LEAST_SIGNIFICANT_8.pack(<span class="number">0xed</span>, base);
+
+<span class="macro">assert_eq!</span>(val, <span class="number">0xface_00ed</span>);</code></pre></div>
+<p>Packing specs can be defined in relation to each other.</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>mycelium_bitfield::Pack64;
+
+<span class="kw">const </span>LOW: Pack64 = Pack64::least_significant(<span class="number">12</span>);
+<span class="kw">const </span>MID: Pack64 = LOW.next(<span class="number">8</span>);
+<span class="kw">const </span>HIGH: Pack64 = MID.next(<span class="number">4</span>);
+
+<span class="kw">let </span>base = <span class="number">0xfeed000000</span>;
+
+<span class="comment">// note that we don't need to pack the values in order.
+</span><span class="kw">let </span>val = HIGH.pack(<span class="number">0xC</span>, base);
+<span class="kw">let </span>val = LOW.pack(<span class="number">0xfee</span>, val);
+<span class="kw">let </span>val = MID.pack(<span class="number">0x0f</span>, val);
+
+<span class="macro">assert_eq!</span>(val, <span class="number">0xfeedc0ffee</span>); <span class="comment">// i want c0ffee</span></code></pre></div>
+<p>The same example can be written a little bit more neatly using methods:</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">const </span>LOW: Pack64 = Pack64::least_significant(<span class="number">12</span>);
+<span class="kw">const </span>MID: Pack64 = LOW.next(<span class="number">8</span>);
+<span class="kw">const </span>HIGH: Pack64 = MID.next(<span class="number">4</span>);
+
+<span class="comment">// Wrap a value to pack it using method calls.
+</span><span class="kw">let </span>coffee = Pack64::pack_in(<span class="number">0</span>)
+    .pack(<span class="number">0xfee</span>, <span class="kw-2">&amp;</span>LOW)
+    .pack(<span class="number">0xC</span>, <span class="kw-2">&amp;</span>HIGH)
+    .pack(<span class="number">0x0f</span>, <span class="kw-2">&amp;</span>MID)
+    .bits();
+
+<span class="macro">assert_eq!</span>(coffee, <span class="number">0xc0ffee</span>); <span class="comment">// i still want c0ffee</span></code></pre></div>
+<p>Packing specs can be used to extract values from their packed
+representation:</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="macro">assert_eq!</span>(LOW.unpack_bits(coffee), <span class="number">0xfee</span>);
+<span class="macro">assert_eq!</span>(MID.unpack_bits(coffee), <span class="number">0x0f</span>);
+<span class="macro">assert_eq!</span>(HIGH.unpack_bits(coffee), <span class="number">0xc</span>);</code></pre></div>
+<p>Any previously set bit patterns in the packed range will be overwritten, but
+existing values outside of a packing spec’s range are preserved:</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="comment">// this is not coffee
+</span><span class="kw">let </span>not_coffee = <span class="number">0xc0ff0f</span>;
+
+<span class="kw">let </span>coffee = LOW.pack(<span class="number">0xfee</span>, not_coffee);
+
+<span class="comment">// now it's coffee
+</span><span class="macro">assert_eq!</span>(coffee, <span class="number">0xc0ffee</span>);</code></pre></div>
+<p>We can also define packing specs for arbitrary bit ranges, in addition to
+defining them in relation to each other.</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>mycelium_bitfield::Pack64;
+
+<span class="comment">// pack a 12-bit value starting at the ninth bit
+</span><span class="kw">let </span>low = Pack64::from_range(<span class="number">9</span>..=<span class="number">21</span>);
+
+<span class="comment">// pack another value into the next 12 bits following `LOW`.
+</span><span class="kw">let </span>mid = low.next(<span class="number">12</span>);
+
+<span class="comment">// pack a third value starting at bit 33 to the end of the `u64`.
+</span><span class="kw">let </span>high = Pack64::from_range(<span class="number">33</span>..);
+
+<span class="kw">let </span>val = Pack64::pack_in(<span class="number">0</span>)
+    .pack(<span class="number">0xc0f</span>, <span class="kw-2">&amp;</span>mid)
+    .pack(<span class="number">0xfee</span>, <span class="kw-2">&amp;</span>low)
+    .pack(<span class="number">0xfeed</span>, <span class="kw-2">&amp;</span>high)
+    .bits();
+
+<span class="macro">assert_eq!</span>(val, <span class="number">0xfeedc0ffee00</span>); <span class="comment">// starting to detect a bit of a theme here...</span></code></pre></div>
+</div></details><h2 id="structs" class="section-header"><a href="#structs">Structs</a></h2><ul class="item-table"><li><div class="item-name"><a class="struct" href="struct.Pack8.html" title="struct mycelium_bitfield::pack::Pack8">Pack8</a></div><div class="desc docblock-short">A spec for packing values into selected bit ranges of <a href="https://doc.rust-lang.org/nightly/core/primitive.u8.html" title="primitive u8"><code>u8</code></a> values.</div></li><li><div class="item-name"><a class="struct" href="struct.Pack16.html" title="struct mycelium_bitfield::pack::Pack16">Pack16</a></div><div class="desc docblock-short">A spec for packing values into selected bit ranges of <a href="https://doc.rust-lang.org/nightly/core/primitive.u16.html" title="primitive u16"><code>u16</code></a> values.</div></li><li><div class="item-name"><a class="struct" href="struct.Pack32.html" title="struct mycelium_bitfield::pack::Pack32">Pack32</a></div><div class="desc docblock-short">A spec for packing values into selected bit ranges of <a href="https://doc.rust-lang.org/nightly/core/primitive.u32.html" title="primitive u32"><code>u32</code></a> values.</div></li><li><div class="item-name"><a class="struct" href="struct.Pack64.html" title="struct mycelium_bitfield::pack::Pack64">Pack64</a></div><div class="desc docblock-short">A spec for packing values into selected bit ranges of <a href="https://doc.rust-lang.org/nightly/core/primitive.u64.html" title="primitive u64"><code>u64</code></a> values.</div></li><li><div class="item-name"><a class="struct" href="struct.Pack128.html" title="struct mycelium_bitfield::pack::Pack128">Pack128</a></div><div class="desc docblock-short">A spec for packing values into selected bit ranges of <a href="https://doc.rust-lang.org/nightly/core/primitive.u128.html" title="primitive u128"><code>u128</code></a> values.</div></li><li><div class="item-name"><a class="struct" href="struct.PackUsize.html" title="struct mycelium_bitfield::pack::PackUsize">PackUsize</a></div><div class="desc docblock-short">A spec for packing values into selected bit ranges of <a href="https://doc.rust-lang.org/nightly/core/primitive.usize.html" title="primitive usize"><code>usize</code></a> values.</div></li><li><div class="item-name"><a class="struct" href="struct.Packing8.html" title="struct mycelium_bitfield::pack::Packing8">Packing8</a></div><div class="desc docblock-short">Wraps a <a href="https://doc.rust-lang.org/nightly/core/primitive.u8.html" title="primitive u8"><code>u8</code></a> to add methods for packing bit ranges specified by <a href="struct.Pack8.html" title="struct mycelium_bitfield::pack::Pack8"><code>Pack8</code></a>.</div></li><li><div class="item-name"><a class="struct" href="struct.Packing16.html" title="struct mycelium_bitfield::pack::Packing16">Packing16</a></div><div class="desc docblock-short">Wraps a <a href="https://doc.rust-lang.org/nightly/core/primitive.u16.html" title="primitive u16"><code>u16</code></a> to add methods for packing bit ranges specified by <a href="struct.Pack16.html" title="struct mycelium_bitfield::pack::Pack16"><code>Pack16</code></a>.</div></li><li><div class="item-name"><a class="struct" href="struct.Packing32.html" title="struct mycelium_bitfield::pack::Packing32">Packing32</a></div><div class="desc docblock-short">Wraps a <a href="https://doc.rust-lang.org/nightly/core/primitive.u32.html" title="primitive u32"><code>u32</code></a> to add methods for packing bit ranges specified by <a href="struct.Pack32.html" title="struct mycelium_bitfield::pack::Pack32"><code>Pack32</code></a>.</div></li><li><div class="item-name"><a class="struct" href="struct.Packing64.html" title="struct mycelium_bitfield::pack::Packing64">Packing64</a></div><div class="desc docblock-short">Wraps a <a href="https://doc.rust-lang.org/nightly/core/primitive.u64.html" title="primitive u64"><code>u64</code></a> to add methods for packing bit ranges specified by <a href="struct.Pack64.html" title="struct mycelium_bitfield::pack::Pack64"><code>Pack64</code></a>.</div></li><li><div class="item-name"><a class="struct" href="struct.Packing128.html" title="struct mycelium_bitfield::pack::Packing128">Packing128</a></div><div class="desc docblock-short">Wraps a <a href="https://doc.rust-lang.org/nightly/core/primitive.u128.html" title="primitive u128"><code>u128</code></a> to add methods for packing bit ranges specified by <a href="struct.Pack128.html" title="struct mycelium_bitfield::pack::Pack128"><code>Pack128</code></a>.</div></li><li><div class="item-name"><a class="struct" href="struct.PackingUsize.html" title="struct mycelium_bitfield::pack::PackingUsize">PackingUsize</a></div><div class="desc docblock-short">Wraps a <a href="https://doc.rust-lang.org/nightly/core/primitive.usize.html" title="primitive usize"><code>usize</code></a> to add methods for packing bit ranges specified by <a href="struct.PackUsize.html" title="struct mycelium_bitfield::pack::PackUsize"><code>PackUsize</code></a>.</div></li><li><div class="item-name"><a class="struct" href="struct.Pair8.html" title="struct mycelium_bitfield::pack::Pair8">Pair8</a></div><div class="desc docblock-short">A pair of <a href="struct.Pack8.html" title="struct mycelium_bitfield::pack::Pack8">Pack8</a>s, allowing a bit range to be unpacked from one offset in a <a href="https://doc.rust-lang.org/nightly/core/primitive.u8.html" title="primitive u8">u8</a> value, and packed into a different offset in a different value.</div></li><li><div class="item-name"><a class="struct" href="struct.Pair16.html" title="struct mycelium_bitfield::pack::Pair16">Pair16</a></div><div class="desc docblock-short">A pair of <a href="struct.Pack16.html" title="struct mycelium_bitfield::pack::Pack16">Pack16</a>s, allowing a bit range to be unpacked from one offset in a <a href="https://doc.rust-lang.org/nightly/core/primitive.u16.html" title="primitive u16">u16</a> value, and packed into a different offset in a different value.</div></li><li><div class="item-name"><a class="struct" href="struct.Pair32.html" title="struct mycelium_bitfield::pack::Pair32">Pair32</a></div><div class="desc docblock-short">A pair of <a href="struct.Pack32.html" title="struct mycelium_bitfield::pack::Pack32">Pack32</a>s, allowing a bit range to be unpacked from one offset in a <a href="https://doc.rust-lang.org/nightly/core/primitive.u32.html" title="primitive u32">u32</a> value, and packed into a different offset in a different value.</div></li><li><div class="item-name"><a class="struct" href="struct.Pair64.html" title="struct mycelium_bitfield::pack::Pair64">Pair64</a></div><div class="desc docblock-short">A pair of <a href="struct.Pack64.html" title="struct mycelium_bitfield::pack::Pack64">Pack64</a>s, allowing a bit range to be unpacked from one offset in a <a href="https://doc.rust-lang.org/nightly/core/primitive.u64.html" title="primitive u64">u64</a> value, and packed into a different offset in a different value.</div></li><li><div class="item-name"><a class="struct" href="struct.Pair128.html" title="struct mycelium_bitfield::pack::Pair128">Pair128</a></div><div class="desc docblock-short">A pair of <a href="struct.Pack128.html" title="struct mycelium_bitfield::pack::Pack128">Pack128</a>s, allowing a bit range to be unpacked from one offset in a <a href="https://doc.rust-lang.org/nightly/core/primitive.u128.html" title="primitive u128">u128</a> value, and packed into a different offset in a different value.</div></li><li><div class="item-name"><a class="struct" href="struct.PairUsize.html" title="struct mycelium_bitfield::pack::PairUsize">PairUsize</a></div><div class="desc docblock-short">A pair of <a href="struct.PackUsize.html" title="struct mycelium_bitfield::pack::PackUsize">PackUsize</a>s, allowing a bit range to be unpacked from one offset in a <a href="https://doc.rust-lang.org/nightly/core/primitive.usize.html" title="primitive usize">usize</a> value, and packed into a different offset in a different value.</div></li></ul></section></div></main></body></html>

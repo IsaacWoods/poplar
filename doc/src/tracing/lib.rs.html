@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/git/checkouts/tracing-e9bbb56ea31f0c18/60c60be/tracing/src/lib.rs`."><title>lib.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-bf502f66ec635d5d.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="tracing" data-themes="" data-resource-suffix="" data-rustdoc-version="1.77.0-nightly (e51e98dde 2023-12-31)" data-channel="nightly" data-search-js="search-c17e98913a53b3b7.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../static.files/storage-f2adc0d6ca4d09fb.js"></script><script defer src="../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-0b2e2def73e61cbe.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-04d5337699b92874.css"></noscript><link rel="icon" href="https://raw.githubusercontent.com/tokio-rs/tracing/master/assets/favicon.ico"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title">
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/git/checkouts/tracing-e9bbb56ea31f0c18/bac2508/tracing/src/lib.rs`."><title>lib.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-4e54bb2b497cc83f.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="tracing" data-themes="" data-resource-suffix="" data-rustdoc-version="1.77.0-nightly (f688dd684 2024-01-04)" data-channel="nightly" data-search-js="search-c17e98913a53b3b7.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../static.files/storage-f2adc0d6ca4d09fb.js"></script><script defer src="../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-0b2e2def73e61cbe.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-04d5337699b92874.css"></noscript><link rel="icon" href="https://raw.githubusercontent.com/tokio-rs/tracing/master/assets/favicon.ico"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title">
             <h2>Files</h2></div></nav><div class="sidebar-resizer"></div>
     <main><nav class="sub"><form class="search-form"><span></span><div id="sidebar-button" tabindex="-1"><a href="../../tracing/all.html" title="show sidebar"></a></div><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
@@ -1209,6 +1209,56 @@
 <a href="#1207" id="1207">1207</a>
 <a href="#1208" id="1208">1208</a>
 <a href="#1209" id="1209">1209</a>
+<a href="#1210" id="1210">1210</a>
+<a href="#1211" id="1211">1211</a>
+<a href="#1212" id="1212">1212</a>
+<a href="#1213" id="1213">1213</a>
+<a href="#1214" id="1214">1214</a>
+<a href="#1215" id="1215">1215</a>
+<a href="#1216" id="1216">1216</a>
+<a href="#1217" id="1217">1217</a>
+<a href="#1218" id="1218">1218</a>
+<a href="#1219" id="1219">1219</a>
+<a href="#1220" id="1220">1220</a>
+<a href="#1221" id="1221">1221</a>
+<a href="#1222" id="1222">1222</a>
+<a href="#1223" id="1223">1223</a>
+<a href="#1224" id="1224">1224</a>
+<a href="#1225" id="1225">1225</a>
+<a href="#1226" id="1226">1226</a>
+<a href="#1227" id="1227">1227</a>
+<a href="#1228" id="1228">1228</a>
+<a href="#1229" id="1229">1229</a>
+<a href="#1230" id="1230">1230</a>
+<a href="#1231" id="1231">1231</a>
+<a href="#1232" id="1232">1232</a>
+<a href="#1233" id="1233">1233</a>
+<a href="#1234" id="1234">1234</a>
+<a href="#1235" id="1235">1235</a>
+<a href="#1236" id="1236">1236</a>
+<a href="#1237" id="1237">1237</a>
+<a href="#1238" id="1238">1238</a>
+<a href="#1239" id="1239">1239</a>
+<a href="#1240" id="1240">1240</a>
+<a href="#1241" id="1241">1241</a>
+<a href="#1242" id="1242">1242</a>
+<a href="#1243" id="1243">1243</a>
+<a href="#1244" id="1244">1244</a>
+<a href="#1245" id="1245">1245</a>
+<a href="#1246" id="1246">1246</a>
+<a href="#1247" id="1247">1247</a>
+<a href="#1248" id="1248">1248</a>
+<a href="#1249" id="1249">1249</a>
+<a href="#1250" id="1250">1250</a>
+<a href="#1251" id="1251">1251</a>
+<a href="#1252" id="1252">1252</a>
+<a href="#1253" id="1253">1253</a>
+<a href="#1254" id="1254">1254</a>
+<a href="#1255" id="1255">1255</a>
+<a href="#1256" id="1256">1256</a>
+<a href="#1257" id="1257">1257</a>
+<a href="#1258" id="1258">1258</a>
+<a href="#1259" id="1259">1259</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! A scoped, structured logging and diagnostics system.
 //!
 //! # Overview
@@ -1230,7 +1280,7 @@
 //! The `tracing` crate provides the APIs necessary for instrumenting libraries
 //! and applications to emit trace data.
 //!
-//! *Compiler support: [requires `rustc` 1.49+][msrv]*
+//! *Compiler support: [requires `rustc` 1.63+][msrv]*
 //!
 //! [msrv]: #supported-rust-versions
 //! # Core Concepts
@@ -1403,7 +1453,7 @@
 //!
 //! You can find more examples showing how to use this crate [here][examples].
 //!
-//! [RAII]: https://github.com/rust-unofficial/patterns/blob/master/patterns/behavioural/RAII.md
+//! [RAII]: https://github.com/rust-unofficial/patterns/blob/main/src/patterns/behavioural/RAII.md
 //! [examples]: https://github.com/tokio-rs/tracing/tree/master/examples
 //!
 //! ### Events
@@ -1425,7 +1475,7 @@
 //! ### Configuring Attributes
 //!
 //! Both macros require a [`Level`] specifying the verbosity of the span or
-//! event. Optionally, the [target] and [parent span] may be overridden. If the
+//! event. Optionally, the, [target] and [parent span] may be overridden. If the
 //! target and parent span are not overridden, they will default to the
 //! module path where the macro was invoked and the current span (as determined
 //! by the collector), respectively.
@@ -1448,7 +1498,16 @@
 //! ```
 //!
 //! The span macros also take a string literal after the level, to set the name
-//! of the span.
+//! of the span (as above).  In the case of the event macros, the name of the event can
+//! be overridden (the default is `event file:line`) using the `name:` specifier.
+//!
+//! ```
+//! # use tracing::{span, event, Level};
+//! # fn main() {
+//! span!(Level::TRACE, "my span");
+//! event!(name: "some_info", Level::INFO, "something has happened!");
+//! # }
+//! ```
 //!
 //! ### Recording Fields
 //!
@@ -1518,6 +1577,19 @@
 //! //  - "guid:x-request-id", containing a `:`, with the value "abcdef"
 //! //  - "type", which is a reserved word, with the value "request"
 //! span!(Level::TRACE, "api", "guid:x-request-id" = "abcdef", "type" = "request");
+//! # }
+//!```
+//!
+//! Constant expressions can also be used as field names. Constants
+//! must be enclosed in curly braces (`{}`) to indicate that the *value*
+//! of the constant is to be used as the field name, rather than the
+//! constant's name. For example:
+//! ```
+//! # use tracing::{span, Level};
+//! # fn main() {
+//! const RESOURCE_NAME: &amp;str = "foo";
+//! // this span will have the field `foo = "some_id"`
+//! span!(Level::TRACE, "get", { RESOURCE_NAME } = "some_id");
 //! # }
 //!```
 //!
@@ -1595,22 +1667,6 @@
 //!
 //! // Now, record a value for parting as well.
 //! span.record("parting", &amp;"goodbye world!");
-//! ```
-//!
-//! Note that a span may have up to 32 fields. The following will not compile:
-//!
-//! ```rust,compile_fail
-//! # use tracing::Level;
-//! # fn main() {
-//! let bad_span = span!(
-//!     Level::TRACE,
-//!     "too many fields!",
-//!     a = 1, b = 2, c = 3, d = 4, e = 5, f = 6, g = 7, h = 8, i = 9,
-//!     j = 10, k = 11, l = 12, m = 13, n = 14, o = 15, p = 16, q = 17,
-//!     r = 18, s = 19, t = 20, u = 21, v = 22, w = 23, x = 24, y = 25,
-//!     z = 26, aa = 27, bb = 28, cc = 29, dd = 30, ee = 31, ff = 32, gg = 33
-//! );
-//! # }
 //! ```
 //!
 //! Finally, events may also include human-readable messages, in the form of a
@@ -1991,6 +2047,7 @@
 //!  - [`tracing-actix-web`] provides `tracing` integration for the `actix-web` web framework.
 //!  - [`tracing-actix`] provides `tracing` integration for the `actix` actor
 //!    framework.
+//!  - [`axum-insights`] provides `tracing` integration and Application insights export for the `axum` web framework.
 //!  - [`tracing-gelf`] implements a subscriber for exporting traces in Greylog
 //!    GELF format.
 //!  - [`tracing-coz`] provides integration with the [coz] causal profiler
@@ -2019,6 +2076,8 @@
 //!  - [`tracing-loki`] provides a layer for shipping logs to [Grafana Loki].
 //!  - [`tracing-logfmt`] provides a layer that formats events and spans into the logfmt format.
 //!  - [`reqwest-tracing`] provides a middleware to trace [`reqwest`] HTTP requests.
+//!  - [`tracing-cloudwatch`] provides a layer that sends events to AWS CloudWatch Logs.
+//!  - [`clippy-tracing`] provides a tool to add, remove and check for `tracing::instrument`.
 //!
 //! If you're the maintainer of a `tracing` ecosystem crate not listed above,
 //! please let us know! We'd love to add your project to the list!
@@ -2030,6 +2089,7 @@
 //! [honeycomb.io]: https://www.honeycomb.io/
 //! [`tracing-actix-web`]: https://crates.io/crates/tracing-actix-web
 //! [`tracing-actix`]: https://crates.io/crates/tracing-actix
+//! [`axum-insights`]: https://crates.io/crates/axum-insights
 //! [`tracing-gelf`]: https://crates.io/crates/tracing-gelf
 //! [`tracing-coz`]: https://crates.io/crates/tracing-coz
 //! [coz]: https://github.com/plasma-umass/coz
@@ -2048,7 +2108,7 @@
 //! [Tracy]: https://github.com/wolfpld/tracy
 //! [`tracing-elastic-apm`]: https://crates.io/crates/tracing-elastic-apm
 //! [Elastic APM]: https://www.elastic.co/apm
-//! [`tracing-etw`]: https://github.com/microsoft/tracing-etw
+//! [`tracing-etw`]: https://github.com/microsoft/rust_win_etw/tree/main/win_etw_tracing
 //! [ETW]: https://docs.microsoft.com/en-us/windows/win32/etw/about-event-tracing
 //! [`tracing-fluent-assertions`]: https://crates.io/crates/tracing-fluent-assertions
 //! [`sentry-tracing`]: https://crates.io/crates/sentry-tracing
@@ -2059,6 +2119,8 @@
 //! [`tracing-logfmt`]: https://crates.io/crates/tracing-logfmt
 //! [`reqwest-tracing`]: https://crates.io/crates/reqwest-tracing
 //! [`reqwest`]: https://crates.io/crates/reqwest
+//! [`tracing-cloudwatch`]: https://crates.io/crates/tracing-cloudwatch
+//! [`clippy-tracing`]: https://crates.io/crates/clippy-tracing
 //!
 //! &lt;div class="example-wrap" style="display:inline-block"&gt;
 //! &lt;pre class="ignore" style="white-space:normal;font:inherit;"&gt;
@@ -2091,14 +2153,14 @@
 //! ## Supported Rust Versions
 //!
 //! Tracing is built against the latest stable release. The minimum supported
-//! version is 1.49. The current Tracing version is not guaranteed to build on
+//! version is 1.63. The current Tracing version is not guaranteed to build on
 //! Rust versions earlier than the minimum supported version.
 //!
 //! Tracing follows the same compiler support policies as the rest of the Tokio
 //! project. The current stable Rust compiler and the three most recent minor
 //! versions before it will always be supported. For example, if the current
-//! stable compiler version is 1.45, the minimum supported version will not be
-//! increased past 1.42, three minor versions prior. Increasing the minimum
+//! stable compiler version is 1.69, the minimum supported version will not be
+//! increased past 1.66, three minor versions prior. Increasing the minimum
 //! supported compiler version is not considered a semver breaking change as
 //! long as doing so complies with this policy.
 //!
@@ -2109,7 +2171,7 @@
 //! [event]: Event
 //! [events]: Event
 //! [`collect`]: collect::Collect
-//! [Collect::event]: collect::Collect::event
+//! [Collect::event]: fn@collect::Collect::event
 //! [`enter`]: collect::Collect::enter
 //! [`exit`]: collect::Collect::exit
 //! [`enabled`]: collect::Collect::enabled
@@ -2147,7 +2209,8 @@
     overflowing_literals,
     path_statements,
     patterns_in_fns_without_body,
-    private_in_public,
+    private_interfaces,
+    private_bounds,
     unconditional_recursion,
     unused,
     unused_allocation,
@@ -2199,8 +2262,11 @@
     <span class="kw">pub use </span><span class="kw">crate</span>::callsite::{Callsite, Registration};
     <span class="kw">use crate</span>::{collect::Interest, Metadata};
     <span class="kw">use </span>core::fmt;
-    <span class="kw">use </span>core::sync::atomic::{AtomicUsize, Ordering};
-    <span class="kw">use </span>tracing_core::Once;
+    <span class="kw">use </span>core::sync::atomic::{AtomicU8, Ordering};
+    <span class="comment">// Re-export the `core` functions that are used in macros. This allows
+    // a crate to be named `core` and avoid name clashes.
+    // See here: https://github.com/tokio-rs/tracing/issues/2761
+    </span><span class="kw">pub use </span>core::{concat, format_args, iter::Iterator, option::Option};
 
     <span class="doccomment">/// Callsite implementation used by macro-generated code.
     ///
@@ -2214,9 +2280,9 @@
     <span class="kw">where
         </span>T: <span class="lifetime">'static</span>,
     {
-        interest: AtomicUsize,
+        interest: AtomicU8,
+        register: AtomicU8,
         meta: <span class="kw-2">&amp;</span><span class="lifetime">'static </span>Metadata&lt;<span class="lifetime">'static</span>&gt;,
-        register: Once,
         registration: <span class="kw-2">&amp;</span><span class="lifetime">'static </span>Registration&lt;T&gt;,
     }
 
@@ -2234,12 +2300,21 @@
             registration: <span class="kw-2">&amp;</span><span class="lifetime">'static </span>Registration&lt;T&gt;,
         ) -&gt; <span class="self">Self </span>{
             <span class="self">Self </span>{
-                interest: AtomicUsize::new(<span class="number">0xDEADFACED</span>),
+                interest: AtomicU8::new(<span class="self">Self</span>::INTEREST_EMPTY),
+                register: AtomicU8::new(<span class="self">Self</span>::UNREGISTERED),
                 meta,
-                register: Once::new(),
                 registration,
             }
         }
+
+        <span class="kw">const </span>UNREGISTERED: u8 = <span class="number">0</span>;
+        <span class="kw">const </span>REGISTERING: u8 = <span class="number">1</span>;
+        <span class="kw">const </span>REGISTERED: u8 = <span class="number">2</span>;
+
+        <span class="kw">const </span>INTEREST_NEVER: u8 = <span class="number">0</span>;
+        <span class="kw">const </span>INTEREST_SOMETIMES: u8 = <span class="number">1</span>;
+        <span class="kw">const </span>INTEREST_ALWAYS: u8 = <span class="number">2</span>;
+        <span class="kw">const </span>INTEREST_EMPTY: u8 = <span class="number">0xFF</span>;
     }
 
     <span class="kw">impl </span>MacroCallsite&lt;<span class="kw-2">&amp;</span><span class="lifetime">'static </span><span class="kw">dyn </span>Callsite&gt; {
@@ -2257,11 +2332,36 @@
         </span><span class="comment">// This only happens once (or if the cached interest value was corrupted).
         </span><span class="attr">#[cold]
         </span><span class="kw">pub fn </span>register(<span class="kw-2">&amp;</span><span class="lifetime">'static </span><span class="self">self</span>) -&gt; Interest {
-            <span class="self">self</span>.register
-                .call_once(|| <span class="kw">crate</span>::callsite::register(<span class="self">self</span>.registration));
+            <span class="comment">// Attempt to advance the registration state to `REGISTERING`...
+            </span><span class="kw">match </span><span class="self">self</span>.register.compare_exchange(
+                <span class="self">Self</span>::UNREGISTERED,
+                <span class="self">Self</span>::REGISTERING,
+                Ordering::AcqRel,
+                Ordering::Acquire,
+            ) {
+                <span class="prelude-val">Ok</span>(<span class="kw">_</span>) =&gt; {
+                    <span class="comment">// Okay, we advanced the state, try to register the callsite.
+                    </span><span class="kw">crate</span>::callsite::register(<span class="self">self</span>.registration);
+                    <span class="self">self</span>.register.store(<span class="self">Self</span>::REGISTERED, Ordering::Release);
+                }
+                <span class="comment">// Great, the callsite is already registered! Just load its
+                // previous cached interest.
+                </span><span class="prelude-val">Err</span>(<span class="self">Self</span>::REGISTERED) =&gt; {}
+                <span class="comment">// Someone else is registering...
+                </span><span class="prelude-val">Err</span>(_state) =&gt; {
+                    <span class="macro">debug_assert_eq!</span>(
+                        _state,
+                        <span class="self">Self</span>::REGISTERING,
+                        <span class="string">"weird callsite registration state"
+                    </span>);
+                    <span class="comment">// Just hit `enabled` this time.
+                    </span><span class="kw">return </span>Interest::sometimes();
+                }
+            }
+
             <span class="kw">match </span><span class="self">self</span>.interest.load(Ordering::Relaxed) {
-                <span class="number">0 </span>=&gt; Interest::never(),
-                <span class="number">2 </span>=&gt; Interest::always(),
+                <span class="self">Self</span>::INTEREST_NEVER =&gt; Interest::never(),
+                <span class="self">Self</span>::INTEREST_ALWAYS =&gt; Interest::always(),
                 <span class="kw">_ </span>=&gt; Interest::sometimes(),
             }
         }
@@ -2278,9 +2378,9 @@
         </span><span class="attr">#[inline]
         </span><span class="kw">pub fn </span>interest(<span class="kw-2">&amp;</span><span class="lifetime">'static </span><span class="self">self</span>) -&gt; Interest {
             <span class="kw">match </span><span class="self">self</span>.interest.load(Ordering::Relaxed) {
-                <span class="number">0 </span>=&gt; Interest::never(),
-                <span class="number">1 </span>=&gt; Interest::sometimes(),
-                <span class="number">2 </span>=&gt; Interest::always(),
+                <span class="self">Self</span>::INTEREST_NEVER =&gt; Interest::never(),
+                <span class="self">Self</span>::INTEREST_SOMETIMES =&gt; Interest::sometimes(),
+                <span class="self">Self</span>::INTEREST_ALWAYS =&gt; Interest::always(),
                 <span class="kw">_ </span>=&gt; <span class="self">self</span>.register(),
             }
         }

@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["TimerError"],"fn":["set_global_timer","sleep","timeout","try_sleep","try_timeout"],"mod":["timeout"],"struct":["AlreadyInitialized","Duration","Sleep","Timeout","Timer","Turn"]};
