@@ -1,5 +1,5 @@
 use crate::interrupts;
-use core::arch::asm;
+use core::{arch::asm, time::Duration};
 use hal::memory::VAddr;
 use hal_riscv::hw::csr::{Scause, Sepc, Stvec};
 use tracing::{info, trace};
@@ -35,7 +35,15 @@ extern "C" fn trap_handler(trap_frame: &mut TrapFrame, scause: usize, stval: usi
             interrupts::handle_external_interrupt();
         }
         Ok(Scause::SupervisorTimerInterrupt) => {
-            sbi::timer::set_timer(hal_riscv::hw::csr::Time::read() as u64 + 0x989680 * 3).unwrap();
+            // TODO: probably don't rely on it being exactly correct? Unknown how accurate they arg
+            // TODO: maitake has a couple of ways to advance the timer - assess if another would be
+            // better for reasons (e.g. on `riscv` we could directly read `stime` each tick)
+            crate::SCHEDULER.get().kernel_scheduler.timer.advance(Duration::from_millis(20));
+            // Schedule the next tick in 20ms time (TODO: I have no idea what a sensible interval
+            // should be). `Timer::advance` returns a `Turn` struct that tells us when the next
+            // deadline is - the most efficient thing if this is all we need the timer interrupt
+            // for would be to wait til then?
+            sbi::timer::set_timer(hal_riscv::hw::csr::Time::read() as u64 + 0x989680 / 50).unwrap();
         }
         Ok(other) => {
             info!("Trap! Cause = {:?}. Stval = {:#x?}", other, stval);

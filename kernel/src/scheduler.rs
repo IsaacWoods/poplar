@@ -3,16 +3,32 @@ use crate::{
     Platform,
 };
 use alloc::{collections::VecDeque, sync::Arc, vec::Vec};
+use core::{future::Future, time::Duration};
 use hal::memory::VAddr;
+use maitake::task::JoinHandle;
 use spinning_top::{guard::SpinlockGuard, Spinlock};
 use tracing::trace;
 
+/// The global `Scheduler` coordinates the main 'run loop' of the kernel, allocating CPU time to
+/// userspace tasks. There is one global `Scheduler` instance, which then holds a `CpuScheduler`
+/// for each running processor to coordinate tasks running on that processor.
+///
+/// It is also responsible for managing spawned kernel asynchronous tasklets (which are somewhat
+/// confusingly also often called `Task`s) - this involves tracking tasks that have been 'woken'
+/// (are ready to make progress) and making sure they are polled regularly. The forward progress of
+/// both userspace tasks and kernel tasklets are intertwined, and so are managed together.
 pub struct Scheduler<P>
 where
     P: Platform,
 {
     // TODO: in the future, this will be a vec with a CpuScheduler for each CPU
-    inner: Spinlock<CpuScheduler<P>>,
+    task_scheduler: Spinlock<CpuScheduler<P>>,
+    pub kernel_scheduler: KernelScheduler,
+}
+
+pub struct KernelScheduler {
+    pub scheduler: Spinlock<maitake::scheduler::Scheduler>,
+    pub timer: maitake::time::Timer,
 }
 
 pub struct CpuScheduler<P>
@@ -20,8 +36,7 @@ where
     P: Platform,
 {
     pub running_task: Option<Arc<Task<P>>>,
-    /// List of Tasks ready to be scheduled. Every kernel object in this list must be a Task.
-    /// Backed by a `VecDeque` so we can rotate objects in the queue efficiently.
+    /// List of Tasks ready to be scheduled. Backed by a `VecDeque` so we can rotate objects in the queue efficiently.
     ready_queue: VecDeque<Arc<Task<P>>>,
     blocked_queue: Vec<Arc<Task<P>>>,
 }
@@ -46,7 +61,13 @@ where
     P: Platform,
 {
     pub fn new() -> Scheduler<P> {
-        Scheduler { inner: Spinlock::new(CpuScheduler::new()) }
+        Scheduler {
+            task_scheduler: Spinlock::new(CpuScheduler::new()),
+            kernel_scheduler: KernelScheduler {
+                scheduler: Spinlock::new(maitake::scheduler::Scheduler::new()),
+                timer: maitake::time::Timer::new(Duration::from_millis(20)),
+            },
+        }
     }
 
     pub fn add_task(&self, task: Arc<Task<P>>) {
@@ -62,7 +83,16 @@ where
 
     pub fn for_this_cpu(&self) -> SpinlockGuard<CpuScheduler<P>> {
         // XXX: this will need to take into account which CPU we're running on in the future
-        self.inner.lock()
+        self.task_scheduler.lock()
+    }
+
+    pub fn spawn_tasklet<F>(&self, future: F) -> JoinHandle<F::Output>
+    where
+        F: Future + Send + 'static,
+        F::Output: Send + 'static,
+    {
+        let tasklet_scheduler = self.kernel_scheduler.scheduler.lock();
+        tasklet_scheduler.spawn(future)
     }
 
     /// Performs the first transistion from the kernel into userspace. On some platforms, this has
@@ -106,6 +136,12 @@ where
     pub fn switch_to_next(&self, new_state: TaskState) {
         let mut scheduler = self.for_this_cpu();
         assert!(scheduler.running_task.is_some());
+
+        // While we're in the kernel, tick the kernel scheduler (TODO: where should this be?)
+        {
+            let tasklet_scheduler = self.kernel_scheduler.scheduler.lock();
+            tasklet_scheduler.tick();
+        }
 
         if let Some(next_task) = scheduler.choose_next() {
             /*

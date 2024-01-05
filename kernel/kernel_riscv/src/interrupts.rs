@@ -19,6 +19,7 @@ pub fn init(fdt: &Fdt) {
 
         PLIC.initialize(unsafe { &*(address.ptr() as *const Plic) });
         PLIC.get().init(num_interrupts);
+        // TODO: do this better
         PLIC.get().enable_interrupt(1, 0xa);
         PLIC.get().set_context_threshold(1, 0);
         PLIC.get().set_source_priority(0xa, 7);

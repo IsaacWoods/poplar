@@ -15,6 +15,8 @@ mod pci;
 mod task;
 mod trap;
 
+use core::time::Duration;
+
 use hal::memory::{Frame, VAddr};
 use hal_riscv::{
     hw::csr::Satp,
@@ -133,8 +135,6 @@ pub extern "C" fn kentry(boot_info: &BootInfo) -> ! {
         hal_riscv::hw::csr::Sie::enable_all();
         hal_riscv::hw::csr::Sstatus::enable_interrupts();
     }
-    // TODO: global function for getting number of ticks per us or whatever from the device tree
-    sbi::timer::set_timer(hal_riscv::hw::csr::Time::read() as u64 + 0x989680 * 3).unwrap();
 
     if let Some(access) = pci::PciAccess::new(&fdt) {
         kernel::initialize_pci(access);
@@ -149,6 +149,18 @@ pub extern "C" fn kentry(boot_info: &BootInfo) -> ! {
     );
 
     SCHEDULER.initialize(Scheduler::new());
+    maitake::time::set_global_timer(&SCHEDULER.get().kernel_scheduler.timer).unwrap();
+    // Kick the timer off
+    // TODO: global function for getting number of ticks per us or whatever from the device tree
+    sbi::timer::set_timer(hal_riscv::hw::csr::Time::read() as u64 + 0x989680 / 50).unwrap();
+
+    SCHEDULER.get().spawn_tasklet(async {
+        tracing::info!("Hello from an async task!");
+        loop {
+            maitake::time::sleep(Duration::from_secs(1)).await;
+            info!("Timer goes ping");
+        }
+    });
 
     /*
      * Create kernel objects from loaded images and schedule them.

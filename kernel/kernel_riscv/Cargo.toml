@@ -17,6 +17,7 @@ fdt = { path = "../../lib/fdt/", features = ["pretty-printing"] }
 sbi = "0.2.0"
 pci_types = { path = "../../lib/pci_types/" }
 bipqueue = {path = "../../lib/bipqueue/" }
+maitake = { git = "https://github.com/hawkw/mycelium", features = ["alloc", "tracing-02"] }
 
 [features]
 platform_rv64_virt = ["hal_riscv/platform_rv64_virt"]

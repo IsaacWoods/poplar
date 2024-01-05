@@ -73,8 +73,9 @@ impl Collect for Logger {
         todo!()
     }
 
-    fn enabled(&self, _metadata: &Metadata) -> bool {
-        true
+    fn enabled(&self, metadata: &Metadata) -> bool {
+        // TODO: support more extensive + customizable filtering
+        *metadata.level() <= Level::INFO
     }
 
     fn enter(&self, _span: &span::Id) {}
