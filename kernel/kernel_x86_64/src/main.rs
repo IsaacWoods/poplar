@@ -231,6 +231,8 @@ pub extern "C" fn kentry(boot_info: &BootInfo) -> ! {
 
     let mut platform = PlatformImpl { kernel_page_table, topology };
 
+    // TODO: we need to support the tasklet scheduler on x64 too - maybe use the HPET to drive
+    // `maitake`'s timer wheel?
     SCHEDULER.initialize(Scheduler::new());
 
     /*
@@ -250,9 +252,5 @@ pub extern "C" fn kentry(boot_info: &BootInfo) -> ! {
         kernel::create_framebuffer(video_info);
     }
 
-    /*
-     * Drop into userspace!
-     */
-    info!("Dropping into usermode");
-    SCHEDULER.get().drop_to_userspace();
+    SCHEDULER.get().start_scheduling();
 }

@@ -149,12 +149,12 @@ pub extern "C" fn kentry(boot_info: &BootInfo) -> ! {
     );
 
     SCHEDULER.initialize(Scheduler::new());
-    maitake::time::set_global_timer(&SCHEDULER.get().kernel_scheduler.timer).unwrap();
+    maitake::time::set_global_timer(&SCHEDULER.get().tasklet_scheduler.timer).unwrap();
     // Kick the timer off
     // TODO: global function for getting number of ticks per us or whatever from the device tree
     sbi::timer::set_timer(hal_riscv::hw::csr::Time::read() as u64 + 0x989680 / 50).unwrap();
 
-    SCHEDULER.get().spawn_tasklet(async {
+    SCHEDULER.get().tasklet_scheduler.spawn(async {
         tracing::info!("Hello from an async task!");
         loop {
             maitake::time::sleep(Duration::from_secs(1)).await;
@@ -179,13 +179,9 @@ pub extern "C" fn kentry(boot_info: &BootInfo) -> ! {
     /*
      * Move to a trap handler that can handle traps from both S-mode and U-mode. We can only do
      * this now because we need a `sscratch` context installed (which hasn't technically happened
-     * yet but will very soon).
+     * yet but will very soon, so cross your fingers AND toes).
      */
     trap::install_full_handler();
 
-    /*
-     * Drop into userspace!
-     */
-    info!("Dropping into usermode");
-    SCHEDULER.get().drop_to_userspace()
+    SCHEDULER.get().start_scheduling()
 }

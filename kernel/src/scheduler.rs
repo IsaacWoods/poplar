@@ -1,11 +1,10 @@
 use crate::{
     object::task::{Task, TaskState},
+    tasklets::TaskletScheduler,
     Platform,
 };
 use alloc::{collections::VecDeque, sync::Arc, vec::Vec};
-use core::{future::Future, time::Duration};
 use hal::memory::VAddr;
-use maitake::task::JoinHandle;
 use spinning_top::{guard::SpinlockGuard, Spinlock};
 use tracing::trace;
 
@@ -23,12 +22,10 @@ where
 {
     // TODO: in the future, this will be a vec with a CpuScheduler for each CPU
     task_scheduler: Spinlock<CpuScheduler<P>>,
-    pub kernel_scheduler: KernelScheduler,
-}
-
-pub struct KernelScheduler {
-    pub scheduler: Spinlock<maitake::scheduler::Scheduler>,
-    pub timer: maitake::time::Timer,
+    // TODO: have a maitake scheduler for each processor (ACTUALLY I can't work out if we need one
+    // - LocalScheduler could be the core-local one, but both say single-core... Maybe we can just
+    // have one and tick it from whatever processor is available?)
+    pub tasklet_scheduler: TaskletScheduler,
 }
 
 pub struct CpuScheduler<P>
@@ -63,10 +60,7 @@ where
     pub fn new() -> Scheduler<P> {
         Scheduler {
             task_scheduler: Spinlock::new(CpuScheduler::new()),
-            kernel_scheduler: KernelScheduler {
-                scheduler: Spinlock::new(maitake::scheduler::Scheduler::new()),
-                timer: maitake::time::Timer::new(Duration::from_millis(20)),
-            },
+            tasklet_scheduler: TaskletScheduler::new(),
         }
     }
 
@@ -86,31 +80,55 @@ where
         self.task_scheduler.lock()
     }
 
-    pub fn spawn_tasklet<F>(&self, future: F) -> JoinHandle<F::Output>
-    where
-        F: Future + Send + 'static,
-        F::Output: Send + 'static,
-    {
-        let tasklet_scheduler = self.kernel_scheduler.scheduler.lock();
-        tasklet_scheduler.spawn(future)
-    }
+    /// Start scheduling! This should be called after a platform has finished initializing, and is
+    /// diverging. It gives kernel tasklets an initial poll while we're here in the kernel, and
+    /// then drops down into userspace.
+    pub fn start_scheduling(&self) -> ! {
+        self.tasklet_scheduler.tick();
 
-    /// Performs the first transistion from the kernel into userspace. On some platforms, this has
-    /// to be done in a different way to how we'd replace the currently running task if we'd
-    /// yielded or pre-empted out of an existing userspace context, and so this is handled
-    /// specially.
-    ///
-    /// The scheduler will always drop into userspace into the first task added to the ready queue.
-    /// By controlling which Task is added first, the ecosystem can be sure that the correct Task
-    /// is run first (whether the userspace layers take advantage of this is up to them - it would
-    /// be more reliable to not depend on one process starting first, but this is an option).
-    pub fn drop_to_userspace(&self) -> ! {
         let mut scheduler = self.for_this_cpu();
-
         assert!(scheduler.running_task.is_none());
         let task = scheduler.choose_next().expect("Tried to drop into userspace with no ready tasks!");
         assert_eq!(*task.state.lock(), TaskState::Ready);
+        Self::drop_to_userspace(scheduler, task);
+    }
 
+    /// Called when a userspace task yields or is pre-empted. This is responsible for the
+    /// 'scheduling' part of the scheduler - it polls kernel tasklets as they need attention, and
+    /// shares CPU time between userspace tasks.
+    ///
+    /// On each call to `schedule`, the kernel can choose to:
+    ///    - Give CPU time to the kernel-space tasklet scheduler
+    ///    - Switch to another userspace task
+    ///    - Steal work from another CPU's scheduler
+    ///    - Idle the CPU, if there is nothing to be done
+    ///    - Nothing
+    ///
+    /// If the current task is switched away from, it will be placed in the state `new_state`. This
+    /// allows the caller to block the current task on a dependency. If a task has been pre-empted
+    /// or yields, it should be placed into `TaskState::Ready`.
+    pub fn schedule(&self, new_state: TaskState) {
+        self.tasklet_scheduler.tick();
+
+        let mut scheduler = self.for_this_cpu();
+        assert!(scheduler.running_task.is_some());
+        if let Some(next_task) = scheduler.choose_next() {
+            Self::switch_to(scheduler, new_state, next_task);
+        } else {
+            /*
+             * There aren't any schedulable tasks. For now, we just return to the current one (by
+             * doing nothing here).
+             *
+             * TODO: this should idle the CPU to minimise power use, waking to interrupts + every
+             * so often to run tasklets, and see if any tasks are unblocked.
+             */
+            trace!("No more schedulable tasks. Returning to current one!");
+        }
+    }
+
+    /// Perform the first transistion from the kernel into userspace. On some platforms, this has
+    /// to be done differently to just a regular context-switch, so we handle it here separately.
+    fn drop_to_userspace(mut scheduler: SpinlockGuard<CpuScheduler<P>>, task: Arc<Task<P>>) -> ! {
         trace!("Dropping into usermode into task: '{}'", task.name);
 
         *task.state.lock() = TaskState::Running;
@@ -127,71 +145,54 @@ where
         }
     }
 
-    /// Switch to the next scheduled task. This is called when a task yields, or when we pre-empt a
-    /// task that is hogging CPU time. If there is nothing to schedule, this is free to idle the
-    /// CPU (including managing power), or steal work from another scheduling unit.
+    /// This actually performs a context switch between two tasks. It takes ownership of the locked
+    /// `CpuScheduler` because we need to carefully release the lock before changing kernel stacks,
+    /// else the next task will not be able to use the scheduler.
     ///
-    /// The task being switched away from is moved to state `new_state` (this allows you to block the current task.
-    /// If it's just being preempted or has yielded, use `TaskState::Ready`).
-    pub fn switch_to_next(&self, new_state: TaskState) {
-        let mut scheduler = self.for_this_cpu();
-        assert!(scheduler.running_task.is_some());
+    /// This function returns when the userspace task that originally called `schedule` is
+    /// scheduled again, as if nothing happened.
+    fn switch_to(mut scheduler: SpinlockGuard<CpuScheduler<P>>, new_state: TaskState, next_task: Arc<Task<P>>) {
+        /*
+         * We're switching task! We sort out the internal scheduler state, and then ask the
+         * platform to perform the context switch for us!
+         * NOTE: This temporarily allows `running_task` to be `None`.
+         */
+        let current_task = scheduler.running_task.take().unwrap();
+        assert_eq!(*current_task.state.lock(), TaskState::Running);
+        assert_eq!(*next_task.state.lock(), TaskState::Ready);
 
-        // While we're in the kernel, tick the kernel scheduler (TODO: where should this be?)
-        {
-            let tasklet_scheduler = self.kernel_scheduler.scheduler.lock();
-            tasklet_scheduler.tick();
+        trace!("Switching from task '{}' to task '{}'", current_task.name, next_task.name);
+
+        scheduler.running_task = Some(next_task.clone());
+        *scheduler.running_task.as_ref().unwrap().state.lock() = TaskState::Running;
+        match new_state {
+            TaskState::Running => panic!("Tried to switch away from a task to state of Running!"),
+            TaskState::Ready => {
+                *current_task.state.lock() = TaskState::Ready;
+                scheduler.ready_queue.push_back(current_task.clone());
+            }
+            TaskState::Blocked(block) => {
+                trace!("Blocking task: {}", current_task.name);
+                *current_task.state.lock() = TaskState::Blocked(block);
+                scheduler.blocked_queue.push(current_task.clone());
+            }
         }
 
-        if let Some(next_task) = scheduler.choose_next() {
-            /*
-             * We're switching task! We sort out the internal scheduler state, and then ask the
-             * platform to perform the context switch for us!
-             * NOTE: This temporarily allows `running_task` to be `None`.
-             */
-            let current_task = scheduler.running_task.take().unwrap();
-            // trace!("Switching from task '{}' to task '{}'", current_task.name, next_task.name);
-            assert_eq!(*current_task.state.lock(), TaskState::Running);
-            assert_eq!(*next_task.state.lock(), TaskState::Ready);
+        current_task.address_space.switch_from();
+        next_task.address_space.switch_to();
 
-            scheduler.running_task = Some(next_task.clone());
-            *scheduler.running_task.as_ref().unwrap().state.lock() = TaskState::Running;
-            match new_state {
-                TaskState::Running => panic!("Tried to switch away from a task to state of Running!"),
-                TaskState::Ready => {
-                    *current_task.state.lock() = TaskState::Ready;
-                    scheduler.ready_queue.push_back(current_task.clone());
-                }
-                TaskState::Blocked(block) => {
-                    trace!("Blocking task: {}", current_task.name);
-                    *current_task.state.lock() = TaskState::Blocked(block);
-                    scheduler.blocked_queue.push(current_task.clone());
-                }
-            }
+        let current_kernel_stack: *mut VAddr = current_task.kernel_stack_pointer.get();
+        let new_kernel_stack = unsafe { *scheduler.running_task.as_ref().unwrap().kernel_stack_pointer.get() };
+        let new_user_stack = unsafe { *scheduler.running_task.as_ref().unwrap().user_stack_pointer.get() };
 
-            current_task.address_space.switch_from();
-            next_task.address_space.switch_to();
+        let from_context = current_task.context.get();
+        let to_context = scheduler.running_task.as_ref().unwrap().context.get() as *const P::TaskContext;
 
-            let current_kernel_stack: *mut VAddr = current_task.kernel_stack_pointer.get();
-            let new_kernel_stack = unsafe { *scheduler.running_task.as_ref().unwrap().kernel_stack_pointer.get() };
-            let new_user_stack = unsafe { *scheduler.running_task.as_ref().unwrap().user_stack_pointer.get() };
+        drop(scheduler);
 
-            let from_context = current_task.context.get();
-            let to_context = scheduler.running_task.as_ref().unwrap().context.get() as *const P::TaskContext;
-
-            drop(scheduler);
-
-            unsafe {
-                *current_task.user_stack_pointer.get() = P::switch_user_stack_pointer(new_user_stack);
-                P::context_switch(current_kernel_stack, new_kernel_stack, from_context, to_context);
-            }
-        } else {
-            /*
-             * There aren't any schedulable tasks. For now, we just return to the current one (by
-             * doing nothing here).
-             * TODO: this should catch up on any kernel bookkeeping, then idle to minimise power use.
-             */
-            trace!("No more schedulable tasks. Returning to current one!");
+        unsafe {
+            *current_task.user_stack_pointer.get() = P::switch_user_stack_pointer(new_user_stack);
+            P::context_switch(current_kernel_stack, new_kernel_stack, from_context, to_context);
         }
     }
 }

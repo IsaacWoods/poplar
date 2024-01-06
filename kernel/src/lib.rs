@@ -17,6 +17,7 @@ pub mod object;
 pub mod pci;
 pub mod scheduler;
 pub mod syscall;
+pub mod tasklets;
 
 use crate::memory::Stack;
 use alloc::{boxed::Box, sync::Arc};

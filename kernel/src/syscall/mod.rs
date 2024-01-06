@@ -96,7 +96,7 @@ fn yield_syscall<P>(scheduler: &Scheduler<P>) -> usize
 where
     P: Platform,
 {
-    scheduler.switch_to_next(TaskState::Ready);
+    scheduler.schedule(TaskState::Ready);
     0
 }
 
