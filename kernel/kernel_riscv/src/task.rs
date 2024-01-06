@@ -109,11 +109,7 @@ impl ContextSwitchFrame {
 }
 
 /// Returns `(kernel_stack_pointer, user_stack_pointer)`.
-pub unsafe fn initialize_stacks(
-    kernel_stack: &Stack,
-    user_stack: &Stack,
-    task_entry_point: VAddr,
-) -> (VAddr, VAddr) {
+pub unsafe fn initialize_stacks(kernel_stack: &Stack, user_stack: &Stack) -> (VAddr, VAddr) {
     /*
      * Firstly, we need to make sure the top of the stack is 16-byte aligned, according to the
      * Sys-V ABI.

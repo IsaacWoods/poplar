@@ -47,9 +47,9 @@ impl Platform for PlatformImpl {
     unsafe fn initialize_task_stacks(
         kernel_stack: &kernel::memory::Stack,
         user_stack: &kernel::memory::Stack,
-        task_entry_point: VAddr,
+        _task_entry_point: VAddr,
     ) -> (VAddr, VAddr) {
-        task::initialize_stacks(kernel_stack, user_stack, task_entry_point)
+        task::initialize_stacks(kernel_stack, user_stack)
     }
 
     fn new_task_context(
@@ -60,7 +60,7 @@ impl Platform for PlatformImpl {
         task::ContextSwitchFrame::new(kernel_stack_pointer, user_stack_pointer, task_entry_point)
     }
 
-    unsafe fn switch_user_stack_pointer(new_user_stack_pointer: VAddr) -> VAddr {
+    unsafe fn switch_user_stack_pointer(_new_user_stack_pointer: VAddr) -> VAddr {
         // TODO: we don't track user stacks in the same way on RISC-V - not sure what to do here...
         VAddr::new(0x0)
     }
