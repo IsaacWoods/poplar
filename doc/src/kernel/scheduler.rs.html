@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/scheduler.rs`."><title>scheduler.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-4e54bb2b497cc83f.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="kernel" data-themes="" data-resource-suffix="" data-rustdoc-version="1.77.0-nightly (f688dd684 2024-01-04)" data-channel="nightly" data-search-js="search-c17e98913a53b3b7.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../static.files/storage-f2adc0d6ca4d09fb.js"></script><script defer src="../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-0b2e2def73e61cbe.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-04d5337699b92874.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title">
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/scheduler.rs`."><title>scheduler.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-4e54bb2b497cc83f.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="kernel" data-themes="" data-resource-suffix="" data-rustdoc-version="1.77.0-nightly (b6a8c762e 2024-01-06)" data-channel="nightly" data-search-js="search-1cefe72944ee87e6.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../static.files/storage-f2adc0d6ca4d09fb.js"></script><script defer src="../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-0b2e2def73e61cbe.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-04d5337699b92874.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title">
             <h2>Files</h2></div></nav><div class="sidebar-resizer"></div>
     <main><nav class="sub"><form class="search-form"><span></span><div id="sidebar-button" tabindex="-1"><a href="../../kernel/all.html" title="show sidebar"></a></div><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
@@ -197,14 +197,14 @@
 <a href="#195" id="195">195</a>
 <a href="#196" id="196">196</a>
 <a href="#197" id="197">197</a>
+<a href="#198" id="198">198</a>
 </pre></div><pre class="rust"><code><span class="kw">use crate</span>::{
     object::task::{Task, TaskState},
+    tasklets::TaskletScheduler,
     Platform,
 };
 <span class="kw">use </span>alloc::{collections::VecDeque, sync::Arc, vec::Vec};
-<span class="kw">use </span>core::{future::Future, time::Duration};
 <span class="kw">use </span>hal::memory::VAddr;
-<span class="kw">use </span>maitake::task::JoinHandle;
 <span class="kw">use </span>spinning_top::{guard::SpinlockGuard, Spinlock};
 <span class="kw">use </span>tracing::trace;
 
@@ -222,12 +222,10 @@
 {
     <span class="comment">// TODO: in the future, this will be a vec with a CpuScheduler for each CPU
     </span>task_scheduler: Spinlock&lt;CpuScheduler&lt;P&gt;&gt;,
-    <span class="kw">pub </span>kernel_scheduler: KernelScheduler,
-}
-
-<span class="kw">pub struct </span>KernelScheduler {
-    <span class="kw">pub </span>scheduler: Spinlock&lt;maitake::scheduler::Scheduler&gt;,
-    <span class="kw">pub </span>timer: maitake::time::Timer,
+    <span class="comment">// TODO: have a maitake scheduler for each processor (ACTUALLY I can't work out if we need one
+    // - LocalScheduler could be the core-local one, but both say single-core... Maybe we can just
+    // have one and tick it from whatever processor is available?)
+    </span><span class="kw">pub </span>tasklet_scheduler: TaskletScheduler,
 }
 
 <span class="kw">pub struct </span>CpuScheduler&lt;P&gt;
@@ -262,10 +260,7 @@
     <span class="kw">pub fn </span>new() -&gt; Scheduler&lt;P&gt; {
         Scheduler {
             task_scheduler: Spinlock::new(CpuScheduler::new()),
-            kernel_scheduler: KernelScheduler {
-                scheduler: Spinlock::new(maitake::scheduler::Scheduler::new()),
-                timer: maitake::time::Timer::new(Duration::from_millis(<span class="number">20</span>)),
-            },
+            tasklet_scheduler: TaskletScheduler::new(),
         }
     }
 
@@ -285,31 +280,55 @@
         </span><span class="self">self</span>.task_scheduler.lock()
     }
 
-    <span class="kw">pub fn </span>spawn_tasklet&lt;F&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, future: F) -&gt; JoinHandle&lt;F::Output&gt;
-    <span class="kw">where
-        </span>F: Future + Send + <span class="lifetime">'static</span>,
-        F::Output: Send + <span class="lifetime">'static</span>,
-    {
-        <span class="kw">let </span>tasklet_scheduler = <span class="self">self</span>.kernel_scheduler.scheduler.lock();
-        tasklet_scheduler.spawn(future)
-    }
+    <span class="doccomment">/// Start scheduling! This should be called after a platform has finished initializing, and is
+    /// diverging. It gives kernel tasklets an initial poll while we're here in the kernel, and
+    /// then drops down into userspace.
+    </span><span class="kw">pub fn </span>start_scheduling(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; ! {
+        <span class="self">self</span>.tasklet_scheduler.tick();
 
-    <span class="doccomment">/// Performs the first transistion from the kernel into userspace. On some platforms, this has
-    /// to be done in a different way to how we'd replace the currently running task if we'd
-    /// yielded or pre-empted out of an existing userspace context, and so this is handled
-    /// specially.
-    ///
-    /// The scheduler will always drop into userspace into the first task added to the ready queue.
-    /// By controlling which Task is added first, the ecosystem can be sure that the correct Task
-    /// is run first (whether the userspace layers take advantage of this is up to them - it would
-    /// be more reliable to not depend on one process starting first, but this is an option).
-    </span><span class="kw">pub fn </span>drop_to_userspace(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; ! {
         <span class="kw">let </span><span class="kw-2">mut </span>scheduler = <span class="self">self</span>.for_this_cpu();
-
         <span class="macro">assert!</span>(scheduler.running_task.is_none());
         <span class="kw">let </span>task = scheduler.choose_next().expect(<span class="string">"Tried to drop into userspace with no ready tasks!"</span>);
         <span class="macro">assert_eq!</span>(<span class="kw-2">*</span>task.state.lock(), TaskState::Ready);
+        <span class="self">Self</span>::drop_to_userspace(scheduler, task);
+    }
 
+    <span class="doccomment">/// Called when a userspace task yields or is pre-empted. This is responsible for the
+    /// 'scheduling' part of the scheduler - it polls kernel tasklets as they need attention, and
+    /// shares CPU time between userspace tasks.
+    ///
+    /// On each call to `schedule`, the kernel can choose to:
+    ///    - Give CPU time to the kernel-space tasklet scheduler
+    ///    - Switch to another userspace task
+    ///    - Steal work from another CPU's scheduler
+    ///    - Idle the CPU, if there is nothing to be done
+    ///    - Nothing
+    ///
+    /// If the current task is switched away from, it will be placed in the state `new_state`. This
+    /// allows the caller to block the current task on a dependency. If a task has been pre-empted
+    /// or yields, it should be placed into `TaskState::Ready`.
+    </span><span class="kw">pub fn </span>schedule(<span class="kw-2">&amp;</span><span class="self">self</span>, new_state: TaskState) {
+        <span class="self">self</span>.tasklet_scheduler.tick();
+
+        <span class="kw">let </span><span class="kw-2">mut </span>scheduler = <span class="self">self</span>.for_this_cpu();
+        <span class="macro">assert!</span>(scheduler.running_task.is_some());
+        <span class="kw">if let </span><span class="prelude-val">Some</span>(next_task) = scheduler.choose_next() {
+            <span class="self">Self</span>::switch_to(scheduler, new_state, next_task);
+        } <span class="kw">else </span>{
+            <span class="comment">/*
+             * There aren't any schedulable tasks. For now, we just return to the current one (by
+             * doing nothing here).
+             *
+             * TODO: this should idle the CPU to minimise power use, waking to interrupts + every
+             * so often to run tasklets, and see if any tasks are unblocked.
+             */
+            </span><span class="macro">trace!</span>(<span class="string">"No more schedulable tasks. Returning to current one!"</span>);
+        }
+    }
+
+    <span class="doccomment">/// Perform the first transistion from the kernel into userspace. On some platforms, this has
+    /// to be done differently to just a regular context-switch, so we handle it here separately.
+    </span><span class="kw">fn </span>drop_to_userspace(<span class="kw-2">mut </span>scheduler: SpinlockGuard&lt;CpuScheduler&lt;P&gt;&gt;, task: Arc&lt;Task&lt;P&gt;&gt;) -&gt; ! {
         <span class="macro">trace!</span>(<span class="string">"Dropping into usermode into task: '{}'"</span>, task.name);
 
         <span class="kw-2">*</span>task.state.lock() = TaskState::Running;
@@ -326,71 +345,54 @@
         }
     }
 
-    <span class="doccomment">/// Switch to the next scheduled task. This is called when a task yields, or when we pre-empt a
-    /// task that is hogging CPU time. If there is nothing to schedule, this is free to idle the
-    /// CPU (including managing power), or steal work from another scheduling unit.
+    <span class="doccomment">/// This actually performs a context switch between two tasks. It takes ownership of the locked
+    /// `CpuScheduler` because we need to carefully release the lock before changing kernel stacks,
+    /// else the next task will not be able to use the scheduler.
     ///
-    /// The task being switched away from is moved to state `new_state` (this allows you to block the current task.
-    /// If it's just being preempted or has yielded, use `TaskState::Ready`).
-    </span><span class="kw">pub fn </span>switch_to_next(<span class="kw-2">&amp;</span><span class="self">self</span>, new_state: TaskState) {
-        <span class="kw">let </span><span class="kw-2">mut </span>scheduler = <span class="self">self</span>.for_this_cpu();
-        <span class="macro">assert!</span>(scheduler.running_task.is_some());
+    /// This function returns when the userspace task that originally called `schedule` is
+    /// scheduled again, as if nothing happened.
+    </span><span class="kw">fn </span>switch_to(<span class="kw-2">mut </span>scheduler: SpinlockGuard&lt;CpuScheduler&lt;P&gt;&gt;, new_state: TaskState, next_task: Arc&lt;Task&lt;P&gt;&gt;) {
+        <span class="comment">/*
+         * We're switching task! We sort out the internal scheduler state, and then ask the
+         * platform to perform the context switch for us!
+         * NOTE: This temporarily allows `running_task` to be `None`.
+         */
+        </span><span class="kw">let </span>current_task = scheduler.running_task.take().unwrap();
+        <span class="macro">assert_eq!</span>(<span class="kw-2">*</span>current_task.state.lock(), TaskState::Running);
+        <span class="macro">assert_eq!</span>(<span class="kw-2">*</span>next_task.state.lock(), TaskState::Ready);
 
-        <span class="comment">// While we're in the kernel, tick the kernel scheduler (TODO: where should this be?)
-        </span>{
-            <span class="kw">let </span>tasklet_scheduler = <span class="self">self</span>.kernel_scheduler.scheduler.lock();
-            tasklet_scheduler.tick();
+        <span class="macro">trace!</span>(<span class="string">"Switching from task '{}' to task '{}'"</span>, current_task.name, next_task.name);
+
+        scheduler.running_task = <span class="prelude-val">Some</span>(next_task.clone());
+        <span class="kw-2">*</span>scheduler.running_task.as_ref().unwrap().state.lock() = TaskState::Running;
+        <span class="kw">match </span>new_state {
+            TaskState::Running =&gt; <span class="macro">panic!</span>(<span class="string">"Tried to switch away from a task to state of Running!"</span>),
+            TaskState::Ready =&gt; {
+                <span class="kw-2">*</span>current_task.state.lock() = TaskState::Ready;
+                scheduler.ready_queue.push_back(current_task.clone());
+            }
+            TaskState::Blocked(block) =&gt; {
+                <span class="macro">trace!</span>(<span class="string">"Blocking task: {}"</span>, current_task.name);
+                <span class="kw-2">*</span>current_task.state.lock() = TaskState::Blocked(block);
+                scheduler.blocked_queue.push(current_task.clone());
+            }
         }
 
-        <span class="kw">if let </span><span class="prelude-val">Some</span>(next_task) = scheduler.choose_next() {
-            <span class="comment">/*
-             * We're switching task! We sort out the internal scheduler state, and then ask the
-             * platform to perform the context switch for us!
-             * NOTE: This temporarily allows `running_task` to be `None`.
-             */
-            </span><span class="kw">let </span>current_task = scheduler.running_task.take().unwrap();
-            <span class="comment">// trace!("Switching from task '{}' to task '{}'", current_task.name, next_task.name);
-            </span><span class="macro">assert_eq!</span>(<span class="kw-2">*</span>current_task.state.lock(), TaskState::Running);
-            <span class="macro">assert_eq!</span>(<span class="kw-2">*</span>next_task.state.lock(), TaskState::Ready);
+        current_task.address_space.switch_from();
+        next_task.address_space.switch_to();
 
-            scheduler.running_task = <span class="prelude-val">Some</span>(next_task.clone());
-            <span class="kw-2">*</span>scheduler.running_task.as_ref().unwrap().state.lock() = TaskState::Running;
-            <span class="kw">match </span>new_state {
-                TaskState::Running =&gt; <span class="macro">panic!</span>(<span class="string">"Tried to switch away from a task to state of Running!"</span>),
-                TaskState::Ready =&gt; {
-                    <span class="kw-2">*</span>current_task.state.lock() = TaskState::Ready;
-                    scheduler.ready_queue.push_back(current_task.clone());
-                }
-                TaskState::Blocked(block) =&gt; {
-                    <span class="macro">trace!</span>(<span class="string">"Blocking task: {}"</span>, current_task.name);
-                    <span class="kw-2">*</span>current_task.state.lock() = TaskState::Blocked(block);
-                    scheduler.blocked_queue.push(current_task.clone());
-                }
-            }
+        <span class="kw">let </span>current_kernel_stack: <span class="kw-2">*mut </span>VAddr = current_task.kernel_stack_pointer.get();
+        <span class="kw">let </span>new_kernel_stack = <span class="kw">unsafe </span>{ <span class="kw-2">*</span>scheduler.running_task.as_ref().unwrap().kernel_stack_pointer.get() };
+        <span class="kw">let </span>new_user_stack = <span class="kw">unsafe </span>{ <span class="kw-2">*</span>scheduler.running_task.as_ref().unwrap().user_stack_pointer.get() };
 
-            current_task.address_space.switch_from();
-            next_task.address_space.switch_to();
+        <span class="kw">let </span>from_context = current_task.context.get();
+        <span class="kw">let </span>to_context = scheduler.running_task.as_ref().unwrap().context.get() <span class="kw">as </span><span class="kw-2">*const </span>P::TaskContext;
 
-            <span class="kw">let </span>current_kernel_stack: <span class="kw-2">*mut </span>VAddr = current_task.kernel_stack_pointer.get();
-            <span class="kw">let </span>new_kernel_stack = <span class="kw">unsafe </span>{ <span class="kw-2">*</span>scheduler.running_task.as_ref().unwrap().kernel_stack_pointer.get() };
-            <span class="kw">let </span>new_user_stack = <span class="kw">unsafe </span>{ <span class="kw-2">*</span>scheduler.running_task.as_ref().unwrap().user_stack_pointer.get() };
+        drop(scheduler);
 
-            <span class="kw">let </span>from_context = current_task.context.get();
-            <span class="kw">let </span>to_context = scheduler.running_task.as_ref().unwrap().context.get() <span class="kw">as </span><span class="kw-2">*const </span>P::TaskContext;
-
-            drop(scheduler);
-
-            <span class="kw">unsafe </span>{
-                <span class="kw-2">*</span>current_task.user_stack_pointer.get() = P::switch_user_stack_pointer(new_user_stack);
-                P::context_switch(current_kernel_stack, new_kernel_stack, from_context, to_context);
-            }
-        } <span class="kw">else </span>{
-            <span class="comment">/*
-             * There aren't any schedulable tasks. For now, we just return to the current one (by
-             * doing nothing here).
-             * TODO: this should catch up on any kernel bookkeeping, then idle to minimise power use.
-             */
-            </span><span class="macro">trace!</span>(<span class="string">"No more schedulable tasks. Returning to current one!"</span>);
+        <span class="kw">unsafe </span>{
+            <span class="kw-2">*</span>current_task.user_stack_pointer.get() = P::switch_user_stack_pointer(new_user_stack);
+            P::context_switch(current_kernel_stack, new_kernel_stack, from_context, to_context);
         }
     }
 }

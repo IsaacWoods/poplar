@@ -7,7 +7,7 @@ var srcIndex = new Map(JSON.parse('[\
 ["hal",["",[["memory",[],["frame.rs","mod.rs","page.rs","paging.rs","physical_address.rs","virtual_address.rs"]]],["lib.rs"]]],\
 ["hash32",["",[],["fnv.rs","lib.rs","murmur3.rs"]]],\
 ["heapless",["",[],["binary_heap.rs","deque.rs","histbuf.rs","indexmap.rs","indexset.rs","lib.rs","linear_map.rs","mpmc.rs","sealed.rs","sorted_linked_list.rs","spsc.rs","string.rs","vec.rs"]]],\
-["kernel",["",[["memory",[],["buddy_allocator.rs","kernel_stack_allocator.rs","mod.rs","slab_allocator.rs"]],["object",[],["address_space.rs","channel.rs","memory_object.rs","mod.rs","task.rs"]],["syscall",[],["mod.rs","validation.rs"]]],["heap_allocator.rs","lib.rs","pci.rs","scheduler.rs"]]],\
+["kernel",["",[["memory",[],["buddy_allocator.rs","kernel_stack_allocator.rs","mod.rs","slab_allocator.rs"]],["object",[],["address_space.rs","channel.rs","memory_object.rs","mod.rs","task.rs"]],["syscall",[],["mod.rs","validation.rs"]],["tasklets",[],["mod.rs"]]],["heap_allocator.rs","lib.rs","pci.rs","scheduler.rs"]]],\
 ["lock_api",["",[],["lib.rs","mutex.rs","remutex.rs","rwlock.rs"]]],\
 ["log",["",[],["__private_api.rs","lib.rs","macros.rs"]]],\
 ["maitake",["",[["future",[],["yield_future.rs"]],["scheduler",[],["steal.rs"]],["task",[],["builder.rs","id.rs","join_handle.rs","state.rs","storage.rs"]],["time",[["timer",[],["global.rs","sleep.rs","wheel.rs"]]],["timeout.rs","timer.rs"]]],["future.rs","lib.rs","loom.rs","scheduler.rs","task.rs","time.rs","trace.rs","util.rs"]]],\
