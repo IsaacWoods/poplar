@@ -15,6 +15,7 @@ extern crate std;
 use core::{
     cell::UnsafeCell,
     mem::MaybeUninit,
+    ops::{Deref, DerefMut},
     ptr::NonNull,
     slice,
     sync::atomic::{AtomicBool, AtomicUsize, Ordering},
@@ -186,12 +187,28 @@ impl<'a, const N: usize> WriteGrant<'a, N> {
     }
 }
 
+impl<'a, const N: usize> Deref for WriteGrant<'a, N> {
+    type Target = [u8];
+
+    fn deref(&self) -> &Self::Target {
+        self.buffer
+    }
+}
+
+impl<'a, const N: usize> DerefMut for WriteGrant<'a, N> {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        self.buffer
+    }
+}
+
 impl<'a, const N: usize> Drop for WriteGrant<'a, N> {
     fn drop(&mut self) {
         let queue = unsafe { self.queue.as_ref() };
         queue.write_granted.store(false, Ordering::Release);
     }
 }
+
+unsafe impl<'a, const N: usize> Send for WriteGrant<'a, N> {}
 
 pub struct ReadGrant<'a, const N: usize> {
     pub buffer: &'a [u8],
@@ -208,12 +225,22 @@ impl<'a, const N: usize> ReadGrant<'a, N> {
     }
 }
 
+impl<'a, const N: usize> Deref for ReadGrant<'a, N> {
+    type Target = [u8];
+
+    fn deref(&self) -> &Self::Target {
+        self.buffer
+    }
+}
+
 impl<'a, const N: usize> Drop for ReadGrant<'a, N> {
     fn drop(&mut self) {
         let queue = unsafe { self.queue.as_ref() };
         queue.read_granted.store(false, Ordering::Release);
     }
 }
+
+unsafe impl<'a, const N: usize> Send for ReadGrant<'a, N> {}
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum Error {

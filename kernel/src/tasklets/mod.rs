@@ -1,3 +1,5 @@
+pub mod queue;
+
 use core::{future::Future, time::Duration};
 use maitake::task::JoinHandle;
 use spinning_top::Spinlock;
