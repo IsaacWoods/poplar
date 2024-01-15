@@ -131,6 +131,11 @@ impl<const N: usize> BipQueue<N> {
             write - read
         };
 
+        if length == 0 {
+            self.read_granted.store(false, Ordering::Release);
+            return Err(Error::NoBytes);
+        }
+
         /*
          * Create a slice of the readable part of the buffer. Casting through `MaybeUninit` is safe
          * because it's `repr(transparent)`.
@@ -214,6 +219,7 @@ impl<'a, const N: usize> Drop for ReadGrant<'a, N> {
 pub enum Error {
     AlreadyGranted,
     NotEnoughSpace,
+    NoBytes,
 }
 
 #[cfg(test)]
