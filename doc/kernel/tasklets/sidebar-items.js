@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"struct":["TaskletScheduler"]};
+window.SIDEBAR_ITEMS = {"mod":["queue"],"struct":["TaskletScheduler"]};
