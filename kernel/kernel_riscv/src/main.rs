@@ -155,7 +155,7 @@ pub extern "C" fn kentry(boot_info: &BootInfo) -> ! {
     // TODO: global function for getting number of ticks per us or whatever from the device tree
     sbi::timer::set_timer(hal_riscv::hw::csr::Time::read() as u64 + 0x989680 / 50).unwrap();
 
-    let (uart_prod, uart_cons) = kernel::tasklets::queue::AsyncSpscQueue::new();
+    let (uart_prod, uart_cons) = kernel::tasklets::queue::SpscQueue::new();
     SCHEDULER.get().tasklet_scheduler.spawn(async move {
         loop {
             let line = {
