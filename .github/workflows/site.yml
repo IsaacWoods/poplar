@@ -26,9 +26,12 @@ jobs:
 
     - name: Generate rustdoc documentation
       run: |
-        CARGO_TARGET_DIR=pages cargo doc \
+        RUSTDOCFLAGS="-Zunstable-options --enable-index-page" \
+        cargo doc \
           --all-features \
+          --target-dir pages \
           --manifest-path kernel/Cargo.toml \
+          --workspace \
           --document-private-items
         mv site/* pages/
 
