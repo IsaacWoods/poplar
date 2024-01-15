@@ -6,7 +6,7 @@ use poplar_util::InitGuard;
 
 pub static PLIC: InitGuard<&'static Plic> = InitGuard::uninit();
 
-pub static SERIAL_BUFFER: BipQueue<64> = BipQueue::new();
+pub static UART_PRODUCER: InitGuard<kernel::tasklets::queue::QueueProducer> = InitGuard::uninit();
 
 pub fn init(fdt: &Fdt) {
     if let Some(plic_node) = fdt.find_compatible(&["riscv,plic0"]) {
@@ -34,9 +34,13 @@ pub fn handle_external_interrupt() {
             // It's the UART
             let serial = crate::logger::SERIAL.get();
             while let Some(byte) = serial.read() {
-                let write = SERIAL_BUFFER.grant(1).unwrap();
-                write.buffer[0] = byte;
-                write.commit(1);
+                if let Some(producer) = UART_PRODUCER.try_get() {
+                    // TODO: with more stuff running and higher baud we might end up with multiple
+                    // chars - would be more efficient to use a bigger grant.
+                    let mut write = producer.grant_sync(1).unwrap();
+                    write[0] = byte;
+                    write.commit(1);
+                }
             }
         }
         _ => (),

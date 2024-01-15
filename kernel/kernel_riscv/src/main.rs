@@ -17,6 +17,7 @@ mod trap;
 
 use core::time::Duration;
 
+use alloc::string::String;
 use hal::memory::{Frame, VAddr};
 use hal_riscv::{
     hw::csr::Satp,
@@ -154,13 +155,33 @@ pub extern "C" fn kentry(boot_info: &BootInfo) -> ! {
     // TODO: global function for getting number of ticks per us or whatever from the device tree
     sbi::timer::set_timer(hal_riscv::hw::csr::Time::read() as u64 + 0x989680 / 50).unwrap();
 
-    SCHEDULER.get().tasklet_scheduler.spawn(async {
-        tracing::info!("Hello from an async task!");
+    let (uart_prod, uart_cons) = kernel::tasklets::queue::AsyncSpscQueue::new();
+    SCHEDULER.get().tasklet_scheduler.spawn(async move {
         loop {
-            maitake::time::sleep(Duration::from_secs(1)).await;
-            info!("Timer goes ping");
+            let line = {
+                let mut line = String::new();
+                loop {
+                    let bytes = uart_cons.read().await;
+                    let as_str = core::str::from_utf8(&bytes).unwrap();
+                    if let Some(index) = as_str.find('\r') {
+                        let (before, _after) = as_str.split_at(index);
+                        line += before;
+                        // Only release up to (and including) the newline so the next pass can consume any bytes
+                        // after it
+                        bytes.release(index + 1);
+                        break;
+                    } else {
+                        line += as_str;
+                        let num_bytes = bytes.len();
+                        bytes.release(num_bytes);
+                    }
+                }
+                line
+            };
+            info!("Line from UART: {}", line);
         }
     });
+    interrupts::UART_PRODUCER.initialize(uart_prod);
 
     /*
      * Create kernel objects from loaded images and schedule them.
