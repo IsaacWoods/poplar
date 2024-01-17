@@ -4,9 +4,6 @@
 
 extern crate alloc;
 
-use core::panic::PanicInfo;
-use linked_list_allocator::LockedHeap;
-
 /*
  * Public re-exports. Most of this is copied from real `std`, plus our `poplar` library.
  * NOTE: deprecated re-exports, such as `std::i32` (and friends), are not included.
@@ -36,7 +33,6 @@ pub use core::{
     result,
 };
 pub use poplar;
-use poplar::{memory_object::MemoryObject, syscall::MemoryObjectFlags};
 
 // Import our own prelude for this crate
 #[allow(unused_imports)] // Not sure why this counts as unused but the compiler thinks it is.
@@ -67,6 +63,10 @@ pub mod prelude {
         pub use core::{assert_eq, panic, prelude::rust_2021::*, unreachable};
     }
 }
+
+use core::panic::PanicInfo;
+use linked_list_allocator::LockedHeap;
+use poplar::{memory_object::MemoryObject, syscall::MemoryObjectFlags};
 
 #[global_allocator]
 static ALLOCATOR: LockedHeap = LockedHeap::empty();

@@ -66,6 +66,7 @@ dependencies = [
  "bit_field",
  "bitflags",
  "cfg-if",
+ "linked_list_allocator",
  "log",
  "pci_types",
  "ptah",

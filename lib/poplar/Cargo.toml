@@ -13,8 +13,10 @@ cfg-if = "0.1"
 log = { version = "0.4", optional = true }
 pci_types = { path = "../pci_types", optional = true }
 ptah = { path = "../ptah", optional = true, default-features = false }
+linked_list_allocator = { version = "0.10.5", optional = true, features = ["alloc_ref"] }
 
 [features]
 default = ["can_alloc", "pci"]
 can_alloc = ["log", "ptah", "ptah/alloc", "ptah/derive"]
 pci = ["pci_types"]
+ddk = ["pci", "linked_list_allocator"]
