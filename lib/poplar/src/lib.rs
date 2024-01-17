@@ -1,10 +1,12 @@
 #![no_std]
-#![feature(decl_macro, never_type)]
+#![feature(decl_macro, never_type, allocator_api)]
 #![deny(unsafe_op_in_unsafe_fn)]
 
 pub mod caps;
 #[cfg(feature = "can_alloc")]
 pub mod channel;
+#[cfg(feature = "ddk")]
+pub mod ddk;
 #[cfg(feature = "can_alloc")]
 pub mod early_logger;
 pub mod memory_object;
