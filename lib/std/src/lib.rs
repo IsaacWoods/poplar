@@ -8,7 +8,7 @@ extern crate alloc;
  * Public re-exports. Most of this is copied from real `std`, plus our `poplar` library.
  * NOTE: deprecated re-exports, such as `std::i32` (and friends), are not included.
  */
-pub use alloc::{borrow, boxed, collections, fmt, format, rc, slice, str, string, vec};
+pub use alloc::{borrow, boxed, collections, fmt, format, rc, slice, str, string, sync, vec};
 pub use core::{
     any,
     array,
@@ -51,7 +51,7 @@ pub mod prelude {
             string::{String, ToString},
             vec::Vec,
         };
-        pub use core::{assert_eq, panic, prelude::rust_2018::*, unreachable};
+        pub use core::{assert_eq, panic, prelude::rust_2018::*, unreachable, write, writeln};
     }
     pub mod rust_2021 {
         pub use alloc::{
@@ -60,7 +60,7 @@ pub mod prelude {
             string::{String, ToString},
             vec::Vec,
         };
-        pub use core::{assert_eq, panic, prelude::rust_2021::*, unreachable};
+        pub use core::{assert_eq, panic, prelude::rust_2021::*, unreachable, write, writeln};
     }
 }
 
