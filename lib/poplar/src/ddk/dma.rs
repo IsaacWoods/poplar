@@ -3,12 +3,15 @@ use alloc::sync::Arc;
 use core::{
     alloc::{Allocator, Layout},
     mem,
+    ops::{Deref, DerefMut},
     ptr::{self, NonNull},
 };
 use linked_list_allocator::LockedHeap;
 
 pub struct DmaPool {
     memory: MappedMemoryObject,
+    // TODO: in the future, something like a slab allocator would probably be better (no need to
+    // waste space inside the physically-mapped region, and likely to map many of the same size)
     allocator: Arc<LockedHeap>,
 }
 
@@ -18,21 +21,32 @@ impl DmaPool {
         DmaPool { memory, allocator }
     }
 
-    pub fn alloc<T>(&self) -> Result<DmaObject<T>, ()> {
+    pub fn create<T>(&self, value: T) -> Result<DmaObject<T>, ()> {
         let ptr = self.allocator.allocate(Layout::new::<T>()).map_err(|_| ())?.cast::<T>();
+        unsafe {
+            ptr::write(ptr.as_ptr(), value);
+        }
         Ok(DmaObject {
             ptr,
-            phys: self.memory.map_address(ptr.as_ptr() as usize).unwrap(),
+            phys: self.memory.virt_to_phys(ptr.as_ptr() as usize).unwrap(),
             allocator: self.allocator.clone(),
         })
     }
 
-    pub fn alloc_array<T>(&self, length: usize) -> Result<DmaArray<T>, ()> {
+    pub fn create_array<T>(&self, length: usize, value: T) -> Result<DmaArray<T>, ()>
+    where
+        T: Copy,
+    {
         let ptr = self.allocator.allocate(Layout::array::<T>(length).unwrap()).map_err(|_| ())?.cast::<T>();
+        for i in 0..length {
+            unsafe {
+                ptr::write(ptr.as_ptr().add(i), value);
+            }
+        }
         Ok(DmaArray {
             ptr,
             length,
-            phys: self.memory.map_address(ptr.as_ptr() as usize).unwrap(),
+            phys: self.memory.virt_to_phys(ptr.as_ptr() as usize).unwrap(),
             allocator: self.allocator.clone(),
         })
     }
@@ -49,6 +63,20 @@ impl<T> DmaObject<T> {
         unsafe {
             ptr::write(self.ptr.as_ptr(), value);
         }
+    }
+}
+
+impl<T> Deref for DmaObject<T> {
+    type Target = T;
+
+    fn deref(&self) -> &Self::Target {
+        unsafe { &*self.ptr.as_ptr() }
+    }
+}
+
+impl<T> DerefMut for DmaObject<T> {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        unsafe { &mut *self.ptr.as_ptr() }
     }
 }
 
@@ -71,6 +99,11 @@ impl<T> DmaArray<T> {
         unsafe {
             ptr::write(self.ptr.as_ptr().add(index), value);
         }
+    }
+
+    pub fn read(&self, index: usize) -> &T {
+        assert!(index < self.length);
+        unsafe { &*self.ptr.as_ptr().add(index) }
     }
 
     pub fn phys_of_element(&self, index: usize) -> usize {
