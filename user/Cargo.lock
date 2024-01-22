@@ -90,6 +90,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "mycelium-bitfield"
+version = "0.1.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "24e0cc5e2c585acbd15c5ce911dff71e1f4d5313f43345873311c4f5efd741cc"
+
+[[package]]
 name = "num-traits"
 version = "0.2.14"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -278,16 +284,26 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8ccb82d61f80a663efe1f787a51b16b5a51e3314d6ac365b08639f52387b33f3"
 
 [[package]]
+name = "usb"
+version = "0.1.0"
+dependencies = [
+ "bit_field",
+ "mycelium-bitfield",
+]
+
+[[package]]
 name = "usb_bus_ehci"
 version = "0.1.0"
 dependencies = [
  "bit_field",
  "bitflags",
  "log",
+ "mycelium-bitfield",
  "platform_bus",
  "poplar_util",
  "ptah",
  "std",
+ "usb",
 ]
 
 [[package]]
