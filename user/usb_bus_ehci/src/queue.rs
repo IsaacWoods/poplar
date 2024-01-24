@@ -22,6 +22,66 @@ impl Queue {
         Queue { head, transactions: Vec::new() }
     }
 
+    // TODO: take a buffer and do stuff with it?
+    pub fn control_transfer(
+        &mut self,
+        setup: &DmaObject<SetupPacket>,
+        transfer_to_device: bool,
+        pool: &mut DmaPool,
+    ) {
+        let num_data = 0;
+
+        let mut transfers = pool.create_array(num_data + 2, TransferDescriptor::new()).unwrap();
+
+        transfers.write(
+            0,
+            TransferDescriptor {
+                next_ptr: TdPtr::new(transfers.phys_of_element(1) as u32, false),
+                alt_ptr: TdPtr::new(0x0, true),
+                token: TdToken::STATUS_ACTIVE
+                    | TdToken::INTERRUPT_ON_COMPLETE
+                    | TdToken::with_pid_code(0b10)
+                    | TdToken::with_total_bytes(mem::size_of::<SetupPacket>() as u32),
+                buffer_ptr_0: setup.phys as u32,
+                buffer_ptr_1: 0,
+                buffer_ptr_2: 0,
+                buffer_ptr_3: 0,
+                buffer_ptr_4: 0,
+            },
+        );
+
+        // TODO: if there are data things we need to generate more TDs in the chain here
+
+        transfers.write(
+            num_data + 1,
+            TransferDescriptor {
+                next_ptr: TdPtr::new(0x0, true),
+                alt_ptr: TdPtr::new(0x0, true),
+                token: TdToken::STATUS_ACTIVE
+                    | TdToken::INTERRUPT_ON_COMPLETE
+                    | TdToken::DATA_TOGGLE
+                    | TdToken::with_pid_code(if transfer_to_device { 0b01 } else { 0b00 }),
+                buffer_ptr_0: 0,
+                buffer_ptr_1: 0,
+                buffer_ptr_2: 0,
+                buffer_ptr_3: 0,
+                buffer_ptr_4: 0,
+            },
+        );
+
+        // TODO: don't just replace `next_td` if we've got running transactions. Need to queue them
+        // and somehow progress the queue as stuff completes I think?
+        self.head.next_td = TdPtr::new(transfers.phys_of_element(0) as u32, false);
+
+        self.transactions.push(Transaction { descriptors: transfers });
+    }
+
+    pub fn set_address(&mut self, address: u8) {
+        let endpoint_characteristics = self.head.endpoint_characteristics;
+        self.head.endpoint_characteristics =
+            endpoint_characteristics.with(EndpointCharacteristics::DEVICE_ADDRESS, address as u32);
+    }
+
     pub fn set_reclaim_head(&mut self, head: bool) {
         let endpoint_characteristics = self.head.endpoint_characteristics;
         self.head.endpoint_characteristics =
