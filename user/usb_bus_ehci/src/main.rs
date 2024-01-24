@@ -1,20 +1,29 @@
+//! `usb_bus_ehci` is a driver compatible with EHCI USB host controllers.
+//!
+//! ### Development
+//!    - On QEMU, enabling tracing of `usb_ehci_*` events is helpful for debugging.
+
 #![feature(never_type)]
 
 mod caps;
+mod queue;
 mod reg;
 
 use crate::{
     caps::Capabilities,
+    queue::{Queue, QueueHead},
     reg::{Command, InterruptEnable, LineStatus, OpRegister, PortStatusControl},
 };
 use bit_field::BitField;
 use log::{info, trace};
 use platform_bus::{BusDriverMessage, DeviceDriverMessage, DeviceDriverRequest, Filter, Property};
+use queue::HorizontalLinkPtr;
 use std::{
     mem,
     poplar::{
         caps::{CapabilitiesRepr, CAP_EARLY_LOGGING, CAP_PADDING, CAP_SERVICE_USER},
         channel::Channel,
+        ddk::dma::DmaPool,
         early_logger::EarlyLogger,
         memory_object::MemoryObject,
         syscall::{self, MemoryObjectFlags},
@@ -25,14 +34,30 @@ pub struct Controller {
     register_base: usize,
     caps: Capabilities,
     free_addresses: Vec<u8>,
+    schedule_pool: DmaPool,
 }
 
 impl Controller {
     pub fn new(register_base: usize) -> Controller {
-        let caps = unsafe { Capabilities::read_from_registers(register_base) };
+        let caps = Capabilities::read_from_registers(register_base);
         info!("Capabilites: {:#?}", caps);
 
-        Controller { register_base, caps, free_addresses: (1..128).collect() }
+        // TODO: once we have kernel virtual address space management, just let it find an address
+        // for us
+        const SCHEDULE_POOL_ADDRESS: usize = 0x00000005_10000000;
+        let schedule_pool = DmaPool::new(unsafe {
+            MemoryObject::create_physical(0x1000, MemoryObjectFlags::WRITABLE)
+                .unwrap()
+                .map_at(SCHEDULE_POOL_ADDRESS)
+                .unwrap()
+        });
+
+        Controller {
+            register_base,
+            caps,
+            free_addresses: (1..128).collect(),
+            schedule_pool,
+        }
     }
 
     pub fn initialize(&mut self) {
@@ -113,8 +138,12 @@ impl Controller {
 
         unsafe {
             if self.read_port_register(port).contains(PortStatusControl::PORT_ENABLED) {
-                // The device is High-Speed
+                // The device is High-Speed. Let's manage it ourselves.
                 trace!("Device on port {} is high-speed.", port);
+
+                // Create a new queue for the new device's control endpoint
+                let mut queue = Queue::new(self.schedule_pool.create(QueueHead::new()).unwrap());
+                self.add_to_async_schedule(&mut queue);
             } else {
                 /*
                  * The device is not High-Speed. Hand it off to a companion controller to deal
@@ -123,6 +152,28 @@ impl Controller {
                 trace!("Device on port {} is full-speed. Handing off to companion controller.", port);
                 self.write_port_register(port, PortStatusControl::PORT_OWNER);
             }
+        }
+    }
+
+    pub fn add_to_async_schedule(&mut self, queue: &mut Queue) {
+        /*
+         * TODO: this currently assumes we only have a single queue head. To manage more than one,
+         * we need to:
+         *    - Keep track of queues in the schedule (this will probably involve them become
+         *      `Arc<RefCell<Queue>>`s is the problem)
+         *    - If there are already queue heads in the schedule, point to the current head with
+         *      our horizontal link ptr and then replace the `NextAsyncListAddress`.
+         *    - Reconfigure the reclaim list heads - this newest queue head becomes the reclaim
+         *      head, and the current one has its H-bit cleared.
+         */
+        queue.set_reclaim_head(true);
+        queue.head.horizontal_link = HorizontalLinkPtr::new(queue.head.phys as u32, 0b01, false);
+        unsafe {
+            self.write_operational_register(OpRegister::NextAsyncListAddress, queue.head.phys as u32);
+            self.write_operational_register(
+                OpRegister::Command,
+                (Command::RUN | Command::ASYNC_SCHEDULE_ENABLE | Command::with_interrupt_threshold(0x08)).bits(),
+            );
         }
     }
 
