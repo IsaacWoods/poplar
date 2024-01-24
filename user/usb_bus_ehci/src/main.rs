@@ -29,6 +29,10 @@ use std::{
         syscall::{self, MemoryObjectFlags},
     },
 };
+use usb::{
+    descriptor::DeviceDescriptor,
+    setup::{Direction, Recipient, Request, RequestType, RequestTypeType, SetupPacket},
+};
 
 pub struct Controller {
     register_base: usize,
@@ -144,6 +148,33 @@ impl Controller {
                 // Create a new queue for the new device's control endpoint
                 let mut queue = Queue::new(self.schedule_pool.create(QueueHead::new()).unwrap());
                 self.add_to_async_schedule(&mut queue);
+
+                // Allocate an address for the device
+                let address = self.free_addresses.pop().unwrap();
+                info!("Allocating address '{}' to new device", address);
+
+                let mut set_address = self
+                    .schedule_pool
+                    .create(SetupPacket {
+                        typ: RequestType::new()
+                            .with(RequestType::RECIPIENT, Recipient::Device)
+                            .with(RequestType::TYP, RequestTypeType::Standard)
+                            .with(RequestType::DIRECTION, Direction::HostToDevice),
+                        request: Request::SetAddress,
+                        value: address as u16,
+                        index: 0,
+                        length: 0,
+                    })
+                    .unwrap();
+                queue.control_transfer(&set_address, true, &mut self.schedule_pool);
+
+                // TODO: this should be done by waiting for an interrupt instead of polling
+                while !self.read_operational_register(OpRegister::Status).get_bit(0) {}
+                info!("SetAddress operation complete!");
+                self.write_operational_register(OpRegister::Status, 0b1);
+
+                queue.set_address(address);
+
             } else {
                 /*
                  * The device is not High-Speed. Hand it off to a companion controller to deal
@@ -188,6 +219,11 @@ impl Controller {
             self.write_port_register(port, PortStatusControl::empty());
             while self.read_port_register(port).contains(PortStatusControl::PORT_RESET) {}
         }
+    }
+
+    pub unsafe fn read_operational_register(&mut self, reg: OpRegister) -> u32 {
+        let address = self.register_base + self.caps.cap_length as usize + (reg as u32 as usize);
+        unsafe { std::ptr::read_volatile(address as *mut u32) }
     }
 
     pub unsafe fn write_operational_register(&mut self, reg: OpRegister, value: u32) {
