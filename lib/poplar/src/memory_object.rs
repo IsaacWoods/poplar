@@ -4,6 +4,7 @@ use crate::{
 };
 use core::ptr;
 
+#[derive(Debug)]
 pub struct MemoryObject {
     pub handle: Handle,
     pub size: usize,
@@ -43,6 +44,7 @@ impl MemoryObject {
     }
 }
 
+#[derive(Debug)]
 pub struct MappedMemoryObject {
     pub inner: MemoryObject,
     /// The virtual address (address in the task's address space) the object has been mapped at.
@@ -56,7 +58,11 @@ impl MappedMemoryObject {
 
     /// For `MemoryObject`s with a known physical mapping, translate a given physical address into
     /// the corresponding virtual address (the address in the task's address space).
-    pub fn map_address(&self, physical: usize) -> Option<usize> {
+    pub fn phys_to_virt(&self, physical: usize) -> Option<usize> {
         self.inner.phys_address.map(|phys_base| physical - phys_base + self.mapped_at)
+    }
+
+    pub fn virt_to_phys(&self, virt: usize) -> Option<usize> {
+        self.inner.phys_address.map(|phys_base| phys_base + (virt - self.mapped_at))
     }
 }

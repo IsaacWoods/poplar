@@ -5,10 +5,12 @@ authors = ["Isaac Woods"]
 edition = "2021"
 
 [dependencies]
-std = { path = "../../lib/std" }
+std = { path = "../../lib/std", features = ["ddk"] }
 log = "0.4"
 platform_bus = { path = "../platform_bus" }
 ptah = { path = "../../lib/ptah" }
 bit_field = "0.10"
+mycelium-bitfield = "0.1.4"
 bitflags = "2.4.1"
 poplar_util = { path = "../../lib/poplar_util" }
+usb = { path = "../../lib/usb" }
