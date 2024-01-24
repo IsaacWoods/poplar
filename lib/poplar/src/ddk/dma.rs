@@ -50,6 +50,21 @@ impl DmaPool {
             allocator: self.allocator.clone(),
         })
     }
+
+    pub fn create_buffer(&self, length: usize) -> Result<DmaBuffer, ()> {
+        let ptr: NonNull<[u8]> = self.allocator.allocate(Layout::array::<u8>(length).unwrap()).map_err(|_| ())?;
+        let slice = unsafe { ptr.as_uninit_slice_mut() };
+        for i in 0..length {
+            slice[i].write(0x00);
+        }
+
+        Ok(DmaBuffer {
+            ptr,
+            length,
+            phys: self.memory.virt_to_phys(ptr.cast::<u8>().as_ptr() as usize).unwrap(),
+            allocator: self.allocator.clone(),
+        })
+    }
 }
 
 pub struct DmaObject<T> {
@@ -114,5 +129,32 @@ impl<T> DmaArray<T> {
 impl<T> Drop for DmaArray<T> {
     fn drop(&mut self) {
         unsafe { self.allocator.deallocate(self.ptr.cast(), Layout::array::<T>(self.length).unwrap()) }
+    }
+}
+
+pub struct DmaBuffer {
+    pub ptr: NonNull<[u8]>,
+    pub length: usize,
+    pub phys: usize,
+    allocator: Arc<LockedHeap>,
+}
+
+impl Deref for DmaBuffer {
+    type Target = [u8];
+
+    fn deref(&self) -> &Self::Target {
+        unsafe { &*self.ptr.as_ptr() }
+    }
+}
+
+impl DerefMut for DmaBuffer {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        unsafe { &mut *self.ptr.as_ptr() }
+    }
+}
+
+impl Drop for DmaBuffer {
+    fn drop(&mut self) {
+        unsafe { self.allocator.deallocate(self.ptr.cast(), Layout::array::<u8>(self.length).unwrap()) }
     }
 }
