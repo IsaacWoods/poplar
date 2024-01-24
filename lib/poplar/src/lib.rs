@@ -1,5 +1,5 @@
 #![no_std]
-#![feature(decl_macro, never_type, allocator_api)]
+#![feature(decl_macro, never_type, allocator_api, ptr_as_uninit)]
 #![deny(unsafe_op_in_unsafe_fn)]
 
 pub mod caps;
