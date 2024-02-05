@@ -26,95 +26,78 @@ bitflags! {
     }
 }
 
-bitflags! {
-    #[derive(Clone, Copy, PartialEq, Eq, Debug)]
-    pub struct Command: u32 {
-        const RUN = 1 << 0;
-        const RESET = 1 << 1;
-        const PERIODIC_SCHEDULE_ENABLE = 1 << 4;
-        const ASYNC_SCHEDULE_ENABLE = 1 << 5;
-        const INTERRUPT_ON_ASYNC_ADVANCE_DOORBELL = 1 << 6;
-        const LIGHT_RESET = 1 << 7;
-        const ASYNC_SCHEDULE_PARK_MODE = 1 << 11;
-
-        /*
-         * Mark the Frame List Size, Async Schedule Park Mode Count, and Interrupt Threshold
-         * Control fields as known bits. This makes behaviour of `bitflags`-generated methods
-         * correct.
-         */
-        const _ = 0b111111110000001100001100;
+mycelium_bitfield::bitfield! {
+    pub struct Command<u32> {
+        pub const RUN: bool;
+        pub const RESET: bool;
+        pub const FRAME_LIST_SIZE = 2;
+        pub const PERIODIC_SCHEDULE_ENABLE: bool;
+        pub const ASYNC_SCHEDULE_ENABLE: bool;
+        pub const INTERRUPT_ON_ASYNC_ADVANCE_DOORBELL: bool;
+        pub const LIGHT_RESET: bool;
+        pub const ASYNC_SCHEDULE_PARK_MODE_COUNT = 2;
+        pub const _RESERVED0 = 1;
+        pub const ASYNC_SCHEDULE_PARK_MODE: bool;
+        pub const _RESERVED1 = 4;
+        pub const INTERRUPT_THRESHOLD = 8;
     }
 }
 
-impl Command {
-    pub fn with_interrupt_threshold(threshold: u8) -> Command {
-        let mut value = 0u32;
-        value.set_bits(16..24, threshold as u32);
-        Command::from_bits_retain(value)
+mycelium_bitfield::bitfield! {
+    pub struct Status<u32> {
+        pub const INTERRUPT: bool;
+        pub const ERR_INTERRUPT: bool;
+        pub const PORT_CHANGE_DETECT: bool;
+        pub const FRAME_LIST_ROLLOVER: bool;
+        pub const HOST_SYSTEM_ERR: bool;
+        pub const INTERRUPT_ON_ASYNC_ADVANCE: bool;
+        const _RESERVED0 = 6;
+        pub const CONTROLLER_HALTED: bool;
+        pub const RECLAMATION: bool;
+        pub const PERIODIC_SCHEDULE_STATUS: bool;
+        pub const ASYNC_SCHEDULE_STATUS: bool;
     }
 }
 
-bitflags! {
-    #[derive(Clone, Copy, PartialEq, Eq, Debug)]
-    pub struct PortStatusControl: u32 {
-        const CURRENT_CONNECT_STATUS = 1 << 0;
-        const CONNECT_STATUS_CHANGE = 1 << 1;
-        const PORT_ENABLED = 1 << 2;
-        const PORT_ENABLED_CHANGE = 1 << 3;
-        const OVER_CURRENT_ACTIVE = 1 << 4;
-        const OVER_CURRENT_CHANGE = 1 << 5;
-        const FORCE_PORT_RESUME = 1 << 6;
-        const SUSPEND = 1 << 7;
-        const PORT_RESET = 1 << 8;
-        const PORT_POWER = 1 << 12;
-        const PORT_OWNER = 1 << 13;
-
-        /*
-         * Mark the Line Status field (bits 10..12), Port Indicator Control (bits 14..16), and Port
-         * Test Control (bits 16..20) as known bits.
-         */
-        const _ = 0b11111100110000000000;
+mycelium_bitfield::bitfield! {
+    pub struct PortStatusControl<u32> {
+        pub const CURRENT_CONNECT_STATUS: bool;
+        pub const CONNECT_STATUS_CHANGE: bool;
+        pub const PORT_ENABLED: bool;
+        pub const PORT_ENABLED_CHANGE: bool;
+        pub const OVER_CURRENT_ACTIVE: bool;
+        pub const OVER_CURRENT_CHANGE: bool;
+        pub const FORCE_PORT_RESUME: bool;
+        pub const SUSPEND: bool;
+        pub const PORT_RESET: bool;
+        pub const _RESERVED0 = 1;
+        pub const LINE_STATUS: LineStatus;
+        pub const PORT_POWER: bool;
+        pub const PORT_OWNER: bool;
+        pub const PORT_INDICATOR_CONTROL: PortIndicatorControl;
+        pub const PORT_TEST_CONTROL = 4;
+        pub const WAKE_ON_CONNECT_ENABLE: bool;
+        pub const WAKE_ON_DISCONNECT_ENABLE: bool;
+        pub const WAKE_ON_OVERCURRENT: bool;
     }
 }
 
-#[derive(Clone, Copy, PartialEq, Eq, Debug)]
-pub enum LineStatus {
-    Se0,
-    JState,
-    KState,
-    Undefined,
+mycelium_bitfield::enum_from_bits! {
+    #[derive(PartialEq, Debug)]
+    pub enum LineStatus<u8> {
+        Se0 = 0b00,
+        JState = 0b10,
+        KState = 0b01,
+        Undefined = 0b11,
+    }
 }
 
-#[derive(Clone, Copy, PartialEq, Eq, Debug)]
-pub enum PortIndicatorControl {
-    Off,
-    Amber,
-    Green,
-    Undefined,
-}
-
-impl PortStatusControl {
-    pub fn line_status(self) -> LineStatus {
-        match self.bits().get_bits(10..12) {
-            0b00 => LineStatus::Se0,
-            0b01 => LineStatus::KState,
-            0b10 => LineStatus::JState,
-            0b11 => LineStatus::Undefined,
-            _ => unreachable!(),
-        }
-    }
-
-    pub fn port_indicator_control(self) -> PortIndicatorControl {
-        match self.bits().get_bits(14..16) {
-            0b00 => PortIndicatorControl::Off,
-            0b01 => PortIndicatorControl::Amber,
-            0b10 => PortIndicatorControl::Green,
-            0b11 => PortIndicatorControl::Undefined,
-            _ => unreachable!(),
-        }
-    }
-
-    pub fn port_test_control(self) -> u8 {
-        self.bits().get_bits(16..20) as u8
+mycelium_bitfield::enum_from_bits! {
+    #[derive(Debug)]
+    pub enum PortIndicatorControl<u8> {
+        Off = 0b00,
+        Amber = 0b01,
+        Green = 0b10,
+        Undefined = 0b11,
     }
 }

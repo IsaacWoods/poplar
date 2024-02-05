@@ -12,7 +12,7 @@ mod reg;
 use crate::{
     caps::Capabilities,
     queue::{Queue, QueueHead},
-    reg::{Command, InterruptEnable, LineStatus, OpRegister, PortStatusControl},
+    reg::{Command, InterruptEnable, LineStatus, OpRegister, PortStatusControl, Status},
 };
 use bit_field::BitField;
 use log::{info, trace};
@@ -87,10 +87,7 @@ impl Controller {
             );
 
             // Turn the controller on
-            self.write_operational_register(
-                OpRegister::Command,
-                (Command::RUN | Command::with_interrupt_threshold(0x08)).bits(),
-            );
+            self.write_command(Command::new().with(Command::RUN, true).with(Command::INTERRUPT_THRESHOLD, 0x08));
 
             // Route all ports to the EHCI controller
             self.write_operational_register(OpRegister::ConfigFlag, 1);
@@ -102,25 +99,31 @@ impl Controller {
         assert!(!self.caps.port_power_control, "We don't support port power control");
         for port in 0..self.caps.num_ports {
             let port_reg = unsafe { self.read_port_register(port) };
-            info!("Port status/cmd for port {}: {:#x} ({:#0b})", port, port_reg, port_reg);
+            info!("Port status/cmd for port {}: {:?}", port, port_reg);
 
-            if port_reg.contains(PortStatusControl::CONNECT_STATUS_CHANGE) {
+            if port_reg.get(PortStatusControl::CONNECT_STATUS_CHANGE) {
                 // Clear the changed status by writing a `1` to it
                 unsafe {
-                    self.write_port_register(port, PortStatusControl::CONNECT_STATUS_CHANGE);
+                    self.write_port_register(
+                        port,
+                        PortStatusControl::new().with(PortStatusControl::CONNECT_STATUS_CHANGE, true),
+                    );
                 }
 
-                if port_reg.contains(PortStatusControl::CURRENT_CONNECT_STATUS) {
+                if port_reg.get(PortStatusControl::CURRENT_CONNECT_STATUS) {
                     // Read the initial state of the D+/D- pins. This allows us to detect Low-Speed
                     // devices before resetting the port.
-                    if port_reg.line_status() == LineStatus::KState {
+                    if port_reg.get(PortStatusControl::LINE_STATUS) == LineStatus::KState {
                         /*
                          * The line being in K-state means the connected device is Low-Speed. It
                          * must be handed off to a companion controller.
                          */
                         trace!("Device on port {} is low-speed. Handing off to companion controller.", port);
                         unsafe {
-                            self.write_port_register(port, PortStatusControl::PORT_OWNER);
+                            self.write_port_register(
+                                port,
+                                PortStatusControl::new().with(PortStatusControl::PORT_OWNER, true),
+                            );
                         }
                     } else {
                         /*
@@ -141,7 +144,7 @@ impl Controller {
         self.reset_port(port);
 
         unsafe {
-            if self.read_port_register(port).contains(PortStatusControl::PORT_ENABLED) {
+            if self.read_port_register(port).get(PortStatusControl::PORT_ENABLED) {
                 // The device is High-Speed. Let's manage it ourselves.
                 trace!("Device on port {} is high-speed.", port);
 
@@ -181,7 +184,7 @@ impl Controller {
                  * with.
                  */
                 trace!("Device on port {} is full-speed. Handing off to companion controller.", port);
-                self.write_port_register(port, PortStatusControl::PORT_OWNER);
+                self.write_port_register(port, PortStatusControl::new().with(PortStatusControl::PORT_OWNER, true));
             }
         }
     }
@@ -203,7 +206,11 @@ impl Controller {
             self.write_operational_register(OpRegister::NextAsyncListAddress, queue.head.phys as u32);
             self.write_operational_register(
                 OpRegister::Command,
-                (Command::RUN | Command::ASYNC_SCHEDULE_ENABLE | Command::with_interrupt_threshold(0x08)).bits(),
+                Command::new()
+                    .with(Command::RUN, true)
+                    .with(Command::ASYNC_SCHEDULE_ENABLE, true)
+                    .with(Command::INTERRUPT_THRESHOLD, 0x08)
+                    .bits(),
             );
         }
     }
@@ -213,15 +220,35 @@ impl Controller {
             /*
              * Reset the port by toggling the PortReset bit and then waiting for it to clear.
              */
-            self.write_port_register(port, PortStatusControl::PORT_RESET);
+            self.write_port_register(port, PortStatusControl::new().with(PortStatusControl::PORT_RESET, true));
             // TODO: apparently we're meant to time a duration here???? QEMU doesn't complain about
             // no delay but I bet real ones do
-            self.write_port_register(port, PortStatusControl::empty());
-            while self.read_port_register(port).contains(PortStatusControl::PORT_RESET) {}
+            self.write_port_register(port, PortStatusControl::new());
+            while self.read_port_register(port).get(PortStatusControl::PORT_RESET) {}
         }
     }
 
-    pub unsafe fn read_operational_register(&mut self, reg: OpRegister) -> u32 {
+    pub fn read_status(&self) -> Status {
+        Status::from_bits(unsafe { self.read_operational_register(OpRegister::Status) })
+    }
+
+    pub unsafe fn write_status(&mut self, value: Status) {
+        unsafe {
+            self.write_operational_register(OpRegister::Status, value.bits());
+        }
+    }
+
+    pub fn read_command(&self) -> Command {
+        Command::from_bits(unsafe { self.read_operational_register(OpRegister::Command) })
+    }
+
+    pub unsafe fn write_command(&mut self, value: Command) {
+        unsafe {
+            self.write_operational_register(OpRegister::Command, value.bits());
+        }
+    }
+
+    pub unsafe fn read_operational_register(&self, reg: OpRegister) -> u32 {
         let address = self.register_base + self.caps.cap_length as usize + (reg as u32 as usize);
         unsafe { std::ptr::read_volatile(address as *mut u32) }
     }
@@ -236,7 +263,7 @@ impl Controller {
     pub unsafe fn read_port_register(&self, port: u8) -> PortStatusControl {
         let address =
             self.register_base + self.caps.cap_length as usize + 0x44 + mem::size_of::<u32>() * port as usize;
-        PortStatusControl::from_bits_truncate(unsafe { std::ptr::read_volatile(address as *const u32) })
+        PortStatusControl::from_bits(unsafe { std::ptr::read_volatile(address as *const u32) })
     }
 
     pub unsafe fn write_port_register(&self, port: u8, value: PortStatusControl) {
