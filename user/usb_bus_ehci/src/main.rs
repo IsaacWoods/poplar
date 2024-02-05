@@ -75,6 +75,27 @@ impl Controller {
          */
         assert!(!self.caps.can_address_64bit);
 
+        // If the controller has already been used by the firmware, halt it before trying to reset
+        if !self.read_status().get(Status::CONTROLLER_HALTED) {
+            info!("EHCI controller has already been started. Halting it.");
+            let command = self.read_command();
+            unsafe {
+                self.write_command(
+                    Command::new()
+                        .with(Command::RUN, false)
+                        .with(Command::INTERRUPT_THRESHOLD, command.get(Command::INTERRUPT_THRESHOLD)),
+                );
+            }
+            while !self.read_status().get(Status::CONTROLLER_HALTED) {}
+        }
+
+        // Reset the controller
+        unsafe {
+            self.write_command(Command::new().with(Command::RESET, true).with(Command::INTERRUPT_THRESHOLD, 0x08));
+            while self.read_command().get(Command::RESET) {}
+        }
+        info!("EHCI controller reset");
+
         unsafe {
             // Enable interrupts we're interested in
             self.write_operational_register(
