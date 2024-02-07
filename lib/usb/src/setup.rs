@@ -23,6 +23,10 @@ mycelium_bitfield::enum_from_bits! {
         Interface = 0b00001,
         Endpoint = 0b00010,
         Other = 0b00100,
+        // XXX: required to make it take up the required number of bits.
+        // TODO: Maybe this could be done better via a proc macro that parses the leading zeros
+        // too?
+        _Dummy = 0b10000,
     }
 }
 
@@ -57,4 +61,21 @@ pub enum Request {
     GetInterface = 10,
     SetInterface = 11,
     SynchFrame = 12,
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    pub fn test_request_type() {
+        assert_eq!(
+            RequestType::new()
+                .with(RequestType::RECIPIENT, Recipient::Endpoint)
+                .with(RequestType::TYP, RequestTypeType::Vendor)
+                .with(RequestType::DIRECTION, Direction::DeviceToHost)
+                .bits(),
+            0b1_10_00010
+        );
+    }
 }
