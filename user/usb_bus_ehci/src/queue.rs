@@ -1,5 +1,4 @@
 use bit_field::BitField;
-use bitflags::bitflags;
 use log::info;
 use std::{
     mem,
@@ -38,10 +37,12 @@ impl Queue {
             TransferDescriptor {
                 next_ptr: TdPtr::new(transfers.phys_of_element(1) as u32, false),
                 alt_ptr: TdPtr::new(0x0, true),
-                token: TdToken::STATUS_ACTIVE
-                    | TdToken::INTERRUPT_ON_COMPLETE
-                    | TdToken::with_pid_code(0b10)
-                    | TdToken::with_total_bytes(mem::size_of::<SetupPacket>() as u32),
+                token: TdToken::new()
+                    .with(TdToken::ACTIVE, true)
+                    // .with(TdToken::INTERRUPT_ON_COMPLETE, true)
+                    .with(TdToken::PID_CODE, PidCode::Setup)
+                    .with(TdToken::TOTAL_BYTES_TO_TRANSFER, mem::size_of::<SetupPacket>() as u32)
+                    .with(TdToken::ERR_COUNTER, 1),
                 buffer_ptr_0: setup.phys as u32,
                 buffer_ptr_1: 0,
                 buffer_ptr_2: 0,
@@ -57,10 +58,12 @@ impl Queue {
             TransferDescriptor {
                 next_ptr: TdPtr::new(0x0, true),
                 alt_ptr: TdPtr::new(0x0, true),
-                token: TdToken::STATUS_ACTIVE
-                    | TdToken::INTERRUPT_ON_COMPLETE
-                    | TdToken::DATA_TOGGLE
-                    | TdToken::with_pid_code(if transfer_to_device { 0b01 } else { 0b00 }),
+                token: TdToken::new()
+                    .with(TdToken::ACTIVE, true)
+                    .with(TdToken::INTERRUPT_ON_COMPLETE, true)
+                    .with(TdToken::DATA_TOGGLE, true)
+                    .with(TdToken::ERR_COUNTER, 1)
+                    .with(TdToken::PID_CODE, if transfer_to_device { PidCode::In } else { PidCode::Out }),
                 buffer_ptr_0: 0,
                 buffer_ptr_1: 0,
                 buffer_ptr_2: 0,
@@ -102,7 +105,7 @@ pub struct QueueHead {
      */
     pub next_td: TdPtr,
     pub alt_td: TdPtr,
-    pub status: QueueHeadStatus,
+    pub status: TdToken,
     pub buffer_ptr_0: u32,
     pub buffer_ptr_1: u32,
     pub buffer_ptr_2: u32,
@@ -120,12 +123,15 @@ impl QueueHead {
             horizontal_link: HorizontalLinkPtr(0x0),
             endpoint_characteristics: EndpointCharacteristics::new()
                 .with(EndpointCharacteristics::ENDPOINT_SPEED, EndpointSpeed::High)
-                .with(EndpointCharacteristics::MAX_PACKET_SIZE, 64),
+                .with(EndpointCharacteristics::ENDPOINT, 0) // TODO
+                .with(EndpointCharacteristics::MAX_PACKET_SIZE, 64)
+                .with(EndpointCharacteristics::DATA_TOGGLE_CONTROL, true), // TODO: I think this
+            // should only be true for control endpoints?
             endpoint_caps: EndpointCapabilities::new().with(EndpointCapabilities::HIGH_BANDWIDTH_MULTIPLIER, 0b01),
             current_td: TdPtr::new(0x0, false),
             next_td: TdPtr::new(0x0, true),
             alt_td: TdPtr::new(0x0, true),
-            status: QueueHeadStatus::new(),
+            status: TdToken::new(),
             buffer_ptr_0: 0x0,
             buffer_ptr_1: 0x0,
             buffer_ptr_2: 0x0,
@@ -174,17 +180,6 @@ mycelium_bitfield::bitfield! {
 }
 
 #[derive(Clone, Copy, Debug)]
-#[repr(transparent)]
-pub struct QueueHeadStatus(pub u32);
-
-impl QueueHeadStatus {
-    pub fn new() -> QueueHeadStatus {
-        let mut value = 0;
-        QueueHeadStatus(value)
-    }
-}
-
-#[derive(Clone, Copy, Debug)]
 #[repr(C, align(32))]
 pub struct TransferDescriptor {
     pub next_ptr: TdPtr,
@@ -202,7 +197,7 @@ impl TransferDescriptor {
         TransferDescriptor {
             next_ptr: TdPtr::new(0x0, true),
             alt_ptr: TdPtr::new(0x0, true),
-            token: TdToken::empty(),
+            token: TdToken::new(),
             buffer_ptr_0: 0x0,
             buffer_ptr_1: 0x0,
             buffer_ptr_2: 0x0,
@@ -214,7 +209,7 @@ impl TransferDescriptor {
 
 #[derive(Clone, Copy, Debug)]
 #[repr(transparent)]
-pub struct TdPtr(u32);
+pub struct TdPtr(pub u32);
 
 impl TdPtr {
     pub fn new(ptr: u32, terminate: bool) -> TdPtr {
@@ -226,7 +221,7 @@ impl TdPtr {
 
 #[derive(Clone, Copy, Debug)]
 #[repr(transparent)]
-pub struct HorizontalLinkPtr(u32);
+pub struct HorizontalLinkPtr(pub u32);
 
 impl HorizontalLinkPtr {
     pub fn new(ptr: u32, typ: u32, terminate: bool) -> HorizontalLinkPtr {
@@ -237,45 +232,35 @@ impl HorizontalLinkPtr {
     }
 }
 
-bitflags! {
-    #[derive(Clone, Copy, Debug)]
-    pub struct TdToken: u32 {
-        const STATUS_DO_PING = 1 << 0;
-        const STATUS_DO_SPLIT = 1 << 1;
-        const STATUS_MISSED_MICRO_FRAME = 1 << 2;
-        const STATUS_TRANSACTION_ERR = 1 << 3;
-        const STATUS_BABBLE_DETECTED = 1 << 4;
-        const STATUS_DATA_BUFFER_ERR = 1 << 5;
-        const STATUS_HALTED = 1 << 6;
-        const STATUS_ACTIVE = 1 << 7;
-        const INTERRUPT_ON_COMPLETE = 1 << 15;
-        const DATA_TOGGLE = 1 << 31;
-
-        /*
-         * Mark the PID Code, Error Counter, Current Page, and Total Bytes to Transfer fields as
-         * known bits. This makes behaviour of `bitflags`-generated methods correct.
-         */
-        const _ = 0b0_111111111111111_0_111_11_11_00000000;
+mycelium_bitfield::enum_from_bits! {
+    /// The 2-bit encodings used by EHCI to encode the token PIDs that should be used for various
+    /// transaction types.
+    #[derive(Debug)]
+    pub enum PidCode<u8> {
+        /// Generates a PID of `0b1110_0001`.
+        Out = 0b00,
+        /// Generates a PID of `0b0110_1001`.
+        In = 0b01,
+        /// Generates a PID of `0b0010_1101`.
+        Setup = 0b10,
     }
 }
 
-impl TdToken {
-    /// Set the token that should be used for transactions associated with this transfer
-    /// descriptor:
-    ///    `0b00` => `OUT` Token
-    ///    `0b01` => `IN` Token
-    ///    `0b10` => `SETUP` Token
-    pub fn with_pid_code(code: u32) -> TdToken {
-        let mut value = 0u32;
-        value.set_bits(8..10, code);
-        // TODO: this is obvs not supposed to be here
-        // value.set_bits(10..12, 1);
-        TdToken::from_bits_retain(value)
-    }
-
-    pub fn with_total_bytes(bytes: u32) -> TdToken {
-        let mut value = 0u32;
-        value.set_bits(16..31, bytes);
-        TdToken::from_bits_retain(value)
+mycelium_bitfield::bitfield! {
+    pub struct TdToken<u32> {
+        pub const DO_PING: bool;
+        pub const SPLIT_TRANSACTION_STATE: bool;
+        pub const MISSED_MICRO_FRAME: bool;
+        pub const TRANSACTION_ERR: bool;
+        pub const BABBLE_DETECTED: bool;
+        pub const DATA_BUFFER_ERR: bool;
+        pub const HALTED: bool;
+        pub const ACTIVE: bool;
+        pub const PID_CODE: PidCode;
+        pub const ERR_COUNTER = 2;
+        pub const CURRENT_PAGE = 3;
+        pub const INTERRUPT_ON_COMPLETE: bool;
+        pub const TOTAL_BYTES_TO_TRANSFER = 15;
+        pub const DATA_TOGGLE: bool;
     }
 }
