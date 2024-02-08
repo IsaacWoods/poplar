@@ -19,18 +19,20 @@ use log::{info, trace};
 use platform_bus::{BusDriverMessage, DeviceDriverMessage, DeviceDriverRequest, Filter, Property};
 use queue::HorizontalLinkPtr;
 use std::{
+    collections::BTreeMap,
     mem,
+    ops::Deref,
     poplar::{
         caps::{CapabilitiesRepr, CAP_EARLY_LOGGING, CAP_PADDING, CAP_SERVICE_USER},
         channel::Channel,
-        ddk::dma::DmaPool,
+        ddk::dma::{DmaObject, DmaPool},
         early_logger::EarlyLogger,
         memory_object::MemoryObject,
         syscall::{self, MemoryObjectFlags},
     },
 };
 use usb::{
-    descriptor::DeviceDescriptor,
+    descriptor::{DeviceDescriptor, DeviceDescriptorHeader},
     setup::{Direction, Recipient, Request, RequestType, RequestTypeType, SetupPacket},
 };
 
@@ -39,6 +41,11 @@ pub struct Controller {
     caps: Capabilities,
     free_addresses: Vec<u8>,
     schedule_pool: DmaPool,
+    active_devices: BTreeMap<u8, ActiveDevice>,
+}
+
+pub struct ActiveDevice {
+    control_queue: Queue,
 }
 
 impl Controller {
@@ -61,14 +68,11 @@ impl Controller {
             caps,
             free_addresses: (1..128).collect(),
             schedule_pool,
+            active_devices: BTreeMap::new(),
         }
     }
 
     pub fn initialize(&mut self) {
-        // TODO: something else may have used the controller. We should probs halt and reset it.
-        // However, this requires access to the PCI config space so will need functionality probs
-        // involving the PCI bus driver (or to hand-over the space?)?
-
         /*
          * We only support controllers that don't support 64-bit addressing at the moment. This
          * means we don't need to set `CTRLDSSEGMENT`.
@@ -102,7 +106,9 @@ impl Controller {
                 OpRegister::InterruptEnable,
                 (InterruptEnable::INTERRUPT
                     | InterruptEnable::ERROR
-                    | InterruptEnable::PORT_CHANGE
+                    // | InterruptEnable::PORT_CHANGE       // TODO: we actually need to handle +
+                                // acknowledge this otherwise the controller seems to get confused and won't
+                                // signal transaction interrupts correctly
                     | InterruptEnable::HOST_ERROR)
                     .bits(),
             );
@@ -116,11 +122,15 @@ impl Controller {
     }
 
     pub fn check_ports(&mut self) {
-        // Check each port
         assert!(!self.caps.port_power_control, "We don't support port power control");
+
         for port in 0..self.caps.num_ports {
             let port_reg = unsafe { self.read_port_register(port) };
-            info!("Port status/cmd for port {}: {:?}", port, port_reg);
+
+            if port_reg.get(PortStatusControl::PORT_ENABLED_CHANGE) {
+                // TODO: handle this better
+                info!("Port error on port {}", port);
+            }
 
             if port_reg.get(PortStatusControl::CONNECT_STATUS_CHANGE) {
                 // Clear the changed status by writing a `1` to it
@@ -196,6 +206,71 @@ impl Controller {
 
                 queue.set_address(address);
 
+                let get_descriptor_header = self
+                    .schedule_pool
+                    .create(SetupPacket {
+                        typ: RequestType::new()
+                            .with(RequestType::RECIPIENT, Recipient::Device)
+                            .with(RequestType::TYP, RequestTypeType::Standard)
+                            .with(RequestType::DIRECTION, Direction::DeviceToHost),
+                        request: Request::GetDescriptor,
+                        value: 1 << 8, // TODO: should probs be a type DescriptorType
+                        index: 0,
+                        length: 8,
+                    })
+                    .unwrap();
+                let mut descriptor: DmaObject<DeviceDescriptorHeader> =
+                    self.schedule_pool.create(DeviceDescriptorHeader::default()).unwrap();
+                queue.control_transfer(
+                    &get_descriptor_header,
+                    Some(&mut descriptor),
+                    false,
+                    &mut self.schedule_pool,
+                );
+
+                while !self.read_status().get(Status::INTERRUPT) {}
+                info!("GetDescriptor operation complete!");
+                self.write_status(Status::new().with(Status::INTERRUPT, true));
+
+                info!("Device Descriptor header: {:#?}", descriptor.deref());
+
+                // TODO: set the max packet size somewhere now we know it from the descriptor? Or
+                // do we care since it should always be 64 for high-speed devices no?
+
+                // Get the rest of the descriptor
+                let get_descriptor = self
+                    .schedule_pool
+                    .create(SetupPacket {
+                        typ: RequestType::new()
+                            .with(RequestType::RECIPIENT, Recipient::Device)
+                            .with(RequestType::TYP, RequestTypeType::Standard)
+                            .with(RequestType::DIRECTION, Direction::DeviceToHost),
+                        request: Request::GetDescriptor,
+                        value: 1 << 8, // TODO: should probs be a type DescriptorType
+                        index: 0,
+                        length: mem::size_of::<DeviceDescriptor>() as u16,
+                    })
+                    .unwrap();
+                let mut descriptor: DmaObject<DeviceDescriptor> =
+                    self.schedule_pool.create(DeviceDescriptor::default()).unwrap();
+                queue.control_transfer(&get_descriptor, Some(&mut descriptor), false, &mut self.schedule_pool);
+
+                while !self.read_status().get(Status::INTERRUPT) {}
+                info!("GetDescriptor operation complete!");
+                self.write_status(Status::new().with(Status::INTERRUPT, true));
+
+                info!("Device Descriptor: {:#?}", descriptor.deref());
+
+                /*
+                 * Add the newly discovered device to our list of active devices. This is important
+                 * as it prevents the queue from being dropped while it is in the async schedule.
+                 * TODO: might be safer to hold `Arc`s to the queue and keep track of stuff in the
+                 * async schedule to stop queues being dropped out from under the controller?
+                 */
+                self.active_devices.insert(address, ActiveDevice { control_queue: queue });
+
+                // TODO: read configuration and interfaces?
+                // TODO: tell `platform_bus` all about our new device :)
             } else {
                 /*
                  * The device is not High-Speed. Hand it off to a companion controller to deal
