@@ -167,17 +167,14 @@ impl Controller {
         unsafe {
             if self.read_port_register(port).get(PortStatusControl::PORT_ENABLED) {
                 // The device is High-Speed. Let's manage it ourselves.
-                trace!("Device on port {} is high-speed.", port);
+                let address = self.free_addresses.pop().unwrap();
+                trace!("Device on port {} is high-speed. Allocated address {} for it to use.", port, address);
 
                 // Create a new queue for the new device's control endpoint
                 let mut queue = Queue::new(self.schedule_pool.create(QueueHead::new()).unwrap());
                 self.add_to_async_schedule(&mut queue);
 
-                // Allocate an address for the device
-                let address = self.free_addresses.pop().unwrap();
-                info!("Allocating address '{}' to new device", address);
-
-                let mut set_address = self
+                let set_address = self
                     .schedule_pool
                     .create(SetupPacket {
                         typ: RequestType::new()
@@ -190,12 +187,12 @@ impl Controller {
                         length: 0,
                     })
                     .unwrap();
-                queue.control_transfer(&set_address, true, &mut self.schedule_pool);
+                queue.control_transfer::<()>(&set_address, None, true, &mut self.schedule_pool);
 
                 // TODO: this should be done by waiting for an interrupt instead of polling
-                while !self.read_operational_register(OpRegister::Status).get_bit(0) {}
+                while !self.read_status().get(Status::INTERRUPT) {}
                 info!("SetAddress operation complete!");
-                self.write_operational_register(OpRegister::Status, 0b1);
+                self.write_status(Status::new().with(Status::INTERRUPT, true));
 
                 queue.set_address(address);
 

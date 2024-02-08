@@ -21,14 +21,27 @@ impl Queue {
         Queue { head, transactions: Vec::new() }
     }
 
-    // TODO: take a buffer and do stuff with it?
-    pub fn control_transfer(
+    /*
+     * TODO: this should take ownership of the setup packet and data buffer (if present) so that
+     * they can't be dropped until the transaction finishes. Otherwise, we confuse the controller
+     * by changing the transfer descriptors out from under it. The transaction can somehow then
+     * give the finished data buffer back once it completes.
+     * This has already caused multiple bugs lmao so needs to be done.
+     */
+    pub fn control_transfer<T>(
         &mut self,
         setup: &DmaObject<SetupPacket>,
+        data: Option<&mut DmaObject<T>>,
         transfer_to_device: bool,
         pool: &mut DmaPool,
     ) {
-        let num_data = 0;
+        let num_data = if let Some(ref data) = data {
+            // TODO: this currently only supports one data TD (transfers up to `0x4000` bytes)
+            assert!(mem::size_of::<T>() <= 0x4000);
+            1
+        } else {
+            0
+        };
 
         let mut transfers = pool.create_array(num_data + 2, TransferDescriptor::new()).unwrap();
 
@@ -51,8 +64,29 @@ impl Queue {
             },
         );
 
-        // TODO: if there are data things we need to generate more TDs in the chain here
+        if let Some(data) = data {
+            transfers.write(
+                1,
+                TransferDescriptor {
+                    next_ptr: TdPtr::new(transfers.phys_of_element(num_data + 1) as u32, false),
+                    alt_ptr: TdPtr::new(0x0, true),
+                    token: TdToken::new()
+                        .with(TdToken::ACTIVE, true)
+                        .with(TdToken::DATA_TOGGLE, true)
+                        .with(TdToken::ERR_COUNTER, 1)
+                        // .with(TdToken::INTERRUPT_ON_COMPLETE, true)
+                        .with(TdToken::PID_CODE, if transfer_to_device { PidCode::Out } else { PidCode::In })
+                        .with(TdToken::TOTAL_BYTES_TO_TRANSFER, mem::size_of::<T>() as u32),
+                    buffer_ptr_0: data.phys as u32,
+                    buffer_ptr_1: 0,
+                    buffer_ptr_2: 0,
+                    buffer_ptr_3: 0,
+                    buffer_ptr_4: 0,
+                },
+            );
+        }
 
+        // This is the DATA1 token sent by the status stage.
         transfers.write(
             num_data + 1,
             TransferDescriptor {
