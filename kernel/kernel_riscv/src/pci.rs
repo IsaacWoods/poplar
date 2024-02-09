@@ -1,7 +1,9 @@
+use bit_field::BitField;
 use core::ptr;
 use fdt::Fdt;
 use hal::memory::PAddr;
 use pci_types::{ConfigRegionAccess, PciAddress};
+use tracing::info;
 
 pub struct PciAccess {
     start: *const u8,
@@ -22,6 +24,20 @@ impl PciAccess {
         let ecam_address = hal_riscv::platform::kernel_map::physical_to_virtual(
             PAddr::new(ecam_window.starting_address as usize).unwrap(),
         );
+
+        let interrupt_map = pci_node.interrupt_map().unwrap();
+        let interrupt_map_mask = pci_node.interrupt_map_mask().unwrap();
+        for mapping in interrupt_map {
+            let child_address_hi = mapping.child_unit_address_hi & interrupt_map_mask.address_mask_hi;
+            let address = PciAddress::new(
+                0,
+                child_address_hi.get_bits(16..24) as u8,
+                child_address_hi.get_bits(11..16) as u8,
+                child_address_hi.get_bits(8..11) as u8,
+            );
+            let pin = mapping.child_interrupt_specifier & interrupt_map_mask.interrupt_mask;
+            info!("PCI address: {:#?}, pin = {} -> {}", address, pin, mapping.parent_interrupt_specifier);
+        }
 
         Some(PciAccess { start: ecam_address.ptr(), size: ecam_window.size.unwrap() })
     }

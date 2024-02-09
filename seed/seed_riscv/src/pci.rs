@@ -46,7 +46,7 @@ impl PciResolver {
                      * The PCI address is encoded into the high bits of the child bus address. The
                      * encoding is explained here: https://elinux.org/Device_Tree_Usage.
                      */
-                    let child_bus_address_hi = range.child_bus_address_hi.unwrap();
+                    let child_bus_address_hi = range.child_bus_address_hi;
                     let space = match child_bus_address_hi.get_bits(24..26) {
                         0b00 => AddressSpace::Config,
                         0b01 => AddressSpace::Io,
