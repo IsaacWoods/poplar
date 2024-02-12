@@ -19,6 +19,13 @@ use std::poplar::{
     syscall::{self, MemoryObjectFlags},
 };
 
+/*
+ * TODO: this is currently broken from many updates to userspace and `platform_bus`. When we get
+ * round to XHCI support (which I imagine will be in quite a bit as none of the hardware we're
+ * interested in initially has support for it) this will need a thorough rework, probably based off
+ * the EHCI driver.
+ */
+
 pub fn main() {
     log::set_logger(&EarlyLogger).unwrap();
     log::set_max_level(log::LevelFilter::Trace);
