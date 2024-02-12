@@ -9,6 +9,12 @@
 //! to select all PCI devices of a particular type (e.g. useful for a driver for all EHCI controllers), or the
 //! `vendor_id` and `device_id` properties to select a specific device (e.g. useful for a graphics driver for a
 //! specific graphics card).
+//!
+//! Sometimes, a Device Driver will need to inspect a device to know whether it can drive it. A
+//! driver may use a more permissive filter to attract devices it may be able to drive, and then
+//! filter them by replying to `QuerySupport` messages from the Platform Bus. Device Drivers that
+//! can provide an exact filter for the devices they can drive can safely blindly return `true` to
+//! these queries.
 
 use ptah::{Deserialize, Serialize};
 use std::{collections::BTreeMap, poplar::Handle};
@@ -16,23 +22,49 @@ use std::{collections::BTreeMap, poplar::Handle};
 type DeviceName = String;
 type PropertyName = String;
 
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct DeviceInfo(pub BTreeMap<PropertyName, Property>);
+
 #[derive(Debug, Serialize, Deserialize)]
-pub struct DeviceInfo {
-    pub properties: BTreeMap<PropertyName, Property>,
-}
+pub struct HandoffInfo(pub BTreeMap<PropertyName, HandoffProperty>);
 
 impl DeviceInfo {
-    pub fn new(properties: BTreeMap<PropertyName, Property>) -> DeviceInfo {
-        DeviceInfo { properties }
+    pub fn get_as_bool(&self, name: &str) -> Option<bool> {
+        self.0.get(name)?.as_bool()
+    }
+
+    pub fn get_as_integer(&self, name: &str) -> Option<u64> {
+        self.0.get(name)?.as_integer()
+    }
+
+    pub fn get_as_string(&self, name: &str) -> Option<&String> {
+        self.0.get(name)?.as_string()
     }
 }
 
-#[derive(PartialEq, Eq, Debug, Serialize, Deserialize)]
+impl HandoffInfo {
+    pub fn get_as_bool(&self, name: &str) -> Option<bool> {
+        self.0.get(name)?.as_bool()
+    }
+
+    pub fn get_as_integer(&self, name: &str) -> Option<u64> {
+        self.0.get(name)?.as_integer()
+    }
+
+    pub fn get_as_string(&self, name: &str) -> Option<&String> {
+        self.0.get(name)?.as_string()
+    }
+
+    pub fn get_as_memory_object(&self, name: &str) -> Option<Handle> {
+        self.0.get(name)?.as_memory_object()
+    }
+}
+
+#[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize)]
 pub enum Property {
     Bool(bool),
     Integer(u64),
     String(String),
-    MemoryObject(Handle),
 }
 
 impl Property {
@@ -56,10 +88,41 @@ impl Property {
             _ => None,
         }
     }
+}
+
+#[derive(PartialEq, Eq, Debug, Serialize, Deserialize)]
+pub enum HandoffProperty {
+    Bool(bool),
+    Integer(u64),
+    String(String),
+    MemoryObject(Handle),
+}
+
+impl HandoffProperty {
+    pub fn as_bool(&self) -> Option<bool> {
+        match self {
+            HandoffProperty::Bool(value) => Some(*value),
+            _ => None,
+        }
+    }
+
+    pub fn as_integer(&self) -> Option<u64> {
+        match self {
+            HandoffProperty::Integer(value) => Some(*value),
+            _ => None,
+        }
+    }
+
+    pub fn as_string(&self) -> Option<&String> {
+        match self {
+            HandoffProperty::String(ref value) => Some(value),
+            _ => None,
+        }
+    }
 
     pub fn as_memory_object(&self) -> Option<Handle> {
         match self {
-            Property::MemoryObject(value) => Some(*value),
+            HandoffProperty::MemoryObject(value) => Some(*value),
             _ => None,
         }
     }
@@ -68,7 +131,7 @@ impl Property {
 /// These are messages sent from Bus Drivers to the Platform Bus.
 #[derive(Debug, Serialize, Deserialize)]
 pub enum BusDriverMessage {
-    RegisterDevice(DeviceName, DeviceInfo),
+    RegisterDevice(DeviceName, DeviceInfo, HandoffInfo),
     // TODO: this could have messages to handle hot-plugging (Bus Driver tells Platform Bus a device was removed,
     // we pass that on to the Device Driver if the device was claimed by one)
 }
@@ -79,13 +142,19 @@ pub enum DeviceDriverMessage {
     /// Register interest in a particular type of device. For a device to be managed by this device driver, all of
     /// the `Filter`s must be fulfilled.
     RegisterInterest(Vec<Filter>),
+    /// Response to a `QuerySupport` request, indicating that this Device Driver either can or
+    /// cannot drive the specified device.
+    CanSupport(DeviceName, bool),
 }
 
 /// These are message sent from the Platform Bus to a Device Driver.
 #[derive(Debug, Serialize, Deserialize)]
 pub enum DeviceDriverRequest {
+    /// Query whether a Device Driver can drive the specified device. Respond with a `CanSupport`
+    /// message.
+    QuerySupport(DeviceName, DeviceInfo),
     /// Request that a Device Driver starts to handle the given Device.
-    HandoffDevice(DeviceName, DeviceInfo),
+    HandoffDevice(DeviceName, DeviceInfo, HandoffInfo),
 }
 
 #[derive(Debug, Serialize, Deserialize)]

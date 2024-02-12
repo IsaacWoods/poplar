@@ -380,7 +380,7 @@ fn main() {
     let platform_bus_device_channel: Channel<DeviceDriverMessage, DeviceDriverRequest> =
         Channel::from_handle(syscall::subscribe_to_service("platform_bus.device_driver").unwrap());
 
-    // Tell PlatformBus that we're interested in XHCI controllers.
+    // Tell PlatformBus that we're interested in EHCI controllers.
     platform_bus_device_channel
         .send(&DeviceDriverMessage::RegisterInterest(vec![
             Filter::Matches(String::from("pci.class"), Property::Integer(0x0c)),
@@ -391,24 +391,26 @@ fn main() {
 
     // TODO: we currently only support one controller, and just stop listening after we find the first one
     // TODO: probably don't bother changing this until we have a futures-based message interface
-    let controller_device = loop {
+    let (_device_info, handoff_info) = loop {
         match platform_bus_device_channel.try_receive().unwrap() {
-            Some(DeviceDriverRequest::HandoffDevice(device_name, device)) => {
+            Some(DeviceDriverRequest::QuerySupport(device_name, device_info)) => {
+                platform_bus_device_channel.send(&DeviceDriverMessage::CanSupport(device_name, true)).unwrap();
+            }
+            Some(DeviceDriverRequest::HandoffDevice(device_name, device_info, handoff_info)) => {
                 info!("Started driving a EHCI controller: {}", device_name);
-                break device;
+                break (device_info, handoff_info);
             }
             None => syscall::yield_to_kernel(),
         }
     };
 
-    let register_space_size =
-        controller_device.properties.get("pci.bar0.size").unwrap().as_integer().unwrap() as usize;
+    let register_space_size = handoff_info.get_as_integer("pci.bar0.size").unwrap() as usize;
 
     // TODO: let the kernel choose the address when it can - we don't care
     // TODO: this trusts the data from the platform_bus. Maybe we shouldn't do that? One
     // idea would be a syscall for querying info about the object?
     let register_space = MemoryObject {
-        handle: controller_device.properties.get("pci.bar0.handle").as_ref().unwrap().as_memory_object().unwrap(),
+        handle: handoff_info.get_as_memory_object("pci.bar0.handle").unwrap(),
         size: register_space_size,
         flags: MemoryObjectFlags::WRITABLE,
         phys_address: None,

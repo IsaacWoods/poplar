@@ -1,5 +1,13 @@
 use log::{info, warn};
-use platform_bus::{BusDriverMessage, DeviceDriverMessage, DeviceDriverRequest, DeviceInfo, Filter, Property};
+use platform_bus::{
+    BusDriverMessage,
+    DeviceDriverMessage,
+    DeviceDriverRequest,
+    DeviceInfo,
+    Filter,
+    HandoffInfo,
+    Property,
+};
 use std::{
     collections::BTreeMap,
     mem,
@@ -19,7 +27,10 @@ type DeviceDriverIndex = usize;
 
 #[derive(Debug)]
 enum DeviceState {
-    Unclaimed(DeviceInfo),
+    // TODO: this is used to transistion between states, but probably shouldn't exist.
+    Thinking,
+    Unclaimed { device_info: DeviceInfo, handoff_info: HandoffInfo },
+    Querying { driver: BusDriverIndex, device_info: DeviceInfo, handoff_info: HandoffInfo },
     Claimed(BusDriverIndex),
 }
 
@@ -95,11 +106,17 @@ pub fn main() {
             loop {
                 match bus_driver.channel.try_receive().unwrap() {
                     Some(message) => match message {
-                        BusDriverMessage::RegisterDevice(name, info) => {
-                            info!("Registering device: {:?} as {}", info, name);
+                        BusDriverMessage::RegisterDevice(name, device_info, handoff_info) => {
+                            info!(
+                                "Registering device: Device: {:?}, Handoff: {:?} as {}",
+                                device_info, handoff_info, name
+                            );
                             devices.insert(
                                 name,
-                                DeviceEntry { bus_driver: *index, state: DeviceState::Unclaimed(info) },
+                                DeviceEntry {
+                                    bus_driver: *index,
+                                    state: DeviceState::Unclaimed { device_info, handoff_info },
+                                },
                             );
                         }
                     },
@@ -114,21 +131,47 @@ pub fn main() {
         for (index, device_driver) in device_drivers.iter_mut() {
             loop {
                 match device_driver.channel.try_receive().unwrap() {
-                    Some(message) => match message {
-                        DeviceDriverMessage::RegisterInterest(filters) => {
-                            info!("Registering interest for devices with filters: {:?}", filters);
+                    Some(message) => {
+                        match message {
+                            DeviceDriverMessage::RegisterInterest(filters) => {
+                                info!("Registering interest for devices with filters: {:?}", filters);
 
-                            /*
-                             * We only allow device drivers to register their interests once. After that, we just
-                             * ignore them.
-                             */
-                            if device_driver.filters.is_none() {
-                                device_driver.filters = Some(filters);
-                            } else {
-                                warn!("Device driver tried to register interests more than one. Ignored.");
+                                /*
+                                 * We only allow device drivers to register their interests once. After that, we just
+                                 * ignore them.
+                                 */
+                                if device_driver.filters.is_none() {
+                                    device_driver.filters = Some(filters);
+                                } else {
+                                    warn!("Device driver tried to register interests more than one. Ignored.");
+                                }
+                            }
+                            DeviceDriverMessage::CanSupport(device_name, does_support) => {
+                                if does_support {
+                                    info!("Handing off device '{}' to supporting device driver", device_name);
+                                    let device = devices.get_mut(&device_name).unwrap();
+                                    let old_state = mem::replace(&mut device.state, DeviceState::Claimed(*index));
+                                    match old_state {
+                                        DeviceState::Querying { device_info, handoff_info, .. } => {
+                                            device_driver
+                                                .channel
+                                                .send(&DeviceDriverRequest::HandoffDevice(
+                                                    device_name,
+                                                    device_info,
+                                                    handoff_info,
+                                                ))
+                                                .unwrap();
+                                        }
+                                        _ => panic!(),
+                                    }
+                                } else {
+                                    // TODO: this is not handled as of yet but see note below about
+                                    // async runtime-related plans
+                                    warn!("Device driver says it doesn't support device '{}'. This is broken as of now!", device_name);
+                                }
                             }
                         }
-                    },
+                    }
                     None => break,
                 }
             }
@@ -148,25 +191,32 @@ pub fn main() {
                 let matches_filter = device_driver.filters.as_ref().unwrap().iter().fold(
                     true,
                     |matches_so_far, filter| match device.state {
-                        DeviceState::Unclaimed(ref info) => {
-                            matches_so_far && filter.match_against(&info.properties)
+                        DeviceState::Unclaimed { ref device_info, .. } => {
+                            matches_so_far && filter.match_against(&device_info.0)
                         }
                         _ => false,
                     },
                 );
 
                 if matches_filter {
-                    info!("Handing off device {} to device driver", name);
-                    let old_state = mem::replace(&mut device.state, DeviceState::Claimed(*index));
-                    match old_state {
-                        DeviceState::Unclaimed(info) => {
+                    info!("Asking device driver with matching filter if it can handle device {}", name);
+                    let state = mem::replace(&mut device.state, DeviceState::Thinking);
+                    let (device_info, handoff_info) = match state {
+                        DeviceState::Unclaimed { device_info, handoff_info } => {
                             device_driver
                                 .channel
-                                .send(&DeviceDriverRequest::HandoffDevice(name.clone(), info))
+                                .send(&DeviceDriverRequest::QuerySupport(name.clone(), device_info.clone()))
                                 .unwrap();
+                            (device_info, handoff_info)
                         }
-                        _ => unreachable!(),
-                    }
+                        _ => panic!("Uh oh more than one driver has a matching filter (this is bad for now but shouldn't be)!"),
+                    };
+                    device.state = DeviceState::Querying { driver: *index, device_info, handoff_info };
+                    // TODO: this actually depends on the first driver saying yes lmao. Doing this
+                    // properly will require more thought but will all be replaced (probably rather
+                    // soonish now) by a userspace async solution I think because this is rather
+                    // untenable... (with async, we'd just wait for the reply / ask each driver and
+                    // track the response)
                 }
             }
         }
