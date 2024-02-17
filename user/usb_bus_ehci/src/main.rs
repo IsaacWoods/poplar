@@ -65,7 +65,7 @@ pub struct ActiveDevice {
 }
 
 impl Controller {
-    pub fn new(register_base: usize) -> Controller {
+    pub fn new(register_base: usize, platform_bus_bus_channel: Channel<BusDriverMessage, !>) -> Controller {
         let caps = Capabilities::read_from_registers(register_base);
         info!("Capabilites: {:#?}", caps);
 
@@ -85,6 +85,7 @@ impl Controller {
             free_addresses: (1..128).collect(),
             schedule_pool,
             active_devices: BTreeMap::new(),
+            platform_bus_bus_channel,
         }
     }
 
@@ -345,6 +346,7 @@ impl Controller {
                  */
                 self.active_devices.insert(address, ActiveDevice { control_queue: queue });
 
+                self.add_device_to_platform_bus(address, &device_descriptor, configuration);
             } else {
                 /*
                  * The device is not High-Speed. Hand it off to a companion controller to deal
@@ -354,6 +356,31 @@ impl Controller {
                 self.write_port_register(port, PortStatusControl::new().with(PortStatusControl::PORT_OWNER, true));
             }
         }
+    }
+
+    fn add_device_to_platform_bus(&mut self, address: u8, descriptor: &DeviceDescriptor, config0: Vec<u8>) {
+        // TODO: when we've got hubs and stuff we'll need to keep track of bus numbers
+        let bus = 0;
+        let name = format!("usb-{}.{}", bus, address);
+        let device_info = {
+            let mut properties = BTreeMap::new();
+            properties.insert("usb.device_class".to_string(), Property::Integer(descriptor.class as u64));
+            properties.insert("usb.device_subclass".to_string(), Property::Integer(descriptor.sub_class as u64));
+            properties.insert("usb.device_protocol".to_string(), Property::Integer(descriptor.protocol as u64));
+            properties.insert("usb.device_vendor".to_string(), Property::Integer(descriptor.vendor_id as u64));
+            properties.insert("usb.device_product".to_string(), Property::Integer(descriptor.product_id as u64));
+            // TODO: we should probs include all the configurations to choose from no?
+            // Maybe need a list, or just to append numbers idk?
+            properties.insert("usb.config0".to_string(), Property::Bytes(config0));
+            DeviceInfo(properties)
+        };
+        let handoff_info = {
+            let mut properties = BTreeMap::new();
+            HandoffInfo(properties)
+        };
+        self.platform_bus_bus_channel
+            .send(&BusDriverMessage::RegisterDevice(name, device_info, handoff_info))
+            .unwrap();
     }
 
     pub fn add_to_async_schedule(&mut self, queue: &mut Queue) {
@@ -494,7 +521,7 @@ fn main() {
         register_space.map_at(REGISTER_SPACE_ADDRESS).unwrap();
     }
 
-    let mut controller = Controller::new(REGISTER_SPACE_ADDRESS);
+    let mut controller = Controller::new(REGISTER_SPACE_ADDRESS, platform_bus_bus_channel);
     controller.initialize();
     controller.check_ports();
 
