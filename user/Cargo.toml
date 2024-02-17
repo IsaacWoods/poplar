@@ -12,6 +12,7 @@ members = [
     "tests/test_syscalls",
     "hello_world",
     "usb_bus_ehci",
+    "usb_hid",
 ]
 resolver = "2"
 

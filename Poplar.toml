@@ -18,6 +18,7 @@ user_tasks = [
     "platform_bus user/platform_bus",
     "pci_bus user/pci_bus",
     "usb_bus_ehci user/usb_bus_ehci",
+    "usb_hid user/usb_hid",
 ]
 
 [mq_pro]

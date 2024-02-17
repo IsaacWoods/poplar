@@ -1,0 +1,12 @@
+[package]
+name = "usb_hid"
+version = "0.1.0"
+authors = ["Isaac Woods"]
+edition = "2021"
+
+[dependencies]
+std = { path = "../../lib/std", features = ["ddk"] }
+log = "0.4"
+platform_bus = { path = "../platform_bus" }
+ptah = { path = "../../lib/ptah" }
+usb = { path = "../../lib/usb" }
