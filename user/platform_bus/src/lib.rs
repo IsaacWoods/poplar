@@ -40,6 +40,10 @@ impl DeviceInfo {
     pub fn get_as_string(&self, name: &str) -> Option<&String> {
         self.0.get(name)?.as_string()
     }
+
+    pub fn get_as_bytes(&self, name: &str) -> Option<&[u8]> {
+        self.0.get(name)?.as_bytes()
+    }
 }
 
 impl HandoffInfo {
@@ -55,6 +59,10 @@ impl HandoffInfo {
         self.0.get(name)?.as_string()
     }
 
+    pub fn get_as_bytes(&self, name: &str) -> Option<&[u8]> {
+        self.0.get(name)?.as_bytes()
+    }
+
     pub fn get_as_memory_object(&self, name: &str) -> Option<Handle> {
         self.0.get(name)?.as_memory_object()
     }
@@ -65,6 +73,7 @@ pub enum Property {
     Bool(bool),
     Integer(u64),
     String(String),
+    Bytes(Vec<u8>),
 }
 
 impl Property {
@@ -88,6 +97,13 @@ impl Property {
             _ => None,
         }
     }
+
+    pub fn as_bytes(&self) -> Option<&[u8]> {
+        match self {
+            Property::Bytes(ref value) => Some(value),
+            _ => None,
+        }
+    }
 }
 
 #[derive(PartialEq, Eq, Debug, Serialize, Deserialize)]
@@ -95,6 +111,7 @@ pub enum HandoffProperty {
     Bool(bool),
     Integer(u64),
     String(String),
+    Bytes(Vec<u8>),
     MemoryObject(Handle),
 }
 
@@ -116,6 +133,13 @@ impl HandoffProperty {
     pub fn as_string(&self) -> Option<&String> {
         match self {
             HandoffProperty::String(ref value) => Some(value),
+            _ => None,
+        }
+    }
+
+    pub fn as_bytes(&self) -> Option<&[u8]> {
+        match self {
+            HandoffProperty::Bytes(ref value) => Some(value),
             _ => None,
         }
     }
