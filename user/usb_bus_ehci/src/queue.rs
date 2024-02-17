@@ -3,17 +3,34 @@ use log::info;
 use std::{
     mem,
     ops::Deref,
-    poplar::ddk::dma::{DmaArray, DmaObject, DmaPool},
+    poplar::ddk::dma::{DmaArray, DmaBuffer, DmaObject, DmaPool},
 };
 use usb::setup::SetupPacket;
 
 pub struct Queue {
     pub head: DmaObject<QueueHead>,
+    // TODO: when we can detect that transactions have completed, we can drop their contents
     pub transactions: Vec<Transaction>,
 }
 
-pub struct Transaction {
-    pub descriptors: DmaArray<TransferDescriptor>,
+pub enum Transaction<T = ()> {
+    InFlight {
+        descriptors: DmaArray<TransferDescriptor>,
+        setup: DmaObject<SetupPacket>,
+        // TODO: can't take ownership just yet
+        // data: Option<DmaObject<T>>,
+    },
+    InFlightBuffer {
+        descriptors: DmaArray<TransferDescriptor>,
+        setup: DmaObject<SetupPacket>,
+        // data: DmaBuffer,
+    },
+    Complete {
+        data: Option<DmaObject<T>>,
+    },
+    CompleteBuffer {
+        data: DmaBuffer,
+    },
 }
 
 impl Queue {
@@ -22,27 +39,55 @@ impl Queue {
     }
 
     /*
-     * TODO: this should take ownership of the setup packet and data buffer (if present) so that
-     * they can't be dropped until the transaction finishes. Otherwise, we confuse the controller
-     * by changing the transfer descriptors out from under it. The transaction can somehow then
-     * give the finished data buffer back once it completes.
-     * This has already caused multiple bugs lmao so needs to be done.
+     * TODO: also take ownership of the data (either DmaObject or DmaBuffer) and store it, then
+     * give it back when the transaction completes. This will require us to better track how
+     * transactions are being completed etc.
      */
     pub fn control_transfer<T>(
         &mut self,
-        setup: &DmaObject<SetupPacket>,
+        setup: SetupPacket,
         data: Option<&mut DmaObject<T>>,
         transfer_to_device: bool,
         pool: &mut DmaPool,
     ) {
-        let num_data = if let Some(ref data) = data {
+        let (data_phys, data_len) = match data {
+            Some(data) => (Some(data.phys), mem::size_of::<T>() as u32),
+            None => (None, 0),
+        };
+        let (setup, descriptors) =
+            self.control_transfer_common(setup, data_phys, data_len, transfer_to_device, pool);
+        self.transactions.push(Transaction::InFlight { descriptors, setup });
+    }
+
+    pub fn control_transfer_buffer(
+        &mut self,
+        setup: SetupPacket,
+        buffer: &mut DmaBuffer,
+        transfer_to_device: bool,
+        pool: &mut DmaPool,
+    ) {
+        let (setup, descriptors) =
+            self.control_transfer_common(setup, Some(buffer.phys), buffer.length as u32, transfer_to_device, pool);
+        self.transactions.push(Transaction::InFlightBuffer { descriptors, setup });
+    }
+
+    fn control_transfer_common(
+        &mut self,
+        setup: SetupPacket,
+        data_phys: Option<usize>,
+        data_len: u32,
+        transfer_to_device: bool,
+        pool: &mut DmaPool,
+    ) -> (DmaObject<SetupPacket>, DmaArray<TransferDescriptor>) {
+        let num_data = if data_phys.is_some() {
             // TODO: this currently only supports one data TD (transfers up to `0x4000` bytes)
-            assert!(mem::size_of::<T>() <= 0x4000);
+            assert!(data_len < 0x4000);
             1
         } else {
             0
         };
 
+        let setup = pool.create(setup).unwrap();
         let mut transfers = pool.create_array(num_data + 2, TransferDescriptor::new()).unwrap();
 
         transfers.write(
@@ -64,7 +109,7 @@ impl Queue {
             },
         );
 
-        if let Some(data) = data {
+        if let Some(data_phys) = data_phys {
             transfers.write(
                 1,
                 TransferDescriptor {
@@ -76,8 +121,8 @@ impl Queue {
                         .with(TdToken::ERR_COUNTER, 1)
                         // .with(TdToken::INTERRUPT_ON_COMPLETE, true)
                         .with(TdToken::PID_CODE, if transfer_to_device { PidCode::Out } else { PidCode::In })
-                        .with(TdToken::TOTAL_BYTES_TO_TRANSFER, mem::size_of::<T>() as u32),
-                    buffer_ptr_0: data.phys as u32,
+                        .with(TdToken::TOTAL_BYTES_TO_TRANSFER, data_len),
+                    buffer_ptr_0: data_phys as u32,
                     buffer_ptr_1: 0,
                     buffer_ptr_2: 0,
                     buffer_ptr_3: 0,
@@ -110,7 +155,7 @@ impl Queue {
         // and somehow progress the queue as stuff completes I think?
         self.head.next_td = TdPtr::new(transfers.phys_of_element(0) as u32, false);
 
-        self.transactions.push(Transaction { descriptors: transfers });
+        (setup, transfers)
     }
 
     pub fn set_address(&mut self, address: u8) {

@@ -16,7 +16,15 @@ use crate::{
 };
 use bit_field::BitField;
 use log::{info, trace};
-use platform_bus::{BusDriverMessage, DeviceDriverMessage, DeviceDriverRequest, Filter, Property};
+use platform_bus::{
+    BusDriverMessage,
+    DeviceDriverMessage,
+    DeviceDriverRequest,
+    DeviceInfo,
+    Filter,
+    HandoffInfo,
+    Property,
+};
 use queue::HorizontalLinkPtr;
 use std::{
     collections::BTreeMap,
@@ -32,7 +40,14 @@ use std::{
     },
 };
 use usb::{
-    descriptor::{DeviceDescriptor, DeviceDescriptorHeader},
+    descriptor::{
+        ConfigurationDescriptor,
+        DescriptorBase,
+        DescriptorType,
+        DeviceDescriptor,
+        EndpointDescriptor,
+        InterfaceDescriptor,
+    },
     setup::{Direction, Recipient, Request, RequestType, RequestTypeType, SetupPacket},
 };
 
@@ -42,6 +57,7 @@ pub struct Controller {
     free_addresses: Vec<u8>,
     schedule_pool: DmaPool,
     active_devices: BTreeMap<u8, ActiveDevice>,
+    platform_bus_bus_channel: Channel<BusDriverMessage, !>,
 }
 
 pub struct ActiveDevice {
@@ -184,20 +200,64 @@ impl Controller {
                 let mut queue = Queue::new(self.schedule_pool.create(QueueHead::new()).unwrap());
                 self.add_to_async_schedule(&mut queue);
 
-                let set_address = self
-                    .schedule_pool
-                    .create(SetupPacket {
+                /*
+                 * People have found experientally that many devices, despite not being
+                 * USB-compliant, expect the first request to unconditionally be of the max packet
+                 * size. You can then set the device's address, then request the full descriptor
+                 * like normal. For High-Speed devices, we do an initial request of 64 bytes.
+                 * (see https://forum.osdev.org/viewtopic.php?f=1&t=56675&sid=817bd512e309859aed0ff09dc891cfcc&start=30)
+                 *
+                 * TODO: I'm not sure how correct any of this is on real hardware, as QEMU seems to
+                 * accept pretty much anything. Apparently some devices also expect you to do a
+                 * reset after requesting this first big packet. I think we'll need to test this
+                 * out on real hardware once we have that up and running.
+                 */
+                let max_packet_size: u8 = {
+                    let get_descriptor_header = SetupPacket {
                         typ: RequestType::new()
                             .with(RequestType::RECIPIENT, Recipient::Device)
                             .with(RequestType::TYP, RequestTypeType::Standard)
-                            .with(RequestType::DIRECTION, Direction::HostToDevice),
-                        request: Request::SetAddress,
-                        value: address as u16,
+                            .with(RequestType::DIRECTION, Direction::DeviceToHost),
+                        request: Request::GetDescriptor,
+                        value: (DescriptorType::Device as u16) << 8,
                         index: 0,
-                        length: 0,
-                    })
-                    .unwrap();
-                queue.control_transfer::<()>(&set_address, None, true, &mut self.schedule_pool);
+                        length: 64,
+                    };
+                    let mut buffer = self.schedule_pool.create_buffer(64).unwrap();
+                    queue.control_transfer_buffer(
+                        get_descriptor_header,
+                        &mut buffer,
+                        false,
+                        &mut self.schedule_pool,
+                    );
+
+                    while !self.read_status().get(Status::INTERRUPT) {}
+                    info!("GetDescriptor operation complete!");
+                    self.write_status(Status::new().with(Status::INTERRUPT, true));
+
+                    // Manually extract the max packet size from the buffer (one byte at `0x7`)
+                    let max_packet_size = buffer[7];
+                    max_packet_size
+                };
+                info!("Max packet size: {}", max_packet_size);
+
+                // TODO: apparently some devices expect you to reset them again after this?
+                // TODO: set the max packet size
+
+                /*
+                 * Give the device an address.
+                 */
+                let set_address = SetupPacket {
+                    typ: RequestType::new()
+                        .with(RequestType::RECIPIENT, Recipient::Device)
+                        .with(RequestType::TYP, RequestTypeType::Standard)
+                        .with(RequestType::DIRECTION, Direction::HostToDevice),
+                    request: Request::SetAddress,
+                    value: address as u16,
+                    index: 0,
+                    length: 0,
+                };
+                queue.control_transfer::<()>(set_address, None, true, &mut self.schedule_pool);
 
                 // TODO: this should be done by waiting for an interrupt instead of polling
                 while !self.read_status().get(Status::INTERRUPT) {}
@@ -206,60 +266,76 @@ impl Controller {
 
                 queue.set_address(address);
 
-                let get_descriptor_header = self
-                    .schedule_pool
-                    .create(SetupPacket {
-                        typ: RequestType::new()
-                            .with(RequestType::RECIPIENT, Recipient::Device)
-                            .with(RequestType::TYP, RequestTypeType::Standard)
-                            .with(RequestType::DIRECTION, Direction::DeviceToHost),
-                        request: Request::GetDescriptor,
-                        value: 1 << 8, // TODO: should probs be a type DescriptorType
-                        index: 0,
-                        length: 8,
-                    })
-                    .unwrap();
-                let mut descriptor: DmaObject<DeviceDescriptorHeader> =
-                    self.schedule_pool.create(DeviceDescriptorHeader::default()).unwrap();
-                queue.control_transfer(
-                    &get_descriptor_header,
-                    Some(&mut descriptor),
-                    false,
-                    &mut self.schedule_pool,
-                );
-
-                while !self.read_status().get(Status::INTERRUPT) {}
-                info!("GetDescriptor operation complete!");
-                self.write_status(Status::new().with(Status::INTERRUPT, true));
-
-                info!("Device Descriptor header: {:#?}", descriptor.deref());
-
-                // TODO: set the max packet size somewhere now we know it from the descriptor? Or
-                // do we care since it should always be 64 for high-speed devices no?
-
                 // Get the rest of the descriptor
-                let get_descriptor = self
-                    .schedule_pool
-                    .create(SetupPacket {
+                let device_descriptor: DeviceDescriptor = {
+                    let get_descriptor = SetupPacket {
                         typ: RequestType::new()
                             .with(RequestType::RECIPIENT, Recipient::Device)
                             .with(RequestType::TYP, RequestTypeType::Standard)
                             .with(RequestType::DIRECTION, Direction::DeviceToHost),
                         request: Request::GetDescriptor,
-                        value: 1 << 8, // TODO: should probs be a type DescriptorType
+                        value: (DescriptorType::Device as u16) << 8,
                         index: 0,
                         length: mem::size_of::<DeviceDescriptor>() as u16,
-                    })
-                    .unwrap();
-                let mut descriptor: DmaObject<DeviceDescriptor> =
-                    self.schedule_pool.create(DeviceDescriptor::default()).unwrap();
-                queue.control_transfer(&get_descriptor, Some(&mut descriptor), false, &mut self.schedule_pool);
+                    };
+                    let mut descriptor: DmaObject<DeviceDescriptor> =
+                        self.schedule_pool.create(DeviceDescriptor::default()).unwrap();
+                    queue.control_transfer(get_descriptor, Some(&mut descriptor), false, &mut self.schedule_pool);
 
-                while !self.read_status().get(Status::INTERRUPT) {}
-                info!("GetDescriptor operation complete!");
-                self.write_status(Status::new().with(Status::INTERRUPT, true));
+                    while !self.read_status().get(Status::INTERRUPT) {}
+                    info!("GetDescriptor operation complete!");
+                    self.write_status(Status::new().with(Status::INTERRUPT, true));
 
-                info!("Device Descriptor: {:#?}", descriptor.deref());
+                    *descriptor
+                };
+                info!("Device Descriptor: {:#?}", device_descriptor);
+
+                let configuration = {
+                    /*
+                     * A configuration is described by a Configuration descriptor, followed by
+                     * other descriptors. We request the Configuration descriptor first, which
+                     * contains the total size of the configuration's hierachy, and then request
+                     * the whole thing in one go.
+                     */
+                    let get_descriptor = SetupPacket {
+                        typ: RequestType::new()
+                            .with(RequestType::RECIPIENT, Recipient::Device)
+                            .with(RequestType::TYP, RequestTypeType::Standard)
+                            .with(RequestType::DIRECTION, Direction::DeviceToHost),
+                        request: Request::GetDescriptor,
+                        value: (DescriptorType::Configuration as u16) << 8,
+                        index: 0,
+                        length: mem::size_of::<ConfigurationDescriptor>() as u16,
+                    };
+                    let mut descriptor: DmaObject<ConfigurationDescriptor> =
+                        self.schedule_pool.create(ConfigurationDescriptor::default()).unwrap();
+                    queue.control_transfer(get_descriptor, Some(&mut descriptor), false, &mut self.schedule_pool);
+
+                    while !self.read_status().get(Status::INTERRUPT) {}
+                    info!("GetDescriptor for configuration descriptor complete!");
+                    self.write_status(Status::new().with(Status::INTERRUPT, true));
+
+                    info!("ConfigurationDescriptor: {:#?}", descriptor.deref());
+
+                    let get_configuration = SetupPacket {
+                        typ: RequestType::new()
+                            .with(RequestType::RECIPIENT, Recipient::Device)
+                            .with(RequestType::TYP, RequestTypeType::Standard)
+                            .with(RequestType::DIRECTION, Direction::DeviceToHost),
+                        request: Request::GetDescriptor,
+                        value: (DescriptorType::Configuration as u16) << 8,
+                        index: 0,
+                        length: descriptor.total_length as u16,
+                    };
+                    let mut buffer = self.schedule_pool.create_buffer(descriptor.total_length as usize).unwrap();
+                    queue.control_transfer_buffer(get_configuration, &mut buffer, false, &mut self.schedule_pool);
+
+                    while !self.read_status().get(Status::INTERRUPT) {}
+                    info!("GetDescriptor for whole configuration complete!");
+                    self.write_status(Status::new().with(Status::INTERRUPT, true));
+
+                    buffer.to_vec()
+                };
 
                 /*
                  * Add the newly discovered device to our list of active devices. This is important
@@ -269,8 +345,6 @@ impl Controller {
                  */
                 self.active_devices.insert(address, ActiveDevice { control_queue: queue });
 
-                // TODO: read configuration and interfaces?
-                // TODO: tell `platform_bus` all about our new device :)
             } else {
                 /*
                  * The device is not High-Speed. Hand it off to a companion controller to deal

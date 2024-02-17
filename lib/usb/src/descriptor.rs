@@ -46,22 +46,6 @@ pub struct DeviceDescriptor {
     pub num_configurations: u8,
 }
 
-/// The first `8` bytes of a `DeviceDescriptor`.
-#[derive(Clone, Copy, Default, Debug)]
-#[repr(C)]
-pub struct DeviceDescriptorHeader {
-    pub length: u8,
-    pub typ: DescriptorType,
-    /// Binary-Coded Decimal representation of the USB Spec version the device supports.
-    /// E.g. `2.10` is represented by `0x210`.
-    pub bcd_usb: u16,
-    pub class: u8,
-    pub sub_class: u8,
-    pub protocol: u8,
-    /// Maximum packet size for endpoint 0 (only 8, 16, 32, and 64 are valid values)
-    pub max_control_packet_size: u8,
-}
-
 /// A configuration descriptor describes a particular configuration of a USB device. The
 /// value of the `configuration_value` field can be passed to a device within a `SetConfiguration`
 /// request to make the device assume that configuration.
