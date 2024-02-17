@@ -317,3 +317,14 @@ dependencies = [
  "ptah",
  "std",
 ]
+
+[[package]]
+name = "usb_hid"
+version = "0.1.0"
+dependencies = [
+ "log",
+ "platform_bus",
+ "ptah",
+ "std",
+ "usb",
+]

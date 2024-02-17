@@ -139,6 +139,13 @@ pub struct DmaBuffer {
     allocator: Arc<LockedHeap>,
 }
 
+impl DmaBuffer {
+    pub unsafe fn at<T>(&self, offset: usize) -> &T {
+        assert!((offset + mem::size_of::<T>()) <= self.length);
+        unsafe { &*(self.ptr.byte_add(offset).cast::<T>().as_ptr()) }
+    }
+}
+
 impl Deref for DmaBuffer {
     type Target = [u8];
 

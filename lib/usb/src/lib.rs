@@ -1,6 +1,7 @@
 #![no_std]
 
 pub mod descriptor;
+pub mod hid;
 pub mod setup;
 
 use core::mem;
