@@ -29,7 +29,6 @@ use queue::HorizontalLinkPtr;
 use std::{
     collections::BTreeMap,
     mem,
-    ops::Deref,
     poplar::{
         caps::{CapabilitiesRepr, CAP_EARLY_LOGGING, CAP_PADDING, CAP_SERVICE_USER},
         channel::Channel,
@@ -40,14 +39,7 @@ use std::{
     },
 };
 use usb::{
-    descriptor::{
-        ConfigurationDescriptor,
-        DescriptorBase,
-        DescriptorType,
-        DeviceDescriptor,
-        EndpointDescriptor,
-        InterfaceDescriptor,
-    },
+    descriptor::{ConfigurationDescriptor, DescriptorType, DeviceDescriptor},
     setup::{Direction, Recipient, Request, RequestType, RequestTypeType, SetupPacket},
 };
 
@@ -225,19 +217,16 @@ impl Controller {
                         length: 64,
                     };
                     let mut buffer = self.schedule_pool.create_buffer(64).unwrap();
-                    queue.control_transfer_buffer(
+                    queue.control_transfer(
                         get_descriptor_header,
-                        &mut buffer,
+                        Some(buffer.token().unwrap()),
                         false,
                         &mut self.schedule_pool,
                     );
-
-                    while !self.read_status().get(Status::INTERRUPT) {}
-                    info!("GetDescriptor operation complete!");
-                    self.write_status(Status::new().with(Status::INTERRUPT, true));
+                    self.wait_for_transfer_completion(&mut queue);
 
                     // Manually extract the max packet size from the buffer (one byte at `0x7`)
-                    let max_packet_size = buffer[7];
+                    let max_packet_size = buffer.read()[7];
                     max_packet_size
                 };
                 info!("Max packet size: {}", max_packet_size);
@@ -258,12 +247,8 @@ impl Controller {
                     index: 0,
                     length: 0,
                 };
-                queue.control_transfer::<()>(set_address, None, true, &mut self.schedule_pool);
-
-                // TODO: this should be done by waiting for an interrupt instead of polling
-                while !self.read_status().get(Status::INTERRUPT) {}
-                info!("SetAddress operation complete!");
-                self.write_status(Status::new().with(Status::INTERRUPT, true));
+                queue.control_transfer(set_address, None, true, &mut self.schedule_pool);
+                self.wait_for_transfer_completion(&mut queue);
 
                 queue.set_address(address);
 
@@ -281,13 +266,15 @@ impl Controller {
                     };
                     let mut descriptor: DmaObject<DeviceDescriptor> =
                         self.schedule_pool.create(DeviceDescriptor::default()).unwrap();
-                    queue.control_transfer(get_descriptor, Some(&mut descriptor), false, &mut self.schedule_pool);
+                    queue.control_transfer(
+                        get_descriptor,
+                        Some(descriptor.token().unwrap()),
+                        false,
+                        &mut self.schedule_pool,
+                    );
+                    self.wait_for_transfer_completion(&mut queue);
 
-                    while !self.read_status().get(Status::INTERRUPT) {}
-                    info!("GetDescriptor operation complete!");
-                    self.write_status(Status::new().with(Status::INTERRUPT, true));
-
-                    *descriptor
+                    *descriptor.read()
                 };
                 info!("Device Descriptor: {:#?}", device_descriptor);
 
@@ -310,13 +297,15 @@ impl Controller {
                     };
                     let mut descriptor: DmaObject<ConfigurationDescriptor> =
                         self.schedule_pool.create(ConfigurationDescriptor::default()).unwrap();
-                    queue.control_transfer(get_descriptor, Some(&mut descriptor), false, &mut self.schedule_pool);
+                    queue.control_transfer(
+                        get_descriptor,
+                        Some(descriptor.token().unwrap()),
+                        false,
+                        &mut self.schedule_pool,
+                    );
+                    self.wait_for_transfer_completion(&mut queue);
 
-                    while !self.read_status().get(Status::INTERRUPT) {}
-                    info!("GetDescriptor for configuration descriptor complete!");
-                    self.write_status(Status::new().with(Status::INTERRUPT, true));
-
-                    info!("ConfigurationDescriptor: {:#?}", descriptor.deref());
+                    info!("ConfigurationDescriptor: {:#?}", descriptor.read());
 
                     let get_configuration = SetupPacket {
                         typ: RequestType::new()
@@ -326,16 +315,19 @@ impl Controller {
                         request: Request::GetDescriptor,
                         value: (DescriptorType::Configuration as u16) << 8,
                         index: 0,
-                        length: descriptor.total_length as u16,
+                        length: descriptor.read().total_length as u16,
                     };
-                    let mut buffer = self.schedule_pool.create_buffer(descriptor.total_length as usize).unwrap();
-                    queue.control_transfer_buffer(get_configuration, &mut buffer, false, &mut self.schedule_pool);
+                    let mut buffer =
+                        self.schedule_pool.create_buffer(descriptor.read().total_length as usize).unwrap();
+                    queue.control_transfer(
+                        get_configuration,
+                        Some(buffer.token().unwrap()),
+                        false,
+                        &mut self.schedule_pool,
+                    );
+                    self.wait_for_transfer_completion(&mut queue);
 
-                    while !self.read_status().get(Status::INTERRUPT) {}
-                    info!("GetDescriptor for whole configuration complete!");
-                    self.write_status(Status::new().with(Status::INTERRUPT, true));
-
-                    buffer.to_vec()
+                    buffer.read().to_vec()
                 };
 
                 /*
@@ -375,7 +367,7 @@ impl Controller {
             DeviceInfo(properties)
         };
         let handoff_info = {
-            let mut properties = BTreeMap::new();
+            let properties = BTreeMap::new();
             HandoffInfo(properties)
         };
         self.platform_bus_bus_channel
@@ -395,7 +387,7 @@ impl Controller {
          *      head, and the current one has its H-bit cleared.
          */
         queue.set_reclaim_head(true);
-        queue.head.horizontal_link = HorizontalLinkPtr::new(queue.head.phys as u32, 0b01, false);
+        queue.head.write().horizontal_link = HorizontalLinkPtr::new(queue.head.phys as u32, 0b01, false);
         unsafe {
             self.write_operational_register(OpRegister::NextAsyncListAddress, queue.head.phys as u32);
             self.write_operational_register(
@@ -407,6 +399,23 @@ impl Controller {
                     .bits(),
             );
         }
+    }
+
+    /*
+     * TODO: this is temporary. In the future, `control_transfer` etc. will return futures that get
+     * magically handled by the IRQ handler.
+     *
+     * Wait for a transaction to complete, and then pop it off the queue. This releases the DMA
+     * objects needed for the transaction, including the token for the data object used. This
+     * allows the result to be read from it, if relevant.
+     */
+    pub fn wait_for_transfer_completion(&mut self, queue: &mut Queue) {
+        while !self.read_status().get(Status::INTERRUPT) {}
+        info!("Transaction complete!");
+        unsafe { self.write_status(Status::new().with(Status::INTERRUPT, true)) };
+
+        // Remove the front transaction from the queue to drop the held DMA objects and token
+        queue.transactions.pop_front();
     }
 
     pub fn reset_port(&mut self, port: u8) {
