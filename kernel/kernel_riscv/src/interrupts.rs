@@ -1,11 +1,16 @@
+use alloc::vec::Vec;
+use core::{
+    mem,
+    ptr,
+    sync::atomic::{AtomicPtr, Ordering},
+};
 use fdt::Fdt;
 use hal::memory::PAddr;
 use hal_riscv::hw::plic::Plic;
 use poplar_util::InitGuard;
 
 pub static PLIC: InitGuard<&'static Plic> = InitGuard::uninit();
-
-pub static UART_PRODUCER: InitGuard<kernel::tasklets::queue::QueueProducer> = InitGuard::uninit();
+pub static HANDLERS: InitGuard<Vec<AtomicPtr<()>>> = InitGuard::uninit();
 
 pub fn init(fdt: &Fdt) {
     if let Some(plic_node) = fdt.find_compatible(&["riscv,plic0"]) {
@@ -16,33 +21,60 @@ pub fn init(fdt: &Fdt) {
         let num_interrupts = plic_node.property("riscv,ndev").unwrap().as_usize().unwrap();
         tracing::info!("Found PLIC at {:#x} with {} interrupts", reg.starting_address as usize, num_interrupts);
 
+        // Create a handler entry for each interrupt
+        // TODO: this assumes interrupt numbers are contiguous. Is that always the case?
+        let handlers = {
+            let mut handlers = Vec::with_capacity(num_interrupts);
+            for _ in 0..num_interrupts {
+                handlers.push(AtomicPtr::new(0x0 as *mut _));
+            }
+            handlers
+        };
+        HANDLERS.initialize(handlers);
+
         PLIC.initialize(unsafe { &*(address.ptr() as *const Plic) });
         PLIC.get().init(num_interrupts);
-        // TODO: do this better
-        PLIC.get().enable_interrupt(1, 0xa);
         PLIC.get().set_context_threshold(1, 0);
-        PLIC.get().set_source_priority(0xa, 7);
+
+        // TODO: gnarly shit to see if PCI interrupts work lmao
+        PLIC.get().enable_interrupt(1, 32);
+        PLIC.get().set_source_priority(32, 7);
+        PLIC.get().enable_interrupt(1, 33);
+        PLIC.get().set_source_priority(33, 7);
+        PLIC.get().enable_interrupt(1, 34);
+        PLIC.get().set_source_priority(34, 7);
+        PLIC.get().enable_interrupt(1, 35);
+        PLIC.get().set_source_priority(35, 7);
     }
+}
+
+/// Register a handler for the specified interrupt
+///
+/// ### Panics
+/// - If the supplied interrupt number does not exist
+pub fn register_handler(interrupt: usize, handler: fn()) {
+    HANDLERS.get().get(interrupt).unwrap().store(handler as *mut _, Ordering::SeqCst);
+}
+
+pub fn enable_interrupt(interrupt: usize) {
+    let plic = PLIC.get();
+    // TODO: don't just assume all interrupts should go to the first context
+    plic.enable_interrupt(1, interrupt);
+    // TODO: do priorities correctly at some point
+    plic.set_source_priority(interrupt, 7);
 }
 
 pub fn handle_external_interrupt() {
     let interrupt = PLIC.get().claim_interrupt(1);
-    // TODO: better way of registering and dispatching ISRs
-    match interrupt {
-        0xa => {
-            // It's the UART
-            let serial = crate::logger::SERIAL.get();
-            while let Some(byte) = serial.read() {
-                if let Some(producer) = UART_PRODUCER.try_get() {
-                    // TODO: with more stuff running and higher baud we might end up with multiple
-                    // chars - would be more efficient to use a bigger grant.
-                    let mut write = producer.grant_sync(1).unwrap();
-                    write[0] = byte;
-                    write.commit(1);
-                }
-            }
+    let handler = HANDLERS.get().get(interrupt as usize).expect("Received interrupt with no handler slot!");
+    let ptr = handler.load(Ordering::SeqCst);
+    if ptr != ptr::null_mut() {
+        unsafe {
+            let ptr: fn() = mem::transmute(ptr);
+            (ptr)();
         }
-        _ => (),
+    } else {
+        info!("Unhandled interrupt {}", interrupt);
     }
     PLIC.get().complete_interrupt(1, interrupt);
 }

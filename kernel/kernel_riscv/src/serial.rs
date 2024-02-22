@@ -12,12 +12,14 @@ use core::{
 use fdt::Fdt;
 use hal::memory::PAddr;
 use hal_riscv::{hw::uart16550::Uart16550, platform::kernel_map::physical_to_virtual};
+use kernel::tasklets::queue::QueueProducer;
 use poplar_util::InitGuard;
 use spinning_top::Spinlock;
 use tracing::{span, Collect, Event, Level, Metadata};
 use tracing_core::span::Current as CurrentSpan;
 
-pub static SERIAL: InitGuard<Uart16550<'static>> = InitGuard::uninit();
+static SERIAL: InitGuard<Uart16550<'static>> = InitGuard::uninit();
+static SERIAL_PRODUCER: InitGuard<kernel::tasklets::queue::QueueProducer> = InitGuard::uninit();
 static LOGGER: Logger = Logger::new();
 
 pub fn init(fdt: &Fdt) {
@@ -42,6 +44,35 @@ pub fn init(fdt: &Fdt) {
 
     tracing::dispatch::set_global_default(tracing::dispatch::Dispatch::from_static(&LOGGER))
         .expect("Failed to set default tracing dispatch");
+}
+
+pub fn enable_input(fdt: &Fdt, producer: QueueProducer) {
+    let stdout = fdt.chosen().stdout().unwrap().node();
+    let interrupt = stdout.interrupts().unwrap().next().unwrap();
+
+    crate::interrupts::register_handler(interrupt, interrupt_handler);
+    crate::interrupts::enable_interrupt(interrupt);
+
+    SERIAL_PRODUCER.initialize(producer);
+}
+
+fn interrupt_handler() {
+    let serial = SERIAL.get();
+    if let Some(producer) = SERIAL_PRODUCER.try_get() {
+        while let Some(byte) = serial.read() {
+            // TODO: with more stuff running and higher baud we might end up with multiple
+            // chars - would be more efficient to use a bigger grant.
+            let mut write = producer.grant_sync(1).unwrap();
+            write[0] = byte;
+            write.commit(1);
+        }
+    } else {
+        /*
+         * Nothing's interested in the serial input, so just blackhole it to avoid repeat
+         * interrupts.
+         */
+        while let Some(_) = serial.read() {}
+    }
 }
 
 struct SerialWriter;

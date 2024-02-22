@@ -10,8 +10,8 @@
 extern crate alloc;
 
 mod interrupts;
-mod logger;
 mod pci;
+mod serial;
 mod task;
 mod trap;
 
@@ -90,7 +90,7 @@ pub extern "C" fn kentry(boot_info: &BootInfo) -> ! {
         let address = hal_riscv::platform::kernel_map::physical_to_virtual(boot_info.fdt_address.unwrap());
         unsafe { fdt::Fdt::from_ptr(address.ptr()).unwrap() }
     };
-    logger::init(&fdt);
+    serial::init(&fdt);
     info!("Hello from the kernel");
 
     trap::install_early_handler();
@@ -154,6 +154,7 @@ pub extern "C" fn kentry(boot_info: &BootInfo) -> ! {
     sbi::timer::set_timer(hal_riscv::hw::csr::Time::read() as u64 + 0x989680 / 50).unwrap();
 
     let (uart_prod, uart_cons) = kernel::tasklets::queue::SpscQueue::new();
+    serial::enable_input(&fdt, uart_prod);
     SCHEDULER.get().tasklet_scheduler.spawn(async move {
         loop {
             let line = {
@@ -179,7 +180,6 @@ pub extern "C" fn kentry(boot_info: &BootInfo) -> ! {
             info!("Line from UART: {}", line);
         }
     });
-    interrupts::UART_PRODUCER.initialize(uart_prod);
 
     /*
      * Create kernel objects from loaded images and schedule them.
