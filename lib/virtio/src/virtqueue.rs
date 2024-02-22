@@ -23,7 +23,6 @@ pub struct Virtqueue {
     pub descriptor_table: Mapped<[Descriptor]>,
     pub available_ring: Mapped<AvailableRing>,
     pub used_ring: Mapped<UsedRing>,
-    used_ring_last_seen: u16,
 }
 
 impl Virtqueue {
@@ -36,14 +35,7 @@ impl Virtqueue {
         let available_ring = unsafe { Mapped::new(queue_size as usize, mapper) };
         let used_ring = unsafe { Mapped::new(queue_size as usize, mapper) };
 
-        Virtqueue {
-            size: queue_size,
-            free_entries,
-            descriptor_table,
-            available_ring,
-            used_ring,
-            used_ring_last_seen: 0,
-        }
+        Virtqueue { size: queue_size, free_entries, descriptor_table, available_ring, used_ring }
     }
 
     /// Push a descriptor into the descriptor table, returning its index. Returns `None` if there is no space left

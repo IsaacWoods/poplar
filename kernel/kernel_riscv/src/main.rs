@@ -15,8 +15,6 @@ mod pci;
 mod task;
 mod trap;
 
-use core::time::Duration;
-
 use alloc::string::String;
 use hal::memory::{Frame, VAddr};
 use hal_riscv::{

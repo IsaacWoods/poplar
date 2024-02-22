@@ -2,6 +2,9 @@
 #![feature(decl_macro, never_type, allocator_api, ptr_as_uninit, non_null_convenience)]
 #![deny(unsafe_op_in_unsafe_fn)]
 
+#[cfg(feature = "can_alloc")]
+extern crate alloc;
+
 pub mod caps;
 #[cfg(feature = "can_alloc")]
 pub mod channel;
@@ -12,10 +15,7 @@ pub mod early_logger;
 pub mod memory_object;
 pub mod syscall;
 
-#[cfg(feature = "can_alloc")]
-extern crate alloc;
-
-use core::{convert::TryFrom, num::TryFromIntError};
+use core::num::TryFromIntError;
 
 /// A `Handle` is used to represent a task's access to a kernel object. It is allocated by the kernel and is unique
 /// to the task to which it is issued - a kernel object can have handles in multiple tasks (and the numbers will

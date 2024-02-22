@@ -1,5 +1,5 @@
 #![no_std]
-#![feature(slice_ptr_get, layout_for_ptr, ptr_metadata, offset_of)]
+#![feature(slice_ptr_get, layout_for_ptr, ptr_metadata)]
 
 extern crate alloc;
 

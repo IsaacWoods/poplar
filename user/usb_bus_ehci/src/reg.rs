@@ -1,4 +1,3 @@
-use bit_field::BitField;
 use bitflags::bitflags;
 
 #[repr(u32)]

@@ -14,7 +14,6 @@ use crate::{
     queue::{Queue, QueueHead},
     reg::{Command, InterruptEnable, LineStatus, OpRegister, PortStatusControl, Status},
 };
-use bit_field::BitField;
 use log::{info, trace};
 use platform_bus::{
     BusDriverMessage,
@@ -503,7 +502,7 @@ fn main() {
     // TODO: probably don't bother changing this until we have a futures-based message interface
     let (_device_info, handoff_info) = loop {
         match platform_bus_device_channel.try_receive().unwrap() {
-            Some(DeviceDriverRequest::QuerySupport(device_name, device_info)) => {
+            Some(DeviceDriverRequest::QuerySupport(device_name, _device_info)) => {
                 platform_bus_device_channel.send(&DeviceDriverMessage::CanSupport(device_name, true)).unwrap();
             }
             Some(DeviceDriverRequest::HandoffDevice(device_name, device_info, handoff_info)) => {

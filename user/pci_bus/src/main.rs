@@ -5,7 +5,6 @@ use pci_types::device_type::{DeviceType, UsbType};
 use platform_bus::{BusDriverMessage, DeviceInfo, HandoffInfo, HandoffProperty, Property};
 use std::{
     collections::BTreeMap,
-    convert::TryFrom,
     poplar::{
         caps::{CapabilitiesRepr, CAP_EARLY_LOGGING, CAP_PADDING, CAP_PCI_BUS_DRIVER, CAP_SERVICE_USER},
         channel::Channel,

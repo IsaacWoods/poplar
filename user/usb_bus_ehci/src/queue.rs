@@ -1,10 +1,8 @@
 use bit_field::BitField;
-use log::info;
 use std::{
     collections::VecDeque,
     mem,
-    ops::Deref,
-    poplar::ddk::dma::{DmaArray, DmaBuffer, DmaObject, DmaPool, DmaToken},
+    poplar::ddk::dma::{DmaArray, DmaObject, DmaPool, DmaToken},
 };
 use usb::setup::SetupPacket;
 

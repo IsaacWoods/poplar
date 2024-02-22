@@ -1,5 +1,5 @@
 use eyre::{eyre, Result, WrapErr};
-use std::{path::PathBuf, process::Command, string::ToString};
+use std::{path::PathBuf, process::Command};
 
 pub struct RunQemuX64 {
     pub image: PathBuf,

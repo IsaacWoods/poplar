@@ -1,4 +1,3 @@
-use bipqueue::BipQueue;
 use fdt::Fdt;
 use hal::memory::PAddr;
 use hal_riscv::hw::plic::Plic;

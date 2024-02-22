@@ -10,10 +10,18 @@ use descriptor::{ConfigurationDescriptor, DescriptorBase, EndpointDescriptor, In
 /// Used to 'visit' each descriptor within a configuration hierachy. Used with
 /// [`walk_configuration`].
 pub trait ConfigurationVisitor {
-    fn visit_configuration(&mut self, descriptor: &ConfigurationDescriptor) {}
-    fn visit_interface(&mut self, descriptor: &InterfaceDescriptor) {}
-    fn visit_endpoint(&mut self, descriptor: &EndpointDescriptor) {}
-    fn visit_other(&mut self, descriptor_typ: u8, bytes: &[u8]) {}
+    fn visit_configuration(&mut self, descriptor: &ConfigurationDescriptor) {
+        let _ = descriptor;
+    }
+    fn visit_interface(&mut self, descriptor: &InterfaceDescriptor) {
+        let _ = descriptor;
+    }
+    fn visit_endpoint(&mut self, descriptor: &EndpointDescriptor) {
+        let _ = descriptor;
+    }
+    fn visit_other(&mut self, descriptor_typ: u8, bytes: &[u8]) {
+        let _ = (descriptor_typ, bytes);
+    }
 }
 
 /// Walk a configuration descriptor hierachy for a device. This should be passed the bytes received

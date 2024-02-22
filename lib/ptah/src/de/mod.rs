@@ -4,7 +4,7 @@ mod impls;
 mod heapless;
 
 use crate::Handle;
-use core::{convert::TryInto, str};
+use core::str;
 
 /// Errors that can occur during deserialization.
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]

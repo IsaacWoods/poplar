@@ -1,13 +1,5 @@
 use log::{info, warn};
-use platform_bus::{
-    BusDriverMessage,
-    DeviceDriverMessage,
-    DeviceDriverRequest,
-    DeviceInfo,
-    Filter,
-    HandoffInfo,
-    Property,
-};
+use platform_bus::{BusDriverMessage, DeviceDriverMessage, DeviceDriverRequest, DeviceInfo, Filter, HandoffInfo};
 use std::{
     collections::BTreeMap,
     mem,
@@ -16,10 +8,7 @@ use std::{
         channel::Channel,
         early_logger::EarlyLogger,
         syscall,
-        syscall::GetMessageError,
-        Handle,
     },
-    rc::Rc,
 };
 
 type BusDriverIndex = usize;

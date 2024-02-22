@@ -34,7 +34,7 @@ pub fn main() {
 
     // TODO: we need to be able to support multiple devices, so this needs to be spawned as a task
     // that loops round listening permanently
-    let (_device_info, handoff_info) = loop {
+    let (_device_info, _handoff_info) = loop {
         match platform_bus_device_channel.try_receive().unwrap() {
             Some(DeviceDriverRequest::QuerySupport(device_name, device_info)) => {
                 info!("Platform bus asked if we can support device {} with info {:?}", device_name, device_info);
@@ -63,6 +63,7 @@ pub fn main() {
                     .unwrap();
             }
             Some(DeviceDriverRequest::HandoffDevice(device_name, device_info, handoff_info)) => {
+                info!("Starting driving HID device '{}'", device_name);
                 break (device_info, handoff_info);
             }
             None => std::poplar::syscall::yield_to_kernel(),

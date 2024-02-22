@@ -50,7 +50,7 @@ impl Sstatus {
     }
 }
 
-pub struct Sip(usize);
+pub struct Sip(pub usize);
 
 impl Sip {
     pub fn read() -> Self {
@@ -68,7 +68,7 @@ impl Sip {
     }
 }
 
-pub struct Sie(usize);
+pub struct Sie(pub usize);
 
 impl Sie {
     pub fn read() -> Self {
@@ -260,7 +260,7 @@ impl Scause {
 }
 
 #[derive(Clone, Copy, Debug)]
-pub struct Sepc(VAddr);
+pub struct Sepc(pub VAddr);
 
 impl Sepc {
     pub fn read() -> Sepc {
@@ -276,7 +276,7 @@ impl Sepc {
 /// to hold a pointer to a hart-local supervisor context - it can be swapped with a user register
 /// at the beginning of a trap handler to provide an initial working register.
 #[derive(Clone, Copy, Debug)]
-pub struct Sscratch(VAddr);
+pub struct Sscratch(pub VAddr);
 
 impl Sscratch {
     pub fn read() -> Sscratch {
