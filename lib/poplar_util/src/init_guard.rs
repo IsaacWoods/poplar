@@ -60,6 +60,7 @@ impl<T> InitGuard<T> {
     /// ### Panics
     /// Panics if this guard hasn't been initialized yet. Use `try_get` if you want a fallible
     /// variant.
+    #[track_caller]
     pub fn get(&self) -> &T {
         match self.state.load(Ordering::SeqCst) {
             /*
