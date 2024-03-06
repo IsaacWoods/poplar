@@ -293,3 +293,48 @@ impl Sscratch {
         }
     }
 }
+
+pub struct Siselect;
+
+impl Siselect {
+    pub const EIDELIVERY: usize = 0x70;
+    pub const EITHRESHOLD: usize = 0x72;
+    pub const EIP_BASE: usize = 0x80;
+    pub const EIE_BASE: usize = 0xc0;
+
+    pub unsafe fn write(reg: usize) {
+        unsafe {
+            asm!("csrw siselect, {}", in(reg) reg);
+        }
+    }
+}
+
+pub struct Sireg;
+
+impl Sireg {
+    pub fn read() -> usize {
+        let value: usize;
+        unsafe {
+            asm!("csrr {}, sireg", out(reg) value);
+        }
+        value
+    }
+
+    pub unsafe fn write(value: usize) {
+        unsafe {
+            asm!("csrw sireg, {}", in(reg) value);
+        }
+    }
+}
+
+pub struct Stopei;
+
+impl Stopei {
+    pub fn read() -> usize {
+        let value: usize;
+        unsafe {
+            asm!("csrrw {}, stopei, zero", out(reg) value);
+        }
+        value
+    }
+}
