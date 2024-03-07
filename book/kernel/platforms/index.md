@@ -24,3 +24,7 @@ This is a virtual RISC-V platform emulated by `qemu-system-riscv64`'s `virt` mac
 - A customizable number of emulated RV64 HARTs
 - Is booted via QEMU's `-kernel` option and OpenSBI
 - A Virtio block device with attached GPT 'disk'
+- Support for USB devices via EHCI
+
+Devices such as the EHCI USB controller are connected to a PCIe bus, and so we use the [Advanced Interrupt Architecture](https://github.com/riscv/riscv-aia)
+with MSIs to avoid the complexity of shared pin-based PCI interrupts. This is done by passing the `aia=aplic-imsic` machine option to QEMU.
