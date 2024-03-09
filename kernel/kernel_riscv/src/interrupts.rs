@@ -10,7 +10,7 @@ use hal_riscv::hw::{
 };
 use poplar_util::InitGuard;
 use spinning_top::Spinlock;
-use tracing::info;
+use tracing::{info, warn};
 
 pub static INTERRUPT_CONTROLLER: InitGuard<InterruptController> = InitGuard::uninit();
 
@@ -152,9 +152,11 @@ pub fn handle_external_interrupt() {
             let interrupt = plic.claim_interrupt(1);
 
             let handlers = handlers.lock();
-            let handler = handlers.get(&(interrupt as u16)).expect("Unhandled interrupt");
-            unsafe {
-                handler.call();
+            match handlers.get(&(interrupt as u16)) {
+                Some(handler) => unsafe {
+                    handler.call();
+                },
+                None => warn!("Unhandled interrupt: {}", interrupt),
             }
 
             plic.complete_interrupt(1, interrupt);
@@ -162,9 +164,11 @@ pub fn handle_external_interrupt() {
         InterruptController::Aia { handlers, .. } => {
             let interrupt = Imsic::pop();
             let handlers = handlers.lock();
-            let handler = handlers.get(&interrupt).expect("Unhandled interrupt");
-            unsafe {
-                handler.call();
+            match handlers.get(&interrupt) {
+                Some(handler) => unsafe {
+                    handler.call();
+                },
+                None => warn!("Unhandled interrupt: {}", interrupt),
             }
         }
     }
