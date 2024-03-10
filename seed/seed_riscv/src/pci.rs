@@ -187,8 +187,9 @@ impl PciResolver {
                         }
                     }
 
-                    // Enable access to memory access to the device
                     endpoint_header.update_command(self, |mut command| {
+                        command |= CommandRegister::BUS_MASTER_ENABLE;
+
                         if needs_memory_access {
                             command |= CommandRegister::MEMORY_ENABLE;
                         }
