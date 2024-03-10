@@ -44,7 +44,7 @@ impl RunQemuRiscV {
     pub fn run(self) -> Result<()> {
         let mut qemu = Command::new("qemu-system-riscv64");
 
-        qemu.args(&["-M", "virt"]);
+        qemu.args(&["-M", "virt,aia=aplic-imsic"]);
         qemu.args(&["-m", "1G"]);
         qemu.args(&["-kernel", self.seed.to_str().unwrap()]);
         if self.debug_int_firehose {
