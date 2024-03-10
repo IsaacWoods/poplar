@@ -1,5 +1,6 @@
 pub mod address_space;
 pub mod channel;
+pub mod event;
 pub mod memory_object;
 pub mod task;
 

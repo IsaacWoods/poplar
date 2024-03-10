@@ -4,6 +4,7 @@ use crate::{
     object::{
         address_space::AddressSpace,
         channel::{ChannelEnd, Message},
+        event::Event,
         memory_object::MemoryObject,
         task::{Task, TaskState},
         KernelObject,
@@ -31,6 +32,7 @@ use poplar::{
         RegisterServiceError,
         SendMessageError,
         SubscribeToServiceError,
+        WaitForEventError,
         CHANNEL_MAX_NUM_HANDLES,
     },
     Handle,
@@ -84,6 +86,7 @@ where
         syscall::SYSCALL_REGISTER_SERVICE => handle_to_syscall_repr(register_service(&task, a, b)),
         syscall::SYSCALL_SUBSCRIBE_TO_SERVICE => handle_to_syscall_repr(subscribe_to_service(&task, a, b)),
         syscall::SYSCALL_PCI_GET_INFO => status_with_payload_to_syscall_repr(pci_get_info(&task, a, b)),
+        syscall::SYSCALL_WAIT_FOR_EVENT => status_to_syscall_repr(wait_for_event(scheduler, &task, a)),
 
         _ => {
             warn!("Process made system call with invalid syscall number: {}", number);
@@ -551,4 +554,15 @@ where
     } else {
         Err(PciGetInfoError::PlatformDoesNotSupportPci)
     }
+}
+
+pub fn wait_for_event<P>(
+    scheduler: &Scheduler<P>,
+    task: &Arc<Task<P>>,
+    event_handle: usize,
+) -> Result<(), WaitForEventError>
+where
+    P: Platform,
+{
+    Ok(())
 }
