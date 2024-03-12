@@ -57,6 +57,10 @@ pub fn main() {
         let handoff_info = {
             let mut properties = BTreeMap::new();
 
+            if let Some(interrupt) = descriptor.interrupt {
+                properties.insert("pci.interrupt".to_string(), HandoffProperty::Event(interrupt));
+            }
+
             for (i, bar) in descriptor.bars.into_iter().enumerate() {
                 if let Some(bar) = bar {
                     match bar {

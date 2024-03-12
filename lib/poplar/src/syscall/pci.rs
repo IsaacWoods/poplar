@@ -22,6 +22,8 @@ pub struct PciDeviceInfo {
     /// device.
     pub interface: Interface,
     pub bars: [Option<Bar>; 6],
+    /// A handle to an `Event` that is signalled when this PCI device issues an interrupt.
+    pub interrupt: Option<Handle>,
 }
 
 #[derive(Debug)]

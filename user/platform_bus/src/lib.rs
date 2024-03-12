@@ -66,6 +66,10 @@ impl HandoffInfo {
     pub fn get_as_memory_object(&self, name: &str) -> Option<Handle> {
         self.0.get(name)?.as_memory_object()
     }
+
+    pub fn get_as_event(&self, name: &str) -> Option<Handle> {
+        self.0.get(name)?.as_event()
+    }
 }
 
 #[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize)]
@@ -113,6 +117,7 @@ pub enum HandoffProperty {
     String(String),
     Bytes(Vec<u8>),
     MemoryObject(Handle),
+    Event(Handle),
 }
 
 impl HandoffProperty {
@@ -147,6 +152,13 @@ impl HandoffProperty {
     pub fn as_memory_object(&self) -> Option<Handle> {
         match self {
             HandoffProperty::MemoryObject(value) => Some(*value),
+            _ => None,
+        }
+    }
+
+    pub fn as_event(&self) -> Option<Handle> {
+        match self {
+            HandoffProperty::Event(value) => Some(*value),
             _ => None,
         }
     }
