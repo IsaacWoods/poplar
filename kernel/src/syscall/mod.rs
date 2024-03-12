@@ -14,7 +14,7 @@ use crate::{
 };
 use alloc::{collections::BTreeMap, string::String, sync::Arc};
 use bit_field::BitField;
-use core::convert::TryFrom;
+use core::{convert::TryFrom, sync::atomic::Ordering};
 use hal::memory::{Flags, PAddr, VAddr};
 use poplar::{
     caps::Capability,
@@ -567,5 +567,25 @@ pub fn wait_for_event<P>(
 where
     P: Platform,
 {
+    let event_handle = Handle::try_from(event_handle).map_err(|_| WaitForEventError::InvalidHandle)?;
+    let event = task
+        .handles
+        .read()
+        .get(&event_handle)
+        .ok_or(WaitForEventError::InvalidHandle)?
+        .clone()
+        .downcast_arc::<Event>()
+        .ok()
+        .ok_or(WaitForEventError::NotAnEvent)?;
+
+    /*
+     * XXX: This is an extremely simple way of implementing this. We should instead probably block
+     * the task, and spawn a tasklet that is awoken when the event is triggered to unblock it. For
+     * now, though, this will work well enough.
+     */
+    while !event.signalled.load(Ordering::SeqCst) {
+        scheduler.schedule(TaskState::Ready);
+    }
+    assert_eq!(Ok(true), event.signalled.compare_exchange(true, false, Ordering::SeqCst, Ordering::SeqCst));
     Ok(())
 }

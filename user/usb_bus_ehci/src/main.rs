@@ -35,6 +35,7 @@ use std::{
         early_logger::EarlyLogger,
         memory_object::MemoryObject,
         syscall::{self, MemoryObjectFlags},
+        Handle,
     },
 };
 use usb::{
@@ -49,6 +50,7 @@ pub struct Controller {
     schedule_pool: DmaPool,
     active_devices: BTreeMap<u8, ActiveDevice>,
     platform_bus_bus_channel: Channel<BusDriverMessage, !>,
+    interrupt_event: Handle,
 }
 
 pub struct ActiveDevice {
@@ -56,7 +58,11 @@ pub struct ActiveDevice {
 }
 
 impl Controller {
-    pub fn new(register_base: usize, platform_bus_bus_channel: Channel<BusDriverMessage, !>) -> Controller {
+    pub fn new(
+        register_base: usize,
+        platform_bus_bus_channel: Channel<BusDriverMessage, !>,
+        interrupt_event: Handle,
+    ) -> Controller {
         let caps = Capabilities::read_from_registers(register_base);
         info!("Capabilites: {:#?}", caps);
 
@@ -77,6 +83,7 @@ impl Controller {
             schedule_pool,
             active_devices: BTreeMap::new(),
             platform_bus_bus_channel,
+            interrupt_event,
         }
     }
 
@@ -409,8 +416,11 @@ impl Controller {
      * allows the result to be read from it, if relevant.
      */
     pub fn wait_for_transfer_completion(&mut self, queue: &mut Queue) {
-        while !self.read_status().get(Status::INTERRUPT) {}
+        std::poplar::syscall::wait_for_event(self.interrupt_event).unwrap();
+
+        assert!(self.read_status().get(Status::INTERRUPT));
         info!("Transaction complete!");
+
         unsafe { self.write_status(Status::new().with(Status::INTERRUPT, true)) };
 
         // Remove the front transaction from the queue to drop the held DMA objects and token
@@ -529,7 +539,11 @@ fn main() {
         register_space.map_at(REGISTER_SPACE_ADDRESS).unwrap();
     }
 
-    let mut controller = Controller::new(REGISTER_SPACE_ADDRESS, platform_bus_bus_channel);
+    let mut controller = Controller::new(
+        REGISTER_SPACE_ADDRESS,
+        platform_bus_bus_channel,
+        handoff_info.get_as_event("pci.interrupt").unwrap(),
+    );
     controller.initialize();
     controller.check_ports();
 
