@@ -52,7 +52,7 @@ pub fn enable_input(fdt: &Fdt, producer: QueueProducer) {
     SERIAL_PRODUCER.initialize(producer);
 }
 
-fn interrupt_handler() {
+fn interrupt_handler(_: u16) {
     let serial = SERIAL.get();
     if let Some(producer) = SERIAL_PRODUCER.try_get() {
         while let Some(byte) = serial.read() {

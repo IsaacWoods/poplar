@@ -1,4 +1,4 @@
-use alloc::{collections::BTreeMap, vec::Vec};
+use alloc::collections::BTreeMap;
 use bit_field::BitField;
 use core::{mem, ptr};
 use fdt::{node::FdtNode, Fdt};
@@ -28,11 +28,11 @@ pub struct InterruptHandler(pub *const ());
 unsafe impl Send for InterruptHandler {}
 
 impl InterruptHandler {
-    pub unsafe fn call(&self) {
+    pub unsafe fn call(&self, number: u16) {
         assert!(self.0 != ptr::null());
         unsafe {
-            let ptr: fn() = mem::transmute(self.0);
-            (ptr)();
+            let ptr: fn(u16) = mem::transmute(self.0);
+            (ptr)(number);
         }
     }
 }
@@ -154,7 +154,7 @@ pub fn handle_external_interrupt() {
             let handlers = handlers.lock();
             match handlers.get(&(interrupt as u16)) {
                 Some(handler) => unsafe {
-                    handler.call();
+                    handler.call(interrupt as u16);
                 },
                 None => warn!("Unhandled interrupt: {}", interrupt),
             }
@@ -166,7 +166,7 @@ pub fn handle_external_interrupt() {
             let handlers = handlers.lock();
             match handlers.get(&interrupt) {
                 Some(handler) => unsafe {
-                    handler.call();
+                    handler.call(interrupt);
                 },
                 None => warn!("Unhandled interrupt: {}", interrupt),
             }
