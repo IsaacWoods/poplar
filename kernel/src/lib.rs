@@ -25,7 +25,7 @@ use hal::memory::{FrameSize, PageTable, VAddr};
 use heap_allocator::LockedHoleAllocator;
 use memory::{KernelStackAllocator, PhysicalMemoryManager};
 use object::{address_space::AddressSpace, memory_object::MemoryObject, task::Task, KernelObject};
-use pci::{PciInfo, PciResolver};
+use pci::{PciInfo, PciInterruptConfigurator, PciResolver};
 use pci_types::ConfigRegionAccess as PciConfigRegionAccess;
 use poplar_util::InitGuard;
 use scheduler::Scheduler;
@@ -153,7 +153,7 @@ pub fn create_framebuffer(video_info: &seed::boot_info::VideoModeInfo) {
 
 pub fn initialize_pci<A>(access: A)
 where
-    A: PciConfigRegionAccess + Send + 'static,
+    A: PciConfigRegionAccess + PciInterruptConfigurator + Send + 'static,
 {
     let (access, info) = PciResolver::resolve(access);
     *PCI_INFO.write() = Some(info);

@@ -48,7 +48,7 @@ pub fn init(fdt: &Fdt) {
 
 pub fn enable_input(fdt: &Fdt, producer: QueueProducer) {
     let stdout = fdt.chosen().stdout().unwrap().node();
-    crate::interrupts::handle_device_interrupt(stdout, interrupt_handler, fdt);
+    crate::interrupts::handle_device_interrupt(stdout, interrupt_handler);
     SERIAL_PRODUCER.initialize(producer);
 }
 

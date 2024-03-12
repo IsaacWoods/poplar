@@ -1,8 +1,16 @@
+use crate::interrupts;
+use alloc::{
+    collections::{BTreeMap, BTreeSet},
+    sync::Arc,
+};
 use bit_field::BitField;
 use core::ptr;
 use fdt::Fdt;
 use hal::memory::PAddr;
-use pci_types::{ConfigRegionAccess, PciAddress};
+use kernel::{object::event::Event, pci::PciInterruptConfigurator};
+use pci_types::{capability::MsiCapability, ConfigRegionAccess, PciAddress};
+use poplar_util::InitGuard;
+use spinning_top::Spinlock;
 use tracing::info;
 
 pub struct PciAccess {
@@ -25,19 +33,7 @@ impl PciAccess {
             PAddr::new(ecam_window.starting_address as usize).unwrap(),
         );
 
-        let interrupt_map = pci_node.interrupt_map().unwrap();
-        let interrupt_map_mask = pci_node.interrupt_map_mask().unwrap();
-        for mapping in interrupt_map {
-            let child_address_hi = mapping.child_unit_address_hi & interrupt_map_mask.address_mask_hi;
-            let address = PciAddress::new(
-                0,
-                child_address_hi.get_bits(16..24) as u8,
-                child_address_hi.get_bits(11..16) as u8,
-                child_address_hi.get_bits(8..11) as u8,
-            );
-            let pin = mapping.child_interrupt_specifier & interrupt_map_mask.interrupt_mask;
-            info!("PCI address: {:#?}, pin = {} -> {}", address, pin, mapping.parent_interrupt_specifier);
-        }
+        PCI_EVENTS.initialize(Spinlock::new(BTreeMap::new()));
 
         Some(PciAccess { start: ecam_address.ptr(), size: ecam_window.size.unwrap() })
     }
@@ -67,5 +63,34 @@ impl ConfigRegionAccess for PciAccess {
 
     unsafe fn write(&self, address: PciAddress, offset: u16, value: u32) {
         ptr::write_volatile(self.address_for(address).add(offset as usize) as *mut u32, value);
+    }
+}
+
+impl PciInterruptConfigurator for PciAccess {
+    fn configure_interrupt(&self, function: PciAddress, msi: &mut MsiCapability) -> Arc<Event> {
+        let event = Event::new();
+
+        // TODO: allocate numbers from somewhere???
+        let message_number = 2;
+
+        PCI_EVENTS.get().lock().insert(message_number, event.clone());
+
+        interrupts::handle_interrupt(message_number, pci_interrupt_handler);
+
+        // TODO: get out of the device tree
+        msi.set_message_info(0x28000000, message_number as u8, pci_types::capability::TriggerMode::Edge, self);
+        msi.set_enabled(true, self);
+
+        event
+    }
+}
+
+// TODO: interrupt guard
+static PCI_EVENTS: InitGuard<Spinlock<BTreeMap<u16, Arc<Event>>>> = InitGuard::uninit();
+
+fn pci_interrupt_handler(number: u16) {
+    info!("PCI interrupt: {}", number);
+    if let Some(event) = PCI_EVENTS.get().lock().get(&number) {
+        event.signal();
     }
 }

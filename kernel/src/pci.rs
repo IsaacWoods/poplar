@@ -1,5 +1,7 @@
-use alloc::collections::BTreeMap;
+use crate::object::event::Event;
+use alloc::{collections::BTreeMap, sync::Arc};
 use pci_types::{
+    capability::{MsiCapability, PciCapability},
     device_type::DeviceType,
     Bar,
     BaseClass,
@@ -26,6 +28,7 @@ pub struct PciDevice {
     pub sub_class: SubClass,
     pub interface: Interface,
     pub bars: [Option<Bar>; MAX_BARS],
+    pub interrupt: Option<Arc<Event>>,
 }
 
 #[derive(Clone, Debug)]
@@ -33,9 +36,19 @@ pub struct PciInfo {
     pub devices: BTreeMap<PciAddress, PciDevice>,
 }
 
+pub trait PciInterruptConfigurator {
+    /// Create an `Event` that is signalled when an interrupt arrives from the specified PCI
+    /// device. Doing this with the required granularity necessitates the use of MSIs, so this only
+    /// supports platforms and PCI devices with MSI support.
+    ///
+    /// This must also configure the given MSI capability to correctly dispatch an interrupt to the
+    /// correct platform-specific destination.
+    fn configure_interrupt(&self, function: PciAddress, msi: &mut MsiCapability) -> Arc<Event>;
+}
+
 pub struct PciResolver<A>
 where
-    A: ConfigRegionAccess,
+    A: ConfigRegionAccess + PciInterruptConfigurator,
 {
     access: A,
     info: PciInfo,
@@ -43,7 +56,7 @@ where
 
 impl<A> PciResolver<A>
 where
-    A: ConfigRegionAccess,
+    A: ConfigRegionAccess + PciInterruptConfigurator,
 {
     pub fn resolve(access: A) -> (A, PciInfo) {
         let mut resolver = Self { access, info: PciInfo { devices: BTreeMap::new() } };
@@ -130,9 +143,17 @@ where
                         bars
                     };
 
+                    let interrupt =
+                        endpoint_header.capabilities(&self.access).find_map(|capability| match capability {
+                            PciCapability::Msi(mut msi) => {
+                                Some(self.access.configure_interrupt(address, &mut msi))
+                            }
+                            _ => None,
+                        });
+
                     self.info.devices.insert(
                         address,
-                        PciDevice { vendor_id, device_id, revision, class, sub_class, interface, bars },
+                        PciDevice { vendor_id, device_id, revision, class, sub_class, interface, bars, interrupt },
                     );
                 }
 

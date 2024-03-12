@@ -104,7 +104,27 @@ impl InterruptController {
     }
 }
 
-pub fn handle_device_interrupt(device: FdtNode<'_, '_>, handler: fn(), fdt: &Fdt) {
+pub fn handle_interrupt(number: u16, handler: fn(u16)) {
+    match INTERRUPT_CONTROLLER.get() {
+        InterruptController::Plic { plic, handlers } => {
+            // TODO: don't just assume all interrupts should go to the first context
+            plic.enable_interrupt(1, number as usize);
+            // TODO: do priorities correctly at some point
+            plic.set_source_priority(number as usize, 7);
+
+            assert!(handlers.lock().get(&number).is_none());
+            handlers.lock().insert(number, InterruptHandler(handler as *const _));
+        }
+        InterruptController::Aia { handlers, .. } => {
+            Imsic::enable(number as usize);
+
+            assert!(handlers.lock().get(&number).is_none());
+            handlers.lock().insert(number, InterruptHandler(handler as *const _));
+        }
+    }
+}
+
+pub fn handle_device_interrupt(device: FdtNode<'_, '_>, handler: fn(u16)) {
     match INTERRUPT_CONTROLLER.get() {
         InterruptController::Plic { plic, handlers } => {
             let interrupt = device.interrupts().unwrap().next().unwrap();
@@ -114,6 +134,7 @@ pub fn handle_device_interrupt(device: FdtNode<'_, '_>, handler: fn(), fdt: &Fdt
             // TODO: do priorities correctly at some point
             plic.set_source_priority(interrupt, 7);
 
+            assert!(handlers.lock().get(&(interrupt as u16)).is_none());
             handlers.lock().insert(interrupt as u16, InterruptHandler(handler as *const _));
         }
         InterruptController::Aia { aplic, handlers } => {
@@ -128,6 +149,8 @@ pub fn handle_device_interrupt(device: FdtNode<'_, '_>, handler: fn(), fdt: &Fdt
                  */
                 interrupt.get_bits(32..64) as u32
             };
+
+            // TODO: check if a device supports MSIs or needs to be routed through the APLIC
 
             /*
              * Configure the APLIC to trigger an MSI with a message matching the interrupt number.
