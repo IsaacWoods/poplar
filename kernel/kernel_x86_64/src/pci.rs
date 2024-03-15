@@ -3,7 +3,9 @@ use alloc::{alloc::Global, sync::Arc};
 use core::ptr;
 use hal::memory::PAddr;
 use hal_x86_64::kernel_map;
-use pci_types::{ConfigRegionAccess, PciAddress};
+use kernel::{object::event::Event, pci::PciInterruptConfigurator};
+use pci_types::{capability::MsiCapability, ConfigRegionAccess, PciAddress};
+use tracing::warn;
 
 #[derive(Clone)]
 pub struct EcamAccess<'a>(Arc<PciConfigRegions<'a, Global>>);
@@ -39,5 +41,13 @@ impl<'a> ConfigRegionAccess for EcamAccess<'a> {
             + offset as usize)
             .mut_ptr();
         ptr::write_volatile(ptr, value)
+    }
+}
+
+impl<'a> PciInterruptConfigurator for EcamAccess<'a> {
+    fn configure_interrupt(&self, _function: PciAddress, _msi: &mut MsiCapability) -> Arc<Event> {
+        let event = Event::new();
+        warn!("MSI support is incomplete on x86_64! PCI interrupts will not trigger delegated `Event` objects!");
+        event
     }
 }
