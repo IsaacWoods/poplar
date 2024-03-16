@@ -17,6 +17,7 @@ jobs:
       uses: actions-rs/toolchain@v1
       with:
         toolchain: nightly
+        target: riscv64imac-unknown-none-elf
         default: true
         profile: minimal
 
@@ -24,14 +25,15 @@ jobs:
       run: |
         cargo install mdbook
 
+      # This is a hack to get it building. TODO: address properly
     - name: Generate rustdoc documentation
       run: |
         RUSTDOCFLAGS="-Zunstable-options --enable-index-page" \
         cargo doc \
           --all-features \
           --target-dir pages \
-          --manifest-path kernel/Cargo.toml \
-          --workspace \
+          --manifest-path kernel/kernel_riscv/Cargo.toml \
+          --target riscv64imac-unknown-none-elf \
           --document-private-items
         mv site/* pages/
 
