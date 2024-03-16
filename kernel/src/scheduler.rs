@@ -89,7 +89,7 @@ where
         let mut scheduler = self.for_this_cpu();
         assert!(scheduler.running_task.is_none());
         let task = scheduler.choose_next().expect("Tried to drop into userspace with no ready tasks!");
-        assert_eq!(*task.state.lock(), TaskState::Ready);
+        assert!(task.state.lock().is_ready());
         Self::drop_to_userspace(scheduler, task);
     }
 
@@ -158,8 +158,8 @@ where
          * NOTE: This temporarily allows `running_task` to be `None`.
          */
         let current_task = scheduler.running_task.take().unwrap();
-        assert_eq!(*current_task.state.lock(), TaskState::Running);
-        assert_eq!(*next_task.state.lock(), TaskState::Ready);
+        assert!(current_task.state.lock().is_running());
+        assert!(next_task.state.lock().is_ready());
 
         trace!("Switching from task '{}' to task '{}'", current_task.name, next_task.name);
 

@@ -1,6 +1,7 @@
 use super::{
     address_space::{AddressSpace, TaskSlot},
     alloc_kernel_object_id,
+    event::Event,
     KernelObject,
     KernelObjectId,
 };
@@ -17,14 +18,39 @@ use hal::memory::VAddr;
 use poplar::{caps::Capability, Handle};
 use spinning_top::{RwSpinlock, Spinlock};
 
-#[derive(Clone, PartialEq, Eq, Debug)]
-pub enum TaskBlock {}
+#[derive(Clone, Debug)]
+pub enum TaskBlock {
+    OnEvent(Arc<Event>),
+}
 
-#[derive(Clone, PartialEq, Eq, Debug)]
+#[derive(Clone, Debug)]
 pub enum TaskState {
     Ready,
     Running,
     Blocked(TaskBlock),
+}
+
+impl TaskState {
+    pub fn is_ready(&self) -> bool {
+        match self {
+            TaskState::Ready => true,
+            _ => false,
+        }
+    }
+
+    pub fn is_running(&self) -> bool {
+        match self {
+            TaskState::Running => true,
+            _ => false,
+        }
+    }
+
+    pub fn is_blocked(&self) -> bool {
+        match self {
+            TaskState::Blocked(_) => true,
+            _ => false,
+        }
+    }
 }
 
 #[derive(Debug)]
