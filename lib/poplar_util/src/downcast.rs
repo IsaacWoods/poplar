@@ -61,7 +61,7 @@ impl<T: Any + Send + Sync> DowncastSync for T {
 /// Adds downcasting support to traits that extend `downcast::Downcast` by defining forwarding
 /// methods to the corresponding implementations on `std::any::Any` in the standard library.
 ///
-/// See https://users.rust-lang.org/t/how-to-create-a-macro-to-impl-a-provided-type-parametrized-trait/5289
+/// See <https://users.rust-lang.org/t/how-to-create-a-macro-to-impl-a-provided-type-parametrized-trait/5289>
 /// for why this is implemented this way to support templatized traits.
 #[macro_export(local_inner_macros)]
 macro_rules! impl_downcast {

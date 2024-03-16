@@ -1,9 +1,5 @@
 use crate::interrupts;
-use alloc::{
-    collections::{BTreeMap, BTreeSet},
-    sync::Arc,
-};
-use bit_field::BitField;
+use alloc::{collections::BTreeMap, sync::Arc};
 use core::ptr;
 use fdt::Fdt;
 use hal::memory::PAddr;
@@ -67,7 +63,7 @@ impl ConfigRegionAccess for PciAccess {
 }
 
 impl PciInterruptConfigurator for PciAccess {
-    fn configure_interrupt(&self, function: PciAddress, msi: &mut MsiCapability) -> Arc<Event> {
+    fn configure_interrupt(&self, _function: PciAddress, msi: &mut MsiCapability) -> Arc<Event> {
         let event = Event::new();
 
         // TODO: allocate numbers from somewhere???

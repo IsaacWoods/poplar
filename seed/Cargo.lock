@@ -224,7 +224,7 @@ dependencies = [
 
 [[package]]
 name = "pci_types"
-version = "0.6.1"
+version = "0.6.2"
 dependencies = [
  "bit_field",
  "bitflags 2.4.1",
