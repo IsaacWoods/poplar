@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"enum":["TaskBlock","TaskCreationError","TaskState"],"fn":["decode_capabilities"],"struct":["Task"]};

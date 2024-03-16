@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["CLEAR_IPI_EID","CONSOLE_GETCHAR_EID","CONSOLE_PUTCHAR_EID","REMOTE_FENCE_I_EID","REMOTE_SFENCE_VMA_ASID_EID","REMOTE_SFENCE_VMA_EID","SEND_IPI_EID","SET_TIMER_EID","SHUTDOWN_EID"],"fn":["clear_ipi","console_getchar","console_putchar","remote_fence_i","remote_sfence_vma","remote_sfence_vma_asid","send_ipi","set_timer","shutdown"]};

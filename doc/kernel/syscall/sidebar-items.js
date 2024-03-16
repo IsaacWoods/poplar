@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"constant":["NONE_BAR","NONE_OBJECT"],"fn":["create_memory_object","early_log","get_framebuffer","get_message","handle_syscall","map_memory_object","pci_get_info","register_service","send_message","subscribe_to_service","yield_syscall"],"mod":["validation"],"static":["SERVICE_MAP"]};

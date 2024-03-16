@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["kentry"],"mod":["interrupts","pci","serial","task","trap"],"static":["SCHEDULER"],"struct":["PlatformImpl"]};

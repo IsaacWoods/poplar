@@ -198,7 +198,7 @@ rustup toolchain link poplar build/{host triple}/stage2     # If you built a sta
 <li><code>git checkout my_fork/{the correct branch}</code></li>
 <li><code>cd ..</code></li>
 <li><code>git add llvm-project</code></li>
-<li><code>git commit -m &quot;Move to custom LLVM&quot;</code></li>
+<li><code>git commit -m "Move to custom LLVM"</code></li>
 </ul>
 <h3 id="things-to-change-in-configtoml"><a class="header" href="#things-to-change-in-configtoml">Things to change in <code>config.toml</code></a></h3>
 <p>This is as of <code>2020-09-29</code> - you need to remember to keep the <code>config.toml</code> up-to-date (as it's not checked in
@@ -225,8 +225,8 @@ itself. We <code>include_str!</code> the linker script in here, so it's distribu
 <ul>
 <li>In <code>llvm/include/llvm/ADT/Triple.h</code>, add a variant for the OS in the <code>OSType</code> enum. I called it <code>Poplar</code>. Don't
 make it the last entry, to avoid having to change the <code>LastOSType</code> variant.</li>
-<li>In <code>llvm/lib/Support/Triple.cpp</code>, in the function <code>Triple::getOSTypeName</code>, add the OS. I added <code>case Poplar: return &quot;poplar&quot;;</code>.</li>
-<li>In the same file, in the <code>parseOS</code> function, add the OS. I added <code>.StartsWith(&quot;poplar&quot;, Triple::Poplar)</code>.</li>
+<li>In <code>llvm/lib/Support/Triple.cpp</code>, in the function <code>Triple::getOSTypeName</code>, add the OS. I added <code>case Poplar: return "poplar";</code>.</li>
+<li>In the same file, in the <code>parseOS</code> function, add the OS. I added <code>.StartsWith("poplar", Triple::Poplar)</code>.</li>
 <li>This file also contains a function, <code>getDefaultFormat</code>, that gives the default format for a platform. The default
 is ELF, so no changes were needed for Poplar, but they might be for another OS.</li>
 </ul>

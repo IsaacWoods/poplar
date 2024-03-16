@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"mod":["aplic","csr","imsic","plic","uart16550"]};

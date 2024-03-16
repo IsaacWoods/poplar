@@ -183,7 +183,7 @@ it).</p>
 <h3 id="boot-procedure"><a class="header" href="#boot-procedure">Boot procedure</a></h3>
 <p>The D1 can be booted from an SD card or flash, or, usefully for development, using Allwinner's FEL protocol, which allows data to be loaded into memory and code executed using
 a small USB stack. This procedure is best visualised with a diagram:
-<img src="../../static/d1_boot_procedure.svg" alt="Diagram of the D1's boot procedure" /></p>
+<img src="../../static/d1_boot_procedure.svg" alt="Diagram of the D1&#39;s boot procedure" /></p>
 <p>The initial part of this process is done by code loaded from the <code>BROM</code> (Boot ROM) - it contains the FEL stack, as well as enough code to load the first-stage bootloader from
 either an SD card or SPI flash. Data loaded by the FEL stack, or from the bootable media, is loaded into SRAM. The DRAM has to be brought up, either by the first-stage
 bootloader, or by a FEL payload.</p>

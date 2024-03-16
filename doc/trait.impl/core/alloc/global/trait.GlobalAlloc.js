@@ -1,3 +1,0 @@
-(function() {var implementors = {
-"kernel":[["impl <a class=\"trait\" href=\"https://doc.rust-lang.org/nightly/core/alloc/global/trait.GlobalAlloc.html\" title=\"trait core::alloc::global::GlobalAlloc\">GlobalAlloc</a> for <a class=\"struct\" href=\"kernel/heap_allocator/struct.LockedHoleAllocator.html\" title=\"struct kernel::heap_allocator::LockedHoleAllocator\">LockedHoleAllocator</a>"]]
-};if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()

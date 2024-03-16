@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["EXTENSION_ID"],"fn":["remote_fence_i","remote_hfence_gvma","remote_hfence_gvma_vmid","remote_hfence_vvma","remote_hfence_vvma_asid","remote_sfence_vma","remote_sfence_vma_asid"]};

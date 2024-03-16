@@ -175,12 +175,12 @@
                     <main>
                         <h1 id="introduction"><a class="header" href="#introduction">Introduction</a></h1>
 <p>Welcome to the Poplar Book, which serves as the main source of documentation for <a href="https://github.com/IsaacWoods/poplar">Poplar</a>.
-The Book aims to be both a 10,000-meter overview of Poplar for the interested observer, and a definitive reference for the inner workings of the kernel and userspace. </p>
+The Book aims to be both a 10,000-meter overview of Poplar for the interested observer, and a definitive reference for the inner workings of the kernel and userspace.</p>
 <p>Please note that this book (like the rest of the OS!) is still very early in development and may lag behind the
 state of the code. If anything is unclear, please <a href="https://github.com/IsaacWoods/poplar/issues">file an issue</a>!</p>
 <h3 id="what-is-poplar"><a class="header" href="#what-is-poplar">What is Poplar?</a></h3>
 <p>At heart, Poplar is a microkernel written in the <a href="https://rust-lang.org">Rust programming language</a>.
-Poplar becomes an &quot;OS&quot; when it's combined with other packages such as drivers, filesystems and user applications.</p>
+Poplar becomes an "OS" when it's combined with other packages such as drivers, filesystems and user applications.</p>
 <p>Poplar is designed to be a modern microkernel, supporting a minimal system call interface and first-class support for message-passing-based IPC between userspace processes. Versatile message-passing allows
 Poplar to move much more out of the kernel than traditionally possible. For example, the kernel has no concept of a filesystem or of files - instead, the VFS and all filesystems are implemented entirely in
 userspace, and files are read and written to by passing messages.</p>

@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"mod":["buddy_allocator","kernel_stack_allocator","slab_allocator"],"struct":["KernelStackAllocator","PhysicalMemoryManager","SlabAllocator","Stack"]};

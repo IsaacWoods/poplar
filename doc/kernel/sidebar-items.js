@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"fn":["create_framebuffer","initialize_pci","load_task"],"mod":["heap_allocator","memory","object","pci","scheduler","syscall","tasklets"],"static":["ALLOCATOR","FRAMEBUFFER","PCI_ACCESS","PCI_INFO","PHYSICAL_MEMORY_MANAGER"],"trait":["Platform"]};

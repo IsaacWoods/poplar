@@ -1,0 +1,2 @@
+cargo:rerun-if-changed=rv64_virt.ld
+cargo:rerun-if-changed=mq_pro.ld

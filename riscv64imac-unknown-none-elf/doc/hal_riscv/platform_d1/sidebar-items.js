@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["VIRTUAL_ADDRESS_BITS"],"mod":["kernel_map","memory"],"type":["PageTableImpl"]};

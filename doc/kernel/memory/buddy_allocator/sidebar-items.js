@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"constant":["BASE_SIZE","MAX_ORDER","NUM_BINS"],"struct":["BuddyAllocator"]};

@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["KERNEL_ADDRESS_SPACE_START","KERNEL_BASE","PHYSICAL_MAP_BASE"],"fn":["physical_to_virtual"]};

@@ -1,0 +1,1 @@
+{"rustc":9977105037795729809,"features":"","declared_features":"","target":0,"profile":0,"path":0,"deps":[[11138931377059941435,"build_script_build",false,8690732871823921069]],"local":[{"RerunIfChanged":{"output":"riscv64imac-unknown-none-elf/debug/build/num-traits-fc355faba177cb67/output","paths":["build.rs"]}}],"rustflags":[],"metadata":0,"config":0,"compile_kind":0}

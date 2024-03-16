@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"constant":["SENTINEL_KERNEL_ID"],"fn":["alloc_kernel_object_id"],"mod":["address_space","channel","memory_object","task"],"static":["KERNEL_OBJECT_ID_COUNTER"],"struct":["KernelObjectId"],"trait":["KernelObject"]};

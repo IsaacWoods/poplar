@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["enable_input","init","interrupt_handler","panic"],"static":["LOGGER","SERIAL","SERIAL_PRODUCER"],"struct":["Logger","SerialWriter","Visitor"]};
