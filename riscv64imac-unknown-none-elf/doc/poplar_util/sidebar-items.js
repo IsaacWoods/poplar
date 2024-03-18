@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"macro":["assert_first_call","impl_downcast","unsafe_pinned","unsafe_unpinned"],"mod":["bitmap","downcast","linker","math","pin","ranges"],"struct":["BinaryPrettyPrint","InitGuard"]};

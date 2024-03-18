@@ -1,1 +1,0 @@
-window.ALL_CRATES = ["pin_project_internal","proc_macro2","ptah_derive","quote","syn","tracing_attributes","unicode_ident"];

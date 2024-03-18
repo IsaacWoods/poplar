@@ -1,0 +1,151 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Schedulers for executing tasks."><title>maitake::scheduler - Rust</title><script> if (window.location.protocol !== "file:") document.write(`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2">`)</script><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-e935ef01ae1c1829.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="maitake" data-themes="" data-resource-suffix="" data-rustdoc-version="1.79.0-nightly (eb45c8444 2024-03-17)" data-channel="nightly" data-search-js="search-42d8da7a6b9792c2.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../static.files/storage-4c98445ec4002617.js"></script><script defer src="../sidebar-items.js"></script><script defer src="../../static.files/main-12cf3b4f4f9dc36d.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-04d5337699b92874.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc mod"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle" title="show sidebar"></button></nav><nav class="sidebar"><div class="sidebar-crate"><h2><a href="../../maitake/index.html">maitake</a><span class="version">0.1.0</span></h2></div><h2 class="location"><a href="#">Module scheduler</a></h2><div class="sidebar-elems"><section><ul class="block"><li><a href="#macros">Macros</a></li><li><a href="#structs">Structs</a></li><li><a href="#enums">Enums</a></li><li><a href="#traits">Traits</a></li></ul></section><h2><a href="../index.html">In crate maitake</a></h2></div></nav><div class="sidebar-resizer"></div>
+    <main><div class="width-limiter"><nav class="sub"><form class="search-form"><span></span><div id="sidebar-button" tabindex="-1"><a href="../../maitake/all.html" title="show sidebar"></a></div><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="main-heading"><h1>Module <a href="../index.html">maitake</a>::<wbr><a class="mod" href="#">scheduler</a><button id="copy-path" title="Copy item path to clipboard"><img src="../../static.files/clipboard-7571035ce49a181d.svg" width="19" height="18" alt="Copy item path"></button></h1><span class="out-of-band"><a class="src" href="../../src/maitake/scheduler.rs.html#1-1735">source</a> · <button id="toggle-all-docs" title="collapse all docs">[<span>&#x2212;</span>]</button></span></div><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>Schedulers for executing <a href="../task/index.html" title="mod maitake::task">tasks</a>.</p>
+<p>In order to execute <a href="../task/index.html" title="mod maitake::task">asynchronous tasks</a>, a system must have one or
+more <em>schedulers</em>. A scheduler (also sometimes referred to as an
+<em>executor</em>) is a component responsible for tracking which tasks have been
+<a href="../task/struct.Waker.html#method.wake" title="method maitake::task::Waker::wake">woken</a>, and <a href="https://doc.rust-lang.org/nightly/core/future/future/trait.Future.html#tymethod.poll" title="method core::future::future::Future::poll">polling</a> them when they are ready to make progress.</p>
+<p>This module contains scheduler implementations for use with the <a href="../task/index.html" title="mod maitake::task"><code>maitake</code>
+task system</a>.</p>
+<h2 id="using-schedulers"><a class="doc-anchor" href="#using-schedulers">§</a>Using Schedulers</h2>
+<p>This module provides two types which can be used as schedulers. These types
+differ based on how the core data of the scheduler is shared with tasks
+spawned on that scheduler:</p>
+<ul>
+<li><a href="struct.Scheduler.html" title="struct maitake::scheduler::Scheduler"><code>Scheduler</code></a>: a reference-counted single-core scheduler (requires the
+“alloc” <a href="../index.html#features" title="mod maitake">feature</a>). A <a href="struct.Scheduler.html" title="struct maitake::scheduler::Scheduler"><code>Scheduler</code></a> is internally implemented using an
+<a href="https://doc.rust-lang.org/nightly/alloc/sync/struct.Arc.html" title="struct alloc::sync::Arc"><code>Arc</code></a>, and each task spawned on a <a href="struct.Scheduler.html" title="struct maitake::scheduler::Scheduler"><code>Scheduler</code></a> holds an <code>Arc</code> clone
+of the scheduler core.</li>
+<li><a href="struct.StaticScheduler.html" title="struct maitake::scheduler::StaticScheduler"><code>StaticScheduler</code></a>: a single-core scheduler stored in a <code>static</code>
+variable. A <a href="struct.StaticScheduler.html" title="struct maitake::scheduler::StaticScheduler"><code>StaticScheduler</code></a> is referenced by tasks spawned on it
+as an <code>&amp;'static StaticScheduler</code> reference. Therefore, it can be used
+without requiring <code>alloc</code>, and avoids atomic reference count
+increments when spawning tasks. However, in order to be used, a
+<a href="struct.StaticScheduler.html" title="struct maitake::scheduler::StaticScheduler"><code>StaticScheduler</code></a> <em>must</em> be stored in a <code>'static</code>, which can limit
+its usage in some cases.</li>
+<li><a href="struct.LocalScheduler.html" title="struct maitake::scheduler::LocalScheduler"><code>LocalScheduler</code></a>: a reference-counted scheduler for <code>!</code><a href="https://doc.rust-lang.org/nightly/core/marker/trait.Send.html" title="trait core::marker::Send"><code>Send</code></a> <code>Future</code>s
+(requires the “alloc” <a href="../index.html#features" title="mod maitake">feature</a>). This type is identical to the
+<a href="struct.Scheduler.html" title="struct maitake::scheduler::Scheduler"><code>Scheduler</code></a> type, except that it is capable of spawning <code>Future</code>s
+that do not implement <a href="https://doc.rust-lang.org/nightly/core/marker/trait.Send.html" title="trait core::marker::Send"><code>Send</code></a>, and is itself not <a href="https://doc.rust-lang.org/nightly/core/marker/trait.Send.html" title="trait core::marker::Send"><code>Send</code></a> or <a href="https://doc.rust-lang.org/nightly/core/marker/trait.Sync.html" title="trait core::marker::Sync"><code>Sync</code></a>
+(it cannot be shared between CPU cores).</li>
+<li><a href="struct.LocalStaticScheduler.html" title="struct maitake::scheduler::LocalStaticScheduler"><code>LocalStaticScheduler</code></a>: a <a href="struct.StaticScheduler.html" title="struct maitake::scheduler::StaticScheduler"><code>StaticScheduler</code></a> variant for <code>!</code><a href="https://doc.rust-lang.org/nightly/core/marker/trait.Send.html" title="trait core::marker::Send"><code>Send</code></a>
+<code>Future</code>s.  This type is identical to the <a href="struct.StaticScheduler.html" title="struct maitake::scheduler::StaticScheduler"><code>StaticScheduler</code></a> type,
+except that it is capable of spawning <code>Future</code>s that do not implement
+<a href="https://doc.rust-lang.org/nightly/core/marker/trait.Send.html" title="trait core::marker::Send"><code>Send</code></a>, and is itself not <a href="https://doc.rust-lang.org/nightly/core/marker/trait.Send.html" title="trait core::marker::Send"><code>Send</code></a> or <a href="https://doc.rust-lang.org/nightly/core/marker/trait.Sync.html" title="trait core::marker::Sync"><code>Sync</code></a> (it cannot be shared
+between CPU cores).</li>
+</ul>
+<p>The <a href="trait.Schedule.html" title="trait maitake::scheduler::Schedule"><code>Schedule</code></a> trait in this module is used by the <a href="../task/struct.Task.html" title="struct maitake::task::Task"><code>Task</code></a> type to
+abstract over both types of scheduler that tasks may be spawned on.</p>
+<h3 id="spawning-tasks"><a class="doc-anchor" href="#spawning-tasks">§</a>Spawning Tasks</h3>
+<p>Once a scheduler has been constructed, tasks may be spawned on it using the
+<a href="struct.Scheduler.html#method.spawn" title="method maitake::scheduler::Scheduler::spawn"><code>Scheduler::spawn</code></a> or <a href="struct.StaticScheduler.html#method.spawn" title="method maitake::scheduler::StaticScheduler::spawn"><code>StaticScheduler::spawn</code></a> methods. These methods
+allocate a <a href="../task/struct.BoxStorage.html" title="struct maitake::task::BoxStorage">new <code>Box</code> to store the spawned task</a>, and
+therefore require the <a href="../index.html#features" title="mod maitake">“alloc” feature</a>.</p>
+<p>Alternatively, if <a href="../task/trait.Storage.html" title="trait maitake::task::Storage">custom task storage</a> is in use, the
+scheduler types also provide <a href="struct.Scheduler.html#method.spawn_allocated" title="method maitake::scheduler::Scheduler::spawn_allocated"><code>Scheduler::spawn_allocated</code></a> and
+<a href="struct.StaticScheduler.html#method.spawn_allocated" title="method maitake::scheduler::StaticScheduler::spawn_allocated"><code>StaticScheduler::spawn_allocated</code></a> methods, which allow spawning a task
+that has already been stored in a type implementing the <a href="../task/trait.Storage.html" title="trait maitake::task::Storage"><code>task::Storage</code></a>
+trait. This can be used <em>without</em> the “alloc” feature flag, and is primarily
+intended for use in systems where tasks are statically allocated, or where
+an alternative allocator API (rather than <code>liballoc</code>) is in use.</p>
+<p>Finally, to configure the properties of a task prior to spawning it, both
+scheduler types provide <a href="struct.Scheduler.html#method.build_task" title="method maitake::scheduler::Scheduler::build_task"><code>Scheduler::build_task</code></a> and
+<a href="struct.StaticScheduler.html#method.build_task" title="method maitake::scheduler::StaticScheduler::build_task"><code>StaticScheduler::build_task</code></a> methods. These methods return a
+<a href="../task/struct.Builder.html" title="struct maitake::task::Builder"><code>task::Builder</code></a> struct, which can be used to set properties of a task and
+then spawn it on that scheduler.</p>
+<h3 id="executing-tasks"><a class="doc-anchor" href="#executing-tasks">§</a>Executing Tasks</h3>
+<p>In order to actually execute the tasks spawned on a scheduler, the scheduler
+must be <em>driven</em> by dequeueing tasks from its run queue and polling them.</p>
+<p>Because <a href="../index.html#maitake-is-not-a-complete-asynchronous-runtime" title="mod maitake"><code>maitake</code> is a low-level async runtime “construction kit”</a>
+rather than a complete runtime implementation, the interface for driving a
+scheduler is tick-based. A <em>tick</em> refers to an iteration of a
+scheduler’s run loop, in which a set of tasks are dequeued from the
+scheduler’s run queue and polled. Calling the <a href="struct.Scheduler.html#method.tick" title="method maitake::scheduler::Scheduler::tick"><code>Scheduler::tick</code></a> or
+<a href="struct.StaticScheduler.html#method.tick" title="method maitake::scheduler::StaticScheduler::tick"><code>StaticScheduler::tick</code></a> method on a  scheduler runs that scheduler for a
+single tick, returning a <a href="struct.Tick.html" title="struct maitake::scheduler::Tick"><code>Tick</code></a> struct with data describing the events
+that occurred during that tick.</p>
+<p>The scheduler API is tick-based, rather than providing methods that
+continuously tick the scheduler until all tasks have completed, because
+ticking a scheduler is often only one step of a system’s run loop. A
+scheduler is responsible for polling the tasks that have been woken, but it
+does <em>not</em> wake tasks which are waiting for other runtime services, such as
+timers and I/O resources.</p>
+<p>Typically, an iteration of a system’s run loop consists of the following steps:</p>
+<ul>
+<li><strong>Tick the scheduler</strong>, executing any tasks that have been woken,</li>
+<li><strong>Tick a <a href="../time/index.html" title="mod maitake::time">timer</a><sup id="fnref1"><a href="#fn1">1</a></sup></strong>, to advance the system clock and wake any tasks waiting
+for time-based events,</li>
+<li><strong>Process wakeups from I/O resources</strong>, such as hardware interrupts that
+occurred during the tick. The component responsible for this is often
+referred to as an <a href="https://en.wikipedia.org/wiki/Reactor_pattern">I/O reactor</a>.</li>
+<li>Optionally, <strong>spawn tasks from external sources</strong>, such as work-stealing
+tasks from other schedulers, or receiving tasks from a remote system.</li>
+</ul>
+<p>The implementation of the timer and I/O runtime services in a bare-metal
+system typically depend on details of the hardware platform in use.
+Therefore, <code>maitake</code> does not provide a batteries-included runtime that
+bundles together a scheduler, timer, and I/O reactor. Instead, the
+lower-level tick-based scheduler interface allows running a <code>maitake</code>
+scheduler as part of a run loop implementation that also drives other parts
+of the runtime.</p>
+<p>A single call to <a href="struct.Scheduler.html#method.tick" title="method maitake::scheduler::Scheduler::tick"><code>Scheduler::tick</code></a> will dequeue and poll up to
+<a href="struct.Scheduler.html#associatedconstant.DEFAULT_TICK_SIZE" title="associated constant maitake::scheduler::Scheduler::DEFAULT_TICK_SIZE"><code>Scheduler::DEFAULT_TICK_SIZE</code></a> tasks from the run queue, rather than
+looping until all tasks in the queue have been dequeued.</p>
+<h3 id="examples"><a class="doc-anchor" href="#examples">§</a>Examples</h3>
+<p>A simple implementation of a system’s run loop might look like this:</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>maitake::scheduler::Scheduler;
+
+<span class="doccomment">/// Process any time-based events that have occurred since this function
+/// was last called.
+</span><span class="kw">fn </span>process_timeouts() {
+    <span class="comment">// this might tick a `maitake::time::Timer` or run some other form of
+    // time driver implementation.
+</span>}
+
+
+<span class="doccomment">/// Process any I/O events that have occurred since this function
+/// was last called.
+</span><span class="kw">fn </span>process_io_events() {
+    <span class="comment">// this function would handle dispatching any I/O interrupts that
+    // occurred during the tick to tasks that are waiting for those I/O
+    // events.
+</span>}
+
+<span class="doccomment">/// Put the system into a low-power state until a hardware interrupt
+/// occurs.
+</span><span class="kw">fn </span>wait_for_interrupts() {
+    <span class="comment">// the implementation of this function would, of course, depend on the
+    // hardware platform in use...
+</span>}
+
+<span class="doccomment">/// The system's main run loop.
+</span><span class="kw">fn </span>run_loop() {
+    <span class="kw">let </span>scheduler = Scheduler::new();
+
+    <span class="kw">loop </span>{
+        <span class="comment">// process time-based events
+        </span>process_timeouts();
+
+        <span class="comment">// process I/O events
+        </span>process_io_events();
+
+        <span class="comment">// tick the scheduler, running any tasks woken by processing time
+        // and I/O events, as well as tasks woken by other tasks during the
+        // tick.
+        </span><span class="kw">let </span>tick = scheduler.tick();
+
+        <span class="kw">if </span>!tick.has_remaining {
+            <span class="comment">// if the scheduler's run queue is empty, wait for an interrupt
+            // to occur before ticking the scheduler again.
+            </span>wait_for_interrupts();
+        }
+    }
+}</code></pre></div>
+<h2 id="scheduling-in-multi-core-systems"><a class="doc-anchor" href="#scheduling-in-multi-core-systems">§</a>Scheduling in Multi-Core Systems</h2>
+<p>WIP ELIZA WRITE THIS</p>
+<div class="footnotes"><hr><ol><li id="fn1"><p>The <a href="crate::time"><code>maitake::time</code></a> module provides one
+<a href="crate::time::Timer"><code>Timer</code></a> implementation, but other timers could be
+used as well.&nbsp;<a href="#fnref1">↩</a></p></li></ol></div></div></details><h2 id="macros" class="section-header">Macros<a href="#macros" class="anchor">§</a></h2><ul class="item-table"><li><div class="item-name"><a class="macro" href="macro.new_static.html" title="macro maitake::scheduler::new_static">new_static</a></div><div class="desc docblock-short">Safely constructs a new <a href="struct.StaticScheduler.html" title="struct maitake::scheduler::StaticScheduler"><code>StaticScheduler</code></a> instance in a <code>static</code>
+initializer.</div></li></ul><h2 id="structs" class="section-header">Structs<a href="#structs" class="anchor">§</a></h2><ul class="item-table"><li><div class="item-name"><a class="struct" href="struct.Injector.html" title="struct maitake::scheduler::Injector">Injector</a></div><div class="desc docblock-short">An injector queue for spawning tasks on multiple <a href="struct.Scheduler.html" title="struct maitake::scheduler::Scheduler"><code>Scheduler</code></a> instances.</div></li><li><div class="item-name"><a class="struct" href="struct.LocalScheduler.html" title="struct maitake::scheduler::LocalScheduler">LocalScheduler</a></div><div class="desc docblock-short">A reference-counted scheduler for <code>!</code><a href="https://doc.rust-lang.org/nightly/core/marker/trait.Send.html" title="trait core::marker::Send"><code>Send</code></a> tasks.</div></li><li><div class="item-name"><a class="struct" href="struct.LocalSpawner.html" title="struct maitake::scheduler::LocalSpawner">LocalSpawner</a></div><div class="desc docblock-short">A handle to a <a href="struct.LocalScheduler.html" title="struct maitake::scheduler::LocalScheduler"><code>LocalScheduler</code></a> that implements <a href="https://doc.rust-lang.org/nightly/core/marker/trait.Send.html" title="trait core::marker::Send"><code>Send</code></a>.</div></li><li><div class="item-name"><a class="struct" href="struct.LocalStaticScheduler.html" title="struct maitake::scheduler::LocalStaticScheduler">LocalStaticScheduler</a></div><div class="desc docblock-short">A statically-initialized scheduler for <code>!</code><a href="https://doc.rust-lang.org/nightly/core/marker/trait.Send.html" title="trait core::marker::Send"><code>Send</code></a> tasks.</div></li><li><div class="item-name"><a class="struct" href="struct.LocalStaticSpawner.html" title="struct maitake::scheduler::LocalStaticSpawner">LocalStaticSpawner</a></div><div class="desc docblock-short">A handle to a <a href="struct.LocalStaticScheduler.html" title="struct maitake::scheduler::LocalStaticScheduler"><code>LocalStaticScheduler</code></a> that implements <a href="https://doc.rust-lang.org/nightly/core/marker/trait.Send.html" title="trait core::marker::Send"><code>Send</code></a>.</div></li><li><div class="item-name"><a class="struct" href="struct.Scheduler.html" title="struct maitake::scheduler::Scheduler">Scheduler</a></div><div class="desc docblock-short">An atomically reference-counted single-core scheduler implementation.</div></li><li><div class="item-name"><a class="struct" href="struct.StaticScheduler.html" title="struct maitake::scheduler::StaticScheduler">StaticScheduler</a></div><div class="desc docblock-short">A statically-initialized scheduler implementation.</div></li><li><div class="item-name"><a class="struct" href="struct.Stealer.html" title="struct maitake::scheduler::Stealer">Stealer</a></div><div class="desc docblock-short">A handle for stealing tasks from a <a href="struct.Scheduler.html" title="struct maitake::scheduler::Scheduler"><code>Scheduler</code></a>’s run queue, or an
+<a href="struct.Injector.html" title="struct maitake::scheduler::Injector"><code>Injector</code></a> queue.</div></li><li><div class="item-name"><a class="struct" href="struct.TaskStub.html" title="struct maitake::scheduler::TaskStub">TaskStub</a></div><div class="desc docblock-short">A stub <a href="../task/struct.Task.html" title="struct maitake::task::Task"><code>Task</code></a>.</div></li><li><div class="item-name"><a class="struct" href="struct.Tick.html" title="struct maitake::scheduler::Tick">Tick</a></div><div class="desc docblock-short">Metrics recorded during a scheduler tick.</div></li></ul><h2 id="enums" class="section-header">Enums<a href="#enums" class="anchor">§</a></h2><ul class="item-table"><li><div class="item-name"><a class="enum" href="enum.TryStealError.html" title="enum maitake::scheduler::TryStealError">TryStealError</a></div><div class="desc docblock-short">Errors returned by <a href="struct.Injector.html#method.try_steal" title="method maitake::scheduler::Injector::try_steal"><code>Injector::try_steal</code></a>, <a href="struct.Scheduler.html#method.try_steal" title="method maitake::scheduler::Scheduler::try_steal"><code>Scheduler::try_steal</code></a>, and
+<a href="struct.StaticScheduler.html#method.try_steal" title="method maitake::scheduler::StaticScheduler::try_steal"><code>StaticScheduler::try_steal</code></a>.</div></li></ul><h2 id="traits" class="section-header">Traits<a href="#traits" class="anchor">§</a></h2><ul class="item-table"><li><div class="item-name"><a class="trait" href="trait.Schedule.html" title="trait maitake::scheduler::Schedule">Schedule</a></div><div class="desc docblock-short">Trait implemented by schedulers.</div></li></ul></section></div></main></body></html>

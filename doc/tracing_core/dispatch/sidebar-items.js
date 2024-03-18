@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["get_default","set_global_default"],"struct":["Dispatch","SetGlobalDefaultError"]};

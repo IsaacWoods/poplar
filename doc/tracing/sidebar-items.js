@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"macro":["debug","debug_span","enabled","error","error_span","event","event_enabled","info","info_span","span","span_enabled","trace","trace_span","warn","warn_span"],"mod":["collect","dispatch","event","field","instrument","level_filters","span"],"struct":["Dispatch","Event","Level","Metadata","Span"],"trait":["Collect","Instrument","Value"]};

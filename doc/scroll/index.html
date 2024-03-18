@@ -1,0 +1,187 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Scroll"><title>scroll - Rust</title><script> if (window.location.protocol !== "file:") document.write(`<link rel="preload" as="font" type="font/woff2" crossorigin href="../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2">`)</script><link rel="stylesheet" href="../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../static.files/rustdoc-e935ef01ae1c1829.css"><meta name="rustdoc-vars" data-root-path="../" data-static-root-path="../static.files/" data-current-crate="scroll" data-themes="" data-resource-suffix="" data-rustdoc-version="1.79.0-nightly (eb45c8444 2024-03-17)" data-channel="nightly" data-search-js="search-42d8da7a6b9792c2.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../static.files/storage-4c98445ec4002617.js"></script><script defer src="../crates.js"></script><script defer src="../static.files/main-12cf3b4f4f9dc36d.js"></script><noscript><link rel="stylesheet" href="../static.files/noscript-04d5337699b92874.css"></noscript><link rel="alternate icon" type="image/png" href="../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc mod crate"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle" title="show sidebar"></button></nav><nav class="sidebar"><div class="sidebar-crate"><h2><a href="../scroll/index.html">scroll</a><span class="version">0.10.2</span></h2></div><div class="sidebar-elems"><ul class="block">
+            <li><a id="all-types" href="all.html">All Items</a></li></ul><section><ul class="block"><li><a href="#modules">Modules</a></li><li><a href="#structs">Structs</a></li><li><a href="#enums">Enums</a></li><li><a href="#constants">Constants</a></li><li><a href="#traits">Traits</a></li><li><a href="#types">Type Aliases</a></li><li><a href="#derives">Derive Macros</a></li></ul></section></div></nav><div class="sidebar-resizer"></div>
+    <main><div class="width-limiter"><nav class="sub"><form class="search-form"><span></span><div id="sidebar-button" tabindex="-1"><a href="../scroll/all.html" title="show sidebar"></a></div><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="main-heading"><h1>Crate <a class="mod" href="#">scroll</a><button id="copy-path" title="Copy item path to clipboard"><img src="../static.files/clipboard-7571035ce49a181d.svg" width="19" height="18" alt="Copy item path"></button></h1><span class="out-of-band"><a class="src" href="../src/scroll/lib.rs.html#1-614">source</a> · <button id="toggle-all-docs" title="collapse all docs">[<span>&#x2212;</span>]</button></span></div><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><h2 id="scroll"><a class="doc-anchor" href="#scroll">§</a>Scroll</h2><div class="example-wrap"><pre class="language-text"><code>        _______________
+   ()==(              (@==()
+        &#39;______________&#39;|
+          |             |
+          |   ἀρετή     |
+        __)_____________|
+   ()==(               (@==()
+        &#39;--------------&#39;
+
+</code></pre></div>
+<p>Scroll is a library for easily and efficiently reading/writing types from data containers like
+byte arrays.</p>
+<h3 id="easily"><a class="doc-anchor" href="#easily">§</a>Easily:</h3>
+<p>Scroll sets down a number of traits:</p>
+<p><a href="ctx/trait.FromCtx.html">FromCtx</a>, <a href="ctx/trait.IntoCtx.html">IntoCtx</a>,
+<a href="ctx/trait.TryFromCtx.html">TryFromCtx</a> and <a href="ctx/trait.TryIntoCtx.html">TryIntoCtx</a> — further
+explained in the <a href="ctx/index.html">ctx module</a>; to be implemented on custom types to allow
+reading, writing, and potentially fallible reading/writing respectively.</p>
+<p><a href="trait.Pread.html">Pread</a> and <a href="trait.Pwrite.html">Pwrite</a> which are implemented on data
+containers such as byte arrays to define how to read or respectively write types implementing
+the *Ctx traits above.
+In addition scroll also defines <a href="trait.IOread.html">IOread</a> and
+<a href="trait.IOwrite.html">IOwrite</a> with additional constraits that then allow reading and writing
+from <code>std::io</code> <a href="https://doc.rust-lang.org/nightly/std/io/trait.Read.html">Read</a> and
+<a href="https://doc.rust-lang.org/nightly/std/io/trait.Write.html">Write</a>.</p>
+<p>In most cases you can use <a href="https://docs.rs/scroll_derive">scroll_derive</a> to derive sensible
+defaults for <code>Pread</code>, <code>Pwrite</code>, their IO counterpart and <code>SizeWith</code>.  More complex situations
+call for manual implementation of those traits; refer to <a href="ctx/index.html">the ctx module</a> for
+details.</p>
+<h3 id="efficiently"><a class="doc-anchor" href="#efficiently">§</a>Efficiently:</h3>
+<p>Reading Slices — including <a href="https://doc.rust-lang.org/std/primitive.str.html">&amp;str</a> — supports
+zero-copy. Scroll is designed with a <code>no_std</code> context in mind; every dependency on <code>std</code> is
+cfg-gated and errors need not allocate.</p>
+<p>Reads by default take only immutable references wherever possible, allowing for trivial
+parallelization.</p>
+<h2 id="examples"><a class="doc-anchor" href="#examples">§</a>Examples</h2>
+<p>Let’s start with a simple example</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>scroll::{ctx, Pread};
+
+<span class="comment">// Let's first define some data, cfg-gated so our assertions later on hold.
+</span><span class="attr">#[cfg(target_endian = <span class="string">"little"</span>)]
+</span><span class="kw">let </span>bytes: [u8; <span class="number">4</span>] = [<span class="number">0xde</span>, <span class="number">0xad</span>, <span class="number">0xbe</span>, <span class="number">0xef</span>];
+<span class="attr">#[cfg(target_endian = <span class="string">"big"</span>)]
+</span><span class="kw">let </span>bytes: [u8; <span class="number">4</span>] = [<span class="number">0xef</span>, <span class="number">0xbe</span>, <span class="number">0xad</span>, <span class="number">0xde</span>];
+
+<span class="comment">// We can read a u32 from the array `bytes` at offset 0. 
+// This will use a default context for the type being parsed;
+// in the case of u32 this defines to use the host's endianess.
+</span><span class="kw">let </span>number = bytes.pread::&lt;u32&gt;(<span class="number">0</span>).unwrap();
+<span class="macro">assert_eq!</span>(number, <span class="number">0xefbeadde</span>);
+
+
+<span class="comment">// Similarly we can also read a single byte at offset 2
+// This time using type ascription instead of the turbofish (::&lt;&gt;) operator.
+</span><span class="kw">let </span>byte: u8 = bytes.pread(<span class="number">2</span>).unwrap();
+<span class="macro">assert_eq!</span>(byte, <span class="number">0xbe</span>);
+
+
+<span class="comment">// If required we can also provide a specific parsing context; e.g. if we want to explicitly
+// define the endianess to use:
+</span><span class="kw">let </span>be_number: u32 = bytes.pread_with(<span class="number">0</span>, scroll::BE).unwrap();
+<span class="macro">assert_eq!</span>(be_number, <span class="number">0xdeadbeef</span>);
+
+<span class="kw">let </span>be_number16 = bytes.pread_with::&lt;u16&gt;(<span class="number">1</span>, scroll::BE).unwrap();
+<span class="macro">assert_eq!</span>(be_number16, <span class="number">0xadbe</span>);
+
+
+<span class="comment">// Reads may fail; in this example due to a too large read for the given container.
+// Scroll's error type does not by default allocate to work in environments like no_std.
+</span><span class="kw">let </span>byte_err: scroll::Result&lt;i64&gt; = bytes.pread(<span class="number">0</span>);
+<span class="macro">assert!</span>(byte_err.is_err());
+
+
+<span class="comment">// We can parse out custom datatypes, or types with lifetimes, as long as they implement
+// the conversion traits `TryFromCtx/FromCtx`.
+// Here we use the default context for &amp;str which parses are C-style '\0'-delimited string.
+</span><span class="kw">let </span>hello: <span class="kw-2">&amp;</span>[u8] = <span class="string">b"hello world\0more words"</span>;
+<span class="kw">let </span>hello_world: <span class="kw-2">&amp;</span>str = hello.pread(<span class="number">0</span>).unwrap();
+<span class="macro">assert_eq!</span>(<span class="string">"hello world"</span>, hello_world);
+
+<span class="comment">// We can again provide a custom context; for example to parse Space-delimited strings.
+// As you can see while we still call `pread` changing the context can influence the output —
+// instead of splitting at '\0' we split at spaces
+</span><span class="kw">let </span>hello2: <span class="kw-2">&amp;</span>[u8] = <span class="string">b"hello world\0more words"</span>;
+<span class="kw">let </span>world: <span class="kw-2">&amp;</span>str = hello2.pread_with(<span class="number">6</span>, ctx::StrCtx::Delimiter(ctx::SPACE)).unwrap();
+<span class="macro">assert_eq!</span>(<span class="string">"world\0more"</span>, world);</code></pre></div>
+<h3 id="stdio-api"><a class="doc-anchor" href="#stdio-api">§</a><code>std::io</code> API</h3>
+<p>Scroll also allows reading from <code>std::io</code>. For this the types to read need to implement
+<a href="ctx/trait.FromCtx.html">FromCtx</a> and <a href="ctx/trait.SizeWith.html">SizeWith</a>.</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>std::io::Cursor;
+<span class="kw">use </span>scroll::{IOread, ctx, Endian};
+<span class="kw">let </span>bytes = [<span class="number">0x01</span>,<span class="number">0x00</span>,<span class="number">0x00</span>,<span class="number">0x00</span>,<span class="number">0x00</span>,<span class="number">0x00</span>,<span class="number">0x00</span>,<span class="number">0x00</span>, <span class="number">0xef</span>,<span class="number">0xbe</span>,<span class="number">0x00</span>,<span class="number">0x00</span>,];
+<span class="kw">let </span><span class="kw-2">mut </span>cursor = Cursor::new(bytes);
+
+<span class="comment">// IOread uses std::io::Read methods, thus the Cursor will be incremented on these reads:
+</span><span class="kw">let </span>prev = cursor.position();
+
+<span class="kw">let </span>integer = cursor.ioread_with::&lt;u64&gt;(Endian::Little).unwrap();
+
+<span class="kw">let </span>after = cursor.position();
+
+<span class="macro">assert!</span>(prev &lt; after);
+
+<span class="comment">// SizeWith allows us to define a context-sensitive size of a read type:
+// Contexts can have different instantiations; e.g. the `Endian` context can be either Little or
+// Big. This is useful if for example the context contains the word-size of fields to be
+// read/written, e.g. switching between ELF32 or ELF64 at runtime.
+</span><span class="kw">let </span>size = &lt;u64 <span class="kw">as </span>ctx::SizeWith&lt;Endian&gt;&gt;::size_with(<span class="kw-2">&amp;</span>Endian::Little) <span class="kw">as </span>u64;
+<span class="macro">assert_eq!</span>(prev + size, after);</code></pre></div>
+<p>In the same vein as IOread we can use IOwrite to write a type to anything implementing
+<code>std::io::Write</code>:</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>std::io::Cursor;
+<span class="kw">use </span>scroll::{IOwrite};
+
+<span class="kw">let </span><span class="kw-2">mut </span>bytes = [<span class="number">0x0u8</span>; <span class="number">5</span>];
+<span class="kw">let </span><span class="kw-2">mut </span>cursor = Cursor::new(<span class="kw-2">&amp;mut </span>bytes[..]);
+
+<span class="comment">// This of course once again increments the cursor position
+</span>cursor.iowrite_with(<span class="number">0xdeadbeef </span><span class="kw">as </span>u32, scroll::BE).unwrap();
+
+<span class="macro">assert_eq!</span>(cursor.into_inner(), [<span class="number">0xde</span>, <span class="number">0xad</span>, <span class="number">0xbe</span>, <span class="number">0xef</span>, <span class="number">0x0</span>]);</code></pre></div>
+<h3 id="complex-use-cases"><a class="doc-anchor" href="#complex-use-cases">§</a>Complex use cases</h3>
+<p>Scoll is designed to be highly adaptable while providing a strong abstraction between the types
+being read/written and the data container containing them.</p>
+<p>In this example we’ll define a custom Data and allow it to be read from an arbitrary byte
+buffer.</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>scroll::{<span class="self">self</span>, ctx, Pread, Endian};
+<span class="kw">use </span>scroll::ctx::StrCtx;
+
+<span class="comment">// Our custom context type. In a more complex situation you could for example store details on
+// how to write or read your type, field-sizes or other information.
+// In this simple example we could also do without using a custom context in the first place.
+</span><span class="attr">#[derive(Copy, Clone)]
+</span><span class="kw">struct </span>Context(Endian);
+
+<span class="comment">// Our custom data type
+</span><span class="kw">struct </span>Data&lt;<span class="lifetime">'zerocopy</span>&gt; {
+  <span class="comment">// This is only a reference to the actual data; we make use of scroll's zero-copy capability
+  </span>name: <span class="kw-2">&amp;</span><span class="lifetime">'zerocopy </span>str,
+  id: u32,
+}
+
+<span class="comment">// To allow for safe zero-copying scroll allows to specify lifetimes explicitly:
+// The context 
+</span><span class="kw">impl</span>&lt;<span class="lifetime">'a</span>&gt; ctx::TryFromCtx&lt;<span class="lifetime">'a</span>, Context&gt; <span class="kw">for </span>Data&lt;<span class="lifetime">'a</span>&gt; {
+  <span class="comment">// If necessary you can set a custom error type here, which will be returned by Pread/Pwrite
+  </span><span class="kw">type </span>Error = scroll::Error;
+
+  <span class="comment">// Using the explicit lifetime specification again you ensure that read data doesn't outlife
+  // its source buffer without having to resort to copying.
+  </span><span class="kw">fn </span>try_from_ctx (src: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>[u8], ctx: Context)
+    <span class="comment">// the `usize` returned here is the amount of bytes read.
+    </span>-&gt; <span class="prelude-ty">Result</span>&lt;(<span class="self">Self</span>, usize), <span class="self">Self</span>::Error&gt; 
+  {
+    <span class="kw">let </span>offset = <span class="kw-2">&amp;mut </span><span class="number">0</span>;
+
+    <span class="kw">let </span>id = src.gread_with(offset, ctx.<span class="number">0</span>)<span class="question-mark">?</span>;
+
+    <span class="comment">// In a more serious application you would validate data here of course.
+    </span><span class="kw">let </span>namelen: u16 = src.gread_with(offset, ctx.<span class="number">0</span>)<span class="question-mark">?</span>;
+    <span class="kw">let </span>name = src.gread_with::&lt;<span class="kw-2">&amp;</span>str&gt;(offset, StrCtx::Length(namelen <span class="kw">as </span>usize))<span class="question-mark">?</span>;
+
+    <span class="prelude-val">Ok</span>((Data { name: name, id: id }, <span class="kw-2">*</span>offset))
+  }
+}
+
+<span class="comment">// In lieu of a complex byte buffer we hearken back to a simple &amp;[u8]; the default source
+// of TryFromCtx. However, any type that implements Pread to produce a &amp;[u8] can now read
+// `Data` thanks to it's implementation of TryFromCtx.
+</span><span class="kw">let </span>bytes = <span class="string">b"\x01\x02\x03\x04\x00\x08UserName"</span>;
+<span class="kw">let </span>data: Data = bytes.pread_with(<span class="number">0</span>, Context(Endian::Big)).unwrap();
+
+<span class="macro">assert_eq!</span>(data.id, <span class="number">0x01020304</span>);
+<span class="macro">assert_eq!</span>(data.name.to_string(), <span class="string">"UserName"</span>.to_string());</code></pre></div>
+<p>For further explanation of the traits and how to implement them manually refer to
+<a href="trait.Pread.html">Pread</a> and <a href="ctx/trait.TryFromCtx.html">TryFromCtx</a>.</p>
+</div></details><h2 id="modules" class="section-header">Modules<a href="#modules" class="anchor">§</a></h2><ul class="item-table"><li><div class="item-name"><a class="mod" href="ctx/index.html" title="mod scroll::ctx">ctx</a></div><div class="desc docblock-short">Generic context-aware conversion traits, for automatic <em>downstream</em> extension of <code>Pread</code>, et. al</div></li></ul><h2 id="structs" class="section-header">Structs<a href="#structs" class="anchor">§</a></h2><ul class="item-table"><li><div class="item-name"><a class="struct" href="struct.Sleb128.html" title="struct scroll::Sleb128">Sleb128</a></div><div class="desc docblock-short">An signed leb128 integer</div></li><li><div class="item-name"><a class="struct" href="struct.Uleb128.html" title="struct scroll::Uleb128">Uleb128</a></div><div class="desc docblock-short">An unsigned leb128 integer</div></li></ul><h2 id="enums" class="section-header">Enums<a href="#enums" class="anchor">§</a></h2><ul class="item-table"><li><div class="item-name"><a class="enum" href="enum.Endian.html" title="enum scroll::Endian">Endian</a></div><div class="desc docblock-short">The endianness (byte order) of a stream of bytes</div></li><li><div class="item-name"><a class="enum" href="enum.Error.html" title="enum scroll::Error">Error</a></div><div class="desc docblock-short">A custom Scroll error</div></li></ul><h2 id="constants" class="section-header">Constants<a href="#constants" class="anchor">§</a></h2><ul class="item-table"><li><div class="item-name"><a class="constant" href="constant.BE.html" title="constant scroll::BE">BE</a></div><div class="desc docblock-short">Big Endian byte order context</div></li><li><div class="item-name"><a class="constant" href="constant.LE.html" title="constant scroll::LE">LE</a></div><div class="desc docblock-short">Little Endian byte order context</div></li><li><div class="item-name"><a class="constant" href="constant.NATIVE.html" title="constant scroll::NATIVE">NATIVE</a></div><div class="desc docblock-short">The machine’s native byte order</div></li><li><div class="item-name"><a class="constant" href="constant.NETWORK.html" title="constant scroll::NETWORK">NETWORK</a></div><div class="desc docblock-short">Network byte order context</div></li></ul><h2 id="traits" class="section-header">Traits<a href="#traits" class="anchor">§</a></h2><ul class="item-table"><li><div class="item-name"><a class="trait" href="trait.Cread.html" title="trait scroll::Cread">Cread</a></div><div class="desc docblock-short">Core-read - core, no_std friendly trait for reading basic traits from byte buffers. Cannot fail
+unless the buffer is too small, in which case an assert fires and the program panics.</div></li><li><div class="item-name"><a class="trait" href="trait.Cwrite.html" title="trait scroll::Cwrite">Cwrite</a></div><div class="desc docblock-short">Core-write - core, no_std friendly trait for writing basic types into byte buffers. Cannot fail
+unless the buffer is too small, in which case an assert fires and the program panics.
+Similar to <a href="trait.Cread.html">Cread</a>, if your type implements <a href="ctx/trait.IntoCtx.html">IntoCtx</a>
+then you can <code>cwrite(your_type, offset)</code>.</div></li><li><div class="item-name"><a class="trait" href="trait.Pread.html" title="trait scroll::Pread">Pread</a></div><div class="desc docblock-short">A very generic, contextual pread interface in Rust. </div></li><li><div class="item-name"><a class="trait" href="trait.Pwrite.html" title="trait scroll::Pwrite">Pwrite</a></div><div class="desc docblock-short">A very generic, contextual pwrite interface in Rust.</div></li></ul><h2 id="types" class="section-header">Type Aliases<a href="#types" class="anchor">§</a></h2><ul class="item-table"><li><div class="item-name"><a class="type" href="type.Result.html" title="type scroll::Result">Result</a></div></li></ul><h2 id="derives" class="section-header">Derive Macros<a href="#derives" class="anchor">§</a></h2><ul class="item-table"><li><div class="item-name"><a class="derive" href="derive.IOread.html" title="derive scroll::IOread">IOread</a></div></li><li><div class="item-name"><a class="derive" href="derive.IOwrite.html" title="derive scroll::IOwrite">IOwrite</a></div></li><li><div class="item-name"><a class="derive" href="derive.Pread.html" title="derive scroll::Pread">Pread</a></div></li><li><div class="item-name"><a class="derive" href="derive.Pwrite.html" title="derive scroll::Pwrite">Pwrite</a></div></li><li><div class="item-name"><a class="derive" href="derive.SizeWith.html" title="derive scroll::SizeWith">SizeWith</a></div></li></ul></section></div></main></body></html>

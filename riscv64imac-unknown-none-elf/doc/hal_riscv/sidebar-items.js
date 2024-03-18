@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"mod":["hw","paging","platform_d1","platform_virt"]};

@@ -1,0 +1,37 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Safely constructs a new `StaticScheduler` instance in a `static` initializer."><title>new_static in maitake::scheduler - Rust</title><script> if (window.location.protocol !== "file:") document.write(`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2">`)</script><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-e935ef01ae1c1829.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="maitake" data-themes="" data-resource-suffix="" data-rustdoc-version="1.79.0-nightly (eb45c8444 2024-03-17)" data-channel="nightly" data-search-js="search-42d8da7a6b9792c2.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../static.files/storage-4c98445ec4002617.js"></script><script defer src="sidebar-items.js"></script><script defer src="../../static.files/main-12cf3b4f4f9dc36d.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-04d5337699b92874.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc macro"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle" title="show sidebar"></button></nav><nav class="sidebar"><div class="sidebar-crate"><h2><a href="../../maitake/index.html">maitake</a><span class="version">0.1.0</span></h2></div><div class="sidebar-elems"><h2><a href="index.html">In maitake::scheduler</a></h2></div></nav><div class="sidebar-resizer"></div>
+    <main><div class="width-limiter"><nav class="sub"><form class="search-form"><span></span><div id="sidebar-button" tabindex="-1"><a href="../../maitake/all.html" title="show sidebar"></a></div><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="main-heading"><h1>Macro <a href="../index.html">maitake</a>::<wbr><a href="index.html">scheduler</a>::<wbr><a class="macro" href="#">new_static</a><button id="copy-path" title="Copy item path to clipboard"><img src="../../static.files/clipboard-7571035ce49a181d.svg" width="19" height="18" alt="Copy item path"></button></h1><span class="out-of-band"><a class="src" href="../../src/maitake/scheduler.rs.html#469-482">source</a> · <button id="toggle-all-docs" title="collapse all docs">[<span>&#x2212;</span>]</button></span></div><pre class="rust item-decl"><span class="macro">macro_rules!</span> new_static {
+    () =&gt; { ... };
+}</pre><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>Safely constructs a new <a href="struct.StaticScheduler.html" title="struct maitake::scheduler::StaticScheduler"><code>StaticScheduler</code></a> instance in a <code>static</code>
+initializer.</p>
+<p>This macro is intended to be used as a <code>static</code> initializer:</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>maitake::scheduler;
+
+<span class="comment">// look ma, no `unsafe`!
+</span><span class="kw">static </span>SCHEDULER: scheduler::StaticScheduler = <span class="macro">scheduler::new_static!</span>();</code></pre></div>
+<p>Note that this macro is re-exported in the <a href="index.html" title="mod maitake::scheduler"><code>scheduler</code></a> module as
+<a href="macro.new_static.html" title="macro maitake::scheduler::new_static"><code>scheduler::new_static!</code></a>, which feels somewhat more idiomatic than using
+it at the crate-level; however, it is also available at the crate-level as
+<a href="macro.new_static.html" title="macro maitake::scheduler::new_static"><code>new_static_scheduler!</code></a>.</p>
+<p>The <a href="struct.StaticScheduler.html#method.new_with_static_stub" title="associated function maitake::scheduler::StaticScheduler::new_with_static_stub"><code>StaticScheduler::new_with_static_stub</code></a> constructor is unsafe to call,
+because it requires that the <a href="struct.TaskStub.html" title="struct maitake::scheduler::TaskStub"><code>TaskStub</code></a> passed to the scheduler not be
+used by other scheduler instances. This macro is a safe alternative to
+manually initializing a <a href="struct.StaticScheduler.html" title="struct maitake::scheduler::StaticScheduler"><code>StaticScheduler</code></a> instance using
+<a href="struct.StaticScheduler.html#method.new_with_static_stub" title="associated function maitake::scheduler::StaticScheduler::new_with_static_stub"><code>new_with_static_stub</code></a>, as it creates the stub task inside a scope,
+ensuring that it cannot be referenceed by other <a href="struct.StaticScheduler.html" title="struct maitake::scheduler::StaticScheduler"><code>StaticScheduler</code></a>
+instances.</p>
+<p>This macro expands to the following code:</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code>{
+    <span class="kw">static </span>STUB_TASK: maitake::scheduler::TaskStub = maitake::scheduler::TaskStub::new();
+    <span class="kw">unsafe </span>{
+        <span class="comment">// safety: `StaticScheduler::new_with_static_stub` is unsafe because
+        // the stub task must not be shared with any other `StaticScheduler`
+        // instance. because the `new_static` macro creates the stub task
+        // inside the scope of the static initializer, it is guaranteed that
+        // no other `StaticScheduler` instance can reference the `STUB_TASK`
+        // static, so this is always safe.
+        </span>maitake::scheduler::StaticScheduler::new_with_static_stub(<span class="kw-2">&amp;</span>STUB_TASK)
+    }
+}</code></pre></div>
+</div></details></section></div></main></body></html>

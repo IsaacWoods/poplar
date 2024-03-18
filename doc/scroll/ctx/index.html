@@ -1,0 +1,169 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Generic context-aware conversion traits, for automatic downstream extension of `Pread`, et. al"><title>scroll::ctx - Rust</title><script> if (window.location.protocol !== "file:") document.write(`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2">`)</script><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-e935ef01ae1c1829.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="scroll" data-themes="" data-resource-suffix="" data-rustdoc-version="1.79.0-nightly (eb45c8444 2024-03-17)" data-channel="nightly" data-search-js="search-42d8da7a6b9792c2.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../static.files/storage-4c98445ec4002617.js"></script><script defer src="../sidebar-items.js"></script><script defer src="../../static.files/main-12cf3b4f4f9dc36d.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-04d5337699b92874.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc mod"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle" title="show sidebar"></button></nav><nav class="sidebar"><div class="sidebar-crate"><h2><a href="../../scroll/index.html">scroll</a><span class="version">0.10.2</span></h2></div><h2 class="location"><a href="#">Module ctx</a></h2><div class="sidebar-elems"><section><ul class="block"><li><a href="#enums">Enums</a></li><li><a href="#constants">Constants</a></li><li><a href="#traits">Traits</a></li></ul></section><h2><a href="../index.html">In crate scroll</a></h2></div></nav><div class="sidebar-resizer"></div>
+    <main><div class="width-limiter"><nav class="sub"><form class="search-form"><span></span><div id="sidebar-button" tabindex="-1"><a href="../../scroll/all.html" title="show sidebar"></a></div><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="main-heading"><h1>Module <a href="../index.html">scroll</a>::<wbr><a class="mod" href="#">ctx</a><button id="copy-path" title="Copy item path to clipboard"><img src="../../static.files/clipboard-7571035ce49a181d.svg" width="19" height="18" alt="Copy item path"></button></h1><span class="out-of-band"><a class="src" href="../../src/scroll/ctx.rs.html#1-868">source</a> · <button id="toggle-all-docs" title="collapse all docs">[<span>&#x2212;</span>]</button></span></div><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>Generic context-aware conversion traits, for automatic <em>downstream</em> extension of <code>Pread</code>, et. al</p>
+<p>The context traits are arguably the center piece of the scroll crate. In simple terms they
+define how to actually read and write, respectively, a data type from a container, being able to
+take context into account.</p>
+<h4 id="reading"><a class="doc-anchor" href="#reading">§</a>Reading</h4>
+<p>Types implementing <a href="trait.TryFromCtx.html">TryFromCtx</a> and it’s infallible cousin <a href="trait.FromCtx.html">FromCtx</a>
+allow a user of <a href="../trait.Pread.html#method.pread">Pread::pread</a> or respectively
+<a href="../trait.Cread.html#method.cread">Cread::cread</a> and
+<a href="../trait.IOread.html#method.ioread">IOread::ioread</a> to read that data type from a data source one
+of the <code>*read</code> traits has been implemented for.</p>
+<p>Implementations of <code>TryFromCtx</code> specify a source (called <code>This</code>) and an <code>Error</code> type for failed
+reads. The source defines the kind of container the type can be read from, and defaults to
+<code>[u8]</code> for any type that implements <code>AsRef&lt;[u8]&gt;</code>.</p>
+<p><code>FromCtx</code> is slightly more restricted; it requires the implementer to use <code>[u8]</code> as source and
+never fail, and thus does not have an <code>Error</code> type.</p>
+<p>Types chosen here are of relevance to <code>Pread</code> implementations; of course only a container which
+can produce a source of the type <code>This</code> can be used to read a <code>TryFromCtx</code> requiring it and the
+<code>Error</code> type returned in <code>Err</code> of <code>Pread::pread</code>’s Result.</p>
+<h4 id="writing"><a class="doc-anchor" href="#writing">§</a>Writing</h4>
+<p><a href="trait.TryIntoCtx.html">TryIntoCtx</a> and the infallible <a href="trait.IntoCtx.html">IntoCtx</a> work
+similarly to the above traits, allowing <a href="../trait.Pwrite.html#method.pwrite">Pwrite::pwrite</a> or
+respectively <a href="../trait.Cwrite.html#method.cwrite">Cwrite::cwrite</a> and
+<a href="../trait.IOwrite.html#method.iowrite">IOwrite::iowrite</a> to write data into a byte sink for
+which one of the <code>*write</code> traits has been implemented for.</p>
+<p><code>IntoCtx</code> is similarly restricted as <code>FromCtx</code> is to <code>TryFromCtx</code>. And equally the types chosen
+affect usable <code>Pwrite</code> implementation.</p>
+<h4 id="context"><a class="doc-anchor" href="#context">§</a>Context</h4>
+<p>Each of the traits passes along a <code>Ctx</code> to the marshalling logic. This context type contains
+any additional information that may be required to successfully parse or write the data:
+Examples would be endianness to use, field lengths of a serialized struct, or delimiters to use
+when reading/writing <code>&amp;str</code>. The context type can be any type but must derive
+<a href="https://doc.rust-lang.org/std/marker/trait.Copy.html">Copy</a>. In addition if you want to use
+the <code>*read</code>-methods instead of the <code>*read_with</code> ones you must also implement
+<a href="https://doc.rust-lang.org/std/default/trait.Default.html">default::Default</a>.</p>
+<h2 id="example"><a class="doc-anchor" href="#example">§</a>Example</h2>
+<p>Let’s expand on the <a href="../index.html#complex-use-cases">previous example</a>.</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>scroll::{<span class="self">self</span>, ctx, Pread, Endian};
+<span class="kw">use </span>scroll::ctx::StrCtx;
+
+<span class="attr">#[derive(Copy, Clone, PartialEq, Eq)]
+</span><span class="kw">enum </span>FieldSize {
+    U32,
+    U64
+}
+
+<span class="comment">// Our custom context type. As said above it has to derive Copy.
+</span><span class="attr">#[derive(Copy, Clone)]
+</span><span class="kw">struct </span>Context {
+    fieldsize: FieldSize,
+    endianess: Endian,
+}
+
+<span class="comment">// Our custom data type
+</span><span class="kw">struct </span>Data&lt;<span class="lifetime">'b</span>&gt; {
+  <span class="comment">// These u64 are encoded either as 32-bit or 64-bit wide ints. Which one it is is defined in
+  // the Context.
+  // Also, let's imagine they have a strict relationship: A &lt; B &lt; C otherwise the struct is
+  // invalid.
+  </span>field_a: u64,
+  field_b: u64,
+  field_c: u64,
+
+  <span class="comment">// Both of these are marshalled with a prefixed length.
+  </span>name: <span class="kw-2">&amp;</span><span class="lifetime">'b </span>str,
+  value: <span class="kw-2">&amp;</span><span class="lifetime">'b </span>[u8],
+}
+
+<span class="attr">#[derive(Debug)]
+</span><span class="kw">enum </span>Error {
+    <span class="comment">// We'll return this custom error if the field* relationship doesn't hold
+    </span>BadFieldMatchup,
+    Scroll(scroll::Error),
+}
+
+<span class="kw">impl</span>&lt;<span class="lifetime">'a</span>&gt; ctx::TryFromCtx&lt;<span class="lifetime">'a</span>, Context&gt; <span class="kw">for </span>Data&lt;<span class="lifetime">'a</span>&gt; {
+  <span class="kw">type </span>Error = Error;
+
+  <span class="comment">// Using the explicit lifetime specification again you ensure that read data doesn't outlife
+  // its source buffer without having to resort to copying.
+  </span><span class="kw">fn </span>try_from_ctx (src: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>[u8], ctx: Context)
+    <span class="comment">// the `usize` returned here is the amount of bytes read.
+    </span>-&gt; <span class="prelude-ty">Result</span>&lt;(<span class="self">Self</span>, usize), <span class="self">Self</span>::Error&gt; 
+  {
+    <span class="comment">// The offset counter; gread and gread_with increment a given counter automatically so we
+    // don't have to manually care.
+    </span><span class="kw">let </span>offset = <span class="kw-2">&amp;mut </span><span class="number">0</span>;
+
+    <span class="kw">let </span>field_a;
+    <span class="kw">let </span>field_b;
+    <span class="kw">let </span>field_c;
+
+    <span class="comment">// Switch the amount of bytes read depending on the parsing context
+    </span><span class="kw">if </span>ctx.fieldsize == FieldSize::U32 {
+      field_a = src.gread_with::&lt;u32&gt;(offset, ctx.endianess)<span class="question-mark">? </span><span class="kw">as </span>u64;
+      field_b = src.gread_with::&lt;u32&gt;(offset, ctx.endianess)<span class="question-mark">? </span><span class="kw">as </span>u64;
+      field_c = src.gread_with::&lt;u32&gt;(offset, ctx.endianess)<span class="question-mark">? </span><span class="kw">as </span>u64;
+    } <span class="kw">else </span>{
+      field_a = src.gread_with::&lt;u64&gt;(offset, ctx.endianess)<span class="question-mark">?</span>;
+      field_b = src.gread_with::&lt;u64&gt;(offset, ctx.endianess)<span class="question-mark">?</span>;
+      field_c = src.gread_with::&lt;u64&gt;(offset, ctx.endianess)<span class="question-mark">?</span>;
+    }
+
+    <span class="comment">// You can use type ascribition or turbofish operators, whichever you prefer.
+    </span><span class="kw">let </span>namelen = src.gread_with::&lt;u16&gt;(offset, ctx.endianess)<span class="question-mark">? </span><span class="kw">as </span>usize;
+    <span class="kw">let </span>name: <span class="kw-2">&amp;</span>str = src.gread_with(offset, scroll::ctx::StrCtx::Length(namelen))<span class="question-mark">?</span>;
+
+    <span class="kw">let </span>vallen = src.gread_with::&lt;u16&gt;(offset, ctx.endianess)<span class="question-mark">? </span><span class="kw">as </span>usize;
+    <span class="kw">let </span>value = <span class="kw-2">&amp;</span>src[<span class="kw-2">*</span>offset..(<span class="kw-2">*</span>offset+vallen)];
+
+    <span class="comment">// Let's sanity check those fields, shall we?
+    </span><span class="kw">if </span>! (field_a &lt; field_b &amp;&amp; field_b &lt; field_c) {
+      <span class="kw">return </span><span class="prelude-val">Err</span>(Error::BadFieldMatchup);
+    }
+
+    <span class="prelude-val">Ok</span>((Data { field_a, field_b, field_c, name, value }, <span class="kw-2">*</span>offset))
+  }
+}
+
+<span class="comment">// In lieu of a complex byte buffer we hearken back to the venerable &amp;[u8]; do note however
+// that the implementation of TryFromCtx did not specify such. In fact any type that implements
+// Pread can now read `Data` as it implements TryFromCtx.
+</span><span class="kw">let </span>bytes = <span class="string">b"\x00\x02\x03\x04\x01\x02\x03\x04\xde\xad\xbe\xef\x00\x08UserName\x00\x02\xCA\xFE"</span>;
+
+<span class="comment">// We define an appropiate context, and get going
+</span><span class="kw">let </span>contextA = Context {
+    fieldsize: FieldSize::U32,
+    endianess: Endian::Big,
+};
+<span class="kw">let </span>data: Data = bytes.pread_with(<span class="number">0</span>, contextA).unwrap();
+
+<span class="macro">assert_eq!</span>(data.field_a, <span class="number">0x00020304</span>);
+<span class="macro">assert_eq!</span>(data.field_b, <span class="number">0x01020304</span>);
+<span class="macro">assert_eq!</span>(data.field_c, <span class="number">0xdeadbeef</span>);
+<span class="macro">assert_eq!</span>(data.name, <span class="string">"UserName"</span>);
+<span class="macro">assert_eq!</span>(data.value, [<span class="number">0xCA</span>, <span class="number">0xFE</span>]);
+
+<span class="comment">// Here we have a context with a different FieldSize, changing parsing information at runtime.
+</span><span class="kw">let </span>contextB = Context {
+    fieldsize: FieldSize::U64,
+    endianess: Endian::Big,
+};
+
+<span class="comment">// Which will of course error with a malformed input for the context
+</span><span class="kw">let </span>err: <span class="prelude-ty">Result</span>&lt;Data, Error&gt; = bytes.pread_with(<span class="number">0</span>, contextB);
+<span class="macro">assert!</span>(err.is_err());
+
+<span class="kw">let </span>bytes_long = [<span class="number">0x00</span>,<span class="number">0x00</span>,<span class="number">0x00</span>,<span class="number">0x00</span>,<span class="number">0x00</span>,<span class="number">0x02</span>,<span class="number">0x03</span>,<span class="number">0x04</span>,<span class="number">0x00</span>,<span class="number">0x00</span>,<span class="number">0x00</span>,<span class="number">0x00</span>,<span class="number">0x01</span>,<span class="number">0x02</span>,<span class="number">0x03</span>,
+                  <span class="number">0x04</span>,<span class="number">0x00</span>,<span class="number">0x00</span>,<span class="number">0x00</span>,<span class="number">0x00</span>,<span class="number">0xde</span>,<span class="number">0xad</span>,<span class="number">0xbe</span>,<span class="number">0xef</span>,<span class="number">0x00</span>,<span class="number">0x08</span>,<span class="number">0x55</span>,<span class="number">0x73</span>,<span class="number">0x65</span>,<span class="number">0x72</span>,
+                  <span class="number">0x4e</span>,<span class="number">0x61</span>,<span class="number">0x6d</span>,<span class="number">0x65</span>,<span class="number">0x00</span>,<span class="number">0x02</span>,<span class="number">0xCA</span>,<span class="number">0xFE</span>];
+
+<span class="kw">let </span>data: Data = bytes_long.pread_with(<span class="number">0</span>, contextB).unwrap();
+
+<span class="macro">assert_eq!</span>(data.field_a, <span class="number">0x00020304</span>);
+<span class="macro">assert_eq!</span>(data.field_b, <span class="number">0x01020304</span>);
+<span class="macro">assert_eq!</span>(data.field_c, <span class="number">0xdeadbeef</span>);
+<span class="macro">assert_eq!</span>(data.name, <span class="string">"UserName"</span>);
+<span class="macro">assert_eq!</span>(data.value, [<span class="number">0xCA</span>, <span class="number">0xFE</span>]);
+
+<span class="comment">// Ergonomic conversion, not relevant really.
+</span><span class="kw">use </span>std::convert::From;
+<span class="kw">impl </span>From&lt;scroll::Error&gt; <span class="kw">for </span>Error {
+  <span class="kw">fn </span>from(error: scroll::Error) -&gt; Error {
+    Error::Scroll(error)
+  }
+}</code></pre></div>
+</div></details><h2 id="enums" class="section-header">Enums<a href="#enums" class="anchor">§</a></h2><ul class="item-table"><li><div class="item-name"><a class="enum" href="enum.StrCtx.html" title="enum scroll::ctx::StrCtx">StrCtx</a></div><div class="desc docblock-short">The parsing context for converting a byte sequence to a <code>&amp;str</code></div></li></ul><h2 id="constants" class="section-header">Constants<a href="#constants" class="anchor">§</a></h2><ul class="item-table"><li><div class="item-name"><a class="constant" href="constant.NULL.html" title="constant scroll::ctx::NULL">NULL</a></div><div class="desc docblock-short">A C-style, null terminator based delimiter</div></li><li><div class="item-name"><a class="constant" href="constant.RET.html" title="constant scroll::ctx::RET">RET</a></div><div class="desc docblock-short">A newline-based delimiter</div></li><li><div class="item-name"><a class="constant" href="constant.SPACE.html" title="constant scroll::ctx::SPACE">SPACE</a></div><div class="desc docblock-short">A space-based delimiter</div></li><li><div class="item-name"><a class="constant" href="constant.TAB.html" title="constant scroll::ctx::TAB">TAB</a></div><div class="desc docblock-short">A tab-based delimiter</div></li></ul><h2 id="traits" class="section-header">Traits<a href="#traits" class="anchor">§</a></h2><ul class="item-table"><li><div class="item-name"><a class="trait" href="trait.FromCtx.html" title="trait scroll::ctx::FromCtx">FromCtx</a></div><div class="desc docblock-short">Reads <code>Self</code> from <code>This</code> using the context <code>Ctx</code>; must <em>not</em> fail</div></li><li><div class="item-name"><a class="trait" href="trait.IntoCtx.html" title="trait scroll::ctx::IntoCtx">IntoCtx</a></div><div class="desc docblock-short">Writes <code>Self</code> into <code>This</code> using the context <code>Ctx</code></div></li><li><div class="item-name"><a class="trait" href="trait.MeasureWith.html" title="trait scroll::ctx::MeasureWith">MeasureWith</a></div><div class="desc docblock-short">A trait for measuring how large something is; for a byte sequence, it will be its length.</div></li><li><div class="item-name"><a class="trait" href="trait.SizeWith.html" title="trait scroll::ctx::SizeWith">SizeWith</a></div><div class="desc docblock-short">Gets the size of <code>Self</code> with a <code>Ctx</code>, and in <code>Self::Units</code>. Implementors can then call <code>Gread</code> related functions</div></li><li><div class="item-name"><a class="trait" href="trait.TryFromCtx.html" title="trait scroll::ctx::TryFromCtx">TryFromCtx</a></div><div class="desc docblock-short">Tries to read <code>Self</code> from <code>This</code> using the context <code>Ctx</code></div></li><li><div class="item-name"><a class="trait" href="trait.TryIntoCtx.html" title="trait scroll::ctx::TryIntoCtx">TryIntoCtx</a></div><div class="desc docblock-short">Tries to write <code>Self</code> into <code>This</code> using the context <code>Ctx</code>
+To implement writing into an arbitrary byte buffer, implement <code>TryIntoCtx</code></div></li></ul></section></div></main></body></html>

@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["init","panic"],"static":["LOGGER"],"struct":["Logger","SerialWriter","Visitor"]};

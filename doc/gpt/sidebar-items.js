@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["HeaderError"],"struct":["GptHeader","Guid","PartitionAttributes","PartitionEntry"]};

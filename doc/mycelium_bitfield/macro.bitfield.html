@@ -1,0 +1,330 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Generates a typed bitfield struct."><title>bitfield in mycelium_bitfield - Rust</title><script> if (window.location.protocol !== "file:") document.write(`<link rel="preload" as="font" type="font/woff2" crossorigin href="../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2">`)</script><link rel="stylesheet" href="../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../static.files/rustdoc-e935ef01ae1c1829.css"><meta name="rustdoc-vars" data-root-path="../" data-static-root-path="../static.files/" data-current-crate="mycelium_bitfield" data-themes="" data-resource-suffix="" data-rustdoc-version="1.79.0-nightly (eb45c8444 2024-03-17)" data-channel="nightly" data-search-js="search-42d8da7a6b9792c2.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../static.files/storage-4c98445ec4002617.js"></script><script defer src="sidebar-items.js"></script><script defer src="../static.files/main-12cf3b4f4f9dc36d.js"></script><noscript><link rel="stylesheet" href="../static.files/noscript-04d5337699b92874.css"></noscript><link rel="alternate icon" type="image/png" href="../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc macro"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle" title="show sidebar"></button></nav><nav class="sidebar"><div class="sidebar-crate"><h2><a href="../mycelium_bitfield/index.html">mycelium_bitfield</a><span class="version">0.1.3</span></h2></div><div class="sidebar-elems"></div></nav><div class="sidebar-resizer"></div>
+    <main><div class="width-limiter"><nav class="sub"><form class="search-form"><span></span><div id="sidebar-button" tabindex="-1"><a href="../mycelium_bitfield/all.html" title="show sidebar"></a></div><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="main-heading"><h1>Macro <a href="index.html">mycelium_bitfield</a>::<wbr><a class="macro" href="#">bitfield</a><button id="copy-path" title="Copy item path to clipboard"><img src="../static.files/clipboard-7571035ce49a181d.svg" width="19" height="18" alt="Copy item path"></button></h1><span class="out-of-band"><a class="src" href="../src/mycelium_bitfield/bitfield.rs.html#360-842">source</a> · <button id="toggle-all-docs" title="collapse all docs">[<span>&#x2212;</span>]</button></span></div><pre class="rust item-decl"><span class="macro">macro_rules!</span> bitfield {
+    (
+        $(<span class="attr">#[$(<span class="macro-nonterminal">$meta</span>:meta)+]</span>)*
+        <span class="macro-nonterminal">$vis</span>:vis <span class="kw">struct </span><span class="macro-nonterminal">$Name</span>:ident&lt;<span class="macro-nonterminal">$T</span>:ident&gt; {
+            $(
+                $(<span class="attr">#[<span class="macro-nonterminal">$field_meta</span>:meta]</span>)*
+                <span class="macro-nonterminal">$field_vis</span>:vis <span class="kw">const </span><span class="macro-nonterminal">$Field</span>:ident $(: <span class="macro-nonterminal">$F</span>:ty)<span class="question-mark">? </span>$( = <span class="macro-nonterminal">$val</span>:tt)<span class="question-mark">?</span>;
+            )+
+        }
+    ) =&gt; { ... };
+    (@field&lt;<span class="macro-nonterminal">$T</span>:ident&gt;, prev: <span class="macro-nonterminal">$Prev</span>:ident:
+        $(<span class="attr">#[<span class="macro-nonterminal">$meta</span>:meta]</span>)*
+        <span class="macro-nonterminal">$vis</span>:vis <span class="kw">const </span><span class="macro-nonterminal">$Field</span>:ident = ..;
+    ) =&gt; { ... };
+    (@field&lt;<span class="macro-nonterminal">$T</span>:ident&gt;, prev: <span class="macro-nonterminal">$Prev</span>:ident:
+        $(<span class="attr">#[<span class="macro-nonterminal">$meta</span>:meta]</span>)*
+        <span class="macro-nonterminal">$vis</span>:vis <span class="kw">const </span><span class="macro-nonterminal">$Field</span>:ident = <span class="macro-nonterminal">$value</span>:literal;
+        $(<span class="macro-nonterminal">$rest</span>:tt)*
+    ) =&gt; { ... };
+    (@field&lt;<span class="macro-nonterminal">$T</span>:ident&gt;, prev: <span class="macro-nonterminal">$Prev</span>:ident:
+        $(<span class="attr">#[<span class="macro-nonterminal">$meta</span>:meta]</span>)*
+        <span class="macro-nonterminal">$vis</span>:vis <span class="kw">const </span><span class="macro-nonterminal">$Field</span>:ident: <span class="macro-nonterminal">$Val</span>:ty;
+        $(<span class="macro-nonterminal">$rest</span>:tt)*
+    ) =&gt; { ... };
+    (@field&lt;<span class="macro-nonterminal">$T</span>:ident&gt;, prev: <span class="macro-nonterminal">$Prev</span>:ident: ) =&gt; { ... };
+    (@field&lt;<span class="macro-nonterminal">$T</span>:ident&gt;:
+        $(<span class="attr">#[<span class="macro-nonterminal">$meta</span>:meta]</span>)*
+        <span class="macro-nonterminal">$vis</span>:vis <span class="kw">const </span><span class="macro-nonterminal">$Field</span>:ident = <span class="macro-nonterminal">$value</span>:literal;
+        $(<span class="macro-nonterminal">$rest</span>:tt)*
+    ) =&gt; { ... };
+    (@field&lt;<span class="macro-nonterminal">$T</span>:ident&gt;:
+        $(<span class="attr">#[<span class="macro-nonterminal">$meta</span>:meta]</span>)*
+        <span class="macro-nonterminal">$vis</span>:vis <span class="kw">const </span><span class="macro-nonterminal">$Field</span>:ident: <span class="macro-nonterminal">$Val</span>:ty;
+        $(<span class="macro-nonterminal">$rest</span>:tt)*
+    ) =&gt; { ... };
+    (@t usize, <span class="macro-nonterminal">$V</span>:ty, <span class="macro-nonterminal">$F</span>:ty) =&gt; { ... };
+    (@t u128, <span class="macro-nonterminal">$V</span>:ty, <span class="macro-nonterminal">$F</span>:ty) =&gt; { ... };
+    (@t u64, <span class="macro-nonterminal">$V</span>:ty, <span class="macro-nonterminal">$F</span>:ty) =&gt; { ... };
+    (@t u32, <span class="macro-nonterminal">$V</span>:ty, <span class="macro-nonterminal">$F</span>:ty) =&gt; { ... };
+    (@t u16, <span class="macro-nonterminal">$V</span>:ty, <span class="macro-nonterminal">$F</span>:ty) =&gt; { ... };
+    (@t u8, <span class="macro-nonterminal">$V</span>:ty, <span class="macro-nonterminal">$F</span>:ty) =&gt; { ... };
+    (@t <span class="macro-nonterminal">$T</span>:ty, <span class="macro-nonterminal">$V</span>:ty, <span class="macro-nonterminal">$F</span>:ty) =&gt; { ... };
+}</pre><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>Generates a typed bitfield struct.</p>
+<p>By default, the <a href="https://doc.rust-lang.org/nightly/core/fmt/trait.Debug.html" title="trait core::fmt::Debug"><code>fmt::Debug</code></a>, <a href="https://doc.rust-lang.org/nightly/core/fmt/trait.Display.html" title="trait core::fmt::Display"><code>fmt::Display</code></a>, <a href="https://doc.rust-lang.org/nightly/core/fmt/trait.Binary.html" title="trait core::fmt::Binary"><code>fmt::Binary</code></a>, <a href="https://doc.rust-lang.org/nightly/core/marker/trait.Copy.html" title="trait core::marker::Copy"><code>Copy</code></a>,
+and <a href="https://doc.rust-lang.org/nightly/core/clone/trait.Clone.html" title="trait core::clone::Clone"><code>Clone</code></a> traits are automatically derived for bitfields.</p>
+<p>All bitfield types are <a href="https://doc.rust-lang.org/reference/type-layout.html#the-transparent-representation"><code>#[repr(transparent)]</code></a>.</p>
+<p>For a complete example of the methods generated by the <code>bitfield!</code> macro,
+see the <a href="crate::example"><code>example</code></a> module’s <a href="crate::example::ExampleBitfield"><code>ExampleBitfield</code></a> type.</p>
+<h2 id="generated-implementations"><a class="doc-anchor" href="#generated-implementations">§</a>Generated Implementations</h2>
+<p>The <code>bitfield!</code> macro generates a type with the following functions, where
+<code>{int}</code> is the integer type that represents the bitfield (one of <a href="https://doc.rust-lang.org/nightly/core/primitive.u8.html" title="primitive u8"><code>u8</code></a>,
+<a href="https://doc.rust-lang.org/nightly/core/primitive.u16.html" title="primitive u16"><code>u16</code></a>, <a href="https://doc.rust-lang.org/nightly/core/primitive.u32.html" title="primitive u32"><code>u32</code></a>, <a href="https://doc.rust-lang.org/nightly/core/primitive.u64.html" title="primitive u64"><code>u64</code></a>, <a href="https://doc.rust-lang.org/nightly/core/primitive.u128.html" title="primitive u128"><code>u128</code></a>, or <a href="https://doc.rust-lang.org/nightly/core/primitive.usize.html" title="primitive usize"><code>usize</code></a>):</p>
+<ul>
+<li><code>const fn new() -&gt; Self</code>: Returns a new instance of the bitfield type with
+all bits zeroed.</li>
+<li><code>const fn from_bits(bits: {int}) -&gt; Self</code>: Converts an <code>{int}</code> into an
+instance of the bitfield type.</li>
+<li><code>const fn bits(self) -&gt; {int}</code>: Returns this bitfield’s bits as a raw
+integer value.</li>
+<li><code>fn with&lt;U&gt;(self, packer: Self::Packer&lt;U&gt;, value: U) -&gt; Self</code>: Given one
+of this type’s generated packing specs for a <code>U</code>-typed value, and a
+<code>U</code>-typed value, returns a new instance of <code>Self</code> with the bit
+representation of <code>value</code> packed into the range represented by <code>packer</code>.</li>
+<li><code>fn set&lt;U&gt;(&amp;mut self, packer: Self::Packer&lt;U&gt;, value: U) -&gt; &amp;mut Self</code>:
+Similar to <code>with</code>, except <code>self</code> is mutated in place, rather than
+returning a new  nstance of <code>Self</code></li>
+<li><code>fn get&lt;U&gt;(&amp;self, packer: Self::Packer&lt;U&gt;) -&gt; U</code>: Given one of this type’s
+generated packing specs for a <code>U</code>-typed value, unpacks the bit range
+represented by that value as a <code>U</code> and returns it. This method panics if
+the requested bit range does not contain a valid bit pattern for a
+<code>U</code>-typed value, as determined by <code>U</code>’s implementation of the <a href="trait.FromBits.html" title="trait mycelium_bitfield::FromBits"><code>FromBits</code></a>
+trait.</li>
+<li><code>fn try_get&lt;U&gt;(&amp;self, packer: Self::Packer&lt;U&gt;) -&gt; Result&lt;U, &lt;U as FromBits&gt;::Error&gt;</code>: Like <code>get</code>, but returns a <code>Result</code> instead of
+panicking.</li>
+<li><code>fn assert_valid()</code>: Asserts that the generated bitfield type is valid.
+This is primarily intended to be used in tests; the macro cannot generate
+tests for a bitfield type on its own, so a test that simply calls
+<code>assert_valid</code> can be added to check the bitfield type’s validity.</li>
+<li><code>fn display_ascii(&amp;self) -&gt; impl core::fmt::Display</code>: Returns a
+<a href="https://doc.rust-lang.org/nightly/core/fmt/trait.Display.html" title="trait core::fmt::Display"><code>fmt::Display</code></a> implementation that formats the bitfield in a multi-line
+format, using only ASCII characters. See <a href="#example-display-output">here</a>
+for examples of this format.</li>
+<li><code>fn display_unicode(&amp;self) -&gt; impl core::fmt::Display</code>: Returns a
+<a href="https://doc.rust-lang.org/nightly/core/fmt/trait.Display.html" title="trait core::fmt::Display"><code>fmt::Display</code></a> implementation that formats the bitfield in a multi-line
+format, always using Unicode box-drawing characters. See
+<a href="#example-display-output">here</a> for examples of this format.</li>
+</ul>
+<p>The visibility of these methods depends on the visibility of the bitfield
+struct — if the struct is defined as <code>pub(crate) struct MyBitfield&lt;u16&gt; { ... }</code>, then these functions will all be <code>pub(crate)</code> as well.</p>
+<p>If a bitfield type is defined with one visibility, but particular subfields
+of that bitfield should not be public, the individual fields may also have
+visibility specifiers. For example, if the bitfield struct <code>MyBitfield</code> is
+<code>pub</code>, but the subfield named <code>PRIVATE_SUBFIELD</code> is <code>pub(crate)</code>, then
+<code>my_bitfield.get(MyBitfield::PRIVATE_SUBRANGE)</code> can only be called inside
+the crate defining the type, because the <code>PRIVATE_SUBRANGE</code> constant is not
+publicly visible.</p>
+<p>In addition to the inherent methods discussed above, the following trait
+implementations are always generated:</p>
+<ul>
+<li><a href="https://doc.rust-lang.org/nightly/core/fmt/trait.Debug.html" title="trait core::fmt::Debug"><code>fmt::Debug</code></a>: The <code>Debug</code> implementation prints the bitfield as a
+“struct”, with a “field” for each packing spec in the bitfield. If any
+of the bitfield’s packing specs pack typed values, that type’s
+<a href="https://doc.rust-lang.org/nightly/core/fmt/trait.Debug.html" title="trait core::fmt::Debug"><code>fmt::Debug</code></a> implementation is used rather than printing the value
+as an integer.</li>
+<li><a href="https://doc.rust-lang.org/nightly/core/fmt/trait.Binary.html" title="trait core::fmt::Binary"><code>fmt::Binary</code></a>: Prints the raw bits of this bitfield as a binary number.</li>
+<li><a href="https://doc.rust-lang.org/nightly/core/fmt/trait.UpperHex.html" title="trait core::fmt::UpperHex"><code>fmt::UpperHex</code></a> and <a href="https://doc.rust-lang.org/nightly/core/fmt/trait.LowerHex.html" title="trait core::fmt::LowerHex"><code>fmt::LowerHex</code></a>: Prints the raw bits of this
+bitfield in hexadecimal.</li>
+<li><a href="https://doc.rust-lang.org/nightly/core/fmt/trait.Display.html" title="trait core::fmt::Display"><code>fmt::Display</code></a>: Pretty-prints the bitfield in a very nice-looking
+multi-line format which I’m rather proud of. See
+<a href="#example-display-output">here</a> for examples of this format.</li>
+<li><a href="https://doc.rust-lang.org/nightly/core/marker/trait.Copy.html" title="trait core::marker::Copy"><code>Copy</code></a>: Behaves identically as the <a href="https://doc.rust-lang.org/nightly/core/marker/trait.Copy.html" title="trait core::marker::Copy"><code>Copy</code></a> implementation for the
+underlying integer type.</li>
+<li><a href="https://doc.rust-lang.org/nightly/core/clone/trait.Clone.html" title="trait core::clone::Clone"><code>Clone</code></a>: Behaves identically as the <a href="https://doc.rust-lang.org/nightly/core/clone/trait.Clone.html" title="trait core::clone::Clone"><code>Clone</code></a> implementation for the
+underlying integer type.</li>
+<li><a href="https://doc.rust-lang.org/nightly/core/convert/trait.From.html" title="trait core::convert::From"><code>From</code></a><code>&lt;{int}&gt; for Self</code>: Converts a raw integer value into an instance
+of the bitfield type. This is equivalent to calling the bitfield type’s
+<code>from_bits</code> function.</li>
+<li><a href="https://doc.rust-lang.org/nightly/core/convert/trait.From.html" title="trait core::convert::From"><code>From</code></a><code>&lt;Self&gt; for {int}</code>: Converts an instance of the bitfield type into
+a raw integer value. This is equivalent to calling the bitfield type’s
+<code>bits</code> method.</li>
+</ul>
+<p>Additional traits may be derived for the bitfield type, such as
+<a href="https://doc.rust-lang.org/nightly/core/cmp/trait.PartialEq.html" title="trait core::cmp::PartialEq"><code>PartialEq</code></a>, <a href="https://doc.rust-lang.org/nightly/core/cmp/trait.Eq.html" title="trait core::cmp::Eq"><code>Eq</code></a>, and <a href="https://doc.rust-lang.org/nightly/core/default/trait.Default.html" title="trait core::default::Default"><code>Default</code></a>. These traits are not automatically
+derived, as custom implementations may also be desired, depending on the
+use-case. For example, the <code>Default</code> value for a bitfield may <em>not</em> be all
+zeroes.</p>
+<h2 id="examples"><a class="doc-anchor" href="#examples">§</a>Examples</h2>
+<p>Basic usage:</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="macro">mycelium_bitfield::bitfield!</span> {
+    <span class="doccomment">/// Bitfield types can have doc comments.
+    </span><span class="attr">#[derive(Eq, PartialEq)] </span><span class="comment">// ...and attributes
+    </span><span class="kw">pub struct </span>MyBitfield&lt;u16&gt; {
+        <span class="comment">// Generates a packing spec named `HELLO` for the first 6
+        // least-significant bits.
+        </span><span class="kw">pub const </span>HELLO = <span class="number">6</span>;
+        <span class="comment">// Fields with names starting with `_` can be used to mark bits as
+        // reserved.
+        </span><span class="kw">const </span>_RESERVED = <span class="number">4</span>;
+        <span class="comment">// Generates a packing spec named `WORLD` for the next 3 bits.
+        </span><span class="kw">pub const </span>WORLD = <span class="number">3</span>;
+    }
+}
+
+<span class="comment">// Bitfield types can be cheaply constructed from a raw numeric
+// representation:
+</span><span class="kw">let </span>bitfield = MyBitfield::from_bits(<span class="number">0b10100_0011_0101</span>);
+
+<span class="comment">// `get` methods can be used to unpack fields from a bitfield type:
+</span><span class="macro">assert_eq!</span>(bitfield.get(MyBitfield::HELLO), <span class="number">0b11_0101</span>);
+<span class="macro">assert_eq!</span>(bitfield.get(MyBitfield::WORLD), <span class="number">0b0101</span>);
+
+<span class="comment">// `with` methods can be used to pack bits into a bitfield type by
+// value:
+</span><span class="kw">let </span>bitfield2 = MyBitfield::new()
+    .with(MyBitfield::HELLO, <span class="number">0b11_0101</span>)
+    .with(MyBitfield::WORLD, <span class="number">0b0101</span>);
+
+<span class="macro">assert_eq!</span>(bitfield, bitfield2);
+
+<span class="comment">// `set` methods can be used to mutate a bitfield type in place:
+</span><span class="kw">let </span><span class="kw-2">mut </span>bitfield3 = MyBitfield::new();
+
+bitfield3
+    .set(MyBitfield::HELLO, <span class="number">0b011_0101</span>)
+    .set(MyBitfield::WORLD, <span class="number">0b0101</span>);
+
+<span class="macro">assert_eq!</span>(bitfield, bitfield3);</code></pre></div>
+<p>Bitfields may also contain typed values, as long as those values implement
+the <a href="trait.FromBits.html" title="trait mycelium_bitfield::FromBits"><code>FromBits</code></a> trait. <a href="trait.FromBits.html" title="trait mycelium_bitfield::FromBits"><code>FromBits</code></a> may be manually implemented, or
+generated automatically for <code>enum</code> types using the <a href="macro.enum_from_bits.html" title="macro mycelium_bitfield::enum_from_bits"><code>enum_from_bits!</code></a> macro:</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>mycelium_bitfield::{bitfield, enum_from_bits, FromBits};
+
+<span class="comment">// An enum type can implement the `FromBits` trait if it has a
+// `#[repr(uN)]` attribute.
+</span><span class="attr">#[repr(u8)]
+#[derive(Debug, Eq, PartialEq)]
+</span><span class="kw">enum </span>MyEnum {
+    Foo = <span class="number">0b00</span>,
+    Bar = <span class="number">0b01</span>,
+    Baz = <span class="number">0b10</span>,
+}
+
+<span class="kw">impl </span>FromBits&lt;u32&gt; <span class="kw">for </span>MyEnum {
+    <span class="comment">// Two bits can represent all possible `MyEnum` values.
+    </span><span class="kw">const </span>BITS: u32 = <span class="number">2</span>;
+    <span class="kw">type </span>Error = <span class="kw-2">&amp;</span><span class="lifetime">'static </span>str;
+
+    <span class="kw">fn </span>try_from_bits(bits: u32) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, <span class="self">Self</span>::Error&gt; {
+        <span class="kw">match </span>bits <span class="kw">as </span>u8 {
+            bits <span class="kw">if </span>bits == <span class="self">Self</span>::Foo <span class="kw">as </span>u8 =&gt; <span class="prelude-val">Ok</span>(<span class="self">Self</span>::Foo),
+            bits <span class="kw">if </span>bits == <span class="self">Self</span>::Bar <span class="kw">as </span>u8 =&gt; <span class="prelude-val">Ok</span>(<span class="self">Self</span>::Bar),
+            bits <span class="kw">if </span>bits == <span class="self">Self</span>::Baz <span class="kw">as </span>u8 =&gt; <span class="prelude-val">Ok</span>(<span class="self">Self</span>::Baz),
+            <span class="kw">_ </span>=&gt; <span class="prelude-val">Err</span>(<span class="string">"expected one of 0b00, 0b01, or 0b10"</span>),
+        }
+    }
+
+    <span class="kw">fn </span>into_bits(<span class="self">self</span>) -&gt; u32 {
+        <span class="self">self </span><span class="kw">as </span>u8 <span class="kw">as </span>u32
+    }
+}
+
+<span class="comment">// Alternatively, the `enum_from_bits!` macro can be used to
+// automatically generate a `FromBits` implementation for an
+// enum type.
+//
+// The macro will generate very similar code to the example
+// manual implementation above.
+</span><span class="macro">enum_from_bits!</span> {
+    <span class="attr">#[derive(Debug, Eq, PartialEq)]
+    </span><span class="kw">pub enum </span>MyGeneratedEnum&lt;u8&gt; {
+        <span class="doccomment">/// Isn't this cool?
+        </span>Wow = <span class="number">0b1001</span>,
+        <span class="doccomment">/// It sure is! :D
+        </span>Whoa = <span class="number">0b0110</span>,
+    }
+}
+
+<span class="macro">bitfield!</span> {
+    <span class="kw">pub struct </span>TypedBitfield&lt;u32&gt; {
+        <span class="doccomment">/// Use the first two bits to represent a typed `MyEnum` value.
+        </span><span class="kw">const </span>ENUM_VALUE: MyEnum;
+
+        <span class="doccomment">/// Typed values and untyped raw bit fields can be used in the
+        /// same bitfield type.
+        </span><span class="kw">pub const </span>SOME_BITS = <span class="number">6</span>;
+
+        <span class="doccomment">/// The `FromBits` trait is also implemented for `bool`, which
+        /// can be used to implement bitflags.
+        </span><span class="kw">pub const </span>FLAG_1: bool;
+        <span class="kw">pub const </span>FLAG_2: bool;
+
+        <span class="doccomment">/// `FromBits` is also implemented by (signed and unsigned) integer
+        /// types. This will allow the next 8 bits to be treated as a `u8`.
+        </span><span class="kw">pub const </span>A_BYTE: u8;
+
+        <span class="doccomment">/// We can also use the automatically generated enum:
+        </span><span class="kw">pub const </span>OTHER_ENUM: MyGeneratedEnum;
+    }
+}
+
+<span class="comment">// Unpacking a typed value with `get` will return that value, or panic if
+// the bit pattern is invalid:
+</span><span class="kw">let </span>my_bitfield = TypedBitfield::from_bits(<span class="number">0b0010_0100_0011_0101_1001_1110</span>);
+
+<span class="macro">assert_eq!</span>(my_bitfield.get(TypedBitfield::ENUM_VALUE), MyEnum::Baz);
+<span class="macro">assert_eq!</span>(my_bitfield.get(TypedBitfield::FLAG_1), <span class="bool-val">true</span>);
+<span class="macro">assert_eq!</span>(my_bitfield.get(TypedBitfield::FLAG_2), <span class="bool-val">false</span>);
+<span class="macro">assert_eq!</span>(my_bitfield.get(TypedBitfield::OTHER_ENUM), MyGeneratedEnum::Wow);
+
+<span class="comment">// The `try_get` method will return an error rather than panicking if an
+// invalid bit pattern is encountered:
+
+</span><span class="kw">let </span>invalid = TypedBitfield::from_bits(<span class="number">0b0011</span>);
+
+<span class="comment">// There is no `MyEnum` variant for 0b11.
+</span><span class="macro">assert!</span>(invalid.try_get(TypedBitfield::ENUM_VALUE).is_err());</code></pre></div>
+<p>Packing specs from one bitfield type may <em>not</em> be used with a different
+bitfield type’s <code>get</code>, <code>set</code>, or <code>with</code> methods. For example, the following
+is a type error:</p>
+
+<div class="example-wrap compile_fail"><a href="#" class="tooltip" title="This example deliberately fails to compile">ⓘ</a><pre class="rust rust-example-rendered"><code><span class="kw">use </span>mycelium_bitfield::bitfield;
+
+<span class="macro">bitfield!</span> {
+    <span class="kw">struct </span>Bitfield1&lt;u8&gt; {
+        <span class="kw">pub const </span>FOO: bool;
+        <span class="kw">pub const </span>BAR: bool;
+        <span class="kw">pub const </span>BAZ = <span class="number">6</span>;
+    }
+}
+
+<span class="macro">bitfield!</span> {
+    <span class="kw">struct </span>Bitfield2&lt;u8&gt; {
+        <span class="kw">pub const </span>ALICE = <span class="number">2</span>;
+        <span class="kw">pub const </span>BOB = <span class="number">4</span>;
+        <span class="kw">pub const </span>CHARLIE = <span class="number">2</span>;
+    }
+}
+
+
+<span class="comment">// This is a *type error*, because `Bitfield2`'s field `ALICE` cannot be
+// used with a `Bitfield2` value:
+</span><span class="kw">let </span>bits = Bitfield1::new().with(Bitfield2::ALICE, <span class="number">0b11</span>);</code></pre></div>
+<h3 id="example-display-output"><a class="doc-anchor" href="#example-display-output">§</a>Example <code>Display</code> Output</h3>
+<p>Bitfields will automatically generate a pretty, multi-line <a href="https://doc.rust-lang.org/nightly/core/fmt/trait.Display.html" title="trait core::fmt::Display"><code>fmt::Display</code></a>
+implementation. The default <a href="https://doc.rust-lang.org/nightly/core/fmt/trait.Display.html" title="trait core::fmt::Display"><code>fmt::Display</code></a> specifier uses only ASCII
+characters, but when Unicode box-drawing characters are also available, the
+alternate (<code>{:#}</code>) <a href="https://doc.rust-lang.org/nightly/core/fmt/trait.Display.html" title="trait core::fmt::Display"><code>fmt::Display</code></a> specifier may be used to select a
+<code>Display</code> implementation that uses those characters, and is (in my opinion)
+even prettier than the default.</p>
+<p>For example:</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="comment">// Create an example bitfield.
+</span><span class="kw">let </span>my_bitfield = TypedBitfield::from_bits(<span class="number">0b0011_0101_1001_1110</span>);
+
+<span class="comment">// The default `Display` implementation uses only ASCII characters:
+</span><span class="kw">let </span>formatted_ascii = <span class="macro">format!</span>(<span class="string">"{my_bitfield}"</span>);
+<span class="kw">let </span>expected = <span class="string">r#"
+00000000000000000011010110011110
+..............................10 ENUM_VALUE: Baz
+........................100111.. SOME_BITS: 39
+.......................1........ FLAG_1: true
+......................0......... FLAG_2: false
+..............00001101.......... A_BYTE: 13
+"#</span>.trim_start();
+<span class="macro">assert_eq!</span>(formatted_ascii, expected);
+
+<span class="comment">// The alternate `Display` format uses Unicode box-drawing characters,
+// and looks even nicer:
+</span><span class="kw">let </span>formatted_unicode = <span class="macro">format!</span>(<span class="string">"{my_bitfield:#}"</span>);
+<span class="kw">let </span>expected = <span class="string">r#"
+00000000000000000011010110011110
+              └┬─────┘││└┬───┘└┤
+               │      ││ │     └ ENUM_VALUE: Baz (10)
+               │      ││ └────── SOME_BITS: 39 (100111)
+               │      │└─────────── FLAG_1: true (1)
+               │      └──────────── FLAG_2: false (0)
+               └─────────────────── A_BYTE: 13 (00001101)
+"#</span>.trim_start();
+<span class="macro">assert_eq!</span>(formatted_unicode, expected);</code></pre></div>
+<p>For situations where the use of ASCII or Unicode formats is always desired
+regardless of the behavior of an upstream formatter (e.g., when returning a
+<code>fmt::Display</code> value that doesn’t know what format specifier will be used),
+bitfield types also generate <code>display_ascii()</code> and <code>display_unicode()</code>
+methods. These methods return <code>impl fmt::Display</code> values that <em>always</em>
+select either the ASCII or Unicode <code>Display</code> implementations explicitly,
+regardless of whether or not the alternate formatting specifier is used.</p>
+</div></details></section></div></main></body></html>
