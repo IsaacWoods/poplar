@@ -30,7 +30,7 @@ impl Sstatus {
 
     pub fn disable_interrupts() {
         unsafe {
-            asm!("csrci status, 2");
+            asm!("csrci sstatus, 2");
         }
     }
 
