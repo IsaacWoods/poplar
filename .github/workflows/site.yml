@@ -24,8 +24,9 @@ jobs:
     - name: Install dependencies
       run: |
         cargo install mdbook
+        sudo apt-get update
+        sudo apt-get install -y libudev-dev
 
-      # This is a hack to get it building. TODO: address properly
     - name: Generate rustdoc documentation
       run: |
         cargo xtask doc pages/doc/
