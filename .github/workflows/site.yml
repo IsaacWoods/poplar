@@ -28,13 +28,7 @@ jobs:
       # This is a hack to get it building. TODO: address properly
     - name: Generate rustdoc documentation
       run: |
-        RUSTDOCFLAGS="-Zunstable-options --enable-index-page" \
-        cargo doc \
-          --all-features \
-          --target-dir pages \
-          --manifest-path kernel/kernel_riscv/Cargo.toml \
-          --target riscv64imac-unknown-none-elf \
-          --document-private-items
+        cargo xtask doc pages/doc/
         mv site/* pages/
 
     - name: Generate book

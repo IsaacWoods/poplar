@@ -12,10 +12,17 @@ pub enum Target {
     },
 }
 
+#[derive(Clone, Copy, PartialEq, Debug)]
+pub enum Subcommand {
+    Build,
+    Doc,
+}
+
 pub struct RunCargo {
     pub artifact_name: String,
     /// The directory that contains the crate to be built. The manifest should be at `{manifest_dir}/Cargo.toml`.
     pub manifest_dir: PathBuf,
+    pub subcommand: Subcommand,
     pub workspace: Option<PathBuf>,
     pub target: Target,
     pub release: bool,
@@ -23,6 +30,8 @@ pub struct RunCargo {
     pub std_components: Vec<String>,
     pub std_features: Vec<String>,
     pub toolchain: Option<String>,
+    /// Any extra arguments that should be passed to Cargo.
+    pub extra: Vec<String>,
     /// These are passed in the `RUSTFLAGS` environment variable
     pub rustflags: Option<String>,
     /// If `true`, the resulting artifact will be flattened into a flat binary and the path to that
@@ -36,6 +45,7 @@ impl RunCargo {
         RunCargo {
             artifact_name: artifact_name.into(),
             manifest_dir,
+            subcommand: Subcommand::Build,
             workspace: None,
             target: Target::Host,
             release: false,
@@ -43,6 +53,7 @@ impl RunCargo {
             std_components: vec![],
             std_features: vec![],
             toolchain: None,
+            extra: vec![],
             rustflags: None,
             flatten_result: false,
         }
@@ -50,6 +61,10 @@ impl RunCargo {
 
     pub fn workspace(self, workspace: PathBuf) -> RunCargo {
         RunCargo { workspace: Some(workspace), ..self }
+    }
+
+    pub fn subcommand(self, subcommand: Subcommand) -> RunCargo {
+        RunCargo { subcommand, ..self }
     }
 
     pub fn target(self, target: Target) -> RunCargo {
@@ -79,6 +94,12 @@ impl RunCargo {
         RunCargo { toolchain: Some(toolchain.into()), ..self }
     }
 
+    /// Pass the given extra arguments to Cargo. This is additive.
+    pub fn extra(mut self, mut extra: Vec<String>) -> RunCargo {
+        self.extra.append(&mut extra);
+        self
+    }
+
     pub fn rustflags<S: Into<String>>(self, rustflags: S) -> RunCargo {
         RunCargo { rustflags: Some(rustflags.into()), ..self }
     }
@@ -100,7 +121,11 @@ impl RunCargo {
             cargo.arg(format!("+{}", toolchain));
         }
 
-        cargo.arg("build");
+        match self.subcommand {
+            Subcommand::Build => cargo.arg("build"),
+            Subcommand::Doc => cargo.arg("doc"),
+        };
+
         cargo.arg("--manifest-path").arg(self.manifest_dir.join("Cargo.toml"));
 
         if self.release {
@@ -128,6 +153,9 @@ impl RunCargo {
         if self.std_features.len() != 0 {
             cargo.arg(format!("-Zbuild-std-features={}", self.std_features.join(",")));
         }
+        if self.extra.len() != 0 {
+            cargo.args(&self.extra);
+        }
         if let Some(ref rustflags) = self.rustflags {
             cargo.env("RUSTFLAGS", rustflags);
         }
@@ -139,37 +167,41 @@ impl RunCargo {
             .then_some(())
             .ok_or(eyre!("Cargo invocation for crate {:?} failed", self.manifest_dir))?;
 
-        let artifact_path = if let Some(workspace) = self.workspace {
-            workspace
-                .join("target")
-                .join(match self.target {
-                    Target::Host => todo!(),
-                    Target::Triple(triple) => triple,
-                    Target::Custom { triple, spec: _spec } => triple,
-                })
-                .join(if self.release { "release" } else { "debug" })
-                .join(self.artifact_name)
+        let target_path = if let Some(workspace) = self.workspace {
+            workspace.join("target").join(match self.target {
+                Target::Host => todo!(),
+                Target::Triple(triple) => triple,
+                Target::Custom { triple, spec: _spec } => triple,
+            })
         } else {
-            self.manifest_dir
-                .join("target")
-                .join(match self.target {
-                    Target::Host => todo!(),
-                    Target::Triple(triple) => triple,
-                    Target::Custom { triple, spec: _spec } => triple,
-                })
-                .join(if self.release { "release" } else { "debug" })
-                .join(self.artifact_name)
+            self.manifest_dir.join("target").join(match self.target {
+                Target::Host => todo!(),
+                Target::Triple(triple) => triple,
+                Target::Custom { triple, spec: _spec } => triple,
+            })
         };
 
-        if self.flatten_result {
-            let binary_path = artifact_path.with_extension("bin");
-            // TODO: `cargo-binutils` does more complex logic to find this binary from the
-            // `llvm-tools` component. It's in our path for some reason, but that might not be true
-            // for everyone?
-            Command::new("llvm-objcopy").args(&["-O", "binary"]).arg(&artifact_path).arg(&binary_path).status()?;
-            Ok(binary_path)
-        } else {
-            Ok(artifact_path)
+        match self.subcommand {
+            Subcommand::Build => {
+                let artifact_path =
+                    target_path.join(if self.release { "release" } else { "debug" }).join(self.artifact_name);
+
+                if self.flatten_result {
+                    let binary_path = artifact_path.with_extension("bin");
+                    // TODO: `cargo-binutils` does more complex logic to find this binary from the
+                    // `llvm-tools` component. It's in our path for some reason, but that might not be true
+                    // for everyone?
+                    Command::new("llvm-objcopy")
+                        .args(&["-O", "binary"])
+                        .arg(&artifact_path)
+                        .arg(&binary_path)
+                        .status()?;
+                    Ok(binary_path)
+                } else {
+                    Ok(artifact_path)
+                }
+            }
+            Subcommand::Doc => Ok(target_path.join("doc")),
         }
     }
 }

@@ -41,6 +41,10 @@ xflags::xflags! {
             required path: PathBuf
         }
 
+        cmd doc {
+            required path: PathBuf
+        }
+
         cmd clean {}
     }
 }
@@ -112,6 +116,7 @@ pub enum TaskCmd {
     Boot(Boot),
     Opensbi(Opensbi),
     Devicetree(Devicetree),
+    Doc(Doc),
     Clean(Clean),
 }
 
@@ -150,6 +155,11 @@ pub struct Opensbi {
 
 #[derive(Debug)]
 pub struct Devicetree {
+    pub path: PathBuf,
+}
+
+#[derive(Debug)]
+pub struct Doc {
     pub path: PathBuf,
 }
 

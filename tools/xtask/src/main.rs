@@ -6,6 +6,7 @@
 
 mod cargo;
 mod config;
+mod doc;
 mod flags;
 mod image;
 mod ramdisk;
@@ -17,6 +18,7 @@ use crate::ramdisk::Ramdisk;
 use cargo::Target;
 use colored::Colorize;
 use config::{Config, Platform};
+use doc::DocGenerator;
 use eyre::{eyre, Result, WrapErr};
 use flags::{DistOptions, TaskCmd};
 use riscv::qemu::RunQemuRiscV;
@@ -104,6 +106,11 @@ fn main() -> Result<()> {
         }
 
         TaskCmd::Devicetree(flags) => compile_device_tree(&flags.path).map(|_| ()),
+
+        TaskCmd::Doc(flags) => {
+            let generator = DocGenerator::new(flags);
+            generator.generate()
+        }
 
         TaskCmd::Clean(_) => {
             clean(PathBuf::from("seed/"))?;
