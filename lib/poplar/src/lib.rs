@@ -13,6 +13,8 @@ pub mod ddk;
 #[cfg(feature = "can_alloc")]
 pub mod early_logger;
 pub mod memory_object;
+#[cfg(feature = "async")]
+pub mod rt;
 pub mod syscall;
 
 use core::num::TryFromIntError;
@@ -56,6 +58,8 @@ impl<'de> ptah::Deserialize<'de> for Handle {
     }
 }
 
+// TODO: I don't think rights are implemented at all are they? Work out if we want them / remove
+// this.
 bitflags::bitflags! {
     struct HandleRights: u32 {
         /// Whether the handle's owner can use it to modify the kernel object it points to. What is means to

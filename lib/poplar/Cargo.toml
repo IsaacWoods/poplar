@@ -14,9 +14,13 @@ log = { version = "0.4", optional = true }
 pci_types = { path = "../pci_types", optional = true }
 ptah = { path = "../ptah", optional = true, default-features = false }
 linked_list_allocator = { version = "0.10.5", optional = true, features = ["alloc_ref"] }
+poplar_util = { path = "../poplar_util" }
+maitake = { git = "https://github.com/hawkw/mycelium", optional = true, features = ["alloc", "tracing-02"] }
+spinning_top = "0.3.0"
 
 [features]
-default = ["can_alloc", "pci"]
+default = ["can_alloc", "pci", "async"]
 can_alloc = ["log", "ptah", "ptah/alloc", "ptah/derive"]
 pci = ["pci_types"]
 ddk = ["pci", "linked_list_allocator"]
+async = ["can_alloc", "maitake"]

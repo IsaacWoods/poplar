@@ -10,3 +10,4 @@ linked_list_allocator = "0.10.5"
 
 [features]
 ddk = ["poplar/ddk"]
+async = ["poplar/async"]

@@ -2,7 +2,7 @@ use crate::{
     syscall::{self, GetMessageError, RegisterServiceError, SendMessageError, CHANNEL_MAX_NUM_HANDLES},
     Handle,
 };
-use core::{marker::PhantomData, mem};
+use core::{future::Future, marker::PhantomData, mem, task::Poll};
 use ptah::{DeserializeOwned, Serialize};
 
 #[derive(Debug)]
@@ -57,6 +57,30 @@ where
             Err(GetMessageError::NoMessage) => Ok(None),
             Err(err) => Err(ChannelReceiveError::ReceiveError(err)),
         }
+    }
+
+    pub fn receive(&self) -> impl Future<Output = Result<R, ChannelReceiveError>> + '_ {
+        core::future::poll_fn(|context| {
+            let mut byte_buffer = [0u8; BYTES_BUFFER_SIZE];
+            let mut handle_buffer = [Handle::ZERO; CHANNEL_MAX_NUM_HANDLES];
+
+            match syscall::get_message(self.0, &mut byte_buffer, &mut handle_buffer) {
+                Ok((bytes, handles)) => {
+                    // TODO: this looks really bad, but is actually fine (since Handle is just a transparent wrapper
+                    // around a `u32`). There might be a better way.
+                    let ptah_handles: &[u32] = unsafe { mem::transmute(handles) };
+
+                    let message: R = ptah::from_wire(bytes, ptah_handles)
+                        .map_err(|err| ChannelReceiveError::FailedToDeserialize(err))?;
+                    Poll::Ready(Ok(message))
+                }
+                Err(GetMessageError::NoMessage) => {
+                    crate::rt::RUNTIME.get().reactor.lock().register(self.0, context.waker().clone());
+                    Poll::Pending
+                }
+                Err(err) => Poll::Ready(Err(ChannelReceiveError::ReceiveError(err))),
+            }
+        })
     }
 }
 
