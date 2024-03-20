@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":["handle_syscall","wait_for_event"]};
+window.SIDEBAR_ITEMS = {"fn":["handle_syscall","poll_interest","wait_for_event"]};
