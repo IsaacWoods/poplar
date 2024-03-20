@@ -38,6 +38,7 @@ pub const SYSCALL_REGISTER_SERVICE: usize = 9;
 pub const SYSCALL_SUBSCRIBE_TO_SERVICE: usize = 10;
 pub const SYSCALL_PCI_GET_INFO: usize = 11;
 pub const SYSCALL_WAIT_FOR_EVENT: usize = 12;
+pub const SYSCALL_POLL_INTEREST: usize = 13;
 
 pub fn yield_to_kernel() {
     unsafe {
@@ -213,4 +214,14 @@ define_error_type!(WaitForEventError {
 pub fn wait_for_event(event: Handle) -> Result<(), WaitForEventError> {
     let result = unsafe { raw::syscall1(SYSCALL_WAIT_FOR_EVENT, event.0 as usize) };
     status_from_syscall_repr(result)
+}
+
+define_error_type!(PollInterestError {
+    InvalidHandle => 1,
+});
+
+pub fn poll_interest(object: Handle) -> Result<bool, PollInterestError> {
+    let result = unsafe { raw::syscall1(SYSCALL_POLL_INTEREST, object.0 as usize) };
+    status_from_syscall_repr(result.get_bits(0..16))?;
+    Ok(result.get_bits(16..64) != 0)
 }

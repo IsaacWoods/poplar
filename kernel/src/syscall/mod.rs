@@ -8,6 +8,7 @@ use crate::{
         memory_object::MemoryObject,
         task::{Task, TaskState},
         KernelObject,
+        KernelObjectType,
     },
     scheduler::Scheduler,
     Platform,
@@ -29,6 +30,7 @@ use poplar::{
         MapMemoryObjectError,
         MemoryObjectFlags,
         PciGetInfoError,
+        PollInterestError,
         RegisterServiceError,
         SendMessageError,
         SubscribeToServiceError,
@@ -87,6 +89,7 @@ where
         syscall::SYSCALL_SUBSCRIBE_TO_SERVICE => handle_to_syscall_repr(subscribe_to_service(&task, a, b)),
         syscall::SYSCALL_PCI_GET_INFO => status_with_payload_to_syscall_repr(pci_get_info(&task, a, b)),
         syscall::SYSCALL_WAIT_FOR_EVENT => status_to_syscall_repr(wait_for_event(scheduler, &task, a)),
+        syscall::SYSCALL_POLL_INTEREST => status_with_payload_to_syscall_repr(poll_interest(&task, a)),
 
         _ => {
             warn!("Process made system call with invalid syscall number: {}", number);
@@ -588,4 +591,30 @@ where
     }
     assert_eq!(Ok(true), event.signalled.compare_exchange(true, false, Ordering::SeqCst, Ordering::SeqCst));
     Ok(())
+}
+
+pub fn poll_interest<P>(task: &Arc<Task<P>>, object_handle: usize) -> Result<usize, PollInterestError>
+where
+    P: Platform,
+{
+    let object_handle = Handle::try_from(object_handle).map_err(|_| PollInterestError::InvalidHandle)?;
+    let object = task.handles.read().get(&object_handle).ok_or(PollInterestError::InvalidHandle)?.clone();
+
+    let interesting = match object.typ() {
+        KernelObjectType::Channel => {
+            let channel = object.downcast_arc::<ChannelEnd>().ok().unwrap();
+            let messages = channel.messages.lock();
+            messages.len() > 0
+        }
+        KernelObjectType::Event => {
+            let event = object.downcast_arc::<Event>().ok().unwrap();
+            // TODO: should we clear this? I have no idea
+            event.signalled.load(Ordering::SeqCst)
+        }
+
+        // TODO: should this return an error instead?
+        _ => false,
+    };
+
+    Ok(if interesting { 1 << 16 } else { 0 })
 }

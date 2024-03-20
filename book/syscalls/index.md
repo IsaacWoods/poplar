@@ -25,6 +25,7 @@ a register.
 | `10`      | `subscribe_to_service`    | Create a channel to a particular service provider.                    |
 | `11`      | `pci_get_info`            | Get information about the PCI devices on the platform.                |
 | `12`      | `wait_for_event`          | Yield to the kernel until an event is signalled                       |
+| `13`      | `poll_interest`           | Poll a kernel object to see if changes need to be processed. TODO: this is an experiment and may not continue to exist. |
 
 ### Making a system call on x86_64
 To make a system call on x86_64, populate these registers:

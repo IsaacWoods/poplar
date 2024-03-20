@@ -13,7 +13,7 @@ use tracing::warn;
 pub struct ChannelEnd {
     pub id: KernelObjectId,
     pub owner: KernelObjectId,
-    messages: Spinlock<VecDeque<Message>>,
+    pub messages: Spinlock<VecDeque<Message>>,
     /// The other end of the channel. If this is `None`, the channel's messages come from the kernel.
     other_end: Option<Weak<ChannelEnd>>,
 }
