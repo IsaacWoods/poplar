@@ -1,4 +1,4 @@
-use super::{KernelObject, KernelObjectId};
+use super::{KernelObject, KernelObjectId, KernelObjectType};
 use alloc::sync::Arc;
 use core::sync::atomic::{AtomicBool, Ordering};
 
@@ -27,5 +27,9 @@ impl Event {
 impl KernelObject for Event {
     fn id(&self) -> KernelObjectId {
         self.id
+    }
+
+    fn typ(&self) -> KernelObjectType {
+        KernelObjectType::Event
     }
 }

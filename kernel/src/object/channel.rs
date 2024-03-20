@@ -1,4 +1,4 @@
-use super::{alloc_kernel_object_id, KernelObject, KernelObjectId};
+use super::{alloc_kernel_object_id, KernelObject, KernelObjectId, KernelObjectType};
 use alloc::{
     collections::VecDeque,
     fmt,
@@ -97,6 +97,10 @@ impl ChannelEnd {
 impl KernelObject for ChannelEnd {
     fn id(&self) -> KernelObjectId {
         self.id
+    }
+
+    fn typ(&self) -> KernelObjectType {
+        KernelObjectType::Channel
     }
 }
 

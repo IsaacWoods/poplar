@@ -1,4 +1,4 @@
-use super::{alloc_kernel_object_id, memory_object::MemoryObject, KernelObject, KernelObjectId};
+use super::{alloc_kernel_object_id, memory_object::MemoryObject, KernelObject, KernelObjectId, KernelObjectType};
 use crate::{
     memory::{PhysicalMemoryManager, Stack},
     Platform,
@@ -139,5 +139,9 @@ where
 {
     fn id(&self) -> KernelObjectId {
         self.id
+    }
+
+    fn typ(&self) -> KernelObjectType {
+        KernelObjectType::AddressSpace
     }
 }

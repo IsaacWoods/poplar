@@ -4,6 +4,7 @@ use super::{
     event::Event,
     KernelObject,
     KernelObjectId,
+    KernelObjectType,
 };
 use crate::{
     memory::{KernelStackAllocator, PhysicalMemoryManager, Stack},
@@ -158,6 +159,10 @@ where
 {
     fn id(&self) -> KernelObjectId {
         self.id
+    }
+
+    fn typ(&self) -> KernelObjectType {
+        KernelObjectType::Task
     }
 }
 

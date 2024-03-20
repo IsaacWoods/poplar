@@ -1,4 +1,4 @@
-use super::{alloc_kernel_object_id, KernelObject, KernelObjectId};
+use super::{alloc_kernel_object_id, KernelObject, KernelObjectId, KernelObjectType};
 use alloc::sync::Arc;
 use hal::memory::{Flags, PAddr};
 use seed::boot_info::Segment;
@@ -32,5 +32,9 @@ impl MemoryObject {
 impl KernelObject for MemoryObject {
     fn id(&self) -> KernelObjectId {
         self.id
+    }
+
+    fn typ(&self) -> KernelObjectType {
+        KernelObjectType::MemoryObject
     }
 }

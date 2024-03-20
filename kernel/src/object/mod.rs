@@ -24,12 +24,22 @@ pub fn alloc_kernel_object_id() -> KernelObjectId {
     KernelObjectId(KERNEL_OBJECT_ID_COUNTER.fetch_add(1, Ordering::Relaxed))
 }
 
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+pub enum KernelObjectType {
+    AddressSpace,
+    Task,
+    MemoryObject,
+    Channel,
+    Event,
+}
+
 /// This trait should be implemented by all types that implement kernel objects, and allows common code to
 /// be generic over all kernel objects. Kernel objects are generally handled as `Arc<T>` where `T` is the type
 /// implementing `KernelObject`, and so interior mutability should be used for data that needs to be mutable within
 /// the kernel object.
 pub trait KernelObject: DowncastSync {
     fn id(&self) -> KernelObjectId;
+    fn typ(&self) -> KernelObjectType;
     // fn owner(&self) -> KernelObjectId;
 }
 
