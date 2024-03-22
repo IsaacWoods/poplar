@@ -37,6 +37,7 @@ use std::{
         syscall::MemoryObjectFlags,
         Handle,
     },
+    sync::Arc,
 };
 use usb::{
     descriptor::{ConfigurationDescriptor, DescriptorType, DeviceDescriptor},
@@ -49,7 +50,7 @@ pub struct Controller {
     free_addresses: Vec<u8>,
     schedule_pool: DmaPool,
     active_devices: BTreeMap<u8, ActiveDevice>,
-    platform_bus_bus_channel: Channel<BusDriverMessage, !>,
+    platform_bus_bus_channel: Arc<Channel<BusDriverMessage, !>>,
     interrupt_event: Handle,
 }
 
@@ -60,7 +61,7 @@ pub struct ActiveDevice {
 impl Controller {
     pub fn new(
         register_base: usize,
-        platform_bus_bus_channel: Channel<BusDriverMessage, !>,
+        platform_bus_bus_channel: Arc<Channel<BusDriverMessage, !>>,
         interrupt_event: Handle,
     ) -> Controller {
         let caps = Capabilities::read_from_registers(register_base);
@@ -379,6 +380,8 @@ impl Controller {
         self.platform_bus_bus_channel
             .send(&BusDriverMessage::RegisterDevice(name, device_info, handoff_info))
             .unwrap();
+
+        // TODO: create a channel for the device to talk to us via and spawn a task to listen to it
     }
 
     pub fn add_to_async_schedule(&mut self, queue: &mut Queue) {
@@ -492,6 +495,8 @@ fn main() {
     log::set_max_level(log::LevelFilter::Trace);
     info!("EHCI USB Bus Driver is running!");
 
+    std::poplar::rt::init_runtime();
+
     // This allows us to talk to the PlatformBus as a bus driver (to register USB devices).
     let platform_bus_bus_channel: Arc<Channel<BusDriverMessage, !>> =
         Arc::new(Channel::subscribe_to_service("platform_bus.bus_driver").unwrap());
@@ -508,48 +513,52 @@ fn main() {
         ]))
         .unwrap();
 
-    // TODO: we currently only support one controller, and just stop listening after we find the first one
-    // TODO: probably don't bother changing this until we have a futures-based message interface
-    let (_device_info, handoff_info) = loop {
-        match platform_bus_device_channel.try_receive().unwrap() {
-            Some(DeviceDriverRequest::QuerySupport(device_name, _device_info)) => {
-                platform_bus_device_channel.send(&DeviceDriverMessage::CanSupport(device_name, true)).unwrap();
+    // Spawn a task to listen for new controllers to drive
+    std::poplar::rt::spawn(async move {
+        loop {
+            match platform_bus_device_channel.receive().await.unwrap() {
+                DeviceDriverRequest::QuerySupport(device_name, _device_info) => {
+                    /*
+                     * Our filters are specific enough that any device that matches should be an
+                     * EHCI controller, so we always say we'll support it here.
+                     */
+                    platform_bus_device_channel.send(&DeviceDriverMessage::CanSupport(device_name, true)).unwrap();
+                }
+                DeviceDriverRequest::HandoffDevice(device_name, device_info, handoff_info) => {
+                    info!("Started driving a EHCI controller: {}", device_name);
+
+                    let register_space_size = handoff_info.get_as_integer("pci.bar0.size").unwrap() as usize;
+
+                    // TODO: let the kernel choose the address when it can - we don't care
+                    // TODO: this trusts the data from the platform_bus. Maybe we shouldn't do that? One
+                    // idea would be a syscall for querying info about the object?
+                    let register_space = MemoryObject {
+                        handle: handoff_info.get_as_memory_object("pci.bar0.handle").unwrap(),
+                        size: register_space_size,
+                        flags: MemoryObjectFlags::WRITABLE,
+                        phys_address: None,
+                    };
+                    const REGISTER_SPACE_ADDRESS: usize = 0x00000005_00000000;
+                    unsafe {
+                        register_space.map_at(REGISTER_SPACE_ADDRESS).unwrap();
+                    }
+
+                    let mut controller = Controller::new(
+                        REGISTER_SPACE_ADDRESS,
+                        platform_bus_bus_channel.clone(),
+                        handoff_info.get_as_event("pci.interrupt").unwrap(),
+                    );
+                    controller.initialize();
+                    controller.check_ports();
+
+                    // TODO: spawn task to listen for interrupts from the controller and respond to
+                    // them
+                }
             }
-            Some(DeviceDriverRequest::HandoffDevice(device_name, device_info, handoff_info)) => {
-                info!("Started driving a EHCI controller: {}", device_name);
-                break (device_info, handoff_info);
-            }
-            None => syscall::yield_to_kernel(),
         }
-    };
+    });
 
-    let register_space_size = handoff_info.get_as_integer("pci.bar0.size").unwrap() as usize;
-
-    // TODO: let the kernel choose the address when it can - we don't care
-    // TODO: this trusts the data from the platform_bus. Maybe we shouldn't do that? One
-    // idea would be a syscall for querying info about the object?
-    let register_space = MemoryObject {
-        handle: handoff_info.get_as_memory_object("pci.bar0.handle").unwrap(),
-        size: register_space_size,
-        flags: MemoryObjectFlags::WRITABLE,
-        phys_address: None,
-    };
-    const REGISTER_SPACE_ADDRESS: usize = 0x00000005_00000000;
-    unsafe {
-        register_space.map_at(REGISTER_SPACE_ADDRESS).unwrap();
-    }
-
-    let mut controller = Controller::new(
-        REGISTER_SPACE_ADDRESS,
-        platform_bus_bus_channel,
-        handoff_info.get_as_event("pci.interrupt").unwrap(),
-    );
-    controller.initialize();
-    controller.check_ports();
-
-    loop {
-        std::poplar::syscall::yield_to_kernel();
-    }
+    std::poplar::rt::enter_loop();
 }
 
 #[used]
