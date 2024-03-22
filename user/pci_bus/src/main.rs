@@ -19,10 +19,9 @@ pub fn main() {
     log::set_max_level(log::LevelFilter::Trace);
     info!("PCI bus driver is running!");
 
-    let platform_bus_channel: Channel<BusDriverMessage, !> = Channel::from_handle(
-        syscall::subscribe_to_service("platform_bus.bus_driver")
-            .expect("Couldn't subscribe to platform_bus.bus_driver service!"),
-    );
+    let platform_bus_channel: Channel<BusDriverMessage, !> =
+        Channel::subscribe_to_service("platform_bus.bus_driver")
+            .expect("Couldn't subscribe to platform_bus.bus_driver service!");
 
     let mut descriptors = syscall::pci_get_info_vec().expect("Failed to get PCI descriptors");
     for descriptor in descriptors.drain(..) {
