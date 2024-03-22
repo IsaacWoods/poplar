@@ -34,7 +34,7 @@ use std::{
         ddk::dma::{DmaObject, DmaPool},
         early_logger::EarlyLogger,
         memory_object::MemoryObject,
-        syscall::{self, MemoryObjectFlags},
+        syscall::MemoryObjectFlags,
         Handle,
     },
 };
@@ -493,11 +493,11 @@ fn main() {
     info!("EHCI USB Bus Driver is running!");
 
     // This allows us to talk to the PlatformBus as a bus driver (to register USB devices).
-    let platform_bus_bus_channel: Channel<BusDriverMessage, !> =
-        Channel::from_handle(syscall::subscribe_to_service("platform_bus.bus_driver").unwrap());
+    let platform_bus_bus_channel: Arc<Channel<BusDriverMessage, !>> =
+        Arc::new(Channel::subscribe_to_service("platform_bus.bus_driver").unwrap());
     // This allows us to talk to the PlatformBus as a device driver (to find controllers we can manage).
     let platform_bus_device_channel: Channel<DeviceDriverMessage, DeviceDriverRequest> =
-        Channel::from_handle(syscall::subscribe_to_service("platform_bus.device_driver").unwrap());
+        Channel::subscribe_to_service("platform_bus.device_driver").unwrap();
 
     // Tell PlatformBus that we're interested in EHCI controllers.
     platform_bus_device_channel

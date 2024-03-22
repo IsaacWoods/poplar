@@ -136,7 +136,7 @@ pub fn main() {
                 let bus_driver_handle = bus_driver_service_channel.receive().await.unwrap();
 
                 info!("Bus driver subscribed to PlatformBus!");
-                let channel = Arc::new(Channel::from_handle(bus_driver_handle));
+                let channel = Arc::new(Channel::new_from_handle(bus_driver_handle));
                 let bus_driver_index = platform_bus.register_bus_driver(channel.clone());
 
                 /*
@@ -172,7 +172,7 @@ pub fn main() {
             let device_driver_handle = device_driver_service_channel.receive().await.unwrap();
 
             info!("Device driver subscribed to PlatformBus!");
-            let channel = Arc::new(Channel::from_handle(device_driver_handle));
+            let channel = Arc::new(Channel::new_from_handle(device_driver_handle));
             let device_driver_index = platform_bus.register_device_driver(channel.clone());
 
             /*

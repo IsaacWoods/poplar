@@ -1,5 +1,12 @@
 use crate::{
-    syscall::{self, GetMessageError, RegisterServiceError, SendMessageError, CHANNEL_MAX_NUM_HANDLES},
+    syscall::{
+        self,
+        GetMessageError,
+        RegisterServiceError,
+        SendMessageError,
+        SubscribeToServiceError,
+        CHANNEL_MAX_NUM_HANDLES,
+    },
     Handle,
 };
 use core::{future::Future, marker::PhantomData, mem, task::Poll};
@@ -27,8 +34,13 @@ where
     S: Serialize + DeserializeOwned,
     R: Serialize + DeserializeOwned,
 {
-    pub fn from_handle(handle: Handle) -> Channel<S, R> {
+    pub fn new_from_handle(handle: Handle) -> Channel<S, R> {
         Channel(handle, PhantomData)
+    }
+
+    pub fn subscribe_to_service(name: &str) -> Result<Channel<S, R>, SubscribeToServiceError> {
+        let handle = syscall::subscribe_to_service(name)?;
+        Ok(Self::new_from_handle(handle))
     }
 
     pub fn send(&self, message: &S) -> Result<(), ChannelSendError> {
@@ -86,7 +98,7 @@ where
 
 impl Channel<!, Handle> {
     pub fn register_service(name: &str) -> Result<Channel<!, Handle>, RegisterServiceError> {
-        Ok(Self::from_handle(syscall::register_service(name)?))
+        Ok(Self::new_from_handle(syscall::register_service(name)?))
     }
 }
 
