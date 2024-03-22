@@ -325,10 +325,8 @@ impl MemoryManager {
 }
 
 impl FrameAllocator<Size4KiB> for MemoryManager {
-    // TODO: this doesn't currently remove empty regions, they just sit at 0 frames - I don't think this is a
-    // problem tbh
     fn allocate_n(&self, n: usize) -> Range<Frame<Size4KiB>> {
-        let inner = self.0.lock();
+        let mut inner = self.0.lock();
         let mut current_node = inner.usable_head;
 
         while let Some(node) = current_node {
@@ -338,6 +336,16 @@ impl FrameAllocator<Size4KiB> for MemoryManager {
 
                 // Allocate from the end of the region so we don't need to alter the node pointers
                 inner_node.size -= n * Size4KiB::SIZE;
+
+                /*
+                 * If we've exhausted this region, move to the next one (the current node's memory
+                 * is invalidated when we return the last frame of this region, which holds the
+                 * list entry).
+                 */
+                if inner_node.size == 0 {
+                    inner.usable_head = inner_node.next;
+                }
+
                 return Frame::starts_with(PAddr::new(start_addr + inner_node.size).unwrap())
                     ..Frame::starts_with(PAddr::new(start_addr + inner_node.size + n * Size4KiB::SIZE).unwrap());
             }
