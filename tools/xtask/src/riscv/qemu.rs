@@ -80,6 +80,8 @@ impl RunQemuRiscV {
 
         qemu.args(&["-global", "virtio-mmio.force-legacy=false"]);
 
+        qemu.args(&["-device", "virtio-gpu"]);
+
         if let Some(disk_image) = self.disk_image {
             // Add the disk image as an NVME device
             qemu.args(&["-drive", &format!("id=disk0,format=raw,if=none,file={}", disk_image.to_str().unwrap())]);

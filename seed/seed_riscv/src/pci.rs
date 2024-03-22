@@ -12,7 +12,7 @@ use pci_types::{
     PciAddress,
     PciHeader,
 };
-use tracing::info;
+use tracing::{info, trace};
 
 pub struct PciResolver {
     ecam_base: *const u8,
@@ -182,6 +182,7 @@ impl PciResolver {
                                 })
                                 .expect("Failed to allocate memory for BAR");
                             unsafe {
+                                trace!("Allocating memory at {:#x} for BAR {} of device", address, i);
                                 endpoint_header.write_bar(i as u8, self, address).unwrap();
                             }
                         }
@@ -254,7 +255,7 @@ struct HostMemoryRange {
     reg: u8,
     cpu_base: usize,
     cpu_size: usize,
-    cursor: usize,
+    offset: usize,
 }
 
 impl HostMemoryRange {
@@ -265,17 +266,17 @@ impl HostMemoryRange {
         cpu_base: usize,
         cpu_size: usize,
     ) -> HostMemoryRange {
-        HostMemoryRange { space, address, reg, cpu_base, cpu_size, cursor: 0 }
+        HostMemoryRange { space, address, reg, cpu_base, cpu_size, offset: 0 }
     }
 
     pub fn allocate(&mut self, size: usize, alignment: usize) -> Option<usize> {
-        let padding = alignment.wrapping_sub(self.cursor) & (alignment - 1);
-        if (size + padding) > (self.cpu_size - self.cursor) {
+        let padding = alignment.wrapping_sub(self.offset) & (alignment - 1);
+        if (size + padding) > (self.cpu_size - self.offset) {
             return None;
         }
 
-        let base = self.cpu_base + self.cursor + padding;
-        self.cursor = base + size;
+        let base = self.cpu_base + self.offset + padding;
+        self.offset += size;
 
         Some(base)
     }
