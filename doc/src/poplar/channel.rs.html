@@ -149,8 +149,27 @@
 <a href="#147" id="147">147</a>
 <a href="#148" id="148">148</a>
 <a href="#149" id="149">149</a>
+<a href="#150" id="150">150</a>
+<a href="#151" id="151">151</a>
+<a href="#152" id="152">152</a>
+<a href="#153" id="153">153</a>
+<a href="#154" id="154">154</a>
+<a href="#155" id="155">155</a>
+<a href="#156" id="156">156</a>
+<a href="#157" id="157">157</a>
+<a href="#158" id="158">158</a>
+<a href="#159" id="159">159</a>
+<a href="#160" id="160">160</a>
+<a href="#161" id="161">161</a>
 </pre></div><pre class="rust"><code><span class="kw">use crate</span>::{
-    syscall::{<span class="self">self</span>, GetMessageError, RegisterServiceError, SendMessageError, CHANNEL_MAX_NUM_HANDLES},
+    syscall::{
+        <span class="self">self</span>,
+        GetMessageError,
+        RegisterServiceError,
+        SendMessageError,
+        SubscribeToServiceError,
+        CHANNEL_MAX_NUM_HANDLES,
+    },
     Handle,
 };
 <span class="kw">use </span>core::{future::Future, marker::PhantomData, mem, task::Poll};
@@ -178,8 +197,13 @@
     </span>S: Serialize + DeserializeOwned,
     R: Serialize + DeserializeOwned,
 {
-    <span class="kw">pub fn </span>from_handle(handle: Handle) -&gt; Channel&lt;S, R&gt; {
+    <span class="kw">pub fn </span>new_from_handle(handle: Handle) -&gt; Channel&lt;S, R&gt; {
         Channel(handle, PhantomData)
+    }
+
+    <span class="kw">pub fn </span>subscribe_to_service(name: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Result</span>&lt;Channel&lt;S, R&gt;, SubscribeToServiceError&gt; {
+        <span class="kw">let </span>handle = syscall::subscribe_to_service(name)<span class="question-mark">?</span>;
+        <span class="prelude-val">Ok</span>(<span class="self">Self</span>::new_from_handle(handle))
     }
 
     <span class="kw">pub fn </span>send(<span class="kw-2">&amp;</span><span class="self">self</span>, message: <span class="kw-2">&amp;</span>S) -&gt; <span class="prelude-ty">Result</span>&lt;(), ChannelSendError&gt; {
@@ -237,7 +261,7 @@
 
 <span class="kw">impl </span>Channel&lt;!, Handle&gt; {
     <span class="kw">pub fn </span>register_service(name: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Result</span>&lt;Channel&lt;!, Handle&gt;, RegisterServiceError&gt; {
-        <span class="prelude-val">Ok</span>(<span class="self">Self</span>::from_handle(syscall::register_service(name)<span class="question-mark">?</span>))
+        <span class="prelude-val">Ok</span>(<span class="self">Self</span>::new_from_handle(syscall::register_service(name)<span class="question-mark">?</span>))
     }
 }
 

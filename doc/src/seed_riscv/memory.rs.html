@@ -370,6 +370,14 @@
 <a href="#368" id="368">368</a>
 <a href="#369" id="369">369</a>
 <a href="#370" id="370">370</a>
+<a href="#371" id="371">371</a>
+<a href="#372" id="372">372</a>
+<a href="#373" id="373">373</a>
+<a href="#374" id="374">374</a>
+<a href="#375" id="375">375</a>
+<a href="#376" id="376">376</a>
+<a href="#377" id="377">377</a>
+<a href="#378" id="378">378</a>
 </pre></div><pre class="rust"><code><span class="comment">/*
  * Copyright 2022, Isaac Woods
  * SPDX-License-Identifier: MPL-2.0
@@ -697,10 +705,8 @@
 }
 
 <span class="kw">impl </span>FrameAllocator&lt;Size4KiB&gt; <span class="kw">for </span>MemoryManager {
-    <span class="comment">// TODO: this doesn't currently remove empty regions, they just sit at 0 frames - I don't think this is a
-    // problem tbh
-    </span><span class="kw">fn </span>allocate_n(<span class="kw-2">&amp;</span><span class="self">self</span>, n: usize) -&gt; Range&lt;Frame&lt;Size4KiB&gt;&gt; {
-        <span class="kw">let </span>inner = <span class="self">self</span>.<span class="number">0</span>.lock();
+    <span class="kw">fn </span>allocate_n(<span class="kw-2">&amp;</span><span class="self">self</span>, n: usize) -&gt; Range&lt;Frame&lt;Size4KiB&gt;&gt; {
+        <span class="kw">let </span><span class="kw-2">mut </span>inner = <span class="self">self</span>.<span class="number">0</span>.lock();
         <span class="kw">let </span><span class="kw-2">mut </span>current_node = inner.usable_head;
 
         <span class="kw">while let </span><span class="prelude-val">Some</span>(node) = current_node {
@@ -710,6 +716,16 @@
 
                 <span class="comment">// Allocate from the end of the region so we don't need to alter the node pointers
                 </span>inner_node.size -= n * Size4KiB::SIZE;
+
+                <span class="comment">/*
+                 * If we've exhausted this region, move to the next one (the current node's memory
+                 * is invalidated when we return the last frame of this region, which holds the
+                 * list entry).
+                 */
+                </span><span class="kw">if </span>inner_node.size == <span class="number">0 </span>{
+                    inner.usable_head = inner_node.next;
+                }
+
                 <span class="kw">return </span>Frame::starts_with(PAddr::new(start_addr + inner_node.size).unwrap())
                     ..Frame::starts_with(PAddr::new(start_addr + inner_node.size + n * Size4KiB::SIZE).unwrap());
             }
