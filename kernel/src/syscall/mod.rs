@@ -22,6 +22,7 @@ use poplar::{
     syscall::{
         self,
         result::{handle_to_syscall_repr, status_to_syscall_repr, status_with_payload_to_syscall_repr},
+        CreateChannelError,
         CreateMemoryObjectError,
         EarlyLogError,
         FramebufferInfo,
@@ -81,7 +82,7 @@ where
         syscall::SYSCALL_GET_FRAMEBUFFER => handle_to_syscall_repr(get_framebuffer(&task, a)),
         syscall::SYSCALL_CREATE_MEMORY_OBJECT => handle_to_syscall_repr(create_memory_object(&task, a, b, c)),
         syscall::SYSCALL_MAP_MEMORY_OBJECT => status_to_syscall_repr(map_memory_object(&task, a, b, c, d)),
-        syscall::SYSCALL_CREATE_CHANNEL => todo!(),
+        syscall::SYSCALL_CREATE_CHANNEL => handle_to_syscall_repr(create_channel(&task, a)),
         syscall::SYSCALL_SEND_MESSAGE => status_to_syscall_repr(send_message(&task, a, b, c, d, e)),
         syscall::SYSCALL_GET_MESSAGE => status_with_payload_to_syscall_repr(get_message(&task, a, b, c, d, e)),
         syscall::SYSCALL_WAIT_FOR_MESSAGE => todo!(),
@@ -260,6 +261,20 @@ where
     }
 
     Ok(())
+}
+
+fn create_channel<P>(task: &Arc<Task<P>>, other_end_address: usize) -> Result<Handle, CreateChannelError>
+where
+    P: Platform,
+{
+    let (end_a, end_b) = ChannelEnd::new_channel(task.id());
+    let end_a_handle = task.add_handle(end_a);
+    let end_b_handle = task.add_handle(end_b);
+
+    let mut other_end_ptr = UserPointer::new(other_end_address as *mut Handle, true);
+    other_end_ptr.validate_write(end_b_handle).map_err(|()| CreateChannelError::InvalidHandleAddress)?;
+
+    Ok(end_a_handle)
 }
 
 fn send_message<P>(

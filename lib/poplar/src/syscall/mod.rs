@@ -3,6 +3,8 @@ pub mod get_framebuffer;
 pub mod pci;
 pub mod result;
 
+use core::mem::MaybeUninit;
+
 pub use get_framebuffer::{get_framebuffer, FramebufferInfo, GetFramebufferError, PixelFormat};
 #[cfg(all(feature = "can_alloc", feature = "pci"))]
 pub use pci::pci_get_info_vec;
@@ -108,6 +110,18 @@ pub unsafe fn map_memory_object(
             address_pointer as usize,
         )
     })
+}
+
+define_error_type!(CreateChannelError {
+    InvalidHandleAddress => 1,
+});
+
+pub fn create_channel() -> Result<(Handle, Handle), CreateChannelError> {
+    let mut other_end: MaybeUninit<Handle> = MaybeUninit::uninit();
+    let one_end = handle_from_syscall_repr(unsafe {
+        raw::syscall1(SYSCALL_CREATE_CHANNEL, other_end.as_mut_ptr() as usize)
+    })?;
+    Ok((one_end, unsafe { other_end.assume_init() }))
 }
 
 pub const CHANNEL_MAX_NUM_BYTES: usize = 4096;

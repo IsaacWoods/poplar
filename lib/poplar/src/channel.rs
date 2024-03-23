@@ -1,6 +1,7 @@
 use crate::{
     syscall::{
         self,
+        CreateChannelError,
         GetMessageError,
         RegisterServiceError,
         SendMessageError,
@@ -36,6 +37,13 @@ where
 {
     pub fn new_from_handle(handle: Handle) -> Channel<S, R> {
         Channel(handle, PhantomData)
+    }
+
+    /// Create a new channel. Returns one end as a `Channel`, and a `Handle` for the other end.
+    /// Generally, the handle
+    pub fn create() -> Result<(Channel<S, R>, Handle), CreateChannelError> {
+        let (this_end, other_end) = syscall::create_channel()?;
+        Ok((Self::new_from_handle(this_end), other_end))
     }
 
     pub fn subscribe_to_service(name: &str) -> Result<Channel<S, R>, SubscribeToServiceError> {
