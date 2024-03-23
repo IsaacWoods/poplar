@@ -6,4 +6,7 @@ pub mod setup;
 
 use ptah::{Serialize, Deserialize};
 
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub enum DeviceControlMessage {
+    UseConfiguration(u8),
 }

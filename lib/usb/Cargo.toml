@@ -7,3 +7,4 @@ edition = "2021"
 [dependencies]
 bit_field = "0.10.2"
 mycelium-bitfield = "0.1.5"
+ptah = { path = "../ptah/", features = ["derive"] }

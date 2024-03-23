@@ -90,7 +90,7 @@ version = "0.10.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9afa463f5405ee81cdb9cc2baf37e08ec7e4c8209442b5d72c04cfb2cd6e6286"
 dependencies = [
- "spinning_top",
+ "spinning_top 0.2.5",
 ]
 
 [[package]]
@@ -191,6 +191,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "num-traits"
+version = "0.2.18"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "da0df0e5185db44f69b44f26786fe401b6c293d1907744beaa7fa62b2e5a517a"
+dependencies = [
+ "autocfg",
+]
+
+[[package]]
 name = "once_cell"
 version = "1.19.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -204,7 +213,7 @@ checksum = "b15813163c1d831bf4a13c3610c05c0d03b39feb07f7e09fa234dac9b15aaf39"
 
 [[package]]
 name = "pci_types"
-version = "0.6.1"
+version = "0.6.2"
 dependencies = [
  "bit_field",
  "bitflags",
@@ -247,7 +256,18 @@ dependencies = [
  "log",
  "maitake",
  "pci_types",
+ "poplar_util",
  "ptah",
+ "spinning_top 0.3.0",
+]
+
+[[package]]
+name = "poplar_util"
+version = "0.1.0"
+dependencies = [
+ "bit_field",
+ "cfg-if 0.1.10",
+ "num-traits",
 ]
 
 [[package]]
@@ -374,6 +394,15 @@ name = "spinning_top"
 version = "0.2.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5b9eb1a2f4c41445a3a0ff9abc5221c5fcd28e1f13cd7c0397706f9ac938ddb0"
+dependencies = [
+ "lock_api",
+]
+
+[[package]]
+name = "spinning_top"
+version = "0.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d96d2d1d716fb500937168cc09353ffdc7a012be8475ac7308e1bdf0e3923300"
 dependencies = [
  "lock_api",
 ]

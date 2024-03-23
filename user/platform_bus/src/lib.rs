@@ -70,6 +70,10 @@ impl HandoffInfo {
     pub fn get_as_event(&self, name: &str) -> Option<Handle> {
         self.0.get(name)?.as_event()
     }
+
+    pub fn get_as_channel(&self, name: &str) -> Option<Handle> {
+        self.0.get(name)?.as_channel()
+    }
 }
 
 #[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize)]
@@ -118,6 +122,7 @@ pub enum HandoffProperty {
     Bytes(Vec<u8>),
     MemoryObject(Handle),
     Event(Handle),
+    Channel(Handle),
 }
 
 impl HandoffProperty {
@@ -159,6 +164,13 @@ impl HandoffProperty {
     pub fn as_event(&self) -> Option<Handle> {
         match self {
             HandoffProperty::Event(value) => Some(*value),
+            _ => None,
+        }
+    }
+
+    pub fn as_channel(&self) -> Option<Handle> {
+        match self {
+            HandoffProperty::Channel(value) => Some(*value),
             _ => None,
         }
     }

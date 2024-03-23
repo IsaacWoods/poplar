@@ -7,7 +7,7 @@ use std::poplar::{
     channel::Channel,
     early_logger::EarlyLogger,
 };
-use usb::descriptor::InterfaceDescriptor;
+use usb::{descriptor::InterfaceDescriptor, DeviceControlMessage};
 
 pub fn main() {
     log::set_logger(&EarlyLogger).unwrap();
@@ -66,6 +66,12 @@ pub fn main() {
                 }
                 DeviceDriverRequest::HandoffDevice(device_name, device_info, handoff_info) => {
                     info!("Started driving HID device '{}'", device_name);
+
+                    // Test the device channel
+                    let device_channel: Channel<DeviceControlMessage, ()> =
+                        Channel::new_from_handle(handoff_info.get_as_channel("usb.channel").unwrap());
+                    device_channel.send(&DeviceControlMessage::UseConfiguration(0)).unwrap();
+
                     // TODO: do something with the device
                 }
             }

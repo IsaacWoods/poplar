@@ -22,6 +22,7 @@ use platform_bus::{
     DeviceInfo,
     Filter,
     HandoffInfo,
+    HandoffProperty,
     Property,
 };
 use queue::HorizontalLinkPtr;
@@ -42,6 +43,7 @@ use std::{
 use usb::{
     descriptor::{ConfigurationDescriptor, DescriptorType, DeviceDescriptor},
     setup::{Direction, Recipient, Request, RequestType, RequestTypeType, SetupPacket},
+    DeviceControlMessage,
 };
 
 pub struct Controller {
@@ -373,15 +375,23 @@ impl Controller {
             properties.insert("usb.config0".to_string(), Property::Bytes(config0));
             DeviceInfo(properties)
         };
+        let (device_channel, device_channel_handle) =
+            Channel::<(), DeviceControlMessage>::create().unwrap();
         let handoff_info = {
-            let properties = BTreeMap::new();
+            let mut properties = BTreeMap::new();
+            properties.insert("usb.channel".to_string(), HandoffProperty::Channel(device_channel_handle));
             HandoffInfo(properties)
         };
         self.platform_bus_bus_channel
             .send(&BusDriverMessage::RegisterDevice(name, device_info, handoff_info))
             .unwrap();
 
-        // TODO: create a channel for the device to talk to us via and spawn a task to listen to it
+        std::poplar::rt::spawn(async move {
+            loop {
+                let message = device_channel.receive().await.unwrap();
+                info!("Message down device channel: {:?}", message);
+            }
+        });
     }
 
     pub fn add_to_async_schedule(&mut self, queue: &mut Queue) {
