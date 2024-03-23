@@ -14,6 +14,8 @@ pub fn main() {
     log::set_max_level(log::LevelFilter::Trace);
     info!("USB HID Driver is running!");
 
+    std::poplar::rt::init_runtime();
+
     // This allows us to talk to the PlatformBus as a bus driver (to register our abstract devices).
     let platform_bus_bus_channel: Channel<BusDriverMessage, !> =
         Channel::subscribe_to_service("platform_bus.bus_driver").unwrap();
@@ -31,47 +33,46 @@ pub fn main() {
         ]))
         .unwrap();
 
-    // TODO: we need to be able to support multiple devices, so this needs to be spawned as a task
-    // that loops round listening permanently
-    let (_device_info, _handoff_info) = loop {
-        match platform_bus_device_channel.try_receive().unwrap() {
-            Some(DeviceDriverRequest::QuerySupport(device_name, device_info)) => {
-                info!("Platform bus asked if we can support device {} with info {:?}", device_name, device_info);
-                // TODO: consider each config if multiple?
-                let configuration = device_info.get_as_bytes("usb.config0").unwrap();
-                info!("USB config: {:x?}", configuration);
+    std::poplar::rt::spawn(async move {
+        loop {
+            match platform_bus_device_channel.receive().await.unwrap() {
+                DeviceDriverRequest::QuerySupport(device_name, device_info) => {
+                    info!(
+                        "Platform bus asked if we can support device {} with info {:?}",
+                        device_name, device_info
+                    );
+                    // TODO: consider each config if multiple?
+                    let configuration = device_info.get_as_bytes("usb.config0").unwrap();
+                    info!("USB config: {:x?}", configuration);
 
-                struct Visitor(pub bool);
-                impl usb::ConfigurationVisitor for Visitor {
-                    fn visit_interface(&mut self, descriptor: &InterfaceDescriptor) {
-                        // Check if this interface indicates a HID class device
-                        if descriptor.interface_class == 3 {
-                            info!("Found a HID class interface!");
-                            self.0 = true;
+                    struct Visitor(pub bool);
+                    impl usb::descriptor::ConfigurationVisitor for Visitor {
+                        fn visit_interface(&mut self, descriptor: &InterfaceDescriptor) {
+                            // Check if this interface indicates a HID class device
+                            if descriptor.interface_class == 3 {
+                                self.0 = true;
+                            }
                         }
                     }
+
+                    let supported = {
+                        let mut visitor = Visitor(false);
+                        usb::descriptor::walk_configuration(configuration, &mut visitor);
+                        visitor.0
+                    };
+                    platform_bus_device_channel
+                        .send(&DeviceDriverMessage::CanSupport(device_name, supported))
+                        .unwrap();
                 }
-
-                let supported = {
-                    let mut visitor = Visitor(false);
-                    usb::walk_configuration(configuration, &mut visitor);
-                    visitor.0
-                };
-                platform_bus_device_channel
-                    .send(&DeviceDriverMessage::CanSupport(device_name, supported))
-                    .unwrap();
+                DeviceDriverRequest::HandoffDevice(device_name, device_info, handoff_info) => {
+                    info!("Started driving HID device '{}'", device_name);
+                    // TODO: do something with the device
+                }
             }
-            Some(DeviceDriverRequest::HandoffDevice(device_name, device_info, handoff_info)) => {
-                info!("Starting driving HID device '{}'", device_name);
-                break (device_info, handoff_info);
-            }
-            None => std::poplar::syscall::yield_to_kernel(),
         }
-    };
+    });
 
-    loop {
-        std::poplar::syscall::yield_to_kernel();
-    }
+    std::poplar::rt::enter_loop();
 }
 
 #[used]
