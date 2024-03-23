@@ -7,7 +7,6 @@ use kernel::{object::event::Event, pci::PciInterruptConfigurator};
 use pci_types::{capability::MsiCapability, ConfigRegionAccess, PciAddress};
 use poplar_util::InitGuard;
 use spinning_top::Spinlock;
-use tracing::info;
 
 pub struct PciAccess {
     start: *const u8,
@@ -85,7 +84,6 @@ impl PciInterruptConfigurator for PciAccess {
 static PCI_EVENTS: InitGuard<Spinlock<BTreeMap<u16, Arc<Event>>>> = InitGuard::uninit();
 
 fn pci_interrupt_handler(number: u16) {
-    info!("PCI interrupt: {}", number);
     if let Some(event) = PCI_EVENTS.get().lock().get(&number) {
         event.signal();
     }
