@@ -1,13 +1,10 @@
 use log::info;
-use std::{
-    poplar::{
-        caps::{CapabilitiesRepr, CAP_EARLY_LOGGING, CAP_PADDING, CAP_SERVICE_PROVIDER},
-        channel::Channel,
-        early_logger::EarlyLogger,
-        syscall,
-        syscall::GetMessageError,
-    },
-    vec::Vec,
+use std::poplar::{
+    caps::{CapabilitiesRepr, CAP_EARLY_LOGGING, CAP_PADDING, CAP_SERVICE_PROVIDER},
+    channel::Channel,
+    early_logger::EarlyLogger,
+    syscall,
+    syscall::GetMessageError,
 };
 
 pub fn main() {

@@ -1,38 +1,19 @@
 use gfxconsole::{Bgr32, Format, Framebuffer, Pixel};
 use log::info;
-use ptah::{Deserialize, Serialize};
 use std::{
     mem::MaybeUninit,
     poplar::{
         caps::{CapabilitiesRepr, CAP_EARLY_LOGGING, CAP_GET_FRAMEBUFFER, CAP_PADDING, CAP_SERVICE_USER},
-        channel::Channel,
         early_logger::EarlyLogger,
         syscall::{self, FramebufferInfo, PixelFormat},
         Handle,
     },
 };
 
-#[derive(Debug, Serialize, Deserialize)]
-struct TestMessage {
-    id: usize,
-    message: String,
-}
-
 pub fn main() {
     log::set_logger(&EarlyLogger).unwrap();
     log::set_max_level(log::LevelFilter::Trace);
     info!("Simple framebuffer driver is running!");
-
-    /*
-     * Test out the service stuff. We want the echo service.
-     */
-    let echo_channel = Channel::<TestMessage, TestMessage>::from_handle(
-        std::poplar::syscall::subscribe_to_service("echo.echo").expect("Failed to subscribe to echo service :("),
-    );
-    echo_channel.send(&TestMessage { id: 42, message: "Hello, World!".to_string() }).unwrap();
-    while let Some(message) = echo_channel.try_receive().expect("Failed to receive message") {
-        info!("Echo sent message back: {:?}", message);
-    }
 
     let framebuffer = make_framebuffer();
     let mut yields = 0;
