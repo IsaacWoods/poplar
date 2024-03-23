@@ -68,13 +68,16 @@ pub fn handle_syscall<P>(
 where
     P: Platform,
 {
-    // info!("Syscall! number = {}, a = {:#x}, b = {:#x}, c = {:#x}, d = {:#x}, e = {:#x}", number, a, b, c, d, e);
-
     // Clone the current task out of the scheduler as we can't hold a lock on the scheduler
     let task = {
         let cpu_scheduler = scheduler.for_this_cpu();
         cpu_scheduler.running_task.as_ref().unwrap().clone()
     };
+
+    // info!(
+    //     "[{}] Syscall! number = {}, a = {:#x}, b = {:#x}, c = {:#x}, d = {:#x}, e = {:#x}",
+    //     task.name, number, a, b, c, d, e
+    // );
 
     match number {
         syscall::SYSCALL_YIELD => yield_syscall(scheduler),
@@ -128,7 +131,7 @@ where
         .validate()
         .map_err(|_| EarlyLogError::MessageNotValidUtf8)?;
 
-    info!("Early log message from {}: {}", task.name, message);
+    info!("[{}]: {}", task.name, message);
     Ok(())
 }
 
