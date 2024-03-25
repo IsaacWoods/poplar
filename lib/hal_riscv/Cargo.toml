@@ -14,5 +14,5 @@ tracing = { git = "https://github.com/tokio-rs/tracing", default-features = fals
 cfg-if = "1.0"
 
 [features]
-platform_rv64_virt = []
-platform_mq_pro = []
+platform_rv64_virt = ["hal/platform_rv64_virt"]
+platform_mq_pro = ["hal/platform_mq_pro"]

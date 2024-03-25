@@ -8,3 +8,7 @@ edition = "2018"
 cfg-if = "0.1"
 log = "0.4"
 bit_field = "0.10"
+
+[features]
+platform_rv64_virt = []
+platform_mq_pro = []
