@@ -140,8 +140,14 @@
 <a href="#138" id="138">138</a>
 <a href="#139" id="139">139</a>
 <a href="#140" id="140">140</a>
+<a href="#141" id="141">141</a>
+<a href="#142" id="142">142</a>
+<a href="#143" id="143">143</a>
 </pre></div><pre class="rust"><code><span class="kw">use super</span>::{Frame, FrameAllocator, FrameSize, PAddr, Page, VAddr};
-<span class="kw">use </span>core::ops::{<span class="self">self</span>, Range};
+<span class="kw">use </span>core::{
+    fmt,
+    ops::{<span class="self">self</span>, Range},
+};
 
 <span class="doccomment">/// Defines the permissions for a region of memory. Used both for abstract regions of memory (e.g. entries in a
 /// memory map) and as a architecture-common representation of paging structures.
@@ -187,7 +193,7 @@
 <span class="doccomment">/// A `PageTable` allows the manipulation of a set of page-tables.
 </span><span class="comment">// TODO: think about how we can do versatile unmapping (maybe return a `Map` type that is returned to unmap - this
 // could store information needed to unmap an artitrarily-mapped area).
-</span><span class="kw">pub trait </span>PageTable&lt;TableSize&gt;: Sized
+</span><span class="kw">pub trait </span>PageTable&lt;TableSize&gt;: Sized + fmt::Debug
 <span class="kw">where
     </span>TableSize: FrameSize,
 {
