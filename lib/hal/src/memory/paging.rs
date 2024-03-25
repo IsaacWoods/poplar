@@ -1,5 +1,8 @@
 use super::{Frame, FrameAllocator, FrameSize, PAddr, Page, VAddr};
-use core::ops::{self, Range};
+use core::{
+    fmt,
+    ops::{self, Range},
+};
 
 /// Defines the permissions for a region of memory. Used both for abstract regions of memory (e.g. entries in a
 /// memory map) and as a architecture-common representation of paging structures.
@@ -45,7 +48,7 @@ pub enum PagingError {
 /// A `PageTable` allows the manipulation of a set of page-tables.
 // TODO: think about how we can do versatile unmapping (maybe return a `Map` type that is returned to unmap - this
 // could store information needed to unmap an artitrarily-mapped area).
-pub trait PageTable<TableSize>: Sized
+pub trait PageTable<TableSize>: Sized + fmt::Debug
 where
     TableSize: FrameSize,
 {

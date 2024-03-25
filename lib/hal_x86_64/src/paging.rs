@@ -74,12 +74,16 @@ impl Entry {
         self.0 == 0
     }
 
+    pub fn is_present(&self) -> bool {
+        self.flags().contains(EntryFlags::PRESENT)
+    }
+
     pub fn flags(&self) -> EntryFlags {
         EntryFlags::from_bits_truncate(self.0)
     }
 
     pub fn address(&self) -> Option<PAddr> {
-        if self.flags().contains(EntryFlags::PRESENT) {
+        if self.is_present() {
             const ADDRESS_MASK: u64 = 0x000f_ffff_ffff_f000;
             Some(PAddr::new((self.0 & ADDRESS_MASK) as usize).unwrap())
         } else {
@@ -278,6 +282,65 @@ impl PageTableImpl {
 
     pub fn p4_mut(&mut self) -> &mut Table<Level4> {
         unsafe { &mut *((self.physical_base + usize::from(self.p4_frame.start)).mut_ptr()) }
+    }
+}
+
+impl fmt::Debug for PageTableImpl {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        writeln!(f, "PageTable {{")?;
+        let p4 = self.p4();
+        for i in 0..512 {
+            if p4[i].is_present() {
+                writeln!(f, "    P4 entry {}({:#x}): {:?}", i, VAddr::from_indices(i, 0, 0, 0), p4[i])?;
+                if p4[i].flags().contains(EntryFlags::HUGE_PAGE) {
+                    continue;
+                }
+                let p3 = p4.next_table(i, self.physical_base).unwrap();
+                for j in 0..512 {
+                    if p3[j].is_present() {
+                        writeln!(
+                            f,
+                            "        P3 entry {}({:#x}): {:?}",
+                            j,
+                            VAddr::from_indices(i, j, 0, 0),
+                            p3[j]
+                        )?;
+                        if p3[j].flags().contains(EntryFlags::HUGE_PAGE) {
+                            continue;
+                        }
+                        let p2 = p3.next_table(j, self.physical_base).unwrap();
+                        for k in 0..512 {
+                            if p2[k].is_present() {
+                                writeln!(
+                                    f,
+                                    "            P2 entry {}({:#x}): {:?}",
+                                    k,
+                                    VAddr::from_indices(i, j, k, 0),
+                                    p2[k]
+                                )?;
+                                if p2[k].flags().contains(EntryFlags::HUGE_PAGE) {
+                                    continue;
+                                }
+                                let p1 = p2.next_table(k, self.physical_base).unwrap();
+                                for m in 0..512 {
+                                    if p1[m].is_present() {
+                                        writeln!(
+                                            f,
+                                            "                P1 entry {}({:#x}): {:?}",
+                                            m,
+                                            VAddr::from_indices(i, j, k, m),
+                                            p1[m]
+                                        )?;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        writeln!(f, "}}")?;
+        Ok(())
     }
 }
 
@@ -497,6 +560,8 @@ pub trait VAddrIndices {
     fn p3_index(self) -> usize;
     fn p2_index(self) -> usize;
     fn p1_index(self) -> usize;
+
+    fn from_indices(p4: usize, p3: usize, p2: usize, p1: usize) -> VAddr;
 }
 
 impl VAddrIndices for VAddr {
@@ -514,6 +579,15 @@ impl VAddrIndices for VAddr {
 
     fn p1_index(self) -> usize {
         usize::from(self).get_bits(12..21)
+    }
+
+    fn from_indices(p4: usize, p3: usize, p2: usize, p1: usize) -> VAddr {
+        let mut address = 0usize;
+        address.set_bits(12..21, p1);
+        address.set_bits(21..30, p2);
+        address.set_bits(30..39, p3);
+        address.set_bits(39..48, p4);
+        VAddr::new(address)
     }
 }
 

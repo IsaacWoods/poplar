@@ -292,35 +292,54 @@ impl PageTableImpl<Level4> {
     pub fn satp(&self) -> Satp {
         Satp::Sv48 { asid: 0, root: self.frame.start }
     }
+}
 
-    pub fn walk(&self) {
-        use tracing::trace;
-        trace!("Starting page table walk");
+impl fmt::Debug for PageTableImpl<Level4> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        writeln!(f, "PageTable {{")?;
         let p4 = self.top();
         for i in 0..512 {
             if p4[i].is_valid() {
-                trace!("P4 entry {}: {:?}", i, p4[i]);
+                writeln!(f, "    P4 entry {}({:#x}): {:?}", i, VAddr::from_indices(i, 0, 0, 0), p4[i])?;
                 if p4[i].is_leaf() {
                     continue;
                 }
                 let p3 = p4.next_table(i, self.physical_base).unwrap();
                 for j in 0..512 {
                     if p3[j].is_valid() {
-                        trace!("    P3 entry {}: {:?}", j, p3[j]);
+                        writeln!(
+                            f,
+                            "        P3 entry {}({:#x}): {:?}",
+                            j,
+                            VAddr::from_indices(i, j, 0, 0),
+                            p3[j]
+                        )?;
                         if p3[j].is_leaf() {
                             continue;
                         }
                         let p2 = p3.next_table(j, self.physical_base).unwrap();
                         for k in 0..512 {
                             if p2[k].is_valid() {
-                                trace!("        P2 entry {}: {:?}", k, p2[k]);
+                                writeln!(
+                                    f,
+                                    "            P2 entry {}({:#x}): {:?}",
+                                    k,
+                                    VAddr::from_indices(i, j, k, 0),
+                                    p2[k]
+                                )?;
                                 if p2[k].is_leaf() {
                                     continue;
                                 }
                                 let p1 = p2.next_table(k, self.physical_base).unwrap();
                                 for m in 0..512 {
                                     if p1[m].is_valid() {
-                                        trace!("            P1 entry {}: {:?}", m, p1[m]);
+                                        writeln!(
+                                            f,
+                                            "                P1 entry {}({:#x}): {:?}",
+                                            m,
+                                            VAddr::from_indices(i, j, k, m),
+                                            p1[m]
+                                        )?;
                                     }
                                 }
                             }
@@ -329,6 +348,8 @@ impl PageTableImpl<Level4> {
                 }
             }
         }
+        writeln!(f, "}}")?;
+        Ok(())
     }
 }
 
@@ -548,34 +569,37 @@ impl PageTableImpl<Level3> {
     pub fn satp(&self) -> Satp {
         Satp::Sv39 { asid: 0, root: self.frame.start }
     }
+}
 
-    pub fn walk(&self) {
-        use tracing::trace;
-        trace!("Starting page table walk");
+impl fmt::Debug for PageTableImpl<Level3> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        writeln!(f, "PageTable {{")?;
         let p3 = self.top();
         for i in 0..512 {
             if p3[i].is_valid() {
-                trace!("P3 entry {}: {:?}", i, p3[i]);
+                writeln!(f, "    P3 entry {}: {:?}", i, p3[i])?;
                 if p3[i].is_leaf() {
                     continue;
                 }
                 let p2 = p3.next_table(i, self.physical_base).unwrap();
                 for j in 0..512 {
                     if p2[j].is_valid() {
-                        trace!("    P2 entry {}: {:?}", j, p2[j]);
+                        writeln!(f, "        P2 entry {}: {:?}", j, p2[j])?;
                         if p2[j].is_leaf() {
                             continue;
                         }
                         let p1 = p2.next_table(j, self.physical_base).unwrap();
                         for k in 0..512 {
                             if p1[k].is_valid() {
-                                trace!("        P1 entry {}: {:?}", k, p1[k]);
+                                writeln!(f, "            P1 entry {}: {:?}", k, p1[k])?;
                             }
                         }
                     }
                 }
             }
         }
+        writeln!(f, "}}")?;
+        Ok(())
     }
 }
 
@@ -786,6 +810,8 @@ pub trait VAddrIndices {
     fn p3_index(self) -> usize;
     fn p2_index(self) -> usize;
     fn p1_index(self) -> usize;
+
+    fn from_indices(p4: usize, p3: usize, p2: usize, p1: usize) -> VAddr;
 }
 
 impl VAddrIndices for VAddr {
@@ -803,6 +829,15 @@ impl VAddrIndices for VAddr {
 
     fn p1_index(self) -> usize {
         usize::from(self).get_bits(12..21)
+    }
+
+    fn from_indices(p4: usize, p3: usize, p2: usize, p1: usize) -> VAddr {
+        let mut address = 0;
+        address.set_bits(12..21, p1);
+        address.set_bits(21..30, p2);
+        address.set_bits(30..39, p3);
+        address.set_bits(39..48, p4);
+        VAddr::new(address)
     }
 }
 
