@@ -11,6 +11,7 @@ poplar_util = { path = "../lib/poplar_util", features = ["has_alloc"] }
 cfg-if = "0.1"
 bitflags = "1"
 bit_field = "0.10"
+linked_list_allocator = "0.10.5"
 poplar = { path = "../lib/poplar" }
 ptah = { path = "../lib/ptah" }
 pci_types = { path = "../lib/pci_types" }

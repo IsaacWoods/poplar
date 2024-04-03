@@ -11,7 +11,6 @@
 #[macro_use]
 extern crate alloc;
 
-mod heap_allocator;
 pub mod memory;
 pub mod object;
 pub mod pci;
@@ -22,7 +21,6 @@ pub mod tasklets;
 use crate::memory::Stack;
 use alloc::{boxed::Box, sync::Arc};
 use hal::memory::{FrameSize, PageTable, VAddr};
-use heap_allocator::LockedHoleAllocator;
 use memory::{KernelStackAllocator, PhysicalMemoryManager};
 use object::{address_space::AddressSpace, memory_object::MemoryObject, task::Task, KernelObject};
 use pci::{PciInfo, PciInterruptConfigurator, PciResolver};
@@ -34,7 +32,7 @@ use spinning_top::{RwSpinlock, Spinlock};
 
 #[cfg(not(test))]
 #[global_allocator]
-pub static ALLOCATOR: LockedHoleAllocator = LockedHoleAllocator::new_uninitialized();
+pub static ALLOCATOR: linked_list_allocator::LockedHeap = linked_list_allocator::LockedHeap::empty();
 
 pub static PHYSICAL_MEMORY_MANAGER: InitGuard<PhysicalMemoryManager> = InitGuard::uninit();
 pub static FRAMEBUFFER: InitGuard<(poplar::syscall::FramebufferInfo, Arc<MemoryObject>)> = InitGuard::uninit();
@@ -158,4 +156,10 @@ where
     let (access, info) = PciResolver::resolve(access);
     *PCI_INFO.write() = Some(info);
     PCI_ACCESS.initialize(Some(Spinlock::new(Box::new(access))));
+}
+
+#[cfg(not(test))]
+#[alloc_error_handler]
+fn handle_alloc_error(layout: core::alloc::Layout) -> ! {
+    panic!("Alloc error: {:?}", layout);
 }

@@ -108,7 +108,7 @@ pub extern "C" fn kentry(boot_info: &BootInfo) -> ! {
      */
     info!("Initializing heap at {:#x} of size {} bytes", boot_info.heap_address, boot_info.heap_size);
     unsafe {
-        kernel::ALLOCATOR.lock().init(boot_info.heap_address, boot_info.heap_size);
+        kernel::ALLOCATOR.lock().init(boot_info.heap_address.mut_ptr(), boot_info.heap_size);
     }
 
     kernel::PHYSICAL_MEMORY_MANAGER.initialize(PhysicalMemoryManager::new(boot_info));

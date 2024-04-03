@@ -129,7 +129,7 @@ pub extern "C" fn kentry(boot_info: &BootInfo) -> ! {
      * can allocate on the heap through the global allocator.
      */
     unsafe {
-        kernel::ALLOCATOR.lock().init(boot_info.heap_address, boot_info.heap_size);
+        kernel::ALLOCATOR.lock().init(boot_info.heap_address.mut_ptr(), boot_info.heap_size);
     }
 
     kernel::PHYSICAL_MEMORY_MANAGER.initialize(PhysicalMemoryManager::new(boot_info));
