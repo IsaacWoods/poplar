@@ -2,7 +2,7 @@
 //! this allocator, memory is broken up into a number of blocks, each of which is a power-of-2 frames in
 //! size. A block of size `2^^n` frames is said to be of order `n`:
 //! ```ignore
-//!       16                               0       Order       Size of blocks
+//!       16                               0       Order       Size of blocks (in frames)
 //!        |-------------------------------|
 //!        |               8               |       4           2^^4 = 16
 //!        |---------------|---------------|
@@ -57,6 +57,7 @@ const NUM_BINS: usize = MAX_ORDER + 1;
 /// point of time.
 const BASE_SIZE: usize = Size4KiB::SIZE;
 
+#[derive(Clone, Debug)]
 pub struct BuddyAllocator {
     /// The bins of free blocks, where bin `i` contains blocks of size `BASE_SIZE * (2^i)`. Uses `BTreeSet` to
     /// store the blocks in each bin, for efficient buddy location. Each block is stored as the physical address
@@ -77,22 +78,35 @@ impl BuddyAllocator {
         assert_eq!(BASE_SIZE, Size4KiB::SIZE);
 
         /*
-         * Break the frame area into a set of blocks with power-of-2 sizes, and register each
-         * block as free to allocate.
+         * Add each frame in the range to the allocator, allowing it to coalesce as it goes.
+         *
+         * TODO: this is inefficient with large numbers of frames, but extracting well-formed
+         * blocks of higher orders is not as easy as it looks (and has caused horrendous bugs in
+         * the past when we didn't pick that complexity up)! Blocks need to be well-aligned
+         * according to their size, or when they're later split, they add the incorrect buddies
+         * back to the allocator!
          */
-        let mut block_start = range.start;
-
-        while block_start < range.end {
-            /*
-             * Pick the largest order block that fits in the remaining area, but cap it at the
-             * largest order the allocator can manage.
-             */
-            let num_frames = (block_start..range.end).count();
-            let order = min(MAX_ORDER, flooring_log2(num_frames));
-
-            self.free_block(block_start.start, order);
-            block_start += 1 << order;
+        for frame in range {
+            self.free_block(frame.start, 0);
         }
+
+        // /*
+        //  * Break the frame area into a set of blocks with power-of-2 sizes, and register each
+        //  * block as free to allocate.
+        //  */
+        // let mut block_start = range.start;
+        //
+        // while block_start < range.end {
+        //     /*
+        //      * Pick the largest order block that fits in the remaining area, but cap it at the
+        //      * largest order the allocator can manage.
+        //      */
+        //     let num_frames = (block_start..range.end).count();
+        //     let order = min(MAX_ORDER, flooring_log2(num_frames));
+        //
+        //     self.free_block(block_start.start, order);
+        //     block_start += 1 << order;
+        // }
     }
 
     #[allow(dead_code)]
@@ -106,7 +120,7 @@ impl BuddyAllocator {
 
     /// Allocate a block of `block_size` bytes from this allocator. Returns `None` if the allocator can't satisfy
     /// the allocation.
-    pub fn allocate_n(&mut self, block_size: Bytes) -> Option<PAddr> {
+    pub fn allocate_bytes(&mut self, block_size: Bytes) -> Option<PAddr> {
         assert!(block_size % BASE_SIZE == 0);
         assert!((block_size / BASE_SIZE).is_power_of_two());
 
@@ -115,7 +129,7 @@ impl BuddyAllocator {
     }
 
     /// Free a block starting at `start` of `block_size` bytes. `block_size` must be a valid size of a whole block.
-    pub fn free_n(&mut self, start: PAddr, block_size: Bytes) {
+    pub fn free_bytes(&mut self, start: PAddr, block_size: Bytes) {
         assert!(block_size % BASE_SIZE == 0);
         assert!((block_size / BASE_SIZE).is_power_of_two());
 
@@ -202,7 +216,6 @@ impl BuddyAllocator {
 mod tests {
     use super::*;
     use alloc::vec::Vec;
-    use hal::memory::{Frame, PAddr, Size4KiB};
 
     #[test]
     fn test_buddy_of() {
@@ -296,7 +309,17 @@ mod tests {
         allocator.add_range(n_frames_at(0x6000, 4));
         allocator.add_range(n_frames_at(0x10000, 64));
         assert_eq!(allocator.available_bytes(), (1 + 4 + 64) * BASE_SIZE);
-        check_bins(allocator, vec![Block::new(0, 0x2000), Block::new(2, 0x6000), Block::new(6, 0x10000)]);
+        check_bins(
+            allocator,
+            vec![
+                Block::new(0, 0x2000),
+                Block::new(1, 0x6000),
+                Block::new(1, 0x8000),
+                Block::new(4, 0x10000),
+                Block::new(4, 0x40000),
+                Block::new(5, 0x20000),
+            ],
+        );
     }
 
     /// Test the splitting of weird-sized ranges into blocks.
@@ -310,14 +333,18 @@ mod tests {
         check_bins(allocator, vec![Block::new(1, 0x0), Block::new(0, 0x2000)]);
 
         /*
-         * Split 523 frames into 4 blocks of orders: 9, then 3, then 1, then 0.
+         * Split 523 frames.
          */
         let mut allocator = BuddyAllocator::new();
         allocator.add_range(n_frames_at(0x40000, 523));
+        assert_eq!(allocator.available_bytes(), 523 * BASE_SIZE);
         check_bins(
             allocator,
             vec![
-                Block::new(9, 0x40000),
+                Block::new(8, 0x100000),
+                Block::new(7, 0x80000),
+                Block::new(6, 0x200000),
+                Block::new(6, 0x40000),
                 Block::new(3, 0x240000),
                 Block::new(1, 0x248000),
                 Block::new(0, 0x24a000),
@@ -365,7 +392,7 @@ mod tests {
         let mut allocator = BuddyAllocator::new();
         assert_eq!(allocator.available_bytes(), 0);
 
-        assert_eq!(allocator.allocate_n(0x1000), None);
+        assert_eq!(allocator.allocate_bytes(0x1000), None);
         assert_eq!(allocator.allocate_block(0), None);
         assert_eq!(allocator.allocate_block(MAX_ORDER), None);
     }
@@ -377,12 +404,36 @@ mod tests {
          * `None` even if we could service the request overall.
          */
         let mut allocator = BuddyAllocator::new();
-        allocator.add_range(n_frames_at(0x0, 4096)); // Allocate 4 blocks of the maximum order (currently 10)
-        assert_eq!(allocator.allocate_block(12), None);
+        allocator.add_range(n_frames_at(0x0, 8192)); // Allocate 4 blocks of the maximum order (currently 12)
+        assert_eq!(allocator.allocate_block(13), None);
+    }
 
-        /*
-         * Currently, `allocate_n` can only allocate contiguous bytes, but this could be relaxed in the future.
-         */
-        assert_eq!(allocator.allocate_n(2048 * Size4KiB::SIZE), None);
+    #[test]
+    fn test_allocation() {
+        let mut allocator = BuddyAllocator::new();
+        allocator.add_range(n_frames_at(0x2000, 1));
+        allocator.add_range(n_frames_at(0x6000, 4));
+        allocator.add_range(n_frames_at(0x10000, 64));
+        assert_eq!(allocator.available_bytes(), (1 + 4 + 64) * BASE_SIZE);
+        check_bins(
+            allocator.clone(),
+            vec![
+                Block::new(0, 0x2000),
+                Block::new(1, 0x6000),
+                Block::new(1, 0x8000),
+                Block::new(4, 0x10000),
+                Block::new(4, 0x40000),
+                Block::new(5, 0x20000),
+            ],
+        );
+
+        // Allocate 2 frames - should come from 0x6000
+        assert_eq!(allocator.allocate_bytes(0x2000), Some(PAddr::new(0x6000).unwrap()));
+
+        // Allocate 1 frame - should come from 0x2000
+        assert_eq!(allocator.allocate_bytes(0x1000), Some(PAddr::new(0x2000).unwrap()));
+
+        // Allocate another frame - this should force a larger block to split
+        assert_eq!(allocator.allocate_bytes(0x1000), Some(PAddr::new(0x8000).unwrap()));
     }
 }

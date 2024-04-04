@@ -7,7 +7,7 @@ pub use slab_allocator::SlabAllocator;
 
 use buddy_allocator::BuddyAllocator;
 use core::ops::Range;
-use hal::memory::{Frame, FrameAllocator, FrameSize, PAddr, VAddr};
+use hal::memory::{Bytes, Frame, FrameAllocator, FrameSize, PAddr, VAddr};
 use seed::boot_info::BootInfo;
 use spinning_top::Spinlock;
 
@@ -28,14 +28,14 @@ impl PhysicalMemoryManager {
         PhysicalMemoryManager { buddy: Spinlock::new(buddy_allocator) }
     }
 
-    pub fn alloc_bytes(&self, num_bytes: usize) -> PAddr {
+    pub fn alloc_bytes(&self, num_bytes: Bytes) -> PAddr {
         /*
          * For now, we always use the buddy allocator.
          * TODO: this isn't very good. We can only allocate a whole block at a time, and always allocate a
          * contiguous block of memory even when we don't need one. This should return an "owned" allocation that
          * can hold a list of non-contiguous ranges of frames, plus information needed to free the allocation.
          */
-        self.buddy.lock().allocate_n(num_bytes).expect("Failed to allocate physical memory!")
+        self.buddy.lock().allocate_bytes(num_bytes).expect("Failed to allocate physical memory!")
     }
 }
 
@@ -44,12 +44,12 @@ where
     S: FrameSize,
 {
     fn allocate_n(&self, n: usize) -> Range<Frame<S>> {
-        let start = self.buddy.lock().allocate_n(n * S::SIZE).expect("Failed to allocate physical memory!");
+        let start = self.buddy.lock().allocate_bytes(n * S::SIZE).expect("Failed to allocate physical memory!");
         Frame::<S>::starts_with(start)..(Frame::<S>::starts_with(start) + n)
     }
 
     fn free_n(&self, start: Frame<S>, num_frames: usize) {
-        self.buddy.lock().free_n(start.start, num_frames * S::SIZE);
+        self.buddy.lock().free_bytes(start.start, num_frames * S::SIZE);
     }
 }
 
