@@ -149,9 +149,6 @@ pub extern "C" fn kentry(boot_info: &BootInfo) -> ! {
 
     SCHEDULER.initialize(Scheduler::new());
     maitake::time::set_global_timer(&SCHEDULER.get().tasklet_scheduler.timer).unwrap();
-    // Kick the timer off
-    // TODO: global function for getting number of ticks per us or whatever from the device tree
-    sbi::timer::set_timer(hal_riscv::hw::csr::Time::read() as u64 + 0x989680 / 50).unwrap();
 
     let (uart_prod, uart_cons) = kernel::tasklets::queue::SpscQueue::new();
     serial::enable_input(&fdt, uart_prod);
@@ -194,6 +191,14 @@ pub extern "C" fn kentry(boot_info: &BootInfo) -> ! {
             &mut kernel_stack_allocator,
         );
     }
+
+    /*
+     * Kick the timer off. We do this just before installing the full handler because the shim
+     * handler doesn't support timer interrupts, so we'll get stuck if we do take too long between
+     * this and having the real handler in place.
+     */
+    // TODO: global function for getting number of ticks per us or whatever from the device tree
+    sbi::timer::set_timer(hal_riscv::hw::csr::Time::read() as u64 + 0x989680 / 50).unwrap();
 
     /*
      * Move to a trap handler that can handle traps from both S-mode and U-mode. We can only do
