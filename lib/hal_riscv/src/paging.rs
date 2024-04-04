@@ -3,8 +3,6 @@
  * SPDX-License-Identifier: MPL-2.0
  */
 
-//! RISC-V paging. Currently we only support `Sv48`.
-
 use crate::hw::csr::Satp;
 use bit_field::BitField;
 use bitflags::bitflags;
