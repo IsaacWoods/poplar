@@ -1,7 +1,10 @@
 use crate::interrupts;
 use core::arch::asm;
-use hal::memory::VAddr;
-use hal_riscv::hw::csr::{Scause, Sepc, Stvec};
+use hal::memory::{Frame, VAddr};
+use hal_riscv::{
+    hw::csr::{Scause, Sepc, Stvec},
+    platform::kernel_map,
+};
 use tracing::info;
 
 /// Install the proper trap handler. This handler is able to take traps from both S-mode and
@@ -44,6 +47,10 @@ extern "C" fn trap_handler(trap_frame: &mut TrapFrame, scause: usize, stval: usi
         }
         Ok(other) => {
             info!("Trap! Cause = {:?}. Stval = {:#x?}", other, stval);
+            if trap_frame.sepc < usize::from(kernel_map::KERNEL_ADDRESS_SPACE_START) {
+                let cpu_scheduler = crate::SCHEDULER.get().for_this_cpu();
+                info!("Trap occurred in user task: {}", cpu_scheduler.running_task.as_ref().unwrap().name);
+            }
             info!("Trap frame: {:#x?}", trap_frame);
             panic!();
         }
