@@ -14,3 +14,4 @@ mycelium-bitfield = "0.1.4"
 bitflags = "2.4.1"
 poplar_util = { path = "../../lib/poplar_util" }
 usb = { path = "../../lib/usb" }
+spinning_top = "0.3.0"

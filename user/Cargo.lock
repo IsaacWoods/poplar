@@ -668,6 +668,7 @@ dependencies = [
  "platform_bus",
  "poplar_util",
  "ptah",
+ "spinning_top 0.3.0",
  "std",
  "usb",
 ]
