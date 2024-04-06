@@ -106,6 +106,9 @@ impl<T> DmaObject<T> {
     }
 }
 
+unsafe impl<T> Send for DmaObject<T> {}
+unsafe impl<T> Sync for DmaObject<T> {}
+
 impl<T> Drop for DmaObject<T> {
     fn drop(&mut self) {
         assert!(!self.token_held(), "DmaObject dropped while token held!");
@@ -158,6 +161,9 @@ impl<T> DmaArray<T> {
     }
 }
 
+unsafe impl<T> Send for DmaArray<T> {}
+unsafe impl<T> Sync for DmaArray<T> {}
+
 impl<T> Drop for DmaArray<T> {
     fn drop(&mut self) {
         assert!(!self.token_held(), "DmaArray dropped while token held!");
@@ -208,6 +214,9 @@ impl DmaBuffer {
     }
 }
 
+unsafe impl Send for DmaBuffer {}
+unsafe impl Sync for DmaBuffer {}
+
 impl Drop for DmaBuffer {
     fn drop(&mut self) {
         assert!(!self.token_held(), "DmaBuffer dropped while token held!");
@@ -227,6 +236,9 @@ pub struct DmaToken {
     pub phys: usize,
     token: NonNull<AtomicBool>,
 }
+
+unsafe impl Send for DmaToken {}
+unsafe impl Sync for DmaToken {}
 
 impl Drop for DmaToken {
     fn drop(&mut self) {
