@@ -12,7 +12,7 @@ use std::{
     mem,
     poplar::{
         channel::Channel,
-        ddk::dma::{DmaObject, DmaPool},
+        ddk::dma::{DmaObject, DmaPool, DmaToken},
         memory_object::MemoryObject,
         syscall::MemoryObjectFlags,
         Handle,
@@ -114,8 +114,14 @@ impl Controller {
         }
     }
 
-    pub fn check_ports(&mut self) {
+    /// Iterate through the controller's connected ports, looking for device connects and
+    /// disconnects. Each new device is added to the Platform Bus, and then a list of new devices
+    /// is returned - the caller should ensure each device's channel is attended to so that
+    /// requests from device drivers are handled.
+    pub fn check_ports(&mut self) -> Vec<Arc<RwSpinlock<ActiveDevice>>> {
         assert!(!self.caps.port_power_control, "We don't support port power control");
+
+        let mut new_devices = Vec::new();
 
         for port in 0..self.caps.num_ports {
             let port_reg = unsafe { self.read_port_register(port) };
@@ -155,16 +161,20 @@ impl Controller {
                          * Low-Speed. We can start the port reset and enable sequence.
                          */
                         trace!("Connected device on port {}", port);
-                        self.handle_device_connect(port);
+                        if let Some(new_device) = self.handle_device_connect(port) {
+                            new_devices.push(new_device);
+                        }
                     }
                 } else {
                     trace!("Device on port {} disconnected", port);
                 }
             }
         }
+
+        new_devices
     }
 
-    pub fn handle_device_connect(&mut self, port: u8) {
+    pub fn handle_device_connect(&mut self, port: u8) -> Option<Arc<RwSpinlock<ActiveDevice>>> {
         self.reset_port(port);
 
         unsafe {
@@ -314,22 +324,17 @@ impl Controller {
                     buffer.read().to_vec()
                 };
 
-                /*
-                 * Add the newly discovered device to our list of active devices. This is important
-                 * as it prevents the queue from being dropped while it is in the async schedule.
-                 * TODO: might be safer to hold `Arc`s to the queue and keep track of stuff in the
-                 * async schedule to stop queues being dropped out from under the controller?
-                 */
-                // self.active_devices.insert(address, ActiveDevice { control_queue: queue });
-                // self.add_device_to_platform_bus(address, &device_descriptor, configuration);
-
                 // TODO: we `Arc` the queue because we ideally should also be holding it in a
                 // central list of all the stuff in the async schedule because dropping it without
                 // removing it from the schedule will crash the controller. Add it to that list
                 // somewhere when we get everything working (the current situation will work, as
                 // long as the device is never removed)
                 let queue = Arc::new(RwSpinlock::new(queue));
-                self.create_device(address, &device_descriptor, configuration, queue);
+                // TODO: add the queue to the central async schedule list here and explain the
+                // importance of not dropping them even if the device is dropped elsewhere etc.
+
+                let device = self.create_device(address, &device_descriptor, configuration, queue);
+                Some(device)
             } else {
                 /*
                  * The device is not High-Speed. Hand it off to a companion controller to deal
@@ -337,6 +342,7 @@ impl Controller {
                  */
                 trace!("Device on port {} is full-speed. Handing off to companion controller.", port);
                 self.write_port_register(port, PortStatusControl::new().with(PortStatusControl::PORT_OWNER, true));
+                None
             }
         }
     }
@@ -347,17 +353,13 @@ impl Controller {
         descriptor: &DeviceDescriptor,
         config0: Vec<u8>,
         control_queue: Arc<RwSpinlock<Queue>>,
-    ) {
+    ) -> Arc<RwSpinlock<ActiveDevice>> {
         /*
-         * Firstly, create a new active device.
-         */
-        let device = Arc::new(RwSpinlock::new(ActiveDevice { address, control_queue }));
-        self.active_devices.insert(address, device.clone());
-
-        /*
-         * Next, create a Platform Bus device for this new device and advertise it to things that
+         * Create a Platform Bus device for this new device and advertise it to things that
          * might be interested in driving it.
          */
+        // TODO: not sure whether this should be done in `Controller` or in the new-device-handling
+        // code?
         // TODO: when we've got hubs and stuff we'll need to keep track of bus numbers
         let bus = 0;
         let name = format!("usb-{}.{}", bus, address);
@@ -383,17 +385,10 @@ impl Controller {
             .send(&BusDriverMessage::RegisterDevice(name, device_info, handoff_info))
             .unwrap();
 
-        /*
-         * Lastly, we connect the channel that will be given to the device driver back to the
-         * active device we created, so it can initiate transactions etc.
-         */
-        std::poplar::rt::spawn(async move {
-            loop {
-                let message = device_channel.receive().await.unwrap();
-                info!("Message down device channel: {:?}", message);
-                device.write().handle_request(message).unwrap();
-            }
-        });
+        let device = Arc::new(RwSpinlock::new(ActiveDevice { address, control_queue, channel: device_channel }));
+        self.active_devices.insert(address, device.clone());
+
+        device
     }
 
     pub fn add_to_async_schedule(&mut self, queue: &mut Queue) {
@@ -420,6 +415,18 @@ impl Controller {
                     .bits(),
             );
         }
+    }
+
+    pub fn do_control_transfer(
+        &mut self,
+        queue: &mut Queue,
+        setup: SetupPacket,
+        data: Option<DmaToken>,
+        transfer_to_device: bool,
+    ) {
+        queue.control_transfer(setup, data, transfer_to_device, &mut self.schedule_pool);
+        // TODO: this should be replaced with the async future thingy etc.
+        self.wait_for_transfer_completion(queue);
     }
 
     /*

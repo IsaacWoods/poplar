@@ -16,9 +16,11 @@ use log::info;
 use platform_bus::{BusDriverMessage, DeviceDriverMessage, DeviceDriverRequest, Filter, Property};
 use spinning_top::RwSpinlock;
 use std::{
+    ops::DerefMut,
     poplar::{
         caps::{CapabilitiesRepr, CAP_EARLY_LOGGING, CAP_PADDING, CAP_SERVICE_USER},
         channel::Channel,
+        ddk::dma::DmaPool,
         early_logger::EarlyLogger,
         memory_object::MemoryObject,
         syscall::MemoryObjectFlags,
@@ -31,12 +33,17 @@ use usb::{
 };
 
 pub struct ActiveDevice {
-    address: u8,
+    pub address: u8,
     control_queue: Arc<RwSpinlock<Queue>>,
+    channel: Channel<(), DeviceControlMessage>,
 }
 
 impl ActiveDevice {
-    pub fn handle_request(&mut self, request: DeviceControlMessage) -> Result<(), ()> {
+    pub fn handle_request(
+        &mut self,
+        request: DeviceControlMessage,
+        controller: &mut Controller,
+    ) -> Result<(), ()> {
         match request {
             DeviceControlMessage::UseConfiguration(config) => {
                 todo!();
@@ -100,13 +107,25 @@ fn main() {
                         register_space.map_at(REGISTER_SPACE_ADDRESS).unwrap();
                     }
 
-                    let mut controller = Controller::new(
+                    let mut controller = Arc::new(RwSpinlock::new(Controller::new(
                         REGISTER_SPACE_ADDRESS,
                         platform_bus_bus_channel.clone(),
                         handoff_info.get_as_event("pci.interrupt").unwrap(),
-                    );
-                    controller.initialize();
-                    controller.check_ports();
+                    )));
+                    controller.write().initialize();
+
+                    let new_devices = controller.write().check_ports();
+                    for device in new_devices {
+                        let controller = controller.clone();
+                        std::poplar::rt::spawn(async move {
+                            loop {
+                                let mut device = device.write();
+                                let message = device.channel.receive().await.unwrap();
+                                info!("Message down device channel: {:?}", message);
+                                device.handle_request(message, controller.write().deref_mut()).unwrap();
+                            }
+                        });
+                    }
 
                     // TODO: spawn task to listen for interrupts from the controller and respond to
                     // them
