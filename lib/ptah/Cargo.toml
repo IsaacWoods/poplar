@@ -3,18 +3,16 @@ members = ["ptah_derive"]
 
 [package]
 name = "ptah"
-version = "0.2.0"
+version = "0.2.1"
 authors = ["Isaac Woods"]
 edition = "2021"
 description = "Rust implementation of Ptah, Poplar's message-passing format"
 license = "MIT OR Apache-2.0"
 
 [dependencies]
-ptah_derive = { version = "0.2.0", optional = true }
+# ptah_derive = { version = "0.2.1", optional = true }
+ptah_derive = { path = "ptah_derive", optional = true }
 heapless = { version = "0.7.16", optional = true }
-
-[patch.crates-io]
-ptah_derive = { path = "ptah_derive" }
 
 [features]
 default = ["alloc", "derive"]

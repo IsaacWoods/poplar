@@ -72,7 +72,7 @@ dependencies = [
 
 [[package]]
 name = "ptah"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "heapless",
  "ptah_derive",
@@ -80,7 +80,7 @@ dependencies = [
 
 [[package]]
 name = "ptah_derive"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "proc-macro2",
  "quote",
