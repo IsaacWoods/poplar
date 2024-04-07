@@ -60,7 +60,7 @@ fn generate_body(data: &Data) -> TokenStream {
         },
         Data::Enum(enum_data) => generate_for_enum(&enum_data),
         // TODO: I'm not sure we want to support this from Rust. Probably throw a compile error here?
-        Data::Union(union_data) => todo!(),
+        Data::Union(_union_data) => todo!(),
     }
 }
 
@@ -96,8 +96,18 @@ fn generate_for_tuple(fields: &FieldsUnnamed) -> TokenStream {
 
 fn generate_for_enum(data: &DataEnum) -> TokenStream {
     let variants = data.variants.iter().enumerate().map(|(i, variant)| {
-        // TODO: we should probably handle explicit descriminants (e.g. SomeVariant = 78,) somehow
-        assert!(variant.discriminant.is_none());
+        /*
+         * XXX: we basically don't handle enum descriminants, but will serialize enums that use
+         * them anyway. We do this by indexing them normally as they appear in the enum - this
+         * works fine for e.g. serialize an enum, sending it down a wire, and then deserializing
+         * back into Rust at the other end, BUT the wire format will not relate to the descriminant
+         * in any way, which could cause issues in the future depending on how this is used.
+         *
+         * If this is not sufficient, we could try to evaluate the descriminant (an arbitrary
+         * expression) to be able to put it down the wire? (we could only support integer constants
+         * which would simplify that slightly).
+         */
+        // assert!(variant.discriminant.is_none());
 
         let index = Index::from(i);
         let variant_name = &variant.ident;

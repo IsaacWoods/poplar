@@ -298,6 +298,18 @@ fn enums() {
 
     test_value(Bar::None);
     test_value(Bar::Some(vec![654, 9]));
+
+    #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
+    #[repr(u8)]
+    enum Baz {
+        A = 7,
+        B = 8,
+        C = 49,
+    }
+
+    test_value(Baz::A);
+    test_value(Baz::B);
+    test_value(Baz::C);
 }
 
 #[test]

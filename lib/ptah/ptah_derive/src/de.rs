@@ -115,10 +115,10 @@ fn generate_for_tuple(name: &Ident, fields: &FieldsUnnamed) -> TokenStream {
     }
 }
 
-fn generate_for_enum(enum_name: &Ident, data: &DataEnum) -> TokenStream {
+fn generate_for_enum(_enum_name: &Ident, data: &DataEnum) -> TokenStream {
     let variants = data.variants.iter().enumerate().map(|(i, variant)| {
-        // TODO: we should probably handle explicit descriminants (e.g. SomeVariant = 78,) somehow
-        assert!(variant.discriminant.is_none());
+        // XXX: see note in serialize-impl generator for thoughts on this
+        // assert!(variant.discriminant.is_none());
 
         let variant_name = &variant.ident;
         let index = Index::from(i);
