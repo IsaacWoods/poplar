@@ -440,7 +440,12 @@ impl Controller {
     pub fn wait_for_transfer_completion(&mut self, queue: &mut Queue) {
         std::poplar::syscall::wait_for_event(self.interrupt_event).unwrap();
 
-        assert!(self.read_status().get(Status::INTERRUPT));
+        let status = self.read_status();
+        if status.get(Status::ERR_INTERRUPT) {
+            panic!("Transaction errored!");
+        }
+
+        assert!(status.get(Status::INTERRUPT));
         info!("Transaction complete!");
 
         unsafe { self.write_status(Status::new().with(Status::INTERRUPT, true)) };
