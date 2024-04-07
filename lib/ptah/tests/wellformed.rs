@@ -24,7 +24,7 @@ where
         Err(err) => panic!("Failed to calculate serialized size of value: {:?} (err = {:?})", value, err),
     };
     println!("Calculated size of value {:?}: {}", value, size);
-    let decoded = match ptah::from_wire(&buffer[0..size]) {
+    let decoded = match ptah::from_wire(&buffer[0..size], &[]) {
         Ok(value) => value,
         Err(err) => panic!("Failed to deserialize value: {:?} (err = {:?})", value, err),
     };
@@ -80,7 +80,8 @@ fn vec() {
 
 #[test]
 fn options() {
-    test_value(None: Option<usize>);
+    let none: Option<usize> = None;
+    test_value(none);
     test_value(Some(6));
     test_value(Some("Hello, World!".to_string()));
 }

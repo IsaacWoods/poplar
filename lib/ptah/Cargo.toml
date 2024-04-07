@@ -10,7 +10,7 @@ description = "Rust implementation of Ptah, Poplar's message-passing format"
 license = "MIT OR Apache-2.0"
 
 [dependencies]
-ptah_derive = { version = "0.1.0", optional = true }
+ptah_derive = { version = "0.2.0", optional = true }
 heapless = { version = "0.7.16", optional = true }
 
 [patch.crates-io]
