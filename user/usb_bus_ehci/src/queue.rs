@@ -9,6 +9,7 @@ use usb::setup::SetupPacket;
 pub struct Queue {
     pub head: DmaObject<QueueHead>,
     pub transactions: VecDeque<Transaction>,
+    max_packet_size: u16,
 }
 
 pub struct Transaction {
@@ -18,8 +19,8 @@ pub struct Transaction {
 }
 
 impl Queue {
-    pub fn new(head: DmaObject<QueueHead>) -> Queue {
-        Queue { head, transactions: VecDeque::new() }
+    pub fn new(head: DmaObject<QueueHead>, max_packet_size: u16) -> Queue {
+        Queue { head, transactions: VecDeque::new(), max_packet_size }
     }
 
     // TODO: once we have an async runtime, this should return a future that is awoken once the
@@ -116,6 +117,14 @@ impl Queue {
             endpoint_characteristics.with(EndpointCharacteristics::DEVICE_ADDRESS, address as u32);
     }
 
+    pub fn set_max_packet_size(&mut self, max_packet_size: u16) {
+        let endpoint_characteristics = self.head.read().endpoint_characteristics;
+        self.head.write().endpoint_characteristics =
+            endpoint_characteristics.with(EndpointCharacteristics::MAX_PACKET_SIZE, max_packet_size as u32);
+
+        self.max_packet_size = max_packet_size;
+    }
+
     pub fn set_reclaim_head(&mut self, head: bool) {
         let endpoint_characteristics = self.head.read().endpoint_characteristics;
         self.head.write().endpoint_characteristics =
@@ -149,13 +158,14 @@ impl QueueHead {
     /// where it will end up in physical memory yet. The overlay area of the current qTD is
     /// zero-initialized - we load the `next_td` field and let the controller initialize the
     /// overlay area for them.
-    pub fn new() -> QueueHead {
+    pub fn new(device: u8, endpoint: u8, max_packet_size: u16) -> QueueHead {
         QueueHead {
             horizontal_link: HorizontalLinkPtr(0x0),
             endpoint_characteristics: EndpointCharacteristics::new()
+                .with(EndpointCharacteristics::DEVICE_ADDRESS, device as u32)
                 .with(EndpointCharacteristics::ENDPOINT_SPEED, EndpointSpeed::High)
-                .with(EndpointCharacteristics::ENDPOINT, 0) // TODO
-                .with(EndpointCharacteristics::MAX_PACKET_SIZE, 64)
+                .with(EndpointCharacteristics::ENDPOINT, endpoint as u32)
+                .with(EndpointCharacteristics::MAX_PACKET_SIZE, max_packet_size as u32)
                 .with(EndpointCharacteristics::DATA_TOGGLE_CONTROL, true), // TODO: I think this
             // should only be true for control endpoints?
             endpoint_caps: EndpointCapabilities::new().with(EndpointCapabilities::HIGH_BANDWIDTH_MULTIPLIER, 0b01),

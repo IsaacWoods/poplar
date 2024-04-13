@@ -184,7 +184,7 @@ impl Controller {
                 trace!("Device on port {} is high-speed. Allocated address {} for it to use.", port, address);
 
                 // Create a new queue for the new device's control endpoint
-                let mut queue = Queue::new(self.schedule_pool.create(QueueHead::new()).unwrap());
+                let queue = self.create_queue(0, 0, 64);
                 self.add_to_async_schedule(&mut queue);
 
                 /*
@@ -465,6 +465,12 @@ impl Controller {
             self.write_port_register(port, PortStatusControl::new());
             while self.read_port_register(port).get(PortStatusControl::PORT_RESET) {}
         }
+    }
+    pub fn create_queue(&mut self, device: u8, endpoint: u8, max_packet_size: u16) -> Arc<RwSpinlock<Queue>> {
+        Queue::new(
+            self.schedule_pool.create(QueueHead::new(device, endpoint, max_packet_size)).unwrap(),
+            max_packet_size,
+        )
     }
 }
 
