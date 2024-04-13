@@ -33,6 +33,12 @@ pub struct Controller {
     active_devices: BTreeMap<u8, Arc<RwSpinlock<ActiveDevice>>>,
     platform_bus_bus_channel: Arc<Channel<BusDriverMessage, !>>,
     interrupt_event: Handle,
+
+    /// Holds references to all the queues that are currently in the asynchronous schedule. It's
+    /// important we keep a central record of them, as they are linked together into a linked list
+    /// in physical memory; if a queue is dropped without removing it from the schedule, we'll
+    /// confuse the controller.
+    async_schedule: Vec<Arc<RwSpinlock<Queue>>>,
 }
 
 impl Controller {
@@ -62,6 +68,8 @@ impl Controller {
             active_devices: BTreeMap::new(),
             platform_bus_bus_channel,
             interrupt_event,
+
+            async_schedule: Vec::new(),
         }
     }
 
@@ -185,7 +193,7 @@ impl Controller {
 
                 // Create a new queue for the new device's control endpoint
                 let queue = self.create_queue(0, 0, 64);
-                self.add_to_async_schedule(&mut queue);
+                self.add_to_async_schedule(queue.clone());
 
                 /*
                  * People have found experientally that many devices, despite not being
@@ -211,13 +219,7 @@ impl Controller {
                         length: 64,
                     };
                     let mut buffer = self.schedule_pool.create_buffer(64).unwrap();
-                    queue.control_transfer(
-                        get_descriptor_header,
-                        Some(buffer.token().unwrap()),
-                        false,
-                        &mut self.schedule_pool,
-                    );
-                    self.wait_for_transfer_completion(&mut queue);
+                    self.do_control_transfer(&queue, get_descriptor_header, Some(buffer.token().unwrap()), false);
 
                     // Manually extract the max packet size from the buffer (one byte at `0x7`)
                     let max_packet_size = buffer.read()[7];
@@ -241,10 +243,9 @@ impl Controller {
                     index: 0,
                     length: 0,
                 };
-                queue.control_transfer(set_address, None, true, &mut self.schedule_pool);
-                self.wait_for_transfer_completion(&mut queue);
+                self.do_control_transfer(&queue, set_address, None, true);
 
-                queue.set_address(address);
+                queue.write().set_address(address);
 
                 // Get the rest of the descriptor
                 let device_descriptor: DeviceDescriptor = {
@@ -260,13 +261,7 @@ impl Controller {
                     };
                     let mut descriptor: DmaObject<DeviceDescriptor> =
                         self.schedule_pool.create(DeviceDescriptor::default()).unwrap();
-                    queue.control_transfer(
-                        get_descriptor,
-                        Some(descriptor.token().unwrap()),
-                        false,
-                        &mut self.schedule_pool,
-                    );
-                    self.wait_for_transfer_completion(&mut queue);
+                    self.do_control_transfer(&queue, get_descriptor, Some(descriptor.token().unwrap()), false);
 
                     *descriptor.read()
                 };
@@ -291,13 +286,7 @@ impl Controller {
                     };
                     let mut descriptor: DmaObject<ConfigurationDescriptor> =
                         self.schedule_pool.create(ConfigurationDescriptor::default()).unwrap();
-                    queue.control_transfer(
-                        get_descriptor,
-                        Some(descriptor.token().unwrap()),
-                        false,
-                        &mut self.schedule_pool,
-                    );
-                    self.wait_for_transfer_completion(&mut queue);
+                    self.do_control_transfer(&queue, get_descriptor, Some(descriptor.token().unwrap()), false);
 
                     info!("ConfigurationDescriptor: {:#?}", descriptor.read());
 
@@ -313,25 +302,10 @@ impl Controller {
                     };
                     let mut buffer =
                         self.schedule_pool.create_buffer(descriptor.read().total_length as usize).unwrap();
-                    queue.control_transfer(
-                        get_configuration,
-                        Some(buffer.token().unwrap()),
-                        false,
-                        &mut self.schedule_pool,
-                    );
-                    self.wait_for_transfer_completion(&mut queue);
+                    self.do_control_transfer(&queue, get_configuration, Some(buffer.token().unwrap()), false);
 
                     buffer.read().to_vec()
                 };
-
-                // TODO: we `Arc` the queue because we ideally should also be holding it in a
-                // central list of all the stuff in the async schedule because dropping it without
-                // removing it from the schedule will crash the controller. Add it to that list
-                // somewhere when we get everything working (the current situation will work, as
-                // long as the device is never removed)
-                let queue = Arc::new(RwSpinlock::new(queue));
-                // TODO: add the queue to the central async schedule list here and explain the
-                // importance of not dropping them even if the device is dropped elsewhere etc.
 
                 let device = self.create_device(address, &device_descriptor, configuration, queue);
                 Some(device)
@@ -391,42 +365,65 @@ impl Controller {
         device
     }
 
-    pub fn add_to_async_schedule(&mut self, queue: &mut Queue) {
-        /*
-         * TODO: this currently assumes we only have a single queue head. To manage more than one,
-         * we need to:
-         *    - Keep track of queues in the schedule (this will probably involve them become
-         *      `Arc<RefCell<Queue>>`s is the problem)
-         *    - If there are already queue heads in the schedule, point to the current head with
-         *      our horizontal link ptr and then replace the `NextAsyncListAddress`.
-         *    - Reconfigure the reclaim list heads - this newest queue head becomes the reclaim
-         *      head, and the current one has its H-bit cleared.
-         */
-        queue.set_reclaim_head(true);
-        queue.head.write().horizontal_link = HorizontalLinkPtr::new(queue.head.phys as u32, 0b01, false);
-        unsafe {
-            self.write_operational_register(OpRegister::NextAsyncListAddress, queue.head.phys as u32);
-            self.write_operational_register(
-                OpRegister::Command,
-                Command::new()
-                    .with(Command::RUN, true)
-                    .with(Command::ASYNC_SCHEDULE_ENABLE, true)
-                    .with(Command::INTERRUPT_THRESHOLD, 0x08)
-                    .bits(),
-            );
+    pub fn add_to_async_schedule(&mut self, queue: Arc<RwSpinlock<Queue>>) {
+        if self.async_schedule.is_empty() {
+            /*
+             * This is the first queue head being added to the schedule. We set it to loop back
+             * round to itself, set it as the head of the reclaimation list, and then set the async
+             * schedule off running.
+             */
+            let mut locked_queue = queue.write();
+            locked_queue.set_reclaim_head(true);
+            locked_queue.head.write().horizontal_link =
+                HorizontalLinkPtr::new(locked_queue.head.phys as u32, 0b01, false);
+            unsafe {
+                self.write_operational_register(OpRegister::NextAsyncListAddress, locked_queue.head.phys as u32);
+                self.write_operational_register(
+                    OpRegister::Command,
+                    Command::new()
+                        .with(Command::RUN, true)
+                        .with(Command::ASYNC_SCHEDULE_ENABLE, true)
+                        .with(Command::INTERRUPT_THRESHOLD, 0x08)
+                        .bits(),
+                );
+            }
+        } else {
+            /*
+             * There are already queue heads in the schedule. We want to add the new queue head
+             * after the last element, and then link back round to the first. The newly added queue
+             * head becomes the reclaim head.
+             *
+             */
+            {
+                let first = self.async_schedule.first().unwrap().read();
+                let mut locked_queue = queue.write();
+                locked_queue.head.write().horizontal_link =
+                    HorizontalLinkPtr::new(first.head.phys as u32, 0b01, false);
+                locked_queue.set_reclaim_head(true);
+            }
+            {
+                let mut current_last = self.async_schedule.last_mut().unwrap().write();
+                assert!(current_last.is_reclaim_head());
+                current_last.head.write().horizontal_link =
+                    HorizontalLinkPtr::new(queue.read().head.phys as u32, 0b01, false);
+                current_last.set_reclaim_head(false);
+            }
         }
+
+        self.async_schedule.push(queue);
     }
 
     pub fn do_control_transfer(
         &mut self,
-        queue: &mut Queue,
+        queue: &Arc<RwSpinlock<Queue>>,
         setup: SetupPacket,
         data: Option<DmaToken>,
         transfer_to_device: bool,
     ) {
+        let mut queue = queue.write();
         queue.control_transfer(setup, data, transfer_to_device, &mut self.schedule_pool);
         // TODO: this should be replaced with the async future thingy etc.
-        self.wait_for_transfer_completion(queue);
+        self.wait_for_transfer_completion(queue.deref_mut());
     }
 
     /*
@@ -466,11 +463,12 @@ impl Controller {
             while self.read_port_register(port).get(PortStatusControl::PORT_RESET) {}
         }
     }
+
     pub fn create_queue(&mut self, device: u8, endpoint: u8, max_packet_size: u16) -> Arc<RwSpinlock<Queue>> {
-        Queue::new(
+        Arc::new(RwSpinlock::new(Queue::new(
             self.schedule_pool.create(QueueHead::new(device, endpoint, max_packet_size)).unwrap(),
             max_packet_size,
-        )
+        )))
     }
 }
 

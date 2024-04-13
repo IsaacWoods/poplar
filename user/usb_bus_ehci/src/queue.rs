@@ -125,6 +125,10 @@ impl Queue {
         self.max_packet_size = max_packet_size;
     }
 
+    pub fn is_reclaim_head(&self) -> bool {
+        self.head.read().endpoint_characteristics.get(EndpointCharacteristics::HEAD_OF_RECLAMATION_LIST)
+    }
+
     pub fn set_reclaim_head(&mut self, head: bool) {
         let endpoint_characteristics = self.head.read().endpoint_characteristics;
         self.head.write().endpoint_characteristics =
