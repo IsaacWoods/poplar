@@ -651,6 +651,7 @@ name = "usb"
 version = "0.1.0"
 dependencies = [
  "bit_field",
+ "log",
  "mycelium-bitfield 0.1.5 (registry+https://github.com/rust-lang/crates.io-index)",
  "ptah",
 ]

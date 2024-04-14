@@ -124,6 +124,7 @@ fn main() -> Result<()> {
             clean(PathBuf::from("lib/poplar_util"))?;
             clean(PathBuf::from("lib/ptah"))?;
             clean(PathBuf::from("lib/virtio"))?;
+            clean(PathBuf::from("lib/usb"))?;
             Ok(())
         }
     }

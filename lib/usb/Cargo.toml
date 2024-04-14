@@ -8,3 +8,4 @@ edition = "2021"
 bit_field = "0.10.2"
 mycelium-bitfield = "0.1.5"
 ptah = { path = "../ptah/", features = ["derive"] }
+log = "0.4"

@@ -1,6 +1,6 @@
 #![feature(never_type)]
 
-use log::info;
+use log::{info, warn};
 use platform_bus::{BusDriverMessage, DeviceDriverMessage, DeviceDriverRequest, Filter, Property};
 use std::poplar::{
     caps::{CapabilitiesRepr, CAP_EARLY_LOGGING, CAP_PADDING, CAP_SERVICE_USER},
@@ -14,6 +14,10 @@ use usb::{
         EndpointAddress,
         EndpointDescriptor,
         InterfaceDescriptor,
+    },
+    hid::{
+        report::{FieldValue, Usage},
+        HidDescriptor,
     },
     DeviceControlMessage,
     DeviceResponse,
@@ -123,7 +127,7 @@ pub fn main() {
                     std::poplar::rt::spawn(async move {
                         // Get the report descriptor
                         device_channel
-                            .send(&DeviceControlMessage::GetDescriptor {
+                            .send(&DeviceControlMessage::GetInterfaceDescriptor {
                                 typ: DescriptorType::Report,
                                 index: 0,
                                 length: config_info.hid_report_len,
@@ -136,8 +140,12 @@ pub fn main() {
                                 {
                                     bytes
                                 }
-                                _ => panic!("Unexpected response from GetDescriptor request!"),
+                                _ => panic!("Unexpected response from GetInterfaceDescriptor request!"),
                             };
+
+                            info!("Got Report descriptor: {:x?}", bytes);
+                            let report_desc = usb::hid::report::ReportDescriptorParser::parse(&bytes);
+                            report_desc
                         };
 
                         device_channel
@@ -160,6 +168,53 @@ pub fn main() {
                                 })
                                 .unwrap();
                             let response = device_channel.receive().await.unwrap();
+                            match response {
+                                DeviceResponse::Data(data) => {
+                                    let report = report_desc.interpret(&data);
+                                    let mut state = KeyState::default();
+
+                                    for field in report {
+                                        match field {
+                                            FieldValue::DynamicValue(Usage::KeyLeftControl, value) => {
+                                                state.left_ctrl = value;
+                                            }
+                                            FieldValue::DynamicValue(Usage::KeyLeftShift, value) => {
+                                                state.left_shift = value;
+                                            }
+                                            FieldValue::DynamicValue(Usage::KeyLeftAlt, value) => {
+                                                state.left_alt = value;
+                                            }
+                                            FieldValue::DynamicValue(Usage::KeyLeftGui, value) => {
+                                                state.left_gui = value;
+                                            }
+                                            FieldValue::DynamicValue(Usage::KeyRightControl, value) => {
+                                                state.right_ctrl = value;
+                                            }
+                                            FieldValue::DynamicValue(Usage::KeyRightShift, value) => {
+                                                state.right_shift = value;
+                                            }
+                                            FieldValue::DynamicValue(Usage::KeyRightAlt, value) => {
+                                                state.right_alt = value;
+                                            }
+                                            FieldValue::DynamicValue(Usage::KeyRightGui, value) => {
+                                                state.right_gui = value;
+                                            }
+                                            FieldValue::DynamicValue(other, _) => {
+                                                warn!("Unknown dynamic flag: {:?}", other);
+                                            }
+
+                                            FieldValue::Selector(Some(usage)) => {
+                                                // info!("Key pressed: {:?} ({:?})", usage, state);
+                                                info!("Key pressed: {:?}", usage);
+                                            }
+                                            FieldValue::Selector(None) => {}
+                                        }
+                                    }
+                                }
+                                DeviceResponse::NoData => {}
+                                _ => panic!("Unexpected message during report loop"),
+                            }
+                        }
                     });
                 }
             }
@@ -167,6 +222,37 @@ pub fn main() {
     });
 
     std::poplar::rt::enter_loop();
+}
+
+#[derive(Clone, Copy, PartialEq, Default, Debug)]
+pub struct KeyState {
+    left_ctrl: bool,
+    left_shift: bool,
+    left_alt: bool,
+    left_gui: bool,
+
+    right_ctrl: bool,
+    right_shift: bool,
+    right_alt: bool,
+    right_gui: bool,
+}
+
+impl KeyState {
+    pub fn ctrl(&self) -> bool {
+        self.left_ctrl || self.right_ctrl
+    }
+
+    pub fn shift(&self) -> bool {
+        self.left_shift || self.right_shift
+    }
+
+    pub fn alt(&self) -> bool {
+        self.left_alt || self.right_alt
+    }
+
+    pub fn gui(&self) -> bool {
+        self.left_gui || self.right_gui
+    }
 }
 
 #[used]
