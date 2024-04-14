@@ -14,7 +14,7 @@ pub struct Queue {
 
 pub struct Transaction {
     descriptors: DmaArray<TransferDescriptor>,
-    setup: DmaObject<SetupPacket>,
+    setup: Option<DmaObject<SetupPacket>>,
     data: Option<DmaToken>,
 }
 
@@ -32,6 +32,8 @@ impl Queue {
         transfer_to_device: bool,
         pool: &mut DmaPool,
     ) {
+        // TODO: do we need to think about max packet size for control transfers??
+
         let num_data = if let Some(ref data) = data {
             // TODO: this currently only supports one data TD (transfers up to `0x4000` bytes)
             assert!(data.length < 0x4000);
@@ -108,7 +110,50 @@ impl Queue {
         // and somehow progress the queue as stuff completes I think?
         self.head.write().next_td = TdPtr::new(transfers.phys_of_element(0) as u32, false);
 
-        self.transactions.push_back(Transaction { descriptors: transfers, setup, data });
+        self.transactions.push_back(Transaction { descriptors: transfers, setup: Some(setup), data });
+    }
+
+    // TODO: this should also return a future that is awoken when the transfer has completed
+    pub fn interrupt_transfer(&mut self, data: DmaToken, transfer_to_device: bool, pool: &mut DmaPool) {
+        // TODO: in the future we should support larger transfers that respect the max packet size
+        // etc.
+        let num_data = 1;
+
+        let mut transfers = pool.create_array(num_data, TransferDescriptor::new()).unwrap();
+
+        for i in 0..num_data {
+            let bytes_to_transfer = {
+                // TODO: if we need multiple packets, this gets complex with alignments and stuff.
+                // Work that out later.
+                data.length as u32
+            };
+            transfers.write(
+                i,
+                TransferDescriptor {
+                    next_ptr: if (i + 1) < num_data {
+                        TdPtr::new(transfers.phys_of_element(i + 1) as u32, false)
+                    } else {
+                        TdPtr::new(0x0, true)
+                    },
+                    alt_ptr: TdPtr::new(0x0, true),
+                    token: TdToken::new()
+                        .with(TdToken::ACTIVE, true)
+                        .with(TdToken::INTERRUPT_ON_COMPLETE, true)
+                        .with(TdToken::PID_CODE, if transfer_to_device { PidCode::Out } else { PidCode::In })
+                        .with(TdToken::TOTAL_BYTES_TO_TRANSFER, bytes_to_transfer),
+                    buffer_ptr_0: data.phys as u32,
+                    buffer_ptr_1: 0,
+                    buffer_ptr_2: 0,
+                    buffer_ptr_3: 0,
+                    buffer_ptr_4: 0,
+                },
+            );
+        }
+
+        // TODO: if we're running a transaction, queue this one instead of overwriting
+        self.head.write().next_td = TdPtr::new(transfers.phys_of_element(0) as u32, false);
+
+        self.transactions.push_back(Transaction { descriptors: transfers, setup: None, data: Some(data) });
     }
 
     pub fn set_address(&mut self, address: u8) {

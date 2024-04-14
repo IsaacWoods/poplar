@@ -10,6 +10,7 @@ use spinning_top::RwSpinlock;
 use std::{
     collections::BTreeMap,
     mem,
+    ops::DerefMut,
     poplar::{
         channel::Channel,
         ddk::dma::{DmaObject, DmaPool, DmaToken},
@@ -422,6 +423,18 @@ impl Controller {
     ) {
         let mut queue = queue.write();
         queue.control_transfer(setup, data, transfer_to_device, &mut self.schedule_pool);
+        // TODO: this should be replaced with the async future thingy etc.
+        self.wait_for_transfer_completion(queue.deref_mut());
+    }
+
+    pub fn do_interrupt_transfer(
+        &mut self,
+        queue: &Arc<RwSpinlock<Queue>>,
+        data: DmaToken,
+        transfer_to_device: bool,
+    ) {
+        let mut queue = queue.write();
+        queue.interrupt_transfer(data, transfer_to_device, &mut self.schedule_pool);
         // TODO: this should be replaced with the async future thingy etc.
         self.wait_for_transfer_completion(queue.deref_mut());
     }
