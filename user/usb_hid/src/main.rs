@@ -7,7 +7,18 @@ use std::poplar::{
     channel::Channel,
     early_logger::EarlyLogger,
 };
-use usb::{descriptor::InterfaceDescriptor, DeviceControlMessage};
+use usb::{
+    descriptor::{
+        ConfigurationDescriptor,
+        DescriptorType,
+        EndpointAddress,
+        EndpointDescriptor,
+        InterfaceDescriptor,
+    },
+    DeviceControlMessage,
+    DeviceResponse,
+    EndpointDirection,
+};
 
 pub fn main() {
     log::set_logger(&EarlyLogger).unwrap();
@@ -67,12 +78,89 @@ pub fn main() {
                 DeviceDriverRequest::HandoffDevice(device_name, device_info, handoff_info) => {
                     info!("Started driving HID device '{}'", device_name);
 
-                    // Test the device channel
-                    let device_channel: Channel<DeviceControlMessage, ()> =
+                    let device_channel: Channel<DeviceControlMessage, DeviceResponse> =
                         Channel::new_from_handle(handoff_info.get_as_channel("usb.channel").unwrap());
-                    device_channel.send(&DeviceControlMessage::UseConfiguration(0)).unwrap();
 
-                    // TODO: do something with the device
+                    let config_info = {
+                        // TODO: this assumes only one configuration
+                        let bytes = device_info.get_as_bytes("usb.config0").unwrap();
+                        #[derive(Default)]
+                        struct ConfigInfo {
+                            config_value: u8,
+                            interface_num: u8,
+                            interface_setting: u8,
+                            endpoint_num: u8,
+                            packet_size: u16,
+                            hid_report_len: u16,
+                        }
+                        impl usb::descriptor::ConfigurationVisitor for ConfigInfo {
+                            fn visit_configuration(&mut self, descriptor: &ConfigurationDescriptor) {
+                                self.config_value = descriptor.configuration_value;
+                            }
+
+                            fn visit_interface(&mut self, descriptor: &InterfaceDescriptor) {
+                                self.interface_num = descriptor.interface_num;
+                                self.interface_setting = descriptor.alternate_setting;
+                            }
+
+                            fn visit_endpoint(&mut self, descriptor: &EndpointDescriptor) {
+                                self.endpoint_num = descriptor.endpoint_address.get(EndpointAddress::NUMBER);
+                                self.packet_size = descriptor.max_packet_size;
+                            }
+
+                            fn visit_hid(&mut self, descriptor: &HidDescriptor) {
+                                // TODO: we might want to handle more descriptors than just the
+                                // Report one (or it might not come first).
+                                assert!(descriptor.descriptor_typ == 34);
+                                self.hid_report_len = descriptor.descriptor_length;
+                            }
+                        }
+                        let mut info = ConfigInfo::default();
+                        usb::descriptor::walk_configuration(bytes, &mut info);
+                        info
+                    };
+
+                    std::poplar::rt::spawn(async move {
+                        // Get the report descriptor
+                        device_channel
+                            .send(&DeviceControlMessage::GetDescriptor {
+                                typ: DescriptorType::Report,
+                                index: 0,
+                                length: config_info.hid_report_len,
+                            })
+                            .unwrap();
+                        let report_desc = {
+                            let bytes = match device_channel.receive().await.unwrap() {
+                                DeviceResponse::Descriptor { typ, index, bytes }
+                                    if typ == DescriptorType::Report && index == 0 =>
+                                {
+                                    bytes
+                                }
+                                _ => panic!("Unexpected response from GetDescriptor request!"),
+                            };
+                        };
+
+                        device_channel
+                            .send(&DeviceControlMessage::UseConfiguration(config_info.config_value))
+                            .unwrap();
+                        device_channel
+                            .send(&DeviceControlMessage::OpenEndpoint {
+                                number: config_info.endpoint_num,
+                                direction: EndpointDirection::In,
+                                max_packet_size: config_info.packet_size,
+                            })
+                            .unwrap();
+
+                        info!("Listening to reports from HID device '{}'", device_name);
+                        loop {
+                            device_channel
+                                .send(&DeviceControlMessage::InterruptTransferIn {
+                                    endpoint: config_info.endpoint_num,
+                                    packet_size: config_info.packet_size,
+                                })
+                                .unwrap();
+                            let response = device_channel.receive().await.unwrap();
+                    });
                 }
             }
         }

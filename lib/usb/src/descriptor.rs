@@ -1,4 +1,6 @@
+use crate::hid::HidDescriptor;
 use core::mem;
+use ptah::{Deserialize, Serialize};
 
 /// Used to 'visit' each descriptor within a configuration hierachy. Used with
 /// [`walk_configuration`].
@@ -10,6 +12,9 @@ pub trait ConfigurationVisitor {
         let _ = descriptor;
     }
     fn visit_endpoint(&mut self, descriptor: &EndpointDescriptor) {
+        let _ = descriptor;
+    }
+    fn visit_hid(&mut self, descriptor: &HidDescriptor) {
         let _ = descriptor;
     }
     fn visit_other(&mut self, descriptor_typ: u8, bytes: &[u8]) {
@@ -50,6 +55,10 @@ pub fn walk_configuration(bytes: &[u8], visitor: &mut impl ConfigurationVisitor)
                 let endpoint_descriptor = at::<EndpointDescriptor>(bytes, offset);
                 visitor.visit_endpoint(endpoint_descriptor);
             }
+            33 => {
+                let hid_descriptor = at::<HidDescriptor>(bytes, offset);
+                visitor.visit_hid(hid_descriptor);
+            }
             other => {
                 let descriptor_bytes = &bytes[offset..(offset + base.length as usize)];
                 visitor.visit_other(other, descriptor_bytes);
@@ -59,7 +68,7 @@ pub fn walk_configuration(bytes: &[u8], visitor: &mut impl ConfigurationVisitor)
     }
 }
 
-#[derive(Clone, Copy, PartialEq, Eq, Default, Debug)]
+#[derive(Clone, Copy, PartialEq, Eq, Default, Debug, Serialize, Deserialize)]
 #[repr(u8)]
 pub enum DescriptorType {
     #[default]
@@ -72,6 +81,11 @@ pub enum DescriptorType {
     DeviceQualifier = 6,
     OtherSpeedConfiguration = 7,
     InterfacePower = 8,
+    /*
+     * TODO: I'm not sure if we want non-standard descriptors to be in this enum or no
+     */
+    Hid = 33,
+    Report = 34,
 }
 
 #[repr(C)]

@@ -1,5 +1,7 @@
+pub mod report;
+
 #[derive(Clone, Copy, Debug)]
-#[repr(C)]
+#[repr(C, packed)]
 pub struct HidDescriptor {
     pub length: u8,
     pub typ: u8,
@@ -8,6 +10,10 @@ pub struct HidDescriptor {
     /// The number of included class descriptors. Will be `>=1` as a `Report` descriptor will
     /// always be present.
     pub num_descriptors: u8,
+    /*
+     * We include the first (guaranteed to be present) descriptor header here so it's included in
+     * the first request. These are not naturally aligned, so we pack the field.
+     */
     pub descriptor_typ: u8,
     pub descriptor_length: u16,
 }
