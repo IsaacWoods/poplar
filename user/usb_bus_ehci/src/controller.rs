@@ -24,13 +24,14 @@ use usb::{
     descriptor::{ConfigurationDescriptor, DescriptorType, DeviceDescriptor},
     setup::{Direction, Recipient, Request, RequestType, RequestTypeType, SetupPacket},
     DeviceControlMessage,
+    DeviceResponse,
 };
 
 pub struct Controller {
     register_base: usize,
     caps: Capabilities,
     free_addresses: Vec<u8>,
-    schedule_pool: DmaPool,
+    pub schedule_pool: DmaPool,
     active_devices: BTreeMap<u8, Arc<RwSpinlock<ActiveDevice>>>,
     platform_bus_bus_channel: Arc<Channel<BusDriverMessage, !>>,
     interrupt_event: Handle,
@@ -350,7 +351,8 @@ impl Controller {
             properties.insert("usb.config0".to_string(), Property::Bytes(config0));
             DeviceInfo(properties)
         };
-        let (device_channel, device_channel_handle) = Channel::<(), DeviceControlMessage>::create().unwrap();
+        let (device_channel, device_channel_handle) =
+            Channel::<DeviceResponse, DeviceControlMessage>::create().unwrap();
         let handoff_info = {
             let mut properties = BTreeMap::new();
             properties.insert("usb.channel".to_string(), HandoffProperty::Channel(device_channel_handle));
@@ -360,7 +362,12 @@ impl Controller {
             .send(&BusDriverMessage::RegisterDevice(name, device_info, handoff_info))
             .unwrap();
 
-        let device = Arc::new(RwSpinlock::new(ActiveDevice { address, control_queue, channel: device_channel }));
+        let device = Arc::new(RwSpinlock::new(ActiveDevice {
+            address,
+            control_queue,
+            endpoints: BTreeMap::new(),
+            channel: device_channel,
+        }));
         self.active_devices.insert(address, device.clone());
 
         device
@@ -370,8 +377,15 @@ impl Controller {
         if self.async_schedule.is_empty() {
             /*
              * This is the first queue head being added to the schedule. We set it to loop back
-             * round to itself, set it as the head of the reclaimation list, and then set the async
+             * round to itself, set it as the head of the reclamation list, and then set the async
              * schedule off running.
+             *
+             *     ┌─────────┐
+             *     │  ┌───┐  │
+             *     │  │ QH│  │
+             *     └─►│  a├──┘
+             *        └───┘RH
+             *         ▲ ASYNCADDR
              */
             let mut locked_queue = queue.write();
             locked_queue.set_reclaim_head(true);
@@ -392,8 +406,14 @@ impl Controller {
             /*
              * There are already queue heads in the schedule. We want to add the new queue head
              * after the last element, and then link back round to the first. The newly added queue
-             * head becomes the reclaim head.
+             * head becomes the head of the reclamation list.
              *
+             *     ┌─────────────────────────┐
+             *     │  ┌───┐   ┌───┐   ┌───┐  │
+             *     │  │ QH│   │ QH│   │ QH│  │
+             *     └─►│  a├──►│  b├──►│  c├──┘
+             *        └───┘   └───┘   └───┘RH
+             *         ▲ ASYNCADDR
              */
             {
                 let first = self.async_schedule.first().unwrap().read();
@@ -456,8 +476,6 @@ impl Controller {
         }
 
         assert!(status.get(Status::INTERRUPT));
-        info!("Transaction complete!");
-
         unsafe { self.write_status(Status::new().with(Status::INTERRUPT, true)) };
 
         // Remove the front transaction from the queue to drop the held DMA objects and token

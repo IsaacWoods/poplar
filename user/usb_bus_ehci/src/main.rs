@@ -16,11 +16,11 @@ use log::info;
 use platform_bus::{BusDriverMessage, DeviceDriverMessage, DeviceDriverRequest, Filter, Property};
 use spinning_top::RwSpinlock;
 use std::{
+    collections::BTreeMap,
     ops::DerefMut,
     poplar::{
         caps::{CapabilitiesRepr, CAP_EARLY_LOGGING, CAP_PADDING, CAP_SERVICE_USER},
         channel::Channel,
-        ddk::dma::DmaPool,
         early_logger::EarlyLogger,
         memory_object::MemoryObject,
         syscall::MemoryObjectFlags,
@@ -30,12 +30,15 @@ use std::{
 use usb::{
     setup::{Direction, Recipient, Request, RequestType, RequestTypeType, SetupPacket},
     DeviceControlMessage,
+    DeviceResponse,
+    EndpointDirection,
 };
 
 pub struct ActiveDevice {
     pub address: u8,
     control_queue: Arc<RwSpinlock<Queue>>,
-    channel: Channel<(), DeviceControlMessage>,
+    endpoints: BTreeMap<u8, Arc<RwSpinlock<Queue>>>,
+    channel: Channel<DeviceResponse, DeviceControlMessage>,
 }
 
 impl ActiveDevice {
@@ -46,10 +49,99 @@ impl ActiveDevice {
     ) -> Result<(), ()> {
         match request {
             DeviceControlMessage::UseConfiguration(config) => {
-                todo!();
+                // TODO: make sure the config number is valid (i.e. device has that many configs)
+
+                let set_configuration = SetupPacket {
+                    typ: RequestType::new()
+                        .with(RequestType::RECIPIENT, Recipient::Device)
+                        .with(RequestType::TYP, RequestTypeType::Standard)
+                        .with(RequestType::DIRECTION, Direction::HostToDevice),
+                    request: Request::SetConfiguration,
+                    value: config as u16,
+                    index: 0,
+                    length: 0,
+                };
+                controller.do_control_transfer(&self.control_queue, set_configuration, None, true);
+
+                Ok(())
             }
-            DeviceControlMessage::UseInterface(interface, setting) => todo!(),
-            DeviceControlMessage::OpenEndpoint(endpoint) => todo!(),
+            DeviceControlMessage::UseInterface(interface, setting) => {
+                let set_configuration = SetupPacket {
+                    typ: RequestType::new()
+                        .with(RequestType::RECIPIENT, Recipient::Device)
+                        .with(RequestType::TYP, RequestTypeType::Standard)
+                        .with(RequestType::DIRECTION, Direction::HostToDevice),
+                    request: Request::SetInterface,
+                    value: setting as u16,
+                    index: interface as u16,
+                    length: 0,
+                };
+                controller.do_control_transfer(&self.control_queue, set_configuration, None, true);
+
+                Ok(())
+            }
+            DeviceControlMessage::OpenEndpoint { number, direction, max_packet_size } => {
+                match direction {
+                    EndpointDirection::In => {
+                        info!(
+                            "Setting up IN pipe for endpoint {} (max packet size of {})",
+                            number, max_packet_size
+                        );
+
+                        let queue = controller.create_queue(self.address, number, max_packet_size);
+                        // TODO: I think in the long run things like Interrupt endpoints should
+                        // actually be in the periodic schedule no?
+                        controller.add_to_async_schedule(queue.clone());
+                        self.endpoints.insert(number, queue);
+                    }
+                    EndpointDirection::Out => {
+                        info!(
+                            "Setting up OUT pipe for endpoint {} (max packet size of {})",
+                            number, max_packet_size
+                        );
+                        todo!()
+                    }
+                }
+
+                Ok(())
+            }
+            DeviceControlMessage::GetInterfaceDescriptor { typ, index, length } => {
+                let get_descriptor = SetupPacket {
+                    typ: RequestType::new()
+                        .with(RequestType::RECIPIENT, Recipient::Interface)
+                        .with(RequestType::TYP, RequestTypeType::Standard)
+                        .with(RequestType::DIRECTION, Direction::DeviceToHost),
+                    request: Request::GetDescriptor,
+                    value: (typ as u16) << 8 + index,
+                    index: 0,
+                    length,
+                };
+                let mut buffer = controller.schedule_pool.create_buffer(length as usize).unwrap();
+                controller.do_control_transfer(
+                    &self.control_queue,
+                    get_descriptor,
+                    Some(buffer.token().unwrap()),
+                    false,
+                );
+
+                self.channel
+                    .send(&DeviceResponse::Descriptor { typ, index, bytes: buffer.read().to_vec() })
+                    .unwrap();
+                Ok(())
+            }
+            DeviceControlMessage::InterruptTransferIn { endpoint, packet_size } => {
+                // info!("Doing IN interrupt transfer for endpoint {} (packet size = {})", endpoint, packet_size);
+                let endpoint = self.endpoints.get(&endpoint).unwrap();
+                // TODO: check that given direction is correct for this endpoint
+
+                let mut buffer = controller.schedule_pool.create_buffer(packet_size as usize).unwrap();
+                controller.do_interrupt_transfer(&endpoint, buffer.token().unwrap(), false);
+                // TODO: I wonder if sending the data back should be divorced from the request
+                // handling so we can handle other requests while we're waiting for it to complete?
+                // This will require transactions to go through the async system first.
+                self.channel.send(&DeviceResponse::Data(buffer.read().to_vec())).unwrap();
+                Ok(())
+            }
         }
     }
 }
@@ -107,7 +199,7 @@ fn main() {
                         register_space.map_at(REGISTER_SPACE_ADDRESS).unwrap();
                     }
 
-                    let mut controller = Arc::new(RwSpinlock::new(Controller::new(
+                    let controller = Arc::new(RwSpinlock::new(Controller::new(
                         REGISTER_SPACE_ADDRESS,
                         platform_bus_bus_channel.clone(),
                         handoff_info.get_as_event("pci.interrupt").unwrap(),
@@ -121,7 +213,6 @@ fn main() {
                             loop {
                                 let mut device = device.write();
                                 let message = device.channel.receive().await.unwrap();
-                                info!("Message down device channel: {:?}", message);
                                 device.handle_request(message, controller.write().deref_mut()).unwrap();
                             }
                         });
