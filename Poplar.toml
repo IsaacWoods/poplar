@@ -23,3 +23,6 @@ user_tasks = [
 
 [mq_pro]
 release = true
+
+[uconsole]
+release = true

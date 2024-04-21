@@ -28,6 +28,7 @@ struct ConfigFile {
     x64: Option<PlatformInfo>,
     rv64_virt: Option<PlatformInfo>,
     mq_pro: Option<PlatformInfo>,
+    uconsole: Option<PlatformInfo>,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -53,6 +54,7 @@ impl Config {
             Platform::X64 => file.x64.as_ref(),
             Platform::Rv64Virt => file.rv64_virt.as_ref(),
             Platform::MqPro => file.mq_pro.as_ref(),
+            Platform::Uconsole => file.uconsole.as_ref(),
         };
         let release = cli_options.map_or(false, |options| options.release)
             || platform_info.map_or(false, |info| info.release.unwrap_or(false));
@@ -89,6 +91,8 @@ pub enum Platform {
     Rv64Virt,
     #[serde(alias = "mq_pro")]
     MqPro,
+    #[serde(alias = "uconsole")]
+    Uconsole,
 }
 
 impl Default for Platform {
@@ -103,6 +107,7 @@ impl fmt::Display for Platform {
             Self::X64 => write!(f, "x64"),
             Self::Rv64Virt => write!(f, "rv64_virt"),
             Self::MqPro => write!(f, "mq_pro"),
+            Self::Uconsole => write!(f, "uconsole"),
         }
     }
 }
@@ -115,7 +120,8 @@ impl std::str::FromStr for Platform {
             "x64" => Ok(Platform::X64),
             "rv64_virt" => Ok(Platform::Rv64Virt),
             "mq_pro" => Ok(Platform::MqPro),
-            _ => Err("Unrecognised platform string. Accepted values are `x64` and `riscv`."),
+            "uconsole" => Ok(Platform::Uconsole),
+            _ => Err("Unrecognised platform string"),
         }
     }
 }

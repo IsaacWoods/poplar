@@ -14,7 +14,7 @@ mod riscv;
 mod serial;
 mod x64;
 
-use crate::ramdisk::Ramdisk;
+use crate::{cargo::RunCargo, ramdisk::Ramdisk};
 use cargo::Target;
 use colored::Colorize;
 use config::{Config, Platform};
@@ -60,8 +60,8 @@ fn main() -> Result<()> {
                     .open_display(flags.display)
                     .debug_int_firehose(flags.debug_int_firehose)
                     .run(),
-                Platform::MqPro => {
-                    panic!("MQ-Pro does not support running in QEMU");
+                _ => {
+                    panic!("Platform does not support running in QEMU");
                 }
             }
         }
@@ -82,6 +82,19 @@ fn main() -> Result<()> {
                     Command::new("xfel").arg("write").arg("0x40080000").arg(&dist_result.bootloader_path).status().unwrap();
                     Command::new("xfel").arg("write32").arg("0x40100000").arg(format!("{}", kernel_size)).status().unwrap();
                     Command::new("xfel").arg("write").arg("0x40100004").arg(&dist_result.kernel_path).status().unwrap();
+                    Command::new("xfel").arg("exec").arg("0x40000000").status().unwrap();
+
+                    println!("{}", format!("[*] Listening to serial").bold().magenta());
+                    serial.listen();
+                }
+                Platform::Uconsole => {
+                    let serial = serial::Serial::new(&Path::new("/dev/ttyUSB0"), 115200);
+
+                    println!("{}", format!("[*] Uploading and running code on device").bold().magenta());
+                    Command::new("xfel").arg("ddr").arg("d1").status().unwrap();
+                    // TODO: this will be Seed in the future, and I guess boot0 will need to be
+                    // passed seperately?
+                    Command::new("xfel").arg("write").arg("0x40000000").arg(&dist_result.bootloader_path).status().unwrap();
                     Command::new("xfel").arg("exec").arg("0x40000000").status().unwrap();
 
                     println!("{}", format!("[*] Listening to serial").bold().magenta());
@@ -141,6 +154,7 @@ fn dist(config: &Config) -> Result<DistResult> {
         Platform::X64 => dist.build_x64(),
         Platform::Rv64Virt => dist.build_rv64_virt(),
         Platform::MqPro => dist.build_mq_pro(),
+        Platform::Uconsole => dist.build_uconsole(),
     }
 }
 
@@ -164,7 +178,6 @@ struct SeedConfig {
 
 impl Dist {
     pub fn build_rv64_virt(self) -> Result<DistResult> {
-        use cargo::RunCargo;
         use image::MakeGptImage;
 
         println!("{}", "[*] Building Seed for RISC-V".bold().magenta());
@@ -223,8 +236,6 @@ impl Dist {
     }
 
     pub fn build_mq_pro(self) -> Result<DistResult> {
-        use cargo::RunCargo;
-
         // println!("{}", "[*] Building D1 boot0".bold().magenta());
         // let _d1_boot0 = RunCargo::new("d1_boot0", PathBuf::from("seed/d1_boot0/"))
         //     .workspace(PathBuf::from("seed/"))
@@ -232,6 +243,7 @@ impl Dist {
         //     .release(self.release)
         //     .std_components(vec!["core".to_string()])
         //     .rustflags("-Clink-arg=-Td1_boot0/link.ld")
+        //     .flatten_result(true)
         //     .run()?;
 
         println!("{}", "[*] Building Seed for RISC-V".bold().magenta());
@@ -268,8 +280,27 @@ impl Dist {
         })
     }
 
+    pub fn build_uconsole(self) -> Result<DistResult> {
+        println!("{}", "[*] Building D1 boot0".bold().magenta());
+        let d1_boot0 = RunCargo::new("d1_boot0", PathBuf::from("seed/d1_boot0/"))
+            .workspace(PathBuf::from("seed/"))
+            .target(Target::Triple("riscv64imac-unknown-none-elf".to_string()))
+            .release(self.release)
+            .std_components(vec!["core".to_string()])
+            .rustflags("-Clink-arg=-Td1_boot0/link.ld")
+            .flatten_result(true)
+            .run()?;
+
+        let fake_kernel_path = PathBuf::new();
+        Ok(DistResult {
+            bootloader_path: d1_boot0,
+            kernel_path: fake_kernel_path,
+            ramdisk: None,
+            disk_image: None,
+        })
+    }
+
     pub fn build_x64(self) -> Result<DistResult> {
-        use cargo::RunCargo;
         use image::MakeGptImage;
 
         println!("{}", "[*] Building Seed for x86_64".bold().magenta());
@@ -333,7 +364,6 @@ impl Dist {
     }
 
     fn build_userspace_task(&self, name: &str, source_dir: PathBuf, target: Target) -> Result<PathBuf> {
-        use cargo::RunCargo;
         println!("{}", format!("[*] Building user task '{}'", name).bold().magenta());
 
         RunCargo::new(name.to_string(), source_dir)
