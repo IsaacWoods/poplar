@@ -173,6 +173,21 @@ pub fn main() {
                                     let report = report_desc.interpret(&data);
                                     let mut state = KeyState::default();
 
+                                    /*
+                                     * TODO: this is currently just for testing the keyboard. I'm
+                                     * not sure what the layer above this should look like, and how
+                                     * we can accurately turn reports into 'key events' - at the
+                                     * moment, things like key modifiers (e.g. CTRL-C) can report
+                                     * key presses twice, as can key rollover.
+                                     *
+                                     * I think we'll need to keep track of which keys we think are
+                                     * pressed in this driver, and then convert that into key
+                                     * pressed / released events manually (I think this would
+                                     * require us to re-add things like key repetition manually
+                                     * back on top).
+                                     *
+                                     * Also worth looking at how other OSs do this I guess?
+                                     */
                                     for field in report {
                                         match field {
                                             FieldValue::DynamicValue(Usage::KeyLeftControl, value) => {
@@ -204,8 +219,7 @@ pub fn main() {
                                             }
 
                                             FieldValue::Selector(Some(usage)) => {
-                                                // info!("Key pressed: {:?} ({:?})", usage, state);
-                                                info!("Key pressed: {:?}", usage);
+                                                info!("Key pressed: {:?} ({:?})", usage, state);
                                             }
                                             FieldValue::Selector(None) => {}
                                         }
@@ -224,6 +238,10 @@ pub fn main() {
     std::poplar::rt::enter_loop();
 }
 
+/*
+ * TODO: not sure where this should live in the future - maybe part of a larger HID device
+ * framework that can then be consumed by other applications.
+ */
 #[derive(Clone, Copy, PartialEq, Default, Debug)]
 pub struct KeyState {
     left_ctrl: bool,
