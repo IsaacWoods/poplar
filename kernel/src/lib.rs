@@ -114,6 +114,7 @@ pub fn load_task<P>(
 
     for segment in &image.segments {
         let memory_object = MemoryObject::from_boot_info(task.id(), segment);
+        task.add_handle(memory_object.clone());
         address_space.map_memory_object(memory_object, segment.virtual_address, allocator).unwrap();
     }
 
