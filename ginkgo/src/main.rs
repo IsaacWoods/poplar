@@ -1,10 +1,7 @@
-use ginkgo::lex::Lex;
+use ginkgo::{lex::Lex, parse::Parser};
 use std::io::{self, Write};
 
 fn main() -> io::Result<()> {
-    // TODO: repl
-    println!("Hello, world!");
-
     loop {
         print!("> ");
         io::stdout().flush()?;
@@ -17,5 +14,8 @@ fn main() -> io::Result<()> {
         for token in lex {
             println!("Token: {:?}", token);
         }
+
+        let parser = Parser::new(&input);
+        parser.parse().unwrap();
     }
 }
