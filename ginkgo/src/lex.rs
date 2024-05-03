@@ -34,7 +34,7 @@ pub enum Token<'s> {
     // extract it at time of usage from the stream? (same with all valued tokens)
     Identifier(&'s str),
     String(&'s str),
-    Integer(usize),
+    Integer(isize),
     Decimal(f64),
 
     /*
