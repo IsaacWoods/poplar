@@ -1,7 +1,7 @@
 use std::str::Chars;
 
-#[derive(Clone, Copy, Debug)]
-pub enum Token<'s> {
+#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Debug)]
+pub enum TokenType {
     /*
      * Symbols.
      */
@@ -30,12 +30,10 @@ pub enum Token<'s> {
     /*
      * Literals.
      */
-    // TODO: this makes `Token` quite a bit bigger. We could avoid this by providing a method to
-    // extract it at time of usage from the stream? (same with all valued tokens)
-    Identifier(&'s str),
-    String(&'s str),
-    Integer(isize),
-    Decimal(f64),
+    Identifier,
+    String,
+    Integer,
+    Decimal,
 
     /*
      * Keywords.
@@ -52,12 +50,19 @@ pub enum Token<'s> {
     Fn,
 }
 
-// TODO: this could be `Token` and `Token` could be `TokenType` or something
 #[derive(Clone, Copy, Debug)]
-pub struct TokenInfo<'s> {
-    typ: Token<'s>,
-    offset: usize,
-    length: usize,
+pub struct Token {
+    pub typ: TokenType,
+    pub offset: usize,
+    pub length: usize,
+}
+
+#[derive(Clone, PartialEq, Debug)]
+pub enum TokenValue<'s> {
+    Identifier(&'s str),
+    String(&'s str),
+    Integer(isize),
+    Decimal(f64),
 }
 
 pub struct Lex<'s> {
@@ -77,6 +82,19 @@ impl<'s> Lex<'s> {
         Lex { source, stream: PeekingIter::new(source.chars()), offset: 0, start_offset: 0, current_length: 0 }
     }
 
+    /// Get the value of a token, if it has one. This can be called at any time, including after
+    /// all tokens have been consumed, and does not change the state of the lexer.
+    pub fn token_value(&self, token: Token) -> Option<TokenValue> {
+        let value = &self.source[token.offset..(token.offset + token.length)];
+        match token.typ {
+            TokenType::Identifier => Some(TokenValue::Identifier(value)),
+            TokenType::String => Some(TokenValue::String(value)),
+            TokenType::Integer => Some(TokenValue::Integer(str::parse(value).unwrap())),
+            TokenType::Decimal => Some(TokenValue::Decimal(str::parse(value).unwrap())),
+            _ => None,
+        }
+    }
+
     pub fn advance(&mut self) -> Option<char> {
         let c = self.stream.next()?;
         self.offset += 1;
@@ -84,18 +102,13 @@ impl<'s> Lex<'s> {
         Some(c)
     }
 
-    /// Returns the value of the currently-lexing token
-    pub fn value(&self) -> &'s str {
-        &self.source[self.start_offset..self.offset]
-    }
-
-    pub fn produce(&mut self, typ: Token<'s>) -> TokenInfo<'s> {
-        TokenInfo { typ, offset: self.start_offset, length: self.current_length }
+    pub fn produce(&mut self, typ: TokenType) -> Token {
+        Token { typ, offset: self.start_offset, length: self.current_length }
     }
 }
 
 impl<'s> Iterator for Lex<'s> {
-    type Item = TokenInfo<'s>;
+    type Item = Token;
 
     fn next(&mut self) -> Option<Self::Item> {
         loop {
@@ -108,49 +121,49 @@ impl<'s> Iterator for Lex<'s> {
             let c = self.advance()?;
 
             match c {
-                '+' => return Some(self.produce(Token::Plus)),
-                '-' => return Some(self.produce(Token::Minus)),
-                '.' => return Some(self.produce(Token::Dot)),
+                '+' => return Some(self.produce(TokenType::Plus)),
+                '-' => return Some(self.produce(TokenType::Minus)),
+                '.' => return Some(self.produce(TokenType::Dot)),
                 '=' => match self.stream.peek() {
                     Some('=') => {
                         self.advance();
-                        return Some(self.produce(Token::EqualEquals));
+                        return Some(self.produce(TokenType::EqualEquals));
                     }
-                    _ => return Some(self.produce(Token::Equals)),
+                    _ => return Some(self.produce(TokenType::Equals)),
                 },
-                '*' => return Some(self.produce(Token::Asterix)),
-                ':' => return Some(self.produce(Token::Colon)),
-                ';' => return Some(self.produce(Token::Semicolon)),
-                ',' => return Some(self.produce(Token::Comma)),
+                '*' => return Some(self.produce(TokenType::Asterix)),
+                ':' => return Some(self.produce(TokenType::Colon)),
+                ';' => return Some(self.produce(TokenType::Semicolon)),
+                ',' => return Some(self.produce(TokenType::Comma)),
                 '!' => match self.stream.peek() {
                     Some('=') => {
                         self.advance();
-                        return Some(self.produce(Token::BangEquals));
+                        return Some(self.produce(TokenType::BangEquals));
                     }
-                    _ => return Some(self.produce(Token::Bang)),
+                    _ => return Some(self.produce(TokenType::Bang)),
                 },
-                '(' => return Some(self.produce(Token::LeftParen)),
-                ')' => return Some(self.produce(Token::RightParen)),
-                '{' => return Some(self.produce(Token::LeftBrace)),
-                '}' => return Some(self.produce(Token::RightBrace)),
+                '(' => return Some(self.produce(TokenType::LeftParen)),
+                ')' => return Some(self.produce(TokenType::RightParen)),
+                '{' => return Some(self.produce(TokenType::LeftBrace)),
+                '}' => return Some(self.produce(TokenType::RightBrace)),
                 '<' => match self.stream.peek() {
                     Some('=') => {
                         self.advance();
-                        return Some(self.produce(Token::LessEqual));
+                        return Some(self.produce(TokenType::LessEqual));
                     }
-                    _ => return Some(self.produce(Token::LessThan)),
+                    _ => return Some(self.produce(TokenType::LessThan)),
                 },
                 '>' => match self.stream.peek() {
                     Some('=') => {
                         self.advance();
-                        return Some(self.produce(Token::GreaterEqual));
+                        return Some(self.produce(TokenType::GreaterEqual));
                     }
-                    _ => return Some(self.produce(Token::GreaterThan)),
+                    _ => return Some(self.produce(TokenType::GreaterThan)),
                 },
-                '?' => return Some(self.produce(Token::QuestionMark)),
+                '?' => return Some(self.produce(TokenType::QuestionMark)),
 
                 // TODO: parse comments, both line and block here
-                '/' => return Some(self.produce(Token::Slash)),
+                '/' => return Some(self.produce(TokenType::Slash)),
 
                 /*
                  * Skip whitespace.
@@ -179,9 +192,9 @@ impl<'s> Iterator for Lex<'s> {
                         while self.stream.peek().map_or(false, |c| c.is_digit(10)) {
                             self.advance();
                         }
-                        return Some(self.produce(Token::Decimal(str::parse(self.value()).unwrap())));
+                        return Some(self.produce(TokenType::Decimal));
                     } else {
-                        return Some(self.produce(Token::Integer(str::parse(self.value()).unwrap())));
+                        return Some(self.produce(TokenType::Integer));
                     }
                 }
 
@@ -202,18 +215,18 @@ impl<'s> Iterator for Lex<'s> {
                         self.advance()?;
                     }
 
-                    match self.value() {
-                        "let" => return Some(self.produce(Token::Let)),
-                        "if" => return Some(self.produce(Token::If)),
-                        "else" => return Some(self.produce(Token::Else)),
-                        "for" => return Some(self.produce(Token::For)),
-                        "loop" => return Some(self.produce(Token::Loop)),
-                        "while" => return Some(self.produce(Token::While)),
-                        "true" => return Some(self.produce(Token::True)),
-                        "false" => return Some(self.produce(Token::False)),
-                        "return" => return Some(self.produce(Token::Return)),
-                        "fn" => return Some(self.produce(Token::Fn)),
-                        other => return Some(self.produce(Token::Identifier(other))),
+                    match &self.source[self.start_offset..(self.start_offset + self.current_length)] {
+                        "let" => return Some(self.produce(TokenType::Let)),
+                        "if" => return Some(self.produce(TokenType::If)),
+                        "else" => return Some(self.produce(TokenType::Else)),
+                        "for" => return Some(self.produce(TokenType::For)),
+                        "loop" => return Some(self.produce(TokenType::Loop)),
+                        "while" => return Some(self.produce(TokenType::While)),
+                        "true" => return Some(self.produce(TokenType::True)),
+                        "false" => return Some(self.produce(TokenType::False)),
+                        "return" => return Some(self.produce(TokenType::Return)),
+                        "fn" => return Some(self.produce(TokenType::Fn)),
+                        _ => return Some(self.produce(TokenType::Identifier)),
                     }
                 }
 
@@ -226,12 +239,12 @@ impl<'s> Iterator for Lex<'s> {
 
 /// Wraps an `Iterator` and provides exactly two items of lookahead. This is enough to implement a
 /// wide variety of lexers and parsers.
-struct PeekingIter<I>
+pub struct PeekingIter<I>
 where
     I: Iterator,
     I::Item: Clone,
 {
-    inner: I,
+    pub inner: I,
     peek: Option<I::Item>,
     peek_next: Option<I::Item>,
 }
