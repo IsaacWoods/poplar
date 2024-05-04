@@ -80,12 +80,25 @@ impl<'s> Parser<'s> {
     pub fn expression(&mut self, precedence: u8) -> AstNode {
         let token = self.stream.next().unwrap();
 
-        let prefix = self.prefix_for(token.typ).unwrap();
+        /*
+         * Start by parsing a prefix operator. Identifiers and literals both have prefix parselets,
+         * so are parsed correctly if there is no 'real' prefix operator.
+         */
+        let prefix = self.prefix_for(token.typ).expect("No prefix parselet for token");
         let mut left = (prefix)(self, token);
 
-        while self.stream.peek().map_or(false, |next| precedence < self.precedence_for(next.typ).unwrap()) {
+        /*
+         * Check if the next token, if it exists, represents a valid infix operator that we can
+         * parse at the current precedence level. If not, or if it has higher precedence than we're
+         * currently allowed to parse, just return the current expression.
+         */
+        while {
+            self.stream.peek().map_or(false, |next| {
+                self.precedence_for(next.typ).map_or(false, |next_precedence| precedence < next_precedence)
+            })
+        } {
             let next = self.stream.next().unwrap();
-            let infix = self.infix_for(next.typ).unwrap();
+            let infix = self.infix_for(next.typ).expect("No infix parselet for token");
             left = (infix)(self, left, next);
         }
 
