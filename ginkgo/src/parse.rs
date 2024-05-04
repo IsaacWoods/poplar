@@ -1,5 +1,6 @@
 use crate::{
     ast::{AstNode, BinaryOp, UnaryOp},
+    interpreter::Value,
     lex::{Lex, PeekingIter, Token, TokenType, TokenValue},
 };
 use std::collections::BTreeMap;
@@ -46,7 +47,7 @@ impl<'s> Parser<'s> {
                 Some(TokenValue::Integer(value)) => value,
                 _ => unreachable!(),
             };
-            AstNode::Integer(value)
+            AstNode::Literal(Value::Integer(value))
         });
         parser.register_prefix(TokenType::Minus, |parser, _token| {
             let operand = parser.expression(PRECEDENCE_PREFIX);
