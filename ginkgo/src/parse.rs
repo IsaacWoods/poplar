@@ -77,10 +77,10 @@ impl<'s> Parser<'s> {
         parser
     }
 
-    pub fn parse(mut self) -> Result<(), ()> {
+    pub fn parse(mut self) -> Result<AstNode, ()> {
         let expr = self.expression(0);
         println!("{}", expr);
-        Ok(())
+        Ok(expr)
     }
 
     pub fn expression(&mut self, precedence: u8) -> AstNode {
