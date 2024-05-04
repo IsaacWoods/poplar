@@ -52,6 +52,11 @@ impl<'s> Parser<'s> {
             let operand = parser.expression(PRECEDENCE_PREFIX);
             AstNode::UnaryOp { op: UnaryOp::Negate, operand: Box::new(operand) }
         });
+        parser.register_prefix(TokenType::LeftParen, |parser, _token| {
+            let inner = parser.expression(0);
+            parser.consume(TokenType::RightParen);
+            AstNode::Grouping { inner: Box::new(inner) }
+        });
         let binary_op: InfixParselet = |parser, left, token| {
             let (op, precedence) = match token.typ {
                 TokenType::Plus => (BinaryOp::Add, PRECEDENCE_SUM),
@@ -120,6 +125,17 @@ impl<'s> Parser<'s> {
             }
         }
         false
+    }
+
+    /// Expect a token of the given type, issuing a parse error if the next token is not of the
+    /// expected type.
+    pub fn consume(&mut self, typ: TokenType) {
+        let token = self.stream.next();
+        if token.is_none() || token.unwrap().typ != typ {
+            // TODO: real error
+            // TODO: for possible recovery, should we consume the token or not??
+            println!("Parse error: expected token of type {:?}", typ);
+        }
     }
 
     pub fn register_prefix(&mut self, token: TokenType, parselet: PrefixParselet) {

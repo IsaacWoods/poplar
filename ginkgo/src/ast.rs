@@ -7,6 +7,7 @@ pub enum AstNode {
     Identifier(String),
     UnaryOp { op: UnaryOp, operand: Box<AstNode> },
     BinaryOp { op: BinaryOp, left: Box<AstNode>, right: Box<AstNode> },
+    Grouping { inner: Box<AstNode> },
 }
 
 #[derive(Clone, Copy, PartialEq, Debug)]
@@ -38,6 +39,7 @@ impl fmt::Display for AstNode {
                 BinaryOp::Multiply => write!(f, "(* {} {})", left, right),
                 BinaryOp::Divide => write!(f, "(/ {} {})", left, right),
             },
+            Self::Grouping { inner } => write!(f, "'(' {} ')'", inner),
             AstNode::Bool(value) => write!(f, "{}", value),
             AstNode::Integer(value) => write!(f, "{}", value),
             AstNode::Identifier(value) => write!(f, "{}", value),
