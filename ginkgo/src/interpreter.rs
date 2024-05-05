@@ -1,4 +1,4 @@
-use crate::ast::{AstNode, BinaryOp, UnaryOp};
+use crate::ast::{BinaryOp, Expr, Stmt, UnaryOp};
 
 #[derive(Clone, PartialEq, Debug)]
 pub enum Value {
@@ -14,12 +14,20 @@ impl Interpreter {
         Interpreter {}
     }
 
-    pub fn eval(&mut self, expr: &AstNode) -> Value {
+    pub fn eval_stmt(&mut self, stmt: &Stmt) {
+        match stmt {
+            Stmt::Expression(expr) => {
+                self.eval_expr(expr);
+            }
+        }
+    }
+
+    pub fn eval_expr(&mut self, expr: &Expr) -> Value {
         match expr {
-            AstNode::Literal(value) => value.clone(),
-            AstNode::Identifier(value) => todo!(),
-            AstNode::UnaryOp { op, operand } => {
-                let operand = self.eval(operand);
+            Expr::Literal(value) => value.clone(),
+            Expr::Identifier(value) => todo!(),
+            Expr::UnaryOp { op, operand } => {
+                let operand = self.eval_expr(operand);
                 match op {
                     UnaryOp::Plus => operand,
                     UnaryOp::Negate => {
@@ -32,9 +40,9 @@ impl Interpreter {
                     UnaryOp::Not => todo!(),
                 }
             }
-            AstNode::BinaryOp { op, left, right } => {
-                let left = self.eval(left);
-                let right = self.eval(right);
+            Expr::BinaryOp { op, left, right } => {
+                let left = self.eval_expr(left);
+                let right = self.eval_expr(right);
                 match op {
                     BinaryOp::Add => {
                         if let Value::Integer(left) = left
@@ -74,7 +82,7 @@ impl Interpreter {
                     }
                 }
             }
-            AstNode::Grouping { inner } => self.eval(inner),
+            Expr::Grouping { inner } => self.eval_expr(inner),
         }
     }
 }

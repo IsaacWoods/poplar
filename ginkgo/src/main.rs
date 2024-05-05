@@ -13,8 +13,10 @@ fn main() -> io::Result<()> {
         io::stdin().read_line(&mut input)?;
 
         let parser = Parser::new(&input);
-        let ast = parser.parse().unwrap();
+        let stmts = parser.parse().unwrap();
 
-        println!("Result: {:?}", interpreter.eval(&ast));
+        for statement in stmts {
+            interpreter.eval_stmt(&statement);
+        }
     }
 }

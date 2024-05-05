@@ -1,5 +1,5 @@
 use crate::{
-    ast::{AstNode, BinaryOp, UnaryOp},
+    ast::{BinaryOp, Expr, Stmt, UnaryOp},
     interpreter::Value,
     lex::{Lex, PeekingIter, Token, TokenType, TokenValue},
 };
@@ -14,8 +14,8 @@ const PRECEDENCE_PREFIX: u8 = 6;
 const PRECEDENCE_POSTFIX: u8 = 7;
 const PRECEDENCE_CALL: u8 = 8;
 
-type PrefixParselet = fn(&mut Parser, Token) -> AstNode;
-type InfixParselet = fn(&mut Parser, AstNode, Token) -> AstNode;
+type PrefixParselet = fn(&mut Parser, Token) -> Expr;
+type InfixParselet = fn(&mut Parser, Expr, Token) -> Expr;
 
 pub struct Parser<'s> {
     stream: PeekingIter<Lex<'s>>,
@@ -40,23 +40,23 @@ impl<'s> Parser<'s> {
                 Some(TokenValue::Identifier(value)) => value,
                 _ => unreachable!(),
             };
-            AstNode::Identifier(value.to_string())
+            Expr::Identifier(value.to_string())
         });
         parser.register_prefix(TokenType::Integer, |parser, token| {
             let value = match parser.stream.inner.token_value(token) {
                 Some(TokenValue::Integer(value)) => value,
                 _ => unreachable!(),
             };
-            AstNode::Literal(Value::Integer(value))
+            Expr::Literal(Value::Integer(value))
         });
         parser.register_prefix(TokenType::Minus, |parser, _token| {
             let operand = parser.expression(PRECEDENCE_PREFIX);
-            AstNode::UnaryOp { op: UnaryOp::Negate, operand: Box::new(operand) }
+            Expr::UnaryOp { op: UnaryOp::Negate, operand: Box::new(operand) }
         });
         parser.register_prefix(TokenType::LeftParen, |parser, _token| {
             let inner = parser.expression(0);
             parser.consume(TokenType::RightParen);
-            AstNode::Grouping { inner: Box::new(inner) }
+            Expr::Grouping { inner: Box::new(inner) }
         });
         let binary_op: InfixParselet = |parser, left, token| {
             let (op, precedence) = match token.typ {
@@ -67,7 +67,7 @@ impl<'s> Parser<'s> {
                 other => panic!("Unsupported binary op token: {:?}", other),
             };
             let right = parser.expression(precedence);
-            AstNode::BinaryOp { op, left: Box::new(left), right: Box::new(right) }
+            Expr::BinaryOp { op, left: Box::new(left), right: Box::new(right) }
         };
         parser.register_infix(TokenType::Plus, PRECEDENCE_SUM, binary_op);
         parser.register_infix(TokenType::Minus, PRECEDENCE_SUM, binary_op);
@@ -77,13 +77,22 @@ impl<'s> Parser<'s> {
         parser
     }
 
-    pub fn parse(mut self) -> Result<AstNode, ()> {
-        let expr = self.expression(0);
-        println!("{}", expr);
-        Ok(expr)
+    pub fn parse(mut self) -> Result<Vec<Stmt>, ()> {
+        let mut statements = Vec::new();
+        while self.stream.peek().is_some() {
+            statements.push(self.statement());
+        }
+        Ok(statements)
     }
 
-    pub fn expression(&mut self, precedence: u8) -> AstNode {
+    pub fn statement(&mut self) -> Stmt {
+        // Default case - it's an expression statement
+        let expression = self.expression(0);
+        self.consume(TokenType::Semicolon);
+        Stmt::Expression(expression)
+    }
+
+    pub fn expression(&mut self, precedence: u8) -> Expr {
         let token = self.stream.next().unwrap();
 
         /*
