@@ -86,6 +86,12 @@ impl<'s> Parser<'s> {
     }
 
     pub fn statement(&mut self) -> Stmt {
+        if self.matches(TokenType::Print) {
+            let expression = self.expression(0);
+            self.consume(TokenType::Semicolon);
+            return Stmt::Print { expression };
+        }
+
         // Default case - it's an expression statement
         let expression = self.expression(0);
         self.consume(TokenType::Semicolon);
@@ -125,9 +131,7 @@ impl<'s> Parser<'s> {
  * Parser utilities.
  */
 impl<'s> Parser<'s> {
-    // TODO: not convinced about this name - other parsers call it match but that's a keyword in
-    // Rust
-    pub fn test(&mut self, typ: TokenType) -> bool {
+    pub fn matches(&mut self, typ: TokenType) -> bool {
         if let Some(token) = self.stream.peek() {
             if token.typ == typ {
                 self.stream.next();

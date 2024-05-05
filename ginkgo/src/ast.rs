@@ -4,12 +4,14 @@ use std::fmt;
 #[derive(Clone, PartialEq)]
 pub enum Stmt {
     Expression(Expr),
+    Print { expression: Expr },
 }
 
 impl fmt::Display for Stmt {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Self::Expression(expr) => writeln!(f, "({})", expr),
+            Self::Print { expression } => writeln!(f, "(print {})", expression),
         }
     }
 }

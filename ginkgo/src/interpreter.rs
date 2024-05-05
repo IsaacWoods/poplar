@@ -19,6 +19,10 @@ impl Interpreter {
             Stmt::Expression(expr) => {
                 self.eval_expr(expr);
             }
+            Stmt::Print { expression } => {
+                let result = self.eval_expr(expression);
+                println!("PRINT: {:?}", result);
+            }
         }
     }
 
