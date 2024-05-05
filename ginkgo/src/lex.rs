@@ -200,8 +200,18 @@ impl<'s> Iterator for Lex<'s> {
                 }
 
                 '"' => {
-                    // TODO: string literals
-                    todo!()
+                    while self.stream.peek().map_or(false, |c| c != '"') {
+                        self.advance()?;
+                    }
+
+                    self.advance()?;
+
+                    /*
+                     * Manually trim the opening and closing `"`s off.
+                     */
+                    self.start_offset += 1;
+                    self.current_length -= 2;
+                    return Some(self.produce(TokenType::String));
                 }
 
                 /*

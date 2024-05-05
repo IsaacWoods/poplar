@@ -49,6 +49,13 @@ impl<'s> Parser<'s> {
             };
             Expr::Literal(Value::Integer(value))
         });
+        parser.register_prefix(TokenType::String, |parser, token| {
+            let value = match parser.stream.inner.token_value(token) {
+                Some(TokenValue::String(value)) => value.to_string(),
+                _ => unreachable!(),
+            };
+            Expr::Literal(Value::String(value))
+        });
         parser.register_prefix(TokenType::Minus, |parser, _token| {
             let operand = parser.expression(PRECEDENCE_PREFIX);
             Expr::UnaryOp { op: UnaryOp::Negate, operand: Box::new(operand) }
