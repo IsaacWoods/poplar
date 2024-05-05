@@ -5,6 +5,8 @@ use std::fmt;
 pub enum Stmt {
     Expression(Expr),
     Print { expression: Expr },
+    Let { name: String, expression: Expr },
+    Block(Vec<Stmt>),
 }
 
 impl fmt::Display for Stmt {
@@ -12,6 +14,16 @@ impl fmt::Display for Stmt {
         match self {
             Self::Expression(expr) => writeln!(f, "({})", expr),
             Self::Print { expression } => writeln!(f, "(print {})", expression),
+            Self::Let { name, expression } => writeln!(f, "(let {} = {})", name, expression),
+            Self::Block(stmts) => {
+                // TODO: this is not good
+                writeln!(f, "{{")?;
+                for stmt in stmts {
+                    writeln!(f, "    {}", stmt)?;
+                }
+                writeln!(f, "}}")?;
+                Ok(())
+            }
         }
     }
 }
@@ -23,6 +35,7 @@ pub enum Expr {
     UnaryOp { op: UnaryOp, operand: Box<Expr> },
     BinaryOp { op: BinaryOp, left: Box<Expr>, right: Box<Expr> },
     Grouping { inner: Box<Expr> },
+    Assign { place: Box<Expr>, expr: Box<Expr> },
 }
 
 #[derive(Clone, Copy, PartialEq, Debug)]
@@ -61,6 +74,7 @@ impl fmt::Display for Expr {
                 BinaryOp::Divide => write!(f, "(/ {} {})", left, right),
             },
             Self::Grouping { inner } => write!(f, "'(' {} ')'", inner),
+            Self::Assign { place, expr } => write!(f, "(= {} {})", place, expr),
         }
     }
 }

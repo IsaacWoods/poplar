@@ -80,6 +80,10 @@ impl<'s> Parser<'s> {
         parser.register_infix(TokenType::Minus, PRECEDENCE_SUM, binary_op);
         parser.register_infix(TokenType::Asterix, PRECEDENCE_PRODUCT, binary_op);
         parser.register_infix(TokenType::Slash, PRECEDENCE_PRODUCT, binary_op);
+        parser.register_infix(TokenType::Equals, PRECEDENCE_ASSIGNMENT, |parser, left, _token| {
+            let expr = parser.expression(PRECEDENCE_ASSIGNMENT - 1);
+            Expr::Assign { place: Box::new(left), expr: Box::new(expr) }
+        });
 
         parser
     }
@@ -99,6 +103,31 @@ impl<'s> Parser<'s> {
             return Stmt::Print { expression };
         }
 
+        if self.matches(TokenType::Let) {
+            let name = {
+                let token = self.consume(TokenType::Identifier).unwrap();
+                if let Some(TokenValue::Identifier(name)) = self.stream.inner.token_value(token) {
+                    name.to_string()
+                } else {
+                    panic!();
+                }
+            };
+            self.consume(TokenType::Equals);
+            let expression = self.expression(0);
+            self.consume(TokenType::Semicolon);
+            return Stmt::Let { name, expression };
+        }
+
+        // TODO: in the future, we want expressions to be able to do this too (so it can probs move
+        // into there)
+        if self.matches(TokenType::LeftBrace) {
+            let mut statements = Vec::new();
+            while !self.matches(TokenType::RightBrace) {
+                statements.push(self.statement());
+            }
+            return Stmt::Block(statements);
+        }
+
         // Default case - it's an expression statement
         let expression = self.expression(0);
         self.consume(TokenType::Semicolon);
@@ -112,7 +141,9 @@ impl<'s> Parser<'s> {
          * Start by parsing a prefix operator. Identifiers and literals both have prefix parselets,
          * so are parsed correctly if there is no 'real' prefix operator.
          */
-        let prefix = self.prefix_for(token.typ).expect("No prefix parselet for token");
+        let Some(prefix) = self.prefix_for(token.typ) else {
+            panic!("No prefix parselet for token: {:?}", token.typ);
+        };
         let mut left = (prefix)(self, token);
 
         /*
@@ -126,7 +157,9 @@ impl<'s> Parser<'s> {
             })
         } {
             let next = self.stream.next().unwrap();
-            let infix = self.infix_for(next.typ).expect("No infix parselet for token");
+            let Some(infix) = self.infix_for(next.typ) else {
+                panic!("No infix parselet for token: {:?}", token.typ);
+            };
             left = (infix)(self, left, next);
         }
 
@@ -150,13 +183,14 @@ impl<'s> Parser<'s> {
 
     /// Expect a token of the given type, issuing a parse error if the next token is not of the
     /// expected type.
-    pub fn consume(&mut self, typ: TokenType) {
+    pub fn consume(&mut self, typ: TokenType) -> Option<Token> {
         let token = self.stream.next();
         if token.is_none() || token.unwrap().typ != typ {
             // TODO: real error
             // TODO: for possible recovery, should we consume the token or not??
             println!("Parse error: expected token of type {:?}", typ);
         }
+        token
     }
 
     pub fn register_prefix(&mut self, token: TokenType, parselet: PrefixParselet) {
