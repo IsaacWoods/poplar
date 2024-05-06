@@ -191,6 +191,12 @@ impl<'s> Parser<'s> {
                 TokenType::Ampersand => (BinaryOp::BitwiseAnd, PRECEDENCE_BITWISE_AND),
                 TokenType::Pipe => (BinaryOp::BitwiseOr, PRECEDENCE_BITWISE_OR),
                 TokenType::Caret => (BinaryOp::BitwiseXor, PRECEDENCE_BITWISE_XOR),
+                TokenType::EqualEquals => (BinaryOp::Equal, PRECEDENCE_CONDITIONAL),
+                TokenType::BangEquals => (BinaryOp::NotEqual, PRECEDENCE_CONDITIONAL),
+                TokenType::GreaterThan => (BinaryOp::GreaterThan, PRECEDENCE_CONDITIONAL),
+                TokenType::GreaterEqual => (BinaryOp::GreaterEqual, PRECEDENCE_CONDITIONAL),
+                TokenType::LessThan => (BinaryOp::LessThan, PRECEDENCE_CONDITIONAL),
+                TokenType::LessEqual => (BinaryOp::LessEqual, PRECEDENCE_CONDITIONAL),
                 other => panic!("Unsupported binary op token: {:?}", other),
             };
             let right = parser.expression(precedence);
@@ -203,6 +209,12 @@ impl<'s> Parser<'s> {
         self.register_infix(TokenType::Ampersand, PRECEDENCE_BITWISE_AND, binary_op);
         self.register_infix(TokenType::Pipe, PRECEDENCE_BITWISE_OR, binary_op);
         self.register_infix(TokenType::Caret, PRECEDENCE_BITWISE_XOR, binary_op);
+        self.register_infix(TokenType::EqualEquals, PRECEDENCE_CONDITIONAL, binary_op);
+        self.register_infix(TokenType::BangEquals, PRECEDENCE_CONDITIONAL, binary_op);
+        self.register_infix(TokenType::GreaterThan, PRECEDENCE_CONDITIONAL, binary_op);
+        self.register_infix(TokenType::GreaterEqual, PRECEDENCE_CONDITIONAL, binary_op);
+        self.register_infix(TokenType::LessThan, PRECEDENCE_CONDITIONAL, binary_op);
+        self.register_infix(TokenType::LessEqual, PRECEDENCE_CONDITIONAL, binary_op);
 
         let logical_op: InfixParselet = |parser, left, token| {
             let (op, precedence) = match token.typ {

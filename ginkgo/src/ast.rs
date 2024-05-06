@@ -83,6 +83,12 @@ pub enum BinaryOp {
     BitwiseAnd,
     BitwiseOr,
     BitwiseXor,
+    Equal,
+    NotEqual,
+    GreaterThan,
+    GreaterEqual,
+    LessThan,
+    LessEqual,
 }
 
 #[derive(Clone, Copy, PartialEq, Debug)]
@@ -113,6 +119,12 @@ impl fmt::Display for Expr {
                 BinaryOp::BitwiseAnd => write!(f, "(& {} {})", left, right),
                 BinaryOp::BitwiseOr => write!(f, "(| {} {})", left, right),
                 BinaryOp::BitwiseXor => write!(f, "(^ {} {})", left, right),
+                BinaryOp::Equal => write!(f, "(== {} {})", left, right),
+                BinaryOp::NotEqual => write!(f, "(!= {} {})", left, right),
+                BinaryOp::GreaterThan => write!(f, "(> {} {})", left, right),
+                BinaryOp::GreaterEqual => write!(f, "(>= {} {})", left, right),
+                BinaryOp::LessThan => write!(f, "(< {} {})", left, right),
+                BinaryOp::LessEqual => write!(f, "(<= {} {})", left, right),
             },
             Self::LogicalOp { op, left, right } => match op {
                 LogicalOp::LogicalAnd => write!(f, "(&& {} {})", left, right),

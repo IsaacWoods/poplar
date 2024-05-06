@@ -155,6 +155,68 @@ impl Interpreter {
                             panic!()
                         }
                     }
+                    BinaryOp::Equal => {
+                        if let Value::Integer(left) = left
+                            && let Value::Integer(right) = right
+                        {
+                            Value::Bool(left == right)
+                        } else if let Value::String(left) = left
+                            && let Value::String(right) = right
+                        {
+                            Value::Bool(left == right)
+                        } else {
+                            panic!()
+                        }
+                    }
+                    BinaryOp::NotEqual => {
+                        if let Value::Integer(left) = left
+                            && let Value::Integer(right) = right
+                        {
+                            Value::Bool(left != right)
+                        } else if let Value::String(left) = left
+                            && let Value::String(right) = right
+                        {
+                            Value::Bool(left != right)
+                        } else {
+                            panic!()
+                        }
+                    }
+                    BinaryOp::GreaterThan => {
+                        if let Value::Integer(left) = left
+                            && let Value::Integer(right) = right
+                        {
+                            Value::Bool(left > right)
+                        } else {
+                            panic!()
+                        }
+                    }
+                    BinaryOp::GreaterEqual => {
+                        if let Value::Integer(left) = left
+                            && let Value::Integer(right) = right
+                        {
+                            Value::Bool(left >= right)
+                        } else {
+                            panic!()
+                        }
+                    }
+                    BinaryOp::LessThan => {
+                        if let Value::Integer(left) = left
+                            && let Value::Integer(right) = right
+                        {
+                            Value::Bool(left < right)
+                        } else {
+                            panic!()
+                        }
+                    }
+                    BinaryOp::LessEqual => {
+                        if let Value::Integer(left) = left
+                            && let Value::Integer(right) = right
+                        {
+                            Value::Bool(left <= right)
+                        } else {
+                            panic!()
+                        }
+                    }
                 }
             }
             Expr::LogicalOp { op, left, right } => {
