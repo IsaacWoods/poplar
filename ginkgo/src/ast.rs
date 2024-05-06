@@ -3,9 +3,18 @@ use std::fmt;
 
 #[derive(Clone, PartialEq)]
 pub enum Stmt {
+    /// An expression in statement position that is not terminated with a semicolon. This may or
+    /// may not be valid depending on position.
     Expression(Expr),
-    Print { expression: Expr },
-    Let { name: String, expression: Expr },
+    /// An expression in statement position terminated with a semicolon.
+    TerminatedExpression(Expr),
+    Print {
+        expression: Expr,
+    },
+    Let {
+        name: String,
+        expression: Expr,
+    },
     Block(Vec<Stmt>),
 }
 
@@ -13,6 +22,7 @@ impl fmt::Display for Stmt {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Self::Expression(expr) => writeln!(f, "({})", expr),
+            Self::TerminatedExpression(expr) => writeln!(f, "({});", expr),
             Self::Print { expression } => writeln!(f, "(print {})", expression),
             Self::Let { name, expression } => writeln!(f, "(let {} = {})", name, expression),
             Self::Block(stmts) => {

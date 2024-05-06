@@ -19,28 +19,47 @@ impl Interpreter {
         Interpreter { globals: globals.clone(), environment: globals }
     }
 
-    pub fn eval_stmt(&mut self, stmt: Stmt) {
+    pub fn eval_stmt(&mut self, stmt: Stmt) -> Option<Value> {
         match stmt {
             Stmt::Expression(expr) => {
+                let result = self.eval_expr(expr);
+                Some(result)
+            }
+            Stmt::TerminatedExpression(expr) => {
                 self.eval_expr(expr);
+                None
             }
             Stmt::Print { expression } => {
                 let result = self.eval_expr(expression);
                 println!("PRINT: {:?}", result);
+                None
             }
             Stmt::Let { name, expression } => {
                 let value = self.eval_expr(expression);
                 self.environment.borrow_mut().define(name, value);
+                None
             }
             Stmt::Block(statements) => {
                 let environment = Environment::new_with_parent(self.environment.clone());
                 let previous_environment = mem::replace(&mut self.environment, environment);
 
-                for statement in statements {
-                    self.eval_stmt(statement);
+                let mut statements = statements.into_iter();
+                let mut result = None;
+                while let Some(next) = statements.next() {
+                    if let Some(value) = self.eval_stmt(next) {
+                        /*
+                         * Only the last statement is allowed to return a value. If there are more
+                         * statements after this one, issue an error.
+                         */
+                        // TODO: runtime error instead of panic
+                        assert!(statements.next().is_none());
+                        result = Some(value);
+                        break;
+                    }
                 }
 
                 self.environment = previous_environment;
+                result
             }
         }
     }

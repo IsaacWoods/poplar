@@ -128,10 +128,17 @@ impl<'s> Parser<'s> {
             return Stmt::Block(statements);
         }
 
-        // Default case - it's an expression statement
+        /*
+         * Default case - it's an expression statement.
+         * Expressions in statement position may or may not be terminated with a semicolon, so we
+         * handle both cases here.
+         */
         let expression = self.expression(0);
-        self.consume(TokenType::Semicolon);
-        Stmt::Expression(expression)
+        if self.matches(TokenType::Semicolon) {
+            Stmt::TerminatedExpression(expression)
+        } else {
+            Stmt::Expression(expression)
+        }
     }
 
     pub fn expression(&mut self, precedence: u8) -> Expr {

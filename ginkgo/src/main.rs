@@ -33,7 +33,9 @@ fn main() -> io::Result<()> {
         let stmts = parser.parse().unwrap();
 
         for statement in stmts {
-            interpreter.eval_stmt(statement);
+            if let Some(result) = interpreter.eval_stmt(statement) {
+                println!("Result: {:?}", result);
+            }
         }
     }
 }
