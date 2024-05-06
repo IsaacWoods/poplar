@@ -16,6 +16,15 @@ pub enum Stmt {
         expression: Expr,
     },
     Block(Vec<Stmt>),
+    If {
+        condition: Expr,
+        then_block: Box<Stmt>,
+        else_block: Option<Box<Stmt>>,
+    },
+    While {
+        condition: Expr,
+        body: Box<Stmt>,
+    },
 }
 
 impl fmt::Display for Stmt {
@@ -26,12 +35,27 @@ impl fmt::Display for Stmt {
             Self::Print { expression } => writeln!(f, "(print {})", expression),
             Self::Let { name, expression } => writeln!(f, "(let {} = {})", name, expression),
             Self::Block(stmts) => {
-                // TODO: this is not good
+                // TODO: this won't handle nesting well
                 writeln!(f, "{{")?;
                 for stmt in stmts {
                     writeln!(f, "    {}", stmt)?;
                 }
                 writeln!(f, "}}")?;
+                Ok(())
+            }
+            Self::If { condition, then_block, else_block } => {
+                writeln!(f, "(if {}", condition)?;
+                write!(f, "{}", then_block)?;
+                if let Some(else_block) = else_block {
+                    write!(f, "{}", else_block)?;
+                }
+                writeln!(f, ")")?;
+                Ok(())
+            }
+            Self::While { condition, body } => {
+                writeln!(f, "(while {}", condition)?;
+                write!(f, "{}", body)?;
+                writeln!(f, ")")?;
                 Ok(())
             }
         }

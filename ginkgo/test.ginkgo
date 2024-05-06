@@ -1,0 +1,12 @@
+print "Hello, World!";
+
+let a = 0;
+let temp = 0;
+let b = 1;
+
+while a < 10000 {
+    print a;
+    temp = a;
+    a = b;
+    b = temp + b;
+}

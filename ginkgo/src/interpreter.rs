@@ -61,6 +61,28 @@ impl Interpreter {
                 self.environment = previous_environment;
                 result
             }
+            Stmt::If { condition, then_block, else_block } => {
+                if let Value::Bool(truthy) = self.eval_expr(condition) {
+                    if truthy {
+                        self.eval_stmt(*then_block)
+                    } else if let Some(else_block) = else_block {
+                        self.eval_stmt(*else_block)
+                    } else {
+                        None
+                    }
+                } else {
+                    panic!("Condition of `if` must be a bool");
+                }
+            }
+            Stmt::While { condition, body } => {
+                let body = *body;
+                while let Value::Bool(truthy) = self.eval_expr(condition.clone())
+                    && truthy
+                {
+                    self.eval_stmt(body.clone());
+                }
+                None
+            }
         }
     }
 

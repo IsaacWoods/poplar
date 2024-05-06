@@ -67,6 +67,43 @@ impl<'s> Parser<'s> {
             return Stmt::Block(statements);
         }
 
+        // TODO: I think we want `if`s to be expressions too actually? (with optional `else` if the
+        // then branch returns unit).
+        if self.matches(TokenType::If) {
+            let condition = self.expression(0);
+            self.consume(TokenType::LeftBrace);
+            let mut then_block = Vec::new();
+            while !self.matches(TokenType::RightBrace) {
+                then_block.push(self.statement());
+            }
+            let then_block = Stmt::Block(then_block);
+
+            let else_block = if self.matches(TokenType::Else) {
+                self.consume(TokenType::LeftBrace);
+                let mut statements = Vec::new();
+                while !self.matches(TokenType::RightBrace) {
+                    statements.push(self.statement());
+                }
+                Some(Box::new(Stmt::Block(statements)))
+            } else {
+                None
+            };
+
+            return Stmt::If { condition, then_block: Box::new(then_block), else_block };
+        }
+
+        if self.matches(TokenType::While) {
+            let condition = self.expression(0);
+            self.consume(TokenType::LeftBrace);
+            let mut body = Vec::new();
+            while !self.matches(TokenType::RightBrace) {
+                body.push(self.statement());
+            }
+            let body = Stmt::Block(body);
+
+            return Stmt::While { condition, body: Box::new(body) };
+        }
+
         /*
          * Default case - it's an expression statement.
          * Expressions in statement position may or may not be terminated with a semicolon, so we
