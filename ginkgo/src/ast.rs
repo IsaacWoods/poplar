@@ -42,10 +42,29 @@ impl fmt::Display for Stmt {
 pub enum Expr {
     Literal(Value),
     Identifier(String),
-    UnaryOp { op: UnaryOp, operand: Box<Expr> },
-    BinaryOp { op: BinaryOp, left: Box<Expr>, right: Box<Expr> },
-    Grouping { inner: Box<Expr> },
-    Assign { place: Box<Expr>, expr: Box<Expr> },
+    UnaryOp {
+        op: UnaryOp,
+        operand: Box<Expr>,
+    },
+    BinaryOp {
+        op: BinaryOp,
+        left: Box<Expr>,
+        right: Box<Expr>,
+    },
+    /// A logical operation. This is implemented separately to `BinaryOp` as it requires different
+    /// semantics around short-circuiting.
+    LogicalOp {
+        op: LogicalOp,
+        left: Box<Expr>,
+        right: Box<Expr>,
+    },
+    Grouping {
+        inner: Box<Expr>,
+    },
+    Assign {
+        place: Box<Expr>,
+        expr: Box<Expr>,
+    },
 }
 
 #[derive(Clone, Copy, PartialEq, Debug)]
@@ -61,6 +80,15 @@ pub enum BinaryOp {
     Subtract,
     Multiply,
     Divide,
+    BitwiseAnd,
+    BitwiseOr,
+    BitwiseXor,
+}
+
+#[derive(Clone, Copy, PartialEq, Debug)]
+pub enum LogicalOp {
+    LogicalAnd,
+    LogicalOr,
 }
 
 impl fmt::Display for Expr {
@@ -82,6 +110,13 @@ impl fmt::Display for Expr {
                 BinaryOp::Subtract => write!(f, "(- {} {})", left, right),
                 BinaryOp::Multiply => write!(f, "(* {} {})", left, right),
                 BinaryOp::Divide => write!(f, "(/ {} {})", left, right),
+                BinaryOp::BitwiseAnd => write!(f, "(& {} {})", left, right),
+                BinaryOp::BitwiseOr => write!(f, "(| {} {})", left, right),
+                BinaryOp::BitwiseXor => write!(f, "(^ {} {})", left, right),
+            },
+            Self::LogicalOp { op, left, right } => match op {
+                LogicalOp::LogicalAnd => write!(f, "(&& {} {})", left, right),
+                LogicalOp::LogicalOr => write!(f, "(|| {} {})", left, right),
             },
             Self::Grouping { inner } => write!(f, "'(' {} ')'", inner),
             Self::Assign { place, expr } => write!(f, "(= {} {})", place, expr),

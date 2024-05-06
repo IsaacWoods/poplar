@@ -1,5 +1,5 @@
 use crate::{
-    ast::{BinaryOp, Expr, Stmt, UnaryOp},
+    ast::{BinaryOp, Expr, LogicalOp, Stmt, UnaryOp},
     interpreter::Value,
     lex::{Lex, PeekingIter, Token, TokenType, TokenValue},
 };
@@ -122,13 +122,19 @@ impl<'s> Parser<'s> {
         const PRECEDENCE_LOGICAL_OR: u8 = 2;
         const PRECEDENCE_LOGICAL_AND: u8 = 3;
         const PRECEDENCE_CONDITIONAL: u8 = 4;
-        const PRECEDENCE_SUM: u8 = 5;
-        const PRECEDENCE_PRODUCT: u8 = 6;
-        const PRECEDENCE_EXPONENT: u8 = 7;
-        const PRECEDENCE_PREFIX: u8 = 8;
-        const PRECEDENCE_POSTFIX: u8 = 9;
-        const PRECEDENCE_CALL: u8 = 10;
+        const PRECEDENCE_BITWISE_OR: u8 = 5;
+        const PRECEDENCE_BITWISE_XOR: u8 = 6;
+        const PRECEDENCE_BITWISE_AND: u8 = 7;
+        const PRECEDENCE_SUM: u8 = 8;
+        const PRECEDENCE_PRODUCT: u8 = 9;
+        const PRECEDENCE_EXPONENT: u8 = 10;
+        const PRECEDENCE_PREFIX: u8 = 11;
+        const PRECEDENCE_POSTFIX: u8 = 12;
+        const PRECEDENCE_CALL: u8 = 13;
 
+        /*
+         * Literals and identifiers and consumed as prefix operations.
+         */
         self.register_prefix(TokenType::Identifier, |parser, token| {
             let value = match parser.stream.inner.token_value(token) {
                 Some(TokenValue::Identifier(value)) => value,
@@ -159,6 +165,10 @@ impl<'s> Parser<'s> {
         };
         self.register_prefix(TokenType::True, bool_literal);
         self.register_prefix(TokenType::False, bool_literal);
+
+        /*
+         * 'Real' prefix operations.
+         */
         self.register_prefix(TokenType::Minus, |parser, _token| {
             let operand = parser.expression(PRECEDENCE_PREFIX);
             Expr::UnaryOp { op: UnaryOp::Negate, operand: Box::new(operand) }
@@ -168,12 +178,19 @@ impl<'s> Parser<'s> {
             parser.consume(TokenType::RightParen);
             Expr::Grouping { inner: Box::new(inner) }
         });
+
+        /*
+         * Infix operations.
+         */
         let binary_op: InfixParselet = |parser, left, token| {
             let (op, precedence) = match token.typ {
                 TokenType::Plus => (BinaryOp::Add, PRECEDENCE_SUM),
                 TokenType::Minus => (BinaryOp::Subtract, PRECEDENCE_SUM),
                 TokenType::Asterix => (BinaryOp::Multiply, PRECEDENCE_PRODUCT),
                 TokenType::Slash => (BinaryOp::Divide, PRECEDENCE_PRODUCT),
+                TokenType::Ampersand => (BinaryOp::BitwiseAnd, PRECEDENCE_BITWISE_AND),
+                TokenType::Pipe => (BinaryOp::BitwiseOr, PRECEDENCE_BITWISE_OR),
+                TokenType::Caret => (BinaryOp::BitwiseXor, PRECEDENCE_BITWISE_XOR),
                 other => panic!("Unsupported binary op token: {:?}", other),
             };
             let right = parser.expression(precedence);
@@ -183,6 +200,25 @@ impl<'s> Parser<'s> {
         self.register_infix(TokenType::Minus, PRECEDENCE_SUM, binary_op);
         self.register_infix(TokenType::Asterix, PRECEDENCE_PRODUCT, binary_op);
         self.register_infix(TokenType::Slash, PRECEDENCE_PRODUCT, binary_op);
+        self.register_infix(TokenType::Ampersand, PRECEDENCE_BITWISE_AND, binary_op);
+        self.register_infix(TokenType::Pipe, PRECEDENCE_BITWISE_OR, binary_op);
+        self.register_infix(TokenType::Caret, PRECEDENCE_BITWISE_XOR, binary_op);
+
+        let logical_op: InfixParselet = |parser, left, token| {
+            let (op, precedence) = match token.typ {
+                TokenType::AmpersandAmpersand => (LogicalOp::LogicalAnd, PRECEDENCE_LOGICAL_AND),
+                TokenType::PipePipe => (LogicalOp::LogicalOr, PRECEDENCE_LOGICAL_OR),
+                other => panic!("Unsupported logical op token: {:?}", other),
+            };
+            let right = parser.expression(precedence);
+            Expr::LogicalOp { op, left: Box::new(left), right: Box::new(right) }
+        };
+        self.register_infix(TokenType::AmpersandAmpersand, PRECEDENCE_LOGICAL_AND, logical_op);
+        self.register_infix(TokenType::PipePipe, PRECEDENCE_LOGICAL_OR, logical_op);
+
+        /*
+         * Assignment.
+         */
         self.register_infix(TokenType::Equals, PRECEDENCE_ASSIGNMENT, |parser, left, _token| {
             let expr = parser.expression(PRECEDENCE_ASSIGNMENT - 1);
             Expr::Assign { place: Box::new(left), expr: Box::new(expr) }

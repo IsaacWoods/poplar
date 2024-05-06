@@ -1,4 +1,4 @@
-use crate::ast::{BinaryOp, Expr, Stmt, UnaryOp};
+use crate::ast::{BinaryOp, Expr, LogicalOp, Stmt, UnaryOp};
 use std::{cell::RefCell, collections::BTreeMap, mem, sync::Arc};
 
 #[derive(Clone, PartialEq, Debug)]
@@ -79,7 +79,13 @@ impl Interpreter {
                             panic!()
                         }
                     }
-                    UnaryOp::Not => todo!(),
+                    UnaryOp::Not => {
+                        if let Value::Bool(value) = operand {
+                            Value::Bool(!value)
+                        } else {
+                            panic!()
+                        }
+                    }
                 }
             }
             Expr::BinaryOp { op, left, right } => {
@@ -120,6 +126,55 @@ impl Interpreter {
                             Value::Integer(left / right)
                         } else {
                             panic!();
+                        }
+                    }
+                    BinaryOp::BitwiseAnd => {
+                        if let Value::Integer(left) = left
+                            && let Value::Integer(right) = right
+                        {
+                            Value::Integer(left & right)
+                        } else {
+                            panic!()
+                        }
+                    }
+                    BinaryOp::BitwiseOr => {
+                        if let Value::Integer(left) = left
+                            && let Value::Integer(right) = right
+                        {
+                            Value::Integer(left | right)
+                        } else {
+                            panic!()
+                        }
+                    }
+                    BinaryOp::BitwiseXor => {
+                        if let Value::Integer(left) = left
+                            && let Value::Integer(right) = right
+                        {
+                            Value::Integer(left ^ right)
+                        } else {
+                            panic!()
+                        }
+                    }
+                }
+            }
+            Expr::LogicalOp { op, left, right } => {
+                let Value::Bool(left) = self.eval_expr(*left) else { panic!() };
+
+                match op {
+                    LogicalOp::LogicalAnd => {
+                        if !left {
+                            Value::Bool(false)
+                        } else {
+                            let Value::Bool(right) = self.eval_expr(*right) else { panic!() };
+                            Value::Bool(left && right)
+                        }
+                    }
+                    LogicalOp::LogicalOr => {
+                        if left {
+                            Value::Bool(true)
+                        } else {
+                            let Value::Bool(right) = self.eval_expr(*right) else { panic!() };
+                            Value::Bool(left || right)
                         }
                     }
                 }

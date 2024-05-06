@@ -26,6 +26,11 @@ pub enum TokenType {
     GreaterThan,
     GreaterEqual,
     QuestionMark,
+    Caret,
+    Ampersand,
+    AmpersandAmpersand,
+    Pipe,
+    PipePipe,
 
     /*
      * Literals.
@@ -162,6 +167,21 @@ impl<'s> Iterator for Lex<'s> {
                     _ => return Some(self.produce(TokenType::GreaterThan)),
                 },
                 '?' => return Some(self.produce(TokenType::QuestionMark)),
+                '^' => return Some(self.produce(TokenType::Caret)),
+                '&' => match self.stream.peek() {
+                    Some('&') => {
+                        self.advance();
+                        return Some(self.produce(TokenType::AmpersandAmpersand));
+                    }
+                    _ => return Some(self.produce(TokenType::Ampersand)),
+                },
+                '|' => match self.stream.peek() {
+                    Some('|') => {
+                        self.advance();
+                        return Some(self.produce(TokenType::PipePipe));
+                    }
+                    _ => return Some(self.produce(TokenType::Pipe)),
+                },
 
                 // TODO: parse comments, both line and block here
                 '/' => return Some(self.produce(TokenType::Slash)),
