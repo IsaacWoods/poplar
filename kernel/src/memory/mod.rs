@@ -30,11 +30,19 @@ impl PhysicalMemoryManager {
 
     pub fn alloc_bytes(&self, num_bytes: Bytes) -> PAddr {
         /*
-         * For now, we always use the buddy allocator.
-         * TODO: this isn't very good. We can only allocate a whole block at a time, and always allocate a
-         * contiguous block of memory even when we don't need one. This should return an "owned" allocation that
-         * can hold a list of non-contiguous ranges of frames, plus information needed to free the allocation.
+         * TODO: the whole physical memory management system needs a big overhaul now that the
+         * kernel is significantly more complex:
+         *    - We currently can only allocate whole blocks from the buddy allocator. This is not
+         *      ideal for larger allocations that don't happen to be power-of-2 sized. We should
+         *      investigate what better kernels do, but I'm guessing there should be layer(s) above
+         *      the underlying buddy allocator.
+         *    - The way we track allocations is very ad-hoc. We should return a structure with e.g.
+         *      the length of the allocation, not just the allocated address and hope for the best.
+         *    - We have no support for scatter-gather allocations, and instead insist that every
+         *      allocation is contiguous, which is a restriction that very few usecases require.
+         *      Especially for larger allocations, this would be a good improvement.
          */
+        let num_bytes = num_bytes.next_power_of_two();
         self.buddy.lock().allocate_bytes(num_bytes).expect("Failed to allocate physical memory!")
     }
 }
