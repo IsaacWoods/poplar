@@ -173,7 +173,7 @@ pub fn seed_main(hart_id: u64, fdt_ptr: *const u8) -> ! {
      * Load desired early tasks.
      */
     // TODO: load from config file
-    for name in &["hello_world", "platform_bus", "pci_bus", "usb_bus_ehci", "usb_hid"] {
+    for name in &["hello_world", "platform_bus", "pci_bus", "usb_bus_ehci", "usb_hid", "virtio_gpu"] {
         let file = if let Some(ref mut ramdisk) = ramdisk {
             ramdisk.load(&name).unwrap()
         } else {

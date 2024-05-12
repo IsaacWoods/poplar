@@ -13,6 +13,7 @@ members = [
     "hello_world",
     "usb_bus_ehci",
     "usb_hid",
+    "virtio_gpu",
 ]
 resolver = "2"
 

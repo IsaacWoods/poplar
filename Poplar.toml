@@ -19,6 +19,7 @@ user_tasks = [
     "pci_bus user/pci_bus",
     "usb_bus_ehci user/usb_bus_ehci",
     "usb_hid user/usb_hid",
+    "virtio_gpu user/virtio_gpu",
 ]
 
 [mq_pro]

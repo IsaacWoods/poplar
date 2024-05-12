@@ -287,16 +287,14 @@ dependencies = [
 
 [[package]]
 name = "ptah"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "ptah_derive",
 ]
 
 [[package]]
 name = "ptah_derive"
-version = "0.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "120c5f0e4963cb4367c98c8416fc5d6475521bd3d4f53ba27241d3345ab55009"
+version = "0.2.1"
 dependencies = [
  "proc-macro2",
  "quote",

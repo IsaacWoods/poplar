@@ -1,0 +1,12 @@
+[package]
+name = "virtio_gpu"
+version = "0.1.0"
+authors = ["Isaac Woods"]
+edition = "2021"
+
+[dependencies]
+std = { path = "../../lib/std", features = ["ddk"] }
+log = "0.4"
+platform_bus = { path = "../platform_bus" }
+bit_field = "0.10"
+virtio = { path = "../../lib/virtio" }

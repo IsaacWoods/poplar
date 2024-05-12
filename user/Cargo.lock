@@ -702,6 +702,31 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "830b7e5d4d90034032940e4ace0d9a9a057e7a45cd94e6c007832e39edb82f6d"
 
 [[package]]
+name = "virtio"
+version = "0.1.0"
+dependencies = [
+ "bit_field",
+ "bitflags",
+ "mycelium-bitfield 0.1.5 (registry+https://github.com/rust-lang/crates.io-index)",
+ "volatile",
+]
+
+[[package]]
+name = "virtio_gpu"
+version = "0.1.0"
+dependencies = [
+ "bit_field",
+ "log",
+ "platform_bus",
+ "std",
+ "virtio",
+]
+
+[[package]]
+name = "volatile"
+version = "0.1.0"
+
+[[package]]
 name = "winapi"
 version = "0.3.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
