@@ -60,6 +60,7 @@ checksum = "baf1de4339761588bc0619e3cbc0120ee582ebb74b53b4efbf79117bd2da40fd"
 name = "d1_boot0"
 version = "0.1.0"
 dependencies = [
+ "bit_field",
  "volatile",
 ]
 
@@ -212,6 +213,12 @@ dependencies = [
  "scroll",
  "scroll_derive",
 ]
+
+[[package]]
+name = "mycelium-bitfield"
+version = "0.1.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "24e0cc5e2c585acbd15c5ce911dff71e1f4d5313f43345873311c4f5efd741cc"
 
 [[package]]
 name = "num-traits"
@@ -517,6 +524,7 @@ version = "0.1.0"
 dependencies = [
  "bit_field",
  "bitflags 2.4.1",
+ "mycelium-bitfield",
  "volatile",
 ]
 

@@ -8,3 +8,4 @@ edition = "2021"
 volatile = { path = "../volatile" }
 bitflags = "2.4.0"
 bit_field = "0.10.2"
+mycelium-bitfield = "0.1.5"

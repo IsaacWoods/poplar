@@ -1,4 +1,4 @@
-use crate::VirtioMmioHeader;
+use crate::mmio::VirtioMmioHeader;
 use volatile::{Read, Volatile};
 
 #[repr(C)]

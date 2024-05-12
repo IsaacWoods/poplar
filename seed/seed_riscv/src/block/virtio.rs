@@ -10,7 +10,7 @@ use virtio::{
     block::BlockDeviceConfig,
     virtqueue::{Mapped, Virtqueue},
     DeviceType,
-    VirtioMmioHeader,
+    mmio::VirtioMmioHeader,
 };
 
 pub struct VirtioBlockDevice<'a> {
