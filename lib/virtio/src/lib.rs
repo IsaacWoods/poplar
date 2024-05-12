@@ -4,6 +4,7 @@
 extern crate alloc;
 
 pub mod block;
+pub mod gpu;
 pub mod mmio;
 pub mod pci;
 pub mod virtqueue;
