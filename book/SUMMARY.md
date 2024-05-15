@@ -25,6 +25,7 @@
 - [Userspace](./userspace/index.md)
     - [Capabilities](./userspace/capabilities.md)
     - [Memory map (x86_64)](./userspace/memory_map_x86_64.md)
+    - [Platform Bus](./userspace/platform_bus.md)
 
 - [Message Passing](./message_passing/index.md)
     - [Ptah wire format](./message_passing/wire_format.md)
