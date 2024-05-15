@@ -341,11 +341,11 @@ impl Controller {
         let name = format!("usb-{}.{}", bus, address);
         let device_info = {
             let mut properties = BTreeMap::new();
-            properties.insert("usb.device_class".to_string(), Property::Integer(descriptor.class as u64));
-            properties.insert("usb.device_subclass".to_string(), Property::Integer(descriptor.sub_class as u64));
-            properties.insert("usb.device_protocol".to_string(), Property::Integer(descriptor.protocol as u64));
-            properties.insert("usb.device_vendor".to_string(), Property::Integer(descriptor.vendor_id as u64));
-            properties.insert("usb.device_product".to_string(), Property::Integer(descriptor.product_id as u64));
+            properties.insert("usb.vendor_id".to_string(), Property::Integer(descriptor.vendor_id as u64));
+            properties.insert("usb.product_id".to_string(), Property::Integer(descriptor.product_id as u64));
+            properties.insert("usb.class".to_string(), Property::Integer(descriptor.class as u64));
+            properties.insert("usb.sub_class".to_string(), Property::Integer(descriptor.sub_class as u64));
+            properties.insert("usb.protocol".to_string(), Property::Integer(descriptor.protocol as u64));
             // TODO: we should probs include all the configurations to choose from no?
             // Maybe need a list, or just to append numbers idk?
             properties.insert("usb.config0".to_string(), Property::Bytes(config0));

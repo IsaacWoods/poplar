@@ -46,8 +46,8 @@ pub fn main() {
     // supposed to indicate its class at the device level so we don't need to test for that.
     platform_bus_device_channel
         .send(&DeviceDriverMessage::RegisterInterest(vec![
-            Filter::Matches(String::from("usb.device_class"), Property::Integer(0x00)),
-            Filter::Matches(String::from("usb.device_subclass"), Property::Integer(0x00)),
+            Filter::Matches(String::from("usb.class"), Property::Integer(0x00)),
+            Filter::Matches(String::from("usb.sub_class"), Property::Integer(0x00)),
         ]))
         .unwrap();
 
