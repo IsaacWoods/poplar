@@ -2,10 +2,13 @@
 
 use log::{info, warn};
 use platform_bus::{BusDriverMessage, DeviceDriverMessage, DeviceDriverRequest, Filter, Property};
-use std::poplar::{
-    caps::{CapabilitiesRepr, CAP_EARLY_LOGGING, CAP_PADDING, CAP_SERVICE_USER},
-    channel::Channel,
-    early_logger::EarlyLogger,
+use std::{
+    collections::{BTreeMap, BTreeSet},
+    poplar::{
+        caps::{CapabilitiesRepr, CAP_EARLY_LOGGING, CAP_PADDING, CAP_SERVICE_USER},
+        channel::Channel,
+        early_logger::EarlyLogger,
+    },
 };
 use usb::{
     descriptor::{
@@ -159,6 +162,22 @@ pub fn main() {
                             })
                             .unwrap();
 
+                        /*
+                         * This tracks the keys that are currently pressed, and how many polling
+                         * cycles each has been pressed for. This is at the heart of the driver's
+                         * ability to debounce key presses and then re-add key repetition in
+                         * software.
+                         * TODO: this currently just polls as-fast-as-it-can. We probably want to
+                         * not do that, so add timing or move to the periodic schedule and do it
+                         * properly.
+                         * TODO: some drivers debounce keys that are only pressed for e.g. a few
+                         * ms. I don't know if that's needed for real hardware, but something to
+                         * consider (esp if we ever get spurious key presses).
+                         * TODO: we don't currently do key repetition, as this requires accurate
+                         * timing of each cycle.
+                         */
+                        let mut pressed_keys = BTreeMap::<Usage, u8>::new();
+
                         info!("Listening to reports from HID device '{}'", device_name);
                         loop {
                             device_channel
@@ -172,22 +191,8 @@ pub fn main() {
                                 DeviceResponse::Data(data) => {
                                     let report = report_desc.interpret(&data);
                                     let mut state = KeyState::default();
+                                    let mut current_keys = BTreeSet::new();
 
-                                    /*
-                                     * TODO: this is currently just for testing the keyboard. I'm
-                                     * not sure what the layer above this should look like, and how
-                                     * we can accurately turn reports into 'key events' - at the
-                                     * moment, things like key modifiers (e.g. CTRL-C) can report
-                                     * key presses twice, as can key rollover.
-                                     *
-                                     * I think we'll need to keep track of which keys we think are
-                                     * pressed in this driver, and then convert that into key
-                                     * pressed / released events manually (I think this would
-                                     * require us to re-add things like key repetition manually
-                                     * back on top).
-                                     *
-                                     * Also worth looking at how other OSs do this I guess?
-                                     */
                                     for field in report {
                                         match field {
                                             FieldValue::DynamicValue(Usage::KeyLeftControl, value) => {
@@ -219,10 +224,26 @@ pub fn main() {
                                             }
 
                                             FieldValue::Selector(Some(usage)) => {
-                                                info!("Key pressed: {:?} ({:?})", usage, state);
+                                                current_keys.insert(usage);
                                             }
                                             FieldValue::Selector(None) => {}
                                         }
+                                    }
+
+                                    pressed_keys = pressed_keys
+                                        .into_iter()
+                                        .filter_map(|(usage, count)| {
+                                            if current_keys.take(&usage).is_some() {
+                                                Some((usage, count + 1))
+                                            } else {
+                                                info!("Key released: {:?}", usage);
+                                                None
+                                            }
+                                        })
+                                        .collect();
+                                    for new_key in current_keys.into_iter() {
+                                        pressed_keys.insert(new_key, 1);
+                                        info!("Key pressed: {:?}", new_key);
                                     }
                                 }
                                 DeviceResponse::NoData => {}
