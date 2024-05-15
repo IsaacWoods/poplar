@@ -1,7 +1,19 @@
+#![feature(never_type)]
+
 use core::sync::atomic::{AtomicUsize, Ordering};
 use log::info;
-use platform_bus::{DeviceDriverMessage, DeviceDriverRequest, Filter, Property};
+use platform_bus::{
+    BusDriverMessage,
+    DeviceDriverMessage,
+    DeviceDriverRequest,
+    DeviceInfo,
+    Filter,
+    HandoffInfo,
+    HandoffProperty,
+    Property,
+};
 use std::{
+    collections::BTreeMap,
     mem::{self, MaybeUninit},
     poplar::{
         caps::{CapabilitiesRepr, CAP_EARLY_LOGGING, CAP_PADDING, CAP_SERVICE_USER},
@@ -185,7 +197,10 @@ fn main() {
     log::set_max_level(log::LevelFilter::Trace);
     info!("Virtio GPU driver is running!");
 
-    // This allows us to talk to the PlatformBus as a device driver
+    // We act as a bus driver to create the framebuffer device
+    let platform_bus_bus_channel: Channel<BusDriverMessage, !> =
+        Channel::subscribe_to_service("platform_bus.bus_driver").unwrap();
+    // And also as a device driver to find Virtio GPU devices
     let platform_bus_device_channel: Channel<DeviceDriverMessage, DeviceDriverRequest> =
         Channel::subscribe_to_service("platform_bus.device_driver").unwrap();
     platform_bus_device_channel
@@ -207,8 +222,6 @@ fn main() {
             None => syscall::yield_to_kernel(),
         }
     };
-    info!("Device info: {:?}", device_info);
-    info!("Handoff info: {:?}", handoff_info);
 
     let mapped_bar = {
         // TODO: let the kernel choose the address when it can - we don't care
@@ -259,9 +272,8 @@ fn main() {
     let framebuffer_resource =
         gpu.create_resource(VirtioGpuFormat::R8G8B8X8Unorm, scanout_info.width, scanout_info.height);
 
-    // Allocate guest memory for the framebuffer.
+    // Allocate guest memory for the framebuffer
     let framebuffer_size = scanout_info.width * scanout_info.height * 4;
-    info!("Requesting {} ({:#x}) bytes for the framebuffer", framebuffer_size, framebuffer_size);
     let framebuffer = {
         let memory_object = unsafe {
             MemoryObject::create_physical(framebuffer_size as usize, MemoryObjectFlags::WRITABLE).unwrap()
@@ -272,7 +284,6 @@ fn main() {
     gpu.attach_backing(framebuffer_resource, framebuffer.inner.phys_address.unwrap() as u64, framebuffer_size);
     gpu.set_scanout(&scanout_info, framebuffer_resource);
 
-    info!("Writing some stuff to the framebuffer!");
     let framebuffer_base = framebuffer.ptr() as *mut u32;
     for y in 0..scanout_info.height {
         for x in 0..scanout_info.width {
@@ -282,9 +293,43 @@ fn main() {
         }
     }
 
+    // Flush the framebuffer to the host for the first time
     gpu.transfer_to_host_2d(framebuffer_resource, scanout_info.width, scanout_info.height);
     gpu.flush_resource(framebuffer_resource, scanout_info.width, scanout_info.height);
-    info!("Finished writing a frame to the framebuffer (hopefully?)");
+
+    // Add the framebuffer as a device to the Platform Bus
+    let channel = {
+        let device_info = {
+            let mut properties = BTreeMap::new();
+            properties.insert("type".to_string(), Property::String("framebuffer".to_string()));
+            properties.insert("width".to_string(), Property::Integer(scanout_info.width as u64));
+            properties.insert("height".to_string(), Property::Integer(scanout_info.height as u64));
+            DeviceInfo(properties)
+        };
+        let (control_channel, control_channel_handle) = Channel::<(), ()>::create().unwrap();
+        let handoff_info = {
+            let mut properties = BTreeMap::new();
+            properties.insert("framebuffer".to_string(), HandoffProperty::MemoryObject(framebuffer.inner.handle));
+            properties.insert("channel".to_string(), HandoffProperty::Channel(control_channel_handle));
+            HandoffInfo(properties)
+        };
+        platform_bus_bus_channel
+            .send(&BusDriverMessage::RegisterDevice("virtio-fb".to_string(), device_info, handoff_info))
+            .unwrap();
+        control_channel
+    };
+
+    loop {
+        match channel.try_receive() {
+            Ok(Some(message)) => {
+                // Flush the entire framebuffer to the host
+                gpu.transfer_to_host_2d(framebuffer_resource, scanout_info.width, scanout_info.height);
+                gpu.flush_resource(framebuffer_resource, scanout_info.width, scanout_info.height);
+            }
+            Ok(None) => std::poplar::syscall::yield_to_kernel(),
+            Err(err) => panic!("Error receiving message from control channel: {:?}", err),
+        }
+    }
 }
 
 pub struct VirtioMemoryManager {
