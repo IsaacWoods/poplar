@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["VendorCapabilityType"],"struct":["VirtioPciCommonCfg","VirtioVendorCap"]};

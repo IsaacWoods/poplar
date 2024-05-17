@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["CtrlType","VirtioGpuFormat"],"struct":["BackingMemoryEntry","CreateResource2D","CtrlHeader","DisplayInfo","DisplayMode","FlushResource","ResourceAttachBacking","SetScanout","SimpleResourceAttachBacking","TransferToHost2D"]};

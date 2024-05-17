@@ -1,0 +1,281 @@
+<!DOCTYPE HTML>
+<html lang="en" class="light" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Platform Bus - Poplar</title>
+
+
+        <!-- Custom HTML head -->
+        
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../favicon.svg">
+        <link rel="shortcut icon" href="../favicon.png">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" href="../highlight.css">
+        <link rel="stylesheet" href="../tomorrow-night.css">
+        <link rel="stylesheet" href="../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+
+    </head>
+    <body class="sidebar-visible no-js">
+    <div id="body-container">
+        <!-- Provide site root to javascript -->
+        <script>
+            var path_to_root = "../";
+            var default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "navy" : "light";
+        </script>
+
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                var theme = localStorage.getItem('mdbook-theme');
+                var sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            var theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            var html = document.querySelector('html');
+            html.classList.remove('light')
+            html.classList.add(theme);
+            var body = document.querySelector('body');
+            body.classList.remove('no-js')
+            body.classList.add('js');
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            var body = document.querySelector('body');
+            var sidebar = null;
+            var sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+            }
+            sidebar_toggle.checked = sidebar === 'visible';
+            body.classList.remove('sidebar-visible');
+            body.classList.add("sidebar-" + sidebar);
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <div class="sidebar-scrollbox">
+                <ol class="chapter"><li class="chapter-item expanded "><a href="../introduction/index.html"><strong aria-hidden="true">1.</strong> Introduction</a></li><li class="chapter-item expanded "><a href="../kernel/index.html"><strong aria-hidden="true">2.</strong> The Kernel</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../kernel/platforms/index.html"><strong aria-hidden="true">2.1.</strong> Platforms</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../kernel/platforms/mqpro.html"><strong aria-hidden="true">2.1.1.</strong> MangoPi MQ-Pro</a></li></ol></li><li class="chapter-item expanded "><a href="../kernel/seed.html"><strong aria-hidden="true">2.2.</strong> Seed</a></li><li class="chapter-item expanded "><a href="../kernel/kernel_objects.html"><strong aria-hidden="true">2.3.</strong> Kernel Objects</a></li><li class="chapter-item expanded "><a href="../kernel/debugging.html"><strong aria-hidden="true">2.4.</strong> Debugging the kernel</a></li></ol></li><li class="chapter-item expanded "><a href="../syscalls/index.html"><strong aria-hidden="true">3.</strong> System calls</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../syscalls/yield.html"><strong aria-hidden="true">3.1.</strong> yield</a></li><li class="chapter-item expanded "><a href="../syscalls/early_log.html"><strong aria-hidden="true">3.2.</strong> early_log</a></li><li class="chapter-item expanded "><a href="../syscalls/get_framebuffer.html"><strong aria-hidden="true">3.3.</strong> get_framebuffer</a></li><li class="chapter-item expanded "><a href="../syscalls/create_memory_object.html"><strong aria-hidden="true">3.4.</strong> create_memory_object</a></li><li class="chapter-item expanded "><a href="../syscalls/map_memory_object.html"><strong aria-hidden="true">3.5.</strong> map_memory_object</a></li><li class="chapter-item expanded "><a href="../syscalls/create_channel.html"><strong aria-hidden="true">3.6.</strong> create_channel</a></li><li class="chapter-item expanded "><a href="../syscalls/send_message.html"><strong aria-hidden="true">3.7.</strong> send_message</a></li><li class="chapter-item expanded "><a href="../syscalls/get_message.html"><strong aria-hidden="true">3.8.</strong> get_message</a></li><li class="chapter-item expanded "><a href="../syscalls/register_service.html"><strong aria-hidden="true">3.9.</strong> register_service</a></li><li class="chapter-item expanded "><a href="../syscalls/subscribe_to_service.html"><strong aria-hidden="true">3.10.</strong> subscribe_to_service</a></li><li class="chapter-item expanded "><a href="../syscalls/pci_get_info.html"><strong aria-hidden="true">3.11.</strong> pci_get_info</a></li></ol></li><li class="chapter-item expanded "><a href="../userspace/index.html"><strong aria-hidden="true">4.</strong> Userspace</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../userspace/capabilities.html"><strong aria-hidden="true">4.1.</strong> Capabilities</a></li><li class="chapter-item expanded "><a href="../userspace/memory_map_x86_64.html"><strong aria-hidden="true">4.2.</strong> Memory map (x86_64)</a></li><li class="chapter-item expanded "><a href="../userspace/platform_bus.html" class="active"><strong aria-hidden="true">4.3.</strong> Platform Bus</a></li></ol></li><li class="chapter-item expanded "><a href="../message_passing/index.html"><strong aria-hidden="true">5.</strong> Message Passing</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../message_passing/wire_format.html"><strong aria-hidden="true">5.1.</strong> Ptah wire format</a></li></ol></li><li class="chapter-item expanded "><a href="../journal/index.html"><strong aria-hidden="true">6.</strong> Journal</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../journal/rustc_target.html"><strong aria-hidden="true">6.1.</strong> Building a rustc target for Poplar</a></li><li class="chapter-item expanded "><a href="../journal/usb.html"><strong aria-hidden="true">6.2.</strong> USB</a></li><li class="chapter-item expanded "><a href="../journal/riscv.html"><strong aria-hidden="true">6.3.</strong> RISC-V</a></li></ol></li></ol>
+            </div>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <!-- Track and set sidebar scroll position -->
+        <script>
+            var sidebarScrollbox = document.querySelector('#sidebar .sidebar-scrollbox');
+            sidebarScrollbox.addEventListener('click', function(e) {
+                if (e.target.tagName === 'A') {
+                    sessionStorage.setItem('sidebar-scroll', sidebarScrollbox.scrollTop);
+                }
+            }, { passive: true });
+            var sidebarScrollTop = sessionStorage.getItem('sidebar-scroll');
+            sessionStorage.removeItem('sidebar-scroll');
+            if (sidebarScrollTop) {
+                // preserve sidebar scroll position when navigating via links within sidebar
+                sidebarScrollbox.scrollTop = sidebarScrollTop;
+            } else {
+                // scroll sidebar to current active section when navigating via "next/previous chapter" buttons
+                var activeSection = document.querySelector('#sidebar .active');
+                if (activeSection) {
+                    activeSection.scrollIntoView({ block: 'center' });
+                }
+            }
+        </script>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </label>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">Poplar</h1>
+
+                    <div class="right-buttons">
+                        <a href="../print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="platform-bus"><a class="header" href="#platform-bus">Platform Bus</a></h1>
+<p>The Platform Bus is a userspace service designed to be a core part of most Poplar systems.
+It manages an abstract "bus" of devices that can be added by userspace <strong>bus drivers</strong> and consumed by userspace <strong>device drivers</strong>.
+Drivers talk to the Platform Bus via channels obtained by subscribing to the Platform Bus's services, <code>platform_bus.bus_driver</code> and
+<code>platform_bus.device_driver</code>.</p>
+<p>Platform Bus is entirely a userspace concept, and so systems can be built around the Poplar kernel without it. However, many drivers and applications will expect
+the Platform Bus service to be present, and systems not using it will have to handle many low-level systems, such as PCI device enumeration, themselves, and so
+it is expected that the vast majority of systems would use Platform Bus as a fundamental building block of their userspace.</p>
+<h3 id="device-representation-on-the-platform-bus"><a class="header" href="#device-representation-on-the-platform-bus">Device representation on the Platform Bus</a></h3>
+<p>Devices on the Platform Bus can be quite abstract, or represent literal devices that are part of the platform, or plugged in as peripherals. Examples
+include a framebuffer "device" provided by a driver for a graphics-capable device, a power-management chip built into the platform, and USB devices,
+respectively.</p>
+<p>Devices are described by a series of properties, which are typed pieces of data associated with a label. <strong>Device properties</strong> are used to identify
+devices, and are given to every device driver that claims it may be able to drive a device. <strong>Handoff properties</strong> are only transfered to a driver
+once it has been selected to drive a device, and can contain handles to kernel objects needed to drive the device. These handles are transferred
+to the task implementing the device driver, which is why they cannot be send arbitrarily to drivers to query support.</p>
+<h3 id="device-registration"><a class="header" href="#device-registration">Device registration</a></h3>
+<p>TODO</p>
+<h3 id="device-hand-off-to-device-driver"><a class="header" href="#device-hand-off-to-device-driver">Device hand-off to device driver</a></h3>
+<p>TODO</p>
+<h3 id="standard-devices"><a class="header" href="#standard-devices">Standard devices</a></h3>
+<p>The Platform Bus library defines expected properties and behaviour for a number of standard device classes, in an attempt to increase compatability
+across drivers and device users. Additional properties may be added as necessary for an individual device.</p>
+<h4 id="pci-devices"><a class="header" href="#pci-devices">PCI devices</a></h4>
+<p>Platform Bus will use information provided by the kernel to create devices for each enumerated PCI device. Standard properties:</p>
+<div class="table-wrapper"><table><thead><tr><th>Property</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>pci.vendor_id</code></td><td>Integer</td><td>Vendor ID of the PCI device</td></tr>
+<tr><td><code>pci.device_id</code></td><td>Integer</td><td>Device ID of the PCI device</td></tr>
+<tr><td><code>pci.class</code></td><td>Integer</td><td>Class of the PCI device</td></tr>
+<tr><td><code>pci.sub_class</code></td><td>Integer</td><td>Sub-class of the PCI device</td></tr>
+<tr><td><code>pci.interface</code></td><td>Integer</td><td>Interface of the PCI device</td></tr>
+<tr><td><code>pci.interrupt</code></td><td>Event</td><td>If configured, an <code>Event</code> that is triggered when the PCI device gets an IRQ</td></tr>
+<tr><td><code>pci.barN.size</code></td><td>Integer</td><td><code>N</code> is a number from 0-6. The size of the given BAR, if present.</td></tr>
+<tr><td><code>pci.barN.handle</code></td><td>MemoryObject</td><td><code>N</code> is a number from 0-6. A memory object mapped to the given BAR, if present.</td></tr>
+</tbody></table>
+</div>
+<p>Generally, specific devices (e.g. a specific GPU) can be detected with a combination of the <code>vendor_id</code> and <code>device_id</code> properties, while a type of
+device can be identified via the <code>class</code>, <code>sub_class</code>, and <code>interface</code> properties. Drivers should filter against the appropriate properties depending
+on the devices they can drive.</p>
+<h4 id="usb-devices"><a class="header" href="#usb-devices">USB devices</a></h4>
+<p>USB devices may be added to the Platform Bus by a USB Host Controller driver, and can be consumed by a wide array of drivers.
+Standard properties:</p>
+<div class="table-wrapper"><table><thead><tr><th>Property</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>usb.vendor_id</code></td><td>Integer</td><td>Class of the USB device</td></tr>
+<tr><td><code>usb.product_id</code></td><td>Integer</td><td>Class of the USB device</td></tr>
+<tr><td><code>usb.class</code></td><td>Integer</td><td>Class of the USB device</td></tr>
+<tr><td><code>usb.sub_class</code></td><td>Integer</td><td>Sub-class of the USB device</td></tr>
+<tr><td><code>usb.protocol</code></td><td>Integer</td><td>Protocol of the USB device</td></tr>
+<tr><td><code>usb.config0</code></td><td>Bytes</td><td>Byte-stream of the first configuration descriptor of the device</td></tr>
+<tr><td><code>usb.channel</code></td><td>Channel</td><td>Control channel to configure and control the device via the bus driver</td></tr>
+</tbody></table>
+</div>
+<h4 id="hid-devices"><a class="header" href="#hid-devices">HID devices</a></h4>
+<p>TODO</p>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../userspace/memory_map_x86_64.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="../message_passing/index.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../userspace/memory_map_x86_64.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="../message_passing/index.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+
+        <script src="../elasticlunr.min.js"></script>
+        <script src="../mark.min.js"></script>
+        <script src="../searcher.js"></script>
+
+        <script src="../clipboard.min.js"></script>
+        <script src="../highlight.js"></script>
+        <script src="../book.js"></script>
+
+        <!-- Custom JS scripts -->
+
+
+    </div>
+    </body>
+</html>

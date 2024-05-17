@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"enum":["DeviceType","StatusFlags"],"mod":["block","virtqueue"],"struct":["VirtioMmioHeader"]};
+window.SIDEBAR_ITEMS = {"enum":["DeviceType","StatusFlags"],"mod":["block","gpu","mmio","pci","virtqueue"]};
