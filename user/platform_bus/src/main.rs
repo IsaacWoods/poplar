@@ -85,15 +85,18 @@ impl PlatformBus {
 
             let device_drivers = self.device_drivers.read();
             for device_driver in device_drivers.iter().filter(|driver| driver.filters.is_some()) {
-                let matches_filter = device_driver.filters.as_ref().unwrap().iter().fold(
-                    true,
-                    |matches_so_far, filter| match device {
+                let mut matches_filter = false;
+                for filter in device_driver.filters.as_ref().unwrap() {
+                    match device {
                         Device::Unclaimed { ref device_info, .. } => {
-                            matches_so_far && filter.match_against(&device_info.0)
+                            if filter.match_against(&device_info.0) {
+                                matches_filter = true;
+                                break;
+                            }
                         }
-                        _ => false,
-                    },
-                );
+                        _ => (),
+                    }
+                }
 
                 if matches_filter {
                     info!("Asking device driver with matching filter if it can handle device {}", name);

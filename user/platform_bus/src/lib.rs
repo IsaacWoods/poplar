@@ -208,6 +208,7 @@ pub enum DeviceDriverRequest {
 #[derive(Debug, Serialize, Deserialize)]
 pub enum Filter {
     Matches(PropertyName, Property),
+    All(Vec<Filter>),
 }
 
 impl Filter {
@@ -217,6 +218,9 @@ impl Filter {
                 Some(property_to_match) => property == property_to_match,
                 None => false,
             },
+            Filter::All(filters) => filters
+                .iter()
+                .fold(true, |matches_so_far, filter| matches_so_far && filter.match_against(&properties)),
         }
     }
 }
