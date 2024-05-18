@@ -13,6 +13,10 @@ pub struct MemoryObject {
 }
 
 impl MemoryObject {
+    pub unsafe fn from_handle(handle: Handle, size: usize, flags: MemoryObjectFlags) -> MemoryObject {
+        MemoryObject { handle, size, flags, phys_address: None }
+    }
+
     pub unsafe fn create(size: usize, flags: MemoryObjectFlags) -> Result<MemoryObject, CreateMemoryObjectError> {
         let handle = unsafe { crate::syscall::create_memory_object(size, flags, ptr::null_mut())? };
         Ok(MemoryObject { handle, size, flags, phys_address: None })

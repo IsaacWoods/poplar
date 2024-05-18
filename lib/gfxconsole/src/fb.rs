@@ -92,3 +92,5 @@ where
         }
     }
 }
+
+unsafe impl<F> Send for Framebuffer<F> where F: Format {}

@@ -1,0 +1,14 @@
+[package]
+name = "fb_console"
+version = "0.1.0"
+authors = ["Isaac Woods"]
+edition = "2021"
+
+[dependencies]
+std = { path = "../../lib/std", features = ["async"] }
+log = "0.4"
+gfxconsole = { path = "../../lib/gfxconsole" }
+ptah = { path = "../../lib/ptah" }
+platform_bus = { path = "../platform_bus" }
+spinning_top = "0.3.0"
+thingbuf = { version = "0.1.6", default-features = false, features = ["alloc"] }

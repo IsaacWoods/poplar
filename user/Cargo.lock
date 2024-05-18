@@ -68,6 +68,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "fb_console"
+version = "0.1.0"
+dependencies = [
+ "gfxconsole",
+ "log",
+ "platform_bus",
+ "ptah",
+ "spinning_top 0.3.0",
+ "std",
+ "thingbuf",
+]
+
+[[package]]
 name = "font8x8"
 version = "0.2.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -542,6 +555,15 @@ dependencies = [
  "linked_list_allocator",
  "log",
  "poplar",
+]
+
+[[package]]
+name = "thingbuf"
+version = "0.1.6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "662b54ef6f7b4e71f683dadc787bbb2d8e8ef2f91b682ebed3164a5a7abca905"
+dependencies = [
+ "pin-project",
 ]
 
 [[package]]
