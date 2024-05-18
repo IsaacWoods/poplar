@@ -37,8 +37,8 @@ impl DeviceInfo {
         self.0.get(name)?.as_integer()
     }
 
-    pub fn get_as_string(&self, name: &str) -> Option<&String> {
-        self.0.get(name)?.as_string()
+    pub fn get_as_str(&self, name: &str) -> Option<&str> {
+        self.0.get(name)?.as_str()
     }
 
     pub fn get_as_bytes(&self, name: &str) -> Option<&[u8]> {
@@ -55,8 +55,8 @@ impl HandoffInfo {
         self.0.get(name)?.as_integer()
     }
 
-    pub fn get_as_string(&self, name: &str) -> Option<&String> {
-        self.0.get(name)?.as_string()
+    pub fn get_as_str(&self, name: &str) -> Option<&str> {
+        self.0.get(name)?.as_str()
     }
 
     pub fn get_as_bytes(&self, name: &str) -> Option<&[u8]> {
@@ -99,7 +99,7 @@ impl Property {
         }
     }
 
-    pub fn as_string(&self) -> Option<&String> {
+    pub fn as_str(&self) -> Option<&str> {
         match self {
             Property::String(ref value) => Some(value),
             _ => None,
@@ -140,7 +140,7 @@ impl HandoffProperty {
         }
     }
 
-    pub fn as_string(&self) -> Option<&String> {
+    pub fn as_str(&self) -> Option<&str> {
         match self {
             HandoffProperty::String(ref value) => Some(value),
             _ => None,
