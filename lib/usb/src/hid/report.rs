@@ -403,7 +403,7 @@ pub enum ItemType {
     Reserved,
 }
 
-#[derive(Clone, Copy, PartialEq, Debug)]
+#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Debug)]
 pub enum Usage {
     KeyA,
     KeyB,
