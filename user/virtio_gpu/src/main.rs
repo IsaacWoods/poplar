@@ -184,14 +184,18 @@ impl<'a> VirtioGpu<'a> {
             std::ptr::write_volatile(notify_address as *mut u16, 0);
         }
 
-        for _ in 0..10 {
-            // TODO: this is an immensely hacky way to hopefully give enough time for the device to
-            // respond - this should obviously be changed to wait til the request has been
-            // serviced.
-            std::poplar::syscall::yield_to_kernel();
-        }
+        self.wait_for_request();
 
+        self.queue.free_descriptor(descriptor_0);
+        self.queue.free_descriptor(descriptor_1);
         unsafe { std::ptr::read(response.ptr.as_ptr()).assume_init() }
+    }
+
+    /// Wait for dispatched requests to complete, clearing the used ring as we go.
+    fn wait_for_request(&mut self) {
+        std::poplar::syscall::wait_for_event(self.interrupt_event).unwrap();
+
+        // TODO: we're sent interrupts for various things - do we need to check??
     }
 }
 
