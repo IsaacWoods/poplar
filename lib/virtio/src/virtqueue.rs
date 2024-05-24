@@ -35,7 +35,13 @@ impl Virtqueue {
         let available_ring = unsafe { Mapped::new(queue_size as usize, mapper) };
         let used_ring = unsafe { Mapped::new(queue_size as usize, mapper) };
 
-        Virtqueue { size: queue_size, free_entries, descriptor_table, available_ring, used_ring }
+        Virtqueue {
+            size: queue_size,
+            free_entries,
+            descriptor_table,
+            available_ring,
+            used_ring,
+        }
     }
 
     /// Push a descriptor into the descriptor table, returning its index. Returns `None` if there is no space left
@@ -50,22 +56,29 @@ impl Virtqueue {
     /// Make the descriptor chain starting at `index` available to the device, allowing it to start servicing the
     /// described request.
     pub fn make_descriptor_available(&mut self, index: u16) {
-        // TODO: can we find a less hideous way to write this???
         let ring_index_ptr = unsafe {
-            self.available_ring.mapped.as_ptr().byte_add(mem::offset_of!(AvailableRing, index)) as *const u16
+            let base = self.available_ring.mapped.as_ptr() as *const u16;
+            base.byte_add(mem::offset_of!(AvailableRing, index))
         };
-        let mut ring_index = unsafe { ptr::read_volatile(ring_index_ptr) };
-        ring_index %= self.size;
+
+        /*
+         * XXX: this is a little confusing, and feels underspecified by the spec to me. We keep the
+         * ring index running continuously, and only take the modulo with respect to the ring size
+         * to work out which entry to write into.
+         * TODO: what happens when the `u16` wraps around?
+         */
+        let ring_index = unsafe { ptr::read_volatile(ring_index_ptr) };
 
         // Write into the correct entry of the ring
         unsafe {
-            // TODO: we can't use `offset_of` on `ring` bc its dyn-sized.
+            // XXX: we can't use `offset_of` on `ring` bc its dyn-sized.
             let ring = self.available_ring.mapped.as_ptr().byte_add(4) as *mut u16;
-            let address = ring.add(ring_index as usize);
+            let address = ring.add((ring_index % self.size) as usize);
             ptr::write_volatile(address, index);
         }
 
         // Do a fence to make sure the device sees the update to the ring before we increment the index
+        // TODO: make portable
         unsafe {
             core::arch::asm!("fence ow, ow");
         }
