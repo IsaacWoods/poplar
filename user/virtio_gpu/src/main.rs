@@ -22,6 +22,7 @@ use std::{
         early_logger::EarlyLogger,
         memory_object::{MappedMemoryObject, MemoryObject},
         syscall::{self, MemoryObjectFlags},
+        Handle,
     },
 };
 use virtio::{
@@ -65,6 +66,7 @@ pub struct VirtioGpu<'a> {
     // TODO: This is located in `mapped_bar`, so we need to be very careful not to create aliasing
     // references! This might be safer if we created ad-hoc references to this as needed?
     common_cfg: &'a mut VirtioPciCommonCfg,
+    interrupt_event: Handle,
     queue: Virtqueue,
     request_pool: DmaPool,
     next_resource_id: ResourceIndex,
@@ -74,10 +76,11 @@ impl<'a> VirtioGpu<'a> {
     pub fn new(
         mapped_bar: MappedMemoryObject,
         common_cfg: &'a mut VirtioPciCommonCfg,
+        interrupt_event: Handle,
         queue: Virtqueue,
         request_pool: DmaPool,
     ) -> VirtioGpu<'a> {
-        VirtioGpu { mapped_bar, common_cfg, queue, request_pool, next_resource_id: 1 }
+        VirtioGpu { mapped_bar, common_cfg, interrupt_event, queue, request_pool, next_resource_id: 1 }
     }
 
     pub fn get_scanout_info(&mut self) -> ScanoutInfo {
@@ -235,6 +238,7 @@ fn main() {
         const BAR_SPACE_ADDRESS: usize = 0x00000005_00000000;
         unsafe { bar.map_at(BAR_SPACE_ADDRESS).unwrap() }
     };
+    let interrupt_event = handoff_info.get_as_event("pci.interrupt").unwrap();
 
     let memory_manager = VirtioMemoryManager::new();
     let queue = Virtqueue::new(64, &memory_manager);
@@ -255,6 +259,7 @@ fn main() {
 
     common_cfg.select_queue(0);
     common_cfg.set_queue_size(64);
+    common_cfg.set_queue_msix_vector(0);
     common_cfg.set_queue_descriptor(queue.descriptor_table.physical as u64);
     common_cfg.set_queue_driver(queue.available_ring.physical as u64);
     common_cfg.set_queue_device(queue.used_ring.physical as u64);
@@ -267,7 +272,7 @@ fn main() {
     }
     assert!(common_cfg.num_queues.read() == 2);
 
-    let mut gpu = VirtioGpu::new(mapped_bar, common_cfg, queue, request_pool);
+    let mut gpu = VirtioGpu::new(mapped_bar, common_cfg, interrupt_event, queue, request_pool);
     let scanout_info = gpu.get_scanout_info();
     let framebuffer_resource =
         gpu.create_resource(VirtioGpuFormat::R8G8B8X8Unorm, scanout_info.width, scanout_info.height);

@@ -4,7 +4,11 @@ use core::ptr;
 use hal::memory::PAddr;
 use hal_x86_64::kernel_map;
 use kernel::{object::event::Event, pci::PciInterruptConfigurator};
-use pci_types::{capability::MsiCapability, ConfigRegionAccess, PciAddress};
+use pci_types::{
+    capability::{MsiCapability, MsixCapability},
+    ConfigRegionAccess,
+    PciAddress,
+};
 use tracing::warn;
 
 #[derive(Clone)]
@@ -45,9 +49,15 @@ impl<'a> ConfigRegionAccess for EcamAccess<'a> {
 }
 
 impl<'a> PciInterruptConfigurator for EcamAccess<'a> {
-    fn configure_interrupt(&self, _function: PciAddress, _msi: &mut MsiCapability) -> Arc<Event> {
+    fn configure_msi(&self, _function: PciAddress, _msi: &mut MsiCapability) -> Arc<Event> {
         let event = Event::new();
         warn!("MSI support is incomplete on x86_64! PCI interrupts will not trigger delegated `Event` objects!");
+        event
+    }
+
+    fn configure_msix(&self, _function: PciAddress, _msi: &mut MsixCapability) -> Arc<Event> {
+        let event = Event::new();
+        warn!("MSI-X support is incomplete on x86_64! PCI interrupts will not trigger delegated `Event` objects!");
         event
     }
 }

@@ -1,7 +1,7 @@
 use crate::object::event::Event;
 use alloc::{collections::BTreeMap, sync::Arc};
 use pci_types::{
-    capability::{MsiCapability, PciCapability},
+    capability::{MsiCapability, MsixCapability, PciCapability},
     device_type::DeviceType,
     Bar,
     BaseClass,
@@ -38,12 +38,14 @@ pub struct PciInfo {
 
 pub trait PciInterruptConfigurator {
     /// Create an `Event` that is signalled when an interrupt arrives from the specified PCI
-    /// device. Doing this with the required granularity necessitates the use of MSIs, so this only
-    /// supports platforms and PCI devices with MSI support.
-    ///
-    /// This must also configure the given MSI capability to correctly dispatch an interrupt to the
-    /// correct platform-specific destination.
-    fn configure_interrupt(&self, function: PciAddress, msi: &mut MsiCapability) -> Arc<Event>;
+    /// device. The device must support configuration of its interrupts via the passed MSI
+    /// capability.
+    fn configure_msi(&self, function: PciAddress, msi: &mut MsiCapability) -> Arc<Event>;
+
+    /// Create an `Event` that is signalled when an interrupt arrives from the specified PCI
+    /// device. The device must support configuration of its interrupts via the passed MSI-X
+    /// capability.
+    fn configure_msix(&self, function: PciAddress, table_bar: Bar, msix: &mut MsixCapability) -> Arc<Event>;
 }
 
 pub struct PciResolver<A>
@@ -145,8 +147,10 @@ where
 
                     let interrupt =
                         endpoint_header.capabilities(&self.access).find_map(|capability| match capability {
-                            PciCapability::Msi(mut msi) => {
-                                Some(self.access.configure_interrupt(address, &mut msi))
+                            PciCapability::Msi(mut msi) => Some(self.access.configure_msi(address, &mut msi)),
+                            PciCapability::MsiX(mut msix) => {
+                                let table_bar = bars[msix.table_bar() as usize].unwrap();
+                                Some(self.access.configure_msix(address, table_bar, &mut msix))
                             }
                             _ => None,
                         });

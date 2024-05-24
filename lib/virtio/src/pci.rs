@@ -76,6 +76,10 @@ impl VirtioPciCommonCfg {
         self.queue_size.write(size);
     }
 
+    pub fn set_queue_msix_vector(&mut self, vector: u16) {
+        self.queue_msix_vector.write(vector);
+    }
+
     pub fn set_queue_descriptor(&mut self, physical: u64) {
         self.queue_descriptor[0].write(physical.get_bits(0..32) as u32);
         self.queue_descriptor[1].write(physical.get_bits(32..64) as u32);
