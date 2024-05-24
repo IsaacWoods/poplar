@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `kernel_riscv/src/pci.rs`."><title>pci.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-dd39b87e5fcfba68.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="kernel_riscv" data-themes="" data-resource-suffix="" data-rustdoc-version="1.80.0-nightly (b92758a9a 2024-05-20)" data-channel="nightly" data-search-js="search-d52510db62a78183.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../static.files/storage-118b08c4c78b968e.js"></script><script defer src="../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-20a3ad099b048cf2.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-df360f571f6edeae.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `kernel_riscv/src/pci.rs`."><title>pci.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-dd39b87e5fcfba68.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="kernel_riscv" data-themes="" data-resource-suffix="" data-rustdoc-version="1.80.0-nightly (867900499 2024-05-23)" data-channel="nightly" data-search-js="search-d52510db62a78183.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../static.files/storage-118b08c4c78b968e.js"></script><script defer src="../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-20a3ad099b048cf2.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-df360f571f6edeae.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -88,13 +88,66 @@
 <a href="#88" id="88">88</a>
 <a href="#89" id="89">89</a>
 <a href="#90" id="90">90</a>
+<a href="#91" id="91">91</a>
+<a href="#92" id="92">92</a>
+<a href="#93" id="93">93</a>
+<a href="#94" id="94">94</a>
+<a href="#95" id="95">95</a>
+<a href="#96" id="96">96</a>
+<a href="#97" id="97">97</a>
+<a href="#98" id="98">98</a>
+<a href="#99" id="99">99</a>
+<a href="#100" id="100">100</a>
+<a href="#101" id="101">101</a>
+<a href="#102" id="102">102</a>
+<a href="#103" id="103">103</a>
+<a href="#104" id="104">104</a>
+<a href="#105" id="105">105</a>
+<a href="#106" id="106">106</a>
+<a href="#107" id="107">107</a>
+<a href="#108" id="108">108</a>
+<a href="#109" id="109">109</a>
+<a href="#110" id="110">110</a>
+<a href="#111" id="111">111</a>
+<a href="#112" id="112">112</a>
+<a href="#113" id="113">113</a>
+<a href="#114" id="114">114</a>
+<a href="#115" id="115">115</a>
+<a href="#116" id="116">116</a>
+<a href="#117" id="117">117</a>
+<a href="#118" id="118">118</a>
+<a href="#119" id="119">119</a>
+<a href="#120" id="120">120</a>
+<a href="#121" id="121">121</a>
+<a href="#122" id="122">122</a>
+<a href="#123" id="123">123</a>
+<a href="#124" id="124">124</a>
+<a href="#125" id="125">125</a>
+<a href="#126" id="126">126</a>
+<a href="#127" id="127">127</a>
+<a href="#128" id="128">128</a>
+<a href="#129" id="129">129</a>
+<a href="#130" id="130">130</a>
+<a href="#131" id="131">131</a>
+<a href="#132" id="132">132</a>
+<a href="#133" id="133">133</a>
+<a href="#134" id="134">134</a>
+<a href="#135" id="135">135</a>
+<a href="#136" id="136">136</a>
+<a href="#137" id="137">137</a>
+<a href="#138" id="138">138</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span><span class="kw">crate</span>::interrupts;
 <span class="kw">use </span>alloc::{collections::BTreeMap, sync::Arc};
 <span class="kw">use </span>core::ptr;
 <span class="kw">use </span>fdt::Fdt;
 <span class="kw">use </span>hal::memory::PAddr;
 <span class="kw">use </span>kernel::{object::event::Event, pci::PciInterruptConfigurator};
-<span class="kw">use </span>pci_types::{capability::MsiCapability, ConfigRegionAccess, PciAddress};
+<span class="kw">use </span>pci_types::{
+    capability::{MsiCapability, MsixCapability, TriggerMode},
+    Bar,
+    ConfigRegionAccess,
+    PciAddress,
+};
 <span class="kw">use </span>poplar_util::InitGuard;
 <span class="kw">use </span>spinning_top::Spinlock;
 
@@ -152,10 +205,13 @@
 }
 
 <span class="kw">impl </span>PciInterruptConfigurator <span class="kw">for </span>PciAccess {
-    <span class="kw">fn </span>configure_interrupt(<span class="kw-2">&amp;</span><span class="self">self</span>, _function: PciAddress, msi: <span class="kw-2">&amp;mut </span>MsiCapability) -&gt; Arc&lt;Event&gt; {
+    <span class="kw">fn </span>configure_msi(<span class="kw-2">&amp;</span><span class="self">self</span>, _function: PciAddress, msi: <span class="kw-2">&amp;mut </span>MsiCapability) -&gt; Arc&lt;Event&gt; {
         <span class="kw">let </span>event = Event::new();
 
         <span class="comment">// TODO: allocate numbers from somewhere???
+        // TODO: we need a way to track unused interrupt vectors - can we find the valid range from
+        // the device tree and then reserve ones used by other devices or something? (this feels
+        // like it could live in the common kernel and be useful for everyone)
         </span><span class="kw">let </span>message_number = <span class="number">2</span>;
 
         PCI_EVENTS.get().lock().insert(message_number, event.clone());
@@ -163,8 +219,48 @@
         interrupts::handle_interrupt(message_number, pci_interrupt_handler);
 
         <span class="comment">// TODO: get out of the device tree
-        </span>msi.set_message_info(<span class="number">0x28000000</span>, message_number <span class="kw">as </span>u8, pci_types::capability::TriggerMode::Edge, <span class="self">self</span>);
+        </span>msi.set_message_info(<span class="number">0x28000000</span>, message_number <span class="kw">as </span>u8, TriggerMode::Edge, <span class="self">self</span>);
         msi.set_enabled(<span class="bool-val">true</span>, <span class="self">self</span>);
+
+        event
+    }
+
+    <span class="kw">fn </span>configure_msix(<span class="kw-2">&amp;</span><span class="self">self</span>, _function: PciAddress, table_bar: Bar, msix: <span class="kw-2">&amp;mut </span>MsixCapability) -&gt; Arc&lt;Event&gt; {
+        <span class="kw">let </span>event = Event::new();
+
+        <span class="comment">// TODO: this is bad and we should allocate these for real as per above
+        </span><span class="kw">let </span>message_number = <span class="number">3</span>;
+        PCI_EVENTS.get().lock().insert(message_number, event.clone());
+
+        interrupts::handle_interrupt(message_number, pci_interrupt_handler);
+
+        <span class="comment">// TODO: get out of the device tree
+        </span><span class="kw">let </span>message_address = <span class="number">0x28000000</span>;
+        msix.set_enabled(<span class="bool-val">true</span>, <span class="self">self</span>);
+
+        <span class="kw">let </span>table_base_phys = <span class="kw">match </span>table_bar {
+            Bar::Memory32 { address, .. } =&gt; (address + msix.table_offset()) <span class="kw">as </span>usize,
+            Bar::Memory64 { address, .. } =&gt; address <span class="kw">as </span>usize + msix.table_offset() <span class="kw">as </span>usize,
+            <span class="kw">_ </span>=&gt; <span class="macro">panic!</span>(),
+        };
+        <span class="kw">let </span>table_base_virt =
+            hal_riscv::platform::kernel_map::physical_to_virtual(PAddr::new(table_base_phys).unwrap());
+        <span class="comment">// TODO: offset into the table if we ever need an entry that isn't the first
+        </span><span class="kw">let </span>entry_ptr = table_base_virt.mut_ptr() <span class="kw">as </span><span class="kw-2">*mut </span>u32;
+
+        <span class="comment">/*
+         * Each entry of the MSI-X table is laid out as:
+         *    0x00 =&gt; Message Address
+         *    0x04 =&gt; Message Upper Address
+         *    0x08 =&gt; Message Data
+         *    0x0c =&gt; Vector Control
+         */
+        </span><span class="kw">unsafe </span>{
+            ptr::write_volatile(entry_ptr.byte_add(<span class="number">0x00</span>), message_address);
+            ptr::write_volatile(entry_ptr.byte_add(<span class="number">0x04</span>), <span class="number">0</span>);
+            ptr::write_volatile(entry_ptr.byte_add(<span class="number">0x08</span>), message_number <span class="kw">as </span>u32);
+            ptr::write_volatile(entry_ptr.byte_add(<span class="number">0x0c</span>), <span class="number">0</span>);
+        }
 
         event
     }
