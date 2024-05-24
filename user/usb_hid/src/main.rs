@@ -1,7 +1,17 @@
 #![feature(never_type)]
 
 use log::{info, warn};
-use platform_bus::{BusDriverMessage, DeviceDriverMessage, DeviceDriverRequest, Filter, Property};
+use platform_bus::{
+    hid::{HidEvent, KeyState},
+    BusDriverMessage,
+    DeviceDriverMessage,
+    DeviceDriverRequest,
+    DeviceInfo,
+    Filter,
+    HandoffInfo,
+    HandoffProperty,
+    Property,
+};
 use std::{
     collections::{BTreeMap, BTreeSet},
     poplar::{
@@ -85,7 +95,7 @@ pub fn main() {
                 DeviceDriverRequest::HandoffDevice(device_name, device_info, handoff_info) => {
                     info!("Started driving HID device '{}'", device_name);
 
-                    let device_channel: Channel<DeviceControlMessage, DeviceResponse> =
+                    let control_channel: Channel<DeviceControlMessage, DeviceResponse> =
                         Channel::new_from_handle(handoff_info.get_as_channel("usb.channel").unwrap());
 
                     let config_info = {
@@ -127,9 +137,29 @@ pub fn main() {
                         info
                     };
 
+                    /*
+                     * Register the device as a abstract HID device on the Platform Bus.
+                     * TODO: we need to work out what devices actually are don't we...
+                     */
+                    let (device_channel, device_channel_other_end) = Channel::<HidEvent, ()>::create().unwrap();
+                    let name = "usb-hid".to_string(); // TODO: proper name
+                    let device_info = {
+                        let mut info = BTreeMap::new();
+                        info.insert("hid.type".to_string(), Property::String("keyboard".to_string()));
+                        DeviceInfo(info)
+                    };
+                    let handoff_info = {
+                        let mut info = BTreeMap::new();
+                        info.insert("hid.channel".to_string(), HandoffProperty::Channel(device_channel_other_end));
+                        HandoffInfo(info)
+                    };
+                    platform_bus_bus_channel
+                        .send(&BusDriverMessage::RegisterDevice(name, device_info, handoff_info))
+                        .unwrap();
+
                     std::poplar::rt::spawn(async move {
                         // Get the report descriptor
-                        device_channel
+                        control_channel
                             .send(&DeviceControlMessage::GetInterfaceDescriptor {
                                 typ: DescriptorType::Report,
                                 index: 0,
@@ -137,7 +167,7 @@ pub fn main() {
                             })
                             .unwrap();
                         let report_desc = {
-                            let bytes = match device_channel.receive().await.unwrap() {
+                            let bytes = match control_channel.receive().await.unwrap() {
                                 DeviceResponse::Descriptor { typ, index, bytes }
                                     if typ == DescriptorType::Report && index == 0 =>
                                 {
@@ -151,10 +181,10 @@ pub fn main() {
                             report_desc
                         };
 
-                        device_channel
+                        control_channel
                             .send(&DeviceControlMessage::UseConfiguration(config_info.config_value))
                             .unwrap();
-                        device_channel
+                        control_channel
                             .send(&DeviceControlMessage::OpenEndpoint {
                                 number: config_info.endpoint_num,
                                 direction: EndpointDirection::In,
@@ -180,13 +210,13 @@ pub fn main() {
 
                         info!("Listening to reports from HID device '{}'", device_name);
                         loop {
-                            device_channel
+                            control_channel
                                 .send(&DeviceControlMessage::InterruptTransferIn {
                                     endpoint: config_info.endpoint_num,
                                     packet_size: config_info.packet_size,
                                 })
                                 .unwrap();
-                            let response = device_channel.receive().await.unwrap();
+                            let response = control_channel.receive().await.unwrap();
                             match response {
                                 DeviceResponse::Data(data) => {
                                     let report = report_desc.interpret(&data);
@@ -236,14 +266,24 @@ pub fn main() {
                                             if current_keys.take(&usage).is_some() {
                                                 Some((usage, count + 1))
                                             } else {
-                                                info!("Key released: {:?}", usage);
+                                                device_channel
+                                                    .send(&HidEvent::KeyReleased {
+                                                        key: map_usage(usage).unwrap(),
+                                                        state,
+                                                    })
+                                                    .unwrap();
                                                 None
                                             }
                                         })
                                         .collect();
                                     for new_key in current_keys.into_iter() {
                                         pressed_keys.insert(new_key, 1);
-                                        info!("Key pressed: {:?}", new_key);
+                                        device_channel
+                                            .send(&HidEvent::KeyPressed {
+                                                key: map_usage(new_key).unwrap(),
+                                                state,
+                                            })
+                                            .unwrap();
                                     }
                                 }
                                 DeviceResponse::NoData => {}
@@ -259,38 +299,65 @@ pub fn main() {
     std::poplar::rt::enter_loop();
 }
 
-/*
- * TODO: not sure where this should live in the future - maybe part of a larger HID device
- * framework that can then be consumed by other applications.
- */
-#[derive(Clone, Copy, PartialEq, Default, Debug)]
-pub struct KeyState {
-    left_ctrl: bool,
-    left_shift: bool,
-    left_alt: bool,
-    left_gui: bool,
-
-    right_ctrl: bool,
-    right_shift: bool,
-    right_alt: bool,
-    right_gui: bool,
-}
-
-impl KeyState {
-    pub fn ctrl(&self) -> bool {
-        self.left_ctrl || self.right_ctrl
-    }
-
-    pub fn shift(&self) -> bool {
-        self.left_shift || self.right_shift
-    }
-
-    pub fn alt(&self) -> bool {
-        self.left_alt || self.right_alt
-    }
-
-    pub fn gui(&self) -> bool {
-        self.left_gui || self.right_gui
+// TODO: we should probably be able to define a keymap in a more data-oriented way in the future
+// TODO: I'm not sure if we'll want to map everything to UTF-8 or if some would need different
+// control-esque types or something?
+fn map_usage(usage: Usage) -> Option<char> {
+    match usage {
+        Usage::KeyA => Some('a'),
+        Usage::KeyB => Some('b'),
+        Usage::KeyC => Some('c'),
+        Usage::KeyD => Some('d'),
+        Usage::KeyE => Some('e'),
+        Usage::KeyF => Some('f'),
+        Usage::KeyG => Some('g'),
+        Usage::KeyH => Some('h'),
+        Usage::KeyI => Some('i'),
+        Usage::KeyJ => Some('j'),
+        Usage::KeyK => Some('k'),
+        Usage::KeyL => Some('l'),
+        Usage::KeyM => Some('m'),
+        Usage::KeyN => Some('n'),
+        Usage::KeyO => Some('o'),
+        Usage::KeyP => Some('p'),
+        Usage::KeyQ => Some('q'),
+        Usage::KeyR => Some('r'),
+        Usage::KeyS => Some('s'),
+        Usage::KeyT => Some('t'),
+        Usage::KeyU => Some('u'),
+        Usage::KeyV => Some('v'),
+        Usage::KeyW => Some('w'),
+        Usage::KeyX => Some('x'),
+        Usage::KeyY => Some('y'),
+        Usage::KeyZ => Some('z'),
+        Usage::Key1 => Some('1'),
+        Usage::Key2 => Some('2'),
+        Usage::Key3 => Some('3'),
+        Usage::Key4 => Some('4'),
+        Usage::Key5 => Some('5'),
+        Usage::Key6 => Some('6'),
+        Usage::Key7 => Some('7'),
+        Usage::Key8 => Some('8'),
+        Usage::Key9 => Some('9'),
+        Usage::Key0 => Some('0'),
+        Usage::KeyReturn => Some('\n'),
+        Usage::KeyEscape => None,
+        Usage::KeyDelete => None,
+        Usage::KeyTab => Some('\t'),
+        Usage::KeySpace => Some(' '),
+        Usage::KeyDash => Some('-'),
+        Usage::KeyEquals => Some('='),
+        Usage::KeyLeftBracket => Some('('),
+        Usage::KeyRightBracket => Some(')'),
+        Usage::KeyForwardSlash => Some('\\'),
+        Usage::KeyPound => Some('#'),
+        Usage::KeySemicolon => Some(';'),
+        Usage::KeyApostrophe => Some('\''),
+        Usage::KeyGrave => Some('`'),
+        Usage::KeyComma => Some(','),
+        Usage::KeyDot => Some('.'),
+        Usage::KeyBackSlash => Some('/'),
+        _ => None,
     }
 }
 
