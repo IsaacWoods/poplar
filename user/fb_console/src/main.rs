@@ -3,7 +3,7 @@
 
 use gfxconsole::{Format, Framebuffer, GfxConsole, Pixel, Rgb32};
 use log::info;
-use platform_bus::{DeviceDriverMessage, DeviceDriverRequest, Filter, Property};
+use platform_bus::{hid::HidEvent, DeviceDriverMessage, DeviceDriverRequest, Filter, Property};
 use spinning_top::Spinlock;
 use std::{
     fmt::Write,
@@ -89,10 +89,10 @@ fn main() {
         let platform_bus_device_channel: Channel<DeviceDriverMessage, DeviceDriverRequest> =
             Channel::subscribe_to_service("platform_bus.device_driver").unwrap();
         platform_bus_device_channel
-            .send(&DeviceDriverMessage::RegisterInterest(vec![Filter::Matches(
-                String::from("type"),
-                Property::String("framebuffer".to_string()),
-            )]))
+            .send(&DeviceDriverMessage::RegisterInterest(vec![
+                Filter::Matches(String::from("type"), Property::String("framebuffer".to_string())),
+                Filter::Matches(String::from("hid.type"), Property::String("keyboard".to_string())),
+            ]))
             .unwrap();
 
         loop {
@@ -102,7 +102,7 @@ fn main() {
                     platform_bus_device_channel.send(&DeviceDriverMessage::CanSupport(name, true)).unwrap();
                 }
                 DeviceDriverRequest::HandoffDevice(name, device_info, handoff_info) => {
-                    if device_info.get_as_string("type").unwrap() == "framebuffer" {
+                    if let Some("framebuffer") = device_info.get_as_str("type") {
                         info!("Found framebuffer device: {}", name);
 
                         let (width, height) = (
@@ -124,19 +124,30 @@ fn main() {
                         let framebuffer = unsafe { framebuffer.map_at(FRAMEBUFFER_ADDDRESS).unwrap() };
 
                         spawn_framebuffer(framebuffer, channel, width, height, input_receiver.take().unwrap());
+                    } else if let Some("keyboard") = device_info.get_as_str("hid.type") {
+                        info!("Found HID-compatible keyboard: {}", name);
+
+                        let channel: Channel<(), HidEvent> =
+                            Channel::new_from_handle(handoff_info.get_as_channel("hid.channel").unwrap());
+                        let input_sender = input_sender.clone();
+
+                        std::poplar::rt::spawn(async move {
+                            loop {
+                                let event = channel.receive().await.unwrap();
+                                match event {
+                                    HidEvent::KeyPressed { key, state } => {
+                                        input_sender.send(InputEvent::KeyPressed(key)).await.unwrap();
+                                    }
+                                    _ => (),
+                                }
+                            }
+                        });
+                    } else {
+                        panic!("Passed unsupported device!");
                     }
                 }
             }
         }
-    });
-
-    let sender = input_sender.clone();
-    std::poplar::rt::spawn(async move {
-        sender.send(InputEvent::KeyPressed('a')).await.unwrap();
-        sender.send(InputEvent::KeyPressed('b')).await.unwrap();
-        sender.send(InputEvent::KeyPressed('c')).await.unwrap();
-        sender.send(InputEvent::KeyPressed('d')).await.unwrap();
-        sender.send(InputEvent::KeyPressed('e')).await.unwrap();
     });
 
     std::poplar::rt::enter_loop();
