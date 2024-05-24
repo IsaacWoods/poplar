@@ -72,6 +72,7 @@ name = "fb_console"
 version = "0.1.0"
 dependencies = [
  "gfxconsole",
+ "ginkgo",
  "log",
  "platform_bus",
  "ptah",
@@ -105,6 +106,13 @@ version = "0.1.0"
 dependencies = [
  "bit_field",
  "font8x8",
+]
+
+[[package]]
+name = "ginkgo"
+version = "0.0.0"
+dependencies = [
+ "std",
 ]
 
 [[package]]

@@ -299,7 +299,8 @@ impl<'s> Parser<'s> {
         if token.is_none() || token.unwrap().typ != typ {
             // TODO: real error
             // TODO: for possible recovery, should we consume the token or not??
-            println!("Parse error: expected token of type {:?}", typ);
+            // println!("Parse error: expected token of type {:?}", typ);
+            panic!("Parse error: expected token of type {:?}", typ);
         }
         token
     }

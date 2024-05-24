@@ -13,6 +13,10 @@ pub struct Interpreter {
     environment: Arc<RefCell<Environment>>,
 }
 
+// TODO: this is probably bad (it isn't true by default bc RefCell)
+unsafe impl Send for Interpreter {}
+unsafe impl Sync for Interpreter {}
+
 impl Interpreter {
     pub fn new() -> Interpreter {
         let globals = Environment::new();
@@ -31,7 +35,7 @@ impl Interpreter {
             }
             Stmt::Print { expression } => {
                 let result = self.eval_expr(expression);
-                println!("PRINT: {:?}", result);
+                // println!("PRINT: {:?}", result);
                 None
             }
             Stmt::Let { name, expression } => {

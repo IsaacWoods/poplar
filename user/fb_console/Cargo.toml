@@ -12,3 +12,4 @@ ptah = { path = "../../lib/ptah" }
 platform_bus = { path = "../platform_bus" }
 spinning_top = "0.3.0"
 thingbuf = { version = "0.1.6", default-features = false, features = ["alloc"] }
+ginkgo = { path = "../../ginkgo", features = ["poplar"] }

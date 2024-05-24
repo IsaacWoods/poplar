@@ -2,6 +2,7 @@
 //! kernel or by a driver for a graphics-capable device.
 
 use gfxconsole::{Format, Framebuffer, GfxConsole, Pixel, Rgb32};
+use ginkgo::{interpreter::Interpreter, parse::Parser};
 use log::info;
 use platform_bus::{hid::HidEvent, DeviceDriverMessage, DeviceDriverRequest, Filter, Property};
 use spinning_top::Spinlock;
@@ -14,7 +15,6 @@ use std::{
         memory_object::{MappedMemoryObject, MemoryObject},
         syscall::MemoryObjectFlags,
     },
-    sync::Arc,
 };
 
 #[derive(Clone, Copy, Default, Debug)]
@@ -49,8 +49,13 @@ fn spawn_framebuffer(
     let console = Console { framebuffer, control_channel: channel, width, height, console, input_events };
 
     std::poplar::rt::spawn(async move {
-        write!(console.console.lock(), "Hello, World!").unwrap();
+        // TODO: separate out graphical layer and shell layer with another channel maybe??
+        writeln!(console.console.lock(), "Welcome to Poplar!").unwrap();
+        write!(console.console.lock(), "> ").unwrap();
         console.control_channel.send(&()).unwrap();
+
+        let mut interpreter = Interpreter::new();
+        let mut current_line = String::new();
 
         loop {
             let mut needs_redraw = false;
@@ -58,9 +63,22 @@ fn spawn_framebuffer(
             if let Some(event) = console.input_events.recv().await {
                 match event {
                     InputEvent::KeyPressed(key) => {
-                        info!("Key pressed: {:?}", key);
                         write!(console.console.lock(), "{}", key).unwrap();
                         needs_redraw = true;
+
+                        if key == '\n' {
+                            let stmts = Parser::new(&current_line).parse().unwrap();
+                            current_line.clear();
+
+                            for statement in stmts {
+                                if let Some(result) = interpreter.eval_stmt(statement) {
+                                    writeln!(console.console.lock(), "Result: {:?}\n", result);
+                                    write!(console.console.lock(), "> ").unwrap();
+                                }
+                            }
+                        } else {
+                            current_line.push(key);
+                        }
                     }
                     InputEvent::Default => panic!(),
                 }
@@ -135,7 +153,7 @@ fn main() {
                             loop {
                                 let event = channel.receive().await.unwrap();
                                 match event {
-                                    HidEvent::KeyPressed { key, state } => {
+                                    HidEvent::KeyPressed { key, .. } => {
                                         input_sender.send(InputEvent::KeyPressed(key)).await.unwrap();
                                     }
                                     _ => (),
