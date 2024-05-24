@@ -16,6 +16,8 @@
 //! can provide an exact filter for the devices they can drive can safely blindly return `true` to
 //! these queries.
 
+pub mod hid;
+
 use ptah::{Deserialize, Serialize};
 use std::{collections::BTreeMap, poplar::Handle};
 
