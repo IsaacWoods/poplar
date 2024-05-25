@@ -54,21 +54,46 @@ where
         assert!(s.is_ascii());
 
         for c in s.chars() {
-            if c != '\n' {
-                self.framebuffer.draw_glyph(
-                    c,
-                    self.cursor_x * GLYPH_SIZE,
-                    self.cursor_y * GLYPH_SIZE,
-                    self.text_color,
-                );
+            match c {
+                '\n' => {
+                    self.cursor_x = 0;
+                    self.cursor_y += 1;
+                }
+                '\x08' => {
+                    // XXX: this is a backspace ('\b'), but Rust doesn't have an escape for it
+                    self.cursor_x -= 1;
+                }
+                '\x7f' => {
+                    /*
+                     * This is an ASCII `DEL` code, which deletes the last character. It is
+                     * produced when backspace on a keyboard is pressed.
+                     */
+                    self.cursor_x -= 1;
+                    self.framebuffer.draw_rect(
+                        self.cursor_x * GLYPH_SIZE,
+                        self.cursor_y * GLYPH_SIZE,
+                        GLYPH_SIZE,
+                        GLYPH_SIZE,
+                        self.bg_color,
+                    );
+                }
 
-                self.cursor_x += 1;
+                _ => {
+                    self.framebuffer.draw_glyph(
+                        c,
+                        self.cursor_x * GLYPH_SIZE,
+                        self.cursor_y * GLYPH_SIZE,
+                        self.text_color,
+                    );
+
+                    self.cursor_x += 1;
+                }
             }
 
             /*
              * If we've reached the end of the line, or if the character is '\n', advance to the next line.
              */
-            if self.cursor_x == self.width || c == '\n' {
+            if self.cursor_x == self.width {
                 self.cursor_x = 0;
                 self.cursor_y += 1;
             }

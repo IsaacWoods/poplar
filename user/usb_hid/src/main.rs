@@ -303,7 +303,6 @@ pub fn main() {
 // TODO: I'm not sure if we'll want to map everything to UTF-8 or if some would need different
 // control-esque types or something?
 fn map_usage(usage: Usage, state: KeyState) -> Option<char> {
-    info!("Mapping usage: {:?}", usage);
     match (usage, state.shift()) {
         (Usage::KeyA, false) => Some('a'),
         (Usage::KeyA, true) => Some('A'),

@@ -73,11 +73,17 @@ fn spawn_framebuffer(
                             for statement in stmts {
                                 if let Some(result) = interpreter.eval_stmt(statement) {
                                     writeln!(console.console.lock(), "Result: {:?}\n", result);
-                                    write!(console.console.lock(), "> ").unwrap();
                                 }
                             }
+
+                            write!(console.console.lock(), "> ").unwrap();
                         } else {
-                            current_line.push(key);
+                            // Handle backspace (ASCII `DEL`) to delete the last char
+                            if key == '\x7f' {
+                                current_line.pop();
+                            } else {
+                                current_line.push(key);
+                            }
                         }
                     }
                     InputEvent::Default => panic!(),
