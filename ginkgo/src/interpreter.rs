@@ -297,8 +297,9 @@ impl Interpreter {
                      * For each parameter expected, take the next param supplied and bind it to the
                      * correct name.
                      * TODO: this is very error prone if the user supplies the wrong number of
-                     * parameters etc.
+                     * parameters etc, so we at least check the arity is correct.
                      */
+                    assert_eq!(param_defs.len(), params.len());
                     let mut params = params.into_iter();
                     for param_def in param_defs {
                         environment.borrow_mut().define(param_def, self.eval_expr(params.next().unwrap()));
