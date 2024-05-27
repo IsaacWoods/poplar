@@ -1,7 +1,7 @@
 use crate::interpreter::Value;
 use std::fmt;
 
-#[derive(Clone, PartialEq)]
+#[derive(Clone, PartialEq, Debug)]
 pub enum Stmt {
     /// An expression in statement position that is not terminated with a semicolon. This may or
     /// may not be valid depending on position.
@@ -62,7 +62,7 @@ impl fmt::Display for Stmt {
     }
 }
 
-#[derive(Clone, PartialEq)]
+#[derive(Clone, PartialEq, Debug)]
 pub enum Expr {
     Literal(Value),
     Identifier(String),
@@ -88,6 +88,14 @@ pub enum Expr {
     Assign {
         place: Box<Expr>,
         expr: Box<Expr>,
+    },
+    Function {
+        params: Vec<String>,
+        body: Vec<Stmt>,
+    },
+    Call {
+        left: Box<Expr>,
+        params: Vec<Expr>,
     },
 }
 
@@ -128,6 +136,8 @@ impl fmt::Display for Expr {
                 Value::Integer(value) => write!(f, "{}", value),
                 Value::Bool(value) => write!(f, "{}", value),
                 Value::String(value) => write!(f, "{}", value),
+                Value::Function { .. } => write!(f, "[function]"),
+                Value::Unit => write!(f, "[unit]"),
             },
             Self::Identifier(name) => write!(f, "{}", name),
             Self::UnaryOp { op, operand } => match op {
@@ -156,6 +166,10 @@ impl fmt::Display for Expr {
             },
             Self::Grouping { inner } => write!(f, "'(' {} ')'", inner),
             Self::Assign { place, expr } => write!(f, "(= {} {})", place, expr),
+            // TODO: maybe print body
+            Self::Function { .. } => write!(f, "(fn() [body])"),
+            // TODO: print params
+            Self::Call { left, .. } => write!(f, "(call {} ([params]))", left),
         }
     }
 }

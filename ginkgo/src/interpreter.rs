@@ -3,9 +3,11 @@ use std::{cell::RefCell, collections::BTreeMap, mem, sync::Arc};
 
 #[derive(Clone, PartialEq, Debug)]
 pub enum Value {
+    Unit,
     Integer(isize),
     Bool(bool),
     String(String),
+    Function { params: Vec<String>, body: Vec<Stmt> },
 }
 
 pub struct Interpreter {
@@ -23,6 +25,28 @@ impl Interpreter {
         Interpreter { globals: globals.clone(), environment: globals }
     }
 
+    pub fn eval_block(&mut self, statements: Vec<Stmt>, environment: Arc<RefCell<Environment>>) -> Option<Value> {
+        let previous_environment = mem::replace(&mut self.environment, environment);
+
+        let mut statements = statements.into_iter();
+        let mut result = None;
+        while let Some(next) = statements.next() {
+            if let Some(value) = self.eval_stmt(next) {
+                /*
+                 * Only the last statement is allowed to return a value. If there are more
+                 * statements after this one, issue an error.
+                 */
+                // TODO: runtime error instead of panic
+                assert!(statements.next().is_none());
+                result = Some(value);
+                break;
+            }
+        }
+
+        self.environment = previous_environment;
+        result
+    }
+
     pub fn eval_stmt(&mut self, stmt: Stmt) -> Option<Value> {
         match stmt {
             Stmt::Expression(expr) => {
@@ -35,7 +59,10 @@ impl Interpreter {
             }
             Stmt::Print { expression } => {
                 let result = self.eval_expr(expression);
-                // println!("PRINT: {:?}", result);
+                // TODO: either - implement functions and add print as a std-lib function (probs
+                // best) or add a handler thing(?) that this calls out to (context: using this as
+                // Poplar's shell)
+                println!("PRINT: {:?}", result);
                 None
             }
             Stmt::Let { name, expression } => {
@@ -44,26 +71,7 @@ impl Interpreter {
                 None
             }
             Stmt::Block(statements) => {
-                let environment = Environment::new_with_parent(self.environment.clone());
-                let previous_environment = mem::replace(&mut self.environment, environment);
-
-                let mut statements = statements.into_iter();
-                let mut result = None;
-                while let Some(next) = statements.next() {
-                    if let Some(value) = self.eval_stmt(next) {
-                        /*
-                         * Only the last statement is allowed to return a value. If there are more
-                         * statements after this one, issue an error.
-                         */
-                        // TODO: runtime error instead of panic
-                        assert!(statements.next().is_none());
-                        result = Some(value);
-                        break;
-                    }
-                }
-
-                self.environment = previous_environment;
-                result
+                self.eval_block(statements, Environment::new_with_parent(self.environment.clone()))
             }
             Stmt::If { condition, then_block, else_block } => {
                 if let Value::Bool(truthy) = self.eval_expr(condition) {
@@ -277,6 +285,29 @@ impl Interpreter {
                     _ => panic!("Invalid place"),
                 }
                 value
+            }
+            Expr::Function { body, params } => Value::Function { params, body },
+            Expr::Call { left, params } => {
+                let function = self.eval_expr(*left);
+
+                if let Value::Function { params: param_defs, body } = function {
+                    let environment = Environment::new_with_parent(self.environment.clone());
+
+                    /*
+                     * For each parameter expected, take the next param supplied and bind it to the
+                     * correct name.
+                     * TODO: this is very error prone if the user supplies the wrong number of
+                     * parameters etc.
+                     */
+                    let mut params = params.into_iter();
+                    for param_def in param_defs {
+                        environment.borrow_mut().define(param_def, self.eval_expr(params.next().unwrap()));
+                    }
+
+                    self.eval_block(body, environment).unwrap_or(Value::Unit)
+                } else {
+                    panic!("Tried to call value that isn't a function: {:?}", function);
+                }
             }
         }
     }

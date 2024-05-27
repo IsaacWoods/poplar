@@ -217,6 +217,36 @@ impl<'s> Parser<'s> {
         });
 
         /*
+         * Function definitions are also prefix operations.
+         */
+        self.register_prefix(TokenType::Fn, |parser, _token| {
+            parser.consume(TokenType::LeftParen);
+
+            let mut params = Vec::new();
+            while !parser.matches(TokenType::RightParen) {
+                // TODO: not sure if we want to parse expressions or something simpler (e.g. could
+                // just be idents for now, but might want more complex (e.g. patterns) in the
+                // future.
+                let param = parser.expression(0);
+                if let Expr::Identifier(value) = param {
+                    params.push(value);
+                } else {
+                    panic!("Invalid param name");
+                }
+                parser.matches(TokenType::Comma);
+            }
+
+            parser.consume(TokenType::LeftBrace);
+
+            let mut statements = Vec::new();
+            while !parser.matches(TokenType::RightBrace) {
+                statements.push(parser.statement());
+            }
+
+            Expr::Function { body: statements, params }
+        });
+
+        /*
          * Infix operations.
          */
         let binary_op: InfixParselet = |parser, left, token| {
@@ -271,6 +301,20 @@ impl<'s> Parser<'s> {
         self.register_infix(TokenType::Equals, PRECEDENCE_ASSIGNMENT, |parser, left, _token| {
             let expr = parser.expression(PRECEDENCE_ASSIGNMENT - 1);
             Expr::Assign { place: Box::new(left), expr: Box::new(expr) }
+        });
+
+        /*
+         * Function calls.
+         */
+        self.register_infix(TokenType::LeftParen, PRECEDENCE_CALL, |parser, left, _token| {
+            let mut params = Vec::new();
+            while !parser.matches(TokenType::RightParen) {
+                let param = parser.expression(0);
+                parser.matches(TokenType::Comma);
+                params.push(param);
+            }
+
+            Expr::Call { left: Box::new(left), params }
         });
     }
 }
