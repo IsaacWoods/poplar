@@ -1,28 +1,51 @@
 use crate::ast::{BinaryOp, Expr, LogicalOp, Stmt, UnaryOp};
 use std::{cell::RefCell, collections::BTreeMap, mem, sync::Arc};
 
-#[derive(Clone, PartialEq, Debug)]
+#[derive(Clone, PartialEq, Default, Debug)]
 pub enum Value {
+    #[default]
     Unit,
     Integer(isize),
     Bool(bool),
     String(String),
-    Function { params: Vec<String>, body: Vec<Stmt> },
+    Function {
+        params: Vec<String>,
+        body: Vec<Stmt>,
+    },
+    NativeFunction(usize),
 }
 
-pub struct Interpreter {
+pub struct Interpreter<'a> {
     globals: Arc<RefCell<Environment>>,
     environment: Arc<RefCell<Environment>>,
+    /// XXX: We don't support removing native functions once they're added as that would invalide
+    /// indices pointing towards them.
+    native_fns: Vec<Box<dyn Fn(Vec<Value>) -> Value + 'a>>,
 }
 
 // TODO: this is probably bad (it isn't true by default bc RefCell)
-unsafe impl Send for Interpreter {}
-unsafe impl Sync for Interpreter {}
+unsafe impl Send for Interpreter<'_> {}
+unsafe impl Sync for Interpreter<'_> {}
 
-impl Interpreter {
-    pub fn new() -> Interpreter {
+impl<'a> Interpreter<'a> {
+    pub fn new() -> Interpreter<'a> {
         let globals = Environment::new();
-        Interpreter { globals: globals.clone(), environment: globals }
+        Interpreter { globals: globals.clone(), environment: globals, native_fns: Vec::new() }
+    }
+
+    /// Define a native function with the given name as a global.
+    pub fn define_native_function<'b, F>(&mut self, name: &str, function: F)
+    where
+        'b: 'a,
+        F: (Fn(Vec<Value>) -> Value) + 'b,
+    {
+        let index = self.native_fns.len();
+        self.native_fns.push(Box::new(function));
+        self.globals.borrow_mut().define(name.to_string(), Value::NativeFunction(index));
+    }
+
+    pub fn define_global(&mut self, name: &str, value: Value) {
+        self.globals.borrow_mut().define(name.to_string(), value);
     }
 
     pub fn eval_block(&mut self, statements: Vec<Stmt>, environment: Arc<RefCell<Environment>>) -> Option<Value> {
@@ -298,6 +321,15 @@ impl Interpreter {
                     }
 
                     self.eval_block(body, environment).unwrap_or(Value::Unit)
+                } else if let Value::NativeFunction(index) = function {
+                    /*
+                     * Native functions do not define how many parameters they wish to accept. This
+                     * allows them to accept varying numbers of parameters, which is not a feature
+                     * supported in Ginkgo itself yet, but is useful.
+                     */
+                    let params = params.into_iter().map(|param| self.eval_expr(param)).collect();
+                    let function = &self.native_fns[index];
+                    function(params)
                 } else {
                     panic!("Tried to call value that isn't a function: {:?}", function);
                 }

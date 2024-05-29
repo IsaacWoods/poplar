@@ -129,11 +129,12 @@ impl fmt::Display for Expr {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Self::Literal(value) => match value {
+                Value::Unit => write!(f, "[unit]"),
                 Value::Integer(value) => write!(f, "{}", value),
                 Value::Bool(value) => write!(f, "{}", value),
                 Value::String(value) => write!(f, "{}", value),
                 Value::Function { .. } => write!(f, "[function]"),
-                Value::Unit => write!(f, "[unit]"),
+                Value::NativeFunction(_) => write!(f, "[native function]"),
             },
             Self::Identifier(name) => write!(f, "{}", name),
             Self::UnaryOp { op, operand } => match op {
