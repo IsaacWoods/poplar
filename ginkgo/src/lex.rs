@@ -53,7 +53,6 @@ pub enum TokenType {
     False,
     Return,
     Fn,
-    Print,
 }
 
 #[derive(Clone, Copy, Debug)]
@@ -257,7 +256,6 @@ impl<'s> Iterator for Lex<'s> {
                         "false" => return Some(self.produce(TokenType::False)),
                         "return" => return Some(self.produce(TokenType::Return)),
                         "fn" => return Some(self.produce(TokenType::Fn)),
-                        "print" => return Some(self.produce(TokenType::Print)),
                         _ => return Some(self.produce(TokenType::Identifier)),
                     }
                 }

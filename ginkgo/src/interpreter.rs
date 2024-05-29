@@ -57,14 +57,6 @@ impl Interpreter {
                 self.eval_expr(expr);
                 None
             }
-            Stmt::Print { expression } => {
-                let result = self.eval_expr(expression);
-                // TODO: either - implement functions and add print as a std-lib function (probs
-                // best) or add a handler thing(?) that this calls out to (context: using this as
-                // Poplar's shell)
-                println!("PRINT: {:?}", result);
-                None
-            }
             Stmt::Let { name, expression } => {
                 let value = self.eval_expr(expression);
                 self.environment.borrow_mut().define(name, value);

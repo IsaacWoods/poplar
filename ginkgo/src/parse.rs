@@ -36,12 +36,6 @@ impl<'s> Parser<'s> {
     }
 
     pub fn statement(&mut self) -> Stmt {
-        if self.matches(TokenType::Print) {
-            let expression = self.expression(0);
-            self.consume(TokenType::Semicolon);
-            return Stmt::Print { expression };
-        }
-
         if self.matches(TokenType::Let) {
             let name = {
                 let token = self.consume(TokenType::Identifier).unwrap();

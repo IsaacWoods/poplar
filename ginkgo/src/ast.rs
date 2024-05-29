@@ -8,9 +8,6 @@ pub enum Stmt {
     Expression(Expr),
     /// An expression in statement position terminated with a semicolon.
     TerminatedExpression(Expr),
-    Print {
-        expression: Expr,
-    },
     Let {
         name: String,
         expression: Expr,
@@ -32,7 +29,6 @@ impl fmt::Display for Stmt {
         match self {
             Self::Expression(expr) => writeln!(f, "({})", expr),
             Self::TerminatedExpression(expr) => writeln!(f, "({});", expr),
-            Self::Print { expression } => writeln!(f, "(print {})", expression),
             Self::Let { name, expression } => writeln!(f, "(let {} = {})", name, expression),
             Self::Block(stmts) => {
                 // TODO: this won't handle nesting well
