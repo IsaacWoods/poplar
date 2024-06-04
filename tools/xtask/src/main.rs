@@ -36,7 +36,7 @@ fn main() -> Result<()> {
     color_eyre::install()?;
     let _root = pushd(project_root())?;
 
-    let flags = flags::Task::from_env()?;
+    let flags = flags::Task::from_env_or_exit();
     match flags.subcommand {
         TaskCmd::Dist(flags) => {
             let config = config::Config::new(Some(&DistOptions::from(&flags)));
