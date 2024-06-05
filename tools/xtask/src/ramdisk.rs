@@ -61,10 +61,10 @@ impl Ramdisk {
 
         let header_path = PathBuf::from(format!("ramdisk_header_{}.bin", self.platform));
         let mut file = File::create(&header_path).unwrap();
-        file.write_all(unsafe {
+        let bytes = unsafe {
             std::slice::from_raw_parts(&header as *const _ as *const u8, mem::size_of::<RamdiskHeader>())
-        })
-        .unwrap();
+        };
+        file.write_all(bytes).unwrap();
         file.write_all(unsafe {
             std::slice::from_raw_parts(
                 entries.as_ptr() as *const u8,

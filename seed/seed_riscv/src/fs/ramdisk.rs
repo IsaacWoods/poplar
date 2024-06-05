@@ -11,7 +11,8 @@ pub struct Ramdisk {
 
 impl Ramdisk {
     pub unsafe fn new(address: usize) -> Option<Ramdisk> {
-        if unsafe { *(address as *const [u8; 8]) } != RamdiskHeader::MAGIC {
+        let magic: [u8; 8] = unsafe { core::ptr::read_volatile(address as *const [u8; 8]) };
+        if magic != RamdiskHeader::MAGIC {
             return None;
         }
 

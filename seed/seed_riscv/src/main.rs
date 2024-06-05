@@ -129,7 +129,7 @@ pub fn seed_main(hart_id: u64, fdt_ptr: *const u8) -> ! {
 
     let mut kernel_page_table = PageTableImpl::new(MEMORY_MANAGER.allocate(), VAddr::new(0x0));
     let kernel_file = if let Some(ref mut ramdisk) = ramdisk {
-        ramdisk.load("kernel").unwrap()
+        ramdisk.load("kernel_riscv").unwrap()
     } else {
         panic!("No kernel source is present!");
     };

@@ -6,6 +6,7 @@
 
 mod cargo;
 mod config;
+mod dist;
 mod doc;
 mod flags;
 mod image;
@@ -14,7 +15,10 @@ mod riscv;
 mod serial;
 mod x64;
 
-use crate::{cargo::RunCargo, ramdisk::Ramdisk};
+use crate::{
+    cargo::RunCargo,
+    dist::{Artifact, ArtifactType, DistResult, SeedConfig},
+};
 use cargo::Target;
 use colored::Colorize;
 use config::{Config, Platform};
@@ -22,10 +26,8 @@ use doc::DocGenerator;
 use eyre::{eyre, Result, WrapErr};
 use flags::{DistOptions, TaskCmd};
 use riscv::qemu::RunQemuRiscV;
-use serde::Serialize;
 use std::{
     env,
-    fs::File,
     path::{Path, PathBuf},
     process::Command,
 };
@@ -49,17 +51,24 @@ fn main() -> Result<()> {
             let dist_result = dist(&config)?;
 
             match config.platform {
-                Platform::X64 => RunQemuX64::new(dist_result.disk_image.unwrap())
+                Platform::X64 => RunQemuX64::new(dist_result.build_disk_image())
                     .open_display(flags.display)
                     .debug_int_firehose(flags.debug_int_firehose)
                     .debug_mmu_firehose(flags.debug_mmu_firehose)
                     .debug_cpu_firehose(flags.debug_cpu_firehose)
                     .run(),
-                Platform::Rv64Virt => RunQemuRiscV::new(dist_result.bootloader_path, dist_result.disk_image)
-                    .ramdisk(dist_result.ramdisk)
+                Platform::Rv64Virt => {
+                    let ramdisk = dist_result.build_ramdisk();
+                    // TODO: support disk images here again at some point
+                    RunQemuRiscV::new(
+                        dist_result.artifact_by_type(ArtifactType::Bootloader).unwrap().source.clone(),
+                        None,
+                    )
+                    .ramdisk(Some(ramdisk))
                     .open_display(flags.display)
                     .debug_int_firehose(flags.debug_int_firehose)
-                    .run(),
+                    .run()
+                }
                 _ => {
                     panic!("Platform does not support running in QEMU");
                 }
@@ -74,14 +83,24 @@ fn main() -> Result<()> {
                 Platform::MqPro => {
                     let serial = serial::Serial::new(&Path::new("/dev/ttyUSB0"), 115200);
 
-                    let kernel_size = File::open(&dist_result.kernel_path).unwrap().metadata().unwrap().len();
+                    let bootloader = &dist_result.artifact_by_type(ArtifactType::Bootloader).unwrap().source;
 
                     println!("{}", format!("[*] Uploading and running code on device").bold().magenta());
                     Command::new("xfel").arg("ddr").arg("d1").status().unwrap();
                     Command::new("xfel").arg("write").arg("0x40000000").arg("bundled/opensbi/build/platform/generic/firmware/fw_jump.bin").status().unwrap();
-                    Command::new("xfel").arg("write").arg("0x40080000").arg(&dist_result.bootloader_path).status().unwrap();
-                    Command::new("xfel").arg("write32").arg("0x40100000").arg(format!("{}", kernel_size)).status().unwrap();
-                    Command::new("xfel").arg("write").arg("0x40100004").arg(&dist_result.kernel_path).status().unwrap();
+                    Command::new("xfel").arg("write").arg("0x40080000").arg(bootloader).status().unwrap();
+
+                    // Load the ramdisk into memory
+                    let ramdisk = dist_result.build_ramdisk();
+                    let (header, entries) = ramdisk.create();
+                    const RAMDISK_BASE_ADDR: u64 = 0x4000_0000 + 0x100000;  // 1 MiB above the base of RAM
+                    Command::new("xfel").arg("write").arg(format!("{:#x}", RAMDISK_BASE_ADDR)).arg(header).status().unwrap();
+                    for (offset, source) in entries {
+                        println!("Loading ramdisk entry {:?} at {:#x}", source, RAMDISK_BASE_ADDR + offset as u64);
+                        Command::new("xfel").arg("write").arg(format!("{:#x}", RAMDISK_BASE_ADDR + offset as u64)).arg(source).status().unwrap();
+                    }
+
+                    // Tell the device to start running code!
                     Command::new("xfel").arg("exec").arg("0x40000000").status().unwrap();
 
                     println!("{}", format!("[*] Listening to serial").bold().magenta());
@@ -92,10 +111,7 @@ fn main() -> Result<()> {
 
                     println!("{}", format!("[*] Uploading and running code on device").bold().magenta());
                     Command::new("xfel").arg("ddr").arg("d1").status().unwrap();
-                    // TODO: this will be Seed in the future, and I guess boot0 will need to be
-                    // passed seperately?
-                    Command::new("xfel").arg("write").arg("0x40000000").arg(&dist_result.bootloader_path).status().unwrap();
-                    Command::new("xfel").arg("exec").arg("0x40000000").status().unwrap();
+                    todo!();
 
                     println!("{}", format!("[*] Listening to serial").bold().magenta());
                     serial.listen();
@@ -126,6 +142,7 @@ fn main() -> Result<()> {
         }
 
         TaskCmd::Clean(_) => {
+            // TODO: put a big list of crates that need cleaning etc. in the config?
             clean(PathBuf::from("seed/"))?;
             clean(PathBuf::from("kernel"))?;
             clean(PathBuf::from("user"))?;
@@ -164,21 +181,9 @@ struct Dist {
     user_tasks: Vec<config::UserTask>,
 }
 
-struct DistResult {
-    bootloader_path: PathBuf,
-    kernel_path: PathBuf,
-    ramdisk: Option<Ramdisk>,
-    disk_image: Option<PathBuf>,
-}
-
-#[derive(Clone, Serialize)]
-struct SeedConfig {
-    user_tasks: Vec<String>,
-}
-
 impl Dist {
     pub fn build_rv64_virt(self) -> Result<DistResult> {
-        use image::MakeGptImage;
+        let mut result = DistResult::new(Platform::Rv64Virt);
 
         println!("{}", "[*] Building Seed for RISC-V".bold().magenta());
         let seed_riscv = RunCargo::new("seed_riscv", PathBuf::from("seed/seed_riscv/"))
@@ -189,6 +194,7 @@ impl Dist {
             .std_components(vec!["core".to_string(), "alloc".to_string()])
             .rustflags("-Clink-arg=-Tseed_riscv/rv64_virt.ld")
             .run()?;
+        result.add(Artifact::new("seed_riscv", ArtifactType::Bootloader, seed_riscv));
 
         println!("{}", "[*] Building the kernel for RISC-V".bold().magenta());
         let kernel = RunCargo::new("kernel_riscv", PathBuf::from("kernel/kernel_riscv/"))
@@ -200,42 +206,23 @@ impl Dist {
             .std_components(vec!["core".to_string(), "alloc".to_string()])
             .rustflags("-Clink-arg=-Tkernel_riscv/rv64_virt.ld")
             .run()?;
+        result.add(Artifact::new("kernel_riscv", ArtifactType::Kernel, kernel).include_in_ramdisk());
 
-        let user_tasks = self
-            .user_tasks
-            .iter()
-            .map(|task| {
-                let artifact = self.build_userspace_task(
-                    &task.name,
-                    task.source_dir.clone(),
-                    Target::Triple("riscv64gc-unknown-none-elf".to_string()),
-                )?;
-                Ok((task.name.clone(), artifact))
-            })
-            .collect::<Result<Vec<(String, PathBuf)>>>()?;
-
-        println!("{}", "[*] Building ramdisk".bold().magenta());
-        let mut ramdisk = Ramdisk::new(Platform::Rv64Virt);
-        ramdisk.add("kernel", &kernel);
-        for (name, source) in &user_tasks {
-            ramdisk.add(name, source);
+        for task in &self.user_tasks {
+            let artifact = self.build_userspace_task(
+                &task.name,
+                task.source_dir.clone(),
+                Target::Triple("riscv64gc-unknown-none-elf".to_string()),
+            )?;
+            result.add(Artifact::new(&task.name, ArtifactType::UserTask, artifact).include_in_ramdisk());
         }
 
-        println!("{}", "[*] Building disk image".bold().magenta());
-        let image_path = PathBuf::from("poplar_riscv.img");
-        let image = MakeGptImage::new(image_path.clone(), 40 * 1024 * 1024, 35 * 1024 * 1024)
-            .copy_efi_file("kernel.elf", kernel.clone());
-        image.build()?;
-
-        Ok(DistResult {
-            bootloader_path: seed_riscv,
-            kernel_path: kernel,
-            ramdisk: Some(ramdisk),
-            disk_image: Some(image_path),
-        })
+        Ok(result)
     }
 
     pub fn build_mq_pro(self) -> Result<DistResult> {
+        let mut result = DistResult::new(Platform::MqPro);
+
         // println!("{}", "[*] Building D1 boot0".bold().magenta());
         // let _d1_boot0 = RunCargo::new("d1_boot0", PathBuf::from("seed/d1_boot0/"))
         //     .workspace(PathBuf::from("seed/"))
@@ -256,6 +243,7 @@ impl Dist {
             .rustflags("-Clink-arg=-Tseed_riscv/mq_pro.ld")
             .flatten_result(true)
             .run()?;
+        result.add(Artifact::new("seed_riscv", ArtifactType::Bootloader, seed_riscv));
 
         println!("{}", "[*] Building the kernel for RISC-V".bold().magenta());
         let kernel = RunCargo::new("kernel_riscv", PathBuf::from("kernel/kernel_riscv/"))
@@ -267,20 +255,14 @@ impl Dist {
             .std_components(vec!["core".to_string(), "alloc".to_string()])
             .rustflags("-Clink-arg=-Tkernel_riscv/mq_pro.ld")
             .run()?;
+        result.add(Artifact::new("kernel_riscv", ArtifactType::Kernel, kernel).include_in_ramdisk());
 
-        println!("{}", "[*] Building ramdisk".bold().magenta());
-        let mut ramdisk = Ramdisk::new(Platform::Rv64Virt);
-        ramdisk.add("kernel", &kernel);
-
-        Ok(DistResult {
-            bootloader_path: seed_riscv,
-            kernel_path: kernel,
-            ramdisk: Some(ramdisk),
-            disk_image: None,
-        })
+        Ok(result)
     }
 
     pub fn build_uconsole(self) -> Result<DistResult> {
+        let mut result = DistResult::new(Platform::Uconsole);
+
         println!("{}", "[*] Building D1 boot0".bold().magenta());
         let d1_boot0 = RunCargo::new("d1_boot0", PathBuf::from("seed/d1_boot0/"))
             .workspace(PathBuf::from("seed/"))
@@ -290,18 +272,13 @@ impl Dist {
             .rustflags("-Clink-arg=-Td1_boot0/link.ld")
             .flatten_result(true)
             .run()?;
+        result.add(Artifact::new("d1_boot0", ArtifactType::BootShim, d1_boot0));
 
-        let fake_kernel_path = PathBuf::new();
-        Ok(DistResult {
-            bootloader_path: d1_boot0,
-            kernel_path: fake_kernel_path,
-            ramdisk: None,
-            disk_image: None,
-        })
+        Ok(result)
     }
 
     pub fn build_x64(self) -> Result<DistResult> {
-        use image::MakeGptImage;
+        let mut result = DistResult::new(Platform::X64);
 
         println!("{}", "[*] Building Seed for x86_64".bold().magenta());
         let seed_uefi = RunCargo::new("seed_uefi.efi", PathBuf::from("seed/seed_uefi/"))
@@ -311,6 +288,10 @@ impl Dist {
             .std_components(vec!["core".to_string(), "alloc".to_string()])
             .std_features(vec!["compiler-builtins-mem".to_string()])
             .run()?;
+        result.add(
+            Artifact::new("seed_uefi", ArtifactType::Bootloader, seed_uefi)
+                .include_in_disk_image("efi/boot/bootx64.efi".to_string()),
+        );
 
         println!("{}", "[*] Building the kernel for x86_64".bold().magenta());
         let kernel = RunCargo::new("kernel_x86_64", PathBuf::from("kernel/kernel_x86_64/"))
@@ -324,43 +305,26 @@ impl Dist {
             .std_components(vec!["core".to_string(), "alloc".to_string()])
             .std_features(vec!["compiler-builtins-mem".to_string()])
             .run()?;
+        result.add(
+            Artifact::new("kernel", ArtifactType::Kernel, kernel).include_in_disk_image("kernel.elf".to_string()),
+        );
 
-        let user_tasks = self
-            .user_tasks
-            .iter()
-            .map(|task| {
-                let artifact = self.build_userspace_task(
-                    &task.name,
-                    task.source_dir.clone(),
-                    Target::Custom {
-                        triple: "x86_64-poplar".to_string(),
-                        spec: PathBuf::from("user/x86_64-poplar.json"),
-                    },
-                )?;
-                Ok((task.name.clone(), artifact))
-            })
-            .collect::<Result<Vec<(String, PathBuf)>>>()?;
-
-        // Generate a file telling Seed how to load us
-        let seed_config = self.generate_seed_config();
-
-        println!("{}", "[*] Building disk image".bold().magenta());
-        let image_path = PathBuf::from("poplar_x64.img");
-        let mut image = MakeGptImage::new(image_path.clone(), 40 * 1024 * 1024, 35 * 1024 * 1024)
-            .copy_efi_file("efi/boot/bootx64.efi", seed_uefi.clone())
-            .copy_efi_file("kernel.elf", kernel.clone())
-            .add_efi_file("config.toml", toml::to_string(&seed_config).unwrap());
-        for (name, artifact_path) in user_tasks {
-            image = image.copy_efi_file(format!("{}.elf", name), artifact_path);
+        for task in &self.user_tasks {
+            let artifact = self.build_userspace_task(
+                &task.name,
+                task.source_dir.clone(),
+                Target::Custom {
+                    triple: "x86_64-poplar".to_string(),
+                    spec: PathBuf::from("user/x86_64-poplar.json"),
+                },
+            )?;
+            let path = format!("{}.elf", task.name);
+            result.add(Artifact::new(&task.name, ArtifactType::UserTask, artifact).include_in_disk_image(path));
         }
-        image.build()?;
 
-        Ok(DistResult {
-            bootloader_path: seed_uefi,
-            kernel_path: kernel,
-            ramdisk: None,
-            disk_image: Some(image_path),
-        })
+        result.add_seed_config(self.generate_seed_config());
+
+        Ok(result)
     }
 
     fn build_userspace_task(&self, name: &str, source_dir: PathBuf, target: Target) -> Result<PathBuf> {
