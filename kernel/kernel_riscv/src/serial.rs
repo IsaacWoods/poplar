@@ -197,7 +197,7 @@ pub fn panic(info: &PanicInfo) -> ! {
     if let Some(message) = info.message() {
         if let Some(location) = info.location() {
             let _ = writeln!(
-                LOGGER.serial.lock(),
+                SerialWriter,
                 "PANIC: {} ({} - {}:{})",
                 message,
                 location.file(),
@@ -205,7 +205,7 @@ pub fn panic(info: &PanicInfo) -> ! {
                 location.column()
             );
         } else {
-            let _ = writeln!(LOGGER.serial.lock(), "PANIC: {} (no location info)", message);
+            let _ = writeln!(SerialWriter, "PANIC: {} (no location info)", message);
         }
     }
     loop {}
