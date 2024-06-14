@@ -19,7 +19,7 @@ mod topo;
 
 use acpi::{AcpiTables, PciConfigRegions};
 use acpi_handler::{AmlHandler, PoplarAcpiHandler};
-use alloc::{alloc::Global, boxed::Box};
+use alloc::boxed::Box;
 use aml::AmlContext;
 use core::time::Duration;
 use hal::memory::{Frame, PAddr, VAddr};
@@ -179,10 +179,10 @@ pub extern "C" fn kentry(boot_info: &BootInfo) -> ! {
             Ok(acpi_tables) => acpi_tables,
             Err(err) => panic!("Failed to discover ACPI tables: {:?}", err),
         };
-    let acpi_platform_info = acpi_tables.platform_info_in(Global).unwrap();
+    let acpi_platform_info = acpi_tables.platform_info().unwrap();
     let topology = Topology::new(&acpi_platform_info);
 
-    let pci_access = pci::EcamAccess::new(PciConfigRegions::new_in(&acpi_tables, Global).unwrap());
+    let pci_access = pci::EcamAccess::new(PciConfigRegions::new(&acpi_tables).unwrap());
 
     /*
      * Parse the DSDT.

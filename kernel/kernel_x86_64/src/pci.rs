@@ -6,6 +6,7 @@ use hal_x86_64::kernel_map;
 use kernel::{object::event::Event, pci::PciInterruptConfigurator};
 use pci_types::{
     capability::{MsiCapability, MsixCapability},
+    Bar,
     ConfigRegionAccess,
     PciAddress,
 };
@@ -55,7 +56,7 @@ impl<'a> PciInterruptConfigurator for EcamAccess<'a> {
         event
     }
 
-    fn configure_msix(&self, _function: PciAddress, _msi: &mut MsixCapability) -> Arc<Event> {
+    fn configure_msix(&self, _function: PciAddress, bar: Bar, _msi: &mut MsixCapability) -> Arc<Event> {
         let event = Event::new();
         warn!("MSI-X support is incomplete on x86_64! PCI interrupts will not trigger delegated `Event` objects!");
         event
