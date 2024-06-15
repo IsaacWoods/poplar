@@ -35,13 +35,7 @@ impl Virtqueue {
         let available_ring = unsafe { Mapped::new(queue_size as usize, mapper) };
         let used_ring = unsafe { Mapped::new(queue_size as usize, mapper) };
 
-        Virtqueue {
-            size: queue_size,
-            free_entries,
-            descriptor_table,
-            available_ring,
-            used_ring,
-        }
+        Virtqueue { size: queue_size, free_entries, descriptor_table, available_ring, used_ring }
     }
 
     /// Push a descriptor into the descriptor table, returning its index. Returns `None` if there is no space left
@@ -161,7 +155,7 @@ where
     T: ?Sized,
 {
     pub unsafe fn new<M: Mapper>(metadata: <T as Pointee>::Metadata, mapper: &M) -> Mapped<T> {
-        let size = unsafe { mem::size_of_val_raw::<T>(ptr::from_raw_parts(ptr::null(), metadata)) };
+        let size = unsafe { mem::size_of_val_raw::<T>(ptr::from_raw_parts(ptr::null() as *const (), metadata)) };
         let (physical, virt) = mapper.alloc(size);
 
         Mapped { physical, mapped: NonNull::from_raw_parts(NonNull::new(virt as *mut _).unwrap(), metadata) }
