@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["Bar"],"fn":["pci_get_info_slice","pci_get_info_vec"],"struct":["PciDeviceInfo"]};

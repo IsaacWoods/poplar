@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/syscall/mod.rs`."><title>mod.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-dd39b87e5fcfba68.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="kernel" data-themes="" data-resource-suffix="" data-rustdoc-version="1.81.0-nightly (f1586001a 2024-06-13)" data-channel="nightly" data-search-js="search-0fe7219eb170c82e.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../static.files/storage-118b08c4c78b968e.js"></script><script defer src="../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-20a3ad099b048cf2.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-df360f571f6edeae.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/syscall/mod.rs`."><title>mod.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-dd39b87e5fcfba68.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="kernel" data-themes="" data-resource-suffix="" data-rustdoc-version="1.81.0-nightly (f8e566053 2024-06-14)" data-channel="nightly" data-search-js="search-0fe7219eb170c82e.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../static.files/storage-118b08c4c78b968e.js"></script><script defer src="../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-20a3ad099b048cf2.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-df360f571f6edeae.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -631,11 +631,6 @@
 <a href="#631" id="631">631</a>
 <a href="#632" id="632">632</a>
 <a href="#633" id="633">633</a>
-<a href="#634" id="634">634</a>
-<a href="#635" id="635">635</a>
-<a href="#636" id="636">636</a>
-<a href="#637" id="637">637</a>
-<a href="#638" id="638">638</a>
 </pre></div><pre class="rust"><code><span class="kw">mod </span>validation;
 
 <span class="kw">use crate</span>::{
@@ -684,11 +679,6 @@
 
 <span class="doccomment">/// Maps the name of a service to the channel used to register new service users.
 </span><span class="kw">static </span>SERVICE_MAP: Spinlock&lt;BTreeMap&lt;String, Arc&lt;ChannelEnd&gt;&gt;&gt; = Spinlock::new(BTreeMap::new());
-
-<span class="comment">// TODO: these shouldn't be needed. Use-sites should be able to read `[None; MAX_WHATEVER]`, but can't because
-// the const_in_array_repeat_expression feature got removed. This works around that for now.
-</span><span class="kw">const </span>NONE_OBJECT: <span class="prelude-ty">Option</span>&lt;Arc&lt;<span class="kw">dyn </span>KernelObject&gt;&gt; = <span class="prelude-val">None</span>;
-<span class="kw">const </span>NONE_BAR: <span class="prelude-ty">Option</span>&lt;poplar::syscall::pci::Bar&gt; = <span class="prelude-val">None</span>;
 
 <span class="doccomment">/// This is the architecture-independent syscall handler. It should be called by the handler that
 /// receives the syscall (each architecture is free to do this however it wishes). The only
@@ -954,7 +944,7 @@
             .map_err(|()| SendMessageError::HandlesAddressInvalid)<span class="question-mark">?
     </span>};
     <span class="kw">let </span>handle_objects = {
-        <span class="kw">let </span><span class="kw-2">mut </span>arr = [NONE_OBJECT; CHANNEL_MAX_NUM_HANDLES];
+        <span class="kw">let </span><span class="kw-2">mut </span>arr = [<span class="kw">const </span>{ <span class="prelude-val">None </span>}; CHANNEL_MAX_NUM_HANDLES];
         <span class="kw">for </span>(i, handle) <span class="kw">in </span>handles.iter().enumerate() {
             arr[i] = <span class="kw">match </span>task.handles.read().get(handle) {
                 <span class="prelude-val">Some</span>(object) =&gt; <span class="prelude-val">Some</span>(object.clone()),
@@ -1106,7 +1096,7 @@
          * XXX: we manually construct a Ptah message here so userspace can use the `poplar::Channel` type if it
          * wants to, but without having to pull that in here.
          */
-        </span><span class="kw">let </span><span class="kw-2">mut </span>handle_objects = [NONE_OBJECT; CHANNEL_MAX_NUM_HANDLES];
+        </span><span class="kw">let </span><span class="kw-2">mut </span>handle_objects = [<span class="kw">const </span>{ <span class="prelude-val">None </span>}; CHANNEL_MAX_NUM_HANDLES];
         handle_objects[<span class="number">0</span>] = <span class="prelude-val">Some</span>(provider_end <span class="kw">as </span>Arc&lt;<span class="kw">dyn </span>KernelObject&gt;);
         register_channel.add_message(Message { bytes: [ptah::make_handle_slot(<span class="number">0</span>)].to_vec(), handle_objects });
 
@@ -1126,7 +1116,7 @@
     </span>P: Platform,
 {
     <span class="kw">use </span>pci_types::{Bar, MAX_BARS};
-    <span class="kw">use </span>poplar::syscall::PciDeviceInfo;
+    <span class="kw">use </span>poplar::ddk::pci::PciDeviceInfo;
 
     <span class="comment">// Check that the task has the 'PciBusDriver' capability
     </span><span class="kw">if </span>!task.capabilities.contains(<span class="kw-2">&amp;</span>Capability::PciBusDriver) {
@@ -1149,7 +1139,7 @@
             <span class="kw">for </span>(i, (<span class="kw-2">&amp;</span>address, device)) <span class="kw">in </span>pci_info.devices.iter().enumerate() {
                 <span class="kw">let </span>interrupt_handle = device.interrupt.clone().map(|interrupt| task.add_handle(interrupt));
 
-                <span class="kw">let </span><span class="kw-2">mut </span>device_descriptor = poplar::syscall::PciDeviceInfo {
+                <span class="kw">let </span><span class="kw-2">mut </span>device_descriptor = poplar::ddk::pci::PciDeviceInfo {
                     address,
                     vendor_id: device.vendor_id,
                     device_id: device.device_id,
@@ -1157,7 +1147,7 @@
                     class: device.class,
                     sub_class: device.sub_class,
                     interface: device.interface,
-                    bars: [NONE_BAR; MAX_BARS],
+                    bars: [<span class="kw">const </span>{ <span class="prelude-val">None </span>}; MAX_BARS],
                     interrupt: interrupt_handle,
                 };
 
@@ -1179,7 +1169,7 @@
                             );
                             <span class="kw">let </span>handle = task.add_handle(memory_object);
                             device_descriptor.bars[i] =
-                                <span class="prelude-val">Some</span>(poplar::syscall::pci::Bar::Memory32 { memory_object: handle, size });
+                                <span class="prelude-val">Some</span>(poplar::ddk::pci::Bar::Memory32 { memory_object: handle, size });
                         }
                         <span class="prelude-val">Some</span>(Bar::Memory64 { address, size, prefetchable }) =&gt; {
                             <span class="kw">let </span>flags = Flags {
@@ -1197,7 +1187,7 @@
                             );
                             <span class="kw">let </span>handle = task.add_handle(memory_object);
                             device_descriptor.bars[i] =
-                                <span class="prelude-val">Some</span>(poplar::syscall::pci::Bar::Memory64 { memory_object: handle, size });
+                                <span class="prelude-val">Some</span>(poplar::ddk::pci::Bar::Memory64 { memory_object: handle, size });
                         }
                         <span class="prelude-val">Some</span>(Bar::Io { .. }) =&gt; <span class="macro">warn!</span>(<span class="string">"PCI device at {} has an I/O BAR. We don't support these, and so they're not passed out to userspace."</span>, address),
                         <span class="prelude-val">None </span>=&gt; (),
