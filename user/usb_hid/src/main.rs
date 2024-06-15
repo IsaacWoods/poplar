@@ -379,7 +379,7 @@ fn map_usage(usage: Usage, state: KeyState) -> Option<char> {
         (Usage::KeyEscape, _) => None,
         /*
          * XXX: confusingly, `KeyDelete` is actually backspace, and delete is `KeyDeleteForward`.
-         * We then send a `0x7f` ASCII `DEL`, which differs from an ASCII backspace (`0x08`), which
+         * We send a `0x7f` ASCII `DEL`, which differs from an ASCII backspace (`0x08`), which
          * moves the cursor but does not delete a character.
          */
         (Usage::KeyDelete, _) => Some('\x7f'),
@@ -403,8 +403,9 @@ fn map_usage(usage: Usage, state: KeyState) -> Option<char> {
         (Usage::KeyGrave, false) => Some('`'),
         (Usage::KeyGrave, true) => Some('~'),
         (Usage::KeyComma, false) => Some(','),
-        (Usage::KeyComma, true) => Some('.'),
+        (Usage::KeyComma, true) => Some('<'),
         (Usage::KeyDot, false) => Some('.'),
+        (Usage::KeyDot, true) => Some('>'),
         (Usage::KeyBackSlash, false) => Some('/'),
         (Usage::KeyBackSlash, true) => Some('?'),
         _ => None,
