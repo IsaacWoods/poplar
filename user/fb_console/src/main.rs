@@ -2,7 +2,10 @@
 //! kernel or by a driver for a graphics-capable device.
 
 use gfxconsole::{Format, Framebuffer, GfxConsole, Pixel, Rgb32};
-use ginkgo::{interpreter::Interpreter, parse::Parser};
+use ginkgo::{
+    interpreter::{Interpreter, Value},
+    parse::Parser,
+};
 use log::info;
 use platform_bus::{hid::HidEvent, DeviceDriverMessage, DeviceDriverRequest, Filter, Property};
 use spinning_top::Spinlock;
@@ -54,8 +57,17 @@ fn spawn_framebuffer(
         write!(console.console.lock(), "> ").unwrap();
         console.control_channel.send(&()).unwrap();
 
+        let (output_sender, output_receiver) = thingbuf::mpsc::channel(16);
+
         let mut interpreter = Interpreter::new();
         let mut current_line = String::new();
+
+        interpreter.define_native_function("print", |params| {
+            assert!(params.len() == 1);
+            let value = params.get(0).unwrap();
+            output_sender.try_send(value.clone()).unwrap();
+            Value::Unit
+        });
 
         loop {
             let mut needs_redraw = false;
@@ -70,13 +82,22 @@ fn spawn_framebuffer(
                             let stmts = Parser::new(&current_line).parse().unwrap();
                             current_line.clear();
 
+                            let mut result = None;
                             for statement in stmts {
-                                if let Some(result) = interpreter.eval_stmt(statement) {
-                                    writeln!(console.console.lock(), "Result: {:?}\n", result);
+                                if let Some(value) = interpreter.eval_stmt(statement) {
+                                    result = Some(value);
                                 }
                             }
 
-                            write!(console.console.lock(), "> ").unwrap();
+                            while let Ok(output) = output_receiver.try_recv() {
+                                writeln!(console.console.lock(), "Output: {:?}", output).unwrap();
+                            }
+
+                            if let Some(result) = result {
+                                writeln!(console.console.lock(), "Result: {:?}", result).unwrap();
+                            }
+
+                            write!(console.console.lock(), "\n> ").unwrap();
                         } else {
                             // Handle backspace (ASCII `DEL`) to delete the last char
                             if key == '\x7f' {
