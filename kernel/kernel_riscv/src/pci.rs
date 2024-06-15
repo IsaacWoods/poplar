@@ -52,11 +52,6 @@ impl PciAccess {
 unsafe impl Send for PciAccess {}
 
 impl ConfigRegionAccess for PciAccess {
-    fn function_exists(&self, _address: PciAddress) -> bool {
-        // TODO
-        true
-    }
-
     unsafe fn read(&self, address: PciAddress, offset: u16) -> u32 {
         ptr::read_volatile(self.address_for(address).add(offset as usize) as *const u32)
     }
@@ -81,7 +76,7 @@ impl PciInterruptConfigurator for PciAccess {
         interrupts::handle_interrupt(message_number, pci_interrupt_handler);
 
         // TODO: get out of the device tree
-        msi.set_message_info(0x28000000, message_number as u8, TriggerMode::Edge, self);
+        msi.set_message_info(0x28000000, message_number as u32, self);
         msi.set_enabled(true, self);
 
         event

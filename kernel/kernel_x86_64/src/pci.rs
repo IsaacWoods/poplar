@@ -22,10 +22,6 @@ impl<'a> EcamAccess<'a> {
 }
 
 impl<'a> ConfigRegionAccess for EcamAccess<'a> {
-    fn function_exists(&self, address: PciAddress) -> bool {
-        self.0.physical_address(address.segment(), address.bus(), address.device(), address.function()).is_some()
-    }
-
     unsafe fn read(&self, address: PciAddress, offset: u16) -> u32 {
         let physical_address = self
             .0
@@ -56,7 +52,7 @@ impl<'a> PciInterruptConfigurator for EcamAccess<'a> {
         event
     }
 
-    fn configure_msix(&self, _function: PciAddress, bar: Bar, _msi: &mut MsixCapability) -> Arc<Event> {
+    fn configure_msix(&self, _function: PciAddress, _bar: Bar, _msi: &mut MsixCapability) -> Arc<Event> {
         let event = Event::new();
         warn!("MSI-X support is incomplete on x86_64! PCI interrupts will not trigger delegated `Event` objects!");
         event

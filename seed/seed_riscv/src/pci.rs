@@ -89,17 +89,15 @@ impl PciResolver {
 
     fn check_device(&mut self, bus: u8, device: u8) {
         let address = PciAddress::new(0, bus, device, 0);
-        if self.function_exists(address) {
-            self.check_function(bus, device, 0);
+        self.check_function(bus, device, 0);
 
-            let header = PciHeader::new(address);
-            if header.has_multiple_functions(self) {
-                /*
-                 * The device is multi-function. We need to check the rest.
-                 */
-                for function in 1..8 {
-                    self.check_function(bus, device, function);
-                }
+        let header = PciHeader::new(address);
+        if header.has_multiple_functions(&*self) {
+            /*
+             * The device is multi-function. We need to check the rest.
+             */
+            for function in 1..8 {
+                self.check_function(bus, device, function);
             }
         }
     }
@@ -107,16 +105,15 @@ impl PciResolver {
     fn check_function(&mut self, bus: u8, device: u8, function: u8) {
         let address = PciAddress::new(0, bus, device, function);
 
-        if self.function_exists(address) {
-            let header = PciHeader::new(address);
-            let (vendor_id, device_id) = header.id(self);
-            let (_revision, class, sub_class, _interface) = header.revision_and_class(self);
+        let header = PciHeader::new(address);
+        let (vendor_id, device_id) = header.id(&*self);
+        let (_revision, class, sub_class, _interface) = header.revision_and_class(&*self);
 
-            if vendor_id == 0xffff {
-                return;
-            }
+        if vendor_id == 0xffff {
+            return;
+        }
 
-            info!(
+        info!(
                 "Found PCI device (bus={}, device={}, function={}): (vendor = {:#x}, device = {:#x}, class={:#x}, subclass={:#x}) -> {:?}",
                 bus,
                 device,
@@ -128,88 +125,87 @@ impl PciResolver {
                 DeviceType::from((class, sub_class))
             );
 
-            match header.header_type(self) {
-                HeaderType::Endpoint => {
-                    let mut endpoint_header = EndpointHeader::from_header(header, self).unwrap();
-                    let bars = {
-                        let mut bars = [None; 6];
+        match header.header_type(&*self) {
+            HeaderType::Endpoint => {
+                let mut endpoint_header = EndpointHeader::from_header(header, &*self).unwrap();
+                let bars = {
+                    let mut bars = [None; 6];
 
-                        let mut skip_next = false;
-                        for i in 0..6 {
-                            if skip_next {
-                                continue;
-                            }
-
-                            let bar = endpoint_header.bar(i, self);
-                            skip_next = match bar {
-                                Some(Bar::Memory64 { .. }) => true,
-                                _ => false,
-                            };
-                            bars[i as usize] = bar;
+                    let mut skip_next = false;
+                    for i in 0..6 {
+                        if skip_next {
+                            continue;
                         }
 
-                        bars
-                    };
-
-                    /*
-                     * It's our responsibility to allocate memory for the BARs of PCI devices on
-                     * RISC-V. This memory needs to be addressable by both the CPU and the PCI host
-                     * bridge, and conform to the device's requirements, so we have to choose a
-                     * suitable region from the reported ranges.
-                     */
-                    let mut needs_memory_access = false;
-                    for (i, bar) in bars.iter().enumerate() {
-                        if let Some(bar) = *bar {
-                            let address = self
-                                .ranges
-                                .iter_mut()
-                                .find_map(|range| match bar {
-                                    Bar::Memory32 { size, .. } => {
-                                        if range.space != AddressSpace::Memory32 {
-                                            return None;
-                                        }
-                                        needs_memory_access = true;
-                                        range.allocate(size as usize, size as usize)
-                                    }
-                                    Bar::Memory64 { size, .. } => {
-                                        if range.space != AddressSpace::Memory64 {
-                                            return None;
-                                        }
-                                        needs_memory_access = true;
-                                        range.allocate(size as usize, size as usize)
-                                    }
-                                    Bar::Io { .. } => unimplemented!(),
-                                })
-                                .expect("Failed to allocate memory for BAR");
-                            unsafe {
-                                trace!("Allocating memory at {:#x} for BAR {} of device", address, i);
-                                endpoint_header.write_bar(i as u8, self, address).unwrap();
-                            }
-                        }
+                        let bar = endpoint_header.bar(i, &*self);
+                        skip_next = match bar {
+                            Some(Bar::Memory64 { .. }) => true,
+                            _ => false,
+                        };
+                        bars[i as usize] = bar;
                     }
 
-                    endpoint_header.update_command(self, |mut command| {
-                        command |= CommandRegister::BUS_MASTER_ENABLE;
+                    bars
+                };
 
-                        if needs_memory_access {
-                            command |= CommandRegister::MEMORY_ENABLE;
+                /*
+                 * It's our responsibility to allocate memory for the BARs of PCI devices on
+                 * RISC-V. This memory needs to be addressable by both the CPU and the PCI host
+                 * bridge, and conform to the device's requirements, so we have to choose a
+                 * suitable region from the reported ranges.
+                 */
+                let mut needs_memory_access = false;
+                for (i, bar) in bars.iter().enumerate() {
+                    if let Some(bar) = *bar {
+                        let address = self
+                            .ranges
+                            .iter_mut()
+                            .find_map(|range| match bar {
+                                Bar::Memory32 { size, .. } => {
+                                    if range.space != AddressSpace::Memory32 {
+                                        return None;
+                                    }
+                                    needs_memory_access = true;
+                                    range.allocate(size as usize, size as usize)
+                                }
+                                Bar::Memory64 { size, .. } => {
+                                    if range.space != AddressSpace::Memory64 {
+                                        return None;
+                                    }
+                                    needs_memory_access = true;
+                                    range.allocate(size as usize, size as usize)
+                                }
+                                Bar::Io { .. } => unimplemented!(),
+                            })
+                            .expect("Failed to allocate memory for BAR");
+                        unsafe {
+                            trace!("Allocating memory at {:#x} for BAR {} of device", address, i);
+                            endpoint_header.write_bar(i as u8, &*self, address).unwrap();
                         }
-                        command
-                    });
+                    }
                 }
 
-                HeaderType::PciPciBridge => {
-                    // TODO: call check_bus on the bridge's secondary bus number
-                    todo!()
-                }
+                endpoint_header.update_command(&*self, |mut command| {
+                    command |= CommandRegister::BUS_MASTER_ENABLE;
 
-                HeaderType::CardBusBridge => {
-                    // TODO: what do we even do with these?
-                    todo!()
-                }
-
-                reserved => panic!("PCI function has reserved header type: {:?}", reserved),
+                    if needs_memory_access {
+                        command |= CommandRegister::MEMORY_ENABLE;
+                    }
+                    command
+                });
             }
+
+            HeaderType::PciPciBridge => {
+                // TODO: call check_bus on the bridge's secondary bus number
+                todo!()
+            }
+
+            HeaderType::CardBusBridge => {
+                // TODO: what do we even do with these?
+                todo!()
+            }
+
+            reserved => panic!("PCI function has reserved header type: {:?}", reserved),
         }
     }
 
@@ -225,11 +221,6 @@ impl PciResolver {
 }
 
 impl ConfigRegionAccess for PciResolver {
-    fn function_exists(&self, _address: PciAddress) -> bool {
-        // TODO
-        true
-    }
-
     unsafe fn read(&self, address: PciAddress, offset: u16) -> u32 {
         ptr::read_volatile(self.address_for(address).add(offset as usize) as *const u32)
     }
