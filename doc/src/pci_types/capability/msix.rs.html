@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/work/poplar/poplar/lib/pci_types/src/capability/msix.rs`."><title>msix.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-dd39b87e5fcfba68.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="pci_types" data-themes="" data-resource-suffix="" data-rustdoc-version="1.80.0-nightly (bdbbb6c6a 2024-05-26)" data-channel="nightly" data-search-js="search-d52510db62a78183.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../static.files/storage-118b08c4c78b968e.js"></script><script defer src="../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-20a3ad099b048cf2.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-df360f571f6edeae.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/work/poplar/poplar/lib/pci_types/src/capability/msix.rs`."><title>msix.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-dd39b87e5fcfba68.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="pci_types" data-themes="" data-resource-suffix="" data-rustdoc-version="1.81.0-nightly (f1586001a 2024-06-13)" data-channel="nightly" data-search-js="search-0fe7219eb170c82e.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../static.files/storage-118b08c4c78b968e.js"></script><script defer src="../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-20a3ad099b048cf2.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-df360f571f6edeae.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -65,13 +65,39 @@
 <a href="#65" id="65">65</a>
 <a href="#66" id="66">66</a>
 <a href="#67" id="67">67</a>
-</pre></div><pre class="rust"><code><span class="kw">use super</span>::{PciCapabilityAddress, TriggerMode};
+<a href="#68" id="68">68</a>
+<a href="#69" id="69">69</a>
+<a href="#70" id="70">70</a>
+<a href="#71" id="71">71</a>
+<a href="#72" id="72">72</a>
+<a href="#73" id="73">73</a>
+<a href="#74" id="74">74</a>
+<a href="#75" id="75">75</a>
+<a href="#76" id="76">76</a>
+<a href="#77" id="77">77</a>
+<a href="#78" id="78">78</a>
+<a href="#79" id="79">79</a>
+<a href="#80" id="80">80</a>
+<a href="#81" id="81">81</a>
+<a href="#82" id="82">82</a>
+<a href="#83" id="83">83</a>
+<a href="#84" id="84">84</a>
+<a href="#85" id="85">85</a>
+<a href="#86" id="86">86</a>
+<a href="#87" id="87">87</a>
+<a href="#88" id="88">88</a>
+<a href="#89" id="89">89</a>
+<a href="#90" id="90">90</a>
+<a href="#91" id="91">91</a>
+<a href="#92" id="92">92</a>
+<a href="#93" id="93">93</a>
+</pre></div><pre class="rust"><code><span class="kw">use </span><span class="kw">super</span>::PciCapabilityAddress;
 <span class="kw">use </span><span class="kw">crate</span>::ConfigRegionAccess;
 <span class="kw">use </span>bit_field::BitField;
 
-<span class="attr">#[derive(Clone, Debug)]
+<span class="attr">#[derive(Clone, Copy, Debug)]
 </span><span class="kw">pub struct </span>MsixCapability {
-    address: PciCapabilityAddress,
+    <span class="kw">pub</span>(<span class="kw">super</span>) address: PciCapabilityAddress,
     table_size: u16,
     <span class="doccomment">/// Table BAR in bits 0..3 and offset into that BAR in bits 3..31
     </span>table: u32,
@@ -83,7 +109,7 @@
     <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>new(
         address: PciCapabilityAddress,
         control: u16,
-        access: <span class="kw-2">&amp;</span><span class="kw">impl </span>ConfigRegionAccess,
+        access: <span class="kw">impl </span>ConfigRegionAccess,
     ) -&gt; MsixCapability {
         <span class="kw">let </span>table_size = control.get_bits(<span class="number">0</span>..<span class="number">11</span>) + <span class="number">1</span>;
         <span class="kw">let </span>table = <span class="kw">unsafe </span>{ access.read(address.address, address.offset + <span class="number">0x04</span>) };
@@ -95,15 +121,37 @@
     ///
     /// Unlike with MSI, the MSI message data and delivery address is not contained within the
     /// capability, but instead in system memory, and pointed to by the BAR specified by
-    /// `[MsixCapability::table_bar]` and `[MsixCapability::table_offset]`. The caller is therefore
+    /// [`MsixCapability::table_bar`] and [`MsixCapability::table_offset`]. The caller is therefore
     /// responsible for configuring this separately, as this crate does not have access to
     /// arbitrary physical memory.
-    </span><span class="kw">pub fn </span>set_enabled(<span class="kw-2">&amp;mut </span><span class="self">self</span>, enabled: bool, access: <span class="kw-2">&amp;</span><span class="kw">impl </span>ConfigRegionAccess) {
+    </span><span class="kw">pub fn </span>set_enabled(<span class="kw-2">&amp;mut </span><span class="self">self</span>, enabled: bool, access: <span class="kw">impl </span>ConfigRegionAccess) {
         <span class="kw">let </span><span class="kw-2">mut </span>control = <span class="kw">unsafe </span>{ access.read(<span class="self">self</span>.address.address, <span class="self">self</span>.address.offset) };
         control.set_bit(<span class="number">31</span>, enabled);
         <span class="kw">unsafe </span>{
             access.write(<span class="self">self</span>.address.address, <span class="self">self</span>.address.offset, control);
         }
+    }
+
+    <span class="kw">pub fn </span>enabled(<span class="kw-2">&amp;</span><span class="self">self</span>, access: <span class="kw">impl </span>ConfigRegionAccess) -&gt; bool {
+        <span class="kw">let </span>control = <span class="kw">unsafe </span>{ access.read(<span class="self">self</span>.address.address, <span class="self">self</span>.address.offset) };
+        control.get_bit(<span class="number">31</span>)
+    }
+
+    <span class="doccomment">/// Enable/disable masking of all interrupts for this PCI function.
+    ///
+    /// Individual interrupt sources can be masked using mask field of the corresponding entry in
+    /// the MSI-X table.
+    </span><span class="kw">pub fn </span>set_function_mask(<span class="kw-2">&amp;mut </span><span class="self">self</span>, mask: bool, access: <span class="kw">impl </span>ConfigRegionAccess) {
+        <span class="kw">let </span><span class="kw-2">mut </span>control = <span class="kw">unsafe </span>{ access.read(<span class="self">self</span>.address.address, <span class="self">self</span>.address.offset) };
+        control.set_bit(<span class="number">30</span>, mask);
+        <span class="kw">unsafe </span>{
+            access.write(<span class="self">self</span>.address.address, <span class="self">self</span>.address.offset, control);
+        }
+    }
+
+    <span class="kw">pub fn </span>function_mask(<span class="kw-2">&amp;</span><span class="self">self</span>, access: <span class="kw">impl </span>ConfigRegionAccess) -&gt; bool {
+        <span class="kw">let </span>control = <span class="kw">unsafe </span>{ access.read(<span class="self">self</span>.address.address, <span class="self">self</span>.address.offset) };
+        control.get_bit(<span class="number">30</span>)
     }
 
     <span class="doccomment">/// The index of the BAR that contains the MSI-X table.
@@ -119,6 +167,10 @@
          */
         </span><span class="self">self</span>.table &amp; !<span class="number">0b111
     </span>}
+
+    <span class="kw">pub fn </span>table_size(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; u16 {
+        <span class="self">self</span>.table_size
+    }
 
     <span class="kw">pub fn </span>pba_bar(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; u8 {
         <span class="self">self</span>.pba.get_bits(<span class="number">0</span>..<span class="number">3</span>) <span class="kw">as </span>u8

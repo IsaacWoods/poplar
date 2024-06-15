@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/work/poplar/poplar/lib/pci_types/src/capability/msi.rs`."><title>msi.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-dd39b87e5fcfba68.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="pci_types" data-themes="" data-resource-suffix="" data-rustdoc-version="1.80.0-nightly (bdbbb6c6a 2024-05-26)" data-channel="nightly" data-search-js="search-d52510db62a78183.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../static.files/storage-118b08c4c78b968e.js"></script><script defer src="../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-20a3ad099b048cf2.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-df360f571f6edeae.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/work/poplar/poplar/lib/pci_types/src/capability/msi.rs`."><title>msi.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-dd39b87e5fcfba68.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="pci_types" data-themes="" data-resource-suffix="" data-rustdoc-version="1.81.0-nightly (f1586001a 2024-06-13)" data-channel="nightly" data-search-js="search-0fe7219eb170c82e.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../static.files/storage-118b08c4c78b968e.js"></script><script defer src="../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-20a3ad099b048cf2.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-df360f571f6edeae.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -172,6 +172,19 @@
 <a href="#172" id="172">172</a>
 <a href="#173" id="173">173</a>
 <a href="#174" id="174">174</a>
+<a href="#175" id="175">175</a>
+<a href="#176" id="176">176</a>
+<a href="#177" id="177">177</a>
+<a href="#178" id="178">178</a>
+<a href="#179" id="179">179</a>
+<a href="#180" id="180">180</a>
+<a href="#181" id="181">181</a>
+<a href="#182" id="182">182</a>
+<a href="#183" id="183">183</a>
+<a href="#184" id="184">184</a>
+<a href="#185" id="185">185</a>
+<a href="#186" id="186">186</a>
+<a href="#187" id="187">187</a>
 </pre></div><pre class="rust"><code><span class="kw">use crate</span>::{capability::PciCapabilityAddress, ConfigRegionAccess};
 <span class="kw">use </span>bit_field::BitField;
 <span class="kw">use </span>core::convert::TryFrom;
@@ -219,9 +232,9 @@
     LevelDeassert = <span class="number">0b10</span>,
 }
 
-<span class="attr">#[derive(Debug, Clone)]
+<span class="attr">#[derive(Debug, Clone, Copy)]
 </span><span class="kw">pub struct </span>MsiCapability {
-    address: PciCapabilityAddress,
+    <span class="kw">pub</span>(<span class="kw">super</span>) address: PciCapabilityAddress,
     per_vector_masking: bool,
     is_64bit: bool,
     multiple_message_capable: MultipleMessageSupport,
@@ -252,23 +265,22 @@
 
     <span class="doccomment">/// How many interrupts this device has?
     </span><span class="attr">#[inline]
-    </span><span class="kw">pub fn </span>get_multiple_message_capable(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; MultipleMessageSupport {
+    </span><span class="kw">pub fn </span>multiple_message_capable(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; MultipleMessageSupport {
         <span class="self">self</span>.multiple_message_capable
     }
 
-    <span class="kw">pub fn </span>ctrl(<span class="kw-2">&amp;</span><span class="self">self</span>, access: <span class="kw-2">&amp;</span><span class="kw">impl </span>ConfigRegionAccess) -&gt; u32 {
-        <span class="kw">let </span>reg = <span class="kw">unsafe </span>{ access.read(<span class="self">self</span>.address.address, <span class="self">self</span>.address.offset) };
-        reg
+    <span class="kw">pub fn </span>ctrl(<span class="kw-2">&amp;</span><span class="self">self</span>, access: <span class="kw">impl </span>ConfigRegionAccess) -&gt; u32 {
+        <span class="kw">unsafe </span>{ access.read(<span class="self">self</span>.address.address, <span class="self">self</span>.address.offset) }
     }
 
     <span class="doccomment">/// Is MSI capability enabled?
-    </span><span class="kw">pub fn </span>is_enabled(<span class="kw-2">&amp;</span><span class="self">self</span>, access: <span class="kw-2">&amp;</span><span class="kw">impl </span>ConfigRegionAccess) -&gt; bool {
+    </span><span class="kw">pub fn </span>is_enabled(<span class="kw-2">&amp;</span><span class="self">self</span>, access: <span class="kw">impl </span>ConfigRegionAccess) -&gt; bool {
         <span class="kw">let </span>reg = <span class="kw">unsafe </span>{ access.read(<span class="self">self</span>.address.address, <span class="self">self</span>.address.offset) };
         reg.get_bit(<span class="number">16</span>)
     }
 
     <span class="doccomment">/// Enable or disable MSI capability
-    </span><span class="kw">pub fn </span>set_enabled(<span class="kw-2">&amp;</span><span class="self">self</span>, enabled: bool, access: <span class="kw-2">&amp;</span><span class="kw">impl </span>ConfigRegionAccess) {
+    </span><span class="kw">pub fn </span>set_enabled(<span class="kw-2">&amp;</span><span class="self">self</span>, enabled: bool, access: <span class="kw">impl </span>ConfigRegionAccess) {
         <span class="kw">let </span><span class="kw-2">mut </span>reg = <span class="kw">unsafe </span>{ access.read(<span class="self">self</span>.address.address, <span class="self">self</span>.address.offset) };
         reg.set_bit(<span class="number">16</span>, enabled);
         <span class="kw">unsafe </span>{ access.write(<span class="self">self</span>.address.address, <span class="self">self</span>.address.offset, reg) };
@@ -276,38 +288,52 @@
 
     <span class="doccomment">/// Set how many interrupts the device will use. If requested count is bigger than supported count,
     /// the second will be used.
-    </span><span class="kw">pub fn </span>set_multiple_message_enable(<span class="kw-2">&amp;</span><span class="self">self</span>, data: MultipleMessageSupport, access: <span class="kw-2">&amp;</span><span class="kw">impl </span>ConfigRegionAccess) {
+    </span><span class="kw">pub fn </span>set_multiple_message_enable(<span class="kw-2">&amp;</span><span class="self">self</span>, data: MultipleMessageSupport, access: <span class="kw">impl </span>ConfigRegionAccess) {
         <span class="kw">let </span><span class="kw-2">mut </span>reg = <span class="kw">unsafe </span>{ access.read(<span class="self">self</span>.address.address, <span class="self">self</span>.address.offset) };
         reg.set_bits(<span class="number">4</span>..<span class="number">7</span>, (data.min(<span class="self">self</span>.multiple_message_capable)) <span class="kw">as </span>u32);
         <span class="kw">unsafe </span>{ access.write(<span class="self">self</span>.address.address, <span class="self">self</span>.address.offset, reg) };
     }
 
     <span class="doccomment">/// Return how many interrupts the device is using
-    </span><span class="kw">pub fn </span>get_multiple_message_enable(<span class="kw-2">&amp;</span><span class="self">self</span>, access: <span class="kw-2">&amp;</span><span class="kw">impl </span>ConfigRegionAccess) -&gt; MultipleMessageSupport {
+    </span><span class="kw">pub fn </span>multiple_message_enable(<span class="kw-2">&amp;</span><span class="self">self</span>, access: <span class="kw">impl </span>ConfigRegionAccess) -&gt; MultipleMessageSupport {
         <span class="kw">let </span>reg = <span class="kw">unsafe </span>{ access.read(<span class="self">self</span>.address.address, <span class="self">self</span>.address.offset) };
         MultipleMessageSupport::try_from(reg.get_bits(<span class="number">4</span>..<span class="number">7</span>) <span class="kw">as </span>u8).unwrap_or(MultipleMessageSupport::Int1)
     }
 
-    <span class="doccomment">/// Set where the interrupts will be sent to
+    <span class="doccomment">/// Set the memory address that will be written to when the interrupt fires, and the data that
+    /// will be written to it.
+    </span><span class="kw">pub fn </span>set_message_info(<span class="kw-2">&amp;</span><span class="self">self</span>, address: u64, data: u32, access: <span class="kw">impl </span>ConfigRegionAccess) {
+        <span class="kw">unsafe </span>{
+            access.write(<span class="self">self</span>.address.address, <span class="self">self</span>.address.offset + <span class="number">0x04</span>, address.get_bits(<span class="number">0</span>..<span class="number">32</span>) <span class="kw">as </span>u32);
+            <span class="kw">if </span><span class="self">self</span>.is_64bit {
+                access.write(<span class="self">self</span>.address.address, <span class="self">self</span>.address.offset + <span class="number">0x08</span>, address.get_bits(<span class="number">32</span>..<span class="number">64</span>) <span class="kw">as </span>u32);
+            }
+        }
+        <span class="kw">let </span>data_offset = <span class="kw">if </span><span class="self">self</span>.is_64bit { <span class="number">0x0c </span>} <span class="kw">else </span>{ <span class="number">0x08 </span>};
+        <span class="kw">unsafe </span>{
+            access.write(<span class="self">self</span>.address.address, <span class="self">self</span>.address.offset + data_offset, data);
+        }
+    }
+
+    <span class="doccomment">/// Set the memory address that will be written to when the interrupt fires, and the data that
+    /// will be written to it, specialised for the message format the LAPIC expects.
     ///
     /// # Arguments
-    /// * `address` - Target Local APIC address (if not changed, can be calculated with `0xFEE00000 | (processor &lt;&lt; 12)`)
+    /// * `address` - Target Local APIC address (if not changed, can be calculated with `0xfee00000 | (processor &lt;&lt; 12)`)
     /// * `vector` - Which interrupt vector should be triggered on LAPIC
     /// * `trigger_mode` - When interrupt should be triggered
     /// * `access` - PCI Configuration Space accessor
-    </span><span class="kw">pub fn </span>set_message_info(
+    </span><span class="kw">pub fn </span>set_message_info_lapic(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
-        address: u32,
+        address: u64,
         vector: u8,
         trigger_mode: TriggerMode,
-        access: <span class="kw-2">&amp;</span><span class="kw">impl </span>ConfigRegionAccess,
+        access: <span class="kw">impl </span>ConfigRegionAccess,
     ) {
-        <span class="kw">unsafe </span>{ access.write(<span class="self">self</span>.address.address, <span class="self">self</span>.address.offset + <span class="number">0x4</span>, address) }
-        <span class="kw">let </span>data_offset = <span class="kw">if </span><span class="self">self</span>.is_64bit { <span class="number">0xC </span>} <span class="kw">else </span>{ <span class="number">0x8 </span>};
-        <span class="kw">let </span><span class="kw-2">mut </span>data = <span class="kw">unsafe </span>{ access.read(<span class="self">self</span>.address.address, <span class="self">self</span>.address.offset + data_offset) };
+        <span class="kw">let </span><span class="kw-2">mut </span>data = <span class="number">0</span>;
         data.set_bits(<span class="number">0</span>..<span class="number">8</span>, vector <span class="kw">as </span>u32);
         data.set_bits(<span class="number">14</span>..<span class="number">16</span>, trigger_mode <span class="kw">as </span>u32);
-        <span class="kw">unsafe </span>{ access.write(<span class="self">self</span>.address.address, <span class="self">self</span>.address.offset + data_offset, data) }
+        <span class="self">self</span>.set_message_info(address, data, access);
     }
 
     <span class="doccomment">/// Get interrupt mask
@@ -315,7 +341,7 @@
     /// # Note
     /// Only supported on when device supports 64-bit addressing and per-vector masking. Otherwise
     /// returns `0`
-    </span><span class="kw">pub fn </span>get_message_mask(<span class="kw-2">&amp;</span><span class="self">self</span>, access: <span class="kw-2">&amp;</span><span class="kw">impl </span>ConfigRegionAccess) -&gt; u32 {
+    </span><span class="kw">pub fn </span>message_mask(<span class="kw-2">&amp;</span><span class="self">self</span>, access: <span class="kw">impl </span>ConfigRegionAccess) -&gt; u32 {
         <span class="kw">if </span><span class="self">self</span>.is_64bit &amp;&amp; <span class="self">self</span>.per_vector_masking {
             <span class="kw">unsafe </span>{ access.read(<span class="self">self</span>.address.address, <span class="self">self</span>.address.offset + <span class="number">0x10</span>) }
         } <span class="kw">else </span>{
@@ -328,7 +354,7 @@
     /// # Note
     /// Only supported on when device supports 64-bit addressing and per-vector masking. Otherwise
     /// will do nothing
-    </span><span class="kw">pub fn </span>set_message_mask(<span class="kw-2">&amp;</span><span class="self">self</span>, access: <span class="kw-2">&amp;</span><span class="kw">impl </span>ConfigRegionAccess, mask: u32) {
+    </span><span class="kw">pub fn </span>set_message_mask(<span class="kw-2">&amp;</span><span class="self">self</span>, mask: u32, access: <span class="kw">impl </span>ConfigRegionAccess) {
         <span class="kw">if </span><span class="self">self</span>.is_64bit &amp;&amp; <span class="self">self</span>.per_vector_masking {
             <span class="kw">unsafe </span>{ access.write(<span class="self">self</span>.address.address, <span class="self">self</span>.address.offset + <span class="number">0x10</span>, mask) }
         }
@@ -338,7 +364,7 @@
     ///
     /// # Note
     /// Only supported on when device supports 64-bit addressing. Otherwise will return `0`
-    </span><span class="kw">pub fn </span>get_pending(<span class="kw-2">&amp;</span><span class="self">self</span>, access: <span class="kw-2">&amp;</span><span class="kw">impl </span>ConfigRegionAccess) -&gt; u32 {
+    </span><span class="kw">pub fn </span>is_pending(<span class="kw-2">&amp;</span><span class="self">self</span>, access: <span class="kw">impl </span>ConfigRegionAccess) -&gt; u32 {
         <span class="kw">if </span><span class="self">self</span>.is_64bit {
             <span class="kw">unsafe </span>{ access.read(<span class="self">self</span>.address.address, <span class="self">self</span>.address.offset + <span class="number">0x14</span>) }
         } <span class="kw">else </span>{

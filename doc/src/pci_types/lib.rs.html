@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/work/poplar/poplar/lib/pci_types/src/lib.rs`."><title>lib.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-dd39b87e5fcfba68.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="pci_types" data-themes="" data-resource-suffix="" data-rustdoc-version="1.80.0-nightly (bdbbb6c6a 2024-05-26)" data-channel="nightly" data-search-js="search-d52510db62a78183.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../static.files/storage-118b08c4c78b968e.js"></script><script defer src="../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-20a3ad099b048cf2.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-df360f571f6edeae.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/work/poplar/poplar/lib/pci_types/src/lib.rs`."><title>lib.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-dd39b87e5fcfba68.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="pci_types" data-themes="" data-resource-suffix="" data-rustdoc-version="1.81.0-nightly (f1586001a 2024-06-13)" data-channel="nightly" data-search-js="search-0fe7219eb170c82e.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../static.files/storage-118b08c4c78b968e.js"></script><script defer src="../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-20a3ad099b048cf2.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-df360f571f6edeae.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -505,6 +505,70 @@
 <a href="#505" id="505">505</a>
 <a href="#506" id="506">506</a>
 <a href="#507" id="507">507</a>
+<a href="#508" id="508">508</a>
+<a href="#509" id="509">509</a>
+<a href="#510" id="510">510</a>
+<a href="#511" id="511">511</a>
+<a href="#512" id="512">512</a>
+<a href="#513" id="513">513</a>
+<a href="#514" id="514">514</a>
+<a href="#515" id="515">515</a>
+<a href="#516" id="516">516</a>
+<a href="#517" id="517">517</a>
+<a href="#518" id="518">518</a>
+<a href="#519" id="519">519</a>
+<a href="#520" id="520">520</a>
+<a href="#521" id="521">521</a>
+<a href="#522" id="522">522</a>
+<a href="#523" id="523">523</a>
+<a href="#524" id="524">524</a>
+<a href="#525" id="525">525</a>
+<a href="#526" id="526">526</a>
+<a href="#527" id="527">527</a>
+<a href="#528" id="528">528</a>
+<a href="#529" id="529">529</a>
+<a href="#530" id="530">530</a>
+<a href="#531" id="531">531</a>
+<a href="#532" id="532">532</a>
+<a href="#533" id="533">533</a>
+<a href="#534" id="534">534</a>
+<a href="#535" id="535">535</a>
+<a href="#536" id="536">536</a>
+<a href="#537" id="537">537</a>
+<a href="#538" id="538">538</a>
+<a href="#539" id="539">539</a>
+<a href="#540" id="540">540</a>
+<a href="#541" id="541">541</a>
+<a href="#542" id="542">542</a>
+<a href="#543" id="543">543</a>
+<a href="#544" id="544">544</a>
+<a href="#545" id="545">545</a>
+<a href="#546" id="546">546</a>
+<a href="#547" id="547">547</a>
+<a href="#548" id="548">548</a>
+<a href="#549" id="549">549</a>
+<a href="#550" id="550">550</a>
+<a href="#551" id="551">551</a>
+<a href="#552" id="552">552</a>
+<a href="#553" id="553">553</a>
+<a href="#554" id="554">554</a>
+<a href="#555" id="555">555</a>
+<a href="#556" id="556">556</a>
+<a href="#557" id="557">557</a>
+<a href="#558" id="558">558</a>
+<a href="#559" id="559">559</a>
+<a href="#560" id="560">560</a>
+<a href="#561" id="561">561</a>
+<a href="#562" id="562">562</a>
+<a href="#563" id="563">563</a>
+<a href="#564" id="564">564</a>
+<a href="#565" id="565">565</a>
+<a href="#566" id="566">566</a>
+<a href="#567" id="567">567</a>
+<a href="#568" id="568">568</a>
+<a href="#569" id="569">569</a>
+<a href="#570" id="570">570</a>
+<a href="#571" id="571">571</a>
 </pre></div><pre class="rust"><code><span class="attr">#![no_std]
 
 </span><span class="kw">pub mod </span>capability;
@@ -582,9 +646,31 @@
 
 <span class="comment">// TODO: documentation
 </span><span class="kw">pub trait </span>ConfigRegionAccess {
-    <span class="kw">fn </span>function_exists(<span class="kw-2">&amp;</span><span class="self">self</span>, address: PciAddress) -&gt; bool;
-    <span class="kw">unsafe fn </span>read(<span class="kw-2">&amp;</span><span class="self">self</span>, address: PciAddress, offset: u16) -&gt; u32;
-    <span class="kw">unsafe fn </span>write(<span class="kw-2">&amp;</span><span class="self">self</span>, address: PciAddress, offset: u16, value: u32);
+    <span class="doccomment">/// Performs a PCI read at `address` with `offset`.
+    ///
+    /// # Safety
+    ///
+    /// `address` and `offset` must be valid for PCI reads.
+    </span><span class="kw">unsafe fn </span>read(<span class="kw-2">&amp;</span><span class="self">self</span>, address: PciAddress, offset: u16) -&gt; u32;
+
+    <span class="doccomment">/// Performs a PCI write at `address` with `offset`.
+    ///
+    /// # Safety
+    ///
+    /// `address` and `offset` must be valid for PCI writes.
+    </span><span class="kw">unsafe fn </span>write(<span class="kw-2">&amp;</span><span class="self">self</span>, address: PciAddress, offset: u16, value: u32);
+}
+
+<span class="kw">impl</span>&lt;T: ConfigRegionAccess + <span class="question-mark">?</span>Sized&gt; ConfigRegionAccess <span class="kw">for </span><span class="kw-2">&amp;</span>T {
+    <span class="attr">#[inline]
+    </span><span class="kw">unsafe fn </span>read(<span class="kw-2">&amp;</span><span class="self">self</span>, address: PciAddress, offset: u16) -&gt; u32 {
+        (<span class="kw-2">**</span><span class="self">self</span>).read(address, offset)
+    }
+
+    <span class="attr">#[inline]
+    </span><span class="kw">unsafe fn </span>write(<span class="kw-2">&amp;</span><span class="self">self</span>, address: PciAddress, offset: u16, value: u32) {
+        (<span class="kw-2">**</span><span class="self">self</span>).write(address, offset, value)
+    }
 }
 
 <span class="attr">#[non_exhaustive]
@@ -624,12 +710,16 @@
         PciHeader(address)
     }
 
-    <span class="kw">pub fn </span>id(<span class="kw-2">&amp;</span><span class="self">self</span>, access: <span class="kw-2">&amp;</span><span class="kw">impl </span>ConfigRegionAccess) -&gt; (VendorId, DeviceId) {
+    <span class="kw">pub fn </span>address(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; PciAddress {
+        <span class="self">self</span>.<span class="number">0
+    </span>}
+
+    <span class="kw">pub fn </span>id(<span class="kw-2">&amp;</span><span class="self">self</span>, access: <span class="kw">impl </span>ConfigRegionAccess) -&gt; (VendorId, DeviceId) {
         <span class="kw">let </span>id = <span class="kw">unsafe </span>{ access.read(<span class="self">self</span>.<span class="number">0</span>, <span class="number">0x00</span>) };
         (id.get_bits(<span class="number">0</span>..<span class="number">16</span>) <span class="kw">as </span>VendorId, id.get_bits(<span class="number">16</span>..<span class="number">32</span>) <span class="kw">as </span>DeviceId)
     }
 
-    <span class="kw">pub fn </span>header_type(<span class="kw-2">&amp;</span><span class="self">self</span>, access: <span class="kw-2">&amp;</span><span class="kw">impl </span>ConfigRegionAccess) -&gt; HeaderType {
+    <span class="kw">pub fn </span>header_type(<span class="kw-2">&amp;</span><span class="self">self</span>, access: <span class="kw">impl </span>ConfigRegionAccess) -&gt; HeaderType {
         <span class="comment">/*
          * Read bits 0..=6 of the Header Type. Bit 7 dictates whether the device has multiple functions and so
          * isn't returned here.
@@ -642,7 +732,7 @@
         }
     }
 
-    <span class="kw">pub fn </span>has_multiple_functions(<span class="kw-2">&amp;</span><span class="self">self</span>, access: <span class="kw-2">&amp;</span><span class="kw">impl </span>ConfigRegionAccess) -&gt; bool {
+    <span class="kw">pub fn </span>has_multiple_functions(<span class="kw-2">&amp;</span><span class="self">self</span>, access: <span class="kw">impl </span>ConfigRegionAccess) -&gt; bool {
         <span class="comment">/*
          * Reads bit 7 of the Header Type, which is 1 if the device has multiple functions.
          */
@@ -651,7 +741,7 @@
 
     <span class="kw">pub fn </span>revision_and_class(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
-        access: <span class="kw-2">&amp;</span><span class="kw">impl </span>ConfigRegionAccess,
+        access: <span class="kw">impl </span>ConfigRegionAccess,
     ) -&gt; (DeviceRevision, BaseClass, SubClass, Interface) {
         <span class="kw">let </span>field = <span class="kw">unsafe </span>{ access.read(<span class="self">self</span>.<span class="number">0</span>, <span class="number">0x08</span>) };
         (
@@ -662,22 +752,22 @@
         )
     }
 
-    <span class="kw">pub fn </span>status(<span class="kw-2">&amp;</span><span class="self">self</span>, access: <span class="kw-2">&amp;</span><span class="kw">impl </span>ConfigRegionAccess) -&gt; StatusRegister {
+    <span class="kw">pub fn </span>status(<span class="kw-2">&amp;</span><span class="self">self</span>, access: <span class="kw">impl </span>ConfigRegionAccess) -&gt; StatusRegister {
         <span class="kw">let </span>data = <span class="kw">unsafe </span>{ access.read(<span class="self">self</span>.<span class="number">0</span>, <span class="number">0x4</span>).get_bits(<span class="number">16</span>..<span class="number">32</span>) };
         StatusRegister::new(data <span class="kw">as </span>u16)
     }
 
-    <span class="kw">pub fn </span>command(<span class="kw-2">&amp;</span><span class="self">self</span>, access: <span class="kw-2">&amp;</span><span class="kw">impl </span>ConfigRegionAccess) -&gt; CommandRegister {
+    <span class="kw">pub fn </span>command(<span class="kw-2">&amp;</span><span class="self">self</span>, access: <span class="kw">impl </span>ConfigRegionAccess) -&gt; CommandRegister {
         <span class="kw">let </span>data = <span class="kw">unsafe </span>{ access.read(<span class="self">self</span>.<span class="number">0</span>, <span class="number">0x4</span>).get_bits(<span class="number">0</span>..<span class="number">16</span>) };
-        CommandRegister::from_bits_truncate(data <span class="kw">as </span>u16)
+        CommandRegister::from_bits_retain(data <span class="kw">as </span>u16)
     }
 
-    <span class="kw">pub fn </span>update_command&lt;F&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, access: <span class="kw-2">&amp;</span><span class="kw">impl </span>ConfigRegionAccess, f: F)
+    <span class="kw">pub fn </span>update_command&lt;F&gt;(<span class="kw-2">&amp;mut </span><span class="self">self</span>, access: <span class="kw">impl </span>ConfigRegionAccess, f: F)
     <span class="kw">where
-        </span>F: Fn(CommandRegister) -&gt; CommandRegister,
+        </span>F: FnOnce(CommandRegister) -&gt; CommandRegister,
     {
         <span class="kw">let </span><span class="kw-2">mut </span>data = <span class="kw">unsafe </span>{ access.read(<span class="self">self</span>.<span class="number">0</span>, <span class="number">0x4</span>) };
-        <span class="kw">let </span>new_command = f(CommandRegister::from_bits_truncate(data.get_bits(<span class="number">0</span>..<span class="number">16</span>) <span class="kw">as </span>u16));
+        <span class="kw">let </span>new_command = f(CommandRegister::from_bits_retain(data.get_bits(<span class="number">0</span>..<span class="number">16</span>) <span class="kw">as </span>u16));
         data.set_bits(<span class="number">0</span>..<span class="number">16</span>, new_command.bits() <span class="kw">as </span>u32);
         <span class="kw">unsafe </span>{
             access.write(<span class="self">self</span>.<span class="number">0</span>, <span class="number">0x4</span>, data);
@@ -734,7 +824,7 @@
 </span><span class="kw">pub struct </span>EndpointHeader(PciAddress);
 
 <span class="kw">impl </span>EndpointHeader {
-    <span class="kw">pub fn </span>from_header(header: PciHeader, access: <span class="kw-2">&amp;</span><span class="kw">impl </span>ConfigRegionAccess) -&gt; <span class="prelude-ty">Option</span>&lt;EndpointHeader&gt; {
+    <span class="kw">pub fn </span>from_header(header: PciHeader, access: <span class="kw">impl </span>ConfigRegionAccess) -&gt; <span class="prelude-ty">Option</span>&lt;EndpointHeader&gt; {
         <span class="kw">match </span>header.header_type(access) {
             HeaderType::Endpoint =&gt; <span class="prelude-val">Some</span>(EndpointHeader(header.<span class="number">0</span>)),
             <span class="kw">_ </span>=&gt; <span class="prelude-val">None</span>,
@@ -745,23 +835,23 @@
         PciHeader(<span class="self">self</span>.<span class="number">0</span>)
     }
 
-    <span class="kw">pub fn </span>status(<span class="kw-2">&amp;</span><span class="self">self</span>, access: <span class="kw-2">&amp;</span><span class="kw">impl </span>ConfigRegionAccess) -&gt; StatusRegister {
+    <span class="kw">pub fn </span>status(<span class="kw-2">&amp;</span><span class="self">self</span>, access: <span class="kw">impl </span>ConfigRegionAccess) -&gt; StatusRegister {
         <span class="self">self</span>.header().status(access)
     }
 
-    <span class="kw">pub fn </span>command(<span class="kw-2">&amp;</span><span class="self">self</span>, access: <span class="kw-2">&amp;</span><span class="kw">impl </span>ConfigRegionAccess) -&gt; CommandRegister {
+    <span class="kw">pub fn </span>command(<span class="kw-2">&amp;</span><span class="self">self</span>, access: <span class="kw">impl </span>ConfigRegionAccess) -&gt; CommandRegister {
         <span class="self">self</span>.header().command(access)
     }
 
-    <span class="kw">pub fn </span>update_command&lt;F&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, access: <span class="kw-2">&amp;</span><span class="kw">impl </span>ConfigRegionAccess, f: F)
+    <span class="kw">pub fn </span>update_command&lt;F&gt;(<span class="kw-2">&amp;mut </span><span class="self">self</span>, access: <span class="kw">impl </span>ConfigRegionAccess, f: F)
     <span class="kw">where
-        </span>F: Fn(CommandRegister) -&gt; CommandRegister,
+        </span>F: FnOnce(CommandRegister) -&gt; CommandRegister,
     {
         <span class="self">self</span>.header().update_command(access, f);
     }
 
-    <span class="kw">pub fn </span>capability_pointer(<span class="kw-2">&amp;</span><span class="self">self</span>, access: <span class="kw-2">&amp;</span><span class="kw">impl </span>ConfigRegionAccess) -&gt; u16 {
-        <span class="kw">let </span>status = <span class="self">self</span>.status(access);
+    <span class="kw">pub fn </span>capability_pointer(<span class="kw-2">&amp;</span><span class="self">self</span>, access: <span class="kw">impl </span>ConfigRegionAccess) -&gt; u16 {
+        <span class="kw">let </span>status = <span class="self">self</span>.status(<span class="kw-2">&amp;</span>access);
         <span class="kw">if </span>status.has_capability_list() {
             <span class="kw">unsafe </span>{ access.read(<span class="self">self</span>.<span class="number">0</span>, <span class="number">0x34</span>).get_bits(<span class="number">0</span>..<span class="number">8</span>) <span class="kw">as </span>u16 }
         } <span class="kw">else </span>{
@@ -769,12 +859,12 @@
         </span>}
     }
 
-    <span class="kw">pub fn </span>capabilities&lt;<span class="lifetime">'a</span>, T: ConfigRegionAccess&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, access: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>T) -&gt; CapabilityIterator&lt;<span class="lifetime">'a</span>, T&gt; {
-        <span class="kw">let </span>pointer = <span class="self">self</span>.capability_pointer(access);
+    <span class="kw">pub fn </span>capabilities&lt;T: ConfigRegionAccess&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, access: T) -&gt; CapabilityIterator&lt;T&gt; {
+        <span class="kw">let </span>pointer = <span class="self">self</span>.capability_pointer(<span class="kw-2">&amp;</span>access);
         CapabilityIterator::new(<span class="self">self</span>.<span class="number">0</span>, pointer, access)
     }
 
-    <span class="kw">pub fn </span>subsystem(<span class="kw-2">&amp;</span><span class="self">self</span>, access: <span class="kw-2">&amp;</span><span class="kw">impl </span>ConfigRegionAccess) -&gt; (SubsystemId, SubsystemVendorId) {
+    <span class="kw">pub fn </span>subsystem(<span class="kw-2">&amp;</span><span class="self">self</span>, access: <span class="kw">impl </span>ConfigRegionAccess) -&gt; (SubsystemId, SubsystemVendorId) {
         <span class="kw">let </span>data = <span class="kw">unsafe </span>{ access.read(<span class="self">self</span>.<span class="number">0</span>, <span class="number">0x2c</span>) };
         (data.get_bits(<span class="number">16</span>..<span class="number">32</span>) <span class="kw">as </span>u16, data.get_bits(<span class="number">0</span>..<span class="number">16</span>) <span class="kw">as </span>u16)
     }
@@ -784,7 +874,7 @@
     /// ### Note
     /// 64-bit memory BARs use two slots, so if one is decoded in e.g. slot #0, this method should not be called
     /// for slot #1
-    </span><span class="kw">pub fn </span>bar(<span class="kw-2">&amp;</span><span class="self">self</span>, slot: u8, access: <span class="kw-2">&amp;</span><span class="kw">impl </span>ConfigRegionAccess) -&gt; <span class="prelude-ty">Option</span>&lt;Bar&gt; {
+    </span><span class="kw">pub fn </span>bar(<span class="kw-2">&amp;</span><span class="self">self</span>, slot: u8, access: <span class="kw">impl </span>ConfigRegionAccess) -&gt; <span class="prelude-ty">Option</span>&lt;Bar&gt; {
         <span class="kw">if </span>slot &gt;= <span class="number">6 </span>{
             <span class="kw">return </span><span class="prelude-val">None</span>;
         }
@@ -795,7 +885,7 @@
         <span class="comment">/*
          * If bit 0 is `0`, the BAR is in memory. If it's `1`, it's in I/O.
          */
-        </span><span class="kw">if </span>bar.get_bit(<span class="number">0</span>) == <span class="bool-val">false </span>{
+        </span><span class="kw">if </span>!bar.get_bit(<span class="number">0</span>) {
             <span class="kw">let </span>prefetchable = bar.get_bit(<span class="number">3</span>);
             <span class="kw">let </span>address = bar.get_bits(<span class="number">4</span>..<span class="number">32</span>) &lt;&lt; <span class="number">4</span>;
 
@@ -865,17 +955,20 @@
         }
     }
 
-    <span class="doccomment">/// Write to a BAR, setting the address for a device to use. The supplied value must be a valid
-    /// BAR value (refer to the PCIe specification for requirements) and must be of the correct
-    /// size (i.e. no larger than `u32::MAX` for 32-bit BARs). In the case of a 64-bit BAR, the
-    /// supplied slot should be the first slot of the pair.
+    <span class="doccomment">/// Write to a BAR, setting the address for a device to use.
+    ///
+    /// # Safety
+    ///
+    /// The supplied value must be a valid BAR value (refer to the PCIe specification for
+    /// requirements) and must be of the correct size (i.e. no larger than `u32::MAX` for 32-bit
+    /// BARs). In the case of a 64-bit BAR, the supplied slot should be the first slot of the pair.
     </span><span class="kw">pub unsafe fn </span>write_bar(
         <span class="kw-2">&amp;mut </span><span class="self">self</span>,
         slot: u8,
-        access: <span class="kw-2">&amp;</span><span class="kw">impl </span>ConfigRegionAccess,
+        access: <span class="kw">impl </span>ConfigRegionAccess,
         value: usize,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;(), BarWriteError&gt; {
-        <span class="kw">match </span><span class="self">self</span>.bar(slot, access) {
+        <span class="kw">match </span><span class="self">self</span>.bar(slot, <span class="kw-2">&amp;</span>access) {
             <span class="prelude-val">Some</span>(Bar::Memory64 { .. }) =&gt; {
                 <span class="kw">let </span>offset = <span class="number">0x10 </span>+ (slot <span class="kw">as </span>u16) * <span class="number">4</span>;
                 <span class="kw">unsafe </span>{
@@ -895,15 +988,28 @@
                 }
                 <span class="prelude-val">Ok</span>(())
             }
-            <span class="prelude-val">None </span>=&gt; <span class="kw">return </span><span class="prelude-val">Err</span>(BarWriteError::NoSuchBar),
+            <span class="prelude-val">None </span>=&gt; <span class="prelude-val">Err</span>(BarWriteError::NoSuchBar),
         }
     }
 
-    <span class="kw">pub fn </span>interrupt(<span class="kw-2">&amp;</span><span class="self">self</span>, access: <span class="kw-2">&amp;</span><span class="kw">impl </span>ConfigRegionAccess) -&gt; (InterruptPin, InterruptLine) {
+    <span class="kw">pub fn </span>interrupt(<span class="kw-2">&amp;</span><span class="self">self</span>, access: <span class="kw">impl </span>ConfigRegionAccess) -&gt; (InterruptPin, InterruptLine) {
         <span class="comment">// According to the PCI Express Specification 4.0, Min_Gnt/Max_Lat registers
         // must be read-only and hardwired to 00h.
         </span><span class="kw">let </span>data = <span class="kw">unsafe </span>{ access.read(<span class="self">self</span>.<span class="number">0</span>, <span class="number">0x3c</span>) };
         (data.get_bits(<span class="number">8</span>..<span class="number">16</span>) <span class="kw">as </span>u8, data.get_bits(<span class="number">0</span>..<span class="number">8</span>) <span class="kw">as </span>u8)
+    }
+
+    <span class="kw">pub fn </span>update_interrupt&lt;F&gt;(<span class="kw-2">&amp;mut </span><span class="self">self</span>, access: <span class="kw">impl </span>ConfigRegionAccess, f: F)
+    <span class="kw">where
+        </span>F: FnOnce((InterruptPin, InterruptLine)) -&gt; (InterruptPin, InterruptLine),
+    {
+        <span class="kw">let </span><span class="kw-2">mut </span>data = <span class="kw">unsafe </span>{ access.read(<span class="self">self</span>.<span class="number">0</span>, <span class="number">0x3c</span>) };
+        <span class="kw">let </span>(new_pin, new_line) = f((data.get_bits(<span class="number">8</span>..<span class="number">16</span>) <span class="kw">as </span>u8, data.get_bits(<span class="number">0</span>..<span class="number">8</span>) <span class="kw">as </span>u8));
+        data.set_bits(<span class="number">8</span>..<span class="number">16</span>, new_pin.into());
+        data.set_bits(<span class="number">0</span>..<span class="number">8</span>, new_line.into());
+        <span class="kw">unsafe </span>{
+            access.write(<span class="self">self</span>.<span class="number">0</span>, <span class="number">0x3c</span>, data);
+        }
     }
 }
 
@@ -956,7 +1062,7 @@
 </span><span class="kw">pub struct </span>PciPciBridgeHeader(PciAddress);
 
 <span class="kw">impl </span>PciPciBridgeHeader {
-    <span class="kw">pub fn </span>from_header(header: PciHeader, access: <span class="kw-2">&amp;</span><span class="kw">impl </span>ConfigRegionAccess) -&gt; <span class="prelude-ty">Option</span>&lt;PciPciBridgeHeader&gt; {
+    <span class="kw">pub fn </span>from_header(header: PciHeader, access: <span class="kw">impl </span>ConfigRegionAccess) -&gt; <span class="prelude-ty">Option</span>&lt;PciPciBridgeHeader&gt; {
         <span class="kw">match </span>header.header_type(access) {
             HeaderType::PciPciBridge =&gt; <span class="prelude-val">Some</span>(PciPciBridgeHeader(header.<span class="number">0</span>)),
             <span class="kw">_ </span>=&gt; <span class="prelude-val">None</span>,
@@ -967,32 +1073,32 @@
         PciHeader(<span class="self">self</span>.<span class="number">0</span>)
     }
 
-    <span class="kw">pub fn </span>status(<span class="kw-2">&amp;</span><span class="self">self</span>, access: <span class="kw-2">&amp;</span><span class="kw">impl </span>ConfigRegionAccess) -&gt; StatusRegister {
+    <span class="kw">pub fn </span>status(<span class="kw-2">&amp;</span><span class="self">self</span>, access: <span class="kw">impl </span>ConfigRegionAccess) -&gt; StatusRegister {
         <span class="self">self</span>.header().status(access)
     }
 
-    <span class="kw">pub fn </span>command(<span class="kw-2">&amp;</span><span class="self">self</span>, access: <span class="kw-2">&amp;</span><span class="kw">impl </span>ConfigRegionAccess) -&gt; CommandRegister {
+    <span class="kw">pub fn </span>command(<span class="kw-2">&amp;</span><span class="self">self</span>, access: <span class="kw">impl </span>ConfigRegionAccess) -&gt; CommandRegister {
         <span class="self">self</span>.header().command(access)
     }
 
-    <span class="kw">pub fn </span>update_command&lt;F&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, access: <span class="kw-2">&amp;</span><span class="kw">impl </span>ConfigRegionAccess, f: F)
+    <span class="kw">pub fn </span>update_command&lt;F&gt;(<span class="kw-2">&amp;mut </span><span class="self">self</span>, access: <span class="kw">impl </span>ConfigRegionAccess, f: F)
     <span class="kw">where
-        </span>F: Fn(CommandRegister) -&gt; CommandRegister,
+        </span>F: FnOnce(CommandRegister) -&gt; CommandRegister,
     {
         <span class="self">self</span>.header().update_command(access, f);
     }
 
-    <span class="kw">pub fn </span>primary_bus_number(<span class="kw-2">&amp;</span><span class="self">self</span>, access: <span class="kw-2">&amp;</span><span class="kw">impl </span>ConfigRegionAccess) -&gt; u8 {
+    <span class="kw">pub fn </span>primary_bus_number(<span class="kw-2">&amp;</span><span class="self">self</span>, access: <span class="kw">impl </span>ConfigRegionAccess) -&gt; u8 {
         <span class="kw">let </span>data = <span class="kw">unsafe </span>{ access.read(<span class="self">self</span>.<span class="number">0</span>, <span class="number">0x18</span>).get_bits(<span class="number">0</span>..<span class="number">8</span>) };
         data <span class="kw">as </span>u8
     }
 
-    <span class="kw">pub fn </span>secondary_bus_number(<span class="kw-2">&amp;</span><span class="self">self</span>, access: <span class="kw-2">&amp;</span><span class="kw">impl </span>ConfigRegionAccess) -&gt; u8 {
+    <span class="kw">pub fn </span>secondary_bus_number(<span class="kw-2">&amp;</span><span class="self">self</span>, access: <span class="kw">impl </span>ConfigRegionAccess) -&gt; u8 {
         <span class="kw">let </span>data = <span class="kw">unsafe </span>{ access.read(<span class="self">self</span>.<span class="number">0</span>, <span class="number">0x18</span>).get_bits(<span class="number">8</span>..<span class="number">16</span>) };
         data <span class="kw">as </span>u8
     }
 
-    <span class="kw">pub fn </span>subordinate_bus_number(<span class="kw-2">&amp;</span><span class="self">self</span>, access: <span class="kw-2">&amp;</span><span class="kw">impl </span>ConfigRegionAccess) -&gt; u8 {
+    <span class="kw">pub fn </span>subordinate_bus_number(<span class="kw-2">&amp;</span><span class="self">self</span>, access: <span class="kw">impl </span>ConfigRegionAccess) -&gt; u8 {
         <span class="kw">let </span>data = <span class="kw">unsafe </span>{ access.read(<span class="self">self</span>.<span class="number">0</span>, <span class="number">0x18</span>).get_bits(<span class="number">16</span>..<span class="number">24</span>) };
         data <span class="kw">as </span>u8
     }
@@ -1005,6 +1111,28 @@
     Memory32 { address: u32, size: u32, prefetchable: bool },
     Memory64 { address: u64, size: u64, prefetchable: bool },
     Io { port: u32 },
+}
+
+<span class="kw">impl </span>Bar {
+    <span class="doccomment">/// Return the IO port of this BAR or panic if not an IO BAR.
+    </span><span class="kw">pub fn </span>unwrap_io(<span class="self">self</span>) -&gt; u32 {
+        <span class="kw">match </span><span class="self">self </span>{
+            Bar::Io { port } =&gt; port,
+            Bar::Memory32 { .. } | Bar::Memory64 { .. } =&gt; <span class="macro">panic!</span>(<span class="string">"expected IO BAR, found memory BAR"</span>),
+        }
+    }
+
+    <span class="doccomment">/// Return the address and size of this BAR or panic if not a memory BAR.
+    </span><span class="kw">pub fn </span>unwrap_mem(<span class="self">self</span>) -&gt; (usize, usize) {
+        <span class="kw">match </span><span class="self">self </span>{
+            Bar::Memory32 { address, size, prefetchable: <span class="kw">_ </span>} =&gt; (address <span class="kw">as </span>usize, size <span class="kw">as </span>usize),
+            Bar::Memory64 { address, size, prefetchable: <span class="kw">_ </span>} =&gt; (
+                address.try_into().expect(<span class="string">"conversion from 64bit BAR to usize failed"</span>),
+                size.try_into().expect(<span class="string">"conversion from 64bit BAR to usize failed"</span>),
+            ),
+            Bar::Io { .. } =&gt; <span class="macro">panic!</span>(<span class="string">"expected memory BAR, found IO BAR"</span>),
+        }
+    }
 }
 
 <span class="attr">#[derive(Clone, Copy, PartialEq, Eq, Debug)]

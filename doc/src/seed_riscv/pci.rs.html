@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `seed_riscv/src/pci.rs`."><title>pci.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-dd39b87e5fcfba68.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="seed_riscv" data-themes="" data-resource-suffix="" data-rustdoc-version="1.80.0-nightly (bdbbb6c6a 2024-05-26)" data-channel="nightly" data-search-js="search-d52510db62a78183.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../static.files/storage-118b08c4c78b968e.js"></script><script defer src="../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-20a3ad099b048cf2.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-df360f571f6edeae.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `seed_riscv/src/pci.rs`."><title>pci.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-dd39b87e5fcfba68.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="seed_riscv" data-themes="" data-resource-suffix="" data-rustdoc-version="1.81.0-nightly (f1586001a 2024-06-13)" data-channel="nightly" data-search-js="search-0fe7219eb170c82e.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../static.files/storage-118b08c4c78b968e.js"></script><script defer src="../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-20a3ad099b048cf2.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-df360f571f6edeae.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -272,15 +272,6 @@
 <a href="#272" id="272">272</a>
 <a href="#273" id="273">273</a>
 <a href="#274" id="274">274</a>
-<a href="#275" id="275">275</a>
-<a href="#276" id="276">276</a>
-<a href="#277" id="277">277</a>
-<a href="#278" id="278">278</a>
-<a href="#279" id="279">279</a>
-<a href="#280" id="280">280</a>
-<a href="#281" id="281">281</a>
-<a href="#282" id="282">282</a>
-<a href="#283" id="283">283</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>alloc::vec::Vec;
 <span class="kw">use </span>bit_field::BitField;
 <span class="kw">use </span>core::ptr;
@@ -372,17 +363,15 @@
 
     <span class="kw">fn </span>check_device(<span class="kw-2">&amp;mut </span><span class="self">self</span>, bus: u8, device: u8) {
         <span class="kw">let </span>address = PciAddress::new(<span class="number">0</span>, bus, device, <span class="number">0</span>);
-        <span class="kw">if </span><span class="self">self</span>.function_exists(address) {
-            <span class="self">self</span>.check_function(bus, device, <span class="number">0</span>);
+        <span class="self">self</span>.check_function(bus, device, <span class="number">0</span>);
 
-            <span class="kw">let </span>header = PciHeader::new(address);
-            <span class="kw">if </span>header.has_multiple_functions(<span class="self">self</span>) {
-                <span class="comment">/*
-                 * The device is multi-function. We need to check the rest.
-                 */
-                </span><span class="kw">for </span>function <span class="kw">in </span><span class="number">1</span>..<span class="number">8 </span>{
-                    <span class="self">self</span>.check_function(bus, device, function);
-                }
+        <span class="kw">let </span>header = PciHeader::new(address);
+        <span class="kw">if </span>header.has_multiple_functions(<span class="kw-2">&amp;*</span><span class="self">self</span>) {
+            <span class="comment">/*
+             * The device is multi-function. We need to check the rest.
+             */
+            </span><span class="kw">for </span>function <span class="kw">in </span><span class="number">1</span>..<span class="number">8 </span>{
+                <span class="self">self</span>.check_function(bus, device, function);
             }
         }
     }
@@ -390,16 +379,15 @@
     <span class="kw">fn </span>check_function(<span class="kw-2">&amp;mut </span><span class="self">self</span>, bus: u8, device: u8, function: u8) {
         <span class="kw">let </span>address = PciAddress::new(<span class="number">0</span>, bus, device, function);
 
-        <span class="kw">if </span><span class="self">self</span>.function_exists(address) {
-            <span class="kw">let </span>header = PciHeader::new(address);
-            <span class="kw">let </span>(vendor_id, device_id) = header.id(<span class="self">self</span>);
-            <span class="kw">let </span>(_revision, class, sub_class, _interface) = header.revision_and_class(<span class="self">self</span>);
+        <span class="kw">let </span>header = PciHeader::new(address);
+        <span class="kw">let </span>(vendor_id, device_id) = header.id(<span class="kw-2">&amp;*</span><span class="self">self</span>);
+        <span class="kw">let </span>(_revision, class, sub_class, _interface) = header.revision_and_class(<span class="kw-2">&amp;*</span><span class="self">self</span>);
 
-            <span class="kw">if </span>vendor_id == <span class="number">0xffff </span>{
-                <span class="kw">return</span>;
-            }
+        <span class="kw">if </span>vendor_id == <span class="number">0xffff </span>{
+            <span class="kw">return</span>;
+        }
 
-            <span class="macro">info!</span>(
+        <span class="macro">info!</span>(
                 <span class="string">"Found PCI device (bus={}, device={}, function={}): (vendor = {:#x}, device = {:#x}, class={:#x}, subclass={:#x}) -&gt; {:?}"</span>,
                 bus,
                 device,
@@ -411,88 +399,87 @@
                 DeviceType::from((class, sub_class))
             );
 
-            <span class="kw">match </span>header.header_type(<span class="self">self</span>) {
-                HeaderType::Endpoint =&gt; {
-                    <span class="kw">let </span><span class="kw-2">mut </span>endpoint_header = EndpointHeader::from_header(header, <span class="self">self</span>).unwrap();
-                    <span class="kw">let </span>bars = {
-                        <span class="kw">let </span><span class="kw-2">mut </span>bars = [<span class="prelude-val">None</span>; <span class="number">6</span>];
+        <span class="kw">match </span>header.header_type(<span class="kw-2">&amp;*</span><span class="self">self</span>) {
+            HeaderType::Endpoint =&gt; {
+                <span class="kw">let </span><span class="kw-2">mut </span>endpoint_header = EndpointHeader::from_header(header, <span class="kw-2">&amp;*</span><span class="self">self</span>).unwrap();
+                <span class="kw">let </span>bars = {
+                    <span class="kw">let </span><span class="kw-2">mut </span>bars = [<span class="prelude-val">None</span>; <span class="number">6</span>];
 
-                        <span class="kw">let </span><span class="kw-2">mut </span>skip_next = <span class="bool-val">false</span>;
-                        <span class="kw">for </span>i <span class="kw">in </span><span class="number">0</span>..<span class="number">6 </span>{
-                            <span class="kw">if </span>skip_next {
-                                <span class="kw">continue</span>;
-                            }
-
-                            <span class="kw">let </span>bar = endpoint_header.bar(i, <span class="self">self</span>);
-                            skip_next = <span class="kw">match </span>bar {
-                                <span class="prelude-val">Some</span>(Bar::Memory64 { .. }) =&gt; <span class="bool-val">true</span>,
-                                <span class="kw">_ </span>=&gt; <span class="bool-val">false</span>,
-                            };
-                            bars[i <span class="kw">as </span>usize] = bar;
+                    <span class="kw">let </span><span class="kw-2">mut </span>skip_next = <span class="bool-val">false</span>;
+                    <span class="kw">for </span>i <span class="kw">in </span><span class="number">0</span>..<span class="number">6 </span>{
+                        <span class="kw">if </span>skip_next {
+                            <span class="kw">continue</span>;
                         }
 
-                        bars
-                    };
-
-                    <span class="comment">/*
-                     * It's our responsibility to allocate memory for the BARs of PCI devices on
-                     * RISC-V. This memory needs to be addressable by both the CPU and the PCI host
-                     * bridge, and conform to the device's requirements, so we have to choose a
-                     * suitable region from the reported ranges.
-                     */
-                    </span><span class="kw">let </span><span class="kw-2">mut </span>needs_memory_access = <span class="bool-val">false</span>;
-                    <span class="kw">for </span>(i, bar) <span class="kw">in </span>bars.iter().enumerate() {
-                        <span class="kw">if let </span><span class="prelude-val">Some</span>(bar) = <span class="kw-2">*</span>bar {
-                            <span class="kw">let </span>address = <span class="self">self
-                                </span>.ranges
-                                .iter_mut()
-                                .find_map(|range| <span class="kw">match </span>bar {
-                                    Bar::Memory32 { size, .. } =&gt; {
-                                        <span class="kw">if </span>range.space != AddressSpace::Memory32 {
-                                            <span class="kw">return </span><span class="prelude-val">None</span>;
-                                        }
-                                        needs_memory_access = <span class="bool-val">true</span>;
-                                        range.allocate(size <span class="kw">as </span>usize, size <span class="kw">as </span>usize)
-                                    }
-                                    Bar::Memory64 { size, .. } =&gt; {
-                                        <span class="kw">if </span>range.space != AddressSpace::Memory64 {
-                                            <span class="kw">return </span><span class="prelude-val">None</span>;
-                                        }
-                                        needs_memory_access = <span class="bool-val">true</span>;
-                                        range.allocate(size <span class="kw">as </span>usize, size <span class="kw">as </span>usize)
-                                    }
-                                    Bar::Io { .. } =&gt; <span class="macro">unimplemented!</span>(),
-                                })
-                                .expect(<span class="string">"Failed to allocate memory for BAR"</span>);
-                            <span class="kw">unsafe </span>{
-                                <span class="macro">trace!</span>(<span class="string">"Allocating memory at {:#x} for BAR {} of device"</span>, address, i);
-                                endpoint_header.write_bar(i <span class="kw">as </span>u8, <span class="self">self</span>, address).unwrap();
-                            }
-                        }
+                        <span class="kw">let </span>bar = endpoint_header.bar(i, <span class="kw-2">&amp;*</span><span class="self">self</span>);
+                        skip_next = <span class="kw">match </span>bar {
+                            <span class="prelude-val">Some</span>(Bar::Memory64 { .. }) =&gt; <span class="bool-val">true</span>,
+                            <span class="kw">_ </span>=&gt; <span class="bool-val">false</span>,
+                        };
+                        bars[i <span class="kw">as </span>usize] = bar;
                     }
 
-                    endpoint_header.update_command(<span class="self">self</span>, |<span class="kw-2">mut </span>command| {
-                        command |= CommandRegister::BUS_MASTER_ENABLE;
+                    bars
+                };
 
-                        <span class="kw">if </span>needs_memory_access {
-                            command |= CommandRegister::MEMORY_ENABLE;
+                <span class="comment">/*
+                 * It's our responsibility to allocate memory for the BARs of PCI devices on
+                 * RISC-V. This memory needs to be addressable by both the CPU and the PCI host
+                 * bridge, and conform to the device's requirements, so we have to choose a
+                 * suitable region from the reported ranges.
+                 */
+                </span><span class="kw">let </span><span class="kw-2">mut </span>needs_memory_access = <span class="bool-val">false</span>;
+                <span class="kw">for </span>(i, bar) <span class="kw">in </span>bars.iter().enumerate() {
+                    <span class="kw">if let </span><span class="prelude-val">Some</span>(bar) = <span class="kw-2">*</span>bar {
+                        <span class="kw">let </span>address = <span class="self">self
+                            </span>.ranges
+                            .iter_mut()
+                            .find_map(|range| <span class="kw">match </span>bar {
+                                Bar::Memory32 { size, .. } =&gt; {
+                                    <span class="kw">if </span>range.space != AddressSpace::Memory32 {
+                                        <span class="kw">return </span><span class="prelude-val">None</span>;
+                                    }
+                                    needs_memory_access = <span class="bool-val">true</span>;
+                                    range.allocate(size <span class="kw">as </span>usize, size <span class="kw">as </span>usize)
+                                }
+                                Bar::Memory64 { size, .. } =&gt; {
+                                    <span class="kw">if </span>range.space != AddressSpace::Memory64 {
+                                        <span class="kw">return </span><span class="prelude-val">None</span>;
+                                    }
+                                    needs_memory_access = <span class="bool-val">true</span>;
+                                    range.allocate(size <span class="kw">as </span>usize, size <span class="kw">as </span>usize)
+                                }
+                                Bar::Io { .. } =&gt; <span class="macro">unimplemented!</span>(),
+                            })
+                            .expect(<span class="string">"Failed to allocate memory for BAR"</span>);
+                        <span class="kw">unsafe </span>{
+                            <span class="macro">trace!</span>(<span class="string">"Allocating memory at {:#x} for BAR {} of device"</span>, address, i);
+                            endpoint_header.write_bar(i <span class="kw">as </span>u8, <span class="kw-2">&amp;*</span><span class="self">self</span>, address).unwrap();
                         }
-                        command
-                    });
+                    }
                 }
 
-                HeaderType::PciPciBridge =&gt; {
-                    <span class="comment">// TODO: call check_bus on the bridge's secondary bus number
-                    </span><span class="macro">todo!</span>()
-                }
+                endpoint_header.update_command(<span class="kw-2">&amp;*</span><span class="self">self</span>, |<span class="kw-2">mut </span>command| {
+                    command |= CommandRegister::BUS_MASTER_ENABLE;
 
-                HeaderType::CardBusBridge =&gt; {
-                    <span class="comment">// TODO: what do we even do with these?
-                    </span><span class="macro">todo!</span>()
-                }
-
-                reserved =&gt; <span class="macro">panic!</span>(<span class="string">"PCI function has reserved header type: {:?}"</span>, reserved),
+                    <span class="kw">if </span>needs_memory_access {
+                        command |= CommandRegister::MEMORY_ENABLE;
+                    }
+                    command
+                });
             }
+
+            HeaderType::PciPciBridge =&gt; {
+                <span class="comment">// TODO: call check_bus on the bridge's secondary bus number
+                </span><span class="macro">todo!</span>()
+            }
+
+            HeaderType::CardBusBridge =&gt; {
+                <span class="comment">// TODO: what do we even do with these?
+                </span><span class="macro">todo!</span>()
+            }
+
+            reserved =&gt; <span class="macro">panic!</span>(<span class="string">"PCI function has reserved header type: {:?}"</span>, reserved),
         }
     }
 
@@ -508,11 +495,6 @@
 }
 
 <span class="kw">impl </span>ConfigRegionAccess <span class="kw">for </span>PciResolver {
-    <span class="kw">fn </span>function_exists(<span class="kw-2">&amp;</span><span class="self">self</span>, _address: PciAddress) -&gt; bool {
-        <span class="comment">// TODO
-        </span><span class="bool-val">true
-    </span>}
-
     <span class="kw">unsafe fn </span>read(<span class="kw-2">&amp;</span><span class="self">self</span>, address: PciAddress, offset: u16) -&gt; u32 {
         ptr::read_volatile(<span class="self">self</span>.address_for(address).add(offset <span class="kw">as </span>usize) <span class="kw">as </span><span class="kw-2">*const </span>u32)
     }

@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/work/poplar/poplar/lib/pci_types/src/capability/mod.rs`."><title>mod.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-dd39b87e5fcfba68.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="pci_types" data-themes="" data-resource-suffix="" data-rustdoc-version="1.80.0-nightly (bdbbb6c6a 2024-05-26)" data-channel="nightly" data-search-js="search-d52510db62a78183.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../static.files/storage-118b08c4c78b968e.js"></script><script defer src="../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-20a3ad099b048cf2.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-df360f571f6edeae.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/work/poplar/poplar/lib/pci_types/src/capability/mod.rs`."><title>mod.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-dd39b87e5fcfba68.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="pci_types" data-themes="" data-resource-suffix="" data-rustdoc-version="1.81.0-nightly (f1586001a 2024-06-13)" data-channel="nightly" data-search-js="search-0fe7219eb170c82e.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../static.files/storage-118b08c4c78b968e.js"></script><script defer src="../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-20a3ad099b048cf2.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-df360f571f6edeae.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -126,6 +126,28 @@
 <a href="#126" id="126">126</a>
 <a href="#127" id="127">127</a>
 <a href="#128" id="128">128</a>
+<a href="#129" id="129">129</a>
+<a href="#130" id="130">130</a>
+<a href="#131" id="131">131</a>
+<a href="#132" id="132">132</a>
+<a href="#133" id="133">133</a>
+<a href="#134" id="134">134</a>
+<a href="#135" id="135">135</a>
+<a href="#136" id="136">136</a>
+<a href="#137" id="137">137</a>
+<a href="#138" id="138">138</a>
+<a href="#139" id="139">139</a>
+<a href="#140" id="140">140</a>
+<a href="#141" id="141">141</a>
+<a href="#142" id="142">142</a>
+<a href="#143" id="143">143</a>
+<a href="#144" id="144">144</a>
+<a href="#145" id="145">145</a>
+<a href="#146" id="146">146</a>
+<a href="#147" id="147">147</a>
+<a href="#148" id="148">148</a>
+<a href="#149" id="149">149</a>
+<a href="#150" id="150">150</a>
 </pre></div><pre class="rust"><code><span class="kw">use crate</span>::{ConfigRegionAccess, PciAddress};
 <span class="kw">use </span>bit_field::BitField;
 <span class="kw">use </span>core::fmt::Formatter;
@@ -136,7 +158,7 @@
 <span class="kw">pub use </span>msi::{MsiCapability, MultipleMessageSupport, TriggerMode};
 <span class="kw">pub use </span>msix::MsixCapability;
 
-<span class="attr">#[derive(Clone)]
+<span class="attr">#[derive(Clone, Copy)]
 </span><span class="kw">pub struct </span>PciCapabilityAddress {
     <span class="kw">pub </span>address: PciAddress,
     <span class="kw">pub </span>offset: u16,
@@ -149,7 +171,7 @@
 }
 
 <span class="doccomment">/// PCI capabilities
-</span><span class="attr">#[derive(Clone, Debug)]
+</span><span class="attr">#[derive(Clone, Copy, Debug)]
 </span><span class="kw">pub enum </span>PciCapability {
     <span class="doccomment">/// Power management capability, Cap ID = `0x01`
     </span>PowerManagement(PciCapabilityAddress),
@@ -192,7 +214,7 @@
         id: u8,
         address: PciCapabilityAddress,
         extension: u16,
-        access: <span class="kw-2">&amp;</span><span class="kw">impl </span>ConfigRegionAccess,
+        access: <span class="kw">impl </span>ConfigRegionAccess,
     ) -&gt; <span class="prelude-ty">Option</span>&lt;PciCapability&gt; {
         <span class="kw">match </span>id {
             <span class="number">0x00 </span>=&gt; <span class="prelude-val">None</span>, <span class="comment">// null capability
@@ -215,21 +237,43 @@
             <span class="kw">_ </span>=&gt; <span class="prelude-val">Some</span>(PciCapability::Unknown { address, id }),
         }
     }
+
+    <span class="kw">pub fn </span>address(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; PciCapabilityAddress {
+        <span class="kw">match </span><span class="kw-2">*</span><span class="self">self </span>{
+            PciCapability::PowerManagement(address) =&gt; address,
+            PciCapability::AcceleratedGraphicsPort(address) =&gt; address,
+            PciCapability::VitalProductData(address) =&gt; address,
+            PciCapability::SlotIdentification(address) =&gt; address,
+            PciCapability::Msi(msi_cap) =&gt; msi_cap.address,
+            PciCapability::CompactPCIHotswap(address) =&gt; address,
+            PciCapability::PciX(address) =&gt; address,
+            PciCapability::HyperTransport(address) =&gt; address,
+            PciCapability::Vendor(address) =&gt; address,
+            PciCapability::DebugPort(address) =&gt; address,
+            PciCapability::CompactPCICentralResourceControl(address) =&gt; address,
+            PciCapability::PciHotPlugControl(address) =&gt; address,
+            PciCapability::BridgeSubsystemVendorId(address) =&gt; address,
+            PciCapability::AGP3(address) =&gt; address,
+            PciCapability::PciExpress(address) =&gt; address,
+            PciCapability::MsiX(msix_cap) =&gt; msix_cap.address,
+            PciCapability::Unknown { address, id: <span class="kw">_ </span>} =&gt; address,
+        }
+    }
 }
 
-<span class="kw">pub struct </span>CapabilityIterator&lt;<span class="lifetime">'a</span>, T: ConfigRegionAccess&gt; {
+<span class="kw">pub struct </span>CapabilityIterator&lt;T: ConfigRegionAccess&gt; {
     address: PciAddress,
     offset: u16,
-    access: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>T,
+    access: T,
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">'a</span>, T: ConfigRegionAccess&gt; CapabilityIterator&lt;<span class="lifetime">'a</span>, T&gt; {
-    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>new(address: PciAddress, offset: u16, access: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>T) -&gt; CapabilityIterator&lt;<span class="lifetime">'a</span>, T&gt; {
+<span class="kw">impl</span>&lt;T: ConfigRegionAccess&gt; CapabilityIterator&lt;T&gt; {
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>new(address: PciAddress, offset: u16, access: T) -&gt; CapabilityIterator&lt;T&gt; {
         CapabilityIterator { address, offset, access }
     }
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">'a</span>, T: ConfigRegionAccess&gt; Iterator <span class="kw">for </span>CapabilityIterator&lt;<span class="lifetime">'a</span>, T&gt; {
+<span class="kw">impl</span>&lt;T: ConfigRegionAccess&gt; Iterator <span class="kw">for </span>CapabilityIterator&lt;T&gt; {
     <span class="kw">type </span>Item = PciCapability;
 
     <span class="kw">fn </span>next(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="self">Self</span>::Item&gt; {
@@ -245,7 +289,7 @@
                 id <span class="kw">as </span>u8,
                 PciCapabilityAddress { address: <span class="self">self</span>.address, offset: <span class="self">self</span>.offset },
                 extension,
-                <span class="self">self</span>.access,
+                <span class="kw-2">&amp;</span><span class="self">self</span>.access,
             );
             <span class="self">self</span>.offset = next_ptr <span class="kw">as </span>u16;
             <span class="kw">if let </span><span class="prelude-val">Some</span>(cap) = cap {
