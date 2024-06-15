@@ -47,11 +47,6 @@ use validation::{UserPointer, UserSlice, UserString};
 /// Maps the name of a service to the channel used to register new service users.
 static SERVICE_MAP: Spinlock<BTreeMap<String, Arc<ChannelEnd>>> = Spinlock::new(BTreeMap::new());
 
-// TODO: these shouldn't be needed. Use-sites should be able to read `[None; MAX_WHATEVER]`, but can't because
-// the const_in_array_repeat_expression feature got removed. This works around that for now.
-const NONE_OBJECT: Option<Arc<dyn KernelObject>> = None;
-const NONE_BAR: Option<poplar::syscall::pci::Bar> = None;
-
 /// This is the architecture-independent syscall handler. It should be called by the handler that
 /// receives the syscall (each architecture is free to do this however it wishes). The only
 /// parameter that is guaranteed to be valid is `number`; the meaning of the rest may be undefined
@@ -316,7 +311,7 @@ where
             .map_err(|()| SendMessageError::HandlesAddressInvalid)?
     };
     let handle_objects = {
-        let mut arr = [NONE_OBJECT; CHANNEL_MAX_NUM_HANDLES];
+        let mut arr = [const { None }; CHANNEL_MAX_NUM_HANDLES];
         for (i, handle) in handles.iter().enumerate() {
             arr[i] = match task.handles.read().get(handle) {
                 Some(object) => Some(object.clone()),
@@ -468,7 +463,7 @@ where
          * XXX: we manually construct a Ptah message here so userspace can use the `poplar::Channel` type if it
          * wants to, but without having to pull that in here.
          */
-        let mut handle_objects = [NONE_OBJECT; CHANNEL_MAX_NUM_HANDLES];
+        let mut handle_objects = [const { None }; CHANNEL_MAX_NUM_HANDLES];
         handle_objects[0] = Some(provider_end as Arc<dyn KernelObject>);
         register_channel.add_message(Message { bytes: [ptah::make_handle_slot(0)].to_vec(), handle_objects });
 
@@ -488,7 +483,7 @@ where
     P: Platform,
 {
     use pci_types::{Bar, MAX_BARS};
-    use poplar::syscall::PciDeviceInfo;
+    use poplar::ddk::pci::PciDeviceInfo;
 
     // Check that the task has the 'PciBusDriver' capability
     if !task.capabilities.contains(&Capability::PciBusDriver) {
@@ -511,7 +506,7 @@ where
             for (i, (&address, device)) in pci_info.devices.iter().enumerate() {
                 let interrupt_handle = device.interrupt.clone().map(|interrupt| task.add_handle(interrupt));
 
-                let mut device_descriptor = poplar::syscall::PciDeviceInfo {
+                let mut device_descriptor = poplar::ddk::pci::PciDeviceInfo {
                     address,
                     vendor_id: device.vendor_id,
                     device_id: device.device_id,
@@ -519,7 +514,7 @@ where
                     class: device.class,
                     sub_class: device.sub_class,
                     interface: device.interface,
-                    bars: [NONE_BAR; MAX_BARS],
+                    bars: [const { None }; MAX_BARS],
                     interrupt: interrupt_handle,
                 };
 
@@ -541,7 +536,7 @@ where
                             );
                             let handle = task.add_handle(memory_object);
                             device_descriptor.bars[i] =
-                                Some(poplar::syscall::pci::Bar::Memory32 { memory_object: handle, size });
+                                Some(poplar::ddk::pci::Bar::Memory32 { memory_object: handle, size });
                         }
                         Some(Bar::Memory64 { address, size, prefetchable }) => {
                             let flags = Flags {
@@ -559,7 +554,7 @@ where
                             );
                             let handle = task.add_handle(memory_object);
                             device_descriptor.bars[i] =
-                                Some(poplar::syscall::pci::Bar::Memory64 { memory_object: handle, size });
+                                Some(poplar::ddk::pci::Bar::Memory64 { memory_object: handle, size });
                         }
                         Some(Bar::Io { .. }) => warn!("PCI device at {} has an I/O BAR. We don't support these, and so they're not passed out to userspace.", address),
                         None => (),

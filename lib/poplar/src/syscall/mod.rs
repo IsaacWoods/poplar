@@ -1,15 +1,11 @@
 pub mod get_framebuffer;
-#[cfg(feature = "pci")]
 pub mod pci;
 pub mod result;
 
 use core::mem::MaybeUninit;
 
 pub use get_framebuffer::{get_framebuffer, FramebufferInfo, GetFramebufferError, PixelFormat};
-#[cfg(all(feature = "can_alloc", feature = "pci"))]
-pub use pci::pci_get_info_vec;
-#[cfg(feature = "pci")]
-pub use pci::{pci_get_info, pci_get_info_slice, PciDeviceInfo, PciGetInfoError};
+pub use pci::{pci_get_info, PciGetInfoError};
 
 cfg_if::cfg_if! {
     if #[cfg(target_arch = "x86_64")] {

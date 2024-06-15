@@ -5,7 +5,7 @@ authors = ["Isaac Woods"]
 edition = "2021"
 
 [dependencies]
-std = { path = "../../lib/std" }
+std = { path = "../../lib/std", features = ["ddk"] }
 log = "0.4"
 pci_types = { path = "../../lib/pci_types" }
 platform_bus = { path = "../platform_bus" }

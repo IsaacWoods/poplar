@@ -8,9 +8,9 @@ use std::{
     poplar::{
         caps::{CapabilitiesRepr, CAP_EARLY_LOGGING, CAP_PADDING, CAP_PCI_BUS_DRIVER, CAP_SERVICE_USER},
         channel::Channel,
+        ddk::pci::Bar,
         early_logger::EarlyLogger,
         syscall,
-        syscall::pci::Bar,
     },
 };
 
@@ -23,19 +23,19 @@ pub fn main() {
         Channel::subscribe_to_service("platform_bus.bus_driver")
             .expect("Couldn't subscribe to platform_bus.bus_driver service!");
 
-    let mut descriptors = syscall::pci_get_info_vec().expect("Failed to get PCI descriptors");
+    let mut descriptors = std::poplar::ddk::pci::pci_get_info_vec().expect("Failed to get PCI descriptors");
     for descriptor in descriptors.drain(..) {
+        let device_type = DeviceType::from((descriptor.class, descriptor.sub_class));
         info!(
-            "PCI device at {}: {:04x}:{:04x} (class = {}, sub = {}, interface = {})",
+            "PCI device at {}: {:04x}:{:04x} (class = {}, sub = {}, interface = {}) => {:?}",
             descriptor.address,
             descriptor.vendor_id,
             descriptor.device_id,
             descriptor.class,
             descriptor.sub_class,
-            descriptor.interface
+            descriptor.interface,
+            device_type,
         );
-        let device_type = DeviceType::from((descriptor.class, descriptor.sub_class));
-        info!("Device type: {:?}", device_type);
         if device_type == DeviceType::UsbController {
             info!("USB controller type: {:?}", UsbType::try_from(descriptor.interface).unwrap());
         }

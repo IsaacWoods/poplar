@@ -19,8 +19,7 @@ maitake = { git = "https://github.com/hawkw/mycelium", optional = true, features
 spinning_top = "0.3.0"
 
 [features]
-default = ["can_alloc", "pci", "async"]
+default = ["can_alloc", "async"]
 can_alloc = ["log", "ptah", "ptah/alloc", "ptah/derive"]
-pci = ["pci_types"]
-ddk = ["pci", "linked_list_allocator"]
+ddk = ["pci_types", "linked_list_allocator"]
 async = ["can_alloc", "maitake"]
