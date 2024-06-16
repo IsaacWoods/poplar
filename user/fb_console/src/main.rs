@@ -90,11 +90,11 @@ fn spawn_framebuffer(
                             }
 
                             while let Ok(output) = output_receiver.try_recv() {
-                                writeln!(console.console.lock(), "Output: {:?}", output).unwrap();
+                                writeln!(console.console.lock(), "Output: {}", output).unwrap();
                             }
 
                             if let Some(result) = result {
-                                writeln!(console.console.lock(), "Result: {:?}", result).unwrap();
+                                writeln!(console.console.lock(), "Result: {}", result).unwrap();
                             }
 
                             write!(console.console.lock(), "\n> ").unwrap();

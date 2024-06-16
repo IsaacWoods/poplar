@@ -1,4 +1,5 @@
 use crate::ast::{BinaryOp, Expr, LogicalOp, Stmt, UnaryOp};
+use core::fmt;
 use std::{cell::RefCell, collections::BTreeMap, mem, sync::Arc};
 
 #[derive(Clone, PartialEq, Default, Debug)]
@@ -13,6 +14,19 @@ pub enum Value {
         body: Vec<Stmt>,
     },
     NativeFunction(usize),
+}
+
+impl fmt::Display for Value {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Value::Unit => write!(f, "()"),
+            Value::Integer(value) => write!(f, "{}", value),
+            Value::Bool(value) => write!(f, "{}", value),
+            Value::String(value) => write!(f, "\"{}\"", value),
+            Value::Function { .. } => write!(f, "[function]"),
+            Value::NativeFunction(_) => write!(f, "[native function]"),
+        }
+    }
 }
 
 pub struct Interpreter<'a> {
