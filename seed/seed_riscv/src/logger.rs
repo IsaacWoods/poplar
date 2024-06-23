@@ -176,19 +176,17 @@ where
 
 #[panic_handler]
 pub fn panic(info: &core::panic::PanicInfo) -> ! {
-    if let Some(message) = info.message() {
-        if let Some(location) = info.location() {
-            let _ = writeln!(
-                LOGGER.serial.lock(),
-                "PANIC: {} ({} - {}:{})",
-                message,
-                location.file(),
-                location.line(),
-                location.column()
-            );
-        } else {
-            let _ = writeln!(LOGGER.serial.lock(), "PANIC: {} (no location info)", message);
-        }
+    if let Some(location) = info.location() {
+        let _ = writeln!(
+            LOGGER.serial.lock(),
+            "PANIC: {} ({} - {}:{})",
+            info.message(),
+            location.file(),
+            location.line(),
+            location.column()
+        );
+    } else {
+        let _ = writeln!(LOGGER.serial.lock(), "PANIC: {} (no location info)", info.message());
     }
     loop {}
 }

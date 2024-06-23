@@ -194,19 +194,17 @@ where
 
 #[panic_handler]
 pub fn panic(info: &PanicInfo) -> ! {
-    if let Some(message) = info.message() {
-        if let Some(location) = info.location() {
-            let _ = writeln!(
-                SerialWriter,
-                "PANIC: {} ({} - {}:{})",
-                message,
-                location.file(),
-                location.line(),
-                location.column()
-            );
-        } else {
-            let _ = writeln!(SerialWriter, "PANIC: {} (no location info)", message);
-        }
+    if let Some(location) = info.location() {
+        let _ = writeln!(
+            SerialWriter,
+            "PANIC: {} ({} - {}:{})",
+            info.message(),
+            location.file(),
+            location.line(),
+            location.column()
+        );
+    } else {
+        let _ = writeln!(SerialWriter, "PANIC: {} (no location info)", info.message());
     }
     loop {}
 }

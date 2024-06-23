@@ -126,15 +126,19 @@ fn lang_start<T>(main: fn() -> T, _argc: isize, _argv: *const *const u8, _sigpip
 pub fn handle_panic(info: &PanicInfo) -> ! {
     use core::fmt::Write;
 
-    // TODO: this isn't an ideal approach - if the allocator stops working we may not get a good error
+    // TODO: this isn't an ideal approach - if the allocator stops working we won't get a good error
     let mut s = String::new();
-    if let Some(message) = info.message() {
-        if let Some(location) = info.location() {
-            let _ =
-                write!(s, "PANIC: {} ({} - {}:{})", message, location.file(), location.line(), location.column());
-        } else {
-            let _ = write!(s, "PANIC: {} (no location info)", message);
-        }
+    if let Some(location) = info.location() {
+        let _ = write!(
+            s,
+            "PANIC: {} ({} - {}:{})",
+            info.message(),
+            location.file(),
+            location.line(),
+            location.column()
+        );
+    } else {
+        let _ = write!(s, "PANIC: {} (no location info)", info.message());
     }
     let _ = poplar::syscall::early_log(&s);
 
