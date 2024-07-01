@@ -128,13 +128,12 @@ pub fn main() {
 
     let platform_bus = PlatformBus::new();
 
-    {
+    /*
+     * Listen for new bus drivers that want a channel to register devices.
+     */
+    std::poplar::rt::spawn({
         let platform_bus = platform_bus.clone();
-
-        /*
-         * Listen for new bus drivers that want a channel to register devices.
-         */
-        std::poplar::rt::spawn(async move {
+        async move {
             loop {
                 let bus_driver_handle = bus_driver_service_channel.receive().await.unwrap();
 
@@ -145,27 +144,33 @@ pub fn main() {
                 /*
                  * Each new bus driver gets a task to listen for newly registered devices.
                  */
-                let platform_bus = platform_bus.clone();
-                std::poplar::rt::spawn(async move {
-                    loop {
-                        match channel.receive().await.unwrap() {
-                            BusDriverMessage::RegisterDevice(name, device_info, handoff_info) => {
-                                info!(
-                                    "Registering device: Device: {:?}, Handoff: {:?} as {}",
-                                    device_info, handoff_info, name
-                                );
-                                platform_bus.register_device(
-                                    name,
-                                    Device::Unclaimed { bus_driver: bus_driver_index, device_info, handoff_info },
-                                );
-                                platform_bus.check_devices();
+                std::poplar::rt::spawn({
+                    let platform_bus = platform_bus.clone();
+                    async move {
+                        loop {
+                            match channel.receive().await.unwrap() {
+                                BusDriverMessage::RegisterDevice(name, device_info, handoff_info) => {
+                                    info!(
+                                        "Registering device: Device: {:?}, Handoff: {:?} as {}",
+                                        device_info, handoff_info, name
+                                    );
+                                    platform_bus.register_device(
+                                        name,
+                                        Device::Unclaimed {
+                                            bus_driver: bus_driver_index,
+                                            device_info,
+                                            handoff_info,
+                                        },
+                                    );
+                                    platform_bus.check_devices();
+                                }
                             }
                         }
                     }
                 });
             }
-        });
-    }
+        }
+    });
 
     /*
      * Listen for new device drivers that want a channel to claim devices on.
