@@ -6,8 +6,19 @@ description = "Small programming language, designed for use as Poplar's shell la
 license = "MPL-2.0"
 edition = "2021"
 
+[lib]
+name = "ginkgo"
+path = "src/lib.rs"
+
+[[bin]]
+name = "ginkgo"
+path = "src/main.rs"
+required-features = ["rustyline"]
+
 [dependencies]
 std = { path = "../lib/std", optional = true }
+rustyline = { version = "14.0.0", features = ["derive"], optional = true }
 
 [features]
+default = ["rustyline"]
 poplar = ["std"]

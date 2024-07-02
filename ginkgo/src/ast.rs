@@ -41,16 +41,16 @@ impl fmt::Display for Stmt {
             }
             Self::If { condition, then_block, else_block } => {
                 writeln!(f, "(if {}", condition)?;
-                write!(f, "{}", then_block)?;
+                write!(f, "    {}", then_block)?;
                 if let Some(else_block) = else_block {
-                    write!(f, "{}", else_block)?;
+                    write!(f, "    {}", else_block)?;
                 }
                 writeln!(f, ")")?;
                 Ok(())
             }
             Self::While { condition, body } => {
                 writeln!(f, "(while {}", condition)?;
-                write!(f, "{}", body)?;
+                write!(f, "    {}", body)?;
                 writeln!(f, ")")?;
                 Ok(())
             }
