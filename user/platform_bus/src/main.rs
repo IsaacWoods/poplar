@@ -17,9 +17,9 @@ use std::{
 type BusDriverIndex = usize;
 type DeviceDriverIndex = usize;
 
-/// Denotes a device that has been added to the Platform Bus directly from information provided to
+/// Denotes that a device has been added to the Platform Bus directly from information provided to
 /// us by the kernel. This is required because things like PCI devices or devices described by
-/// the device tree, for example, do not have full bus drivers.
+/// the device tree, for example, are managed by the Platform Bus directly.
 pub const KERNEL_DEVICE: BusDriverIndex = usize::MAX;
 
 struct BusDriver {
@@ -35,9 +35,16 @@ struct DeviceDriver {
 #[derive(Debug)]
 pub enum Device {
     Unclaimed { bus_driver: BusDriverIndex, device_info: DeviceInfo, handoff_info: HandoffInfo },
-    // TODO: this shouldn't exist probably
-    Thinking,
     Claimed { bus_driver: BusDriverIndex, device_info: DeviceInfo, device_driver: DeviceDriverIndex },
+}
+
+impl Device {
+    pub fn is_claimed(&self) -> bool {
+        match self {
+            Device::Unclaimed { .. } => false,
+            Device::Claimed { .. } => true,
+        }
+    }
 }
 
 struct PlatformBus {
@@ -227,8 +234,23 @@ pub fn main() {
                                 let mut devices = platform_bus.devices.write();
                                 let device = devices.get_mut(&device_name).unwrap();
 
+                                if device.is_claimed() {
+                                    warn!("Device driver claimed support for '{}', but device has already been handed off! Ignoring.", device_name);
+                                    continue;
+                                }
+
                                 info!("Handing off device '{}' to supporting device driver", device_name);
-                                let taken_device = mem::replace(device, Device::Thinking);
+                                let claimed_device =
+                                    if let Device::Unclaimed { bus_driver, device_info, .. } = &device {
+                                        Device::Claimed {
+                                            bus_driver: *bus_driver,
+                                            device_info: device_info.clone(),
+                                            device_driver: device_driver_index,
+                                        }
+                                    } else {
+                                        panic!()
+                                    };
+                                let taken_device = mem::replace(device, claimed_device);
                                 if let Device::Unclaimed { bus_driver, device_info, handoff_info } = taken_device {
                                     device_driver
                                         .channel
@@ -238,24 +260,8 @@ pub fn main() {
                                             handoff_info,
                                         ))
                                         .unwrap();
-                                    let _ = mem::replace(
-                                        device,
-                                        Device::Claimed {
-                                            bus_driver,
-                                            device_info,
-                                            device_driver: device_driver_index,
-                                        },
-                                    );
                                 } else {
-                                    /*
-                                     * TODO: think harder about whether multiple drivers should
-                                     * ever claim to support a device. Maybe we should not even
-                                     * ask if it's already been handed off actually??
-                                     */
-                                    info!(
-                                        "Device driver claims to support {}, but it has already been handed off!",
-                                        device_name
-                                    );
+                                    panic!();
                                 }
                             }
                         }
