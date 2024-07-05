@@ -268,17 +268,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b15813163c1d831bf4a13c3610c05c0d03b39feb07f7e09fa234dac9b15aaf39"
 
 [[package]]
-name = "pci_bus"
-version = "0.1.0"
-dependencies = [
- "log",
- "pci_types",
- "platform_bus",
- "ptah",
- "std",
-]
-
-[[package]]
 name = "pci_types"
 version = "0.10.0"
 dependencies = [
@@ -317,6 +306,7 @@ name = "platform_bus"
 version = "0.1.0"
 dependencies = [
  "log",
+ "pci_types",
  "ptah",
  "spinning_top 0.3.0",
  "std",

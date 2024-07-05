@@ -1,29 +1,13 @@
-#![feature(never_type)]
-
+use crate::Device;
 use log::info;
 use pci_types::device_type::{DeviceType, UsbType};
-use platform_bus::{BusDriverMessage, DeviceInfo, HandoffInfo, HandoffProperty, Property};
-use std::{
-    collections::BTreeMap,
-    poplar::{
-        caps::{CapabilitiesRepr, CAP_EARLY_LOGGING, CAP_PADDING, CAP_PCI_BUS_DRIVER, CAP_SERVICE_USER},
-        channel::Channel,
-        ddk::pci::Bar,
-        early_logger::EarlyLogger,
-        syscall,
-    },
-};
+use platform_bus::{DeviceInfo, HandoffInfo, HandoffProperty, Property};
+use std::{collections::BTreeMap, poplar::ddk::pci::Bar};
 
-pub fn main() {
-    log::set_logger(&EarlyLogger).unwrap();
-    log::set_max_level(log::LevelFilter::Trace);
-    info!("PCI bus driver is running!");
-
-    let platform_bus_channel: Channel<BusDriverMessage, !> =
-        Channel::subscribe_to_service("platform_bus.bus_driver")
-            .expect("Couldn't subscribe to platform_bus.bus_driver service!");
-
+pub fn enumerate_pci_devices() -> BTreeMap<String, Device> {
+    let mut devices = BTreeMap::new();
     let mut descriptors = std::poplar::ddk::pci::pci_get_info_vec().expect("Failed to get PCI descriptors");
+
     for descriptor in descriptors.drain(..) {
         let device_type = DeviceType::from((descriptor.class, descriptor.sub_class));
         info!(
@@ -40,9 +24,6 @@ pub fn main() {
             info!("USB controller type: {:?}", UsbType::try_from(descriptor.interface).unwrap());
         }
 
-        /*
-         * Register the device with the Platform Bus.
-         */
         let name = "pci-".to_string() + &descriptor.address.to_string();
         let device_info = {
             let mut properties = BTreeMap::new();
@@ -83,15 +64,9 @@ pub fn main() {
 
             HandoffInfo(properties)
         };
-        platform_bus_channel.send(&BusDriverMessage::RegisterDevice(name, device_info, handoff_info)).unwrap();
+
+        devices.insert(name, Device::Unclaimed { bus_driver: crate::KERNEL_DEVICE, device_info, handoff_info });
     }
 
-    loop {
-        syscall::yield_to_kernel();
-    }
+    devices
 }
-
-#[used]
-#[link_section = ".caps"]
-pub static mut CAPS: CapabilitiesRepr<4> =
-    CapabilitiesRepr::new([CAP_EARLY_LOGGING, CAP_PCI_BUS_DRIVER, CAP_SERVICE_USER, CAP_PADDING]);

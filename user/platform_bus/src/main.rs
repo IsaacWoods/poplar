@@ -1,3 +1,5 @@
+mod pci;
+
 use log::{info, warn};
 use platform_bus::{BusDriverMessage, DeviceDriverMessage, DeviceDriverRequest, DeviceInfo, Filter, HandoffInfo};
 use spinning_top::RwSpinlock;
@@ -5,7 +7,7 @@ use std::{
     collections::BTreeMap,
     mem,
     poplar::{
-        caps::{CapabilitiesRepr, CAP_EARLY_LOGGING, CAP_PADDING, CAP_SERVICE_PROVIDER},
+        caps::{CapabilitiesRepr, CAP_EARLY_LOGGING, CAP_PADDING, CAP_PCI_BUS_DRIVER, CAP_SERVICE_PROVIDER},
         channel::Channel,
         early_logger::EarlyLogger,
     },
@@ -14,6 +16,11 @@ use std::{
 
 type BusDriverIndex = usize;
 type DeviceDriverIndex = usize;
+
+/// Denotes a device that has been added to the Platform Bus directly from information provided to
+/// us by the kernel. This is required because things like PCI devices or devices described by
+/// the device tree, for example, do not have full bus drivers.
+pub const KERNEL_DEVICE: BusDriverIndex = usize::MAX;
 
 struct BusDriver {
     channel: Arc<Channel<(), BusDriverMessage>>,
@@ -26,7 +33,7 @@ struct DeviceDriver {
 }
 
 #[derive(Debug)]
-enum Device {
+pub enum Device {
     Unclaimed { bus_driver: BusDriverIndex, device_info: DeviceInfo, handoff_info: HandoffInfo },
     // TODO: this shouldn't exist probably
     Thinking,
@@ -127,6 +134,11 @@ pub fn main() {
     let device_driver_service_channel = Channel::register_service("device_driver").unwrap();
 
     let platform_bus = PlatformBus::new();
+
+    /*
+     * Add devices from buses that the Platform Bus enumerates itself.
+     */
+    platform_bus.devices.write().append(&mut pci::enumerate_pci_devices());
 
     /*
      * Listen for new bus drivers that want a channel to register devices.
@@ -240,7 +252,10 @@ pub fn main() {
                                      * ever claim to support a device. Maybe we should not even
                                      * ask if it's already been handed off actually??
                                      */
-                                    info!("Device driver claims to support device, but it has already been handed off!");
+                                    info!(
+                                        "Device driver claims to support {}, but it has already been handed off!",
+                                        device_name
+                                    );
                                 }
                             }
                         }
@@ -256,4 +271,4 @@ pub fn main() {
 #[used]
 #[link_section = ".caps"]
 pub static mut CAPS: CapabilitiesRepr<4> =
-    CapabilitiesRepr::new([CAP_EARLY_LOGGING, CAP_SERVICE_PROVIDER, CAP_PADDING, CAP_PADDING]);
+    CapabilitiesRepr::new([CAP_EARLY_LOGGING, CAP_SERVICE_PROVIDER, CAP_PCI_BUS_DRIVER, CAP_PADDING]);
