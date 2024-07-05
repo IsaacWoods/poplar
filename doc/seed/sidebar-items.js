@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"mod":["boot_info","ramdisk"]};
+window.SIDEBAR_ITEMS = {"mod":["boot_info","ramdisk"],"struct":["SeedConfig"]};
