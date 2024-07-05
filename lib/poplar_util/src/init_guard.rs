@@ -38,7 +38,7 @@ impl<T> InitGuard<T> {
     /// ### Panics
     /// Panics if this `InitGuard` has already been initialized.
     pub fn initialize(&self, value: T) {
-        match self.state.compare_exchange(STATE_UNINIT, STATE_INITIALIZING, Ordering::SeqCst, Ordering::SeqCst) {
+        match self.state.compare_exchange(STATE_UNINIT, STATE_INITIALIZING, Ordering::AcqRel, Ordering::Relaxed) {
             Ok(STATE_UNINIT) => {
                 unsafe {
                     /*
@@ -47,7 +47,7 @@ impl<T> InitGuard<T> {
                      */
                     (*self.data.get()).as_mut_ptr().write(value);
                 }
-                self.state.store(STATE_INITIALIZED, Ordering::SeqCst);
+                self.state.store(STATE_INITIALIZED, Ordering::Release);
             }
 
             Err(STATE_INITIALIZING) | Err(STATE_INITIALIZED) => panic!("InitGuard has already been initialized!"),
@@ -62,7 +62,7 @@ impl<T> InitGuard<T> {
     /// variant.
     #[track_caller]
     pub fn get(&self) -> &T {
-        match self.state.load(Ordering::SeqCst) {
+        match self.state.load(Ordering::Acquire) {
             /*
              * Here, we create a reference to the data within the `MaybeUninit`. This causes UB if
              * the data isn't really initialized.
@@ -79,7 +79,7 @@ impl<T> InitGuard<T> {
     /// Panics if this guard hasn't been initialized yet. Use `try_get_mut` if you want a fallible
     /// variant.
     pub fn get_mut(&mut self) -> &mut T {
-        match self.state.load(Ordering::SeqCst) {
+        match self.state.load(Ordering::Acquire) {
             /*
              * Here, we create a reference to the data within the `MaybeUninit`. This causes UB if
              * the data isn't really initialized.
@@ -93,7 +93,7 @@ impl<T> InitGuard<T> {
     /// Get a reference to the data, if this guard has been initialized. Returns `None` if it has
     /// not yet been initialized, or is currently being initialized.
     pub fn try_get(&self) -> Option<&T> {
-        match self.state.load(Ordering::SeqCst) {
+        match self.state.load(Ordering::Acquire) {
             /*
              * Here, we create a reference to the data within the `MaybeUninit`. This causes UB if
              * the data isn't really initialized.
@@ -107,7 +107,7 @@ impl<T> InitGuard<T> {
     /// Get a mutable reference to the data, if this guard has been initialized. Returns `None` if it has
     /// not yet been initialized, or is currently being initialized.
     pub fn try_get_mut(&mut self) -> Option<&mut T> {
-        match self.state.load(Ordering::SeqCst) {
+        match self.state.load(Ordering::Acquire) {
             /*
              * Here, we create a reference to the data within the `MaybeUninit`. This causes UB if
              * the data isn't really initialized.
