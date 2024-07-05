@@ -83,15 +83,18 @@ impl<'a> VirtioGpu<'a> {
         VirtioGpu { mapped_bar, common_cfg, interrupt_event, queue, request_pool, next_resource_id: 1 }
     }
 
-    pub fn get_scanout_info(&mut self) -> ScanoutInfo {
+    pub fn get_scanout_info(&mut self, override_size: Option<(u32, u32)>) -> ScanoutInfo {
         let response: DisplayInfo = self.make_request(CtrlHeader::new(CtrlType::CmdGetDisplayInfo));
         assert!(response.header.typ == CtrlType::OkDisplayInfo);
         // XXX: we'll only support one display for now, so find the first enabled scanout
         let (scanout_id, mode) = response.modes.iter().enumerate().find(|(_, mode)| mode.enabled != 0).unwrap();
         info!("Display info: {:?}", mode);
-        // TODO: we can actually just ignore this and set w/h to whatever we want which is nice too
-        ScanoutInfo { width: mode.width, height: mode.height, scanout_id: scanout_id as u32 }
-        // ScanoutInfo { width: 800, height: 600, scanout_id: scanout_id as u32 }
+
+        if let Some((width, height)) = override_size {
+            ScanoutInfo { width, height, scanout_id: scanout_id as u32 }
+        } else {
+            ScanoutInfo { width: mode.width, height: mode.height, scanout_id: scanout_id as u32 }
+        }
     }
 
     pub fn create_resource(&mut self, format: VirtioGpuFormat, width: u32, height: u32) -> ResourceIndex {
@@ -277,7 +280,9 @@ fn main() {
     assert!(common_cfg.num_queues.read() == 2);
 
     let mut gpu = VirtioGpu::new(mapped_bar, common_cfg, interrupt_event, queue, request_pool);
-    let scanout_info = gpu.get_scanout_info();
+    // TODO: we currently set the resolution to always be 800x600, but this should of course be up
+    // to the layer above us in the future
+    let scanout_info = gpu.get_scanout_info(Some((800, 600)));
     let framebuffer_resource =
         gpu.create_resource(VirtioGpuFormat::R8G8B8X8Unorm, scanout_info.width, scanout_info.height);
 
