@@ -69,6 +69,16 @@ fn spawn_framebuffer(
             Value::Unit
         });
 
+        interpreter.define_native_function("version", |params| {
+            assert!(params.len() == 0);
+            /*
+             * TODO: we don't really have a concept of Poplar versions yet. When this is more
+             * formalised, we should get it from somewhere central (i.e. env var during build) so
+             * this auto-updates.
+             */
+            Value::String("Poplar 0.1.0".to_string())
+        });
+
         loop {
             let mut needs_redraw = false;
 
