@@ -308,6 +308,7 @@ dependencies = [
  "bit_field",
  "cfg-if 0.1.10",
  "log",
+ "smallvec",
 ]
 
 [[package]]
@@ -608,6 +609,7 @@ version = "0.1.0"
 dependencies = [
  "hal",
  "heapless",
+ "serde",
 ]
 
 [[package]]
@@ -665,6 +667,12 @@ checksum = "900fba806f70c630b0a382d0d825e17a0f19fcd059a2ade1ff237bcddf446b31"
 dependencies = [
  "lazy_static",
 ]
+
+[[package]]
+name = "smallvec"
+version = "1.13.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3c5e1a9a646d36c3599cd173a41282daf47c44583ad367b8e6837255952e5c67"
 
 [[package]]
 name = "stable_deref_trait"

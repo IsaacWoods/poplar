@@ -45,6 +45,13 @@ impl DistResult {
             }
         }
 
+        // If a config file for Seed is required, add it here
+        if let Some(config) = &self.seed_config {
+            let path = PathBuf::from(format!("seed_config_{}.toml", self.platform));
+            std::fs::write(&path, toml::to_string(config).unwrap()).unwrap();
+            ramdisk.add("config", &path);
+        }
+
         ramdisk
     }
 

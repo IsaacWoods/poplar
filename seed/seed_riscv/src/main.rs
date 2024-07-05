@@ -28,7 +28,7 @@ use linked_list_allocator::LockedHeap;
 use memory::{MemoryManager, MemoryRegions};
 use pci::PciResolver;
 use poplar_util::{linker::LinkerSymbol, math::align_up};
-use seed::boot_info::BootInfo;
+use seed::{boot_info::BootInfo, SeedConfig};
 use tracing::info;
 
 /*
@@ -127,6 +127,14 @@ pub fn seed_main(hart_id: u64, fdt_ptr: *const u8) -> ! {
         ALLOCATOR.lock().init(usize::from(heap_memory.start.start) as *mut u8, HEAP_SIZE);
     }
 
+    let config = if let Some(ref mut ramdisk) = ramdisk {
+        let config = ramdisk.load("config").expect("No config file found!");
+        picotoml::from_str::<SeedConfig>(core::str::from_utf8(config.data).unwrap()).unwrap()
+    } else {
+        panic!("No config file found!");
+    };
+    info!("Config: {:?}", config);
+
     let mut kernel_page_table = PageTableImpl::new(MEMORY_MANAGER.allocate(), VAddr::new(0x0));
     let kernel_file = if let Some(ref mut ramdisk) = ramdisk {
         ramdisk.load("kernel_riscv").unwrap()
@@ -172,9 +180,7 @@ pub fn seed_main(hart_id: u64, fdt_ptr: *const u8) -> ! {
     /*
      * Load desired early tasks.
      */
-    // TODO: load from config file
-    for name in &["hello_world", "platform_bus", "pci_bus", "usb_bus_ehci", "usb_hid", "virtio_gpu", "fb_console"]
-    {
+    for name in &config.user_tasks {
         let file = if let Some(ref mut ramdisk) = ramdisk {
             ramdisk.load(&name).unwrap()
         } else {

@@ -15,7 +15,10 @@ use hal::memory::{kibibytes, Bytes, Flags, FrameAllocator, FrameSize, PAddr, Pag
 use hal_x86_64::paging::PageTableImpl;
 use log::{error, info};
 use logger::Logger;
-use seed::boot_info::{BootInfo, VideoModeInfo};
+use seed::{
+    boot_info::{BootInfo, VideoModeInfo},
+    SeedConfig,
+};
 use serde::Deserialize;
 use uefi::{
     fs::Path,
@@ -37,11 +40,6 @@ pub const BOOT_INFO_MEMORY_TYPE: MemoryType = MemoryType::custom(0x80000004);
 pub const KERNEL_HEAP_MEMORY_TYPE: MemoryType = MemoryType::custom(0x80000005);
 
 const KERNEL_HEAP_SIZE: Bytes = kibibytes(800);
-
-#[derive(Clone, Debug, Deserialize)]
-struct SeedConfig {
-    pub user_tasks: Vec<String>,
-}
 
 #[entry]
 fn efi_main(image_handle: Handle, system_table: SystemTable<Boot>) -> Status {

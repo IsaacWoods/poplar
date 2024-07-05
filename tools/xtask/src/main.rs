@@ -217,6 +217,8 @@ impl Dist {
             result.add(Artifact::new(&task.name, ArtifactType::UserTask, artifact).include_in_ramdisk());
         }
 
+        result.add_seed_config(self.generate_seed_config());
+
         Ok(result)
     }
 

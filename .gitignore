@@ -9,6 +9,8 @@
 *.elf
 *.dtb
 
+seed_config_*
+
 # These are built on CI and should never be committed
 /doc_target/
 /docs/
