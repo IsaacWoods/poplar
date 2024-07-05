@@ -2,6 +2,7 @@
 // Copyright 2022, Isaac Woods
 
 use bit_field::BitField as _;
+use hal::memory::VAddr;
 use volatile::Volatile;
 
 /// The register block of a UART16550-compatible serial device. The usage of the registers are
@@ -24,10 +25,10 @@ pub enum Uart16550<'a> {
 }
 
 impl<'a> Uart16550<'a> {
-    pub unsafe fn new(addr: usize, reg_width: usize) -> Uart16550<'a> {
+    pub unsafe fn new(addr: VAddr, reg_width: usize) -> Uart16550<'a> {
         match reg_width {
-            1 => Self::One(unsafe { &mut *(addr as *mut Registers<u8>) }),
-            4 => Self::Four(unsafe { &mut *(addr as *mut Registers<u32>) }),
+            1 => Self::One(unsafe { &mut *(addr.mut_ptr() as *mut Registers<u8>) }),
+            4 => Self::Four(unsafe { &mut *(addr.mut_ptr() as *mut Registers<u32>) }),
             _ => panic!("Unsupported register width!"),
         }
     }

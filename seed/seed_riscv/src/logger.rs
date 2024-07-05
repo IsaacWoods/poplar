@@ -9,6 +9,7 @@ use core::{
     sync::atomic::{AtomicU64, Ordering},
 };
 use fdt::Fdt;
+use hal::memory::VAddr;
 use hal_riscv::hw::uart16550::Uart16550;
 use poplar_util::InitGuard;
 use spinning_top::Spinlock;
@@ -47,7 +48,7 @@ impl SerialWriter {
     }
 
     fn init(&mut self, addr: usize, reg_width: usize) {
-        let serial = unsafe { Uart16550::new(addr, reg_width) };
+        let serial = unsafe { Uart16550::new(VAddr::new(addr), reg_width) };
         self.serial.initialize(serial);
     }
 }

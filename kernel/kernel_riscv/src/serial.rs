@@ -38,7 +38,7 @@ pub fn init(fdt: &Fdt) {
     };
 
     let serial_mapped_address = physical_to_virtual(PAddr::new(addr).unwrap());
-    let serial = unsafe { Uart16550::new(usize::from(serial_mapped_address), reg_width) };
+    let serial = unsafe { Uart16550::new(serial_mapped_address, reg_width) };
     serial.init();
     SERIAL.initialize(serial);
 
