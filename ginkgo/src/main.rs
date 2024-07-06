@@ -1,4 +1,5 @@
 use ginkgo::{
+    ast::BindingResolver,
     interpreter::{Interpreter, Value},
     parse::Parser,
 };
@@ -16,6 +17,7 @@ use std::{io, path::Path};
 
 fn main() -> io::Result<()> {
     let mut interpreter = Interpreter::new();
+    let mut resolver = BindingResolver::new();
 
     /*
      * TODO: things to experiment with: `gc-arena` crate for garbage-collected values long-term +
@@ -37,7 +39,13 @@ fn main() -> io::Result<()> {
 
         let source = std::fs::read_to_string(Path::new(&path)).unwrap();
         let parser = Parser::new(&source);
-        let output = parser.parse().unwrap();
+        let mut output = parser.parse().unwrap();
+
+        for mut statement in &mut output {
+            resolver.resolve_bindings(&mut statement);
+        }
+
+        println!("AST: {:#?}", output);
 
         for statement in output {
             interpreter.eval_stmt(statement);
@@ -64,7 +72,11 @@ fn main() -> io::Result<()> {
                 rl.add_history_entry(line.as_str()).unwrap();
 
                 let parser = Parser::new(&line);
-                let stmts = parser.parse().unwrap();
+                let mut stmts = parser.parse().unwrap();
+
+                for statement in &mut stmts {
+                    resolver.resolve_bindings(statement);
+                }
 
                 for statement in stmts {
                     if let Some(result) = interpreter.eval_stmt(statement) {

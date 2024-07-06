@@ -1,4 +1,4 @@
-use crate::ast::{BinaryOp, Expr, LogicalOp, Stmt, UnaryOp};
+use crate::ast::{BinaryOp, Expr, ExprTyp, LogicalOp, Resolution, Stmt, StmtTyp, UnaryOp};
 use core::fmt;
 use std::{cell::RefCell, collections::BTreeMap, mem, sync::Arc};
 
@@ -73,8 +73,11 @@ impl<'a> Interpreter<'a> {
                  * Only the last statement is allowed to return a value. If there are more
                  * statements after this one, issue an error.
                  */
-                // TODO: runtime error instead of panic
-                assert!(statements.next().is_none());
+                if !statements.next().is_none() {
+                    // TODO: runtime error instead of panic
+                    panic!("Non-terminated statement is not last. Value = {:#?}", value);
+                }
+
                 result = Some(value);
                 break;
             }
@@ -85,24 +88,24 @@ impl<'a> Interpreter<'a> {
     }
 
     pub fn eval_stmt(&mut self, stmt: Stmt) -> Option<Value> {
-        match stmt {
-            Stmt::Expression(expr) => {
+        match stmt.typ {
+            StmtTyp::Expression(expr) => {
                 let result = self.eval_expr(expr);
                 Some(result)
             }
-            Stmt::TerminatedExpression(expr) => {
+            StmtTyp::TerminatedExpression(expr) => {
                 self.eval_expr(expr);
                 None
             }
-            Stmt::Let { name, expression } => {
+            StmtTyp::Let { name, expression } => {
                 let value = self.eval_expr(expression);
                 self.environment.borrow_mut().define(name, value);
                 None
             }
-            Stmt::Block(statements) => {
+            StmtTyp::Block(statements) => {
                 self.eval_block(statements, Environment::new_with_parent(self.environment.clone()))
             }
-            Stmt::If { condition, then_block, else_block } => {
+            StmtTyp::If { condition, then_block, else_block } => {
                 if let Value::Bool(truthy) = self.eval_expr(condition) {
                     if truthy {
                         self.eval_stmt(*then_block)
@@ -115,7 +118,7 @@ impl<'a> Interpreter<'a> {
                     panic!("Condition of `if` must be a bool");
                 }
             }
-            Stmt::While { condition, body } => {
+            StmtTyp::While { condition, body } => {
                 let body = *body;
                 while let Value::Bool(truthy) = self.eval_expr(condition.clone())
                     && truthy
@@ -128,10 +131,16 @@ impl<'a> Interpreter<'a> {
     }
 
     pub fn eval_expr(&mut self, expr: Expr) -> Value {
-        match expr {
-            Expr::Literal(value) => value.clone(),
-            Expr::Identifier(name) => self.environment.borrow().get(&name).unwrap().clone(),
-            Expr::UnaryOp { op, operand } => {
+        match expr.typ {
+            ExprTyp::Literal(value) => value.clone(),
+            ExprTyp::Identifier { name, resolution } => {
+                if let Some(value) = self.resolve_binding(&name, resolution) {
+                    value.clone()
+                } else {
+                    panic!("Failed to get value for binding called '{}'. Either it does not exist (or dies before a function referencing it, bc we don't do any borrow checking :))", name);
+                }
+            }
+            ExprTyp::UnaryOp { op, operand } => {
                 let operand = self.eval_expr(*operand);
                 match op {
                     UnaryOp::Plus => operand,
@@ -151,7 +160,7 @@ impl<'a> Interpreter<'a> {
                     }
                 }
             }
-            Expr::BinaryOp { op, left, right } => {
+            ExprTyp::BinaryOp { op, left, right } => {
                 let left = self.eval_expr(*left);
                 let right = self.eval_expr(*right);
                 match op {
@@ -282,7 +291,7 @@ impl<'a> Interpreter<'a> {
                     }
                 }
             }
-            Expr::LogicalOp { op, left, right } => {
+            ExprTyp::LogicalOp { op, left, right } => {
                 let Value::Bool(left) = self.eval_expr(*left) else { panic!() };
 
                 match op {
@@ -304,19 +313,22 @@ impl<'a> Interpreter<'a> {
                     }
                 }
             }
-            Expr::Grouping { inner } => self.eval_expr(*inner),
-            Expr::Assign { place, expr } => {
+            ExprTyp::Grouping { inner } => self.eval_expr(*inner),
+            ExprTyp::Assign { place, expr } => {
                 let value = self.eval_expr(*expr);
-                match *place {
-                    Expr::Identifier(name) => {
-                        self.environment.borrow_mut().assign(name, value.clone());
-                    }
+                match place.typ {
+                    ExprTyp::Identifier { name, resolution } => match resolution {
+                        Resolution::Unresolved => self.globals.borrow_mut().assign(name, 0, value.clone()),
+                        Resolution::Local { depth } => {
+                            self.environment.borrow_mut().assign(name, depth, value.clone())
+                        }
+                    },
                     _ => panic!("Invalid place"),
                 }
                 value
             }
-            Expr::Function { body, params } => Value::Function { params, body },
-            Expr::Call { left, params } => {
+            ExprTyp::Function { body, params } => Value::Function { params, body },
+            ExprTyp::Call { left, params } => {
                 let function = self.eval_expr(*left);
 
                 if let Value::Function { params: param_defs, body } = function {
@@ -325,8 +337,6 @@ impl<'a> Interpreter<'a> {
                     /*
                      * For each parameter expected, take the next param supplied and bind it to the
                      * correct name.
-                     * TODO: this is very error prone if the user supplies the wrong number of
-                     * parameters etc, so we at least check the arity is correct.
                      */
                     assert_eq!(param_defs.len(), params.len());
                     let mut params = params.into_iter();
@@ -350,6 +360,19 @@ impl<'a> Interpreter<'a> {
             }
         }
     }
+
+    pub fn resolve_binding(&self, name: &str, resolution: Resolution) -> Option<Value> {
+        match resolution {
+            Resolution::Unresolved => {
+                /*
+                 * The binding has not been resolved. If we've got to interpretation, that should
+                 * mean it's global.
+                 */
+                self.globals.borrow().get(name, 0)
+            }
+            Resolution::Local { depth } => self.environment.borrow().get(name, depth),
+        }
+    }
 }
 
 pub struct Environment {
@@ -370,24 +393,35 @@ impl Environment {
         self.bindings.insert(name, value);
     }
 
-    pub fn assign(&mut self, name: String, value: Value) {
-        if self.bindings.contains_key(&name) {
-            self.bindings.insert(name, value);
-        } else if let Some(parent) = &self.parent {
-            parent.borrow_mut().assign(name, value);
+    pub fn assign(&mut self, name: String, depth: u8, value: Value) {
+        if depth == 0 {
+            if self.bindings.contains_key(&name) {
+                self.bindings.insert(name, value);
+            } else {
+                panic!("Tried to assign to undefined variable!");
+            }
         } else {
-            // TODO: error here properly
-            panic!("Tried to assign to undefined variable!");
+            if let Some(parent) = &self.parent {
+                parent.borrow_mut().assign(name, depth - 1, value);
+            } else {
+                panic!("Tried to assign to undefined variable!");
+            }
         }
     }
 
-    pub fn get(&self, name: &str) -> Option<Value> {
-        if let Some(value) = self.bindings.get(name) {
-            Some(value.clone())
-        } else if let Some(parent) = &self.parent {
-            parent.borrow().get(name)
+    pub fn get(&self, name: &str, depth: u8) -> Option<Value> {
+        if depth == 0 {
+            if let Some(value) = self.bindings.get(name) {
+                Some(value.clone())
+            } else {
+                None
+            }
         } else {
-            None
+            if let Some(parent) = &self.parent {
+                parent.borrow().get(name, depth - 1)
+            } else {
+                None
+            }
         }
     }
 }

@@ -1,5 +1,5 @@
 use crate::{
-    ast::{BinaryOp, Expr, LogicalOp, Stmt, UnaryOp},
+    ast::{BinaryOp, Expr, ExprTyp, LogicalOp, Resolution, Stmt, UnaryOp},
     interpreter::Value,
     lex::{Lex, PeekingIter, Token, TokenType, TokenValue},
 };
@@ -48,7 +48,7 @@ impl<'s> Parser<'s> {
             self.consume(TokenType::Equals);
             let expression = self.expression(0);
             self.consume(TokenType::Semicolon);
-            return Stmt::Let { name, expression };
+            return Stmt::new_let(name, expression);
         }
 
         // TODO: in the future, we want expressions to be able to do this too (so it can probs move
@@ -58,7 +58,7 @@ impl<'s> Parser<'s> {
             while !self.matches(TokenType::RightBrace) {
                 statements.push(self.statement());
             }
-            return Stmt::Block(statements);
+            return Stmt::new_block(statements);
         }
 
         // TODO: I think we want `if`s to be expressions too actually? (with optional `else` if the
@@ -70,7 +70,7 @@ impl<'s> Parser<'s> {
             while !self.matches(TokenType::RightBrace) {
                 then_block.push(self.statement());
             }
-            let then_block = Stmt::Block(then_block);
+            let then_block = Stmt::new_block(then_block);
 
             let else_block = if self.matches(TokenType::Else) {
                 self.consume(TokenType::LeftBrace);
@@ -78,12 +78,12 @@ impl<'s> Parser<'s> {
                 while !self.matches(TokenType::RightBrace) {
                     statements.push(self.statement());
                 }
-                Some(Box::new(Stmt::Block(statements)))
+                Some(Stmt::new_block(statements))
             } else {
                 None
             };
 
-            return Stmt::If { condition, then_block: Box::new(then_block), else_block };
+            return Stmt::new_if(condition, then_block, else_block);
         }
 
         if self.matches(TokenType::While) {
@@ -93,9 +93,8 @@ impl<'s> Parser<'s> {
             while !self.matches(TokenType::RightBrace) {
                 body.push(self.statement());
             }
-            let body = Stmt::Block(body);
 
-            return Stmt::While { condition, body: Box::new(body) };
+            return Stmt::new_while(condition, Stmt::new_block(body));
         }
 
         /*
@@ -105,9 +104,9 @@ impl<'s> Parser<'s> {
          */
         let expression = self.expression(0);
         if self.matches(TokenType::Semicolon) {
-            Stmt::TerminatedExpression(expression)
+            Stmt::new_terminated_expr(expression)
         } else {
-            Stmt::Expression(expression)
+            Stmt::new_expr(expression)
         }
     }
 
@@ -171,28 +170,28 @@ impl<'s> Parser<'s> {
                 Some(TokenValue::Identifier(value)) => value,
                 _ => unreachable!(),
             };
-            Expr::Identifier(value.to_string())
+            Expr::new(ExprTyp::Identifier { name: value.to_string(), resolution: Resolution::Unresolved })
         });
         self.register_prefix(TokenType::Integer, |parser, token| {
             let value = match parser.stream.inner.token_value(token) {
                 Some(TokenValue::Integer(value)) => value,
                 _ => unreachable!(),
             };
-            Expr::Literal(Value::Integer(value))
+            Expr::new(ExprTyp::Literal(Value::Integer(value)))
         });
         self.register_prefix(TokenType::String, |parser, token| {
             let value = match parser.stream.inner.token_value(token) {
                 Some(TokenValue::String(value)) => value.to_string(),
                 _ => unreachable!(),
             };
-            Expr::Literal(Value::String(value))
+            Expr::new(ExprTyp::Literal(Value::String(value)))
         });
         let bool_literal: PrefixParselet = |_parser, token| {
-            Expr::Literal(match token.typ {
+            Expr::new(ExprTyp::Literal(match token.typ {
                 TokenType::True => Value::Bool(true),
                 TokenType::False => Value::Bool(false),
                 _ => unreachable!(),
-            })
+            }))
         };
         self.register_prefix(TokenType::True, bool_literal);
         self.register_prefix(TokenType::False, bool_literal);
@@ -202,12 +201,12 @@ impl<'s> Parser<'s> {
          */
         self.register_prefix(TokenType::Minus, |parser, _token| {
             let operand = parser.expression(PRECEDENCE_PREFIX);
-            Expr::UnaryOp { op: UnaryOp::Negate, operand: Box::new(operand) }
+            Expr::new(ExprTyp::UnaryOp { op: UnaryOp::Negate, operand: Box::new(operand) })
         });
         self.register_prefix(TokenType::LeftParen, |parser, _token| {
             let inner = parser.expression(0);
             parser.consume(TokenType::RightParen);
-            Expr::Grouping { inner: Box::new(inner) }
+            Expr::new(ExprTyp::Grouping { inner: Box::new(inner) })
         });
 
         /*
@@ -222,8 +221,8 @@ impl<'s> Parser<'s> {
                 // just be idents for now, but might want more complex (e.g. patterns) in the
                 // future.
                 let param = parser.expression(0);
-                if let Expr::Identifier(value) = param {
-                    params.push(value);
+                if let ExprTyp::Identifier { name, .. } = param.typ {
+                    params.push(name);
                 } else {
                     panic!("Invalid param name");
                 }
@@ -237,7 +236,7 @@ impl<'s> Parser<'s> {
                 statements.push(parser.statement());
             }
 
-            Expr::Function { body: statements, params }
+            Expr::new(ExprTyp::Function { body: statements, params })
         });
 
         /*
@@ -261,7 +260,7 @@ impl<'s> Parser<'s> {
                 other => panic!("Unsupported binary op token: {:?}", other),
             };
             let right = parser.expression(precedence);
-            Expr::BinaryOp { op, left: Box::new(left), right: Box::new(right) }
+            Expr::new(ExprTyp::BinaryOp { op, left: Box::new(left), right: Box::new(right) })
         };
         self.register_infix(TokenType::Plus, PRECEDENCE_SUM, binary_op);
         self.register_infix(TokenType::Minus, PRECEDENCE_SUM, binary_op);
@@ -284,7 +283,7 @@ impl<'s> Parser<'s> {
                 other => panic!("Unsupported logical op token: {:?}", other),
             };
             let right = parser.expression(precedence);
-            Expr::LogicalOp { op, left: Box::new(left), right: Box::new(right) }
+            Expr::new(ExprTyp::LogicalOp { op, left: Box::new(left), right: Box::new(right) })
         };
         self.register_infix(TokenType::AmpersandAmpersand, PRECEDENCE_LOGICAL_AND, logical_op);
         self.register_infix(TokenType::PipePipe, PRECEDENCE_LOGICAL_OR, logical_op);
@@ -294,7 +293,7 @@ impl<'s> Parser<'s> {
          */
         self.register_infix(TokenType::Equals, PRECEDENCE_ASSIGNMENT, |parser, left, _token| {
             let expr = parser.expression(PRECEDENCE_ASSIGNMENT - 1);
-            Expr::Assign { place: Box::new(left), expr: Box::new(expr) }
+            Expr::new(ExprTyp::Assign { place: Box::new(left), expr: Box::new(expr) })
         });
 
         /*
@@ -308,7 +307,7 @@ impl<'s> Parser<'s> {
                 params.push(param);
             }
 
-            Expr::Call { left: Box::new(left), params }
+            Expr::new(ExprTyp::Call { left: Box::new(left), params })
         });
     }
 }
