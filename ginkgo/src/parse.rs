@@ -51,6 +51,39 @@ impl<'s> Parser<'s> {
             return Stmt::new_let(name, expression);
         }
 
+        if self.matches(TokenType::Fn) {
+            let name = {
+                let token = self.consume(TokenType::Identifier).unwrap();
+                if let Some(TokenValue::Identifier(name)) = self.stream.inner.token_value(token) {
+                    name.to_string()
+                } else {
+                    panic!();
+                }
+            };
+            self.consume(TokenType::LeftParen);
+            let mut params = Vec::new();
+            while !self.matches(TokenType::RightParen) {
+                // TODO: not sure if we want to parse expressions or something simpler (e.g. could
+                // just be idents for now, but might want more complex (e.g. patterns) in the
+                // future.
+                let param = self.expression(0);
+                if let ExprTyp::Identifier { name, .. } = param.typ {
+                    params.push(name);
+                } else {
+                    panic!("Invalid param name");
+                }
+                self.matches(TokenType::Comma);
+            }
+
+            self.consume(TokenType::LeftBrace);
+
+            let mut statements = Vec::new();
+            while !self.matches(TokenType::RightBrace) {
+                statements.push(self.statement());
+            }
+            return Stmt::new_fn_def(name, params, statements);
+        }
+
         // TODO: in the future, we want expressions to be able to do this too (so it can probs move
         // into there)
         if self.matches(TokenType::LeftBrace) {

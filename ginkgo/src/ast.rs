@@ -19,6 +19,10 @@ impl Stmt {
         Stmt { typ: StmtTyp::Let { name, expression: expr } }
     }
 
+    pub fn new_fn_def(name: String, params: Vec<String>, body: Vec<Stmt>) -> Stmt {
+        Stmt { typ: StmtTyp::FnDef { name, params, body } }
+    }
+
     pub fn new_block(stmts: Vec<Stmt>) -> Stmt {
         Stmt { typ: StmtTyp::Block(stmts) }
     }
@@ -48,6 +52,11 @@ pub enum StmtTyp {
     Let {
         name: String,
         expression: Expr,
+    },
+    FnDef {
+        name: String,
+        params: Vec<String>,
+        body: Vec<Stmt>,
     },
     Block(Vec<Stmt>),
     If {
@@ -249,17 +258,23 @@ impl BindingResolver {
             StmtTyp::Expression(ref mut expr) => self.resolve_bindings_expr(expr),
             StmtTyp::TerminatedExpression(ref mut expr) => self.resolve_bindings_expr(expr),
             StmtTyp::Let { ref name, ref mut expression } => {
-                /*
-                 * Resolve the expression that the binding will be initialised with.
-                 * TODO: this differs from Lox's behaviour, maybe we do want that or don't want
-                 * that?
-                 */
+                // Resolve the expression that the binding will be initialised with.
                 self.resolve_bindings_expr(expression);
 
                 // Define the new binding
                 if let Some(scope) = self.scopes.last_mut() {
                     scope.insert(name.clone());
                 }
+            }
+            StmtTyp::FnDef { ref params, ref mut body, .. } => {
+                self.begin_scope();
+                for param in params {
+                    self.scopes.last_mut().unwrap().insert(param.clone());
+                }
+                for stmt in body {
+                    self.resolve_bindings(stmt);
+                }
+                self.end_scope();
             }
             StmtTyp::Block(ref mut stmts) => {
                 self.begin_scope();

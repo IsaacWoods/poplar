@@ -1,0 +1,14 @@
+fn fib(up_to) {
+    let a = 0;
+    let temp = 0;
+    let b = 1;
+
+    while a < up_to {
+        print(a);
+        temp = a;
+        a = b;
+        b = temp + b;
+    }
+}
+
+fib(10000);

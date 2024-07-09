@@ -102,6 +102,10 @@ impl<'a> Interpreter<'a> {
                 self.environment.borrow_mut().define(name, value);
                 None
             }
+            StmtTyp::FnDef { name, params, body } => {
+                self.environment.borrow_mut().define(name, Value::Function { params, body });
+                None
+            }
             StmtTyp::Block(statements) => {
                 self.eval_block(statements, Environment::new_with_parent(self.environment.clone()))
             }
