@@ -241,7 +241,7 @@ impl<'s> Iterator for Lex<'s> {
                      * Do a maximal munch to make sure identifiers that start with reserved
                      * keywords are not mistaken for those keywords.
                      */
-                    while self.stream.peek().map_or(false, char::is_alphanumeric) {
+                    while self.stream.peek().map_or(false, |c| c.is_alphanumeric() || c == '_') {
                         self.advance()?;
                     }
 
