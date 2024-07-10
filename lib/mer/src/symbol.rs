@@ -1,11 +1,11 @@
-use scroll_derive::Pread;
+use crate::{section::SectionType, Elf};
 use bit_field::BitField;
-use crate::{Elf, section::SectionType};
+use scroll::Pread;
 
 pub enum SymbolBinding {
     /// Only visible inside the object file that defines it.
     Local,
-    
+
     /// Global symbol - visible to all object files.
     Global,
 

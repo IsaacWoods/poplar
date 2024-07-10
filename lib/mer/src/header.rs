@@ -1,5 +1,5 @@
 use crate::ElfError;
-use scroll_derive::Pread;
+use scroll::Pread;
 
 /// The ELF header
 #[derive(Debug, Default, Pread)]

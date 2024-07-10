@@ -35,8 +35,8 @@ impl Elf<'_> {
 
         let mut elf = Elf { bytes, header, symbol_table: None };
 
-        elf.sections().map(|section| section.validate()).collect::<Result<_, ElfError>>()?;
-        elf.segments().map(|segment| segment.validate()).collect::<Result<_, ElfError>>()?;
+        elf.sections().map(|section| section.validate()).collect::<Result<(), ElfError>>()?;
+        elf.segments().map(|segment| segment.validate()).collect::<Result<(), ElfError>>()?;
 
         // Cache the symbol table, if there is one
         elf.symbol_table = match elf.sections().find(|section| section.name(&elf) == Some(".symtab")) {

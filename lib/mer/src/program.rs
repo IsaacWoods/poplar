@@ -1,6 +1,6 @@
 use crate::{note::NoteIter, Elf, ElfError};
 use bit_field::BitField;
-use scroll_derive::Pread;
+use scroll::Pread;
 
 #[derive(PartialEq, Eq, Debug)]
 pub enum SegmentType {

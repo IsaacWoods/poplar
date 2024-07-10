@@ -1,8 +1,7 @@
-use crate::Elf;
-use crate::ElfError;
-use core::str;
-use scroll_derive::Pread;
+use crate::{Elf, ElfError};
 use bit_field::BitField;
+use core::str;
+use scroll::Pread;
 
 #[derive(PartialEq, Eq)]
 pub enum SectionType {
