@@ -1,5 +1,5 @@
 #![allow(internal_features)]
-#![feature(lang_items, prelude_import, async_iterator, core_intrinsics, panic_info_message, naked_functions)]
+#![feature(lang_items, prelude_import, async_iterator, core_intrinsics, naked_functions)]
 #![no_std]
 
 extern crate alloc;

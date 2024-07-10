@@ -5,7 +5,7 @@
 
 #![no_std]
 #![no_main]
-#![feature(pointer_is_aligned_to, panic_info_message, const_mut_refs, strict_provenance, fn_align)]
+#![feature(pointer_is_aligned_to, const_mut_refs, strict_provenance, fn_align)]
 
 extern crate alloc;
 

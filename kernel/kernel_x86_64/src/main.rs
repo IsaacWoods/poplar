@@ -5,7 +5,7 @@
 
 #![no_std]
 #![no_main]
-#![feature(decl_macro, naked_functions, allocator_api, panic_info_message)]
+#![feature(decl_macro, naked_functions, allocator_api)]
 
 extern crate alloc;
 
