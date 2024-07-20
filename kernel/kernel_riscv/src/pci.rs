@@ -4,13 +4,13 @@ use core::ptr;
 use fdt::Fdt;
 use hal::memory::PAddr;
 use kernel::{object::event::Event, pci::PciInterruptConfigurator};
+use mulch::InitGuard;
 use pci_types::{
     capability::{MsiCapability, MsixCapability, TriggerMode},
     Bar,
     ConfigRegionAccess,
     PciAddress,
 };
-use poplar_util::InitGuard;
 use spinning_top::Spinlock;
 
 pub struct PciAccess {

@@ -9,7 +9,7 @@ use core::{
     sync::atomic::{AtomicU64, Ordering},
 };
 use hal_x86_64::hw::serial::SerialPort;
-use poplar_util::InitGuard;
+use mulch::InitGuard;
 use spinning_top::Spinlock;
 use tracing::{span, Collect, Event, Level, Metadata};
 use tracing_core::span::Current as CurrentSpan;

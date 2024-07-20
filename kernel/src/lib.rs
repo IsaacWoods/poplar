@@ -22,10 +22,10 @@ use crate::memory::Stack;
 use alloc::{boxed::Box, sync::Arc};
 use hal::memory::{FrameSize, PageTable, VAddr};
 use memory::{KernelStackAllocator, PhysicalMemoryManager};
+use mulch::InitGuard;
 use object::{address_space::AddressSpace, memory_object::MemoryObject, task::Task, KernelObject};
 use pci::{PciInfo, PciInterruptConfigurator, PciResolver};
 use pci_types::ConfigRegionAccess as PciConfigRegionAccess;
-use poplar_util::InitGuard;
 use scheduler::Scheduler;
 use seed::boot_info::LoadedImage;
 use spinning_top::{RwSpinlock, Spinlock};
@@ -133,7 +133,7 @@ pub fn create_framebuffer(video_info: &seed::boot_info::VideoModeInfo) {
     let memory_object = MemoryObject::new(
         object::SENTINEL_KERNEL_ID,
         video_info.framebuffer_address,
-        poplar_util::math::align_up(size_in_bytes, Size4KiB::SIZE),
+        mulch::math::align_up(size_in_bytes, Size4KiB::SIZE),
         Flags { writable: true, user_accessible: true, cached: false, ..Default::default() },
     );
 

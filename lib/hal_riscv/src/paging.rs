@@ -451,7 +451,7 @@ impl PageTable<Size4KiB> for PageTableImpl<Level4> {
     where
         A: FrameAllocator<Size4KiB>,
     {
-        use poplar_util::math::{abs_difference, align_down};
+        use mulch::math::{abs_difference, align_down};
 
         assert!(virtual_start.is_aligned(Size4KiB::SIZE));
         assert!(physical_start.is_aligned(Size4KiB::SIZE));
@@ -695,7 +695,7 @@ impl PageTable<Size4KiB> for PageTableImpl<Level3> {
     where
         A: FrameAllocator<Size4KiB>,
     {
-        use poplar_util::math::{abs_difference, align_down};
+        use mulch::math::{abs_difference, align_down};
 
         assert!(virtual_start.is_aligned(Size4KiB::SIZE));
         assert!(physical_start.is_aligned(Size4KiB::SIZE));

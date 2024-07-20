@@ -16,7 +16,7 @@
 /// - The struct must not be `#[repr(packed)]`.
 ///
 /// ```
-/// use poplar_util::unsafe_pinned;
+/// use mulch::unsafe_pinned;
 /// use core::marker::Unpin;
 /// use core::pin::Pin;
 ///
@@ -63,7 +63,7 @@ macro_rules! unsafe_pinned {
 /// avoid consuming the `Pin`.
 ///
 /// ```
-/// use poplar_util::unsafe_unpinned;
+/// use mulch::unsafe_unpinned;
 /// use core::pin::Pin;
 ///
 /// struct Bar;

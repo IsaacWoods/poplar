@@ -446,7 +446,7 @@ impl PageTable<Size4KiB> for PageTableImpl {
     where
         A: FrameAllocator<Size4KiB>,
     {
-        use poplar_util::math::{abs_difference, align_down};
+        use mulch::math::{abs_difference, align_down};
 
         assert!(virtual_start.is_aligned(Size4KiB::SIZE));
         assert!(physical_start.is_aligned(Size4KiB::SIZE));
@@ -817,7 +817,7 @@ mod tests {
         where
             A: FrameAllocator<Size4KiB>,
         {
-            use poplar_util::math::{abs_difference, align_down};
+            use mulch::math::{abs_difference, align_down};
 
             assert!(virtual_start.is_aligned(Size4KiB::SIZE));
             assert!(physical_start.is_aligned(Size4KiB::SIZE));

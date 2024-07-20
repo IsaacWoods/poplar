@@ -39,6 +39,7 @@ dependencies = [
  "bit_field",
  "cfg-if 0.1.10",
  "log",
+ "smallvec",
 ]
 
 [[package]]
@@ -49,7 +50,7 @@ dependencies = [
  "bitflags",
  "cfg-if 1.0.0",
  "hal",
- "poplar_util",
+ "mulch",
  "tracing",
  "volatile",
 ]
@@ -59,6 +60,15 @@ name = "log"
 version = "0.4.20"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b5e6163cb8c49088c2c36f57875e58ccd8c87c7427f7fbd50ea6710b2f3f2e8f"
+
+[[package]]
+name = "mulch"
+version = "0.1.0"
+dependencies = [
+ "bit_field",
+ "cfg-if 0.1.10",
+ "num-traits",
+]
 
 [[package]]
 name = "num-traits"
@@ -76,13 +86,10 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8afb450f006bf6385ca15ef45d71d2288452bc3683ce2e2cacc0d18e4be60b58"
 
 [[package]]
-name = "poplar_util"
-version = "0.1.0"
-dependencies = [
- "bit_field",
- "cfg-if 0.1.10",
- "num-traits",
-]
+name = "smallvec"
+version = "1.13.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3c5e1a9a646d36c3599cd173a41282daf47c44583ad367b8e6837255952e5c67"
 
 [[package]]
 name = "tracing"

@@ -26,8 +26,8 @@ use hal::memory::{Flags, FrameAllocator, FrameSize, PAddr, PageTable, Size4KiB, 
 use hal_riscv::{hw::csr::Stvec, platform::PageTableImpl};
 use linked_list_allocator::LockedHeap;
 use memory::{MemoryManager, MemoryRegions};
+use mulch::{linker::LinkerSymbol, math::align_up};
 use pci::PciResolver;
-use poplar_util::{linker::LinkerSymbol, math::align_up};
 use seed::{boot_info::BootInfo, SeedConfig};
 use tracing::info;
 

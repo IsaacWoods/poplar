@@ -9,7 +9,7 @@ hal = { path = "../hal" }
 bitflags = "1"
 bit_field = "0.10"
 spinning_top = "0.3.0"
-poplar_util = { path = "../poplar_util" }
+mulch = { path = "../mulch" }
 tracing = { git = "https://github.com/tokio-rs/tracing", default-features = false }
 
 [features]

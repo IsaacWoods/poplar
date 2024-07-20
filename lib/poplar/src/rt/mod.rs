@@ -7,7 +7,7 @@ mod reactor;
 use self::reactor::Reactor;
 use core::future::Future;
 use maitake::{scheduler::Scheduler, task::JoinHandle};
-use poplar_util::InitGuard;
+use mulch::InitGuard;
 use spinning_top::Spinlock;
 
 // TODO: if we want support for multiple tasks in an address space, this needs to be thread-local

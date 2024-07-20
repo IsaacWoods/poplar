@@ -109,6 +109,9 @@ dependencies = [
 [[package]]
 name = "fdt"
 version = "0.2.0-alpha1"
+dependencies = [
+ "tracing 0.2.0",
+]
 
 [[package]]
 name = "font8x8"
@@ -150,6 +153,7 @@ dependencies = [
  "bit_field",
  "cfg-if 0.1.10",
  "log",
+ "smallvec",
 ]
 
 [[package]]
@@ -160,7 +164,7 @@ dependencies = [
  "bitflags 1.3.2",
  "cfg-if 1.0.0",
  "hal",
- "poplar_util",
+ "mulch",
  "tracing 0.2.0",
  "volatile",
 ]
@@ -172,7 +176,7 @@ dependencies = [
  "bit_field",
  "bitflags 1.3.2",
  "hal",
- "poplar_util",
+ "mulch",
  "spinning_top 0.3.0",
  "tracing 0.2.0",
 ]
@@ -207,9 +211,9 @@ dependencies = [
  "hal",
  "linked_list_allocator",
  "maitake",
+ "mulch",
  "pci_types",
  "poplar",
- "poplar_util",
  "ptah",
  "seed",
  "spinning_top 0.3.0",
@@ -227,8 +231,8 @@ dependencies = [
  "hal_riscv",
  "kernel",
  "maitake",
+ "mulch",
  "pci_types",
- "poplar_util",
  "sbi",
  "seed",
  "spinning_top 0.2.5",
@@ -247,8 +251,8 @@ dependencies = [
  "hal",
  "hal_x86_64",
  "kernel",
+ "mulch",
  "pci_types",
- "poplar_util",
  "seed",
  "spinning_top 0.2.5",
  "tracing 0.2.0",
@@ -347,6 +351,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "523dc4f511e55ab87b694dc30d0f820d60906ef06413f93d4d7a1385599cc149"
 
 [[package]]
+name = "mulch"
+version = "0.1.0"
+dependencies = [
+ "bit_field",
+ "cfg-if 0.1.10",
+ "num-traits",
+]
+
+[[package]]
 name = "mycelium-bitfield"
 version = "0.1.3"
 source = "git+https://github.com/hawkw/mycelium#54871d4bffa7ba5b824c17db67685c186bc6c8e0"
@@ -435,21 +448,13 @@ dependencies = [
  "bit_field",
  "bitflags 2.5.0",
  "cfg-if 0.1.10",
+ "linked_list_allocator",
  "log",
  "maitake",
+ "mulch",
  "pci_types",
- "poplar_util",
  "ptah",
  "spinning_top 0.3.0",
-]
-
-[[package]]
-name = "poplar_util"
-version = "0.1.0"
-dependencies = [
- "bit_field",
- "cfg-if 0.1.10",
- "num-traits",
 ]
 
 [[package]]
@@ -606,9 +611,9 @@ dependencies = [
 
 [[package]]
 name = "smallvec"
-version = "1.11.2"
+version = "1.13.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4dccd0940a2dcdf68d092b8cbab7dc0ad8fa938bf95787e1b916b0e3d0e8e970"
+checksum = "3c5e1a9a646d36c3599cd173a41282daf47c44583ad367b8e6837255952e5c67"
 
 [[package]]
 name = "spinning_top"

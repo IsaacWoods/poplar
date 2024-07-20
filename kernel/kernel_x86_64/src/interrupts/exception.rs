@@ -7,7 +7,7 @@ use hal_x86_64::hw::{
     idt::{ExceptionWithErrorStackFrame, InterruptStackFrame},
     registers::read_control_reg,
 };
-use poplar_util::BinaryPrettyPrint;
+use mulch::BinaryPrettyPrint;
 use tracing::{error, info};
 
 pub extern "C" fn nmi_handler(_: &InterruptStackFrame) {

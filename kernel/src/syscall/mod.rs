@@ -161,7 +161,7 @@ where
     P: Platform,
 {
     use hal::memory::{FrameSize, Size4KiB};
-    use poplar_util::math::align_up;
+    use mulch::math::align_up;
 
     // TODO: should we require that the size be multiple of the page size, or just up it here?
     let size = align_up(size, Size4KiB::SIZE);

@@ -15,7 +15,7 @@ use hal_x86_64::{
     },
     kernel_map,
 };
-use poplar_util::InitGuard;
+use mulch::InitGuard;
 use spinning_top::Spinlock;
 use tracing::warn;
 

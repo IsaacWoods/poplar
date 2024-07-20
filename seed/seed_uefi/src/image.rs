@@ -10,7 +10,7 @@ use mer::{
     program::{ProgramHeader, SegmentType},
     Elf,
 };
-use poplar_util::math;
+use mulch::math;
 use seed::boot_info::{LoadedImage, Segment, MAX_CAPABILITY_STREAM_LENGTH};
 use uefi::{
     fs::Path,

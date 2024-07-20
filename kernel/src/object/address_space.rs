@@ -5,8 +5,8 @@ use crate::{
 };
 use alloc::{sync::Arc, vec::Vec};
 use hal::memory::{mebibytes, Bytes, FrameAllocator, PageTable, VAddr};
+use mulch::bitmap::Bitmap;
 use poplar::syscall::MapMemoryObjectError;
-use poplar_util::bitmap::Bitmap;
 use spinning_top::Spinlock;
 
 const MAX_TASKS: usize = 64;

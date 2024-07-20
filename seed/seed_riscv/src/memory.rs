@@ -7,7 +7,7 @@ use arrayvec::ArrayVec;
 use core::{fmt, ops::Range, ptr::NonNull};
 use fdt::Fdt;
 use hal::memory::{Frame, FrameAllocator, FrameSize, PAddr, Size4KiB};
-use poplar_util::{math::align_up, ranges::RangeIntersect};
+use mulch::{math::align_up, ranges::RangeIntersect};
 use spinning_top::Spinlock;
 use tracing::trace;
 

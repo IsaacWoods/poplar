@@ -7,7 +7,7 @@ edition = "2018"
 [dependencies]
 hal = { path = "../lib/hal" }
 seed = { path = "../seed" }
-poplar_util = { path = "../lib/poplar_util", features = ["has_alloc"] }
+mulch = { path = "../lib/mulch", features = ["has_alloc"] }
 cfg-if = "0.1"
 bitflags = "1"
 bit_field = "0.10"

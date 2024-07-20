@@ -26,7 +26,7 @@ use kernel::{
     scheduler::Scheduler,
     Platform,
 };
-use poplar_util::InitGuard;
+use mulch::InitGuard;
 use seed::boot_info::BootInfo;
 use tracing::info;
 

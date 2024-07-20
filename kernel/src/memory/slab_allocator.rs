@@ -1,6 +1,6 @@
 use alloc::vec::Vec;
 use hal::memory::VAddr;
-use poplar_util::{bitmap::BitmapSlice, math::ceiling_integer_divide};
+use mulch::{bitmap::BitmapSlice, math::ceiling_integer_divide};
 
 pub struct SlabAllocator {
     pub bottom: VAddr,

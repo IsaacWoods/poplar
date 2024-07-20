@@ -15,7 +15,7 @@ tracing-core = { git = "https://github.com/tokio-rs/tracing", default-features =
 bit_field = "0.10"
 acpi = { path = "../../lib/acpi/acpi" }
 aml = { path = "../../lib/acpi/aml" }
-poplar_util = { path = "../../lib/poplar_util" }
+mulch = { path = "../../lib/mulch" }
 gfxconsole = { path = "../../lib/gfxconsole" }
 pci_types = { path = "../../lib/pci_types" }
 

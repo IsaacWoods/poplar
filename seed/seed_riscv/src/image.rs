@@ -15,7 +15,7 @@ use mer::{
     program::{ProgramHeader, SegmentType},
     Elf,
 };
-use poplar_util::math::align_up;
+use mulch::math::align_up;
 use seed::boot_info::{LoadedImage, Segment, MAX_CAPABILITY_STREAM_LENGTH};
 
 #[derive(Clone, Debug)]

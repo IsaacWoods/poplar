@@ -214,6 +214,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "523dc4f511e55ab87b694dc30d0f820d60906ef06413f93d4d7a1385599cc149"
 
 [[package]]
+name = "mulch"
+version = "0.1.0"
+dependencies = [
+ "bit_field",
+ "cfg-if 0.1.10",
+ "num-traits",
+]
+
+[[package]]
 name = "mycelium-bitfield"
 version = "0.1.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -322,19 +331,10 @@ dependencies = [
  "linked_list_allocator",
  "log",
  "maitake",
+ "mulch",
  "pci_types",
- "poplar_util",
  "ptah",
  "spinning_top 0.3.0",
-]
-
-[[package]]
-name = "poplar_util"
-version = "0.1.0"
-dependencies = [
- "bit_field",
- "cfg-if 0.1.10",
- "num-traits",
 ]
 
 [[package]]
@@ -685,7 +685,6 @@ dependencies = [
  "log",
  "mycelium-bitfield 0.1.5 (registry+https://github.com/rust-lang/crates.io-index)",
  "platform_bus",
- "poplar_util",
  "ptah",
  "spinning_top 0.3.0",
  "std",
@@ -698,8 +697,8 @@ version = "0.1.0"
 dependencies = [
  "bit_field",
  "log",
+ "mulch",
  "platform_bus",
- "poplar_util",
  "ptah",
  "std",
 ]

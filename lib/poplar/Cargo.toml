@@ -14,7 +14,7 @@ log = { version = "0.4", optional = true }
 pci_types = { path = "../pci_types", optional = true }
 ptah = { path = "../ptah", optional = true, default-features = false }
 linked_list_allocator = { version = "0.10.5", optional = true, features = ["alloc_ref"] }
-poplar_util = { path = "../poplar_util" }
+mulch = { path = "../mulch" }
 maitake = { git = "https://github.com/hawkw/mycelium", optional = true, features = ["alloc", "tracing-02"] }
 spinning_top = "0.3.0"
 

@@ -8,7 +8,7 @@ edition = "2021"
 seed = { path = ".." }
 hal = { path = "../../lib/hal/" }
 hal_riscv = { path = "../../lib/hal_riscv/" }
-poplar_util = { path = "../../lib/poplar_util/" }
+mulch = { path = "../../lib/mulch/" }
 volatile = { path = "../../lib/volatile" }
 spinning_top = { version = "0.2.4", features = ["nightly"] }
 bit_field = "0.10.1"

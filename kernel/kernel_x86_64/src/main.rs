@@ -35,8 +35,8 @@ use kernel::{
     scheduler::Scheduler,
     Platform,
 };
+use mulch::InitGuard;
 use per_cpu::PerCpuImpl;
-use poplar_util::InitGuard;
 use seed::boot_info::BootInfo;
 use topo::Topology;
 use tracing::info;

@@ -1,5 +1,5 @@
 [package]
-name = "poplar_util"
+name = "mulch"
 version = "0.1.0"
 authors = ["Isaac Woods"]
 edition = "2018"

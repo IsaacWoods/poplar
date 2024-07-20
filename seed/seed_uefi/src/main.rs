@@ -8,7 +8,6 @@ mod allocator;
 mod image;
 mod logger;
 
-use alloc::{string::String, vec::Vec};
 use allocator::BootFrameAllocator;
 use core::{arch::asm, convert::TryFrom, mem, panic::PanicInfo, ptr};
 use hal::memory::{kibibytes, Bytes, Flags, FrameAllocator, FrameSize, PAddr, Page, PageTable, Size4KiB, VAddr};
@@ -19,7 +18,6 @@ use seed::{
     boot_info::{BootInfo, VideoModeInfo},
     SeedConfig,
 };
-use serde::Deserialize;
 use uefi::{
     fs::Path,
     prelude::*,

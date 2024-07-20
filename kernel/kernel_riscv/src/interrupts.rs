@@ -8,7 +8,7 @@ use hal_riscv::hw::{
     imsic::Imsic,
     plic::Plic,
 };
-use poplar_util::InitGuard;
+use mulch::InitGuard;
 use spinning_top::Spinlock;
 use tracing::{info, warn};
 
