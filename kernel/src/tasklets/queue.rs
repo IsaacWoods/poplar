@@ -1,10 +1,10 @@
 use alloc::sync::Arc;
-use bipqueue::BipQueue;
 use core::ops::{Deref, DerefMut};
 use maitake::sync::WaitCell;
+use mulch::bipqueue::BipQueue;
 
 /// A SPSC (Single Producer, Single Consumer) queue built on top of a [bi-partite
-/// buffer](bipqueue::BipQueue), with added asynchronous support. This is useful for things that
+/// buffer](mulch::bipqueue::BipQueue), with added asynchronous support. This is useful for things that
 /// need to produce a stream of bytes somewhere (e.g. an interrupt handler, one tasklet) and then
 /// consume them within another `async` tasklet.
 pub struct SpscQueue {
@@ -64,7 +64,7 @@ impl QueueProducer {
 }
 
 pub struct WriteGrant<'a> {
-    inner: bipqueue::WriteGrant<'a, 512>,
+    inner: mulch::bipqueue::WriteGrant<'a, 512>,
     queue: Arc<SpscQueue>,
 }
 
@@ -115,7 +115,7 @@ impl QueueConsumer {
 }
 
 pub struct ReadGrant<'a> {
-    inner: bipqueue::ReadGrant<'a, 512>,
+    inner: mulch::bipqueue::ReadGrant<'a, 512>,
     queue: Arc<SpscQueue>,
 }
 

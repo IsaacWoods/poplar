@@ -31,6 +31,7 @@ mod init_guard;
 pub mod math;
 #[macro_use]
 pub mod pin;
+pub mod bipqueue;
 pub mod linker;
 pub mod ranges;
 

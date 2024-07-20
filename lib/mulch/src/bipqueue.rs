@@ -7,11 +7,6 @@
 //!    - [This blog post](https://ferrous-systems.com/blog/lock-free-ring-buffer/)
 //!    - [This article](https://www.codeproject.com/articles/3479/the-bip-buffer-the-circular-buffer-with-a-twist)
 
-#![no_std]
-
-#[cfg(test)]
-extern crate std;
-
 use core::{
     cell::UnsafeCell,
     mem::MaybeUninit,
