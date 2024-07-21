@@ -23,6 +23,7 @@ fn main() -> io::Result<()> {
      * TODO: things to experiment with: `gc-arena` crate for garbage-collected values long-term +
      * `rustyline` for a decent REPL interface (either wholesale or being inspired by it (at least
      * for the Poplar version this will probs be required))
+     * - miette for fancy diagnostic reporting
      */
 
     interpreter.define_native_function("print", |params| {
@@ -44,8 +45,6 @@ fn main() -> io::Result<()> {
         for mut statement in &mut output {
             resolver.resolve_bindings(&mut statement);
         }
-
-        println!("AST: {:#?}", output);
 
         for statement in output {
             interpreter.eval_stmt(statement);
@@ -80,7 +79,7 @@ fn main() -> io::Result<()> {
 
                 for statement in stmts {
                     if let Some(result) = interpreter.eval_stmt(statement) {
-                        println!("Result: {:?}", result);
+                        println!("Result: {}", result);
                     }
                 }
             }

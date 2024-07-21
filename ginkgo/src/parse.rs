@@ -1,5 +1,5 @@
 use crate::{
-    ast::{BinaryOp, Expr, ExprTyp, LogicalOp, Resolution, Stmt, UnaryOp},
+    ast::{BinaryOp, Expr, ExprTyp, LogicalOp, Resolution, Stmt, StmtTyp, UnaryOp},
     interpreter::Value,
     lex::{Lex, PeekingIter, Token, TokenType, TokenValue},
 };
@@ -37,14 +37,7 @@ impl<'s> Parser<'s> {
 
     pub fn statement(&mut self) -> Stmt {
         if self.matches(TokenType::Let) {
-            let name = {
-                let token = self.consume(TokenType::Identifier).unwrap();
-                if let Some(TokenValue::Identifier(name)) = self.stream.inner.token_value(token) {
-                    name.to_string()
-                } else {
-                    panic!();
-                }
-            };
+            let name = self.identifier();
             self.consume(TokenType::Equals);
             let expression = self.expression(0);
             self.consume(TokenType::Semicolon);
@@ -52,36 +45,21 @@ impl<'s> Parser<'s> {
         }
 
         if self.matches(TokenType::Fn) {
-            let name = {
-                let token = self.consume(TokenType::Identifier).unwrap();
-                if let Some(TokenValue::Identifier(name)) = self.stream.inner.token_value(token) {
-                    name.to_string()
-                } else {
-                    panic!();
-                }
-            };
-            self.consume(TokenType::LeftParen);
-            let mut params = Vec::new();
-            while !self.matches(TokenType::RightParen) {
-                // TODO: not sure if we want to parse expressions or something simpler (e.g. could
-                // just be idents for now, but might want more complex (e.g. patterns) in the
-                // future.
-                let param = self.expression(0);
-                if let ExprTyp::Identifier { name, .. } = param.typ {
-                    params.push(name);
-                } else {
-                    panic!("Invalid param name");
-                }
-                self.matches(TokenType::Comma);
-            }
+            return self.function();
+        }
 
+        if self.matches(TokenType::Class) {
+            let name = self.identifier();
             self.consume(TokenType::LeftBrace);
 
-            let mut statements = Vec::new();
-            while !self.matches(TokenType::RightBrace) {
-                statements.push(self.statement());
+            let mut defs = Vec::new();
+
+            while self.matches(TokenType::Fn) {
+                defs.push(self.function());
             }
-            return Stmt::new_fn_def(name, params, statements);
+
+            self.consume(TokenType::RightBrace);
+            return Stmt { typ: StmtTyp::ClassDef { name } };
         }
 
         // TODO: in the future, we want expressions to be able to do this too (so it can probs move
@@ -140,6 +118,43 @@ impl<'s> Parser<'s> {
             Stmt::new_terminated_expr(expression)
         } else {
             Stmt::new_expr(expression)
+        }
+    }
+
+    pub fn function(&mut self) -> Stmt {
+        let name = self.identifier();
+        self.consume(TokenType::LeftParen);
+        let mut params = Vec::new();
+        while !self.matches(TokenType::RightParen) {
+            // TODO: not sure if we want to parse expressions or something simpler (e.g. could
+            // just be idents for now, but might want more complex (e.g. patterns) in the
+            // future.
+            let param = self.expression(0);
+            if let ExprTyp::Identifier { name, .. } = param.typ {
+                params.push(name);
+            } else {
+                panic!("Invalid param name");
+            }
+            self.matches(TokenType::Comma);
+        }
+
+        self.consume(TokenType::LeftBrace);
+
+        let mut statements = Vec::new();
+        while !self.matches(TokenType::RightBrace) {
+            statements.push(self.statement());
+        }
+        Stmt::new_fn_def(name, params, statements)
+    }
+
+    pub fn identifier(&mut self) -> String {
+        let token = self.consume(TokenType::Identifier).unwrap();
+        if let Some(TokenValue::Identifier(name)) = self.stream.inner.token_value(token) {
+            name.to_string()
+        } else {
+            // TODO: report error properly - this shouldn't even be reachable so is probs
+            // acc an ICE??
+            panic!();
         }
     }
 

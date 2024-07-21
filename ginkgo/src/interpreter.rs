@@ -14,6 +14,10 @@ pub enum Value {
         body: Vec<Stmt>,
     },
     NativeFunction(usize),
+    Class(usize),
+    Instance {
+        class: usize,
+    },
 }
 
 impl fmt::Display for Value {
@@ -24,9 +28,15 @@ impl fmt::Display for Value {
             Value::Bool(value) => write!(f, "{}", value),
             Value::String(value) => write!(f, "\"{}\"", value),
             Value::Function { .. } => write!(f, "[function]"),
-            Value::NativeFunction(_) => write!(f, "[native function]"),
+            Value::NativeFunction(index) => write!(f, "[native function({})]", index),
+            Value::Class(index) => write!(f, "[class({})]", index),
+            Value::Instance { .. } => write!(f, "[instance]"),
         }
     }
+}
+
+pub struct Class {
+    name: String,
 }
 
 pub struct Interpreter<'a> {
@@ -35,6 +45,8 @@ pub struct Interpreter<'a> {
     /// XXX: We don't support removing native functions once they're added as that would invalide
     /// indices pointing towards them.
     native_fns: Vec<Box<dyn Fn(Vec<Value>) -> Value + 'a>>,
+    /// XXX: once a class is defined, it can also not be removed to avoid invalidating indices.
+    classes: Vec<Class>,
 }
 
 // TODO: this is probably bad (it isn't true by default bc RefCell)
@@ -44,7 +56,7 @@ unsafe impl Sync for Interpreter<'_> {}
 impl<'a> Interpreter<'a> {
     pub fn new() -> Interpreter<'a> {
         let globals = Environment::new();
-        Interpreter { globals: globals.clone(), environment: globals, native_fns: Vec::new() }
+        Interpreter { globals: globals.clone(), environment: globals, native_fns: Vec::new(), classes: Vec::new() }
     }
 
     /// Define a native function with the given name as a global.
@@ -104,6 +116,12 @@ impl<'a> Interpreter<'a> {
             }
             StmtTyp::FnDef { name, params, body } => {
                 self.environment.borrow_mut().define(name, Value::Function { params, body });
+                None
+            }
+            StmtTyp::ClassDef { name } => {
+                let index = self.classes.len();
+                self.classes.push(Class { name: name.clone() });
+                self.environment.borrow_mut().define(name, Value::Class(index));
                 None
             }
             StmtTyp::Block(statements) => {
@@ -333,33 +351,41 @@ impl<'a> Interpreter<'a> {
             }
             ExprTyp::Function { body, params } => Value::Function { params, body },
             ExprTyp::Call { left, params } => {
-                let function = self.eval_expr(*left);
+                match self.eval_expr(*left) {
+                    Value::Function { params: param_defs, body } => {
+                        let environment = Environment::new_with_parent(self.environment.clone());
 
-                if let Value::Function { params: param_defs, body } = function {
-                    let environment = Environment::new_with_parent(self.environment.clone());
+                        /*
+                         * For each parameter expected, take the next param supplied and bind it to the
+                         * correct name.
+                         */
+                        assert_eq!(param_defs.len(), params.len());
+                        let mut params = params.into_iter();
+                        for param_def in param_defs {
+                            environment.borrow_mut().define(param_def, self.eval_expr(params.next().unwrap()));
+                        }
 
-                    /*
-                     * For each parameter expected, take the next param supplied and bind it to the
-                     * correct name.
-                     */
-                    assert_eq!(param_defs.len(), params.len());
-                    let mut params = params.into_iter();
-                    for param_def in param_defs {
-                        environment.borrow_mut().define(param_def, self.eval_expr(params.next().unwrap()));
+                        self.eval_block(body, environment).unwrap_or(Value::Unit)
                     }
-
-                    self.eval_block(body, environment).unwrap_or(Value::Unit)
-                } else if let Value::NativeFunction(index) = function {
-                    /*
-                     * Native functions do not define how many parameters they wish to accept. This
-                     * allows them to accept varying numbers of parameters, which is not a feature
-                     * supported in Ginkgo itself yet, but is useful.
-                     */
-                    let params = params.into_iter().map(|param| self.eval_expr(param)).collect();
-                    let function = &self.native_fns[index];
-                    function(params)
-                } else {
-                    panic!("Tried to call value that isn't a function: {:?}", function);
+                    Value::NativeFunction(index) => {
+                        /*
+                         * Native functions do not define how many parameters they wish to accept. This
+                         * allows them to accept varying numbers of parameters, which is not a feature
+                         * supported in Ginkgo itself yet, but is useful.
+                         */
+                        let params = params.into_iter().map(|param| self.eval_expr(param)).collect();
+                        let function = &self.native_fns[index];
+                        function(params)
+                    }
+                    Value::Class(index) => {
+                        /*
+                         * "Calling" a class instantiates an instance of it.
+                         */
+                        Value::Instance { class: index }
+                    }
+                    other => {
+                        panic!("Tried to call non-callable value: {:?}", other);
+                    }
                 }
             }
         }

@@ -58,6 +58,9 @@ pub enum StmtTyp {
         params: Vec<String>,
         body: Vec<Stmt>,
     },
+    ClassDef {
+        name: String,
+    },
     Block(Vec<Stmt>),
     If {
         condition: Expr,
@@ -275,6 +278,11 @@ impl BindingResolver {
                     self.resolve_bindings(stmt);
                 }
                 self.end_scope();
+            }
+            StmtTyp::ClassDef { ref name } => {
+                if let Some(scope) = self.scopes.last_mut() {
+                    scope.insert(name.clone());
+                }
             }
             StmtTyp::Block(ref mut stmts) => {
                 self.begin_scope();
