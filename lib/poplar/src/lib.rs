@@ -12,6 +12,7 @@ pub mod channel;
 pub mod ddk;
 #[cfg(feature = "can_alloc")]
 pub mod early_logger;
+pub mod event;
 pub mod memory_object;
 #[cfg(feature = "async")]
 pub mod rt;

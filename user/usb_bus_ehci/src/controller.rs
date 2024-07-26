@@ -14,9 +14,9 @@ use std::{
     poplar::{
         channel::Channel,
         ddk::dma::{DmaObject, DmaPool, DmaToken},
+        event::Event,
         memory_object::MemoryObject,
         syscall::MemoryObjectFlags,
-        Handle,
     },
     sync::Arc,
 };
@@ -34,7 +34,7 @@ pub struct Controller {
     pub schedule_pool: DmaPool,
     active_devices: BTreeMap<u8, Arc<RwSpinlock<ActiveDevice>>>,
     platform_bus_bus_channel: Arc<Channel<BusDriverMessage, !>>,
-    interrupt_event: Handle,
+    interrupt_event: Event,
 
     /// Holds references to all the queues that are currently in the asynchronous schedule. It's
     /// important we keep a central record of them, as they are linked together into a linked list
@@ -47,7 +47,7 @@ impl Controller {
     pub fn new(
         register_base: usize,
         platform_bus_bus_channel: Arc<Channel<BusDriverMessage, !>>,
-        interrupt_event: Handle,
+        interrupt_event: Event,
     ) -> Controller {
         let caps = Capabilities::read_from_registers(register_base);
         info!("Capabilites: {:#?}", caps);
@@ -468,7 +468,7 @@ impl Controller {
      * allows the result to be read from it, if relevant.
      */
     pub fn wait_for_transfer_completion(&mut self, queue: &mut Queue) {
-        std::poplar::syscall::wait_for_event(self.interrupt_event).unwrap();
+        self.interrupt_event.wait_for_event_blocking();
 
         let status = self.read_status();
         if status.get(Status::ERR_INTERRUPT) {

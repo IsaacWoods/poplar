@@ -19,7 +19,10 @@
 pub mod hid;
 
 use ptah::{Deserialize, Serialize};
-use std::{collections::BTreeMap, poplar::Handle};
+use std::{
+    collections::BTreeMap,
+    poplar::{event::Event, Handle},
+};
 
 type DeviceName = String;
 type PropertyName = String;
@@ -69,7 +72,7 @@ impl HandoffInfo {
         self.0.get(name)?.as_memory_object()
     }
 
-    pub fn get_as_event(&self, name: &str) -> Option<Handle> {
+    pub fn get_as_event(&self, name: &str) -> Option<Event> {
         self.0.get(name)?.as_event()
     }
 
@@ -163,9 +166,9 @@ impl HandoffProperty {
         }
     }
 
-    pub fn as_event(&self) -> Option<Handle> {
+    pub fn as_event(&self) -> Option<Event> {
         match self {
-            HandoffProperty::Event(value) => Some(*value),
+            HandoffProperty::Event(value) => Some(Event::new_from_handle(*value)),
             _ => None,
         }
     }

@@ -20,9 +20,9 @@ use std::{
         channel::Channel,
         ddk::dma::DmaPool,
         early_logger::EarlyLogger,
+        event::Event,
         memory_object::{MappedMemoryObject, MemoryObject},
         syscall::{self, MemoryObjectFlags},
-        Handle,
     },
 };
 use virtio::{
@@ -66,7 +66,7 @@ pub struct VirtioGpu<'a> {
     // TODO: This is located in `mapped_bar`, so we need to be very careful not to create aliasing
     // references! This might be safer if we created ad-hoc references to this as needed?
     common_cfg: &'a mut VirtioPciCommonCfg,
-    interrupt_event: Handle,
+    interrupt_event: Event,
     queue: Virtqueue,
     request_pool: DmaPool,
     next_resource_id: ResourceIndex,
@@ -76,7 +76,7 @@ impl<'a> VirtioGpu<'a> {
     pub fn new(
         mapped_bar: MappedMemoryObject,
         common_cfg: &'a mut VirtioPciCommonCfg,
-        interrupt_event: Handle,
+        interrupt_event: Event,
         queue: Virtqueue,
         request_pool: DmaPool,
     ) -> VirtioGpu<'a> {
@@ -196,7 +196,7 @@ impl<'a> VirtioGpu<'a> {
 
     /// Wait for dispatched requests to complete, clearing the used ring as we go.
     fn wait_for_request(&mut self) {
-        std::poplar::syscall::wait_for_event(self.interrupt_event).unwrap();
+        self.interrupt_event.wait_for_event_blocking();
 
         // TODO: we're sent interrupts for various things - do we need to check??
     }

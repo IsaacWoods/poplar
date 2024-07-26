@@ -52,7 +52,6 @@ impl Queue {
                 alt_ptr: TdPtr::new(0x0, true),
                 token: TdToken::new()
                     .with(TdToken::ACTIVE, true)
-                    // .with(TdToken::INTERRUPT_ON_COMPLETE, true)
                     .with(TdToken::PID_CODE, PidCode::Setup)
                     .with(TdToken::TOTAL_BYTES_TO_TRANSFER, mem::size_of::<SetupPacket>() as u32)
                     .with(TdToken::ERR_COUNTER, 1),
@@ -74,7 +73,6 @@ impl Queue {
                         .with(TdToken::ACTIVE, true)
                         .with(TdToken::DATA_TOGGLE, true)
                         .with(TdToken::ERR_COUNTER, 1)
-                        // .with(TdToken::INTERRUPT_ON_COMPLETE, true)
                         .with(TdToken::PID_CODE, if transfer_to_device { PidCode::Out } else { PidCode::In })
                         .with(TdToken::TOTAL_BYTES_TO_TRANSFER, data.length as u32),
                     buffer_ptr_0: data.phys as u32,
