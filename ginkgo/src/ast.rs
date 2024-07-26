@@ -19,8 +19,8 @@ impl Stmt {
         Stmt { typ: StmtTyp::Let { name, expression: expr } }
     }
 
-    pub fn new_fn_def(name: String, params: Vec<String>, body: Vec<Stmt>) -> Stmt {
-        Stmt { typ: StmtTyp::FnDef { name, params, body } }
+    pub fn new_fn_def(name: String, takes_self: bool, params: Vec<String>, body: Vec<Stmt>) -> Stmt {
+        Stmt { typ: StmtTyp::FnDef { name, takes_self, params, body } }
     }
 
     pub fn new_block(stmts: Vec<Stmt>) -> Stmt {
@@ -55,6 +55,7 @@ pub enum StmtTyp {
     },
     FnDef {
         name: String,
+        takes_self: bool,
         params: Vec<String>,
         body: Vec<Stmt>,
     },
@@ -149,6 +150,7 @@ pub enum ExprTyp {
         expr: Box<Expr>,
     },
     Function {
+        takes_self: bool,
         params: Vec<String>,
         body: Vec<Stmt>,
     },
@@ -270,6 +272,7 @@ impl BindingResolver {
                 }
             }
             StmtTyp::FnDef { ref params, ref mut body, .. } => {
+                // TODO: check if the function is allowed to have a `self` param if it does
                 self.begin_scope();
                 for param in params {
                     self.scopes.last_mut().unwrap().insert(param.clone());
@@ -334,7 +337,8 @@ impl BindingResolver {
                 self.resolve_bindings_expr(place);
                 self.resolve_bindings_expr(expr);
             }
-            ExprTyp::Function { ref mut params, ref mut body } => {
+            ExprTyp::Function { ref mut params, ref mut body, .. } => {
+                // TODO: check if the function is allowed to have a `self` param if it does
                 self.begin_scope();
                 for param in params {
                     self.scopes.last_mut().unwrap().insert(param.clone());

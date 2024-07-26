@@ -10,6 +10,7 @@ pub enum Value {
     Bool(bool),
     String(String),
     Function {
+        takes_self: bool,
         params: Vec<String>,
         body: Vec<Stmt>,
     },
@@ -114,8 +115,8 @@ impl<'a> Interpreter<'a> {
                 self.environment.borrow_mut().define(name, value);
                 None
             }
-            StmtTyp::FnDef { name, params, body } => {
-                self.environment.borrow_mut().define(name, Value::Function { params, body });
+            StmtTyp::FnDef { name, takes_self, params, body } => {
+                self.environment.borrow_mut().define(name, Value::Function { takes_self, params, body });
                 None
             }
             StmtTyp::ClassDef { name } => {
@@ -349,16 +350,18 @@ impl<'a> Interpreter<'a> {
                 }
                 value
             }
-            ExprTyp::Function { body, params } => Value::Function { params, body },
+            ExprTyp::Function { takes_self, body, params } => Value::Function { takes_self, params, body },
             ExprTyp::Call { left, params } => {
                 match self.eval_expr(*left) {
-                    Value::Function { params: param_defs, body } => {
+                    Value::Function { takes_self, params: param_defs, body } => {
                         let environment = Environment::new_with_parent(self.environment.clone());
 
                         /*
                          * For each parameter expected, take the next param supplied and bind it to the
                          * correct name.
                          */
+                        // TODO: if takes_self, this should include an instance somehow that gets
+                        // passed to the function
                         assert_eq!(param_defs.len(), params.len());
                         let mut params = params.into_iter();
                         for param_def in param_defs {

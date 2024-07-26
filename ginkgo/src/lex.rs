@@ -54,6 +54,8 @@ pub enum TokenType {
     Return,
     Fn,
     Class,
+    // XXX: stupid name because `Self` is a keyword in Rust too
+    GinkgoSelf,
 }
 
 #[derive(Clone, Copy, Debug)]
@@ -258,6 +260,7 @@ impl<'s> Iterator for Lex<'s> {
                         "return" => return Some(self.produce(TokenType::Return)),
                         "fn" => return Some(self.produce(TokenType::Fn)),
                         "class" => return Some(self.produce(TokenType::Class)),
+                        "self" => return Some(self.produce(TokenType::GinkgoSelf)),
                         _ => return Some(self.produce(TokenType::Identifier)),
                     }
                 }

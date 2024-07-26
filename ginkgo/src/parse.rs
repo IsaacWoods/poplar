@@ -124,6 +124,18 @@ impl<'s> Parser<'s> {
     pub fn function(&mut self) -> Stmt {
         let name = self.identifier();
         self.consume(TokenType::LeftParen);
+
+        /*
+         * Only the first parameter can be `self`, and it can only occur inside classes.
+         * TODO: check here or in the resolver whether we're in the right place for a self?
+         */
+        let takes_self = if self.matches(TokenType::GinkgoSelf) {
+            self.matches(TokenType::Comma);
+            true
+        } else {
+            false
+        };
+
         let mut params = Vec::new();
         while !self.matches(TokenType::RightParen) {
             // TODO: not sure if we want to parse expressions or something simpler (e.g. could
@@ -144,7 +156,7 @@ impl<'s> Parser<'s> {
         while !self.matches(TokenType::RightBrace) {
             statements.push(self.statement());
         }
-        Stmt::new_fn_def(name, params, statements)
+        Stmt::new_fn_def(name, takes_self, params, statements)
     }
 
     pub fn identifier(&mut self) -> String {
@@ -263,6 +275,16 @@ impl<'s> Parser<'s> {
         self.register_prefix(TokenType::Fn, |parser, _token| {
             parser.consume(TokenType::LeftParen);
 
+            /*
+             * Only the first parameter can be `self`, and it can only occur inside classes.
+             */
+            let takes_self = if parser.matches(TokenType::GinkgoSelf) {
+                parser.matches(TokenType::Comma);
+                true
+            } else {
+                false
+            };
+
             let mut params = Vec::new();
             while !parser.matches(TokenType::RightParen) {
                 // TODO: not sure if we want to parse expressions or something simpler (e.g. could
@@ -284,7 +306,7 @@ impl<'s> Parser<'s> {
                 statements.push(parser.statement());
             }
 
-            Expr::new(ExprTyp::Function { body: statements, params })
+            Expr::new(ExprTyp::Function { takes_self, body: statements, params })
         });
 
         /*
