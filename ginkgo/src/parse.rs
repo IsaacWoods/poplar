@@ -220,7 +220,8 @@ impl<'s> Parser<'s> {
         const PRECEDENCE_EXPONENT: u8 = 10;
         const PRECEDENCE_PREFIX: u8 = 11;
         const PRECEDENCE_POSTFIX: u8 = 12;
-        const PRECEDENCE_CALL: u8 = 13;
+        const PRECEDENCE_PROPERTY_ACCESS: u8 = 13;
+        const PRECEDENCE_CALL: u8 = 14;
 
         /*
          * Literals and identifiers and consumed as prefix operations.
@@ -378,6 +379,11 @@ impl<'s> Parser<'s> {
             }
 
             Expr::new(ExprTyp::Call { left: Box::new(left), params })
+        });
+
+        self.register_infix(TokenType::Dot, PRECEDENCE_PROPERTY_ACCESS, |parser, left, _token| {
+            let property = parser.identifier();
+            Expr::new(ExprTyp::PropertyAccess { left: Box::new(left), property })
         });
     }
 }

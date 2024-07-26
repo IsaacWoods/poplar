@@ -18,6 +18,7 @@ pub enum Value {
     Class(usize),
     Instance {
         class: usize,
+        instance: usize,
     },
 }
 
@@ -40,14 +41,22 @@ pub struct Class {
     name: String,
 }
 
+pub struct Instance {
+    properties: BTreeMap<String, Value>,
+}
+
 pub struct Interpreter<'a> {
     globals: Arc<RefCell<Environment>>,
     environment: Arc<RefCell<Environment>>,
-    /// XXX: We don't support removing native functions once they're added as that would invalide
-    /// indices pointing towards them.
+    /*
+     * We keep track of various things as indexed lists. We don't support removing elements of any
+     * of these, as that would invalidate indices.
+     * TODO: that doesn't really work long term for instances does it. Probs need a nicer way or at
+     * least a generational arena for them.
+     */
     native_fns: Vec<Box<dyn Fn(Vec<Value>) -> Value + 'a>>,
-    /// XXX: once a class is defined, it can also not be removed to avoid invalidating indices.
     classes: Vec<Class>,
+    instances: Vec<Instance>,
 }
 
 // TODO: this is probably bad (it isn't true by default bc RefCell)
@@ -57,7 +66,13 @@ unsafe impl Sync for Interpreter<'_> {}
 impl<'a> Interpreter<'a> {
     pub fn new() -> Interpreter<'a> {
         let globals = Environment::new();
-        Interpreter { globals: globals.clone(), environment: globals, native_fns: Vec::new(), classes: Vec::new() }
+        Interpreter {
+            globals: globals.clone(),
+            environment: globals,
+            native_fns: Vec::new(),
+            classes: Vec::new(),
+            instances: Vec::new(),
+        }
     }
 
     /// Define a native function with the given name as a global.
@@ -346,7 +361,14 @@ impl<'a> Interpreter<'a> {
                             self.environment.borrow_mut().assign(name, depth, value.clone())
                         }
                     },
-                    _ => panic!("Invalid place"),
+                    ExprTyp::PropertyAccess { left, property } => {
+                        if let Value::Instance { class, instance } = self.eval_expr(*left) {
+                            self.instances.get_mut(instance).unwrap().properties.insert(property, value.clone());
+                        } else {
+                            panic!("Tried to set property on value that is not an object!");
+                        }
+                    }
+                    _ => panic!("Invalid place: {:?}", place.typ),
                 }
                 value
             }
@@ -384,11 +406,24 @@ impl<'a> Interpreter<'a> {
                         /*
                          * "Calling" a class instantiates an instance of it.
                          */
-                        Value::Instance { class: index }
+                        let instance_index = self.instances.len();
+                        self.instances.push(Instance { properties: BTreeMap::new() });
+                        Value::Instance { class: index, instance: instance_index }
                     }
                     other => {
                         panic!("Tried to call non-callable value: {:?}", other);
                     }
+                }
+            }
+            ExprTyp::PropertyAccess { left, property } => {
+                if let Value::Instance { class, instance } = self.eval_expr(*left) {
+                    if let Some(property) = self.instances.get(instance).unwrap().properties.get(&property) {
+                        property.clone()
+                    } else {
+                        panic!("Tried to access property '{}' on object but it does not exist!", property);
+                    }
+                } else {
+                    panic!("Tried to access property on value that is not an object!");
                 }
             }
         }

@@ -158,6 +158,10 @@ pub enum ExprTyp {
         left: Box<Expr>,
         params: Vec<Expr>,
     },
+    PropertyAccess {
+        left: Box<Expr>,
+        property: String,
+    },
 }
 
 #[derive(Clone, Copy, PartialEq, Debug)]
@@ -353,6 +357,10 @@ impl BindingResolver {
                 for param in params {
                     self.resolve_bindings_expr(param);
                 }
+            }
+            ExprTyp::PropertyAccess { ref mut left, .. } => {
+                self.resolve_bindings_expr(left);
+                // We don't need to do anything with the actual property name
             }
         }
     }
