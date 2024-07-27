@@ -105,6 +105,7 @@ pub fn main() {
                         struct ConfigInfo {
                             config_value: u8,
                             interface_num: u8,
+                            interface_protocol: u8,
                             interface_setting: u8,
                             endpoint_num: u8,
                             packet_size: u16,
@@ -117,6 +118,7 @@ pub fn main() {
 
                             fn visit_interface(&mut self, descriptor: &InterfaceDescriptor) {
                                 self.interface_num = descriptor.interface_num;
+                                self.interface_protocol = descriptor.interface_protocol;
                                 self.interface_setting = descriptor.alternate_setting;
                             }
 
@@ -142,10 +144,21 @@ pub fn main() {
                      * TODO: we need to work out what devices actually are don't we...
                      */
                     let (device_channel, device_channel_other_end) = Channel::<HidEvent, ()>::create().unwrap();
-                    let name = "usb-hid".to_string(); // TODO: proper name
+                    // TODO: proper name
+                    let name = "usb-hid".to_string();
+                    // TODO: make this a proper enum I think?
+                    let typ = match config_info.interface_protocol {
+                        0 => "none",
+                        1 => "keyboard",
+                        2 => "mouse",
+                        other => {
+                            warn!("Reserved interface protocol in HID device descriptor: {}", other);
+                            "reserved"
+                        }
+                    };
                     let device_info = {
                         let mut info = BTreeMap::new();
-                        info.insert("hid.type".to_string(), Property::String("keyboard".to_string()));
+                        info.insert("hid.type".to_string(), Property::String(typ.to_string()));
                         DeviceInfo(info)
                     };
                     let handoff_info = {
@@ -180,6 +193,7 @@ pub fn main() {
                             let report_desc = usb::hid::report::ReportDescriptorParser::parse(&bytes);
                             report_desc
                         };
+                        info!("Parsed report descriptor: {:#?}", report_desc);
 
                         control_channel
                             .send(&DeviceControlMessage::UseConfiguration(config_info.config_value))
@@ -225,6 +239,52 @@ pub fn main() {
 
                                     for field in report {
                                         match field {
+                                            FieldValue::UntranslatedSelector { usage_page, usage } => {
+                                                warn!("Received unknown selector in HID report: page={:#x}, usage={:#x}", usage_page, usage);
+                                            }
+                                            FieldValue::UntranslatedDynamicValue { usage_page, usage } => {
+                                                warn!("Received unknown dynamic value in HID report: page={:#x}, usage={:#x}", usage_page, usage);
+                                            }
+
+                                            // TODO: move to mouse section idk
+                                            FieldValue::DynamicValue(Usage::X, value) => {
+                                                info!("X: {}", value);
+                                            }
+                                            FieldValue::DynamicValue(Usage::Y, value) => {
+                                                info!("Y: {}", value);
+                                            }
+                                            FieldValue::DynamicValue(Usage::Z, value) => {
+                                                info!("Z: {}", value);
+                                            }
+                                            FieldValue::DynamicValue(Usage::Wheel, value) => {
+                                                info!("Wheel: {}", value);
+                                            }
+                                            FieldValue::DynamicValue(Usage::Button1, value) => {
+                                                if value != 0 {
+                                                    info!("Button 1 pressed");
+                                                }
+                                            }
+                                            FieldValue::DynamicValue(Usage::Button2, value) => {
+                                                if value != 0 {
+                                                    info!("Button 2 pressed");
+                                                }
+                                            }
+                                            FieldValue::DynamicValue(Usage::Button3, value) => {
+                                                if value != 0 {
+                                                    info!("Button 3 pressed");
+                                                }
+                                            }
+                                            FieldValue::DynamicValue(Usage::Button4, value) => {
+                                                if value != 0 {
+                                                    info!("Button 4 pressed");
+                                                }
+                                            }
+                                            FieldValue::DynamicValue(Usage::Button5, value) => {
+                                                if value != 0 {
+                                                    info!("Button 5 pressed");
+                                                }
+                                            }
+
                                             FieldValue::DynamicValue(Usage::KeyLeftControl, value) => {
                                                 state.left_ctrl = value != 0;
                                             }
