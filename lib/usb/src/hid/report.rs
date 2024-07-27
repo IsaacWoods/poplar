@@ -1,6 +1,7 @@
 use alloc::{vec, vec::Vec};
-use bit_field::BitField;
+use bit_field::{BitArray, BitField};
 use core::ops::Range;
+use log::{info, warn};
 
 #[derive(Debug)]
 pub struct ReportDescriptor {
@@ -17,8 +18,8 @@ pub enum ReportField {
         size: u32,
         /// The number of elements in the array
         count: u32,
-        logical_min: u32,
-        logical_max: u32,
+        logical_min: i32,
+        logical_max: i32,
 
         usage_page: u16,
         usage_min: u32,
@@ -27,8 +28,8 @@ pub enum ReportField {
     Variable {
         /// Size, in bits
         size: u32,
-        data_min: u32,
-        data_max: u32,
+        data_min: i32,
+        data_max: i32,
 
         usage_page: u16,
         usage_id: u32,
@@ -37,8 +38,20 @@ pub enum ReportField {
 
 #[derive(Debug)]
 pub enum FieldValue {
-    Selector(Option<Usage>),
-    DynamicValue(Usage, bool),
+    Selector(Usage),
+    DynamicValue(Usage, i32),
+    /// Marks a selector that could not be translated. This means the usage value translation
+    /// is incomplete for the device type, or the device has produced an invalid report.
+    UntranslatedSelector {
+        usage_page: u16,
+        usage: u32,
+    },
+    /// Marks a dynamic value that could not be translated. This means the usage value translation
+    /// is incomplete for the device type, or the device has produced an invalid report.
+    UntranslatedDynamicValue {
+        usage_page: u16,
+        usage: u32,
+    },
 }
 
 impl ReportDescriptor {
@@ -54,15 +67,35 @@ impl ReportDescriptor {
                         let value = Self::extract_field_as_u32(report, bit_offset..(bit_offset + size));
                         bit_offset += size;
                         let usage_id = usage_min + value;
-                        let usage = translate_usage(*usage_page, usage_id);
-                        result.push(FieldValue::Selector(usage));
+                        if let Some(usage) = translate_usage(*usage_page, usage_id) {
+                            result.push(FieldValue::Selector(usage));
+                        } else {
+                            result.push(FieldValue::UntranslatedSelector {
+                                usage_page: *usage_page,
+                                usage: usage_id,
+                            });
+                        }
                     }
                 }
-                ReportField::Variable { size, usage_page, usage_id, .. } => {
-                    let value = Self::extract_field_as_u32(report, bit_offset..(bit_offset + size));
-                    bit_offset += size;
-                    let usage = translate_usage(*usage_page, *usage_id).unwrap();
-                    result.push(FieldValue::DynamicValue(usage, value != 0));
+                ReportField::Variable { size, usage_page, usage_id, data_min, data_max } => {
+                    if let Some(usage) = translate_usage(*usage_page, *usage_id) {
+                        if *data_min < 0 {
+                            let value = Self::extract_field_as_i32(report, bit_offset..(bit_offset + size));
+                            bit_offset += size;
+                            result.push(FieldValue::DynamicValue(usage, value));
+                        } else {
+                            let value = Self::extract_field_as_u32(report, bit_offset..(bit_offset + size));
+                            bit_offset += size;
+                            assert!(value != i32::MAX as u32);
+                            result.push(FieldValue::DynamicValue(usage, value as i32));
+                        }
+                    } else {
+                        warn!("Unknown usage: (page={:#x},id={:#x})", usage_page, usage_id);
+                        result.push(FieldValue::UntranslatedDynamicValue {
+                            usage_page: *usage_page,
+                            usage: *usage_id,
+                        });
+                    }
                 }
             }
         }
@@ -92,14 +125,28 @@ impl ReportDescriptor {
         bytes[..bits.len()].copy_from_slice(&bits);
         u32::from_le_bytes(bytes)
     }
+
+    fn extract_field_as_i32(report: &[u8], bits: Range<u32>) -> i32 {
+        let bits = Self::extract_field(report, bits);
+        let mut bytes = [0u8; 4];
+        bytes[..bits.len()].copy_from_slice(&bits);
+
+        // Sign-extend shorter values to correct the 2s-complement representation.
+        if bytes.get_bit(bits.len() * 8 - 1) {
+            for i in (bits.len() * 8)..(bytes.len() * 8) {
+                bytes.set_bit(i, true);
+            }
+        }
+
+        i32::from_le_bytes(bytes)
+    }
 }
 
 #[derive(Debug)]
 struct GlobalState {
     pub usage_page: Option<u16>,
-    // TODO: these can actually all be signed or unsigned I think??
-    pub logical_min: Option<u32>,
-    pub logical_max: Option<u32>,
+    pub logical_min: Option<i32>,
+    pub logical_max: Option<i32>,
     pub report_size: Option<u32>,
     pub report_count: Option<u32>,
     pub physical_min: Option<u32>,
@@ -196,11 +243,13 @@ impl ReportDescriptorParser {
             }
             0b0001 => {
                 // Logical minimum
-                self.global.logical_min = Some(item.data_as_u32());
+                self.global.logical_min = Some(item.data_as_i32());
+                log::info!("Logical min: {:?}", self.global.logical_min);
             }
             0b0010 => {
                 // Logical maximum
-                self.global.logical_max = Some(item.data_as_u32());
+                self.global.logical_max = Some(item.data_as_i32());
+                log::info!("Logical max: {:?}", self.global.logical_max);
             }
             0b0011 => {
                 // Physical minimum
@@ -286,6 +335,10 @@ impl ReportDescriptorParser {
         } else if is_array {
             let logical_min = self.global.logical_min.unwrap();
             let logical_max = self.global.logical_max.unwrap();
+
+            if logical_min > logical_max {
+                // Sign extend logical
+            }
 
             // TODO: support signed values if we end up needing to
             assert!(!i32::try_from(logical_min).unwrap().is_negative());
@@ -377,6 +430,14 @@ pub struct Item<'a> {
     pub data: &'a [u8],
 }
 
+#[derive(Clone, Copy, PartialEq, Debug)]
+pub enum ItemType {
+    Main,
+    Global,
+    Local,
+    Reserved,
+}
+
 impl<'a> Item<'a> {
     /// Interprets up to 2 bytes of `data` as a `u16`. In the case that there are less than 2
     /// bytes, the upper bytes will be padded with zeros.
@@ -393,14 +454,24 @@ impl<'a> Item<'a> {
         bytes[..self.data.len()].copy_from_slice(self.data);
         u32::from_le_bytes(bytes)
     }
-}
 
-#[derive(Clone, Copy, PartialEq, Debug)]
-pub enum ItemType {
-    Main,
-    Global,
-    Local,
-    Reserved,
+    pub fn data_as_i32(&self) -> i32 {
+        let mut bytes = [0; 4];
+        bytes[..self.data.len()].copy_from_slice(self.data);
+
+        /*
+         * We need to sign-extend values that are shorter than 4 bytes to make sure negative values
+         * continue to have the correct 2s-complement representation. There's probably a more
+         * efficient way to do this, but I'm not interested in bit-munging today.
+         */
+        if bytes.get_bit(self.data.len() * 8 - 1) {
+            for i in (self.data.len() * 8)..(bytes.len() * 8) {
+                bytes.set_bit(i, true);
+            }
+        }
+
+        i32::from_le_bytes(bytes)
+    }
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Debug)]

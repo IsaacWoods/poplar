@@ -226,37 +226,36 @@ pub fn main() {
                                     for field in report {
                                         match field {
                                             FieldValue::DynamicValue(Usage::KeyLeftControl, value) => {
-                                                state.left_ctrl = value;
+                                                state.left_ctrl = value != 0;
                                             }
                                             FieldValue::DynamicValue(Usage::KeyLeftShift, value) => {
-                                                state.left_shift = value;
+                                                state.left_shift = value != 0;
                                             }
                                             FieldValue::DynamicValue(Usage::KeyLeftAlt, value) => {
-                                                state.left_alt = value;
+                                                state.left_alt = value != 0;
                                             }
                                             FieldValue::DynamicValue(Usage::KeyLeftGui, value) => {
-                                                state.left_gui = value;
+                                                state.left_gui = value != 0;
                                             }
                                             FieldValue::DynamicValue(Usage::KeyRightControl, value) => {
-                                                state.right_ctrl = value;
+                                                state.right_ctrl = value != 0;
                                             }
                                             FieldValue::DynamicValue(Usage::KeyRightShift, value) => {
-                                                state.right_shift = value;
+                                                state.right_shift = value != 0;
                                             }
                                             FieldValue::DynamicValue(Usage::KeyRightAlt, value) => {
-                                                state.right_alt = value;
+                                                state.right_alt = value != 0;
                                             }
                                             FieldValue::DynamicValue(Usage::KeyRightGui, value) => {
-                                                state.right_gui = value;
+                                                state.right_gui = value != 0;
                                             }
                                             FieldValue::DynamicValue(other, _) => {
                                                 warn!("Unknown dynamic flag: {:?}", other);
                                             }
 
-                                            FieldValue::Selector(Some(usage)) => {
+                                            FieldValue::Selector(usage) => {
                                                 current_keys.insert(usage);
                                             }
-                                            FieldValue::Selector(None) => {}
                                         }
                                     }
 
