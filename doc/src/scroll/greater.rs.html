@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/scroll-0.10.2/src/greater.rs`."><title>greater.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-dd39b87e5fcfba68.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="scroll" data-themes="" data-resource-suffix="" data-rustdoc-version="1.81.0-nightly (35b658fb1 2024-07-08)" data-channel="nightly" data-search-js="search-d234aafac6c221dd.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../static.files/storage-118b08c4c78b968e.js"></script><script defer src="../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-20a3ad099b048cf2.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-df360f571f6edeae.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/scroll-0.12.0/src/greater.rs`."><title>greater.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-5ca6ca2a1f83705a.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="scroll" data-themes="" data-resource-suffix="" data-rustdoc-version="1.82.0-nightly (7c2012d0e 2024-07-26)" data-channel="nightly" data-search-js="search-d234aafac6c221dd.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../static.files/storage-118b08c4c78b968e.js"></script><script defer src="../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-d2fab2bf619172d3.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-df360f571f6edeae.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -152,6 +152,21 @@
 <a href="#152" id="152">152</a>
 <a href="#153" id="153">153</a>
 <a href="#154" id="154">154</a>
+<a href="#155" id="155">155</a>
+<a href="#156" id="156">156</a>
+<a href="#157" id="157">157</a>
+<a href="#158" id="158">158</a>
+<a href="#159" id="159">159</a>
+<a href="#160" id="160">160</a>
+<a href="#161" id="161">161</a>
+<a href="#162" id="162">162</a>
+<a href="#163" id="163">163</a>
+<a href="#164" id="164">164</a>
+<a href="#165" id="165">165</a>
+<a href="#166" id="166">166</a>
+<a href="#167" id="167">167</a>
+<a href="#168" id="168">168</a>
+<a href="#169" id="169">169</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>core::ops::{Index, IndexMut, RangeFrom};
 
 <span class="kw">use </span><span class="kw">crate</span>::ctx::{FromCtx, IntoCtx};
@@ -187,8 +202,8 @@
 /// assert_eq!({bar.foo}, -1);
 /// assert_eq!({bar.bar}, 0xdeadbeef);
 /// ```
-</span><span class="kw">pub trait </span>Cread&lt;Ctx, I = usize&gt; : Index&lt;I&gt; + Index&lt;RangeFrom&lt;I&gt;&gt;
- <span class="kw">where
+</span><span class="kw">pub trait </span>Cread&lt;Ctx, I = usize&gt;: Index&lt;I&gt; + Index&lt;RangeFrom&lt;I&gt;&gt;
+<span class="kw">where
     </span>Ctx: Copy,
 {
     <span class="doccomment">/// Reads a value from `Self` at `offset` with `ctx`. Cannot fail.
@@ -207,7 +222,11 @@
     /// assert_eq!(bar, 0xdeadbeef);
     /// ```
     </span><span class="attr">#[inline]
-    </span><span class="kw">fn </span>cread_with&lt;N: FromCtx&lt;Ctx, &lt;<span class="self">Self </span><span class="kw">as </span>Index&lt;RangeFrom&lt;I&gt;&gt;&gt;::Output&gt;&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, offset: I, ctx: Ctx) -&gt; N {
+    </span><span class="kw">fn </span>cread_with&lt;N: FromCtx&lt;Ctx, &lt;<span class="self">Self </span><span class="kw">as </span>Index&lt;RangeFrom&lt;I&gt;&gt;&gt;::Output&gt;&gt;(
+        <span class="kw-2">&amp;</span><span class="self">self</span>,
+        offset: I,
+        ctx: Ctx,
+    ) -&gt; N {
         N::from_ctx(<span class="kw-2">&amp;</span><span class="self">self</span>[offset..], ctx)
     }
     <span class="doccomment">/// Reads a value implementing `FromCtx` from `Self` at `offset`,
@@ -233,7 +252,10 @@
     /// assert_eq!(bar, 0xefbe0000);
     /// ```
     </span><span class="attr">#[inline]
-    </span><span class="kw">fn </span>cread&lt;N: FromCtx&lt;Ctx, &lt;<span class="self">Self </span><span class="kw">as </span>Index&lt;RangeFrom&lt;I&gt;&gt;&gt;::Output&gt;&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, offset: I) -&gt; N <span class="kw">where </span>Ctx: Default {
+    </span><span class="kw">fn </span>cread&lt;N: FromCtx&lt;Ctx, &lt;<span class="self">Self </span><span class="kw">as </span>Index&lt;RangeFrom&lt;I&gt;&gt;&gt;::Output&gt;&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, offset: I) -&gt; N
+    <span class="kw">where
+        </span>Ctx: Default,
+    {
         <span class="kw">let </span>ctx = Ctx::default();
         N::from_ctx(<span class="kw-2">&amp;</span><span class="self">self</span>[offset..], ctx)
     }
@@ -284,7 +306,10 @@
     /// assert_eq!(bytes.cread::&lt;i64&gt;(0), 42);
     /// assert_eq!(bytes.cread::&lt;u32&gt;(8), 0xdeadbeef);
     </span><span class="attr">#[inline]
-    </span><span class="kw">fn </span>cwrite&lt;N: IntoCtx&lt;Ctx, &lt;<span class="self">Self </span><span class="kw">as </span>Index&lt;RangeFrom&lt;I&gt;&gt;&gt;::Output&gt;&gt;(<span class="kw-2">&amp;mut </span><span class="self">self</span>, n: N, offset: I) <span class="kw">where </span>Ctx: Default {
+    </span><span class="kw">fn </span>cwrite&lt;N: IntoCtx&lt;Ctx, &lt;<span class="self">Self </span><span class="kw">as </span>Index&lt;RangeFrom&lt;I&gt;&gt;&gt;::Output&gt;&gt;(<span class="kw-2">&amp;mut </span><span class="self">self</span>, n: N, offset: I)
+    <span class="kw">where
+        </span>Ctx: Default,
+    {
         <span class="kw">let </span>ctx = Ctx::default();
         n.into_ctx(<span class="self">self</span>.index_mut(offset..), ctx)
     }
@@ -300,7 +325,12 @@
     /// assert_eq!(bytes.cread_with::&lt;i64&gt;(0, LE), 42);
     /// assert_eq!(bytes.cread_with::&lt;u32&gt;(8, LE), 0xefbeadde);
     </span><span class="attr">#[inline]
-    </span><span class="kw">fn </span>cwrite_with&lt;N: IntoCtx&lt;Ctx, &lt;<span class="self">Self </span><span class="kw">as </span>Index&lt;RangeFrom&lt;I&gt;&gt;&gt;::Output&gt;&gt;(<span class="kw-2">&amp;mut </span><span class="self">self</span>, n: N, offset: I, ctx: Ctx) {
+    </span><span class="kw">fn </span>cwrite_with&lt;N: IntoCtx&lt;Ctx, &lt;<span class="self">Self </span><span class="kw">as </span>Index&lt;RangeFrom&lt;I&gt;&gt;&gt;::Output&gt;&gt;(
+        <span class="kw-2">&amp;mut </span><span class="self">self</span>,
+        n: N,
+        offset: I,
+        ctx: Ctx,
+    ) {
         n.into_ctx(<span class="self">self</span>.index_mut(offset..), ctx)
     }
 }

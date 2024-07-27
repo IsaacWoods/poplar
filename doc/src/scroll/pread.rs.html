@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/scroll-0.10.2/src/pread.rs`."><title>pread.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-dd39b87e5fcfba68.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="scroll" data-themes="" data-resource-suffix="" data-rustdoc-version="1.81.0-nightly (35b658fb1 2024-07-08)" data-channel="nightly" data-search-js="search-d234aafac6c221dd.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../static.files/storage-118b08c4c78b968e.js"></script><script defer src="../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-20a3ad099b048cf2.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-df360f571f6edeae.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/scroll-0.12.0/src/pread.rs`."><title>pread.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-5ca6ca2a1f83705a.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="scroll" data-themes="" data-resource-suffix="" data-rustdoc-version="1.82.0-nightly (7c2012d0e 2024-07-26)" data-channel="nightly" data-search-js="search-d234aafac6c221dd.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../static.files/storage-118b08c4c78b968e.js"></script><script defer src="../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-d2fab2bf619172d3.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-df360f571f6edeae.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -165,13 +165,28 @@
 <a href="#165" id="165">165</a>
 <a href="#166" id="166">166</a>
 <a href="#167" id="167">167</a>
+<a href="#168" id="168">168</a>
+<a href="#169" id="169">169</a>
+<a href="#170" id="170">170</a>
+<a href="#171" id="171">171</a>
+<a href="#172" id="172">172</a>
+<a href="#173" id="173">173</a>
+<a href="#174" id="174">174</a>
+<a href="#175" id="175">175</a>
+<a href="#176" id="176">176</a>
+<a href="#177" id="177">177</a>
+<a href="#178" id="178">178</a>
+<a href="#179" id="179">179</a>
+<a href="#180" id="180">180</a>
+<a href="#181" id="181">181</a>
+<a href="#182" id="182">182</a>
+<a href="#183" id="183">183</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>core::result;
-<span class="kw">use </span>core::ops::{Index, RangeFrom};
 
-<span class="kw">use </span><span class="kw">crate</span>::ctx::{TryFromCtx, MeasureWith};
+<span class="kw">use </span><span class="kw">crate</span>::ctx::TryFromCtx;
 <span class="kw">use </span><span class="kw">crate</span>::error;
 
-<span class="doccomment">/// A very generic, contextual pread interface in Rust. 
+<span class="doccomment">/// A very generic, contextual pread interface in Rust.
 ///
 /// Like [Pwrite](trait.Pwrite.html) — but for reading!
 ///
@@ -187,6 +202,11 @@
 /// `Pread` and `TryFromCtx` are generic over what 'data' means and could be implemented instead
 /// over chunks of memory or any other indexable type — but scroll does come with a set of powerful
 /// blanket implementations for data being a continous block of byte-addressable memory.
+///
+/// Note that in the particular case of the implementation of `Pread` for `[u8]`,
+/// reading it at the length boundary of that slice will cause to read from an empty slice.
+/// i.e. we make use of the fact that `&amp;bytes[bytes.len()..]` will return an empty slice, rather
+/// than returning an error. In the past, scroll returned an offset error.
 ///
 /// Pread provides two main groups of functions: pread and gread.
 ///
@@ -206,14 +226,10 @@
 /// the resulting type. scroll defaults to `&amp;[u8]` here.
 ///
 /// Unless you need to implement your own data store — that is either can't convert to `&amp;[u8]` or
-/// have a data that is not `&amp;[u8]` — you will probably want to implement
+/// have a data that does not expose a `&amp;[u8]` — you will probably want to implement
 /// [TryFromCtx](ctx/trait.TryFromCtx.html) on your Rust types to be extracted.
 ///
-</span><span class="kw">pub trait </span>Pread&lt;Ctx, E&gt; : Index&lt;usize&gt; + Index&lt;RangeFrom&lt;usize&gt;&gt; + MeasureWith&lt;Ctx&gt;
- <span class="kw">where
-       </span>Ctx: Copy,
-       E: From&lt;error::Error&gt;,
-{
+</span><span class="kw">pub trait </span>Pread&lt;Ctx: Copy, E&gt; {
     <span class="attr">#[inline]
     </span><span class="doccomment">/// Reads a value from `self` at `offset` with a default `Ctx`. For the primitive numeric values, this will read at the machine's endianness.
     /// # Example
@@ -221,9 +237,16 @@
     /// use scroll::Pread;
     /// let bytes = [0x7fu8; 0x01];
     /// let byte = bytes.pread::&lt;u8&gt;(0).unwrap();
-    </span><span class="kw">fn </span>pread&lt;<span class="lifetime">'a</span>, N: TryFromCtx&lt;<span class="lifetime">'a</span>, Ctx, &lt;<span class="self">Self </span><span class="kw">as </span>Index&lt;RangeFrom&lt;usize&gt;&gt;&gt;::Output, Error = E&gt;&gt;(<span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="self">self</span>, offset: usize) -&gt; result::Result&lt;N, E&gt; <span class="kw">where </span>&lt;<span class="self">Self </span><span class="kw">as </span>Index&lt;RangeFrom&lt;usize&gt;&gt;&gt;::Output: <span class="lifetime">'a</span>, Ctx: Default {
+    </span><span class="kw">fn </span>pread&lt;<span class="lifetime">'a</span>, N: TryFromCtx&lt;<span class="lifetime">'a</span>, Ctx, <span class="self">Self</span>, Error = E&gt;&gt;(
+        <span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="self">self</span>,
+        offset: usize,
+    ) -&gt; result::Result&lt;N, E&gt;
+    <span class="kw">where
+        </span>Ctx: Default,
+    {
         <span class="self">self</span>.pread_with(offset, Ctx::default())
     }
+
     <span class="attr">#[inline]
     </span><span class="doccomment">/// Reads a value from `self` at `offset` with the given `ctx`
     /// # Example
@@ -232,13 +255,15 @@
     /// let bytes: [u8; 2] = [0xde, 0xad];
     /// let dead: u16 = bytes.pread_with(0, scroll::BE).unwrap();
     /// assert_eq!(dead, 0xdeadu16);
-    </span><span class="kw">fn </span>pread_with&lt;<span class="lifetime">'a</span>, N: TryFromCtx&lt;<span class="lifetime">'a</span>, Ctx, &lt;<span class="self">Self </span><span class="kw">as </span>Index&lt;RangeFrom&lt;usize&gt;&gt;&gt;::Output, Error = E&gt;&gt;(<span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="self">self</span>, offset: usize, ctx: Ctx) -&gt; result::Result&lt;N, E&gt; <span class="kw">where </span>&lt;<span class="self">Self </span><span class="kw">as </span>Index&lt;RangeFrom&lt;usize&gt;&gt;&gt;::Output: <span class="lifetime">'a </span>{
-        <span class="kw">let </span>len = <span class="self">self</span>.measure_with(<span class="kw-2">&amp;</span>ctx);
-        <span class="kw">if </span>offset &gt;= len {
-            <span class="kw">return </span><span class="prelude-val">Err</span>(error::Error::BadOffset(offset).into())
-        }
-        N::try_from_ctx(<span class="kw-2">&amp;</span><span class="self">self</span>[offset..], ctx).and_then(|(n, <span class="kw">_</span>)| <span class="prelude-val">Ok</span>(n))
+    </span><span class="kw">fn </span>pread_with&lt;<span class="lifetime">'a</span>, N: TryFromCtx&lt;<span class="lifetime">'a</span>, Ctx, <span class="self">Self</span>, Error = E&gt;&gt;(
+        <span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="self">self</span>,
+        offset: usize,
+        ctx: Ctx,
+    ) -&gt; result::Result&lt;N, E&gt; {
+        <span class="kw">let </span><span class="kw-2">mut </span>ignored = offset;
+        <span class="self">self</span>.gread_with(<span class="kw-2">&amp;mut </span>ignored, ctx)
     }
+
     <span class="attr">#[inline]
     </span><span class="doccomment">/// Reads a value from `self` at `offset` with a default `Ctx`. For the primitive numeric values, this will read at the machine's endianness. Updates the offset
     /// # Example
@@ -248,10 +273,17 @@
     /// let bytes = [0x7fu8; 0x01];
     /// let byte = bytes.gread::&lt;u8&gt;(offset).unwrap();
     /// assert_eq!(*offset, 1);
-    </span><span class="kw">fn </span>gread&lt;<span class="lifetime">'a</span>, N: TryFromCtx&lt;<span class="lifetime">'a</span>, Ctx, &lt;<span class="self">Self </span><span class="kw">as </span>Index&lt;RangeFrom&lt;usize&gt;&gt;&gt;::Output, Error = E&gt;&gt;(<span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="self">self</span>, offset: <span class="kw-2">&amp;mut </span>usize) -&gt; result::Result&lt;N, E&gt; <span class="kw">where </span>Ctx: Default, &lt;<span class="self">Self </span><span class="kw">as </span>Index&lt;RangeFrom&lt;usize&gt;&gt;&gt;::Output: <span class="lifetime">'a </span>{
+    </span><span class="kw">fn </span>gread&lt;<span class="lifetime">'a</span>, N: TryFromCtx&lt;<span class="lifetime">'a</span>, Ctx, <span class="self">Self</span>, Error = E&gt;&gt;(
+        <span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="self">self</span>,
+        offset: <span class="kw-2">&amp;mut </span>usize,
+    ) -&gt; result::Result&lt;N, E&gt;
+    <span class="kw">where
+        </span>Ctx: Default,
+    {
         <span class="kw">let </span>ctx = Ctx::default();
         <span class="self">self</span>.gread_with(offset, ctx)
     }
+
     <span class="doccomment">/// Reads a value from `self` at `offset` with the given `ctx`, and updates the offset.
     /// # Example
     /// ```rust
@@ -261,28 +293,13 @@
     /// let dead: u16 = bytes.gread_with(offset, scroll::BE).unwrap();
     /// assert_eq!(dead, 0xdeadu16);
     /// assert_eq!(*offset, 2);
-    </span><span class="attr">#[inline]
-    </span><span class="kw">fn </span>gread_with&lt;<span class="lifetime">'a</span>, N: TryFromCtx&lt;<span class="lifetime">'a</span>, Ctx, &lt;<span class="self">Self </span><span class="kw">as </span>Index&lt;RangeFrom&lt;usize&gt;&gt;&gt;::Output, Error = E&gt;&gt;
-        (<span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="self">self</span>, offset: <span class="kw-2">&amp;mut </span>usize, ctx: Ctx) -&gt;
-        result::Result&lt;N, E&gt;
-        <span class="kw">where </span>&lt;<span class="self">Self </span><span class="kw">as </span>Index&lt;RangeFrom&lt;usize&gt;&gt;&gt;::Output: <span class="lifetime">'a
-    </span>{
-        <span class="kw">let </span>o = <span class="kw-2">*</span>offset;
-        <span class="comment">// self.pread_with(o, ctx).and_then(|(n, size)| {
-        //     *offset += size;
-        //     Ok(n)
-        // })
-        </span><span class="kw">let </span>len = <span class="self">self</span>.measure_with(<span class="kw-2">&amp;</span>ctx);
-        <span class="kw">if </span>o &gt;= len {
-            <span class="kw">return </span><span class="prelude-val">Err</span>(error::Error::BadOffset(o).into())
-        }
-        N::try_from_ctx(<span class="kw-2">&amp;</span><span class="self">self</span>[o..], ctx).and_then(|(n, size)| {
-            <span class="kw-2">*</span>offset += size;
-            <span class="prelude-val">Ok</span>(n)
-        })
-    }
+    </span><span class="kw">fn </span>gread_with&lt;<span class="lifetime">'a</span>, N: TryFromCtx&lt;<span class="lifetime">'a</span>, Ctx, <span class="self">Self</span>, Error = E&gt;&gt;(
+        <span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="self">self</span>,
+        offset: <span class="kw-2">&amp;mut </span>usize,
+        ctx: Ctx,
+    ) -&gt; result::Result&lt;N, E&gt;;
 
-    <span class="doccomment">/// Trys to write `inout.len()` `N`s into `inout` from `Self` starting at `offset`, using the default context for `N`, and updates the offset.
+    <span class="doccomment">/// Tries to write `inout.len()` `N`s into `inout` from `Self` starting at `offset`, using the default context for `N`, and updates the offset.
     /// # Example
     /// ```rust
     /// use scroll::Pread;
@@ -293,19 +310,21 @@
     /// assert_eq!(&amp;bytes, &amp;bytes_from);
     /// assert_eq!(*offset, 2);
     </span><span class="attr">#[inline]
-    </span><span class="kw">fn </span>gread_inout&lt;<span class="lifetime">'a</span>, N&gt;(<span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="self">self</span>, offset: <span class="kw-2">&amp;mut </span>usize, inout: <span class="kw-2">&amp;mut </span>[N]) -&gt; result::Result&lt;(), E&gt;
-        <span class="kw">where
-        </span>N: TryFromCtx&lt;<span class="lifetime">'a</span>, Ctx, &lt;<span class="self">Self </span><span class="kw">as </span>Index&lt;RangeFrom&lt;usize&gt;&gt;&gt;::Output, Error = E&gt;,
-    Ctx: Default,
-    &lt;<span class="self">Self </span><span class="kw">as </span>Index&lt;RangeFrom&lt;usize&gt;&gt;&gt;::Output: <span class="lifetime">'a
-    </span>{
+    </span><span class="kw">fn </span>gread_inout&lt;<span class="lifetime">'a</span>, N: TryFromCtx&lt;<span class="lifetime">'a</span>, Ctx, <span class="self">Self</span>, Error = E&gt;&gt;(
+        <span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="self">self</span>,
+        offset: <span class="kw-2">&amp;mut </span>usize,
+        inout: <span class="kw-2">&amp;mut </span>[N],
+    ) -&gt; result::Result&lt;(), E&gt;
+    <span class="kw">where
+        </span>Ctx: Default,
+    {
         <span class="kw">for </span>i <span class="kw">in </span>inout.iter_mut() {
             <span class="kw-2">*</span>i = <span class="self">self</span>.gread(offset)<span class="question-mark">?</span>;
         }
         <span class="prelude-val">Ok</span>(())
     }
 
-    <span class="doccomment">/// Trys to write `inout.len()` `N`s into `inout` from `Self` starting at `offset`, using the context `ctx`
+    <span class="doccomment">/// Tries to write `inout.len()` `N`s into `inout` from `Self` starting at `offset`, using the context `ctx`
     /// # Example
     /// ```rust
     /// use scroll::{ctx, LE, Pread};
@@ -316,11 +335,12 @@
     /// assert_eq!(&amp;bytes, &amp;bytes_from);
     /// assert_eq!(*offset, 2);
     </span><span class="attr">#[inline]
-    </span><span class="kw">fn </span>gread_inout_with&lt;<span class="lifetime">'a</span>, N&gt;(<span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="self">self</span>, offset: <span class="kw-2">&amp;mut </span>usize, inout: <span class="kw-2">&amp;mut </span>[N], ctx: Ctx) -&gt; result::Result&lt;(), E&gt;
-        <span class="kw">where
-        </span>N: TryFromCtx&lt;<span class="lifetime">'a</span>, Ctx, &lt;<span class="self">Self </span><span class="kw">as </span>Index&lt;RangeFrom&lt;usize&gt;&gt;&gt;::Output, Error = E&gt;,
-    &lt;<span class="self">Self </span><span class="kw">as </span>Index&lt;RangeFrom&lt;usize&gt;&gt;&gt;::Output: <span class="lifetime">'a
-    </span>{
+    </span><span class="kw">fn </span>gread_inout_with&lt;<span class="lifetime">'a</span>, N: TryFromCtx&lt;<span class="lifetime">'a</span>, Ctx, <span class="self">Self</span>, Error = E&gt;&gt;(
+        <span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="self">self</span>,
+        offset: <span class="kw-2">&amp;mut </span>usize,
+        inout: <span class="kw-2">&amp;mut </span>[N],
+        ctx: Ctx,
+    ) -&gt; result::Result&lt;(), E&gt; {
         <span class="kw">for </span>i <span class="kw">in </span>inout.iter_mut() {
             <span class="kw-2">*</span>i = <span class="self">self</span>.gread_with(offset, ctx)<span class="question-mark">?</span>;
         }
@@ -328,8 +348,20 @@
     }
 }
 
-<span class="kw">impl</span>&lt;Ctx: Copy,
-     E: From&lt;error::Error&gt;,
-     R: <span class="question-mark">?</span>Sized + Index&lt;usize&gt; + Index&lt;RangeFrom&lt;usize&gt;&gt; + MeasureWith&lt;Ctx&gt;&gt;
-    Pread&lt;Ctx, E&gt; <span class="kw">for </span>R {}
+<span class="kw">impl</span>&lt;Ctx: Copy, E: From&lt;error::Error&gt;&gt; Pread&lt;Ctx, E&gt; <span class="kw">for </span>[u8] {
+    <span class="kw">fn </span>gread_with&lt;<span class="lifetime">'a</span>, N: TryFromCtx&lt;<span class="lifetime">'a</span>, Ctx, <span class="self">Self</span>, Error = E&gt;&gt;(
+        <span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="self">self</span>,
+        offset: <span class="kw-2">&amp;mut </span>usize,
+        ctx: Ctx,
+    ) -&gt; result::Result&lt;N, E&gt; {
+        <span class="kw">let </span>start = <span class="kw-2">*</span>offset;
+        <span class="kw">if </span>start &gt; <span class="self">self</span>.len() {
+            <span class="kw">return </span><span class="prelude-val">Err</span>(error::Error::BadOffset(start).into());
+        }
+        N::try_from_ctx(<span class="kw-2">&amp;</span><span class="self">self</span>[start..], ctx).map(|(n, size)| {
+            <span class="kw-2">*</span>offset += size;
+            n
+        })
+    }
+}
 </code></pre></div></section></main></body></html>

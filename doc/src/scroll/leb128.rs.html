@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/scroll-0.10.2/src/leb128.rs`."><title>leb128.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-dd39b87e5fcfba68.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="scroll" data-themes="" data-resource-suffix="" data-rustdoc-version="1.81.0-nightly (35b658fb1 2024-07-08)" data-channel="nightly" data-search-js="search-d234aafac6c221dd.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../static.files/storage-118b08c4c78b968e.js"></script><script defer src="../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-20a3ad099b048cf2.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-df360f571f6edeae.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/scroll-0.12.0/src/leb128.rs`."><title>leb128.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-5ca6ca2a1f83705a.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="scroll" data-themes="" data-resource-suffix="" data-rustdoc-version="1.82.0-nightly (7c2012d0e 2024-07-26)" data-channel="nightly" data-search-js="search-d234aafac6c221dd.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../static.files/storage-118b08c4c78b968e.js"></script><script defer src="../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-d2fab2bf619172d3.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-df360f571f6edeae.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -221,12 +221,39 @@
 <a href="#221" id="221">221</a>
 <a href="#222" id="222">222</a>
 <a href="#223" id="223">223</a>
-</pre></div><pre class="rust"><code><span class="kw">use </span>core::u8;
-<span class="kw">use </span>core::convert::{From, AsRef};
-<span class="kw">use </span>core::result;
-<span class="kw">use </span><span class="kw">crate</span>::Pread;
+<a href="#224" id="224">224</a>
+<a href="#225" id="225">225</a>
+<a href="#226" id="226">226</a>
+<a href="#227" id="227">227</a>
+<a href="#228" id="228">228</a>
+<a href="#229" id="229">229</a>
+<a href="#230" id="230">230</a>
+<a href="#231" id="231">231</a>
+<a href="#232" id="232">232</a>
+<a href="#233" id="233">233</a>
+<a href="#234" id="234">234</a>
+<a href="#235" id="235">235</a>
+<a href="#236" id="236">236</a>
+<a href="#237" id="237">237</a>
+<a href="#238" id="238">238</a>
+<a href="#239" id="239">239</a>
+<a href="#240" id="240">240</a>
+<a href="#241" id="241">241</a>
+<a href="#242" id="242">242</a>
+<a href="#243" id="243">243</a>
+<a href="#244" id="244">244</a>
+<a href="#245" id="245">245</a>
+<a href="#246" id="246">246</a>
+<a href="#247" id="247">247</a>
+<a href="#248" id="248">248</a>
+<a href="#249" id="249">249</a>
+<a href="#250" id="250">250</a>
+<a href="#251" id="251">251</a>
+</pre></div><pre class="rust"><code><span class="kw">use </span>core::convert::{AsRef, From};
+<span class="kw">use </span>core::{result, u8};
+
 <span class="kw">use </span><span class="kw">crate</span>::ctx::TryFromCtx;
-<span class="kw">use </span><span class="kw">crate</span>::error;
+<span class="kw">use crate</span>::{error, Pread};
 
 <span class="attr">#[derive(Debug, PartialEq, Copy, Clone)]
 </span><span class="doccomment">/// An unsigned leb128 integer
@@ -324,7 +351,10 @@
             <span class="kw">let </span>byte: u8 = src.pread(count)<span class="question-mark">?</span>;
 
             <span class="kw">if </span>shift == <span class="number">63 </span>&amp;&amp; byte != <span class="number">0x00 </span>&amp;&amp; byte != <span class="number">0x01 </span>{
-                <span class="kw">return </span><span class="prelude-val">Err</span>(error::Error::BadInput{ size: src.len(), msg: <span class="string">"failed to parse"</span>})
+                <span class="kw">return </span><span class="prelude-val">Err</span>(error::Error::BadInput {
+                    size: src.len(),
+                    msg: <span class="string">"failed to parse"</span>,
+                });
             }
 
             <span class="kw">let </span>low_bits = u64::from(mask_continuation(byte));
@@ -334,7 +364,13 @@
             shift += <span class="number">7</span>;
 
             <span class="kw">if </span>byte &amp; CONTINUATION_BIT == <span class="number">0 </span>{
-                <span class="kw">return </span><span class="prelude-val">Ok</span>((Uleb128 { value: result, count }, count));
+                <span class="kw">return </span><span class="prelude-val">Ok</span>((
+                    Uleb128 {
+                        value: result,
+                        count,
+                    },
+                    count,
+                ));
             }
         }
     }
@@ -354,7 +390,10 @@
             byte = src.gread(offset)<span class="question-mark">?</span>;
 
             <span class="kw">if </span>shift == <span class="number">63 </span>&amp;&amp; byte != <span class="number">0x00 </span>&amp;&amp; byte != <span class="number">0x7f </span>{
-                <span class="kw">return </span><span class="prelude-val">Err</span>(error::Error::BadInput{size: src.len(), msg: <span class="string">"failed to parse"</span>})
+                <span class="kw">return </span><span class="prelude-val">Err</span>(error::Error::BadInput {
+                    size: src.len(),
+                    msg: <span class="string">"failed to parse"</span>,
+                });
             }
 
             <span class="kw">let </span>low_bits = i64::from(mask_continuation(byte));
@@ -371,14 +410,20 @@
             </span>result |= !<span class="number">0 </span>&lt;&lt; shift;
         }
         <span class="kw">let </span>count = <span class="kw-2">*</span>offset - o;
-        <span class="prelude-val">Ok</span>((Sleb128{ value: result, count }, count))
+        <span class="prelude-val">Ok</span>((
+            Sleb128 {
+                value: result,
+                count,
+            },
+            count,
+        ))
     }
 }
 
 <span class="attr">#[cfg(test)]
 </span><span class="kw">mod </span>tests {
-    <span class="kw">use super</span>::{Uleb128, Sleb128};
     <span class="kw">use </span><span class="kw">super</span>::<span class="kw">super</span>::LE;
+    <span class="kw">use super</span>::{Sleb128, Uleb128};
 
     <span class="kw">const </span>CONTINUATION_BIT: u8 = <span class="number">1 </span>&lt;&lt; <span class="number">7</span>;
     <span class="comment">//const SIGN_BIT: u8 = 1 &lt;&lt; 6;
@@ -389,21 +434,24 @@
         <span class="kw">let </span>buf = [<span class="number">2u8 </span>| CONTINUATION_BIT, <span class="number">1</span>];
         <span class="kw">let </span>bytes = <span class="kw-2">&amp;</span>buf[..];
         <span class="kw">let </span>num = bytes.pread::&lt;Uleb128&gt;(<span class="number">0</span>).unwrap();
-        <span class="macro">println!</span>(<span class="string">"num: {:?}"</span>, <span class="kw-2">&amp;</span>num);
+        <span class="attr">#[cfg(feature = <span class="string">"std"</span>)]
+        </span><span class="macro">println!</span>(<span class="string">"num: {num:?}"</span>);
         <span class="macro">assert_eq!</span>(<span class="number">130u64</span>, num.into());
         <span class="macro">assert_eq!</span>(num.size(), <span class="number">2</span>);
 
-        <span class="kw">let </span>buf = [<span class="number">0x00</span>,<span class="number">0x01</span>];
+        <span class="kw">let </span>buf = [<span class="number">0x00</span>, <span class="number">0x01</span>];
         <span class="kw">let </span>bytes = <span class="kw-2">&amp;</span>buf[..];
         <span class="kw">let </span>num = bytes.pread::&lt;Uleb128&gt;(<span class="number">0</span>).unwrap();
-        <span class="macro">println!</span>(<span class="string">"num: {:?}"</span>, <span class="kw-2">&amp;</span>num);
+        <span class="attr">#[cfg(feature = <span class="string">"std"</span>)]
+        </span><span class="macro">println!</span>(<span class="string">"num: {num:?}"</span>);
         <span class="macro">assert_eq!</span>(<span class="number">0u64</span>, num.into());
         <span class="macro">assert_eq!</span>(num.size(), <span class="number">1</span>);
 
         <span class="kw">let </span>buf = [<span class="number">0x21</span>];
         <span class="kw">let </span>bytes = <span class="kw-2">&amp;</span>buf[..];
         <span class="kw">let </span>num = bytes.pread::&lt;Uleb128&gt;(<span class="number">0</span>).unwrap();
-        <span class="macro">println!</span>(<span class="string">"num: {:?}"</span>, <span class="kw-2">&amp;</span>num);
+        <span class="attr">#[cfg(feature = <span class="string">"std"</span>)]
+        </span><span class="macro">println!</span>(<span class="string">"num: {num:?}"</span>);
         <span class="macro">assert_eq!</span>(<span class="number">0x21u64</span>, num.into());
         <span class="macro">assert_eq!</span>(num.size(), <span class="number">1</span>);
     }
@@ -415,23 +463,28 @@
         <span class="kw">let </span>bytes = <span class="kw-2">&amp;</span>buf[..];
         <span class="kw">let </span>num = bytes.pread::&lt;Uleb128&gt;(<span class="number">0</span>).expect(<span class="string">"Should read Uleb128"</span>);
         <span class="macro">assert_eq!</span>(<span class="number">130u64</span>, num.into());
-        <span class="macro">assert_eq!</span>(<span class="number">386</span>, bytes.pread_with::&lt;u16&gt;(<span class="number">0</span>, LE).expect(<span class="string">"Should read number"</span>));
+        <span class="macro">assert_eq!</span>(
+            <span class="number">386</span>,
+            bytes.pread_with::&lt;u16&gt;(<span class="number">0</span>, LE).expect(<span class="string">"Should read number"</span>)
+        );
     }
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>uleb128_overflow() {
         <span class="kw">use </span><span class="kw">super</span>::<span class="kw">super</span>::Pread;
-        <span class="kw">let </span>buf = [<span class="number">2u8 </span>| CONTINUATION_BIT,
-                   <span class="number">2 </span>| CONTINUATION_BIT,
-                   <span class="number">2 </span>| CONTINUATION_BIT,
-                   <span class="number">2 </span>| CONTINUATION_BIT,
-                   <span class="number">2 </span>| CONTINUATION_BIT,
-                   <span class="number">2 </span>| CONTINUATION_BIT,
-                   <span class="number">2 </span>| CONTINUATION_BIT,
-                   <span class="number">2 </span>| CONTINUATION_BIT,
-                   <span class="number">2 </span>| CONTINUATION_BIT,
-                   <span class="number">2 </span>| CONTINUATION_BIT,
-                   <span class="number">1</span>];
+        <span class="kw">let </span>buf = [
+            <span class="number">2u8 </span>| CONTINUATION_BIT,
+            <span class="number">2 </span>| CONTINUATION_BIT,
+            <span class="number">2 </span>| CONTINUATION_BIT,
+            <span class="number">2 </span>| CONTINUATION_BIT,
+            <span class="number">2 </span>| CONTINUATION_BIT,
+            <span class="number">2 </span>| CONTINUATION_BIT,
+            <span class="number">2 </span>| CONTINUATION_BIT,
+            <span class="number">2 </span>| CONTINUATION_BIT,
+            <span class="number">2 </span>| CONTINUATION_BIT,
+            <span class="number">2 </span>| CONTINUATION_BIT,
+            <span class="number">1</span>,
+        ];
         <span class="kw">let </span>bytes = <span class="kw-2">&amp;</span>buf[..];
         <span class="macro">assert!</span>(bytes.pread::&lt;Uleb128&gt;(<span class="number">0</span>).is_err());
     }
@@ -440,7 +493,10 @@
     </span><span class="kw">fn </span>sleb128() {
         <span class="kw">use </span><span class="kw">super</span>::<span class="kw">super</span>::Pread;
         <span class="kw">let </span>bytes = [<span class="number">0x7fu8 </span>| CONTINUATION_BIT, <span class="number">0x7e</span>];
-        <span class="kw">let </span>num: i64 = bytes.pread::&lt;Sleb128&gt;(<span class="number">0</span>).expect(<span class="string">"Should read Sleb128"</span>).into();
+        <span class="kw">let </span>num: i64 = bytes
+            .pread::&lt;Sleb128&gt;(<span class="number">0</span>)
+            .expect(<span class="string">"Should read Sleb128"</span>)
+            .into();
         <span class="macro">assert_eq!</span>(-<span class="number">129</span>, num);
     }
 }

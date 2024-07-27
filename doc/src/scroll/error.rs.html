@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/scroll-0.10.2/src/error.rs`."><title>error.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-dd39b87e5fcfba68.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="scroll" data-themes="" data-resource-suffix="" data-rustdoc-version="1.81.0-nightly (35b658fb1 2024-07-08)" data-channel="nightly" data-search-js="search-d234aafac6c221dd.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../static.files/storage-118b08c4c78b968e.js"></script><script defer src="../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-20a3ad099b048cf2.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-df360f571f6edeae.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/scroll-0.12.0/src/error.rs`."><title>error.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-5ca6ca2a1f83705a.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="scroll" data-themes="" data-resource-suffix="" data-rustdoc-version="1.82.0-nightly (7c2012d0e 2024-07-26)" data-channel="nightly" data-search-js="search-d234aafac6c221dd.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../static.files/storage-118b08c4c78b968e.js"></script><script defer src="../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-d2fab2bf619172d3.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-df360f571f6edeae.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -66,48 +66,66 @@
 <a href="#66" id="66">66</a>
 <a href="#67" id="67">67</a>
 <a href="#68" id="68">68</a>
+<a href="#69" id="69">69</a>
+<a href="#70" id="70">70</a>
+<a href="#71" id="71">71</a>
+<a href="#72" id="72">72</a>
+<a href="#73" id="73">73</a>
+<a href="#74" id="74">74</a>
+<a href="#75" id="75">75</a>
+<a href="#76" id="76">76</a>
+<a href="#77" id="77">77</a>
+<a href="#78" id="78">78</a>
+<a href="#79" id="79">79</a>
+<a href="#80" id="80">80</a>
+<a href="#81" id="81">81</a>
+<a href="#82" id="82">82</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>core::fmt::{<span class="self">self</span>, Display};
 <span class="kw">use </span>core::result;
-
 <span class="attr">#[cfg(feature = <span class="string">"std"</span>)]
-</span><span class="kw">use </span>std::io;
-<span class="attr">#[cfg(feature = <span class="string">"std"</span>)]
-</span><span class="kw">use </span>std::error;
+</span><span class="kw">use </span>std::{error, io};
 
 <span class="attr">#[derive(Debug)]
 </span><span class="doccomment">/// A custom Scroll error
 </span><span class="kw">pub enum </span>Error {
     <span class="doccomment">/// The type you tried to read was too big
-    </span>TooBig { size: usize, len: usize },
+    </span>TooBig {
+        size: usize,
+        len: usize,
+    },
     <span class="doccomment">/// The requested offset to read/write at is invalid
     </span>BadOffset(usize),
-    BadInput{ size: usize, msg: <span class="kw-2">&amp;</span><span class="lifetime">'static </span>str },
-    <span class="attr">#[cfg(feature = <span class="string">"std"</span>)]
-    </span><span class="doccomment">/// A custom Scroll error for reporting messages to clients
+    BadInput {
+        size: usize,
+        msg: <span class="kw-2">&amp;</span><span class="lifetime">'static </span>str,
+    },
+    <span class="doccomment">/// A custom Scroll error for reporting messages to clients.
+    /// For no-std, use [`Error::BadInput`] with a static string.
+    </span><span class="attr">#[cfg(feature = <span class="string">"std"</span>)]
     </span>Custom(String),
-    <span class="attr">#[cfg(feature = <span class="string">"std"</span>)]
-    </span><span class="doccomment">/// Returned when IO based errors are encountered
+    <span class="doccomment">/// Returned when IO based errors are encountered
+    </span><span class="attr">#[cfg(feature = <span class="string">"std"</span>)]
     </span>IO(io::Error),
 }
 
 <span class="attr">#[cfg(feature = <span class="string">"std"</span>)]
 </span><span class="kw">impl </span>error::Error <span class="kw">for </span>Error {
     <span class="kw">fn </span>description(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>str {
-        <span class="kw">match </span><span class="kw-2">*</span><span class="self">self </span>{
-            Error::TooBig{ .. } =&gt; { <span class="string">"TooBig" </span>}
-            Error::BadOffset(<span class="kw">_</span>) =&gt; { <span class="string">"BadOffset" </span>}
-            Error::BadInput{ .. } =&gt; { <span class="string">"BadInput" </span>}
-            Error::Custom(<span class="kw">_</span>) =&gt; { <span class="string">"Custom" </span>}
-            Error::IO(<span class="kw">_</span>) =&gt; { <span class="string">"IO" </span>}
+        <span class="kw">match </span><span class="self">self </span>{
+            Error::TooBig { .. } =&gt; <span class="string">"TooBig"</span>,
+            Error::BadOffset(<span class="kw">_</span>) =&gt; <span class="string">"BadOffset"</span>,
+            Error::BadInput { .. } =&gt; <span class="string">"BadInput"</span>,
+            Error::Custom(<span class="kw">_</span>) =&gt; <span class="string">"Custom"</span>,
+            Error::IO(<span class="kw">_</span>) =&gt; <span class="string">"IO"</span>,
         }
     }
     <span class="kw">fn </span>cause(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span><span class="kw">dyn </span>error::Error&gt; {
-        <span class="kw">match </span><span class="kw-2">*</span><span class="self">self </span>{
-            Error::TooBig{ .. } =&gt; { <span class="prelude-val">None </span>}
-            Error::BadOffset(<span class="kw">_</span>) =&gt; { <span class="prelude-val">None </span>}
-            Error::BadInput{ .. } =&gt; { <span class="prelude-val">None </span>}
-            Error::Custom(<span class="kw">_</span>) =&gt; { <span class="prelude-val">None </span>}
-            Error::IO(<span class="kw-2">ref </span>io) =&gt; { io.source() }
+        <span class="kw">match </span><span class="self">self </span>{
+            Error::TooBig { .. } =&gt; <span class="prelude-val">None</span>,
+            Error::BadOffset(<span class="kw">_</span>) =&gt; <span class="prelude-val">None</span>,
+            Error::BadInput { .. } =&gt; <span class="prelude-val">None</span>,
+            Error::Custom(<span class="kw">_</span>) =&gt; <span class="prelude-val">None</span>,
+            Error::IO(<span class="kw-2">ref </span>io) =&gt; io.source(),
         }
     }
 }
@@ -121,14 +139,24 @@
 
 <span class="kw">impl </span>Display <span class="kw">for </span>Error {
     <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, fmt: <span class="kw-2">&amp;mut </span>fmt::Formatter) -&gt; fmt::Result {
-        <span class="kw">match </span><span class="kw-2">*</span><span class="self">self </span>{
-            Error::TooBig{ <span class="kw-2">ref </span>size, <span class="kw-2">ref </span>len } =&gt; { <span class="macro">write!</span> (fmt, <span class="string">"type is too big ({}) for {}"</span>, size, len) },
-            Error::BadOffset(<span class="kw-2">ref </span>offset) =&gt; { <span class="macro">write!</span> (fmt, <span class="string">"bad offset {}"</span>, offset) },
-            Error::BadInput{ <span class="kw-2">ref </span>msg, <span class="kw-2">ref </span>size } =&gt; { <span class="macro">write!</span> (fmt, <span class="string">"bad input {} ({})"</span>, msg, size) },
+        <span class="kw">match </span><span class="self">self </span>{
+            Error::TooBig { <span class="kw-2">ref </span>size, <span class="kw-2">ref </span>len } =&gt; {
+                <span class="macro">write!</span>(fmt, <span class="string">"type is too big ({size}) for {len}"</span>)
+            }
+            Error::BadOffset(<span class="kw-2">ref </span>offset) =&gt; {
+                <span class="macro">write!</span>(fmt, <span class="string">"bad offset {offset}"</span>)
+            }
+            Error::BadInput { <span class="kw-2">ref </span>msg, <span class="kw-2">ref </span>size } =&gt; {
+                <span class="macro">write!</span>(fmt, <span class="string">"bad input {msg} ({size})"</span>)
+            }
             <span class="attr">#[cfg(feature = <span class="string">"std"</span>)]
-            </span>Error::Custom(<span class="kw-2">ref </span>msg) =&gt; { <span class="macro">write!</span> (fmt, <span class="string">"{}"</span>, msg) },
+            </span>Error::Custom(<span class="kw-2">ref </span>msg) =&gt; {
+                <span class="macro">write!</span>(fmt, <span class="string">"{msg}"</span>)
+            }
             <span class="attr">#[cfg(feature = <span class="string">"std"</span>)]
-            </span>Error::IO(<span class="kw-2">ref </span>err) =&gt; { <span class="macro">write!</span>(fmt, <span class="string">"{}"</span>, err) },
+            </span>Error::IO(<span class="kw-2">ref </span>err) =&gt; {
+                <span class="macro">write!</span>(fmt, <span class="string">"{err}"</span>)
+            }
         }
     }
 }

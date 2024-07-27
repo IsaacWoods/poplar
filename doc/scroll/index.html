@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Scroll"><title>scroll - Rust</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../static.files/rustdoc-dd39b87e5fcfba68.css"><meta name="rustdoc-vars" data-root-path="../" data-static-root-path="../static.files/" data-current-crate="scroll" data-themes="" data-resource-suffix="" data-rustdoc-version="1.81.0-nightly (35b658fb1 2024-07-08)" data-channel="nightly" data-search-js="search-d234aafac6c221dd.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../static.files/storage-118b08c4c78b968e.js"></script><script defer src="../crates.js"></script><script defer src="../static.files/main-20a3ad099b048cf2.js"></script><noscript><link rel="stylesheet" href="../static.files/noscript-df360f571f6edeae.css"></noscript><link rel="alternate icon" type="image/png" href="../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc mod crate"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle" title="show sidebar"></button></nav><nav class="sidebar"><div class="sidebar-crate"><h2><a href="../scroll/index.html">scroll</a><span class="version">0.10.2</span></h2></div><div class="sidebar-elems"><ul class="block"><li><a id="all-types" href="all.html">All Items</a></li></ul><section><ul class="block"><li><a href="#modules">Modules</a></li><li><a href="#structs">Structs</a></li><li><a href="#enums">Enums</a></li><li><a href="#constants">Constants</a></li><li><a href="#traits">Traits</a></li><li><a href="#types">Type Aliases</a></li><li><a href="#derives">Derive Macros</a></li></ul></section></div></nav><div class="sidebar-resizer"></div><main><div class="width-limiter"><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1>Crate <a class="mod" href="#">scroll</a><button id="copy-path" title="Copy item path to clipboard">Copy item path</button></h1><span class="out-of-band"><a class="src" href="../src/scroll/lib.rs.html#1-614">source</a> · <button id="toggle-all-docs" title="collapse all docs">[<span>&#x2212;</span>]</button></span></div><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><h2 id="scroll"><a class="doc-anchor" href="#scroll">§</a>Scroll</h2><div class="example-wrap"><pre class="language-text"><code>        _______________
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Scroll"><title>scroll - Rust</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../static.files/rustdoc-5ca6ca2a1f83705a.css"><meta name="rustdoc-vars" data-root-path="../" data-static-root-path="../static.files/" data-current-crate="scroll" data-themes="" data-resource-suffix="" data-rustdoc-version="1.82.0-nightly (7c2012d0e 2024-07-26)" data-channel="nightly" data-search-js="search-d234aafac6c221dd.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../static.files/storage-118b08c4c78b968e.js"></script><script defer src="../crates.js"></script><script defer src="../static.files/main-d2fab2bf619172d3.js"></script><noscript><link rel="stylesheet" href="../static.files/noscript-df360f571f6edeae.css"></noscript><link rel="alternate icon" type="image/png" href="../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc mod crate"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle" title="show sidebar"></button></nav><nav class="sidebar"><div class="sidebar-crate"><h2><a href="../scroll/index.html">scroll</a><span class="version">0.12.0</span></h2></div><div class="sidebar-elems"><ul class="block"><li><a id="all-types" href="all.html">All Items</a></li></ul><section><ul class="block"><li><a href="#modules">Modules</a></li><li><a href="#structs">Structs</a></li><li><a href="#enums">Enums</a></li><li><a href="#constants">Constants</a></li><li><a href="#traits">Traits</a></li><li><a href="#types">Type Aliases</a></li><li><a href="#derives">Derive Macros</a></li></ul></section></div></nav><div class="sidebar-resizer"></div><main><div class="width-limiter"><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1>Crate <a class="mod" href="#">scroll</a><button id="copy-path" title="Copy item path to clipboard">Copy item path</button></h1><span class="out-of-band"><a class="src" href="../src/scroll/lib.rs.html#1-652">source</a> · <button id="toggle-all-docs" title="collapse all docs">[<span>&#x2212;</span>]</button></span></div><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><h2 id="scroll"><a class="doc-anchor" href="#scroll">§</a>Scroll</h2><div class="example-wrap"><pre class="language-text"><code>        _______________
    ()==(              (@==()
         &#39;______________&#39;|
           |             |
@@ -44,7 +44,7 @@ parallelization.</p>
 <span class="attr">#[cfg(target_endian = <span class="string">"big"</span>)]
 </span><span class="kw">let </span>bytes: [u8; <span class="number">4</span>] = [<span class="number">0xef</span>, <span class="number">0xbe</span>, <span class="number">0xad</span>, <span class="number">0xde</span>];
 
-<span class="comment">// We can read a u32 from the array `bytes` at offset 0. 
+<span class="comment">// We can read a u32 from the array `bytes` at offset 0.
 // This will use a default context for the type being parsed;
 // in the case of u32 this defines to use the host's endianess.
 </span><span class="kw">let </span>number = bytes.pread::&lt;u32&gt;(<span class="number">0</span>).unwrap();
@@ -54,16 +54,25 @@ parallelization.</p>
 <span class="comment">// Similarly we can also read a single byte at offset 2
 // This time using type ascription instead of the turbofish (::&lt;&gt;) operator.
 </span><span class="kw">let </span>byte: u8 = bytes.pread(<span class="number">2</span>).unwrap();
-<span class="macro">assert_eq!</span>(byte, <span class="number">0xbe</span>);
+<span class="attr">#[cfg(target_endian = <span class="string">"little"</span>)]
+</span><span class="macro">assert_eq!</span>(byte, <span class="number">0xbe</span>);
+<span class="attr">#[cfg(target_endian = <span class="string">"big"</span>)]
+</span><span class="macro">assert_eq!</span>(byte, <span class="number">0xad</span>);
 
 
 <span class="comment">// If required we can also provide a specific parsing context; e.g. if we want to explicitly
 // define the endianess to use:
 </span><span class="kw">let </span>be_number: u32 = bytes.pread_with(<span class="number">0</span>, scroll::BE).unwrap();
-<span class="macro">assert_eq!</span>(be_number, <span class="number">0xdeadbeef</span>);
+<span class="attr">#[cfg(target_endian = <span class="string">"little"</span>)]
+</span><span class="macro">assert_eq!</span>(be_number, <span class="number">0xdeadbeef</span>);
+<span class="attr">#[cfg(target_endian = <span class="string">"big"</span>)]
+</span><span class="macro">assert_eq!</span>(be_number, <span class="number">0xefbeadde</span>);
 
 <span class="kw">let </span>be_number16 = bytes.pread_with::&lt;u16&gt;(<span class="number">1</span>, scroll::BE).unwrap();
-<span class="macro">assert_eq!</span>(be_number16, <span class="number">0xadbe</span>);
+<span class="attr">#[cfg(target_endian = <span class="string">"little"</span>)]
+</span><span class="macro">assert_eq!</span>(be_number16, <span class="number">0xadbe</span>);
+<span class="attr">#[cfg(target_endian = <span class="string">"big"</span>)]
+</span><span class="macro">assert_eq!</span>(be_number16, <span class="number">0xbead</span>);
 
 
 <span class="comment">// Reads may fail; in this example due to a too large read for the given container.
@@ -89,7 +98,8 @@ parallelization.</p>
 <p>Scroll also allows reading from <code>std::io</code>. For this the types to read need to implement
 <a href="ctx/trait.FromCtx.html">FromCtx</a> and <a href="ctx/trait.SizeWith.html">SizeWith</a>.</p>
 
-<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>std::io::Cursor;
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="attr">#[cfg(feature = <span class="string">"std"</span>)] </span>{
+<span class="kw">use </span>std::io::Cursor;
 <span class="kw">use </span>scroll::{IOread, ctx, Endian};
 <span class="kw">let </span>bytes = [<span class="number">0x01</span>,<span class="number">0x00</span>,<span class="number">0x00</span>,<span class="number">0x00</span>,<span class="number">0x00</span>,<span class="number">0x00</span>,<span class="number">0x00</span>,<span class="number">0x00</span>, <span class="number">0xef</span>,<span class="number">0xbe</span>,<span class="number">0x00</span>,<span class="number">0x00</span>,];
 <span class="kw">let </span><span class="kw-2">mut </span>cursor = Cursor::new(bytes);
@@ -112,7 +122,8 @@ parallelization.</p>
 <p>In the same vein as IOread we can use IOwrite to write a type to anything implementing
 <code>std::io::Write</code>:</p>
 
-<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>std::io::Cursor;
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="attr">#[cfg(feature = <span class="string">"std"</span>)] </span>{
+<span class="kw">use </span>std::io::Cursor;
 <span class="kw">use </span>scroll::{IOwrite};
 
 <span class="kw">let </span><span class="kw-2">mut </span>bytes = [<span class="number">0x0u8</span>; <span class="number">5</span>];
@@ -145,7 +156,7 @@ buffer.</p>
 }
 
 <span class="comment">// To allow for safe zero-copying scroll allows to specify lifetimes explicitly:
-// The context 
+// The context
 </span><span class="kw">impl</span>&lt;<span class="lifetime">'a</span>&gt; ctx::TryFromCtx&lt;<span class="lifetime">'a</span>, Context&gt; <span class="kw">for </span>Data&lt;<span class="lifetime">'a</span>&gt; {
   <span class="comment">// If necessary you can set a custom error type here, which will be returned by Pread/Pwrite
   </span><span class="kw">type </span>Error = scroll::Error;
@@ -154,7 +165,7 @@ buffer.</p>
   // its source buffer without having to resort to copying.
   </span><span class="kw">fn </span>try_from_ctx (src: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>[u8], ctx: Context)
     <span class="comment">// the `usize` returned here is the amount of bytes read.
-    </span>-&gt; <span class="prelude-ty">Result</span>&lt;(<span class="self">Self</span>, usize), <span class="self">Self</span>::Error&gt; 
+    </span>-&gt; <span class="prelude-ty">Result</span>&lt;(<span class="self">Self</span>, usize), <span class="self">Self</span>::Error&gt;
   {
     <span class="kw">let </span>offset = <span class="kw-2">&amp;mut </span><span class="number">0</span>;
 
