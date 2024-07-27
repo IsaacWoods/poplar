@@ -259,6 +259,17 @@ impl Dist {
             .run()?;
         result.add(Artifact::new("kernel_riscv", ArtifactType::Kernel, kernel).include_in_ramdisk());
 
+        for task in &self.user_tasks {
+            let artifact = self.build_userspace_task(
+                &task.name,
+                task.source_dir.clone(),
+                Target::Triple("riscv64gc-unknown-none-elf".to_string()),
+            )?;
+            result.add(Artifact::new(&task.name, ArtifactType::UserTask, artifact).include_in_ramdisk());
+        }
+
+        result.add_seed_config(self.generate_seed_config());
+
         Ok(result)
     }
 
