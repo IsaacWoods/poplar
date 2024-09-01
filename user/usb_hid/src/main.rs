@@ -2,7 +2,7 @@
 
 use log::{info, warn};
 use platform_bus::{
-    hid::{HidEvent, KeyState},
+    input::{InputEvent, KeyState},
     BusDriverMessage,
     DeviceDriverMessage,
     DeviceDriverRequest,
@@ -143,7 +143,7 @@ pub fn main() {
                      * Register the device as a abstract HID device on the Platform Bus.
                      * TODO: we need to work out what devices actually are don't we...
                      */
-                    let (device_channel, device_channel_other_end) = Channel::<HidEvent, ()>::create().unwrap();
+                    let (device_channel, device_channel_other_end) = Channel::<InputEvent, ()>::create().unwrap();
                     // TODO: proper name
                     let name = "usb-hid".to_string();
                     // TODO: make this a proper enum I think?
@@ -326,7 +326,7 @@ pub fn main() {
                                                 Some((usage, count + 1))
                                             } else {
                                                 device_channel
-                                                    .send(&HidEvent::KeyReleased {
+                                                    .send(&InputEvent::KeyReleased {
                                                         key: map_usage(usage, state).unwrap(),
                                                         state,
                                                     })
@@ -338,7 +338,7 @@ pub fn main() {
                                     for new_key in current_keys.into_iter() {
                                         pressed_keys.insert(new_key, 1);
                                         device_channel
-                                            .send(&HidEvent::KeyPressed {
+                                            .send(&InputEvent::KeyPressed {
                                                 key: map_usage(new_key, state).unwrap(),
                                                 state,
                                             })

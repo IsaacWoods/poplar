@@ -16,7 +16,7 @@
 //! can provide an exact filter for the devices they can drive can safely blindly return `true` to
 //! these queries.
 
-pub mod hid;
+pub mod input;
 
 use ptah::{Deserialize, Serialize};
 use std::{

@@ -5,7 +5,9 @@
 use ptah::{Deserialize, Serialize};
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug, Serialize, Deserialize)]
-pub enum HidEvent {
+pub enum InputEvent {
+    // TODO: enumerate keys instead of turning them into chars here - this is the PHYSICAL layer
+    // and then should go through a keymap later
     KeyPressed { key: char, state: KeyState },
     KeyReleased { key: char, state: KeyState },
 }

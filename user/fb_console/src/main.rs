@@ -7,7 +7,13 @@ use ginkgo::{
     parse::Parser,
 };
 use log::info;
-use platform_bus::{hid::HidEvent, DeviceDriverMessage, DeviceDriverRequest, Filter, Property};
+use platform_bus::{
+    input::InputEvent as PlatformBusInputEvent,
+    DeviceDriverMessage,
+    DeviceDriverRequest,
+    Filter,
+    Property,
+};
 use spinning_top::Spinlock;
 use std::{
     fmt::Write,
@@ -182,7 +188,7 @@ fn main() {
                     } else if let Some("keyboard") = device_info.get_as_str("hid.type") {
                         info!("Found HID-compatible keyboard: {}", name);
 
-                        let channel: Channel<(), HidEvent> =
+                        let channel: Channel<(), PlatformBusInputEvent> =
                             Channel::new_from_handle(handoff_info.get_as_channel("hid.channel").unwrap());
                         let input_sender = input_sender.clone();
 
@@ -190,7 +196,7 @@ fn main() {
                             loop {
                                 let event = channel.receive().await.unwrap();
                                 match event {
-                                    HidEvent::KeyPressed { key, .. } => {
+                                    PlatformBusInputEvent::KeyPressed { key, .. } => {
                                         input_sender.send(InputEvent::KeyPressed(key)).await.unwrap();
                                     }
                                     _ => (),
