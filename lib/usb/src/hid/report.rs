@@ -1,7 +1,7 @@
 use alloc::{vec, vec::Vec};
 use bit_field::{BitArray, BitField};
 use core::ops::Range;
-use log::{info, warn};
+use log::warn;
 
 #[derive(Debug)]
 pub struct ReportDescriptor {
@@ -77,7 +77,7 @@ impl ReportDescriptor {
                         }
                     }
                 }
-                ReportField::Variable { size, usage_page, usage_id, data_min, data_max } => {
+                ReportField::Variable { size, usage_page, usage_id, data_min, .. } => {
                     if let Some(usage) = translate_usage(*usage_page, *usage_id) {
                         if *data_min < 0 {
                             let value = Self::extract_field_as_i32(report, bit_offset..(bit_offset + size));
@@ -244,12 +244,10 @@ impl ReportDescriptorParser {
             0b0001 => {
                 // Logical minimum
                 self.global.logical_min = Some(item.data_as_i32());
-                log::info!("Logical min: {:?}", self.global.logical_min);
             }
             0b0010 => {
                 // Logical maximum
                 self.global.logical_max = Some(item.data_as_i32());
-                log::info!("Logical max: {:?}", self.global.logical_max);
             }
             0b0011 => {
                 // Physical minimum
@@ -335,10 +333,6 @@ impl ReportDescriptorParser {
         } else if is_array {
             let logical_min = self.global.logical_min.unwrap();
             let logical_max = self.global.logical_max.unwrap();
-
-            if logical_min > logical_max {
-                // Sign extend logical
-            }
 
             // TODO: support signed values if we end up needing to
             assert!(!i32::try_from(logical_min).unwrap().is_negative());

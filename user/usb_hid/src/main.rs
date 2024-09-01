@@ -239,6 +239,11 @@ pub fn main() {
 
                                     for field in report {
                                         match field {
+                                            // TODO: this filters out empty key entries - we should
+                                            // probably do this in the report parsing code instead
+                                            // of here?
+                                            FieldValue::UntranslatedSelector { usage_page: 7, usage: 0x00 } => {}
+
                                             FieldValue::UntranslatedSelector { usage_page, usage } => {
                                                 warn!("Received unknown selector in HID report: page={:#x}, usage={:#x}", usage_page, usage);
                                             }
