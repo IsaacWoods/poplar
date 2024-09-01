@@ -15,7 +15,7 @@ use tracing::{info, warn};
 pub static INTERRUPT_CONTROLLER: InitGuard<InterruptController> = InitGuard::uninit();
 
 pub fn init(fdt: &Fdt) {
-    if let Some(plic_node) = fdt.find_compatible(&["riscv,plic0"]) {
+    if let Some(plic_node) = fdt.find_compatible(&["riscv,plic0", "allwinner,sun20i-d1-plic"]) {
         InterruptController::init_plic(plic_node);
     } else if fdt.find_compatible(&["riscv,aplic"]).is_some() {
         InterruptController::init_aia(fdt);
