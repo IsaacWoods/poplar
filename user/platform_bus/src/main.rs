@@ -1,4 +1,4 @@
-mod pci;
+mod service;
 
 use log::{info, warn};
 use platform_bus::{BusDriverMessage, DeviceDriverMessage, DeviceDriverRequest, DeviceInfo, Filter, HandoffInfo};
@@ -145,7 +145,7 @@ pub fn main() {
     /*
      * Add devices from buses that the Platform Bus enumerates itself.
      */
-    platform_bus.devices.write().append(&mut pci::enumerate_pci_devices());
+    platform_bus.devices.write().append(&mut service::pci::enumerate_pci_devices());
 
     /*
      * Listen for new bus drivers that want a channel to register devices.
