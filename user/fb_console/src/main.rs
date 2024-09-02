@@ -93,39 +93,50 @@ fn spawn_framebuffer(
             if let Some(event) = console.input_events.recv().await {
                 match event {
                     InputEvent::KeyPressed(key) => {
-                        write!(console.console.lock(), "{}", key).unwrap();
-                        needs_redraw = true;
+                        // TODO: `noline` is a no-std REPL impl crate thingy that could be useful
+                        // for improving this experience
+                        match key {
+                            '\n' => {
+                                let mut stmts = Parser::new(&current_line).parse().unwrap();
+                                current_line.clear();
 
-                        if key == '\n' {
-                            let mut stmts = Parser::new(&current_line).parse().unwrap();
-                            current_line.clear();
+                                for mut statement in &mut stmts {
+                                    resolver.resolve_bindings(&mut statement);
+                                }
 
-                            for mut statement in &mut stmts {
-                                resolver.resolve_bindings(&mut statement);
+                                let mut result = None;
+                                for statement in stmts {
+                                    if let Some(value) = interpreter.eval_stmt(statement) {
+                                        result = Some(value);
+                                    }
+                                }
+
+                                write!(console.console.lock(), "{}", key);
+                                while let Ok(output) = output_receiver.try_recv() {
+                                    writeln!(console.console.lock(), "Output: {}", output).unwrap();
+                                }
+
+                                if let Some(result) = result {
+                                    writeln!(console.console.lock(), "Result: {}", result).unwrap();
+                                }
+
+                                write!(console.console.lock(), "\n> ").unwrap();
+                                needs_redraw = true;
                             }
 
-                            let mut result = None;
-                            for statement in stmts {
-                                if let Some(value) = interpreter.eval_stmt(statement) {
-                                    result = Some(value);
+                            // ASCII `DEL` is produced by backspace
+                            '\x7f' => {
+                                // Only allow the user to delete characters they've typed.
+                                if current_line.pop().is_some() {
+                                    write!(console.console.lock(), "{}", key).unwrap();
+                                    needs_redraw = true;
                                 }
                             }
 
-                            while let Ok(output) = output_receiver.try_recv() {
-                                writeln!(console.console.lock(), "Output: {}", output).unwrap();
-                            }
-
-                            if let Some(result) = result {
-                                writeln!(console.console.lock(), "Result: {}", result).unwrap();
-                            }
-
-                            write!(console.console.lock(), "\n> ").unwrap();
-                        } else {
-                            // Handle backspace (ASCII `DEL`) to delete the last char
-                            if key == '\x7f' {
-                                current_line.pop();
-                            } else {
+                            other => {
+                                write!(console.console.lock(), "{}", key).unwrap();
                                 current_line.push(key);
+                                needs_redraw = true;
                             }
                         }
                     }
