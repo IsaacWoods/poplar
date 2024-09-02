@@ -443,6 +443,7 @@ impl<'a> Interpreter<'a> {
     }
 }
 
+#[derive(Debug)]
 pub struct Environment {
     parent: Option<Arc<RefCell<Environment>>>,
     bindings: BTreeMap<String, Value>,

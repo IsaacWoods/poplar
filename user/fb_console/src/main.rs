@@ -3,6 +3,7 @@
 
 use gfxconsole::{Format, Framebuffer, GfxConsole, Pixel, Rgb32};
 use ginkgo::{
+    ast::BindingResolver,
     interpreter::{Interpreter, Value},
     parse::Parser,
 };
@@ -66,6 +67,7 @@ fn spawn_framebuffer(
         let (output_sender, output_receiver) = thingbuf::mpsc::channel(16);
 
         let mut interpreter = Interpreter::new();
+        let mut resolver = BindingResolver::new();
         let mut current_line = String::new();
 
         interpreter.define_native_function("print", |params| {
@@ -95,8 +97,12 @@ fn spawn_framebuffer(
                         needs_redraw = true;
 
                         if key == '\n' {
-                            let stmts = Parser::new(&current_line).parse().unwrap();
+                            let mut stmts = Parser::new(&current_line).parse().unwrap();
                             current_line.clear();
+
+                            for mut statement in &mut stmts {
+                                resolver.resolve_bindings(&mut statement);
+                            }
 
                             let mut result = None;
                             for statement in stmts {
