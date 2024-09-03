@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/work/poplar/poplar/lib/picotoml/src/lexer.rs`."><title>lexer.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-492a78a4a87dcc01.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="picotoml" data-themes="" data-resource-suffix="" data-rustdoc-version="1.83.0-nightly (94885bc69 2024-09-01)" data-channel="nightly" data-search-js="search-a99f1315e7cc5121.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../static.files/storage-118b08c4c78b968e.js"></script><script defer src="../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-921df33f47b8780c.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-3b12f09e550e0385.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/work/poplar/poplar/lib/picotoml/src/lexer.rs`."><title>lexer.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-fecee23daa4e8a6d.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="picotoml" data-themes="" data-resource-suffix="" data-rustdoc-version="1.83.0-nightly (bd53aa3bf 2024-09-02)" data-channel="nightly" data-search-js="search-a99f1315e7cc5121.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../static.files/storage-118b08c4c78b968e.js"></script><script defer src="../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-921df33f47b8780c.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-3b12f09e550e0385.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -403,12 +403,6 @@
 <a href="#403" id="403">403</a>
 <a href="#404" id="404">404</a>
 <a href="#405" id="405">405</a>
-<a href="#406" id="406">406</a>
-<a href="#407" id="407">407</a>
-<a href="#408" id="408">408</a>
-<a href="#409" id="409">409</a>
-<a href="#410" id="410">410</a>
-<a href="#411" id="411">411</a>
 </pre></div><pre class="rust"><code><span class="kw">use crate</span>::{Error, ErrorKind, Expected};
 <span class="kw">use </span>core::ops::Range;
 <span class="kw">use </span>logos::Logos;
@@ -435,10 +429,7 @@
     <span class="attr">#[token(<span class="string">"="</span>)]
     </span>Equals,
 
-    <span class="comment">// TODO: this should be removed if this all works
-    //#[error]
-    //Skip whitespace
-    </span><span class="attr">#[regex(<span class="string">"[ |\t]+"</span>, logos::skip, priority = <span class="number">2</span>)]
+    <span class="attr">#[regex(<span class="string">"[ |\t]+"</span>, logos::skip, priority = <span class="number">2</span>)]
     </span>Whitespace,
 
     <span class="attr">#[regex(<span class="string">"'[^']*'"</span>)]
@@ -511,9 +502,7 @@
     <span class="kw">pub fn </span>expect(<span class="kw-2">&amp;</span><span class="self">self</span>, expected: Token) -&gt; <span class="kw">crate</span>::error::Result&lt;()&gt; {
         <span class="kw">match </span><span class="self">self</span>.token {
             token <span class="kw">if </span>token == expected =&gt; <span class="prelude-val">Ok</span>(()),
-            <span class="comment">// TODO: remove
-            // Token::Error =&gt; Err(Error::new(self.range.clone(), ErrorKind::FailedToLex)),
-            </span><span class="kw">_ </span>=&gt; <span class="prelude-val">Err</span>(Error::new(
+            <span class="kw">_ </span>=&gt; <span class="prelude-val">Err</span>(Error::new(
                 <span class="self">self</span>.range.clone(),
                 ErrorKind::UnexpectedToken(<span class="self">self</span>.token, Expected::Token(expected)),
             )),
@@ -594,8 +583,7 @@
     <span class="kw">type </span>Item = TokenItem;
 
     <span class="kw">fn </span>next(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="self">Self</span>::Item&gt; {
-        <span class="comment">// TODO: probs shouldn't unwrap here
-        </span><span class="self">self</span>.lexer.next().map(|t| TokenItem::new(t.unwrap(), <span class="self">self</span>.lexer.span()))
+        <span class="self">self</span>.lexer.next().map(|t| TokenItem::new(t.unwrap(), <span class="self">self</span>.lexer.span()))
     }
 }
 
