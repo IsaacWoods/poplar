@@ -24,9 +24,6 @@ pub enum Token {
     #[token("=")]
     Equals,
 
-    // TODO: this should be removed if this all works
-    //#[error]
-    //Skip whitespace
     #[regex("[ |\t]+", logos::skip, priority = 2)]
     Whitespace,
 
@@ -100,8 +97,6 @@ impl<'a> TokenItem {
     pub fn expect(&self, expected: Token) -> crate::error::Result<()> {
         match self.token {
             token if token == expected => Ok(()),
-            // TODO: remove
-            // Token::Error => Err(Error::new(self.range.clone(), ErrorKind::FailedToLex)),
             _ => Err(Error::new(
                 self.range.clone(),
                 ErrorKind::UnexpectedToken(self.token, Expected::Token(expected)),
@@ -183,7 +178,6 @@ impl<'a> Iterator for LexerIterator<'a> {
     type Item = TokenItem;
 
     fn next(&mut self) -> Option<Self::Item> {
-        // TODO: probs shouldn't unwrap here
         self.lexer.next().map(|t| TokenItem::new(t.unwrap(), self.lexer.span()))
     }
 }

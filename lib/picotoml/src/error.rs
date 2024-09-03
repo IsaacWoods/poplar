@@ -1,5 +1,8 @@
 use crate::lexer::{Token, TokenItem};
-use core::fmt::{self, Display, Write};
+use core::{
+    fmt::{self, Display, Write},
+    num::{ParseFloatError, ParseIntError},
+};
 use serde::de;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -7,8 +10,8 @@ use serde::de;
 pub enum ErrorKind {
     UnknownToken,
     UnexpectedToken(Token, Expected),
-    InvalidInteger(core::num::ParseIntError),
-    InvalidFloat(core::num::ParseFloatError),
+    InvalidInteger(ParseIntError),
+    InvalidFloat(ParseFloatError),
     TableAlreadyDefined,
     TrailingCharacters,
     MissingToken,
@@ -114,7 +117,7 @@ impl core::fmt::Display for ErrorKind {
     }
 }
 
-//Wrapper type so that we can format a T: Display into a fixed size buffer
+// Wrapper type so that we can format a T: Display into a fixed size buffer
 struct Wrapper<'a> {
     buf: &'a mut [u8],
     offset: usize,
@@ -132,7 +135,7 @@ impl<'a> fmt::Write for Wrapper<'a> {
 
         let remainder = &mut self.buf[self.offset..];
         if remainder.len() < bytes.len() {
-            // return error instead of panicking if out of space
+            // Return error instead of panicking if out of space
             return Err(core::fmt::Error);
         }
         let remainder = &mut remainder[..bytes.len()];

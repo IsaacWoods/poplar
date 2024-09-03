@@ -1,8 +1,4 @@
-//! A no_std toml deserializer for embedded systems
-//! Full toml support for deserializing into structs that implement `serde::Deserialize`.
-//!
-//! Requires no memory allocations and is likely much faster than toml-rs.
-//! Supports deserialization only
+//! A `no_std` TOML deserializer build for embedded systems. Can be used without an allocator.
 
 #![no_std]
 
