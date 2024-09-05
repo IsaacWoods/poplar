@@ -30,12 +30,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b048fb63fd8b5923fc5aa7b340d8e156aec7ec02f0c78fa8a6ddc2613f6f71de"
 
 [[package]]
-name = "cc"
-version = "1.1.6"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2aba8f4e9906c7ce3c73463f62a7f0c65183ada1a2d47e397cc8810827f9694f"
-
-[[package]]
 name = "cfg-if"
 version = "0.1.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -65,7 +59,7 @@ dependencies = [
 [[package]]
 name = "cordyceps"
 version = "0.3.2"
-source = "git+https://github.com/hawkw/mycelium#2ecceaf8849bd30c5b28a97cc7b81fef83c748a0"
+source = "git+https://github.com/hawkw/mycelium#e51eb8aa98e7609490fa674f408db32fd51caa70"
 dependencies = [
  "loom",
  "tracing 0.1.40",
@@ -106,11 +100,10 @@ dependencies = [
 
 [[package]]
 name = "generator"
-version = "0.8.1"
+version = "0.8.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "186014d53bc231d0090ef8d6f03e0920c54d85a5ed22f4f2f74315ec56cf83fb"
+checksum = "979f00864edc7516466d6b3157706e06c032f22715700ddd878228a91d02bc56"
 dependencies = [
- "cc",
  "cfg-if 1.0.0",
  "libc",
  "log",
@@ -143,9 +136,9 @@ checksum = "bbd2bcb4c963f2ddae06a2efc7e9f3591312473c50c6685e1f298068316e66fe"
 
 [[package]]
 name = "libc"
-version = "0.2.155"
+version = "0.2.158"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "97b3888a4aecf77e811145cadf6eef5901f4782c53886191b2f693f24761847c"
+checksum = "d8adc4bb1803a324070e64a98ae98f38934d91957a99cfb3a43dcbc01bc56439"
 
 [[package]]
 name = "linked_list_allocator"
@@ -194,7 +187,7 @@ dependencies = [
 [[package]]
 name = "maitake"
 version = "0.1.0"
-source = "git+https://github.com/hawkw/mycelium#2ecceaf8849bd30c5b28a97cc7b81fef83c748a0"
+source = "git+https://github.com/hawkw/mycelium#e51eb8aa98e7609490fa674f408db32fd51caa70"
 dependencies = [
  "cordyceps",
  "maitake-sync",
@@ -208,13 +201,15 @@ dependencies = [
 [[package]]
 name = "maitake-sync"
 version = "0.1.2"
-source = "git+https://github.com/hawkw/mycelium#2ecceaf8849bd30c5b28a97cc7b81fef83c748a0"
+source = "git+https://github.com/hawkw/mycelium#e51eb8aa98e7609490fa674f408db32fd51caa70"
 dependencies = [
  "cordyceps",
  "loom",
+ "mutex-traits",
  "mycelium-bitfield",
  "pin-project",
  "portable-atomic",
+ "tracing 0.1.40",
 ]
 
 [[package]]
@@ -242,14 +237,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "mutex-traits"
+version = "1.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "fd54cb762feb1788c74f5d3387983864d2365ca1819043d2addb76db80169102"
+
+[[package]]
 name = "mycelium-bitfield"
 version = "0.1.5"
-source = "git+https://github.com/hawkw/mycelium#2ecceaf8849bd30c5b28a97cc7b81fef83c748a0"
+source = "git+https://github.com/hawkw/mycelium#e51eb8aa98e7609490fa674f408db32fd51caa70"
 
 [[package]]
 name = "mycelium-util"
 version = "0.1.0"
-source = "git+https://github.com/hawkw/mycelium#2ecceaf8849bd30c5b28a97cc7b81fef83c748a0"
+source = "git+https://github.com/hawkw/mycelium#e51eb8aa98e7609490fa674f408db32fd51caa70"
 dependencies = [
  "cordyceps",
  "loom",
@@ -327,7 +328,7 @@ checksum = "2f38a4412a78282e09a2cf38d195ea5420d15ba0602cb375210efbc877243965"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.71",
+ "syn 2.0.76",
 ]
 
 [[package]]
@@ -383,9 +384,9 @@ dependencies = [
 
 [[package]]
 name = "quote"
-version = "1.0.36"
+version = "1.0.37"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0fa76aaf39101c457836aec0ce2316dbdc3ab723cdda1c6bd4e6ad4208acaca7"
+checksum = "b5b9d34b8991d19d98081b46eacdd8eb58c6f2b201139f7c5f643cc155a633af"
 dependencies = [
  "proc-macro2",
 ]
@@ -402,9 +403,9 @@ dependencies = [
 
 [[package]]
 name = "regex"
-version = "1.10.5"
+version = "1.10.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b91213439dad192326a0d7c6ee3955910425f441d7038e0d6933b0aec5c4517f"
+checksum = "4219d74c6b67a3654a9fbebc4b419e22126d13d2f3c4a07ee0cb61ff79a79619"
 dependencies = [
  "aho-corasick",
  "memchr",
@@ -494,7 +495,7 @@ checksum = "e5af959c8bf6af1aff6d2b463a57f71aae53d1332da58419e30ad8dc7011d951"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.71",
+ "syn 2.0.76",
 ]
 
 [[package]]
@@ -563,9 +564,9 @@ dependencies = [
 
 [[package]]
 name = "syn"
-version = "2.0.71"
+version = "2.0.76"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b146dcf730474b4bcd16c311627b31ede9ab149045db4d6088b3becaea046462"
+checksum = "578e081a14e0cefc3279b0472138c513f37b41a08d5a3cca9b6e4e8ceb6cd525"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -596,7 +597,7 @@ dependencies = [
 [[package]]
 name = "tracing"
 version = "0.2.0"
-source = "git+https://github.com/tokio-rs/tracing#44861cad7a821f08b3c13aba14bb8ddf562b7053"
+source = "git+https://github.com/tokio-rs/tracing#527b4f66a604e7a6baa6aa7536428e3a303ba3c8"
 dependencies = [
  "pin-project-lite",
  "tracing-attributes 0.2.0",
@@ -611,17 +612,17 @@ checksum = "34704c8d6ebcbc939824180af020566b01a7c01f80641264eba0999f6c2b6be7"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.71",
+ "syn 2.0.76",
 ]
 
 [[package]]
 name = "tracing-attributes"
 version = "0.2.0"
-source = "git+https://github.com/tokio-rs/tracing#44861cad7a821f08b3c13aba14bb8ddf562b7053"
+source = "git+https://github.com/tokio-rs/tracing#527b4f66a604e7a6baa6aa7536428e3a303ba3c8"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.71",
+ "syn 2.0.76",
 ]
 
 [[package]]
@@ -637,7 +638,7 @@ dependencies = [
 [[package]]
 name = "tracing-core"
 version = "0.2.0"
-source = "git+https://github.com/tokio-rs/tracing#44861cad7a821f08b3c13aba14bb8ddf562b7053"
+source = "git+https://github.com/tokio-rs/tracing#527b4f66a604e7a6baa6aa7536428e3a303ba3c8"
 
 [[package]]
 name = "tracing-log"
@@ -722,9 +723,9 @@ checksum = "712e227841d057c1ee1cd2fb22fa7e5a5461ae8e48fa2ca79ec42cfc1931183f"
 
 [[package]]
 name = "windows"
-version = "0.54.0"
+version = "0.58.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9252e5725dbed82865af151df558e754e4a3c2c30818359eb17465f1346a1b49"
+checksum = "dd04d41d93c4992d421894c18c8b43496aa748dd4c081bac0dc93eb0489272b6"
 dependencies = [
  "windows-core",
  "windows-targets",
@@ -732,20 +733,55 @@ dependencies = [
 
 [[package]]
 name = "windows-core"
-version = "0.54.0"
+version = "0.58.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "12661b9c89351d684a50a8a643ce5f608e20243b9fb84687800163429f161d65"
+checksum = "6ba6d44ec8c2591c134257ce647b7ea6b20335bf6379a27dac5f1641fcf59f99"
 dependencies = [
+ "windows-implement",
+ "windows-interface",
  "windows-result",
+ "windows-strings",
  "windows-targets",
 ]
 
 [[package]]
-name = "windows-result"
-version = "0.1.2"
+name = "windows-implement"
+version = "0.58.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5e383302e8ec8515204254685643de10811af0ed97ea37210dc26fb0032647f8"
+checksum = "2bbd5b46c938e506ecbce286b6628a02171d56153ba733b6c741fc627ec9579b"
 dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 2.0.76",
+]
+
+[[package]]
+name = "windows-interface"
+version = "0.58.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "053c4c462dc91d3b1504c6fe5a726dd15e216ba718e84a0e46a88fbe5ded3515"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 2.0.76",
+]
+
+[[package]]
+name = "windows-result"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1d1043d8214f791817bab27572aaa8af63732e11bf84aa21a45a78d6c317ae0e"
+dependencies = [
+ "windows-targets",
+]
+
+[[package]]
+name = "windows-strings"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4cd9b125c486025df0eabcb585e62173c6c9eddcec5d117d3b6e8c30e2ee4d10"
+dependencies = [
+ "windows-result",
  "windows-targets",
 ]
 
