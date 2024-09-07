@@ -56,6 +56,7 @@ fn main() -> Result<()> {
                     .debug_int_firehose(flags.debug_int_firehose)
                     .debug_mmu_firehose(flags.debug_mmu_firehose)
                     .debug_cpu_firehose(flags.debug_cpu_firehose)
+                    .trace(config.qemu_trace)
                     .run(),
                 Platform::Rv64Virt => {
                     let ramdisk = dist_result.build_ramdisk();
@@ -67,6 +68,7 @@ fn main() -> Result<()> {
                     .ramdisk(Some(ramdisk))
                     .open_display(flags.display)
                     .debug_int_firehose(flags.debug_int_firehose)
+                    .trace(config.qemu_trace)
                     .run()
                 }
                 _ => {

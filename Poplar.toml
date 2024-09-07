@@ -20,6 +20,8 @@ user_tasks = [
     "virtio_gpu user/virtio_gpu",
     "fb_console user/fb_console",
 ]
+# Useful values: `virtio_*`, `usb_ehci_*`, `usb_packet_*`, `usb_*`
+qemu_trace = ""
 
 [mq_pro]
 release = true

@@ -10,6 +10,7 @@ pub struct RunQemuRiscV {
 
     pub open_display: bool,
     pub debug_int_firehose: bool,
+    pub trace: Option<String>,
 }
 
 impl RunQemuRiscV {
@@ -21,6 +22,7 @@ impl RunQemuRiscV {
             disk_image,
             open_display: false,
             debug_int_firehose: false,
+            trace: None,
         }
     }
 
@@ -39,6 +41,10 @@ impl RunQemuRiscV {
 
     pub fn debug_int_firehose(self, enabled: bool) -> Self {
         Self { debug_int_firehose: enabled, ..self }
+    }
+
+    pub fn trace(self, trace: Option<String>) -> Self {
+        Self { trace, ..self }
     }
 
     pub fn run(self) -> Result<()> {
@@ -97,6 +103,10 @@ impl RunQemuRiscV {
             qemu.args(&["-display", "none"]);
             // If we're not opening a display, allow connections to the monitor over TCP (open with `nc 127.0.0.1 55555`)
             qemu.args(&["-monitor", "tcp:127.0.0.1:55555,server,nowait"]);
+        }
+
+        if let Some(trace) = self.trace {
+            qemu.args(&["--trace", &trace]);
         }
 
         println!("QEMU command: {:?}", qemu);

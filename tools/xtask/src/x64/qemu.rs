@@ -18,6 +18,7 @@ pub struct RunQemuX64 {
     pub debug_mmu_firehose: bool,
     /// Passes `-d cpu` to QEMU. Note that this disables KVM even if `kvm` is set.
     pub debug_cpu_firehose: bool,
+    pub trace: Option<String>,
 
     /*
      * Firmware
@@ -44,6 +45,7 @@ impl RunQemuX64 {
             debug_int_firehose: false,
             debug_mmu_firehose: false,
             debug_cpu_firehose: false,
+            trace: None,
 
             ovmf_dir: PathBuf::from("bundled/ovmf/"),
             ovmf_debugcon_to_file: false,
@@ -66,6 +68,10 @@ impl RunQemuX64 {
 
     pub fn debug_cpu_firehose(self, enabled: bool) -> Self {
         Self { debug_cpu_firehose: enabled, ..self }
+    }
+
+    pub fn trace(self, trace: Option<String>) -> Self {
+        Self { trace, ..self }
     }
 
     fn use_kvm(&self) -> bool {
@@ -102,6 +108,10 @@ impl RunQemuX64 {
         qemu.arg("--no-reboot");
         // qemu.args(&["-smp", &self.cpus.to_string()]);
         qemu.args(&["-m", &self.ram.to_string()]);
+
+        if let Some(trace) = self.trace {
+            qemu.args(&["--trace", &trace]);
+        }
 
         // Emit serial on both stdio and to a file
         qemu.args(&["-chardev", "stdio,id=char0,logfile=qemu_serial_x64.log"]);

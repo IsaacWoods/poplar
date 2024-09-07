@@ -12,6 +12,7 @@ pub struct Config {
     pub release: bool,
     pub kernel_features: Vec<String>,
     pub user_tasks: Vec<UserTask>,
+    pub qemu_trace: Option<String>,
 }
 
 #[derive(Clone, Debug)]
@@ -36,6 +37,7 @@ pub struct PlatformInfo {
     pub release: Option<bool>,
     pub kernel_features: Option<Vec<String>>,
     pub user_tasks: Option<Vec<String>>,
+    pub qemu_trace: Option<String>,
 }
 
 impl Config {
@@ -78,8 +80,9 @@ impl Config {
                 UserTask { name, source_dir }
             })
             .collect();
+        let qemu_trace = platform_info.and_then(|info| info.qemu_trace.clone());
 
-        Config { platform, release, kernel_features, user_tasks }
+        Config { platform, release, kernel_features, user_tasks, qemu_trace }
     }
 }
 
