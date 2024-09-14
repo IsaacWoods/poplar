@@ -31,6 +31,7 @@ pub use core::{
     pin,
     ptr,
     result,
+    task,
 };
 pub use poplar;
 
