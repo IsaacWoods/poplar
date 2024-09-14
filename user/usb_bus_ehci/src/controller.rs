@@ -16,6 +16,7 @@ use std::{
         ddk::dma::{DmaObject, DmaPool, DmaToken},
         event::Event,
         memory_object::MemoryObject,
+        rt::maitake::sync::WaitCell,
         syscall::MemoryObjectFlags,
     },
     sync::Arc,
@@ -30,17 +31,19 @@ use usb::{
 pub struct Controller {
     registers: RwSpinlock<RegisterBlock>,
     caps: Capabilities,
-    free_addresses: Vec<u8>,
-    pub schedule_pool: DmaPool,
-    active_devices: BTreeMap<u8, Arc<RwSpinlock<ActiveDevice>>>,
+    free_addresses: RwSpinlock<Vec<u8>>,
+    pub schedule_pool: RwSpinlock<DmaPool>,
+    active_devices: RwSpinlock<BTreeMap<u8, Arc<RwSpinlock<ActiveDevice>>>>,
     platform_bus_bus_channel: Arc<Channel<BusDriverMessage, !>>,
-    interrupt_event: Event,
 
     /// Holds references to all the queues that are currently in the asynchronous schedule. It's
     /// important we keep a central record of them, as they are linked together into a linked list
     /// in physical memory; if a queue is dropped without removing it from the schedule, we'll
     /// confuse the controller.
-    async_schedule: Vec<Arc<RwSpinlock<Queue>>>,
+    async_schedule: RwSpinlock<Vec<Arc<RwSpinlock<Queue>>>>,
+
+    // TODO: temporary
+    interrupt_received: WaitCell,
 }
 
 impl Controller {
@@ -48,32 +51,60 @@ impl Controller {
         register_base: usize,
         platform_bus_bus_channel: Arc<Channel<BusDriverMessage, !>>,
         interrupt_event: Event,
-    ) -> Controller {
+    ) -> Arc<Controller> {
         let caps = Capabilities::read_from_registers(register_base);
         info!("Capabilites: {:#?}", caps);
 
         // TODO: once we have kernel virtual address space management, just let it find an address
         // for us
         const SCHEDULE_POOL_ADDRESS: usize = 0x00000005_10000000;
-        let schedule_pool = DmaPool::new(unsafe {
+        let schedule_pool = RwSpinlock::new(DmaPool::new(unsafe {
             MemoryObject::create_physical(0x1000, MemoryObjectFlags::WRITABLE)
                 .unwrap()
                 .map_at(SCHEDULE_POOL_ADDRESS)
                 .unwrap()
-        });
+        }));
 
         let registers = RwSpinlock::new(RegisterBlock::new(register_base, caps.cap_length));
         let controller = Arc::new(Controller {
             registers,
             caps,
-            free_addresses: (1..128).collect(),
+            free_addresses: RwSpinlock::new((1..128).collect()),
             schedule_pool,
-            active_devices: BTreeMap::new(),
+            active_devices: RwSpinlock::new(BTreeMap::new()),
             platform_bus_bus_channel,
-            interrupt_event,
 
-            async_schedule: Vec::new(),
-        }
+            async_schedule: RwSpinlock::new(Vec::new()),
+
+            interrupt_received: WaitCell::new(),
+        });
+
+        /*
+         * Spawn a task to handle interrupts from the device.
+         */
+        std::poplar::rt::spawn({
+            let controller = controller.clone();
+
+            async move {
+                loop {
+                    interrupt_event.wait_for_event().await;
+
+                    let status = controller.registers.read().read_status();
+                    if status.get(Status::ERR_INTERRUPT) {
+                        panic!("EHCI controller has reported an error!");
+                    }
+
+                    assert!(status.get(Status::INTERRUPT));
+                    unsafe {
+                        controller.registers.write().write_status(Status::new().with(Status::INTERRUPT, true))
+                    };
+
+                    controller.interrupt_received.wake();
+                }
+            }
+        });
+
+        controller
     }
 
     pub fn initialize(&self) {
@@ -133,7 +164,7 @@ impl Controller {
     /// disconnects. Each new device is added to the Platform Bus, and then a list of new devices
     /// is returned - the caller should ensure each device's channel is attended to so that
     /// requests from device drivers are handled.
-    pub fn check_ports(&mut self) -> Vec<Arc<RwSpinlock<ActiveDevice>>> {
+    pub async fn check_ports(&self) -> Vec<Arc<RwSpinlock<ActiveDevice>>> {
         assert!(!self.caps.port_power_control, "We don't support port power control");
 
         let mut new_devices = Vec::new();
@@ -176,7 +207,7 @@ impl Controller {
                          * Low-Speed. We can start the port reset and enable sequence.
                          */
                         trace!("Connected device on port {}", port);
-                        if let Some(new_device) = self.handle_device_connect(port) {
+                        if let Some(new_device) = self.handle_device_connect(port).await {
                             new_devices.push(new_device);
                         }
                     }
@@ -189,13 +220,13 @@ impl Controller {
         new_devices
     }
 
-    pub fn handle_device_connect(&mut self, port: u8) -> Option<Arc<RwSpinlock<ActiveDevice>>> {
+    pub async fn handle_device_connect(&self, port: u8) -> Option<Arc<RwSpinlock<ActiveDevice>>> {
         self.reset_port(port);
 
         unsafe {
             if self.registers.read().read_port_register(port).get(PortStatusControl::PORT_ENABLED) {
                 // The device is High-Speed. Let's manage it ourselves.
-                let address = self.free_addresses.pop().unwrap();
+                let address = self.free_addresses.write().pop().unwrap();
                 trace!("Device on port {} is high-speed. Allocated address {} for it to use.", port, address);
 
                 // Create a new queue for the new device's control endpoint
@@ -225,8 +256,9 @@ impl Controller {
                         index: 0,
                         length: 64,
                     };
-                    let mut buffer = self.schedule_pool.create_buffer(64).unwrap();
-                    self.do_control_transfer(&queue, get_descriptor_header, Some(buffer.token().unwrap()), false);
+                    let mut buffer = self.schedule_pool.write().create_buffer(64).unwrap();
+                    self.do_control_transfer(&queue, get_descriptor_header, Some(buffer.token().unwrap()), false)
+                        .await;
 
                     // Manually extract the max packet size from the buffer (one byte at `0x7`)
                     let max_packet_size = buffer.read()[7];
@@ -250,7 +282,7 @@ impl Controller {
                     index: 0,
                     length: 0,
                 };
-                self.do_control_transfer(&queue, set_address, None, true);
+                self.do_control_transfer(&queue, set_address, None, true).await;
 
                 queue.write().set_address(address);
 
@@ -267,8 +299,9 @@ impl Controller {
                         length: mem::size_of::<DeviceDescriptor>() as u16,
                     };
                     let mut descriptor: DmaObject<DeviceDescriptor> =
-                        self.schedule_pool.create(DeviceDescriptor::default()).unwrap();
-                    self.do_control_transfer(&queue, get_descriptor, Some(descriptor.token().unwrap()), false);
+                        self.schedule_pool.write().create(DeviceDescriptor::default()).unwrap();
+                    self.do_control_transfer(&queue, get_descriptor, Some(descriptor.token().unwrap()), false)
+                        .await;
 
                     *descriptor.read()
                 };
@@ -292,8 +325,9 @@ impl Controller {
                         length: mem::size_of::<ConfigurationDescriptor>() as u16,
                     };
                     let mut descriptor: DmaObject<ConfigurationDescriptor> =
-                        self.schedule_pool.create(ConfigurationDescriptor::default()).unwrap();
-                    self.do_control_transfer(&queue, get_descriptor, Some(descriptor.token().unwrap()), false);
+                        self.schedule_pool.write().create(ConfigurationDescriptor::default()).unwrap();
+                    self.do_control_transfer(&queue, get_descriptor, Some(descriptor.token().unwrap()), false)
+                        .await;
 
                     info!("ConfigurationDescriptor: {:#?}", descriptor.read());
 
@@ -308,8 +342,9 @@ impl Controller {
                         length: descriptor.read().total_length as u16,
                     };
                     let mut buffer =
-                        self.schedule_pool.create_buffer(descriptor.read().total_length as usize).unwrap();
-                    self.do_control_transfer(&queue, get_configuration, Some(buffer.token().unwrap()), false);
+                        self.schedule_pool.write().create_buffer(descriptor.read().total_length as usize).unwrap();
+                    self.do_control_transfer(&queue, get_configuration, Some(buffer.token().unwrap()), false)
+                        .await;
 
                     buffer.read().to_vec()
                 };
@@ -331,7 +366,7 @@ impl Controller {
     }
 
     fn create_device(
-        &mut self,
+        &self,
         address: u8,
         descriptor: &DeviceDescriptor,
         config0: Vec<u8>,
@@ -375,13 +410,15 @@ impl Controller {
             endpoints: BTreeMap::new(),
             channel: device_channel,
         }));
-        self.active_devices.insert(address, device.clone());
+        self.active_devices.write().insert(address, device.clone());
 
         device
     }
 
-    pub fn add_to_async_schedule(&mut self, queue: Arc<RwSpinlock<Queue>>) {
-        if self.async_schedule.is_empty() {
+    pub fn add_to_async_schedule(&self, queue: Arc<RwSpinlock<Queue>>) {
+        let mut async_schedule = self.async_schedule.write();
+
+        if async_schedule.is_empty() {
             /*
              * This is the first queue head being added to the schedule. We set it to loop back
              * round to itself, set it as the head of the reclamation list, and then set the async
@@ -425,14 +462,14 @@ impl Controller {
              *         ▲ ASYNCADDR
              */
             {
-                let first = self.async_schedule.first().unwrap().read();
+                let first = async_schedule.first().unwrap().read();
                 let mut locked_queue = queue.write();
                 locked_queue.head.write().horizontal_link =
                     HorizontalLinkPtr::new(first.head.phys as u32, 0b01, false);
                 locked_queue.set_reclaim_head(true);
             }
             {
-                let mut current_last = self.async_schedule.last_mut().unwrap().write();
+                let mut current_last = async_schedule.last_mut().unwrap().write();
                 assert!(current_last.is_reclaim_head());
                 current_last.head.write().horizontal_link =
                     HorizontalLinkPtr::new(queue.read().head.phys as u32, 0b01, false);
@@ -440,54 +477,41 @@ impl Controller {
             }
         }
 
-        self.async_schedule.push(queue);
+        async_schedule.push(queue);
     }
 
-    pub fn do_control_transfer(
-        &mut self,
+    pub async fn do_control_transfer(
+        &self,
         queue: &Arc<RwSpinlock<Queue>>,
         setup: SetupPacket,
         data: Option<DmaToken>,
         transfer_to_device: bool,
     ) {
+        // TODO: this should be replaced with a waitcell in the actual transaction/queue instead of
+        // a global one
+        // XXX: subscribe to interrupts before we ever kick the transaction off
+        let wait = self.interrupt_received.subscribe().await;
+
         let mut queue = queue.write();
-        queue.control_transfer(setup, data, transfer_to_device, &mut self.schedule_pool);
-        // TODO: this should be replaced with the async future thingy etc.
-        self.wait_for_transfer_completion(queue.deref_mut());
+        queue.control_transfer(setup, data, transfer_to_device, self.schedule_pool.write().deref_mut());
+        wait.await.unwrap();
+        queue.transactions.pop_front();
     }
 
-    pub fn do_interrupt_transfer(
-        &mut self,
+    pub async fn do_interrupt_transfer(
+        &self,
         queue: &Arc<RwSpinlock<Queue>>,
         data: DmaToken,
         transfer_to_device: bool,
     ) {
+        // TODO: this should be replaced with a waitcell in the actual transaction/queue instead of
+        // a global one
+        // XXX: subscribe to interrupts before we ever kick the transaction off
+        let wait = self.interrupt_received.subscribe().await;
+
         let mut queue = queue.write();
-        queue.interrupt_transfer(data, transfer_to_device, &mut self.schedule_pool);
-        // TODO: this should be replaced with the async future thingy etc.
-        self.wait_for_transfer_completion(queue.deref_mut());
-    }
-
-    /*
-     * TODO: this is temporary. In the future, `control_transfer` etc. will return futures that get
-     * magically handled by the IRQ handler.
-     *
-     * Wait for a transaction to complete, and then pop it off the queue. This releases the DMA
-     * objects needed for the transaction, including the token for the data object used. This
-     * allows the result to be read from it, if relevant.
-     */
-    pub fn wait_for_transfer_completion(&mut self, queue: &mut Queue) {
-        self.interrupt_event.wait_for_event_blocking();
-
-        let status = self.read_status();
-        if status.get(Status::ERR_INTERRUPT) {
-            panic!("Transaction errored!");
-        }
-
-        assert!(status.get(Status::INTERRUPT));
-        unsafe { self.write_status(Status::new().with(Status::INTERRUPT, true)) };
-
-        // Remove the front transaction from the queue to drop the held DMA objects and token
+        queue.interrupt_transfer(data, transfer_to_device, self.schedule_pool.write().deref_mut());
+        wait.await.unwrap();
         queue.transactions.pop_front();
     }
 
@@ -507,9 +531,9 @@ impl Controller {
         }
     }
 
-    pub fn create_queue(&mut self, device: u8, endpoint: u8, max_packet_size: u16) -> Arc<RwSpinlock<Queue>> {
+    pub fn create_queue(&self, device: u8, endpoint: u8, max_packet_size: u16) -> Arc<RwSpinlock<Queue>> {
         Arc::new(RwSpinlock::new(Queue::new(
-            self.schedule_pool.create(QueueHead::new(device, endpoint, max_packet_size)).unwrap(),
+            self.schedule_pool.write().create(QueueHead::new(device, endpoint, max_packet_size)).unwrap(),
             max_packet_size,
         )))
     }

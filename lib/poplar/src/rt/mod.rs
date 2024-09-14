@@ -4,6 +4,8 @@
 
 mod reactor;
 
+pub use maitake;
+
 use self::reactor::Reactor;
 use core::future::Future;
 use maitake::{scheduler::Scheduler, task::JoinHandle};

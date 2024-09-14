@@ -17,7 +17,7 @@ use platform_bus::{BusDriverMessage, DeviceDriverMessage, DeviceDriverRequest, F
 use spinning_top::RwSpinlock;
 use std::{
     collections::BTreeMap,
-    ops::DerefMut,
+    ops::Deref,
     poplar::{
         caps::{CapabilitiesRepr, CAP_EARLY_LOGGING, CAP_PADDING, CAP_SERVICE_USER},
         channel::Channel,
@@ -42,10 +42,10 @@ pub struct ActiveDevice {
 }
 
 impl ActiveDevice {
-    pub fn handle_request(
+    pub async fn handle_request(
         &mut self,
         request: DeviceControlMessage,
-        controller: &mut Controller,
+        controller: &Controller,
     ) -> Result<(), ()> {
         match request {
             DeviceControlMessage::UseConfiguration(config) => {
@@ -61,7 +61,7 @@ impl ActiveDevice {
                     index: 0,
                     length: 0,
                 };
-                controller.do_control_transfer(&self.control_queue, set_configuration, None, true);
+                controller.do_control_transfer(&self.control_queue, set_configuration, None, true).await;
 
                 Ok(())
             }
@@ -76,7 +76,7 @@ impl ActiveDevice {
                     index: interface as u16,
                     length: 0,
                 };
-                controller.do_control_transfer(&self.control_queue, set_configuration, None, true);
+                controller.do_control_transfer(&self.control_queue, set_configuration, None, true).await;
 
                 Ok(())
             }
@@ -116,13 +116,10 @@ impl ActiveDevice {
                     index: 0,
                     length,
                 };
-                let mut buffer = controller.schedule_pool.create_buffer(length as usize).unwrap();
-                controller.do_control_transfer(
-                    &self.control_queue,
-                    get_descriptor,
-                    Some(buffer.token().unwrap()),
-                    false,
-                );
+                let mut buffer = controller.schedule_pool.write().create_buffer(length as usize).unwrap();
+                controller
+                    .do_control_transfer(&self.control_queue, get_descriptor, Some(buffer.token().unwrap()), false)
+                    .await;
 
                 self.channel
                     .send(&DeviceResponse::Descriptor { typ, index, bytes: buffer.read().to_vec() })
@@ -134,8 +131,8 @@ impl ActiveDevice {
                 let endpoint = self.endpoints.get(&endpoint).unwrap();
                 // TODO: check that given direction is correct for this endpoint
 
-                let mut buffer = controller.schedule_pool.create_buffer(packet_size as usize).unwrap();
-                controller.do_interrupt_transfer(&endpoint, buffer.token().unwrap(), false);
+                let mut buffer = controller.schedule_pool.write().create_buffer(packet_size as usize).unwrap();
+                controller.do_interrupt_transfer(&endpoint, buffer.token().unwrap(), false).await;
                 // TODO: I wonder if sending the data back should be divorced from the request
                 // handling so we can handle other requests while we're waiting for it to complete?
                 // This will require transactions to go through the async system first.
@@ -199,27 +196,24 @@ fn main() {
                         register_space.map_at(REGISTER_SPACE_ADDRESS).unwrap();
                     }
 
-                    let controller = Arc::new(RwSpinlock::new(Controller::new(
+                    let controller = Controller::new(
                         REGISTER_SPACE_ADDRESS,
                         platform_bus_bus_channel.clone(),
                         handoff_info.get_as_event("pci.interrupt").unwrap(),
-                    )));
-                    controller.write().initialize();
+                    );
+                    controller.initialize();
 
-                    let new_devices = controller.write().check_ports();
+                    let new_devices = controller.check_ports().await;
                     for device in new_devices {
                         let controller = controller.clone();
                         std::poplar::rt::spawn(async move {
                             loop {
                                 let mut device = device.write();
                                 let message = device.channel.receive().await.unwrap();
-                                device.handle_request(message, controller.write().deref_mut()).unwrap();
+                                device.handle_request(message, controller.deref()).await.unwrap();
                             }
                         });
                     }
-
-                    // TODO: spawn task to listen for interrupts from the controller and respond to
-                    // them
                 }
             }
         }
