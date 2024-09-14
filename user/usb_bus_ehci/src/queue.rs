@@ -60,8 +60,6 @@ impl Queue {
         Queue { head, transactions: VecDeque::new(), max_packet_size }
     }
 
-    // TODO: once we have an async runtime, this should return a future that is awoken once the
-    // transaction has completed via the IRQ handler
     pub fn control_transfer(
         &mut self,
         setup: SetupPacket,
@@ -143,12 +141,6 @@ impl Queue {
             },
         );
 
-        // If the queue is empty, start the transaction now. We do this here to ensure we're
-        // already subscribed to the transaction's waker.
-        if self.transactions.is_empty() {
-            self.head.write().next_td = TdPtr::new(transfers.phys_of_element(0) as u32, false);
-        }
-
         let state = Arc::new(Spinlock::new(TransactionState { complete: false, waker: None }));
 
         self.transactions.push_back(Transaction {
@@ -159,10 +151,19 @@ impl Queue {
             state: state.clone(),
         });
 
+        /*
+         * If this is the only transaction in the queue, start it now. We do this once the
+         * transaction has been added so it will always be in the queue when the interrupt-driven
+         * schedule management runs.
+         */
+        if self.transactions.len() == 1 {
+            let next_td = self.transactions.back().unwrap().descriptors.phys_of_element(0);
+            self.head.write().next_td = TdPtr::new(next_td as u32, false);
+        }
+
         TransactionFuture(state)
     }
 
-    // TODO: this should also return a future that is awoken when the transfer has completed
     pub fn interrupt_transfer(
         &mut self,
         data: DmaToken,
@@ -204,11 +205,6 @@ impl Queue {
             );
         }
 
-        // If the queue is empty, start the transaction now.
-        if self.transactions.is_empty() {
-            self.head.write().next_td = TdPtr::new(transfers.phys_of_element(0) as u32, false);
-        }
-
         let state = Arc::new(Spinlock::new(TransactionState { complete: false, waker: None }));
 
         self.transactions.push_back(Transaction {
@@ -218,6 +214,16 @@ impl Queue {
             num_complete: 0,
             state: state.clone(),
         });
+
+        /*
+         * If this is the only transaction in the queue, start it now. We do this once the
+         * transaction has been added so it will always be in the queue when the interrupt-driven
+         * schedule management runs.
+         */
+        if self.transactions.len() == 1 {
+            let next_td = self.transactions.back().unwrap().descriptors.phys_of_element(0);
+            self.head.write().next_td = TdPtr::new(next_td as u32, false);
+        }
 
         TransactionFuture(state)
     }
