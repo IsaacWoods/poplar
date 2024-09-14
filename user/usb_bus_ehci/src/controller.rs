@@ -1,7 +1,7 @@
 use crate::{
     caps::Capabilities,
     queue::{HorizontalLinkPtr, Queue, QueueHead},
-    reg::{Command, InterruptEnable, LineStatus, OpRegister, PortStatusControl, Status},
+    reg::{Command, InterruptEnable, LineStatus, OpRegister, PortStatusControl, RegisterBlock, Status},
     ActiveDevice,
 };
 use log::{info, trace};
@@ -28,7 +28,7 @@ use usb::{
 };
 
 pub struct Controller {
-    register_base: usize,
+    registers: RwSpinlock<RegisterBlock>,
     caps: Capabilities,
     free_addresses: Vec<u8>,
     pub schedule_pool: DmaPool,
@@ -62,8 +62,9 @@ impl Controller {
                 .unwrap()
         });
 
-        Controller {
-            register_base,
+        let registers = RwSpinlock::new(RegisterBlock::new(register_base, caps.cap_length));
+        let controller = Arc::new(Controller {
+            registers,
             caps,
             free_addresses: (1..128).collect(),
             schedule_pool,
@@ -75,37 +76,40 @@ impl Controller {
         }
     }
 
-    pub fn initialize(&mut self) {
+    pub fn initialize(&self) {
         /*
          * We only support controllers that don't support 64-bit addressing at the moment. This
          * means we don't need to set `CTRLDSSEGMENT`.
          */
         assert!(!self.caps.can_address_64bit);
 
+        let mut registers = self.registers.write();
+
         // If the controller has already been used by the firmware, halt it before trying to reset
-        if !self.read_status().get(Status::CONTROLLER_HALTED) {
+        if !registers.read_status().get(Status::CONTROLLER_HALTED) {
             info!("EHCI controller has already been started. Halting it.");
-            let command = self.read_command();
+            let command = registers.read_command();
             unsafe {
-                self.write_command(
+                registers.write_command(
                     Command::new()
                         .with(Command::RUN, false)
                         .with(Command::INTERRUPT_THRESHOLD, command.get(Command::INTERRUPT_THRESHOLD)),
                 );
             }
-            while !self.read_status().get(Status::CONTROLLER_HALTED) {}
+            while !registers.read_status().get(Status::CONTROLLER_HALTED) {}
         }
 
         // Reset the controller
         unsafe {
-            self.write_command(Command::new().with(Command::RESET, true).with(Command::INTERRUPT_THRESHOLD, 0x08));
-            while self.read_command().get(Command::RESET) {}
+            registers
+                .write_command(Command::new().with(Command::RESET, true).with(Command::INTERRUPT_THRESHOLD, 0x08));
+            while registers.read_command().get(Command::RESET) {}
         }
         info!("EHCI controller reset");
 
         unsafe {
             // Enable interrupts we're interested in
-            self.write_operational_register(
+            registers.write_operational_register(
                 OpRegister::InterruptEnable,
                 (InterruptEnable::INTERRUPT
                     | InterruptEnable::ERROR
@@ -117,10 +121,11 @@ impl Controller {
             );
 
             // Turn the controller on
-            self.write_command(Command::new().with(Command::RUN, true).with(Command::INTERRUPT_THRESHOLD, 0x08));
+            registers
+                .write_command(Command::new().with(Command::RUN, true).with(Command::INTERRUPT_THRESHOLD, 0x08));
 
             // Route all ports to the EHCI controller
-            self.write_operational_register(OpRegister::ConfigFlag, 1);
+            registers.write_operational_register(OpRegister::ConfigFlag, 1);
         }
     }
 
@@ -134,7 +139,7 @@ impl Controller {
         let mut new_devices = Vec::new();
 
         for port in 0..self.caps.num_ports {
-            let port_reg = unsafe { self.read_port_register(port) };
+            let port_reg = unsafe { self.registers.read().read_port_register(port) };
 
             if port_reg.get(PortStatusControl::PORT_ENABLED_CHANGE) {
                 // TODO: handle this better
@@ -144,7 +149,7 @@ impl Controller {
             if port_reg.get(PortStatusControl::CONNECT_STATUS_CHANGE) {
                 // Clear the changed status by writing a `1` to it
                 unsafe {
-                    self.write_port_register(
+                    self.registers.write().write_port_register(
                         port,
                         PortStatusControl::new().with(PortStatusControl::CONNECT_STATUS_CHANGE, true),
                     );
@@ -160,7 +165,7 @@ impl Controller {
                          */
                         trace!("Device on port {} is low-speed. Handing off to companion controller.", port);
                         unsafe {
-                            self.write_port_register(
+                            self.registers.write().write_port_register(
                                 port,
                                 PortStatusControl::new().with(PortStatusControl::PORT_OWNER, true),
                             );
@@ -188,7 +193,7 @@ impl Controller {
         self.reset_port(port);
 
         unsafe {
-            if self.read_port_register(port).get(PortStatusControl::PORT_ENABLED) {
+            if self.registers.read().read_port_register(port).get(PortStatusControl::PORT_ENABLED) {
                 // The device is High-Speed. Let's manage it ourselves.
                 let address = self.free_addresses.pop().unwrap();
                 trace!("Device on port {} is high-speed. Allocated address {} for it to use.", port, address);
@@ -317,7 +322,9 @@ impl Controller {
                  * with.
                  */
                 trace!("Device on port {} is full-speed. Handing off to companion controller.", port);
-                self.write_port_register(port, PortStatusControl::new().with(PortStatusControl::PORT_OWNER, true));
+                self.registers
+                    .write()
+                    .write_port_register(port, PortStatusControl::new().with(PortStatusControl::PORT_OWNER, true));
                 None
             }
         }
@@ -392,8 +399,10 @@ impl Controller {
             locked_queue.head.write().horizontal_link =
                 HorizontalLinkPtr::new(locked_queue.head.phys as u32, 0b01, false);
             unsafe {
-                self.write_operational_register(OpRegister::NextAsyncListAddress, locked_queue.head.phys as u32);
-                self.write_operational_register(
+                let mut registers = self.registers.write();
+                registers
+                    .write_operational_register(OpRegister::NextAsyncListAddress, locked_queue.head.phys as u32);
+                registers.write_operational_register(
                     OpRegister::Command,
                     Command::new()
                         .with(Command::RUN, true)
@@ -482,16 +491,19 @@ impl Controller {
         queue.transactions.pop_front();
     }
 
-    pub fn reset_port(&mut self, port: u8) {
+    pub fn reset_port(&self, port: u8) {
         unsafe {
+            let registers = self.registers.write();
+
             /*
              * Reset the port by toggling the PortReset bit and then waiting for it to clear.
              */
-            self.write_port_register(port, PortStatusControl::new().with(PortStatusControl::PORT_RESET, true));
+            registers
+                .write_port_register(port, PortStatusControl::new().with(PortStatusControl::PORT_RESET, true));
             // TODO: apparently we're meant to time a duration here???? QEMU doesn't complain about
             // no delay but I bet real ones do
-            self.write_port_register(port, PortStatusControl::new());
-            while self.read_port_register(port).get(PortStatusControl::PORT_RESET) {}
+            registers.write_port_register(port, PortStatusControl::new());
+            while registers.read_port_register(port).get(PortStatusControl::PORT_RESET) {}
         }
     }
 
@@ -500,56 +512,5 @@ impl Controller {
             self.schedule_pool.create(QueueHead::new(device, endpoint, max_packet_size)).unwrap(),
             max_packet_size,
         )))
-    }
-}
-
-/*
- * Controller register access methods.
- */
-impl Controller {
-    pub fn read_status(&self) -> Status {
-        Status::from_bits(unsafe { self.read_operational_register(OpRegister::Status) })
-    }
-
-    pub unsafe fn write_status(&mut self, value: Status) {
-        unsafe {
-            self.write_operational_register(OpRegister::Status, value.bits());
-        }
-    }
-
-    pub fn read_command(&self) -> Command {
-        Command::from_bits(unsafe { self.read_operational_register(OpRegister::Command) })
-    }
-
-    pub unsafe fn write_command(&mut self, value: Command) {
-        unsafe {
-            self.write_operational_register(OpRegister::Command, value.bits());
-        }
-    }
-
-    pub unsafe fn read_operational_register(&self, reg: OpRegister) -> u32 {
-        let address = self.register_base + self.caps.cap_length as usize + (reg as u32 as usize);
-        unsafe { std::ptr::read_volatile(address as *mut u32) }
-    }
-
-    pub unsafe fn write_operational_register(&mut self, reg: OpRegister, value: u32) {
-        let address = self.register_base + self.caps.cap_length as usize + (reg as u32 as usize);
-        unsafe {
-            std::ptr::write_volatile(address as *mut u32, value);
-        }
-    }
-
-    pub unsafe fn read_port_register(&self, port: u8) -> PortStatusControl {
-        let address =
-            self.register_base + self.caps.cap_length as usize + 0x44 + mem::size_of::<u32>() * port as usize;
-        PortStatusControl::from_bits(unsafe { std::ptr::read_volatile(address as *const u32) })
-    }
-
-    pub unsafe fn write_port_register(&self, port: u8, value: PortStatusControl) {
-        let address =
-            self.register_base + self.caps.cap_length as usize + 0x44 + mem::size_of::<u32>() * port as usize;
-        unsafe {
-            std::ptr::write_volatile(address as *mut u32, value.bits());
-        }
     }
 }

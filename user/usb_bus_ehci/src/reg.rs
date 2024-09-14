@@ -1,4 +1,60 @@
 use bitflags::bitflags;
+use core::mem;
+
+pub struct RegisterBlock {
+    base: usize,
+    cap_length: u8,
+}
+
+impl RegisterBlock {
+    pub fn new(base: usize, cap_length: u8) -> RegisterBlock {
+        RegisterBlock { base, cap_length }
+    }
+
+    pub fn read_status(&self) -> Status {
+        Status::from_bits(unsafe { self.read_operational_register(OpRegister::Status) })
+    }
+
+    pub unsafe fn write_status(&mut self, value: Status) {
+        unsafe {
+            self.write_operational_register(OpRegister::Status, value.bits());
+        }
+    }
+
+    pub fn read_command(&self) -> Command {
+        Command::from_bits(unsafe { self.read_operational_register(OpRegister::Command) })
+    }
+
+    pub unsafe fn write_command(&mut self, value: Command) {
+        unsafe {
+            self.write_operational_register(OpRegister::Command, value.bits());
+        }
+    }
+
+    pub unsafe fn read_operational_register(&self, reg: OpRegister) -> u32 {
+        let address = self.base + self.cap_length as usize + (reg as u32 as usize);
+        unsafe { std::ptr::read_volatile(address as *mut u32) }
+    }
+
+    pub unsafe fn write_operational_register(&mut self, reg: OpRegister, value: u32) {
+        let address = self.base + self.cap_length as usize + (reg as u32 as usize);
+        unsafe {
+            std::ptr::write_volatile(address as *mut u32, value);
+        }
+    }
+
+    pub unsafe fn read_port_register(&self, port: u8) -> PortStatusControl {
+        let address = self.base + self.cap_length as usize + 0x44 + mem::size_of::<u32>() * port as usize;
+        PortStatusControl::from_bits(unsafe { std::ptr::read_volatile(address as *const u32) })
+    }
+
+    pub unsafe fn write_port_register(&self, port: u8, value: PortStatusControl) {
+        let address = self.base + self.cap_length as usize + 0x44 + mem::size_of::<u32>() * port as usize;
+        unsafe {
+            std::ptr::write_volatile(address as *mut u32, value.bits());
+        }
+    }
+}
 
 #[repr(u32)]
 pub enum OpRegister {
