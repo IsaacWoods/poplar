@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/syscall/mod.rs`."><title>mod.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-405f8b29f52305f8.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="kernel" data-themes="" data-resource-suffix="" data-rustdoc-version="1.83.0-nightly (9c01301c5 2024-09-05)" data-channel="nightly" data-search-js="search-a99f1315e7cc5121.js" data-settings-js="settings-7e3bb6c46e92e77c.js" ><script src="../../../static.files/storage-29b1d5a9048d38fe.js"></script><script defer src="../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-14659ec02b58af51.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-40f72c9259523cb3.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers">
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/syscall/mod.rs`."><title>mod.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-405f8b29f52305f8.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="kernel" data-themes="" data-resource-suffix="" data-rustdoc-version="1.83.0-nightly (0609062a9 2024-09-13)" data-channel="nightly" data-search-js="search-0cfde64e8ad3a7fe.js" data-settings-js="settings-7e3bb6c46e92e77c.js" ><script src="../../../static.files/storage-29b1d5a9048d38fe.js"></script><script defer src="../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-14659ec02b58af51.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-40f72c9259523cb3.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers">
 <a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
@@ -631,7 +631,15 @@
 <a href="#630" id="630">630</a>
 <a href="#631" id="631">631</a>
 <a href="#632" id="632">632</a>
-<a href="#633" id="633">633</a></pre></div><pre class="rust"><code><span class="kw">mod </span>validation;
+<a href="#633" id="633">633</a>
+<a href="#634" id="634">634</a>
+<a href="#635" id="635">635</a>
+<a href="#636" id="636">636</a>
+<a href="#637" id="637">637</a>
+<a href="#638" id="638">638</a>
+<a href="#639" id="639">639</a>
+<a href="#640" id="640">640</a>
+<a href="#641" id="641">641</a></pre></div><pre class="rust"><code><span class="kw">mod </span>validation;
 
 <span class="kw">use crate</span>::{
     object::{
@@ -720,7 +728,7 @@
         syscall::SYSCALL_REGISTER_SERVICE =&gt; handle_to_syscall_repr(register_service(<span class="kw-2">&amp;</span>task, a, b)),
         syscall::SYSCALL_SUBSCRIBE_TO_SERVICE =&gt; handle_to_syscall_repr(subscribe_to_service(<span class="kw-2">&amp;</span>task, a, b)),
         syscall::SYSCALL_PCI_GET_INFO =&gt; status_with_payload_to_syscall_repr(pci_get_info(<span class="kw-2">&amp;</span>task, a, b)),
-        syscall::SYSCALL_WAIT_FOR_EVENT =&gt; status_to_syscall_repr(wait_for_event(scheduler, <span class="kw-2">&amp;</span>task, a)),
+        syscall::SYSCALL_WAIT_FOR_EVENT =&gt; status_to_syscall_repr(wait_for_event(scheduler, <span class="kw-2">&amp;</span>task, a, b)),
         syscall::SYSCALL_POLL_INTEREST =&gt; status_with_payload_to_syscall_repr(poll_interest(<span class="kw-2">&amp;</span>task, a)),
 
         <span class="kw">_ </span>=&gt; {
@@ -1212,11 +1220,13 @@
     scheduler: <span class="kw-2">&amp;</span>Scheduler&lt;P&gt;,
     task: <span class="kw-2">&amp;</span>Arc&lt;Task&lt;P&gt;&gt;,
     event_handle: usize,
+    block: usize,
 ) -&gt; <span class="prelude-ty">Result</span>&lt;(), WaitForEventError&gt;
 <span class="kw">where
     </span>P: Platform,
 {
     <span class="kw">let </span>event_handle = Handle::try_from(event_handle).map_err(|<span class="kw">_</span>| WaitForEventError::InvalidHandle)<span class="question-mark">?</span>;
+    <span class="kw">let </span>block = block != <span class="number">0</span>;
     <span class="kw">let </span>event = task
         .handles
         .read()
@@ -1227,16 +1237,23 @@
         .ok()
         .ok_or(WaitForEventError::NotAnEvent)<span class="question-mark">?</span>;
 
-    <span class="comment">/*
-     * XXX: This is an extremely simple way of implementing this. We should instead probably block
-     * the task, and spawn a tasklet that is awoken when the event is triggered to unblock it. For
-     * now, though, this will work well enough.
-     */
-    </span><span class="kw">while </span>!event.signalled.load(Ordering::SeqCst) {
-        scheduler.schedule(TaskState::Ready);
+    <span class="kw">if </span>block {
+        <span class="comment">/*
+         * XXX: This is an extremely simple way of implementing this. We should instead probably block
+         * the task, and spawn a tasklet that is awoken when the event is triggered to unblock it. For
+         * now, though, this will work well enough.
+         */
+        </span><span class="kw">while </span>!event.signalled.load(Ordering::SeqCst) {
+            scheduler.schedule(TaskState::Ready);
+        }
+        <span class="macro">assert_eq!</span>(<span class="prelude-val">Ok</span>(<span class="bool-val">true</span>), event.signalled.compare_exchange(<span class="bool-val">true</span>, <span class="bool-val">false</span>, Ordering::SeqCst, Ordering::SeqCst));
+        <span class="prelude-val">Ok</span>(())
+    } <span class="kw">else </span>{
+        <span class="kw">match </span>event.signalled.compare_exchange(<span class="bool-val">true</span>, <span class="bool-val">false</span>, Ordering::SeqCst, Ordering::SeqCst) {
+            <span class="prelude-val">Ok</span>(<span class="bool-val">true</span>) =&gt; <span class="prelude-val">Ok</span>(()),
+            <span class="kw">_ </span>=&gt; <span class="prelude-val">Err</span>(WaitForEventError::NoEvent),
+        }
     }
-    <span class="macro">assert_eq!</span>(<span class="prelude-val">Ok</span>(<span class="bool-val">true</span>), event.signalled.compare_exchange(<span class="bool-val">true</span>, <span class="bool-val">false</span>, Ordering::SeqCst, Ordering::SeqCst));
-    <span class="prelude-val">Ok</span>(())
 }
 
 <span class="kw">pub fn </span>poll_interest&lt;P&gt;(task: <span class="kw-2">&amp;</span>Arc&lt;Task&lt;P&gt;&gt;, object_handle: usize) -&gt; <span class="prelude-ty">Result</span>&lt;usize, PollInterestError&gt;
@@ -1254,8 +1271,7 @@
         </span>}
         KernelObjectType::Event =&gt; {
             <span class="kw">let </span>event = object.downcast_arc::&lt;Event&gt;().ok().unwrap();
-            <span class="comment">// TODO: should we clear this? I have no idea
-            </span>event.signalled.load(Ordering::SeqCst)
+            event.signalled.load(Ordering::SeqCst)
         }
 
         <span class="comment">// TODO: should this return an error instead?
