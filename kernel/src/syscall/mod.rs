@@ -87,7 +87,7 @@ where
         syscall::SYSCALL_REGISTER_SERVICE => handle_to_syscall_repr(register_service(&task, a, b)),
         syscall::SYSCALL_SUBSCRIBE_TO_SERVICE => handle_to_syscall_repr(subscribe_to_service(&task, a, b)),
         syscall::SYSCALL_PCI_GET_INFO => status_with_payload_to_syscall_repr(pci_get_info(&task, a, b)),
-        syscall::SYSCALL_WAIT_FOR_EVENT => status_to_syscall_repr(wait_for_event(scheduler, &task, a)),
+        syscall::SYSCALL_WAIT_FOR_EVENT => status_to_syscall_repr(wait_for_event(scheduler, &task, a, b)),
         syscall::SYSCALL_POLL_INTEREST => status_with_payload_to_syscall_repr(poll_interest(&task, a)),
 
         _ => {
@@ -579,11 +579,13 @@ pub fn wait_for_event<P>(
     scheduler: &Scheduler<P>,
     task: &Arc<Task<P>>,
     event_handle: usize,
+    block: usize,
 ) -> Result<(), WaitForEventError>
 where
     P: Platform,
 {
     let event_handle = Handle::try_from(event_handle).map_err(|_| WaitForEventError::InvalidHandle)?;
+    let block = block != 0;
     let event = task
         .handles
         .read()
@@ -594,16 +596,23 @@ where
         .ok()
         .ok_or(WaitForEventError::NotAnEvent)?;
 
-    /*
-     * XXX: This is an extremely simple way of implementing this. We should instead probably block
-     * the task, and spawn a tasklet that is awoken when the event is triggered to unblock it. For
-     * now, though, this will work well enough.
-     */
-    while !event.signalled.load(Ordering::SeqCst) {
-        scheduler.schedule(TaskState::Ready);
+    if block {
+        /*
+         * XXX: This is an extremely simple way of implementing this. We should instead probably block
+         * the task, and spawn a tasklet that is awoken when the event is triggered to unblock it. For
+         * now, though, this will work well enough.
+         */
+        while !event.signalled.load(Ordering::SeqCst) {
+            scheduler.schedule(TaskState::Ready);
+        }
+        assert_eq!(Ok(true), event.signalled.compare_exchange(true, false, Ordering::SeqCst, Ordering::SeqCst));
+        Ok(())
+    } else {
+        match event.signalled.compare_exchange(true, false, Ordering::SeqCst, Ordering::SeqCst) {
+            Ok(true) => Ok(()),
+            _ => Err(WaitForEventError::NoEvent),
+        }
     }
-    assert_eq!(Ok(true), event.signalled.compare_exchange(true, false, Ordering::SeqCst, Ordering::SeqCst));
-    Ok(())
 }
 
 pub fn poll_interest<P>(task: &Arc<Task<P>>, object_handle: usize) -> Result<usize, PollInterestError>
@@ -621,7 +630,6 @@ where
         }
         KernelObjectType::Event => {
             let event = object.downcast_arc::<Event>().ok().unwrap();
-            // TODO: should we clear this? I have no idea
             event.signalled.load(Ordering::SeqCst)
         }
 

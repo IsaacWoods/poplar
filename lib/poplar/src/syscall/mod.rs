@@ -219,10 +219,12 @@ pub fn subscribe_to_service(name: &str) -> Result<Handle, SubscribeToServiceErro
 define_error_type!(WaitForEventError {
     InvalidHandle => 1,
     NotAnEvent => 2,
+    /// No event has occured, and the caller does not want the kernel to block.
+    NoEvent => 3,
 });
 
-pub fn wait_for_event(event: Handle) -> Result<(), WaitForEventError> {
-    let result = unsafe { raw::syscall1(SYSCALL_WAIT_FOR_EVENT, event.0 as usize) };
+pub fn wait_for_event(event: Handle, block: bool) -> Result<(), WaitForEventError> {
+    let result = unsafe { raw::syscall2(SYSCALL_WAIT_FOR_EVENT, event.0 as usize, if block { 1 } else { 0 }) };
     status_from_syscall_repr(result)
 }
 
