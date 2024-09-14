@@ -4,7 +4,7 @@ use crate::{
     reg::{Command, InterruptEnable, LineStatus, OpRegister, PortStatusControl, RegisterBlock, Status},
     ActiveDevice,
 };
-use log::{info, trace};
+use log::{info, trace, warn};
 use platform_bus::{BusDriverMessage, DeviceInfo, HandoffInfo, HandoffProperty, Property};
 use spinning_top::RwSpinlock;
 use std::{
@@ -41,9 +41,6 @@ pub struct Controller {
     /// in physical memory; if a queue is dropped without removing it from the schedule, we'll
     /// confuse the controller.
     async_schedule: RwSpinlock<Vec<Arc<RwSpinlock<Queue>>>>,
-
-    // TODO: temporary
-    interrupt_received: WaitCell,
 }
 
 impl Controller {
@@ -75,8 +72,6 @@ impl Controller {
             platform_bus_bus_channel,
 
             async_schedule: RwSpinlock::new(Vec::new()),
-
-            interrupt_received: WaitCell::new(),
         });
 
         /*
@@ -90,16 +85,36 @@ impl Controller {
                     interrupt_event.wait_for_event().await;
 
                     let status = controller.registers.read().read_status();
+
+                    // Acknowledge all interrupt bits in the status register
+                    unsafe {
+                        controller.registers.write().write_status(
+                            Status::new()
+                                .with(Status::INTERRUPT, status.get(Status::INTERRUPT))
+                                .with(Status::ERR_INTERRUPT, status.get(Status::ERR_INTERRUPT))
+                                .with(Status::PORT_CHANGE_DETECT, status.get(Status::PORT_CHANGE_DETECT)),
+                        );
+                    }
+
                     if status.get(Status::ERR_INTERRUPT) {
                         panic!("EHCI controller has reported an error!");
                     }
 
-                    assert!(status.get(Status::INTERRUPT));
-                    unsafe {
-                        controller.registers.write().write_status(Status::new().with(Status::INTERRUPT, true))
-                    };
+                    if status.get(Status::PORT_CHANGE_DETECT) {
+                        warn!("Port changes detected. Should re-run port detect algorithm here.");
+                        // TODO: re-run port initialization code here
+                    }
 
-                    controller.interrupt_received.wake();
+                    if status.get(Status::INTERRUPT) {
+                        /*
+                         * Progress has been made in executing the schedule. We check each queue
+                         * head for completed transactions.
+                         */
+                        let async_schedule = controller.async_schedule.write();
+                        for queue in async_schedule.iter() {
+                            queue.write().check_progress();
+                        }
+                    }
                 }
             }
         });
@@ -144,9 +159,7 @@ impl Controller {
                 OpRegister::InterruptEnable,
                 (InterruptEnable::INTERRUPT
                     | InterruptEnable::ERROR
-                    // | InterruptEnable::PORT_CHANGE       // TODO: we actually need to handle +
-                                // acknowledge this otherwise the controller seems to get confused and won't
-                                // signal transaction interrupts correctly
+                    | InterruptEnable::PORT_CHANGE
                     | InterruptEnable::HOST_ERROR)
                     .bits(),
             );
@@ -487,15 +500,14 @@ impl Controller {
         data: Option<DmaToken>,
         transfer_to_device: bool,
     ) {
-        // TODO: this should be replaced with a waitcell in the actual transaction/queue instead of
-        // a global one
-        // XXX: subscribe to interrupts before we ever kick the transaction off
-        let wait = self.interrupt_received.subscribe().await;
-
-        let mut queue = queue.write();
-        queue.control_transfer(setup, data, transfer_to_device, self.schedule_pool.write().deref_mut());
-        wait.await.unwrap();
-        queue.transactions.pop_front();
+        // XXX: create the future and drop the queue before awaiting the future, or we'll deadlock
+        let future = queue.write().control_transfer(
+            setup,
+            data,
+            transfer_to_device,
+            self.schedule_pool.write().deref_mut(),
+        );
+        future.await;
     }
 
     pub async fn do_interrupt_transfer(
@@ -504,15 +516,10 @@ impl Controller {
         data: DmaToken,
         transfer_to_device: bool,
     ) {
-        // TODO: this should be replaced with a waitcell in the actual transaction/queue instead of
-        // a global one
-        // XXX: subscribe to interrupts before we ever kick the transaction off
-        let wait = self.interrupt_received.subscribe().await;
-
-        let mut queue = queue.write();
-        queue.interrupt_transfer(data, transfer_to_device, self.schedule_pool.write().deref_mut());
-        wait.await.unwrap();
-        queue.transactions.pop_front();
+        // XXX: create the future and drop the queue before awaiting the future, or we'll deadlock
+        let future =
+            queue.write().interrupt_transfer(data, transfer_to_device, self.schedule_pool.write().deref_mut());
+        future.await;
     }
 
     pub fn reset_port(&self, port: u8) {

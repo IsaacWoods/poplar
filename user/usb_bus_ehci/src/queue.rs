@@ -1,8 +1,14 @@
 use bit_field::BitField;
+use log::{error, info, warn};
+use spinning_top::Spinlock;
 use std::{
     collections::VecDeque,
+    future::Future,
     mem,
+    pin::Pin,
     poplar::ddk::dma::{DmaArray, DmaObject, DmaPool, DmaToken},
+    sync::Arc,
+    task::{Poll, Waker},
 };
 use usb::setup::SetupPacket;
 
@@ -16,6 +22,37 @@ pub struct Transaction {
     descriptors: DmaArray<TransferDescriptor>,
     setup: Option<DmaObject<SetupPacket>>,
     data: Option<DmaToken>,
+    /// Used to track how many transfers have completed
+    num_complete: usize,
+
+    state: Arc<Spinlock<TransactionState>>,
+}
+
+pub struct TransactionState {
+    complete: bool,
+    waker: Option<Waker>,
+}
+
+pub struct TransactionFuture(Arc<Spinlock<TransactionState>>);
+
+impl Future for TransactionFuture {
+    type Output = ();
+
+    fn poll(self: Pin<&mut Self>, cx: &mut core::task::Context<'_>) -> Poll<Self::Output> {
+        let mut state = self.0.lock();
+        if state.complete {
+            Poll::Ready(())
+        } else {
+            /*
+             * Set the current waker that should be woken when the transaction completes. We do
+             * this each time as the future can move between tasks on the executor, so this can
+             * become stale if only done once.
+             * TODO: we can maybe make this more efficient using `Waker::will_wake`
+             */
+            state.waker = Some(cx.waker().clone());
+            Poll::Pending
+        }
+    }
 }
 
 impl Queue {
@@ -31,7 +68,7 @@ impl Queue {
         data: Option<DmaToken>,
         transfer_to_device: bool,
         pool: &mut DmaPool,
-    ) {
+    ) -> TransactionFuture {
         // TODO: do we need to think about max packet size for control transfers??
 
         let num_data = if let Some(ref data) = data {
@@ -52,6 +89,7 @@ impl Queue {
                 alt_ptr: TdPtr::new(0x0, true),
                 token: TdToken::new()
                     .with(TdToken::ACTIVE, true)
+                    .with(TdToken::INTERRUPT_ON_COMPLETE, true)
                     .with(TdToken::PID_CODE, PidCode::Setup)
                     .with(TdToken::TOTAL_BYTES_TO_TRANSFER, mem::size_of::<SetupPacket>() as u32)
                     .with(TdToken::ERR_COUNTER, 1),
@@ -71,6 +109,7 @@ impl Queue {
                     alt_ptr: TdPtr::new(0x0, true),
                     token: TdToken::new()
                         .with(TdToken::ACTIVE, true)
+                        .with(TdToken::INTERRUPT_ON_COMPLETE, true)
                         .with(TdToken::DATA_TOGGLE, true)
                         .with(TdToken::ERR_COUNTER, 1)
                         .with(TdToken::PID_CODE, if transfer_to_device { PidCode::Out } else { PidCode::In })
@@ -104,15 +143,32 @@ impl Queue {
             },
         );
 
-        // TODO: don't just replace `next_td` if we've got running transactions. Need to queue them
-        // and somehow progress the queue as stuff completes I think?
-        self.head.write().next_td = TdPtr::new(transfers.phys_of_element(0) as u32, false);
+        // If the queue is empty, start the transaction now. We do this here to ensure we're
+        // already subscribed to the transaction's waker.
+        if self.transactions.is_empty() {
+            self.head.write().next_td = TdPtr::new(transfers.phys_of_element(0) as u32, false);
+        }
 
-        self.transactions.push_back(Transaction { descriptors: transfers, setup: Some(setup), data });
+        let state = Arc::new(Spinlock::new(TransactionState { complete: false, waker: None }));
+
+        self.transactions.push_back(Transaction {
+            descriptors: transfers,
+            setup: Some(setup),
+            data,
+            num_complete: 0,
+            state: state.clone(),
+        });
+
+        TransactionFuture(state)
     }
 
     // TODO: this should also return a future that is awoken when the transfer has completed
-    pub fn interrupt_transfer(&mut self, data: DmaToken, transfer_to_device: bool, pool: &mut DmaPool) {
+    pub fn interrupt_transfer(
+        &mut self,
+        data: DmaToken,
+        transfer_to_device: bool,
+        pool: &mut DmaPool,
+    ) -> TransactionFuture {
         // TODO: in the future we should support larger transfers that respect the max packet size
         // etc.
         let num_data = 1;
@@ -148,10 +204,82 @@ impl Queue {
             );
         }
 
-        // TODO: if we're running a transaction, queue this one instead of overwriting
-        self.head.write().next_td = TdPtr::new(transfers.phys_of_element(0) as u32, false);
+        // If the queue is empty, start the transaction now.
+        if self.transactions.is_empty() {
+            self.head.write().next_td = TdPtr::new(transfers.phys_of_element(0) as u32, false);
+        }
 
-        self.transactions.push_back(Transaction { descriptors: transfers, setup: None, data: Some(data) });
+        let state = Arc::new(Spinlock::new(TransactionState { complete: false, waker: None }));
+
+        self.transactions.push_back(Transaction {
+            descriptors: transfers,
+            setup: None,
+            data: Some(data),
+            num_complete: 0,
+            state: state.clone(),
+        });
+
+        TransactionFuture(state)
+    }
+
+    pub fn check_progress(&mut self) {
+        let Some(current_transaction) = self.transactions.front_mut() else {
+            return;
+        };
+
+        /*
+         * For the current transaction, go through each transfer descriptor and check if it has
+         * completed or encountered an error.
+         */
+        let mut err_detected = false;
+        while current_transaction.num_complete < current_transaction.descriptors.length {
+            let transfer = current_transaction.descriptors.read(current_transaction.num_complete);
+            if transfer.token.get(TdToken::ACTIVE) {
+                break;
+            }
+            if transfer.token.get(TdToken::HALTED)
+                || transfer.token.get(TdToken::TRANSACTION_ERR)
+                || transfer.token.get(TdToken::BABBLE_DETECTED)
+                || transfer.token.get(TdToken::DATA_BUFFER_ERR)
+            {
+                err_detected = true;
+                break;
+            }
+
+            // Check all bytes were transferred.
+            // TODO: we probably need to deal with short packets at some point?
+            if transfer.token.get(TdToken::TOTAL_BYTES_TO_TRANSFER) != 0 {
+                warn!("Completed transfer has remaining bytes to transfer!");
+            }
+
+            current_transaction.num_complete += 1;
+        }
+
+        /*
+         * Now we've processed completed transfers, check if the transaction as a whole is
+         * complete. If it is, we can tell its initiator to proceed.
+         */
+        if current_transaction.num_complete == current_transaction.descriptors.length {
+            /*
+             * Drop the transaction from the queue. This frees the data `DmaToken`, allowing the
+             * caller to access the underlying data. We also mark the associated future as complete
+             * and wake it.
+             */
+            let completed = self.transactions.pop_front().unwrap();
+            let mut state = completed.state.lock();
+            state.complete = true;
+            if let Some(waker) = state.waker.take() {
+                waker.wake();
+            }
+
+            // Schedule the next transaction in the queue
+            if let Some(next) = self.transactions.front() {
+                self.head.write().next_td = TdPtr::new(next.descriptors.phys_of_element(0) as u32, false);
+            }
+        } else if err_detected {
+            error!("Transfer error detected!");
+            self.transactions.pop_front();
+        }
     }
 
     pub fn set_address(&mut self, address: u8) {
