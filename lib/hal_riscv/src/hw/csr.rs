@@ -159,7 +159,7 @@ impl Satp {
 
     pub unsafe fn write(self) {
         unsafe {
-            asm!("csrw satp, {}", in(reg) self.raw());
+            asm!("csrw satp, {}; sfence.vma", in(reg) self.raw());
         }
     }
 }
