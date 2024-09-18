@@ -1,6 +1,9 @@
 //! `fb_console` is a console running on top of a framebuffer device, either provided through the
 //! kernel or by a driver for a graphics-capable device.
 
+// TODO: make a window manager and then make it so that this can drive a framebuffer directly, or
+// create a window for itself.
+
 use gfxconsole::{Format, Framebuffer, GfxConsole, Pixel, Rgb32};
 use ginkgo::{
     ast::BindingResolver,
@@ -33,6 +36,8 @@ enum InputEvent {
     #[default]
     Default,
     KeyPressed(char),
+    RelX(i32),
+    RelY(i32),
 }
 
 struct Console {
@@ -87,6 +92,9 @@ fn spawn_framebuffer(
             Value::String("Poplar 0.1.0".to_string())
         });
 
+        let mut mouse_x = 300u32;
+        let mut mouse_y = 300u32;
+
         loop {
             let mut needs_redraw = false;
 
@@ -111,7 +119,7 @@ fn spawn_framebuffer(
                                     }
                                 }
 
-                                write!(console.console.lock(), "{}", key);
+                                write!(console.console.lock(), "{}", key).unwrap();
                                 while let Ok(output) = output_receiver.try_recv() {
                                     writeln!(console.console.lock(), "Output: {}", output).unwrap();
                                 }
@@ -133,18 +141,35 @@ fn spawn_framebuffer(
                                 }
                             }
 
-                            other => {
+                            _ => {
                                 write!(console.console.lock(), "{}", key).unwrap();
                                 current_line.push(key);
                                 needs_redraw = true;
                             }
                         }
                     }
+                    InputEvent::RelX(value) => {
+                        mouse_x = mouse_x.saturating_add_signed(value);
+                        needs_redraw = true;
+                    }
+                    InputEvent::RelY(value) => {
+                        mouse_y = mouse_y.saturating_add_signed(value);
+                        needs_redraw = true;
+                    }
+
                     InputEvent::Default => panic!(),
                 }
             }
 
             if needs_redraw {
+                // TODO: this obvs won't remove the old cursor - we need a proper thing for that...
+                console.console.lock().framebuffer.draw_rect(
+                    mouse_x as usize,
+                    mouse_y as usize,
+                    4,
+                    4,
+                    gfxconsole::Rgb32::pixel(0xff, 0, 0xff, 0xff),
+                );
                 console.control_channel.send(&()).unwrap();
             }
         }
@@ -170,6 +195,7 @@ fn main() {
             .send(&DeviceDriverMessage::RegisterInterest(vec![
                 Filter::Matches(String::from("type"), Property::String("framebuffer".to_string())),
                 Filter::Matches(String::from("hid.type"), Property::String("keyboard".to_string())),
+                Filter::Matches(String::from("hid.type"), Property::String("mouse".to_string())),
             ]))
             .unwrap();
 
@@ -202,8 +228,8 @@ fn main() {
                         let framebuffer = unsafe { framebuffer.map_at(FRAMEBUFFER_ADDDRESS).unwrap() };
 
                         spawn_framebuffer(framebuffer, channel, width, height, input_receiver.take().unwrap());
-                    } else if let Some("keyboard") = device_info.get_as_str("hid.type") {
-                        info!("Found HID-compatible keyboard: {}", name);
+                    } else if device_info.get_as_str("hid.type").is_some() {
+                        info!("Found HID-compatible input device: {}", name);
 
                         let channel: Channel<(), PlatformBusInputEvent> =
                             Channel::new_from_handle(handoff_info.get_as_channel("hid.channel").unwrap());
@@ -213,13 +239,32 @@ fn main() {
                             loop {
                                 let event = channel.receive().await.unwrap();
                                 match event {
-                                    PlatformBusInputEvent::KeyPressed { key, state } => {
-                                        input_sender
-                                            .send(InputEvent::KeyPressed(map_key(key, state).unwrap()))
-                                            .await
-                                            .unwrap();
+                                    PlatformBusInputEvent::KeyPressed { key, state } => match key {
+                                        Key::BtnLeft => {
+                                            info!("Left mouse button");
+                                        }
+                                        Key::BtnRight => {
+                                            info!("Right mouse button");
+                                        }
+                                        Key::BtnMiddle => {
+                                            info!("Middle mouse button");
+                                        }
+                                        Key::BtnSide | Key::BtnExtra => {}
+
+                                        other => {
+                                            input_sender
+                                                .send(InputEvent::KeyPressed(map_key(key, state).unwrap()))
+                                                .await
+                                                .unwrap();
+                                        }
+                                    },
+                                    PlatformBusInputEvent::RelX(value) => {
+                                        input_sender.send(InputEvent::RelX(value)).await.unwrap();
                                     }
+                                    PlatformBusInputEvent::RelY(value) => {
+                                        input_sender.send(InputEvent::RelY(value)).await.unwrap();
                                     }
+                                    PlatformBusInputEvent::RelWheel(_) => {}
                                     _ => (),
                                 }
                             }

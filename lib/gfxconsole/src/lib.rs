@@ -14,7 +14,7 @@ pub struct GfxConsole<F>
 where
     F: Format,
 {
-    framebuffer: Framebuffer<F>,
+    pub framebuffer: Framebuffer<F>,
     bg_color: Pixel<F>,
     text_color: Pixel<F>,
     cursor_x: Cell,

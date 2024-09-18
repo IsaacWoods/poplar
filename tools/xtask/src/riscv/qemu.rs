@@ -98,6 +98,7 @@ impl RunQemuRiscV {
         // interested in actually uses it.
         qemu.args(&["-device", "usb-ehci,id=ehci"]);
         qemu.args(&["-device", "usb-kbd,bus=ehci.0"]);
+        qemu.args(&["-device", "usb-mouse,bus=ehci.0"]);
 
         if !self.open_display {
             qemu.args(&["-display", "none"]);
