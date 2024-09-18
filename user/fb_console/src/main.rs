@@ -9,7 +9,7 @@ use ginkgo::{
 };
 use log::info;
 use platform_bus::{
-    input::InputEvent as PlatformBusInputEvent,
+    input::{InputEvent as PlatformBusInputEvent, Key, KeyState},
     DeviceDriverMessage,
     DeviceDriverRequest,
     Filter,
@@ -213,8 +213,12 @@ fn main() {
                             loop {
                                 let event = channel.receive().await.unwrap();
                                 match event {
-                                    PlatformBusInputEvent::KeyPressed { key, .. } => {
-                                        input_sender.send(InputEvent::KeyPressed(key)).await.unwrap();
+                                    PlatformBusInputEvent::KeyPressed { key, state } => {
+                                        input_sender
+                                            .send(InputEvent::KeyPressed(map_key(key, state).unwrap()))
+                                            .await
+                                            .unwrap();
+                                    }
                                     }
                                     _ => (),
                                 }
@@ -229,6 +233,119 @@ fn main() {
     });
 
     std::poplar::rt::enter_loop();
+}
+
+// TODO: we should probably be able to define a keymap in a more data-oriented way in the future
+// TODO: I'm not sure if we'll want to map everything to UTF-8 or if some would need different
+// control-esque types or something?
+pub fn map_key(usage: Key, state: KeyState) -> Option<char> {
+    match (usage, state.shift()) {
+        (Key::KeyA, false) => Some('a'),
+        (Key::KeyA, true) => Some('A'),
+        (Key::KeyB, false) => Some('b'),
+        (Key::KeyB, true) => Some('B'),
+        (Key::KeyC, false) => Some('c'),
+        (Key::KeyC, true) => Some('C'),
+        (Key::KeyD, false) => Some('d'),
+        (Key::KeyD, true) => Some('D'),
+        (Key::KeyE, false) => Some('e'),
+        (Key::KeyE, true) => Some('E'),
+        (Key::KeyF, false) => Some('f'),
+        (Key::KeyF, true) => Some('F'),
+        (Key::KeyG, false) => Some('g'),
+        (Key::KeyG, true) => Some('G'),
+        (Key::KeyH, false) => Some('h'),
+        (Key::KeyH, true) => Some('H'),
+        (Key::KeyI, false) => Some('i'),
+        (Key::KeyI, true) => Some('I'),
+        (Key::KeyJ, false) => Some('j'),
+        (Key::KeyJ, true) => Some('J'),
+        (Key::KeyK, false) => Some('k'),
+        (Key::KeyK, true) => Some('K'),
+        (Key::KeyL, false) => Some('l'),
+        (Key::KeyL, true) => Some('L'),
+        (Key::KeyM, false) => Some('m'),
+        (Key::KeyM, true) => Some('M'),
+        (Key::KeyN, false) => Some('n'),
+        (Key::KeyN, true) => Some('N'),
+        (Key::KeyO, false) => Some('o'),
+        (Key::KeyO, true) => Some('O'),
+        (Key::KeyP, false) => Some('p'),
+        (Key::KeyP, true) => Some('P'),
+        (Key::KeyQ, false) => Some('q'),
+        (Key::KeyQ, true) => Some('Q'),
+        (Key::KeyR, false) => Some('r'),
+        (Key::KeyR, true) => Some('R'),
+        (Key::KeyS, false) => Some('s'),
+        (Key::KeyS, true) => Some('S'),
+        (Key::KeyT, false) => Some('t'),
+        (Key::KeyT, true) => Some('T'),
+        (Key::KeyU, false) => Some('u'),
+        (Key::KeyU, true) => Some('U'),
+        (Key::KeyV, false) => Some('v'),
+        (Key::KeyV, true) => Some('V'),
+        (Key::KeyW, false) => Some('w'),
+        (Key::KeyW, true) => Some('W'),
+        (Key::KeyX, false) => Some('x'),
+        (Key::KeyX, true) => Some('X'),
+        (Key::KeyY, false) => Some('y'),
+        (Key::KeyY, true) => Some('Y'),
+        (Key::KeyZ, false) => Some('z'),
+        (Key::Key1, false) => Some('1'),
+        (Key::Key1, true) => Some('!'),
+        (Key::Key2, false) => Some('2'),
+        (Key::Key2, true) => Some('@'),
+        (Key::Key3, false) => Some('3'),
+        (Key::Key3, true) => Some('#'),
+        (Key::Key4, false) => Some('4'),
+        (Key::Key4, true) => Some('$'),
+        (Key::Key5, false) => Some('5'),
+        (Key::Key5, true) => Some('%'),
+        (Key::Key6, false) => Some('6'),
+        (Key::Key6, true) => Some('^'),
+        (Key::Key7, false) => Some('7'),
+        (Key::Key7, true) => Some('&'),
+        (Key::Key8, false) => Some('8'),
+        (Key::Key8, true) => Some('*'),
+        (Key::Key9, false) => Some('9'),
+        (Key::Key9, true) => Some('('),
+        (Key::Key0, false) => Some('0'),
+        (Key::Key0, true) => Some(')'),
+        (Key::KeyReturn, _) => Some('\n'),
+        (Key::KeyEscape, _) => None,
+        /*
+         * XXX: confusingly, `KeyDelete` is actually backspace, and delete is `KeyDeleteForward`.
+         * We map to an `0x7f` ASCII `DEL`, which differs from an ASCII backspace (`0x08`), which
+         * moves the cursor but does not delete a character.
+         */
+        (Key::KeyDelete, _) => Some('\x7f'),
+        (Key::KeyTab, _) => Some('\t'),
+        (Key::KeySpace, _) => Some(' '),
+        (Key::KeyDash, false) => Some('-'),
+        (Key::KeyDash, true) => Some('_'),
+        (Key::KeyEquals, false) => Some('='),
+        (Key::KeyEquals, true) => Some('+'),
+        (Key::KeyLeftBracket, false) => Some('['),
+        (Key::KeyLeftBracket, true) => Some('{'),
+        (Key::KeyRightBracket, false) => Some(']'),
+        (Key::KeyRightBracket, true) => Some('}'),
+        (Key::KeyForwardSlash, false) => Some('\\'),
+        (Key::KeyForwardSlash, true) => Some('|'),
+        (Key::KeyPound, _) => Some('#'),
+        (Key::KeySemicolon, false) => Some(';'),
+        (Key::KeySemicolon, true) => Some(':'),
+        (Key::KeyApostrophe, false) => Some('\''),
+        (Key::KeyApostrophe, true) => Some('"'),
+        (Key::KeyGrave, false) => Some('`'),
+        (Key::KeyGrave, true) => Some('~'),
+        (Key::KeyComma, false) => Some(','),
+        (Key::KeyComma, true) => Some('<'),
+        (Key::KeyDot, false) => Some('.'),
+        (Key::KeyDot, true) => Some('>'),
+        (Key::KeyBackSlash, false) => Some('/'),
+        (Key::KeyBackSlash, true) => Some('?'),
+        _ => None,
+    }
 }
 
 #[used]
