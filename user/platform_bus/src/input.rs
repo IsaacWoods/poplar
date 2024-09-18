@@ -8,10 +8,23 @@ use ptah::{Deserialize, Serialize};
 pub enum InputEvent {
     KeyPressed { key: Key, state: KeyState },
     KeyReleased { key: Key, state: KeyState },
+    RelX(i32),
+    RelY(i32),
+    RelZ(i32),
+    RelWheel(i32),
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug, Serialize, Deserialize)]
 pub enum Key {
+    /*
+     * Buttons
+     */
+    BtnLeft,
+    BtnMiddle,
+    BtnRight,
+    BtnSide,
+    BtnExtra,
+
     /*
      * Keys
      */

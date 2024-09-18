@@ -251,42 +251,57 @@ pub fn main() {
                                                 warn!("Received unknown dynamic value in HID report: page={:#x}, usage={:#x}", usage_page, usage);
                                             }
 
-                                            // TODO: move to mouse section idk
                                             FieldValue::DynamicValue(Usage::X, value) => {
-                                                info!("X: {}", value);
+                                                if value != 0 {
+                                                    device_channel.send(&InputEvent::RelX(value)).unwrap();
+                                                }
                                             }
                                             FieldValue::DynamicValue(Usage::Y, value) => {
-                                                info!("Y: {}", value);
+                                                if value != 0 {
+                                                    device_channel.send(&InputEvent::RelY(value)).unwrap();
+                                                }
                                             }
                                             FieldValue::DynamicValue(Usage::Z, value) => {
-                                                info!("Z: {}", value);
+                                                if value != 0 {
+                                                    device_channel.send(&InputEvent::RelZ(value)).unwrap();
+                                                }
                                             }
                                             FieldValue::DynamicValue(Usage::Wheel, value) => {
-                                                info!("Wheel: {}", value);
-                                            }
-                                            FieldValue::DynamicValue(Usage::Button1, value) => {
                                                 if value != 0 {
-                                                    info!("Button 1 pressed");
+                                                    device_channel.send(&InputEvent::RelWheel(value)).unwrap();
                                                 }
                                             }
-                                            FieldValue::DynamicValue(Usage::Button2, value) => {
+                                            FieldValue::DynamicValue(
+                                                usage @ (Usage::Button1
+                                                | Usage::Button2
+                                                | Usage::Button3
+                                                | Usage::Button4
+                                                | Usage::Button5),
+                                                value,
+                                            ) => {
+                                                let map_button = |usage| match usage {
+                                                    Usage::Button1 => Key::BtnLeft,
+                                                    Usage::Button2 => Key::BtnRight,
+                                                    Usage::Button3 => Key::BtnMiddle,
+                                                    Usage::Button4 => Key::BtnSide,
+                                                    Usage::Button5 => Key::BtnExtra,
+                                                    _ => unreachable!(),
+                                                };
+
                                                 if value != 0 {
-                                                    info!("Button 2 pressed");
-                                                }
-                                            }
-                                            FieldValue::DynamicValue(Usage::Button3, value) => {
-                                                if value != 0 {
-                                                    info!("Button 3 pressed");
-                                                }
-                                            }
-                                            FieldValue::DynamicValue(Usage::Button4, value) => {
-                                                if value != 0 {
-                                                    info!("Button 4 pressed");
-                                                }
-                                            }
-                                            FieldValue::DynamicValue(Usage::Button5, value) => {
-                                                if value != 0 {
-                                                    info!("Button 5 pressed");
+                                                    device_channel
+                                                        .send(&InputEvent::KeyPressed {
+                                                            key: map_button(usage),
+                                                            state: KeyState::default(),
+                                                        })
+                                                        .unwrap();
+                                                } else {
+                                                    device_channel
+                                                        .send(&InputEvent::KeyReleased {
+                                                            key: map_button(usage),
+                                                            state: KeyState::default(),
+                                                        })
+                                                        .unwrap();
                                                 }
                                             }
 
@@ -332,7 +347,7 @@ pub fn main() {
                                             } else {
                                                 device_channel
                                                     .send(&InputEvent::KeyReleased {
-                                                        key: map_usage(usage),
+                                                        key: map_key_usage(usage),
                                                         state,
                                                     })
                                                     .unwrap();
@@ -343,7 +358,7 @@ pub fn main() {
                                     for new_key in current_keys.into_iter() {
                                         pressed_keys.insert(new_key, 1);
                                         device_channel
-                                            .send(&InputEvent::KeyPressed { key: map_usage(new_key), state })
+                                            .send(&InputEvent::KeyPressed { key: map_key_usage(new_key), state })
                                             .unwrap();
                                     }
                                 }
@@ -360,7 +375,7 @@ pub fn main() {
     std::poplar::rt::enter_loop();
 }
 
-fn map_usage(usage: Usage) -> Key {
+fn map_key_usage(usage: Usage) -> Key {
     match usage {
         Usage::KeyA => Key::KeyA,
         Usage::KeyB => Key::KeyB,
@@ -500,12 +515,6 @@ fn map_usage(usage: Usage) -> Key {
         Usage::KeyRightShift => Key::KeyRightShift,
         Usage::KeyRightAlt => Key::KeyRightAlt,
         Usage::KeyRightGui => Key::KeyRightGui,
-        Usage::ButtonNone => todo!(),
-        Usage::Button1 => Key::BtnLeft,
-        Usage::Button2 => Key::BtnMiddle,
-        Usage::Button3 => Key::BtnRight,
-        Usage::Button4 => Key::BtnSide,
-        Usage::Button5 => Key::BtnExtra,
         _ => panic!("Unknown usage: {:?}", usage),
     }
 }

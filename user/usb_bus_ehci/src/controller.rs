@@ -16,7 +16,6 @@ use std::{
         ddk::dma::{DmaObject, DmaPool, DmaToken},
         event::Event,
         memory_object::MemoryObject,
-        rt::maitake::sync::WaitCell,
         syscall::MemoryObjectFlags,
     },
     sync::Arc,
