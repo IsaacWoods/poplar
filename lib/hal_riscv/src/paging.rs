@@ -365,8 +365,8 @@ impl PageTable<Size4KiB> for PageTableImpl<Level4> {
          * if it wasn't there.
          */
         let kernel_p3_address =
-            kernel_page_table.top()[crate::platform::kernel_map::KERNEL_P4_ENTRY].address().unwrap();
-        page_table.top_mut()[crate::platform::kernel_map::KERNEL_P4_ENTRY]
+            kernel_page_table.top()[crate::platform::kernel_map::KERNEL_TABLE_ENTRY].address().unwrap();
+        page_table.top_mut()[crate::platform::kernel_map::KERNEL_TABLE_ENTRY]
             .set(Some((kernel_p3_address, EntryFlags::empty())), false);
 
         page_table
@@ -615,6 +615,7 @@ impl PageTable<Size4KiB> for PageTableImpl<Level3> {
          * TODO: This could be problematic because the kernel could realistically need to map new
          * top-level entries during the runtime, in which case tasks' page tables would need
          * updating. Probably worth thinking about at some point...
+         * TODO: I wonder if we could pre-allocate these so they all get copied across properly?
          */
         for i in (ENTRY_COUNT / 2)..ENTRY_COUNT {
             page_table.top_mut()[i] = kernel_page_table.top()[i];

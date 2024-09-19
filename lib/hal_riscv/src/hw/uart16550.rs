@@ -40,17 +40,20 @@ impl<'a> Uart16550<'a> {
             Self::One(registers) => {
                 // 8 data bits
                 registers.line_control.write(0x03);
-                // Clear pending interrupt (if any)
+                // Clear pending interrupt (if any), no FIFOs, no modem status changes
                 registers.interrupt_identity.write(0x01);
                 // Interrupt on data received
                 registers.interrupt_enable.write(0x01);
 
                 // Setting bit 7 of LCR exposes the DLL and DLM registers
-                let line_control = registers.line_control.read();
-                registers.line_control.write(line_control | (1 << 7));
+                let mut line_control = registers.line_control.read();
+                line_control.set_bit(7, true);
+                registers.line_control.write(line_control);
                 // Set a baud rate of 115200 (DLL=0x01, DLM=0x00)
                 registers.data.write(0x01);
                 registers.interrupt_enable.write(0x00);
+                // Unlatch the devisor registers again
+                line_control.set_bit(7, false);
                 registers.line_control.write(line_control);
             }
             Self::Four(registers) => {
@@ -62,11 +65,14 @@ impl<'a> Uart16550<'a> {
                 registers.interrupt_enable.write(0x01);
 
                 // Setting bit 7 of LCR exposes the DLL and DLM registers
-                let line_control = registers.line_control.read();
-                registers.line_control.write(line_control | (1 << 7));
+                let mut line_control = registers.line_control.read();
+                line_control.set_bit(7, true);
+                registers.line_control.write(line_control);
                 // Set a baud rate of 115200 (DLL=0x01, DLM=0x00)
                 registers.data.write(0x01);
                 registers.interrupt_enable.write(0x00);
+                // Unlatch the devisor registers again
+                line_control.set_bit(7, false);
                 registers.line_control.write(line_control);
             }
         }
@@ -80,11 +86,11 @@ impl<'a> Uart16550<'a> {
     }
 
     pub fn write(&self, data: u8) {
-        while !self.line_status().get_bit(5) {}
         match self {
             Self::One(registers) => registers.data.write(data),
             Self::Four(registers) => registers.data.write(data as u32),
         }
+        while !self.line_status().get_bit(5) {}
     }
 
     pub fn read(&self) -> Option<u8> {
