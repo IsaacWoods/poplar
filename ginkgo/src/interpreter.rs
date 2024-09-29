@@ -10,7 +10,9 @@ pub enum Value {
     Bool(bool),
     String(String),
     Function {
-        takes_self: bool,
+        expect_receiver: bool,
+        /// The object that 'receives' the method call. This is only relevant for methods that take a `self` parameter, not functions, where this should be `None`.
+        receiver: Option<Box<Value>>,
         params: Vec<String>,
         body: Vec<Stmt>,
     },
@@ -39,6 +41,7 @@ impl fmt::Display for Value {
 
 pub struct Class {
     name: String,
+    defs: BTreeMap<String, Value>,
 }
 
 pub struct Instance {
@@ -131,12 +134,28 @@ impl<'a> Interpreter<'a> {
                 None
             }
             StmtTyp::FnDef { name, takes_self, params, body } => {
-                self.environment.borrow_mut().define(name, Value::Function { takes_self, params, body });
+                self.environment
+                    .borrow_mut()
+                    .define(name, Value::Function { expect_receiver: takes_self, receiver: None, params, body });
                 None
             }
-            StmtTyp::ClassDef { name } => {
+            StmtTyp::ClassDef { name, defs } => {
+                let defs = defs
+                    .into_iter()
+                    .filter_map(|def| match def.typ {
+                        StmtTyp::FnDef { name, takes_self, params, body } => Some((
+                            name,
+                            Value::Function { expect_receiver: takes_self, receiver: None, params, body },
+                        )),
+                        _ => {
+                            panic!("Unexpected statement in class definition");
+                            None
+                        }
+                    })
+                    .collect();
+
                 let index = self.classes.len();
-                self.classes.push(Class { name: name.clone() });
+                self.classes.push(Class { name: name.clone(), defs });
                 self.environment.borrow_mut().define(name, Value::Class(index));
                 None
             }
@@ -176,6 +195,13 @@ impl<'a> Interpreter<'a> {
                     value.clone()
                 } else {
                     panic!("Failed to get value for binding called '{}'. Either it does not exist (or dies before a function referencing it, bc we don't do any borrow checking :))", name);
+                }
+            }
+            ExprTyp::GinkgoSelf { resolution } => {
+                if let Some(value) = self.resolve_binding("self", resolution) {
+                    value.clone()
+                } else {
+                    panic!("Failed to get `self`");
                 }
             }
             ExprTyp::UnaryOp { op, operand } => {
@@ -372,18 +398,28 @@ impl<'a> Interpreter<'a> {
                 }
                 value
             }
-            ExprTyp::Function { takes_self, body, params } => Value::Function { takes_self, params, body },
+            ExprTyp::Function { takes_self, body, params } => {
+                Value::Function { expect_receiver: takes_self, receiver: None, params, body }
+            }
             ExprTyp::Call { left, params } => {
                 match self.eval_expr(*left) {
-                    Value::Function { takes_self, params: param_defs, body } => {
+                    Value::Function { expect_receiver, receiver, params: param_defs, body } => {
                         let environment = Environment::new_with_parent(self.environment.clone());
+
+                        /*
+                         * If this is a method, introduce a `self` binding to the instance the method is invoked on.
+                         */
+                        if expect_receiver {
+                            environment.borrow_mut().define(
+                                "self".to_string(),
+                                *receiver.expect("No method receiver despite expecting one!"),
+                            );
+                        }
 
                         /*
                          * For each parameter expected, take the next param supplied and bind it to the
                          * correct name.
                          */
-                        // TODO: if takes_self, this should include an instance somehow that gets
-                        // passed to the function
                         assert_eq!(param_defs.len(), params.len());
                         let mut params = params.into_iter();
                         for param_def in param_defs {
@@ -417,8 +453,31 @@ impl<'a> Interpreter<'a> {
             }
             ExprTyp::PropertyAccess { left, property } => {
                 if let Value::Instance { class, instance } = self.eval_expr(*left) {
-                    if let Some(property) = self.instances.get(instance).unwrap().properties.get(&property) {
-                        property.clone()
+                    /*
+                     * When accessing a property, check for fields on the instance, and then definitions on the class. This means fields on the instance can shadow class definitions.
+                     */
+                    if let Some(property) = self
+                        .instances
+                        .get(instance)
+                        .unwrap()
+                        .properties
+                        .get(&property)
+                        .or_else(|| self.classes.get(class).unwrap().defs.get(&property))
+                    {
+                        /*
+                         * If the accessed property is a method that expects a receiver, return a version of the function with the correct receiver already bound.
+                         */
+                        if let Value::Function { expect_receiver: true, receiver, params, body } = property {
+                            assert!(receiver.is_none());
+                            Value::Function {
+                                expect_receiver: true,
+                                receiver: Some(Box::new(Value::Instance { class, instance })),
+                                params: params.clone(),
+                                body: body.clone(),
+                            }
+                        } else {
+                            property.clone()
+                        }
                     } else {
                         panic!("Tried to access property '{}' on object but it does not exist!", property);
                     }

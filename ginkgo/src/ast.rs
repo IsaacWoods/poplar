@@ -61,6 +61,7 @@ pub enum StmtTyp {
     },
     ClassDef {
         name: String,
+        defs: Vec<Stmt>,
     },
     Block(Vec<Stmt>),
     If {
@@ -124,6 +125,9 @@ pub enum ExprTyp {
     Literal(Value),
     Identifier {
         name: String,
+        resolution: Resolution,
+    },
+    GinkgoSelf {
         resolution: Resolution,
     },
     UnaryOp {
@@ -275,9 +279,12 @@ impl BindingResolver {
                     scope.insert(name.clone());
                 }
             }
-            StmtTyp::FnDef { ref params, ref mut body, .. } => {
+            StmtTyp::FnDef { takes_self, ref params, ref mut body, .. } => {
                 // TODO: check if the function is allowed to have a `self` param if it does
                 self.begin_scope();
+                if takes_self {
+                    self.scopes.last_mut().unwrap().insert("self".to_string());
+                }
                 for param in params {
                     self.scopes.last_mut().unwrap().insert(param.clone());
                 }
@@ -286,10 +293,15 @@ impl BindingResolver {
                 }
                 self.end_scope();
             }
-            StmtTyp::ClassDef { ref name } => {
+            StmtTyp::ClassDef { ref name, ref mut defs } => {
                 if let Some(scope) = self.scopes.last_mut() {
                     scope.insert(name.clone());
                 }
+                self.begin_scope();
+                for def in defs {
+                    self.resolve_bindings(def);
+                }
+                self.end_scope();
             }
             StmtTyp::Block(ref mut stmts) => {
                 self.begin_scope();
@@ -326,6 +338,14 @@ impl BindingResolver {
                 // TODO: how to handle globals? Do they even need to be special-cased or just add
                 // them as an extra scope at the top? Lox just leaves them unresolved and assumes
                 // they're global for interpretation...
+            }
+            ExprTyp::GinkgoSelf { ref mut resolution } => {
+                for (i, scope) in self.scopes.iter().enumerate() {
+                    if scope.contains("self") {
+                        *resolution = Resolution::Local { depth: (self.scopes.len() - i - 1) as u8 };
+                        break;
+                    }
+                }
             }
             ExprTyp::UnaryOp { ref mut operand, .. } => self.resolve_bindings_expr(operand),
             ExprTyp::BinaryOp { ref mut left, ref mut right, .. } => {

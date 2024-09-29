@@ -59,7 +59,7 @@ impl<'s> Parser<'s> {
             }
 
             self.consume(TokenType::RightBrace);
-            return Stmt { typ: StmtTyp::ClassDef { name } };
+            return Stmt { typ: StmtTyp::ClassDef { name, defs } };
         }
 
         // TODO: in the future, we want expressions to be able to do this too (so it can probs move
@@ -256,6 +256,9 @@ impl<'s> Parser<'s> {
         };
         self.register_prefix(TokenType::True, bool_literal);
         self.register_prefix(TokenType::False, bool_literal);
+        self.register_prefix(TokenType::GinkgoSelf, |_parser, _token| {
+            Expr::new(ExprTyp::GinkgoSelf { resolution: Resolution::Unresolved })
+        });
 
         /*
          * 'Real' prefix operations.
