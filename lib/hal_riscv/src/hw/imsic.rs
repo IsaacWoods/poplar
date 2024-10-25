@@ -24,11 +24,15 @@ impl Imsic {
     }
 
     pub fn enable(number: usize) {
-        let eie_byte = Siselect::EIE_BASE + 2 * number / 64;
+        /*
+         * On RV64, the even-numbered registers are not selectable. We need to skip over one
+         * register for each 64-bit block of interrupts.
+         */
+        let eie_reg = Siselect::EIE_BASE + 2 * (number / 64);
         let eie_bit = number % 64;
 
         unsafe {
-            Siselect::write(eie_byte);
+            Siselect::write(eie_reg);
             let mut value = Sireg::read();
             value.set_bit(eie_bit, true);
             Sireg::write(value);
