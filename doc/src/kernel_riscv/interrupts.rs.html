@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `kernel_riscv/src/interrupts.rs`."><title>interrupts.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-405f8b29f52305f8.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="kernel_riscv" data-themes="" data-resource-suffix="" data-rustdoc-version="1.83.0-nightly (28e8f01c2 2024-09-17)" data-channel="nightly" data-search-js="search-0cfde64e8ad3a7fe.js" data-settings-js="settings-7e3bb6c46e92e77c.js" ><script src="../../static.files/storage-29b1d5a9048d38fe.js"></script><script defer src="../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-14659ec02b58af51.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-40f72c9259523cb3.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers">
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `kernel_riscv/src/interrupts.rs`."><title>interrupts.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../static.files/rustdoc-4ee5002b.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="kernel_riscv" data-themes="" data-resource-suffix="" data-rustdoc-version="1.84.0-nightly (a93c1718c 2024-10-24)" data-channel="nightly" data-search-js="search-c5a66128.js" data-settings-js="settings-0f613d39.js" ><script src="../../static.files/storage-59e33391.js"></script><script defer src="../../static.files/src-script-56102188.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-5f194d8c.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-893ab5e7.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">kernel_riscv/</div>interrupts.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers">
 <a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
@@ -190,13 +190,7 @@
 <a href="#189" id="189">189</a>
 <a href="#190" id="190">190</a>
 <a href="#191" id="191">191</a>
-<a href="#192" id="192">192</a>
-<a href="#193" id="193">193</a>
-<a href="#194" id="194">194</a>
-<a href="#195" id="195">195</a>
-<a href="#196" id="196">196</a>
-<a href="#197" id="197">197</a>
-<a href="#198" id="198">198</a></pre></div><pre class="rust"><code><span class="kw">use </span>alloc::collections::BTreeMap;
+<a href="#192" id="192">192</a></pre></div><pre class="rust"><code><span class="kw">use </span>alloc::collections::BTreeMap;
 <span class="kw">use </span>bit_field::BitField;
 <span class="kw">use </span>core::{mem, ptr};
 <span class="kw">use </span>fdt::{node::FdtNode, Fdt};
@@ -239,12 +233,12 @@
     Plic {
         plic: <span class="kw-2">&amp;</span><span class="lifetime">'static </span>Plic,
         <span class="comment">// TODO: wrap in a guard to disable interrupts
-        </span>handlers: Spinlock&lt;BTreeMap&lt;u16, InterruptHandler&gt;&gt;,
+        </span>handlers: Spinlock&lt;BTreeMap&lt;usize, InterruptHandler&gt;&gt;,
     },
     Aia {
         aplic: <span class="kw-2">&amp;</span><span class="lifetime">'static </span>AplicDomain,
         <span class="comment">// TODO: wrap in a guard to disable interrupts
-        </span>handlers: Spinlock&lt;BTreeMap&lt;u16, InterruptHandler&gt;&gt;,
+        </span>handlers: Spinlock&lt;BTreeMap&lt;usize, InterruptHandler&gt;&gt;,
     },
 }
 
@@ -310,57 +304,50 @@
             <span class="comment">// TODO: do priorities correctly at some point
             </span>plic.set_source_priority(number <span class="kw">as </span>usize, <span class="number">7</span>);
 
-            <span class="macro">assert!</span>(handlers.lock().get(<span class="kw-2">&amp;</span>number).is_none());
-            handlers.lock().insert(number, InterruptHandler(handler <span class="kw">as </span><span class="kw-2">*const </span><span class="kw">_</span>));
+            handlers.lock().insert(number <span class="kw">as </span>usize, InterruptHandler(handler <span class="kw">as </span><span class="kw-2">*const </span><span class="kw">_</span>));
         }
         InterruptController::Aia { handlers, .. } =&gt; {
             Imsic::enable(number <span class="kw">as </span>usize);
-
-            <span class="macro">assert!</span>(handlers.lock().get(<span class="kw-2">&amp;</span>number).is_none());
-            handlers.lock().insert(number, InterruptHandler(handler <span class="kw">as </span><span class="kw-2">*const </span><span class="kw">_</span>));
+            handlers.lock().insert(number <span class="kw">as </span>usize, InterruptHandler(handler <span class="kw">as </span><span class="kw-2">*const </span><span class="kw">_</span>));
         }
     }
 }
 
-<span class="kw">pub fn </span>handle_device_interrupt(device: FdtNode&lt;<span class="lifetime">'_</span>, <span class="lifetime">'_</span>&gt;, handler: <span class="kw">fn</span>(u16)) {
+<span class="kw">pub fn </span>handle_wired_fdt_device_interrupt(node: FdtNode&lt;<span class="lifetime">'_</span>, <span class="lifetime">'_</span>&gt;, handler: <span class="kw">fn</span>(u16)) {
+    handle_wired_device_interrupt(node.interrupts().unwrap().next().unwrap(), handler);
+}
+
+<span class="kw">pub fn </span>handle_wired_device_interrupt(interrupt: usize, handler: <span class="kw">fn</span>(u16)) {
     <span class="kw">match </span>INTERRUPT_CONTROLLER.get() {
         InterruptController::Plic { plic, handlers } =&gt; {
-            <span class="kw">let </span>interrupt = device.interrupts().unwrap().next().unwrap();
-
             <span class="comment">// TODO: don't just assume all interrupts should go to the first context
             </span>plic.enable_interrupt(<span class="number">1</span>, interrupt);
             <span class="comment">// TODO: do priorities correctly at some point
             </span>plic.set_source_priority(interrupt, <span class="number">7</span>);
 
-            <span class="macro">assert!</span>(handlers.lock().get(<span class="kw-2">&amp;</span>(interrupt <span class="kw">as </span>u16)).is_none());
-            handlers.lock().insert(interrupt <span class="kw">as </span>u16, InterruptHandler(handler <span class="kw">as </span><span class="kw-2">*const </span><span class="kw">_</span>));
+            <span class="macro">assert!</span>(handlers.lock().get(<span class="kw-2">&amp;</span>(interrupt <span class="kw">as </span>usize)).is_none());
+            handlers.lock().insert(interrupt <span class="kw">as </span>usize, InterruptHandler(handler <span class="kw">as </span><span class="kw-2">*const </span><span class="kw">_</span>));
         }
         InterruptController::Aia { aplic, handlers } =&gt; {
-            <span class="kw">let </span>interrupt = {
-                <span class="kw">let </span>interrupt = device.interrupts().unwrap().next().unwrap();
-                <span class="comment">/*
-                 * TODO:
-                 * I haven't worked out where this is documented yet, but the interrupt number is
-                 * in the top 32 bits of the `interrupt` property. I'm guessing the bottom 32 bits
-                 * is the phandle of the interrupt controller, which makes me think this should be
-                 * an `interrupt-extended` property, but it's not.
-                 */
-                </span>interrupt.get_bits(<span class="number">32</span>..<span class="number">64</span>) <span class="kw">as </span>u32
-            };
+            <span class="comment">/*
+             * TODO:
+             * I haven't worked out where this is documented yet, but the interrupt number is
+             * in the top 32 bits of the `interrupt` property. I'm guessing the bottom 32 bits
+             * is the phandle of the interrupt controller, which makes me think this should be
+             * an `interrupt-extended` property, but it's not.
+             */
+            </span><span class="kw">let </span>interrupt = interrupt.get_bits(<span class="number">32</span>..<span class="number">64</span>);
 
-            <span class="comment">// TODO: check if a device supports MSIs or needs to be routed through the APLIC
-
-            /*
+            <span class="comment">/*
              * Configure the APLIC to trigger an MSI with a message matching the interrupt number.
              */
             </span>Imsic::enable(interrupt <span class="kw">as </span>usize);
-            aplic.set_target_msi(interrupt, interrupt);
+            aplic.set_target_msi(interrupt <span class="kw">as </span>u32, interrupt <span class="kw">as </span>u32);
             <span class="comment">// TODO: how are we supposed to know this in general?
-            </span>aplic.set_source_cfg(interrupt, SourceMode::LevelHigh);
-            aplic.enable_interrupt(interrupt);
+            </span>aplic.set_source_cfg(interrupt <span class="kw">as </span>u32, SourceMode::LevelHigh);
+            aplic.enable_interrupt(interrupt <span class="kw">as </span>u32);
 
-            <span class="macro">assert!</span>(handlers.lock().get(<span class="kw-2">&amp;</span>(interrupt <span class="kw">as </span>u16)).is_none());
-            handlers.lock().insert(interrupt <span class="kw">as </span>u16, InterruptHandler(handler <span class="kw">as </span><span class="kw-2">*const </span><span class="kw">_</span>));
+            handlers.lock().insert(interrupt <span class="kw">as </span>usize, InterruptHandler(handler <span class="kw">as </span><span class="kw-2">*const </span><span class="kw">_</span>));
         }
     }
 }
@@ -373,7 +360,7 @@
             <span class="kw">let </span>interrupt = plic.claim_interrupt(<span class="number">1</span>);
 
             <span class="kw">let </span>handlers = handlers.lock();
-            <span class="kw">match </span>handlers.get(<span class="kw-2">&amp;</span>(interrupt <span class="kw">as </span>u16)) {
+            <span class="kw">match </span>handlers.get(<span class="kw-2">&amp;</span>(interrupt <span class="kw">as </span>usize)) {
                 <span class="prelude-val">Some</span>(handler) =&gt; <span class="kw">unsafe </span>{
                     handler.call(interrupt <span class="kw">as </span>u16);
                 },
@@ -383,11 +370,12 @@
             plic.complete_interrupt(<span class="number">1</span>, interrupt);
         }
         InterruptController::Aia { handlers, .. } =&gt; {
-            <span class="kw">let </span>interrupt = Imsic::pop();
+            <span class="kw">let </span>interrupt = Imsic::pop() <span class="kw">as </span>usize;
             <span class="kw">let </span>handlers = handlers.lock();
+
             <span class="kw">match </span>handlers.get(<span class="kw-2">&amp;</span>interrupt) {
                 <span class="prelude-val">Some</span>(handler) =&gt; <span class="kw">unsafe </span>{
-                    handler.call(interrupt);
+                    handler.call(interrupt <span class="kw">as </span>u16);
                 },
                 <span class="prelude-val">None </span>=&gt; <span class="macro">warn!</span>(<span class="string">"Unhandled interrupt: {}"</span>, interrupt),
             }
