@@ -34,3 +34,4 @@
     - [Building a `rustc` target for Poplar](./journal/rustc_target.md)
     - [USB](./journal/usb.md)
     - [RISC-V](./journal/riscv.md)
+    - [PCI interrupt routing](./journal/pci_interrupt_routing.md)

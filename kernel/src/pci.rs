@@ -28,7 +28,7 @@ pub struct PciDevice {
     pub sub_class: SubClass,
     pub interface: Interface,
     pub bars: [Option<Bar>; MAX_BARS],
-    pub interrupt: Option<Arc<Event>>,
+    pub interrupt_event: Option<Arc<Event>>,
 }
 
 #[derive(Clone, Debug)]
@@ -37,6 +37,12 @@ pub struct PciInfo {
 }
 
 pub trait PciInterruptConfigurator {
+    /// Create an `Event` that is signalled when an interrupt arrives from the specified PCI
+    /// device. This is used when the device does not support MSI or MSI-X interrupts. The event
+    /// may be triggered when the device has not actually received an interrupt, due to interrupt
+    /// pin sharing in the legacy system, and so receivers must be resilient to spurious events.
+    fn configure_legacy(&self, function: PciAddress, pin: u8) -> Arc<Event>;
+
     /// Create an `Event` that is signalled when an interrupt arrives from the specified PCI
     /// device. The device must support configuration of its interrupts via the passed MSI
     /// capability.
@@ -142,19 +148,49 @@ where
                     bars
                 };
 
-                let interrupt =
-                    endpoint_header.capabilities(&self.access).find_map(|capability| match capability {
+                /*
+                 * Create an event that is triggered when an interrupt arrives for the PCI device.
+                 * We try to use MSI or MSI-X if the device supports it, otherwise we have to use
+                 * the shared interrupt pins.
+                 */
+                let interrupt_event = endpoint_header
+                    .capabilities(&self.access)
+                    .find_map(|capability| match capability {
                         PciCapability::Msi(mut msi) => Some(self.access.configure_msi(address, &mut msi)),
                         PciCapability::MsiX(mut msix) => {
                             let table_bar = bars[msix.table_bar() as usize].unwrap();
                             Some(self.access.configure_msix(address, table_bar, &mut msix))
                         }
                         _ => None,
+                    })
+                    .or_else(|| {
+                        /*
+                         * If the device does not support MSI or MSI-X, we're forced to use the
+                         * legacy interrupt pins.
+                         */
+                        let (pin, _) = endpoint_header.interrupt(&self.access);
+                        match pin {
+                            0x00 => {
+                                // Device does not support interrupts of any kind
+                                None
+                            }
+                            0x01..0x05 => Some(self.access.configure_legacy(address, pin)),
+                            _ => panic!("Invalid legacy interrupt pin!"),
+                        }
                     });
 
                 self.info.devices.insert(
                     address,
-                    PciDevice { vendor_id, device_id, revision, class, sub_class, interface, bars, interrupt },
+                    PciDevice {
+                        vendor_id,
+                        device_id,
+                        revision,
+                        class,
+                        sub_class,
+                        interface,
+                        bars,
+                        interrupt_event,
+                    },
                 );
             }
 

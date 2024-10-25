@@ -41,12 +41,12 @@ pub enum InterruptController {
     Plic {
         plic: &'static Plic,
         // TODO: wrap in a guard to disable interrupts
-        handlers: Spinlock<BTreeMap<u16, InterruptHandler>>,
+        handlers: Spinlock<BTreeMap<usize, InterruptHandler>>,
     },
     Aia {
         aplic: &'static AplicDomain,
         // TODO: wrap in a guard to disable interrupts
-        handlers: Spinlock<BTreeMap<u16, InterruptHandler>>,
+        handlers: Spinlock<BTreeMap<usize, InterruptHandler>>,
     },
 }
 
@@ -112,57 +112,50 @@ pub fn handle_interrupt(number: u16, handler: fn(u16)) {
             // TODO: do priorities correctly at some point
             plic.set_source_priority(number as usize, 7);
 
-            assert!(handlers.lock().get(&number).is_none());
-            handlers.lock().insert(number, InterruptHandler(handler as *const _));
+            handlers.lock().insert(number as usize, InterruptHandler(handler as *const _));
         }
         InterruptController::Aia { handlers, .. } => {
             Imsic::enable(number as usize);
-
-            assert!(handlers.lock().get(&number).is_none());
-            handlers.lock().insert(number, InterruptHandler(handler as *const _));
+            handlers.lock().insert(number as usize, InterruptHandler(handler as *const _));
         }
     }
 }
 
-pub fn handle_device_interrupt(device: FdtNode<'_, '_>, handler: fn(u16)) {
+pub fn handle_wired_fdt_device_interrupt(node: FdtNode<'_, '_>, handler: fn(u16)) {
+    handle_wired_device_interrupt(node.interrupts().unwrap().next().unwrap(), handler);
+}
+
+pub fn handle_wired_device_interrupt(interrupt: usize, handler: fn(u16)) {
     match INTERRUPT_CONTROLLER.get() {
         InterruptController::Plic { plic, handlers } => {
-            let interrupt = device.interrupts().unwrap().next().unwrap();
-
             // TODO: don't just assume all interrupts should go to the first context
             plic.enable_interrupt(1, interrupt);
             // TODO: do priorities correctly at some point
             plic.set_source_priority(interrupt, 7);
 
-            assert!(handlers.lock().get(&(interrupt as u16)).is_none());
-            handlers.lock().insert(interrupt as u16, InterruptHandler(handler as *const _));
+            assert!(handlers.lock().get(&(interrupt as usize)).is_none());
+            handlers.lock().insert(interrupt as usize, InterruptHandler(handler as *const _));
         }
         InterruptController::Aia { aplic, handlers } => {
-            let interrupt = {
-                let interrupt = device.interrupts().unwrap().next().unwrap();
-                /*
-                 * TODO:
-                 * I haven't worked out where this is documented yet, but the interrupt number is
-                 * in the top 32 bits of the `interrupt` property. I'm guessing the bottom 32 bits
-                 * is the phandle of the interrupt controller, which makes me think this should be
-                 * an `interrupt-extended` property, but it's not.
-                 */
-                interrupt.get_bits(32..64) as u32
-            };
-
-            // TODO: check if a device supports MSIs or needs to be routed through the APLIC
+            /*
+             * TODO:
+             * I haven't worked out where this is documented yet, but the interrupt number is
+             * in the top 32 bits of the `interrupt` property. I'm guessing the bottom 32 bits
+             * is the phandle of the interrupt controller, which makes me think this should be
+             * an `interrupt-extended` property, but it's not.
+             */
+            let interrupt = interrupt.get_bits(32..64);
 
             /*
              * Configure the APLIC to trigger an MSI with a message matching the interrupt number.
              */
             Imsic::enable(interrupt as usize);
-            aplic.set_target_msi(interrupt, interrupt);
+            aplic.set_target_msi(interrupt as u32, interrupt as u32);
             // TODO: how are we supposed to know this in general?
-            aplic.set_source_cfg(interrupt, SourceMode::LevelHigh);
-            aplic.enable_interrupt(interrupt);
+            aplic.set_source_cfg(interrupt as u32, SourceMode::LevelHigh);
+            aplic.enable_interrupt(interrupt as u32);
 
-            assert!(handlers.lock().get(&(interrupt as u16)).is_none());
-            handlers.lock().insert(interrupt as u16, InterruptHandler(handler as *const _));
+            handlers.lock().insert(interrupt as usize, InterruptHandler(handler as *const _));
         }
     }
 }
@@ -175,7 +168,7 @@ pub fn handle_external_interrupt() {
             let interrupt = plic.claim_interrupt(1);
 
             let handlers = handlers.lock();
-            match handlers.get(&(interrupt as u16)) {
+            match handlers.get(&(interrupt as usize)) {
                 Some(handler) => unsafe {
                     handler.call(interrupt as u16);
                 },
@@ -185,11 +178,12 @@ pub fn handle_external_interrupt() {
             plic.complete_interrupt(1, interrupt);
         }
         InterruptController::Aia { handlers, .. } => {
-            let interrupt = Imsic::pop();
+            let interrupt = Imsic::pop() as usize;
             let handlers = handlers.lock();
+
             match handlers.get(&interrupt) {
                 Some(handler) => unsafe {
-                    handler.call(interrupt);
+                    handler.call(interrupt as u16);
                 },
                 None => warn!("Unhandled interrupt: {}", interrupt),
             }

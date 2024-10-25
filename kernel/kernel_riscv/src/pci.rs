@@ -1,21 +1,26 @@
 use crate::interrupts;
-use alloc::{collections::BTreeMap, sync::Arc};
+use alloc::{collections::BTreeMap, sync::Arc, vec, vec::Vec};
+use bit_field::BitField;
 use core::ptr;
 use fdt::Fdt;
 use hal::memory::PAddr;
 use kernel::{object::event::Event, pci::PciInterruptConfigurator};
-use mulch::InitGuard;
 use pci_types::{
-    capability::{MsiCapability, MsixCapability, TriggerMode},
+    capability::{MsiCapability, MsixCapability},
     Bar,
     ConfigRegionAccess,
     PciAddress,
 };
 use spinning_top::Spinlock;
+use tracing::{debug, info};
+
+// TODO: this should have an interrupt guard as well
+static INTERRUPT_ROUTING: Spinlock<BTreeMap<u32, Vec<Arc<Event>>>> = Spinlock::new(BTreeMap::new());
 
 pub struct PciAccess {
     start: *const u8,
     size: usize,
+    legacy_interrupt_remapping: BTreeMap<(PciAddress, u8), u32>,
 }
 
 impl PciAccess {
@@ -33,9 +38,47 @@ impl PciAccess {
             PAddr::new(ecam_window.starting_address as usize).unwrap(),
         );
 
-        PCI_EVENTS.initialize(Spinlock::new(BTreeMap::new()));
+        /*
+         * Find routing information for legacy interrupt pins from the device tree.
+         */
+        let remapping = {
+            let mut remapping = BTreeMap::new();
+            let interrupt_map = pci_node.interrupt_map().unwrap();
+            let interrupt_map_mask = pci_node.interrupt_map_mask().unwrap();
 
-        Some(PciAccess { start: ecam_address.ptr(), size: ecam_window.size.unwrap() })
+            for mapping in interrupt_map {
+                let child_address_hi = mapping.child_unit_address_hi & interrupt_map_mask.address_mask_hi;
+                let address = PciAddress::new(
+                    0,
+                    child_address_hi.get_bits(16..24) as u8,
+                    child_address_hi.get_bits(11..16) as u8,
+                    child_address_hi.get_bits(8..11) as u8,
+                );
+                let pin = mapping.child_interrupt_specifier & interrupt_map_mask.interrupt_mask;
+                // TODO: we need a way of mapping FDT interrupt data to vectors based on the interrupt
+                // mode (this should only be done on AIA archs)
+                let mapped_interrupt = mapping.parent_interrupt_specifier.get_bits(32..64) as u32;
+
+                debug!(
+                    "Legacy PCI interrupt remapping: {:#?}, pin = {} -> {} ({:#x})",
+                    address, pin, mapped_interrupt, mapped_interrupt
+                );
+                crate::interrupts::handle_wired_device_interrupt(
+                    mapping.parent_interrupt_specifier,
+                    pci_interrupt_handler,
+                );
+
+                INTERRUPT_ROUTING.lock().insert(mapped_interrupt, Vec::new());
+                remapping.insert((address, pin as u8), mapped_interrupt);
+            }
+            remapping
+        };
+
+        Some(PciAccess {
+            start: ecam_address.ptr(),
+            size: ecam_window.size.unwrap(),
+            legacy_interrupt_remapping: remapping,
+        })
     }
 
     fn address_for(&self, pci_address: PciAddress) -> *const u8 {
@@ -62,18 +105,29 @@ impl ConfigRegionAccess for PciAccess {
 }
 
 impl PciInterruptConfigurator for PciAccess {
-    fn configure_msi(&self, _function: PciAddress, msi: &mut MsiCapability) -> Arc<Event> {
+    fn configure_legacy(&self, function: PciAddress, pin: u8) -> Arc<Event> {
+        info!("Configuring PCI device to use legacy interrupts: {:?}", function);
         let event = Event::new();
+
+        let remapped_interrupt =
+            self.legacy_interrupt_remapping.get(&(function, pin)).expect("PCI interrupt not in remapping!");
+        INTERRUPT_ROUTING.lock().get_mut(&remapped_interrupt).unwrap().push(event.clone());
+
+        event
+    }
+
+    fn configure_msi(&self, function: PciAddress, msi: &mut MsiCapability) -> Arc<Event> {
+        let event = Event::new();
+        info!("Configuring PCI device to use MSI interrupts: {:?}", function);
 
         // TODO: allocate numbers from somewhere???
         // TODO: we need a way to track unused interrupt vectors - can we find the valid range from
         // the device tree and then reserve ones used by other devices or something? (this feels
         // like it could live in the common kernel and be useful for everyone)
         let message_number = 2;
+        INTERRUPT_ROUTING.lock().insert(message_number, vec![event.clone()]);
 
-        PCI_EVENTS.get().lock().insert(message_number, event.clone());
-
-        interrupts::handle_interrupt(message_number, pci_interrupt_handler);
+        interrupts::handle_interrupt(message_number as u16, pci_interrupt_handler);
 
         // TODO: get out of the device tree
         msi.set_message_info(0x28000000, message_number as u32, self);
@@ -82,14 +136,15 @@ impl PciInterruptConfigurator for PciAccess {
         event
     }
 
-    fn configure_msix(&self, _function: PciAddress, table_bar: Bar, msix: &mut MsixCapability) -> Arc<Event> {
+    fn configure_msix(&self, function: PciAddress, table_bar: Bar, msix: &mut MsixCapability) -> Arc<Event> {
         let event = Event::new();
+        info!("Configuring PCI device to use MSI-X interrupts: {:?}", function);
 
         // TODO: this is bad and we should allocate these for real as per above
         let message_number = 3;
-        PCI_EVENTS.get().lock().insert(message_number, event.clone());
+        INTERRUPT_ROUTING.lock().insert(message_number, vec![event.clone()]);
 
-        interrupts::handle_interrupt(message_number, pci_interrupt_handler);
+        interrupts::handle_interrupt(message_number as u16, pci_interrupt_handler);
 
         // TODO: get out of the device tree
         let message_address = 0x28000000;
@@ -122,12 +177,11 @@ impl PciInterruptConfigurator for PciAccess {
         event
     }
 }
-
-// TODO: interrupt guard
-static PCI_EVENTS: InitGuard<Spinlock<BTreeMap<u16, Arc<Event>>>> = InitGuard::uninit();
-
 fn pci_interrupt_handler(number: u16) {
-    if let Some(event) = PCI_EVENTS.get().lock().get(&number) {
-        event.signal();
+    let routing = INTERRUPT_ROUTING.lock();
+    if let Some(events) = routing.get(&(number as u32)) {
+        for event in events {
+            event.signal();
+        }
     }
 }

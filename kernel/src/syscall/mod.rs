@@ -504,7 +504,7 @@ where
                 .map_err(|()| PciGetInfoError::BufferPointerInvalid)?;
 
             for (i, (&address, device)) in pci_info.devices.iter().enumerate() {
-                let interrupt_handle = device.interrupt.clone().map(|interrupt| task.add_handle(interrupt));
+                let interrupt_handle = device.interrupt_event.clone().map(|interrupt| task.add_handle(interrupt));
 
                 let mut device_descriptor = poplar::ddk::pci::PciDeviceInfo {
                     address,

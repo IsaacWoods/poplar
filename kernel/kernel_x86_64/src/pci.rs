@@ -46,6 +46,12 @@ impl<'a> ConfigRegionAccess for EcamAccess<'a> {
 }
 
 impl<'a> PciInterruptConfigurator for EcamAccess<'a> {
+    fn configure_legacy(&self, _function: PciAddress, _pin: u8) -> Arc<Event> {
+        // TODO: this will need to read the result of the `_PRT` object out of the interepreted AML
+        // namespace
+        todo!()
+    }
+
     fn configure_msi(&self, _function: PciAddress, _msi: &mut MsiCapability) -> Arc<Event> {
         let event = Event::new();
         warn!("MSI support is incomplete on x86_64! PCI interrupts will not trigger delegated `Event` objects!");
