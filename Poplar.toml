@@ -13,6 +13,7 @@ user_tasks = [
 # The release profile is heavily recommended for software-emulated targets to achieve reasonable speeds
 release = true
 user_tasks = [
+    "service_host user/service_host",
     "hello_world user/hello_world",
     "platform_bus user/platform_bus",
     "usb_bus_ehci user/usb_bus_ehci",

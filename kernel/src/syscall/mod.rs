@@ -110,11 +110,11 @@ where
     P: Platform,
 {
     // Check the current task has the `EarlyLogging` capability
-    if !task.capabilities.contains(&Capability::EarlyLogging) {
-        // Log a warning because otherwise it's difficult to debug a task (it can't log...)
-        warn!("Task '{}' tried to use early logging but does not have the correct capability!", task.name);
-        return Err(EarlyLogError::TaskDoesNotHaveCorrectCapability);
-    }
+    // if !task.capabilities.contains(&Capability::EarlyLogging) {
+    //     // Log a warning because otherwise it's difficult to debug a task (it can't log...)
+    //     warn!("Task '{}' tried to use early logging but does not have the correct capability!", task.name);
+    //     return Err(EarlyLogError::TaskDoesNotHaveCorrectCapability);
+    // }
 
     // Check if the message is too long
     if str_length > 4096 {

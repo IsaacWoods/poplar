@@ -1,0 +1,10 @@
+[package]
+name = "service_host"
+version = "0.1.0"
+authors = ["Isaac Woods"]
+edition = "2021"
+
+[dependencies]
+std = { path = "../../lib/std" }
+log = "0.4"
+ptah = { path = "../../lib/ptah" }
