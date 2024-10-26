@@ -751,13 +751,13 @@
     </span>P: Platform,
 {
     <span class="comment">// Check the current task has the `EarlyLogging` capability
-    </span><span class="kw">if </span>!task.capabilities.contains(<span class="kw-2">&amp;</span>Capability::EarlyLogging) {
-        <span class="comment">// Log a warning because otherwise it's difficult to debug a task (it can't log...)
-        </span><span class="macro">warn!</span>(<span class="string">"Task '{}' tried to use early logging but does not have the correct capability!"</span>, task.name);
-        <span class="kw">return </span><span class="prelude-val">Err</span>(EarlyLogError::TaskDoesNotHaveCorrectCapability);
-    }
+    // if !task.capabilities.contains(&amp;Capability::EarlyLogging) {
+    //     // Log a warning because otherwise it's difficult to debug a task (it can't log...)
+    //     warn!("Task '{}' tried to use early logging but does not have the correct capability!", task.name);
+    //     return Err(EarlyLogError::TaskDoesNotHaveCorrectCapability);
+    // }
 
-    <span class="comment">// Check if the message is too long
+    // Check if the message is too long
     </span><span class="kw">if </span>str_length &gt; <span class="number">4096 </span>{
         <span class="kw">return </span><span class="prelude-val">Err</span>(EarlyLogError::MessageTooLong);
     }
