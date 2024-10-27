@@ -24,7 +24,7 @@ pub struct Serializer<W>
 where
     W: Writer,
 {
-    writer: W,
+    pub(crate) writer: W,
 }
 
 impl<W> Serializer<W>

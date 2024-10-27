@@ -30,7 +30,7 @@ where
     Ok(size)
 }
 
-pub fn to_wire<'w, T, W>(value: &T, writer: W) -> ser::Result<()>
+pub fn to_wire<'w, T, W>(value: &T, writer: W) -> ser::Result<usize>
 where
     T: Serialize,
     W: Writer,
@@ -38,7 +38,7 @@ where
     let mut serializer = Serializer::new(writer);
 
     value.serialize(&mut serializer)?;
-    Ok(())
+    Ok(serializer.writer.bytes_written())
 }
 
 /// Deserialize a `T` from some bytes and, optionally, some handles. If the wire is not able to transport handles,
@@ -99,17 +99,18 @@ pub fn index_from_handle_slot(slot: HandleSlot) -> u8 {
 pub trait Writer {
     fn write(&mut self, buf: &[u8]) -> ser::Result<()>;
     fn push_handle(&mut self, handle: Handle) -> ser::Result<HandleSlot>;
+    fn bytes_written(&self) -> usize;
 }
 
 /// This is a `Writer` that can be used to serialize a value into a pre-allocated byte buffer.
 pub struct CursorWriter<'a> {
     buffer: &'a mut [u8],
-    position: usize,
+    cursor: usize,
 }
 
 impl<'a> CursorWriter<'a> {
     pub fn new(buffer: &'a mut [u8]) -> CursorWriter<'a> {
-        CursorWriter { buffer, position: 0 }
+        CursorWriter { buffer, cursor: 0 }
     }
 }
 
@@ -118,17 +119,21 @@ impl<'a> Writer for CursorWriter<'a> {
         /*
          * Detect if the write will overflow the buffer.
          */
-        if (self.position + buf.len()) > self.buffer.len() {
+        if (self.cursor + buf.len()) > self.buffer.len() {
             return Err(ser::Error::WriterFullOfBytes);
         }
 
-        self.buffer[self.position..(self.position + buf.len())].copy_from_slice(buf);
-        self.position += buf.len();
+        self.buffer[self.cursor..(self.cursor + buf.len())].copy_from_slice(buf);
+        self.cursor += buf.len();
         Ok(())
     }
 
     fn push_handle(&mut self, _handle: Handle) -> ser::Result<HandleSlot> {
         unimplemented!()
+    }
+
+    fn bytes_written(&self) -> usize {
+        self.cursor
     }
 }
 
@@ -141,6 +146,10 @@ impl<'a> Writer for &'a mut alloc::vec::Vec<u8> {
 
     fn push_handle(&mut self, _handle: Handle) -> ser::Result<HandleSlot> {
         unimplemented!()
+    }
+
+    fn bytes_written(&self) -> usize {
+        self.len()
     }
 }
 
@@ -163,5 +172,9 @@ impl<'a> Writer for SizeCalculator<'a> {
          * the same size, so it doesn't matter what we return.
          */
         Ok(HANDLE_SLOT_0)
+    }
+
+    fn bytes_written(&self) -> usize {
+        *self.size
     }
 }

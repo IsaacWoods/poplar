@@ -166,4 +166,8 @@ impl<'a> ptah::Writer for &'a mut ChannelWriter {
         self.num_handles += 1;
         Ok(slot)
     }
+
+    fn bytes_written(&self) -> usize {
+        self.num_bytes
+    }
 }
