@@ -57,10 +57,9 @@ pub fn early_log(message: &str) -> Result<(), EarlyLogError> {
 }
 
 define_error_type!(CreateMemoryObjectError {
-    InvalidVirtualAddress => 1,
-    InvalidFlags => 2,
-    InvalidSize => 3,
-    InvalidPhysicalAddressPointer => 4,
+    InvalidFlags => 1,
+    InvalidSize => 2,
+    InvalidPhysicalAddressPointer => 3,
 });
 
 bitflags::bitflags! {
@@ -84,11 +83,10 @@ pub unsafe fn create_memory_object(
 }
 
 define_error_type!(MapMemoryObjectError {
-    InvalidHandle => 1,
-    RegionAlreadyMapped => 2,
-    NotAMemoryObject => 3,
-    NotAnAddressSpace => 4,
-    AddressPointerInvalid => 5,
+    InvalidMemoryObjectHandle => 1,
+    InvalidAddressSpaceHandle => 2,
+    RegionAlreadyMapped => 3,
+    AddressPointerInvalid => 4,
 });
 
 pub unsafe fn map_memory_object(

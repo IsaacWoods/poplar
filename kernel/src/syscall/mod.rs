@@ -202,19 +202,19 @@ where
     P: Platform,
 {
     let memory_object_handle =
-        Handle::try_from(memory_object_handle).map_err(|_| MapMemoryObjectError::InvalidHandle)?;
+        Handle::try_from(memory_object_handle).map_err(|_| MapMemoryObjectError::InvalidMemoryObjectHandle)?;
     let address_space_handle =
-        Handle::try_from(address_space_handle).map_err(|_| MapMemoryObjectError::InvalidHandle)?;
+        Handle::try_from(address_space_handle).map_err(|_| MapMemoryObjectError::InvalidAddressSpaceHandle)?;
 
     let memory_object = task
         .handles
         .read()
         .get(&memory_object_handle)
-        .ok_or(MapMemoryObjectError::InvalidHandle)?
+        .ok_or(MapMemoryObjectError::InvalidMemoryObjectHandle)?
         .clone()
         .downcast_arc::<MemoryObject>()
         .ok()
-        .ok_or(MapMemoryObjectError::NotAMemoryObject)?;
+        .ok_or(MapMemoryObjectError::InvalidMemoryObjectHandle)?;
 
     let (virtual_address, write_to_ptr) = if virtual_address == 0x0 {
         /*
@@ -241,11 +241,11 @@ where
         task.handles
             .read()
             .get(&memory_object_handle)
-            .ok_or(MapMemoryObjectError::InvalidHandle)?
+            .ok_or(MapMemoryObjectError::InvalidAddressSpaceHandle)?
             .clone()
             .downcast_arc::<AddressSpace<P>>()
             .ok()
-            .ok_or(MapMemoryObjectError::NotAnAddressSpace)?
+            .ok_or(MapMemoryObjectError::InvalidAddressSpaceHandle)?
             .map_memory_object(memory_object.clone(), virtual_address, &crate::PHYSICAL_MEMORY_MANAGER.get())?;
     }
 
