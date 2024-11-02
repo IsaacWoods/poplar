@@ -1,14 +1,15 @@
 # Summary
 
-- [Introduction](./introduction/index.md)
+- [Introduction](./introduction.md)
 
 - [The Kernel](./kernel/index.md)
+    - [Kernel objects](./kernel/kernel_objects.md)
     - [Platforms](./kernel/platforms/index.md)
         - [MangoPi MQ-Pro](./kernel/platforms/mqpro.md)
     - [Seed](./kernel/seed.md)
-    - [Kernel Objects](./kernel/kernel_objects.md)
     - [Debugging the kernel](./kernel/debugging.md)
 
+- [Message Passing](./message_passing.md)
 - [System calls](./syscalls/index.md)
     - [`yield`](./syscalls/yield.md)
     - [`early_log`](./syscalls/early_log.md)
@@ -24,11 +25,7 @@
 
 - [Userspace](./userspace/index.md)
     - [Capabilities](./userspace/capabilities.md)
-    - [Memory map (x86_64)](./userspace/memory_map_x86_64.md)
     - [Platform Bus](./userspace/platform_bus.md)
-
-- [Message Passing](./message_passing/index.md)
-    - [Ptah wire format](./message_passing/wire_format.md)
 
 - [Journal](./journal/index.md)
     - [Building a `rustc` target for Poplar](./journal/rustc_target.md)

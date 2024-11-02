@@ -7,7 +7,7 @@ in userspace as possible.
 Currently, the only officially supported language for writing userspace programs is Rust.
 
 #### Target
-Poplar provides custom target files for userspace programs. These are found in the `user/{arch}_poplar.toml` files.
+Poplar provides custom `rustc` target files for userspace programs. These are found in the `user/{arch}_poplar.toml` files.
 
 #### Standard library
 Poplar provides a Rust crate, called `std`, which replaces Rust's standard library. We've done this for a few
@@ -29,3 +29,6 @@ userspace:
      then the build script copies it into the Cargo `OUT_DIR`. It also passes a directive to `rustc` such that
      you can simply pass `-Tlink.ld` to link with the correct script. This is, for example, done using `RUSTFLAGS`
      by Poplar's `xtask`, but you can also pass it manually or with another method, depending on your build system.
+ - It provides a prelude that should be very similar to the official `std` prelude
+ - It provides an entry point to the executable that does required initialisation before passing control to Rust's
+     `main` function
