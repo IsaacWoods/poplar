@@ -12,21 +12,21 @@
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="theme-color" content="#ffffff">
 
-        <link rel="icon" href="../favicon.svg">
-        <link rel="shortcut icon" href="../favicon.png">
-        <link rel="stylesheet" href="../css/variables.css">
-        <link rel="stylesheet" href="../css/general.css">
-        <link rel="stylesheet" href="../css/chrome.css">
-        <link rel="stylesheet" href="../css/print.css" media="print">
+        <link rel="icon" href="favicon.svg">
+        <link rel="shortcut icon" href="favicon.png">
+        <link rel="stylesheet" href="css/variables.css">
+        <link rel="stylesheet" href="css/general.css">
+        <link rel="stylesheet" href="css/chrome.css">
+        <link rel="stylesheet" href="css/print.css" media="print">
 
         <!-- Fonts -->
-        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
-        <link rel="stylesheet" href="../fonts/fonts.css">
+        <link rel="stylesheet" href="FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="fonts/fonts.css">
 
         <!-- Highlight.js Stylesheets -->
-        <link rel="stylesheet" href="../highlight.css">
-        <link rel="stylesheet" href="../tomorrow-night.css">
-        <link rel="stylesheet" href="../ayu-highlight.css">
+        <link rel="stylesheet" href="highlight.css">
+        <link rel="stylesheet" href="tomorrow-night.css">
+        <link rel="stylesheet" href="ayu-highlight.css">
 
         <!-- Custom theme stylesheets -->
 
@@ -35,7 +35,7 @@
     <div id="body-container">
         <!-- Provide site root to javascript -->
         <script>
-            var path_to_root = "../";
+            var path_to_root = "";
             var default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "navy" : "light";
         </script>
 
@@ -88,7 +88,7 @@
 
         <nav id="sidebar" class="sidebar" aria-label="Table of contents">
             <div class="sidebar-scrollbox">
-                <ol class="chapter"><li class="chapter-item expanded "><a href="../introduction/index.html"><strong aria-hidden="true">1.</strong> Introduction</a></li><li class="chapter-item expanded "><a href="../kernel/index.html"><strong aria-hidden="true">2.</strong> The Kernel</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../kernel/platforms/index.html"><strong aria-hidden="true">2.1.</strong> Platforms</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../kernel/platforms/mqpro.html"><strong aria-hidden="true">2.1.1.</strong> MangoPi MQ-Pro</a></li></ol></li><li class="chapter-item expanded "><a href="../kernel/seed.html"><strong aria-hidden="true">2.2.</strong> Seed</a></li><li class="chapter-item expanded "><a href="../kernel/kernel_objects.html"><strong aria-hidden="true">2.3.</strong> Kernel Objects</a></li><li class="chapter-item expanded "><a href="../kernel/debugging.html"><strong aria-hidden="true">2.4.</strong> Debugging the kernel</a></li></ol></li><li class="chapter-item expanded "><a href="../syscalls/index.html"><strong aria-hidden="true">3.</strong> System calls</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../syscalls/yield.html"><strong aria-hidden="true">3.1.</strong> yield</a></li><li class="chapter-item expanded "><a href="../syscalls/early_log.html"><strong aria-hidden="true">3.2.</strong> early_log</a></li><li class="chapter-item expanded "><a href="../syscalls/get_framebuffer.html"><strong aria-hidden="true">3.3.</strong> get_framebuffer</a></li><li class="chapter-item expanded "><a href="../syscalls/create_memory_object.html"><strong aria-hidden="true">3.4.</strong> create_memory_object</a></li><li class="chapter-item expanded "><a href="../syscalls/map_memory_object.html"><strong aria-hidden="true">3.5.</strong> map_memory_object</a></li><li class="chapter-item expanded "><a href="../syscalls/create_channel.html"><strong aria-hidden="true">3.6.</strong> create_channel</a></li><li class="chapter-item expanded "><a href="../syscalls/send_message.html"><strong aria-hidden="true">3.7.</strong> send_message</a></li><li class="chapter-item expanded "><a href="../syscalls/get_message.html"><strong aria-hidden="true">3.8.</strong> get_message</a></li><li class="chapter-item expanded "><a href="../syscalls/register_service.html"><strong aria-hidden="true">3.9.</strong> register_service</a></li><li class="chapter-item expanded "><a href="../syscalls/subscribe_to_service.html"><strong aria-hidden="true">3.10.</strong> subscribe_to_service</a></li><li class="chapter-item expanded "><a href="../syscalls/pci_get_info.html"><strong aria-hidden="true">3.11.</strong> pci_get_info</a></li></ol></li><li class="chapter-item expanded "><a href="../userspace/index.html"><strong aria-hidden="true">4.</strong> Userspace</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../userspace/capabilities.html"><strong aria-hidden="true">4.1.</strong> Capabilities</a></li><li class="chapter-item expanded "><a href="../userspace/memory_map_x86_64.html"><strong aria-hidden="true">4.2.</strong> Memory map (x86_64)</a></li><li class="chapter-item expanded "><a href="../userspace/platform_bus.html"><strong aria-hidden="true">4.3.</strong> Platform Bus</a></li></ol></li><li class="chapter-item expanded "><a href="../message_passing/index.html" class="active"><strong aria-hidden="true">5.</strong> Message Passing</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../message_passing/wire_format.html"><strong aria-hidden="true">5.1.</strong> Ptah wire format</a></li></ol></li><li class="chapter-item expanded "><a href="../journal/index.html"><strong aria-hidden="true">6.</strong> Journal</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../journal/rustc_target.html"><strong aria-hidden="true">6.1.</strong> Building a rustc target for Poplar</a></li><li class="chapter-item expanded "><a href="../journal/usb.html"><strong aria-hidden="true">6.2.</strong> USB</a></li><li class="chapter-item expanded "><a href="../journal/riscv.html"><strong aria-hidden="true">6.3.</strong> RISC-V</a></li><li class="chapter-item expanded "><a href="../journal/pci_interrupt_routing.html"><strong aria-hidden="true">6.4.</strong> PCI interrupt routing</a></li></ol></li></ol>
+                <ol class="chapter"><li class="chapter-item expanded "><a href="introduction.html"><strong aria-hidden="true">1.</strong> Introduction</a></li><li class="chapter-item expanded "><a href="kernel/index.html"><strong aria-hidden="true">2.</strong> The Kernel</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="kernel/kernel_objects.html"><strong aria-hidden="true">2.1.</strong> Kernel objects</a></li><li class="chapter-item expanded "><a href="kernel/system_calls.html"><strong aria-hidden="true">2.2.</strong> System calls</a></li><li class="chapter-item expanded "><a href="kernel/platforms/index.html"><strong aria-hidden="true">2.3.</strong> Platforms</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="kernel/platforms/mqpro.html"><strong aria-hidden="true">2.3.1.</strong> MangoPi MQ-Pro</a></li></ol></li><li class="chapter-item expanded "><a href="kernel/seed.html"><strong aria-hidden="true">2.4.</strong> Seed</a></li><li class="chapter-item expanded "><a href="kernel/debugging.html"><strong aria-hidden="true">2.5.</strong> Debugging the kernel</a></li></ol></li><li class="chapter-item expanded "><a href="message_passing.html" class="active"><strong aria-hidden="true">3.</strong> Message Passing</a></li><li class="chapter-item expanded "><a href="userspace/index.html"><strong aria-hidden="true">4.</strong> Userspace</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="userspace/capabilities.html"><strong aria-hidden="true">4.1.</strong> Capabilities</a></li><li class="chapter-item expanded "><a href="userspace/platform_bus.html"><strong aria-hidden="true">4.2.</strong> Platform Bus</a></li></ol></li><li class="chapter-item expanded "><a href="journal/index.html"><strong aria-hidden="true">5.</strong> Journal</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="journal/rustc_target.html"><strong aria-hidden="true">5.1.</strong> Building a rustc target for Poplar</a></li><li class="chapter-item expanded "><a href="journal/usb.html"><strong aria-hidden="true">5.2.</strong> USB</a></li><li class="chapter-item expanded "><a href="journal/riscv.html"><strong aria-hidden="true">5.3.</strong> RISC-V</a></li><li class="chapter-item expanded "><a href="journal/pci_interrupt_routing.html"><strong aria-hidden="true">5.4.</strong> PCI interrupt routing</a></li></ol></li></ol>
             </div>
             <div id="sidebar-resize-handle" class="sidebar-resize-handle">
                 <div class="sidebar-resize-indicator"></div>
@@ -144,7 +144,7 @@
                     <h1 class="menu-title">Poplar</h1>
 
                     <div class="right-buttons">
-                        <a href="../print.html" title="Print this book" aria-label="Print this book">
+                        <a href="print.html" title="Print this book" aria-label="Print this book">
                             <i id="print-button" class="fa fa-print"></i>
                         </a>
 
@@ -178,23 +178,26 @@
 Channels move packets, called "messages", which contain a stream of bytes, and optionally one or more handles that
 are transferred from the sending task to the receiving task.</p>
 <h3 id="ptah"><a class="header" href="#ptah">Ptah</a></h3>
-<p>Channels can move arbitrary bytes, but Poplar also includes a layer on top of of Channels called Ptah, which
+<p>Channels can move arbitrary bytes, but Poplar also includes a layer on top of Channels called Ptah, which
 consists of a data model and wire format suitable for encoding data which can be serialized and deserialized from
 any sensible language without too much difficulty.</p>
+<p>Ptah is used for IPC between tasks running in userspace, and also for more complex communication between the kernel
+and userspace.</p>
 <p>Ptah is heavily inspired by <a href="https://serde.rs">Serde</a>, and the first implementation of Ptah was actually a <a href="https://github.com/IsaacWoods/poplar/tree/04f3eed45a40f196a02374ca053aaee16517dccb/lib/ptah">Serde
 data format</a>.
 Unfortunately, it made properly handling Poplar handles very difficult - when a handle is sent over a channel, it
 needs to be put into a separate array, and the in-line data replaced by an index into that array.  When the message
 travels over a task boundary, the kernel examines and replaces each handle in this array with a handle to the same
 kernel object in the new task. This effectively means we need to add a new <code>Handle</code> type to our data model, which
-is not easily possible with Serde (and would make it incompatible with standard Serde anyway).</p>
+is not easily possible with Serde (and would make it incompatible with standard Serde serializers anyway).</p>
 <h3 id="the-ptah-data-model"><a class="header" href="#the-ptah-data-model">The Ptah Data Model</a></h3>
 <p>The Ptah data model maps pretty well to the Rust type system, and relatively closely to the Serde data model. Key
 differences are some stronger guarantees about the encoding of types such as enums (the data model only needs to
 fit a single wire format, and so can afford to be less flexible than Serde's), and the lack of a few types -
 <code>unit</code>-based types, and the statically-sized version of <code>seq</code> and <code>map</code> - <code>tuple</code> and <code>struct</code>. Ptah is not a
-self-describing format (i.e. the types you're trying to deserialize is fully known), so the elements of structs and
-tuples can simply be serialized in the order they appear, and then deserialized in order at the other end.</p>
+self-describing format (i.e. the type you're trying to (de)serialize must be known at both ends), so the elements
+of structs and tuples can simply be serialized in the order they appear, and then deserialized in order at the
+other end.</p>
 <ul>
 <li>Primitive types
 <ul>
@@ -231,7 +234,7 @@ tuples can simply be serialized in the order they appear, and then deserialized 
 </li>
 <li><code>seq</code>
 <ul>
-<li>A variable-length sequence of values, mapping to many types such as <code>Vec&lt;T&gt;</code>.</li>
+<li>A variable-length sequence of values, mapping to types such as arrays and <code>Vec&lt;T&gt;</code>.</li>
 </ul>
 </li>
 <li><code>map</code>
@@ -241,22 +244,36 @@ tuples can simply be serialized in the order they appear, and then deserialized 
 </li>
 <li><code>handle</code>
 <ul>
-<li>This is the type that means we need our own data model in the first place</li>
-<li>These are encoded out-of-line of the rest of the data, so that the Poplar kernel can introspect into them, if
-it needs to</li>
+<li>A marker in the data stream that a handle to a kernel object is being moved across the channel. The handle itself is encoded out-of-band.</li>
+<li>This allows the kernel, or something else handling Ptah-encoded data, to process the handle</li>
+<li>Handles being first-class in the data model is why Poplar can't readily use something like <code>serde</code></li>
 </ul>
 </li>
 </ul>
+<h3 id="the-ptah-wire-format"><a class="header" href="#the-ptah-wire-format">The Ptah Wire Format</a></h3>
+<p>The wire format describes how messages can be encoded into a stream of bytes suitable for transmission over a
+channel, or over another transport layer such as the network or a serial port.</p>
+<p>Primitives are transmitted as little-endian and packed to their natural alignment. The following primitive types
+are recognised:</p>
+<div class="table-wrapper"><table><thead><tr><th>Name</th><th>Size (bytes)</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>bool</code></td><td>1</td><td>A boolean value</td></tr>
+<tr><td><code>u8</code>, <code>u16</code>, <code>u32</code>, <code>u64</code>, <code>u128</code></td><td>1, 2, 4, 8</td><td>An unsigned integer</td></tr>
+<tr><td><code>i8</code>, <code>i16</code>, <code>i32</code>, <code>i64</code>, <code>i128</code></td><td>1, 2, 4, 8</td><td>A signed integer</td></tr>
+<tr><td><code>f32</code>, <code>f64</code></td><td>4, 8</td><td>Single / double-precision IEEE-754 FP values</td></tr>
+<tr><td><code>char</code></td><td>4</td><td>A single UTF-8 Unicode scalar value</td></tr>
+</tbody></table>
+</div>
+<p>TODO: rest of the wire format</p>
 
                     </main>
 
                     <nav class="nav-wrapper" aria-label="Page navigation">
                         <!-- Mobile navigation buttons -->
-                            <a rel="prev" href="../userspace/platform_bus.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                            <a rel="prev" href="kernel/debugging.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                                 <i class="fa fa-angle-left"></i>
                             </a>
 
-                            <a rel="next prefetch" href="../message_passing/wire_format.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                            <a rel="next prefetch" href="userspace/index.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                                 <i class="fa fa-angle-right"></i>
                             </a>
 
@@ -266,11 +283,11 @@ it needs to</li>
             </div>
 
             <nav class="nav-wide-wrapper" aria-label="Page navigation">
-                    <a rel="prev" href="../userspace/platform_bus.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                    <a rel="prev" href="kernel/debugging.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                         <i class="fa fa-angle-left"></i>
                     </a>
 
-                    <a rel="next prefetch" href="../message_passing/wire_format.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                    <a rel="next prefetch" href="userspace/index.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                         <i class="fa fa-angle-right"></i>
                     </a>
             </nav>
@@ -285,13 +302,13 @@ it needs to</li>
         </script>
 
 
-        <script src="../elasticlunr.min.js"></script>
-        <script src="../mark.min.js"></script>
-        <script src="../searcher.js"></script>
+        <script src="elasticlunr.min.js"></script>
+        <script src="mark.min.js"></script>
+        <script src="searcher.js"></script>
 
-        <script src="../clipboard.min.js"></script>
-        <script src="../highlight.js"></script>
-        <script src="../book.js"></script>
+        <script src="clipboard.min.js"></script>
+        <script src="highlight.js"></script>
+        <script src="book.js"></script>
 
         <!-- Custom JS scripts -->
 
