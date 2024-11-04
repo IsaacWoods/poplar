@@ -66,9 +66,6 @@ dependencies = [
 [[package]]
 name = "fdt"
 version = "0.2.0-alpha1"
-dependencies = [
- "tracing",
-]
 
 [[package]]
 name = "fnv"
