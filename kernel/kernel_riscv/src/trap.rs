@@ -23,7 +23,8 @@ extern "C" fn trap_handler(trap_frame: &mut TrapFrame, scause: usize, stval: usi
             // expensive for multiple xs per syscall?)
             hal_riscv::hw::csr::Sstatus::enable_user_memory_access();
             trap_frame.a0 = kernel::syscall::handle_syscall(
-                &crate::SCHEDULER.get(),
+                crate::SCHEDULER.get(),
+                crate::KERNEL_PAGE_TABLES.get(),
                 trap_frame.a0,
                 trap_frame.a1,
                 trap_frame.a2,

@@ -28,20 +28,15 @@ use kernel::{
 };
 use mulch::InitGuard;
 use seed::boot_info::BootInfo;
+use spinning_top::RwSpinlock;
 use tracing::info;
 
-pub struct PlatformImpl {
-    kernel_page_table: <Self as Platform>::PageTable,
-}
+pub struct PlatformImpl;
 
 impl Platform for PlatformImpl {
     type PageTableSize = hal::memory::Size4KiB;
     type PageTable = hal_riscv::platform::PageTableImpl;
     type TaskContext = task::ContextSwitchFrame;
-
-    fn kernel_page_table(&mut self) -> &mut Self::PageTable {
-        &mut self.kernel_page_table
-    }
 
     unsafe fn initialize_task_stacks(
         kernel_stack: &kernel::memory::Stack,
@@ -83,6 +78,7 @@ impl Platform for PlatformImpl {
 }
 
 pub static SCHEDULER: InitGuard<Scheduler<PlatformImpl>> = InitGuard::uninit();
+pub static KERNEL_PAGE_TABLES: InitGuard<RwSpinlock<hal_riscv::platform::PageTableImpl>> = InitGuard::uninit();
 
 #[no_mangle]
 pub extern "C" fn kentry(boot_info: &BootInfo) -> ! {
@@ -128,6 +124,7 @@ pub extern "C" fn kentry(boot_info: &BootInfo) -> ! {
             }
         }
     };
+    KERNEL_PAGE_TABLES.initialize(RwSpinlock::new(kernel_page_table));
 
     interrupts::init(&fdt);
     unsafe {
@@ -186,11 +183,11 @@ pub extern "C" fn kentry(boot_info: &BootInfo) -> ! {
         kernel::load_task(
             SCHEDULER.get(),
             image,
-            platform.kernel_page_table(),
             &kernel::PHYSICAL_MEMORY_MANAGER.get(),
             &mut kernel_stack_allocator,
         );
     }
+        &mut KERNEL_PAGE_TABLES.get().write(),
 
     /*
      * Kick the timer off. We do this just before installing the full handler because the shim

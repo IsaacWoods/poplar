@@ -21,6 +21,7 @@ use poplar::{
     syscall::{
         self,
         result::{handle_to_syscall_repr, status_to_syscall_repr, status_with_payload_to_syscall_repr},
+        CreateAddressSpaceError,
         CreateChannelError,
         CreateMemoryObjectError,
         EarlyLogError,
@@ -39,7 +40,7 @@ use poplar::{
     },
     Handle,
 };
-use spinning_top::Spinlock;
+use spinning_top::{RwSpinlock, Spinlock};
 use tracing::{info, warn};
 use validation::{UserPointer, UserSlice, UserString};
 
@@ -52,6 +53,7 @@ static SERVICE_MAP: Spinlock<BTreeMap<String, Arc<ChannelEnd>>> = Spinlock::new(
 /// depending on how many parameters the specific system call takes.
 pub fn handle_syscall<P>(
     scheduler: &Scheduler<P>,
+    kernel_page_tables: &RwSpinlock<P::PageTable>,
     number: usize,
     a: usize,
     b: usize,
@@ -88,6 +90,9 @@ where
         syscall::SYSCALL_PCI_GET_INFO => status_with_payload_to_syscall_repr(pci_get_info(&task, a, b)),
         syscall::SYSCALL_WAIT_FOR_EVENT => status_to_syscall_repr(wait_for_event(scheduler, &task, a, b)),
         syscall::SYSCALL_POLL_INTEREST => status_with_payload_to_syscall_repr(poll_interest(&task, a)),
+        syscall::SYSCALL_CREATE_ADDRESS_SPACE => {
+            handle_to_syscall_repr(create_address_space(&task, &mut kernel_page_tables.write()))
+        }
 
         _ => {
             warn!("Process made system call with invalid syscall number: {}", number);
@@ -598,4 +603,16 @@ where
     };
 
     Ok(if interesting { 1 << 16 } else { 0 })
+}
+
+pub fn create_address_space<P>(
+    task: &Arc<Task<P>>,
+    kernel_page_tables: &mut P::PageTable,
+) -> Result<Handle, CreateAddressSpaceError>
+where
+    P: Platform,
+{
+    let address_space =
+        AddressSpace::<P>::new(task.id(), kernel_page_tables, crate::PHYSICAL_MEMORY_MANAGER.get());
+    Ok(task.handles.add(address_space))
 }

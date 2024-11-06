@@ -38,11 +38,11 @@ use kernel::{
 use mulch::InitGuard;
 use per_cpu::PerCpuImpl;
 use seed::boot_info::BootInfo;
+use spinning_top::RwSpinlock;
 use topo::Topology;
 use tracing::info;
 
 pub struct PlatformImpl {
-    kernel_page_table: PageTableImpl,
     topology: Topology,
 }
 
@@ -51,10 +51,6 @@ impl Platform for PlatformImpl {
     type PageTable = PageTableImpl;
     // We put the context on the stack on x86_64
     type TaskContext = ();
-
-    fn kernel_page_table(&mut self) -> &mut Self::PageTable {
-        &mut self.kernel_page_table
-    }
 
     unsafe fn initialize_task_stacks(
         kernel_stack: &Stack,
@@ -103,6 +99,7 @@ impl Platform for PlatformImpl {
 }
 
 pub static SCHEDULER: InitGuard<Scheduler<PlatformImpl>> = InitGuard::uninit();
+pub static KERNEL_PAGE_TABLES: InitGuard<RwSpinlock<hal_x86_64::paging::PageTableImpl>> = InitGuard::uninit();
 
 #[no_mangle]
 pub extern "C" fn kentry(boot_info: &BootInfo) -> ! {
@@ -117,12 +114,13 @@ pub extern "C" fn kentry(boot_info: &BootInfo) -> ! {
      * Get the kernel page tables set up by the loader. We have to assume that the loader has set up a correct set
      * of page tables, including a full physical mapping at the correct location, and so this is very unsafe.
      */
-    let kernel_page_table = unsafe {
+    let kernel_page_tables = unsafe {
         PageTableImpl::from_frame(
             Frame::starts_with(PAddr::new(read_control_reg!(cr3) as usize).unwrap()),
             kernel_map::PHYSICAL_MAPPING_BASE,
         )
     };
+    KERNEL_PAGE_TABLES.initialize(RwSpinlock::new(kernel_page_tables));
 
     /*
      * Initialise the heap allocator. After this, the kernel is free to use collections etc. that
@@ -229,7 +227,7 @@ pub extern "C" fn kentry(boot_info: &BootInfo) -> ! {
 
     task::install_syscall_handler();
 
-    let mut platform = PlatformImpl { kernel_page_table, topology };
+    let platform = PlatformImpl { topology };
 
     // TODO: we need to support the tasklet scheduler on x64 too - maybe use the HPET to drive
     // `maitake`'s timer wheel?
@@ -243,11 +241,11 @@ pub extern "C" fn kentry(boot_info: &BootInfo) -> ! {
         kernel::load_task(
             SCHEDULER.get(),
             image,
-            platform.kernel_page_table(),
             &kernel::PHYSICAL_MEMORY_MANAGER.get(),
             &mut kernel_stack_allocator,
         );
     }
+        &mut KERNEL_PAGE_TABLES.get().write(),
     if let Some(ref video_info) = boot_info.video_mode {
         kernel::create_framebuffer(video_info);
     }

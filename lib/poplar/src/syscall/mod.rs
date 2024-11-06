@@ -37,6 +37,7 @@ pub const SYSCALL_SUBSCRIBE_TO_SERVICE: usize = 10;
 pub const SYSCALL_PCI_GET_INFO: usize = 11;
 pub const SYSCALL_WAIT_FOR_EVENT: usize = 12;
 pub const SYSCALL_POLL_INTEREST: usize = 13;
+pub const SYSCALL_CREATE_ADDRESS_SPACE: usize = 15;
 
 pub fn yield_to_kernel() {
     unsafe {
@@ -234,4 +235,10 @@ pub fn poll_interest(object: Handle) -> Result<bool, PollInterestError> {
     let result = unsafe { raw::syscall1(SYSCALL_POLL_INTEREST, object.0 as usize) };
     status_from_syscall_repr(result.get_bits(0..16))?;
     Ok(result.get_bits(16..64) != 0)
+}
+
+define_error_type!(CreateAddressSpaceError {});
+
+pub fn create_address_space() -> Result<Handle, CreateAddressSpaceError> {
+    handle_from_syscall_repr(unsafe { raw::syscall0(SYSCALL_CREATE_ADDRESS_SPACE) })
 }

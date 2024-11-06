@@ -29,7 +29,16 @@ extern "C" {
 /// monomorphization of the common syscall handler.
 #[no_mangle]
 extern "C" fn rust_syscall_entry(number: usize, a: usize, b: usize, c: usize, d: usize, e: usize) -> usize {
-    kernel::syscall::handle_syscall::<crate::PlatformImpl>(crate::SCHEDULER.get(), number, a, b, c, d, e)
+    kernel::syscall::handle_syscall::<crate::PlatformImpl>(
+        crate::SCHEDULER.get(),
+        crate::KERNEL_PAGE_TABLES.get(),
+        number,
+        a,
+        b,
+        c,
+        d,
+        e,
+    )
 }
 
 /// This is the layout of the stack that we expect to be present when we switch to a task. It is

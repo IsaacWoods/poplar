@@ -11,7 +11,7 @@ kernel = { path = "../" }
 seed = { path = "../../seed" }
 tracing = { git = "https://github.com/tokio-rs/tracing", default-features = false }
 tracing-core = { git = "https://github.com/tokio-rs/tracing", default-features = false }
-spinning_top = { version = "0.2.4", features = ["nightly"] }
+spinning_top = { version = "0.3" }
 mulch = { path = "../../lib/mulch/" }
 bit_field = "0.10.2"
 fdt = { path = "../../lib/fdt/", features = ["pretty-printing"] }

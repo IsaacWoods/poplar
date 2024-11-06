@@ -44,8 +44,6 @@ pub trait Platform: Sized + 'static {
     type PageTable: PageTable<Self::PageTableSize> + Send;
     type TaskContext;
 
-    fn kernel_page_table(&mut self) -> &mut Self::PageTable;
-
     /// Often, the platform will need to put stuff on either the kernel or the user stack before a task is run for
     /// the first time. `task_entry_point` is the virtual address that should be jumped to in usermode when the
     /// task is run for the first time.
