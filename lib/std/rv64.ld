@@ -9,7 +9,6 @@ PHDRS {
     rodata PT_LOAD FLAGS(4);
     data PT_LOAD;
     tls PT_TLS;
-    caps PT_NOTE;
 }
 
 SECTIONS {
@@ -56,10 +55,6 @@ SECTIONS {
     .tbss : {
         *(.tbss .tbss.*)
     } :tls
-
-    .caps : {
-        KEEP(*(.caps))
-    } :caps
 
     /DISCARD/ : {
         *(.eh_frame*)

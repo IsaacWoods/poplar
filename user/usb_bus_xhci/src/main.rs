@@ -12,7 +12,6 @@ use memory::MemoryArea;
 use operational::OperationRegisters;
 use platform_bus::{BusDriverMessage, DeviceDriverMessage, DeviceDriverRequest, Filter, Property};
 use std::poplar::{
-    caps::{CapabilitiesRepr, CAP_EARLY_LOGGING, CAP_PADDING, CAP_SERVICE_USER},
     channel::Channel,
     early_logger::EarlyLogger,
     memory_object::MemoryObject,
@@ -118,8 +117,3 @@ fn initialize_controller(
 
     // todo!()
 }
-
-#[used]
-#[link_section = ".caps"]
-pub static mut CAPS: CapabilitiesRepr<4> =
-    CapabilitiesRepr::new([CAP_EARLY_LOGGING, CAP_SERVICE_USER, CAP_PADDING, CAP_PADDING]);

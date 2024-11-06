@@ -11,7 +11,7 @@ use mer::{
     Elf,
 };
 use mulch::math;
-use seed::boot_info::{LoadedImage, Segment, MAX_CAPABILITY_STREAM_LENGTH};
+use seed::boot_info::{LoadedImage, Segment};
 use uefi::{
     fs::Path,
     proto::media::{
@@ -119,36 +119,6 @@ pub fn load_image(boot_services: &BootServices, volume_handle: Handle, name: &st
                 match image_data.segments.push(segment) {
                     Ok(()) => (),
                     Err(_) => panic!("Image at '{}' has too many load segments!", path),
-                }
-            }
-
-            SegmentType::Note => {
-                /*
-                 * We want to search the note entries for one containing the task's capabilities (if this is an
-                 * initial task). If there is one, we want to copy it into the info we pass to the kenrel.
-                 */
-                const CAPABILITY_OWNER_STR: &str = "POPLAR";
-                const CAPABILITY_ENTRY_TYPE: u32 = 0;
-
-                let caps = segment.iterate_note_entries(&elf).unwrap().find(|entry| {
-                    entry.entry_type == CAPABILITY_ENTRY_TYPE
-                        && str::from_utf8(entry.name).unwrap() == CAPABILITY_OWNER_STR
-                });
-
-                if caps.is_some() {
-                    let caps_length = caps.as_ref().unwrap().desc.len();
-                    if caps_length > MAX_CAPABILITY_STREAM_LENGTH {
-                        panic!("Image at path '{}' has too long capability encoding!", path);
-                    }
-
-                    /*
-                     * We copy at most `MAX_CAPABILITY_BYTES_PER_IMAGE` bytes from the note entry,
-                     * but can safely copy less, leaving the rest of the array zero-initialized.
-                     * The zero bytes are interpreted as padding by the kernel so this is fine.
-                     */
-                    let mut caps_array: [u8; MAX_CAPABILITY_STREAM_LENGTH] = Default::default();
-                    caps_array[..caps_length].copy_from_slice(&caps.unwrap().desc);
-                    image_data.capability_stream = caps_array;
                 }
             }
 

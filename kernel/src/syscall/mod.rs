@@ -18,7 +18,6 @@ use bit_field::BitField;
 use core::{convert::TryFrom, sync::atomic::Ordering};
 use hal::memory::{Flags, PAddr, VAddr};
 use poplar::{
-    caps::Capability,
     syscall::{
         self,
         result::{handle_to_syscall_repr, status_to_syscall_repr, status_with_payload_to_syscall_repr},
@@ -109,13 +108,6 @@ fn early_log<P>(task: &Arc<Task<P>>, str_length: usize, str_address: usize) -> R
 where
     P: Platform,
 {
-    // Check the current task has the `EarlyLogging` capability
-    // if !task.capabilities.contains(&Capability::EarlyLogging) {
-    //     // Log a warning because otherwise it's difficult to debug a task (it can't log...)
-    //     warn!("Task '{}' tried to use early logging but does not have the correct capability!", task.name);
-    //     return Err(EarlyLogError::TaskDoesNotHaveCorrectCapability);
-    // }
-
     // Check if the message is too long
     if str_length > 4096 {
         return Err(EarlyLogError::MessageTooLong);
@@ -134,13 +126,6 @@ fn get_framebuffer<P>(task: &Arc<Task<P>>, info_address: usize) -> Result<Handle
 where
     P: Platform,
 {
-    /*
-     * Check that the task has the correct capability.
-     */
-    if !task.capabilities.contains(&Capability::GetFramebuffer) {
-        return Err(GetFramebufferError::AccessDenied);
-    }
-
     let (info, memory_object) = crate::FRAMEBUFFER.try_get().ok_or(GetFramebufferError::NoFramebufferCreated)?;
     let handle = task.handles.add(memory_object.clone());
 
@@ -399,11 +384,6 @@ where
 {
     use poplar::syscall::SERVICE_NAME_MAX_LENGTH;
 
-    // Check that the task has the `ServiceProvider` capability
-    if !task.capabilities.contains(&Capability::ServiceProvider) {
-        return Err(RegisterServiceError::TaskDoesNotHaveCorrectCapability);
-    }
-
     // Check that the name is not too short or long
     if name_length == 0 || name_length > SERVICE_NAME_MAX_LENGTH {
         return Err(RegisterServiceError::NameLengthNotValid);
@@ -429,11 +409,6 @@ where
     P: Platform,
 {
     use poplar::syscall::SERVICE_NAME_MAX_LENGTH;
-
-    // Check that the task has the `ServiceUser` capability
-    if !task.capabilities.contains(&Capability::ServiceUser) {
-        return Err(SubscribeToServiceError::TaskDoesNotHaveCorrectCapability);
-    }
 
     // Check that the name is not too short or long
     if name_length == 0 || name_length > SERVICE_NAME_MAX_LENGTH {
@@ -476,11 +451,6 @@ where
 {
     use pci_types::{Bar, MAX_BARS};
     use poplar::ddk::pci::PciDeviceInfo;
-
-    // Check that the task has the 'PciBusDriver' capability
-    if !task.capabilities.contains(&Capability::PciBusDriver) {
-        return Err(PciGetInfoError::TaskDoesNotHaveCorrectCapability);
-    }
 
     // TODO: request this through the platform nicely instead of through a huge global
     if let Some(ref pci_info) = *crate::PCI_INFO.read() {

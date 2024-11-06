@@ -22,7 +22,6 @@ use spinning_top::Spinlock;
 use std::{
     fmt::Write,
     poplar::{
-        caps::{CapabilitiesRepr, CAP_EARLY_LOGGING, CAP_GET_FRAMEBUFFER, CAP_PADDING, CAP_SERVICE_USER},
         channel::Channel,
         early_logger::EarlyLogger,
         memory_object::{MappedMemoryObject, MemoryObject},
@@ -392,8 +391,3 @@ pub fn map_key(usage: Key, state: KeyState) -> Option<char> {
         _ => None,
     }
 }
-
-#[used]
-#[link_section = ".caps"]
-pub static mut CAPS: CapabilitiesRepr<4> =
-    CapabilitiesRepr::new([CAP_EARLY_LOGGING, CAP_GET_FRAMEBUFFER, CAP_SERVICE_USER, CAP_PADDING]);

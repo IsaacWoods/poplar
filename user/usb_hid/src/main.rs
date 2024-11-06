@@ -14,11 +14,7 @@ use platform_bus::{
 };
 use std::{
     collections::{BTreeMap, BTreeSet},
-    poplar::{
-        caps::{CapabilitiesRepr, CAP_EARLY_LOGGING, CAP_PADDING, CAP_SERVICE_USER},
-        channel::Channel,
-        early_logger::EarlyLogger,
-    },
+    poplar::{channel::Channel, early_logger::EarlyLogger},
 };
 use usb::{
     descriptor::{
@@ -518,8 +514,3 @@ fn map_key_usage(usage: Usage) -> Key {
         _ => panic!("Unknown usage: {:?}", usage),
     }
 }
-
-#[used]
-#[link_section = ".caps"]
-pub static mut CAPS: CapabilitiesRepr<4> =
-    CapabilitiesRepr::new([CAP_EARLY_LOGGING, CAP_SERVICE_USER, CAP_PADDING, CAP_PADDING]);

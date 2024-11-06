@@ -16,7 +16,6 @@ use std::{
     collections::BTreeMap,
     mem::{self, MaybeUninit},
     poplar::{
-        caps::{CapabilitiesRepr, CAP_EARLY_LOGGING, CAP_PADDING, CAP_SERVICE_USER},
         channel::Channel,
         ddk::dma::DmaPool,
         early_logger::EarlyLogger,
@@ -367,8 +366,3 @@ impl virtio::virtqueue::Mapper for VirtioMemoryManager {
         (self.area.virt_to_phys(virt).unwrap(), virt)
     }
 }
-
-#[used]
-#[link_section = ".caps"]
-pub static mut CAPS: CapabilitiesRepr<4> =
-    CapabilitiesRepr::new([CAP_EARLY_LOGGING, CAP_SERVICE_USER, CAP_PADDING, CAP_PADDING]);

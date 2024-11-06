@@ -10,12 +10,11 @@ use core::{fmt, ops::Range};
 use hal::memory::{Bytes, Flags, Frame, PAddr, VAddr};
 use heapless::{String, Vec};
 
-pub const BOOT_INFO_MAGIC: u32 = 0xcafebabe;
+pub const BOOT_INFO_MAGIC: u32 = 0xf0cacc1a;
 pub const MAX_MEMORY_MAP_ENTRIES: usize = 256;
 pub const MAX_LOADED_IMAGES: usize = 32;
 pub const MAX_IMAGE_NAME_LENGTH: usize = 32;
 pub const MAX_IMAGE_LOADED_SEGMENTS: usize = 3;
-pub const MAX_CAPABILITY_STREAM_LENGTH: usize = 32;
 
 pub type MemoryMap = Vec<MemoryMapEntry, MAX_MEMORY_MAP_ENTRIES>;
 
@@ -117,7 +116,6 @@ pub struct LoadedImage {
     pub master_tls: Option<Segment>,
     /// The virtual address at which to start executing the image.
     pub entry_point: VAddr,
-    pub capability_stream: [u8; 32],
 }
 
 #[derive(Clone, Copy, Default, Debug)]

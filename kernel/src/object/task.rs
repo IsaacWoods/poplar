@@ -16,7 +16,7 @@ use core::{
     sync::atomic::{AtomicU32, Ordering},
 };
 use hal::memory::VAddr;
-use poplar::{caps::Capability, Handle};
+use poplar::Handle;
 use spinning_top::{RwSpinlock, Spinlock};
 
 #[derive(Clone, Debug)]
@@ -78,7 +78,6 @@ where
     pub name: String,
     pub address_space: Arc<AddressSpace<P>>,
     pub state: Spinlock<TaskState>,
-    pub capabilities: Vec<Capability>,
 
     pub user_slot: Spinlock<TaskSlot>,
     pub kernel_stack: Spinlock<Stack>,
@@ -131,8 +130,6 @@ where
             name: String::from(image.name.as_str()),
             address_space,
             state: Spinlock::new(TaskState::Ready),
-            capabilities: decode_capabilities(&image.capability_stream)?,
-
             user_slot: Spinlock::new(task_slot),
             kernel_stack: Spinlock::new(kernel_stack),
             kernel_stack_pointer: UnsafeCell::new(kernel_stack_pointer),
@@ -185,39 +182,4 @@ impl Handles {
     pub fn get(&self, handle: Handle) -> Option<Arc<dyn KernelObject>> {
         self.handles.read().get(&handle).cloned()
     }
-}
-
-/// Decode a capability stream (as found in a task's image) into a set of capabilities as they're
-/// represented in the kernel. For the format that's being decoded here, refer to the
-/// `(3.1) Userspace/Capabilities` section of the Book.
-fn decode_capabilities(mut cap_stream: &[u8]) -> Result<Vec<Capability>, TaskCreationError> {
-    use poplar::caps::*;
-
-    let mut caps = Vec::new();
-
-    // TODO: when decl_macro hygiene-opt-out is implemented, this should be converted to use it
-    macro_rules! one_byte_cap {
-        ($cap: path) => {{
-            caps.push($cap);
-            cap_stream = &cap_stream[1..];
-        }};
-    }
-
-    while cap_stream.len() > 0 {
-        match cap_stream[0] {
-            CAP_GET_FRAMEBUFFER => one_byte_cap!(Capability::GetFramebuffer),
-            CAP_EARLY_LOGGING => one_byte_cap!(Capability::EarlyLogging),
-            CAP_SERVICE_PROVIDER => one_byte_cap!(Capability::ServiceProvider),
-            CAP_SERVICE_USER => one_byte_cap!(Capability::ServiceUser),
-            CAP_PCI_BUS_DRIVER => one_byte_cap!(Capability::PciBusDriver),
-
-            // We skip `0x00` as the first byte of a capability, as it is just used to pad the
-            // stream and so has no meaning
-            0x00 => cap_stream = &cap_stream[1..],
-
-            _ => return Err(TaskCreationError::InvalidCapabilityEncoding),
-        }
-    }
-
-    Ok(caps)
 }

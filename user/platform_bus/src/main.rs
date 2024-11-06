@@ -6,11 +6,7 @@ use spinning_top::RwSpinlock;
 use std::{
     collections::BTreeMap,
     mem,
-    poplar::{
-        caps::{CapabilitiesRepr, CAP_EARLY_LOGGING, CAP_PADDING, CAP_PCI_BUS_DRIVER, CAP_SERVICE_PROVIDER},
-        channel::Channel,
-        early_logger::EarlyLogger,
-    },
+    poplar::{channel::Channel, early_logger::EarlyLogger},
     sync::Arc,
 };
 
@@ -273,8 +269,3 @@ pub fn main() {
 
     std::poplar::rt::enter_loop();
 }
-
-#[used]
-#[link_section = ".caps"]
-pub static mut CAPS: CapabilitiesRepr<4> =
-    CapabilitiesRepr::new([CAP_EARLY_LOGGING, CAP_SERVICE_PROVIDER, CAP_PCI_BUS_DRIVER, CAP_PADDING]);

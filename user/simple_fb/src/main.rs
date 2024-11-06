@@ -3,7 +3,6 @@ use log::info;
 use std::{
     mem::MaybeUninit,
     poplar::{
-        caps::{CapabilitiesRepr, CAP_EARLY_LOGGING, CAP_GET_FRAMEBUFFER, CAP_PADDING, CAP_SERVICE_USER},
         early_logger::EarlyLogger,
         syscall::{self, FramebufferInfo, PixelFormat},
         Handle,
@@ -62,8 +61,3 @@ fn make_framebuffer() -> Framebuffer<Bgr32> {
         stride: framebuffer_info.stride as usize,
     }
 }
-
-#[used]
-#[link_section = ".caps"]
-pub static mut CAPS: CapabilitiesRepr<4> =
-    CapabilitiesRepr::new([CAP_EARLY_LOGGING, CAP_GET_FRAMEBUFFER, CAP_SERVICE_USER, CAP_PADDING]);

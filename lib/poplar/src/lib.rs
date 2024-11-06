@@ -5,7 +5,6 @@
 #[cfg(feature = "can_alloc")]
 extern crate alloc;
 
-pub mod caps;
 #[cfg(feature = "can_alloc")]
 pub mod channel;
 #[cfg(feature = "ddk")]
