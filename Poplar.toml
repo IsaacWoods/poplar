@@ -3,6 +3,7 @@ platform = "rv64_virt"
 [x64]
 release = false
 user_tasks = [
+    "service_host user/service_host",
     "platform_bus user/platform_bus",
     # "usb_bus_xhci user/usb_bus_xhci",
     "simple_fb user/simple_fb",

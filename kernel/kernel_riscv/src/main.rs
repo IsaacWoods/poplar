@@ -107,8 +107,6 @@ pub extern "C" fn kentry(boot_info: &BootInfo) -> ! {
         kernel::ALLOCATOR.lock().init(boot_info.heap_address.mut_ptr(), boot_info.heap_size);
     }
 
-    kernel::PHYSICAL_MEMORY_MANAGER.initialize(PhysicalMemoryManager::new(boot_info));
-
     let kernel_page_table = unsafe {
         match Satp::read() {
             Satp::Sv39 { root, .. } => {
@@ -126,6 +124,13 @@ pub extern "C" fn kentry(boot_info: &BootInfo) -> ! {
     };
     KERNEL_PAGE_TABLES.initialize(RwSpinlock::new(kernel_page_table));
 
+    let mut kernel_stack_allocator = KernelStackAllocator::new(
+        kernel_map::KERNEL_STACKS_BASE,
+        kernel_map::KERNEL_STACKS_BASE + kernel_map::STACK_SLOT_SIZE * kernel_map::MAX_TASKS,
+        kernel_map::STACK_SLOT_SIZE,
+    );
+    kernel::PHYSICAL_MEMORY_MANAGER.initialize(PhysicalMemoryManager::new(boot_info, kernel_stack_allocator));
+
     interrupts::init(&fdt);
     unsafe {
         hal_riscv::hw::csr::Sie::enable_all();
@@ -135,14 +140,6 @@ pub extern "C" fn kentry(boot_info: &BootInfo) -> ! {
     if let Some(access) = pci::PciAccess::new(&fdt) {
         kernel::initialize_pci(access);
     }
-
-    let mut platform = PlatformImpl { kernel_page_table };
-
-    let mut kernel_stack_allocator = KernelStackAllocator::<PlatformImpl>::new(
-        kernel_map::KERNEL_STACKS_BASE,
-        kernel_map::KERNEL_STACKS_BASE + kernel_map::STACK_SLOT_SIZE * kernel_map::MAX_TASKS,
-        kernel_map::STACK_SLOT_SIZE,
-    );
 
     SCHEDULER.initialize(Scheduler::new());
     maitake::time::set_global_timer(&SCHEDULER.get().tasklet_scheduler.timer).unwrap();
@@ -178,16 +175,12 @@ pub extern "C" fn kentry(boot_info: &BootInfo) -> ! {
     /*
      * Create kernel objects from loaded images and schedule them.
      */
-    info!("Loading {} initial tasks to the ready queue", boot_info.loaded_images.len());
-    for image in &boot_info.loaded_images {
-        kernel::load_task(
-            SCHEDULER.get(),
-            image,
-            &kernel::PHYSICAL_MEMORY_MANAGER.get(),
-            &mut kernel_stack_allocator,
-        );
-    }
+    kernel::load_userspace(
+        SCHEDULER.get(),
+        &boot_info,
         &mut KERNEL_PAGE_TABLES.get().write(),
+        kernel::PHYSICAL_MEMORY_MANAGER.get(),
+    );
 
     /*
      * Kick the timer off. We do this just before installing the full handler because the shim

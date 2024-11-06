@@ -19,15 +19,15 @@ pub mod syscall;
 pub mod tasklets;
 
 use crate::memory::Stack;
-use alloc::{boxed::Box, sync::Arc};
+use alloc::{boxed::Box, collections::btree_map::BTreeMap, string::ToString, sync::Arc, vec::Vec};
 use hal::memory::{FrameSize, PageTable, VAddr};
-use memory::{KernelStackAllocator, PhysicalMemoryManager};
+use memory::PhysicalMemoryManager;
 use mulch::InitGuard;
-use object::{address_space::AddressSpace, memory_object::MemoryObject, task::Task, KernelObject};
+use object::{address_space::AddressSpace, memory_object::MemoryObject, task::Task};
 use pci::{PciInfo, PciInterruptConfigurator, PciResolver};
 use pci_types::ConfigRegionAccess as PciConfigRegionAccess;
 use scheduler::Scheduler;
-use seed::boot_info::LoadedImage;
+use seed::boot_info::BootInfo;
 use spinning_top::{RwSpinlock, Spinlock};
 
 #[cfg(not(test))]
@@ -88,34 +88,48 @@ pub trait Platform: Sized + 'static {
     ) -> !;
 }
 
-pub fn load_task<P>(
+pub fn load_userspace<P>(
     scheduler: &Scheduler<P>,
-    image: &LoadedImage,
+    boot_info: &BootInfo,
     kernel_page_table: &mut P::PageTable,
     allocator: &PhysicalMemoryManager,
-    kernel_stack_allocator: &mut KernelStackAllocator<P>,
 ) where
     P: Platform,
 {
-    use object::SENTINEL_KERNEL_ID;
+    use object::{task::Handles, SENTINEL_KERNEL_ID};
 
+    let bootstrap_task = boot_info.loaded_images.first().unwrap();
     let address_space = AddressSpace::new(SENTINEL_KERNEL_ID, kernel_page_table, allocator);
-    let task = Task::from_boot_info(
-        SENTINEL_KERNEL_ID,
-        address_space.clone(),
-        image,
-        allocator,
-        kernel_page_table,
-        kernel_stack_allocator,
-    )
-    .expect("Failed to load initial task");
+    let handles = Handles::new();
 
-    for segment in &image.segments {
-        let memory_object = MemoryObject::from_boot_info(task.id(), segment);
-        task.add_handle(memory_object.clone());
+    for segment in &bootstrap_task.segments {
+        // TODO: this now uses the wrong task id...
+        let memory_object = MemoryObject::from_boot_info(SENTINEL_KERNEL_ID, segment);
+        handles.add(memory_object.clone());
         address_space.map_memory_object(memory_object, segment.virtual_address, allocator).unwrap();
     }
 
+    /*
+     * Add other loaded tasks' segments to the bootstrap task and add each task to the manifest.
+     */
+    for image in &boot_info.loaded_images[1..] {
+        for segment in &image.segments {
+            // TODO: this uses the wrong task ID...
+            let memory_object = MemoryObject::from_boot_info(SENTINEL_KERNEL_ID, segment);
+            handles.add(memory_object);
+        }
+    }
+
+    let task = Task::new(
+        SENTINEL_KERNEL_ID,
+        address_space.clone(),
+        bootstrap_task.name.to_string(),
+        bootstrap_task.entry_point,
+        handles,
+        allocator,
+        kernel_page_table,
+    )
+    .expect("Failed to load bootstrapping task");
     scheduler.add_task(task);
 }
 

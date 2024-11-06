@@ -6,7 +6,7 @@ use crate::{
 use alloc::{collections::VecDeque, sync::Arc, vec::Vec};
 use hal::memory::VAddr;
 use spinning_top::{guard::SpinlockGuard, Spinlock};
-use tracing::trace;
+use tracing::{info, trace};
 
 /// The global `Scheduler` coordinates the main 'run loop' of the kernel, allocating CPU time to
 /// userspace tasks. There is one global `Scheduler` instance, which then holds a `CpuScheduler`
@@ -84,6 +84,8 @@ where
     /// diverging. It gives kernel tasklets an initial poll while we're here in the kernel, and
     /// then drops down into userspace.
     pub fn start_scheduling(&self) -> ! {
+        info!("Kernel initialization done. Dropping to userspace.");
+
         self.tasklet_scheduler.tick();
 
         let mut scheduler = self.for_this_cpu();

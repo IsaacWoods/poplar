@@ -13,10 +13,11 @@ use spinning_top::Spinlock;
 
 pub struct PhysicalMemoryManager {
     buddy: Spinlock<BuddyAllocator>,
+    pub kernel_stacks: KernelStackAllocator,
 }
 
 impl PhysicalMemoryManager {
-    pub fn new(boot_info: &BootInfo) -> PhysicalMemoryManager {
+    pub fn new(boot_info: &BootInfo, kernel_stack_allocator: KernelStackAllocator) -> PhysicalMemoryManager {
         let mut buddy_allocator = BuddyAllocator::new();
 
         for entry in &boot_info.memory_map {
@@ -25,7 +26,7 @@ impl PhysicalMemoryManager {
             }
         }
 
-        PhysicalMemoryManager { buddy: Spinlock::new(buddy_allocator) }
+        PhysicalMemoryManager { buddy: Spinlock::new(buddy_allocator), kernel_stacks: kernel_stack_allocator }
     }
 
     pub fn alloc_bytes(&self, num_bytes: Bytes) -> PAddr {

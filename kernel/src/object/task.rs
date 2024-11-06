@@ -7,10 +7,10 @@ use super::{
     KernelObjectType,
 };
 use crate::{
-    memory::{KernelStackAllocator, PhysicalMemoryManager, Stack},
+    memory::{PhysicalMemoryManager, Stack},
     Platform,
 };
-use alloc::{collections::BTreeMap, string::String, sync::Arc, vec::Vec};
+use alloc::{collections::BTreeMap, string::String, sync::Arc};
 use core::{
     cell::UnsafeCell,
     sync::atomic::{AtomicU32, Ordering},
@@ -101,33 +101,33 @@ impl<P> Task<P>
 where
     P: Platform,
 {
-    pub fn from_boot_info(
+    pub fn new(
         owner: KernelObjectId,
         address_space: Arc<AddressSpace<P>>,
-        image: &seed::boot_info::LoadedImage,
+        name: String,
+        entry_point: VAddr,
         handles: Handles,
         allocator: &PhysicalMemoryManager,
         kernel_page_table: &mut P::PageTable,
-        kernel_stack_allocator: &mut KernelStackAllocator<P>,
     ) -> Result<Arc<Task<P>>, TaskCreationError> {
         let id = alloc_kernel_object_id();
 
         // TODO: better way of getting initial stack sizes
         let task_slot =
             address_space.alloc_task_slot(0x4000, allocator).ok_or(TaskCreationError::AddressSpaceFull)?;
-        let kernel_stack = kernel_stack_allocator
-            .alloc_kernel_stack(0x4000, allocator, kernel_page_table)
+        let kernel_stack = allocator
+            .kernel_stacks
+            .alloc_kernel_stack::<P>(0x4000, allocator, kernel_page_table)
             .ok_or(TaskCreationError::NoKernelStackSlots)?;
 
         let (kernel_stack_pointer, user_stack_pointer) =
-            unsafe { P::initialize_task_stacks(&kernel_stack, &task_slot.user_stack, image.entry_point) };
-
-        let context = P::new_task_context(kernel_stack_pointer, user_stack_pointer, image.entry_point);
+            unsafe { P::initialize_task_stacks(&kernel_stack, &task_slot.user_stack, entry_point) };
+        let context = P::new_task_context(kernel_stack_pointer, user_stack_pointer, entry_point);
 
         Ok(Arc::new(Task {
             id,
             owner,
-            name: String::from(image.name.as_str()),
+            name,
             address_space,
             state: Spinlock::new(TaskState::Ready),
             user_slot: Spinlock::new(task_slot),

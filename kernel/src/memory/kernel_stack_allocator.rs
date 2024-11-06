@@ -1,36 +1,30 @@
 use super::{PhysicalMemoryManager, SlabAllocator, Stack};
 use crate::Platform;
-use core::marker::PhantomData;
 use hal::memory::VAddr;
 use spinning_top::Spinlock;
 
-pub struct KernelStackAllocator<P>
-where
-    P: Platform,
-{
+pub struct KernelStackAllocator {
     kernel_stack_slots: Spinlock<SlabAllocator>,
     slot_size: usize,
-    _phantom: PhantomData<P>,
 }
 
-impl<P> KernelStackAllocator<P>
-where
-    P: Platform,
-{
-    pub fn new(stacks_bottom: VAddr, stacks_top: VAddr, slot_size: usize) -> KernelStackAllocator<P> {
+impl KernelStackAllocator {
+    pub fn new(stacks_bottom: VAddr, stacks_top: VAddr, slot_size: usize) -> KernelStackAllocator {
         KernelStackAllocator {
             kernel_stack_slots: Spinlock::new(SlabAllocator::new(stacks_bottom, stacks_top, slot_size)),
             slot_size,
-            _phantom: PhantomData,
         }
     }
 
-    pub fn alloc_kernel_stack(
+    pub fn alloc_kernel_stack<P>(
         &self,
         initial_size: usize,
         physical_memory_manager: &PhysicalMemoryManager,
         kernel_page_table: &mut P::PageTable,
-    ) -> Option<Stack> {
+    ) -> Option<Stack>
+    where
+        P: Platform,
+    {
         use hal::memory::{Flags, PageTable};
 
         let slot_bottom = self.kernel_stack_slots.lock().alloc()?;
