@@ -44,25 +44,3 @@ pub trait KernelObject: DowncastSync {
 }
 
 impl_downcast!(sync KernelObject);
-
-// This doesn't really work because hygiene opt-out (needed for the fields) still isn't implemented :(
-// macro kernel_object {
-//     ($(#[$outer_meta:meta])*
-//     struct $name:ident {
-//         $($(#[$field_meta:meta])*$vis:vis $field:ident: $type:ty),*$(,)?
-//     }
-// ) => {
-//     $(#[$outer_meta])*
-//     pub struct $name {
-//         pub id: $crate::object::KernelObjectId,
-//         pub owner: $crate::object::KernelObjectId,
-//         $($(#[$field_meta])* $vis $field: $type),*
-//     }
-
-//     impl $crate::object::KernelObject for $name {
-//         fn id(&self) -> $crate::object::KernelObjectId {
-//             self.id
-//         }
-//     }
-// }
-// }
