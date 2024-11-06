@@ -522,49 +522,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "test1"
-version = "0.1.0"
-dependencies = [
- "linked_list_allocator",
- "log",
- "poplar",
-]
-
-[[package]]
-name = "test2"
-version = "0.1.0"
-dependencies = [
- "linked_list_allocator",
- "log",
- "poplar",
-]
-
-[[package]]
-name = "test_pf"
-version = "0.1.0"
-dependencies = [
- "linked_list_allocator",
- "log",
- "poplar",
-]
-
-[[package]]
-name = "test_syscalls"
-version = "0.1.0"
-dependencies = [
- "poplar",
-]
-
-[[package]]
-name = "test_tls"
-version = "0.1.0"
-dependencies = [
- "linked_list_allocator",
- "log",
- "poplar",
-]
-
-[[package]]
 name = "thingbuf"
 version = "0.1.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"

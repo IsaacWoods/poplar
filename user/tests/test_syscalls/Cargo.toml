@@ -1,8 +1,0 @@
-[package]
-name = "test_syscalls"
-version = "0.1.0"
-authors = ["Isaac Woods"]
-edition = "2021"
-
-[dependencies]
-poplar = { path = "../../../lib/poplar", default-features = false }

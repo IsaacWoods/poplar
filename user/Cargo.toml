@@ -4,16 +4,12 @@ members = [
     "echo",
     "platform_bus",
     "usb_bus_xhci",
-    "tests/test_tls",
-    "tests/test_pf",
-    "tests/test1",
-    "tests/test2",
-    "tests/test_syscalls",
     "hello_world",
     "usb_bus_ehci",
     "usb_hid",
     "virtio_gpu",
-    "fb_console", "service_host",
+    "fb_console",
+    "service_host",
 ]
 resolver = "2"
 
