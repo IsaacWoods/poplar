@@ -142,7 +142,7 @@ where
     }
 
     let (info, memory_object) = crate::FRAMEBUFFER.try_get().ok_or(GetFramebufferError::NoFramebufferCreated)?;
-    let handle = task.add_handle(memory_object.clone());
+    let handle = task.handles.add(memory_object.clone());
 
     UserPointer::new(info_address as *mut FramebufferInfo, true)
         .validate_write(*info)
@@ -188,7 +188,7 @@ where
             .map_err(|()| CreateMemoryObjectError::InvalidPhysicalAddressPointer)?;
     }
 
-    Ok(task.add_handle(memory_object))
+    Ok(task.handles.add(memory_object))
 }
 
 fn map_memory_object<P>(
@@ -208,10 +208,8 @@ where
 
     let memory_object = task
         .handles
-        .read()
-        .get(&memory_object_handle)
+        .get(memory_object_handle)
         .ok_or(MapMemoryObjectError::InvalidMemoryObjectHandle)?
-        .clone()
         .downcast_arc::<MemoryObject>()
         .ok()
         .ok_or(MapMemoryObjectError::InvalidMemoryObjectHandle)?;
@@ -239,10 +237,8 @@ where
         )?;
     } else {
         task.handles
-            .read()
-            .get(&memory_object_handle)
+            .get(address_space_handle)
             .ok_or(MapMemoryObjectError::InvalidAddressSpaceHandle)?
-            .clone()
             .downcast_arc::<AddressSpace<P>>()
             .ok()
             .ok_or(MapMemoryObjectError::InvalidAddressSpaceHandle)?
@@ -266,8 +262,8 @@ where
     P: Platform,
 {
     let (end_a, end_b) = ChannelEnd::new_channel(task.id());
-    let end_a_handle = task.add_handle(end_a);
-    let end_b_handle = task.add_handle(end_b);
+    let end_a_handle = task.handles.add(end_a);
+    let end_b_handle = task.handles.add(end_b);
 
     let mut other_end_ptr = UserPointer::new(other_end_address as *mut Handle, true);
     other_end_ptr.validate_write(end_b_handle).map_err(|()| CreateChannelError::InvalidHandleAddress)?;
@@ -313,7 +309,7 @@ where
     let handle_objects = {
         let mut arr = [const { None }; CHANNEL_MAX_NUM_HANDLES];
         for (i, handle) in handles.iter().enumerate() {
-            arr[i] = match task.handles.read().get(handle) {
+            arr[i] = match task.handles.get(*handle) {
                 Some(object) => Some(object.clone()),
                 None => return Err(SendMessageError::InvalidTransferredHandle),
             };
@@ -321,16 +317,14 @@ where
             /*
              * We're transferring the handle's object, so we remove the handle to it from the sending task.
              */
-            task.handles.write().remove(&handle);
+            task.handles.remove(*handle);
         }
         arr
     };
 
     task.handles
-        .read()
-        .get(&channel_handle)
+        .get(channel_handle)
         .ok_or(SendMessageError::InvalidChannelHandle)?
-        .clone()
         .downcast_arc::<ChannelEnd>()
         .ok()
         .ok_or(SendMessageError::NotAChannel)?
@@ -352,10 +346,8 @@ where
 
     let channel = task
         .handles
-        .read()
-        .get(&channel_handle)
+        .get(channel_handle)
         .ok_or(GetMessageError::InvalidChannelHandle)?
-        .clone()
         .downcast_arc::<ChannelEnd>()
         .ok()
         .ok_or(GetMessageError::NotAChannel)?;
@@ -386,7 +378,7 @@ where
                 Err(()) => return Err((message, GetMessageError::HandlesAddressInvalid)),
             };
             for i in 0..num_handles {
-                handles_buffer[i] = task.add_handle(message.handle_objects[i].as_ref().unwrap().clone());
+                handles_buffer[i] = task.handles.add(message.handle_objects[i].as_ref().unwrap().clone());
             }
         }
 
@@ -425,7 +417,7 @@ where
     let channel = ChannelEnd::new_kernel_channel(task.id());
     SERVICE_MAP.lock().insert(task.name.clone() + "." + service_name, channel.clone());
 
-    Ok(task.add_handle(channel))
+    Ok(task.handles.add(channel))
 }
 
 fn subscribe_to_service<P>(
@@ -468,7 +460,7 @@ where
         register_channel.add_message(Message { bytes: [ptah::make_handle_slot(0)].to_vec(), handle_objects });
 
         // Return the user's end of the new channel to it
-        Ok(task.add_handle(user_end))
+        Ok(task.handles.add(user_end))
     } else {
         Err(SubscribeToServiceError::NoServiceWithThatName)
     }
@@ -504,7 +496,7 @@ where
                 .map_err(|()| PciGetInfoError::BufferPointerInvalid)?;
 
             for (i, (&address, device)) in pci_info.devices.iter().enumerate() {
-                let interrupt_handle = device.interrupt_event.clone().map(|interrupt| task.add_handle(interrupt));
+                let interrupt_handle = device.interrupt_event.clone().map(|interrupt| task.handles.add(interrupt));
 
                 let mut device_descriptor = poplar::ddk::pci::PciDeviceInfo {
                     address,
@@ -534,7 +526,7 @@ where
                                 size as usize,
                                 flags,
                             );
-                            let handle = task.add_handle(memory_object);
+                            let handle = task.handles.add(memory_object);
                             device_descriptor.bars[i] =
                                 Some(poplar::ddk::pci::Bar::Memory32 { memory_object: handle, size });
                         }
@@ -552,7 +544,7 @@ where
                                 size as usize,
                                 flags,
                             );
-                            let handle = task.add_handle(memory_object);
+                            let handle = task.handles.add(memory_object);
                             device_descriptor.bars[i] =
                                 Some(poplar::ddk::pci::Bar::Memory64 { memory_object: handle, size });
                         }
@@ -588,10 +580,8 @@ where
     let block = block != 0;
     let event = task
         .handles
-        .read()
-        .get(&event_handle)
+        .get(event_handle)
         .ok_or(WaitForEventError::InvalidHandle)?
-        .clone()
         .downcast_arc::<Event>()
         .ok()
         .ok_or(WaitForEventError::NotAnEvent)?;
@@ -620,7 +610,7 @@ where
     P: Platform,
 {
     let object_handle = Handle::try_from(object_handle).map_err(|_| PollInterestError::InvalidHandle)?;
-    let object = task.handles.read().get(&object_handle).ok_or(PollInterestError::InvalidHandle)?.clone();
+    let object = task.handles.get(object_handle).ok_or(PollInterestError::InvalidHandle)?;
 
     let interesting = match object.typ() {
         KernelObjectType::Channel => {

@@ -87,8 +87,7 @@ where
 
     pub context: UnsafeCell<P::TaskContext>,
 
-    pub handles: RwSpinlock<BTreeMap<Handle, Arc<dyn KernelObject>>>,
-    next_handle: AtomicU32,
+    pub handles: Handles,
 }
 
 /*
@@ -107,6 +106,7 @@ where
         owner: KernelObjectId,
         address_space: Arc<AddressSpace<P>>,
         image: &seed::boot_info::LoadedImage,
+        handles: Handles,
         allocator: &PhysicalMemoryManager,
         kernel_page_table: &mut P::PageTable,
         kernel_stack_allocator: &mut KernelStackAllocator<P>,
@@ -140,16 +140,8 @@ where
 
             context: UnsafeCell::new(context),
 
-            handles: RwSpinlock::new(BTreeMap::new()),
-            // XXX: 0 is a special handle value, so start at 1
-            next_handle: AtomicU32::new(1),
+            handles,
         }))
-    }
-
-    pub fn add_handle(&self, object: Arc<dyn KernelObject>) -> Handle {
-        let handle_num = self.next_handle.fetch_add(1, Ordering::Relaxed);
-        self.handles.write().insert(Handle(handle_num), object);
-        Handle(handle_num)
     }
 }
 
@@ -163,6 +155,35 @@ where
 
     fn typ(&self) -> KernelObjectType {
         KernelObjectType::Task
+    }
+}
+
+pub struct Handles {
+    handles: RwSpinlock<BTreeMap<Handle, Arc<dyn KernelObject>>>,
+    next: AtomicU32,
+}
+
+impl Handles {
+    pub fn new() -> Handles {
+        Handles {
+            handles: RwSpinlock::new(BTreeMap::new()),
+            // XXX: 0 is a special handle value, so start at 1
+            next: AtomicU32::new(1),
+        }
+    }
+
+    pub fn add(&self, object: Arc<dyn KernelObject>) -> Handle {
+        let handle_num = self.next.fetch_add(1, Ordering::Relaxed);
+        self.handles.write().insert(Handle(handle_num), object);
+        Handle(handle_num)
+    }
+
+    pub fn remove(&self, handle: Handle) {
+        self.handles.write().remove(&handle);
+    }
+
+    pub fn get(&self, handle: Handle) -> Option<Arc<dyn KernelObject>> {
+        self.handles.read().get(&handle).cloned()
     }
 }
 
