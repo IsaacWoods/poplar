@@ -122,7 +122,7 @@ where
     P: Platform,
 {
     // Check if the message is too long
-    if str_length > 4096 {
+    if str_length > 8192 {
         return Err(EarlyLogError::MessageTooLong);
     }
 
