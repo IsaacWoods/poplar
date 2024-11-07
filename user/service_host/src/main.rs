@@ -23,6 +23,13 @@
 use log::info;
 use std::poplar::{early_logger::EarlyLogger, manifest::BootstrapManifest, Handle};
 
+pub struct Service {
+    name: String,
+    address_space: Handle,
+    segments: Vec<(Handle, usize)>,
+    task: Handle,
+}
+
 fn main() {
     log::set_logger(&EarlyLogger).unwrap();
     log::set_max_level(log::LevelFilter::Trace);
@@ -35,4 +42,28 @@ fn main() {
             unsafe { core::slice::from_raw_parts((MANIFEST_ADDRESS + 4) as *const u8, manifest_len as usize) };
         ptah::from_wire(data, &[]).unwrap()
     };
+
+    let mut services = Vec::new();
+
+    for service in &manifest.boot_services {
+        info!("Spawning service '{}'", service.name);
+        let address_space = std::poplar::syscall::create_address_space().unwrap();
+        let mut segments = Vec::new();
+        for (map_at, memory_object) in &service.segments {
+            let memory_object = Handle(*memory_object);
+            unsafe {
+                std::poplar::syscall::map_memory_object(
+                    memory_object,
+                    address_space,
+                    Some(*map_at),
+                    0x0 as *mut _,
+                )
+                .unwrap();
+            }
+            segments.push((memory_object, *map_at));
+        }
+
+        let task = std::poplar::syscall::spawn_task(&service.name, address_space, service.entry_point).unwrap();
+        services.push(Service { name: service.name.clone(), address_space, segments, task });
+    }
 }

@@ -13,7 +13,11 @@ use crate::{
     scheduler::Scheduler,
     Platform,
 };
-use alloc::{collections::BTreeMap, string::String, sync::Arc};
+use alloc::{
+    collections::BTreeMap,
+    string::{String, ToString},
+    sync::Arc,
+};
 use bit_field::BitField;
 use core::{convert::TryFrom, sync::atomic::Ordering};
 use hal::memory::{Flags, PAddr, VAddr};
@@ -34,6 +38,7 @@ use poplar::{
         PollInterestError,
         RegisterServiceError,
         SendMessageError,
+        SpawnTaskError,
         SubscribeToServiceError,
         WaitForEventError,
         CHANNEL_MAX_NUM_HANDLES,
@@ -92,6 +97,9 @@ where
         syscall::SYSCALL_POLL_INTEREST => status_with_payload_to_syscall_repr(poll_interest(&task, a)),
         syscall::SYSCALL_CREATE_ADDRESS_SPACE => {
             handle_to_syscall_repr(create_address_space(&task, &mut kernel_page_tables.write()))
+        }
+        syscall::SYSCALL_SPAWN_TASK => {
+            handle_to_syscall_repr(spawn_task(&task, a, b, c, d, scheduler, &mut kernel_page_tables.write()))
         }
 
         _ => {
@@ -615,4 +623,46 @@ where
     let address_space =
         AddressSpace::<P>::new(task.id(), kernel_page_tables, crate::PHYSICAL_MEMORY_MANAGER.get());
     Ok(task.handles.add(address_space))
+}
+
+pub fn spawn_task<P>(
+    task: &Arc<Task<P>>,
+    name_len: usize,
+    name_address: usize,
+    address_space: usize,
+    entry_point: usize,
+    scheduler: &Scheduler<P>,
+    kernel_page_tables: &mut P::PageTable,
+) -> Result<Handle, SpawnTaskError>
+where
+    P: Platform,
+{
+    use crate::object::task::Handles;
+
+    let name = UserString::new(name_address as *mut u8, name_len)
+        .validate()
+        .map_err(|()| SpawnTaskError::InvalidTaskName)?;
+    let address_space_handle = Handle::try_from(address_space).map_err(|_| SpawnTaskError::NotAnAddressSpace)?;
+    let address_space = task
+        .handles
+        .get(address_space_handle)
+        .ok_or(SpawnTaskError::NotAnAddressSpace)?
+        .downcast_arc::<AddressSpace<P>>()
+        .ok()
+        .ok_or(SpawnTaskError::NotAnAddressSpace)?;
+
+    let pmm = crate::PHYSICAL_MEMORY_MANAGER.get();
+    let new_task = Task::new(
+        task.id(),
+        address_space.clone(),
+        name.to_string(),
+        VAddr::new(entry_point),
+        Handles::new(),
+        &pmm,
+        kernel_page_tables,
+    )
+    .expect("Failed to create task");
+    scheduler.add_task(new_task.clone());
+
+    Ok(task.handles.add(new_task))
 }

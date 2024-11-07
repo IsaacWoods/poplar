@@ -37,7 +37,8 @@ pub const SYSCALL_SUBSCRIBE_TO_SERVICE: usize = 10;
 pub const SYSCALL_PCI_GET_INFO: usize = 11;
 pub const SYSCALL_WAIT_FOR_EVENT: usize = 12;
 pub const SYSCALL_POLL_INTEREST: usize = 13;
-pub const SYSCALL_CREATE_ADDRESS_SPACE: usize = 15;
+pub const SYSCALL_CREATE_ADDRESS_SPACE: usize = 14;
+pub const SYSCALL_SPAWN_TASK: usize = 15;
 
 pub fn yield_to_kernel() {
     unsafe {
@@ -241,4 +242,21 @@ define_error_type!(CreateAddressSpaceError {});
 
 pub fn create_address_space() -> Result<Handle, CreateAddressSpaceError> {
     handle_from_syscall_repr(unsafe { raw::syscall0(SYSCALL_CREATE_ADDRESS_SPACE) })
+}
+
+define_error_type!(SpawnTaskError {
+    InvalidTaskName => 1,
+    NotAnAddressSpace => 2,
+});
+
+pub fn spawn_task(task_name: &str, address_space: Handle, entry_point: usize) -> Result<Handle, SpawnTaskError> {
+    handle_from_syscall_repr(unsafe {
+        raw::syscall4(
+            SYSCALL_SPAWN_TASK,
+            task_name.len(),
+            task_name as *const str as *const u8 as usize,
+            address_space.0 as usize,
+            entry_point,
+        )
+    })
 }
