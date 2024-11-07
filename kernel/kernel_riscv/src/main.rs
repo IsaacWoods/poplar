@@ -16,7 +16,7 @@ mod task;
 mod trap;
 
 use alloc::string::String;
-use hal::memory::{Frame, VAddr};
+use hal::memory::{Frame, PAddr, VAddr};
 use hal_riscv::{
     hw::csr::Satp,
     platform::{kernel_map, PageTableImpl},
@@ -74,6 +74,13 @@ impl Platform for PlatformImpl {
         _user_stack_pointer: VAddr,
     ) -> ! {
         task::drop_into_userspace(context, kernel_stack_pointer)
+    }
+
+    unsafe fn write_to_phys_memory(address: PAddr, data: &[u8]) {
+        let virt: *mut u8 = hal_riscv::platform::kernel_map::physical_to_virtual(address).mut_ptr();
+        unsafe {
+            core::ptr::copy(data.as_ptr(), virt, data.len());
+        }
     }
 }
 

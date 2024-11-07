@@ -21,10 +21,18 @@
  */
 
 use log::info;
-use std::poplar::early_logger::EarlyLogger;
+use std::poplar::{early_logger::EarlyLogger, manifest::BootstrapManifest, Handle};
 
 fn main() {
     log::set_logger(&EarlyLogger).unwrap();
     log::set_max_level(log::LevelFilter::Trace);
     info!("ServiceHost is running!");
+
+    let manifest: BootstrapManifest = {
+        const MANIFEST_ADDRESS: usize = 0x20000000;
+        let manifest_len = unsafe { core::ptr::read(MANIFEST_ADDRESS as *const u32) };
+        let data =
+            unsafe { core::slice::from_raw_parts((MANIFEST_ADDRESS + 4) as *const u8, manifest_len as usize) };
+        ptah::from_wire(data, &[]).unwrap()
+    };
 }

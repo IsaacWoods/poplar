@@ -19,8 +19,8 @@ pub mod syscall;
 pub mod tasklets;
 
 use crate::memory::Stack;
-use alloc::{boxed::Box, collections::btree_map::BTreeMap, string::ToString, sync::Arc, vec::Vec};
-use hal::memory::{FrameSize, PageTable, VAddr};
+use alloc::{boxed::Box, string::ToString, sync::Arc, vec::Vec};
+use hal::memory::{FrameSize, PAddr, PageTable, VAddr};
 use memory::PhysicalMemoryManager;
 use mulch::InitGuard;
 use object::{address_space::AddressSpace, memory_object::MemoryObject, task::Task};
@@ -86,6 +86,11 @@ pub trait Platform: Sized + 'static {
         kernel_stack_pointer: VAddr,
         user_stack_pointer: VAddr,
     ) -> !;
+
+    // TODO: this should not exist long-term. I think the common-kernel PMM should know how to fill
+    // regions of physical memory using the direct-physical-memory-map, but this can be done with
+    // the revamp of the PMM.
+    unsafe fn write_to_phys_memory(address: PAddr, data: &[u8]);
 }
 
 pub fn load_userspace<P>(
@@ -96,7 +101,13 @@ pub fn load_userspace<P>(
 ) where
     P: Platform,
 {
+    use hal::memory::Flags;
     use object::{task::Handles, SENTINEL_KERNEL_ID};
+    use poplar::manifest::BootstrapManifest;
+
+    if boot_info.loaded_images.is_empty() {
+        return;
+    }
 
     let bootstrap_task = boot_info.loaded_images.first().unwrap();
     let address_space = AddressSpace::new(SENTINEL_KERNEL_ID, kernel_page_table, allocator);
@@ -112,13 +123,41 @@ pub fn load_userspace<P>(
     /*
      * Add other loaded tasks' segments to the bootstrap task and add each task to the manifest.
      */
+    let mut manifest =
+        BootstrapManifest { task_name: bootstrap_task.name.as_str().to_string(), boot_services: Vec::new() };
     for image in &boot_info.loaded_images[1..] {
+        let mut service = poplar::manifest::BootService {
+            name: image.name.as_str().to_string(),
+            entry_point: usize::from(image.entry_point),
+            segments: Vec::new(),
+        };
         for segment in &image.segments {
             // TODO: this uses the wrong task ID...
             let memory_object = MemoryObject::from_boot_info(SENTINEL_KERNEL_ID, segment);
-            handles.add(memory_object);
+            let handle = handles.add(memory_object);
+            service.segments.push((usize::from(segment.virtual_address), handle.0));
         }
+        manifest.boot_services.push(service);
     }
+    let mut buffer = Vec::new();
+    let bytes_written = ptah::to_wire(&manifest, &mut buffer).unwrap();
+
+    const MANIFEST_ADDRESS: VAddr = VAddr::new(0x20000000);
+    let mem_object_len = mulch::math::align_up(bytes_written, 0x1000);
+    let manifest_object = {
+        let phys = allocator.alloc_bytes(mem_object_len);
+        unsafe {
+            P::write_to_phys_memory(phys, &(bytes_written as u32).to_le_bytes());
+            P::write_to_phys_memory(phys + 4, &buffer);
+        }
+        MemoryObject::new(
+            SENTINEL_KERNEL_ID,
+            phys,
+            mem_object_len,
+            Flags { user_accessible: true, ..Default::default() },
+        )
+    };
+    address_space.map_memory_object(manifest_object, MANIFEST_ADDRESS, allocator).unwrap();
 
     let task = Task::new(
         SENTINEL_KERNEL_ID,
