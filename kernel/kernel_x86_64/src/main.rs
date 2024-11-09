@@ -96,6 +96,13 @@ impl Platform for PlatformImpl {
         per_cpu.set_user_stack_pointer(user_stack_pointer);
         task::drop_into_userspace()
     }
+
+    unsafe fn write_to_phys_memory(address: PAddr, data: &[u8]) {
+        let virt: *mut u8 = hal_x86_64::kernel_map::physical_to_virtual(address).mut_ptr();
+        unsafe {
+            core::ptr::copy(data.as_ptr(), virt, data.len());
+        }
+    }
 }
 
 pub static SCHEDULER: InitGuard<Scheduler<PlatformImpl>> = InitGuard::uninit();
