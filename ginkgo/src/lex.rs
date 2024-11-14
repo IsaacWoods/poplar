@@ -1,4 +1,5 @@
 use std::str::Chars;
+use unicode_xid::UnicodeXID;
 
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Debug)]
 pub enum TokenType {
@@ -75,8 +76,6 @@ pub enum TokenValue<'s> {
 
 pub struct Lex<'s> {
     source: &'s str,
-    // TODO: I wonder if we, in a UTF8-aware world, want to iterate over grapheme clusters instead
-    // (this may well be a fair bit slower??)
     stream: PeekingIter<Chars<'s>>,
     offset: usize,
 
@@ -105,8 +104,8 @@ impl<'s> Lex<'s> {
 
     pub fn advance(&mut self) -> Option<char> {
         let c = self.stream.next()?;
-        self.offset += 1;
-        self.current_length += 1;
+        self.offset += c.len_utf8();
+        self.current_length += c.len_utf8();
         Some(c)
     }
 
@@ -185,7 +184,7 @@ impl<'s> Iterator for Lex<'s> {
                     _ => return Some(self.produce(TokenType::Pipe)),
                 },
 
-                // TODO: parse comments, both line and block here
+                // TODO: parse comments, both line and block here, including handling of nested comments
                 '/' => return Some(self.produce(TokenType::Slash)),
 
                 /*
@@ -199,6 +198,8 @@ impl<'s> Iterator for Lex<'s> {
                 c if c.is_digit(10) => {
                     // TODO: parse hex
                     // TODO: support octal?
+                    // TODO: scientfic notation
+                    // TODO: separation with underscore between digits
 
                     while self.stream.peek().map_or(false, |c| c.is_digit(10)) {
                         self.advance();
@@ -239,12 +240,13 @@ impl<'s> Iterator for Lex<'s> {
                 /*
                  * Parse keywords and identifiers.
                  */
-                c if c.is_alphanumeric() => {
+                // TODO: identifiers should be able to start with underscores, but an underscore on its own should not be lexed as an identifier
+                c if c.is_xid_start() || c == '_' => {
                     /*
                      * Do a maximal munch to make sure identifiers that start with reserved
                      * keywords are not mistaken for those keywords.
                      */
-                    while self.stream.peek().map_or(false, |c| c.is_alphanumeric() || c == '_') {
+                    while self.stream.peek().map_or(false, |c| c.is_xid_continue()) {
                         self.advance()?;
                     }
 
@@ -334,4 +336,68 @@ where
             self.inner.next()
         }
     }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn test_tokens(source: &str, tokens: &[TokenType]) {
+        let mut lex = Lex::new(source);
+
+        for token_to_match in tokens.into_iter() {
+            match lex.next() {
+                Some(token) if token.typ == *token_to_match => (),
+                Some(other) => panic!("Got wrong type of token: {:?} => {:?}", other, lex.token_value(other)),
+                None => panic!(),
+            }
+        }
+    }
+
+    #[test]
+    fn keywords() {
+        test_tokens(
+            "let if else for loop while true false return fn class self",
+            &[
+                TokenType::Let,
+                TokenType::If,
+                TokenType::Else,
+                TokenType::For,
+                TokenType::Loop,
+                TokenType::While,
+                TokenType::True,
+                TokenType::False,
+                TokenType::Return,
+                TokenType::Fn,
+                TokenType::Class,
+                TokenType::GinkgoSelf,
+            ],
+        );
+    }
+
+    #[test]
+    fn identifiers() {
+        fn test_identifier(ident: &str) {
+            let mut lex = Lex::new(ident);
+            let token = lex.next().expect("Failed to lex identifier correctly!");
+            assert!(lex.next().is_none());
+
+            match lex.token_value(token) {
+                Some(TokenValue::Identifier(lexed_ident)) => assert_eq!(ident, lexed_ident),
+                _ => panic!("Failed to lex identifier correctly!"),
+            }
+        }
+
+        test_identifier("foo");
+        test_identifier("bar73");
+        test_identifier("with_some_underscores");
+        test_identifier("do_n0t_nam3_th1ngs_l1k3_thi5");
+        test_identifier("Москва");
+        test_identifier("東京");
+    }
+
+    // TODO: test numbers - hex literals, octal literals, binary literals, scientific notation, underscore separation
+    // TODO: test strings
+    // TODO: test operators
+    // TODO: test comments
 }

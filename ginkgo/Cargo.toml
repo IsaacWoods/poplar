@@ -18,6 +18,7 @@ required-features = ["rustyline"]
 [dependencies]
 std = { path = "../lib/std", optional = true }
 rustyline = { version = "14.0.0", features = ["derive"], optional = true }
+unicode-xid = "0.2.6"
 
 [features]
 default = ["rustyline"]
