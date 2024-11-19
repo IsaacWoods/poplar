@@ -78,8 +78,10 @@ fn main() -> io::Result<()> {
                 }
 
                 for statement in stmts {
-                    if let Some(result) = interpreter.eval_stmt(statement) {
-                        println!("Result: {}", result);
+                    match interpreter.eval_stmt(statement) {
+                        ginkgo::interpreter::ControlFlow::None => (),
+                        ginkgo::interpreter::ControlFlow::Yield(value) => println!("Result: {:?}", value),
+                        ginkgo::interpreter::ControlFlow::Return(value) => println!("Result: {:?}", value),
                     }
                 }
             }

@@ -40,6 +40,10 @@ impl Stmt {
     pub fn new_while(condition: Expr, body: Stmt) -> Stmt {
         Stmt { typ: StmtTyp::While { condition, body: Box::new(body) } }
     }
+
+    pub fn new_return(value: Expr) -> Stmt {
+        Stmt { typ: StmtTyp::Return { value } }
+    }
 }
 
 #[derive(Clone, PartialEq, Debug)]
@@ -72,6 +76,9 @@ pub enum StmtTyp {
     While {
         condition: Expr,
         body: Box<Stmt>,
+    },
+    Return {
+        value: Expr,
     },
 }
 
@@ -320,6 +327,9 @@ impl BindingResolver {
             StmtTyp::While { ref mut condition, ref mut body } => {
                 self.resolve_bindings_expr(condition);
                 self.resolve_bindings(body);
+            }
+            StmtTyp::Return { ref mut value } => {
+                self.resolve_bindings_expr(value);
             }
         }
     }

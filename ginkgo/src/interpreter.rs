@@ -66,6 +66,36 @@ pub struct Interpreter<'a> {
 unsafe impl Send for Interpreter<'_> {}
 unsafe impl Sync for Interpreter<'_> {}
 
+#[derive(Clone, PartialEq, Debug)]
+pub enum ControlFlow {
+    None,
+    Yield(Value),
+    Return(Value),
+}
+
+impl core::ops::Try for ControlFlow {
+    type Output = Value;
+    type Residual = ControlFlow;
+
+    fn from_output(output: Self::Output) -> Self {
+        todo!()
+    }
+
+    fn branch(self) -> std::ops::ControlFlow<Self::Residual, Self::Output> {
+        match self {
+            ControlFlow::None => std::ops::ControlFlow::Continue(Value::Unit),
+            ControlFlow::Yield(value) => std::ops::ControlFlow::Continue(value),
+            ControlFlow::Return(value) => std::ops::ControlFlow::Break(ControlFlow::Return(value)),
+        }
+    }
+}
+
+impl core::ops::FromResidual for ControlFlow {
+    fn from_residual(residual: <Self as std::ops::Try>::Residual) -> Self {
+        residual
+    }
+}
+
 impl<'a> Interpreter<'a> {
     pub fn new() -> Interpreter<'a> {
         let globals = Environment::new();
@@ -93,24 +123,30 @@ impl<'a> Interpreter<'a> {
         self.globals.borrow_mut().define(name.to_string(), value);
     }
 
-    pub fn eval_block(&mut self, statements: Vec<Stmt>, environment: Arc<RefCell<Environment>>) -> Option<Value> {
+    pub fn eval_block(&mut self, statements: Vec<Stmt>, environment: Arc<RefCell<Environment>>) -> ControlFlow {
         let previous_environment = mem::replace(&mut self.environment, environment);
 
         let mut statements = statements.into_iter();
-        let mut result = None;
+        let mut result = ControlFlow::Yield(Value::Unit);
         while let Some(next) = statements.next() {
-            if let Some(value) = self.eval_stmt(next) {
-                /*
-                 * Only the last statement is allowed to return a value. If there are more
-                 * statements after this one, issue an error.
-                 */
-                if !statements.next().is_none() {
-                    // TODO: runtime error instead of panic
-                    panic!("Non-terminated statement is not last. Value = {:#?}", value);
+            match self.eval_stmt(next) {
+                ControlFlow::None => (),
+                ControlFlow::Yield(value) => {
+                    /*
+                     * Only the last statement is allowed to return a value. If there are more
+                     * statements after this one, issue an error.
+                     */
+                    if !statements.next().is_none() {
+                        // TODO: runtime error instead of panic
+                        panic!("Non-terminated statement is not last. Value = {:#?}", value);
+                    }
+                    result = ControlFlow::Yield(value);
+                    break;
                 }
-
-                result = Some(value);
-                break;
+                ControlFlow::Return(value) => {
+                    result = ControlFlow::Return(value);
+                    break;
+                }
             }
         }
 
@@ -118,26 +154,26 @@ impl<'a> Interpreter<'a> {
         result
     }
 
-    pub fn eval_stmt(&mut self, stmt: Stmt) -> Option<Value> {
+    pub fn eval_stmt(&mut self, stmt: Stmt) -> ControlFlow {
         match stmt.typ {
             StmtTyp::Expression(expr) => {
-                let result = self.eval_expr(expr);
-                Some(result)
+                let result = self.eval_expr(expr)?;
+                ControlFlow::Yield(result)
             }
             StmtTyp::TerminatedExpression(expr) => {
-                self.eval_expr(expr);
-                None
+                self.eval_expr(expr)?;
+                ControlFlow::None
             }
             StmtTyp::Let { name, expression } => {
-                let value = self.eval_expr(expression);
+                let value = self.eval_expr(expression)?;
                 self.environment.borrow_mut().define(name, value);
-                None
+                ControlFlow::None
             }
             StmtTyp::FnDef { name, takes_self, params, body } => {
                 self.environment
                     .borrow_mut()
                     .define(name, Value::Function { expect_receiver: takes_self, receiver: None, params, body });
-                None
+                ControlFlow::None
             }
             StmtTyp::ClassDef { name, defs } => {
                 let defs = defs
@@ -157,19 +193,19 @@ impl<'a> Interpreter<'a> {
                 let index = self.classes.len();
                 self.classes.push(Class { name: name.clone(), defs });
                 self.environment.borrow_mut().define(name, Value::Class(index));
-                None
+                ControlFlow::None
             }
             StmtTyp::Block(statements) => {
                 self.eval_block(statements, Environment::new_with_parent(self.environment.clone()))
             }
             StmtTyp::If { condition, then_block, else_block } => {
-                if let Value::Bool(truthy) = self.eval_expr(condition) {
+                if let Value::Bool(truthy) = self.eval_expr(condition)? {
                     if truthy {
                         self.eval_stmt(*then_block)
                     } else if let Some(else_block) = else_block {
                         self.eval_stmt(*else_block)
                     } else {
-                        None
+                        ControlFlow::None
                     }
                 } else {
                     panic!("Condition of `if` must be a bool");
@@ -177,47 +213,48 @@ impl<'a> Interpreter<'a> {
             }
             StmtTyp::While { condition, body } => {
                 let body = *body;
-                while let Value::Bool(truthy) = self.eval_expr(condition.clone())
+                while let Value::Bool(truthy) = self.eval_expr(condition.clone())?
                     && truthy
                 {
                     self.eval_stmt(body.clone());
                 }
-                None
+                ControlFlow::None
             }
+            StmtTyp::Return { value } => ControlFlow::Return(self.eval_expr(value)?),
         }
     }
 
-    pub fn eval_expr(&mut self, expr: Expr) -> Value {
+    pub fn eval_expr(&mut self, expr: Expr) -> ControlFlow {
         match expr.typ {
-            ExprTyp::Literal(value) => value.clone(),
+            ExprTyp::Literal(value) => ControlFlow::Yield(value.clone()),
             ExprTyp::Identifier { name, resolution } => {
                 if let Some(value) = self.resolve_binding(&name, resolution) {
-                    value.clone()
+                    ControlFlow::Yield(value.clone())
                 } else {
                     panic!("Failed to get value for binding called '{}'. Either it does not exist (or dies before a function referencing it, bc we don't do any borrow checking :))", name);
                 }
             }
             ExprTyp::GinkgoSelf { resolution } => {
                 if let Some(value) = self.resolve_binding("self", resolution) {
-                    value.clone()
+                    ControlFlow::Yield(value.clone())
                 } else {
                     panic!("Failed to get `self`");
                 }
             }
             ExprTyp::UnaryOp { op, operand } => {
-                let operand = self.eval_expr(*operand);
+                let operand = self.eval_expr(*operand)?;
                 match op {
-                    UnaryOp::Plus => operand,
+                    UnaryOp::Plus => ControlFlow::Yield(operand),
                     UnaryOp::Negate => {
                         if let Value::Integer(value) = operand {
-                            Value::Integer(-value)
+                            ControlFlow::Yield(Value::Integer(-value))
                         } else {
                             panic!()
                         }
                     }
                     UnaryOp::Not => {
                         if let Value::Bool(value) = operand {
-                            Value::Bool(!value)
+                            ControlFlow::Yield(Value::Bool(!value))
                         } else {
                             panic!()
                         }
@@ -225,14 +262,14 @@ impl<'a> Interpreter<'a> {
                 }
             }
             ExprTyp::BinaryOp { op, left, right } => {
-                let left = self.eval_expr(*left);
-                let right = self.eval_expr(*right);
+                let left = self.eval_expr(*left)?;
+                let right = self.eval_expr(*right)?;
                 match op {
                     BinaryOp::Add => {
                         if let Value::Integer(left) = left
                             && let Value::Integer(right) = right
                         {
-                            Value::Integer(left + right)
+                            ControlFlow::Yield(Value::Integer(left + right))
                         } else {
                             panic!();
                         }
@@ -241,7 +278,7 @@ impl<'a> Interpreter<'a> {
                         if let Value::Integer(left) = left
                             && let Value::Integer(right) = right
                         {
-                            Value::Integer(left - right)
+                            ControlFlow::Yield(Value::Integer(left - right))
                         } else {
                             panic!();
                         }
@@ -250,7 +287,7 @@ impl<'a> Interpreter<'a> {
                         if let Value::Integer(left) = left
                             && let Value::Integer(right) = right
                         {
-                            Value::Integer(left * right)
+                            ControlFlow::Yield(Value::Integer(left * right))
                         } else {
                             panic!();
                         }
@@ -259,7 +296,7 @@ impl<'a> Interpreter<'a> {
                         if let Value::Integer(left) = left
                             && let Value::Integer(right) = right
                         {
-                            Value::Integer(left / right)
+                            ControlFlow::Yield(Value::Integer(left / right))
                         } else {
                             panic!();
                         }
@@ -268,7 +305,7 @@ impl<'a> Interpreter<'a> {
                         if let Value::Integer(left) = left
                             && let Value::Integer(right) = right
                         {
-                            Value::Integer(left & right)
+                            ControlFlow::Yield(Value::Integer(left & right))
                         } else {
                             panic!()
                         }
@@ -277,7 +314,7 @@ impl<'a> Interpreter<'a> {
                         if let Value::Integer(left) = left
                             && let Value::Integer(right) = right
                         {
-                            Value::Integer(left | right)
+                            ControlFlow::Yield(Value::Integer(left | right))
                         } else {
                             panic!()
                         }
@@ -286,7 +323,7 @@ impl<'a> Interpreter<'a> {
                         if let Value::Integer(left) = left
                             && let Value::Integer(right) = right
                         {
-                            Value::Integer(left ^ right)
+                            ControlFlow::Yield(Value::Integer(left ^ right))
                         } else {
                             panic!()
                         }
@@ -295,11 +332,11 @@ impl<'a> Interpreter<'a> {
                         if let Value::Integer(left) = left
                             && let Value::Integer(right) = right
                         {
-                            Value::Bool(left == right)
+                            ControlFlow::Yield(Value::Bool(left == right))
                         } else if let Value::String(left) = left
                             && let Value::String(right) = right
                         {
-                            Value::Bool(left == right)
+                            ControlFlow::Yield(Value::Bool(left == right))
                         } else {
                             panic!()
                         }
@@ -308,11 +345,11 @@ impl<'a> Interpreter<'a> {
                         if let Value::Integer(left) = left
                             && let Value::Integer(right) = right
                         {
-                            Value::Bool(left != right)
+                            ControlFlow::Yield(Value::Bool(left != right))
                         } else if let Value::String(left) = left
                             && let Value::String(right) = right
                         {
-                            Value::Bool(left != right)
+                            ControlFlow::Yield(Value::Bool(left != right))
                         } else {
                             panic!()
                         }
@@ -321,7 +358,7 @@ impl<'a> Interpreter<'a> {
                         if let Value::Integer(left) = left
                             && let Value::Integer(right) = right
                         {
-                            Value::Bool(left > right)
+                            ControlFlow::Yield(Value::Bool(left > right))
                         } else {
                             panic!()
                         }
@@ -330,7 +367,7 @@ impl<'a> Interpreter<'a> {
                         if let Value::Integer(left) = left
                             && let Value::Integer(right) = right
                         {
-                            Value::Bool(left >= right)
+                            ControlFlow::Yield(Value::Bool(left >= right))
                         } else {
                             panic!()
                         }
@@ -339,7 +376,7 @@ impl<'a> Interpreter<'a> {
                         if let Value::Integer(left) = left
                             && let Value::Integer(right) = right
                         {
-                            Value::Bool(left < right)
+                            ControlFlow::Yield(Value::Bool(left < right))
                         } else {
                             panic!()
                         }
@@ -348,7 +385,7 @@ impl<'a> Interpreter<'a> {
                         if let Value::Integer(left) = left
                             && let Value::Integer(right) = right
                         {
-                            Value::Bool(left <= right)
+                            ControlFlow::Yield(Value::Bool(left <= right))
                         } else {
                             panic!()
                         }
@@ -356,30 +393,30 @@ impl<'a> Interpreter<'a> {
                 }
             }
             ExprTyp::LogicalOp { op, left, right } => {
-                let Value::Bool(left) = self.eval_expr(*left) else { panic!() };
+                let Value::Bool(left) = self.eval_expr(*left)? else { panic!() };
 
                 match op {
                     LogicalOp::LogicalAnd => {
                         if !left {
-                            Value::Bool(false)
+                            ControlFlow::Yield(Value::Bool(false))
                         } else {
-                            let Value::Bool(right) = self.eval_expr(*right) else { panic!() };
-                            Value::Bool(left && right)
+                            let Value::Bool(right) = self.eval_expr(*right)? else { panic!() };
+                            ControlFlow::Yield(Value::Bool(left && right))
                         }
                     }
                     LogicalOp::LogicalOr => {
                         if left {
-                            Value::Bool(true)
+                            ControlFlow::Yield(Value::Bool(true))
                         } else {
-                            let Value::Bool(right) = self.eval_expr(*right) else { panic!() };
-                            Value::Bool(left || right)
+                            let Value::Bool(right) = self.eval_expr(*right)? else { panic!() };
+                            ControlFlow::Yield(Value::Bool(left || right))
                         }
                     }
                 }
             }
             ExprTyp::Grouping { inner } => self.eval_expr(*inner),
             ExprTyp::Assign { place, expr } => {
-                let value = self.eval_expr(*expr);
+                let value = self.eval_expr(*expr)?;
                 match place.typ {
                     ExprTyp::Identifier { name, resolution } => match resolution {
                         Resolution::Unresolved => self.globals.borrow_mut().assign(name, 0, value.clone()),
@@ -388,7 +425,7 @@ impl<'a> Interpreter<'a> {
                         }
                     },
                     ExprTyp::PropertyAccess { left, property } => {
-                        if let Value::Instance { class, instance } = self.eval_expr(*left) {
+                        if let Value::Instance { class, instance } = self.eval_expr(*left)? {
                             self.instances.get_mut(instance).unwrap().properties.insert(property, value.clone());
                         } else {
                             panic!("Tried to set property on value that is not an object!");
@@ -396,13 +433,13 @@ impl<'a> Interpreter<'a> {
                     }
                     _ => panic!("Invalid place: {:?}", place.typ),
                 }
-                value
+                ControlFlow::Yield(value)
             }
             ExprTyp::Function { takes_self, body, params } => {
-                Value::Function { expect_receiver: takes_self, receiver: None, params, body }
+                ControlFlow::Yield(Value::Function { expect_receiver: takes_self, receiver: None, params, body })
             }
             ExprTyp::Call { left, params } => {
-                match self.eval_expr(*left) {
+                match self.eval_expr(*left)? {
                     Value::Function { expect_receiver, receiver, params: param_defs, body } => {
                         let environment = Environment::new_with_parent(self.environment.clone());
 
@@ -423,10 +460,17 @@ impl<'a> Interpreter<'a> {
                         assert_eq!(param_defs.len(), params.len());
                         let mut params = params.into_iter();
                         for param_def in param_defs {
-                            environment.borrow_mut().define(param_def, self.eval_expr(params.next().unwrap()));
+                            environment.borrow_mut().define(param_def, self.eval_expr(params.next().unwrap())?);
                         }
 
-                        self.eval_block(body, environment).unwrap_or(Value::Unit)
+                        /*
+                         * When we call a function, we want to terminate the propagation of its return at the call-site.
+                         */
+                        match self.eval_block(body, environment) {
+                            ControlFlow::None => ControlFlow::Yield(Value::Unit),
+                            ControlFlow::Yield(value) => ControlFlow::Yield(value),
+                            ControlFlow::Return(value) => ControlFlow::Yield(value),
+                        }
                     }
                     Value::NativeFunction(index) => {
                         /*
@@ -434,9 +478,12 @@ impl<'a> Interpreter<'a> {
                          * allows them to accept varying numbers of parameters, which is not a feature
                          * supported in Ginkgo itself yet, but is useful.
                          */
-                        let params = params.into_iter().map(|param| self.eval_expr(param)).collect();
+                        let mut evaluated_params = Vec::new();
+                        for param in params {
+                            evaluated_params.push(self.eval_expr(param)?);
+                        }
                         let function = &self.native_fns[index];
-                        function(params)
+                        ControlFlow::Yield(function(evaluated_params))
                     }
                     Value::Class(index) => {
                         /*
@@ -444,7 +491,7 @@ impl<'a> Interpreter<'a> {
                          */
                         let instance_index = self.instances.len();
                         self.instances.push(Instance { properties: BTreeMap::new() });
-                        Value::Instance { class: index, instance: instance_index }
+                        ControlFlow::Yield(Value::Instance { class: index, instance: instance_index })
                     }
                     other => {
                         panic!("Tried to call non-callable value: {:?}", other);
@@ -452,7 +499,7 @@ impl<'a> Interpreter<'a> {
                 }
             }
             ExprTyp::PropertyAccess { left, property } => {
-                if let Value::Instance { class, instance } = self.eval_expr(*left) {
+                if let Value::Instance { class, instance } = self.eval_expr(*left)? {
                     /*
                      * When accessing a property, check for fields on the instance, and then definitions on the class. This means fields on the instance can shadow class definitions.
                      */
@@ -469,14 +516,14 @@ impl<'a> Interpreter<'a> {
                          */
                         if let Value::Function { expect_receiver: true, receiver, params, body } = property {
                             assert!(receiver.is_none());
-                            Value::Function {
+                            ControlFlow::Yield(Value::Function {
                                 expect_receiver: true,
                                 receiver: Some(Box::new(Value::Instance { class, instance })),
                                 params: params.clone(),
                                 body: body.clone(),
-                            }
+                            })
                         } else {
-                            property.clone()
+                            ControlFlow::Yield(property.clone())
                         }
                     } else {
                         panic!("Tried to access property '{}' on object but it does not exist!", property);

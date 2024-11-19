@@ -108,6 +108,12 @@ impl<'s> Parser<'s> {
             return Stmt::new_while(condition, Stmt::new_block(body));
         }
 
+        if self.matches(TokenType::Return) {
+            let value = self.expression(0);
+            self.consume(TokenType::Semicolon);
+            return Stmt::new_return(value);
+        }
+
         /*
          * Default case - it's an expression statement.
          * Expressions in statement position may or may not be terminated with a semicolon, so we
