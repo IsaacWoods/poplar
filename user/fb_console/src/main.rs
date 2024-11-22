@@ -113,8 +113,14 @@ fn spawn_framebuffer(
 
                                 let mut result = None;
                                 for statement in stmts {
-                                    if let Some(value) = interpreter.eval_stmt(statement) {
-                                        result = Some(value);
+                                    match interpreter.eval_stmt(statement) {
+                                        ginkgo::interpreter::ControlFlow::None => (),
+                                        ginkgo::interpreter::ControlFlow::Yield(value) => {
+                                            result = Some(value);
+                                        }
+                                        ginkgo::interpreter::ControlFlow::Return(value) => {
+                                            result = Some(value);
+                                        }
                                     }
                                 }
 
