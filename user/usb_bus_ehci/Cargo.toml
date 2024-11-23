@@ -7,6 +7,7 @@ edition = "2021"
 [dependencies]
 std = { path = "../../lib/std", features = ["ddk"] }
 log = "0.4"
+service_host = { path = "../service_host" }
 platform_bus = { path = "../platform_bus" }
 ptah = { path = "../../lib/ptah" }
 bit_field = "0.10"

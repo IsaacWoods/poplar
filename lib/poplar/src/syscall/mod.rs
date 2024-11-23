@@ -32,8 +32,6 @@ pub const SYSCALL_CREATE_CHANNEL: usize = 5;
 pub const SYSCALL_SEND_MESSAGE: usize = 6;
 pub const SYSCALL_GET_MESSAGE: usize = 7;
 pub const SYSCALL_WAIT_FOR_MESSAGE: usize = 8;
-pub const SYSCALL_REGISTER_SERVICE: usize = 9;
-pub const SYSCALL_SUBSCRIBE_TO_SERVICE: usize = 10;
 pub const SYSCALL_PCI_GET_INFO: usize = 11;
 pub const SYSCALL_WAIT_FOR_EVENT: usize = 12;
 pub const SYSCALL_POLL_INTEREST: usize = 13;
@@ -185,35 +183,6 @@ pub fn get_message<'b, 'h>(
     let valid_handles_len = result.get_bits(32..48);
 
     Ok((&mut byte_buffer[0..valid_bytes_len], &mut handle_buffer[0..valid_handles_len]))
-}
-
-pub const SERVICE_NAME_MAX_LENGTH: usize = 256;
-
-define_error_type!(RegisterServiceError {
-    TaskDoesNotHaveCorrectCapability => 1,
-    NamePointerNotValid => 2,
-    /// Name must be greater than `0` bytes, and not greater than `256` bytes.
-    NameLengthNotValid => 3,
-});
-
-pub fn register_service(name: &str) -> Result<Handle, RegisterServiceError> {
-    handle_from_syscall_repr(unsafe {
-        raw::syscall2(SYSCALL_REGISTER_SERVICE, name.len(), name.as_ptr() as usize)
-    })
-}
-
-define_error_type!(SubscribeToServiceError {
-    TaskDoesNotHaveCorrectCapability => 1,
-    NamePointerNotValid => 2,
-    /// Name must be greater than `0` bytes, and not greater than `256` bytes.
-    NameLengthNotValid => 3,
-    NoServiceWithThatName => 4,
-});
-
-pub fn subscribe_to_service(name: &str) -> Result<Handle, SubscribeToServiceError> {
-    handle_from_syscall_repr(unsafe {
-        raw::syscall2(SYSCALL_SUBSCRIBE_TO_SERVICE, name.len(), name.as_ptr() as usize)
-    })
 }
 
 define_error_type!(WaitForEventError {

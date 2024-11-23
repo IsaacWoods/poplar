@@ -49,6 +49,7 @@ fn main() {
     };
 
     let mut tasks = Vec::new();
+    let mut services: BTreeMap<String, Channel<ServiceChannelMessage, ()>> = BTreeMap::new();
 
     for task in &manifest.boot_tasks {
         info!("Spawning task '{}'", task.name);
@@ -76,5 +77,42 @@ fn main() {
                 .unwrap();
         tasks.push(Task { name: task.name.clone(), address_space, segments, task: spawned_task, task_channel });
     }
+
+    // Monitor each task's channel for requests
+    // TODO: this should probs be async in the future
+    loop {
+        std::poplar::syscall::yield_to_kernel();
+        for task in &tasks {
+            if let Some(request) = task.task_channel.try_receive().unwrap() {
+                match request {
+                    ServiceHostRequest::RegisterService { name } => {
+                        // TODO: check for service name conflicts and send back an error
+                        info!("Task '{}' registering new service '{}'", task.name, name);
+                        let (service_channel, channel_handle) = Channel::create().unwrap();
+                        task.task_channel.send(&ServiceHostResponse::ServiceRegistered(channel_handle)).unwrap();
+                        services.insert(name, service_channel);
+                    }
+                    ServiceHostRequest::SubscribeService(name) => {
+                        info!("Task '{}' subscribing to service called '{}'", task.name, name);
+                        if let Some(ref service_channel) = services.get(&name) {
+                            let (channel_a, channel_b) = std::poplar::syscall::create_channel().unwrap();
+                            service_channel.send(&ServiceChannelMessage::NewClient(channel_a)).unwrap();
+                            task.task_channel.send(&ServiceHostResponse::SubscribedToService(channel_b)).unwrap();
+                        } else {
+                            /*
+                             * Now there's more to service registration, we probs need to actually
+                             * handle this... I wonder if we should keep a list of 'waiting' tasks
+                             * that want access to a service, and check it when a new service is
+                             * registered. We defo can't just ignore it (but this should be
+                             * customizable behaviour. Some clients might just want to check if a
+                             * service is available, but not block on it becoming available).
+                             */
+                            warn!("Tried to subscribe to service but it has not been registered!");
+                        }
+                    }
+                    ServiceHostRequest::RequestResource(name) => todo!(),
+                }
+            }
+        }
     }
 }

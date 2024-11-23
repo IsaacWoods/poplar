@@ -12,6 +12,7 @@ use platform_bus::{
     HandoffProperty,
     Property,
 };
+use service_host::ServiceHostClient;
 use std::{
     collections::BTreeMap,
     mem::{self, MaybeUninit},
@@ -206,12 +207,14 @@ fn main() {
     log::set_max_level(log::LevelFilter::Trace);
     info!("Virtio GPU driver is running!");
 
+    let service_host_client = ServiceHostClient::new();
     // We act as a bus driver to create the framebuffer device
     let platform_bus_bus_channel: Channel<BusDriverMessage, !> =
-        Channel::subscribe_to_service("platform_bus.bus_driver").unwrap();
+        service_host_client.subscribe_service("platform_bus.bus_driver").unwrap();
     // And also as a device driver to find Virtio GPU devices
     let platform_bus_device_channel: Channel<DeviceDriverMessage, DeviceDriverRequest> =
-        Channel::subscribe_to_service("platform_bus.device_driver").unwrap();
+        service_host_client.subscribe_service("platform_bus.device_driver").unwrap();
+
     platform_bus_device_channel
         .send(&DeviceDriverMessage::RegisterInterest(vec![
             Filter::Matches(String::from("pci.vendor_id"), Property::Integer(0x1af4)),

@@ -2,6 +2,7 @@ mod service;
 
 use log::{info, warn};
 use platform_bus::{BusDriverMessage, DeviceDriverMessage, DeviceDriverRequest, DeviceInfo, Filter, HandoffInfo};
+use service_host::{ServiceChannelMessage, ServiceHostClient};
 use spinning_top::RwSpinlock;
 use std::{
     collections::BTreeMap,
@@ -133,8 +134,10 @@ pub fn main() {
     // TODO: this should probs be replaced with a macro similar to `tokio::main`
     std::poplar::rt::init_runtime();
 
-    let bus_driver_service_channel = Channel::register_service("bus_driver").unwrap();
-    let device_driver_service_channel = Channel::register_service("device_driver").unwrap();
+    let service_host_client = ServiceHostClient::new();
+    let bus_driver_service_channel = service_host_client.register_service("platform_bus.bus_driver").unwrap();
+    let device_driver_service_channel =
+        service_host_client.register_service("platform_bus.device_driver").unwrap();
 
     let platform_bus = PlatformBus::new();
 
@@ -150,39 +153,41 @@ pub fn main() {
         let platform_bus = platform_bus.clone();
         async move {
             loop {
-                let bus_driver_handle = bus_driver_service_channel.receive().await.unwrap();
+                match bus_driver_service_channel.receive().await.unwrap() {
+                    ServiceChannelMessage::NewClient(bus_driver_handle) => {
+                        info!("Bus driver subscribed to PlatformBus!");
+                        let channel = Arc::new(Channel::new_from_handle(bus_driver_handle));
+                        let bus_driver_index = platform_bus.register_bus_driver(channel.clone());
 
-                info!("Bus driver subscribed to PlatformBus!");
-                let channel = Arc::new(Channel::new_from_handle(bus_driver_handle));
-                let bus_driver_index = platform_bus.register_bus_driver(channel.clone());
-
-                /*
-                 * Each new bus driver gets a task to listen for newly registered devices.
-                 */
-                std::poplar::rt::spawn({
-                    let platform_bus = platform_bus.clone();
-                    async move {
-                        loop {
-                            match channel.receive().await.unwrap() {
-                                BusDriverMessage::RegisterDevice(name, device_info, handoff_info) => {
-                                    info!(
-                                        "Registering device: Device: {:?}, Handoff: {:?} as {}",
-                                        device_info, handoff_info, name
-                                    );
-                                    platform_bus.register_device(
-                                        name,
-                                        Device::Unclaimed {
-                                            bus_driver: bus_driver_index,
-                                            device_info,
-                                            handoff_info,
-                                        },
-                                    );
-                                    platform_bus.check_devices();
+                        /*
+                         * Each new bus driver gets a task to listen for newly registered devices.
+                         */
+                        std::poplar::rt::spawn({
+                            let platform_bus = platform_bus.clone();
+                            async move {
+                                loop {
+                                    match channel.receive().await.unwrap() {
+                                        BusDriverMessage::RegisterDevice(name, device_info, handoff_info) => {
+                                            info!(
+                                                "Registering device: Device: {:?}, Handoff: {:?} as {}",
+                                                device_info, handoff_info, name
+                                            );
+                                            platform_bus.register_device(
+                                                name,
+                                                Device::Unclaimed {
+                                                    bus_driver: bus_driver_index,
+                                                    device_info,
+                                                    handoff_info,
+                                                },
+                                            );
+                                            platform_bus.check_devices();
+                                        }
+                                    }
                                 }
                             }
-                        }
+                        });
                     }
-                });
+                }
             }
         }
     });
@@ -192,78 +197,82 @@ pub fn main() {
      */
     std::poplar::rt::spawn(async move {
         loop {
-            let device_driver_handle = device_driver_service_channel.receive().await.unwrap();
+            match device_driver_service_channel.receive().await.unwrap() {
+                ServiceChannelMessage::NewClient(device_driver_handle) => {
+                    info!("Device driver subscribed to PlatformBus!");
+                    let channel = Arc::new(Channel::new_from_handle(device_driver_handle));
+                    let device_driver_index = platform_bus.register_device_driver(channel.clone());
 
-            info!("Device driver subscribed to PlatformBus!");
-            let channel = Arc::new(Channel::new_from_handle(device_driver_handle));
-            let device_driver_index = platform_bus.register_device_driver(channel.clone());
+                    /*
+                     * Each new device driver gets a task to listen for newly registered devices.
+                     */
+                    let platform_bus = platform_bus.clone();
+                    std::poplar::rt::spawn(async move {
+                        loop {
+                            match channel.receive().await.unwrap() {
+                                DeviceDriverMessage::RegisterInterest(filters) => {
+                                    info!("Registering interest for devices with filters: {:?}", filters);
+                                    {
+                                        let mut device_drivers = platform_bus.device_drivers.write();
+                                        let device_driver = device_drivers.get_mut(device_driver_index).unwrap();
 
-            /*
-             * Each new device driver gets a task to listen for newly registered devices.
-             */
-            let platform_bus = platform_bus.clone();
-            std::poplar::rt::spawn(async move {
-                loop {
-                    match channel.receive().await.unwrap() {
-                        DeviceDriverMessage::RegisterInterest(filters) => {
-                            info!("Registering interest for devices with filters: {:?}", filters);
-                            {
-                                let mut device_drivers = platform_bus.device_drivers.write();
-                                let device_driver = device_drivers.get_mut(device_driver_index).unwrap();
-
-                                /*
-                                 * We only allow device drivers to register their interests once. After that, we just
-                                 * ignore them.
-                                 */
-                                if device_driver.filters.is_none() {
-                                    device_driver.filters = Some(filters);
-                                } else {
-                                    warn!("Device driver tried to register interests more than one. Ignored.");
-                                }
-                            }
-                            platform_bus.check_devices();
-                        }
-                        DeviceDriverMessage::CanSupport(device_name, does_support) => {
-                            if does_support {
-                                let mut device_drivers = platform_bus.device_drivers.write();
-                                let device_driver = device_drivers.get_mut(device_driver_index).unwrap();
-                                let mut devices = platform_bus.devices.write();
-                                let device = devices.get_mut(&device_name).unwrap();
-
-                                if device.is_claimed() {
-                                    warn!("Device driver claimed support for '{}', but device has already been handed off! Ignoring.", device_name);
-                                    continue;
-                                }
-
-                                info!("Handing off device '{}' to supporting device driver", device_name);
-                                let claimed_device =
-                                    if let Device::Unclaimed { bus_driver, device_info, .. } = &device {
-                                        Device::Claimed {
-                                            bus_driver: *bus_driver,
-                                            device_info: device_info.clone(),
-                                            device_driver: device_driver_index,
+                                        /*
+                                         * We only allow device drivers to register their interests once. After that, we just
+                                         * ignore them.
+                                         */
+                                        if device_driver.filters.is_none() {
+                                            device_driver.filters = Some(filters);
+                                        } else {
+                                            warn!("Device driver tried to register interests more than one. Ignored.");
                                         }
-                                    } else {
-                                        panic!()
-                                    };
-                                let taken_device = mem::replace(device, claimed_device);
-                                if let Device::Unclaimed { bus_driver, device_info, handoff_info } = taken_device {
-                                    device_driver
-                                        .channel
-                                        .send(&DeviceDriverRequest::HandoffDevice(
-                                            device_name,
-                                            device_info.clone(),
-                                            handoff_info,
-                                        ))
-                                        .unwrap();
-                                } else {
-                                    panic!();
+                                    }
+                                    platform_bus.check_devices();
+                                }
+                                DeviceDriverMessage::CanSupport(device_name, does_support) => {
+                                    if does_support {
+                                        let mut device_drivers = platform_bus.device_drivers.write();
+                                        let device_driver = device_drivers.get_mut(device_driver_index).unwrap();
+                                        let mut devices = platform_bus.devices.write();
+                                        let device = devices.get_mut(&device_name).unwrap();
+
+                                        if device.is_claimed() {
+                                            warn!("Device driver claimed support for '{}', but device has already been handed off! Ignoring.", device_name);
+                                            continue;
+                                        }
+
+                                        info!("Handing off device '{}' to supporting device driver", device_name);
+                                        let claimed_device =
+                                            if let Device::Unclaimed { bus_driver, device_info, .. } = &device {
+                                                Device::Claimed {
+                                                    bus_driver: *bus_driver,
+                                                    device_info: device_info.clone(),
+                                                    device_driver: device_driver_index,
+                                                }
+                                            } else {
+                                                panic!()
+                                            };
+                                        let taken_device = mem::replace(device, claimed_device);
+                                        if let Device::Unclaimed { bus_driver, device_info, handoff_info } =
+                                            taken_device
+                                        {
+                                            device_driver
+                                                .channel
+                                                .send(&DeviceDriverRequest::HandoffDevice(
+                                                    device_name,
+                                                    device_info.clone(),
+                                                    handoff_info,
+                                                ))
+                                                .unwrap();
+                                        } else {
+                                            panic!();
+                                        }
+                                    }
                                 }
                             }
                         }
-                    }
+                    });
                 }
-            });
+            }
         }
     });
 

@@ -18,6 +18,7 @@ use platform_bus::{
     Filter,
     Property,
 };
+use service_host::ServiceHostClient;
 use spinning_top::Spinlock;
 use std::{
     fmt::Write,
@@ -193,9 +194,10 @@ fn main() {
     std::poplar::rt::spawn(async move {
         let mut input_receiver = Some(input_receiver);
 
+        let service_host_client = ServiceHostClient::new();
         // We act as a device driver to find framebuffers and input devices
         let platform_bus_device_channel: Channel<DeviceDriverMessage, DeviceDriverRequest> =
-            Channel::subscribe_to_service("platform_bus.device_driver").unwrap();
+            service_host_client.subscribe_service("platform_bus.device_driver").unwrap();
         platform_bus_device_channel
             .send(&DeviceDriverMessage::RegisterInterest(vec![
                 Filter::Matches(String::from("type"), Property::String("framebuffer".to_string())),

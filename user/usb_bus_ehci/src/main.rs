@@ -14,6 +14,7 @@ use crate::queue::Queue;
 use controller::Controller;
 use log::info;
 use platform_bus::{BusDriverMessage, DeviceDriverMessage, DeviceDriverRequest, Filter, Property};
+use service_host::ServiceHostClient;
 use spinning_top::RwSpinlock;
 use std::{
     collections::BTreeMap,
@@ -149,12 +150,13 @@ fn main() {
 
     std::poplar::rt::init_runtime();
 
+    let service_host_client = ServiceHostClient::new();
     // This allows us to talk to the PlatformBus as a bus driver (to register USB devices).
     let platform_bus_bus_channel: Arc<Channel<BusDriverMessage, !>> =
-        Arc::new(Channel::subscribe_to_service("platform_bus.bus_driver").unwrap());
+        Arc::new(service_host_client.subscribe_service("platform_bus.bus_driver").unwrap());
     // This allows us to talk to the PlatformBus as a device driver (to find controllers we can manage).
     let platform_bus_device_channel: Channel<DeviceDriverMessage, DeviceDriverRequest> =
-        Channel::subscribe_to_service("platform_bus.device_driver").unwrap();
+        service_host_client.subscribe_service("platform_bus.device_driver").unwrap();
 
     // Tell PlatformBus that we're interested in EHCI controllers.
     platform_bus_device_channel

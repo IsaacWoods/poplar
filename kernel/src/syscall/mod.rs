@@ -13,11 +13,7 @@ use crate::{
     scheduler::Scheduler,
     Platform,
 };
-use alloc::{
-    collections::BTreeMap,
-    string::{String, ToString},
-    sync::Arc,
-};
+use alloc::{string::ToString, sync::Arc};
 use bit_field::BitField;
 use core::{convert::TryFrom, sync::atomic::Ordering};
 use hal::memory::{Flags, PAddr, VAddr};
@@ -36,21 +32,17 @@ use poplar::{
         MemoryObjectFlags,
         PciGetInfoError,
         PollInterestError,
-        RegisterServiceError,
         SendMessageError,
+        SpawnTaskDetails,
         SpawnTaskError,
-        SubscribeToServiceError,
         WaitForEventError,
         CHANNEL_MAX_NUM_HANDLES,
     },
     Handle,
 };
-use spinning_top::{RwSpinlock, Spinlock};
+use spinning_top::RwSpinlock;
 use tracing::{info, warn};
 use validation::{UserPointer, UserSlice, UserString};
-
-/// Maps the name of a service to the channel used to register new service users.
-static SERVICE_MAP: Spinlock<BTreeMap<String, Arc<ChannelEnd>>> = Spinlock::new(BTreeMap::new());
 
 /// This is the architecture-independent syscall handler. It should be called by the handler that
 /// receives the syscall (each architecture is free to do this however it wishes). The only
@@ -90,8 +82,6 @@ where
         syscall::SYSCALL_SEND_MESSAGE => status_to_syscall_repr(send_message(&task, a, b, c, d, e)),
         syscall::SYSCALL_GET_MESSAGE => status_with_payload_to_syscall_repr(get_message(&task, a, b, c, d, e)),
         syscall::SYSCALL_WAIT_FOR_MESSAGE => todo!(),
-        syscall::SYSCALL_REGISTER_SERVICE => handle_to_syscall_repr(register_service(&task, a, b)),
-        syscall::SYSCALL_SUBSCRIBE_TO_SERVICE => handle_to_syscall_repr(subscribe_to_service(&task, a, b)),
         syscall::SYSCALL_PCI_GET_INFO => status_with_payload_to_syscall_repr(pci_get_info(&task, a, b)),
         syscall::SYSCALL_WAIT_FOR_EVENT => status_to_syscall_repr(wait_for_event(scheduler, &task, a, b)),
         syscall::SYSCALL_POLL_INTEREST => status_with_payload_to_syscall_repr(poll_interest(&task, a)),
@@ -385,73 +375,6 @@ where
         status.set_bits(32..48, num_handles);
         Ok(status)
     })
-}
-
-fn register_service<P>(
-    task: &Arc<Task<P>>,
-    name_length: usize,
-    name_ptr: usize,
-) -> Result<Handle, RegisterServiceError>
-where
-    P: Platform,
-{
-    use poplar::syscall::SERVICE_NAME_MAX_LENGTH;
-
-    // Check that the name is not too short or long
-    if name_length == 0 || name_length > SERVICE_NAME_MAX_LENGTH {
-        return Err(RegisterServiceError::NameLengthNotValid);
-    }
-
-    let service_name = UserString::new(name_ptr as *mut u8, name_length)
-        .validate()
-        .map_err(|()| RegisterServiceError::NamePointerNotValid)?;
-
-    info!("Task {} has registered a service called {}", task.name, service_name);
-    let channel = ChannelEnd::new_kernel_channel(task.id());
-    SERVICE_MAP.lock().insert(task.name.clone() + "." + service_name, channel.clone());
-
-    Ok(task.handles.add(channel))
-}
-
-fn subscribe_to_service<P>(
-    task: &Arc<Task<P>>,
-    name_length: usize,
-    name_ptr: usize,
-) -> Result<Handle, SubscribeToServiceError>
-where
-    P: Platform,
-{
-    use poplar::syscall::SERVICE_NAME_MAX_LENGTH;
-
-    // Check that the name is not too short or long
-    if name_length == 0 || name_length > SERVICE_NAME_MAX_LENGTH {
-        return Err(SubscribeToServiceError::NameLengthNotValid);
-    }
-
-    let service_name = UserString::new(name_ptr as *mut u8, name_length)
-        .validate()
-        .map_err(|()| SubscribeToServiceError::NamePointerNotValid)?;
-
-    if let Some(register_channel) = SERVICE_MAP.lock().get(service_name) {
-        // Create new channel to allow the two tasks to communicate
-        let (provider_end, user_end) = ChannelEnd::new_channel(task.id());
-
-        /*
-         * Send a message down `register_channel` to tell it about its new service user, transferring the
-         * provider's half of the created service channel.
-         *
-         * XXX: we manually construct a Ptah message here so userspace can use the `poplar::Channel` type if it
-         * wants to, but without having to pull that in here.
-         */
-        let mut handle_objects = [const { None }; CHANNEL_MAX_NUM_HANDLES];
-        handle_objects[0] = Some(provider_end as Arc<dyn KernelObject>);
-        register_channel.add_message(Message { bytes: [ptah::make_handle_slot(0)].to_vec(), handle_objects });
-
-        // Return the user's end of the new channel to it
-        Ok(task.handles.add(user_end))
-    } else {
-        Err(SubscribeToServiceError::NoServiceWithThatName)
-    }
 }
 
 fn pci_get_info<P>(

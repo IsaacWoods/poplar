@@ -29,8 +29,6 @@ Deprecated:
 | Number    | System call               | Description                                                           |
 |-----------|---------------------------|-----------------------------------------------------------------------|
 | `2`       | `get_framebuffer`         | Get the framebuffer that the kernel has created, if it has.           |
-| `9`       | `register_service`        | Register yourself as a service.                                       |
-| `10`      | `subscribe_to_service`    | Create a channel to a particular service provider.                    |
 | `11`      | `pci_get_info`            | Get information about the PCI devices on the platform.                |
 
 ### Making a system call on x86_64

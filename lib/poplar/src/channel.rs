@@ -1,13 +1,5 @@
 use crate::{
-    syscall::{
-        self,
-        CreateChannelError,
-        GetMessageError,
-        RegisterServiceError,
-        SendMessageError,
-        SubscribeToServiceError,
-        CHANNEL_MAX_NUM_HANDLES,
-    },
+    syscall::{self, CreateChannelError, GetMessageError, SendMessageError, CHANNEL_MAX_NUM_HANDLES},
     Handle,
 };
 use core::{future::Future, marker::PhantomData, mem, task::Poll};
@@ -40,15 +32,10 @@ where
     }
 
     /// Create a new channel. Returns one end as a `Channel`, and a `Handle` for the other end.
-    /// Generally, the handle
+    /// Generally, the handle is passed to another task.
     pub fn create() -> Result<(Channel<S, R>, Handle), CreateChannelError> {
         let (this_end, other_end) = syscall::create_channel()?;
         Ok((Self::new_from_handle(this_end), other_end))
-    }
-
-    pub fn subscribe_to_service(name: &str) -> Result<Channel<S, R>, SubscribeToServiceError> {
-        let handle = syscall::subscribe_to_service(name)?;
-        Ok(Self::new_from_handle(handle))
     }
 
     pub fn send(&self, message: &S) -> Result<(), ChannelSendError> {
@@ -127,12 +114,6 @@ where
                 Err(err) => Poll::Ready(Err(ChannelReceiveError::ReceiveError(err))),
             }
         })
-    }
-}
-
-impl Channel<!, Handle> {
-    pub fn register_service(name: &str) -> Result<Channel<!, Handle>, RegisterServiceError> {
-        Ok(Self::new_from_handle(syscall::register_service(name)?))
     }
 }
 

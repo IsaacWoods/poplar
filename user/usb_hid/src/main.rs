@@ -12,6 +12,7 @@ use platform_bus::{
     HandoffProperty,
     Property,
 };
+use service_host::ServiceHostClient;
 use std::{
     collections::{BTreeMap, BTreeSet},
     poplar::{channel::Channel, early_logger::EarlyLogger},
@@ -40,12 +41,13 @@ pub fn main() {
 
     std::poplar::rt::init_runtime();
 
+    let service_host_client = ServiceHostClient::new();
     // This allows us to talk to the PlatformBus as a bus driver (to register our abstract devices).
     let platform_bus_bus_channel: Channel<BusDriverMessage, !> =
-        Channel::subscribe_to_service("platform_bus.bus_driver").unwrap();
+        service_host_client.subscribe_service("platform_bus.bus_driver").unwrap();
     // This allows us to talk to the PlatformBus as a device driver (to find supported USB devices).
     let platform_bus_device_channel: Channel<DeviceDriverMessage, DeviceDriverRequest> =
-        Channel::subscribe_to_service("platform_bus.device_driver").unwrap();
+        service_host_client.subscribe_service("platform_bus.device_driver").unwrap();
 
     // Tell PlatformBus that we're interested in USB devices that are specified per-interface
     // (we need to parse their configurations to tell if they're HID devices). A HID device is not

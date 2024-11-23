@@ -6,3 +6,4 @@ edition = "2021"
 
 [dependencies]
 std = { path = "../../lib/std" }
+service_host = { path = "../service_host" }
