@@ -99,7 +99,7 @@ where
             handle_to_syscall_repr(create_address_space(&task, &mut kernel_page_tables.write()))
         }
         syscall::SYSCALL_SPAWN_TASK => {
-            handle_to_syscall_repr(spawn_task(&task, a, b, c, d, scheduler, &mut kernel_page_tables.write()))
+            handle_to_syscall_repr(spawn_task(&task, a, scheduler, &mut kernel_page_tables.write()))
         }
 
         _ => {
@@ -627,10 +627,7 @@ where
 
 pub fn spawn_task<P>(
     task: &Arc<Task<P>>,
-    name_len: usize,
-    name_address: usize,
-    address_space: usize,
-    entry_point: usize,
+    details_ptr: usize,
     scheduler: &Scheduler<P>,
     kernel_page_tables: &mut P::PageTable,
 ) -> Result<Handle, SpawnTaskError>
@@ -639,10 +636,13 @@ where
 {
     use crate::object::task::Handles;
 
-    let name = UserString::new(name_address as *mut u8, name_len)
+    let details = UserPointer::new(details_ptr as *mut SpawnTaskDetails, false).validate_read().unwrap();
+
+    let name = UserString::new(details.name_ptr as *mut u8, details.name_len)
         .validate()
         .map_err(|()| SpawnTaskError::InvalidTaskName)?;
-    let address_space_handle = Handle::try_from(address_space).map_err(|_| SpawnTaskError::NotAnAddressSpace)?;
+    let address_space_handle =
+        Handle::try_from(details.address_space as usize).map_err(|_| SpawnTaskError::NotAnAddressSpace)?;
     let address_space = task
         .handles
         .get(address_space_handle)
@@ -651,13 +651,28 @@ where
         .ok()
         .ok_or(SpawnTaskError::NotAnAddressSpace)?;
 
+    let handles = Handles::new();
+    handles.add(address_space.clone());
+
+    // TODO: we should really be adding the required memory objects to the task, or they could be
+    // freed from under us. This could be done by convention using the object transfer array?
+
+    let handles_to_transfer =
+        UserSlice::new(details.object_array as *mut u32, details.object_array_len).validate_read().unwrap();
+    for to_transfer in handles_to_transfer {
+        let handle =
+            Handle::try_from(*to_transfer as usize).map_err(|_| SpawnTaskError::InvalidHandleToTransfer)?;
+        let object = task.handles.get(handle).ok_or(SpawnTaskError::InvalidHandleToTransfer)?;
+        handles.add(object);
+    }
+
     let pmm = crate::PHYSICAL_MEMORY_MANAGER.get();
     let new_task = Task::new(
         task.id(),
-        address_space.clone(),
+        address_space,
         name.to_string(),
-        VAddr::new(entry_point),
-        Handles::new(),
+        VAddr::new(details.entry_point),
+        handles,
         &pmm,
         kernel_page_tables,
     )

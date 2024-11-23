@@ -10,24 +10,29 @@
  *  - take a manifest from the kernel detailing all the handles it's giving us
  *  - create new tasks for each of the other userspace tasks (in future we'll monitor and restart
  *    them if crashed, according to some policy)
- *  - add a channel to each new task for service discovery + management
+ *  - add a channel to each new task for task discovery + management
  *  - kernel will fill in a manifest for each new task detailing its handles (incl our channel)
- *  - provide service registration and discovery through the channel
- *  - provide a special service ourselves for the console to e.g. list services running, get system
+ *  - provide task registration and discovery through the channel
+ *  - provide a special task ourselves for the console to e.g. list tasks running, get system
  *    status, etc.
  *  - move PCI info + objects, kernel framebuffer, etc. to be passed to this task and then onwards
- *  - thinking: we need a mechanism for services to be able to ask us for specific objects (e.g.
+ *  - thinking: we need a mechanism for tasks to be able to ask us for specific objects (e.g.
  *    PCI info to platform_bus)
  */
 
-use log::info;
-use std::poplar::{early_logger::EarlyLogger, manifest::BootstrapManifest, Handle};
+use log::{info, warn};
+use service_host::{ServiceChannelMessage, ServiceHostRequest, ServiceHostResponse};
+use std::{
+    collections::btree_map::BTreeMap,
+    poplar::{channel::Channel, early_logger::EarlyLogger, manifest::BootstrapManifest, Handle},
+};
 
-pub struct Service {
+pub struct Task {
     name: String,
     address_space: Handle,
     segments: Vec<(Handle, usize)>,
     task: Handle,
+    task_channel: Channel<ServiceHostResponse, ServiceHostRequest>,
 }
 
 fn main() {
@@ -43,13 +48,13 @@ fn main() {
         ptah::from_wire(data, &[]).unwrap()
     };
 
-    let mut services = Vec::new();
+    let mut tasks = Vec::new();
 
-    for service in &manifest.boot_services {
-        info!("Spawning service '{}'", service.name);
+    for task in &manifest.boot_tasks {
+        info!("Spawning task '{}'", task.name);
         let address_space = std::poplar::syscall::create_address_space().unwrap();
         let mut segments = Vec::new();
-        for (map_at, memory_object) in &service.segments {
+        for (map_at, memory_object) in &task.segments {
             let memory_object = Handle(*memory_object);
             unsafe {
                 std::poplar::syscall::map_memory_object(
@@ -63,7 +68,13 @@ fn main() {
             segments.push((memory_object, *map_at));
         }
 
-        let task = std::poplar::syscall::spawn_task(&service.name, address_space, service.entry_point).unwrap();
-        services.push(Service { name: service.name.clone(), address_space, segments, task });
+        // Create a channel to communicate with the task through
+        let (task_channel, channel_handle) = Channel::create().unwrap();
+
+        let spawned_task =
+            std::poplar::syscall::spawn_task(&task.name, address_space, task.entry_point, &[channel_handle])
+                .unwrap();
+        tasks.push(Task { name: task.name.clone(), address_space, segments, task: spawned_task, task_channel });
+    }
     }
 }

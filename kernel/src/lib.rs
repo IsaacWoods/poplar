@@ -124,9 +124,9 @@ pub fn load_userspace<P>(
      * Add other loaded tasks' segments to the bootstrap task and add each task to the manifest.
      */
     let mut manifest =
-        BootstrapManifest { task_name: bootstrap_task.name.as_str().to_string(), boot_services: Vec::new() };
+        BootstrapManifest { task_name: bootstrap_task.name.as_str().to_string(), boot_tasks: Vec::new() };
     for image in &boot_info.loaded_images[1..] {
-        let mut service = poplar::manifest::BootService {
+        let mut service = poplar::manifest::BootTask {
             name: image.name.as_str().to_string(),
             entry_point: usize::from(image.entry_point),
             segments: Vec::new(),
@@ -137,7 +137,7 @@ pub fn load_userspace<P>(
             let handle = handles.add(memory_object);
             service.segments.push((usize::from(segment.virtual_address), handle.0));
         }
-        manifest.boot_services.push(service);
+        manifest.boot_tasks.push(service);
     }
     let mut buffer = Vec::new();
     let bytes_written = ptah::to_wire(&manifest, &mut buffer).unwrap();

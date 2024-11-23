@@ -7,14 +7,14 @@ use ptah::{Deserialize, Serialize};
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct BootstrapManifest {
     pub task_name: String,
-    pub boot_services: Vec<BootService>,
+    pub boot_tasks: Vec<BootTask>,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct BootService {
+pub struct BootTask {
     pub name: String,
     pub entry_point: usize,
-    /// The segments that should be loaded into the service's address space. In the format `(virtual
+    /// The segments that should be loaded into the task's address space. In the format `(virtual
     /// address, handle to MemoryObject)`.
     pub segments: Vec<(usize, u32)>,
 }

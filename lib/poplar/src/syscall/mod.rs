@@ -247,16 +247,35 @@ pub fn create_address_space() -> Result<Handle, CreateAddressSpaceError> {
 define_error_type!(SpawnTaskError {
     InvalidTaskName => 1,
     NotAnAddressSpace => 2,
+    InvalidHandleToTransfer => 3,
 });
 
-pub fn spawn_task(task_name: &str, address_space: Handle, entry_point: usize) -> Result<Handle, SpawnTaskError> {
+#[repr(C)]
+pub struct SpawnTaskDetails {
+    pub name_ptr: *const u8,
+    pub name_len: usize,
+    pub entry_point: usize,
+    pub address_space: u32,
+    pub object_array: *const u32,
+    pub object_array_len: usize,
+}
+
+pub fn spawn_task(
+    task_name: &str,
+    address_space: Handle,
+    entry_point: usize,
+    objects: &[Handle],
+) -> Result<Handle, SpawnTaskError> {
+    let details = SpawnTaskDetails {
+        name_ptr: task_name as *const str as *const u8,
+        name_len: task_name.len(),
+        entry_point,
+        address_space: address_space.0,
+        object_array: objects as *const [Handle] as *const u32,
+        object_array_len: objects.len(),
+    };
+
     handle_from_syscall_repr(unsafe {
-        raw::syscall4(
-            SYSCALL_SPAWN_TASK,
-            task_name.len(),
-            task_name as *const str as *const u8 as usize,
-            address_space.0 as usize,
-            entry_point,
-        )
+        raw::syscall1(SYSCALL_SPAWN_TASK, &details as *const SpawnTaskDetails as usize)
     })
 }
