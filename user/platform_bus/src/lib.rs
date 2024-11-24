@@ -210,7 +210,7 @@ pub enum DeviceDriverRequest {
     HandoffDevice(DeviceName, DeviceInfo, HandoffInfo),
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub enum Filter {
     Matches(PropertyName, Property),
     All(Vec<Filter>),
@@ -228,4 +228,44 @@ impl Filter {
                 .fold(true, |matches_so_far, filter| matches_so_far && filter.match_against(&properties)),
         }
     }
+}
+
+/// Type returned by a query to the PlatformBus's inspection service. This is designed to be used
+/// from a shell/console to query the state of the PlatformBus and its devices.
+/*
+ * TODO: including all the properties of each device currently causes a stack overflow in
+ * `platform_bus`. I haven't yet worked out if this is a true overflow (it shouldn't be that large
+ * on the stack), or something else going on. It is still included now as a POC of an interaction
+ * between a service-providing task and `fb_console`.
+ */
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct PlatformBusInspect {
+    pub devices: Vec<DeviceInspect>,
+    pub bus_drivers: Vec<BusDriverInspect>,
+    pub device_drivers: Vec<DeviceDriverInspect>,
+}
+
+// TODO: maybe include names of bus/bus+device drivers (will require a lookup for each)
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub enum DeviceInspect {
+    Unclaimed {
+        name: String,
+        // device_info: BTreeMap<PropertyName, Property>,
+        // handoff_info_names: Vec<PropertyName>,
+    },
+    Claimed {
+        name: String,
+        // device_info: BTreeMap<PropertyName, Property>,
+    },
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct BusDriverInspect {
+    pub name: String,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct DeviceDriverInspect {
+    pub name: String,
+    pub filters: Option<Vec<Filter>>,
 }

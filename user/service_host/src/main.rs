@@ -96,7 +96,12 @@ fn main() {
                         info!("Task '{}' subscribing to service called '{}'", task.name, name);
                         if let Some(ref service_channel) = services.get(&name) {
                             let (channel_a, channel_b) = std::poplar::syscall::create_channel().unwrap();
-                            service_channel.send(&ServiceChannelMessage::NewClient(channel_a)).unwrap();
+                            service_channel
+                                .send(&ServiceChannelMessage::NewClient {
+                                    name: task.name.clone(),
+                                    channel: channel_a,
+                                })
+                                .unwrap();
                             task.task_channel.send(&ServiceHostResponse::SubscribedToService(channel_b)).unwrap();
                         } else {
                             /*

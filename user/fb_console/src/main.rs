@@ -47,6 +47,10 @@ struct Console {
     height: usize,
     console: Spinlock<GfxConsole<Rgb32>>,
     input_events: thingbuf::mpsc::Receiver<InputEvent>,
+
+    // TODO: we really need to separate out the like rendering/input management layer and the shell
+    // logic
+    platform_bus_inspect: Channel<(), platform_bus::PlatformBusInspect>,
 }
 
 fn spawn_framebuffer(
@@ -55,13 +59,24 @@ fn spawn_framebuffer(
     width: usize,
     height: usize,
     input_events: thingbuf::mpsc::Receiver<InputEvent>,
+    service_host_client: &ServiceHostClient,
 ) {
+    let platform_bus_inspect = service_host_client.subscribe_service("platform_bus.inspect").unwrap();
+
     let console = Spinlock::new(GfxConsole::new(
         Framebuffer { ptr: framebuffer.ptr() as *mut Pixel<Rgb32>, width, height, stride: width },
         Rgb32::pixel(0x00, 0x00, 0x00, 0x00),
         Rgb32::pixel(0xff, 0xff, 0xff, 0xff),
     ));
-    let console = Console { framebuffer, control_channel: channel, width, height, console, input_events };
+    let console = Console {
+        framebuffer,
+        control_channel: channel,
+        width,
+        height,
+        console,
+        input_events,
+        platform_bus_inspect,
+    };
 
     std::poplar::rt::spawn(async move {
         // TODO: separate out graphical layer and shell layer with another channel maybe??
@@ -90,6 +105,14 @@ fn spawn_framebuffer(
              * this auto-updates.
              */
             Value::String("Poplar 0.1.0".to_string())
+        });
+
+        interpreter.define_native_function("inspect_platform_bus", |params| {
+            assert!(params.len() == 0);
+            console.platform_bus_inspect.send(&()).unwrap();
+            let info = console.platform_bus_inspect.receive_blocking().unwrap();
+            output_sender.try_send(Value::String(format!("{:#?}", info))).unwrap();
+            Value::Bool(true)
         });
 
         let mut mouse_x = 300u32;
@@ -234,7 +257,14 @@ fn main() {
                         const FRAMEBUFFER_ADDDRESS: usize = 0x00000005_00000000;
                         let framebuffer = unsafe { framebuffer.map_at(FRAMEBUFFER_ADDDRESS).unwrap() };
 
-                        spawn_framebuffer(framebuffer, channel, width, height, input_receiver.take().unwrap());
+                        spawn_framebuffer(
+                            framebuffer,
+                            channel,
+                            width,
+                            height,
+                            input_receiver.take().unwrap(),
+                            &service_host_client,
+                        );
                     } else if device_info.get_as_str("hid.type").is_some() {
                         info!("Found HID-compatible input device: {}", name);
 

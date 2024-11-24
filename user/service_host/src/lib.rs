@@ -26,7 +26,7 @@ pub enum ServiceHostResponse {
 /// service.
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
 pub enum ServiceChannelMessage {
-    NewClient(Handle),
+    NewClient { name: String, channel: Handle },
 }
 
 /// Represents a channel connected to `service_host` for a client task to make requests through.
