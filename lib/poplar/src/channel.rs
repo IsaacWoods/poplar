@@ -2,8 +2,13 @@ use crate::{
     syscall::{self, CreateChannelError, GetMessageError, SendMessageError, CHANNEL_MAX_NUM_HANDLES},
     Handle,
 };
+use alloc::vec::Vec;
 use core::{future::Future, marker::PhantomData, mem, task::Poll};
 use ptah::{DeserializeOwned, Serialize};
+
+// TODO: we now have heap-allocated buffers for sending, but still have bounded receives based on
+// stack sizes. Is there any way of dealing with larger messages on receive?
+const BYTES_BUFFER_SIZE: usize = 512;
 
 #[derive(Debug)]
 pub enum ChannelSendError {
@@ -117,27 +122,23 @@ where
     }
 }
 
-const BYTES_BUFFER_SIZE: usize = 512;
-
 struct ChannelWriter {
-    byte_buffer: [u8; BYTES_BUFFER_SIZE],
+    byte_buffer: Vec<u8>,
     handle_buffer: [Handle; CHANNEL_MAX_NUM_HANDLES],
-    num_bytes: usize,
     num_handles: u8,
 }
 
 impl ChannelWriter {
     pub fn new() -> ChannelWriter {
         ChannelWriter {
-            byte_buffer: [0u8; BYTES_BUFFER_SIZE],
+            byte_buffer: Vec::new(),
             handle_buffer: [Handle::ZERO; CHANNEL_MAX_NUM_HANDLES],
-            num_bytes: 0,
             num_handles: 0,
         }
     }
 
     pub fn bytes(&self) -> &[u8] {
-        &self.byte_buffer[0..self.num_bytes]
+        &self.byte_buffer
     }
 
     pub fn handles(&self) -> &[Handle] {
@@ -147,15 +148,7 @@ impl ChannelWriter {
 
 impl<'a> ptah::Writer for &'a mut ChannelWriter {
     fn write(&mut self, buf: &[u8]) -> ptah::ser::Result<()> {
-        /*
-         * Detect if the write will overflow the buffer.
-         */
-        if (self.num_bytes + buf.len()) > BYTES_BUFFER_SIZE {
-            return Err(ptah::ser::Error::WriterFullOfBytes);
-        }
-
-        self.byte_buffer[self.num_bytes..(self.num_bytes + buf.len())].copy_from_slice(buf);
-        self.num_bytes += buf.len();
+        self.byte_buffer.extend_from_slice(buf);
         Ok(())
     }
 
@@ -175,6 +168,6 @@ impl<'a> ptah::Writer for &'a mut ChannelWriter {
     }
 
     fn bytes_written(&self) -> usize {
-        self.num_bytes
+        self.byte_buffer.len()
     }
 }
