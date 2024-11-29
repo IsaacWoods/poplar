@@ -1,10 +1,10 @@
 use super::{alloc_kernel_object_id, memory_object::MemoryObject, KernelObject, KernelObjectId, KernelObjectType};
 use crate::{
-    memory::{PhysicalMemoryManager, Stack},
+    memory::{vmm::Stack, Pmm},
     Platform,
 };
 use alloc::{sync::Arc, vec::Vec};
-use hal::memory::{mebibytes, Bytes, FrameAllocator, PageTable, VAddr};
+use hal::memory::{mebibytes, Bytes, FrameAllocator, FrameSize, PageTable, Size4KiB, VAddr};
 use mulch::bitmap::Bitmap;
 use poplar::syscall::MapMemoryObjectError;
 use spinning_top::Spinlock;
@@ -64,7 +64,7 @@ where
         &self,
         memory_object: Arc<MemoryObject>,
         virtual_address: VAddr,
-        allocator: &PhysicalMemoryManager,
+        allocator: &Pmm,
     ) -> Result<(), MapMemoryObjectError> {
         use hal::memory::PagingError;
 
@@ -87,11 +87,7 @@ where
 
     /// Try to allocate a slot for a Task. Creates a user stack with `initial_stack_size` bytes initially
     /// allocated. Returs `None` if no more tasks can be created in this Address Space.
-    pub fn alloc_task_slot(
-        &self,
-        initial_stack_size: usize,
-        allocator: &PhysicalMemoryManager,
-    ) -> Option<TaskSlot> {
+    pub fn alloc_task_slot(&self, initial_stack_size: usize, allocator: &Pmm) -> Option<TaskSlot> {
         use hal::memory::Flags;
 
         let index = self.slot_bitmap.lock().alloc(1)?;
@@ -101,7 +97,7 @@ where
             let top = slot_bottom + USER_STACK_SLOT_SIZE - 1;
             let stack_bottom = (top + 1) - initial_stack_size;
 
-            let physical_start = allocator.alloc_bytes(initial_stack_size);
+            let physical_start = allocator.alloc(initial_stack_size / Size4KiB::SIZE);
             self.page_table
                 .lock()
                 .map_area(

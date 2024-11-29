@@ -156,7 +156,8 @@ where
     let flags = MemoryObjectFlags::from_bits_truncate(flags as u32);
 
     // TODO: do something more sensible with this when we have a concept of physical memory "ownership"
-    let physical_start = crate::PHYSICAL_MEMORY_MANAGER.get().alloc_bytes(size);
+    assert!(size % Size4KiB::SIZE == 0);
+    let physical_start = crate::PMM.get().alloc(size / Size4KiB::SIZE);
 
     let memory_object = MemoryObject::new(
         task.id(),
@@ -218,11 +219,7 @@ where
          * If the AddressSpace handle is the zero handle, we map the MemoryObject into the calling task's
          * address space.
          */
-        task.address_space.map_memory_object(
-            memory_object.clone(),
-            virtual_address,
-            &crate::PHYSICAL_MEMORY_MANAGER.get(),
-        )?;
+        task.address_space.map_memory_object(memory_object.clone(), virtual_address, &crate::PMM.get())?;
     } else {
         task.handles
             .get(address_space_handle)
@@ -230,7 +227,7 @@ where
             .downcast_arc::<AddressSpace<P>>()
             .ok()
             .ok_or(MapMemoryObjectError::InvalidAddressSpaceHandle)?
-            .map_memory_object(memory_object.clone(), virtual_address, &crate::PHYSICAL_MEMORY_MANAGER.get())?;
+            .map_memory_object(memory_object.clone(), virtual_address, &crate::PMM.get())?;
     }
 
     /*
@@ -543,8 +540,7 @@ pub fn create_address_space<P>(
 where
     P: Platform,
 {
-    let address_space =
-        AddressSpace::<P>::new(task.id(), kernel_page_tables, crate::PHYSICAL_MEMORY_MANAGER.get());
+    let address_space = AddressSpace::<P>::new(task.id(), kernel_page_tables, crate::PMM.get());
     Ok(task.handles.add(address_space))
 }
 
@@ -589,7 +585,7 @@ where
         handles.add(object);
     }
 
-    let pmm = crate::PHYSICAL_MEMORY_MANAGER.get();
+    let pmm = crate::PMM.get();
     let new_task = Task::new(
         task.id(),
         address_space,

@@ -1,7 +1,7 @@
 use core::{arch::global_asm, mem, ptr};
 use hal::memory::VAddr;
 use hal_x86_64::hw::registers::{write_msr, CpuFlags};
-use kernel::memory::Stack;
+use kernel::memory::vmm::Stack;
 
 global_asm!(include_str!("task.s"));
 global_asm!(include_str!("syscall.s"));

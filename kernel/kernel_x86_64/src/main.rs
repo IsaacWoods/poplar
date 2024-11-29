@@ -30,7 +30,7 @@ use hal_x86_64::{
 };
 use interrupts::InterruptController;
 use kernel::{
-    memory::{KernelStackAllocator, PhysicalMemoryManager, Stack},
+    memory::{vmm::Stack, Pmm, Vmm},
     pci::PciResolver,
     scheduler::Scheduler,
     Platform,
@@ -137,12 +137,12 @@ pub extern "C" fn kentry(boot_info: &BootInfo) -> ! {
         kernel::ALLOCATOR.lock().init(boot_info.heap_address.mut_ptr(), boot_info.heap_size);
     }
 
-    let kernel_stack_allocator = KernelStackAllocator::new(
+    kernel::PMM.initialize(Pmm::new(boot_info));
+    kernel::VMM.initialize(Vmm::new(
         kernel_map::KERNEL_STACKS_BASE,
         kernel_map::KERNEL_STACKS_BASE + kernel_map::STACK_SLOT_SIZE * kernel_map::MAX_TASKS,
         hal::memory::mebibytes(2),
-    );
-    kernel::PHYSICAL_MEMORY_MANAGER.initialize(PhysicalMemoryManager::new(boot_info, kernel_stack_allocator));
+    ));
 
     /*
      * We want to replace the GDT and IDT as soon as we can, as we're currently relying on the ones installed by
@@ -242,12 +242,7 @@ pub extern "C" fn kentry(boot_info: &BootInfo) -> ! {
     /*
      * Create kernel objects from loaded images and schedule them.
      */
-    kernel::load_userspace(
-        SCHEDULER.get(),
-        &boot_info,
-        &mut KERNEL_PAGE_TABLES.get().write(),
-        kernel::PHYSICAL_MEMORY_MANAGER.get(),
-    );
+    kernel::load_userspace(SCHEDULER.get(), &boot_info, &mut KERNEL_PAGE_TABLES.get().write());
     if let Some(ref video_info) = boot_info.video_mode {
         kernel::create_framebuffer(video_info);
     }

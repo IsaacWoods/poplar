@@ -22,7 +22,7 @@ use hal_riscv::{
     platform::{kernel_map, PageTableImpl},
 };
 use kernel::{
-    memory::{KernelStackAllocator, PhysicalMemoryManager},
+    memory::{Pmm, Vmm},
     scheduler::Scheduler,
     Platform,
 };
@@ -39,8 +39,8 @@ impl Platform for PlatformImpl {
     type TaskContext = task::ContextSwitchFrame;
 
     unsafe fn initialize_task_stacks(
-        kernel_stack: &kernel::memory::Stack,
-        user_stack: &kernel::memory::Stack,
+        kernel_stack: &kernel::memory::vmm::Stack,
+        user_stack: &kernel::memory::vmm::Stack,
         _task_entry_point: VAddr,
     ) -> (VAddr, VAddr) {
         task::initialize_stacks(kernel_stack, user_stack)
@@ -131,12 +131,12 @@ pub extern "C" fn kentry(boot_info: &BootInfo) -> ! {
     };
     KERNEL_PAGE_TABLES.initialize(RwSpinlock::new(kernel_page_table));
 
-    let mut kernel_stack_allocator = KernelStackAllocator::new(
+    kernel::PMM.initialize(Pmm::new(boot_info));
+    kernel::VMM.initialize(Vmm::new(
         kernel_map::KERNEL_STACKS_BASE,
         kernel_map::KERNEL_STACKS_BASE + kernel_map::STACK_SLOT_SIZE * kernel_map::MAX_TASKS,
         kernel_map::STACK_SLOT_SIZE,
-    );
-    kernel::PHYSICAL_MEMORY_MANAGER.initialize(PhysicalMemoryManager::new(boot_info, kernel_stack_allocator));
+    ));
 
     interrupts::init(&fdt);
     unsafe {
@@ -182,12 +182,7 @@ pub extern "C" fn kentry(boot_info: &BootInfo) -> ! {
     /*
      * Create kernel objects from loaded images and schedule them.
      */
-    kernel::load_userspace(
-        SCHEDULER.get(),
-        &boot_info,
-        &mut KERNEL_PAGE_TABLES.get().write(),
-        kernel::PHYSICAL_MEMORY_MANAGER.get(),
-    );
+    kernel::load_userspace(SCHEDULER.get(), &boot_info, &mut KERNEL_PAGE_TABLES.get().write());
 
     /*
      * Kick the timer off. We do this just before installing the full handler because the shim

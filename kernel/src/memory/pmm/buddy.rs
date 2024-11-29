@@ -117,23 +117,26 @@ impl BuddyAllocator {
         bytes
     }
 
-    /// Allocate a block of `block_size` bytes from this allocator. Returns `None` if the allocator can't satisfy
+    /// Allocate a block of `count` base-blocks from this allocator. Returns `None` if the allocator can't satisfy
     /// the allocation.
-    pub fn allocate_bytes(&mut self, block_size: Bytes) -> Option<PAddr> {
-        assert!(block_size % BASE_SIZE == 0);
-        assert!((block_size / BASE_SIZE).is_power_of_two());
+    pub fn alloc(&mut self, count: usize) -> Option<PAddr> {
+        // TODO: what should we do about this requirement? I'm surprised we haven't run afoul of it
+        // yet...
+        // TODO: shouldn't we be able to allocate a larger block, and then free the portion we
+        // don't need as a smaller-order block(s) (they need to be well-aligned - this is the same
+        // problem as the intial block allocation. Work out the maths at some point...)
+        assert!(count.is_power_of_two());
 
-        let order = (block_size / BASE_SIZE).trailing_zeros() as usize;
+        let order = count.trailing_zeros() as usize;
         self.allocate_block(order)
     }
 
-    /// Free a block starting at `start` of `block_size` bytes. `block_size` must be a valid size of a whole block.
-    pub fn free_bytes(&mut self, start: PAddr, block_size: Bytes) {
-        assert!(block_size % BASE_SIZE == 0);
-        assert!((block_size / BASE_SIZE).is_power_of_two());
+    /// Free a block starting at `base` of `count` base-blocks. `count` must be a power-of-2.
+    pub fn free(&mut self, base: PAddr, count: usize) {
+        assert!(count.is_power_of_two());
 
-        let order = (block_size / BASE_SIZE).trailing_zeros() as usize;
-        self.free_block(start, order);
+        let order = count.trailing_zeros() as usize;
+        self.free_block(base, order);
     }
 
     /// Tries to allocate a block of the given order. If no blocks of the correct size are

@@ -7,7 +7,7 @@ use super::{
     KernelObjectType,
 };
 use crate::{
-    memory::{PhysicalMemoryManager, Stack},
+    memory::{vmm::Stack, Pmm},
     Platform,
 };
 use alloc::{collections::BTreeMap, string::String, sync::Arc};
@@ -107,16 +107,16 @@ where
         name: String,
         entry_point: VAddr,
         handles: Handles,
-        allocator: &PhysicalMemoryManager,
+        allocator: &Pmm,
         kernel_page_table: &mut P::PageTable,
     ) -> Result<Arc<Task<P>>, TaskCreationError> {
         let id = alloc_kernel_object_id();
 
         // TODO: better way of getting initial stack sizes
         let task_slot =
-            address_space.alloc_task_slot(0x4000, allocator).ok_or(TaskCreationError::AddressSpaceFull)?;
-        let kernel_stack = allocator
-            .kernel_stacks
+            address_space.alloc_task_slot(0x8000, allocator).ok_or(TaskCreationError::AddressSpaceFull)?;
+        let kernel_stack = crate::VMM
+            .get()
             .alloc_kernel_stack::<P>(0x4000, allocator, kernel_page_table)
             .ok_or(TaskCreationError::NoKernelStackSlots)?;
 

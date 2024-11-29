@@ -18,10 +18,10 @@ pub mod scheduler;
 pub mod syscall;
 pub mod tasklets;
 
-use crate::memory::Stack;
+use crate::memory::vmm::Stack;
 use alloc::{boxed::Box, string::ToString, sync::Arc, vec::Vec};
-use hal::memory::{FrameSize, PAddr, PageTable, VAddr};
-use memory::PhysicalMemoryManager;
+use hal::memory::{FrameSize, PAddr, PageTable, Size4KiB, VAddr};
+use memory::{Pmm, Vmm};
 use mulch::InitGuard;
 use object::{address_space::AddressSpace, memory_object::MemoryObject, task::Task};
 use pci::{PciInfo, PciInterruptConfigurator, PciResolver};
@@ -34,7 +34,8 @@ use spinning_top::{RwSpinlock, Spinlock};
 #[global_allocator]
 pub static ALLOCATOR: linked_list_allocator::LockedHeap = linked_list_allocator::LockedHeap::empty();
 
-pub static PHYSICAL_MEMORY_MANAGER: InitGuard<PhysicalMemoryManager> = InitGuard::uninit();
+pub static PMM: InitGuard<Pmm> = InitGuard::uninit();
+pub static VMM: InitGuard<Vmm> = InitGuard::uninit();
 pub static FRAMEBUFFER: InitGuard<(poplar::syscall::FramebufferInfo, Arc<MemoryObject>)> = InitGuard::uninit();
 pub static PCI_INFO: RwSpinlock<Option<PciInfo>> = RwSpinlock::new(None);
 pub static PCI_ACCESS: InitGuard<Option<Spinlock<Box<dyn PciConfigRegionAccess + Send>>>> = InitGuard::uninit();
@@ -93,12 +94,8 @@ pub trait Platform: Sized + 'static {
     unsafe fn write_to_phys_memory(address: PAddr, data: &[u8]);
 }
 
-pub fn load_userspace<P>(
-    scheduler: &Scheduler<P>,
-    boot_info: &BootInfo,
-    kernel_page_table: &mut P::PageTable,
-    allocator: &PhysicalMemoryManager,
-) where
+pub fn load_userspace<P>(scheduler: &Scheduler<P>, boot_info: &BootInfo, kernel_page_table: &mut P::PageTable)
+where
     P: Platform,
 {
     use hal::memory::Flags;
@@ -109,15 +106,16 @@ pub fn load_userspace<P>(
         return;
     }
 
+    let pmm = PMM.get();
     let bootstrap_task = boot_info.loaded_images.first().unwrap();
-    let address_space = AddressSpace::new(SENTINEL_KERNEL_ID, kernel_page_table, allocator);
+    let address_space = AddressSpace::new(SENTINEL_KERNEL_ID, kernel_page_table, pmm);
     let handles = Handles::new();
 
     for segment in &bootstrap_task.segments {
         // TODO: this now uses the wrong task id...
         let memory_object = MemoryObject::from_boot_info(SENTINEL_KERNEL_ID, segment);
         handles.add(memory_object.clone());
-        address_space.map_memory_object(memory_object, segment.virtual_address, allocator).unwrap();
+        address_space.map_memory_object(memory_object, segment.virtual_address, pmm).unwrap();
     }
 
     /*
@@ -145,7 +143,7 @@ pub fn load_userspace<P>(
     const MANIFEST_ADDRESS: VAddr = VAddr::new(0x20000000);
     let mem_object_len = mulch::math::align_up(bytes_written, 0x1000);
     let manifest_object = {
-        let phys = allocator.alloc_bytes(mem_object_len);
+        let phys = pmm.alloc(mem_object_len / Size4KiB::SIZE);
         unsafe {
             P::write_to_phys_memory(phys, &(bytes_written as u32).to_le_bytes());
             P::write_to_phys_memory(phys + 4, &buffer);
@@ -157,7 +155,7 @@ pub fn load_userspace<P>(
             Flags { user_accessible: true, ..Default::default() },
         )
     };
-    address_space.map_memory_object(manifest_object, MANIFEST_ADDRESS, allocator).unwrap();
+    address_space.map_memory_object(manifest_object, MANIFEST_ADDRESS, pmm).unwrap();
 
     let task = Task::new(
         SENTINEL_KERNEL_ID,
@@ -165,7 +163,7 @@ pub fn load_userspace<P>(
         bootstrap_task.name.to_string(),
         bootstrap_task.entry_point,
         handles,
-        allocator,
+        pmm,
         kernel_page_table,
     )
     .expect("Failed to load bootstrapping task");
