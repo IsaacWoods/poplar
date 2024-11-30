@@ -127,11 +127,10 @@ fn lang_start<T>(main: fn() -> T, _argc: isize, _argv: *const *const u8, _sigpip
 pub fn handle_panic(info: &PanicInfo) -> ! {
     use core::fmt::Write;
 
-    // TODO: this isn't an ideal approach - if the allocator stops working we won't get a good error
-    let mut s = String::new();
+    let mut buffer = PanicBuffer::new();
     if let Some(location) = info.location() {
         let _ = write!(
-            s,
+            buffer,
             "PANIC: {} ({} - {}:{})",
             info.message(),
             location.file(),
@@ -139,9 +138,35 @@ pub fn handle_panic(info: &PanicInfo) -> ! {
             location.column()
         );
     } else {
-        let _ = write!(s, "PANIC: {} (no location info)", info.message());
+        let _ = write!(buffer, "PANIC: {} (no location info)", info.message());
     }
-    let _ = poplar::syscall::early_log(&s);
+    let _ = poplar::syscall::early_log(buffer.as_str());
 
     loop {}
+}
+
+const PANIC_BUFFER_LEN: usize = 256;
+
+pub struct PanicBuffer {
+    buffer: [u8; PANIC_BUFFER_LEN],
+    len: usize,
+}
+
+impl PanicBuffer {
+    pub fn new() -> PanicBuffer {
+        PanicBuffer { buffer: [0; PANIC_BUFFER_LEN], len: 0 }
+    }
+
+    pub fn as_str(&self) -> &str {
+        unsafe { core::str::from_utf8_unchecked(&self.buffer[0..self.len]) }
+    }
+}
+
+impl fmt::Write for PanicBuffer {
+    fn write_str(&mut self, s: &str) -> fmt::Result {
+        let bytes = s.as_bytes();
+        self.buffer[self.len..(self.len + bytes.len())].copy_from_slice(bytes);
+        self.len += bytes.len();
+        Ok(())
+    }
 }
