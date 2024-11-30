@@ -8,7 +8,6 @@ edition = "2018"
 cfg-if = "0.1"
 log = "0.4"
 bit_field = "0.10"
-smallvec = "1.13.2"
 
 [features]
 platform_rv64_virt = []
