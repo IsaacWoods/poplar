@@ -102,8 +102,14 @@ unsafe extern "C" fn rust_entry() -> ! {
     }
 
     // Initialize the heap
+    /*
+     * TODO: we need a better userspace heap allocator - I don't think we even need to allocate an
+     * initial heap - on the first allocation, we should create an initial memory object and map
+     * it, and then increase the size of it as it becomes exhausted. At some point, we should
+     * probably free massive heaps if tasks have a high tidemark but low normal usage or whatever.
+     */
     const HEAP_START: usize = 0x600000000;
-    const HEAP_SIZE: usize = 0x4000;
+    const HEAP_SIZE: usize = 0x8000;
     let heap = MemoryObject::create(HEAP_SIZE, MemoryObjectFlags::WRITABLE).unwrap();
     let _mapped_heap = heap.map_at(HEAP_START).unwrap();
     ALLOCATOR.lock().init(HEAP_START as *mut u8, HEAP_SIZE);

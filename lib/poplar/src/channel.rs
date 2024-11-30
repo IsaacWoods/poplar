@@ -8,7 +8,7 @@ use ptah::{DeserializeOwned, Serialize};
 
 // TODO: we now have heap-allocated buffers for sending, but still have bounded receives based on
 // stack sizes. Is there any way of dealing with larger messages on receive?
-const BYTES_BUFFER_SIZE: usize = 512;
+const BYTES_BUFFER_SIZE: usize = 2048;
 
 #[derive(Debug)]
 pub enum ChannelSendError {

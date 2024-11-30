@@ -154,15 +154,14 @@ impl PlatformBus {
                 Device::Unclaimed { bus_driver, device_info, handoff_info } => {
                     devices.push(DeviceInspect::Unclaimed {
                         name: name.clone(),
-                        // device_info: device_info.0.clone(),
+                        device_info: device_info.0.clone(),
                         // TODO
                         // handoff_info_names: Vec::new(),
                     });
                 }
                 Device::Claimed { bus_driver, device_info, device_driver } => {
-                    devices.push(DeviceInspect::Claimed {
-                        name: name.clone(), /*device_info: device_info.0.clone()*/
-                    });
+                    devices
+                        .push(DeviceInspect::Claimed { name: name.clone(), device_info: device_info.0.clone() });
                 }
             }
         }

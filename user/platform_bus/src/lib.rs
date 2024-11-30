@@ -250,12 +250,12 @@ pub struct PlatformBusInspect {
 pub enum DeviceInspect {
     Unclaimed {
         name: String,
-        // device_info: BTreeMap<PropertyName, Property>,
+        device_info: BTreeMap<PropertyName, Property>,
         // handoff_info_names: Vec<PropertyName>,
     },
     Claimed {
         name: String,
-        // device_info: BTreeMap<PropertyName, Property>,
+        device_info: BTreeMap<PropertyName, Property>,
     },
 }
 
