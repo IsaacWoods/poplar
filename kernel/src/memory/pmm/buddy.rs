@@ -120,12 +120,13 @@ impl BuddyAllocator {
     /// Allocate a block of `count` base-blocks from this allocator. Returns `None` if the allocator can't satisfy
     /// the allocation.
     pub fn alloc(&mut self, count: usize) -> Option<PAddr> {
-        // TODO: what should we do about this requirement? I'm surprised we haven't run afoul of it
-        // yet...
-        // TODO: shouldn't we be able to allocate a larger block, and then free the portion we
-        // don't need as a smaller-order block(s) (they need to be well-aligned - this is the same
-        // problem as the intial block allocation. Work out the maths at some point...)
-        assert!(count.is_power_of_two());
+        /*
+         * TODO: this requirement wastes a lot of space on larger allocations that aren't sized
+         * nicely. We should be allocate a larger block, and then split the remaining space into
+         * smaller blocks (this is the same problem as the initial block allocation - the blocks
+         * need to be well-aligned for their sizes. Work out the maths at some point).
+         */
+        let count = count.next_power_of_two();
 
         let order = count.trailing_zeros() as usize;
         self.allocate_block(order)
