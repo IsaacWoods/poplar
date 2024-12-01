@@ -7,7 +7,6 @@ user_tasks = [
     "platform_bus user/platform_bus",
     # "usb_bus_xhci user/usb_bus_xhci",
     "simple_fb user/simple_fb",
-    "echo user/echo",
 ]
 
 [rv64_virt]

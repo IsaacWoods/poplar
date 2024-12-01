@@ -1,7 +1,6 @@
 [workspace]
 members = [
     "simple_fb",
-    "echo",
     "platform_bus",
     "usb_bus_xhci",
     "hello_world",

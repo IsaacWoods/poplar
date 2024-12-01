@@ -51,14 +51,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "echo"
-version = "0.1.0"
-dependencies = [
- "log",
- "std",
-]
-
-[[package]]
 name = "fb_console"
 version = "0.1.0"
 dependencies = [
