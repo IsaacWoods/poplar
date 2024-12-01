@@ -19,7 +19,7 @@ impl Pmm {
 
         for entry in &boot_info.memory_map {
             if entry.typ == seed::boot_info::MemoryType::Conventional {
-                buddy_allocator.add_range(entry.frame_range());
+                buddy_allocator.free_range(entry.frame_range());
             }
         }
 

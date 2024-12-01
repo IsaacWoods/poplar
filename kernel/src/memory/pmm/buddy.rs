@@ -71,41 +71,14 @@ impl BuddyAllocator {
         BuddyAllocator { bins: Default::default() }
     }
 
-    /// Add a range of `Frame`s to this allocator, marking them free to allocate.
-    pub fn add_range(&mut self, range: Range<Frame>) {
-        // XXX: if we ever change BASE_SIZE, this needs to be adjusted, so we assert here
-        assert_eq!(BASE_SIZE, Size4KiB::SIZE);
-
+    /// Free a range of `Frame`s into this allocator, marking them free to allocate.
+    pub fn free_range(&mut self, range: Range<Frame<Size4KiB>>) {
         /*
          * Add each frame in the range to the allocator, allowing it to coalesce as it goes.
-         *
-         * TODO: this is inefficient with large numbers of frames, but extracting well-formed
-         * blocks of higher orders is not as easy as it looks (and has caused horrendous bugs in
-         * the past when we didn't pick that complexity up)! Blocks need to be well-aligned
-         * according to their size, or when they're later split, they add the incorrect buddies
-         * back to the allocator!
          */
         for frame in range {
             self.free_block(frame.start, 0);
         }
-
-        // /*
-        //  * Break the frame area into a set of blocks with power-of-2 sizes, and register each
-        //  * block as free to allocate.
-        //  */
-        // let mut block_start = range.start;
-        //
-        // while block_start < range.end {
-        //     /*
-        //      * Pick the largest order block that fits in the remaining area, but cap it at the
-        //      * largest order the allocator can manage.
-        //      */
-        //     let num_frames = (block_start..range.end).count();
-        //     let order = min(MAX_ORDER, flooring_log2(num_frames));
-        //
-        //     self.free_block(block_start.start, order);
-        //     block_start += 1 << order;
-        // }
     }
 
     #[allow(dead_code)]
@@ -207,14 +180,6 @@ impl BuddyAllocator {
     }
 }
 
-/*
- * TODO: actually test the allocator as well:
- *    - allocate n frames, with variety of ranges requiring splitting and stuff
- *    - create a BTreeSet or whatever that contains all the 4KiB frames expected out of that range
- *    - allocate 4KiB frames out until we fail to allocate
- *    - remove the frames from the BTreeSet, checking we don't remove one that shouldn't be removed
- *    - when we fail to allocate, check that all the bins, as well as the BTreeSet of expected frames, is empty
- */
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -294,10 +259,10 @@ mod tests {
     #[test]
     fn test_single_frame_binning() {
         let mut allocator = BuddyAllocator::new();
-        allocator.add_range(n_frames_at(0x0, 1));
-        allocator.add_range(n_frames_at(0x2000, 1));
-        allocator.add_range(n_frames_at(0x16000, 1));
-        allocator.add_range(n_frames_at(0xf480000, 1));
+        allocator.free_range(n_frames_at(0x0, 1));
+        allocator.free_range(n_frames_at(0x2000, 1));
+        allocator.free_range(n_frames_at(0x16000, 1));
+        allocator.free_range(n_frames_at(0xf480000, 1));
         assert_eq!(allocator.available_bytes(), 0x4000);
         check_bins(
             allocator,
@@ -308,9 +273,9 @@ mod tests {
     #[test]
     fn test_bigger_block_binning() {
         let mut allocator = BuddyAllocator::new();
-        allocator.add_range(n_frames_at(0x2000, 1));
-        allocator.add_range(n_frames_at(0x6000, 4));
-        allocator.add_range(n_frames_at(0x10000, 64));
+        allocator.free_range(n_frames_at(0x2000, 1));
+        allocator.free_range(n_frames_at(0x6000, 4));
+        allocator.free_range(n_frames_at(0x10000, 64));
         assert_eq!(allocator.available_bytes(), (1 + 4 + 64) * BASE_SIZE);
         check_bins(
             allocator,
@@ -332,14 +297,14 @@ mod tests {
          * Split 3 frames into an order-1 block and an order-0 block.
          */
         let mut allocator = BuddyAllocator::new();
-        allocator.add_range(n_frames_at(0x0, 3));
+        allocator.free_range(n_frames_at(0x0, 3));
         check_bins(allocator, vec![Block::new(1, 0x0), Block::new(0, 0x2000)]);
 
         /*
          * Split 523 frames.
          */
         let mut allocator = BuddyAllocator::new();
-        allocator.add_range(n_frames_at(0x40000, 523));
+        allocator.free_range(n_frames_at(0x40000, 523));
         assert_eq!(allocator.available_bytes(), 523 * BASE_SIZE);
         check_bins(
             allocator,
@@ -362,9 +327,9 @@ mod tests {
          * be.
          */
         let mut allocator = BuddyAllocator::new();
-        allocator.add_range(n_frames_at(0x1000, 1));
-        allocator.add_range(n_frames_at(0x3000, 1));
-        allocator.add_range(n_frames_at(0x2000, 1));
+        allocator.free_range(n_frames_at(0x1000, 1));
+        allocator.free_range(n_frames_at(0x3000, 1));
+        allocator.free_range(n_frames_at(0x2000, 1));
         assert_eq!(allocator.available_bytes(), 0x3000);
         check_bins(allocator, vec![Block::new(0, 0x1000), Block::new(1, 0x2000)]);
 
@@ -372,10 +337,10 @@ mod tests {
          * Start with four order-0 blocks that can be coalesced into a single order-2 block.
          */
         let mut allocator = BuddyAllocator::new();
-        allocator.add_range(n_frames_at(0x0, 1));
-        allocator.add_range(n_frames_at(0x2000, 1));
-        allocator.add_range(n_frames_at(0x3000, 1));
-        allocator.add_range(n_frames_at(0x1000, 1));
+        allocator.free_range(n_frames_at(0x0, 1));
+        allocator.free_range(n_frames_at(0x2000, 1));
+        allocator.free_range(n_frames_at(0x3000, 1));
+        allocator.free_range(n_frames_at(0x1000, 1));
         assert_eq!(allocator.available_bytes(), 0x4000);
         check_bins(allocator, vec![Block::new(2, 0x0)]);
 
@@ -384,7 +349,7 @@ mod tests {
          */
         let mut allocator = BuddyAllocator::new();
         for i in 0..1024 {
-            allocator.add_range(n_frames_at(i * Size4KiB::SIZE, 1));
+            allocator.free_range(n_frames_at(i * Size4KiB::SIZE, 1));
         }
         assert_eq!(allocator.available_bytes(), 0x400000);
         check_bins(allocator, vec![Block::new(10, 0x0)]);
@@ -395,7 +360,7 @@ mod tests {
         let mut allocator = BuddyAllocator::new();
         assert_eq!(allocator.available_bytes(), 0);
 
-        assert_eq!(allocator.allocate_bytes(0x1000), None);
+        assert_eq!(allocator.alloc(1), None);
         assert_eq!(allocator.allocate_block(0), None);
         assert_eq!(allocator.allocate_block(MAX_ORDER), None);
     }
@@ -407,16 +372,16 @@ mod tests {
          * `None` even if we could service the request overall.
          */
         let mut allocator = BuddyAllocator::new();
-        allocator.add_range(n_frames_at(0x0, 8192)); // Allocate 4 blocks of the maximum order (currently 12)
+        allocator.free_range(n_frames_at(0x0, 8192)); // Allocate 4 blocks of the maximum order (currently 12)
         assert_eq!(allocator.allocate_block(13), None);
     }
 
     #[test]
     fn test_allocation() {
         let mut allocator = BuddyAllocator::new();
-        allocator.add_range(n_frames_at(0x2000, 1));
-        allocator.add_range(n_frames_at(0x6000, 4));
-        allocator.add_range(n_frames_at(0x10000, 64));
+        allocator.free_range(n_frames_at(0x2000, 1));
+        allocator.free_range(n_frames_at(0x6000, 4));
+        allocator.free_range(n_frames_at(0x10000, 64));
         assert_eq!(allocator.available_bytes(), (1 + 4 + 64) * BASE_SIZE);
         check_bins(
             allocator.clone(),
@@ -431,12 +396,12 @@ mod tests {
         );
 
         // Allocate 2 frames - should come from 0x6000
-        assert_eq!(allocator.allocate_bytes(0x2000), Some(PAddr::new(0x6000).unwrap()));
+        assert_eq!(allocator.alloc(2), Some(PAddr::new(0x6000).unwrap()));
 
         // Allocate 1 frame - should come from 0x2000
-        assert_eq!(allocator.allocate_bytes(0x1000), Some(PAddr::new(0x2000).unwrap()));
+        assert_eq!(allocator.alloc(1), Some(PAddr::new(0x2000).unwrap()));
 
         // Allocate another frame - this should force a larger block to split
-        assert_eq!(allocator.allocate_bytes(0x1000), Some(PAddr::new(0x8000).unwrap()));
+        assert_eq!(allocator.alloc(1), Some(PAddr::new(0x8000).unwrap()));
     }
 }
