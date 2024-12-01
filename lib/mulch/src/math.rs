@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: MPL-2.0
  */
 
-use core::{mem, ops};
+use core::ops;
 use num_traits::PrimInt;
 
 // TODO: feels like something like this should exist in `num_traits` or something, but if it does I couldn't find
@@ -30,51 +30,6 @@ impl_power_of_twoable!(u16);
 impl_power_of_twoable!(u32);
 impl_power_of_twoable!(u64);
 impl_power_of_twoable!(usize);
-
-/// Fast integer `log2` that floors to the lower power-of-2 if `x` is not a power-of-2. `x`
-/// must not be 0.
-///
-/// ### Example
-/// ``` ignore
-/// assert_eq!(flooring_log2(1), 0);
-/// assert_eq!(flooring_log2(64), 6);
-/// assert_eq!(flooring_log2(61), 5);
-/// assert_eq!(flooring_log2(4095), 11);
-/// ```
-pub fn flooring_log2(x: usize) -> usize {
-    assert!(x > 0);
-    const NUM_BITS: usize = mem::size_of::<usize>() * 8;
-
-    /*
-     * Count the number of leading zeros in the value, then subtract that from the total
-     * number of bits in the type (64 for a `u64`). This gets the first bit set, which is
-     * the largest power-of-2 component of the value.
-     */
-    NUM_BITS - x.leading_zeros() as usize - 1
-}
-
-#[test]
-fn test_flooring_log2() {
-    assert_eq!(flooring_log2(1), 0);
-    assert_eq!(flooring_log2(64), 6);
-    assert_eq!(flooring_log2(61), 5);
-    assert_eq!(flooring_log2(4095), 11);
-}
-
-pub fn ceiling_log2(x: usize) -> usize {
-    let x = if x.is_power_of_two() { x } else { x.next_power_of_two() };
-
-    // `x` will always be a power of two now, so log(2) == the number of trailing zeros
-    x.trailing_zeros() as usize
-}
-
-#[test]
-fn test_ceiling_log2() {
-    assert_eq!(ceiling_log2(1), 0);
-    assert_eq!(ceiling_log2(64), 6);
-    assert_eq!(ceiling_log2(61), 6);
-    assert_eq!(ceiling_log2(4095), 12);
-}
 
 pub fn align_down<T: PrimInt + PowerOfTwoable>(value: T, align: T) -> T {
     assert!(align == T::zero() || align.is_power_of_two());
