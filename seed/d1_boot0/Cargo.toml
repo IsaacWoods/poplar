@@ -6,3 +6,4 @@ edition = "2021"
 
 [dependencies]
 volatile = { path = "../../lib/volatile" }
+bit_field = "0.10.2"
