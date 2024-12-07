@@ -1,8 +1,4 @@
-use ginkgo::{
-    ast::BindingResolver,
-    interpreter::{Interpreter, Value},
-    parse::Parser,
-};
+use ginkgo::{parse::Parser, vm::Vm};
 use rustyline::{
     error::ReadlineError,
     validate::MatchingBracketValidator,
@@ -16,9 +12,6 @@ use rustyline::{
 use std::{io, path::Path};
 
 fn main() -> io::Result<()> {
-    let mut interpreter = Interpreter::new();
-    let mut resolver = BindingResolver::new();
-
     /*
      * TODO: things to experiment with: `gc-arena` crate for garbage-collected values long-term +
      * `rustyline` for a decent REPL interface (either wholesale or being inspired by it (at least
@@ -26,12 +19,14 @@ fn main() -> io::Result<()> {
      * - miette for fancy diagnostic reporting
      */
 
-    interpreter.define_native_function("print", |params| {
-        assert!(params.len() == 1);
-        let value = params.get(0).unwrap();
-        println!("PRINT: {:?}", value);
-        Value::Unit
-    });
+    let mut vm = Vm::new();
+
+    // interpreter.define_native_function("print", |params| {
+    //     assert!(params.len() == 1);
+    //     let value = params.get(0).unwrap();
+    //     println!("PRINT: {:?}", value);
+    //     Value::Unit
+    // });
 
     // If we were passed a path, load and run that file
     if std::env::args().count() > 1 {
@@ -40,30 +35,14 @@ fn main() -> io::Result<()> {
 
         let source = std::fs::read_to_string(Path::new(&path)).unwrap();
         let parser = Parser::new(&source);
-        let mut output = parser.parse().unwrap();
-
-        for mut statement in &mut output {
-            resolver.resolve_bindings(&mut statement);
-        }
-
-        for statement in output {
-            interpreter.eval_stmt(statement);
-        }
+        let chunk = parser.parse().unwrap();
+        vm.interpret(chunk);
     }
 
     let mut rl = Editor::new().unwrap();
     rl.set_helper(Some(ReplHelper { validator: MatchingBracketValidator::new() }));
     // TODO: can load history here if wanted
 
-    // TODO: we want a much more advanced REPL than this, to the point where it'll definitely need
-    // intimate support from the parser itself. It'll be useful in a range of settings (thinking
-    // Poplar's shell), so we can include at least some of it in the library portion.
-    //
-    // XXX: the answer, it turns out, is to do validation outside the parser (maybe by using simple
-    // rules from a token stream out of a lexer) to tell when input is incomplete (i.e. when we're
-    // inside a structure or construct). We can either build this around `rustyline`, or use our
-    // own thing as we may well need it anyway to use from inside Poplar (I'm not sure how much of
-    // VT100 we want to emulate?).
     loop {
         let line = rl.readline("> ");
         match line {
@@ -71,19 +50,9 @@ fn main() -> io::Result<()> {
                 rl.add_history_entry(line.as_str()).unwrap();
 
                 let parser = Parser::new(&line);
-                let mut stmts = parser.parse().unwrap();
+                let chunk = parser.parse().unwrap();
 
-                for statement in &mut stmts {
-                    resolver.resolve_bindings(statement);
-                }
-
-                for statement in stmts {
-                    match interpreter.eval_stmt(statement) {
-                        ginkgo::interpreter::ControlFlow::None => (),
-                        ginkgo::interpreter::ControlFlow::Yield(value) => println!("Result: {:?}", value),
-                        ginkgo::interpreter::ControlFlow::Return(value) => println!("Result: {:?}", value),
-                    }
-                }
+                vm.interpret(chunk);
             }
             Err(ReadlineError::Interrupted) => {
                 println!("Ctrl-C");
