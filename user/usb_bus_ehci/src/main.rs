@@ -127,15 +127,11 @@ impl ActiveDevice {
                 Ok(())
             }
             DeviceControlMessage::InterruptTransferIn { endpoint, packet_size } => {
-                // info!("Doing IN interrupt transfer for endpoint {} (packet size = {})", endpoint, packet_size);
                 let endpoint = self.endpoints.get(&endpoint).unwrap();
                 // TODO: check that given direction is correct for this endpoint
 
                 let mut buffer = controller.schedule_pool.write().create_buffer(packet_size as usize).unwrap();
                 controller.do_interrupt_transfer(&endpoint, buffer.token().unwrap(), false).await;
-                // TODO: I wonder if sending the data back should be divorced from the request
-                // handling so we can handle other requests while we're waiting for it to complete?
-                // This will require transactions to go through the async system first.
                 self.channel.send(&DeviceResponse::Data(buffer.read().to_vec())).unwrap();
                 Ok(())
             }

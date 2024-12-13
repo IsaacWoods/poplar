@@ -1,5 +1,5 @@
 use bit_field::BitField;
-use log::{error, info, warn};
+use log::{error, warn};
 use spinning_top::Spinlock;
 use std::{
     collections::VecDeque,
