@@ -50,6 +50,14 @@ impl RunQemuRiscV {
     pub fn run(self) -> Result<()> {
         let mut qemu = Command::new("qemu-system-riscv64");
 
+        /*
+         * XXX: current versions of QEMU on Wayland do not capture the mouse correctly for me
+         * (mouse events are not generated with relative x/y on mouse movement). This could be an
+         * oddity of my current setup / versions of things, but for now at least force QEMU's GTK
+         * backend to use X / XWayland until hopefully that's fixed.
+         */
+        qemu.env("GDK_BACKEND", "x11");
+
         qemu.args(&["-M", "virt,aia=aplic-imsic"]);
         qemu.args(&["-m", "1G"]);
         qemu.args(&["-kernel", self.seed.to_str().unwrap()]);
