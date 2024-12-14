@@ -81,8 +81,6 @@ where
 
     pub user_slot: Spinlock<TaskSlot>,
     pub kernel_stack: Spinlock<Stack>,
-    pub kernel_stack_pointer: UnsafeCell<VAddr>,
-    pub user_stack_pointer: UnsafeCell<VAddr>,
 
     pub context: UnsafeCell<P::TaskContext>,
 
@@ -120,9 +118,7 @@ where
             .alloc_kernel_stack::<P>(0x4000, allocator, kernel_page_table)
             .ok_or(TaskCreationError::NoKernelStackSlots)?;
 
-        let (kernel_stack_pointer, user_stack_pointer) =
-            unsafe { P::initialize_task_stacks(&kernel_stack, &task_slot.user_stack, entry_point) };
-        let context = P::new_task_context(kernel_stack_pointer, user_stack_pointer, entry_point);
+        let context = P::new_task_context(&kernel_stack, &task_slot.user_stack, entry_point);
 
         Ok(Arc::new(Task {
             id,
@@ -132,9 +128,6 @@ where
             state: Spinlock::new(TaskState::Ready),
             user_slot: Spinlock::new(task_slot),
             kernel_stack: Spinlock::new(kernel_stack),
-            kernel_stack_pointer: UnsafeCell::new(kernel_stack_pointer),
-            user_stack_pointer: UnsafeCell::new(user_stack_pointer),
-
             context: UnsafeCell::new(context),
 
             handles,

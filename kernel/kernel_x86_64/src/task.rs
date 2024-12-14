@@ -62,12 +62,15 @@ pub struct ContextSwitchFrame {
     pub return_address: u64,
 }
 
-/// Returns `(kernel_stack_pointer, user_stack_pointer)`.
-pub unsafe fn initialize_stacks(
-    kernel_stack: &Stack,
-    user_stack: &Stack,
-    task_entry_point: VAddr,
-) -> (VAddr, VAddr) {
+/// The context stored for each task. We track the user and kernel stack pointers, as we need to
+/// keep the per-CPU versions of each of them coordinated with the scheduled task. On x64, the
+/// context switch frame is stored on the kernel stack itself, so doesn't need to be stored here.
+pub struct TaskContext {
+    kernel_stack_pointer: VAddr,
+    user_stack_pointer: VAddr,
+}
+
+pub fn new_task_context(kernel_stack: &Stack, user_stack: &Stack, task_entry_point: VAddr) -> TaskContext {
     /*
      * These are the set of flags we enter the task for the first time with. We allow, set the parity flag to
      * even, and leave everything else unset.
@@ -87,7 +90,9 @@ pub unsafe fn initialize_stacks(
      * Start off with a zero return address to terminate backtraces at task entry.
      */
     kernel_stack_pointer -= 8;
-    ptr::write(kernel_stack_pointer.mut_ptr() as *mut u64, 0x0);
+    unsafe {
+        ptr::write(kernel_stack_pointer.mut_ptr() as *mut u64, 0x0);
+    }
 
     /*
      * Next, we construct the context-switch frame that is used when a task is switched to for
@@ -95,34 +100,39 @@ pub unsafe fn initialize_stacks(
      * kernel-space trampoline that enters userspace.
      */
     kernel_stack_pointer -= mem::size_of::<ContextSwitchFrame>();
-    ptr::write(
-        kernel_stack_pointer.mut_ptr() as *mut ContextSwitchFrame,
-        ContextSwitchFrame {
-            flags: INITIAL_RFLAGS.into(),
-            r15: usize::from(task_entry_point) as u64,
-            // TODO: if we keep the new flags thing, revisit this
-            r14: INITIAL_RFLAGS.into(),
-            r13: 0x0,
-            r12: 0x0,
-            rbp: 0x0,
-            rbx: 0x0,
-            return_address: task_entry_trampoline as u64,
-        },
-    );
+    unsafe {
+        ptr::write(
+            kernel_stack_pointer.mut_ptr() as *mut ContextSwitchFrame,
+            ContextSwitchFrame {
+                flags: INITIAL_RFLAGS.into(),
+                r15: usize::from(task_entry_point) as u64,
+                // TODO: if we keep the new flags thing, revisit this
+                r14: INITIAL_RFLAGS.into(),
+                r13: 0x0,
+                r12: 0x0,
+                rbp: 0x0,
+                rbx: 0x0,
+                return_address: task_entry_trampoline as u64,
+            },
+        );
+    }
 
-    (kernel_stack_pointer, user_stack_pointer)
+    TaskContext { kernel_stack_pointer, user_stack_pointer }
 }
 
-pub unsafe fn context_switch(current_kernel_stack: *mut VAddr, new_kernel_stack: VAddr) {
-    do_context_switch(current_kernel_stack, new_kernel_stack);
+pub unsafe fn context_switch(from_context: *mut TaskContext, to_context: *const TaskContext) {
+    let per_cpu = unsafe { crate::per_cpu::get_per_cpu_data() };
+    (*from_context).user_stack_pointer = per_cpu.user_stack_pointer();
+    per_cpu.set_user_stack_pointer((*to_context).user_stack_pointer);
+    per_cpu.set_kernel_stack_pointer((*to_context).kernel_stack_pointer);
+    // TODO: use &raw when we have a newer nightly
+    do_context_switch(ptr::addr_of_mut!((*from_context).kernel_stack_pointer), (*to_context).kernel_stack_pointer);
 }
 
-pub unsafe fn drop_into_userspace() -> ! {
-    /*
-     * On x86_64, we use the context we install into the task's kernel stack to drop into usermode. We don't
-     * need the kernel stack pointer as it has already been installed into the per-cpu info, so we can just
-     * load it from there.
-     */
+pub unsafe fn drop_into_userspace(context: *const TaskContext) -> ! {
+    let per_cpu = unsafe { crate::per_cpu::get_per_cpu_data() };
+    per_cpu.set_kernel_stack_pointer((*context).kernel_stack_pointer);
+    per_cpu.set_user_stack_pointer((*context).user_stack_pointer);
     do_drop_to_usermode();
 }
 

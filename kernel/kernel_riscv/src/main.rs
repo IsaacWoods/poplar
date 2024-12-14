@@ -36,44 +36,22 @@ pub struct PlatformImpl;
 impl Platform for PlatformImpl {
     type PageTableSize = hal::memory::Size4KiB;
     type PageTable = hal_riscv::platform::PageTableImpl;
-    type TaskContext = task::ContextSwitchFrame;
-
-    unsafe fn initialize_task_stacks(
-        kernel_stack: &kernel::memory::vmm::Stack,
-        user_stack: &kernel::memory::vmm::Stack,
-        _task_entry_point: VAddr,
-    ) -> (VAddr, VAddr) {
-        task::initialize_stacks(kernel_stack, user_stack)
-    }
+    type TaskContext = task::TaskContext;
 
     fn new_task_context(
-        kernel_stack_pointer: VAddr,
-        user_stack_pointer: VAddr,
+        kernel_stack: &kernel::memory::vmm::Stack,
+        user_stack: &kernel::memory::vmm::Stack,
         task_entry_point: VAddr,
     ) -> Self::TaskContext {
-        task::ContextSwitchFrame::new(kernel_stack_pointer, user_stack_pointer, task_entry_point)
+        task::new_task_context(kernel_stack, user_stack, task_entry_point)
     }
 
-    unsafe fn switch_user_stack_pointer(_new_user_stack_pointer: VAddr) -> VAddr {
-        // TODO: we don't track user stacks in the same way on RISC-V - not sure what to do here...
-        VAddr::new(0x0)
+    unsafe fn context_switch(from_context: *mut Self::TaskContext, to_context: *const Self::TaskContext) {
+        task::context_switch(from_context, to_context);
     }
 
-    unsafe fn context_switch(
-        _current_kernel_stack_pointer: *mut VAddr,
-        new_kernel_stack_pointer: VAddr,
-        from_context: *mut Self::TaskContext,
-        to_context: *const Self::TaskContext,
-    ) {
-        task::context_switch(new_kernel_stack_pointer, from_context, to_context);
-    }
-
-    unsafe fn drop_into_userspace(
-        context: *const Self::TaskContext,
-        kernel_stack_pointer: VAddr,
-        _user_stack_pointer: VAddr,
-    ) -> ! {
-        task::drop_into_userspace(context, kernel_stack_pointer)
+    unsafe fn drop_into_userspace(context: *const Self::TaskContext) -> ! {
+        task::drop_into_userspace(context)
     }
 
     unsafe fn write_to_phys_memory(address: PAddr, data: &[u8]) {

@@ -18,10 +18,9 @@ pub mod scheduler;
 pub mod syscall;
 pub mod tasklets;
 
-use crate::memory::vmm::Stack;
 use alloc::{boxed::Box, string::ToString, sync::Arc, vec::Vec};
 use hal::memory::{FrameSize, PAddr, PageTable, Size4KiB, VAddr};
-use memory::{Pmm, Vmm};
+use memory::{vmm::Stack, Pmm, Vmm};
 use mulch::InitGuard;
 use object::{address_space::AddressSpace, memory_object::MemoryObject, task::Task};
 use pci::{PciInfo, PciInterruptConfigurator, PciResolver};
@@ -45,52 +44,18 @@ pub trait Platform: Sized + 'static {
     type PageTable: PageTable<Self::PageTableSize> + Send;
     type TaskContext;
 
-    /// Often, the platform will need to put stuff on either the kernel or the user stack before a task is run for
-    /// the first time. `task_entry_point` is the virtual address that should be jumped to in usermode when the
-    /// task is run for the first time.
-    ///
-    /// The return value is of the form `(kernel_stack_pointer, user_stack_pointer)`.
-    unsafe fn initialize_task_stacks(
-        kernel_stack: &Stack,
-        user_stack: &Stack,
-        task_entry_point: VAddr,
-    ) -> (VAddr, VAddr);
+    /// Create a `TaskContext` for a new task with the supplied kernel and user stacks.
+    fn new_task_context(kernel_stack: &Stack, user_stack: &Stack, task_entry_point: VAddr) -> Self::TaskContext;
 
-    fn new_task_context(
-        kernel_stack_pointer: VAddr,
-        user_stack_pointer: VAddr,
-        task_entry_point: VAddr,
-    ) -> Self::TaskContext;
+    /// Do the arch-dependent part of the context switch. This should save the context of the
+    /// currently running task into `from_context`, and restore `to_context` to start executing.
+    unsafe fn context_switch(from_context: *mut Self::TaskContext, to_context: *const Self::TaskContext);
 
-    unsafe fn switch_user_stack_pointer(new_user_stack_pointer: VAddr) -> VAddr;
+    /// Do the actual drop into usermode. This assumes that the task's page tables have already been installed.
+    unsafe fn drop_into_userspace(context: *const Self::TaskContext) -> !;
 
-    /// Do the final part of a context switch: save all the state that needs to be for the
-    /// currently running task, switch to the new kernel stack, and restore the state of the next
-    /// task.
-    ///
-    /// This function takes both kernel stacks for the current and new tasks, and also the
-    /// platform-specific task context held in the task. This is because we use various methods of
-    /// doing context switches on different platforms, according to the easiest / most performant
-    /// for the architecture. A pointer to the current kernel stack is provided so that it can be
-    /// updated if state is pushed onto it.
-    unsafe fn context_switch(
-        current_kernel_stack_pointer: *mut VAddr,
-        new_kernel_stack_pointer: VAddr,
-        from_context: *mut Self::TaskContext,
-        to_context: *const Self::TaskContext,
-    );
-
-    /// Do the actual drop into usermode. This assumes that the task's page tables have already been installed,
-    /// and that an initial frame has been put into the task's kernel stack that this will use to enter userspace.
-    unsafe fn drop_into_userspace(
-        context: *const Self::TaskContext,
-        kernel_stack_pointer: VAddr,
-        user_stack_pointer: VAddr,
-    ) -> !;
-
-    // TODO: this should not exist long-term. I think the common-kernel PMM should know how to fill
-    // regions of physical memory using the direct-physical-memory-map, but this can be done with
-    // the revamp of the PMM.
+    // TODO: this should not exist long-term. The common kernel VMM should know about the direct
+    // physical mapping and should be able to write to physical memory itself.
     unsafe fn write_to_phys_memory(address: PAddr, data: &[u8]);
 }
 

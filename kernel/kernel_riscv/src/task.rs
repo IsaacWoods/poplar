@@ -83,36 +83,17 @@ pub struct ContextSwitchFrame {
     pub s11: usize,
 }
 
-impl ContextSwitchFrame {
-    pub fn new(
-        kernel_stack_pointer: VAddr,
-        user_stack_pointer: VAddr,
-        task_entry_point: VAddr,
-    ) -> ContextSwitchFrame {
-        ContextSwitchFrame {
-            ra: task_entry_trampoline as usize,
-            sp: usize::from(kernel_stack_pointer),
-            s0: usize::from(task_entry_point),
-            s1: usize::from(user_stack_pointer),
-            s2: 0,
-            s3: 0,
-            s4: 0,
-            s5: 0,
-            s6: 0,
-            s7: 0,
-            s8: 0,
-            s9: 0,
-            s10: 0,
-            s11: 0,
-        }
-    }
+/// The context stored for each task. On RISC-V, we store the context switch state in the task
+/// context.
+pub struct TaskContext {
+    context_switch_frame: ContextSwitchFrame,
+    kernel_stack_pointer: VAddr,
 }
 
-/// Returns `(kernel_stack_pointer, user_stack_pointer)`.
-pub unsafe fn initialize_stacks(kernel_stack: &Stack, user_stack: &Stack) -> (VAddr, VAddr) {
+pub fn new_task_context(kernel_stack: &Stack, user_stack: &Stack, task_entry_point: VAddr) -> TaskContext {
     /*
-     * Firstly, we need to make sure the top of the stack is 16-byte aligned, according to the
-     * Sys-V ABI.
+     * Initialize the kernel stack. Firstly, we need to make sure the top of the stack is 16-byte
+     * aligned, according to the Sys-V ABI.
      */
     const REQUIRED_INITIAL_STACK_ALIGNMENT: usize = 16;
     let mut kernel_stack_pointer = kernel_stack.top.align_down(REQUIRED_INITIAL_STACK_ALIGNMENT);
@@ -122,24 +103,47 @@ pub unsafe fn initialize_stacks(kernel_stack: &Stack, user_stack: &Stack) -> (VA
      * Start off with a zero return address to terminate backtraces at task entry.
      */
     kernel_stack_pointer -= 8;
-    ptr::write(kernel_stack_pointer.mut_ptr() as *mut u64, 0x0);
+    unsafe { ptr::write(kernel_stack_pointer.mut_ptr() as *mut u64, 0x0) };
 
-    (kernel_stack_pointer, user_stack_pointer)
+    let context_switch_frame = ContextSwitchFrame {
+        ra: task_entry_trampoline as usize,
+        sp: usize::from(kernel_stack_pointer),
+        s0: usize::from(task_entry_point),
+        s1: usize::from(user_stack_pointer),
+        s2: 0,
+        s3: 0,
+        s4: 0,
+        s5: 0,
+        s6: 0,
+        s7: 0,
+        s8: 0,
+        s9: 0,
+        s10: 0,
+        s11: 0,
+    };
+
+    TaskContext { context_switch_frame, kernel_stack_pointer }
 }
 
-pub unsafe fn context_switch(
-    new_kernel_stack_pointer: VAddr,
-    from_context: *mut ContextSwitchFrame,
-    to_context: *const ContextSwitchFrame,
-) {
+pub unsafe fn context_switch(from_context: *mut TaskContext, to_context: *const TaskContext) {
+    unsafe {
+        (*from_context).kernel_stack_pointer = (*SCRATCH.0.as_ptr()).kernel_stack_pointer;
+    }
+    let new_kernel_stack_pointer = unsafe { (*to_context).kernel_stack_pointer };
     SCRATCH.0.set(Scratch::new(new_kernel_stack_pointer));
-    do_context_switch(from_context, to_context);
+    // TODO: use &raw when we update nightly
+    do_context_switch(
+        ptr::addr_of_mut!((*from_context).context_switch_frame),
+        ptr::addr_of!((*to_context).context_switch_frame),
+    );
 }
 
-pub unsafe fn drop_into_userspace(context: *const ContextSwitchFrame, kernel_stack_pointer: VAddr) -> ! {
+pub unsafe fn drop_into_userspace(context: *const TaskContext) -> ! {
     // Initialize this HART's `sscratch` area
+    let kernel_stack_pointer = unsafe { (*context).kernel_stack_pointer };
     SCRATCH.0.set(Scratch::new(kernel_stack_pointer));
     Sscratch::write(VAddr::from(SCRATCH.0.as_ptr()));
 
-    unsafe { do_drop_to_userspace(context) }
+    // TODO: this should use the &raw operator when we update nightly
+    unsafe { do_drop_to_userspace(ptr::addr_of!((*context).context_switch_frame)) }
 }

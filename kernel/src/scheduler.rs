@@ -4,7 +4,6 @@ use crate::{
     Platform,
 };
 use alloc::{collections::VecDeque, sync::Arc, vec::Vec};
-use hal::memory::VAddr;
 use spinning_top::{guard::SpinlockGuard, Spinlock};
 use tracing::{info, trace};
 
@@ -141,9 +140,7 @@ where
 
         unsafe {
             let context = task.context.get() as *const P::TaskContext;
-            let kernel_stack_pointer: VAddr = *task.kernel_stack_pointer.get();
-            let user_stack_pointer: VAddr = *task.user_stack_pointer.get();
-            P::drop_into_userspace(context, kernel_stack_pointer, user_stack_pointer)
+            P::drop_into_userspace(context)
         }
     }
 
@@ -183,18 +180,13 @@ where
         current_task.address_space.switch_from();
         next_task.address_space.switch_to();
 
-        let current_kernel_stack: *mut VAddr = current_task.kernel_stack_pointer.get();
-        let new_kernel_stack = unsafe { *scheduler.running_task.as_ref().unwrap().kernel_stack_pointer.get() };
-        let new_user_stack = unsafe { *scheduler.running_task.as_ref().unwrap().user_stack_pointer.get() };
-
         let from_context = current_task.context.get();
         let to_context = scheduler.running_task.as_ref().unwrap().context.get() as *const P::TaskContext;
 
         drop(scheduler);
 
         unsafe {
-            *current_task.user_stack_pointer.get() = P::switch_user_stack_pointer(new_user_stack);
-            P::context_switch(current_kernel_stack, new_kernel_stack, from_context, to_context);
+            P::context_switch(from_context, to_context);
         }
     }
 }
