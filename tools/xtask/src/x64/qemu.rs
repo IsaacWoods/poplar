@@ -144,9 +144,9 @@ impl RunQemuX64 {
             qemu.args(&["-global", "isa-debugcon.iobase=0x402"]);
         }
 
-        qemu.args(&["-device", "qemu-xhci,id=xhci,bus=pcie.0"]);
-        qemu.args(&["-device", "usb-kbd,bus=xhci.0"]);
-        qemu.args(&["-device", "usb-mouse,bus=xhci.0"]);
+        qemu.args(&["-device", "usb-ehci,id=ehci,bus=pcie.0"]);
+        qemu.args(&["-device", "usb-kbd,bus=ehci.0"]);
+        qemu.args(&["-device", "usb-mouse,bus=ehci.0"]);
 
         // XXX: for testing NUMA
         qemu.args(&["-smp", "8"]);

@@ -5,7 +5,7 @@ release = false
 user_tasks = [
     "service_host user/service_host",
     "platform_bus user/platform_bus",
-    # "usb_bus_xhci user/usb_bus_xhci",
+    "usb_bus_ehci user/usb_bus_ehci",
     "simple_fb user/simple_fb",
 ]
 
