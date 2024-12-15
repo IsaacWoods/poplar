@@ -5,7 +5,7 @@
 
 #![no_std]
 #![no_main]
-#![feature(const_mut_refs, const_option, fn_align, naked_functions)]
+#![feature(fn_align, naked_functions)]
 
 extern crate alloc;
 

@@ -76,22 +76,21 @@ static ALLOCATOR: LockedHeap = LockedHeap::empty();
 #[no_mangle]
 #[naked]
 unsafe extern "C" fn _start() -> ! {
-    core::arch::asm!("jmp rust_entry", options(noreturn))
+    core::arch::naked_asm!("jmp rust_entry")
 }
 
 #[cfg(target_arch = "riscv64")]
 #[no_mangle]
 #[naked]
 unsafe extern "C" fn _start() -> ! {
-    core::arch::asm!(
+    core::arch::naked_asm!(
         "
         .option push
         .option norelax
         lla gp, __global_pointer$
         .option pop
         j rust_entry
-        ",
-        options(noreturn)
+        "
     )
 }
 

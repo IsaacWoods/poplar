@@ -158,7 +158,7 @@ where
         let size = unsafe { mem::size_of_val_raw::<T>(ptr::from_raw_parts(ptr::null() as *const (), metadata)) };
         let (physical, virt) = mapper.alloc(size);
 
-        Mapped { physical, mapped: NonNull::from_raw_parts(NonNull::new(virt as *mut _).unwrap(), metadata) }
+        Mapped { physical, mapped: NonNull::from_raw_parts(NonNull::new(virt as *mut ()).unwrap(), metadata) }
     }
 }
 

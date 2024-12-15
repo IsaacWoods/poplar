@@ -49,10 +49,12 @@ impl<S> Step for Page<S>
 where
     S: FrameSize,
 {
-    fn steps_between(start: &Self, end: &Self) -> Option<usize> {
-        let address_difference = usize::from(end.start).checked_sub(usize::from(start.start))?;
+    fn steps_between(start: &Self, end: &Self) -> (usize, Option<usize>) {
+        let Some(address_difference) = usize::from(end.start).checked_sub(usize::from(start.start)) else {
+            return (0, None);
+        };
         assert!(address_difference % S::SIZE == 0);
-        Some(address_difference / S::SIZE)
+        (address_difference / S::SIZE, Some(address_difference / S::SIZE))
     }
 
     fn forward_checked(start: Self, count: usize) -> Option<Self> {

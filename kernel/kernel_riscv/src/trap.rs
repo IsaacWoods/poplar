@@ -1,6 +1,6 @@
 use crate::interrupts;
-use core::arch::asm;
-use hal::memory::{Frame, VAddr};
+use core::arch::naked_asm;
+use hal::memory::VAddr;
 use hal_riscv::{
     hw::csr::{Scause, Sepc, Stvec},
     platform::kernel_map,
@@ -100,8 +100,10 @@ pub struct TrapFrame {
 #[naked]
 extern "C" fn trap_handler_shim() -> ! {
     unsafe {
-        asm!(
+        naked_asm!(
             "
+            .attribute arch, \"rv64imac\"
+
             // Swap `sscratch` and `t6` to provide an initial working register
             csrrw t6, sscratch, t6
 
@@ -207,8 +209,7 @@ extern "C" fn trap_handler_shim() -> ! {
             ld sp, 16(sp)
 
             sret
-            ",
-            options(noreturn)
+            "
         )
     }
 }

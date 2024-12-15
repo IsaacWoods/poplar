@@ -1,5 +1,4 @@
 #![no_std]
-#![feature(const_option)]
 
 pub mod hw;
 pub mod paging;
