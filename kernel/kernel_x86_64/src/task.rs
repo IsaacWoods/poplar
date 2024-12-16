@@ -125,8 +125,7 @@ pub unsafe fn context_switch(from_context: *mut TaskContext, to_context: *const 
     (*from_context).user_stack_pointer = per_cpu.user_stack_pointer();
     per_cpu.set_user_stack_pointer((*to_context).user_stack_pointer);
     per_cpu.set_kernel_stack_pointer((*to_context).kernel_stack_pointer);
-    // TODO: use &raw when we have a newer nightly
-    do_context_switch(ptr::addr_of_mut!((*from_context).kernel_stack_pointer), (*to_context).kernel_stack_pointer);
+    do_context_switch(&raw mut (*from_context).kernel_stack_pointer, (*to_context).kernel_stack_pointer);
 }
 
 pub unsafe fn drop_into_userspace(context: *const TaskContext) -> ! {

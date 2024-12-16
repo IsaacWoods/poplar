@@ -131,10 +131,9 @@ pub unsafe fn context_switch(from_context: *mut TaskContext, to_context: *const 
     }
     let new_kernel_stack_pointer = unsafe { (*to_context).kernel_stack_pointer };
     SCRATCH.0.set(Scratch::new(new_kernel_stack_pointer));
-    // TODO: use &raw when we update nightly
     do_context_switch(
-        ptr::addr_of_mut!((*from_context).context_switch_frame),
-        ptr::addr_of!((*to_context).context_switch_frame),
+        &raw mut (*from_context).context_switch_frame,
+        &raw const (*to_context).context_switch_frame,
     );
 }
 
@@ -144,6 +143,5 @@ pub unsafe fn drop_into_userspace(context: *const TaskContext) -> ! {
     SCRATCH.0.set(Scratch::new(kernel_stack_pointer));
     Sscratch::write(VAddr::from(SCRATCH.0.as_ptr()));
 
-    // TODO: this should use the &raw operator when we update nightly
-    unsafe { do_drop_to_userspace(ptr::addr_of!((*context).context_switch_frame)) }
+    unsafe { do_drop_to_userspace(&raw const (*context).context_switch_frame) }
 }
