@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":["context_switch","do_context_switch","do_drop_to_userspace","drop_into_userspace","gp","initialize_stacks","task_entry_trampoline","tp"],"static":["SCRATCH"],"struct":["ContextSwitchFrame","NotGreatCell","Scratch"]};
+window.SIDEBAR_ITEMS = {"fn":["context_switch","do_context_switch","do_drop_to_userspace","drop_into_userspace","gp","new_task_context","task_entry_trampoline","tp"],"static":["SCRATCH"],"struct":["ContextSwitchFrame","NotGreatCell","Scratch","TaskContext"]};

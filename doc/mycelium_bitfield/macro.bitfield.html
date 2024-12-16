@@ -1,46 +1,46 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Generates a typed bitfield struct."><title>bitfield in mycelium_bitfield - Rust</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../static.files/rustdoc-590a400c.css"><meta name="rustdoc-vars" data-root-path="../" data-static-root-path="../static.files/" data-current-crate="mycelium_bitfield" data-themes="" data-resource-suffix="" data-rustdoc-version="1.84.0-nightly (b3f75cc87 2024-11-02)" data-channel="nightly" data-search-js="search-c5a66128.js" data-settings-js="settings-0f613d39.js" ><script src="../static.files/storage-59e33391.js"></script><script defer src="sidebar-items.js"></script><script defer src="../static.files/main-5f194d8c.js"></script><noscript><link rel="stylesheet" href="../static.files/noscript-893ab5e7.css"></noscript><link rel="alternate icon" type="image/png" href="../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../static.files/favicon-044be391.svg"></head><body class="rustdoc macro"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle" title="show sidebar"></button></nav><nav class="sidebar"><div class="sidebar-crate"><h2><a href="../mycelium_bitfield/index.html">mycelium_<wbr>bitfield</a><span class="version">0.1.5</span></h2></div><div class="sidebar-elems"><section id="rustdoc-toc"><h2 class="location"><a href="#">bitfield</a></h2><h3><a href="#">Sections</a></h3><ul class="block top-toc"><li><a href="#generated-implementations" title="Generated Implementations">Generated Implementations</a></li><li><a href="#examples" title="Examples">Examples</a><ul><li><a href="#example-display-output" title="Example `Display` Output">Example <code>Display</code> Output</a></li></ul></li></ul></section><div id="rustdoc-modnav"><h2 class="in-crate"><a href="index.html">In crate mycelium_<wbr>bitfield</a></h2></div></div></nav><div class="sidebar-resizer"></div><main><div class="width-limiter"><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><span class="rustdoc-breadcrumbs"><a href="index.html">mycelium_bitfield</a></span><h1>Macro <span class="macro">bitfield</span><button id="copy-path" title="Copy item path to clipboard">Copy item path</button></h1><rustdoc-toolbar></rustdoc-toolbar><span class="sub-heading"><a class="src" href="../src/mycelium_bitfield/bitfield.rs.html#360-842">Source</a> </span></div><pre class="rust item-decl"><span class="macro">macro_rules!</span> bitfield {
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Generates a typed bitfield struct."><title>bitfield in mycelium_bitfield - Rust</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../static.files/rustdoc-46132b98.css"><meta name="rustdoc-vars" data-root-path="../" data-static-root-path="../static.files/" data-current-crate="mycelium_bitfield" data-themes="" data-resource-suffix="" data-rustdoc-version="1.85.0-nightly (0aeaa5eb2 2024-12-14)" data-channel="nightly" data-search-js="search-92e6798f.js" data-settings-js="settings-0f613d39.js" ><script src="../static.files/storage-59e33391.js"></script><script defer src="sidebar-items.js"></script><script defer src="../static.files/main-5f194d8c.js"></script><noscript><link rel="stylesheet" href="../static.files/noscript-893ab5e7.css"></noscript><link rel="alternate icon" type="image/png" href="../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../static.files/favicon-044be391.svg"></head><body class="rustdoc macro"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle" title="show sidebar"></button></nav><nav class="sidebar"><div class="sidebar-crate"><h2><a href="../mycelium_bitfield/index.html">mycelium_<wbr>bitfield</a><span class="version">0.1.5</span></h2></div><div class="sidebar-elems"><section id="rustdoc-toc"><h2 class="location"><a href="#">bitfield</a></h2><h3><a href="#">Sections</a></h3><ul class="block top-toc"><li><a href="#generated-implementations" title="Generated Implementations">Generated Implementations</a></li><li><a href="#examples" title="Examples">Examples</a><ul><li><a href="#example-display-output" title="Example `Display` Output">Example <code>Display</code> Output</a></li></ul></li></ul></section><div id="rustdoc-modnav"><h2 class="in-crate"><a href="index.html">In crate mycelium_<wbr>bitfield</a></h2></div></div></nav><div class="sidebar-resizer"></div><main><div class="width-limiter"><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><span class="rustdoc-breadcrumbs"><a href="index.html">mycelium_bitfield</a></span><h1>Macro <span class="macro">bitfield</span><button id="copy-path" title="Copy item path to clipboard">Copy item path</button></h1><rustdoc-toolbar></rustdoc-toolbar><span class="sub-heading"><a class="src" href="../src/mycelium_bitfield/bitfield.rs.html#360-842">Source</a> </span></div><pre class="rust item-decl"><code>macro_rules! bitfield {
     (
-        $(<span class="attr">#[$(<span class="macro-nonterminal">$meta</span>:meta)+]</span>)*
-        <span class="macro-nonterminal">$vis</span>:vis <span class="kw">struct </span><span class="macro-nonterminal">$Name</span>:ident&lt;<span class="macro-nonterminal">$T</span>:ident&gt; {
+        $(#[$($meta:meta)+])*
+        $vis:vis struct $Name:ident&lt;$T:ident&gt; {
             $(
-                $(<span class="attr">#[<span class="macro-nonterminal">$field_meta</span>:meta]</span>)*
-                <span class="macro-nonterminal">$field_vis</span>:vis <span class="kw">const </span><span class="macro-nonterminal">$Field</span>:ident $(: <span class="macro-nonterminal">$F</span>:ty)<span class="question-mark">? </span>$( = <span class="macro-nonterminal">$val</span>:tt)<span class="question-mark">?</span>;
+                $(#[$field_meta:meta])*
+                $field_vis:vis const $Field:ident $(: $F:ty)? $( = $val:tt)?;
             )+
         }
     ) =&gt; { ... };
-    (@field&lt;<span class="macro-nonterminal">$T</span>:ident&gt;, prev: <span class="macro-nonterminal">$Prev</span>:ident:
-        $(<span class="attr">#[<span class="macro-nonterminal">$meta</span>:meta]</span>)*
-        <span class="macro-nonterminal">$vis</span>:vis <span class="kw">const </span><span class="macro-nonterminal">$Field</span>:ident = ..;
+    (@field&lt;$T:ident&gt;, prev: $Prev:ident:
+        $(#[$meta:meta])*
+        $vis:vis const $Field:ident = ..;
     ) =&gt; { ... };
-    (@field&lt;<span class="macro-nonterminal">$T</span>:ident&gt;, prev: <span class="macro-nonterminal">$Prev</span>:ident:
-        $(<span class="attr">#[<span class="macro-nonterminal">$meta</span>:meta]</span>)*
-        <span class="macro-nonterminal">$vis</span>:vis <span class="kw">const </span><span class="macro-nonterminal">$Field</span>:ident = <span class="macro-nonterminal">$value</span>:literal;
-        $(<span class="macro-nonterminal">$rest</span>:tt)*
+    (@field&lt;$T:ident&gt;, prev: $Prev:ident:
+        $(#[$meta:meta])*
+        $vis:vis const $Field:ident = $value:literal;
+        $($rest:tt)*
     ) =&gt; { ... };
-    (@field&lt;<span class="macro-nonterminal">$T</span>:ident&gt;, prev: <span class="macro-nonterminal">$Prev</span>:ident:
-        $(<span class="attr">#[<span class="macro-nonterminal">$meta</span>:meta]</span>)*
-        <span class="macro-nonterminal">$vis</span>:vis <span class="kw">const </span><span class="macro-nonterminal">$Field</span>:ident: <span class="macro-nonterminal">$Val</span>:ty;
-        $(<span class="macro-nonterminal">$rest</span>:tt)*
+    (@field&lt;$T:ident&gt;, prev: $Prev:ident:
+        $(#[$meta:meta])*
+        $vis:vis const $Field:ident: $Val:ty;
+        $($rest:tt)*
     ) =&gt; { ... };
-    (@field&lt;<span class="macro-nonterminal">$T</span>:ident&gt;, prev: <span class="macro-nonterminal">$Prev</span>:ident: ) =&gt; { ... };
-    (@field&lt;<span class="macro-nonterminal">$T</span>:ident&gt;:
-        $(<span class="attr">#[<span class="macro-nonterminal">$meta</span>:meta]</span>)*
-        <span class="macro-nonterminal">$vis</span>:vis <span class="kw">const </span><span class="macro-nonterminal">$Field</span>:ident = <span class="macro-nonterminal">$value</span>:literal;
-        $(<span class="macro-nonterminal">$rest</span>:tt)*
+    (@field&lt;$T:ident&gt;, prev: $Prev:ident: ) =&gt; { ... };
+    (@field&lt;$T:ident&gt;:
+        $(#[$meta:meta])*
+        $vis:vis const $Field:ident = $value:literal;
+        $($rest:tt)*
     ) =&gt; { ... };
-    (@field&lt;<span class="macro-nonterminal">$T</span>:ident&gt;:
-        $(<span class="attr">#[<span class="macro-nonterminal">$meta</span>:meta]</span>)*
-        <span class="macro-nonterminal">$vis</span>:vis <span class="kw">const </span><span class="macro-nonterminal">$Field</span>:ident: <span class="macro-nonterminal">$Val</span>:ty;
-        $(<span class="macro-nonterminal">$rest</span>:tt)*
+    (@field&lt;$T:ident&gt;:
+        $(#[$meta:meta])*
+        $vis:vis const $Field:ident: $Val:ty;
+        $($rest:tt)*
     ) =&gt; { ... };
-    (@t usize, <span class="macro-nonterminal">$V</span>:ty, <span class="macro-nonterminal">$F</span>:ty) =&gt; { ... };
-    (@t u128, <span class="macro-nonterminal">$V</span>:ty, <span class="macro-nonterminal">$F</span>:ty) =&gt; { ... };
-    (@t u64, <span class="macro-nonterminal">$V</span>:ty, <span class="macro-nonterminal">$F</span>:ty) =&gt; { ... };
-    (@t u32, <span class="macro-nonterminal">$V</span>:ty, <span class="macro-nonterminal">$F</span>:ty) =&gt; { ... };
-    (@t u16, <span class="macro-nonterminal">$V</span>:ty, <span class="macro-nonterminal">$F</span>:ty) =&gt; { ... };
-    (@t u8, <span class="macro-nonterminal">$V</span>:ty, <span class="macro-nonterminal">$F</span>:ty) =&gt; { ... };
-    (@t <span class="macro-nonterminal">$T</span>:ty, <span class="macro-nonterminal">$V</span>:ty, <span class="macro-nonterminal">$F</span>:ty) =&gt; { ... };
-}</pre><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>Generates a typed bitfield struct.</p>
+    (@t usize, $V:ty, $F:ty) =&gt; { ... };
+    (@t u128, $V:ty, $F:ty) =&gt; { ... };
+    (@t u64, $V:ty, $F:ty) =&gt; { ... };
+    (@t u32, $V:ty, $F:ty) =&gt; { ... };
+    (@t u16, $V:ty, $F:ty) =&gt; { ... };
+    (@t u8, $V:ty, $F:ty) =&gt; { ... };
+    (@t $T:ty, $V:ty, $F:ty) =&gt; { ... };
+}</code></pre><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>Generates a typed bitfield struct.</p>
 <p>By default, the <a href="https://doc.rust-lang.org/nightly/core/fmt/trait.Debug.html" title="trait core::fmt::Debug"><code>fmt::Debug</code></a>, <a href="https://doc.rust-lang.org/nightly/core/fmt/trait.Display.html" title="trait core::fmt::Display"><code>fmt::Display</code></a>, <a href="https://doc.rust-lang.org/nightly/core/fmt/trait.Binary.html" title="trait core::fmt::Binary"><code>fmt::Binary</code></a>, <a href="https://doc.rust-lang.org/nightly/core/marker/trait.Copy.html" title="trait core::marker::Copy"><code>Copy</code></a>,
 and <a href="https://doc.rust-lang.org/nightly/core/clone/trait.Clone.html" title="trait core::clone::Clone"><code>Clone</code></a> traits are automatically derived for bitfields.</p>
 <p>All bitfield types are <a href="https://doc.rust-lang.org/reference/type-layout.html#the-transparent-representation"><code>#[repr(transparent)]</code></a>.</p>

@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"constant":["CAP_EARLY_LOGGING","CAP_GET_FRAMEBUFFER","CAP_PADDING","CAP_PCI_BUS_DRIVER","CAP_SERVICE_PROVIDER","CAP_SERVICE_USER"],"enum":["Capability"],"struct":["CapabilitiesRepr"]};

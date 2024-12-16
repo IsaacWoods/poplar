@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/scheduler.rs`."><title>scheduler.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../static.files/rustdoc-590a400c.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="kernel" data-themes="" data-resource-suffix="" data-rustdoc-version="1.84.0-nightly (b3f75cc87 2024-11-02)" data-channel="nightly" data-search-js="search-c5a66128.js" data-settings-js="settings-0f613d39.js" ><script src="../../static.files/storage-59e33391.js"></script><script defer src="../../static.files/src-script-56102188.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-5f194d8c.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-893ab5e7.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">kernel/</div>scheduler.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers">
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/scheduler.rs`."><title>scheduler.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../static.files/rustdoc-46132b98.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="kernel" data-themes="" data-resource-suffix="" data-rustdoc-version="1.85.0-nightly (0aeaa5eb2 2024-12-14)" data-channel="nightly" data-search-js="search-92e6798f.js" data-settings-js="settings-0f613d39.js" ><script src="../../static.files/storage-59e33391.js"></script><script defer src="../../static.files/src-script-56102188.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-5f194d8c.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-893ab5e7.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">kernel/</div>scheduler.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers">
 <a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
@@ -190,21 +190,14 @@
 <a href="#189" id="189">189</a>
 <a href="#190" id="190">190</a>
 <a href="#191" id="191">191</a>
-<a href="#192" id="192">192</a>
-<a href="#193" id="193">193</a>
-<a href="#194" id="194">194</a>
-<a href="#195" id="195">195</a>
-<a href="#196" id="196">196</a>
-<a href="#197" id="197">197</a>
-<a href="#198" id="198">198</a></pre></div><pre class="rust"><code><span class="kw">use crate</span>::{
+<a href="#192" id="192">192</a></pre></div><pre class="rust"><code><span class="kw">use crate</span>::{
     object::task::{Task, TaskState},
     tasklets::TaskletScheduler,
     Platform,
 };
 <span class="kw">use </span>alloc::{collections::VecDeque, sync::Arc, vec::Vec};
-<span class="kw">use </span>hal::memory::VAddr;
 <span class="kw">use </span>spinning_top::{guard::SpinlockGuard, Spinlock};
-<span class="kw">use </span>tracing::trace;
+<span class="kw">use </span>tracing::{info, trace};
 
 <span class="doccomment">/// The global `Scheduler` coordinates the main 'run loop' of the kernel, allocating CPU time to
 /// userspace tasks. There is one global `Scheduler` instance, which then holds a `CpuScheduler`
@@ -282,6 +275,8 @@
     /// diverging. It gives kernel tasklets an initial poll while we're here in the kernel, and
     /// then drops down into userspace.
     </span><span class="kw">pub fn </span>start_scheduling(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; ! {
+        <span class="macro">info!</span>(<span class="string">"Kernel initialization done. Dropping to userspace."</span>);
+
         <span class="self">self</span>.tasklet_scheduler.tick();
 
         <span class="kw">let </span><span class="kw-2">mut </span>scheduler = <span class="self">self</span>.for_this_cpu();
@@ -337,9 +332,7 @@
 
         <span class="kw">unsafe </span>{
             <span class="kw">let </span>context = task.context.get() <span class="kw">as </span><span class="kw-2">*const </span>P::TaskContext;
-            <span class="kw">let </span>kernel_stack_pointer: VAddr = <span class="kw-2">*</span>task.kernel_stack_pointer.get();
-            <span class="kw">let </span>user_stack_pointer: VAddr = <span class="kw-2">*</span>task.user_stack_pointer.get();
-            P::drop_into_userspace(context, kernel_stack_pointer, user_stack_pointer)
+            P::drop_into_userspace(context)
         }
     }
 
@@ -379,18 +372,13 @@
         current_task.address_space.switch_from();
         next_task.address_space.switch_to();
 
-        <span class="kw">let </span>current_kernel_stack: <span class="kw-2">*mut </span>VAddr = current_task.kernel_stack_pointer.get();
-        <span class="kw">let </span>new_kernel_stack = <span class="kw">unsafe </span>{ <span class="kw-2">*</span>scheduler.running_task.as_ref().unwrap().kernel_stack_pointer.get() };
-        <span class="kw">let </span>new_user_stack = <span class="kw">unsafe </span>{ <span class="kw-2">*</span>scheduler.running_task.as_ref().unwrap().user_stack_pointer.get() };
-
         <span class="kw">let </span>from_context = current_task.context.get();
         <span class="kw">let </span>to_context = scheduler.running_task.as_ref().unwrap().context.get() <span class="kw">as </span><span class="kw-2">*const </span>P::TaskContext;
 
         drop(scheduler);
 
         <span class="kw">unsafe </span>{
-            <span class="kw-2">*</span>current_task.user_stack_pointer.get() = P::switch_user_stack_pointer(new_user_stack);
-            P::context_switch(current_kernel_stack, new_kernel_stack, from_context, to_context);
+            P::context_switch(from_context, to_context);
         }
     }
 }

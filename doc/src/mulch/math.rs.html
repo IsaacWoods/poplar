@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/work/poplar/poplar/lib/mulch/src/math.rs`."><title>math.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../static.files/rustdoc-590a400c.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="mulch" data-themes="" data-resource-suffix="" data-rustdoc-version="1.84.0-nightly (b3f75cc87 2024-11-02)" data-channel="nightly" data-search-js="search-c5a66128.js" data-settings-js="settings-0f613d39.js" ><script src="../../static.files/storage-59e33391.js"></script><script defer src="../../static.files/src-script-56102188.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-5f194d8c.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-893ab5e7.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">mulch/</div>math.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers">
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/work/poplar/poplar/lib/mulch/src/math.rs`."><title>math.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../static.files/rustdoc-46132b98.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="mulch" data-themes="" data-resource-suffix="" data-rustdoc-version="1.85.0-nightly (0aeaa5eb2 2024-12-14)" data-channel="nightly" data-search-js="search-92e6798f.js" data-settings-js="settings-0f613d39.js" ><script src="../../static.files/storage-59e33391.js"></script><script defer src="../../static.files/src-script-56102188.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-5f194d8c.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-893ab5e7.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">mulch/</div>math.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers">
 <a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
@@ -98,57 +98,12 @@
 <a href="#97" id="97">97</a>
 <a href="#98" id="98">98</a>
 <a href="#99" id="99">99</a>
-<a href="#100" id="100">100</a>
-<a href="#101" id="101">101</a>
-<a href="#102" id="102">102</a>
-<a href="#103" id="103">103</a>
-<a href="#104" id="104">104</a>
-<a href="#105" id="105">105</a>
-<a href="#106" id="106">106</a>
-<a href="#107" id="107">107</a>
-<a href="#108" id="108">108</a>
-<a href="#109" id="109">109</a>
-<a href="#110" id="110">110</a>
-<a href="#111" id="111">111</a>
-<a href="#112" id="112">112</a>
-<a href="#113" id="113">113</a>
-<a href="#114" id="114">114</a>
-<a href="#115" id="115">115</a>
-<a href="#116" id="116">116</a>
-<a href="#117" id="117">117</a>
-<a href="#118" id="118">118</a>
-<a href="#119" id="119">119</a>
-<a href="#120" id="120">120</a>
-<a href="#121" id="121">121</a>
-<a href="#122" id="122">122</a>
-<a href="#123" id="123">123</a>
-<a href="#124" id="124">124</a>
-<a href="#125" id="125">125</a>
-<a href="#126" id="126">126</a>
-<a href="#127" id="127">127</a>
-<a href="#128" id="128">128</a>
-<a href="#129" id="129">129</a>
-<a href="#130" id="130">130</a>
-<a href="#131" id="131">131</a>
-<a href="#132" id="132">132</a>
-<a href="#133" id="133">133</a>
-<a href="#134" id="134">134</a>
-<a href="#135" id="135">135</a>
-<a href="#136" id="136">136</a>
-<a href="#137" id="137">137</a>
-<a href="#138" id="138">138</a>
-<a href="#139" id="139">139</a>
-<a href="#140" id="140">140</a>
-<a href="#141" id="141">141</a>
-<a href="#142" id="142">142</a>
-<a href="#143" id="143">143</a>
-<a href="#144" id="144">144</a>
-<a href="#145" id="145">145</a></pre></div><pre class="rust"><code><span class="comment">/*
+<a href="#100" id="100">100</a></pre></div><pre class="rust"><code><span class="comment">/*
  * Copyright 2022, Isaac Woods
  * SPDX-License-Identifier: MPL-2.0
  */
 
-</span><span class="kw">use </span>core::{mem, ops};
+</span><span class="kw">use </span>core::ops;
 <span class="kw">use </span>num_traits::PrimInt;
 
 <span class="comment">// TODO: feels like something like this should exist in `num_traits` or something, but if it does I couldn't find
@@ -175,51 +130,6 @@
 <span class="macro">impl_power_of_twoable!</span>(u32);
 <span class="macro">impl_power_of_twoable!</span>(u64);
 <span class="macro">impl_power_of_twoable!</span>(usize);
-
-<span class="doccomment">/// Fast integer `log2` that floors to the lower power-of-2 if `x` is not a power-of-2. `x`
-/// must not be 0.
-///
-/// ### Example
-/// ``` ignore
-/// assert_eq!(flooring_log2(1), 0);
-/// assert_eq!(flooring_log2(64), 6);
-/// assert_eq!(flooring_log2(61), 5);
-/// assert_eq!(flooring_log2(4095), 11);
-/// ```
-</span><span class="kw">pub fn </span>flooring_log2(x: usize) -&gt; usize {
-    <span class="macro">assert!</span>(x &gt; <span class="number">0</span>);
-    <span class="kw">const </span>NUM_BITS: usize = mem::size_of::&lt;usize&gt;() * <span class="number">8</span>;
-
-    <span class="comment">/*
-     * Count the number of leading zeros in the value, then subtract that from the total
-     * number of bits in the type (64 for a `u64`). This gets the first bit set, which is
-     * the largest power-of-2 component of the value.
-     */
-    </span>NUM_BITS - x.leading_zeros() <span class="kw">as </span>usize - <span class="number">1
-</span>}
-
-<span class="attr">#[test]
-</span><span class="kw">fn </span>test_flooring_log2() {
-    <span class="macro">assert_eq!</span>(flooring_log2(<span class="number">1</span>), <span class="number">0</span>);
-    <span class="macro">assert_eq!</span>(flooring_log2(<span class="number">64</span>), <span class="number">6</span>);
-    <span class="macro">assert_eq!</span>(flooring_log2(<span class="number">61</span>), <span class="number">5</span>);
-    <span class="macro">assert_eq!</span>(flooring_log2(<span class="number">4095</span>), <span class="number">11</span>);
-}
-
-<span class="kw">pub fn </span>ceiling_log2(x: usize) -&gt; usize {
-    <span class="kw">let </span>x = <span class="kw">if </span>x.is_power_of_two() { x } <span class="kw">else </span>{ x.next_power_of_two() };
-
-    <span class="comment">// `x` will always be a power of two now, so log(2) == the number of trailing zeros
-    </span>x.trailing_zeros() <span class="kw">as </span>usize
-}
-
-<span class="attr">#[test]
-</span><span class="kw">fn </span>test_ceiling_log2() {
-    <span class="macro">assert_eq!</span>(ceiling_log2(<span class="number">1</span>), <span class="number">0</span>);
-    <span class="macro">assert_eq!</span>(ceiling_log2(<span class="number">64</span>), <span class="number">6</span>);
-    <span class="macro">assert_eq!</span>(ceiling_log2(<span class="number">61</span>), <span class="number">6</span>);
-    <span class="macro">assert_eq!</span>(ceiling_log2(<span class="number">4095</span>), <span class="number">12</span>);
-}
 
 <span class="kw">pub fn </span>align_down&lt;T: PrimInt + PowerOfTwoable&gt;(value: T, align: T) -&gt; T {
     <span class="macro">assert!</span>(align == T::zero() || align.is_power_of_two());

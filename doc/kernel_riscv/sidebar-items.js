@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":["kentry"],"mod":["interrupts","pci","serial","task","trap"],"static":["SCHEDULER"],"struct":["PlatformImpl"]};
+window.SIDEBAR_ITEMS = {"fn":["kentry"],"mod":["interrupts","pci","serial","task","trap"],"static":["KERNEL_PAGE_TABLES","SCHEDULER"],"struct":["PlatformImpl"]};

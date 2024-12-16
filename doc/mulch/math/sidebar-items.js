@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":["abs_difference","align_down","align_up","ceiling_integer_divide","ceiling_log2","flooring_log2"],"trait":["PowerOfTwoable"]};
+window.SIDEBAR_ITEMS = {"fn":["abs_difference","align_down","align_up","ceiling_integer_divide"],"trait":["PowerOfTwoable"]};

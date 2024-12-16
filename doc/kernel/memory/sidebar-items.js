@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"struct":["KernelStackAllocator","PhysicalMemoryManager","SlabAllocator","Stack"]};
+window.SIDEBAR_ITEMS = {"mod":["pmm","slab_allocator","vmm"]};

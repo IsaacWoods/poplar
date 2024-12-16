@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/work/poplar/poplar/lib/poplar/src/syscall/mod.rs`."><title>mod.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../../static.files/rustdoc-590a400c.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="poplar" data-themes="" data-resource-suffix="" data-rustdoc-version="1.84.0-nightly (b3f75cc87 2024-11-02)" data-channel="nightly" data-search-js="search-c5a66128.js" data-settings-js="settings-0f613d39.js" ><script src="../../../static.files/storage-59e33391.js"></script><script defer src="../../../static.files/src-script-56102188.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-5f194d8c.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-893ab5e7.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">poplar/syscall/</div>mod.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers">
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/work/poplar/poplar/lib/poplar/src/syscall/mod.rs`."><title>mod.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../../static.files/rustdoc-46132b98.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="poplar" data-themes="" data-resource-suffix="" data-rustdoc-version="1.85.0-nightly (0aeaa5eb2 2024-12-14)" data-channel="nightly" data-search-js="search-92e6798f.js" data-settings-js="settings-0f613d39.js" ><script src="../../../static.files/storage-59e33391.js"></script><script defer src="../../../static.files/src-script-56102188.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-5f194d8c.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-893ab5e7.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">poplar/syscall/</div>mod.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers">
 <a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
@@ -235,7 +235,20 @@
 <a href="#234" id="234">234</a>
 <a href="#235" id="235">235</a>
 <a href="#236" id="236">236</a>
-<a href="#237" id="237">237</a></pre></div><pre class="rust"><code><span class="kw">pub mod </span>get_framebuffer;
+<a href="#237" id="237">237</a>
+<a href="#238" id="238">238</a>
+<a href="#239" id="239">239</a>
+<a href="#240" id="240">240</a>
+<a href="#241" id="241">241</a>
+<a href="#242" id="242">242</a>
+<a href="#243" id="243">243</a>
+<a href="#244" id="244">244</a>
+<a href="#245" id="245">245</a>
+<a href="#246" id="246">246</a>
+<a href="#247" id="247">247</a>
+<a href="#248" id="248">248</a>
+<a href="#249" id="249">249</a>
+<a href="#250" id="250">250</a></pre></div><pre class="rust"><code><span class="kw">pub mod </span>get_framebuffer;
 <span class="kw">pub mod </span>pci;
 <span class="kw">pub mod </span>result;
 
@@ -269,11 +282,11 @@
 <span class="kw">pub const </span>SYSCALL_SEND_MESSAGE: usize = <span class="number">6</span>;
 <span class="kw">pub const </span>SYSCALL_GET_MESSAGE: usize = <span class="number">7</span>;
 <span class="kw">pub const </span>SYSCALL_WAIT_FOR_MESSAGE: usize = <span class="number">8</span>;
-<span class="kw">pub const </span>SYSCALL_REGISTER_SERVICE: usize = <span class="number">9</span>;
-<span class="kw">pub const </span>SYSCALL_SUBSCRIBE_TO_SERVICE: usize = <span class="number">10</span>;
 <span class="kw">pub const </span>SYSCALL_PCI_GET_INFO: usize = <span class="number">11</span>;
 <span class="kw">pub const </span>SYSCALL_WAIT_FOR_EVENT: usize = <span class="number">12</span>;
 <span class="kw">pub const </span>SYSCALL_POLL_INTEREST: usize = <span class="number">13</span>;
+<span class="kw">pub const </span>SYSCALL_CREATE_ADDRESS_SPACE: usize = <span class="number">14</span>;
+<span class="kw">pub const </span>SYSCALL_SPAWN_TASK: usize = <span class="number">15</span>;
 
 <span class="kw">pub fn </span>yield_to_kernel() {
     <span class="kw">unsafe </span>{
@@ -422,35 +435,6 @@
     <span class="prelude-val">Ok</span>((<span class="kw-2">&amp;mut </span>byte_buffer[<span class="number">0</span>..valid_bytes_len], <span class="kw-2">&amp;mut </span>handle_buffer[<span class="number">0</span>..valid_handles_len]))
 }
 
-<span class="kw">pub const </span>SERVICE_NAME_MAX_LENGTH: usize = <span class="number">256</span>;
-
-<span class="macro">define_error_type!</span>(RegisterServiceError {
-    TaskDoesNotHaveCorrectCapability =&gt; <span class="number">1</span>,
-    NamePointerNotValid =&gt; <span class="number">2</span>,
-    <span class="doccomment">/// Name must be greater than `0` bytes, and not greater than `256` bytes.
-    </span>NameLengthNotValid =&gt; <span class="number">3</span>,
-});
-
-<span class="kw">pub fn </span>register_service(name: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Result</span>&lt;Handle, RegisterServiceError&gt; {
-    handle_from_syscall_repr(<span class="kw">unsafe </span>{
-        raw::syscall2(SYSCALL_REGISTER_SERVICE, name.len(), name.as_ptr() <span class="kw">as </span>usize)
-    })
-}
-
-<span class="macro">define_error_type!</span>(SubscribeToServiceError {
-    TaskDoesNotHaveCorrectCapability =&gt; <span class="number">1</span>,
-    NamePointerNotValid =&gt; <span class="number">2</span>,
-    <span class="doccomment">/// Name must be greater than `0` bytes, and not greater than `256` bytes.
-    </span>NameLengthNotValid =&gt; <span class="number">3</span>,
-    NoServiceWithThatName =&gt; <span class="number">4</span>,
-});
-
-<span class="kw">pub fn </span>subscribe_to_service(name: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Result</span>&lt;Handle, SubscribeToServiceError&gt; {
-    handle_from_syscall_repr(<span class="kw">unsafe </span>{
-        raw::syscall2(SYSCALL_SUBSCRIBE_TO_SERVICE, name.len(), name.as_ptr() <span class="kw">as </span>usize)
-    })
-}
-
 <span class="macro">define_error_type!</span>(WaitForEventError {
     InvalidHandle =&gt; <span class="number">1</span>,
     NotAnEvent =&gt; <span class="number">2</span>,
@@ -471,5 +455,47 @@
     <span class="kw">let </span>result = <span class="kw">unsafe </span>{ raw::syscall1(SYSCALL_POLL_INTEREST, object.<span class="number">0 </span><span class="kw">as </span>usize) };
     status_from_syscall_repr(result.get_bits(<span class="number">0</span>..<span class="number">16</span>))<span class="question-mark">?</span>;
     <span class="prelude-val">Ok</span>(result.get_bits(<span class="number">16</span>..<span class="number">64</span>) != <span class="number">0</span>)
+}
+
+<span class="macro">define_error_type!</span>(CreateAddressSpaceError {});
+
+<span class="kw">pub fn </span>create_address_space() -&gt; <span class="prelude-ty">Result</span>&lt;Handle, CreateAddressSpaceError&gt; {
+    handle_from_syscall_repr(<span class="kw">unsafe </span>{ raw::syscall0(SYSCALL_CREATE_ADDRESS_SPACE) })
+}
+
+<span class="macro">define_error_type!</span>(SpawnTaskError {
+    InvalidTaskName =&gt; <span class="number">1</span>,
+    NotAnAddressSpace =&gt; <span class="number">2</span>,
+    InvalidHandleToTransfer =&gt; <span class="number">3</span>,
+});
+
+<span class="attr">#[repr(C)]
+</span><span class="kw">pub struct </span>SpawnTaskDetails {
+    <span class="kw">pub </span>name_ptr: <span class="kw-2">*const </span>u8,
+    <span class="kw">pub </span>name_len: usize,
+    <span class="kw">pub </span>entry_point: usize,
+    <span class="kw">pub </span>address_space: u32,
+    <span class="kw">pub </span>object_array: <span class="kw-2">*const </span>u32,
+    <span class="kw">pub </span>object_array_len: usize,
+}
+
+<span class="kw">pub fn </span>spawn_task(
+    task_name: <span class="kw-2">&amp;</span>str,
+    address_space: Handle,
+    entry_point: usize,
+    objects: <span class="kw-2">&amp;</span>[Handle],
+) -&gt; <span class="prelude-ty">Result</span>&lt;Handle, SpawnTaskError&gt; {
+    <span class="kw">let </span>details = SpawnTaskDetails {
+        name_ptr: task_name <span class="kw">as </span><span class="kw-2">*const </span>str <span class="kw">as </span><span class="kw-2">*const </span>u8,
+        name_len: task_name.len(),
+        entry_point,
+        address_space: address_space.<span class="number">0</span>,
+        object_array: objects <span class="kw">as </span><span class="kw-2">*const </span>[Handle] <span class="kw">as </span><span class="kw-2">*const </span>u32,
+        object_array_len: objects.len(),
+    };
+
+    handle_from_syscall_repr(<span class="kw">unsafe </span>{
+        raw::syscall1(SYSCALL_SPAWN_TASK, <span class="kw-2">&amp;</span>details <span class="kw">as </span><span class="kw-2">*const </span>SpawnTaskDetails <span class="kw">as </span>usize)
+    })
 }
 </code></pre></div></section></main></body></html>

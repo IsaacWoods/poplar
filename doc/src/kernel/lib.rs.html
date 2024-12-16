@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/lib.rs`."><title>lib.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../static.files/rustdoc-590a400c.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="kernel" data-themes="" data-resource-suffix="" data-rustdoc-version="1.84.0-nightly (b3f75cc87 2024-11-02)" data-channel="nightly" data-search-js="search-c5a66128.js" data-settings-js="settings-0f613d39.js" ><script src="../../static.files/storage-59e33391.js"></script><script defer src="../../static.files/src-script-56102188.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-5f194d8c.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-893ab5e7.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">kernel/</div>lib.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers">
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/lib.rs`."><title>lib.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../static.files/rustdoc-46132b98.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="kernel" data-themes="" data-resource-suffix="" data-rustdoc-version="1.85.0-nightly (0aeaa5eb2 2024-12-14)" data-channel="nightly" data-search-js="search-92e6798f.js" data-settings-js="settings-0f613d39.js" ><script src="../../static.files/storage-59e33391.js"></script><script defer src="../../static.files/src-script-56102188.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-5f194d8c.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-893ab5e7.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">kernel/</div>lib.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers">
 <a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
@@ -164,7 +164,21 @@
 <a href="#163" id="163">163</a>
 <a href="#164" id="164">164</a>
 <a href="#165" id="165">165</a>
-<a href="#166" id="166">166</a></pre></div><pre class="rust"><code><span class="attr">#![no_std]
+<a href="#166" id="166">166</a>
+<a href="#167" id="167">167</a>
+<a href="#168" id="168">168</a>
+<a href="#169" id="169">169</a>
+<a href="#170" id="170">170</a>
+<a href="#171" id="171">171</a>
+<a href="#172" id="172">172</a>
+<a href="#173" id="173">173</a>
+<a href="#174" id="174">174</a>
+<a href="#175" id="175">175</a>
+<a href="#176" id="176">176</a>
+<a href="#177" id="177">177</a>
+<a href="#178" id="178">178</a>
+<a href="#179" id="179">179</a>
+<a href="#180" id="180">180</a></pre></div><pre class="rust"><code><span class="attr">#![no_std]
 #![feature(
     decl_macro,
     allocator_api,
@@ -184,23 +198,23 @@
 <span class="kw">pub mod </span>syscall;
 <span class="kw">pub mod </span>tasklets;
 
-<span class="kw">use </span><span class="kw">crate</span>::memory::Stack;
-<span class="kw">use </span>alloc::{boxed::Box, sync::Arc};
-<span class="kw">use </span>hal::memory::{FrameSize, PageTable, VAddr};
-<span class="kw">use </span>memory::{KernelStackAllocator, PhysicalMemoryManager};
+<span class="kw">use </span>alloc::{boxed::Box, string::ToString, sync::Arc, vec::Vec};
+<span class="kw">use </span>hal::memory::{FrameSize, PAddr, PageTable, Size4KiB, VAddr};
+<span class="kw">use </span>memory::{vmm::Stack, Pmm, Vmm};
 <span class="kw">use </span>mulch::InitGuard;
-<span class="kw">use </span>object::{address_space::AddressSpace, memory_object::MemoryObject, task::Task, KernelObject};
+<span class="kw">use </span>object::{address_space::AddressSpace, memory_object::MemoryObject, task::Task};
 <span class="kw">use </span>pci::{PciInfo, PciInterruptConfigurator, PciResolver};
 <span class="kw">use </span>pci_types::ConfigRegionAccess <span class="kw">as </span>PciConfigRegionAccess;
 <span class="kw">use </span>scheduler::Scheduler;
-<span class="kw">use </span>seed::boot_info::LoadedImage;
+<span class="kw">use </span>seed::boot_info::BootInfo;
 <span class="kw">use </span>spinning_top::{RwSpinlock, Spinlock};
 
 <span class="attr">#[cfg(not(test))]
 #[global_allocator]
 </span><span class="kw">pub static </span>ALLOCATOR: linked_list_allocator::LockedHeap = linked_list_allocator::LockedHeap::empty();
 
-<span class="kw">pub static </span>PHYSICAL_MEMORY_MANAGER: InitGuard&lt;PhysicalMemoryManager&gt; = InitGuard::uninit();
+<span class="kw">pub static </span>PMM: InitGuard&lt;Pmm&gt; = InitGuard::uninit();
+<span class="kw">pub static </span>VMM: InitGuard&lt;Vmm&gt; = InitGuard::uninit();
 <span class="kw">pub static </span>FRAMEBUFFER: InitGuard&lt;(poplar::syscall::FramebufferInfo, Arc&lt;MemoryObject&gt;)&gt; = InitGuard::uninit();
 <span class="kw">pub static </span>PCI_INFO: RwSpinlock&lt;<span class="prelude-ty">Option</span>&lt;PciInfo&gt;&gt; = RwSpinlock::new(<span class="prelude-val">None</span>);
 <span class="kw">pub static </span>PCI_ACCESS: InitGuard&lt;<span class="prelude-ty">Option</span>&lt;Spinlock&lt;Box&lt;<span class="kw">dyn </span>PciConfigRegionAccess + Send&gt;&gt;&gt;&gt; = InitGuard::uninit();
@@ -210,80 +224,94 @@
     <span class="kw">type </span>PageTable: PageTable&lt;<span class="self">Self</span>::PageTableSize&gt; + Send;
     <span class="kw">type </span>TaskContext;
 
-    <span class="kw">fn </span>kernel_page_table(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;mut </span><span class="self">Self</span>::PageTable;
+    <span class="doccomment">/// Create a `TaskContext` for a new task with the supplied kernel and user stacks.
+    </span><span class="kw">fn </span>new_task_context(kernel_stack: <span class="kw-2">&amp;</span>Stack, user_stack: <span class="kw-2">&amp;</span>Stack, task_entry_point: VAddr) -&gt; <span class="self">Self</span>::TaskContext;
 
-    <span class="doccomment">/// Often, the platform will need to put stuff on either the kernel or the user stack before a task is run for
-    /// the first time. `task_entry_point` is the virtual address that should be jumped to in usermode when the
-    /// task is run for the first time.
-    ///
-    /// The return value is of the form `(kernel_stack_pointer, user_stack_pointer)`.
-    </span><span class="kw">unsafe fn </span>initialize_task_stacks(
-        kernel_stack: <span class="kw-2">&amp;</span>Stack,
-        user_stack: <span class="kw-2">&amp;</span>Stack,
-        task_entry_point: VAddr,
-    ) -&gt; (VAddr, VAddr);
+    <span class="doccomment">/// Do the arch-dependent part of the context switch. This should save the context of the
+    /// currently running task into `from_context`, and restore `to_context` to start executing.
+    </span><span class="kw">unsafe fn </span>context_switch(from_context: <span class="kw-2">*mut </span><span class="self">Self</span>::TaskContext, to_context: <span class="kw-2">*const </span><span class="self">Self</span>::TaskContext);
 
-    <span class="kw">fn </span>new_task_context(
-        kernel_stack_pointer: VAddr,
-        user_stack_pointer: VAddr,
-        task_entry_point: VAddr,
-    ) -&gt; <span class="self">Self</span>::TaskContext;
+    <span class="doccomment">/// Do the actual drop into usermode. This assumes that the task's page tables have already been installed.
+    </span><span class="kw">unsafe fn </span>drop_into_userspace(context: <span class="kw-2">*const </span><span class="self">Self</span>::TaskContext) -&gt; !;
 
-    <span class="kw">unsafe fn </span>switch_user_stack_pointer(new_user_stack_pointer: VAddr) -&gt; VAddr;
-
-    <span class="doccomment">/// Do the final part of a context switch: save all the state that needs to be for the
-    /// currently running task, switch to the new kernel stack, and restore the state of the next
-    /// task.
-    ///
-    /// This function takes both kernel stacks for the current and new tasks, and also the
-    /// platform-specific task context held in the task. This is because we use various methods of
-    /// doing context switches on different platforms, according to the easiest / most performant
-    /// for the architecture. A pointer to the current kernel stack is provided so that it can be
-    /// updated if state is pushed onto it.
-    </span><span class="kw">unsafe fn </span>context_switch(
-        current_kernel_stack_pointer: <span class="kw-2">*mut </span>VAddr,
-        new_kernel_stack_pointer: VAddr,
-        from_context: <span class="kw-2">*mut </span><span class="self">Self</span>::TaskContext,
-        to_context: <span class="kw-2">*const </span><span class="self">Self</span>::TaskContext,
-    );
-
-    <span class="doccomment">/// Do the actual drop into usermode. This assumes that the task's page tables have already been installed,
-    /// and that an initial frame has been put into the task's kernel stack that this will use to enter userspace.
-    </span><span class="kw">unsafe fn </span>drop_into_userspace(
-        context: <span class="kw-2">*const </span><span class="self">Self</span>::TaskContext,
-        kernel_stack_pointer: VAddr,
-        user_stack_pointer: VAddr,
-    ) -&gt; !;
+    <span class="comment">// TODO: this should not exist long-term. The common kernel VMM should know about the direct
+    // physical mapping and should be able to write to physical memory itself.
+    </span><span class="kw">unsafe fn </span>write_to_phys_memory(address: PAddr, data: <span class="kw-2">&amp;</span>[u8]);
 }
 
-<span class="kw">pub fn </span>load_task&lt;P&gt;(
-    scheduler: <span class="kw-2">&amp;</span>Scheduler&lt;P&gt;,
-    image: <span class="kw-2">&amp;</span>LoadedImage,
-    kernel_page_table: <span class="kw-2">&amp;mut </span>P::PageTable,
-    allocator: <span class="kw-2">&amp;</span>PhysicalMemoryManager,
-    kernel_stack_allocator: <span class="kw-2">&amp;mut </span>KernelStackAllocator&lt;P&gt;,
-) <span class="kw">where
+<span class="kw">pub fn </span>load_userspace&lt;P&gt;(scheduler: <span class="kw-2">&amp;</span>Scheduler&lt;P&gt;, boot_info: <span class="kw-2">&amp;</span>BootInfo, kernel_page_table: <span class="kw-2">&amp;mut </span>P::PageTable)
+<span class="kw">where
     </span>P: Platform,
 {
-    <span class="kw">use </span>object::SENTINEL_KERNEL_ID;
+    <span class="kw">use </span>hal::memory::Flags;
+    <span class="kw">use </span>object::{task::Handles, SENTINEL_KERNEL_ID};
+    <span class="kw">use </span>poplar::manifest::BootstrapManifest;
 
-    <span class="kw">let </span>address_space = AddressSpace::new(SENTINEL_KERNEL_ID, kernel_page_table, allocator);
-    <span class="kw">let </span>task = Task::from_boot_info(
-        SENTINEL_KERNEL_ID,
-        address_space.clone(),
-        image,
-        allocator,
-        kernel_page_table,
-        kernel_stack_allocator,
-    )
-    .expect(<span class="string">"Failed to load initial task"</span>);
-
-    <span class="kw">for </span>segment <span class="kw">in </span><span class="kw-2">&amp;</span>image.segments {
-        <span class="kw">let </span>memory_object = MemoryObject::from_boot_info(task.id(), segment);
-        task.add_handle(memory_object.clone());
-        address_space.map_memory_object(memory_object, segment.virtual_address, allocator).unwrap();
+    <span class="kw">if </span>boot_info.loaded_images.is_empty() {
+        <span class="kw">return</span>;
     }
 
+    <span class="kw">let </span>pmm = PMM.get();
+    <span class="kw">let </span>bootstrap_task = boot_info.loaded_images.first().unwrap();
+    <span class="kw">let </span>address_space = AddressSpace::new(SENTINEL_KERNEL_ID, kernel_page_table, pmm);
+    <span class="kw">let </span>handles = Handles::new();
+
+    <span class="kw">for </span>segment <span class="kw">in </span><span class="kw-2">&amp;</span>bootstrap_task.segments {
+        <span class="comment">// TODO: this now uses the wrong task id...
+        </span><span class="kw">let </span>memory_object = MemoryObject::from_boot_info(SENTINEL_KERNEL_ID, segment);
+        handles.add(memory_object.clone());
+        address_space.map_memory_object(memory_object, segment.virtual_address, pmm).unwrap();
+    }
+
+    <span class="comment">/*
+     * Add other loaded tasks' segments to the bootstrap task and add each task to the manifest.
+     */
+    </span><span class="kw">let </span><span class="kw-2">mut </span>manifest =
+        BootstrapManifest { task_name: bootstrap_task.name.as_str().to_string(), boot_tasks: Vec::new() };
+    <span class="kw">for </span>image <span class="kw">in </span><span class="kw-2">&amp;</span>boot_info.loaded_images[<span class="number">1</span>..] {
+        <span class="kw">let </span><span class="kw-2">mut </span>service = poplar::manifest::BootTask {
+            name: image.name.as_str().to_string(),
+            entry_point: usize::from(image.entry_point),
+            segments: Vec::new(),
+        };
+        <span class="kw">for </span>segment <span class="kw">in </span><span class="kw-2">&amp;</span>image.segments {
+            <span class="comment">// TODO: this uses the wrong task ID...
+            </span><span class="kw">let </span>memory_object = MemoryObject::from_boot_info(SENTINEL_KERNEL_ID, segment);
+            <span class="kw">let </span>handle = handles.add(memory_object);
+            service.segments.push((usize::from(segment.virtual_address), handle.<span class="number">0</span>));
+        }
+        manifest.boot_tasks.push(service);
+    }
+    <span class="kw">let </span><span class="kw-2">mut </span>buffer = Vec::new();
+    <span class="kw">let </span>bytes_written = ptah::to_wire(<span class="kw-2">&amp;</span>manifest, <span class="kw-2">&amp;mut </span>buffer).unwrap();
+
+    <span class="kw">const </span>MANIFEST_ADDRESS: VAddr = VAddr::new(<span class="number">0x20000000</span>);
+    <span class="kw">let </span>mem_object_len = mulch::math::align_up(bytes_written, <span class="number">0x1000</span>);
+    <span class="kw">let </span>manifest_object = {
+        <span class="kw">let </span>phys = pmm.alloc(mem_object_len / Size4KiB::SIZE);
+        <span class="kw">unsafe </span>{
+            P::write_to_phys_memory(phys, <span class="kw-2">&amp;</span>(bytes_written <span class="kw">as </span>u32).to_le_bytes());
+            P::write_to_phys_memory(phys + <span class="number">4</span>, <span class="kw-2">&amp;</span>buffer);
+        }
+        MemoryObject::new(
+            SENTINEL_KERNEL_ID,
+            phys,
+            mem_object_len,
+            Flags { user_accessible: <span class="bool-val">true</span>, ..Default::default() },
+        )
+    };
+    address_space.map_memory_object(manifest_object, MANIFEST_ADDRESS, pmm).unwrap();
+
+    <span class="kw">let </span>task = Task::new(
+        SENTINEL_KERNEL_ID,
+        address_space.clone(),
+        bootstrap_task.name.to_string(),
+        bootstrap_task.entry_point,
+        handles,
+        pmm,
+        kernel_page_table,
+    )
+    .expect(<span class="string">"Failed to load bootstrapping task"</span>);
     scheduler.add_task(task);
 }
 

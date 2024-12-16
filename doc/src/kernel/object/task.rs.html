@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/object/task.rs`."><title>task.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../../static.files/rustdoc-590a400c.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="kernel" data-themes="" data-resource-suffix="" data-rustdoc-version="1.84.0-nightly (b3f75cc87 2024-11-02)" data-channel="nightly" data-search-js="search-c5a66128.js" data-settings-js="settings-0f613d39.js" ><script src="../../../static.files/storage-59e33391.js"></script><script defer src="../../../static.files/src-script-56102188.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-5f194d8c.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-893ab5e7.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">kernel/object/</div>task.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers">
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/object/task.rs`."><title>task.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../../static.files/rustdoc-46132b98.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="kernel" data-themes="" data-resource-suffix="" data-rustdoc-version="1.85.0-nightly (0aeaa5eb2 2024-12-14)" data-channel="nightly" data-search-js="search-92e6798f.js" data-settings-js="settings-0f613d39.js" ><script src="../../../static.files/storage-59e33391.js"></script><script defer src="../../../static.files/src-script-56102188.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-5f194d8c.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-893ab5e7.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">kernel/object/</div>task.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers">
 <a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
@@ -176,31 +176,7 @@
 <a href="#175" id="175">175</a>
 <a href="#176" id="176">176</a>
 <a href="#177" id="177">177</a>
-<a href="#178" id="178">178</a>
-<a href="#179" id="179">179</a>
-<a href="#180" id="180">180</a>
-<a href="#181" id="181">181</a>
-<a href="#182" id="182">182</a>
-<a href="#183" id="183">183</a>
-<a href="#184" id="184">184</a>
-<a href="#185" id="185">185</a>
-<a href="#186" id="186">186</a>
-<a href="#187" id="187">187</a>
-<a href="#188" id="188">188</a>
-<a href="#189" id="189">189</a>
-<a href="#190" id="190">190</a>
-<a href="#191" id="191">191</a>
-<a href="#192" id="192">192</a>
-<a href="#193" id="193">193</a>
-<a href="#194" id="194">194</a>
-<a href="#195" id="195">195</a>
-<a href="#196" id="196">196</a>
-<a href="#197" id="197">197</a>
-<a href="#198" id="198">198</a>
-<a href="#199" id="199">199</a>
-<a href="#200" id="200">200</a>
-<a href="#201" id="201">201</a>
-<a href="#202" id="202">202</a></pre></div><pre class="rust"><code><span class="kw">use super</span>::{
+<a href="#178" id="178">178</a></pre></div><pre class="rust"><code><span class="kw">use super</span>::{
     address_space::{AddressSpace, TaskSlot},
     alloc_kernel_object_id,
     event::Event,
@@ -209,16 +185,16 @@
     KernelObjectType,
 };
 <span class="kw">use crate</span>::{
-    memory::{KernelStackAllocator, PhysicalMemoryManager, Stack},
+    memory::{vmm::Stack, Pmm},
     Platform,
 };
-<span class="kw">use </span>alloc::{collections::BTreeMap, string::String, sync::Arc, vec::Vec};
+<span class="kw">use </span>alloc::{collections::BTreeMap, string::String, sync::Arc};
 <span class="kw">use </span>core::{
     cell::UnsafeCell,
     sync::atomic::{AtomicU32, Ordering},
 };
 <span class="kw">use </span>hal::memory::VAddr;
-<span class="kw">use </span>poplar::{caps::Capability, Handle};
+<span class="kw">use </span>poplar::Handle;
 <span class="kw">use </span>spinning_top::{RwSpinlock, Spinlock};
 
 <span class="attr">#[derive(Clone, Debug)]
@@ -280,17 +256,13 @@
     <span class="kw">pub </span>name: String,
     <span class="kw">pub </span>address_space: Arc&lt;AddressSpace&lt;P&gt;&gt;,
     <span class="kw">pub </span>state: Spinlock&lt;TaskState&gt;,
-    <span class="kw">pub </span>capabilities: Vec&lt;Capability&gt;,
 
     <span class="kw">pub </span>user_slot: Spinlock&lt;TaskSlot&gt;,
     <span class="kw">pub </span>kernel_stack: Spinlock&lt;Stack&gt;,
-    <span class="kw">pub </span>kernel_stack_pointer: UnsafeCell&lt;VAddr&gt;,
-    <span class="kw">pub </span>user_stack_pointer: UnsafeCell&lt;VAddr&gt;,
 
     <span class="kw">pub </span>context: UnsafeCell&lt;P::TaskContext&gt;,
 
-    <span class="kw">pub </span>handles: RwSpinlock&lt;BTreeMap&lt;Handle, Arc&lt;<span class="kw">dyn </span>KernelObject&gt;&gt;&gt;,
-    next_handle: AtomicU32,
+    <span class="kw">pub </span>handles: Handles,
 }
 
 <span class="comment">/*
@@ -305,53 +277,39 @@
 <span class="kw">where
     </span>P: Platform,
 {
-    <span class="kw">pub fn </span>from_boot_info(
+    <span class="kw">pub fn </span>new(
         owner: KernelObjectId,
         address_space: Arc&lt;AddressSpace&lt;P&gt;&gt;,
-        image: <span class="kw-2">&amp;</span>seed::boot_info::LoadedImage,
-        allocator: <span class="kw-2">&amp;</span>PhysicalMemoryManager,
+        name: String,
+        entry_point: VAddr,
+        handles: Handles,
+        allocator: <span class="kw-2">&amp;</span>Pmm,
         kernel_page_table: <span class="kw-2">&amp;mut </span>P::PageTable,
-        kernel_stack_allocator: <span class="kw-2">&amp;mut </span>KernelStackAllocator&lt;P&gt;,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;Arc&lt;Task&lt;P&gt;&gt;, TaskCreationError&gt; {
         <span class="kw">let </span>id = alloc_kernel_object_id();
 
         <span class="comment">// TODO: better way of getting initial stack sizes
         </span><span class="kw">let </span>task_slot =
-            address_space.alloc_task_slot(<span class="number">0x4000</span>, allocator).ok_or(TaskCreationError::AddressSpaceFull)<span class="question-mark">?</span>;
-        <span class="kw">let </span>kernel_stack = kernel_stack_allocator
-            .alloc_kernel_stack(<span class="number">0x4000</span>, allocator, kernel_page_table)
+            address_space.alloc_task_slot(<span class="number">0x8000</span>, allocator).ok_or(TaskCreationError::AddressSpaceFull)<span class="question-mark">?</span>;
+        <span class="kw">let </span>kernel_stack = <span class="kw">crate</span>::VMM
+            .get()
+            .alloc_kernel_stack::&lt;P&gt;(<span class="number">0x4000</span>, allocator, kernel_page_table)
             .ok_or(TaskCreationError::NoKernelStackSlots)<span class="question-mark">?</span>;
 
-        <span class="kw">let </span>(kernel_stack_pointer, user_stack_pointer) =
-            <span class="kw">unsafe </span>{ P::initialize_task_stacks(<span class="kw-2">&amp;</span>kernel_stack, <span class="kw-2">&amp;</span>task_slot.user_stack, image.entry_point) };
-
-        <span class="kw">let </span>context = P::new_task_context(kernel_stack_pointer, user_stack_pointer, image.entry_point);
+        <span class="kw">let </span>context = P::new_task_context(<span class="kw-2">&amp;</span>kernel_stack, <span class="kw-2">&amp;</span>task_slot.user_stack, entry_point);
 
         <span class="prelude-val">Ok</span>(Arc::new(Task {
             id,
             owner,
-            name: String::from(image.name.as_str()),
+            name,
             address_space,
             state: Spinlock::new(TaskState::Ready),
-            capabilities: decode_capabilities(<span class="kw-2">&amp;</span>image.capability_stream)<span class="question-mark">?</span>,
-
             user_slot: Spinlock::new(task_slot),
             kernel_stack: Spinlock::new(kernel_stack),
-            kernel_stack_pointer: UnsafeCell::new(kernel_stack_pointer),
-            user_stack_pointer: UnsafeCell::new(user_stack_pointer),
-
             context: UnsafeCell::new(context),
 
-            handles: RwSpinlock::new(BTreeMap::new()),
-            <span class="comment">// XXX: 0 is a special handle value, so start at 1
-            </span>next_handle: AtomicU32::new(<span class="number">1</span>),
+            handles,
         }))
-    }
-
-    <span class="kw">pub fn </span>add_handle(<span class="kw-2">&amp;</span><span class="self">self</span>, object: Arc&lt;<span class="kw">dyn </span>KernelObject&gt;) -&gt; Handle {
-        <span class="kw">let </span>handle_num = <span class="self">self</span>.next_handle.fetch_add(<span class="number">1</span>, Ordering::Relaxed);
-        <span class="self">self</span>.handles.write().insert(Handle(handle_num), object);
-        Handle(handle_num)
     }
 }
 
@@ -368,38 +326,32 @@
     }
 }
 
-<span class="doccomment">/// Decode a capability stream (as found in a task's image) into a set of capabilities as they're
-/// represented in the kernel. For the format that's being decoded here, refer to the
-/// `(3.1) Userspace/Capabilities` section of the Book.
-</span><span class="kw">fn </span>decode_capabilities(<span class="kw-2">mut </span>cap_stream: <span class="kw-2">&amp;</span>[u8]) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;Capability&gt;, TaskCreationError&gt; {
-    <span class="kw">use </span>poplar::caps::<span class="kw-2">*</span>;
+<span class="kw">pub struct </span>Handles {
+    handles: RwSpinlock&lt;BTreeMap&lt;Handle, Arc&lt;<span class="kw">dyn </span>KernelObject&gt;&gt;&gt;,
+    next: AtomicU32,
+}
 
-    <span class="kw">let </span><span class="kw-2">mut </span>caps = Vec::new();
-
-    <span class="comment">// TODO: when decl_macro hygiene-opt-out is implemented, this should be converted to use it
-    </span><span class="macro">macro_rules!</span> one_byte_cap {
-        (<span class="macro-nonterminal">$cap</span>: path) =&gt; {{
-            caps.push(<span class="macro-nonterminal">$cap</span>);
-            cap_stream = <span class="kw-2">&amp;</span>cap_stream[<span class="number">1</span>..];
-        }};
-    }
-
-    <span class="kw">while </span>cap_stream.len() &gt; <span class="number">0 </span>{
-        <span class="kw">match </span>cap_stream[<span class="number">0</span>] {
-            CAP_GET_FRAMEBUFFER =&gt; <span class="macro">one_byte_cap!</span>(Capability::GetFramebuffer),
-            CAP_EARLY_LOGGING =&gt; <span class="macro">one_byte_cap!</span>(Capability::EarlyLogging),
-            CAP_SERVICE_PROVIDER =&gt; <span class="macro">one_byte_cap!</span>(Capability::ServiceProvider),
-            CAP_SERVICE_USER =&gt; <span class="macro">one_byte_cap!</span>(Capability::ServiceUser),
-            CAP_PCI_BUS_DRIVER =&gt; <span class="macro">one_byte_cap!</span>(Capability::PciBusDriver),
-
-            <span class="comment">// We skip `0x00` as the first byte of a capability, as it is just used to pad the
-            // stream and so has no meaning
-            </span><span class="number">0x00 </span>=&gt; cap_stream = <span class="kw-2">&amp;</span>cap_stream[<span class="number">1</span>..],
-
-            <span class="kw">_ </span>=&gt; <span class="kw">return </span><span class="prelude-val">Err</span>(TaskCreationError::InvalidCapabilityEncoding),
+<span class="kw">impl </span>Handles {
+    <span class="kw">pub fn </span>new() -&gt; Handles {
+        Handles {
+            handles: RwSpinlock::new(BTreeMap::new()),
+            <span class="comment">// XXX: 0 is a special handle value, so start at 1
+            </span>next: AtomicU32::new(<span class="number">1</span>),
         }
     }
 
-    <span class="prelude-val">Ok</span>(caps)
+    <span class="kw">pub fn </span>add(<span class="kw-2">&amp;</span><span class="self">self</span>, object: Arc&lt;<span class="kw">dyn </span>KernelObject&gt;) -&gt; Handle {
+        <span class="kw">let </span>handle_num = <span class="self">self</span>.next.fetch_add(<span class="number">1</span>, Ordering::Relaxed);
+        <span class="self">self</span>.handles.write().insert(Handle(handle_num), object);
+        Handle(handle_num)
+    }
+
+    <span class="kw">pub fn </span>remove(<span class="kw-2">&amp;</span><span class="self">self</span>, handle: Handle) {
+        <span class="self">self</span>.handles.write().remove(<span class="kw-2">&amp;</span>handle);
+    }
+
+    <span class="kw">pub fn </span>get(<span class="kw-2">&amp;</span><span class="self">self</span>, handle: Handle) -&gt; <span class="prelude-ty">Option</span>&lt;Arc&lt;<span class="kw">dyn </span>KernelObject&gt;&gt; {
+        <span class="self">self</span>.handles.read().get(<span class="kw-2">&amp;</span>handle).cloned()
+    }
 }
 </code></pre></div></section></main></body></html>

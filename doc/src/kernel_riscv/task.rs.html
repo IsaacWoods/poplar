@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `kernel_riscv/src/task.rs`."><title>task.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../static.files/rustdoc-590a400c.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="kernel_riscv" data-themes="" data-resource-suffix="" data-rustdoc-version="1.84.0-nightly (b3f75cc87 2024-11-02)" data-channel="nightly" data-search-js="search-c5a66128.js" data-settings-js="settings-0f613d39.js" ><script src="../../static.files/storage-59e33391.js"></script><script defer src="../../static.files/src-script-56102188.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-5f194d8c.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-893ab5e7.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">kernel_riscv/</div>task.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers">
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `kernel_riscv/src/task.rs`."><title>task.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../static.files/rustdoc-46132b98.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="kernel_riscv" data-themes="" data-resource-suffix="" data-rustdoc-version="1.85.0-nightly (0aeaa5eb2 2024-12-14)" data-channel="nightly" data-search-js="search-92e6798f.js" data-settings-js="settings-0f613d39.js" ><script src="../../static.files/storage-59e33391.js"></script><script defer src="../../static.files/src-script-56102188.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-5f194d8c.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-893ab5e7.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">kernel_riscv/</div>task.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers">
 <a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
@@ -143,14 +143,16 @@
 <a href="#142" id="142">142</a>
 <a href="#143" id="143">143</a>
 <a href="#144" id="144">144</a>
-<a href="#145" id="145">145</a></pre></div><pre class="rust"><code><span class="kw">use </span>core::{
+<a href="#145" id="145">145</a>
+<a href="#146" id="146">146</a>
+<a href="#147" id="147">147</a></pre></div><pre class="rust"><code><span class="kw">use </span>core::{
     arch::{asm, global_asm},
     cell::Cell,
     ptr,
 };
 <span class="kw">use </span>hal::memory::VAddr;
 <span class="kw">use </span>hal_riscv::hw::csr::Sscratch;
-<span class="kw">use </span>kernel::memory::Stack;
+<span class="kw">use </span>kernel::memory::vmm::Stack;
 
 <span class="macro">global_asm!</span>(<span class="macro">include_str!</span>(<span class="string">"task.s"</span>));
 <span class="kw">extern </span><span class="string">"C" </span>{
@@ -228,36 +230,17 @@
     <span class="kw">pub </span>s11: usize,
 }
 
-<span class="kw">impl </span>ContextSwitchFrame {
-    <span class="kw">pub fn </span>new(
-        kernel_stack_pointer: VAddr,
-        user_stack_pointer: VAddr,
-        task_entry_point: VAddr,
-    ) -&gt; ContextSwitchFrame {
-        ContextSwitchFrame {
-            ra: task_entry_trampoline <span class="kw">as </span>usize,
-            sp: usize::from(kernel_stack_pointer),
-            s0: usize::from(task_entry_point),
-            s1: usize::from(user_stack_pointer),
-            s2: <span class="number">0</span>,
-            s3: <span class="number">0</span>,
-            s4: <span class="number">0</span>,
-            s5: <span class="number">0</span>,
-            s6: <span class="number">0</span>,
-            s7: <span class="number">0</span>,
-            s8: <span class="number">0</span>,
-            s9: <span class="number">0</span>,
-            s10: <span class="number">0</span>,
-            s11: <span class="number">0</span>,
-        }
-    }
+<span class="doccomment">/// The context stored for each task. On RISC-V, we store the context switch state in the task
+/// context.
+</span><span class="kw">pub struct </span>TaskContext {
+    context_switch_frame: ContextSwitchFrame,
+    kernel_stack_pointer: VAddr,
 }
 
-<span class="doccomment">/// Returns `(kernel_stack_pointer, user_stack_pointer)`.
-</span><span class="kw">pub unsafe fn </span>initialize_stacks(kernel_stack: <span class="kw-2">&amp;</span>Stack, user_stack: <span class="kw-2">&amp;</span>Stack) -&gt; (VAddr, VAddr) {
+<span class="kw">pub fn </span>new_task_context(kernel_stack: <span class="kw-2">&amp;</span>Stack, user_stack: <span class="kw-2">&amp;</span>Stack, task_entry_point: VAddr) -&gt; TaskContext {
     <span class="comment">/*
-     * Firstly, we need to make sure the top of the stack is 16-byte aligned, according to the
-     * Sys-V ABI.
+     * Initialize the kernel stack. Firstly, we need to make sure the top of the stack is 16-byte
+     * aligned, according to the Sys-V ABI.
      */
     </span><span class="kw">const </span>REQUIRED_INITIAL_STACK_ALIGNMENT: usize = <span class="number">16</span>;
     <span class="kw">let </span><span class="kw-2">mut </span>kernel_stack_pointer = kernel_stack.top.align_down(REQUIRED_INITIAL_STACK_ALIGNMENT);
@@ -267,25 +250,46 @@
      * Start off with a zero return address to terminate backtraces at task entry.
      */
     </span>kernel_stack_pointer -= <span class="number">8</span>;
-    ptr::write(kernel_stack_pointer.mut_ptr() <span class="kw">as </span><span class="kw-2">*mut </span>u64, <span class="number">0x0</span>);
+    <span class="kw">unsafe </span>{ ptr::write(kernel_stack_pointer.mut_ptr() <span class="kw">as </span><span class="kw-2">*mut </span>u64, <span class="number">0x0</span>) };
 
-    (kernel_stack_pointer, user_stack_pointer)
+    <span class="kw">let </span>context_switch_frame = ContextSwitchFrame {
+        ra: task_entry_trampoline <span class="kw">as </span>usize,
+        sp: usize::from(kernel_stack_pointer),
+        s0: usize::from(task_entry_point),
+        s1: usize::from(user_stack_pointer),
+        s2: <span class="number">0</span>,
+        s3: <span class="number">0</span>,
+        s4: <span class="number">0</span>,
+        s5: <span class="number">0</span>,
+        s6: <span class="number">0</span>,
+        s7: <span class="number">0</span>,
+        s8: <span class="number">0</span>,
+        s9: <span class="number">0</span>,
+        s10: <span class="number">0</span>,
+        s11: <span class="number">0</span>,
+    };
+
+    TaskContext { context_switch_frame, kernel_stack_pointer }
 }
 
-<span class="kw">pub unsafe fn </span>context_switch(
-    new_kernel_stack_pointer: VAddr,
-    from_context: <span class="kw-2">*mut </span>ContextSwitchFrame,
-    to_context: <span class="kw-2">*const </span>ContextSwitchFrame,
-) {
+<span class="kw">pub unsafe fn </span>context_switch(from_context: <span class="kw-2">*mut </span>TaskContext, to_context: <span class="kw-2">*const </span>TaskContext) {
+    <span class="kw">unsafe </span>{
+        (<span class="kw-2">*</span>from_context).kernel_stack_pointer = (<span class="kw-2">*</span>SCRATCH.<span class="number">0</span>.as_ptr()).kernel_stack_pointer;
+    }
+    <span class="kw">let </span>new_kernel_stack_pointer = <span class="kw">unsafe </span>{ (<span class="kw-2">*</span>to_context).kernel_stack_pointer };
     SCRATCH.<span class="number">0</span>.set(Scratch::new(new_kernel_stack_pointer));
-    do_context_switch(from_context, to_context);
+    do_context_switch(
+        <span class="kw-2">&amp;</span>raw <span class="kw-2">mut </span>(<span class="kw-2">*</span>from_context).context_switch_frame,
+        <span class="kw-2">&amp;</span>raw <span class="kw">const </span>(<span class="kw-2">*</span>to_context).context_switch_frame,
+    );
 }
 
-<span class="kw">pub unsafe fn </span>drop_into_userspace(context: <span class="kw-2">*const </span>ContextSwitchFrame, kernel_stack_pointer: VAddr) -&gt; ! {
+<span class="kw">pub unsafe fn </span>drop_into_userspace(context: <span class="kw-2">*const </span>TaskContext) -&gt; ! {
     <span class="comment">// Initialize this HART's `sscratch` area
-    </span>SCRATCH.<span class="number">0</span>.set(Scratch::new(kernel_stack_pointer));
+    </span><span class="kw">let </span>kernel_stack_pointer = <span class="kw">unsafe </span>{ (<span class="kw-2">*</span>context).kernel_stack_pointer };
+    SCRATCH.<span class="number">0</span>.set(Scratch::new(kernel_stack_pointer));
     Sscratch::write(VAddr::from(SCRATCH.<span class="number">0</span>.as_ptr()));
 
-    <span class="kw">unsafe </span>{ do_drop_to_userspace(context) }
+    <span class="kw">unsafe </span>{ do_drop_to_userspace(<span class="kw-2">&amp;</span>raw <span class="kw">const </span>(<span class="kw-2">*</span>context).context_switch_frame) }
 }
 </code></pre></div></section></main></body></html>
