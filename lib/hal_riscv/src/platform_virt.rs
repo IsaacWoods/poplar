@@ -35,7 +35,7 @@ pub type PageTableImpl = crate::paging::PageTableImpl<Level4>;
 pub mod kernel_map {
     use hal::memory::{mebibytes, Bytes, PAddr, VAddr};
 
-    pub const KERNEL_P4_ENTRY: usize = 511;
+    pub const KERNEL_TABLE_ENTRY: usize = 511;
     pub const KERNEL_ADDRESS_SPACE_START: VAddr = VAddr::new(0xffff_ff80_0000_0000);
 
     pub const PHYSICAL_MAP_BASE: VAddr = KERNEL_ADDRESS_SPACE_START;

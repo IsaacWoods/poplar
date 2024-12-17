@@ -67,6 +67,18 @@ pub static KERNEL_PAGE_TABLES: InitGuard<RwSpinlock<hal_riscv::platform::PageTab
 
 #[no_mangle]
 pub extern "C" fn kentry(boot_info: &BootInfo) -> ! {
+    /*
+     * TODO: bringup on the D1 has made me realise this early-boot is not super tenable. We need a
+     * system for early logging that happens before initialising all this stuff etc. The real UART
+     * needs to then be hidden behind a trait and hooked up into a centralised `tracing` system.
+     *
+     * Options for early logging should also be customisable and include something set up by Seed
+     * (e.g. a UEFI service, SBI, etc.) or a UART impl. Kernels we've seen such as FreeBSD take a
+     * more pragmatic approach than us and literally hard-code addresses of the serial devices, for
+     * example - we should accept that atm we literally are developing for a specific device in
+     * the D1, for example.
+     */
+
     let fdt = {
         let address = hal_riscv::platform::kernel_map::physical_to_virtual(boot_info.fdt_address.unwrap());
         unsafe { fdt::Fdt::from_ptr(address.ptr()).unwrap() }
@@ -129,33 +141,34 @@ pub extern "C" fn kentry(boot_info: &BootInfo) -> ! {
     SCHEDULER.initialize(Scheduler::new());
     maitake::time::set_global_timer(&SCHEDULER.get().tasklet_scheduler.timer).unwrap();
 
-    let (uart_prod, uart_cons) = kernel::tasklets::queue::SpscQueue::new();
-    serial::enable_input(&fdt, uart_prod);
-    SCHEDULER.get().tasklet_scheduler.spawn(async move {
-        loop {
-            let line = {
-                let mut line = String::new();
-                loop {
-                    let bytes = uart_cons.read().await;
-                    let as_str = core::str::from_utf8(&bytes).unwrap();
-                    if let Some(index) = as_str.find('\r') {
-                        let (before, _after) = as_str.split_at(index);
-                        line += before;
-                        // Only release up to (and including) the newline so the next pass can consume any bytes
-                        // after it
-                        bytes.release(index + 1);
-                        break;
-                    } else {
-                        line += as_str;
-                        let num_bytes = bytes.len();
-                        bytes.release(num_bytes);
-                    }
-                }
-                line
-            };
-            info!("Line from UART: {}", line);
-        }
-    });
+    // TODO: this is broken on the D1 because the device tree is being a cunt
+    // let (uart_prod, uart_cons) = kernel::tasklets::queue::SpscQueue::new();
+    // serial::enable_input(&fdt, uart_prod);
+    // SCHEDULER.get().tasklet_scheduler.spawn(async move {
+    //     loop {
+    //         let line = {
+    //             let mut line = String::new();
+    //             loop {
+    //                 let bytes = uart_cons.read().await;
+    //                 let as_str = core::str::from_utf8(&bytes).unwrap();
+    //                 if let Some(index) = as_str.find('\r') {
+    //                     let (before, _after) = as_str.split_at(index);
+    //                     line += before;
+    //                     // Only release up to (and including) the newline so the next pass can consume any bytes
+    //                     // after it
+    //                     bytes.release(index + 1);
+    //                     break;
+    //                 } else {
+    //                     line += as_str;
+    //                     let num_bytes = bytes.len();
+    //                     bytes.release(num_bytes);
+    //                 }
+    //             }
+    //             line
+    //         };
+    //         info!("Line from UART: {}", line);
+    //     }
+    // });
 
     /*
      * Create kernel objects from loaded images and schedule them.

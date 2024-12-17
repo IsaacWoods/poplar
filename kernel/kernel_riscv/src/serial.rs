@@ -37,9 +37,20 @@ pub fn init(fdt: &Fdt) {
         None => 1,
     };
 
+    /*
+     * TODO XXX: re-initializing the UART seems to break things on the D1. I'm not yet sure why -
+     * the IP is apparently a Synopsys DesignWare 8250. Apparently this impl will raise an
+     * interrupt when you write to its LCR when it's busy - I wonder if that might be happening
+     * here, and we're not handling it correctly and so get the UART stuck somehow?
+     *
+     * See: https://patchwork.kernel.org/project/linux-arm-kernel/patch/1354640699-6066-1-git-send-email-gregory.clement@free-electrons.com/
+     *
+     * We'll need to dig into whether we should be re-initing the UART anyways here, and if we want
+     * to how to poke the D1's UART in the correct way.
+     */
     let serial_mapped_address = physical_to_virtual(PAddr::new(addr).unwrap());
     let serial = unsafe { Uart16550::new(serial_mapped_address, reg_width) };
-    serial.init();
+    // serial.init();
     SERIAL.initialize(serial);
 
     tracing::dispatch::set_global_default(tracing::dispatch::Dispatch::from_static(&LOGGER))
@@ -47,6 +58,8 @@ pub fn init(fdt: &Fdt) {
 }
 
 pub fn enable_input(fdt: &Fdt, producer: QueueProducer) {
+    // TODO: on the D1 this doesn't seem to produce a node with an `interrupts` property? The DT
+    // does have one on `uart0`
     let stdout = fdt.chosen().stdout().unwrap().node();
     crate::interrupts::handle_wired_fdt_device_interrupt(stdout, interrupt_handler);
     SERIAL_PRODUCER.initialize(producer);
@@ -83,6 +96,8 @@ impl fmt::Write for SerialWriter {
         Ok(())
     }
 }
+
+// TODO: abstract out serial writer and centralise `tracing` logging infra into `kernel`
 
 struct Logger {
     next_id: AtomicU64,
