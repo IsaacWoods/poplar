@@ -29,6 +29,7 @@ use uefi::{
 /*
  * These are the custom UEFI memory types we use. They're all collected here so we can easily see which numbers
  * we're using.
+ * TODO: I think some UEFI impls don't like this so get rid of it at some point.
  */
 pub const KERNEL_MEMORY_TYPE: MemoryType = MemoryType::custom(0x80000000);
 pub const IMAGE_MEMORY_TYPE: MemoryType = MemoryType::custom(0x80000001);
@@ -44,12 +45,12 @@ fn efi_main(image_handle: Handle, system_table: SystemTable<Boot>) -> Status {
     Logger::init();
     info!("Hello, World!");
 
-    let video_mode = create_framebuffer(system_table.boot_services(), 800, 600);
-    Logger::switch_to_graphical(&video_mode);
-
     unsafe {
         uefi::allocator::init(system_table.boot_services());
     }
+
+    let video_mode = create_framebuffer(system_table.boot_services(), 800, 600);
+    Logger::switch_to_graphical(&video_mode);
 
     /*
      * We create a set of page tables for the kernel. Because memory is identity-mapped in UEFI, we can act as

@@ -108,7 +108,7 @@ unsafe extern "C" fn rust_entry() -> ! {
      * probably free massive heaps if tasks have a high tidemark but low normal usage or whatever.
      */
     const HEAP_START: usize = 0x600000000;
-    const HEAP_SIZE: usize = 0x8000;
+    const HEAP_SIZE: usize = 0x800000;
     let heap = MemoryObject::create(HEAP_SIZE, MemoryObjectFlags::WRITABLE).unwrap();
     let _mapped_heap = heap.map_at(HEAP_START).unwrap();
     ALLOCATOR.lock().init(HEAP_START as *mut u8, HEAP_SIZE);
