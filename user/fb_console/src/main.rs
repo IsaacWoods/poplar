@@ -4,7 +4,7 @@
 // TODO: make a window manager and then make it so that this can drive a framebuffer directly, or
 // create a window for itself.
 
-use gfxconsole::{Format, Framebuffer, GfxConsole, Pixel, Rgb32};
+use gfxconsole::{Framebuffer, GfxConsole};
 use ginkgo::{
     ast::BindingResolver,
     interpreter::{Interpreter, Value},
@@ -45,7 +45,7 @@ struct Console {
     control_channel: Channel<(), ()>,
     width: usize,
     height: usize,
-    console: Spinlock<GfxConsole<Rgb32>>,
+    console: Spinlock<GfxConsole>,
     input_events: thingbuf::mpsc::Receiver<InputEvent>,
 
     // TODO: we really need to separate out the like rendering/input management layer and the shell
@@ -64,9 +64,9 @@ fn spawn_framebuffer(
     let platform_bus_inspect = service_host_client.subscribe_service("platform_bus.inspect").unwrap();
 
     let console = Spinlock::new(GfxConsole::new(
-        Framebuffer { ptr: framebuffer.ptr() as *mut Pixel<Rgb32>, width, height, stride: width },
-        Rgb32::pixel(0x00, 0x00, 0x00, 0x00),
-        Rgb32::pixel(0xff, 0xff, 0xff, 0xff),
+        Framebuffer::new(framebuffer.ptr() as *mut u32, width, height, width, 0, 8, 16),
+        0x00000000,
+        0xffffffff,
     ));
     let console = Console {
         framebuffer,
@@ -192,13 +192,7 @@ fn spawn_framebuffer(
 
             if needs_redraw {
                 // TODO: this obvs won't remove the old cursor - we need a proper thing for that...
-                console.console.lock().framebuffer.draw_rect(
-                    mouse_x as usize,
-                    mouse_y as usize,
-                    4,
-                    4,
-                    gfxconsole::Rgb32::pixel(0xff, 0, 0xff, 0xff),
-                );
+                console.console.lock().framebuffer.draw_rect(mouse_x as usize, mouse_y as usize, 4, 4, 0xffff00ff);
                 console.control_channel.send(&()).unwrap();
             }
         }

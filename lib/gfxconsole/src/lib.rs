@@ -2,7 +2,7 @@
 
 pub mod fb;
 
-pub use fb::{Bgr32, Format, Framebuffer, Pixel, Rgb32};
+pub use fb::{Framebuffer, Rgb32};
 
 use core::fmt;
 
@@ -10,24 +10,18 @@ type Cell = usize;
 
 const GLYPH_SIZE: usize = 8;
 
-pub struct GfxConsole<F>
-where
-    F: Format,
-{
-    pub framebuffer: Framebuffer<F>,
-    bg_color: Pixel<F>,
-    text_color: Pixel<F>,
+pub struct GfxConsole {
+    pub framebuffer: Framebuffer,
+    bg_color: Rgb32,
+    text_color: Rgb32,
     cursor_x: Cell,
     cursor_y: Cell,
     width: Cell,
     height: Cell,
 }
 
-impl<F> GfxConsole<F>
-where
-    F: Format,
-{
-    pub fn new(framebuffer: Framebuffer<F>, bg_color: Pixel<F>, text_color: Pixel<F>) -> GfxConsole<F> {
+impl GfxConsole {
+    pub fn new(mut framebuffer: Framebuffer, bg_color: Rgb32, text_color: Rgb32) -> GfxConsole {
         let width = framebuffer.width / GLYPH_SIZE;
         let height = framebuffer.height / GLYPH_SIZE;
 
@@ -42,10 +36,7 @@ where
     }
 }
 
-impl<F> fmt::Write for GfxConsole<F>
-where
-    F: Format,
-{
+impl fmt::Write for GfxConsole {
     fn write_str(&mut self, s: &str) -> Result<(), fmt::Error> {
         /*
          * We include a small font that only includes ASCII characters, which also allows us to take some shortcuts

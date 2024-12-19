@@ -1,4 +1,4 @@
-use gfxconsole::{Bgr32, Format, Framebuffer, Pixel};
+use gfxconsole::Framebuffer;
 use log::info;
 use std::{
     mem::MaybeUninit,
@@ -14,25 +14,24 @@ pub fn main() {
     log::set_max_level(log::LevelFilter::Trace);
     info!("Simple framebuffer driver is running!");
 
-    let framebuffer = make_framebuffer();
+    let mut framebuffer = make_framebuffer();
     let mut yields = 0;
 
     loop {
-        framebuffer.clear(Bgr32::pixel(0xaa, 0xaa, 0xaa, 0xff));
+        framebuffer.clear(0xffaaaaaa);
         framebuffer.draw_string(
             &format!("The framebuffer driver has yielded {} times!", yields),
             400,
             400,
-            Bgr32::pixel(0xff, 0x00, 0xff, 0xff),
+            0xffff0000,
         );
         yields += 1;
 
-        info!("Yielding from FB");
         syscall::yield_to_kernel();
     }
 }
 
-fn make_framebuffer() -> Framebuffer<Bgr32> {
+fn make_framebuffer() -> Framebuffer {
     /*
      * This is the virtual address the framebuffer will be mapped to in our address space.
      * NOTE: this address was basically pulled out of thin air.
@@ -54,10 +53,13 @@ fn make_framebuffer() -> Framebuffer<Bgr32> {
     }
     assert_eq!(framebuffer_info.pixel_format, PixelFormat::Bgr32);
 
-    Framebuffer {
-        ptr: FRAMEBUFFER_ADDRESS as *mut Pixel<Bgr32>,
-        width: framebuffer_info.width as usize,
-        height: framebuffer_info.height as usize,
-        stride: framebuffer_info.stride as usize,
-    }
+    Framebuffer::new(
+        FRAMEBUFFER_ADDRESS as *mut u32,
+        framebuffer_info.width as usize,
+        framebuffer_info.height as usize,
+        framebuffer_info.stride as usize,
+        16,
+        8,
+        0,
+    )
 }
