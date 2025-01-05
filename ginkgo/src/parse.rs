@@ -1,8 +1,9 @@
 use crate::{
     lex::{Lex, PeekingIter, Token, TokenType, TokenValue},
+    object::{GinkgoObj, GinkgoString, ObjHeader},
     vm::{Chunk, Opcode, Value},
 };
-use std::collections::BTreeMap;
+use std::{collections::BTreeMap, mem::replace, thread::current};
 
 pub struct Parser<'s> {
     stream: PeekingIter<Lex<'s>>,
@@ -12,6 +13,15 @@ pub struct Parser<'s> {
     precedence: BTreeMap<TokenType, u8>,
 
     chunk: Option<Chunk>,
+
+    scope_depth: usize,
+    locals: Vec<Local>,
+}
+
+pub struct Local {
+    // TODO: it'd be nice for this to borrow out of the source string for the duration of the parse
+    name: String,
+    depth: usize,
 }
 
 impl<'s> Parser<'s> {
@@ -23,6 +33,8 @@ impl<'s> Parser<'s> {
             infix_parselets: BTreeMap::new(),
             precedence: BTreeMap::new(),
             chunk: Some(Chunk::new()),
+            scope_depth: 0,
+            locals: Vec::new(),
         };
         parser.register_parselets();
 
@@ -41,10 +53,79 @@ impl<'s> Parser<'s> {
     pub fn statement(&mut self) {
         if self.matches(TokenType::Let) {
             let name = self.identifier();
+
+            if self.scope_depth > 0 {
+                self.locals.push(Local { name, depth: self.scope_depth });
+            } else {
+                let name = GinkgoString::new(&name);
+                let name_constant =
+                    self.chunk.as_mut().unwrap().create_constant(Value::Obj(name as *const ObjHeader));
+                self.emit2(Opcode::Constant, name_constant as u8);
+            }
+
+            // TODO: allow vars to not be initialized (initialize to unit maybe? Or a `nil` value?)
             self.consume(TokenType::Equals);
-            let expression = self.expression(0);
+            self.expression(0);
             self.consume(TokenType::Semicolon);
-            todo!()
+
+            if self.scope_depth == 0 {
+                self.emit(Opcode::DefineGlobal);
+            }
+        } else if self.matches(TokenType::LeftBrace) {
+            self.begin_scope();
+            while !self.matches(TokenType::RightBrace) {
+                self.statement();
+            }
+            self.end_scope();
+        } else if self.matches(TokenType::If) {
+            self.expression(0);
+            let then_jump = self.emit_jump(Opcode::JumpIfFalse);
+            self.emit(Opcode::Pop); // Pop the condition on the then branch
+            self.consume(TokenType::LeftBrace);
+            self.begin_scope();
+            while !self.matches(TokenType::RightBrace) {
+                self.statement();
+            }
+            self.end_scope();
+            let else_jump = self.emit_jump(Opcode::Jump);
+
+            self.chunk.as_mut().unwrap().patch_jump(then_jump);
+            self.emit(Opcode::Pop); // Pop the condition on the else branch
+
+            if self.matches(TokenType::Else) {
+                self.consume(TokenType::LeftBrace);
+                self.begin_scope();
+                while !self.matches(TokenType::RightBrace) {
+                    self.statement();
+                }
+                self.end_scope();
+            }
+            self.chunk.as_mut().unwrap().patch_jump(else_jump);
+        } else if self.matches(TokenType::While) {
+            let loop_jump = self.chunk.as_ref().unwrap().current_offset();
+            self.expression(0);
+            let exit_jump = self.emit_jump(Opcode::JumpIfFalse);
+            self.emit(Opcode::Pop);
+
+            self.consume(TokenType::LeftBrace);
+            self.begin_scope();
+            while !self.matches(TokenType::RightBrace) {
+                self.statement();
+            }
+            self.end_scope();
+            self.emit_jump_to(Opcode::Jump, loop_jump);
+            self.chunk.as_mut().unwrap().patch_jump(exit_jump);
+        } else {
+            /*
+             * Default case - it's an expression statement.
+             * Expressions in statement position may or may not be terminated with a semicolon, so we
+             * handle both cases here.
+             */
+            self.expression(0);
+            if self.matches(TokenType::Semicolon) {
+                // Pop whatever the expression produces back off the stack
+                self.emit(Opcode::Pop);
+            }
         }
 
         // if self.matches(TokenType::Fn) {
@@ -65,42 +146,31 @@ impl<'s> Parser<'s> {
         // return Stmt { typ: StmtTyp::ClassDef { name, defs } };
         // }
 
-        // TODO: in the future, we want expressions to be able to do this too (so it can probs move
-        // into there)
-        if self.matches(TokenType::LeftBrace) {
-            let mut statements = Vec::new();
-            while !self.matches(TokenType::RightBrace) {
-                statements.push(self.statement());
-            }
-            // return Stmt::new_block(statements);
-            todo!()
-        }
-
         // TODO: I think we want `if`s to be expressions too actually? (with optional `else` if the
         // then branch returns unit).
-        if self.matches(TokenType::If) {
-            // let condition = self.expression(0);
-            // self.consume(TokenType::LeftBrace);
-            // let mut then_block = Vec::new();
-            // while !self.matches(TokenType::RightBrace) {
-            //     then_block.push(self.statement());
-            // }
-            // let then_block = Stmt::new_block(then_block);
+        // if self.matches(TokenType::If) {
+        //     // let condition = self.expression(0);
+        //     // self.consume(TokenType::LeftBrace);
+        //     // let mut then_block = Vec::new();
+        //     // while !self.matches(TokenType::RightBrace) {
+        //     //     then_block.push(self.statement());
+        //     // }
+        //     // let then_block = Stmt::new_block(then_block);
 
-            // let else_block = if self.matches(TokenType::Else) {
-            //     self.consume(TokenType::LeftBrace);
-            //     let mut statements = Vec::new();
-            //     while !self.matches(TokenType::RightBrace) {
-            //         statements.push(self.statement());
-            //     }
-            // Some(Stmt::new_block(statements))
-            // } else {
-            //     None
-            // };
+        //     // let else_block = if self.matches(TokenType::Else) {
+        //     //     self.consume(TokenType::LeftBrace);
+        //     //     let mut statements = Vec::new();
+        //     //     while !self.matches(TokenType::RightBrace) {
+        //     //         statements.push(self.statement());
+        //     //     }
+        //     // Some(Stmt::new_block(statements))
+        //     // } else {
+        //     //     None
+        //     // };
 
-            // return Stmt::new_if(condition, then_block, else_block);
-            todo!()
-        }
+        //     // return Stmt::new_if(condition, then_block, else_block);
+        //     todo!()
+        // }
 
         // if self.matches(TokenType::While) {
         //     let condition = self.expression(0);
@@ -117,18 +187,6 @@ impl<'s> Parser<'s> {
         //     let value = self.expression(0);
         //     self.consume(TokenType::Semicolon);
         //     return Stmt::new_return(value);
-        // }
-
-        /*
-         * Default case - it's an expression statement.
-         * Expressions in statement position may or may not be terminated with a semicolon, so we
-         * handle both cases here.
-         */
-        let expression = self.expression(0);
-        // if self.matches(TokenType::Semicolon) {
-        //     Stmt::new_terminated_expr(expression)
-        // } else {
-        //     Stmt::new_expr(expression)
         // }
     }
 
@@ -170,6 +228,7 @@ impl<'s> Parser<'s> {
     //     Stmt::new_fn_def(name, takes_self, params, statements)
     // }
 
+    // TODO: borrow out of the source string for the return value
     pub fn identifier(&mut self) -> String {
         let token = self.consume(TokenType::Identifier).unwrap();
         if let Some(TokenValue::Identifier(name)) = self.stream.inner.token_value(token) {
@@ -210,6 +269,23 @@ impl<'s> Parser<'s> {
             (infix)(self, next);
         }
     }
+
+    fn begin_scope(&mut self) {
+        self.scope_depth += 1;
+    }
+
+    fn end_scope(&mut self) {
+        self.scope_depth -= 1;
+
+        // Pop locals
+        // TODO: can we do this from the back and then stop when we find a local to keep?
+        let locals_to_pop = self.locals.iter().filter(|local| local.depth > self.scope_depth).count();
+        // TODO: PopN instruction
+        for _ in 0..locals_to_pop {
+            self.emit(Opcode::Pop);
+        }
+        self.locals.truncate(locals_to_pop);
+    }
 }
 
 /*
@@ -233,14 +309,32 @@ impl<'s> Parser<'s> {
         const PRECEDENCE_CALL: u8 = 14;
 
         /*
-         * Literals and identifiers and consumed as prefix operations.
+         * Literals and identifiers are consumed as prefix operations.
          */
         self.register_prefix(TokenType::Identifier, |parser, token| {
             let value = match parser.stream.inner.token_value(token) {
                 Some(TokenValue::Identifier(value)) => value,
                 _ => unreachable!(),
             };
-            todo!()
+
+            // See if the name resolves to a local
+            let local_idx =
+                parser
+                    .locals
+                    .iter()
+                    .enumerate()
+                    .rev()
+                    .find_map(|(i, local)| if local.name == value { Some(i) } else { None });
+            if let Some(local_idx) = local_idx {
+                parser.emit(Opcode::GetLocal);
+                parser.emit_raw(local_idx as u8);
+            } else {
+                let name = GinkgoString::new(&value.to_string());
+                let name_constant =
+                    parser.chunk.as_mut().unwrap().create_constant(Value::Obj(name as *const ObjHeader));
+                parser.emit2(Opcode::Constant, name_constant as u8);
+                parser.emit(Opcode::GetGlobal);
+            }
         });
         self.register_prefix(TokenType::Integer, |parser, token| {
             let value = match parser.stream.inner.token_value(token) {
@@ -255,18 +349,14 @@ impl<'s> Parser<'s> {
                 Some(TokenValue::String(value)) => value.to_string(),
                 _ => unreachable!(),
             };
-            let constant = parser.chunk.as_mut().unwrap().create_constant(Value::String(value));
+            let value = GinkgoString::new(&value.to_string());
+            let constant = parser.chunk.as_mut().unwrap().create_constant(Value::Obj(value as *const ObjHeader));
             parser.emit2(Opcode::Constant, constant as u8);
         });
-        let bool_literal: PrefixParselet = |parser, token| {
-            let value = match token.typ {
-                TokenType::True => Value::Bool(true),
-                TokenType::False => Value::Bool(false),
-                _ => unreachable!(),
-            };
-            // TODO: I feel these could be hardcoded rather than exist as constants?
-            let constant = parser.chunk.as_mut().unwrap().create_constant(value);
-            parser.emit2(Opcode::Constant, constant as u8);
+        let bool_literal: PrefixParselet = |parser, token| match token.typ {
+            TokenType::True => parser.emit(Opcode::True),
+            TokenType::False => parser.emit(Opcode::False),
+            _ => unreachable!(),
         };
         self.register_prefix(TokenType::True, bool_literal);
         self.register_prefix(TokenType::False, bool_literal);
@@ -363,25 +453,48 @@ impl<'s> Parser<'s> {
         self.register_infix(TokenType::LessThan, PRECEDENCE_CONDITIONAL, binary_op);
         self.register_infix(TokenType::LessEqual, PRECEDENCE_CONDITIONAL, binary_op);
 
-        // let logical_op: InfixParselet = |parser, left, token| {
-        //     let (op, precedence) = match token.typ {
-        //         TokenType::AmpersandAmpersand => (LogicalOp::LogicalAnd, PRECEDENCE_LOGICAL_AND),
-        //         TokenType::PipePipe => (LogicalOp::LogicalOr, PRECEDENCE_LOGICAL_OR),
-        //         other => panic!("Unsupported logical op token: {:?}", other),
-        //     };
-        //     let right = parser.expression(precedence);
-        //     Expr::new(ExprTyp::LogicalOp { op, left: Box::new(left), right: Box::new(right) })
-        // };
-        // self.register_infix(TokenType::AmpersandAmpersand, PRECEDENCE_LOGICAL_AND, logical_op);
-        // self.register_infix(TokenType::PipePipe, PRECEDENCE_LOGICAL_OR, logical_op);
+        self.register_infix(TokenType::AmpersandAmpersand, PRECEDENCE_LOGICAL_AND, |parser, _token| {
+            /*
+             * We utilise the fact that jump operations leave their condition on the stack to implement
+             * short-circuiting here. If the left side is false, jump over the right side, leaving the
+             * `false` as the overall result.
+             */
+            let jump = parser.emit_jump(Opcode::JumpIfFalse);
+            parser.emit(Opcode::Pop);
+            parser.expression(PRECEDENCE_LOGICAL_AND);
+            parser.chunk.as_mut().unwrap().patch_jump(jump);
+        });
+        self.register_infix(TokenType::PipePipe, PRECEDENCE_LOGICAL_OR, |parser, _token| {
+            /*
+             * We do something similar for logical OR.
+             */
+            let jump = parser.emit_jump(Opcode::JumpIfTrue);
+            parser.emit(Opcode::Pop);
+            parser.expression(PRECEDENCE_LOGICAL_OR);
+            parser.chunk.as_mut().unwrap().patch_jump(jump);
+        });
 
         /*
          * Assignment.
          */
-        // self.register_infix(TokenType::Equals, PRECEDENCE_ASSIGNMENT, |parser, left, _token| {
-        //     let expr = parser.expression(PRECEDENCE_ASSIGNMENT - 1);
-        //     Expr::new(ExprTyp::Assign { place: Box::new(left), expr: Box::new(expr) })
-        // });
+        self.register_infix(TokenType::Equals, PRECEDENCE_ASSIGNMENT, |parser, _token| {
+            /*
+             * This is a slightly strange approach, but works for our needs. We have parsed the left-hand
+             * side of the assignment, which should produce a place. We need to remove the emitted bytecode
+             * and emit our own to do the assignment. We also use this to confirm the LHS will produce
+             * a valid place to assign to.
+             */
+            // TODO: this won't work with GetLocal followed by the index :( - can we fix through somehow?? Maybe push the slot to the actual stack idk??
+            let op_to_replace_with = match parser.chunk.as_mut().unwrap().pop_last_op() {
+                Some(Opcode::GetGlobal) => Opcode::SetGlobal,
+                Some(Opcode::GetLocal) => Opcode::SetLocal,
+                // TODO: runtime error
+                _ => panic!(),
+            };
+
+            parser.expression(PRECEDENCE_ASSIGNMENT - 1);
+            parser.emit(op_to_replace_with);
+        });
 
         /*
          * Function calls.
@@ -456,12 +569,36 @@ impl<'s> Parser<'s> {
     }
 
     fn emit(&mut self, op: Opcode) {
-        self.chunk.as_mut().unwrap().push(op as u8);
+        self.emit_raw(op as u8);
+    }
+
+    fn emit_raw(&mut self, byte: u8) {
+        self.chunk.as_mut().unwrap().push(byte);
     }
 
     fn emit2(&mut self, op: Opcode, operand: u8) {
         let chunk = self.chunk.as_mut().unwrap();
         chunk.push(op as u8);
         chunk.push(operand);
+    }
+
+    /// Emit a `jump`, returning an offset to patch later
+    fn emit_jump(&mut self, jump: Opcode) -> usize {
+        self.emit(jump);
+        // Record the offset of the jump's operand to patch later
+        let offset = self.chunk.as_ref().unwrap().current_offset();
+        self.emit_raw(0);
+        self.emit_raw(0);
+        offset
+    }
+
+    /// Emit a `jump` to an already-known `target`
+    fn emit_jump_to(&mut self, jump: Opcode, target: usize) {
+        self.emit(jump);
+        let current_offset = self.chunk.as_ref().unwrap().current_offset();
+        // XXX: add an extra 2 to account for the `i16` operand
+        let bytes = i16::try_from(target.checked_signed_diff(current_offset + 2).unwrap()).unwrap().to_le_bytes();
+        self.emit_raw(bytes[0]);
+        self.emit_raw(bytes[1]);
     }
 }

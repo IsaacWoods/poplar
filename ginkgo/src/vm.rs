@@ -1,4 +1,6 @@
-use core::{cmp, fmt, ops};
+use crate::object::{GinkgoObj, GinkgoString, ObjHeader};
+use core::{cmp, fmt};
+use std::collections::BTreeMap;
 
 macro_rules! opcodes {
     { $($opcode:literal => $name:ident $(,)*)* } => {
@@ -44,66 +46,19 @@ opcodes! {
     15 => LessEqual,
     16 => GreaterThan,
     17 => GreaterEqual,
-}
-
-#[derive(Clone, Eq, Debug)]
-pub enum Value {
-    Unit,
-    Integer(i64),
-    Bool(bool),
-    String(String),
-}
-
-impl Value {
-    pub fn as_integer(&self) -> Option<i64> {
-        if let Value::Integer(value) = self {
-            Some(*value)
-        } else {
-            None
-        }
-    }
-
-    pub fn as_bool(&self) -> Option<bool> {
-        if let Value::Bool(value) = self {
-            Some(*value)
-        } else {
-            None
-        }
-    }
-
-    pub fn as_string(&self) -> Option<&String> {
-        if let Value::String(value) = self {
-            Some(value)
-        } else {
-            None
-        }
-    }
-}
-
-impl cmp::PartialEq for Value {
-    fn eq(&self, other: &Self) -> bool {
-        match (self, other) {
-            (Self::Integer(l), Self::Integer(r)) => l == r,
-            (Self::Bool(l), Self::Bool(r)) => l == r,
-            (Self::String(l), Self::String(r)) => l == r,
-            _ => false,
-        }
-    }
-}
-
-impl cmp::PartialOrd for Value {
-    fn partial_cmp(&self, other: &Self) -> Option<cmp::Ordering> {
-        match (self, other) {
-            (Self::Integer(l), Self::Integer(r)) => Some(l.cmp(r)),
-            (Self::Bool(l), Self::Bool(r)) => Some(l.cmp(r)),
-            (Self::String(l), Self::String(r)) => Some(l.cmp(r)),
-            _ => None,
-        }
-    }
+    18 => Pop,
+    19 => DefineGlobal,
+    20 => GetGlobal,
+    21 => SetGlobal,
+    22 => GetLocal,
+    23 => SetLocal,
+    24 => Jump,
+    25 => JumpIfTrue,
+    26 => JumpIfFalse,
 }
 
 pub struct Chunk {
-    code: Vec<u8>,
+    pub code: Vec<u8>,
     constants: Vec<Value>,
 }
 
@@ -121,6 +76,24 @@ impl Chunk {
         self.constants.push(value);
         index
     }
+
+    pub fn pop_last_op(&mut self) -> Option<Opcode> {
+        let last = self.code.pop();
+        last?.try_into().ok()
+    }
+
+    pub fn current_offset(&self) -> usize {
+        self.code.len()
+    }
+
+    pub fn patch_jump(&mut self, jump_operand_offset: usize) {
+        // XXX: minus an extra 2 to account for the `i16` operand
+        let bytes = i16::try_from(self.code.len().checked_signed_diff(jump_operand_offset).unwrap() - 2)
+            .unwrap()
+            .to_le_bytes();
+        self.code[jump_operand_offset] = bytes[0];
+        self.code[jump_operand_offset + 1] = bytes[1];
+    }
 }
 
 impl fmt::Debug for Chunk {
@@ -128,9 +101,24 @@ impl fmt::Debug for Chunk {
         let mut stream = self.code.iter().enumerate();
 
         while let Some((offset, &opcode)) = stream.next() {
-            let do_simple_instruction = |f: &mut fmt::Formatter<'_>, offset, name| {
-                writeln!(f, "[{:#x}] {}", offset, name).unwrap();
-            };
+            macro_rules! decompile {
+                ($name:literal) => {{
+                    writeln!(f, "[{:#x}] {}", offset, $name).unwrap();
+                }};
+                ($name:literal, operand) => {{
+                    let (_, operand) = stream.next().unwrap();
+                    writeln!(f, "[{:#x}] {} {}", offset, $name, operand).unwrap();
+                }};
+                ($name:literal, constant) => {{
+                    let (_, index) = stream.next().unwrap();
+                    let value = self.constants.get(*index as usize);
+                    writeln!(f, "[{:#x}] {} {:?}", offset, $name, value).unwrap();
+                }};
+                ($name:literal, jump_operand) => {{
+                    let jump_by = i16::from_le_bytes([*stream.next().unwrap().1, *stream.next().unwrap().1]);
+                    writeln!(f, "[{:#x}] {} {}", offset, $name, jump_by).unwrap();
+                }};
+            }
 
             let Ok(opcode) = Opcode::try_from(opcode) else {
                 writeln!(f, "[!!!] Invalid opcode: {:#x}", opcode).unwrap();
@@ -138,28 +126,33 @@ impl fmt::Debug for Chunk {
             };
 
             match opcode {
-                Opcode::Return => do_simple_instruction(f, offset, "RETURN"),
-                Opcode::Constant => {
-                    let (_, index) = stream.next().unwrap();
-                    let value = self.constants.get(*index as usize);
-                    writeln!(f, "[{:#x}] CONSTANT {:?}", offset, value).unwrap();
-                }
-                Opcode::Negate => do_simple_instruction(f, offset, "NEGATE"),
-                Opcode::Add => do_simple_instruction(f, offset, "ADD"),
-                Opcode::Subtract => do_simple_instruction(f, offset, "SUBTRACT"),
-                Opcode::Multiply => do_simple_instruction(f, offset, "MULTIPLY"),
-                Opcode::Divide => do_simple_instruction(f, offset, "DIVIDE"),
-                Opcode::True => do_simple_instruction(f, offset, "TRUE"),
-                Opcode::False => do_simple_instruction(f, offset, "FALSE"),
-                Opcode::BitwiseAnd => do_simple_instruction(f, offset, "BITWISE_AND"),
-                Opcode::BitwiseOr => do_simple_instruction(f, offset, "BITWISE_OR"),
-                Opcode::BitwiseXor => do_simple_instruction(f, offset, "BITWISE_XOR"),
-                Opcode::Equal => do_simple_instruction(f, offset, "EQUAL"),
-                Opcode::NotEqual => do_simple_instruction(f, offset, "NOT_EQUAL"),
-                Opcode::LessThan => do_simple_instruction(f, offset, "LESS_THAN"),
-                Opcode::LessEqual => do_simple_instruction(f, offset, "LESS_EQUAL"),
-                Opcode::GreaterThan => do_simple_instruction(f, offset, "GREATER_THAN"),
-                Opcode::GreaterEqual => do_simple_instruction(f, offset, "GREATER_EQUAL"),
+                Opcode::Return => decompile!("Return"),
+                Opcode::Constant => decompile!("Constant", constant),
+                Opcode::Negate => decompile!("Negate"),
+                Opcode::Add => decompile!("Add"),
+                Opcode::Subtract => decompile!("Subtract"),
+                Opcode::Multiply => decompile!("Multiply"),
+                Opcode::Divide => decompile!("Divide"),
+                Opcode::True => decompile!("True"),
+                Opcode::False => decompile!("False"),
+                Opcode::BitwiseAnd => decompile!("BitwiseAnd"),
+                Opcode::BitwiseOr => decompile!("BitwiseOr"),
+                Opcode::BitwiseXor => decompile!("BitwiseXor"),
+                Opcode::Equal => decompile!("Equal"),
+                Opcode::NotEqual => decompile!("NotEqual"),
+                Opcode::LessThan => decompile!("LessThan"),
+                Opcode::LessEqual => decompile!("LessEqual"),
+                Opcode::GreaterThan => decompile!("GreaterThan"),
+                Opcode::GreaterEqual => decompile!("GreaterEqual"),
+                Opcode::Pop => decompile!("Pop"),
+                Opcode::DefineGlobal => decompile!("DefineGlobal"),
+                Opcode::GetGlobal => decompile!("GetGlobal"),
+                Opcode::SetGlobal => decompile!("SetGlobal"),
+                Opcode::GetLocal => decompile!("GetLocal", operand),
+                Opcode::SetLocal => decompile!("SetLocal", operand),
+                Opcode::Jump => decompile!("Jump", jump_operand),
+                Opcode::JumpIfTrue => decompile!("JumpIfTrue", jump_operand),
+                Opcode::JumpIfFalse => decompile!("JumpIfFalse", jump_operand),
             }
         }
         Ok(())
@@ -170,11 +163,13 @@ pub struct Vm {
     stack: Vec<Value>,
     chunk: Option<Chunk>,
     ip: usize,
+
+    globals: BTreeMap<String, Value>,
 }
 
 impl Vm {
     pub fn new() -> Vm {
-        Vm { stack: Vec::new(), chunk: None, ip: 0 }
+        Vm { stack: Vec::new(), chunk: None, ip: 0, globals: BTreeMap::new() }
     }
 
     pub fn interpret(&mut self, chunk: Chunk) -> Value {
@@ -187,7 +182,8 @@ impl Vm {
             };
 
             // TODO: this should be behind a compiler flag or something maybe, as it's useful long-term
-            println!("[{:#x}] {:?} ({:?})", self.ip - 1, op, self.stack);
+            println!("{:?}", self.stack); // Print stack before we execute this op under last instruction
+            println!("[{:#x}] {:?}", self.ip - 1, op);
 
             match op {
                 Opcode::Return => break,
@@ -218,6 +214,76 @@ impl Vm {
                 | Opcode::LessEqual
                 | Opcode::GreaterThan
                 | Opcode::GreaterEqual => self.do_binary_op(op),
+                Opcode::Pop => {
+                    let _ = self.stack.pop().unwrap();
+                }
+                Opcode::DefineGlobal => {
+                    let value = self.stack.pop().unwrap();
+                    let name = {
+                        let name = self.stack.pop().unwrap();
+                        let name = unsafe { name.as_obj::<GinkgoString>().unwrap() };
+                        name.as_str().to_string()
+                    };
+                    self.globals.insert(name, value);
+                }
+                Opcode::GetGlobal => {
+                    let name = {
+                        let name = self.stack.pop().unwrap();
+                        let name = unsafe { name.as_obj::<GinkgoString>().unwrap() };
+                        name.as_str().to_string()
+                    };
+                    let value = self.globals.get(&name).unwrap().clone();
+                    self.stack.push(value);
+                }
+                Opcode::SetGlobal => {
+                    let value = self.stack.pop().unwrap();
+                    let name = {
+                        let name = self.stack.pop().unwrap();
+                        let name = unsafe { name.as_obj::<GinkgoString>().unwrap() };
+                        name.as_str().to_string()
+                    };
+
+                    // XXX: assignment keeps the value on the stack, so push it back after the global is popped
+                    self.stack.push(value.clone());
+
+                    // Replace the value, erroring if it doesn't yet exist
+                    if let None = self.globals.insert(name.clone(), value) {
+                        self.globals.remove(&name);
+                        // TODO: runtime error
+                        panic!("Tried to assign to undefined variable!");
+                    }
+                }
+                Opcode::GetLocal => {
+                    let slot = self.next() as usize;
+                    self.stack.push(self.stack.get(slot).unwrap().clone());
+                }
+                Opcode::SetLocal => {
+                    let slot = self.next() as usize;
+                    // XXX: we leave the value on the stack, as the assignment should still produce a value
+                    self.stack.insert(slot, self.stack.last().unwrap().clone());
+                }
+                Opcode::Jump => {
+                    let jump_offset = i16::from_le_bytes([self.next(), self.next()]);
+                    self.ip = self.ip.checked_add_signed(jump_offset as isize).unwrap();
+                }
+                Opcode::JumpIfTrue => {
+                    let jump_offset = i16::from_le_bytes([self.next(), self.next()]);
+                    let Value::Bool(result) = self.stack.last().unwrap() else {
+                        panic!("Tried to jump but result is not a boolean!");
+                    };
+                    if *result {
+                        self.ip = self.ip.checked_add_signed(jump_offset as isize).unwrap();
+                    }
+                }
+                Opcode::JumpIfFalse => {
+                    let jump_offset = i16::from_le_bytes([self.next(), self.next()]);
+                    let Value::Bool(result) = self.stack.last().unwrap() else {
+                        panic!("Tried to jump but result is not a boolean!");
+                    };
+                    if !result {
+                        self.ip = self.ip.checked_add_signed(jump_offset as isize).unwrap();
+                    }
+                }
             }
         }
 
@@ -264,6 +330,67 @@ impl Vm {
             Opcode::GreaterThan => self.stack.push(Value::Bool(left > right)),
             Opcode::GreaterEqual => self.stack.push(Value::Bool(left >= right)),
             _ => panic!(),
+        }
+    }
+}
+
+#[derive(Clone, Eq, Debug)]
+pub enum Value {
+    Unit,
+    Integer(i64),
+    Bool(bool),
+    Obj(*const ObjHeader),
+}
+
+impl Value {
+    pub fn as_integer(&self) -> Option<i64> {
+        if let Value::Integer(value) = self {
+            Some(*value)
+        } else {
+            None
+        }
+    }
+
+    pub fn as_bool(&self) -> Option<bool> {
+        if let Value::Bool(value) = self {
+            Some(*value)
+        } else {
+            None
+        }
+    }
+
+    pub unsafe fn as_obj<T: GinkgoObj>(&self) -> Option<&T> {
+        if let Value::Obj(ptr) = self {
+            let obj_typ = unsafe { (**ptr).typ };
+            if obj_typ == T::TYP {
+                Some(unsafe { &*(*ptr as *const T) })
+            } else {
+                None
+            }
+        } else {
+            None
+        }
+    }
+}
+
+impl cmp::PartialEq for Value {
+    fn eq(&self, other: &Self) -> bool {
+        match (self, other) {
+            (Self::Integer(l), Self::Integer(r)) => l == r,
+            (Self::Bool(l), Self::Bool(r)) => l == r,
+            (Self::Obj(l), Self::Obj(r)) => crate::object::object_eq(*l, *r),
+            _ => false,
+        }
+    }
+}
+
+impl cmp::PartialOrd for Value {
+    fn partial_cmp(&self, other: &Self) -> Option<cmp::Ordering> {
+        match (self, other) {
+            (Self::Integer(l), Self::Integer(r)) => Some(l.cmp(r)),
+            (Self::Bool(l), Self::Bool(r)) => Some(l.cmp(r)),
+            (Self::Obj(l), Self::Obj(r)) => todo!(),
+            _ => None,
         }
     }
 }
