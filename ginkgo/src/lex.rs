@@ -91,7 +91,7 @@ impl<'s> Lex<'s> {
 
     /// Get the value of a token, if it has one. This can be called at any time, including after
     /// all tokens have been consumed, and does not change the state of the lexer.
-    pub fn token_value(&self, token: Token) -> Option<TokenValue> {
+    pub fn token_value(&self, token: Token) -> Option<TokenValue<'_>> {
         let value = &self.source[token.offset..(token.offset + token.length)];
         match token.typ {
             TokenType::Identifier => Some(TokenValue::Identifier(value)),
@@ -190,7 +190,7 @@ impl<'s> Iterator for Lex<'s> {
                 /*
                  * Skip whitespace.
                  */
-                ' ' | '\t' | '\n' => continue,
+                ' ' | '\t' | '\n' | '\r' => continue,
 
                 /*
                  * Number literals.
