@@ -1,9 +1,9 @@
 use crate::{
     lex::{Lex, PeekingIter, Token, TokenType, TokenValue},
-    object::{GinkgoObj, GinkgoString, ObjHeader},
+    object::{GinkgoString, ObjHeader},
     vm::{Chunk, Opcode, Value},
 };
-use std::{collections::BTreeMap, mem::replace, thread::current};
+use std::collections::BTreeMap;
 
 pub struct Parser<'s> {
     stream: PeekingIter<Lex<'s>>,
@@ -326,14 +326,12 @@ impl<'s> Parser<'s> {
                     .rev()
                     .find_map(|(i, local)| if local.name == value { Some(i) } else { None });
             if let Some(local_idx) = local_idx {
-                parser.emit(Opcode::GetLocal);
-                parser.emit_raw(local_idx as u8);
+                parser.emit2(Opcode::GetLocal, local_idx as u8);
             } else {
                 let name = GinkgoString::new(&value.to_string());
                 let name_constant =
                     parser.chunk.as_mut().unwrap().create_constant(Value::Obj(name as *const ObjHeader));
-                parser.emit2(Opcode::Constant, name_constant as u8);
-                parser.emit(Opcode::GetGlobal);
+                parser.emit2(Opcode::GetGlobal, name_constant as u8);
             }
         });
         self.register_prefix(TokenType::Integer, |parser, token| {
@@ -485,6 +483,7 @@ impl<'s> Parser<'s> {
              * a valid place to assign to.
              */
             // TODO: this won't work with GetLocal followed by the index :( - can we fix through somehow?? Maybe push the slot to the actual stack idk??
+            let hopefully_an_operand = parser.chunk.as_mut().unwrap().pop_last().unwrap();
             let op_to_replace_with = match parser.chunk.as_mut().unwrap().pop_last_op() {
                 Some(Opcode::GetGlobal) => Opcode::SetGlobal,
                 Some(Opcode::GetLocal) => Opcode::SetLocal,
@@ -493,7 +492,7 @@ impl<'s> Parser<'s> {
             };
 
             parser.expression(PRECEDENCE_ASSIGNMENT - 1);
-            parser.emit(op_to_replace_with);
+            parser.emit2(op_to_replace_with, hopefully_an_operand);
         });
 
         /*
