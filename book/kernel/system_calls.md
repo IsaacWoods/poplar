@@ -24,6 +24,7 @@ a register.
 | `13`      | `poll_interest`           | Poll a kernel object to see if changes need to be processed.          |
 | `14`      | `create_address_space`    | Create an AddressSpace kernel object.                                 |
 | `15`      | `spawn_task`              | Create a Task kernel object and start scheduling it.                  |
+| `16`      | `resize_memory_object`    | Grow or shrink a MemoryObject.                                        |
 
 Deprecated:
 | Number    | System call               | Description                                                           |
@@ -189,4 +190,7 @@ TODO
 TODO
 
 ### Syscall: `spawn_task`
+TODO
+
+### Syscall: `resize_memory_object`
 TODO

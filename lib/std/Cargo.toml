@@ -7,6 +7,7 @@ edition = "2021"
 [dependencies]
 poplar = { path = "../poplar" }
 linked_list_allocator = "0.10.5"
+spinning_top = "0.3.0"
 
 [features]
 ddk = ["poplar/ddk"]

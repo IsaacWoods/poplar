@@ -2,13 +2,15 @@
 #![feature(lang_items, prelude_import, async_iterator, core_intrinsics, naked_functions)]
 #![no_std]
 
-extern crate alloc;
+extern crate alloc as alloc_crate;
+
+pub mod alloc;
 
 /*
  * Public re-exports. Most of this is copied from real `std`, plus our `poplar` library.
  * NOTE: deprecated re-exports, such as `std::i32` (and friends), are not included.
  */
-pub use alloc::{borrow, boxed, collections, fmt, format, rc, slice, str, string, sync, vec};
+pub use alloc_crate::{borrow, boxed, collections, fmt, format, rc, slice, str, string, sync, vec};
 pub use core::{
     any,
     array,
@@ -46,7 +48,7 @@ pub use prelude::rust_2021::*;
  */
 pub mod prelude {
     pub mod rust_2018 {
-        pub use alloc::{
+        pub use alloc_crate::{
             boxed::Box,
             format,
             string::{String, ToString},
@@ -55,7 +57,7 @@ pub mod prelude {
         pub use core::{assert_eq, panic, prelude::rust_2018::*, todo, unreachable, write, writeln};
     }
     pub mod rust_2021 {
-        pub use alloc::{
+        pub use alloc_crate::{
             boxed::Box,
             format,
             string::{String, ToString},
@@ -66,11 +68,6 @@ pub mod prelude {
 }
 
 use core::panic::PanicInfo;
-use linked_list_allocator::LockedHeap;
-use poplar::{memory_object::MemoryObject, syscall::MemoryObjectFlags};
-
-#[global_allocator]
-static ALLOCATOR: LockedHeap = LockedHeap::empty();
 
 #[cfg(target_arch = "x86_64")]
 #[no_mangle]
@@ -99,19 +96,6 @@ unsafe extern "C" fn rust_entry() -> ! {
     extern "C" {
         fn main(argc: isize, argv: *const *const u8) -> isize;
     }
-
-    // Initialize the heap
-    /*
-     * TODO: we need a better userspace heap allocator - I don't think we even need to allocate an
-     * initial heap - on the first allocation, we should create an initial memory object and map
-     * it, and then increase the size of it as it becomes exhausted. At some point, we should
-     * probably free massive heaps if tasks have a high tidemark but low normal usage or whatever.
-     */
-    const HEAP_START: usize = 0x600000000;
-    const HEAP_SIZE: usize = 0x800000;
-    let heap = MemoryObject::create(HEAP_SIZE, MemoryObjectFlags::WRITABLE).unwrap();
-    let _mapped_heap = heap.map_at(HEAP_START).unwrap();
-    ALLOCATOR.lock().init(HEAP_START as *mut u8, HEAP_SIZE);
 
     main(0, core::ptr::null());
 

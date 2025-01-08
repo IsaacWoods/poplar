@@ -1,5 +1,5 @@
 use crate::{
-    syscall::{self, CreateMemoryObjectError, MapMemoryObjectError, MemoryObjectFlags},
+    syscall::{self, CreateMemoryObjectError, MapMemoryObjectError, MemoryObjectFlags, ResizeMemoryObjectError},
     Handle,
 };
 use core::ptr;
@@ -46,6 +46,14 @@ impl MemoryObject {
         }
         Ok(MappedMemoryObject { inner: self, mapped_at: address })
     }
+
+    pub unsafe fn resize(&mut self, new_size: usize) -> Result<(), ResizeMemoryObjectError> {
+        unsafe {
+            syscall::resize_memory_object(self.handle, new_size)?;
+        }
+        self.size = new_size;
+        Ok(())
+    }
 }
 
 #[derive(Debug)]
@@ -68,5 +76,9 @@ impl MappedMemoryObject {
 
     pub fn virt_to_phys(&self, virt: usize) -> Option<usize> {
         self.inner.phys_address.map(|phys_base| phys_base + (virt - self.mapped_at))
+    }
+
+    pub unsafe fn resize(&mut self, new_size: usize) -> Result<(), ResizeMemoryObjectError> {
+        unsafe { self.inner.resize(new_size) }
     }
 }

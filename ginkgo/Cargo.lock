@@ -550,6 +550,7 @@ version = "0.1.0"
 dependencies = [
  "linked_list_allocator",
  "poplar",
+ "spinning_top 0.3.0",
 ]
 
 [[package]]

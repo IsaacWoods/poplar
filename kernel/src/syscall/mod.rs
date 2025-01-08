@@ -16,7 +16,7 @@ use crate::{
 use alloc::{string::ToString, sync::Arc};
 use bit_field::BitField;
 use core::{convert::TryFrom, sync::atomic::Ordering};
-use hal::memory::{Flags, PAddr, VAddr};
+use hal::memory::{Flags, FrameSize, PAddr, PageTable, Size4KiB, VAddr};
 use poplar::{
     syscall::{
         self,
@@ -32,6 +32,7 @@ use poplar::{
         MemoryObjectFlags,
         PciGetInfoError,
         PollInterestError,
+        ResizeMemoryObjectError,
         SendMessageError,
         SpawnTaskDetails,
         SpawnTaskError,
@@ -91,6 +92,7 @@ where
         syscall::SYSCALL_SPAWN_TASK => {
             handle_to_syscall_repr(spawn_task(&task, a, scheduler, &mut kernel_page_tables.write()))
         }
+        syscall::SYSCALL_RESIZE_MEMORY_OBJECT => status_to_syscall_repr(resize_memory_object(&task, a, b)),
 
         _ => {
             warn!("Process made system call with invalid syscall number: {}", number);
@@ -148,7 +150,6 @@ fn create_memory_object<P>(
 where
     P: Platform,
 {
-    use hal::memory::{FrameSize, Size4KiB};
     use mulch::math::align_up;
 
     // TODO: should we require that the size be multiple of the page size, or just up it here?
@@ -599,4 +600,66 @@ where
     scheduler.add_task(new_task.clone());
 
     Ok(task.handles.add(new_task))
+}
+
+pub fn resize_memory_object<P>(
+    task: &Arc<Task<P>>,
+    memory_object_handle: usize,
+    new_size: usize,
+) -> Result<(), ResizeMemoryObjectError>
+where
+    P: Platform,
+{
+    let memory_object_handle =
+        Handle::try_from(memory_object_handle).map_err(|_| ResizeMemoryObjectError::InvalidMemoryObjectHandle)?;
+    let memory_object = task
+        .handles
+        .get(memory_object_handle)
+        .ok_or(ResizeMemoryObjectError::InvalidMemoryObjectHandle)?
+        .downcast_arc::<MemoryObject>()
+        .ok()
+        .ok_or(ResizeMemoryObjectError::InvalidMemoryObjectHandle)?;
+
+    /*
+     * TODO: the big remaining question is how we deal with remapping a resized memory object that
+     * is mapped into an address space with multiple tasks, or multiple address spaces. This is not
+     * easy - in the case that one of the tasks is running on another CPU, this involves sending
+     * TLB shootdowns and things... maybe initially just ban this?
+     *
+     * XXX: We don't actually check this currently as we don't track which address spaces a
+     * MemoryObject is mapped into. Probably do this?
+     *
+     * We might only need to do this when unmapping memory objects because I don't think any arch
+     * we're targetting will cache a page not being present?
+     */
+
+    let old_size = memory_object.size();
+    if new_size > old_size {
+        // Grow the memory object
+        // TODO: should we require that the size be multiple of the page size, or just up it here?
+        let extend_by = mulch::math::align_up(new_size - old_size, Size4KiB::SIZE);
+        let new_backing = crate::PMM.get().alloc(extend_by / Size4KiB::SIZE);
+        unsafe {
+            memory_object.extend(extend_by, new_backing);
+        }
+
+        // Map the new region into the current task's address space, if we're already mapped.
+        let mappings = task.address_space.mappings.lock();
+        let mapping = mappings.iter().find(|(_addr, object)| object.id == memory_object.id);
+        if let Some((virtual_addr, object)) = mapping {
+            let new_virtual = *virtual_addr + old_size;
+            task.address_space
+                .page_table
+                .lock()
+                .map_area(new_virtual, new_backing, extend_by, object.flags(), crate::PMM.get())
+                .map_err(|_| ResizeMemoryObjectError::ResizedObjectCannotBeRemapped)?;
+        }
+    } else if new_size < old_size {
+        // Shrink the memory object
+        todo!()
+    } else {
+        // The memory object is already the correct size. Do nothing.
+    }
+
+    Ok(())
 }

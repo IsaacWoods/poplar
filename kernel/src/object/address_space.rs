@@ -3,7 +3,7 @@ use crate::{
     memory::{vmm::Stack, Pmm},
     Platform,
 };
-use alloc::{sync::Arc, vec::Vec};
+use alloc::{collections::btree_map::BTreeMap, sync::Arc, vec::Vec};
 use hal::memory::{mebibytes, Bytes, FrameAllocator, FrameSize, PageTable, Size4KiB, VAddr};
 use mulch::bitmap::Bitmap;
 use poplar::syscall::MapMemoryObjectError;
@@ -37,8 +37,8 @@ where
     pub id: KernelObjectId,
     pub owner: KernelObjectId,
     pub state: Spinlock<State>,
-    pub memory_objects: Spinlock<Vec<Arc<MemoryObject>>>,
-    page_table: Spinlock<P::PageTable>,
+    pub mappings: Spinlock<BTreeMap<VAddr, Arc<MemoryObject>>>,
+    pub page_table: Spinlock<P::PageTable>,
     slot_bitmap: Spinlock<u64>,
 }
 
@@ -54,7 +54,7 @@ where
             id: alloc_kernel_object_id(),
             owner,
             state: Spinlock::new(State::NotActive),
-            memory_objects: Spinlock::new(vec![]),
+            mappings: Spinlock::new(BTreeMap::new()),
             page_table: Spinlock::new(P::PageTable::new_with_kernel_mapped(kernel_page_table, allocator)),
             slot_bitmap: Spinlock::new(0),
         })
@@ -68,20 +68,22 @@ where
     ) -> Result<(), MapMemoryObjectError> {
         use hal::memory::PagingError;
 
-        self.page_table
-            .lock()
-            .map_area(
-                virtual_address,
-                memory_object.physical_address,
-                memory_object.size,
-                memory_object.flags,
-                allocator,
-            )
-            .map_err(|err| match err {
-                // XXX: these are explicity enumerated to avoid a bug if variants are added to `PagingError`.
-                PagingError::AlreadyMapped => MapMemoryObjectError::RegionAlreadyMapped,
-            })?;
-        self.memory_objects.lock().push(memory_object);
+        {
+            let mut current_virtual = virtual_address;
+            let inner = memory_object.inner.lock();
+            for (backing, size) in &inner.backing {
+                self.page_table
+                    .lock()
+                    .map_area(current_virtual, *backing, *size, inner.flags, allocator)
+                    .map_err(|err| match err {
+                        // XXX: these are explicity enumerated to avoid a bug if variants are added to `PagingError`.
+                        PagingError::AlreadyMapped => MapMemoryObjectError::RegionAlreadyMapped,
+                    })?;
+                current_virtual += *size;
+            }
+        }
+
+        self.mappings.lock().insert(virtual_address, memory_object);
         Ok(())
     }
 

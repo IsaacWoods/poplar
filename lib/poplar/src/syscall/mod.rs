@@ -37,6 +37,7 @@ pub const SYSCALL_WAIT_FOR_EVENT: usize = 12;
 pub const SYSCALL_POLL_INTEREST: usize = 13;
 pub const SYSCALL_CREATE_ADDRESS_SPACE: usize = 14;
 pub const SYSCALL_SPAWN_TASK: usize = 15;
+pub const SYSCALL_RESIZE_MEMORY_OBJECT: usize = 16;
 
 pub fn yield_to_kernel() {
     unsafe {
@@ -246,5 +247,17 @@ pub fn spawn_task(
 
     handle_from_syscall_repr(unsafe {
         raw::syscall1(SYSCALL_SPAWN_TASK, &details as *const SpawnTaskDetails as usize)
+    })
+}
+
+define_error_type!(ResizeMemoryObjectError {
+    InvalidMemoryObjectHandle => 1,
+    NewSizeTooBig => 2,
+    ResizedObjectCannotBeRemapped => 3,
+});
+
+pub unsafe fn resize_memory_object(memory_object: Handle, new_size: usize) -> Result<(), ResizeMemoryObjectError> {
+    status_from_syscall_repr(unsafe {
+        raw::syscall2(SYSCALL_RESIZE_MEMORY_OBJECT, memory_object.0 as usize, new_size)
     })
 }
