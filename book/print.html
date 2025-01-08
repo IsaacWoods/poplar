@@ -230,6 +230,7 @@ a register.</p>
 <tr><td><code>13</code></td><td><code>poll_interest</code></td><td>Poll a kernel object to see if changes need to be processed.</td></tr>
 <tr><td><code>14</code></td><td><code>create_address_space</code></td><td>Create an AddressSpace kernel object.</td></tr>
 <tr><td><code>15</code></td><td><code>spawn_task</code></td><td>Create a Task kernel object and start scheduling it.</td></tr>
+<tr><td><code>16</code></td><td><code>resize_memory_object</code></td><td>Grow or shrink a MemoryObject.</td></tr>
 </tbody></table>
 </div>
 <p>Deprecated:</p>
@@ -446,6 +447,8 @@ All the handles are removed from the sending <code>Task</code> and added to the 
 <h3 id="syscall-create_address_space"><a class="header" href="#syscall-create_address_space">Syscall: <code>create_address_space</code></a></h3>
 <p>TODO</p>
 <h3 id="syscall-spawn_task"><a class="header" href="#syscall-spawn_task">Syscall: <code>spawn_task</code></a></h3>
+<p>TODO</p>
+<h3 id="syscall-resize_memory_object"><a class="header" href="#syscall-resize_memory_object">Syscall: <code>resize_memory_object</code></a></h3>
 <p>TODO</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="platforms"><a class="header" href="#platforms">Platforms</a></h1>
 <p>A platform is a build target for the kernel. In some cases, there is only one platform for an entire architecture because the hardware is relatively standardized (e.g. x86_64).

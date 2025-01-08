@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":["create_address_space","handle_syscall","poll_interest","spawn_task","wait_for_event"]};
+window.SIDEBAR_ITEMS = {"fn":["create_address_space","handle_syscall","poll_interest","resize_memory_object","spawn_task","wait_for_event"]};

@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/object/address_space.rs`."><title>address_space.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../../static.files/rustdoc-46132b98.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="kernel" data-themes="" data-resource-suffix="" data-rustdoc-version="1.86.0-nightly (1891c2866 2025-01-04)" data-channel="nightly" data-search-js="search-75f5ac3e.js" data-settings-js="settings-0f613d39.js" ><script src="../../../static.files/storage-59e33391.js"></script><script defer src="../../../static.files/src-script-56102188.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-5f194d8c.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-893ab5e7.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">kernel/object/</div>address_space.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers">
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/object/address_space.rs`."><title>address_space.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../../static.files/rustdoc-46132b98.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="kernel" data-themes="" data-resource-suffix="" data-rustdoc-version="1.86.0-nightly (ad211ced8 2025-01-07)" data-channel="nightly" data-search-js="search-75f5ac3e.js" data-settings-js="settings-0f613d39.js" ><script src="../../../static.files/storage-59e33391.js"></script><script defer src="../../../static.files/src-script-56102188.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-5f194d8c.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-893ab5e7.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">kernel/object/</div>address_space.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers">
 <a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
@@ -141,12 +141,14 @@
 <a href="#140" id="140">140</a>
 <a href="#141" id="141">141</a>
 <a href="#142" id="142">142</a>
-<a href="#143" id="143">143</a></pre></div><pre class="rust"><code><span class="kw">use super</span>::{alloc_kernel_object_id, memory_object::MemoryObject, KernelObject, KernelObjectId, KernelObjectType};
+<a href="#143" id="143">143</a>
+<a href="#144" id="144">144</a>
+<a href="#145" id="145">145</a></pre></div><pre class="rust"><code><span class="kw">use super</span>::{alloc_kernel_object_id, memory_object::MemoryObject, KernelObject, KernelObjectId, KernelObjectType};
 <span class="kw">use crate</span>::{
     memory::{vmm::Stack, Pmm},
     Platform,
 };
-<span class="kw">use </span>alloc::{sync::Arc, vec::Vec};
+<span class="kw">use </span>alloc::{collections::btree_map::BTreeMap, sync::Arc, vec::Vec};
 <span class="kw">use </span>hal::memory::{mebibytes, Bytes, FrameAllocator, FrameSize, PageTable, Size4KiB, VAddr};
 <span class="kw">use </span>mulch::bitmap::Bitmap;
 <span class="kw">use </span>poplar::syscall::MapMemoryObjectError;
@@ -180,8 +182,8 @@
     <span class="kw">pub </span>id: KernelObjectId,
     <span class="kw">pub </span>owner: KernelObjectId,
     <span class="kw">pub </span>state: Spinlock&lt;State&gt;,
-    <span class="kw">pub </span>memory_objects: Spinlock&lt;Vec&lt;Arc&lt;MemoryObject&gt;&gt;&gt;,
-    page_table: Spinlock&lt;P::PageTable&gt;,
+    <span class="kw">pub </span>mappings: Spinlock&lt;BTreeMap&lt;VAddr, Arc&lt;MemoryObject&gt;&gt;&gt;,
+    <span class="kw">pub </span>page_table: Spinlock&lt;P::PageTable&gt;,
     slot_bitmap: Spinlock&lt;u64&gt;,
 }
 
@@ -197,7 +199,7 @@
             id: alloc_kernel_object_id(),
             owner,
             state: Spinlock::new(State::NotActive),
-            memory_objects: Spinlock::new(<span class="macro">vec!</span>[]),
+            mappings: Spinlock::new(BTreeMap::new()),
             page_table: Spinlock::new(P::PageTable::new_with_kernel_mapped(kernel_page_table, allocator)),
             slot_bitmap: Spinlock::new(<span class="number">0</span>),
         })
@@ -211,20 +213,22 @@
     ) -&gt; <span class="prelude-ty">Result</span>&lt;(), MapMemoryObjectError&gt; {
         <span class="kw">use </span>hal::memory::PagingError;
 
-        <span class="self">self</span>.page_table
-            .lock()
-            .map_area(
-                virtual_address,
-                memory_object.physical_address,
-                memory_object.size,
-                memory_object.flags,
-                allocator,
-            )
-            .map_err(|err| <span class="kw">match </span>err {
-                <span class="comment">// XXX: these are explicity enumerated to avoid a bug if variants are added to `PagingError`.
-                </span>PagingError::AlreadyMapped =&gt; MapMemoryObjectError::RegionAlreadyMapped,
-            })<span class="question-mark">?</span>;
-        <span class="self">self</span>.memory_objects.lock().push(memory_object);
+        {
+            <span class="kw">let </span><span class="kw-2">mut </span>current_virtual = virtual_address;
+            <span class="kw">let </span>inner = memory_object.inner.lock();
+            <span class="kw">for </span>(backing, size) <span class="kw">in </span><span class="kw-2">&amp;</span>inner.backing {
+                <span class="self">self</span>.page_table
+                    .lock()
+                    .map_area(current_virtual, <span class="kw-2">*</span>backing, <span class="kw-2">*</span>size, inner.flags, allocator)
+                    .map_err(|err| <span class="kw">match </span>err {
+                        <span class="comment">// XXX: these are explicity enumerated to avoid a bug if variants are added to `PagingError`.
+                        </span>PagingError::AlreadyMapped =&gt; MapMemoryObjectError::RegionAlreadyMapped,
+                    })<span class="question-mark">?</span>;
+                current_virtual += <span class="kw-2">*</span>size;
+            }
+        }
+
+        <span class="self">self</span>.mappings.lock().insert(virtual_address, memory_object);
         <span class="prelude-val">Ok</span>(())
     }
 
