@@ -3,11 +3,12 @@ use core::{cmp, fmt};
 use std::collections::BTreeMap;
 
 macro_rules! opcodes {
-    { $($opcode:literal => $name:ident $(,)*)* } => {
+    { $($(#[$($attrss:meta)*])* $opcode:literal => $name:ident $(,)*)* } => {
         #[derive(Clone, Copy, PartialEq, Debug)]
         #[repr(u8)]
         pub enum Opcode {
             $(
+                $(#[$($attrss)*])*
                 $name = $opcode,
              )*
         }
@@ -29,13 +30,16 @@ macro_rules! opcodes {
 
 opcodes! {
     0 => Return,
+    /// Push a constant onto the stack. Followed by a single-byte operand which is the index into the chunk's constant table.
     1 => Constant,
     2 => Negate,
     3 => Add,
     4 => Subtract,
     5 => Multiply,
     6 => Divide,
+    /// Push a `true` boolean value onto the stack.
     7 => True,
+    /// Push a `false` boolean value onto the stack.
     8 => False,
     9 => BitwiseAnd,
     10 => BitwiseOr,
@@ -399,4 +403,5 @@ impl cmp::PartialOrd for Value {
             _ => None,
         }
     }
+}
 }
