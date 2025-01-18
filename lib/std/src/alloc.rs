@@ -38,7 +38,7 @@ unsafe impl GlobalAlloc for ManagedHeap {
              * extend it if it has.
              */
             if self.mapped_heap.lock().is_none() {
-                let initial_size = usize::min(INITIAL_HEAP_SIZE, layout.size());
+                let initial_size = usize::max(INITIAL_HEAP_SIZE, layout.size());
                 let memory = MemoryObject::create(initial_size, MemoryObjectFlags::WRITABLE).unwrap();
                 *self.mapped_heap.lock() = Some(memory.map_at(HEAP_START).unwrap());
                 self.inner.lock().init(HEAP_START as *mut u8, initial_size);
@@ -49,7 +49,7 @@ unsafe impl GlobalAlloc for ManagedHeap {
                 {
                     let mut memory_object = self.mapped_heap.lock();
                     let current_size = memory_object.as_ref().unwrap().inner.size;
-                    let new_size = usize::min(current_size * 2, current_size + layout.size() + 256);
+                    let new_size = usize::max(current_size * 2, current_size + layout.size() + 256);
                     memory_object.as_mut().unwrap().resize(new_size).unwrap();
                     self.inner.lock().extend(new_size - current_size);
                 }
