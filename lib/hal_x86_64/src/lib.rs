@@ -1,5 +1,5 @@
 #![no_std]
-#![feature(decl_macro, naked_functions, type_ascription)]
+#![feature(decl_macro, naked_functions, type_ascription, if_let_guard)]
 #![deny(unsafe_op_in_unsafe_fn)]
 
 #[cfg(test)]

@@ -53,7 +53,7 @@ impl IdtEntry {
         }
     }
 
-    pub fn set_handler(&mut self, handler: HandlerFunc, code_selector: SegmentSelector) -> &mut Self {
+    pub fn set_handler(&mut self, handler: HandlerFunc) -> &mut Self {
         /*
          * Set the Present bit, and set the gate type to an Interrupt Gate.
          */
@@ -62,7 +62,7 @@ impl IdtEntry {
         flags.set_bit(7, true);
         self.flags = flags;
 
-        self.segment_selector = code_selector.table_offset();
+        self.segment_selector = crate::hw::gdt::KERNEL_CODE_SELECTOR.table_offset();
 
         let address = handler as u64;
         self.address_0_15 = address.get_bits(0..16) as u16;

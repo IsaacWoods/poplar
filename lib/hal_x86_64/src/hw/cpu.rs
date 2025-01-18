@@ -1,6 +1,6 @@
 /// This module gets and decodes information about the CPU we're running on, using the `cpuid`
 /// instruction. If we're running under a hypervisor, we use the [Linux standard for
-/// interacting with hypervisors][linux-hypervisors].
+/// interacting with hypervisors][linux-hypervisors] to find out which hypervisor it is.
 ///
 /// [linux-hypervisors]: https://lwn.net/Articles/301888/
 use bit_field::BitField;
@@ -9,6 +9,7 @@ use core::{arch::x86_64::CpuidResult, str};
 #[derive(Clone, Copy, Debug)]
 pub struct SupportedFeatures {
     pub xsave: bool,
+    pub x2apic: bool,
 }
 
 /// Describes information we know about the system we're running on.
@@ -59,10 +60,7 @@ impl CpuInfo {
                 0x8e if self.model_info.stepping == 0x9 => Some(Microarch::KabyLake),
                 0x8e if self.model_info.stepping == 0xa => Some(Microarch::CoffeeLake),
                 0x9e if self.model_info.stepping == 0x9 => Some(Microarch::KabyLake),
-                // TODO: when if_let_guards are implemented, this can be made a bit cleaner
-                // 0x9e if let (0xa..=0xd) = self.model_info.stepping => Some(Microarch::CoffeeLake),
-                0x9e if (0xa..=0xd).contains(&self.model_info.stepping) => Some(Microarch::CoffeeLake),
-
+                0x9e if let (0xa..=0xd) = self.model_info.stepping => Some(Microarch::CoffeeLake),
                 _ => None,
             },
 
@@ -274,7 +272,7 @@ fn decode_model_info(model_info: u32) -> ModelInfo {
 }
 
 fn decode_supported_features(processor_info_ecx: u32, _processor_info_edx: u32) -> SupportedFeatures {
-    SupportedFeatures { xsave: processor_info_ecx.get_bit(26) }
+    SupportedFeatures { xsave: processor_info_ecx.get_bit(26), x2apic: processor_info_ecx.get_bit(21) }
 }
 
 fn decode_hypervisor_info() -> Option<HypervisorInfo> {
