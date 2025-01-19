@@ -2,7 +2,7 @@ use acpi::InterruptModel;
 use alloc::{alloc::Global, vec};
 use aml::{value::Args as AmlArgs, AmlContext, AmlName, AmlValue};
 use bit_field::BitField;
-use core::time::Duration;
+use core::{str::FromStr, time::Duration};
 use hal::memory::PAddr;
 use hal_x86_64::{
     hw::{
@@ -16,6 +16,7 @@ use hal_x86_64::{
             Idt,
             InterruptStackFrame,
         },
+        ioapic::{DeliveryMode, IoApic, PinPolarity, TriggerMode},
         lapic::LocalApic,
         registers::read_control_reg,
     },
@@ -39,16 +40,20 @@ use tracing::{error, info, warn};
 /// |------------------|-----------------------------|
 static IDT: Spinlock<Idt> = Spinlock::new(Idt::empty());
 static LOCAL_APIC: InitGuard<LocalApic> = InitGuard::uninit();
+static IO_APIC: InitGuard<IoApic> = InitGuard::uninit();
 
 /*
  * Constants for allocated portions of the IDT. These should match the layout above.
  */
 const ISA_INTERRUPTS_START: u8 = 0x20;
+const NUM_ISA_INTERRUPTS: usize = 16;
 const FREE_VECTORS_START: u8 = 0x30;
 const APIC_TIMER_VECTOR: u8 = 0xfe;
 const APIC_SPURIOUS_VECTOR: u8 = 0xff;
 
 pub struct InterruptController {
+    model: InterruptModel<Global>,
+    isa_gsi_mappings: [u32; NUM_ISA_INTERRUPTS],
     // TODO: PCI routing information
     // TODO: dynamically allocate IDT entries
 }
@@ -69,8 +74,8 @@ impl InterruptController {
         idt.load();
     }
 
-    pub fn init(interrupt_model: &InterruptModel<Global>, aml_context: &mut AmlContext) -> InterruptController {
-        match interrupt_model {
+    pub fn init(interrupt_model: InterruptModel<Global>, aml_context: &mut AmlContext) -> InterruptController {
+        match &interrupt_model {
             InterruptModel::Apic(info) => {
                 if info.also_has_legacy_pics {
                     unsafe { Pic::new() }.remap_and_disable(ISA_INTERRUPTS_START, ISA_INTERRUPTS_START + 8);
@@ -108,7 +113,68 @@ impl InterruptController {
                     LOCAL_APIC.get().enable(APIC_SPURIOUS_VECTOR);
                 }
 
-                InterruptController {}
+                assert!(info.io_apics.len() == 1);
+                let io_apic_addr = hal_x86_64::kernel_map::physical_to_virtual(
+                    PAddr::new(info.io_apics.first().unwrap().address as usize).unwrap(),
+                );
+                let mut io_apic = unsafe { IoApic::new(io_apic_addr, 0) };
+
+                /*
+                 * Process the MADT's interrupt source overrides. These define differences in how
+                 * the IOAPIC is wired, compared to the standard IA-PC dual-i8259 wiring. Only ISA
+                 * interrupts that are wired in a non-standard way are overridden, otherwise an
+                 * identity mapping can be assumed.
+                 *
+                 * The default settings for the ISA bus are high pin-polarity and edge-triggered
+                 * interrupts.
+                 */
+                let isa_gsi_mappings = {
+                    struct IsaGsiMapping {
+                        gsi: u32,
+                        polarity: PinPolarity,
+                        trigger_mode: TriggerMode,
+                    }
+                    let mut mappings: [IsaGsiMapping; NUM_ISA_INTERRUPTS] =
+                        core::array::from_fn(|i| IsaGsiMapping {
+                            gsi: i as u32,
+                            polarity: PinPolarity::High,
+                            trigger_mode: TriggerMode::Edge,
+                        });
+                    for entry in info.interrupt_source_overrides.iter() {
+                        use acpi::platform::interrupt::{
+                            Polarity as AcpiPolarity,
+                            TriggerMode as AcpiTriggerMode,
+                        };
+
+                        mappings[entry.isa_source as usize].gsi = entry.global_system_interrupt;
+                        mappings[entry.isa_source as usize].polarity = match entry.polarity {
+                            AcpiPolarity::ActiveHigh => PinPolarity::High,
+                            AcpiPolarity::ActiveLow => PinPolarity::Low,
+                            AcpiPolarity::SameAsBus => PinPolarity::High,
+                        };
+                        mappings[entry.isa_source as usize].trigger_mode = match entry.trigger_mode {
+                            AcpiTriggerMode::Edge => TriggerMode::Edge,
+                            AcpiTriggerMode::Level => TriggerMode::Level,
+                            AcpiTriggerMode::SameAsBus => TriggerMode::Edge,
+                        };
+                    }
+                    for (isa, entry) in mappings.iter().enumerate() {
+                        io_apic.write_entry(
+                            entry.gsi,
+                            ISA_INTERRUPTS_START + isa as u8,
+                            DeliveryMode::Fixed,
+                            entry.polarity,
+                            entry.trigger_mode,
+                            true,
+                            0,
+                        );
+                    }
+                    core::array::from_fn(|i| mappings[i].gsi)
+                };
+
+                IO_APIC.initialize(io_apic);
+
+                InterruptController { model: interrupt_model, isa_gsi_mappings }
             }
             _ => panic!("Unsupported interrupt model!"),
         }

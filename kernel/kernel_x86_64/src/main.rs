@@ -5,7 +5,7 @@
 
 #![no_std]
 #![no_main]
-#![feature(decl_macro, naked_functions, allocator_api)]
+#![feature(decl_macro, naked_functions, allocator_api, iterator_try_collect)]
 
 extern crate alloc;
 
@@ -21,7 +21,7 @@ use acpi::{AcpiTables, PciConfigRegions};
 use acpi_handler::{AmlHandler, PoplarAcpiHandler};
 use alloc::boxed::Box;
 use aml::AmlContext;
-use core::time::Duration;
+use core::{str::FromStr, time::Duration};
 use hal::memory::{Frame, PAddr, VAddr};
 use hal_x86_64::{
     hw::{registers::read_control_reg, tss::Tss},
@@ -31,7 +31,6 @@ use hal_x86_64::{
 use interrupts::InterruptController;
 use kernel::{
     memory::{vmm::Stack, Pmm, Vmm},
-    pci::PciResolver,
     scheduler::Scheduler,
     Platform,
 };
@@ -193,7 +192,7 @@ pub extern "C" fn kentry(boot_info: &BootInfo) -> ! {
      * Initialise the interrupt controller, which enables interrupts, and start the per-cpu timer.
      */
     let mut interrupt_controller =
-        InterruptController::init(&acpi_platform_info.interrupt_model, &mut aml_context);
+        InterruptController::init(acpi_platform_info.interrupt_model.clone(), &mut aml_context);
     unsafe {
         core::arch::asm!("sti");
     }
