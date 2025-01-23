@@ -1,5 +1,5 @@
 use super::{registers::CpuFlags, DescriptorTablePointer};
-use crate::hw::gdt::{PrivilegeLevel, SegmentSelector};
+use crate::hw::gdt::PrivilegeLevel;
 use bit_field::BitField;
 use core::{
     arch::asm,
@@ -209,7 +209,8 @@ pub macro wrap_handler($name: path) {{
     #[naked]
     extern "C" fn wrapper() -> ! {
         unsafe {
-            core::arch::naked_asm!("/*
+            core::arch::naked_asm!("
+                  /*
                    * Save registers. We only need to save the scratch registers (rax, rcx, rdx, rdi, rsi, r8, r9,
                    * and r10) as Rust will handle callee-saved registers, but we save all of them so we can inspect
                    * register contents in a handler if we need to. Order must match `InterruptStackFrame` and
@@ -269,7 +270,8 @@ pub macro wrap_handler_with_error_code($name: path) {{
     #[naked]
     extern "C" fn wrapper() -> ! {
         unsafe {
-            core::arch::naked_asm!("push rax
+            core::arch::naked_asm!("
+                  push rax
                   push rbx
                   push rcx
                   push rdx
