@@ -216,10 +216,10 @@ fn main() {
         service_host_client.subscribe_service("platform_bus.device_driver").unwrap();
 
     platform_bus_device_channel
-        .send(&DeviceDriverMessage::RegisterInterest(vec![
+        .send(&DeviceDriverMessage::RegisterInterest(vec![Filter::All(vec![
             Filter::Matches(String::from("pci.vendor_id"), Property::Integer(0x1af4)),
             Filter::Matches(String::from("pci.device_id"), Property::Integer(0x1050)),
-        ]))
+        ])]))
         .unwrap();
 
     let (device_info, handoff_info) = loop {

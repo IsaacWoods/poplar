@@ -53,10 +53,10 @@ pub fn main() {
     // (we need to parse their configurations to tell if they're HID devices). A HID device is not
     // supposed to indicate its class at the device level so we don't need to test for that.
     platform_bus_device_channel
-        .send(&DeviceDriverMessage::RegisterInterest(vec![
+        .send(&DeviceDriverMessage::RegisterInterest(vec![Filter::All(vec![
             Filter::Matches(String::from("usb.class"), Property::Integer(0x00)),
             Filter::Matches(String::from("usb.sub_class"), Property::Integer(0x00)),
-        ]))
+        ])]))
         .unwrap();
 
     std::poplar::rt::spawn(async move {

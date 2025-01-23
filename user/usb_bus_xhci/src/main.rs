@@ -39,11 +39,11 @@ pub fn main() {
 
     // Tell PlatformBus that we're interested in XHCI controllers.
     platform_bus_device_channel
-        .send(&DeviceDriverMessage::RegisterInterest(vec![
+        .send(&DeviceDriverMessage::RegisterInterest(vec![Filter::All(vec![
             Filter::Matches(String::from("pci.class"), Property::Integer(0x0c)),
             Filter::Matches(String::from("pci.sub_class"), Property::Integer(0x03)),
             Filter::Matches(String::from("pci.interface"), Property::Integer(0x30)),
-        ]))
+        ])]))
         .unwrap();
 
     // TODO: we currently only support one controller, and just stop listening after we find the first one
