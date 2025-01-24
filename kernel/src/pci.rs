@@ -116,10 +116,8 @@ where
         }
 
         info!(
-            "Found PCI device (bus={}, device={}, function={}): (vendor = {:#x}, device = {:#x}) -> {:?}",
-            bus,
-            device,
-            function,
+            "Found PCI device {:?} ({:x}:{:x}) -> {:?}",
+            address,
             vendor_id,
             device_id,
             DeviceType::from((class, sub_class))
