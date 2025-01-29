@@ -28,7 +28,7 @@ use hal_x86_64::{
     kernel_map,
     paging::PageTableImpl,
 };
-use interrupts::InterruptController;
+use interrupts::{InterruptController, INTERRUPT_CONTROLLER};
 use kernel::{
     memory::{vmm::Stack, Pmm, Vmm},
     scheduler::Scheduler,
@@ -191,12 +191,11 @@ pub extern "C" fn kentry(boot_info: &BootInfo) -> ! {
     /*
      * Initialise the interrupt controller, which enables interrupts, and start the per-cpu timer.
      */
-    let mut interrupt_controller =
         InterruptController::init(acpi_platform_info.interrupt_model.clone(), &mut aml_context);
     unsafe {
         core::arch::asm!("sti");
     }
-    interrupt_controller.enable_local_timer(&topology.cpu_info, Duration::from_millis(10));
+    INTERRUPT_CONTROLLER.get().lock().enable_local_timer(&topology.cpu_info, Duration::from_millis(10));
 
     task::install_syscall_handler();
 
