@@ -1,0 +1,48 @@
+[workspace]
+members = [
+    "ginkgo",
+    "kernel",
+    "kernel/kernel_x86_64",
+    "kernel/kernel_riscv",
+    # "lib/acpi",
+    "lib/fdt",
+    "lib/gfxconsole",
+    "lib/gpt",
+    "lib/hal",
+    "lib/hal_riscv",
+    "lib/hal_x86_64",
+    "lib/mer",
+    "lib/mulch",
+    "lib/pci_types",
+    "lib/picotoml",
+    "lib/poplar",
+    "lib/ptah",
+    "lib/ptah/ptah_derive",
+    "lib/std",
+    "lib/usb",
+    "lib/virtio",
+    "lib/volatile",
+    "seed",
+    "seed/seed_uefi",
+    "seed/seed_riscv",
+    "seed/d1_boot0",
+    "tools/tftp_serve",
+    "tools/xtask",
+    "user/simple_fb",
+    "user/platform_bus",
+    "user/usb_bus_xhci",
+    "user/hello_world",
+    "user/usb_bus_ehci",
+    "user/usb_hid",
+    "user/virtio_gpu",
+    "user/fb_console",
+    "user/service_host",
+]
+resolver = "2"
+
+[profile.dev]
+debug = false
+panic = "abort"
+
+[profile.release]
+panic = "abort"

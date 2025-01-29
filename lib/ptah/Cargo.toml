@@ -1,6 +1,3 @@
-[workspace]
-members = ["ptah_derive"]
-
 [package]
 name = "ptah"
 version = "0.2.1"

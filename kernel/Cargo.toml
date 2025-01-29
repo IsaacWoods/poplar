@@ -18,7 +18,3 @@ pci_types = { path = "../lib/pci_types" }
 tracing = { git = "https://github.com/tokio-rs/tracing", default-features = false }
 spinning_top = "0.3.0"
 maitake = { git = "https://github.com/hawkw/mycelium", features = ["alloc", "tracing-02"] }
-
-[workspace]
-members = ["kernel_x86_64", "kernel_riscv"]
-resolver = "2"
