@@ -3,7 +3,7 @@ use eyre::{eyre, Result, WrapErr};
 use std::{path::PathBuf, process::Command};
 
 pub struct RunQemuRiscV {
-    pub opensbi: Option<PathBuf>,
+    pub bios: Option<PathBuf>,
     pub seed: PathBuf,
     pub ramdisk: Option<Ramdisk>,
     pub disk_image: Option<PathBuf>,
@@ -16,7 +16,7 @@ pub struct RunQemuRiscV {
 impl RunQemuRiscV {
     pub fn new(seed: PathBuf, disk_image: Option<PathBuf>) -> RunQemuRiscV {
         RunQemuRiscV {
-            opensbi: None,
+            bios: None,
             seed,
             ramdisk: None,
             disk_image,
@@ -26,9 +26,9 @@ impl RunQemuRiscV {
         }
     }
 
-    /// Provide a custom version of OpenSBI to use. This will be passed to QEMU using the `-bios` flag.
-    pub fn opensbi(self, opensbi: PathBuf) -> Self {
-        Self { opensbi: Some(opensbi), ..self }
+    /// Provide a custom version of QEMU BIOS firmware to use. This will be passed to QEMU using the `-bios` flag.
+    pub fn bios(self, bios: PathBuf) -> Self {
+        Self { bios: Some(bios), ..self }
     }
 
     pub fn ramdisk(self, ramdisk: Option<Ramdisk>) -> Self {
@@ -65,8 +65,8 @@ impl RunQemuRiscV {
             qemu.args(&["-d", "int"]);
         }
 
-        if let Some(opensbi) = self.opensbi {
-            qemu.args(&["-bios", opensbi.to_str().unwrap()]);
+        if let Some(bios) = self.bios {
+            qemu.args(&["-bios", bios.to_str().unwrap()]);
         }
 
         if let Some(ramdisk) = self.ramdisk {

@@ -22,7 +22,7 @@ The vast majority of x86_64 hardware is pretty similar, and so is treated as a s
 ### Platform: `rv64_virt`
 This is a virtual RISC-V platform emulated by `qemu-system-riscv64`'s `virt` machine. It features:
 - A customizable number of emulated RV64 HARTs
-- Is booted via QEMU's `-kernel` option and OpenSBI
+- Is booted via QEMU's `-kernel` option and QEMU BIOS firmware
 - A Virtio block device with attached GPT 'disk'
 - Support for USB devices via EHCI
 
