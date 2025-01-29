@@ -148,6 +148,10 @@ impl RunQemuX64 {
         qemu.args(&["-device", "usb-kbd,bus=ehci.0"]);
         qemu.args(&["-device", "usb-mouse,bus=ehci.0"]);
 
+        qemu.args(&["-global", "virtio-mmio.force-legacy=false"]);
+
+        qemu.args(&["-device", "virtio-gpu"]);
+
         // XXX: for testing NUMA
         qemu.args(&["-smp", "8"]);
         qemu.args(&["-object", "memory-backend-ram,size=256M,id=m0"]);

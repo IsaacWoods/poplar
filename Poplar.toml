@@ -1,12 +1,14 @@
-platform = "rv64_virt"
+platform = "x64"
 
 [x64]
-release = false
+release = true
 user_tasks = [
     "service_host user/service_host",
     "platform_bus user/platform_bus",
     "usb_bus_ehci user/usb_bus_ehci",
-    "simple_fb user/simple_fb",
+    "usb_hid user/usb_hid",
+    "virtio_gpu user/virtio_gpu",
+    "fb_console user/fb_console",
 ]
 
 [rv64_virt]

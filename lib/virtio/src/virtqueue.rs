@@ -73,6 +73,7 @@ impl Virtqueue {
 
         // Do a fence to make sure the device sees the update to the ring before we increment the index
         // TODO: make portable
+        #[cfg(target_arch = "riscv64")]
         unsafe {
             core::arch::asm!("fence ow, ow");
         }

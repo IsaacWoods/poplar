@@ -170,6 +170,7 @@ impl<'a> VirtioGpu<'a> {
 
         self.queue.make_descriptor_available(descriptor_0);
 
+        #[cfg(target_arch = "riscv64")]
         unsafe {
             core::arch::asm!("fence ow, ow");
         }
