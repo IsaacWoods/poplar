@@ -177,6 +177,7 @@ impl PciInterruptConfigurator for PciAccess {
         event
     }
 }
+
 fn pci_interrupt_handler(number: u16) {
     let routing = INTERRUPT_ROUTING.lock();
     if let Some(events) = routing.get(&(number as u32)) {

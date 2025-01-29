@@ -19,9 +19,9 @@ mod topo;
 
 use acpi::{AcpiTables, PciConfigRegions};
 use acpi_handler::{AmlHandler, PoplarAcpiHandler};
-use alloc::boxed::Box;
+use alloc::{boxed::Box, sync::Arc};
 use aml::AmlContext;
-use core::{str::FromStr, time::Duration};
+use core::{ptr, str::FromStr, time::Duration};
 use hal::memory::{Frame, PAddr, VAddr};
 use hal_x86_64::{
     hw::{registers::read_control_reg, tss::Tss},
@@ -35,9 +35,10 @@ use kernel::{
     Platform,
 };
 use mulch::InitGuard;
+use pci::PciConfigurator;
 use per_cpu::PerCpuImpl;
 use seed::boot_info::BootInfo;
-use spinning_top::RwSpinlock;
+use spinning_top::{RwSpinlock, Spinlock};
 use topo::Topology;
 use tracing::info;
 
@@ -174,13 +175,7 @@ pub extern "C" fn kentry(boot_info: &BootInfo) -> ! {
         // info!("{:#?}", aml_context.namespace);
         // info!("----- Finished AML namespace -----");
     }
-
-    kernel::initialize_pci(pci_access);
-
-    // TODO: if we need to route PCI interrupts, this might be useful at some point?
-    // let routing_table =
-    //     PciRoutingTable::from_prt_path(&AmlName::from_str("\\_SB.PCI0._PRT").unwrap(), aml_context)
-    //         .expect("Failed to parse _PRT");
+    let aml_context = Arc::new(Spinlock::new(aml_context));
 
     /*
      * Initialize devices defined in AML.
@@ -191,11 +186,14 @@ pub extern "C" fn kentry(boot_info: &BootInfo) -> ! {
     /*
      * Initialise the interrupt controller, which enables interrupts, and start the per-cpu timer.
      */
-        InterruptController::init(acpi_platform_info.interrupt_model.clone(), &mut aml_context);
+    InterruptController::init(acpi_platform_info.interrupt_model.clone(), &mut aml_context.lock());
     unsafe {
         core::arch::asm!("sti");
     }
     INTERRUPT_CONTROLLER.get().lock().enable_local_timer(&topology.cpu_info, Duration::from_millis(10));
+
+    let pci_configurator = PciConfigurator::new(pci_access, aml_context.clone());
+    kernel::initialize_pci(pci_configurator);
 
     task::install_syscall_handler();
 
