@@ -168,7 +168,7 @@ pub extern "C" fn kentry(boot_info: &BootInfo) -> ! {
      * this and having the real handler in place.
      */
     // TODO: global function for getting number of ticks per us or whatever from the device tree
-    sbi::timer::set_timer(hal_riscv::hw::csr::Time::read() as u64 + 0x989680 / 50).unwrap();
+    sbi_rt::set_timer(hal_riscv::hw::csr::Time::read() as u64 + 0x989680 / 50).unwrap();
 
     /*
      * Move to a trap handler that can handle traps from both S-mode and U-mode. We can only do
