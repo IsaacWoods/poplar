@@ -2,10 +2,8 @@
 
 #![no_std]
 
+#[cfg(feature = "alloc")]
 extern crate alloc;
-
-#[cfg(test)]
-extern crate std;
 
 mod de;
 mod error;
