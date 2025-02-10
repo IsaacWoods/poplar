@@ -15,7 +15,7 @@ pub struct PeekingIterator<I: Iterator> {
     #[cfg(feature = "alloc")]
     queue: alloc::vec::Vec<Option<I::Item>>,
     #[cfg(not(feature = "alloc"))]
-    queue: arrayvec::ArrayVec<Option<I::Item>, DEFAULT_STACK_SIZE>,
+    queue: heapless::Vec<Option<I::Item>, DEFAULT_STACK_SIZE>,
 
     /// The cursor points to the element we are currently peeking at.
     ///
@@ -85,7 +85,10 @@ impl<I: Iterator> PeekingIterator<I> {
     #[inline]
     fn push_next_to_queue(&mut self) {
         let item = self.iterator.next();
+        #[cfg(feature = "alloc")]
         self.queue.push(item);
+        #[cfg(not(feature = "alloc"))]
+        self.queue.push(item).ok();
     }
 
     /// Increment the cursor which points to the current peekable item.
