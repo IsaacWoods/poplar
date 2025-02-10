@@ -9,7 +9,7 @@ edition = "2021"
 [dependencies]
 logos = { version = "0.13.0", default-features = false, features = ["export_derive"] }
 serde = { version = "1.0.188", default-features = false }
-smallvec = "1.13.2"
+arrayvec = "0.7.6"
 
 [features]
 default = []

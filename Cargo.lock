@@ -1109,9 +1109,9 @@ dependencies = [
 name = "picotoml"
 version = "0.1.0"
 dependencies = [
+ "arrayvec",
  "logos",
  "serde",
- "smallvec",
 ]
 
 [[package]]

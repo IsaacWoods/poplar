@@ -1,6 +1,6 @@
 use core::iter::FusedIterator;
 
-/// Default stack size for SmallVec.
+/// Default stack size for ArrayVec.
 #[cfg(not(feature = "alloc"))]
 const DEFAULT_STACK_SIZE: usize = 8;
 
@@ -15,7 +15,7 @@ pub struct PeekingIterator<I: Iterator> {
     #[cfg(feature = "alloc")]
     queue: alloc::vec::Vec<Option<I::Item>>,
     #[cfg(not(feature = "alloc"))]
-    queue: smallvec::SmallVec<[Option<I::Item>; DEFAULT_STACK_SIZE]>,
+    queue: arrayvec::ArrayVec<Option<I::Item>, DEFAULT_STACK_SIZE>,
 
     /// The cursor points to the element we are currently peeking at.
     ///
