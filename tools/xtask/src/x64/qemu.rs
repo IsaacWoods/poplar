@@ -169,14 +169,11 @@ impl RunQemuX64 {
          */
         qemu.args(&[
             "-drive",
-            &format!(
-                "if=pflash,format=raw,file={},readonly=on",
-                self.ovmf_dir.join("OVMF_CODE.fd").to_str().unwrap()
-            ),
+            &format!("if=pflash,format=raw,file={},readonly=on", self.ovmf_dir.join("code.fd").to_str().unwrap()),
         ]);
         qemu.args(&[
             "-drive",
-            &format!("if=pflash,format=raw,file={}", self.ovmf_dir.join("OVMF_VARS.fd").to_str().unwrap()),
+            &format!("if=pflash,format=raw,file={}", self.ovmf_dir.join("vars.fd").to_str().unwrap()),
         ]);
 
         /*

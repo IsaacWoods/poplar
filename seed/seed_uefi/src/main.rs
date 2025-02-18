@@ -302,12 +302,18 @@ fn process_memory_map<'a, A, P>(
     /*
      * Construct the physical memory mapping. We find the maximum physical address that the memory map contains,
      * and map that much physical memory.
+     *
+     * TODO: this can't handle the newer OVMF memory map, so we're just hardcoding 4GiB for now.
+     * This is bad. Replace with something more robust, even maybe with split physical mapping if
+     * needed?
      */
-    let max_physical_address = memory_map
-        .entries()
-        .map(|entry| entry.phys_start as usize + entry.page_count as usize * Size4KiB::SIZE)
-        .max()
-        .unwrap();
+    // let max_physical_address = memory_map
+    //     .entries()
+    //     .filter(|entry| entry.ty == MemoryType::RESERVED)
+    //     .map(|entry| entry.phys_start as usize + entry.page_count as usize * Size4KiB::SIZE)
+    //     .max()
+    //     .unwrap();
+    let max_physical_address = 0x10_0000000; // 4GiB
     info!(
         "Constructing physical mapping 0x0..{:#x} at {:#x}",
         max_physical_address,
