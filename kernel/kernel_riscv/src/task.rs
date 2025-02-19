@@ -1,6 +1,6 @@
 use core::{
     arch::{asm, global_asm},
-    cell::Cell,
+    cell::{Cell, SyncUnsafeCell},
     ptr,
 };
 use hal::memory::VAddr;
@@ -14,17 +14,12 @@ extern "C" {
     fn do_context_switch(from_context: *mut ContextSwitchFrame, to_context: *const ContextSwitchFrame);
 }
 
-// TODO: this is definitely pretty bad and probably a LLVM crime. Plan in the future is to use
-// `thread_local` for HART-local data so this can be a `Cell` directly.
-pub struct NotGreatCell<T>(pub Cell<T>);
-unsafe impl<T> Sync for NotGreatCell<T> {}
-
-static SCRATCH: NotGreatCell<Scratch> = NotGreatCell(Cell::new(Scratch {
+static SCRATCH: SyncUnsafeCell<Scratch> = SyncUnsafeCell::new(Scratch {
     kernel_stack_pointer: VAddr::new(0x0),
     kernel_thread_pointer: VAddr::new(0x0),
     kernel_global_pointer: VAddr::new(0x0),
     scratch_stack_pointer: VAddr::new(0x0),
-}));
+});
 
 /*
  * XXX: the offsets of fields in this struct are used in assembly, so care must be taken when
@@ -127,10 +122,10 @@ pub fn new_task_context(kernel_stack: &Stack, user_stack: &Stack, task_entry_poi
 
 pub unsafe fn context_switch(from_context: *mut TaskContext, to_context: *const TaskContext) {
     unsafe {
-        (*from_context).kernel_stack_pointer = (*SCRATCH.0.as_ptr()).kernel_stack_pointer;
+        (*from_context).kernel_stack_pointer = (*SCRATCH.get()).kernel_stack_pointer;
+        let new_kernel_stack_pointer = (*to_context).kernel_stack_pointer;
+        *SCRATCH.get() = Scratch::new(new_kernel_stack_pointer);
     }
-    let new_kernel_stack_pointer = unsafe { (*to_context).kernel_stack_pointer };
-    SCRATCH.0.set(Scratch::new(new_kernel_stack_pointer));
     do_context_switch(
         &raw mut (*from_context).context_switch_frame,
         &raw const (*to_context).context_switch_frame,
@@ -139,9 +134,11 @@ pub unsafe fn context_switch(from_context: *mut TaskContext, to_context: *const 
 
 pub unsafe fn drop_into_userspace(context: *const TaskContext) -> ! {
     // Initialize this HART's `sscratch` area
-    let kernel_stack_pointer = unsafe { (*context).kernel_stack_pointer };
-    SCRATCH.0.set(Scratch::new(kernel_stack_pointer));
-    Sscratch::write(VAddr::from(SCRATCH.0.as_ptr()));
+    unsafe {
+        let kernel_stack_pointer = (*context).kernel_stack_pointer;
+        *SCRATCH.get() = Scratch::new(kernel_stack_pointer);
+    }
+    Sscratch::write(VAddr::from(SCRATCH.get()));
 
     unsafe { do_drop_to_userspace(&raw const (*context).context_switch_frame) }
 }

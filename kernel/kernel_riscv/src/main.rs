@@ -5,7 +5,7 @@
 
 #![no_std]
 #![no_main]
-#![feature(fn_align, naked_functions)]
+#![feature(fn_align, naked_functions, sync_unsafe_cell)]
 
 extern crate alloc;
 
