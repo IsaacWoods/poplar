@@ -1,5 +1,6 @@
 pub mod queue;
 
+use crate::clocksource::Clocksource;
 use core::{future::Future, time::Duration};
 use maitake::task::JoinHandle;
 use spinning_top::Spinlock;
@@ -13,11 +14,15 @@ pub struct TaskletScheduler {
 }
 
 impl TaskletScheduler {
-    pub fn new() -> TaskletScheduler {
+    pub fn new<T>() -> TaskletScheduler
+    where
+        T: Clocksource,
+    {
+        let clock = maitake::time::Clock::new(Duration::from_nanos(1), || T::nanos_since_boot());
+
         TaskletScheduler {
             scheduler: Spinlock::new(maitake::scheduler::Scheduler::new()),
-            // TODO: probs need to be able to supply a tick granularity?
-            timer: maitake::time::Timer::new(Duration::from_millis(20)),
+            timer: maitake::time::Timer::new(clock),
         }
     }
 
@@ -32,9 +37,6 @@ impl TaskletScheduler {
 
     pub fn tick(&self) {
         self.scheduler.lock().tick();
-    }
-
-    pub fn advance_timer(&self, ticks: u64) {
-        self.timer.advance_ticks(1);
+        self.timer.turn();
     }
 }

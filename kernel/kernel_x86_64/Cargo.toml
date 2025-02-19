@@ -2,7 +2,7 @@
 name = "kernel_x86_64"
 version = "0.1.0"
 authors = ["Isaac Woods"]
-edition = "2018"
+edition = "2021"
 
 [dependencies]
 kernel = { path = "../" }
@@ -18,6 +18,7 @@ aml = { path = "../../lib/acpi/aml" }
 mulch = { path = "../../lib/mulch" }
 gfxconsole = { path = "../../lib/gfxconsole" }
 pci_types = { path = "../../lib/pci_types" }
+maitake = { git = "https://github.com/hawkw/mycelium", features = ["alloc", "tracing-02"] }
 
 [features]
 qemu_exit = ["hal_x86_64/qemu"]

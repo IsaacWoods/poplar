@@ -11,6 +11,7 @@
 #[macro_use]
 extern crate alloc;
 
+pub mod clocksource;
 pub mod memory;
 pub mod object;
 pub mod pci;
@@ -19,6 +20,7 @@ pub mod syscall;
 pub mod tasklets;
 
 use alloc::{boxed::Box, string::ToString, sync::Arc, vec::Vec};
+use clocksource::Clocksource;
 use hal::memory::{FrameSize, PAddr, PageTable, Size4KiB, VAddr};
 use memory::{vmm::Stack, Pmm, Vmm};
 use mulch::InitGuard;
@@ -43,6 +45,7 @@ pub trait Platform: Sized + 'static {
     type PageTableSize: FrameSize;
     type PageTable: PageTable<Self::PageTableSize> + Send;
     type TaskContext;
+    type Clocksource: Clocksource;
 
     /// Create a `TaskContext` for a new task with the supplied kernel and user stacks.
     fn new_task_context(kernel_stack: &Stack, user_stack: &Stack, task_entry_point: VAddr) -> Self::TaskContext;

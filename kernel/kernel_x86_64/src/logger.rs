@@ -9,10 +9,13 @@ use core::{
     sync::atomic::{AtomicU64, Ordering},
 };
 use hal_x86_64::hw::serial::SerialPort;
+use kernel::clocksource::Clocksource;
 use mulch::InitGuard;
 use spinning_top::Spinlock;
 use tracing::{span, Collect, Event, Level, Metadata};
 use tracing_core::span::Current as CurrentSpan;
+
+use crate::clocksource::TscClocksource;
 
 static LOGGER: Logger = Logger::new();
 
@@ -90,7 +93,8 @@ impl Collect for Logger {
                 Level::ERROR => "\x1b[31m",
             };
             let mut serial = self.serial.lock();
-            write!(serial, "[{}{:5}\x1b[0m] {}: ", color, level, event.metadata().target()).unwrap();
+            let time = TscClocksource::nanos_since_boot();
+            write!(serial, "[{}][{}{:5}\x1b[0m] {}: ", time, color, level, event.metadata().target()).unwrap();
             event.record(&mut Visitor::new(serial.deref_mut()));
             write!(serial, "\n").unwrap();
         }

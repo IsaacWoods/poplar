@@ -59,7 +59,7 @@ where
     pub fn new() -> Scheduler<P> {
         Scheduler {
             task_scheduler: Spinlock::new(CpuScheduler::new()),
-            tasklet_scheduler: TaskletScheduler::new(),
+            tasklet_scheduler: TaskletScheduler::new::<P::Clocksource>(),
         }
     }
 

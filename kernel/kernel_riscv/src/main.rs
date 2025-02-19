@@ -37,6 +37,8 @@ impl Platform for PlatformImpl {
     type PageTableSize = hal::memory::Size4KiB;
     type PageTable = hal_riscv::platform::PageTableImpl;
     type TaskContext = task::TaskContext;
+    // TODO: make a clocksource based off the `stime` register probs?
+    type Clocksource = todo!();
 
     fn new_task_context(
         kernel_stack: &kernel::memory::vmm::Stack,

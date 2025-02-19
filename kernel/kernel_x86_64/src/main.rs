@@ -5,10 +5,11 @@
 
 #![no_std]
 #![no_main]
-#![feature(decl_macro, naked_functions, allocator_api, iterator_try_collect)]
+#![feature(decl_macro, naked_functions, allocator_api, iterator_try_collect, unsafe_cell_access, sync_unsafe_cell)]
 
 extern crate alloc;
 
+mod clocksource;
 mod acpi_handler;
 mod interrupts;
 mod logger;
@@ -21,10 +22,11 @@ use acpi::{AcpiTables, PciConfigRegions};
 use acpi_handler::{AmlHandler, PoplarAcpiHandler};
 use alloc::{boxed::Box, sync::Arc};
 use aml::AmlContext;
-use core::{ptr, str::FromStr, time::Duration};
+use clocksource::TscClocksource;
+use core::time::Duration;
 use hal::memory::{Frame, PAddr, VAddr};
 use hal_x86_64::{
-    hw::{registers::read_control_reg, tss::Tss},
+    hw::{cpu::CpuInfo, registers::read_control_reg, tss::Tss},
     kernel_map,
     paging::PageTableImpl,
 };
@@ -50,6 +52,7 @@ impl Platform for PlatformImpl {
     type PageTableSize = hal::memory::Size4KiB;
     type PageTable = PageTableImpl;
     type TaskContext = task::TaskContext;
+    type Clocksource = TscClocksource;
 
     fn new_task_context(kernel_stack: &Stack, user_stack: &Stack, task_entry_point: VAddr) -> Self::TaskContext {
         task::new_task_context(kernel_stack, user_stack, task_entry_point)
@@ -143,6 +146,8 @@ pub extern "C" fn kentry(boot_info: &BootInfo) -> ! {
     /*
      * Parse the static ACPI tables.
      */
+    let cpu_info = CpuInfo::new();
+    TscClocksource::init(&cpu_info);
     if boot_info.rsdp_address.is_none() {
         panic!("Bootloader did not pass RSDP address. Booting without ACPI is not supported.");
     }
@@ -199,9 +204,8 @@ pub extern "C" fn kentry(boot_info: &BootInfo) -> ! {
 
     let platform = PlatformImpl { topology };
 
-    // TODO: we need to support the tasklet scheduler on x64 too - maybe use the HPET to drive
-    // `maitake`'s timer wheel?
     SCHEDULER.initialize(Scheduler::new());
+    maitake::time::set_global_timer(&SCHEDULER.get().tasklet_scheduler.timer).unwrap();
 
     /*
      * Create kernel objects from loaded images and schedule them.

@@ -120,6 +120,25 @@ impl CpuInfo {
         // running on.
         None
     }
+
+    /// Calculate the TSC frequency from CPUID. This will return `None` if the TSC is not
+    /// invariant, or if the required CPUID leaves are not present.
+    pub fn tsc_frequency(&self) -> Option<u32> {
+        /*
+         * If we're running under a hypervisor, see if we've been able to work out the TSC
+         * frequency from its leaves.
+         */
+        if let Some(ref hypervisor_info) = self.hypervisor_info {
+            if let Some(apic_freq) = hypervisor_info.tsc_frequency {
+                return Some(apic_freq);
+            }
+        }
+
+        // TODO: we should be able to do core_crystal_clock_frequency * some_ratio to work it out
+        // on newer hardware in bare-metal cases
+
+        None
+    }
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
@@ -180,6 +199,7 @@ pub enum HypervisorVendor {
 pub struct HypervisorInfo {
     pub vendor: HypervisorVendor,
     pub max_leaf: u32,
+    pub tsc_frequency: Option<u32>,
     pub apic_frequency: Option<u32>,
 }
 
@@ -307,10 +327,12 @@ fn decode_hypervisor_info() -> Option<HypervisorInfo> {
      * NOTE: for this to exist under KVM, the `vmware-cpuid-freq` and `invtsc` cpu flags must be
      * set.
      */
-    let apic_frequency =
-        if max_leaf >= 0x4000_0010 { Some(cpuid(CpuidEntry::HypervisorFrequencies).ebx * 1000) } else { None };
+    let hypervisor_frequencies =
+        if max_leaf >= 0x4000_0010 { Some(cpuid(CpuidEntry::HypervisorFrequencies)) } else { None };
+    let tsc_frequency = hypervisor_frequencies.map(|f| f.eax * 1000);
+    let apic_frequency = hypervisor_frequencies.map(|f| f.ebx * 1000);
 
-    Some(HypervisorInfo { vendor, max_leaf, apic_frequency })
+    Some(HypervisorInfo { vendor, max_leaf, tsc_frequency, apic_frequency })
 }
 
 fn cpuid(entry: CpuidEntry) -> CpuidResult {
