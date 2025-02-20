@@ -20,8 +20,7 @@ pub struct Topology {
 }
 
 impl Topology {
-    pub fn new(acpi_info: &acpi::PlatformInfo<alloc::alloc::Global>) -> Topology {
-        let cpu_info = CpuInfo::new();
+    pub fn new(cpu_info: CpuInfo, acpi_info: &acpi::PlatformInfo<alloc::alloc::Global>) -> Topology {
         info!(
             "We're running on an {:?} processor. The microarchitecture is: {:?}",
             cpu_info.vendor,

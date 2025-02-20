@@ -10,18 +10,15 @@
 extern crate alloc;
 
 mod clocksource;
-mod acpi_handler;
 mod interrupts;
+mod kacpi;
 mod logger;
 mod pci;
 mod per_cpu;
 mod task;
 mod topo;
 
-use acpi::{AcpiTables, PciConfigRegions};
-use acpi_handler::{AmlHandler, PoplarAcpiHandler};
-use alloc::{boxed::Box, sync::Arc};
-use aml::AmlContext;
+use alloc::boxed::Box;
 use clocksource::TscClocksource;
 use core::time::Duration;
 use hal::memory::{Frame, PAddr, VAddr};
@@ -31,6 +28,7 @@ use hal_x86_64::{
     paging::PageTableImpl,
 };
 use interrupts::{InterruptController, INTERRUPT_CONTROLLER};
+use kacpi::AcpiManager;
 use kernel::{
     memory::{vmm::Stack, Pmm, Vmm},
     scheduler::Scheduler,
@@ -40,7 +38,7 @@ use mulch::InitGuard;
 use pci::PciConfigurator;
 use per_cpu::PerCpuImpl;
 use seed::boot_info::BootInfo;
-use spinning_top::{RwSpinlock, Spinlock};
+use spinning_top::RwSpinlock;
 use topo::Topology;
 use tracing::info;
 
@@ -144,60 +142,28 @@ pub extern "C" fn kentry(boot_info: &BootInfo) -> ! {
     // TODO: go back and set the #PF handler to use a separate kernel stack via the TSS
 
     /*
-     * Parse the static ACPI tables.
+     * Initialize the clocksource.
      */
     let cpu_info = CpuInfo::new();
     TscClocksource::init(&cpu_info);
-    if boot_info.rsdp_address.is_none() {
-        panic!("Bootloader did not pass RSDP address. Booting without ACPI is not supported.");
-    }
-    let acpi_tables =
-        match unsafe { AcpiTables::from_rsdp(PoplarAcpiHandler, usize::from(boot_info.rsdp_address.unwrap())) } {
-            Ok(acpi_tables) => acpi_tables,
-            Err(err) => panic!("Failed to discover ACPI tables: {:?}", err),
-        };
-    let acpi_platform_info = acpi_tables.platform_info().unwrap();
-    let topology = Topology::new(&acpi_platform_info);
-
-    let pci_access = pci::EcamAccess::new(PciConfigRegions::new(&acpi_tables).unwrap());
 
     /*
-     * Parse the DSDT.
+     * Initialize ACPI. This also gives us access to the PCI configuration space and topology
+     * information.
      */
-    let mut aml_context =
-        AmlContext::new(Box::new(AmlHandler::new(pci_access.clone())), aml::DebugVerbosity::None);
-    if let Ok(ref dsdt) = acpi_tables.dsdt() {
-        let virtual_address = kernel_map::physical_to_virtual(PAddr::new(dsdt.address).unwrap());
-        info!(
-            "DSDT parse: {:?}",
-            aml_context
-                .parse_table(unsafe { core::slice::from_raw_parts(virtual_address.ptr(), dsdt.length as usize) })
-        );
-
-        // TODO: we should parse the SSDTs here. Only bother if we've managed to parse the DSDT.
-
-        // info!("----- Printing AML namespace -----");
-        // info!("{:#?}", aml_context.namespace);
-        // info!("----- Finished AML namespace -----");
-    }
-    let aml_context = Arc::new(Spinlock::new(aml_context));
-
-    /*
-     * Initialize devices defined in AML.
-     * TODO: We should probably call `_REG` on all the op-regions we allow access to at this point before this.
-     */
-    // aml_context.initialize_objects().expect("Failed to initialize AML objects");
+    let (acpi_manager, pci_access) = AcpiManager::initialize(&boot_info);
+    let topology = Topology::new(cpu_info, &acpi_manager.platform_info);
 
     /*
      * Initialise the interrupt controller, which enables interrupts, and start the per-cpu timer.
      */
-    InterruptController::init(acpi_platform_info.interrupt_model.clone(), &mut aml_context.lock());
+    InterruptController::init(&acpi_manager);
     unsafe {
         core::arch::asm!("sti");
     }
     INTERRUPT_CONTROLLER.get().lock().enable_local_timer(&topology.cpu_info, Duration::from_millis(10));
 
-    let pci_configurator = PciConfigurator::new(pci_access, aml_context.clone());
+    let pci_configurator = PciConfigurator::new(pci_access, acpi_manager.clone());
     kernel::initialize_pci(pci_configurator);
 
     task::install_syscall_handler();

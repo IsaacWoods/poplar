@@ -1,12 +1,59 @@
-use crate::kernel_map;
-use acpi::{AcpiHandler, PhysicalMapping};
+use crate::{clocksource::TscClocksource, kernel_map, pci::EcamAccess};
+use acpi::{AcpiHandler, AcpiTables, PciConfigRegions, PhysicalMapping, PlatformInfo};
+use alloc::{alloc::Global, sync::Arc};
+use aml::Interpreter;
 use bit_field::BitField;
-use core::ptr::NonNull;
+use core::{ptr::NonNull, slice};
 use hal::memory::PAddr;
 use hal_x86_64::hw::port::Port;
+use kernel::clocksource::Clocksource;
 use mulch::math::align_down;
 use pci_types::{ConfigRegionAccess, PciAddress};
-use tracing::debug;
+use seed::boot_info::BootInfo;
+use tracing::{debug, info};
+
+pub struct AcpiManager {
+    pub tables: AcpiTables<PoplarAcpiHandler>,
+    pub platform_info: PlatformInfo<Global>,
+    pub interpreter: aml::Interpreter<AmlHandler<EcamAccess>>,
+}
+
+impl AcpiManager {
+    pub fn initialize(boot_info: &BootInfo) -> (Arc<AcpiManager>, EcamAccess) {
+        if boot_info.rsdp_address.is_none() {
+            panic!("Bootloader did not pass RSDP address. Booting without ACPI is not supported.");
+        }
+        let tables = match unsafe {
+            AcpiTables::from_rsdp(PoplarAcpiHandler, usize::from(boot_info.rsdp_address.unwrap()))
+        } {
+            Ok(tables) => tables,
+            Err(err) => panic!("Failed to discover ACPI tables: {:?}", err),
+        };
+        let platform_info = tables.platform_info().unwrap();
+
+        let pci_access = crate::pci::EcamAccess::new(PciConfigRegions::new(&tables).unwrap());
+        let aml_handler = AmlHandler { pci_access: pci_access.clone() };
+        let interpreter = Interpreter::new(aml_handler);
+
+        if let Ok(ref dsdt) = tables.dsdt() {
+            let virtual_address = kernel_map::physical_to_virtual(PAddr::new(dsdt.address).unwrap());
+            let stream = unsafe { slice::from_raw_parts(virtual_address.ptr(), dsdt.length as usize) };
+            info!("DSDT parse: {:?}", interpreter.load_table(stream));
+
+            // TODO: find any present SSDTs and also parse them
+
+            info!("ACPI namespace: {}", interpreter.namespace.lock());
+        } else {
+            panic!("Cannot find valid DSDT. Booting without ACPI is not supported.");
+        }
+
+        // TODO: register operation regions
+        // TODO: run `_INI` on devices
+        // TODO: probs some other stuff ur meant to do
+
+        (Arc::new(AcpiManager { tables, platform_info, interpreter }), pci_access)
+    }
+}
 
 #[derive(Clone)]
 pub struct PoplarAcpiHandler;
@@ -169,6 +216,10 @@ where
     fn write_pci_u32(&self, segment: u16, bus: u8, device: u8, function: u8, offset: u16, value: u32) {
         debug!("AML: Writing dword to PCI config space (segment={:#x},bus={:#x},device={:#x},function={:#x},offset={:#x}): {:#x}", segment, bus, device, function, offset, value);
         unsafe { self.pci_access.write(PciAddress::new(segment, bus, device, function), offset, value) }
+    }
+
+    fn nanos_since_boot(&self) -> u64 {
+        TscClocksource::nanos_since_boot()
     }
 
     fn stall(&self, _microseconds: u64) {

@@ -1,6 +1,7 @@
+use crate::kacpi::AcpiManager;
 use acpi::InterruptModel;
-use alloc::{alloc::Global, vec};
-use aml::{value::Args as AmlArgs, AmlContext, AmlName, AmlValue};
+use alloc::{alloc::Global, sync::Arc, vec};
+use aml::namespace::AmlName;
 use bit_field::BitField;
 use core::{str::FromStr, time::Duration};
 use hal::memory::PAddr;
@@ -78,8 +79,8 @@ impl InterruptController {
         idt.load();
     }
 
-    pub fn init(interrupt_model: InterruptModel<Global>, aml_context: &mut AmlContext) {
-        match &interrupt_model {
+    pub fn init(acpi: &AcpiManager) {
+        match &acpi.platform_info.interrupt_model {
             InterruptModel::Apic(info) => {
                 if info.also_has_legacy_pics {
                     unsafe { Pic::new() }.remap_and_disable(ISA_INTERRUPTS_START, ISA_INTERRUPTS_START + 8);
@@ -99,12 +100,12 @@ impl InterruptController {
                 /*
                  * Tell ACPI that we intend to use the APICs instead of the legacy PIC.
                  */
-                aml_context
+                acpi.interpreter
                     .invoke_method(
-                        &AmlName::from_str("\\_PIC").unwrap(),
-                        AmlArgs::from_list(vec![AmlValue::Integer(1)]).unwrap(),
+                        AmlName::from_str("\\_PIC").unwrap(),
+                        vec![Arc::new(aml::object::Object::Integer(1))],
                     )
-                    .expect("Failed to invoke \\_PIC method");
+                    .expect("Failed to invoke \\_PIC");
 
                 /*
                  * Install handlers for the spurious interrupt and local APIC timer, and then
@@ -242,7 +243,7 @@ impl InterruptController {
                 };
 
                 INTERRUPT_CONTROLLER.initialize(Spinlock::new(InterruptController {
-                    model: interrupt_model,
+                    model: acpi.platform_info.interrupt_model.clone(),
                     isa_gsi_mappings,
                     platform_handlers: [None; NUM_PLATFORM_VECTORS],
                     io_apic,

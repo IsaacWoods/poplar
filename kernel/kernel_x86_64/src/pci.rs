@@ -1,9 +1,9 @@
-use crate::interrupts::INTERRUPT_CONTROLLER;
+use crate::{interrupts::INTERRUPT_CONTROLLER, kacpi::AcpiManager};
 use acpi::PciConfigRegions;
 use alloc::{alloc::Global, collections::btree_map::BTreeMap, sync::Arc, vec, vec::Vec};
 use aml::{
+    namespace::AmlName,
     pci_routing::{PciRoutingTable, Pin},
-    AmlContext,
 };
 use bit_field::BitField;
 use core::{ptr, str::FromStr};
@@ -73,22 +73,20 @@ pub struct PciConfigurator {
     legacy_routing_table: PciRoutingTable,
     /// Maps from GSIs allocated to legacy PCI interrupts to platform interrupt number
     legacy_platform_interrupts: Spinlock<BTreeMap<u32, u8>>,
-    aml_context: Arc<Spinlock<AmlContext>>,
+    acpi: Arc<AcpiManager>,
 }
 
 impl PciConfigurator {
-    pub fn new(access: EcamAccess, aml_context: Arc<Spinlock<AmlContext>>) -> PciConfigurator {
-        let legacy_routing_table = PciRoutingTable::from_prt_path(
-            &aml::AmlName::from_str("\\_SB.PCI0._PRT").unwrap(),
-            &mut aml_context.lock(),
-        )
-        .expect("Failed to parse _PRT");
+    pub fn new(access: EcamAccess, acpi: Arc<AcpiManager>) -> PciConfigurator {
+        let legacy_routing_table =
+            PciRoutingTable::from_prt_path(AmlName::from_str("\\_SB.PCI0._PRT").unwrap(), &acpi.interpreter)
+                .expect("Failed to parse _PRT");
 
         PciConfigurator {
             access,
             legacy_routing_table,
             legacy_platform_interrupts: Spinlock::new(BTreeMap::new()),
-            aml_context,
+            acpi,
         }
     }
 }
@@ -114,9 +112,8 @@ impl PciInterruptConfigurator for PciConfigurator {
         };
         let routed_gsi = self
             .legacy_routing_table
-            .route(function.device() as u16, function.function() as u16, pin, &mut self.aml_context.lock())
+            .route(function.device() as u16, function.function() as u16, pin, &self.acpi.interpreter)
             .unwrap();
-        tracing::info!("Routed interrupt for PCI function {:?}({:?}): {:?}", function, pin, routed_gsi);
 
         let event = Event::new();
 
