@@ -15,7 +15,7 @@ spinning_top = { version = "0.3" }
 mulch = { path = "../../lib/mulch/" }
 bit_field = "0.10.2"
 fdt = { path = "../../lib/fdt/", features = ["pretty-printing"] }
-sbi = "0.2.0"
+sbi-rt = "0.0.3"
 pci_types = { path = "../../lib/pci_types/" }
 maitake = { git = "https://github.com/hawkw/mycelium", features = ["alloc", "tracing-02"] }
 

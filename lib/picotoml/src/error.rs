@@ -67,10 +67,6 @@ impl Error {
     }
 }
 
-#[cfg(test)]
-impl std::error::Error for Error {}
-
-#[cfg(not(test))]
 impl serde::ser::StdError for Error {}
 
 impl de::Error for Error {

@@ -1,5 +1,8 @@
-use alloc::vec::Vec;
 use core::iter::FusedIterator;
+
+/// Default stack size for ArrayVec.
+#[cfg(not(feature = "alloc"))]
+const DEFAULT_STACK_SIZE: usize = 8;
 
 pub struct PeekingIterator<I: Iterator> {
     /// The underlying iterator. Consumption of this inner iterator does not represent consumption of the
@@ -9,7 +12,10 @@ pub struct PeekingIterator<I: Iterator> {
     /// The queue represents the items of our iterator which have not been consumed, but can be peeked
     /// at without consuming them. Once an element has been consumed by the iterator, the element will
     /// be dequeued and it will no longer be possible to peek at this element.
-    queue: Vec<Option<I::Item>>,
+    #[cfg(feature = "alloc")]
+    queue: alloc::vec::Vec<Option<I::Item>>,
+    #[cfg(not(feature = "alloc"))]
+    queue: heapless::Vec<Option<I::Item>, DEFAULT_STACK_SIZE>,
 
     /// The cursor points to the element we are currently peeking at.
     ///
@@ -23,7 +29,7 @@ pub struct PeekingIterator<I: Iterator> {
 
 impl<I: Iterator> PeekingIterator<I> {
     pub fn new(iterator: I) -> PeekingIterator<I> {
-        PeekingIterator { iterator, queue: Vec::new(), cursor: 0 }
+        PeekingIterator { iterator, queue: Default::default(), cursor: 0 }
     }
 
     #[inline]
@@ -79,7 +85,10 @@ impl<I: Iterator> PeekingIterator<I> {
     #[inline]
     fn push_next_to_queue(&mut self) {
         let item = self.iterator.next();
+        #[cfg(feature = "alloc")]
         self.queue.push(item);
+        #[cfg(not(feature = "alloc"))]
+        self.queue.push(item).ok();
     }
 
     /// Increment the cursor which points to the current peekable item.

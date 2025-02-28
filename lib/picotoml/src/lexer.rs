@@ -185,10 +185,9 @@ impl<'a> Iterator for LexerIterator<'a> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use alloc::{vec, vec::Vec};
     use BracketType::*;
 
-    fn test_lex(toml: &'static str, expected_tokens: Vec<(Token, &'static str)>) {
+    fn test_lex(toml: &'static str, expected_tokens: impl IntoIterator<Item = (Token, &'static str)>) {
         let mut lex = Token::lexer(toml);
 
         for (expected_token, expected_str) in expected_tokens {
@@ -208,7 +207,7 @@ mod tests {
     #^ Empty line above
 
             "#,
-            vec![
+            [
                 (Token::Comment, "#bare_str"),
                 (Token::Eol, "\n"),
                 (Token::Comment, "# This is a comment"),
@@ -229,7 +228,7 @@ mod tests {
     "my fav number" = 7
     "127.0.0.1" = 15
             "#,
-            vec![
+            [
                 (Token::Eol, "\n"),
                 (Token::BareString, "server"),
                 (Token::Equals, "="),
@@ -251,7 +250,7 @@ mod tests {
     fn lex3() {
         test_lex(
             "test = \"test\"\na\n#ABC\na",
-            vec![
+            [
                 (Token::BareString, "test"),
                 (Token::Equals, "="),
                 (Token::QuotedString, "\"test\""),
@@ -275,7 +274,7 @@ mod tests {
 me too!
             '''
             "#,
-            vec![
+            [
                 (Token::Eol, "\n"),
                 (Token::MutlilineString, "\"\"\"multi line test\n  please parse these newlines\n   \"\"\""),
                 (Token::Equals, "="),
@@ -296,7 +295,7 @@ contributors = [
   { name = "Baz Qux", email = "bazqux@example.com", url = "https://example.com/bazqux" }
 ]
             "#,
-            vec![
+            [
                 (Token::Eol, "\n"),
                 (Token::Eol, "\n"),
                 (Token::BareString, "numbers"),
@@ -349,7 +348,7 @@ contributors = [
 [[]]
 a = 3564
 b = false"#,
-            vec![
+            [
                 (Token::Eol, "\n"),
                 (Token::DoubleSquareBracket(Open), "[["),
                 (Token::DoubleSquareBracket(Close), "]]"),
@@ -375,7 +374,7 @@ b = false"#,
     "my fav number" = 7.564
     "127.0.0.1" = 15.56
             "#,
-            vec![
+            [
                 (Token::Eol, "\n"),
                 (Token::DoubleSquareBracket(Open), "[["),
                 (Token::BareString, "array"),

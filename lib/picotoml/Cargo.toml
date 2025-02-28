@@ -9,3 +9,9 @@ edition = "2021"
 [dependencies]
 logos = { version = "0.13.0", default-features = false, features = ["export_derive"] }
 serde = { version = "1.0.188", default-features = false }
+heapless = "0.8.0"
+
+[features]
+default = []
+alloc = ["serde/alloc"]
+std = ["serde/std"]

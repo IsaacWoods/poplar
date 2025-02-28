@@ -1,8 +1,10 @@
 # RISC-V
 
 ### Building OpenSBI
-OpenSBI is the reference implementation for the Supervisor Binary Interface (SBI). It's basically how you access
-M-mode functionality from your S-mode bootloader or kernel.
+OpenSBI is one of the reference implementations for the RISC-V  Supervisor Binary Interface (SBI). SBI provides a
+standardized interface for S-mode software (e.g., bootloaders or kernels) to securely access privileged hardware
+functionalities through basic features and security mechanisms like isolation and access control, abstracting
+M-mode interactions without direct exposure.
 
 Firstly, we need a RISC-V C toolchain. On Arch, I installed the `riscv64-unknown-elf-binutils` AUR package. I also
 tried to install the `riscv64-unknown-elf-gcc` package, but this wouldn't work, so I built OpenSBI with Clang+LLVM

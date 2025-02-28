@@ -4,7 +4,7 @@ pub mod memory {
     use hal::memory::{kibibytes, mebibytes, PAddr};
 
     pub const DRAM_START: PAddr = PAddr::new(0x4000_0000).unwrap();
-    pub const OPENSBI_ADDR: PAddr = DRAM_START;
+    pub const M_FIRMWARE_ADDR: PAddr = DRAM_START;
     // TODO: when const traits are implemented, this should be rewritten in terms of DRAM_START
     pub const SEED_ADDR: PAddr = PAddr::new(0x4000_0000 + kibibytes(512)).unwrap();
     pub const RAMDISK_ADDR: PAddr = PAddr::new(0x4000_0000 + mebibytes(1)).unwrap();
