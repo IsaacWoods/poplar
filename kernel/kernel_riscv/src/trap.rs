@@ -39,7 +39,6 @@ extern "C" fn trap_handler(trap_frame: &mut TrapFrame, scause: usize, stval: usi
             interrupts::handle_external_interrupt();
         }
         Ok(Scause::SupervisorTimerInterrupt) => {
-            crate::SCHEDULER.get().tasklet_scheduler.advance_timer(1);
             // Schedule the next tick in 20ms time (TODO: I have no idea what a sensible interval
             // should be). `Timer::advance` returns a `Turn` struct that tells us when the next
             // deadline is - the most efficient thing if this is all we need the timer interrupt

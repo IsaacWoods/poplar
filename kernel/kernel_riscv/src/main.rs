@@ -9,6 +9,7 @@
 
 extern crate alloc;
 
+mod clocksource;
 mod interrupts;
 mod pci;
 mod serial;
@@ -37,8 +38,7 @@ impl Platform for PlatformImpl {
     type PageTableSize = hal::memory::Size4KiB;
     type PageTable = hal_riscv::platform::PageTableImpl;
     type TaskContext = task::TaskContext;
-    // TODO: make a clocksource based off the `stime` register probs?
-    type Clocksource = todo!();
+    type Clocksource = clocksource::Clocksource;
 
     fn new_task_context(
         kernel_stack: &kernel::memory::vmm::Stack,
@@ -84,6 +84,8 @@ pub extern "C" fn kentry(boot_info: &BootInfo) -> ! {
 
     // info!("Boot info: {:#?}", boot_info);
     // info!("FDT: {:#?}", fdt);
+
+    clocksource::Clocksource::initialize(&fdt);
 
     /*
      * Initialise the heap allocator. After this, the kernel is free to use collections etc. that
