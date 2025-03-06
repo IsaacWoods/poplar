@@ -55,6 +55,8 @@ const DEVICE_CFG_OFFSET: usize = 0x2000;
 const NOTIFY_CFG_OFFSET: usize = 0x3000;
 
 pub type ResourceIndex = u32;
+
+#[derive(Debug)]
 pub struct ScanoutInfo {
     width: u32,
     height: u32,
@@ -169,11 +171,6 @@ impl<'a> VirtioGpu<'a> {
         );
 
         self.queue.make_descriptor_available(descriptor_0);
-
-        #[cfg(target_arch = "riscv64")]
-        unsafe {
-            core::arch::asm!("fence ow, ow");
-        }
 
         /*
          * TODO: notifying the device of an available virtqueue is much harder via PCI than MMIO -

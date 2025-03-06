@@ -1,5 +1,6 @@
 use crate::StatusFlags;
 use bit_field::BitField;
+use core::sync::atomic::{self, Ordering};
 use volatile::{Read, ReadWrite, Volatile};
 
 #[derive(Clone, Copy, Debug)]
@@ -54,15 +55,12 @@ pub struct VirtioPciCommonCfg {
 impl VirtioPciCommonCfg {
     pub fn reset(&mut self) {
         self.device_status.write(0);
+        atomic::fence(Ordering::Release);
     }
 
     pub fn set_status_flag(&mut self, flag: StatusFlags) {
         self.device_status.write(self.device_status.read() | flag as u8);
-        // TODO: this should probably not just be inline assembly lmao (this is a write fence)
-        #[cfg(target_arch = "riscv64")]
-        unsafe {
-            core::arch::asm!("fence ow, ow");
-        }
+        atomic::fence(Ordering::Release);
     }
 
     pub fn is_status_flag_set(&self, flag: StatusFlags) -> bool {

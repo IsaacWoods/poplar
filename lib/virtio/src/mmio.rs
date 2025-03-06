@@ -1,5 +1,6 @@
 use crate::{DeviceType, StatusFlags};
 use bit_field::BitField;
+use core::sync::atomic::{self, Ordering};
 use volatile::{Read, ReadWrite, Volatile, Write};
 
 #[repr(C)]
@@ -48,11 +49,7 @@ impl VirtioMmioHeader {
 
     pub fn set_status_flag(&mut self, flag: StatusFlags) {
         self.status.write(self.status.read() | flag as u32);
-        // TODO: this should probably not just be inline assembly lmao (this is a write fence)
-        #[cfg(target_arch = "riscv64")]
-        unsafe {
-            core::arch::asm!("fence ow, ow");
-        }
+        atomic::fence(Ordering::Release);
     }
 
     pub fn is_magic_valid(&self) -> bool {

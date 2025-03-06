@@ -1,9 +1,8 @@
 use alloc::collections::VecDeque;
 use core::{
-    mem,
-    mem::MaybeUninit,
-    ptr,
-    ptr::{NonNull, Pointee},
+    mem::{self, MaybeUninit},
+    ptr::{self, NonNull, Pointee},
+    sync::atomic::{self, Ordering},
 };
 
 /// A virtqueue is the mechanism used for bulk data transport to and from Virtio devices. We use the split
@@ -62,6 +61,7 @@ impl Virtqueue {
          * TODO: what happens when the `u16` wraps around?
          */
         let ring_index = unsafe { ptr::read_volatile(ring_index_ptr) };
+        atomic::fence(Ordering::Acquire);
 
         // Write into the correct entry of the ring
         unsafe {
@@ -72,11 +72,7 @@ impl Virtqueue {
         }
 
         // Do a fence to make sure the device sees the update to the ring before we increment the index
-        // TODO: make portable
-        #[cfg(target_arch = "riscv64")]
-        unsafe {
-            core::arch::asm!("fence ow, ow");
-        }
+        atomic::fence(Ordering::Release);
 
         // Update the ring's index
         unsafe {
@@ -159,6 +155,10 @@ where
         let size = unsafe { mem::size_of_val_raw::<T>(ptr::from_raw_parts(ptr::null() as *const (), metadata)) };
         let (physical, virt) = mapper.alloc(size);
 
+        unsafe {
+            ptr::write_bytes(virt as *mut u8, 0, size);
+        }
+
         Mapped { physical, mapped: NonNull::from_raw_parts(NonNull::new(virt as *mut ()).unwrap(), metadata) }
     }
 }
@@ -166,6 +166,10 @@ where
 impl<T> Mapped<[MaybeUninit<T>]> {
     pub fn new_slice<M: Mapper>(num_elements: usize, mapper: &M) -> Mapped<[MaybeUninit<T>]> {
         let (physical, virt) = mapper.alloc(mem::size_of::<T>() * num_elements);
+
+        unsafe {
+            ptr::write_bytes(virt as *mut T, 0, num_elements);
+        }
 
         Mapped {
             physical,

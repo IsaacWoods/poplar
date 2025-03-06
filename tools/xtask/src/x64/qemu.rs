@@ -150,7 +150,7 @@ impl RunQemuX64 {
 
         qemu.args(&["-global", "virtio-mmio.force-legacy=false"]);
 
-        qemu.args(&["-device", "virtio-gpu"]);
+        qemu.args(&["-device", "virtio-gpu-pci"]);
 
         // XXX: for testing NUMA
         qemu.args(&["-smp", "8"]);
