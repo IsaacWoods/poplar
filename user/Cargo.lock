@@ -310,6 +310,7 @@ version = "0.1.0"
 dependencies = [
  "log",
  "pci_types",
+ "poplar",
  "ptah",
  "service_host",
  "spinning_top 0.3.0",
@@ -439,6 +440,7 @@ name = "service_host"
 version = "0.1.0"
 dependencies = [
  "log",
+ "poplar",
  "ptah",
  "std",
 ]

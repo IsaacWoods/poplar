@@ -14,6 +14,7 @@ path = "src/main.rs"
 
 [dependencies]
 std = { path = "../../lib/std", features = ["async", "ddk"] }
+poplar = { path = "../../lib/poplar" }
 service_host = { path = "../service_host" }
 log = "0.4"
 ptah = { path = "../../lib/ptah" }

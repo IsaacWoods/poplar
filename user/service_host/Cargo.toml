@@ -6,5 +6,6 @@ edition = "2021"
 
 [dependencies]
 std = { path = "../../lib/std" }
+poplar = { path = "../../lib/poplar" }
 log = "0.4"
 ptah = { path = "../../lib/ptah" }
