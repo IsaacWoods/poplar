@@ -5,6 +5,7 @@ use crate::{
         address_space::AddressSpace,
         channel::{ChannelEnd, Message},
         event::Event,
+        interrupt::Interrupt,
         memory_object::MemoryObject,
         task::{Task, TaskState},
         KernelObject,
@@ -21,6 +22,7 @@ use poplar::{
     syscall::{
         self,
         result::{handle_to_syscall_repr, status_to_syscall_repr, status_with_payload_to_syscall_repr},
+        AckInterruptError,
         CreateAddressSpaceError,
         CreateChannelError,
         CreateMemoryObjectError,
@@ -37,6 +39,7 @@ use poplar::{
         SpawnTaskDetails,
         SpawnTaskError,
         WaitForEventError,
+        WaitForInterruptError,
         CHANNEL_MAX_NUM_HANDLES,
     },
     Handle,
@@ -93,6 +96,8 @@ where
             handle_to_syscall_repr(spawn_task(&task, a, scheduler, &mut kernel_page_tables.write()))
         }
         syscall::SYSCALL_RESIZE_MEMORY_OBJECT => status_to_syscall_repr(resize_memory_object(&task, a, b)),
+        syscall::SYSCALL_WAIT_FOR_INTERRUPT => status_to_syscall_repr(wait_for_interrupt(scheduler, &task, a, b)),
+        syscall::SYSCALL_ACK_INTERRUPT => status_to_syscall_repr(ack_interrupt(&task, a)),
 
         _ => {
             warn!("Process made system call with invalid syscall number: {}", number);
@@ -400,7 +405,7 @@ where
                 .map_err(|()| PciGetInfoError::BufferPointerInvalid)?;
 
             for (i, (&address, device)) in pci_info.devices.iter().enumerate() {
-                let interrupt_handle = device.interrupt_event.clone().map(|interrupt| task.handles.add(interrupt));
+                let interrupt_handle = device.interrupt.clone().map(|interrupt| task.handles.add(interrupt));
 
                 let mut device_descriptor = poplar::ddk::pci::PciDeviceInfo {
                     address,
@@ -480,15 +485,15 @@ pub fn wait_for_event<P>(
 where
     P: Platform,
 {
-    let event_handle = Handle::try_from(event_handle).map_err(|_| WaitForEventError::InvalidHandle)?;
+    let event_handle = Handle::try_from(event_handle).map_err(|_| WaitForEventError::InvalidEventHandle)?;
     let block = block != 0;
     let event = task
         .handles
         .get(event_handle)
-        .ok_or(WaitForEventError::InvalidHandle)?
+        .ok_or(WaitForEventError::InvalidEventHandle)?
         .downcast_arc::<Event>()
         .ok()
-        .ok_or(WaitForEventError::NotAnEvent)?;
+        .ok_or(WaitForEventError::InvalidEventHandle)?;
 
     if block {
         /*
@@ -526,9 +531,11 @@ where
             let event = object.downcast_arc::<Event>().ok().unwrap();
             event.signalled.load(Ordering::SeqCst)
         }
-
-        // TODO: should this return an error instead?
-        _ => false,
+        KernelObjectType::Interrupt => {
+            let interrupt = object.downcast_arc::<Interrupt>().ok().unwrap();
+            interrupt.triggered.load(Ordering::SeqCst)
+        }
+        _ => Err(PollInterestError::UnsupportedObjectType)?,
     };
 
     Ok(if interesting { 1 << 16 } else { 0 })
@@ -661,5 +668,65 @@ where
         // The memory object is already the correct size. Do nothing.
     }
 
+    Ok(())
+}
+
+pub fn wait_for_interrupt<P>(
+    scheduler: &Scheduler<P>,
+    task: &Arc<Task<P>>,
+    interrupt_handle: usize,
+    block: usize,
+) -> Result<(), WaitForInterruptError>
+where
+    P: Platform,
+{
+    let interrupt_handle =
+        Handle::try_from(interrupt_handle).map_err(|_| WaitForInterruptError::InvalidInterruptHandle)?;
+    let block = block != 0;
+    let interrupt = task
+        .handles
+        .get(interrupt_handle)
+        .ok_or(WaitForInterruptError::InvalidInterruptHandle)?
+        .downcast_arc::<Interrupt>()
+        .ok()
+        .ok_or(WaitForInterruptError::InvalidInterruptHandle)?;
+
+    if block {
+        /*
+         * XXX: This is an extremely simple way of implementing this. We should instead probably block
+         * the task, and spawn a tasklet that is awoken when the event is triggered to unblock it. For
+         * now, though, this will work well enough.
+         */
+        while !interrupt.triggered.load(Ordering::SeqCst) {
+            scheduler.schedule(TaskState::Ready);
+        }
+        assert_eq!(
+            Ok(true),
+            interrupt.triggered.compare_exchange(true, false, Ordering::SeqCst, Ordering::SeqCst)
+        );
+        Ok(())
+    } else {
+        match interrupt.triggered.compare_exchange(true, false, Ordering::SeqCst, Ordering::SeqCst) {
+            Ok(true) => Ok(()),
+            _ => Err(WaitForInterruptError::NoInterrupt),
+        }
+    }
+}
+
+pub fn ack_interrupt<P>(task: &Arc<Task<P>>, interrupt_handle: usize) -> Result<(), AckInterruptError>
+where
+    P: Platform,
+{
+    let interrupt_handle =
+        Handle::try_from(interrupt_handle).map_err(|_| AckInterruptError::InvalidInterruptHandle)?;
+    let interrupt = task
+        .handles
+        .get(interrupt_handle)
+        .ok_or(AckInterruptError::InvalidInterruptHandle)?
+        .downcast_arc::<Interrupt>()
+        .ok()
+        .ok_or(AckInterruptError::InvalidInterruptHandle)?;
+
+    interrupt.rearm::<P>();
     Ok(())
 }

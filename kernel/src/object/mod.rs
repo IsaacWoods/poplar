@@ -1,6 +1,7 @@
 pub mod address_space;
 pub mod channel;
 pub mod event;
+pub mod interrupt;
 pub mod memory_object;
 pub mod task;
 
@@ -31,6 +32,7 @@ pub enum KernelObjectType {
     MemoryObject,
     Channel,
     Event,
+    Interrupt,
 }
 
 /// This trait should be implemented by all types that implement kernel objects, and allows common code to

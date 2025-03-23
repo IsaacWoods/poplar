@@ -38,6 +38,8 @@ pub const SYSCALL_POLL_INTEREST: usize = 13;
 pub const SYSCALL_CREATE_ADDRESS_SPACE: usize = 14;
 pub const SYSCALL_SPAWN_TASK: usize = 15;
 pub const SYSCALL_RESIZE_MEMORY_OBJECT: usize = 16;
+pub const SYSCALL_WAIT_FOR_INTERRUPT: usize = 17;
+pub const SYSCALL_ACK_INTERRUPT: usize = 18;
 
 pub fn yield_to_kernel() {
     unsafe {
@@ -187,8 +189,7 @@ pub fn get_message<'b, 'h>(
 }
 
 define_error_type!(WaitForEventError {
-    InvalidHandle => 1,
-    NotAnEvent => 2,
+    InvalidEventHandle => 1,
     /// No event has occured, and the caller does not want the kernel to block.
     NoEvent => 3,
 });
@@ -200,6 +201,7 @@ pub fn wait_for_event(event: Handle, block: bool) -> Result<(), WaitForEventErro
 
 define_error_type!(PollInterestError {
     InvalidHandle => 1,
+    UnsupportedObjectType => 2,
 });
 
 pub fn poll_interest(object: Handle) -> Result<bool, PollInterestError> {
@@ -260,4 +262,23 @@ pub unsafe fn resize_memory_object(memory_object: Handle, new_size: usize) -> Re
     status_from_syscall_repr(unsafe {
         raw::syscall2(SYSCALL_RESIZE_MEMORY_OBJECT, memory_object.0 as usize, new_size)
     })
+}
+
+define_error_type!(WaitForInterruptError {
+    InvalidInterruptHandle => 1,
+    NoInterrupt => 2,
+});
+
+pub fn wait_for_interrupt(interrupt_object: Handle, block: bool) -> Result<(), WaitForInterruptError> {
+    status_from_syscall_repr(unsafe {
+        raw::syscall2(SYSCALL_WAIT_FOR_INTERRUPT, interrupt_object.0 as usize, if block { 1 } else { 0 })
+    })
+}
+
+define_error_type!(AckInterruptError {
+    InvalidInterruptHandle => 1,
+});
+
+pub fn ack_interrupt(interrupt_object: Handle) -> Result<(), AckInterruptError> {
+    status_from_syscall_repr(unsafe { raw::syscall1(SYSCALL_ACK_INTERRUPT, interrupt_object.0 as usize) })
 }

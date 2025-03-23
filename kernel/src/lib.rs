@@ -44,8 +44,8 @@ pub static PCI_ACCESS: InitGuard<Option<Spinlock<Box<dyn PciConfigRegionAccess +
 pub trait Platform: Sized + 'static {
     type PageTableSize: FrameSize;
     type PageTable: PageTable<Self::PageTableSize> + Send;
-    type TaskContext;
     type Clocksource: Clocksource;
+    type TaskContext;
 
     /// Create a `TaskContext` for a new task with the supplied kernel and user stacks.
     fn new_task_context(kernel_stack: &Stack, user_stack: &Stack, task_entry_point: VAddr) -> Self::TaskContext;
@@ -60,6 +60,8 @@ pub trait Platform: Sized + 'static {
     // TODO: this should not exist long-term. The common kernel VMM should know about the direct
     // physical mapping and should be able to write to physical memory itself.
     unsafe fn write_to_phys_memory(address: PAddr, data: &[u8]);
+
+    fn rearm_interrupt(interrupt: usize);
 }
 
 pub fn load_userspace<P>(scheduler: &Scheduler<P>, boot_info: &BootInfo, kernel_page_table: &mut P::PageTable)

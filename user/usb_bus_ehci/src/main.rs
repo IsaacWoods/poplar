@@ -196,7 +196,7 @@ fn main() {
                     let controller = Controller::new(
                         REGISTER_SPACE_ADDRESS,
                         platform_bus_bus_channel.clone(),
-                        handoff_info.get_as_event("pci.interrupt").unwrap(),
+                        handoff_info.get_as_interrupt("pci.interrupt").unwrap(),
                     );
                     controller.initialize();
 

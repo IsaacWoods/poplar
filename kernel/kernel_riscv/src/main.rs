@@ -37,8 +37,8 @@ pub struct PlatformImpl;
 impl Platform for PlatformImpl {
     type PageTableSize = hal::memory::Size4KiB;
     type PageTable = hal_riscv::platform::PageTableImpl;
-    type TaskContext = task::TaskContext;
     type Clocksource = clocksource::Clocksource;
+    type TaskContext = task::TaskContext;
 
     fn new_task_context(
         kernel_stack: &kernel::memory::vmm::Stack,
@@ -62,6 +62,8 @@ impl Platform for PlatformImpl {
             core::ptr::copy(data.as_ptr(), virt, data.len());
         }
     }
+
+    fn rearm_interrupt(_interrupt: usize) {}
 }
 
 pub static SCHEDULER: InitGuard<Scheduler<PlatformImpl>> = InitGuard::uninit();

@@ -4,7 +4,7 @@ use bit_field::BitField;
 use core::ptr;
 use fdt::Fdt;
 use hal::memory::PAddr;
-use kernel::{object::event::Event, pci::PciInterruptConfigurator};
+use kernel::{object::interrupt::Interrupt, pci::PciInterruptConfigurator};
 use pci_types::{
     capability::{MsiCapability, MsixCapability},
     Bar,
@@ -15,7 +15,7 @@ use spinning_top::Spinlock;
 use tracing::{debug, info};
 
 // TODO: this should have an interrupt guard as well
-static INTERRUPT_ROUTING: Spinlock<BTreeMap<u32, Vec<Arc<Event>>>> = Spinlock::new(BTreeMap::new());
+static INTERRUPT_ROUTING: Spinlock<BTreeMap<u32, Vec<Arc<Interrupt>>>> = Spinlock::new(BTreeMap::new());
 
 pub struct PciAccess {
     start: *const u8,
@@ -105,19 +105,20 @@ impl ConfigRegionAccess for PciAccess {
 }
 
 impl PciInterruptConfigurator for PciAccess {
-    fn configure_legacy(&self, function: PciAddress, pin: u8) -> Arc<Event> {
+    fn configure_legacy(&self, function: PciAddress, pin: u8) -> Arc<Interrupt> {
         info!("Configuring PCI device to use legacy interrupts: {:?}", function);
-        let event = Event::new();
+        // TODO: this could mask/unmask maybe? Doesn't seem to be needed on QEMU
+        let interrupt = Interrupt::new(None);
 
         let remapped_interrupt =
             self.legacy_interrupt_remapping.get(&(function, pin)).expect("PCI interrupt not in remapping!");
-        INTERRUPT_ROUTING.lock().get_mut(&remapped_interrupt).unwrap().push(event.clone());
+        INTERRUPT_ROUTING.lock().get_mut(&remapped_interrupt).unwrap().push(interrupt.clone());
 
-        event
+        interrupt
     }
 
-    fn configure_msi(&self, function: PciAddress, msi: &mut MsiCapability) -> Arc<Event> {
-        let event = Event::new();
+    fn configure_msi(&self, function: PciAddress, msi: &mut MsiCapability) -> Arc<Interrupt> {
+        let interrupt = Interrupt::new(None);
         info!("Configuring PCI device to use MSI interrupts: {:?}", function);
 
         // TODO: allocate numbers from somewhere???
@@ -125,7 +126,7 @@ impl PciInterruptConfigurator for PciAccess {
         // the device tree and then reserve ones used by other devices or something? (this feels
         // like it could live in the common kernel and be useful for everyone)
         let message_number = 2;
-        INTERRUPT_ROUTING.lock().insert(message_number, vec![event.clone()]);
+        INTERRUPT_ROUTING.lock().insert(message_number, vec![interrupt.clone()]);
 
         interrupts::handle_interrupt(message_number as u16, pci_interrupt_handler);
 
@@ -133,16 +134,16 @@ impl PciInterruptConfigurator for PciAccess {
         msi.set_message_info(0x28000000, message_number as u32, self);
         msi.set_enabled(true, self);
 
-        event
+        interrupt
     }
 
-    fn configure_msix(&self, function: PciAddress, table_bar: Bar, msix: &mut MsixCapability) -> Arc<Event> {
-        let event = Event::new();
+    fn configure_msix(&self, function: PciAddress, table_bar: Bar, msix: &mut MsixCapability) -> Arc<Interrupt> {
+        let interrupt = Interrupt::new(None);
         info!("Configuring PCI device to use MSI-X interrupts: {:?}", function);
 
         // TODO: this is bad and we should allocate these for real as per above
         let message_number = 3;
-        INTERRUPT_ROUTING.lock().insert(message_number, vec![event.clone()]);
+        INTERRUPT_ROUTING.lock().insert(message_number, vec![interrupt.clone()]);
 
         interrupts::handle_interrupt(message_number as u16, pci_interrupt_handler);
 
@@ -174,15 +175,15 @@ impl PciInterruptConfigurator for PciAccess {
             ptr::write_volatile(entry_ptr.byte_add(0x0c), 0);
         }
 
-        event
+        interrupt
     }
 }
 
 fn pci_interrupt_handler(number: u16) {
     let routing = INTERRUPT_ROUTING.lock();
-    if let Some(events) = routing.get(&(number as u32)) {
-        for event in events {
-            event.signal();
+    if let Some(interrupts) = routing.get(&(number as u32)) {
+        for interrupt in interrupts {
+            interrupt.trigger();
         }
     }
 }

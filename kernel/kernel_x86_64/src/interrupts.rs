@@ -56,10 +56,16 @@ const APIC_SPURIOUS_VECTOR: u8 = 0xff;
 
 type PlatformHandler = fn(&InterruptStackFrame, u8);
 
+#[derive(Clone, Copy)]
+struct PlatformInterruptEntry {
+    handler: PlatformHandler,
+    irq_to_mask: Option<u32>,
+}
+
 pub struct InterruptController {
     model: InterruptModel<Global>,
     isa_gsi_mappings: [u32; NUM_ISA_INTERRUPTS],
-    platform_handlers: [Option<PlatformHandler>; NUM_PLATFORM_VECTORS],
+    platform_handlers: [Option<PlatformInterruptEntry>; NUM_PLATFORM_VECTORS],
     io_apic: IoApic,
 }
 
@@ -268,10 +274,10 @@ impl InterruptController {
         }
     }
 
-    pub fn allocate_platform_interrupt(&mut self, handler: PlatformHandler) -> u8 {
+    pub fn allocate_platform_interrupt(&mut self, handler: PlatformHandler, irq_to_mask: Option<u32>) -> u8 {
         for i in 0..NUM_PLATFORM_VECTORS {
             if self.platform_handlers[i].is_none() {
-                self.platform_handlers[i] = Some(handler);
+                self.platform_handlers[i] = Some(PlatformInterruptEntry { handler, irq_to_mask });
                 return FREE_VECTORS_START + i as u8;
             }
         }
@@ -285,8 +291,10 @@ impl InterruptController {
         pin_polarity: PinPolarity,
         trigger_mode: TriggerMode,
         handler: PlatformHandler,
+        mask_on_trigger: bool,
     ) -> Result<u8, ()> {
-        let platform_interrupt = self.allocate_platform_interrupt(handler);
+        let platform_interrupt =
+            self.allocate_platform_interrupt(handler, if mask_on_trigger { Some(gsi) } else { None });
         self.io_apic.write_entry(
             gsi,
             platform_interrupt,
@@ -297,6 +305,10 @@ impl InterruptController {
             0,
         );
         Ok(platform_interrupt)
+    }
+
+    pub fn rearm_interrupt(&mut self, gsi: u32) {
+        self.io_apic.set_irq_mask(gsi, false);
     }
 }
 
@@ -423,10 +435,14 @@ pub extern "C" fn double_fault_handler(stack_frame: &ExceptionWithErrorStackFram
 #[no_mangle]
 pub extern "C" fn handle_platform_interrupt(stack_frame: &InterruptStackFrame, number: u8) {
     assert!((FREE_VECTORS_START..(FREE_VECTORS_START + NUM_PLATFORM_VECTORS as u8)).contains(&number));
-    if let Some(handler) =
-        INTERRUPT_CONTROLLER.get().try_lock().unwrap().platform_handlers[(number - FREE_VECTORS_START) as usize]
-    {
-        (handler)(stack_frame, number);
+    let mut interrupt_controller = INTERRUPT_CONTROLLER.get().try_lock().unwrap();
+
+    if let Some(entry) = interrupt_controller.platform_handlers[(number - FREE_VECTORS_START) as usize] {
+        (entry.handler)(stack_frame, number);
+
+        if let Some(irq) = entry.irq_to_mask {
+            interrupt_controller.io_apic.set_irq_mask(irq, true);
+        }
     } else {
         panic!("Got platform interrupt but it has no handler! Vector = {}", number);
     }

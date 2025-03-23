@@ -15,6 +15,7 @@ use std::{
         channel::Channel,
         ddk::dma::{DmaObject, DmaPool, DmaToken},
         event::Event,
+        interrupt::Interrupt,
         memory_object::MemoryObject,
         syscall::MemoryObjectFlags,
     },
@@ -46,7 +47,7 @@ impl Controller {
     pub fn new(
         register_base: usize,
         platform_bus_bus_channel: Arc<Channel<BusDriverMessage, !>>,
-        interrupt_event: Event,
+        interrupt_event: Interrupt,
     ) -> Arc<Controller> {
         let caps = Capabilities::read_from_registers(register_base);
         info!("Capabilites: {:#?}", caps);
@@ -81,8 +82,7 @@ impl Controller {
 
             async move {
                 loop {
-                    interrupt_event.wait_for_event().await;
-
+                    interrupt_event.wait_for_interrupt().await;
                     let status = controller.registers.read().read_status();
 
                     // Acknowledge all interrupt bits in the status register
@@ -94,6 +94,9 @@ impl Controller {
                                 .with(Status::PORT_CHANGE_DETECT, status.get(Status::PORT_CHANGE_DETECT)),
                         );
                     }
+
+                    // Re-arm the interrupt
+                    interrupt_event.ack();
 
                     if status.get(Status::ERR_INTERRUPT) {
                         panic!("EHCI controller has reported an error!");

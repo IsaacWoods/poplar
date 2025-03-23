@@ -15,7 +15,10 @@ use hal_x86_64::{
     },
     kernel_map,
 };
-use kernel::{object::event::Event, pci::PciInterruptConfigurator};
+use kernel::{
+    object::{event::Event, interrupt::Interrupt},
+    pci::PciInterruptConfigurator,
+};
 use pci_types::{
     capability::{MsiCapability, MsixCapability},
     Bar,
@@ -27,7 +30,7 @@ use tracing::info;
 
 // TODO: this should have an interrupt guard as well
 /// Maps platform interrupt numbers to sets of PCI events
-static INTERRUPT_ROUTING: Spinlock<BTreeMap<u8, Vec<Arc<Event>>>> = Spinlock::new(BTreeMap::new());
+static INTERRUPT_ROUTING: Spinlock<BTreeMap<u8, Vec<Arc<Interrupt>>>> = Spinlock::new(BTreeMap::new());
 
 /// Allows access to PCI configuration space via the ECAM.
 #[derive(Clone)]
@@ -102,7 +105,7 @@ impl ConfigRegionAccess for PciConfigurator {
 }
 
 impl PciInterruptConfigurator for PciConfigurator {
-    fn configure_legacy(&self, function: PciAddress, pin: u8) -> Arc<Event> {
+    fn configure_legacy(&self, function: PciAddress, pin: u8) -> Arc<Interrupt> {
         let pin = match pin {
             1 => Pin::IntA,
             2 => Pin::IntB,
@@ -115,30 +118,30 @@ impl PciInterruptConfigurator for PciConfigurator {
             .route(function.device() as u16, function.function() as u16, pin, &self.acpi.interpreter)
             .unwrap();
 
-        let event = Event::new();
+        let interrupt = Interrupt::new(Some(routed_gsi.irq as usize));
 
         let mut legacy_platform_interrupts = self.legacy_platform_interrupts.lock();
         if let Some(platform_interrupt) = legacy_platform_interrupts.get(&routed_gsi.irq) {
-            INTERRUPT_ROUTING.lock().get_mut(platform_interrupt).unwrap().push(event.clone());
+            INTERRUPT_ROUTING.lock().get_mut(platform_interrupt).unwrap().push(interrupt.clone());
         } else {
             let platform_interrupt = INTERRUPT_CONTROLLER
                 .get()
                 .lock()
-                .configure_gsi(routed_gsi.irq, PinPolarity::Low, TriggerMode::Level, handle_pci_interrupt)
+                .configure_gsi(routed_gsi.irq, PinPolarity::Low, TriggerMode::Level, handle_pci_interrupt, true)
                 .unwrap();
             legacy_platform_interrupts.insert(routed_gsi.irq, platform_interrupt);
-            INTERRUPT_ROUTING.lock().insert(platform_interrupt, vec![event.clone()]);
+            INTERRUPT_ROUTING.lock().insert(platform_interrupt, vec![interrupt.clone()]);
         }
 
-        event
+        interrupt
     }
 
-    fn configure_msi(&self, _function: PciAddress, msi: &mut MsiCapability) -> Arc<Event> {
-        let event = Event::new();
+    fn configure_msi(&self, _function: PciAddress, msi: &mut MsiCapability) -> Arc<Interrupt> {
+        let interrupt = Interrupt::new(None);
 
         let platform_interrupt =
-            INTERRUPT_CONTROLLER.get().lock().allocate_platform_interrupt(handle_pci_interrupt);
-        INTERRUPT_ROUTING.lock().insert(platform_interrupt, vec![event.clone()]);
+            INTERRUPT_CONTROLLER.get().lock().allocate_platform_interrupt(handle_pci_interrupt, None);
+        INTERRUPT_ROUTING.lock().insert(platform_interrupt, vec![interrupt.clone()]);
 
         let msi_address = {
             let mut address = 0;
@@ -156,16 +159,16 @@ impl PciInterruptConfigurator for PciConfigurator {
         msi.set_message_info(msi_address, msi_data, self);
         msi.set_enabled(true, self);
 
-        event
+        interrupt
     }
 
-    fn configure_msix(&self, function: PciAddress, bar: Bar, msix: &mut MsixCapability) -> Arc<Event> {
-        let event = Event::new();
+    fn configure_msix(&self, function: PciAddress, bar: Bar, msix: &mut MsixCapability) -> Arc<Interrupt> {
+        let interrupt = Interrupt::new(None);
         info!("Configuring PCI device to use MSI-X interrupts: {:?}", function);
 
         let platform_interrupt =
-            INTERRUPT_CONTROLLER.get().lock().allocate_platform_interrupt(handle_pci_interrupt);
-        INTERRUPT_ROUTING.lock().insert(platform_interrupt, vec![event.clone()]);
+            INTERRUPT_CONTROLLER.get().lock().allocate_platform_interrupt(handle_pci_interrupt, None);
+        INTERRUPT_ROUTING.lock().insert(platform_interrupt, vec![interrupt.clone()]);
 
         msix.set_enabled(true, self);
 
@@ -210,15 +213,15 @@ impl PciInterruptConfigurator for PciConfigurator {
             ptr::write_volatile(entry_ptr.byte_add(0x0c), 0);
         }
 
-        event
+        interrupt
     }
 }
 
 pub fn handle_pci_interrupt(_: &InterruptStackFrame, platform_interrupt: u8) {
     let routing = INTERRUPT_ROUTING.lock();
-    if let Some(events) = routing.get(&platform_interrupt) {
-        for event in events {
-            event.signal();
+    if let Some(interrupts) = routing.get(&platform_interrupt) {
+        for interrupt in interrupts {
+            interrupt.trigger();
         }
     } else {
         panic!("Unhandled PCI interrupt: {}", platform_interrupt);

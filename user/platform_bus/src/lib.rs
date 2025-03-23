@@ -18,6 +18,7 @@
 
 pub mod input;
 
+use poplar::interrupt::Interrupt;
 use ptah::{Deserialize, Serialize};
 use std::{
     collections::BTreeMap,
@@ -76,6 +77,10 @@ impl HandoffInfo {
         self.0.get(name)?.as_event()
     }
 
+    pub fn get_as_interrupt(&self, name: &str) -> Option<Interrupt> {
+        self.0.get(name)?.as_interrupt()
+    }
+
     pub fn get_as_channel(&self, name: &str) -> Option<Handle> {
         self.0.get(name)?.as_channel()
     }
@@ -127,6 +132,7 @@ pub enum HandoffProperty {
     Bytes(Vec<u8>),
     MemoryObject(Handle),
     Event(Handle),
+    Interrupt(Handle),
     Channel(Handle),
 }
 
@@ -169,6 +175,13 @@ impl HandoffProperty {
     pub fn as_event(&self) -> Option<Event> {
         match self {
             HandoffProperty::Event(value) => Some(Event::new_from_handle(*value)),
+            _ => None,
+        }
+    }
+
+    pub fn as_interrupt(&self) -> Option<Interrupt> {
+        match self {
+            HandoffProperty::Interrupt(value) => Some(Interrupt::new_from_handle(*value)),
             _ => None,
         }
     }

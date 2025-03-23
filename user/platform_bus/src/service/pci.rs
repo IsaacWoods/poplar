@@ -38,7 +38,7 @@ pub fn enumerate_pci_devices() -> BTreeMap<String, Device> {
             let mut properties = BTreeMap::new();
 
             if let Some(interrupt) = descriptor.interrupt {
-                properties.insert("pci.interrupt".to_string(), HandoffProperty::Event(interrupt));
+                properties.insert("pci.interrupt".to_string(), HandoffProperty::Interrupt(interrupt));
             }
 
             for (i, bar) in descriptor.bars.into_iter().enumerate() {

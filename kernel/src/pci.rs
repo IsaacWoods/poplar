@@ -1,4 +1,4 @@
-use crate::object::event::Event;
+use crate::object::interrupt::Interrupt;
 use alloc::{collections::BTreeMap, sync::Arc};
 use pci_types::{
     capability::{MsiCapability, MsixCapability, PciCapability},
@@ -28,7 +28,7 @@ pub struct PciDevice {
     pub sub_class: SubClass,
     pub interface: Interface,
     pub bars: [Option<Bar>; MAX_BARS],
-    pub interrupt_event: Option<Arc<Event>>,
+    pub interrupt: Option<Arc<Interrupt>>,
 }
 
 #[derive(Clone, Debug)]
@@ -37,21 +37,21 @@ pub struct PciInfo {
 }
 
 pub trait PciInterruptConfigurator {
-    /// Create an `Event` that is signalled when an interrupt arrives from the specified PCI
+    /// Create an `Interrupt` that is signalled when an interrupt arrives from the specified PCI
     /// device. This is used when the device does not support MSI or MSI-X interrupts. The event
     /// may be triggered when the device has not actually received an interrupt, due to interrupt
     /// pin sharing in the legacy system, and so receivers must be resilient to spurious events.
-    fn configure_legacy(&self, function: PciAddress, pin: u8) -> Arc<Event>;
+    fn configure_legacy(&self, function: PciAddress, pin: u8) -> Arc<Interrupt>;
 
-    /// Create an `Event` that is signalled when an interrupt arrives from the specified PCI
+    /// Create an `Interrupt` that is signalled when an interrupt arrives from the specified PCI
     /// device. The device must support configuration of its interrupts via the passed MSI
     /// capability.
-    fn configure_msi(&self, function: PciAddress, msi: &mut MsiCapability) -> Arc<Event>;
+    fn configure_msi(&self, function: PciAddress, msi: &mut MsiCapability) -> Arc<Interrupt>;
 
-    /// Create an `Event` that is signalled when an interrupt arrives from the specified PCI
+    /// Create an `Interrupt` that is signalled when an interrupt arrives from the specified PCI
     /// device. The device must support configuration of its interrupts via the passed MSI-X
     /// capability.
-    fn configure_msix(&self, function: PciAddress, table_bar: Bar, msix: &mut MsixCapability) -> Arc<Event>;
+    fn configure_msix(&self, function: PciAddress, table_bar: Bar, msix: &mut MsixCapability) -> Arc<Interrupt>;
 }
 
 pub struct PciResolver<A>
@@ -147,11 +147,11 @@ where
                 };
 
                 /*
-                 * Create an event that is triggered when an interrupt arrives for the PCI device.
+                 * Create an object that is triggered when an interrupt arrives for the PCI device.
                  * We try to use MSI or MSI-X if the device supports it, otherwise we have to use
                  * the shared interrupt pins.
                  */
-                let interrupt_event = endpoint_header
+                let interrupt = endpoint_header
                     .capabilities(&self.access)
                     .find_map(|capability| match capability {
                         PciCapability::Msi(mut msi) => Some(self.access.configure_msi(address, &mut msi)),
@@ -179,16 +179,7 @@ where
 
                 self.info.devices.insert(
                     address,
-                    PciDevice {
-                        vendor_id,
-                        device_id,
-                        revision,
-                        class,
-                        sub_class,
-                        interface,
-                        bars,
-                        interrupt_event,
-                    },
+                    PciDevice { vendor_id, device_id, revision, class, sub_class, interface, bars, interrupt },
                 );
             }
 

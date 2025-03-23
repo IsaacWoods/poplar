@@ -49,8 +49,8 @@ pub struct PlatformImpl {
 impl Platform for PlatformImpl {
     type PageTableSize = hal::memory::Size4KiB;
     type PageTable = PageTableImpl;
-    type TaskContext = task::TaskContext;
     type Clocksource = TscClocksource;
+    type TaskContext = task::TaskContext;
 
     fn new_task_context(kernel_stack: &Stack, user_stack: &Stack, task_entry_point: VAddr) -> Self::TaskContext {
         task::new_task_context(kernel_stack, user_stack, task_entry_point)
@@ -71,6 +71,13 @@ impl Platform for PlatformImpl {
         unsafe {
             core::ptr::copy(data.as_ptr(), virt, data.len());
         }
+    }
+
+    fn rearm_interrupt(interrupt: usize) {
+        // TODO: this should be replaced by a spinlock that actually disables interrupts...
+        unsafe { core::arch::asm!("cli") };
+        interrupts::INTERRUPT_CONTROLLER.get().try_lock().unwrap().rearm_interrupt(interrupt as u32);
+        unsafe { core::arch::asm!("sti") };
     }
 }
 
