@@ -136,6 +136,19 @@ where
                         }
 
                         let bar = endpoint_header.bar(i, &self.access);
+
+                        if let Some(bar) = &bar {
+                            match bar {
+                                Bar::Memory32 { address, size, .. } => {
+                                    info!("BAR{}: 32-bit memory @ {:#x}..{:#x}", i, address, address + size);
+                                }
+                                Bar::Memory64 { address, size, .. } => {
+                                    info!("BAR{}: 64-bit memory @ {:#x}..{:#x}", i, address, address + size);
+                                }
+                                Bar::Io { port } => info!("BAR{}: IO @ {:#x}", i, port),
+                            }
+                        }
+
                         skip_next = match bar {
                             Some(Bar::Memory64 { .. }) => true,
                             _ => false,
