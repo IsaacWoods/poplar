@@ -3,6 +3,7 @@
  * SPDX-License-Identifier: MPL-2.0
  */
 
+use crate::clocksource::TscClocksource;
 use core::{
     fmt,
     fmt::Write,
@@ -15,7 +16,8 @@ use spinning_top::Spinlock;
 use tracing::{span, Collect, Event, Level, Metadata};
 use tracing_core::span::Current as CurrentSpan;
 
-use crate::clocksource::TscClocksource;
+// TODO: a lot of the logging layer should be centralised in `kernel` with an arch-specific output
+// layer
 
 static LOGGER: Logger = Logger::new();
 
@@ -23,6 +25,8 @@ pub fn init() {
     LOGGER.serial.lock().init();
     tracing::dispatch::set_global_default(tracing::dispatch::Dispatch::from_static(&LOGGER))
         .expect("Failed to set default tracing dispatch");
+    log::set_logger(&LOGGER).unwrap();
+    log::set_max_level(log::LevelFilter::Info);
 }
 
 struct SerialWriter {
@@ -65,6 +69,39 @@ impl Logger {
     const fn new() -> Logger {
         Logger { next_id: AtomicU64::new(1), serial: Spinlock::new(SerialWriter::new()) }
     }
+}
+
+impl log::Log for Logger {
+    fn enabled(&self, metadata: &log::Metadata) -> bool {
+        metadata.level() <= log::Level::Debug
+    }
+
+    fn log(&self, record: &log::Record) {
+        if log::Log::enabled(&self, record.metadata()) {
+            let level = record.metadata().level();
+            let color = match level {
+                log::Level::Trace => "\x1b[36m",
+                log::Level::Debug => "\x1b[34m",
+                log::Level::Info => "\x1b[32m",
+                log::Level::Warn => "\x1b[33m",
+                log::Level::Error => "\x1b[31m",
+            };
+            let mut serial = self.serial.lock();
+            let time = TscClocksource::nanos_since_boot();
+            writeln!(
+                serial,
+                "[{}][{}{:5}\x1b[0m] {}: {}",
+                time,
+                color,
+                level,
+                record.metadata().target(),
+                record.args()
+            )
+            .unwrap();
+        }
+    }
+
+    fn flush(&self) {}
 }
 
 impl Collect for Logger {

@@ -10,6 +10,7 @@ hal = { path = "../../lib/hal" }
 hal_x86_64 = { path = "../../lib/hal_x86_64" }
 seed = { path = "../../seed" }
 spinning_top = { version = "0.3" }
+log = "0.4"
 tracing = { git = "https://github.com/tokio-rs/tracing", default-features = false }
 tracing-core = { git = "https://github.com/tokio-rs/tracing", default-features = false }
 bit_field = "0.10"
