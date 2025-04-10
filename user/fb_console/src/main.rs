@@ -5,11 +5,7 @@
 // create a window for itself.
 
 use gfxconsole::{Framebuffer, GfxConsole};
-use ginkgo::{
-    ast::BindingResolver,
-    interpreter::{Interpreter, Value},
-    parse::Parser,
-};
+use ginkgo::{parse::Parser, vm::Vm};
 use log::info;
 use platform_bus::{
     input::{InputEvent as PlatformBusInputEvent, Key, KeyState},
@@ -48,8 +44,7 @@ struct Console {
     console: Spinlock<GfxConsole>,
     input_events: thingbuf::mpsc::Receiver<InputEvent>,
 
-    // TODO: we really need to separate out the like rendering/input management layer and the shell
-    // logic
+    // TODO: separate out the rendering/input management layer from the shell/console logic
     platform_bus_inspect: Channel<(), platform_bus::PlatformBusInspect>,
 }
 
@@ -79,41 +74,12 @@ fn spawn_framebuffer(
     };
 
     std::poplar::rt::spawn(async move {
-        // TODO: separate out graphical layer and shell layer with another channel maybe??
         writeln!(console.console.lock(), "Welcome to Poplar!").unwrap();
         write!(console.console.lock(), "> ").unwrap();
         console.control_channel.send(&()).unwrap();
 
-        let (output_sender, output_receiver) = thingbuf::mpsc::channel(16);
-
-        let mut interpreter = Interpreter::new();
-        let mut resolver = BindingResolver::new();
         let mut current_line = String::new();
-
-        interpreter.define_native_function("print", |params| {
-            assert!(params.len() == 1);
-            let value = params.get(0).unwrap();
-            output_sender.try_send(value.clone()).unwrap();
-            Value::Unit
-        });
-
-        interpreter.define_native_function("version", |params| {
-            assert!(params.len() == 0);
-            /*
-             * TODO: we don't really have a concept of Poplar versions yet. When this is more
-             * formalised, we should get it from somewhere central (i.e. env var during build) so
-             * this auto-updates.
-             */
-            Value::String("Poplar 0.1.0".to_string())
-        });
-
-        interpreter.define_native_function("inspect_platform_bus", |params| {
-            assert!(params.len() == 0);
-            console.platform_bus_inspect.send(&()).unwrap();
-            let info = console.platform_bus_inspect.receive_blocking().unwrap();
-            output_sender.try_send(Value::String(format!("{:#?}", info))).unwrap();
-            Value::Bool(true)
-        });
+        let mut vm = Vm::new();
 
         let mut mouse_x = 300u32;
         let mut mouse_y = 300u32;
@@ -128,33 +94,14 @@ fn spawn_framebuffer(
                         // for improving this experience
                         match key {
                             '\n' => {
-                                let mut stmts = Parser::new(&current_line).parse().unwrap();
-                                current_line.clear();
-
-                                for mut statement in &mut stmts {
-                                    resolver.resolve_bindings(&mut statement);
-                                }
-
-                                let mut result = None;
-                                for statement in stmts {
-                                    match interpreter.eval_stmt(statement) {
-                                        ginkgo::interpreter::ControlFlow::None => (),
-                                        ginkgo::interpreter::ControlFlow::Yield(value) => {
-                                            result = Some(value);
-                                        }
-                                        ginkgo::interpreter::ControlFlow::Return(value) => {
-                                            result = Some(value);
-                                        }
-                                    }
-                                }
+                                let parser = Parser::new(&current_line);
+                                let chunk = parser.parse().unwrap();
+                                vm.interpret(chunk);
+                                // TODO: probs don't randomly pop stuff off the stack lmao
 
                                 write!(console.console.lock(), "{}", key).unwrap();
-                                while let Ok(output) = output_receiver.try_recv() {
-                                    writeln!(console.console.lock(), "Output: {}", output).unwrap();
-                                }
-
-                                if let Some(result) = result {
-                                    writeln!(console.console.lock(), "Result: {}", result).unwrap();
+                                if let Some(result) = vm.stack.pop() {
+                                    writeln!(console.console.lock(), "Result: {:?}", result).unwrap();
                                 }
 
                                 write!(console.console.lock(), "\n> ").unwrap();
