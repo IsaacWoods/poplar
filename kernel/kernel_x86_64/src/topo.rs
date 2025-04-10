@@ -1,4 +1,5 @@
-use acpi::platform::ProcessorState;
+use crate::kacpi::PoplarAcpiHandler;
+use acpi::platform::{AcpiPlatform, ProcessorState};
 use alloc::vec::Vec;
 use hal_x86_64::hw::cpu::CpuInfo;
 use tracing::{info, warn};
@@ -20,7 +21,7 @@ pub struct Topology {
 }
 
 impl Topology {
-    pub fn new(cpu_info: CpuInfo, acpi_info: &acpi::PlatformInfo<alloc::alloc::Global>) -> Topology {
+    pub fn new(cpu_info: CpuInfo, acpi_info: &AcpiPlatform<PoplarAcpiHandler, alloc::alloc::Global>) -> Topology {
         info!(
             "We're running on an {:?} processor. The microarchitecture is: {:?}",
             cpu_info.vendor,

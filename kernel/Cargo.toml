@@ -22,3 +22,6 @@ maitake = { git = "https://github.com/hawkw/mycelium", features = ["alloc", "tra
 [workspace]
 members = ["kernel_x86_64", "kernel_riscv"]
 resolver = "2"
+
+[patch.crates-io]
+pci_types = { path = "../lib/pci_types" }

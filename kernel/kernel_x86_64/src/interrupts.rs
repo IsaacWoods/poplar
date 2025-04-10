@@ -1,7 +1,9 @@
 use crate::kacpi::AcpiManager;
-use acpi::InterruptModel;
-use alloc::{alloc::Global, sync::Arc, vec};
-use aml::namespace::AmlName;
+use acpi::{
+    aml::{namespace::AmlName, object::Object as AmlObject},
+    platform::InterruptModel,
+};
+use alloc::{alloc::Global, vec};
 use bit_field::BitField;
 use core::{str::FromStr, time::Duration};
 use hal::memory::PAddr;
@@ -86,7 +88,7 @@ impl InterruptController {
     }
 
     pub fn init(acpi: &AcpiManager) {
-        match &acpi.platform_info.interrupt_model {
+        match &acpi.platform.interrupt_model {
             InterruptModel::Apic(info) => {
                 if info.also_has_legacy_pics {
                     unsafe { Pic::new() }.remap_and_disable(ISA_INTERRUPTS_START, ISA_INTERRUPTS_START + 8);
@@ -107,10 +109,7 @@ impl InterruptController {
                  * Tell ACPI that we intend to use the APICs instead of the legacy PIC.
                  */
                 acpi.interpreter
-                    .invoke_method(
-                        AmlName::from_str("\\_PIC").unwrap(),
-                        vec![Arc::new(aml::object::Object::Integer(1))],
-                    )
+                    .invoke_method(AmlName::from_str("\\_PIC").unwrap(), vec![AmlObject::Integer(1).wrap()])
                     .expect("Failed to invoke \\_PIC");
 
                 /*
@@ -249,7 +248,7 @@ impl InterruptController {
                 };
 
                 INTERRUPT_CONTROLLER.initialize(Spinlock::new(InterruptController {
-                    model: acpi.platform_info.interrupt_model.clone(),
+                    model: acpi.platform.interrupt_model.clone(),
                     isa_gsi_mappings,
                     platform_handlers: [None; NUM_PLATFORM_VECTORS],
                     io_apic,

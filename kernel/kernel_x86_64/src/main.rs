@@ -159,7 +159,7 @@ pub extern "C" fn kentry(boot_info: &BootInfo) -> ! {
      * information.
      */
     let (acpi_manager, pci_access) = AcpiManager::initialize(&boot_info);
-    let topology = Topology::new(cpu_info, &acpi_manager.platform_info);
+    let topology = Topology::new(cpu_info, &acpi_manager.platform);
 
     /*
      * Initialise the interrupt controller, which enables interrupts, and start the per-cpu timer.

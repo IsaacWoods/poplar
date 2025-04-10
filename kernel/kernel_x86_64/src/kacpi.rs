@@ -1,9 +1,14 @@
 use crate::{clocksource::TscClocksource, kernel_map, pci::EcamAccess};
-use acpi::{AcpiHandler, AcpiTables, PciConfigRegions, PhysicalMapping, PlatformInfo};
+use acpi::{
+    aml::{AmlError, Interpreter},
+    platform::{AcpiPlatform, PciConfigRegions},
+    AcpiHandler,
+    AcpiTables,
+    PhysicalMapping,
+};
 use alloc::{alloc::Global, sync::Arc};
-use aml::Interpreter;
 use bit_field::BitField;
-use core::{ptr::NonNull, slice};
+use core::ptr::NonNull;
 use hal::memory::PAddr;
 use hal_x86_64::hw::port::Port;
 use kernel::clocksource::Clocksource;
@@ -13,9 +18,8 @@ use seed::boot_info::BootInfo;
 use tracing::{debug, info};
 
 pub struct AcpiManager {
-    pub tables: AcpiTables<PoplarAcpiHandler>,
-    pub platform_info: PlatformInfo<Global>,
-    pub interpreter: aml::Interpreter<AmlHandler<EcamAccess>>,
+    pub platform: AcpiPlatform<PoplarAcpiHandler, Global>,
+    pub interpreter: acpi::aml::Interpreter<AmlHandler<EcamAccess>>,
 }
 
 impl AcpiManager {
@@ -23,35 +27,35 @@ impl AcpiManager {
         if boot_info.rsdp_address.is_none() {
             panic!("Bootloader did not pass RSDP address. Booting without ACPI is not supported.");
         }
-        let tables = match unsafe {
-            AcpiTables::from_rsdp(PoplarAcpiHandler, usize::from(boot_info.rsdp_address.unwrap()))
-        } {
-            Ok(tables) => tables,
-            Err(err) => panic!("Failed to discover ACPI tables: {:?}", err),
+        let tables = unsafe {
+            AcpiTables::from_rsdp(PoplarAcpiHandler, usize::from(boot_info.rsdp_address.unwrap())).unwrap()
         };
-        let platform_info = tables.platform_info().unwrap();
 
-        let pci_access = crate::pci::EcamAccess::new(PciConfigRegions::new(&tables).unwrap());
-        let aml_handler = AmlHandler { pci_access: pci_access.clone() };
-        let interpreter = Interpreter::new(aml_handler);
-
-        if let Ok(ref dsdt) = tables.dsdt() {
-            let virtual_address = kernel_map::physical_to_virtual(PAddr::new(dsdt.address).unwrap());
-            let stream = unsafe { slice::from_raw_parts(virtual_address.ptr(), dsdt.length as usize) };
-            info!("DSDT parse: {:?}", interpreter.load_table(stream));
-
-            // TODO: find any present SSDTs and also parse them
-
-            info!("ACPI namespace: {}", interpreter.namespace.lock());
-        } else {
-            panic!("Cannot find valid DSDT. Booting without ACPI is not supported.");
+        for (addr, table) in tables.table_headers() {
+            info!(
+                "{} {:8x} {:4x} {:2x} {:6} {:8} {:2x} {:4} {:8x}",
+                table.signature,
+                addr,
+                table.length(),
+                table.revision(),
+                table.oem_id().unwrap_or("??????"),
+                table.oem_table_id().unwrap_or("????????"),
+                table.oem_revision(),
+                table.creator_id().unwrap_or("????"),
+                table.creator_revision(),
+            );
         }
 
-        // TODO: register operation regions
-        // TODO: run `_INI` on devices
-        // TODO: probs some other stuff ur meant to do
 
-        (Arc::new(AcpiManager { tables, platform_info, interpreter }), pci_access)
+        let platform = AcpiPlatform::new(tables).unwrap();
+        let pci_access = crate::pci::EcamAccess::new(PciConfigRegions::new(&platform.tables).unwrap());
+        let aml_handler = AmlHandler { pci_access: pci_access.clone() };
+
+        let interpreter = Interpreter::new_from_tables(PoplarAcpiHandler, aml_handler, &platform.tables).unwrap();
+        interpreter.initialize_namespace();
+        info!("ACPI namespace: {}", interpreter.namespace.lock());
+
+        (Arc::new(AcpiManager { platform, interpreter }), pci_access)
     }
 }
 
@@ -90,7 +94,7 @@ where
     }
 }
 
-impl<A> aml::Handler for AmlHandler<A>
+impl<A> acpi::aml::Handler for AmlHandler<A>
 where
     A: ConfigRegionAccess + Send + Sync,
 {
@@ -122,28 +126,28 @@ where
         unsafe { core::ptr::read_volatile(address.ptr()) }
     }
 
-    fn write_u8(&mut self, address: usize, value: u8) {
+    fn write_u8(&self, address: usize, value: u8) {
         debug!("AML: Writing byte to {:#x}: {:#x}", address, value);
         let address = hal_x86_64::kernel_map::physical_to_virtual(PAddr::new(address).unwrap());
         assert!(address.is_aligned(1));
         unsafe { core::ptr::write_volatile(address.mut_ptr(), value) }
     }
 
-    fn write_u16(&mut self, address: usize, value: u16) {
+    fn write_u16(&self, address: usize, value: u16) {
         debug!("AML: Writing word to {:#x}: {:#x}", address, value);
         let address = hal_x86_64::kernel_map::physical_to_virtual(PAddr::new(address).unwrap());
         assert!(address.is_aligned(2));
         unsafe { core::ptr::write_volatile(address.mut_ptr(), value) }
     }
 
-    fn write_u32(&mut self, address: usize, value: u32) {
+    fn write_u32(&self, address: usize, value: u32) {
         debug!("AML: Writing dword to {:#x}: {:#x}", address, value);
         let address = hal_x86_64::kernel_map::physical_to_virtual(PAddr::new(address).unwrap());
         assert!(address.is_aligned(4));
         unsafe { core::ptr::write_volatile(address.mut_ptr(), value) }
     }
 
-    fn write_u64(&mut self, address: usize, value: u64) {
+    fn write_u64(&self, address: usize, value: u64) {
         debug!("AML: Writing qword to {:#x}: {:#x}", address, value);
         let address = hal_x86_64::kernel_map::physical_to_virtual(PAddr::new(address).unwrap());
         assert!(address.is_aligned(8));
@@ -180,42 +184,38 @@ where
         unsafe { Port::new(port).write(value) }
     }
 
-    fn read_pci_u8(&self, segment: u16, bus: u8, device: u8, function: u8, offset: u16) -> u8 {
-        debug!("AML: Reading byte from PCI config space (segment={:#x},bus={:#x},device={:#x},function={:#x},offset={:#x})", segment, bus, device, function, offset);
-        let dword_read = unsafe {
-            self.pci_access.read(PciAddress::new(segment, bus, device, function), align_down(offset, 0x20))
-        };
+    fn read_pci_u8(&self, address: PciAddress, offset: u16) -> u8 {
+        debug!("AML: Reading byte from PCI config space {:?}(offset={:#x})", address, offset);
+        let dword_read = unsafe { self.pci_access.read(address, align_down(offset, 0x20)) };
         let start_bit = (offset % 0x20) as usize;
         dword_read.get_bits(start_bit..(start_bit + 8)) as u8
     }
 
-    fn read_pci_u16(&self, segment: u16, bus: u8, device: u8, function: u8, offset: u16) -> u16 {
-        debug!("AML: Reading word from PCI config space (segment={:#x},bus={:#x},device={:#x},function={:#x},offset={:#x})", segment, bus, device, function, offset);
-        let dword_read = unsafe {
-            self.pci_access.read(PciAddress::new(segment, bus, device, function), align_down(offset, 0x20))
-        };
+    fn read_pci_u16(&self, address: PciAddress, offset: u16) -> u16 {
+        debug!("AML: Reading word from PCI config space {:?}(offset={:#x})", address, offset);
+        let dword_read = unsafe { self.pci_access.read(address, align_down(offset, 0x20)) };
         let start_bit = (offset % 0x20) as usize;
         dword_read.get_bits(start_bit..(start_bit + 16)) as u16
     }
 
-    fn read_pci_u32(&self, segment: u16, bus: u8, device: u8, function: u8, offset: u16) -> u32 {
-        debug!("AML: Reading dword from PCI config space (segment={:#x},bus={:#x},device={:#x},function={:#x},offset={:#x})", segment, bus, device, function, offset);
-        unsafe { self.pci_access.read(PciAddress::new(segment, bus, device, function), offset) }
+    fn read_pci_u32(&self, address: PciAddress, offset: u16) -> u32 {
+        debug!("AML: Reading dword from PCI config space {:?}(offset={:#x})", address, offset);
+        unsafe { self.pci_access.read(address, offset) }
     }
 
-    fn write_pci_u8(&self, segment: u16, bus: u8, device: u8, function: u8, offset: u16, value: u8) {
-        debug!("AML: Writing byte to PCI config space (segment={:#x},bus={:#x},device={:#x},function={:#x},offset={:#x}): {:#x}", segment, bus, device, function, offset, value);
+    fn write_pci_u8(&self, address: PciAddress, offset: u16, value: u8) {
+        debug!("AML: Writing byte from PCI config space {:?}(offset={:#x}) <- {:#x}", address, offset, value);
         unimplemented!()
     }
 
-    fn write_pci_u16(&self, segment: u16, bus: u8, device: u8, function: u8, offset: u16, value: u16) {
-        debug!("AML: Writing word to PCI config space (segment={:#x},bus={:#x},device={:#x},function={:#x},offset={:#x}): {:#x}", segment, bus, device, function, offset, value);
+    fn write_pci_u16(&self, address: PciAddress, offset: u16, value: u16) {
+        debug!("AML: Writing word from PCI config space {:?}(offset={:#x}) <- {:#x}", address, offset, value);
         unimplemented!()
     }
 
-    fn write_pci_u32(&self, segment: u16, bus: u8, device: u8, function: u8, offset: u16, value: u32) {
-        debug!("AML: Writing dword to PCI config space (segment={:#x},bus={:#x},device={:#x},function={:#x},offset={:#x}): {:#x}", segment, bus, device, function, offset, value);
-        unsafe { self.pci_access.write(PciAddress::new(segment, bus, device, function), offset, value) }
+    fn write_pci_u32(&self, address: PciAddress, offset: u16, value: u32) {
+        debug!("AML: Writing dword from PCI config space {:?}(offset={:#x}) <- {:#x}", address, offset, value);
+        unsafe { self.pci_access.write(address, offset, value) }
     }
 
     fn nanos_since_boot(&self) -> u64 {
@@ -228,5 +228,19 @@ where
 
     fn sleep(&self, _milliseconds: u64) {
         todo!()
+    }
+
+    fn create_mutex(&self) -> acpi::aml::Handle {
+        // TODO: keep track of mutexes
+        acpi::aml::Handle(0)
+    }
+
+    fn acquire(&self, mutex: acpi::aml::Handle, timeout: u16) -> Result<(), AmlError> {
+        // TODO
+        Ok(())
+    }
+
+    fn release(&self, mutex: acpi::aml::Handle) {
+        // TODO
     }
 }

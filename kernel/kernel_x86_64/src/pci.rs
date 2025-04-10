@@ -1,10 +1,12 @@
 use crate::{interrupts::INTERRUPT_CONTROLLER, kacpi::AcpiManager};
-use acpi::PciConfigRegions;
-use alloc::{alloc::Global, collections::btree_map::BTreeMap, sync::Arc, vec, vec::Vec};
-use aml::{
-    namespace::AmlName,
-    pci_routing::{PciRoutingTable, Pin},
+use acpi::{
+    aml::{
+        namespace::AmlName,
+        pci_routing::{PciRoutingTable, Pin},
+    },
+    platform::PciConfigRegions,
 };
+use alloc::{alloc::Global, collections::btree_map::BTreeMap, sync::Arc, vec, vec::Vec};
 use bit_field::BitField;
 use core::{ptr, str::FromStr};
 use hal::memory::PAddr;
@@ -15,10 +17,7 @@ use hal_x86_64::{
     },
     kernel_map,
 };
-use kernel::{
-    object::{event::Event, interrupt::Interrupt},
-    pci::PciInterruptConfigurator,
-};
+use kernel::{object::interrupt::Interrupt, pci::PciInterruptConfigurator};
 use pci_types::{
     capability::{MsiCapability, MsixCapability},
     Bar,
