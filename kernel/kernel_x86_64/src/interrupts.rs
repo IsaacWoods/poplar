@@ -3,7 +3,7 @@ use acpi::{
     aml::{namespace::AmlName, object::Object as AmlObject},
     platform::InterruptModel,
 };
-use alloc::{alloc::Global, vec};
+use alloc::vec;
 use bit_field::BitField;
 use core::{str::FromStr, time::Duration};
 use hal::memory::PAddr;
@@ -65,7 +65,7 @@ struct PlatformInterruptEntry {
 }
 
 pub struct InterruptController {
-    model: InterruptModel<Global>,
+    model: InterruptModel,
     isa_gsi_mappings: [u32; NUM_ISA_INTERRUPTS],
     platform_handlers: [Option<PlatformInterruptEntry>; NUM_PLATFORM_VECTORS],
     io_apic: IoApic,

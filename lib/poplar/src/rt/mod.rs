@@ -29,6 +29,11 @@ pub fn enter_loop() {
     loop {
         crate::syscall::yield_to_kernel();
 
+        // TODO: for userspace time - for now we could just have a syscall here to get the time
+        // elapsed to update the timer wheel with. In the future this could be mapped into
+        // userspace using one of those fancy kernel-supplied userspace shim things (like Fuchsia
+        // has/had) or maybe just return it from blocking syscalls??
+
         let runtime = RUNTIME.get();
         runtime.reactor.lock().poll();
         runtime.scheduler.tick();

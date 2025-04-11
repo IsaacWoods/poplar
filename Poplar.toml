@@ -10,6 +10,7 @@ user_tasks = [
     "virtio_gpu user/virtio_gpu",
     "fb_console user/fb_console",
 ]
+qemu_trace = ""
 
 [rv64_virt]
 # The release profile is heavily recommended for software-emulated targets to achieve reasonable speeds

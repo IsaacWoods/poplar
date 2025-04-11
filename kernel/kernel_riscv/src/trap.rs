@@ -43,6 +43,7 @@ extern "C" fn trap_handler(trap_frame: &mut TrapFrame, scause: usize, stval: usi
             // should be). `Timer::advance` returns a `Turn` struct that tells us when the next
             // deadline is - the most efficient thing if this is all we need the timer interrupt
             // for would be to wait til then?
+            // TODO: we don't actually use this for anything anymore. Maybe get rid of it.
             sbi::timer::set_timer(hal_riscv::hw::csr::Time::read() as u64 + 0x989680 / 50).unwrap();
         }
         Ok(other) => {

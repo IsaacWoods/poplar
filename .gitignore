@@ -14,3 +14,6 @@ seed_config_*
 # These are built on CI and should never be committed
 /doc_target/
 /docs/
+
+# Temp: we probs want this committed in the long run but it's noisy for now
+/hw/

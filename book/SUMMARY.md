@@ -16,6 +16,8 @@
     - [Capabilities](./userspace/capabilities.md)
     - [Platform Bus](./userspace/platform_bus.md)
 
+- [Ginkgo](./ginkgo/index.md)
+
 - [Journal](./journal/index.md)
     - [Building a `rustc` target for Poplar](./journal/rustc_target.md)
     - [USB](./journal/usb.md)

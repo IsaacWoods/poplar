@@ -6,6 +6,9 @@
 //! containers - the resulting data structure is then serialized using `ptah`, and can then be deserialized in the
 //! kernel.
 
+// TODO: it feels dubious to me to use `heapless` here for some reason - their layouts seem fine
+// but are not `repr(C)`, and I also wonder if a string table might be a better idea idk?
+
 use core::{fmt, ops::Range};
 use hal::memory::{Bytes, Flags, Frame, PAddr, VAddr};
 use heapless::{String, Vec};
@@ -26,6 +29,8 @@ pub struct BootInfo {
     /// Map of available memory that the kernel. This only includes ranges of memory that can be freely used at
     /// some point, and so memory used for e.g. UEFI runtime services are simply not included. The kernel must
     /// assume that memory not featured in this map is not available for use.
+    // TODO: maybe we should include all memory in the memory map? Like why not tell the kernel
+    // that stuff?
     pub memory_map: MemoryMap,
 
     pub loaded_images: Vec<LoadedImage, MAX_LOADED_IMAGES>,

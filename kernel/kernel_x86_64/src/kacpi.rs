@@ -1,7 +1,7 @@
 use crate::{clocksource::TscClocksource, kernel_map, pci::EcamAccess};
 use acpi::{
     aml::{AmlError, Interpreter},
-    platform::{PciConfigRegions, PlatformInfo},
+    platform::{AcpiPlatform, PciConfigRegions},
     AcpiHandler,
     AcpiTables,
     PhysicalMapping,
@@ -16,6 +16,29 @@ use mulch::math::align_down;
 use pci_types::{ConfigRegionAccess, PciAddress};
 use seed::boot_info::BootInfo;
 use tracing::{debug, info};
+
+/*
+ * TODO: allowing the computer to shut down
+ *
+ * - Provide a nice view of the PM1 register block (read/write support)
+ * - Register a handler for the SCI interrupt (respecting overrides etc.)
+ * - Configure events and enter ACPI mode
+ * - Detect a fixed power button press from the PM1 registers on an SCI
+ * - Do the actual shutdown bit: _PTS and _S5 and all that
+ *
+ * Long term:
+ * - Provide a power button device as a kernel device on the PlatformBus
+ * - Provide a power control device as a kernel device on the PlatformBus
+ * - Decide which bit of userspace is responsible for sticking the two together
+ *
+ * I think we'll need some clever system of scheduling work from the interrupt handler to execute
+ * later, because executing AML from an interrupt context is a crime. We could just utilise the
+ * `tasklet` Maitake async system for this - bonus points if we can make the interpreter itself
+ * async.
+ *
+ * Eventually, we'll want a kernel EC driver too I think - we can have a userspace aspect by making
+ * it a kernel device on the PlatformBus maybe.
+ */
 
 pub fn find_tables(boot_info: &BootInfo) -> AcpiTables<PoplarAcpiHandler> {
     if boot_info.rsdp_address.is_none() {
@@ -43,22 +66,21 @@ pub fn find_tables(boot_info: &BootInfo) -> AcpiTables<PoplarAcpiHandler> {
 }
 
 pub struct AcpiManager {
-    pub tables: AcpiTables<PoplarAcpiHandler>,
-    pub platform: PlatformInfo,
+    pub platform: AcpiPlatform<PoplarAcpiHandler>,
     pub interpreter: acpi::aml::Interpreter<AmlHandler<EcamAccess>>,
 }
 
 impl AcpiManager {
     pub fn initialize(tables: AcpiTables<PoplarAcpiHandler>) -> (Arc<AcpiManager>, EcamAccess) {
-        let platform = PlatformInfo::new(&tables).unwrap();
-        let pci_access = crate::pci::EcamAccess::new(PciConfigRegions::new(&tables).unwrap());
+        let platform = AcpiPlatform::new(tables).unwrap();
+        let pci_access = crate::pci::EcamAccess::new(PciConfigRegions::new(&platform.tables).unwrap());
         let aml_handler = AmlHandler { pci_access: pci_access.clone() };
 
-        let interpreter = Interpreter::new_from_tables(PoplarAcpiHandler, aml_handler, &tables).unwrap();
+        let interpreter = Interpreter::new_from_tables(PoplarAcpiHandler, aml_handler, &platform.tables).unwrap();
         interpreter.initialize_namespace();
         info!("ACPI namespace: {}", interpreter.namespace.lock());
 
-        (Arc::new(AcpiManager { tables, platform, interpreter }), pci_access)
+        (Arc::new(AcpiManager { platform, interpreter }), pci_access)
     }
 }
 

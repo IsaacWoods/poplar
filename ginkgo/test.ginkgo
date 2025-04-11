@@ -6,5 +6,3 @@ if x > 8 {
 } else {
     foo = 2;
 }
-
-foo

@@ -190,6 +190,10 @@ pub struct CallFrame {
     slot_offset: usize,
 }
 
+// TODO: `Vm` probably isn't really `Send` atm, but we need it to be. Look into how to store values
+// etc. in the future to make this thread-safe.
+unsafe impl Send for Vm {}
+
 impl Vm {
     pub fn new() -> Vm {
         Vm {
@@ -223,9 +227,10 @@ impl Vm {
                 panic!();
             };
 
+            // TODO: add `println` to Poplar's std
             // TODO: this should be behind a compiler flag or something maybe, as it's useful long-term
-            println!("{:?}", self.stack); // Print stack before we execute this op under last instruction
-            println!("[{:#x}] {:?}", self.ip - 1, op);
+            // println!("{:?}", self.stack); // Print stack before we execute this op under last instruction
+            // println!("[{:#x}] {:?}", self.ip - 1, op);
 
             match op {
                 Opcode::Return => {
