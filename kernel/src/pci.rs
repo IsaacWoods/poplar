@@ -126,6 +126,7 @@ where
         match header.header_type(&self.access) {
             HeaderType::Endpoint => {
                 let endpoint_header = EndpointHeader::from_header(header, &self.access).unwrap();
+
                 let bars = {
                     let mut bars = [None; 6];
 
@@ -158,6 +159,45 @@ where
 
                     bars
                 };
+
+                /*
+                 * TODO: this is temporary debugging required for writing Virtio drivers that need
+                 * to know the layout of the capability space. In the future, we'll pass out the
+                 * PCI config space to userspace drivers, as it has become obvious that we do need
+                 * to access it for a range of functionality. This will be part of the new kernel
+                 * PlatformBus device system.
+                 */
+                if vendor_id == 0x1af4 {
+                    for capability in endpoint_header.capabilities(&self.access) {
+                        info!("Capability: {:?}", capability);
+                        match capability {
+                            PciCapability::Vendor(address) => {
+                                let mut cap_bytes = [0u32; 4];
+                                cap_bytes[0] = unsafe { self.access.read(address.address, address.offset + 0) };
+                                cap_bytes[1] = unsafe { self.access.read(address.address, address.offset + 4) };
+                                cap_bytes[2] = unsafe { self.access.read(address.address, address.offset + 8) };
+                                cap_bytes[3] = unsafe { self.access.read(address.address, address.offset + 12) };
+
+                                #[derive(Clone, Copy, Debug)]
+                                #[repr(C)]
+                                pub struct VirtioVendorCap {
+                                    cap_id: u8,
+                                    cap_next: u8,
+                                    cap_length: u8,
+                                    typ: u8,
+                                    bar: u8,
+                                    id: u8,
+                                    padding: [u8; 2],
+                                    offset: u32,
+                                    length: u32,
+                                }
+                                let cap: VirtioVendorCap = unsafe { core::mem::transmute_copy(&cap_bytes) };
+                                info!("Vendor cap: {:?}", cap);
+                            }
+                            _ => {}
+                        }
+                    }
+                }
 
                 /*
                  * Create an object that is triggered when an interrupt arrives for the PCI device.
