@@ -1,4 +1,4 @@
-use crate::object::{GinkgoObj, GinkgoString, ObjHeader};
+use crate::object::{ErasedGc, GinkgoObj, GinkgoString, ObjHeader};
 use core::{cmp, fmt};
 use std::collections::BTreeMap;
 
@@ -349,7 +349,7 @@ pub enum Value {
     Unit,
     Integer(i64),
     Bool(bool),
-    Obj(*const ObjHeader),
+    Obj(ErasedGc),
 }
 
 impl Value {
@@ -370,10 +370,10 @@ impl Value {
     }
 
     pub unsafe fn as_obj<T: GinkgoObj>(&self) -> Option<&T> {
-        if let Value::Obj(ptr) = self {
-            let obj_typ = unsafe { (**ptr).typ };
+        if let Value::Obj(obj) = self {
+            let obj_typ = unsafe { (*obj.inner).typ };
             if obj_typ == T::TYP {
-                Some(unsafe { &*(*ptr as *const T) })
+                Some(unsafe { &*(obj.inner as *const T) })
             } else {
                 None
             }
@@ -388,7 +388,7 @@ impl cmp::PartialEq for Value {
         match (self, other) {
             (Self::Integer(l), Self::Integer(r)) => l == r,
             (Self::Bool(l), Self::Bool(r)) => l == r,
-            (Self::Obj(l), Self::Obj(r)) => crate::object::object_eq(*l, *r),
+            (Self::Obj(l), Self::Obj(r)) => crate::object::object_eq(&*l, &*r),
             _ => false,
         }
     }
@@ -403,5 +403,4 @@ impl cmp::PartialOrd for Value {
             _ => None,
         }
     }
-}
 }
