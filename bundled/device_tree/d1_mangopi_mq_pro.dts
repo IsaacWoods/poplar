@@ -432,6 +432,9 @@
 		dma-noncoherent;
 		#address-cells = <1>;
 		#size-cells = <1>;
+        // TODO: Isaac added this and it may well be very wrong and also why do we require it when
+        // Linux doesn't??
+        #interrupt-cells = <2>;
 
 		pio: pinctrl@2000000 {
 			compatible = "allwinner,sun20i-d1-pinctrl";
@@ -634,7 +637,9 @@
             reg = <0x2500000 0x400>;
             reg-io-width = <4>;
             reg-shift = <2>;
-            interrupts = <SOC_PERIPHERAL_IRQ(2) IRQ_TYPE_LEVEL_HIGH>;
+            // TODO: `fdt` doesn't seem to like the interrupt cell thingy
+            // interrupts = <SOC_PERIPHERAL_IRQ(2) IRQ_TYPE_LEVEL_HIGH>;
+            interrupts = <18>;
             clocks = <&ccu CLK_BUS_UART0>;
             resets = <&ccu RST_BUS_UART0>;
             dmas = <&dma 14>, <&dma 14>;

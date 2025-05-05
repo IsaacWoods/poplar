@@ -26,7 +26,9 @@ pub type PageTableImpl = crate::paging::PageTableImpl<Level3>;
 ///
 /// The top 1GiB is reserved for the kernel itself, starting at `0xffff_ffff_c000_0000`.
 pub mod kernel_map {
-    use hal::memory::{PAddr, VAddr};
+    use hal::memory::{mebibytes, Bytes, PAddr, VAddr};
+
+    pub const KERNEL_TABLE_ENTRY: usize = 511;
 
     pub const KERNEL_ADDRESS_SPACE_START: VAddr = VAddr::new(0xffff_ffc0_0000_0000);
     pub const PHYSICAL_MAP_BASE: VAddr = KERNEL_ADDRESS_SPACE_START;
@@ -44,4 +46,14 @@ pub mod kernel_map {
     /// The kernel starts at -1GiB. The kernel image is loaded directly at this address, and the following space until
     /// the top of memory is managed dynamically and contains the boot info structures, memory map, and kernel heap.
     pub const KERNEL_BASE: VAddr = VAddr::new(0xffff_ffff_c000_0000);
+
+    // TODO: not quite sure yet where these should be on Sv39
+    pub const KERNEL_STACKS_BASE: VAddr = VAddr::new(0x0);
+    /*
+     * There is an imposed maximum number of tasks because of the simple way we're allocating task kernel stacks.
+     * This is currently 65536 with a task kernel stack size of 2MiB.
+     * TODO: these could be wrong for Sv39 too
+     */
+    pub const STACK_SLOT_SIZE: Bytes = mebibytes(2);
+    pub const MAX_TASKS: usize = 65536;
 }
