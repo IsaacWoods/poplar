@@ -1,7 +1,8 @@
-use crate::vm::Chunk;
-use core::fmt;
-use std::{
-    alloc::{Allocator, Global, Layout},
+use crate::vm::{Chunk, Value};
+use alloc::alloc::Global;
+use core::{
+    alloc::{Allocator, Layout},
+    fmt,
     mem,
     ptr,
     str,
@@ -57,6 +58,10 @@ impl fmt::Debug for ErasedGc {
                 let value = unsafe { self.as_typ::<GinkgoFunction>().unwrap() };
                 write!(f, "GinkgoFunction {{ name: {:?}, ... }}", value.name)
             }
+            ObjType::GinkgoNativeFunction => {
+                let value = unsafe { self.as_typ::<GinkgoNativeFunction>().unwrap() };
+                write!(f, "GinkgoNativeFunction {{ name: {:?}, ... }}", value.name)
+            }
         }
     }
 }
@@ -75,6 +80,7 @@ pub struct ObjHeader {
 pub enum ObjType {
     GinkgoString,
     GinkgoFunction,
+    GinkgoNativeFunction,
 }
 
 pub fn object_eq(l: &ErasedGc, r: &ErasedGc) -> bool {
@@ -88,6 +94,7 @@ pub fn object_eq(l: &ErasedGc, r: &ErasedGc) -> bool {
             }
         }
         ObjType::GinkgoFunction => todo!(),
+        ObjType::GinkgoNativeFunction => todo!(),
         _ => false,
     }
 }
@@ -141,4 +148,28 @@ impl GinkgoFunction {
 
 impl GinkgoObj for GinkgoFunction {
     const TYP: ObjType = ObjType::GinkgoFunction;
+}
+
+#[repr(C)]
+pub struct GinkgoNativeFunction {
+    header: ObjHeader,
+    pub name: String,
+    pub func: Box<dyn Fn(&[Value]) -> Value>,
+}
+
+impl GinkgoNativeFunction {
+    pub fn new<F>(name: String, func: F) -> Gc<GinkgoNativeFunction>
+    where
+        F: Fn(&[Value]) -> Value + 'static,
+    {
+        Gc::new(GinkgoNativeFunction {
+            header: ObjHeader { typ: ObjType::GinkgoNativeFunction },
+            name,
+            func: Box::new(func),
+        })
+    }
+}
+
+impl GinkgoObj for GinkgoNativeFunction {
+    const TYP: ObjType = ObjType::GinkgoNativeFunction;
 }

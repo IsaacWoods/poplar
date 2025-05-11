@@ -1,4 +1,7 @@
-use ginkgo::{parse::Parser, vm::Vm};
+use ginkgo::{
+    parse::Parser,
+    vm::{Value, Vm},
+};
 use rustyline::{
     error::ReadlineError,
     validate::MatchingBracketValidator,
@@ -21,12 +24,12 @@ fn main() -> io::Result<()> {
 
     let mut vm = Vm::new();
 
-    // interpreter.define_native_function("print", |params| {
-    //     assert!(params.len() == 1);
-    //     let value = params.get(0).unwrap();
-    //     println!("PRINT: {:?}", value);
-    //     Value::Unit
-    // });
+    vm.define_native_fn("print", |args| {
+        assert!(args.len() == 1);
+        let value = args.get(0).unwrap();
+        println!("PRINT: {:?}", value);
+        Value::Unit
+    });
 
     // If we were passed a path, load and run that file
     if std::env::args().count() > 1 {

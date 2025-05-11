@@ -7,6 +7,8 @@
     unsigned_signed_diff
 )]
 
+extern crate alloc;
+
 pub mod lex;
 pub mod object;
 pub mod parse;

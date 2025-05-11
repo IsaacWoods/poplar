@@ -1,4 +1,4 @@
-use crate::object::{ErasedGc, GinkgoFunction, GinkgoObj, GinkgoString, ObjType};
+use crate::object::{ErasedGc, GinkgoFunction, GinkgoNativeFunction, GinkgoObj, GinkgoString, ObjType};
 use core::{cmp, fmt};
 use std::collections::BTreeMap;
 
@@ -202,6 +202,18 @@ impl Vm {
         }
     }
 
+    pub fn define_global(&mut self, name: &str, value: Value) {
+        self.globals.insert(name.to_string(), value);
+    }
+
+    pub fn define_native_fn<F>(&mut self, name: &str, func: F)
+    where
+        F: Fn(&[Value]) -> Value + 'static,
+    {
+        self.globals
+            .insert(name.to_string(), Value::Obj(GinkgoNativeFunction::new(name.to_string(), func).erase()));
+    }
+
     pub fn interpret(&mut self, chunk: Chunk) -> Value {
         self.chunk = Some(chunk);
         self.ip = 0;
@@ -351,6 +363,15 @@ impl Vm {
                                     ip: old_ip,
                                     slot_offset: old_slot_offset,
                                 });
+                            }
+                            ObjType::GinkgoNativeFunction => {
+                                let called_value =
+                                    unsafe { called_value.as_typ::<GinkgoNativeFunction>().unwrap() };
+                                let args = &self.stack[(self.stack.len() - arg_count)..];
+                                let return_value = (called_value.func)(args);
+
+                                self.stack.resize(self.stack.len() - arg_count - 1, Value::Unit);
+                                self.stack.push(return_value);
                             }
                             other => panic!("Cannot call value of type: {:?}", other),
                         }
