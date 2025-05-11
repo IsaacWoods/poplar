@@ -132,6 +132,7 @@ impl<'s> Parser<'s> {
             self.function_decl();
         } else if self.matches(TokenType::Return) {
             if self.matches(TokenType::Semicolon) {
+                self.emit(Opcode::Unit);
                 self.emit(Opcode::Return);
             } else {
                 self.expression(0);

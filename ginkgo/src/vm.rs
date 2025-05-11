@@ -60,6 +60,8 @@ opcodes! {
     25 => JumpIfTrue,
     26 => JumpIfFalse,
     27 => Call,
+    /// Push a value of type `Unit` onto the stack. This is used by functions that don't return values.
+    28 => Unit,
 }
 
 // TODO: we should probably be ref-counting these instead of cloning them...
@@ -165,6 +167,7 @@ impl fmt::Debug for Chunk {
                 Opcode::JumpIfTrue => decompile!("JumpIfTrue", jump_operand),
                 Opcode::JumpIfFalse => decompile!("JumpIfFalse", jump_operand),
                 Opcode::Call => decompile!("Call", operand),
+                Opcode::Unit => decompile!("Unit"),
             }
         }
         Ok(())
@@ -354,6 +357,9 @@ impl Vm {
                     } else {
                         panic!();
                     }
+                }
+                Opcode::Unit => {
+                    self.stack.push(Value::Unit);
                 }
             }
         }
