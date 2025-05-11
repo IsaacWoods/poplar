@@ -1,3 +1,5 @@
+use crate::vm::Chunk;
+use core::fmt;
 use std::{
     alloc::{Allocator, Global, Layout},
     mem,
@@ -25,17 +27,36 @@ where
     }
 }
 
-#[derive(Clone, PartialEq, Eq, Debug)]
+#[derive(Clone, PartialEq, Eq)]
 pub struct ErasedGc {
     pub inner: *mut ObjHeader,
 }
 
 impl ErasedGc {
+    pub fn typ(&self) -> ObjType {
+        unsafe { (*self.inner).typ }
+    }
+
     pub unsafe fn as_typ<T: GinkgoObj>(&self) -> Option<&T> {
         if unsafe { (*self.inner).typ == T::TYP } {
             Some(unsafe { &*(self.inner as *const T) })
         } else {
             None
+        }
+    }
+}
+
+impl fmt::Debug for ErasedGc {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self.typ() {
+            ObjType::GinkgoString => {
+                let value = unsafe { self.as_typ::<GinkgoString>().unwrap() };
+                write!(f, "GingkoString({:?})", value.as_str())
+            }
+            ObjType::GinkgoFunction => {
+                let value = unsafe { self.as_typ::<GinkgoFunction>().unwrap() };
+                write!(f, "GinkgoFunction {{ name: {:?}, ... }}", value.name)
+            }
         }
     }
 }
@@ -53,6 +74,7 @@ pub struct ObjHeader {
 #[repr(C)]
 pub enum ObjType {
     GinkgoString,
+    GinkgoFunction,
 }
 
 pub fn object_eq(l: &ErasedGc, r: &ErasedGc) -> bool {
@@ -101,4 +123,22 @@ impl GinkgoString {
 
 impl GinkgoObj for GinkgoString {
     const TYP: ObjType = ObjType::GinkgoString;
+}
+
+#[repr(C)]
+pub struct GinkgoFunction {
+    header: ObjHeader,
+    pub name: String,
+    pub arity: usize,
+    pub chunk: Chunk,
+}
+
+impl GinkgoFunction {
+    pub fn new(name: String, arity: usize, chunk: Chunk) -> Gc<GinkgoFunction> {
+        Gc::new(GinkgoFunction { header: ObjHeader { typ: ObjType::GinkgoFunction }, name, arity, chunk })
+    }
+}
+
+impl GinkgoObj for GinkgoFunction {
+    const TYP: ObjType = ObjType::GinkgoFunction;
 }

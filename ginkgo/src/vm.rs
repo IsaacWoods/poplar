@@ -1,4 +1,4 @@
-use crate::object::{ErasedGc, GinkgoObj, GinkgoString, ObjHeader};
+use crate::object::{ErasedGc, GinkgoFunction, GinkgoObj, GinkgoString, ObjType};
 use core::{cmp, fmt};
 use std::collections::BTreeMap;
 
@@ -59,8 +59,11 @@ opcodes! {
     24 => Jump,
     25 => JumpIfTrue,
     26 => JumpIfFalse,
+    27 => Call,
 }
 
+// TODO: we should probably be ref-counting these instead of cloning them...
+#[derive(Clone)]
 pub struct Chunk {
     pub code: Vec<u8>,
     constants: Vec<Value>,
@@ -161,6 +164,7 @@ impl fmt::Debug for Chunk {
                 Opcode::Jump => decompile!("Jump", jump_operand),
                 Opcode::JumpIfTrue => decompile!("JumpIfTrue", jump_operand),
                 Opcode::JumpIfFalse => decompile!("JumpIfFalse", jump_operand),
+                Opcode::Call => decompile!("Call", operand),
             }
         }
         Ok(())
@@ -171,13 +175,28 @@ pub struct Vm {
     pub stack: Vec<Value>,
     chunk: Option<Chunk>,
     ip: usize,
+    slot_offset: usize,
+    call_stack: Vec<CallFrame>,
 
     globals: BTreeMap<String, Value>,
 }
 
+pub struct CallFrame {
+    chunk: Chunk,
+    ip: usize,
+    slot_offset: usize,
+}
+
 impl Vm {
     pub fn new() -> Vm {
-        Vm { stack: Vec::new(), chunk: None, ip: 0, globals: BTreeMap::new() }
+        Vm {
+            stack: Vec::new(),
+            chunk: None,
+            ip: 0,
+            slot_offset: 0,
+            call_stack: Vec::new(),
+            globals: BTreeMap::new(),
+        }
     }
 
     pub fn interpret(&mut self, chunk: Chunk) -> Value {
@@ -194,7 +213,22 @@ impl Vm {
             println!("[{:#x}] {:?}", self.ip - 1, op);
 
             match op {
-                Opcode::Return => break,
+                Opcode::Return => {
+                    if let Some(frame) = self.call_stack.pop() {
+                        /*
+                         * Resize the stack to throw away the current call frame's temporaries. We pop the return value off first and then push it back on.
+                         */
+                        let return_value = self.stack.pop().unwrap();
+                        self.stack.resize(self.slot_offset, Value::Unit);
+                        self.stack.push(return_value);
+
+                        self.chunk = Some(frame.chunk);
+                        self.ip = frame.ip;
+                        self.slot_offset = frame.slot_offset;
+                    } else {
+                        break;
+                    }
+                }
                 Opcode::Constant => {
                     let index = self.next() as usize;
                     let constant = self.chunk.as_ref().unwrap().constants.get(index).unwrap();
@@ -226,12 +260,12 @@ impl Vm {
                     let _ = self.stack.pop().unwrap();
                 }
                 Opcode::DefineGlobal => {
-                    let value = self.stack.pop().unwrap();
                     let name = {
                         let name = self.stack.pop().unwrap();
                         let name = unsafe { name.as_obj::<GinkgoString>().unwrap() };
                         name.as_str().to_string()
                     };
+                    let value = self.stack.pop().unwrap();
                     self.globals.insert(name, value);
                 }
                 Opcode::GetGlobal => {
@@ -265,7 +299,7 @@ impl Vm {
                 }
                 Opcode::GetLocal => {
                     let slot = self.next() as usize;
-                    self.stack.push(self.stack.get(slot).unwrap().clone());
+                    self.stack.push(self.stack.get(self.slot_offset + slot).unwrap().clone());
                 }
                 Opcode::SetLocal => {
                     let slot = self.next() as usize;
@@ -292,6 +326,33 @@ impl Vm {
                     };
                     if !result {
                         self.ip = self.ip.checked_add_signed(jump_offset as isize).unwrap();
+                    }
+                }
+                Opcode::Call => {
+                    let arg_count = self.next() as usize;
+                    let called_value = self.stack.get(self.stack.len() - arg_count - 1).unwrap();
+
+                    if let Value::Obj(called_value) = called_value {
+                        match called_value.typ() {
+                            ObjType::GinkgoFunction => {
+                                let called_value = unsafe { called_value.as_typ::<GinkgoFunction>().unwrap() };
+                                let old_chunk = self.chunk.replace(called_value.chunk.clone()).unwrap();
+                                let old_ip = self.ip;
+                                let old_slot_offset = self.slot_offset;
+
+                                self.ip = 0;
+                                self.slot_offset += self.stack.len() - arg_count - 1;
+
+                                self.call_stack.push(CallFrame {
+                                    chunk: old_chunk,
+                                    ip: old_ip,
+                                    slot_offset: old_slot_offset,
+                                });
+                            }
+                            other => panic!("Cannot call value of type: {:?}", other),
+                        }
+                    } else {
+                        panic!();
                     }
                 }
             }

@@ -1,0 +1,11 @@
+fn foo(x, y) {
+    let z = x + y;
+    return z + 5;
+}
+
+fn bar(x) {
+    let bar_var = foo(x, 4);
+    return bar_var;
+}
+
+let x = bar(7);

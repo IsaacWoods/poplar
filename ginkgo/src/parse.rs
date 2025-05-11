@@ -1,9 +1,9 @@
 use crate::{
     lex::{Lex, PeekingIter, Token, TokenType, TokenValue},
-    object::{GinkgoString, ObjHeader},
+    object::{GinkgoFunction, GinkgoString},
     vm::{Chunk, Opcode, Value},
 };
-use std::collections::BTreeMap;
+use std::{collections::BTreeMap, mem};
 
 pub struct Parser<'s> {
     stream: PeekingIter<Lex<'s>>,
@@ -12,10 +12,20 @@ pub struct Parser<'s> {
     infix_parselets: BTreeMap<TokenType, InfixParselet>,
     precedence: BTreeMap<TokenType, u8>,
 
-    chunk: Option<Chunk>,
+    current_function: Function,
+    func_stack: Vec<Function>,
+}
 
+pub struct Function {
+    chunk: Chunk,
     scope_depth: usize,
     locals: Vec<Local>,
+}
+
+impl Function {
+    pub fn new() -> Function {
+        Function { chunk: Chunk::new(), scope_depth: 0, locals: Vec::new() }
+    }
 }
 
 pub struct Local {
@@ -27,14 +37,15 @@ pub struct Local {
 impl<'s> Parser<'s> {
     pub fn new(source: &'s str) -> Parser<'s> {
         let lex = PeekingIter::new(Lex::new(source));
+        // We treat the top-level as a special function
+        let script_func = Function { chunk: Chunk::new(), scope_depth: 0, locals: Vec::new() };
         let mut parser = Parser {
             stream: lex,
             prefix_parselets: BTreeMap::new(),
             infix_parselets: BTreeMap::new(),
             precedence: BTreeMap::new(),
-            chunk: Some(Chunk::new()),
-            scope_depth: 0,
-            locals: Vec::new(),
+            current_function: script_func,
+            func_stack: Vec::new(),
         };
         parser.register_parselets();
 
@@ -47,20 +58,19 @@ impl<'s> Parser<'s> {
         }
         // TODO: where should we add the dubious return??
         self.emit(Opcode::Return);
-        Ok(self.chunk.take().unwrap())
+
+        let script_func = mem::replace(&mut self.current_function, Function::new());
+        Ok(script_func.chunk)
     }
 
     pub fn statement(&mut self) {
         if self.matches(TokenType::Let) {
             let name = self.identifier();
 
-            if self.scope_depth > 0 {
-                self.locals.push(Local { name, depth: self.scope_depth });
-            } else {
-                let name = GinkgoString::new(&name);
-                let name_constant =
-                    self.chunk.as_mut().unwrap().create_constant(Value::Obj(name as *const ObjHeader));
-                self.emit2(Opcode::Constant, name_constant as u8);
+            if self.current_function.scope_depth > 0 {
+                self.current_function
+                    .locals
+                    .push(Local { name: name.clone(), depth: self.current_function.scope_depth });
             }
 
             // TODO: allow vars to not be initialized (initialize to unit maybe? Or a `nil` value?)
@@ -68,7 +78,10 @@ impl<'s> Parser<'s> {
             self.expression(0);
             self.consume(TokenType::Semicolon);
 
-            if self.scope_depth == 0 {
+            if self.current_function.scope_depth == 0 {
+                let name = GinkgoString::new(&name);
+                let name_constant = self.current_function.chunk.create_constant(Value::Obj(name.erase()));
+                self.emit2(Opcode::Constant, name_constant as u8);
                 self.emit(Opcode::DefineGlobal);
             }
         } else if self.matches(TokenType::LeftBrace) {
@@ -89,7 +102,7 @@ impl<'s> Parser<'s> {
             self.end_scope();
             let else_jump = self.emit_jump(Opcode::Jump);
 
-            self.chunk.as_mut().unwrap().patch_jump(then_jump);
+            self.current_function.chunk.patch_jump(then_jump);
             self.emit(Opcode::Pop); // Pop the condition on the else branch
 
             if self.matches(TokenType::Else) {
@@ -100,9 +113,9 @@ impl<'s> Parser<'s> {
                 }
                 self.end_scope();
             }
-            self.chunk.as_mut().unwrap().patch_jump(else_jump);
+            self.current_function.chunk.patch_jump(else_jump);
         } else if self.matches(TokenType::While) {
-            let loop_jump = self.chunk.as_ref().unwrap().current_offset();
+            let loop_jump = self.current_function.chunk.current_offset();
             self.expression(0);
             let exit_jump = self.emit_jump(Opcode::JumpIfFalse);
             self.emit(Opcode::Pop);
@@ -114,7 +127,17 @@ impl<'s> Parser<'s> {
             }
             self.end_scope();
             self.emit_jump_to(Opcode::Jump, loop_jump);
-            self.chunk.as_mut().unwrap().patch_jump(exit_jump);
+            self.current_function.chunk.patch_jump(exit_jump);
+        } else if self.matches(TokenType::Fn) {
+            self.function_decl();
+        } else if self.matches(TokenType::Return) {
+            if self.matches(TokenType::Semicolon) {
+                self.emit(Opcode::Return);
+            } else {
+                self.expression(0);
+                self.consume(TokenType::Semicolon);
+                self.emit(Opcode::Return);
+            }
         } else {
             /*
              * Default case - it's an expression statement.
@@ -127,11 +150,6 @@ impl<'s> Parser<'s> {
                 self.emit(Opcode::Pop);
             }
         }
-
-        // if self.matches(TokenType::Fn) {
-        //     return self.function();
-        // }
-
         // if self.matches(TokenType::Class) {
         //     let name = self.identifier();
         //     self.consume(TokenType::LeftBrace);
@@ -146,32 +164,6 @@ impl<'s> Parser<'s> {
         // return Stmt { typ: StmtTyp::ClassDef { name, defs } };
         // }
 
-        // TODO: I think we want `if`s to be expressions too actually? (with optional `else` if the
-        // then branch returns unit).
-        // if self.matches(TokenType::If) {
-        //     // let condition = self.expression(0);
-        //     // self.consume(TokenType::LeftBrace);
-        //     // let mut then_block = Vec::new();
-        //     // while !self.matches(TokenType::RightBrace) {
-        //     //     then_block.push(self.statement());
-        //     // }
-        //     // let then_block = Stmt::new_block(then_block);
-
-        //     // let else_block = if self.matches(TokenType::Else) {
-        //     //     self.consume(TokenType::LeftBrace);
-        //     //     let mut statements = Vec::new();
-        //     //     while !self.matches(TokenType::RightBrace) {
-        //     //         statements.push(self.statement());
-        //     //     }
-        //     // Some(Stmt::new_block(statements))
-        //     // } else {
-        //     //     None
-        //     // };
-
-        //     // return Stmt::new_if(condition, then_block, else_block);
-        //     todo!()
-        // }
-
         // if self.matches(TokenType::While) {
         //     let condition = self.expression(0);
         //     self.consume(TokenType::LeftBrace);
@@ -182,51 +174,53 @@ impl<'s> Parser<'s> {
 
         //     return Stmt::new_while(condition, Stmt::new_block(body));
         // }
-
-        // if self.matches(TokenType::Return) {
-        //     let value = self.expression(0);
-        //     self.consume(TokenType::Semicolon);
-        //     return Stmt::new_return(value);
-        // }
     }
 
-    // pub fn function(&mut self) -> Stmt {
-    //     let name = self.identifier();
-    //     self.consume(TokenType::LeftParen);
+    fn function_decl(&mut self) {
+        let name = self.identifier();
 
-    //     /*
-    //      * Only the first parameter can be `self`, and it can only occur inside classes.
-    //      * TODO: check here or in the resolver whether we're in the right place for a self?
-    //      */
-    //     let takes_self = if self.matches(TokenType::GinkgoSelf) {
-    //         self.matches(TokenType::Comma);
-    //         true
-    //     } else {
-    //         false
-    //     };
+        self.func_stack.push(mem::replace(&mut self.current_function, Function::new()));
+        self.begin_scope();
 
-    //     let mut params = Vec::new();
-    //     while !self.matches(TokenType::RightParen) {
-    //         // TODO: not sure if we want to parse expressions or something simpler (e.g. could
-    //         // just be idents for now, but might want more complex (e.g. patterns) in the
-    //         // future.
-    //         let param = self.expression(0);
-    //         if let ExprTyp::Identifier { name, .. } = param.typ {
-    //             params.push(name);
-    //         } else {
-    //             panic!("Invalid param name");
-    //         }
-    //         self.matches(TokenType::Comma);
-    //     }
+        // The first 'local' is the function being called, so put that in here
+        self.current_function.locals.push(Local { name: name.clone(), depth: self.current_function.scope_depth });
 
-    //     self.consume(TokenType::LeftBrace);
+        self.consume(TokenType::LeftParen);
+        let mut arity = 0;
+        if !self.matches(TokenType::RightParen) {
+            loop {
+                let param_name = self.identifier();
+                arity += 1;
 
-    //     let mut statements = Vec::new();
-    //     while !self.matches(TokenType::RightBrace) {
-    //         statements.push(self.statement());
-    //     }
-    //     Stmt::new_fn_def(name, takes_self, params, statements)
-    // }
+                self.current_function
+                    .locals
+                    .push(Local { name: param_name, depth: self.current_function.scope_depth });
+
+                if !self.matches(TokenType::Comma) {
+                    break;
+                }
+            }
+            self.consume(TokenType::RightParen);
+        }
+
+        self.consume(TokenType::LeftBrace);
+        while !self.matches(TokenType::RightBrace) {
+            self.statement();
+        }
+        self.end_scope();
+
+        let function = mem::replace(&mut self.current_function, self.func_stack.pop().unwrap());
+        let function = GinkgoFunction::new(name.clone(), arity, function.chunk);
+        let constant = self.current_function.chunk.create_constant(Value::Obj(function.erase())) as u8;
+        self.emit2(Opcode::Constant, constant);
+
+        if self.current_function.scope_depth == 0 {
+            let name = GinkgoString::new(&name);
+            let name_constant = self.current_function.chunk.create_constant(Value::Obj(name.erase()));
+            self.emit2(Opcode::Constant, name_constant as u8);
+            self.emit(Opcode::DefineGlobal);
+        }
+    }
 
     // TODO: borrow out of the source string for the return value
     pub fn identifier(&mut self) -> String {
@@ -271,20 +265,25 @@ impl<'s> Parser<'s> {
     }
 
     fn begin_scope(&mut self) {
-        self.scope_depth += 1;
+        self.current_function.scope_depth += 1;
     }
 
     fn end_scope(&mut self) {
-        self.scope_depth -= 1;
+        self.current_function.scope_depth -= 1;
 
         // Pop locals
         // TODO: can we do this from the back and then stop when we find a local to keep?
-        let locals_to_pop = self.locals.iter().filter(|local| local.depth > self.scope_depth).count();
+        let locals_to_pop = self
+            .current_function
+            .locals
+            .iter()
+            .filter(|local| local.depth > self.current_function.scope_depth)
+            .count();
         // TODO: PopN instruction
         for _ in 0..locals_to_pop {
             self.emit(Opcode::Pop);
         }
-        self.locals.truncate(locals_to_pop);
+        self.current_function.locals.truncate(locals_to_pop);
     }
 }
 
@@ -318,19 +317,18 @@ impl<'s> Parser<'s> {
             };
 
             // See if the name resolves to a local
-            let local_idx =
-                parser
-                    .locals
-                    .iter()
-                    .enumerate()
-                    .rev()
-                    .find_map(|(i, local)| if local.name == value { Some(i) } else { None });
+            let local_idx = parser.current_function.locals.iter().enumerate().rev().find_map(|(i, local)| {
+                if local.name == value {
+                    Some(i)
+                } else {
+                    None
+                }
+            });
             if let Some(local_idx) = local_idx {
                 parser.emit2(Opcode::GetLocal, local_idx as u8);
             } else {
                 let name = GinkgoString::new(&value.to_string());
-                let name_constant =
-                    parser.chunk.as_mut().unwrap().create_constant(Value::Obj(name as *const ObjHeader));
+                let name_constant = parser.current_function.chunk.create_constant(Value::Obj(name.erase()));
                 parser.emit2(Opcode::GetGlobal, name_constant as u8);
             }
         });
@@ -339,7 +337,7 @@ impl<'s> Parser<'s> {
                 Some(TokenValue::Integer(value)) => value,
                 _ => unreachable!(),
             };
-            let constant = parser.chunk.as_mut().unwrap().create_constant(Value::Integer(value as i64));
+            let constant = parser.current_function.chunk.create_constant(Value::Integer(value as i64));
             parser.emit2(Opcode::Constant, constant as u8);
         });
         self.register_prefix(TokenType::String, |parser, token| {
@@ -348,7 +346,7 @@ impl<'s> Parser<'s> {
                 _ => unreachable!(),
             };
             let value = GinkgoString::new(&value.to_string());
-            let constant = parser.chunk.as_mut().unwrap().create_constant(Value::Obj(value as *const ObjHeader));
+            let constant = parser.current_function.chunk.create_constant(Value::Obj(value.erase()));
             parser.emit2(Opcode::Constant, constant as u8);
         });
         let bool_literal: PrefixParselet = |parser, token| match token.typ {
@@ -460,7 +458,7 @@ impl<'s> Parser<'s> {
             let jump = parser.emit_jump(Opcode::JumpIfFalse);
             parser.emit(Opcode::Pop);
             parser.expression(PRECEDENCE_LOGICAL_AND);
-            parser.chunk.as_mut().unwrap().patch_jump(jump);
+            parser.current_function.chunk.patch_jump(jump);
         });
         self.register_infix(TokenType::PipePipe, PRECEDENCE_LOGICAL_OR, |parser, _token| {
             /*
@@ -469,7 +467,7 @@ impl<'s> Parser<'s> {
             let jump = parser.emit_jump(Opcode::JumpIfTrue);
             parser.emit(Opcode::Pop);
             parser.expression(PRECEDENCE_LOGICAL_OR);
-            parser.chunk.as_mut().unwrap().patch_jump(jump);
+            parser.current_function.chunk.patch_jump(jump);
         });
 
         /*
@@ -483,8 +481,8 @@ impl<'s> Parser<'s> {
              * a valid place to assign to.
              */
             // TODO: this won't work with GetLocal followed by the index :( - can we fix through somehow?? Maybe push the slot to the actual stack idk??
-            let hopefully_an_operand = parser.chunk.as_mut().unwrap().pop_last().unwrap();
-            let op_to_replace_with = match parser.chunk.as_mut().unwrap().pop_last_op() {
+            let hopefully_an_operand = parser.current_function.chunk.pop_last().unwrap();
+            let op_to_replace_with = match parser.current_function.chunk.pop_last_op() {
                 Some(Opcode::GetGlobal) => Opcode::SetGlobal,
                 Some(Opcode::GetLocal) => Opcode::SetLocal,
                 // TODO: runtime error
@@ -498,16 +496,16 @@ impl<'s> Parser<'s> {
         /*
          * Function calls.
          */
-        // self.register_infix(TokenType::LeftParen, PRECEDENCE_CALL, |parser, left, _token| {
-        //     let mut params = Vec::new();
-        //     while !parser.matches(TokenType::RightParen) {
-        //         let param = parser.expression(0);
-        //         parser.matches(TokenType::Comma);
-        //         params.push(param);
-        //     }
+        self.register_infix(TokenType::LeftParen, PRECEDENCE_CALL, |parser, _token| {
+            let mut arg_count = 0;
+            while !parser.matches(TokenType::RightParen) {
+                parser.expression(0);
+                parser.matches(TokenType::Comma);
+                arg_count += 1;
+            }
 
-        //     Expr::new(ExprTyp::Call { left: Box::new(left), params })
-        // });
+            parser.emit2(Opcode::Call, arg_count);
+        });
 
         // self.register_infix(TokenType::Dot, PRECEDENCE_PROPERTY_ACCESS, |parser, left, _token| {
         //     let property = parser.identifier();
@@ -572,20 +570,19 @@ impl<'s> Parser<'s> {
     }
 
     fn emit_raw(&mut self, byte: u8) {
-        self.chunk.as_mut().unwrap().push(byte);
+        self.current_function.chunk.push(byte);
     }
 
     fn emit2(&mut self, op: Opcode, operand: u8) {
-        let chunk = self.chunk.as_mut().unwrap();
-        chunk.push(op as u8);
-        chunk.push(operand);
+        self.current_function.chunk.push(op as u8);
+        self.current_function.chunk.push(operand);
     }
 
     /// Emit a `jump`, returning an offset to patch later
     fn emit_jump(&mut self, jump: Opcode) -> usize {
         self.emit(jump);
         // Record the offset of the jump's operand to patch later
-        let offset = self.chunk.as_ref().unwrap().current_offset();
+        let offset = self.current_function.chunk.current_offset();
         self.emit_raw(0);
         self.emit_raw(0);
         offset
@@ -594,7 +591,7 @@ impl<'s> Parser<'s> {
     /// Emit a `jump` to an already-known `target`
     fn emit_jump_to(&mut self, jump: Opcode, target: usize) {
         self.emit(jump);
-        let current_offset = self.chunk.as_ref().unwrap().current_offset();
+        let current_offset = self.current_function.chunk.current_offset();
         // XXX: add an extra 2 to account for the `i16` operand
         let bytes = i16::try_from(target.checked_signed_diff(current_offset + 2).unwrap()).unwrap().to_le_bytes();
         self.emit_raw(bytes[0]);
