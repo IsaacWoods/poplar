@@ -206,7 +206,7 @@ pub struct ExceptionWithErrorStackFrame {
 }
 
 pub macro wrap_handler($name: path) {{
-    #[naked]
+    #[unsafe(naked)]
     extern "C" fn wrapper() -> ! {
         unsafe {
             core::arch::naked_asm!("
@@ -267,7 +267,7 @@ pub macro wrap_handler($name: path) {{
 }}
 
 pub macro wrap_handler_with_error_code($name: path) {{
-    #[naked]
+    #[unsafe(naked)]
     extern "C" fn wrapper() -> ! {
         unsafe {
             core::arch::naked_asm!("

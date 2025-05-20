@@ -453,7 +453,7 @@ pub extern "C" fn handle_platform_interrupt(stack_frame: &InterruptStackFrame, n
 
 macro_rules! platform_handler_stub {
     ($name:ident, $number:literal) => {
-        #[naked]
+        #[unsafe(naked)]
         extern "C" fn $name() -> ! {
             unsafe {
                 core::arch::naked_asm!("

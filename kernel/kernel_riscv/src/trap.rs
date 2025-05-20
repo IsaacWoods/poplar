@@ -96,7 +96,7 @@ pub struct TrapFrame {
 }
 
 #[repr(align(4))]
-#[naked]
+#[unsafe(naked)]
 extern "C" fn trap_handler_shim() -> ! {
     unsafe {
         naked_asm!(
