@@ -5,7 +5,7 @@
 
 #![no_std]
 #![no_main]
-#![feature(decl_macro, naked_functions, allocator_api, iterator_try_collect, unsafe_cell_access, sync_unsafe_cell)]
+#![feature(decl_macro, allocator_api, iterator_try_collect, unsafe_cell_access, sync_unsafe_cell)]
 
 extern crate alloc;
 

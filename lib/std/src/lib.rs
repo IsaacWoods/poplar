@@ -1,5 +1,5 @@
 #![allow(internal_features)]
-#![feature(lang_items, prelude_import, async_iterator, core_intrinsics, naked_functions)]
+#![feature(lang_items, prelude_import, async_iterator, core_intrinsics)]
 #![no_std]
 
 extern crate alloc as alloc_crate;
@@ -71,14 +71,14 @@ use core::panic::PanicInfo;
 
 #[cfg(target_arch = "x86_64")]
 #[no_mangle]
-#[naked]
+#[unsafe(naked)]
 unsafe extern "C" fn _start() -> ! {
     core::arch::naked_asm!("jmp rust_entry")
 }
 
 #[cfg(target_arch = "riscv64")]
 #[no_mangle]
-#[naked]
+#[unsafe(naked)]
 unsafe extern "C" fn _start() -> ! {
     core::arch::naked_asm!(
         "
