@@ -67,7 +67,7 @@ where
     T: Deserialize<'de>,
 {
     fn deserialize(deserializer: &mut Deserializer<'de>) -> Result<[T; N]> {
-        let mut array: [MaybeUninit<T>; N] = MaybeUninit::uninit_array();
+        let mut array: [MaybeUninit<T>; N] = [const { MaybeUninit::uninit() }; N];
         let start_ptr: *mut T = MaybeUninit::slice_as_mut_ptr(&mut array);
 
         for i in 0..N {

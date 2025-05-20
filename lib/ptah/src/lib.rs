@@ -1,5 +1,5 @@
 #![no_std]
-#![feature(decl_macro, maybe_uninit_uninit_array, maybe_uninit_slice, never_type)]
+#![feature(decl_macro, maybe_uninit_slice, never_type)]
 
 #[cfg(feature = "alloc")]
 extern crate alloc;
