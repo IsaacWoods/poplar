@@ -1,12 +1,12 @@
 use crate::{clocksource::TscClocksource, kernel_map, pci::EcamAccess};
 use acpi::{
     aml::{AmlError, Interpreter},
-    platform::{AcpiPlatform, PciConfigRegions},
+    platform::{PciConfigRegions, PlatformInfo},
     AcpiHandler,
     AcpiTables,
     PhysicalMapping,
 };
-use alloc::{alloc::Global, sync::Arc};
+use alloc::sync::Arc;
 use bit_field::BitField;
 use core::ptr::NonNull;
 use hal::memory::PAddr;
@@ -18,7 +18,7 @@ use seed::boot_info::BootInfo;
 use tracing::{debug, info};
 
 pub struct AcpiManager {
-    pub platform: AcpiPlatform<PoplarAcpiHandler, Global>,
+    pub platform: PlatformInfo,
     pub interpreter: acpi::aml::Interpreter<AmlHandler<EcamAccess>>,
 }
 
@@ -46,12 +46,11 @@ impl AcpiManager {
             );
         }
 
-
-        let platform = AcpiPlatform::new(tables).unwrap();
-        let pci_access = crate::pci::EcamAccess::new(PciConfigRegions::new(&platform.tables).unwrap());
+        let platform = PlatformInfo::new(&tables).unwrap();
+        let pci_access = crate::pci::EcamAccess::new(PciConfigRegions::new(&tables).unwrap());
         let aml_handler = AmlHandler { pci_access: pci_access.clone() };
 
-        let interpreter = Interpreter::new_from_tables(PoplarAcpiHandler, aml_handler, &platform.tables).unwrap();
+        let interpreter = Interpreter::new_from_tables(PoplarAcpiHandler, aml_handler, &tables).unwrap();
         interpreter.initialize_namespace();
         info!("ACPI namespace: {}", interpreter.namespace.lock());
 
