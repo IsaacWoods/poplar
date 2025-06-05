@@ -17,35 +17,39 @@ use pci_types::{ConfigRegionAccess, PciAddress};
 use seed::boot_info::BootInfo;
 use tracing::{debug, info};
 
+pub fn find_tables(boot_info: &BootInfo) -> AcpiTables<PoplarAcpiHandler> {
+    if boot_info.rsdp_address.is_none() {
+        panic!("Bootloader did not pass RSDP address. Booting without ACPI is not supported.");
+    }
+    let tables =
+        unsafe { AcpiTables::from_rsdp(PoplarAcpiHandler, usize::from(boot_info.rsdp_address.unwrap())).unwrap() };
+
+    for (addr, table) in tables.table_headers() {
+        info!(
+            "{} {:8x} {:4x} {:2x} {:6} {:8} {:2x} {:4} {:8x}",
+            table.signature,
+            addr,
+            table.length(),
+            table.revision(),
+            table.oem_id().unwrap_or("??????"),
+            table.oem_table_id().unwrap_or("????????"),
+            table.oem_revision(),
+            table.creator_id().unwrap_or("????"),
+            table.creator_revision(),
+        );
+    }
+
+    tables
+}
+
 pub struct AcpiManager {
+    pub tables: AcpiTables<PoplarAcpiHandler>,
     pub platform: PlatformInfo,
     pub interpreter: acpi::aml::Interpreter<AmlHandler<EcamAccess>>,
 }
 
 impl AcpiManager {
-    pub fn initialize(boot_info: &BootInfo) -> (Arc<AcpiManager>, EcamAccess) {
-        if boot_info.rsdp_address.is_none() {
-            panic!("Bootloader did not pass RSDP address. Booting without ACPI is not supported.");
-        }
-        let tables = unsafe {
-            AcpiTables::from_rsdp(PoplarAcpiHandler, usize::from(boot_info.rsdp_address.unwrap())).unwrap()
-        };
-
-        for (addr, table) in tables.table_headers() {
-            info!(
-                "{} {:8x} {:4x} {:2x} {:6} {:8} {:2x} {:4} {:8x}",
-                table.signature,
-                addr,
-                table.length(),
-                table.revision(),
-                table.oem_id().unwrap_or("??????"),
-                table.oem_table_id().unwrap_or("????????"),
-                table.oem_revision(),
-                table.creator_id().unwrap_or("????"),
-                table.creator_revision(),
-            );
-        }
-
+    pub fn initialize(tables: AcpiTables<PoplarAcpiHandler>) -> (Arc<AcpiManager>, EcamAccess) {
         let platform = PlatformInfo::new(&tables).unwrap();
         let pci_access = crate::pci::EcamAccess::new(PciConfigRegions::new(&tables).unwrap());
         let aml_handler = AmlHandler { pci_access: pci_access.clone() };
@@ -54,7 +58,7 @@ impl AcpiManager {
         interpreter.initialize_namespace();
         info!("ACPI namespace: {}", interpreter.namespace.lock());
 
-        (Arc::new(AcpiManager { platform, interpreter }), pci_access)
+        (Arc::new(AcpiManager { tables, platform, interpreter }), pci_access)
     }
 }
 

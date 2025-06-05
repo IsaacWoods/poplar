@@ -148,6 +148,8 @@ pub extern "C" fn kentry(boot_info: &BootInfo) -> ! {
 
     // TODO: go back and set the #PF handler to use a separate kernel stack via the TSS
 
+    let acpi_tables = kacpi::find_tables(&boot_info);
+
     /*
      * Initialize the clocksource.
      */
@@ -158,7 +160,7 @@ pub extern "C" fn kentry(boot_info: &BootInfo) -> ! {
      * Initialize ACPI. This also gives us access to the PCI configuration space and topology
      * information.
      */
-    let (acpi_manager, pci_access) = AcpiManager::initialize(&boot_info);
+    let (acpi_manager, pci_access) = AcpiManager::initialize(acpi_tables);
     let topology = Topology::new(cpu_info, &acpi_manager.platform);
 
     /*
