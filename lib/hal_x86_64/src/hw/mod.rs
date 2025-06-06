@@ -1,5 +1,6 @@
 pub mod cpu;
 pub mod gdt;
+pub mod hpet;
 pub mod i8259_pic;
 pub mod idt;
 pub mod ioapic;

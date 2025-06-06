@@ -154,7 +154,7 @@ pub extern "C" fn kentry(boot_info: &BootInfo) -> ! {
      * Initialize the clocksource.
      */
     let cpu_info = CpuInfo::new();
-    TscClocksource::init(&cpu_info);
+    TscClocksource::init(&cpu_info, &acpi_tables);
 
     /*
      * Initialize ACPI. This also gives us access to the PCI configuration space and topology
