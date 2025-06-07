@@ -1,5 +1,5 @@
 use core::{
-    ptr,
+    ptr::{self, NonNull},
     slice,
     str::{self, FromStr},
 };
@@ -13,12 +13,12 @@ use mer::{
 use mulch::math;
 use seed::boot_info::{LoadedImage, Segment};
 use uefi::{
+    boot::{AllocateType, MemoryType},
     fs::Path,
     proto::media::{
         file::{File, FileAttribute, FileInfo, FileMode, FileType},
         fs::SimpleFileSystem,
     },
-    table::boot::{AllocateType, BootServices, MemoryType},
     Handle,
 };
 
@@ -32,19 +32,13 @@ pub struct KernelInfo {
     pub next_safe_address: VAddr,
 }
 
-pub fn load_kernel<A, P>(
-    boot_services: &BootServices,
-    volume_handle: Handle,
-    path: &Path,
-    page_table: &mut P,
-    allocator: &A,
-) -> KernelInfo
+pub fn load_kernel<A, P>(volume_handle: Handle, path: &Path, page_table: &mut P, allocator: &A) -> KernelInfo
 where
     A: FrameAllocator<Size4KiB>,
     P: PageTable<Size4KiB>,
 {
     info!("Loading kernel from: {}", path);
-    let (elf, pool_addr) = load_elf(boot_services, volume_handle, path);
+    let (elf, pool_addr) = load_elf(volume_handle, path);
     let entry_point = VAddr::new(elf.entry_point());
 
     let mut next_safe_address = kernel_map::KERNEL_BASE;
@@ -52,7 +46,7 @@ where
     for segment in elf.segments() {
         match segment.segment_type() {
             SegmentType::Load if segment.mem_size > 0 => {
-                let segment = load_segment(boot_services, segment, crate::KERNEL_MEMORY_TYPE, &elf, false);
+                let segment = load_segment(segment, crate::KERNEL_MEMORY_TYPE, &elf, false);
 
                 /*
                  * If this segment loads past `next_safe_address`, update it.
@@ -99,13 +93,15 @@ where
     assert!(guard_page_address.is_aligned(Size4KiB::SIZE), "Guard page address is not page aligned");
     page_table.unmap::<Size4KiB>(Page::starts_with(guard_page_address));
 
-    boot_services.free_pool(pool_addr).unwrap();
+    unsafe {
+        uefi::boot::free_pool(pool_addr).unwrap();
+    }
     KernelInfo { entry_point, stack_top, next_safe_address }
 }
 
-pub fn load_image(boot_services: &BootServices, volume_handle: Handle, name: &str, path: &Path) -> LoadedImage {
+pub fn load_image(volume_handle: Handle, name: &str, path: &Path) -> LoadedImage {
     info!("Loading requested '{}' image from: {}", name, path);
-    let (elf, pool_addr) = load_elf(boot_services, volume_handle, path);
+    let (elf, pool_addr) = load_elf(volume_handle, path);
 
     let mut image_data = LoadedImage::default();
     image_data.entry_point = VAddr::new(elf.entry_point());
@@ -114,7 +110,7 @@ pub fn load_image(boot_services: &BootServices, volume_handle: Handle, name: &st
     for segment in elf.segments() {
         match segment.segment_type() {
             SegmentType::Load if segment.mem_size > 0 => {
-                let segment = load_segment(boot_services, segment, crate::IMAGE_MEMORY_TYPE, &elf, true);
+                let segment = load_segment(segment, crate::IMAGE_MEMORY_TYPE, &elf, true);
 
                 match image_data.segments.push(segment) {
                     Ok(()) => (),
@@ -126,17 +122,18 @@ pub fn load_image(boot_services: &BootServices, volume_handle: Handle, name: &st
         }
     }
 
-    boot_services.free_pool(pool_addr).unwrap();
+    unsafe {
+        uefi::boot::free_pool(pool_addr).unwrap();
+    }
     image_data
 }
 
 /// TODO: This returns the elf file, and also the pool addr. When the caller is done with the elf, they need to
 /// free the pool themselves. When pools is made safer, we need to rework how this all works to tie the lifetime of
 /// the elf to the pool.
-fn load_elf<'a>(boot_services: &BootServices, volume_handle: Handle, path: &Path) -> (Elf<'a>, *mut u8) {
+fn load_elf<'a>(volume_handle: Handle, path: &Path) -> (Elf<'a>, NonNull<u8>) {
     // TODO: rewrite to use `uefi`'s FS stuff now we've caved and added a heap
-    let mut root_file_protocol = boot_services
-        .open_protocol_exclusive::<SimpleFileSystem>(volume_handle)
+    let mut root_file_protocol = uefi::boot::open_protocol_exclusive::<SimpleFileSystem>(volume_handle)
         .expect("Failed to get volume")
         .open_volume()
         .expect("Failed to open volume");
@@ -147,11 +144,10 @@ fn load_elf<'a>(boot_services: &BootServices, volume_handle: Handle, path: &Path
     let mut info_buffer = [0u8; 128];
     let info = file.get_info::<FileInfo>(&mut info_buffer).unwrap();
 
-    let pool_addr = boot_services
-        .allocate_pool(MemoryType::LOADER_DATA, info.file_size() as usize)
+    let pool_addr = uefi::boot::allocate_pool(MemoryType::LOADER_DATA, info.file_size() as usize)
         .expect("Failed to allocate data for image file");
     let file_data: &mut [u8] =
-        unsafe { slice::from_raw_parts_mut(pool_addr as *mut u8, info.file_size() as usize) };
+        unsafe { slice::from_raw_parts_mut(pool_addr.as_ptr() as *mut u8, info.file_size() as usize) };
 
     match file.into_type().unwrap() {
         FileType::Regular(mut regular_file) => {
@@ -168,13 +164,7 @@ fn load_elf<'a>(boot_services: &BootServices, volume_handle: Handle, path: &Path
     (elf, pool_addr)
 }
 
-fn load_segment(
-    boot_services: &BootServices,
-    segment: ProgramHeader,
-    memory_type: MemoryType,
-    elf: &Elf,
-    user_accessible: bool,
-) -> Segment {
+fn load_segment(segment: ProgramHeader, memory_type: MemoryType, elf: &Elf, user_accessible: bool) -> Segment {
     /*
      * We don't require each segment to fill up all the pages it needs - as long as the start of each segment is
      * page-aligned so they don't overlap, it's fine. This is mainly to support images linked by `lld` with the `-z
@@ -186,8 +176,7 @@ fn load_segment(
     let mem_size = math::align_up(segment.mem_size as usize, Size4KiB::SIZE);
 
     let num_frames = (mem_size as usize) / Size4KiB::SIZE;
-    let physical_address = boot_services
-        .allocate_pages(AllocateType::AnyPages, memory_type, num_frames)
+    let physical_address = uefi::boot::allocate_pages(AllocateType::AnyPages, memory_type, num_frames)
         .expect("Failed to allocate memory for image segment!");
 
     /*
@@ -197,7 +186,7 @@ fn load_segment(
      */
     assert!(segment.file_size <= segment.mem_size, "Segment's data will not fit in requested memory");
     unsafe {
-        slice::from_raw_parts_mut(physical_address as usize as *mut u8, segment.file_size as usize)
+        slice::from_raw_parts_mut(physical_address.as_ptr() as *mut u8, segment.file_size as usize)
             .copy_from_slice(segment.data(&elf));
     }
 
@@ -206,14 +195,14 @@ fn load_segment(
      */
     unsafe {
         ptr::write_bytes(
-            ((physical_address as usize) + (segment.file_size as usize)) as *mut u8,
+            (physical_address.addr().get() + (segment.file_size as usize)) as *mut u8,
             0,
             mem_size - (segment.file_size as usize),
         );
     }
 
     Segment {
-        physical_address: PAddr::new(physical_address as usize).unwrap(),
+        physical_address: PAddr::new(physical_address.addr().get()).unwrap(),
         virtual_address: VAddr::new(segment.virtual_address as usize),
         size: num_frames * Size4KiB::SIZE,
         flags: Flags {

@@ -1,6 +1,6 @@
 #![no_std]
 #![no_main]
-#![feature(cell_update, never_type)]
+#![feature(never_type)]
 
 extern crate alloc;
 
@@ -19,10 +19,10 @@ use seed::{
     SeedConfig,
 };
 use uefi::{
+    boot::{AllocateType, MemoryType, SearchType},
     fs::Path,
     prelude::*,
     proto::{console::gop::GraphicsOutput, loaded_image::LoadedImage},
-    table::boot::{AllocateType, MemoryType, SearchType},
     CString16,
 };
 
@@ -41,37 +41,32 @@ pub const KERNEL_HEAP_MEMORY_TYPE: MemoryType = MemoryType::custom(0x80000005);
 const KERNEL_HEAP_SIZE: Bytes = kibibytes(800);
 
 #[entry]
-fn efi_main(image_handle: Handle, system_table: SystemTable<Boot>) -> Status {
+fn main() -> Status {
+    let _ = uefi::helpers::init();
     Logger::init();
     info!("Hello, World!");
 
-    unsafe {
-        uefi::allocator::init(system_table.boot_services());
-    }
-
-    let video_mode = create_framebuffer(system_table.boot_services(), 800, 600);
+    let video_mode = create_framebuffer(800, 600);
     Logger::switch_to_graphical(&video_mode);
 
     /*
      * We create a set of page tables for the kernel. Because memory is identity-mapped in UEFI, we can act as
      * if we've placed the physical mapping at 0x0.
      */
-    let allocator = BootFrameAllocator::new(system_table.boot_services(), 64);
+    let allocator = BootFrameAllocator::new(64);
     let mut page_table = PageTableImpl::new(allocator.allocate(), VAddr::new(0x0));
 
     /*
-     * Get the handle of the volume that the loader's image was loaded off. This will allow us to get access to the
+     * Get the handle of the volume that the loader's image was loaded from. This will allow us to get access to the
      * filesystem that contains the kernel and other files.
      */
     let loader_image_device =
-        system_table.boot_services().open_protocol_exclusive::<LoadedImage>(image_handle).unwrap().device();
+        uefi::boot::open_protocol_exclusive::<LoadedImage>(uefi::boot::image_handle()).unwrap().device().unwrap();
 
     let config = {
         use core::convert::TryFrom;
         use uefi::{data_types::CString16, fs::Path, proto::media::fs::SimpleFileSystem};
-        let root_file_protocol = system_table
-            .boot_services()
-            .open_protocol_exclusive::<SimpleFileSystem>(loader_image_device)
+        let root_file_protocol = uefi::boot::open_protocol_exclusive::<SimpleFileSystem>(loader_image_device)
             .expect("Failed to get volume");
         let mut filesystem = uefi::fs::FileSystem::new(root_file_protocol);
         let config = filesystem.read(Path::new(&CString16::try_from("config.toml").unwrap())).unwrap();
@@ -80,15 +75,8 @@ fn efi_main(image_handle: Handle, system_table: SystemTable<Boot>) -> Status {
     info!("Config: {:?}", config);
 
     let kernel_path = CString16::try_from("kernel.elf").unwrap();
-    let kernel_info = {
-        image::load_kernel(
-            system_table.boot_services(),
-            loader_image_device,
-            Path::new(&kernel_path),
-            &mut page_table,
-            &allocator,
-        )
-    };
+    let kernel_info =
+        { image::load_kernel(loader_image_device, Path::new(&kernel_path), &mut page_table, &allocator) };
     let mut next_safe_address = kernel_info.next_safe_address;
 
     /*
@@ -100,11 +88,10 @@ fn efi_main(image_handle: Handle, system_table: SystemTable<Boot>) -> Status {
          * due to the identity mapping.
          */
         let boot_info_needed_frames = Size4KiB::frames_needed(mem::size_of::<BootInfo>());
-        let boot_info_physical_start = system_table
-            .boot_services()
-            .allocate_pages(AllocateType::AnyPages, BOOT_INFO_MEMORY_TYPE, boot_info_needed_frames)
-            .unwrap();
-        let identity_boot_info_ptr = boot_info_physical_start as *mut BootInfo;
+        let boot_info_physical_start =
+            uefi::boot::allocate_pages(AllocateType::AnyPages, BOOT_INFO_MEMORY_TYPE, boot_info_needed_frames)
+                .unwrap();
+        let identity_boot_info_ptr = boot_info_physical_start.as_ptr() as *mut BootInfo;
         unsafe {
             ptr::write(identity_boot_info_ptr, BootInfo::default());
         }
@@ -118,7 +105,7 @@ fn efi_main(image_handle: Handle, system_table: SystemTable<Boot>) -> Status {
         page_table
             .map_area(
                 boot_info_virtual_address,
-                PAddr::new(boot_info_physical_start as usize).unwrap(),
+                PAddr::new(boot_info_physical_start.addr().get()).unwrap(),
                 boot_info_needed_frames * Size4KiB::SIZE,
                 Flags { ..Default::default() },
                 &allocator,
@@ -128,19 +115,12 @@ fn efi_main(image_handle: Handle, system_table: SystemTable<Boot>) -> Status {
     };
     boot_info.magic = seed::boot_info::BOOT_INFO_MAGIC;
     boot_info.video_mode = Some(video_mode);
-    boot_info.rsdp_address = find_rsdp(&system_table);
+    boot_info.rsdp_address = find_rsdp();
 
     /*
      * Allocate the kernel heap.
      */
-    allocate_and_map_heap(
-        system_table.boot_services(),
-        boot_info,
-        &mut next_safe_address,
-        KERNEL_HEAP_SIZE,
-        &mut page_table,
-        &allocator,
-    );
+    allocate_and_map_heap(boot_info, &mut next_safe_address, KERNEL_HEAP_SIZE, &mut page_table, &allocator);
 
     /*
      * Load the requested images for early tasks.
@@ -151,13 +131,12 @@ fn efi_main(image_handle: Handle, system_table: SystemTable<Boot>) -> Status {
             path.push_str(&CString16::try_from(".elf").unwrap());
             path
         };
-        let info = image::load_image(system_table.boot_services(), loader_image_device, name, Path::new(&path));
+        let info = image::load_image(loader_image_device, name, Path::new(&path));
         boot_info.loaded_images.push(info).unwrap();
     }
 
-    uefi::allocator::exit_boot_services();
-    let (_system_table, memory_map) = system_table.exit_boot_services();
-    process_memory_map(memory_map, boot_info, &mut page_table, &allocator);
+    let memory_map = unsafe { uefi::boot::exit_boot_services(None) };
+    process_memory_map(&memory_map, boot_info, &mut page_table, &allocator);
 
     /*
      * Jump into the kernel!
@@ -188,46 +167,42 @@ fn efi_main(image_handle: Handle, system_table: SystemTable<Boot>) -> Status {
     }
 }
 
-fn find_rsdp(system_table: &SystemTable<Boot>) -> Option<PAddr> {
+fn find_rsdp() -> Option<PAddr> {
     use uefi::table::cfg::{ACPI2_GUID, ACPI_GUID};
 
-    /*
-     * Search the config table for an entry containing the address of the RSDP. First, search the whole table for
-     * a v2 RSDP, then if we don't find one, look for a v1 one.
-     */
-    system_table
-        .config_table()
-        .iter()
-        .find_map(
-            |entry| {
+    uefi::system::with_config_table(|entries| {
+        /*
+         * Search the config table for an entry containing the address of the RSDP. First, search the whole table for
+         * a v2 RSDP, then if we don't find one, look for a v1 one.
+         */
+        entries
+            .iter()
+            .find_map(|entry| {
                 if entry.guid == ACPI2_GUID {
                     Some(PAddr::new(entry.address as usize).unwrap())
                 } else {
                     None
                 }
-            },
-        )
-        .or_else(|| {
-            system_table.config_table().iter().find_map(|entry| {
-                if entry.guid == ACPI_GUID {
-                    Some(PAddr::new(entry.address as usize).unwrap())
-                } else {
-                    None
-                }
             })
-        })
+            .or_else(|| {
+                entries.iter().find_map(|entry| {
+                    if entry.guid == ACPI_GUID {
+                        Some(PAddr::new(entry.address as usize).unwrap())
+                    } else {
+                        None
+                    }
+                })
+            })
+    })
 }
 
 /// Process the final UEFI memory map when after we've exited boot services:
 ///    * Identity-map the loader, so it doesn't disappear from under us.
 ///    * Construct the memory map passed to the kernel, and add it to the boot info.
 ///    * Construct the physical memory mapping by mapping all of physical memory into the kernel address space.
-fn process_memory_map<'a, A, P>(
-    memory_map: uefi::table::boot::MemoryMap<'a>,
-    boot_info: &mut BootInfo,
-    mapper: &mut P,
-    allocator: &A,
-) where
+fn process_memory_map<M, A, P>(memory_map: &M, boot_info: &mut BootInfo, mapper: &mut P, allocator: &A)
+where
+    M: uefi::mem::memory_map::MemoryMap,
     A: FrameAllocator<Size4KiB>,
     P: PageTable<Size4KiB>,
 {
@@ -333,7 +308,6 @@ fn process_memory_map<'a, A, P>(
 /// Allocate and map the kernel heap. This takes the current next safe virtual address, uses it for the heap, and
 /// updates it.
 fn allocate_and_map_heap<A, P>(
-    boot_services: &BootServices,
     boot_info: &mut BootInfo,
     next_safe_address: &mut VAddr,
     heap_size: usize,
@@ -346,12 +320,12 @@ fn allocate_and_map_heap<A, P>(
     assert!(heap_size % Size4KiB::SIZE == 0, "Heap will not be page aligned");
     let frames_needed = Size4KiB::frames_needed(heap_size);
     let physical_start =
-        boot_services.allocate_pages(AllocateType::AnyPages, KERNEL_HEAP_MEMORY_TYPE, frames_needed).unwrap();
+        uefi::boot::allocate_pages(AllocateType::AnyPages, KERNEL_HEAP_MEMORY_TYPE, frames_needed).unwrap();
 
     mapper
         .map_area(
             *next_safe_address,
-            PAddr::new(physical_start as usize).unwrap(),
+            PAddr::new(physical_start.addr().get() as usize).unwrap(),
             heap_size,
             Flags { writable: true, ..Default::default() },
             allocator,
@@ -369,22 +343,17 @@ fn allocate_and_map_heap<A, P>(
     *next_safe_address = (Page::<Size4KiB>::contains(*next_safe_address + heap_size) + 1).start;
 }
 
-fn create_framebuffer(
-    boot_services: &BootServices,
-    requested_width: usize,
-    requested_height: usize,
-) -> VideoModeInfo {
+fn create_framebuffer(requested_width: usize, requested_height: usize) -> VideoModeInfo {
     use seed::boot_info::PixelFormat;
     use uefi::proto::console::gop::PixelFormat as GopFormat;
 
     // Get a list of all the devices that support the `GraphicsOutput` protocol
-    let handles = boot_services
-        .locate_handle_buffer(SearchType::from_proto::<GraphicsOutput>())
+    let handles = uefi::boot::locate_handle_buffer(SearchType::from_proto::<GraphicsOutput>())
         .expect("Failed to get list of graphics devices");
 
     for handle in handles.iter() {
         info!("Considering graphics device: {:?}", handle);
-        let mut proto = boot_services.open_protocol_exclusive::<GraphicsOutput>(*handle).unwrap();
+        let mut proto = uefi::boot::open_protocol_exclusive::<GraphicsOutput>(*handle).unwrap();
 
         let chosen_mode = proto.modes().find(|mode| {
             let (width, height) = mode.info().resolution();

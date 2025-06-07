@@ -1,6 +1,6 @@
-use core::{cell::Cell, ops::Range};
+use core::{cell::Cell, ops::Range, ptr};
 use hal::memory::{Frame, FrameAllocator, FrameSize, PAddr, Size4KiB};
-use uefi::table::boot::{AllocateType, BootServices};
+use uefi::boot::AllocateType;
 
 /// `BootFrameAllocator` is the allocator we use in the bootloader to allocate memory for the
 /// kernel page tables. It pre-allocates a preset number of frames using the UEFI boot services,
@@ -19,17 +19,16 @@ pub struct BootFrameAllocator {
 }
 
 impl BootFrameAllocator {
-    pub fn new(boot_services: &BootServices, num_frames: usize) -> BootFrameAllocator {
-        let start_frame_address = boot_services
-            .allocate_pages(AllocateType::AnyPages, crate::PAGE_TABLE_MEMORY_TYPE, num_frames)
-            .expect("Failed to allocate frames for page table allocator");
+    pub fn new(num_frames: usize) -> BootFrameAllocator {
+        let start_frame_address =
+            uefi::boot::allocate_pages(AllocateType::AnyPages, crate::PAGE_TABLE_MEMORY_TYPE, num_frames)
+                .expect("Failed to allocate frames for page table allocator");
 
-        // Zero all the memory so the page tables start with everything unmapped
         unsafe {
-            boot_services.set_mem(start_frame_address as usize as *mut _, num_frames * Size4KiB::SIZE, 0);
+            ptr::write_bytes(start_frame_address.as_ptr() as *mut u8, 0x00, num_frames * Size4KiB::SIZE);
         }
 
-        let start_frame = Frame::contains(PAddr::new(start_frame_address as usize).unwrap());
+        let start_frame = Frame::contains(PAddr::new(start_frame_address.addr().get()).unwrap());
         BootFrameAllocator { end_frame: start_frame + num_frames, next_frame: Cell::new(start_frame) }
     }
 }

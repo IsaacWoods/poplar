@@ -10,10 +10,13 @@ hal = { path = "../../lib/hal" }
 hal_x86_64 = { path = "../../lib/hal_x86_64" }
 log = "0.4"
 spinning_top = "0.3.0"
-uefi = { version = "0.24.0", features = ["alloc", "global_allocator"] }
+uefi = { version = "0.35.0", features = ["alloc", "global_allocator"] }
 mer = { path = "../../lib/mer" }
 gfxconsole = { path = "../../lib/gfxconsole" }
 mulch = { path = "../../lib/mulch" }
 heapless = "0.8.0"
-serde = { version = "1", default-features = false, features = ["derive", "alloc"] }
+serde = { version = "1", default-features = false, features = [
+    "derive",
+    "alloc",
+] }
 picotoml = { path = "../../lib/picotoml" }
