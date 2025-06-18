@@ -8,7 +8,7 @@ edition = "2021"
 hal = { path = "../../lib/hal" }
 hal_riscv = { path = "../../lib/hal_riscv" }
 kernel = { path = "../" }
-seed = { path = "../../seed" }
+seed_bootinfo = { path = "../../seed/seed_bootinfo" }
 tracing = { git = "https://github.com/tokio-rs/tracing", default-features = false }
 tracing-core = { git = "https://github.com/tokio-rs/tracing", default-features = false }
 spinning_top = { version = "0.3" }
@@ -17,7 +17,10 @@ bit_field = "0.10.2"
 fdt = { path = "../../lib/fdt/", features = ["pretty-printing"] }
 sbi = "0.2.0"
 pci_types = { path = "../../lib/pci_types/" }
-maitake = { git = "https://github.com/hawkw/mycelium", features = ["alloc", "tracing-02"] }
+maitake = { git = "https://github.com/hawkw/mycelium", features = [
+    "alloc",
+    "tracing-02",
+] }
 
 [features]
 platform_rv64_virt = ["hal_riscv/platform_rv64_virt"]

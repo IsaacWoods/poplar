@@ -1,13 +1,9 @@
-[package]
-name = "seed"
-version = "0.1.0"
-authors = ["Isaac Woods"]
-edition = "2021"
-
-[dependencies]
-hal = { path = "../lib/hal" }
-heapless = "0.8.0"
-serde = { version = "1", default-features = false, features = ["derive", "alloc"] }
-
 [workspace]
-members = ["seed_uefi", "seed_riscv", "d1_boot0"]
+resolver = "3"
+members = [
+    "seed_uefi",
+    "seed_riscv",
+    "d1_boot0",
+    "seed_bootinfo",
+    "seed_config",
+]

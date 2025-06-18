@@ -1,0 +1,11 @@
+[package]
+name = "seed_config"
+version = "0.1.0"
+authors = ["Isaac Woods"]
+edition = "2024"
+
+[dependencies]
+serde = { version = "1", default-features = false, features = [
+    "derive",
+    "alloc",
+] }

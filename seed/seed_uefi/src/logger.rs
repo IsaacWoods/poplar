@@ -2,7 +2,7 @@ use core::fmt;
 use gfxconsole::{Framebuffer, GfxConsole};
 use hal_x86_64::hw::serial::SerialPort;
 use log::{LevelFilter, Log, Metadata, Record};
-use seed::boot_info::VideoModeInfo;
+use seed_bootinfo::{PixelFormat, VideoModeInfo};
 use spinning_top::Spinlock;
 
 pub static LOGGER: Spinlock<Logger> = Spinlock::new(Logger::Uninit);
@@ -44,14 +44,19 @@ impl Logger {
     pub fn switch_to_graphical(
         VideoModeInfo { framebuffer_address, pixel_format, width, height, stride }: &VideoModeInfo,
     ) {
-        let framebuffer = match pixel_format {
-            seed::boot_info::PixelFormat::Rgb32 => {
-                Framebuffer::new(usize::from(*framebuffer_address) as *mut u32, *width, *height, *stride, 0, 8, 16)
-            }
-            seed::boot_info::PixelFormat::Bgr32 => {
-                Framebuffer::new(usize::from(*framebuffer_address) as *mut u32, *width, *height, *stride, 16, 8, 0)
-            }
+        let (r_shift, g_shift, b_shift) = match pixel_format {
+            PixelFormat::Rgb32 => (0, 8, 16),
+            PixelFormat::Bgr32 => (16, 8, 0),
         };
+        let framebuffer = Framebuffer::new(
+            *framebuffer_address as usize as *mut u32,
+            *width as usize,
+            *height as usize,
+            *stride as usize,
+            r_shift,
+            g_shift,
+            b_shift,
+        );
         *LOGGER.lock() = Logger::Graphical {
             serial_port: unsafe { SerialPort::new(hal_x86_64::hw::serial::COM1) },
             console: GfxConsole::new(framebuffer, 0x0000aaff, 0xffffffff),

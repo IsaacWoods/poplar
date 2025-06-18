@@ -1,8 +1,6 @@
-use core::{
-    ptr::{self, NonNull},
-    slice,
-    str::{self, FromStr},
-};
+use crate::{MemoryUsage, MemoryUse};
+use alloc::vec::Vec;
+use core::{ptr, slice};
 use hal::memory::{Flags, FrameAllocator, FrameSize, PAddr, Page, PageTable, Size4KiB, VAddr};
 use hal_x86_64::kernel_map;
 use log::info;
@@ -11,15 +9,10 @@ use mer::{
     Elf,
 };
 use mulch::math;
-use seed::boot_info::{LoadedImage, Segment};
+use seed_bootinfo::SegmentFlags;
 use uefi::{
     boot::{AllocateType, MemoryType},
-    fs::Path,
-    proto::media::{
-        file::{File, FileAttribute, FileInfo, FileMode, FileType},
-        fs::SimpleFileSystem,
-    },
-    Handle,
+    fs::{FileSystem, Path},
 };
 
 pub struct KernelInfo {
@@ -32,45 +25,58 @@ pub struct KernelInfo {
     pub next_safe_address: VAddr,
 }
 
-pub fn load_kernel<A, P>(volume_handle: Handle, path: &Path, page_table: &mut P, allocator: &A) -> KernelInfo
+pub fn load_kernel<A, P>(
+    fs: &mut FileSystem,
+    path: &Path,
+    page_table: &mut P,
+    allocator: &A,
+    memory_usage: &mut Vec<MemoryUsage>,
+) -> KernelInfo
 where
     A: FrameAllocator<Size4KiB>,
     P: PageTable<Size4KiB>,
 {
     info!("Loading kernel from: {}", path);
-    let (elf, pool_addr) = load_elf(volume_handle, path);
-    let entry_point = VAddr::new(elf.entry_point());
 
+    let file = fs.read(path).expect("Failed to load kernel ELF");
+    let Ok(elf) = Elf::new(&file) else {
+        panic!("Failed to parse kernel image as ELF");
+    };
+
+    let entry_point = VAddr::new(elf.entry_point());
     let mut next_safe_address = kernel_map::KERNEL_BASE;
 
     for segment in elf.segments() {
         match segment.segment_type() {
             SegmentType::Load if segment.mem_size > 0 => {
-                let segment = load_segment(segment, crate::KERNEL_MEMORY_TYPE, &elf, false);
+                let segment = load_segment(segment, &elf);
+                let phys_addr = PAddr::new(segment.phys_addr as usize).unwrap();
+                let virt_addr = VAddr::new(segment.virt_addr as usize);
+                let size = segment.size as usize;
+
+                memory_usage.push(MemoryUsage { start: phys_addr, length: size, usage: MemoryUse::Kernel });
 
                 /*
                  * If this segment loads past `next_safe_address`, update it.
                  */
-                if (segment.virtual_address + segment.size) > next_safe_address {
-                    next_safe_address =
-                        (Page::<Size4KiB>::contains(segment.virtual_address + segment.size) + 1).start;
+                if (virt_addr + size) > next_safe_address {
+                    next_safe_address = (Page::<Size4KiB>::contains(virt_addr + size) + 1).start;
                 }
 
-                assert!(
-                    segment.virtual_address.is_aligned(Size4KiB::SIZE),
-                    "Segment's virtual address is not page-aligned"
-                );
-                assert!(
-                    segment.physical_address.is_aligned(Size4KiB::SIZE),
-                    "Segment's physical address is not frame-aligned"
-                );
-                assert!(segment.size % Size4KiB::SIZE == 0, "Segment size is not a multiple of page size!");
+                assert!(virt_addr.is_aligned(Size4KiB::SIZE), "Segment's virtual address is not page-aligned");
+                assert!(phys_addr.is_aligned(Size4KiB::SIZE), "Segment's physical address is not frame-aligned");
+                assert!(size % Size4KiB::SIZE == 0, "Segment size is not a multiple of page size!");
                 page_table
                     .map_area(
-                        segment.virtual_address,
-                        segment.physical_address,
-                        segment.size,
-                        segment.flags,
+                        virt_addr,
+                        phys_addr,
+                        size,
+                        Flags {
+                            writable: segment.flags.get(SegmentFlags::WRITABLE),
+                            executable: segment.flags.get(SegmentFlags::EXECUTABLE),
+                            user_accessible: false,
+                            cached: true,
+                        },
                         allocator,
                     )
                     .unwrap();
@@ -93,78 +99,59 @@ where
     assert!(guard_page_address.is_aligned(Size4KiB::SIZE), "Guard page address is not page aligned");
     page_table.unmap::<Size4KiB>(Page::starts_with(guard_page_address));
 
-    unsafe {
-        uefi::boot::free_pool(pool_addr).unwrap();
-    }
     KernelInfo { entry_point, stack_top, next_safe_address }
 }
 
-pub fn load_image(volume_handle: Handle, name: &str, path: &Path) -> LoadedImage {
+pub struct LoadedImageInfo {
+    pub entry_point: VAddr,
+    pub num_segments: u16,
+    pub segments: [seed_bootinfo::LoadedSegment; seed_bootinfo::LOADED_IMAGE_MAX_SEGMENTS],
+}
+
+pub fn load_image(
+    fs: &mut FileSystem,
+    name: &str,
+    path: &Path,
+    memory_usage: &mut Vec<MemoryUsage>,
+) -> LoadedImageInfo {
     info!("Loading requested '{}' image from: {}", name, path);
-    let (elf, pool_addr) = load_elf(volume_handle, path);
 
-    let mut image_data = LoadedImage::default();
-    image_data.entry_point = VAddr::new(elf.entry_point());
-    image_data.name = heapless::String::from_str(name).unwrap();
+    let Ok(file) = fs.read(path) else {
+        panic!("Failed to read ELF from filesystem for requested image '{}'", name);
+    };
+    let Ok(elf) = Elf::new(&file) else {
+        panic!("Failed to parse image '{}' as ELF", name);
+    };
 
+    let entry_point = VAddr::new(elf.entry_point());
+    let mut segments = [seed_bootinfo::LoadedSegment::default(); seed_bootinfo::LOADED_IMAGE_MAX_SEGMENTS];
+    let mut num_segments = 0;
     for segment in elf.segments() {
         match segment.segment_type() {
             SegmentType::Load if segment.mem_size > 0 => {
-                let segment = load_segment(segment, crate::IMAGE_MEMORY_TYPE, &elf, true);
-
-                match image_data.segments.push(segment) {
-                    Ok(()) => (),
-                    Err(_) => panic!("Image at '{}' has too many load segments!", path),
+                if (num_segments + 1) > seed_bootinfo::LOADED_IMAGE_MAX_SEGMENTS {
+                    panic!("Loaded image '{}' has too many loaded segments!", name);
                 }
-            }
 
+                let segment = load_segment(segment, &elf);
+                memory_usage.push(MemoryUsage {
+                    start: PAddr::new(segment.phys_addr as usize).unwrap(),
+                    length: segment.size as usize,
+                    usage: MemoryUse::LoadedImage,
+                });
+                segments[num_segments] = segment;
+                num_segments += 1;
+            }
             _ => (),
         }
     }
 
-    unsafe {
-        uefi::boot::free_pool(pool_addr).unwrap();
-    }
-    image_data
+    LoadedImageInfo { entry_point, num_segments: num_segments as u16, segments }
 }
 
-/// TODO: This returns the elf file, and also the pool addr. When the caller is done with the elf, they need to
-/// free the pool themselves. When pools is made safer, we need to rework how this all works to tie the lifetime of
-/// the elf to the pool.
-fn load_elf<'a>(volume_handle: Handle, path: &Path) -> (Elf<'a>, NonNull<u8>) {
-    // TODO: rewrite to use `uefi`'s FS stuff now we've caved and added a heap
-    let mut root_file_protocol = uefi::boot::open_protocol_exclusive::<SimpleFileSystem>(volume_handle)
-        .expect("Failed to get volume")
-        .open_volume()
-        .expect("Failed to open volume");
+fn load_segment(segment: ProgramHeader, elf: &Elf) -> seed_bootinfo::LoadedSegment {
+    use seed_bootinfo::{LoadedSegment, SegmentFlags};
 
-    let mut file = root_file_protocol
-        .open(path.to_cstr16(), FileMode::Read, FileAttribute::READ_ONLY)
-        .expect("Failed to open file");
-    let mut info_buffer = [0u8; 128];
-    let info = file.get_info::<FileInfo>(&mut info_buffer).unwrap();
-
-    let pool_addr = uefi::boot::allocate_pool(MemoryType::LOADER_DATA, info.file_size() as usize)
-        .expect("Failed to allocate data for image file");
-    let file_data: &mut [u8] =
-        unsafe { slice::from_raw_parts_mut(pool_addr.as_ptr() as *mut u8, info.file_size() as usize) };
-
-    match file.into_type().unwrap() {
-        FileType::Regular(mut regular_file) => {
-            regular_file.read(file_data).expect("Failed to read image");
-        }
-        FileType::Dir(_) => panic!("Path is to a directory!"),
-    }
-
-    let elf = match Elf::new(file_data) {
-        Ok(elf) => elf,
-        Err(err) => panic!("Failed to load ELF for image '{}': {:?}", path, err),
-    };
-
-    (elf, pool_addr)
-}
-
-fn load_segment(segment: ProgramHeader, memory_type: MemoryType, elf: &Elf, user_accessible: bool) -> Segment {
     /*
      * We don't require each segment to fill up all the pages it needs - as long as the start of each segment is
      * page-aligned so they don't overlap, it's fine. This is mainly to support images linked by `lld` with the `-z
@@ -176,7 +163,7 @@ fn load_segment(segment: ProgramHeader, memory_type: MemoryType, elf: &Elf, user
     let mem_size = math::align_up(segment.mem_size as usize, Size4KiB::SIZE);
 
     let num_frames = (mem_size as usize) / Size4KiB::SIZE;
-    let physical_address = uefi::boot::allocate_pages(AllocateType::AnyPages, memory_type, num_frames)
+    let physical_address = uefi::boot::allocate_pages(AllocateType::AnyPages, MemoryType::RESERVED, num_frames)
         .expect("Failed to allocate memory for image segment!");
 
     /*
@@ -201,15 +188,13 @@ fn load_segment(segment: ProgramHeader, memory_type: MemoryType, elf: &Elf, user
         );
     }
 
-    Segment {
-        physical_address: PAddr::new(physical_address.addr().get()).unwrap(),
-        virtual_address: VAddr::new(segment.virtual_address as usize),
-        size: num_frames * Size4KiB::SIZE,
-        flags: Flags {
-            writable: segment.is_writable(),
-            executable: segment.is_executable(),
-            user_accessible,
-            ..Default::default()
-        },
+    let flags = SegmentFlags::new()
+        .with(SegmentFlags::WRITABLE, segment.is_writable())
+        .with(SegmentFlags::EXECUTABLE, segment.is_executable());
+    LoadedSegment {
+        phys_addr: physical_address.addr().get() as u64,
+        virt_addr: segment.virtual_address,
+        size: (num_frames * Size4KiB::SIZE) as u32,
+        flags,
     }
 }

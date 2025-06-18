@@ -141,25 +141,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "hash32"
-version = "0.3.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "47d60b12902ba28e2730cd37e95b8c9223af2808df9e902d4df49588d1470606"
-dependencies = [
- "byteorder",
-]
-
-[[package]]
-name = "heapless"
-version = "0.8.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0bfb9eb618601c89945a70e254898da93b13be0388091d42117462b265bb3fad"
-dependencies = [
- "hash32",
- "stable_deref_trait",
-]
-
-[[package]]
 name = "kernel"
 version = "0.1.0"
 dependencies = [
@@ -173,7 +154,7 @@ dependencies = [
  "pci_types",
  "poplar",
  "ptah",
- "seed",
+ "seed_bootinfo",
  "spinning_top 0.3.0",
  "tracing 0.2.0",
 ]
@@ -191,7 +172,7 @@ dependencies = [
  "mulch",
  "pci_types",
  "sbi",
- "seed",
+ "seed_bootinfo",
  "spinning_top 0.3.0",
  "tracing 0.2.0",
  "tracing-core 0.2.0",
@@ -211,7 +192,7 @@ dependencies = [
  "maitake",
  "mulch",
  "pci_types",
- "seed",
+ "seed_bootinfo",
  "spinning_top 0.3.0",
  "tracing 0.2.0",
  "tracing-core 0.2.0",
@@ -538,32 +519,10 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "94143f37725109f92c262ed2cf5e59bce7498c01bcc1502d7b9afe439a4e9f49"
 
 [[package]]
-name = "seed"
+name = "seed_bootinfo"
 version = "0.1.0"
 dependencies = [
- "hal",
- "heapless",
- "serde",
-]
-
-[[package]]
-name = "serde"
-version = "1.0.219"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5f0e2c6ed6606019b4e29e69dbaba95b11854410e5347d525002456dbbb786b6"
-dependencies = [
- "serde_derive",
-]
-
-[[package]]
-name = "serde_derive"
-version = "1.0.219"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5b0276cf7f2c73365f7157c8123c21cd9a50fbbd844757af28ca1f5925fc2a00"
-dependencies = [
- "proc-macro2",
- "quote",
- "syn 2.0.100",
+ "mycelium-bitfield 0.1.5 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
@@ -598,12 +557,6 @@ checksum = "d96d2d1d716fb500937168cc09353ffdc7a012be8475ac7308e1bdf0e3923300"
 dependencies = [
  "lock_api",
 ]
-
-[[package]]
-name = "stable_deref_trait"
-version = "1.2.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a8f112729512f8e442d81f95a8a7ddf2b7c6b8a1a6f509a95864142b30cab2d3"
 
 [[package]]
 name = "syn"

@@ -3,7 +3,6 @@ mod buddy;
 use buddy::BuddyAllocator;
 use core::ops::Range;
 use hal::memory::{Frame, FrameAllocator, FrameSize, PAddr, Size4KiB};
-use seed::boot_info::BootInfo;
 use spinning_top::Spinlock;
 
 /// The Physical Memory Manager (PMM) manages the system's supply of physical memory. It operates
@@ -14,12 +13,14 @@ pub struct Pmm {
 }
 
 impl Pmm {
-    pub fn new(boot_info: &BootInfo) -> Pmm {
+    pub fn new(memory_map: &[seed_bootinfo::MemoryEntry]) -> Pmm {
         let mut buddy_allocator = BuddyAllocator::new();
 
-        for entry in &boot_info.memory_map {
-            if entry.typ == seed::boot_info::MemoryType::Conventional {
-                buddy_allocator.free_range(entry.frame_range());
+        for entry in memory_map {
+            if entry.typ == seed_bootinfo::MemoryType::Usable {
+                let frames = Frame::starts_with(PAddr::new(entry.base as usize).unwrap())
+                    ..Frame::starts_with(PAddr::new(entry.base as usize + entry.length as usize).unwrap());
+                buddy_allocator.free_range(frames);
             }
         }
 

@@ -8,7 +8,7 @@ edition = "2021"
 kernel = { path = "../" }
 hal = { path = "../../lib/hal" }
 hal_x86_64 = { path = "../../lib/hal_x86_64" }
-seed = { path = "../../seed" }
+seed_bootinfo = { path = "../../seed/seed_bootinfo" }
 spinning_top = { version = "0.3" }
 log = "0.4"
 tracing = { git = "https://github.com/tokio-rs/tracing", default-features = false }
@@ -18,7 +18,10 @@ acpi = { path = "../../lib/acpi" }
 mulch = { path = "../../lib/mulch" }
 gfxconsole = { path = "../../lib/gfxconsole" }
 pci_types = { path = "../../lib/pci_types" }
-maitake = { git = "https://github.com/hawkw/mycelium", features = ["alloc", "tracing-02"] }
+maitake = { git = "https://github.com/hawkw/mycelium", features = [
+    "alloc",
+    "tracing-02",
+] }
 
 [features]
 qemu_exit = ["hal_x86_64/qemu"]

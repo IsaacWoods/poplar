@@ -30,6 +30,7 @@ use hal_x86_64::{
 use interrupts::{InterruptController, INTERRUPT_CONTROLLER};
 use kacpi::AcpiManager;
 use kernel::{
+    bootinfo::BootInfo,
     memory::{vmm::Stack, Pmm, Vmm},
     scheduler::Scheduler,
     Platform,
@@ -37,7 +38,6 @@ use kernel::{
 use mulch::InitGuard;
 use pci::PciConfigurator;
 use per_cpu::PerCpuImpl;
-use seed::boot_info::BootInfo;
 use spinning_top::RwSpinlock;
 use topo::Topology;
 use tracing::info;
@@ -85,13 +85,11 @@ pub static SCHEDULER: InitGuard<Scheduler<PlatformImpl>> = InitGuard::uninit();
 pub static KERNEL_PAGE_TABLES: InitGuard<RwSpinlock<hal_x86_64::paging::PageTableImpl>> = InitGuard::uninit();
 
 #[no_mangle]
-pub extern "C" fn kentry(boot_info: &BootInfo) -> ! {
+pub extern "C" fn kentry(boot_info_ptr: *const ()) -> ! {
     logger::init();
     info!("Poplar kernel is running");
 
-    if boot_info.magic != seed::boot_info::BOOT_INFO_MAGIC {
-        panic!("Boot info magic is not correct!");
-    }
+    let boot_info = unsafe { BootInfo::new(boot_info_ptr) };
 
     /*
      * Get the kernel page tables set up by the loader. We have to assume that the loader has set up a correct set
@@ -105,15 +103,19 @@ pub extern "C" fn kentry(boot_info: &BootInfo) -> ! {
     };
     KERNEL_PAGE_TABLES.initialize(RwSpinlock::new(kernel_page_tables));
 
+    tracing::error!("Pausing here because we can't do early allocation yet");
+    panic!();
+
     /*
      * Initialise the heap allocator. After this, the kernel is free to use collections etc. that
      * can allocate on the heap through the global allocator.
      */
-    unsafe {
-        kernel::ALLOCATOR.lock().init(boot_info.heap_address.mut_ptr(), boot_info.heap_size);
-    }
+    // TODO: make initial allocation from boot memory map
+    // unsafe {
+    //     kernel::ALLOCATOR.lock().init(boot_info.heap_address.mut_ptr(), boot_info.heap_size);
+    // }
 
-    kernel::PMM.initialize(Pmm::new(boot_info));
+    kernel::PMM.initialize(Pmm::new(boot_info.memory_map()));
     kernel::VMM.initialize(Vmm::new(
         kernel_map::KERNEL_STACKS_BASE,
         kernel_map::KERNEL_STACKS_BASE + kernel_map::STACK_SLOT_SIZE * kernel_map::MAX_TASKS,
@@ -186,8 +188,8 @@ pub extern "C" fn kentry(boot_info: &BootInfo) -> ! {
      * Create kernel objects from loaded images and schedule them.
      */
     kernel::load_userspace(SCHEDULER.get(), &boot_info, &mut KERNEL_PAGE_TABLES.get().write());
-    if let Some(ref video_info) = boot_info.video_mode {
-        kernel::create_framebuffer(video_info);
+    if let Some(video_info) = boot_info.video_mode_info() {
+        kernel::create_framebuffer(&video_info);
     }
 
     SCHEDULER.get().start_scheduling();

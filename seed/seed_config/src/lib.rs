@@ -2,9 +2,6 @@
 
 extern crate alloc;
 
-pub mod boot_info;
-pub mod ramdisk;
-
 use alloc::{string::String, vec::Vec};
 use serde::Deserialize;
 
