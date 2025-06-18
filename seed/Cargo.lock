@@ -330,11 +330,16 @@ dependencies = [
 ]
 
 [[package]]
-name = "seed"
+name = "seed_bootinfo"
 version = "0.1.0"
 dependencies = [
- "hal",
- "heapless",
+ "mycelium-bitfield",
+]
+
+[[package]]
+name = "seed_config"
+version = "0.1.0"
+dependencies = [
  "serde",
 ]
 
@@ -354,7 +359,8 @@ dependencies = [
  "mulch",
  "pci_types",
  "picotoml",
- "seed",
+ "seed_bootinfo",
+ "seed_config",
  "serde",
  "spinning_top 0.2.5",
  "tracing",
@@ -370,12 +376,12 @@ dependencies = [
  "gfxconsole",
  "hal",
  "hal_x86_64",
- "heapless",
  "log",
  "mer",
  "mulch",
  "picotoml",
- "seed",
+ "seed_bootinfo",
+ "seed_config",
  "serde",
  "spinning_top 0.3.0",
  "uefi",

@@ -5,7 +5,8 @@ authors = ["Isaac Woods"]
 edition = "2018"
 
 [dependencies]
-seed = { path = ".." }
+seed_bootinfo = { path = "../seed_bootinfo" }
+seed_config = { path = "../seed_config" }
 hal = { path = "../../lib/hal" }
 hal_x86_64 = { path = "../../lib/hal_x86_64" }
 log = "0.4"
@@ -14,7 +15,6 @@ uefi = { version = "0.35.0", features = ["alloc", "global_allocator"] }
 mer = { path = "../../lib/mer" }
 gfxconsole = { path = "../../lib/gfxconsole" }
 mulch = { path = "../../lib/mulch" }
-heapless = "0.8.0"
 serde = { version = "1", default-features = false, features = [
     "derive",
     "alloc",

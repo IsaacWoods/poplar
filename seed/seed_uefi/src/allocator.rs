@@ -1,6 +1,6 @@
 use core::{cell::Cell, ops::Range, ptr};
 use hal::memory::{Frame, FrameAllocator, FrameSize, PAddr, Size4KiB};
-use uefi::boot::AllocateType;
+use uefi::boot::{AllocateType, MemoryType};
 
 /// `BootFrameAllocator` is the allocator we use in the bootloader to allocate memory for the
 /// kernel page tables. It pre-allocates a preset number of frames using the UEFI boot services,
@@ -21,7 +21,7 @@ pub struct BootFrameAllocator {
 impl BootFrameAllocator {
     pub fn new(num_frames: usize) -> BootFrameAllocator {
         let start_frame_address =
-            uefi::boot::allocate_pages(AllocateType::AnyPages, crate::PAGE_TABLE_MEMORY_TYPE, num_frames)
+            uefi::boot::allocate_pages(AllocateType::AnyPages, MemoryType::RESERVED, num_frames)
                 .expect("Failed to allocate frames for page table allocator");
 
         unsafe {

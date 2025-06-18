@@ -5,12 +5,13 @@
     alloc_error_handler,
     trait_alias,
     type_ascription,
-    naked_functions,
-    get_mut_unchecked
+    get_mut_unchecked,
+    str_from_raw_parts
 )]
 #[macro_use]
 extern crate alloc;
 
+pub mod bootinfo;
 pub mod clocksource;
 pub mod memory;
 pub mod object;
@@ -20,6 +21,7 @@ pub mod syscall;
 pub mod tasklets;
 
 use alloc::{boxed::Box, string::ToString, sync::Arc, vec::Vec};
+use bootinfo::BootInfo;
 use clocksource::Clocksource;
 use hal::memory::{FrameSize, PAddr, PageTable, Size4KiB, VAddr};
 use memory::{vmm::Stack, Pmm, Vmm};
@@ -28,7 +30,6 @@ use object::{address_space::AddressSpace, memory_object::MemoryObject, task::Tas
 use pci::{PciInfo, PciInterruptConfigurator, PciResolver};
 use pci_types::ConfigRegionAccess as PciConfigRegionAccess;
 use scheduler::Scheduler;
-use seed::boot_info::BootInfo;
 use spinning_top::{RwSpinlock, Spinlock};
 
 #[cfg(not(test))]
@@ -72,12 +73,14 @@ where
     use object::{task::Handles, SENTINEL_KERNEL_ID};
     use poplar::manifest::BootstrapManifest;
 
-    if boot_info.loaded_images.is_empty() {
+    if boot_info.num_loaded_images() == 0 {
         return;
     }
 
+    let mut loaded_images = boot_info.loaded_images();
+
     let pmm = PMM.get();
-    let bootstrap_task = boot_info.loaded_images.first().unwrap();
+    let bootstrap_task = loaded_images.next().unwrap();
     let address_space = AddressSpace::new(SENTINEL_KERNEL_ID, kernel_page_table, pmm);
     let handles = Handles::new();
 
@@ -85,33 +88,32 @@ where
         // TODO: this now uses the wrong task id...
         let memory_object = MemoryObject::from_boot_info(SENTINEL_KERNEL_ID, segment);
         handles.add(memory_object.clone());
-        address_space.map_memory_object(memory_object, segment.virtual_address, pmm).unwrap();
+        address_space.map_memory_object(memory_object, VAddr::new(segment.virt_addr as usize), pmm).unwrap();
     }
 
     /*
      * Add other loaded tasks' segments to the bootstrap task and add each task to the manifest.
      */
-    let mut manifest =
-        BootstrapManifest { task_name: bootstrap_task.name.as_str().to_string(), boot_tasks: Vec::new() };
-    for image in &boot_info.loaded_images[1..] {
+    let mut manifest = BootstrapManifest { task_name: bootstrap_task.name.to_string(), boot_tasks: Vec::new() };
+    for image in loaded_images {
         let mut service = poplar::manifest::BootTask {
-            name: image.name.as_str().to_string(),
-            entry_point: usize::from(image.entry_point),
+            name: image.name.to_string(),
+            entry_point: image.entry_point as usize,
             segments: Vec::new(),
         };
         for segment in &image.segments {
             // TODO: this uses the wrong task ID...
             let memory_object = MemoryObject::from_boot_info(SENTINEL_KERNEL_ID, segment);
             let handle = handles.add(memory_object);
-            service.segments.push((usize::from(segment.virtual_address), handle.0));
+            service.segments.push((segment.virt_addr as usize, handle.0));
         }
         manifest.boot_tasks.push(service);
     }
     let mut buffer = Vec::new();
     let bytes_written = ptah::to_wire(&manifest, &mut buffer).unwrap();
 
-    const MANIFEST_ADDRESS: VAddr = VAddr::new(0x20000000);
-    let mem_object_len = mulch::math::align_up(bytes_written, 0x1000);
+    const MANIFEST_ADDRESS: VAddr = VAddr::new(0x2000_0000);
+    let mem_object_len = mulch::math::align_up(bytes_written, Size4KiB::SIZE);
     let manifest_object = {
         let phys = pmm.alloc(mem_object_len / Size4KiB::SIZE);
         unsafe {
@@ -131,7 +133,7 @@ where
         SENTINEL_KERNEL_ID,
         address_space.clone(),
         bootstrap_task.name.to_string(),
-        bootstrap_task.entry_point,
+        VAddr::new(bootstrap_task.entry_point as usize),
         handles,
         pmm,
         kernel_page_table,
@@ -140,18 +142,18 @@ where
     scheduler.add_task(task);
 }
 
-pub fn create_framebuffer(video_info: &seed::boot_info::VideoModeInfo) {
+pub fn create_framebuffer(video_info: &seed_bootinfo::VideoModeInfo) {
     use hal::memory::{Flags, Size4KiB};
     use poplar::syscall::{FramebufferInfo, PixelFormat};
-    use seed::boot_info::PixelFormat as BootPixelFormat;
+    use seed_bootinfo::PixelFormat as BootPixelFormat;
 
     // We only support RGB32 and BGR32 pixel formats so BPP will always be 4 for now.
-    const BPP: usize = 4;
+    const BPP: u64 = 4;
 
-    let size_in_bytes = video_info.stride * video_info.height * BPP;
+    let size_in_bytes = (video_info.stride * video_info.height * BPP) as usize;
     let memory_object = MemoryObject::new(
         object::SENTINEL_KERNEL_ID,
-        video_info.framebuffer_address,
+        PAddr::new(video_info.framebuffer_address as usize).unwrap(),
         mulch::math::align_up(size_in_bytes, Size4KiB::SIZE),
         Flags { writable: true, user_accessible: true, cached: false, ..Default::default() },
     );

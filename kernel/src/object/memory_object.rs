@@ -1,7 +1,6 @@
 use super::{alloc_kernel_object_id, KernelObject, KernelObjectId, KernelObjectType};
 use alloc::{sync::Arc, vec::Vec};
 use hal::memory::{Flags, PAddr};
-use seed::boot_info::Segment;
 use spinning_top::Spinlock;
 
 #[derive(Debug)]
@@ -28,14 +27,20 @@ impl MemoryObject {
         })
     }
 
-    pub fn from_boot_info(owner: KernelObjectId, segment: &Segment) -> Arc<MemoryObject> {
+    pub fn from_boot_info(owner: KernelObjectId, segment: &seed_bootinfo::LoadedSegment) -> Arc<MemoryObject> {
+        let flags = Flags {
+            writable: segment.flags.get(seed_bootinfo::SegmentFlags::WRITABLE),
+            executable: segment.flags.get(seed_bootinfo::SegmentFlags::EXECUTABLE),
+            user_accessible: true,
+            ..Default::default()
+        };
         Arc::new(MemoryObject {
             id: alloc_kernel_object_id(),
             owner,
             inner: Spinlock::new(Inner {
-                size: segment.size,
-                flags: segment.flags,
-                backing: vec![(segment.physical_address, segment.size)],
+                size: segment.size as usize,
+                flags,
+                backing: vec![(PAddr::new(segment.phys_addr as usize).unwrap(), segment.size as usize)],
             }),
         })
     }

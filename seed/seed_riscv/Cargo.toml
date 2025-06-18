@@ -5,7 +5,8 @@ authors = ["Isaac Woods"]
 edition = "2021"
 
 [dependencies]
-seed = { path = ".." }
+seed_bootinfo = { path = "../seed_bootinfo" }
+seed_config = { path = "../seed_config" }
 hal = { path = "../../lib/hal/" }
 hal_riscv = { path = "../../lib/hal_riscv/" }
 mulch = { path = "../../lib/mulch/" }
@@ -22,7 +23,10 @@ pci_types = { path = "../../lib/pci_types" }
 virtio = { path = "../../lib/virtio" }
 gpt = { path = "../../lib/gpt" }
 heapless = "0.8.0"
-serde = { version = "1", default-features = false, features = ["derive", "alloc"] }
+serde = { version = "1", default-features = false, features = [
+    "derive",
+    "alloc",
+] }
 picotoml = { path = "../../lib/picotoml" }
 
 [features]

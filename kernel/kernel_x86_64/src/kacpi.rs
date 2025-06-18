@@ -11,10 +11,9 @@ use bit_field::BitField;
 use core::ptr::NonNull;
 use hal::memory::PAddr;
 use hal_x86_64::hw::port::Port;
-use kernel::clocksource::Clocksource;
+use kernel::{bootinfo::BootInfo, clocksource::Clocksource};
 use mulch::math::align_down;
 use pci_types::{ConfigRegionAccess, PciAddress};
-use seed::boot_info::BootInfo;
 use tracing::{debug, info};
 
 /*
@@ -41,11 +40,10 @@ use tracing::{debug, info};
  */
 
 pub fn find_tables(boot_info: &BootInfo) -> AcpiTables<PoplarAcpiHandler> {
-    if boot_info.rsdp_address.is_none() {
+    let Some(rsdp_addr) = boot_info.rsdp_addr() else {
         panic!("Bootloader did not pass RSDP address. Booting without ACPI is not supported.");
-    }
-    let tables =
-        unsafe { AcpiTables::from_rsdp(PoplarAcpiHandler, usize::from(boot_info.rsdp_address.unwrap())).unwrap() };
+    };
+    let tables = unsafe { AcpiTables::from_rsdp(PoplarAcpiHandler, rsdp_addr as usize).unwrap() };
 
     for (addr, table) in tables.table_headers() {
         info!(

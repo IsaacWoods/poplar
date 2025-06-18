@@ -6,7 +6,7 @@ edition = "2018"
 
 [dependencies]
 hal = { path = "../lib/hal" }
-seed = { path = "../seed" }
+seed_bootinfo = { path = "../seed/seed_bootinfo" }
 mulch = { path = "../lib/mulch", features = ["has_alloc"] }
 cfg-if = "0.1"
 bitflags = "1"
@@ -17,7 +17,10 @@ ptah = { path = "../lib/ptah" }
 pci_types = { path = "../lib/pci_types" }
 tracing = { git = "https://github.com/tokio-rs/tracing", default-features = false }
 spinning_top = "0.3.0"
-maitake = { git = "https://github.com/hawkw/mycelium", features = ["alloc", "tracing-02"] }
+maitake = { git = "https://github.com/hawkw/mycelium", features = [
+    "alloc",
+    "tracing-02",
+] }
 
 [workspace]
 members = ["kernel_x86_64", "kernel_riscv"]
