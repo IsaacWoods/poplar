@@ -21,7 +21,7 @@ mod topo;
 use alloc::boxed::Box;
 use clocksource::TscClocksource;
 use core::time::Duration;
-use hal::memory::{Frame, PAddr, VAddr};
+use hal::memory::{Flags, Frame, FrameSize, PAddr, PageTable, Size4KiB, VAddr};
 use hal_x86_64::{
     hw::{cpu::CpuInfo, registers::read_control_reg, tss::Tss},
     kernel_map,
@@ -30,17 +30,22 @@ use hal_x86_64::{
 use interrupts::{InterruptController, INTERRUPT_CONTROLLER};
 use kacpi::AcpiManager;
 use kernel::{
-    bootinfo::BootInfo,
+    bootinfo::{BootInfo, EarlyFrameAllocator},
     memory::{vmm::Stack, Pmm, Vmm},
     scheduler::Scheduler,
     Platform,
 };
-use mulch::InitGuard;
+use mulch::{linker::LinkerSymbol, InitGuard};
 use pci::PciConfigurator;
 use per_cpu::PerCpuImpl;
 use spinning_top::RwSpinlock;
 use topo::Topology;
 use tracing::info;
+
+extern "C" {
+    static _kernel_start: LinkerSymbol;
+    static _kernel_end: LinkerSymbol;
+}
 
 pub struct PlatformImpl {
     topology: Topology,
@@ -89,7 +94,7 @@ pub extern "C" fn kentry(boot_info_ptr: *const ()) -> ! {
     logger::init();
     info!("Poplar kernel is running");
 
-    let boot_info = unsafe { BootInfo::new(boot_info_ptr) };
+    let mut boot_info = unsafe { BootInfo::new(boot_info_ptr) };
 
     /*
      * Get the kernel page tables set up by the loader. We have to assume that the loader has set up a correct set
@@ -103,17 +108,38 @@ pub extern "C" fn kentry(boot_info_ptr: *const ()) -> ! {
     };
     KERNEL_PAGE_TABLES.initialize(RwSpinlock::new(kernel_page_tables));
 
-    tracing::error!("Pausing here because we can't do early allocation yet");
-    panic!();
-
     /*
      * Initialise the heap allocator. After this, the kernel is free to use collections etc. that
      * can allocate on the heap through the global allocator.
      */
-    // TODO: make initial allocation from boot memory map
-    // unsafe {
-    //     kernel::ALLOCATOR.lock().init(boot_info.heap_address.mut_ptr(), boot_info.heap_size);
-    // }
+    {
+        use hal::memory::FrameAllocator;
+
+        const INITIAL_HEAP_SIZE: usize = 800 * 1024; // TODO: reduce initial size probs and add ability to grow heap as needed
+        let early_allocator = EarlyFrameAllocator::new(&mut boot_info);
+        let initial_heap = early_allocator.allocate_n(Size4KiB::frames_needed(INITIAL_HEAP_SIZE));
+
+        let heap_start =
+            VAddr::new(
+                unsafe { _kernel_end.ptr().byte_add(_kernel_end.ptr().align_offset(Size4KiB::SIZE)) } as usize
+            );
+        info!("Initialising early heap of size {:#x} bytes at {:#x}", INITIAL_HEAP_SIZE, heap_start);
+        KERNEL_PAGE_TABLES
+            .get()
+            .write()
+            .map_area(
+                heap_start,
+                initial_heap.start.start,
+                INITIAL_HEAP_SIZE,
+                Flags { writable: true, ..Default::default() },
+                &early_allocator,
+            )
+            .unwrap();
+
+        unsafe {
+            kernel::ALLOCATOR.lock().init(heap_start.mut_ptr(), INITIAL_HEAP_SIZE);
+        }
+    }
 
     kernel::PMM.initialize(Pmm::new(boot_info.memory_map()));
     kernel::VMM.initialize(Vmm::new(

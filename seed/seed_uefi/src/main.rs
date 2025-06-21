@@ -110,7 +110,7 @@ fn main() -> Status {
             boot_info_kernel_address,
             boot_info_phys,
             BOOT_INFO_MAX_SIZE,
-            Flags { ..Default::default() },
+            Flags { writable: true, ..Default::default() },
             &allocator,
         )
         .unwrap();
