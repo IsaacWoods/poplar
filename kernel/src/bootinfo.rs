@@ -1,5 +1,6 @@
-use core::{ptr, slice, str};
-use seed_bootinfo::{Header, LoadedSegment, MemoryEntry, VideoModeInfo};
+use core::{ops, ptr, slice, str};
+use hal::memory::{Frame, FrameAllocator, FrameSize, PAddr, Size4KiB};
+use seed_bootinfo::{Header, LoadedSegment, MemoryEntry, MemoryType, VideoModeInfo};
 
 pub struct BootInfo {
     pub base: *const Header,
@@ -86,4 +87,42 @@ pub struct LoadedImage<'a> {
     pub num_segments: usize,
     pub segments: [LoadedSegment; seed_bootinfo::LOADED_IMAGE_MAX_SEGMENTS],
     pub entry_point: u64,
+}
+
+pub struct EarlyFrameAllocator<'a> {
+    boot_info: &'a mut BootInfo,
+}
+
+impl<'a> EarlyFrameAllocator<'a> {
+    pub fn new(boot_info: &'a mut BootInfo) -> EarlyFrameAllocator<'a> {
+        EarlyFrameAllocator { boot_info }
+    }
+}
+
+impl<'a> FrameAllocator<Size4KiB> for EarlyFrameAllocator<'a> {
+    fn allocate_n(&self, n: usize) -> ops::Range<Frame> {
+        let header = unsafe { *self.boot_info.base };
+        let memory_map = unsafe {
+            slice::from_raw_parts_mut(
+                self.boot_info.base.byte_add(header.mem_map_offset as usize) as *mut MemoryEntry,
+                header.mem_map_length as usize,
+            )
+        };
+
+        for i in 0..(header.mem_map_length as usize) {
+            if memory_map[i].typ == MemoryType::Usable && memory_map[i].length as usize >= n * Size4KiB::SIZE {
+                let base =
+                    PAddr::new(memory_map[i].base as usize + memory_map[i].length as usize - n * Size4KiB::SIZE)
+                        .unwrap();
+                memory_map[i].length -= (n * Size4KiB::SIZE) as u64;
+                return Frame::starts_with(base)..(Frame::starts_with(base) + n);
+            }
+        }
+
+        panic!("Failed to allocate from early memory map!");
+    }
+
+    fn free_n(&self, start: Frame, n: usize) {
+        // TODO: we could put free entries back into a scratch entry, but for now we just leak freed frames
+    }
 }
