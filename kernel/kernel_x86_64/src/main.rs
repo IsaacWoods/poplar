@@ -94,6 +94,16 @@ pub extern "C" fn kentry(boot_info_ptr: *const ()) -> ! {
     logger::init();
     info!("Poplar kernel is running");
 
+    /*
+     * TODO: I want to redo how we do initialization here in a few ways given our increased experience:
+     * - Take a memory map from Seed and have a bootstrapping phys allocator in the kernel
+     * - Do not take a heap from Seed. Instead alloc out of the bootstrapping allocator for the initial heap.
+     * - Have an early logging system for initial debug printing and then a proper common logging framework
+     * - Collect CPU initialization into one place. This is inspired by Managarm and will be useful for SMP support.
+     * - PCI init should theoretically be done in line with ACPI namespace iteration
+     * - I wonder if we can make the GDT a const structure and remove its locking?? (need to think about per-CPU TSS mangling)
+     */
+
     let mut boot_info = unsafe { BootInfo::new(boot_info_ptr) };
 
     /*
@@ -175,6 +185,7 @@ pub extern "C" fn kentry(boot_info_ptr: *const ()) -> ! {
     PerCpuImpl::install(tss);
 
     // TODO: go back and set the #PF handler to use a separate kernel stack via the TSS
+    // TODO: various of the other handlers need separate IST entries (at least NMI, MCE(?), DF too)
 
     let acpi_tables = kacpi::find_tables(&boot_info);
 

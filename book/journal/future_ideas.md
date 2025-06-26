@@ -71,3 +71,16 @@ Other thoughts:
 - I think we need to submit and allow locks to various things (e.g. the namespace). This will require very careful locking :(
 - Other things might actually be a little simpler (e.g. the basic parsing) than with the combinators
 - Nested method calls can be handled with a heap-allocated stack of call frames
+
+## Common logging framework
+Our current logging framework is very rudimentary, and is largely duplicated between architectures. The next iteration should
+be live in the common kernel, and think ahead to supporting multi-core logging and strategies other than shoving everything out
+via a serial port, which real systems will not want to do.
+
+I am still undecided over whether real structured logging (a la `tracing` instead of `log`) makes sense in Poplar. I don't really
+use structured logging, but this may just be because I am not used to it yet. We should look in more detail over whether we really
+care about supporting it, as it does add much complexity.
+
+Linux uses a pretty-large set of ring buffers, one of descriptors and another of actual formatted text. It has very complex lockless
+synchronization to make it NMI-safe etc. that we may or may not want to involve ourselves with. This ring buffer is exposed to userspace
+via a file, and is read by `dmesg`.

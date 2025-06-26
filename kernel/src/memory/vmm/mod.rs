@@ -4,6 +4,25 @@ use super::{Pmm, SlabAllocator};
 use hal::memory::{FrameSize, PAddr, Size4KiB, VAddr};
 use spinning_top::Spinlock;
 
+/*
+ * TODO
+ *
+ * I want to entirely reimagine how we handle virtual memory here. Far more stuff should be in the common kernel rather than the arch-layer, and
+ * more stuff should be dynamic. This is required now to handle HPET mapping more correctly, rather than abusing the direct mapping, but has been
+ * a weak point of the kernel for a while.
+ *
+ * Big task: decide whether the VMM should be parameterised by `P` (and therefore can manage the kernel page table itself), in which case the instance
+ * needs to be managed by the arch-layer. This should be possible, but might be optimal idk.
+ *
+ *    - Pass boot info size / info about end of kernel from Seed to kernel
+ *    - Maybe split memory module out into top-level PMM and VMM modules?
+ *    - Have a concept of the HHDM in the common kernel and retire `Platform::write_to_phys_memory` (this shouldn't really exist at all...)
+ *    - Have a concept of an owned portion of the kernel address space that is bound to normal lifetime etc. for mapping stuff dynamically
+ *    - Dynamically map the HPET register space if required
+ *    - Construct initial layout with HHDM, kernel image, boot info, log ring (?in future)
+ *    - Make kernel stacks dynamically-allocated to free up virtual space + remove hard task limit
+ */
+
 pub struct Vmm {
     kernel_stack_slots: Spinlock<SlabAllocator>,
     kernel_stack_slot_size: usize,

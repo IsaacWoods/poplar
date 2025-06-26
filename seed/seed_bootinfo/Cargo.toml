@@ -5,3 +5,4 @@ edition = "2024"
 
 [dependencies]
 mycelium-bitfield = "0.1.4"
+hal = { path = "../../lib/hal" }

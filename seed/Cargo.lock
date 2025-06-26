@@ -333,6 +333,7 @@ dependencies = [
 name = "seed_bootinfo"
 version = "0.1.0"
 dependencies = [
+ "hal",
  "mycelium-bitfield",
 ]
 
