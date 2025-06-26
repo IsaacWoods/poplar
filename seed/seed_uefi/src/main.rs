@@ -30,7 +30,19 @@ use uefi::{
 };
 
 /*
+ * TODO:
+ *    - Get rid of custom memory types
+ *    - New HHDM construction
+ *    - New boot-info construction and new kernel interface crate
+ *    - Get rid of kernel heap construction here
+ *    - Move image loading to common Seed crate?
+ *    - Move graphical logging to common Seed crate?
+ *    - Pass config options to kernel somehow
+ *    - Graphical panic handler with big red oops screen (common crate?)
+ *    - Do we need the BootFrameAllocator? Can we instead just alloc single frames as we need them?
+ *    - Remove dependency on `seed` from `xtask` (no wonder it's slow as fuck, what the hell are we doing...)
  */
+
 /// Records the usage of various memory allocations that need to be tracked in the memory map. Ideally, we would
 /// use UEFI custom memory types for this, but unfortunately due to a bug in Tianocore not behaving correctly with
 /// custom memory types (see https://wiki.osdev.org/UEFI#My_bootloader_hangs_if_I_use_user_defined_EFI_MEMORY_TYPE_values),
@@ -64,6 +76,7 @@ fn main() -> Status {
      * if we've placed the physical mapping at 0x0.
      */
     let allocator = BootFrameAllocator::new(64);
+    // TODO: keep track of this area via memory usages (it would be even nice to have more granular stuff... maybe keep a separate list?? hard without heap tho...)
     let mut page_table = PageTableImpl::new(allocator.allocate(), VAddr::new(0x0));
 
     let mut string_table = BootInfoStringTable::new();
@@ -213,13 +226,15 @@ fn main() -> Status {
     info!("Mapping physical memory 0x0..{:#x} into higher-half direct mapping", top_of_phys_mem);
     page_table
         .map_area(
-            hal_x86_64::kernel_map::PHYSICAL_MAPPING_BASE,
+            seed_bootinfo::kernel_map::PHYSICAL_MAPPING_BASE,
             PAddr::new(0x0).unwrap(),
             top_of_phys_mem as usize,
             Flags { writable: true, ..Default::default() },
             &allocator,
         )
         .unwrap();
+
+    // TODO: once we're finished mapping stuff, we can recycle free frames in the boot frame allocator and also add them to the memory map
 
     /*
      * Create the memory map we're going to pass to the kernel.
@@ -310,6 +325,7 @@ fn main() -> Status {
         magic: seed_bootinfo::MAGIC,
         mem_map_offset,
         mem_map_length,
+        kernel_free_start: usize::from(next_safe_address) as u64,
         rsdp_address: usize::from(find_rsdp().unwrap_or(PAddr::new(0).unwrap())) as u64,
         device_tree_address: 0,
         loaded_images_offset,

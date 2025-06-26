@@ -2,7 +2,6 @@ use crate::{MemoryUsage, MemoryUse};
 use alloc::vec::Vec;
 use core::{ptr, slice};
 use hal::memory::{Flags, FrameAllocator, FrameSize, PAddr, Page, PageTable, Size4KiB, VAddr};
-use hal_x86_64::kernel_map;
 use log::info;
 use mer::{
     program::{ProgramHeader, SegmentType},
@@ -44,7 +43,7 @@ where
     };
 
     let entry_point = VAddr::new(elf.entry_point());
-    let mut next_safe_address = kernel_map::KERNEL_BASE;
+    let mut next_safe_address = seed_bootinfo::kernel_map::KERNEL_START;
 
     for segment in elf.segments() {
         match segment.segment_type() {

@@ -1,5 +1,23 @@
 #![no_std]
 
+/// On x86_64, kernelspace occupies the top-most P4 entry (virtual addresses `0xffff_ff80_0000_0000` through
+/// to `0xffff_ffff_ffff_ffff`). The actual kernel image is loaded at `-2GiB` (`0xffff_ffff_8000_0000`) and
+/// is followed immediately by the boot information constructed by Seed, and then by dynamically allocated space
+/// for kernel data structures.
+///
+/// This allows best utilisation of the `kernel` code model, which optimises for encoding offsets in signed 32-bit
+/// immediates, which are common in x86_64 instructions.
+#[cfg(target_arch = "x86_64")]
+pub mod kernel_map {
+    use hal::memory::VAddr;
+
+    pub const HIGHER_HALF_START: VAddr = VAddr::new(0xffff_8000_0000_0000);
+    pub const KERNEL_SPACE_START: VAddr = VAddr::new(0xffff_ff80_0000_0000);
+    pub const PHYSICAL_MAPPING_BASE: VAddr = KERNEL_SPACE_START;
+
+    pub const KERNEL_START: VAddr = VAddr::new(0xffff_ffff_8000_0000);
+}
+
 pub const MAGIC: u32 = 0xf0cacc1a;
 
 // TODO: framebuffer, seed version, kernel config, user task configs(?)
@@ -8,10 +26,13 @@ pub const MAGIC: u32 = 0xf0cacc1a;
 pub struct Header {
     pub magic: u32,
 
-    /// Offset from the start of this header to the memory map
+    /// Offset from the start of this header to the memory map.
     pub mem_map_offset: u16,
-    /// Length of the memory map, in entries
+    /// Length of the memory map, in entries.
     pub mem_map_length: u16,
+
+    /// The **virtual** address, after the kernel and boot info, at which the kernel can start to dynamically allocate memory.
+    pub kernel_free_start: u64,
 
     /// The physical address of the RSDP, if found. If not, this will be `0`.
     pub rsdp_address: u64,

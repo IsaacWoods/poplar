@@ -1,12 +1,22 @@
 # Platform Bus
-The Platform Bus is a userspace service designed to be a core part of most Poplar systems.
-It manages an abstract "bus" of devices that can be added by userspace **bus drivers** and consumed by userspace **device drivers**.
-Drivers talk to the Platform Bus via channels obtained by subscribing to the Platform Bus's services, `platform_bus.bus_driver` and
-`platform_bus.device_driver`.
+The Platform Bus, or PBus, is a core component of most Poplar systems. It has components that live in kernelspace
+and in userspace. It manages an abstract "bus" of devices that represent either physical or abstract devices that are part of
+the platform (e.g. part of a SoC) or that are plugged in as peripherals.
 
-Platform Bus is entirely a userspace concept, and so systems can be built around the Poplar kernel without it. However, many drivers and applications will expect
-the Platform Bus service to be present, and systems not using it will have to handle many low-level systems, such as PCI device enumeration, themselves, and so
-it is expected that the vast majority of systems would use Platform Bus as a fundamental building block of their userspace.
+Devices are managed by **bus drivers**, which can be implemented as part of the kernel or in userspace, and can be used by
+userspace **device drivers**. Communication between drivers takes place through `Channel` kernel objects.
+
+### Why does a microkernel have kernel bus drivers?
+While Poplar is at its core a microkernel, it is pragmatic for the kernel to manage certain busses and devices. It, for example,
+performs the initial bringup of ACPI and of the PCI bus.
+
+Rationale for this depends on the particular driver. Some may require access to a resource that has not been exposed to userspace,
+such as the x86 I/O address space - while we could implement an x86 RTC userspace driver that has permission to perform CMOS memory
+reads, I remain unconvinced that this adds safety and security over a traditional kernelspace driver.
+
+In essence, even a microkernel retains responsibility for ensuring fair and correct multiplexing of system resources between userspace
+services and applications. In my view, this includes things like device power management, and as such, implementation of ACPI and similar
+functionality in kernelspace does not contradict my personal ethos for microkernel design.
 
 ### Device representation on the Platform Bus
 Devices on the Platform Bus can be quite abstract, or represent literal devices that are part of the platform, or plugged in as peripherals. Examples
