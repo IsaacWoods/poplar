@@ -1,9 +1,8 @@
 mod slab_allocator;
 
-use crate::{pmm::Pmm, Platform};
+use crate::Platform;
 use core::sync::atomic::{AtomicUsize, Ordering};
 use hal::memory::{Flags, FrameSize, PAddr, PageTable, Size4KiB, VAddr};
-use slab_allocator::SlabAllocator;
 use spinning_top::Spinlock;
 
 pub struct Vmm<P: Platform> {
@@ -12,31 +11,18 @@ pub struct Vmm<P: Platform> {
     // TODO: this should be replaced by some sort of tree
     kernel_next_available: AtomicUsize,
     kernel_end_of_dynamic_area: VAddr,
-    kernel_stack_slots: Spinlock<SlabAllocator>,
-    kernel_stack_slot_size: usize,
 }
 
 impl<P> Vmm<P>
 where
     P: Platform,
 {
-    pub fn new(
-        kernel_page_table: P::PageTable,
-        kernel_stacks_bottom: VAddr,
-        kernel_stacks_top: VAddr,
-        kernel_stack_slot_size: usize,
-    ) -> Vmm<P> {
+    pub fn new(kernel_page_table: P::PageTable) -> Vmm<P> {
         Vmm {
             kernel_page_table: Spinlock::new(kernel_page_table),
             kernel_next_available: AtomicUsize::new(usize::from(P::KERNEL_DYNAMIC_AREA_BASE)),
             // TODO: I guess this could not always be the case? Maybe use another constant?
             kernel_end_of_dynamic_area: P::KERNEL_IMAGE_BASE,
-            kernel_stack_slots: Spinlock::new(SlabAllocator::new(
-                kernel_stacks_bottom,
-                kernel_stacks_top,
-                kernel_stack_slot_size,
-            )),
-            kernel_stack_slot_size,
         }
     }
 
@@ -63,19 +49,19 @@ where
     pub fn map_kernel(&self, addr: PAddr, size: usize, flags: Flags) -> Option<VAddr> {
         let virt = self.alloc_kernel(size)?;
         self.kernel_page_table.lock().map_area(virt, addr, size, flags, crate::PMM.get()).unwrap();
-        tracing::info!("Asked to map phys addr {:#x} into kernel dynamic area. VAddr = {:#x}", addr, virt);
         Some(virt)
     }
 
-    // TODO: this could probably just be done into the dynamic memory area??
-    pub fn alloc_kernel_stack(&self, initial_size: usize, physical_memory_manager: &Pmm) -> Option<Stack> {
+    pub fn alloc_kernel_stack(&self, initial_size: usize) -> Option<Stack> {
         use hal::memory::{Flags, PageTable};
 
-        let slot_bottom = self.kernel_stack_slots.lock().alloc()?;
-        let top = slot_bottom + self.kernel_stack_slot_size - 1;
+        const KERNEL_STACK_SLOT_SIZE: usize = hal::memory::mebibytes(1);
+
+        let slot_bottom = self.alloc_kernel(KERNEL_STACK_SLOT_SIZE).unwrap();
+        let top = slot_bottom + KERNEL_STACK_SLOT_SIZE - 1;
         let stack_bottom = top - initial_size + 1;
 
-        let physical_start = physical_memory_manager.alloc(initial_size / Size4KiB::SIZE);
+        let physical_start = crate::PMM.get().alloc(initial_size / Size4KiB::SIZE);
         self.kernel_page_table
             .lock()
             .map_area(
@@ -83,7 +69,7 @@ where
                 physical_start,
                 initial_size,
                 Flags { writable: true, ..Default::default() },
-                physical_memory_manager,
+                crate::PMM.get(),
             )
             .unwrap();
 
