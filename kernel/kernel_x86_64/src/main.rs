@@ -128,9 +128,9 @@ pub extern "C" fn kentry(boot_info_ptr: *const ()) -> ! {
     {
         use hal::memory::FrameAllocator;
 
-        const INITIAL_HEAP_SIZE: usize = 800 * 1024; // TODO: reduce initial size probs and add ability to grow heap as needed
-                                                     // TODO: keep track of this when we initialise the VMM as we need to do this first, so we
-                                                     // just put it at the start of the virtual block
+        // TODO: reduce initial size probs and add ability to grow heap as needed
+        const INITIAL_HEAP_SIZE: usize = 800 * 1024;
+        // TODO: we might want to do this in the dynamic area instead of after the kernel
         let heap_start = boot_info.kernel_free_start();
         let early_allocator = EarlyFrameAllocator::new(&mut boot_info);
         let initial_heap = early_allocator.allocate_n(Size4KiB::frames_needed(INITIAL_HEAP_SIZE));
@@ -151,21 +151,8 @@ pub extern "C" fn kentry(boot_info_ptr: *const ()) -> ! {
         }
     }
 
-    // TODO: get rid of these
-    pub const KERNEL_STACKS_BASE: VAddr = VAddr::new(0xffff_ffdf_8000_0000);
-    /*
-     * There is an imposed maximum number of tasks because of the simple way we're allocating task kernel stacks.
-     * This is currently 65536 with a task kernel stack size of 2MiB.
-     */
-    pub const STACK_SLOT_SIZE: hal::memory::Bytes = hal::memory::mebibytes(2);
-    pub const MAX_TASKS: usize = 65536;
     kernel::PMM.initialize(Pmm::new(boot_info.memory_map()));
-    VMM.initialize(Vmm::new(
-        kernel_page_tables,
-        KERNEL_STACKS_BASE,
-        KERNEL_STACKS_BASE + STACK_SLOT_SIZE * MAX_TASKS,
-        hal::memory::mebibytes(2),
-    ));
+    VMM.initialize(Vmm::new(kernel_page_tables));
 
     /*
      * We want to replace the GDT and IDT as soon as we can, as we're currently relying on the ones installed by

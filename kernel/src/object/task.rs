@@ -114,8 +114,7 @@ where
         // TODO: better way of getting initial stack sizes
         let task_slot =
             address_space.alloc_task_slot(0x8000, allocator).ok_or(TaskCreationError::AddressSpaceFull)?;
-        let kernel_stack =
-            vmm.alloc_kernel_stack(0x4000, allocator).ok_or(TaskCreationError::NoKernelStackSlots)?;
+        let kernel_stack = vmm.alloc_kernel_stack(0x4000).ok_or(TaskCreationError::NoKernelStackSlots)?;
 
         let context = P::new_task_context(&kernel_stack, &task_slot.user_stack, entry_point);
 
