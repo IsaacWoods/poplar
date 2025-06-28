@@ -89,7 +89,7 @@ where
         syscall::SYSCALL_PCI_GET_INFO => status_with_payload_to_syscall_repr(pci_get_info(&task, a, b)),
         syscall::SYSCALL_WAIT_FOR_EVENT => status_to_syscall_repr(wait_for_event(scheduler, &task, a, b)),
         syscall::SYSCALL_POLL_INTEREST => status_with_payload_to_syscall_repr(poll_interest(&task, a)),
-        syscall::SYSCALL_CREATE_ADDRESS_SPACE => handle_to_syscall_repr(create_address_space(&task, vmm)),
+        syscall::SYSCALL_CREATE_ADDRESS_SPACE => handle_to_syscall_repr(create_address_space(&task)),
         syscall::SYSCALL_SPAWN_TASK => handle_to_syscall_repr(spawn_task(&task, a, scheduler, vmm)),
         syscall::SYSCALL_RESIZE_MEMORY_OBJECT => status_to_syscall_repr(resize_memory_object(&task, a, b)),
         syscall::SYSCALL_WAIT_FOR_INTERRUPT => status_to_syscall_repr(wait_for_interrupt(scheduler, &task, a, b)),
@@ -537,11 +537,11 @@ where
     Ok(if interesting { 1 << 16 } else { 0 })
 }
 
-pub fn create_address_space<P>(task: &Arc<Task<P>>, vmm: &Vmm<P>) -> Result<Handle, CreateAddressSpaceError>
+pub fn create_address_space<P>(task: &Arc<Task<P>>) -> Result<Handle, CreateAddressSpaceError>
 where
     P: Platform,
 {
-    let address_space = AddressSpace::<P>::new(task.id(), crate::PMM.get(), vmm);
+    let address_space = AddressSpace::<P>::new(task.id());
     Ok(task.handles.add(address_space))
 }
 

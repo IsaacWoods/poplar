@@ -142,7 +142,7 @@ impl HierarchicalLevel for Level2 {
     type NextLevel = Level1;
 }
 
-const ENTRY_COUNT: usize = 512;
+pub const ENTRY_COUNT: usize = 512;
 
 #[repr(C, align(4096))]
 pub struct Table<L>
@@ -345,33 +345,6 @@ impl fmt::Debug for PageTableImpl {
 }
 
 impl PageTable<Size4KiB> for PageTableImpl {
-    fn new_with_kernel_mapped<A>(kernel_page_table: &Self, allocator: &A) -> Self
-    where
-        A: FrameAllocator<Size4KiB>,
-    {
-        // TODO: this should be done in the kernel bc it's not really a HAL concern how we lay out
-        // memory
-        const PHYSICAL_MAPPING_BASE: VAddr = VAddr::new(0xffff_8000_0000_0000);
-        let mut page_table = PageTableImpl::new(allocator.allocate(), PHYSICAL_MAPPING_BASE);
-
-        // /*
-        //  * Install the address of the kernel's P3 in every address space, so that the kernel is always mapped.
-        //  * It's safe to unwrap the kernel P3 address, as we wouldn't be able to fetch these instructions
-        //  * if it wasn't there.
-        //  */
-        // let kernel_p3_address = kernel_page_table.p4()[crate::kernel_map::KERNEL_P4_ENTRY].address().unwrap();
-        // page_table.p4_mut()[crate::kernel_map::KERNEL_P4_ENTRY]
-        //     .set(Some((kernel_p3_address, EntryFlags::WRITABLE)));
-
-        // TODO: this could be parameterised better I'm sure
-        for i in 256..512 {
-            let kernel_p3_address = kernel_page_table.p4()[i].address().unwrap();
-            page_table.p4_mut()[i].set(Some((kernel_p3_address, EntryFlags::WRITABLE)));
-        }
-
-        page_table
-    }
-
     unsafe fn switch_to(&self) {
         unsafe {
             write_control_reg!(cr3, usize::from(self.p4_frame.start) as u64);

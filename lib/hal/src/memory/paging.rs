@@ -52,12 +52,6 @@ pub trait PageTable<TableSize>: Sized + fmt::Debug
 where
     TableSize: FrameSize,
 {
-    /// Constructs a new set of page tables, but with the kernel mapped into it. This is generally useful for
-    /// constructing page tables for userspace.
-    fn new_with_kernel_mapped<A>(kernel_page_table: &Self, allocator: &A) -> Self
-    where
-        A: FrameAllocator<TableSize>;
-
     /// Install these page tables as the current set.
     unsafe fn switch_to(&self);
 
