@@ -6,7 +6,7 @@ use maitake::task::JoinHandle;
 use spinning_top::Spinlock;
 
 /// Poplar supports running asynchronous tasks (which we call *tasklets* to differentiate from
-/// our userspace Task objects) in kernelspace through a [`maitake`](https://github.com/hawkw/mycelium/tree/main/maitake)-based
+/// our userspace Task objects) in the kernel through a [`maitake`](https://github.com/hawkw/mycelium/tree/main/maitake)-based
 /// runtime.
 pub struct TaskletScheduler {
     scheduler: Spinlock<maitake::scheduler::Scheduler>,

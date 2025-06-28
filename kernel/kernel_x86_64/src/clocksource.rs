@@ -7,11 +7,11 @@
 //! is not possible, we use another clock to calibrate the frequency of the TSC.
 
 use crate::kacpi::PoplarAcpiHandler;
-use acpi::{sdt::hpet::HpetTable, AcpiTables, HpetInfo};
+use acpi::{AcpiTables, HpetInfo};
 use core::{arch::asm, cell::SyncUnsafeCell};
-use hal::memory::PAddr;
+use hal::memory::{Flags, PAddr};
 use hal_x86_64::hw::{
-    cpu::{self, CpuInfo},
+    cpu::CpuInfo,
     hpet::{GeneralCapsAndId, HpetRegBlock},
 };
 use kernel::clocksource::{Clocksource, FractionalFreq};
@@ -30,8 +30,15 @@ impl Hpet {
     const FEMTOS_PER_NANO: u64 = 1_000_000;
 
     pub fn new(info: HpetInfo) -> Hpet {
-        let regs_ptr: *mut u64 =
-            hal_x86_64::kernel_map::physical_to_virtual(PAddr::new(info.base_address as usize).unwrap()).mut_ptr();
+        let regs_ptr: *mut u64 = crate::VMM
+            .get()
+            .map_kernel(
+                PAddr::new(info.base_address as usize).unwrap(),
+                0x1000,
+                Flags { writable: true, cached: false, ..Default::default() },
+            )
+            .unwrap()
+            .mut_ptr();
         let regs = unsafe { HpetRegBlock::new(regs_ptr) };
         let general_caps = regs.general_caps();
         info!("HPET capabilities: {:?}", general_caps);

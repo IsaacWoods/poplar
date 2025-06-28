@@ -1,4 +1,4 @@
-use crate::{clocksource::TscClocksource, kernel_map, pci::EcamAccess};
+use crate::{clocksource::TscClocksource, pci::EcamAccess};
 use acpi::{
     aml::{AmlError, Interpreter},
     platform::{AcpiPlatform, PciConfigRegions},
@@ -9,7 +9,7 @@ use acpi::{
 use alloc::sync::Arc;
 use bit_field::BitField;
 use core::ptr::NonNull;
-use hal::memory::PAddr;
+use hal::memory::{Flags, Frame, FrameSize, PAddr, Size4KiB, VAddr};
 use hal_x86_64::hw::port::Port;
 use kernel::{bootinfo::BootInfo, clocksource::Clocksource};
 use mulch::math::align_down;
@@ -87,7 +87,7 @@ pub struct PoplarAcpiHandler;
 
 impl AcpiHandler for PoplarAcpiHandler {
     unsafe fn map_physical_region<T>(&self, physical_address: usize, size: usize) -> PhysicalMapping<Self, T> {
-        let virtual_address = kernel_map::physical_to_virtual(PAddr::new(physical_address).unwrap());
+        let virtual_address = crate::VMM.get().physical_to_virtual(PAddr::new(physical_address).unwrap());
 
         PhysicalMapping::new(
             usize::from(physical_address),
@@ -123,58 +123,100 @@ where
 {
     fn read_u8(&self, address: usize) -> u8 {
         debug!("AML: Reading byte from {:#x}", address);
-        let address = hal_x86_64::kernel_map::physical_to_virtual(PAddr::new(address).unwrap());
-        assert!(address.is_aligned(1));
-        unsafe { core::ptr::read_volatile(address.ptr()) }
+
+        let addr_to_map = Frame::<Size4KiB>::contains(PAddr::new(address).unwrap()).start;
+        let mapped_virt = crate::VMM
+            .get()
+            .map_kernel(addr_to_map, Size4KiB::SIZE, Flags { writable: true, ..Default::default() })
+            .unwrap();
+        let virt = mapped_virt + (address % Size4KiB::SIZE);
+
+        assert!(virt.is_aligned(1));
+        unsafe { core::ptr::read_volatile(virt.ptr()) }
     }
 
     fn read_u16(&self, address: usize) -> u16 {
         debug!("AML: Reading word from {:#x}", address);
-        let address = hal_x86_64::kernel_map::physical_to_virtual(PAddr::new(address).unwrap());
-        assert!(address.is_aligned(2));
-        unsafe { core::ptr::read_volatile(address.ptr()) }
+        let addr_to_map = Frame::<Size4KiB>::contains(PAddr::new(address).unwrap()).start;
+        let mapped_virt = crate::VMM
+            .get()
+            .map_kernel(addr_to_map, Size4KiB::SIZE, Flags { writable: true, ..Default::default() })
+            .unwrap();
+        let virt = mapped_virt + (address % Size4KiB::SIZE);
+        assert!(virt.is_aligned(2));
+        unsafe { core::ptr::read_volatile(virt.ptr()) }
     }
 
     fn read_u32(&self, address: usize) -> u32 {
         debug!("AML: Reading dword from {:#x}", address);
-        let address = hal_x86_64::kernel_map::physical_to_virtual(PAddr::new(address).unwrap());
-        assert!(address.is_aligned(4));
-        unsafe { core::ptr::read_volatile(address.ptr()) }
+        let addr_to_map = Frame::<Size4KiB>::contains(PAddr::new(address).unwrap()).start;
+        let mapped_virt = crate::VMM
+            .get()
+            .map_kernel(addr_to_map, Size4KiB::SIZE, Flags { writable: true, ..Default::default() })
+            .unwrap();
+        let virt = mapped_virt + (address % Size4KiB::SIZE);
+        assert!(virt.is_aligned(4));
+        unsafe { core::ptr::read_volatile(virt.ptr()) }
     }
 
     fn read_u64(&self, address: usize) -> u64 {
         debug!("AML: Reading qword from {:#x}", address);
-        let address = hal_x86_64::kernel_map::physical_to_virtual(PAddr::new(address).unwrap());
-        assert!(address.is_aligned(8));
-        unsafe { core::ptr::read_volatile(address.ptr()) }
+        let addr_to_map = Frame::<Size4KiB>::contains(PAddr::new(address).unwrap()).start;
+        let mapped_virt = crate::VMM
+            .get()
+            .map_kernel(addr_to_map, Size4KiB::SIZE, Flags { writable: true, ..Default::default() })
+            .unwrap();
+        let virt = mapped_virt + (address % Size4KiB::SIZE);
+        assert!(virt.is_aligned(8));
+        unsafe { core::ptr::read_volatile(virt.ptr()) }
     }
 
     fn write_u8(&self, address: usize, value: u8) {
         debug!("AML: Writing byte to {:#x}: {:#x}", address, value);
-        let address = hal_x86_64::kernel_map::physical_to_virtual(PAddr::new(address).unwrap());
-        assert!(address.is_aligned(1));
-        unsafe { core::ptr::write_volatile(address.mut_ptr(), value) }
+        let addr_to_map = Frame::<Size4KiB>::contains(PAddr::new(address).unwrap()).start;
+        let mapped_virt = crate::VMM
+            .get()
+            .map_kernel(addr_to_map, Size4KiB::SIZE, Flags { writable: true, ..Default::default() })
+            .unwrap();
+        let virt = mapped_virt + (address % Size4KiB::SIZE);
+        assert!(virt.is_aligned(1));
+        unsafe { core::ptr::write_volatile(virt.mut_ptr(), value) }
     }
 
     fn write_u16(&self, address: usize, value: u16) {
         debug!("AML: Writing word to {:#x}: {:#x}", address, value);
-        let address = hal_x86_64::kernel_map::physical_to_virtual(PAddr::new(address).unwrap());
-        assert!(address.is_aligned(2));
-        unsafe { core::ptr::write_volatile(address.mut_ptr(), value) }
+        let addr_to_map = Frame::<Size4KiB>::contains(PAddr::new(address).unwrap()).start;
+        let mapped_virt = crate::VMM
+            .get()
+            .map_kernel(addr_to_map, Size4KiB::SIZE, Flags { writable: true, ..Default::default() })
+            .unwrap();
+        let virt = mapped_virt + (address % Size4KiB::SIZE);
+        assert!(virt.is_aligned(2));
+        unsafe { core::ptr::write_volatile(virt.mut_ptr(), value) }
     }
 
     fn write_u32(&self, address: usize, value: u32) {
         debug!("AML: Writing dword to {:#x}: {:#x}", address, value);
-        let address = hal_x86_64::kernel_map::physical_to_virtual(PAddr::new(address).unwrap());
-        assert!(address.is_aligned(4));
-        unsafe { core::ptr::write_volatile(address.mut_ptr(), value) }
+        let addr_to_map = Frame::<Size4KiB>::contains(PAddr::new(address).unwrap()).start;
+        let mapped_virt = crate::VMM
+            .get()
+            .map_kernel(addr_to_map, Size4KiB::SIZE, Flags { writable: true, ..Default::default() })
+            .unwrap();
+        let virt = mapped_virt + (address % Size4KiB::SIZE);
+        assert!(virt.is_aligned(4));
+        unsafe { core::ptr::write_volatile(virt.mut_ptr(), value) }
     }
 
     fn write_u64(&self, address: usize, value: u64) {
         debug!("AML: Writing qword to {:#x}: {:#x}", address, value);
-        let address = hal_x86_64::kernel_map::physical_to_virtual(PAddr::new(address).unwrap());
-        assert!(address.is_aligned(8));
-        unsafe { core::ptr::write_volatile(address.mut_ptr(), value) }
+        let addr_to_map = Frame::<Size4KiB>::contains(PAddr::new(address).unwrap()).start;
+        let mapped_virt = crate::VMM
+            .get()
+            .map_kernel(addr_to_map, Size4KiB::SIZE, Flags { writable: true, ..Default::default() })
+            .unwrap();
+        let virt = mapped_virt + (address % Size4KiB::SIZE);
+        assert!(virt.is_aligned(8));
+        unsafe { core::ptr::write_volatile(virt.mut_ptr(), value) }
     }
 
     fn read_io_u8(&self, port: u16) -> u8 {

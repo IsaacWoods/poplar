@@ -1,7 +1,7 @@
 use core::{arch::global_asm, mem, ptr};
 use hal::memory::VAddr;
 use hal_x86_64::hw::registers::{write_msr, CpuFlags};
-use kernel::memory::vmm::Stack;
+use kernel::vmm::Stack;
 
 global_asm!(include_str!("task.s"));
 global_asm!(include_str!("syscall.s"));
@@ -31,7 +31,7 @@ extern "C" {
 extern "C" fn rust_syscall_entry(number: usize, a: usize, b: usize, c: usize, d: usize, e: usize) -> usize {
     kernel::syscall::handle_syscall::<crate::PlatformImpl>(
         crate::SCHEDULER.get(),
-        crate::KERNEL_PAGE_TABLES.get(),
+        crate::VMM.get(),
         number,
         a,
         b,

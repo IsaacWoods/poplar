@@ -1,9 +1,10 @@
 use super::{alloc_kernel_object_id, memory_object::MemoryObject, KernelObject, KernelObjectId, KernelObjectType};
 use crate::{
-    memory::{vmm::Stack, Pmm},
+    pmm::Pmm,
+    vmm::{Stack, Vmm},
     Platform,
 };
-use alloc::{collections::btree_map::BTreeMap, sync::Arc, vec::Vec};
+use alloc::{collections::btree_map::BTreeMap, sync::Arc};
 use hal::memory::{mebibytes, Bytes, FrameAllocator, FrameSize, PageTable, Size4KiB, VAddr};
 use mulch::bitmap::Bitmap;
 use poplar::syscall::MapMemoryObjectError;
@@ -46,7 +47,7 @@ impl<P> AddressSpace<P>
 where
     P: Platform,
 {
-    pub fn new<A>(owner: KernelObjectId, kernel_page_table: &P::PageTable, allocator: &A) -> Arc<AddressSpace<P>>
+    pub fn new<A>(owner: KernelObjectId, allocator: &A, vmm: &Vmm<P>) -> Arc<AddressSpace<P>>
     where
         A: FrameAllocator<P::PageTableSize>,
     {
@@ -55,7 +56,10 @@ where
             owner,
             state: Spinlock::new(State::NotActive),
             mappings: Spinlock::new(BTreeMap::new()),
-            page_table: Spinlock::new(P::PageTable::new_with_kernel_mapped(kernel_page_table, allocator)),
+            page_table: Spinlock::new(P::PageTable::new_with_kernel_mapped(
+                &vmm.kernel_page_table.lock(),
+                allocator,
+            )),
             slot_bitmap: Spinlock::new(0),
         })
     }

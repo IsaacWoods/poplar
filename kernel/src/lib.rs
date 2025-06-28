@@ -13,31 +13,32 @@ extern crate alloc;
 
 pub mod bootinfo;
 pub mod clocksource;
-pub mod memory;
 pub mod object;
 pub mod pci;
+pub mod pmm;
 pub mod scheduler;
 pub mod syscall;
 pub mod tasklets;
+pub mod vmm;
 
 use alloc::{boxed::Box, string::ToString, sync::Arc, vec::Vec};
 use bootinfo::BootInfo;
 use clocksource::Clocksource;
 use hal::memory::{FrameSize, PAddr, PageTable, Size4KiB, VAddr};
-use memory::{vmm::Stack, Pmm, Vmm};
 use mulch::InitGuard;
 use object::{address_space::AddressSpace, memory_object::MemoryObject, task::Task};
 use pci::{PciInfo, PciInterruptConfigurator, PciResolver};
 use pci_types::ConfigRegionAccess as PciConfigRegionAccess;
+use pmm::Pmm;
 use scheduler::Scheduler;
 use spinning_top::{RwSpinlock, Spinlock};
+use vmm::{Stack, Vmm};
 
 #[cfg(not(test))]
 #[global_allocator]
 pub static ALLOCATOR: linked_list_allocator::LockedHeap = linked_list_allocator::LockedHeap::empty();
 
 pub static PMM: InitGuard<Pmm> = InitGuard::uninit();
-pub static VMM: InitGuard<Vmm> = InitGuard::uninit();
 pub static FRAMEBUFFER: InitGuard<(poplar::syscall::FramebufferInfo, Arc<MemoryObject>)> = InitGuard::uninit();
 pub static PCI_INFO: RwSpinlock<Option<PciInfo>> = RwSpinlock::new(None);
 pub static PCI_ACCESS: InitGuard<Option<Spinlock<Box<dyn PciConfigRegionAccess + Send>>>> = InitGuard::uninit();
@@ -47,6 +48,11 @@ pub trait Platform: Sized + 'static {
     type PageTable: PageTable<Self::PageTableSize> + Send;
     type Clocksource: Clocksource;
     type TaskContext;
+
+    const HIGHER_HALF_START: VAddr;
+    const PHYSICAL_MAPPING_BASE: VAddr;
+    const KERNEL_DYNAMIC_AREA_BASE: VAddr;
+    const KERNEL_IMAGE_BASE: VAddr;
 
     /// Create a `TaskContext` for a new task with the supplied kernel and user stacks.
     fn new_task_context(kernel_stack: &Stack, user_stack: &Stack, task_entry_point: VAddr) -> Self::TaskContext;
@@ -65,7 +71,7 @@ pub trait Platform: Sized + 'static {
     fn rearm_interrupt(interrupt: usize);
 }
 
-pub fn load_userspace<P>(scheduler: &Scheduler<P>, boot_info: &BootInfo, kernel_page_table: &mut P::PageTable)
+pub fn load_userspace<P>(scheduler: &Scheduler<P>, boot_info: &BootInfo, vmm: &Vmm<P>)
 where
     P: Platform,
 {
@@ -81,7 +87,7 @@ where
 
     let pmm = PMM.get();
     let bootstrap_task = loaded_images.next().unwrap();
-    let address_space = AddressSpace::new(SENTINEL_KERNEL_ID, kernel_page_table, pmm);
+    let address_space = AddressSpace::new(SENTINEL_KERNEL_ID, pmm, vmm);
     let handles = Handles::new();
 
     for segment in &bootstrap_task.segments {
@@ -136,7 +142,7 @@ where
         VAddr::new(bootstrap_task.entry_point as usize),
         handles,
         pmm,
-        kernel_page_table,
+        vmm,
     )
     .expect("Failed to load bootstrapping task");
     scheduler.add_task(task);

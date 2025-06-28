@@ -43,7 +43,7 @@ where
     };
 
     let entry_point = VAddr::new(elf.entry_point());
-    let mut next_safe_address = seed_bootinfo::kernel_map::KERNEL_START;
+    let mut next_safe_address = seed_bootinfo::kernel_map::KERNEL_IMAGE_BASE;
 
     for segment in elf.segments() {
         match segment.segment_type() {
