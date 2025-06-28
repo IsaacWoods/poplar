@@ -24,6 +24,7 @@ pub mod vmm;
 use alloc::{boxed::Box, string::ToString, sync::Arc, vec::Vec};
 use bootinfo::BootInfo;
 use clocksource::Clocksource;
+use core::ptr;
 use hal::memory::{FrameSize, PAddr, PageTable, Size4KiB, VAddr};
 use mulch::InitGuard;
 use object::{address_space::AddressSpace, memory_object::MemoryObject, task::Task};
@@ -57,16 +58,15 @@ pub trait Platform: Sized + 'static {
     /// Create a `TaskContext` for a new task with the supplied kernel and user stacks.
     fn new_task_context(kernel_stack: &Stack, user_stack: &Stack, task_entry_point: VAddr) -> Self::TaskContext;
 
+    /// Create a set of page tables for a new task, with the kernel mapped into the higher-half.
+    fn new_task_page_tables() -> Self::PageTable;
+
     /// Do the arch-dependent part of the context switch. This should save the context of the
     /// currently running task into `from_context`, and restore `to_context` to start executing.
     unsafe fn context_switch(from_context: *mut Self::TaskContext, to_context: *const Self::TaskContext);
 
     /// Do the actual drop into usermode. This assumes that the task's page tables have already been installed.
     unsafe fn drop_into_userspace(context: *const Self::TaskContext) -> !;
-
-    // TODO: this should not exist long-term. The common kernel VMM should know about the direct
-    // physical mapping and should be able to write to physical memory itself.
-    unsafe fn write_to_phys_memory(address: PAddr, data: &[u8]);
 
     fn rearm_interrupt(interrupt: usize);
 }
@@ -87,7 +87,7 @@ where
 
     let pmm = PMM.get();
     let bootstrap_task = loaded_images.next().unwrap();
-    let address_space = AddressSpace::new(SENTINEL_KERNEL_ID, pmm, vmm);
+    let address_space = AddressSpace::new(SENTINEL_KERNEL_ID);
     let handles = Handles::new();
 
     for segment in &bootstrap_task.segments {
@@ -123,8 +123,9 @@ where
     let manifest_object = {
         let phys = pmm.alloc(mem_object_len / Size4KiB::SIZE);
         unsafe {
-            P::write_to_phys_memory(phys, &(bytes_written as u32).to_le_bytes());
-            P::write_to_phys_memory(phys + 4, &buffer);
+            let virt = vmm.physical_to_virtual(phys);
+            ptr::write(virt.mut_ptr(), bytes_written as u32);
+            ptr::copy(buffer.as_ptr(), (virt + 4).mut_ptr() as *mut u8, bytes_written);
         }
         MemoryObject::new(
             SENTINEL_KERNEL_ID,

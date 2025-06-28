@@ -65,6 +65,20 @@ impl Platform for PlatformImpl {
         task::new_task_context(kernel_stack, user_stack, task_entry_point)
     }
 
+    fn new_task_page_tables() -> Self::PageTable {
+        use hal::memory::FrameAllocator;
+        use hal_x86_64::paging::ENTRY_COUNT;
+
+        let mut page_table = PageTableImpl::new(kernel::PMM.get().allocate(), Self::PHYSICAL_MAPPING_BASE);
+        let kernel_tables = &VMM.get().kernel_page_table.lock();
+
+        for i in (ENTRY_COUNT / 2)..ENTRY_COUNT {
+            page_table.p4_mut()[i] = kernel_tables.p4()[i];
+        }
+
+        page_table
+    }
+
     unsafe fn context_switch(from_context: *mut Self::TaskContext, to_context: *const Self::TaskContext) {
         task::context_switch(from_context, to_context)
     }
@@ -73,13 +87,6 @@ impl Platform for PlatformImpl {
     /// and that an initial frame has been put into the task's kernel stack that this will use to enter userspace.
     unsafe fn drop_into_userspace(context: *const Self::TaskContext) -> ! {
         task::drop_into_userspace(context)
-    }
-
-    unsafe fn write_to_phys_memory(address: PAddr, data: &[u8]) {
-        let virt: *mut u8 = VMM.get().physical_to_virtual(address).mut_ptr();
-        unsafe {
-            core::ptr::copy(data.as_ptr(), virt, data.len());
-        }
     }
 
     fn rearm_interrupt(interrupt: usize) {
