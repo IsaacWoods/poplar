@@ -9,13 +9,10 @@ use acpi::{
 use alloc::{alloc::Global, collections::btree_map::BTreeMap, sync::Arc, vec, vec::Vec};
 use bit_field::BitField;
 use core::{ptr, str::FromStr};
-use hal::memory::PAddr;
-use hal_x86_64::{
-    hw::{
-        idt::InterruptStackFrame,
-        ioapic::{PinPolarity, TriggerMode},
-    },
-    kernel_map,
+use hal::memory::{Flags, FrameSize, PAddr, Size4KiB, VAddr};
+use hal_x86_64::hw::{
+    idt::InterruptStackFrame,
+    ioapic::{PinPolarity, TriggerMode},
 };
 use kernel::{object::interrupt::Interrupt, pci::PciInterruptConfigurator};
 use pci_types::{
@@ -31,13 +28,46 @@ use tracing::info;
 /// Maps platform interrupt numbers to sets of PCI events
 static INTERRUPT_ROUTING: Spinlock<BTreeMap<u8, Vec<Arc<Interrupt>>>> = Spinlock::new(BTreeMap::new());
 
+#[derive(Clone, Copy)]
+struct BusMapping {
+    starts_at: PAddr,
+    mapped_at: VAddr,
+}
+
+struct EcamAccessInner {
+    regions: PciConfigRegions,
+    bus_mappings: Spinlock<BTreeMap<u8, BusMapping>>,
+}
+
 /// Allows access to PCI configuration space via the ECAM.
 #[derive(Clone)]
-pub struct EcamAccess(Arc<PciConfigRegions<Global>>);
+pub struct EcamAccess(Arc<EcamAccessInner>);
 
 impl EcamAccess {
     pub fn new(regions: PciConfigRegions<Global>) -> EcamAccess {
-        EcamAccess(Arc::new(regions))
+        let inner = EcamAccessInner { regions, bus_mappings: Spinlock::new(BTreeMap::new()) };
+        EcamAccess(Arc::new(inner))
+    }
+
+    fn map_bus(&self, segment: u16, bus: u8) -> BusMapping {
+        let mut mappings = self.0.bus_mappings.lock();
+
+        if let Some(mapping) = mappings.get(&bus) {
+            return *mapping;
+        }
+
+        /*
+         * We create mappings for each bus on-demand as they are first enumerated. This makes it
+         * easy to size the mappings as each bus covers 2^20 bytes of total configuration space.
+         */
+        const BUS_MAPPING_SIZE: usize = 1 << 20;
+        let phys = PAddr::new(self.0.regions.physical_address(segment, bus, 0, 0).unwrap() as usize).unwrap();
+        let virt = crate::VMM
+            .get()
+            .map_kernel(phys, BUS_MAPPING_SIZE, Flags { writable: true, cached: false, ..Default::default() })
+            .unwrap();
+        mappings.insert(bus, BusMapping { starts_at: phys, mapped_at: virt });
+        *mappings.get(&bus).unwrap()
     }
 }
 
@@ -45,22 +75,32 @@ impl ConfigRegionAccess for EcamAccess {
     unsafe fn read(&self, address: PciAddress, offset: u16) -> u32 {
         let physical_address = self
             .0
+            .regions
             .physical_address(address.segment(), address.bus(), address.device(), address.function())
             .unwrap();
-        let ptr = (kernel_map::physical_to_virtual(PAddr::new(physical_address as usize).unwrap())
-            + offset as usize)
-            .ptr();
+        let mapping = self.map_bus(address.segment(), address.bus());
+        let ptr = {
+            let function_offset = (physical_address as usize) - usize::from(mapping.starts_at);
+            assert!(function_offset < (1 << 20));
+            (mapping.mapped_at + function_offset + offset as usize).ptr()
+        };
+        // TODO: ECAM accesses should be done into/out of EAX only. Do this in asm
         ptr::read_volatile(ptr)
     }
 
     unsafe fn write(&self, address: PciAddress, offset: u16, value: u32) {
         let physical_address = self
             .0
+            .regions
             .physical_address(address.segment(), address.bus(), address.device(), address.function())
             .unwrap();
-        let ptr = (kernel_map::physical_to_virtual(PAddr::new(physical_address as usize).unwrap())
-            + offset as usize)
-            .mut_ptr();
+        let mapping = self.map_bus(address.segment(), address.bus());
+        let ptr = {
+            let function_offset = (physical_address as usize) - usize::from(mapping.starts_at);
+            assert!(function_offset < (1 << 20));
+            (mapping.mapped_at + function_offset + offset as usize).mut_ptr()
+        };
+        // TODO: ECAM accesses should be done into/out of EAX only. Do this in asm
         ptr::write_volatile(ptr, value)
     }
 }
@@ -176,7 +216,14 @@ impl PciInterruptConfigurator for PciConfigurator {
             Bar::Memory64 { address, .. } => address as usize + msix.table_offset() as usize,
             _ => panic!(),
         };
-        let table_base_virt = hal_x86_64::kernel_map::physical_to_virtual(PAddr::new(table_base_phys).unwrap());
+        let table_base_virt = crate::VMM
+            .get()
+            .map_kernel(
+                PAddr::new(table_base_phys).unwrap(),
+                Size4KiB::SIZE,
+                Flags { writable: true, cached: false, ..Default::default() },
+            )
+            .unwrap();
         // TODO: offset into the table if we ever need an entry that isn't the first
         let entry_ptr = table_base_virt.mut_ptr() as *mut u32;
 
