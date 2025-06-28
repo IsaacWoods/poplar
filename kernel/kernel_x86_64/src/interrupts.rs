@@ -7,23 +7,14 @@ use alloc::vec;
 use bit_field::BitField;
 use core::{str::FromStr, time::Duration};
 use hal::memory::PAddr;
-use hal_x86_64::{
-    hw::{
-        cpu::CpuInfo,
-        gdt::PrivilegeLevel,
-        i8259_pic::Pic,
-        idt::{
-            wrap_handler,
-            wrap_handler_with_error_code,
-            ExceptionWithErrorStackFrame,
-            Idt,
-            InterruptStackFrame,
-        },
-        ioapic::{DeliveryMode, IoApic, PinPolarity, TriggerMode},
-        lapic::LocalApic,
-        registers::read_control_reg,
-    },
-    kernel_map,
+use hal_x86_64::hw::{
+    cpu::CpuInfo,
+    gdt::PrivilegeLevel,
+    i8259_pic::Pic,
+    idt::{wrap_handler, wrap_handler_with_error_code, ExceptionWithErrorStackFrame, Idt, InterruptStackFrame},
+    ioapic::{DeliveryMode, IoApic, PinPolarity, TriggerMode},
+    lapic::LocalApic,
+    registers::read_control_reg,
 };
 use mulch::{BinaryPrettyPrint, InitGuard};
 use spinning_top::Spinlock;
@@ -99,9 +90,11 @@ impl InterruptController {
                  */
                 // TODO: change the region to be NO_CACHE
                 let lapic = unsafe {
-                    LocalApic::new(kernel_map::physical_to_virtual(
-                        PAddr::new(info.local_apic_address as usize).unwrap(),
-                    ))
+                    LocalApic::new(
+                        crate::VMM
+                            .get()
+                            .physical_to_virtual(PAddr::new(info.local_apic_address as usize).unwrap()),
+                    )
                 };
                 LOCAL_APIC.initialize(lapic);
 
@@ -189,9 +182,9 @@ impl InterruptController {
                 }
 
                 assert!(info.io_apics.len() == 1);
-                let io_apic_addr = hal_x86_64::kernel_map::physical_to_virtual(
-                    PAddr::new(info.io_apics.first().unwrap().address as usize).unwrap(),
-                );
+                let io_apic_addr = crate::VMM
+                    .get()
+                    .physical_to_virtual(PAddr::new(info.io_apics.first().unwrap().address as usize).unwrap());
                 let mut io_apic = unsafe { IoApic::new(io_apic_addr, 0) };
 
                 /*

@@ -1,5 +1,5 @@
 use core::{ops, ptr, slice, str};
-use hal::memory::{Frame, FrameAllocator, FrameSize, PAddr, Size4KiB};
+use hal::memory::{Frame, FrameAllocator, FrameSize, PAddr, Size4KiB, VAddr};
 use seed_bootinfo::{Header, LoadedSegment, MemoryEntry, MemoryType, VideoModeInfo};
 
 pub struct BootInfo {
@@ -28,6 +28,10 @@ impl BootInfo {
                 header.mem_map_length as usize,
             )
         }
+    }
+
+    pub fn kernel_free_start(&self) -> VAddr {
+        VAddr::new(unsafe { *self.base }.kernel_free_start as usize)
     }
 
     pub fn rsdp_addr(&self) -> Option<u64> {

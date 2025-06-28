@@ -12,6 +12,7 @@ use crate::{
         KernelObjectType,
     },
     scheduler::Scheduler,
+    vmm::Vmm,
     Platform,
 };
 use alloc::{string::ToString, sync::Arc};
@@ -44,7 +45,6 @@ use poplar::{
     },
     Handle,
 };
-use spinning_top::RwSpinlock;
 use tracing::{info, warn};
 use validation::{UserPointer, UserSlice, UserString};
 
@@ -54,7 +54,7 @@ use validation::{UserPointer, UserSlice, UserString};
 /// depending on how many parameters the specific system call takes.
 pub fn handle_syscall<P>(
     scheduler: &Scheduler<P>,
-    kernel_page_tables: &RwSpinlock<P::PageTable>,
+    vmm: &Vmm<P>,
     number: usize,
     a: usize,
     b: usize,
@@ -89,12 +89,8 @@ where
         syscall::SYSCALL_PCI_GET_INFO => status_with_payload_to_syscall_repr(pci_get_info(&task, a, b)),
         syscall::SYSCALL_WAIT_FOR_EVENT => status_to_syscall_repr(wait_for_event(scheduler, &task, a, b)),
         syscall::SYSCALL_POLL_INTEREST => status_with_payload_to_syscall_repr(poll_interest(&task, a)),
-        syscall::SYSCALL_CREATE_ADDRESS_SPACE => {
-            handle_to_syscall_repr(create_address_space(&task, &mut kernel_page_tables.write()))
-        }
-        syscall::SYSCALL_SPAWN_TASK => {
-            handle_to_syscall_repr(spawn_task(&task, a, scheduler, &mut kernel_page_tables.write()))
-        }
+        syscall::SYSCALL_CREATE_ADDRESS_SPACE => handle_to_syscall_repr(create_address_space(&task, vmm)),
+        syscall::SYSCALL_SPAWN_TASK => handle_to_syscall_repr(spawn_task(&task, a, scheduler, vmm)),
         syscall::SYSCALL_RESIZE_MEMORY_OBJECT => status_to_syscall_repr(resize_memory_object(&task, a, b)),
         syscall::SYSCALL_WAIT_FOR_INTERRUPT => status_to_syscall_repr(wait_for_interrupt(scheduler, &task, a, b)),
         syscall::SYSCALL_ACK_INTERRUPT => status_to_syscall_repr(ack_interrupt(&task, a)),
@@ -541,14 +537,11 @@ where
     Ok(if interesting { 1 << 16 } else { 0 })
 }
 
-pub fn create_address_space<P>(
-    task: &Arc<Task<P>>,
-    kernel_page_tables: &mut P::PageTable,
-) -> Result<Handle, CreateAddressSpaceError>
+pub fn create_address_space<P>(task: &Arc<Task<P>>, vmm: &Vmm<P>) -> Result<Handle, CreateAddressSpaceError>
 where
     P: Platform,
 {
-    let address_space = AddressSpace::<P>::new(task.id(), kernel_page_tables, crate::PMM.get());
+    let address_space = AddressSpace::<P>::new(task.id(), crate::PMM.get(), vmm);
     Ok(task.handles.add(address_space))
 }
 
@@ -556,7 +549,7 @@ pub fn spawn_task<P>(
     task: &Arc<Task<P>>,
     details_ptr: usize,
     scheduler: &Scheduler<P>,
-    kernel_page_tables: &mut P::PageTable,
+    vmm: &Vmm<P>,
 ) -> Result<Handle, SpawnTaskError>
 where
     P: Platform,
@@ -594,16 +587,9 @@ where
     }
 
     let pmm = crate::PMM.get();
-    let new_task = Task::new(
-        task.id(),
-        address_space,
-        name.to_string(),
-        VAddr::new(details.entry_point),
-        handles,
-        &pmm,
-        kernel_page_tables,
-    )
-    .expect("Failed to create task");
+    let new_task =
+        Task::new(task.id(), address_space, name.to_string(), VAddr::new(details.entry_point), handles, &pmm, vmm)
+            .expect("Failed to create task");
     scheduler.add_task(new_task.clone());
 
     Ok(task.handles.add(new_task))

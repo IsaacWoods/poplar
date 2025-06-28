@@ -1,21 +1,21 @@
 #![no_std]
 
-/// On x86_64, kernelspace occupies the top-most P4 entry (virtual addresses `0xffff_ff80_0000_0000` through
-/// to `0xffff_ffff_ffff_ffff`). The actual kernel image is loaded at `-2GiB` (`0xffff_ffff_8000_0000`) and
-/// is followed immediately by the boot information constructed by Seed, and then by dynamically allocated space
-/// for kernel data structures.
+/// On x86_64 with 4-level paging, the higher-half starts at `0xffff_8000_0000_0000`. We dedicate
+/// the first half of the higher-half (64 TiB) to the direct physical map. Following this is an
+/// area the kernel can use for dynamic virtual allocations (starting at `0xffff_c000_0000_0000`).
 ///
-/// This allows best utilisation of the `kernel` code model, which optimises for encoding offsets in signed 32-bit
-/// immediates, which are common in x86_64 instructions.
+/// The actual kernel image is loaded at `-2GiB` (`0xffff_ffff_8000_0000`), and is followed by boot
+/// information constructed by Seed. This allows best utilisation of the `kernel` code model, which
+/// optimises for encoding offsets in signed 32-bit immediates, which are common in x86_64 instruction
+/// encodings.
 #[cfg(target_arch = "x86_64")]
 pub mod kernel_map {
     use hal::memory::VAddr;
 
     pub const HIGHER_HALF_START: VAddr = VAddr::new(0xffff_8000_0000_0000);
-    pub const KERNEL_SPACE_START: VAddr = VAddr::new(0xffff_ff80_0000_0000);
-    pub const PHYSICAL_MAPPING_BASE: VAddr = KERNEL_SPACE_START;
-
-    pub const KERNEL_START: VAddr = VAddr::new(0xffff_ffff_8000_0000);
+    pub const PHYSICAL_MAPPING_BASE: VAddr = HIGHER_HALF_START;
+    pub const KERNEL_DYNAMIC_AREA_BASE: VAddr = VAddr::new(0xffff_c000_0000_0000);
+    pub const KERNEL_IMAGE_BASE: VAddr = VAddr::new(0xffff_ffff_8000_0000);
 }
 
 pub const MAGIC: u32 = 0xf0cacc1a;

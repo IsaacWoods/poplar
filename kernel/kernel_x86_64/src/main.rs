@@ -24,21 +24,20 @@ use core::time::Duration;
 use hal::memory::{Flags, Frame, FrameSize, PAddr, PageTable, Size4KiB, VAddr};
 use hal_x86_64::{
     hw::{cpu::CpuInfo, registers::read_control_reg, tss::Tss},
-    kernel_map,
     paging::PageTableImpl,
 };
 use interrupts::{InterruptController, INTERRUPT_CONTROLLER};
 use kacpi::AcpiManager;
 use kernel::{
     bootinfo::{BootInfo, EarlyFrameAllocator},
-    memory::{vmm::Stack, Pmm, Vmm},
+    pmm::Pmm,
     scheduler::Scheduler,
+    vmm::{Stack, Vmm},
     Platform,
 };
 use mulch::{linker::LinkerSymbol, InitGuard};
 use pci::PciConfigurator;
 use per_cpu::PerCpuImpl;
-use spinning_top::RwSpinlock;
 use topo::Topology;
 use tracing::info;
 
@@ -57,6 +56,11 @@ impl Platform for PlatformImpl {
     type Clocksource = TscClocksource;
     type TaskContext = task::TaskContext;
 
+    const HIGHER_HALF_START: VAddr = seed_bootinfo::kernel_map::HIGHER_HALF_START;
+    const PHYSICAL_MAPPING_BASE: VAddr = seed_bootinfo::kernel_map::PHYSICAL_MAPPING_BASE;
+    const KERNEL_DYNAMIC_AREA_BASE: VAddr = seed_bootinfo::kernel_map::KERNEL_DYNAMIC_AREA_BASE;
+    const KERNEL_IMAGE_BASE: VAddr = seed_bootinfo::kernel_map::KERNEL_IMAGE_BASE;
+
     fn new_task_context(kernel_stack: &Stack, user_stack: &Stack, task_entry_point: VAddr) -> Self::TaskContext {
         task::new_task_context(kernel_stack, user_stack, task_entry_point)
     }
@@ -72,7 +76,7 @@ impl Platform for PlatformImpl {
     }
 
     unsafe fn write_to_phys_memory(address: PAddr, data: &[u8]) {
-        let virt: *mut u8 = hal_x86_64::kernel_map::physical_to_virtual(address).mut_ptr();
+        let virt: *mut u8 = VMM.get().physical_to_virtual(address).mut_ptr();
         unsafe {
             core::ptr::copy(data.as_ptr(), virt, data.len());
         }
@@ -86,8 +90,8 @@ impl Platform for PlatformImpl {
     }
 }
 
+pub static VMM: InitGuard<Vmm<PlatformImpl>> = InitGuard::uninit();
 pub static SCHEDULER: InitGuard<Scheduler<PlatformImpl>> = InitGuard::uninit();
-pub static KERNEL_PAGE_TABLES: InitGuard<RwSpinlock<hal_x86_64::paging::PageTableImpl>> = InitGuard::uninit();
 
 #[no_mangle]
 pub extern "C" fn kentry(boot_info_ptr: *const ()) -> ! {
@@ -110,33 +114,29 @@ pub extern "C" fn kentry(boot_info_ptr: *const ()) -> ! {
      * Get the kernel page tables set up by the loader. We have to assume that the loader has set up a correct set
      * of page tables, including a full physical mapping at the correct location, and so this is very unsafe.
      */
-    let kernel_page_tables = unsafe {
+    let mut kernel_page_tables = unsafe {
         PageTableImpl::from_frame(
             Frame::starts_with(PAddr::new(read_control_reg!(cr3) as usize).unwrap()),
-            kernel_map::PHYSICAL_MAPPING_BASE,
+            seed_bootinfo::kernel_map::PHYSICAL_MAPPING_BASE,
         )
     };
-    KERNEL_PAGE_TABLES.initialize(RwSpinlock::new(kernel_page_tables));
 
     /*
-     * Initialise the heap allocator. After this, the kernel is free to use collections etc. that
-     * can allocate on the heap through the global allocator.
+     * Set up an initial heap at the start of the kernelspace dynamic area. This is required to
+     * initialise the PMM and VMM as they both utilise allocating collections.
      */
     {
         use hal::memory::FrameAllocator;
 
         const INITIAL_HEAP_SIZE: usize = 800 * 1024; // TODO: reduce initial size probs and add ability to grow heap as needed
+                                                     // TODO: keep track of this when we initialise the VMM as we need to do this first, so we
+                                                     // just put it at the start of the virtual block
+        let heap_start = boot_info.kernel_free_start();
         let early_allocator = EarlyFrameAllocator::new(&mut boot_info);
         let initial_heap = early_allocator.allocate_n(Size4KiB::frames_needed(INITIAL_HEAP_SIZE));
 
-        let heap_start =
-            VAddr::new(
-                unsafe { _kernel_end.ptr().byte_add(_kernel_end.ptr().align_offset(Size4KiB::SIZE)) } as usize
-            );
         info!("Initialising early heap of size {:#x} bytes at {:#x}", INITIAL_HEAP_SIZE, heap_start);
-        KERNEL_PAGE_TABLES
-            .get()
-            .write()
+        kernel_page_tables
             .map_area(
                 heap_start,
                 initial_heap.start.start,
@@ -151,10 +151,19 @@ pub extern "C" fn kentry(boot_info_ptr: *const ()) -> ! {
         }
     }
 
+    // TODO: get rid of these
+    pub const KERNEL_STACKS_BASE: VAddr = VAddr::new(0xffff_ffdf_8000_0000);
+    /*
+     * There is an imposed maximum number of tasks because of the simple way we're allocating task kernel stacks.
+     * This is currently 65536 with a task kernel stack size of 2MiB.
+     */
+    pub const STACK_SLOT_SIZE: hal::memory::Bytes = hal::memory::mebibytes(2);
+    pub const MAX_TASKS: usize = 65536;
     kernel::PMM.initialize(Pmm::new(boot_info.memory_map()));
-    kernel::VMM.initialize(Vmm::new(
-        kernel_map::KERNEL_STACKS_BASE,
-        kernel_map::KERNEL_STACKS_BASE + kernel_map::STACK_SLOT_SIZE * kernel_map::MAX_TASKS,
+    VMM.initialize(Vmm::new(
+        kernel_page_tables,
+        KERNEL_STACKS_BASE,
+        KERNEL_STACKS_BASE + STACK_SLOT_SIZE * MAX_TASKS,
         hal::memory::mebibytes(2),
     ));
 
@@ -224,7 +233,7 @@ pub extern "C" fn kentry(boot_info_ptr: *const ()) -> ! {
     /*
      * Create kernel objects from loaded images and schedule them.
      */
-    kernel::load_userspace(SCHEDULER.get(), &boot_info, &mut KERNEL_PAGE_TABLES.get().write());
+    kernel::load_userspace(SCHEDULER.get(), &boot_info, VMM.get());
     if let Some(video_info) = boot_info.video_mode_info() {
         kernel::create_framebuffer(&video_info);
     }

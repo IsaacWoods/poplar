@@ -43,6 +43,7 @@ dependencies = [
  "bitflags",
  "hal",
  "mulch",
+ "mycelium-bitfield",
  "spinning_top",
  "tracing",
 ]
@@ -71,6 +72,12 @@ dependencies = [
  "cfg-if",
  "num-traits",
 ]
+
+[[package]]
+name = "mycelium-bitfield"
+version = "0.1.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "24e0cc5e2c585acbd15c5ce911dff71e1f4d5313f43345873311c4f5efd741cc"
 
 [[package]]
 name = "num-traits"

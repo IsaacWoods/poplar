@@ -4,9 +4,8 @@
 //! that userspace could ordinarily access itself (otherwise, we could leak information to a
 //! userspace task that it shouldn't be able to access).
 
-use core::{marker::PhantomData, ptr, slice, str};
-
 use alloc::{borrow::Cow, string::String};
+use core::{marker::PhantomData, ptr, slice, str};
 
 pub struct UserPointer<T> {
     ptr: *mut T,
