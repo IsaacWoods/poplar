@@ -570,6 +570,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "seed_ramdisk"
+version = "0.1.0"
+
+[[package]]
 name = "serde"
 version = "1.0.188"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -980,6 +984,7 @@ dependencies = [
  "fscommon",
  "gpt",
  "seed_config",
+ "seed_ramdisk",
  "serde",
  "serialport",
  "toml",

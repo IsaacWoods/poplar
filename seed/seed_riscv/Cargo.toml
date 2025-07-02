@@ -7,6 +7,7 @@ edition = "2021"
 [dependencies]
 seed_bootinfo = { path = "../seed_bootinfo" }
 seed_config = { path = "../seed_config" }
+seed_ramdisk = { path = "../seed_ramdisk" }
 hal = { path = "../../lib/hal/" }
 hal_riscv = { path = "../../lib/hal_riscv/" }
 mulch = { path = "../../lib/mulch/" }
@@ -22,7 +23,6 @@ mer = { path = "../../lib/mer/" }
 pci_types = { path = "../../lib/pci_types" }
 virtio = { path = "../../lib/virtio" }
 gpt = { path = "../../lib/gpt" }
-heapless = "0.8.0"
 serde = { version = "1", default-features = false, features = [
     "derive",
     "alloc",
@@ -30,5 +30,5 @@ serde = { version = "1", default-features = false, features = [
 picotoml = { path = "../../lib/picotoml" }
 
 [features]
-platform_rv64_virt = ["hal_riscv/platform_rv64_virt"]
-platform_mq_pro = ["hal_riscv/platform_mq_pro"]
+platform_rv64_virt = []
+platform_mq_pro = []

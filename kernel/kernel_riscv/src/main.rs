@@ -5,7 +5,7 @@
 
 #![no_std]
 #![no_main]
-#![feature(fn_align, naked_functions, sync_unsafe_cell)]
+#![feature(fn_align, sync_unsafe_cell)]
 
 extern crate alloc;
 
@@ -17,35 +17,39 @@ mod task;
 mod trap;
 
 use alloc::string::String;
-use hal::memory::{Frame, PAddr, VAddr};
-use hal_riscv::{
-    hw::csr::Satp,
-    platform::{kernel_map, PageTableImpl},
-};
+use hal::memory::{Flags, Frame, FrameSize, Size4KiB, VAddr};
+use hal_riscv::hw::csr::Satp;
 use kernel::{
-    memory::{Pmm, Vmm},
+    bootinfo::{BootInfo, EarlyFrameAllocator},
+    pmm::Pmm,
     scheduler::Scheduler,
+    vmm::Vmm,
     Platform,
 };
 use mulch::InitGuard;
-use seed::boot_info::BootInfo;
-use spinning_top::RwSpinlock;
 use tracing::info;
 
 pub struct PlatformImpl;
 
 impl Platform for PlatformImpl {
     type PageTableSize = hal::memory::Size4KiB;
-    type PageTable = hal_riscv::platform::PageTableImpl;
+    #[cfg(any(feature = "platform_rv64_virt", test))]
+    type PageTable = hal_riscv::paging::PageTableImpl<hal_riscv::paging::Level4>;
+    #[cfg(feature = "platform_mq_pro")]
+    type PageTable = hal_riscv::paging::PageTableImpl<hal_riscv::paging::Level3>;
     type Clocksource = clocksource::Clocksource;
     type TaskContext = task::TaskContext;
 
     fn new_task_context(
-        kernel_stack: &kernel::memory::vmm::Stack,
-        user_stack: &kernel::memory::vmm::Stack,
+        kernel_stack: &kernel::vmm::Stack,
+        user_stack: &kernel::vmm::Stack,
         task_entry_point: VAddr,
     ) -> Self::TaskContext {
         task::new_task_context(kernel_stack, user_stack, task_entry_point)
+    }
+
+    fn new_task_page_tables() -> Self::PageTable {
+        todo!()
     }
 
     unsafe fn context_switch(from_context: *mut Self::TaskContext, to_context: *const Self::TaskContext) {
@@ -56,71 +60,78 @@ impl Platform for PlatformImpl {
         task::drop_into_userspace(context)
     }
 
-    unsafe fn write_to_phys_memory(address: PAddr, data: &[u8]) {
-        let virt: *mut u8 = hal_riscv::platform::kernel_map::physical_to_virtual(address).mut_ptr();
-        unsafe {
-            core::ptr::copy(data.as_ptr(), virt, data.len());
-        }
-    }
-
     fn rearm_interrupt(_interrupt: usize) {}
 }
 
+pub static VMM: InitGuard<Vmm<PlatformImpl>> = InitGuard::uninit();
 pub static SCHEDULER: InitGuard<Scheduler<PlatformImpl>> = InitGuard::uninit();
-pub static KERNEL_PAGE_TABLES: InitGuard<RwSpinlock<hal_riscv::platform::PageTableImpl>> = InitGuard::uninit();
 
 #[no_mangle]
-pub extern "C" fn kentry(boot_info: &BootInfo) -> ! {
+pub extern "C" fn kentry(boot_info_ptr: *mut ()) -> ! {
+    let mut boot_info = unsafe { BootInfo::new(boot_info_ptr) };
+
     let fdt = {
-        let address = hal_riscv::platform::kernel_map::physical_to_virtual(boot_info.fdt_address.unwrap());
+        let address = boot_info.physical_mapping_base() + boot_info.device_tree_addr().unwrap() as usize;
         unsafe { fdt::Fdt::from_ptr(address.ptr()).unwrap() }
     };
-    serial::init(&fdt);
+    serial::init(&fdt, &boot_info);
     info!("Hello from the kernel");
 
     trap::install_early_handler();
-
-    if boot_info.magic != seed::boot_info::BOOT_INFO_MAGIC {
-        panic!("Boot info has incorrect magic!");
-    }
 
     // info!("Boot info: {:#?}", boot_info);
     // info!("FDT: {:#?}", fdt);
 
     clocksource::Clocksource::initialize(&fdt);
 
-    /*
-     * Initialise the heap allocator. After this, the kernel is free to use collections etc. that
-     * can allocate on the heap through the global allocator.
-     */
-    info!("Initializing heap at {:#x} of size {} bytes", boot_info.heap_address, boot_info.heap_size);
-    unsafe {
-        kernel::ALLOCATOR.lock().init(boot_info.heap_address.mut_ptr(), boot_info.heap_size);
-    }
-
-    let kernel_page_table = unsafe {
+    let mut kernel_page_table = unsafe {
         match Satp::read() {
-            Satp::Sv39 { root, .. } => {
-                assert!(hal_riscv::platform::VIRTUAL_ADDRESS_BITS == 39);
-                PageTableImpl::from_frame(Frame::starts_with(root), kernel_map::PHYSICAL_MAP_BASE)
-            }
-            Satp::Sv48 { root, .. } => {
-                assert!(hal_riscv::platform::VIRTUAL_ADDRESS_BITS == 48);
-                PageTableImpl::from_frame(Frame::starts_with(root), kernel_map::PHYSICAL_MAP_BASE)
-            }
+            Satp::Sv39 { root, .. } => <PlatformImpl as Platform>::PageTable::from_frame(
+                Frame::starts_with(root),
+                boot_info.physical_mapping_base(),
+            ),
+            Satp::Sv48 { root, .. } => <PlatformImpl as Platform>::PageTable::from_frame(
+                Frame::starts_with(root),
+                boot_info.physical_mapping_base(),
+            ),
             _ => {
                 panic!("Kernel booted in an unexpected paging mode! Have we been built for the correct platform?");
             }
         }
     };
-    KERNEL_PAGE_TABLES.initialize(RwSpinlock::new(kernel_page_table));
 
-    kernel::PMM.initialize(Pmm::new(boot_info));
-    kernel::VMM.initialize(Vmm::new(
-        kernel_map::KERNEL_STACKS_BASE,
-        kernel_map::KERNEL_STACKS_BASE + kernel_map::STACK_SLOT_SIZE * kernel_map::MAX_TASKS,
-        kernel_map::STACK_SLOT_SIZE,
-    ));
+    /*
+     * Initialise the heap allocator. After this, the kernel is free to use collections etc. that
+     * can allocate on the heap through the global allocator.
+     */
+    {
+        use hal::memory::{FrameAllocator, PageTable};
+
+        // TODO: reduce initial size probs and add ability to grow heap as needed
+        const INITIAL_HEAP_SIZE: usize = 800 * 1024;
+        // TODO: we might want to do this in the dynamic area instead of after the kernel
+        let heap_start = boot_info.kernel_free_start();
+        let early_allocator = EarlyFrameAllocator::new(&mut boot_info);
+        let initial_heap = early_allocator.allocate_n(Size4KiB::frames_needed(INITIAL_HEAP_SIZE));
+
+        info!("Initialising early heap of size {:#x} bytes at {:#x}", INITIAL_HEAP_SIZE, heap_start);
+        kernel_page_table
+            .map_area(
+                heap_start,
+                initial_heap.start.start,
+                INITIAL_HEAP_SIZE,
+                Flags { writable: true, ..Default::default() },
+                &early_allocator,
+            )
+            .unwrap();
+
+        unsafe {
+            kernel::ALLOCATOR.lock().init(heap_start.mut_ptr(), INITIAL_HEAP_SIZE);
+        }
+    }
+
+    kernel::PMM.initialize(Pmm::new(boot_info.memory_map()));
+    VMM.initialize(Vmm::new(kernel_page_table, &boot_info));
 
     interrupts::init(&fdt);
     unsafe {
@@ -166,7 +177,7 @@ pub extern "C" fn kentry(boot_info: &BootInfo) -> ! {
     /*
      * Create kernel objects from loaded images and schedule them.
      */
-    kernel::load_userspace(SCHEDULER.get(), &boot_info, &mut KERNEL_PAGE_TABLES.get().write());
+    kernel::load_userspace(SCHEDULER.get(), &boot_info, &VMM.get());
 
     /*
      * Kick the timer off. We do this just before installing the full handler because the shim

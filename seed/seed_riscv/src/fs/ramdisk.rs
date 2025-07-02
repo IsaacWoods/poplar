@@ -2,7 +2,7 @@ use super::{File, Filesystem};
 use alloc::{slice, string::ToString};
 use core::mem;
 use hal::memory::PAddr;
-use seed::ramdisk::{RamdiskEntry, RamdiskHeader};
+use seed_ramdisk::{RamdiskEntry, RamdiskHeader};
 
 pub struct Ramdisk {
     base: *const RamdiskHeader,

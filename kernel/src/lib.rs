@@ -50,11 +50,6 @@ pub trait Platform: Sized + 'static {
     type Clocksource: Clocksource;
     type TaskContext;
 
-    const HIGHER_HALF_START: VAddr;
-    const PHYSICAL_MAPPING_BASE: VAddr;
-    const KERNEL_DYNAMIC_AREA_BASE: VAddr;
-    const KERNEL_IMAGE_BASE: VAddr;
-
     /// Create a `TaskContext` for a new task with the supplied kernel and user stacks.
     fn new_task_context(kernel_stack: &Stack, user_stack: &Stack, task_entry_point: VAddr) -> Self::TaskContext;
 

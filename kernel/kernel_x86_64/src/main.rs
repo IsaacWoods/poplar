@@ -56,11 +56,6 @@ impl Platform for PlatformImpl {
     type Clocksource = TscClocksource;
     type TaskContext = task::TaskContext;
 
-    const HIGHER_HALF_START: VAddr = seed_bootinfo::kernel_map::HIGHER_HALF_START;
-    const PHYSICAL_MAPPING_BASE: VAddr = seed_bootinfo::kernel_map::PHYSICAL_MAPPING_BASE;
-    const KERNEL_DYNAMIC_AREA_BASE: VAddr = seed_bootinfo::kernel_map::KERNEL_DYNAMIC_AREA_BASE;
-    const KERNEL_IMAGE_BASE: VAddr = seed_bootinfo::kernel_map::KERNEL_IMAGE_BASE;
-
     fn new_task_context(kernel_stack: &Stack, user_stack: &Stack, task_entry_point: VAddr) -> Self::TaskContext {
         task::new_task_context(kernel_stack, user_stack, task_entry_point)
     }
@@ -69,8 +64,9 @@ impl Platform for PlatformImpl {
         use hal::memory::FrameAllocator;
         use hal_x86_64::paging::ENTRY_COUNT;
 
-        let mut page_table = PageTableImpl::new(kernel::PMM.get().allocate(), Self::PHYSICAL_MAPPING_BASE);
-        let kernel_tables = &VMM.get().kernel_page_table.lock();
+        let vmm = &VMM.get();
+        let mut page_table = PageTableImpl::new(kernel::PMM.get().allocate(), vmm.physical_mapping_base);
+        let kernel_tables = vmm.kernel_page_table.lock();
 
         for i in (ENTRY_COUNT / 2)..ENTRY_COUNT {
             page_table.p4_mut()[i] = kernel_tables.p4()[i];
@@ -124,13 +120,13 @@ pub extern "C" fn kentry(boot_info_ptr: *const ()) -> ! {
     let mut kernel_page_tables = unsafe {
         PageTableImpl::from_frame(
             Frame::starts_with(PAddr::new(read_control_reg!(cr3) as usize).unwrap()),
-            seed_bootinfo::kernel_map::PHYSICAL_MAPPING_BASE,
+            boot_info.physical_mapping_base(),
         )
     };
 
     /*
-     * Set up an initial heap at the start of the kernelspace dynamic area. This is required to
-     * initialise the PMM and VMM as they both utilise allocating collections.
+     * Set up an initial heap after the kernel image and bootinfo. This is required to initialise
+     * the PMM and VMM as they both utilise allocating collections.
      */
     {
         use hal::memory::FrameAllocator;
@@ -159,7 +155,7 @@ pub extern "C" fn kentry(boot_info_ptr: *const ()) -> ! {
     }
 
     kernel::PMM.initialize(Pmm::new(boot_info.memory_map()));
-    VMM.initialize(Vmm::new(kernel_page_tables));
+    VMM.initialize(Vmm::new(kernel_page_tables, &boot_info));
 
     /*
      * We want to replace the GDT and IDT as soon as we can, as we're currently relying on the ones installed by

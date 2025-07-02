@@ -29,19 +29,23 @@ use uefi::{
     CString16,
 };
 
-/*
- * TODO:
- *    - Get rid of custom memory types
- *    - New HHDM construction
- *    - New boot-info construction and new kernel interface crate
- *    - Get rid of kernel heap construction here
- *    - Move image loading to common Seed crate?
- *    - Move graphical logging to common Seed crate?
- *    - Pass config options to kernel somehow
- *    - Graphical panic handler with big red oops screen (common crate?)
- *    - Do we need the BootFrameAllocator? Can we instead just alloc single frames as we need them?
- *    - Remove dependency on `seed` from `xtask` (no wonder it's slow as fuck, what the hell are we doing...)
- */
+/// On x86_64 with 4-level paging, the higher-half starts at `0xffff_8000_0000_0000`. We dedicate
+/// the first half of the higher-half (64 TiB) to the direct physical map. Following this is an
+/// area the kernel can use for dynamic virtual allocations (starting at `0xffff_c000_0000_0000`).
+///
+/// The actual kernel image is loaded at `-2GiB` (`0xffff_ffff_8000_0000`), and is followed by boot
+/// information constructed by Seed. This allows best utilisation of the `kernel` code model, which
+/// optimises for encoding offsets in signed 32-bit immediates, which are common in x86_64 instruction
+/// encodings.
+#[cfg(target_arch = "x86_64")]
+pub mod kernel_map {
+    use hal::memory::VAddr;
+
+    pub const HIGHER_HALF_START: VAddr = VAddr::new(0xffff_8000_0000_0000);
+    pub const PHYSICAL_MAPPING_BASE: VAddr = HIGHER_HALF_START;
+    pub const KERNEL_DYNAMIC_AREA_BASE: VAddr = VAddr::new(0xffff_c000_0000_0000);
+    pub const KERNEL_IMAGE_BASE: VAddr = VAddr::new(0xffff_ffff_8000_0000);
+}
 
 /// Records the usage of various memory allocations that need to be tracked in the memory map. Ideally, we would
 /// use UEFI custom memory types for this, but unfortunately due to a bug in Tianocore not behaving correctly with
@@ -99,7 +103,7 @@ fn main() -> Status {
     /*
      * Create space to assemble boot info into, and map it into kernel space.
      */
-    const BOOT_INFO_MAX_SIZE: usize = Size4KiB::SIZE;
+    const BOOT_INFO_MAX_SIZE: usize = 4 * Size4KiB::SIZE;
     let boot_info_phys = PAddr::new(
         uefi::boot::allocate_pages(
             AllocateType::AnyPages,
@@ -226,7 +230,7 @@ fn main() -> Status {
     info!("Mapping physical memory 0x0..{:#x} into higher-half direct mapping", top_of_phys_mem);
     page_table
         .map_area(
-            seed_bootinfo::kernel_map::PHYSICAL_MAPPING_BASE,
+            kernel_map::PHYSICAL_MAPPING_BASE,
             PAddr::new(0x0).unwrap(),
             top_of_phys_mem as usize,
             Flags { writable: true, ..Default::default() },
@@ -323,16 +327,27 @@ fn main() -> Status {
     // Write the bootinfo header
     let boot_info_header = seed_bootinfo::Header {
         magic: seed_bootinfo::MAGIC,
+
         mem_map_offset,
         mem_map_length,
+
+        higher_half_base: usize::from(kernel_map::HIGHER_HALF_START) as u64,
+        physical_mapping_base: usize::from(kernel_map::PHYSICAL_MAPPING_BASE) as u64,
+        kernel_dynamic_area_base: usize::from(kernel_map::KERNEL_DYNAMIC_AREA_BASE) as u64,
+        kernel_image_base: usize::from(kernel_map::KERNEL_IMAGE_BASE) as u64,
         kernel_free_start: usize::from(next_safe_address) as u64,
+
         rsdp_address: usize::from(find_rsdp().unwrap_or(PAddr::new(0).unwrap())) as u64,
         device_tree_address: 0,
+
         loaded_images_offset,
         num_loaded_images,
+
         string_table_offset,
         string_table_length,
+
         video_mode_offset,
+
         _reserved0: [0; 3],
     };
     unsafe {

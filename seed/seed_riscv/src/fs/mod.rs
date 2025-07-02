@@ -11,8 +11,8 @@ use alloc::string::String;
 /// a file in its entirity into memory, and then close it once you're done with it. In the future,
 /// this could be made smarter, but is probably sufficient for a bootloader as is.
 pub trait Filesystem {
-    fn load(&mut self, path: &str) -> Result<File, ()>;
-    fn close(&mut self, file: File);
+    fn load(&mut self, path: &str) -> Result<File<'_>, ()>;
+    fn close(&mut self, file: File<'_>);
 }
 
 // TODO: some filesystems will need to allocate memory for this (real ones) and others wont (the

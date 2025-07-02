@@ -1,15 +1,19 @@
 mod slab_allocator;
 
-use crate::Platform;
+use crate::{bootinfo::BootInfo, Platform};
 use core::sync::atomic::{AtomicUsize, Ordering};
 use hal::memory::{Flags, FrameSize, PAddr, PageTable, Size4KiB, VAddr};
 use spinning_top::Spinlock;
 
 pub struct Vmm<P: Platform> {
     pub kernel_page_table: Spinlock<P::PageTable>,
+    pub higher_half_start: VAddr,
+    pub physical_mapping_base: VAddr,
+    pub kernel_dynamic_area_base: VAddr,
+    pub kernel_image_base: VAddr,
     // Tracks the next available address in the kernel dynamic allocation map
     // TODO: this should be replaced by some sort of tree
-    kernel_next_available: AtomicUsize,
+    kernel_dynamic_next_available: AtomicUsize,
     kernel_end_of_dynamic_area: VAddr,
 }
 
@@ -17,24 +21,28 @@ impl<P> Vmm<P>
 where
     P: Platform,
 {
-    pub fn new(kernel_page_table: P::PageTable) -> Vmm<P> {
+    pub fn new(kernel_page_table: P::PageTable, boot_info: &BootInfo) -> Vmm<P> {
         Vmm {
             kernel_page_table: Spinlock::new(kernel_page_table),
-            kernel_next_available: AtomicUsize::new(usize::from(P::KERNEL_DYNAMIC_AREA_BASE)),
+            higher_half_start: boot_info.higher_half_base(),
+            physical_mapping_base: boot_info.physical_mapping_base(),
+            kernel_dynamic_area_base: boot_info.kernel_dynamic_area_base(),
+            kernel_image_base: boot_info.kernel_image_base(),
+            kernel_dynamic_next_available: AtomicUsize::new(usize::from(boot_info.kernel_dynamic_area_base())),
             // TODO: I guess this could not always be the case? Maybe use another constant?
-            kernel_end_of_dynamic_area: P::KERNEL_IMAGE_BASE,
+            kernel_end_of_dynamic_area: boot_info.kernel_image_base(),
         }
     }
 
     // TODO: maybe check the physical address is normal ram here??
     pub fn physical_to_virtual(&self, phys: PAddr) -> VAddr {
-        P::PHYSICAL_MAPPING_BASE + usize::from(phys)
+        self.physical_mapping_base + usize::from(phys)
     }
 
     // TODO: this could return an owned object that frees the space when dropped
     pub fn alloc_kernel(&self, size: usize) -> Option<VAddr> {
         let size = mulch::math::align_up(size, Size4KiB::SIZE);
-        let address = VAddr::new(self.kernel_next_available.fetch_add(size, Ordering::Relaxed));
+        let address = VAddr::new(self.kernel_dynamic_next_available.fetch_add(size, Ordering::Relaxed));
 
         if (address + size) > self.kernel_end_of_dynamic_area {
             tracing::warn!("Failed to allocate space in kernel virtual dynamic area!");

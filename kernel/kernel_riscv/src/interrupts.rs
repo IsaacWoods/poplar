@@ -2,7 +2,7 @@ use alloc::collections::BTreeMap;
 use bit_field::BitField;
 use core::{mem, ptr};
 use fdt::{node::FdtNode, Fdt};
-use hal::memory::PAddr;
+use hal::memory::{Flags, PAddr};
 use hal_riscv::hw::{
     aplic::{AplicDomain, SourceMode},
     imsic::Imsic,
@@ -13,6 +13,14 @@ use spinning_top::Spinlock;
 use tracing::{info, warn};
 
 pub static INTERRUPT_CONTROLLER: InitGuard<InterruptController> = InitGuard::uninit();
+
+pub fn hart_to_plic_context_id(hart_id: usize) -> usize {
+    #[cfg(feature = "platform_rv64_virt")]
+    return 1 + 2 * hart_id;
+
+    #[cfg(feature = "platform_mq_pro")]
+    return todo!();
+}
 
 pub fn init(fdt: &Fdt) {
     if let Some(plic_node) = fdt.find_compatible(&["riscv,plic0"]) {
@@ -53,9 +61,14 @@ pub enum InterruptController {
 impl InterruptController {
     pub fn init_plic(plic_node: FdtNode<'_, '_>) {
         let reg = plic_node.reg().unwrap().next().unwrap();
-        let address = hal_riscv::platform::kernel_map::physical_to_virtual(
-            PAddr::new(reg.starting_address as usize).unwrap(),
-        );
+        let address = crate::VMM
+            .get()
+            .map_kernel(
+                PAddr::new(reg.starting_address as usize).unwrap(),
+                reg.size.unwrap(),
+                Flags { writable: true, cached: false, ..Default::default() },
+            )
+            .unwrap();
         let num_interrupts = plic_node.property("riscv,ndev").unwrap().as_usize().unwrap();
         tracing::info!("Found PLIC at {:#x} with {} interrupts", reg.starting_address as usize, num_interrupts);
 
@@ -72,10 +85,11 @@ impl InterruptController {
          * This gets the physical address of the area of memory used to trigger messages on the
          * S-mode IMSIC.
          */
-        let imsic_area = {
+        let imsic_phys = {
             // TODO: same problem as below re multiple entries
             let node = fdt.find_compatible(&["riscv,imsics"]).unwrap();
-            PAddr::new(node.reg().unwrap().next().unwrap().starting_address as usize).unwrap()
+            let reg = node.reg().unwrap().next().unwrap();
+            PAddr::new(reg.starting_address as usize).unwrap()
         };
 
         let (aplic_phys, aplic) = {
@@ -85,19 +99,27 @@ impl InterruptController {
              * doesn't seem to have good support for this so this probs will work for now.
              */
             let node = fdt.find_compatible(&["riscv,aplic"]).unwrap();
-            let aplic_address = node.reg().unwrap().next().unwrap().starting_address as usize;
-            let address = hal_riscv::platform::kernel_map::physical_to_virtual(PAddr::new(aplic_address).unwrap());
+            let reg = node.reg().unwrap().next().unwrap();
+            let aplic_address = PAddr::new(reg.starting_address as usize).unwrap();
+            let address = crate::VMM
+                .get()
+                .map_kernel(
+                    aplic_address,
+                    reg.size.unwrap(),
+                    Flags { writable: true, cached: false, ..Default::default() },
+                )
+                .unwrap();
             (aplic_address, unsafe { &*(address.ptr() as *const AplicDomain) })
         };
 
         info!(
             "Configuring Advanced Interrupt Architecture (IMSCI @ {:#x}, APLIC @ {:#x})",
-            imsic_area, aplic_phys
+            imsic_phys, aplic_phys
         );
 
         Imsic::init();
         aplic.init();
-        aplic.set_msi_address(usize::from(imsic_area));
+        aplic.set_msi_address(usize::from(imsic_phys));
 
         INTERRUPT_CONTROLLER
             .initialize(InterruptController::Aia { aplic, handlers: Spinlock::new(BTreeMap::new()) });
