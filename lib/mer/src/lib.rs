@@ -55,7 +55,7 @@ impl Elf<'_> {
     }
 
     /// Create a `SectionIter` that iterates over this ELF's section header.
-    pub fn sections(&self) -> EntryIter<SectionHeader> {
+    pub fn sections(&self) -> EntryIter<'_, SectionHeader> {
         let start = self.header.section_header_offset as usize;
         let end = start
             + self.header.section_header_entry_size as usize * self.header.number_of_section_headers as usize;
@@ -67,7 +67,7 @@ impl Elf<'_> {
         )
     }
 
-    pub fn segments(&self) -> EntryIter<ProgramHeader> {
+    pub fn segments(&self) -> EntryIter<'_, ProgramHeader> {
         let start = self.header.program_header_offset as usize;
         let end = start
             + self.header.program_header_entry_size as usize * self.header.number_of_program_headers as usize;
@@ -79,7 +79,7 @@ impl Elf<'_> {
         )
     }
 
-    pub fn symbols(&self) -> EntryIter<Symbol> {
+    pub fn symbols(&self) -> EntryIter<'_, Symbol> {
         match &self.symbol_table {
             None => EntryIter::new(&[], 0, 0),
 
