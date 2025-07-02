@@ -1,10 +1,7 @@
 use crate::interrupts;
 use core::arch::naked_asm;
 use hal::memory::VAddr;
-use hal_riscv::{
-    hw::csr::{Scause, Sepc, Stvec},
-    platform::kernel_map,
-};
+use hal_riscv::hw::csr::{Scause, Sepc, Stvec};
 use tracing::info;
 
 /// Install the proper trap handler. This handler is able to take traps from both S-mode and
@@ -24,7 +21,7 @@ extern "C" fn trap_handler(trap_frame: &mut TrapFrame, scause: usize, stval: usi
             hal_riscv::hw::csr::Sstatus::enable_user_memory_access();
             trap_frame.a0 = kernel::syscall::handle_syscall(
                 crate::SCHEDULER.get(),
-                crate::KERNEL_PAGE_TABLES.get(),
+                crate::VMM.get(),
                 trap_frame.a0,
                 trap_frame.a1,
                 trap_frame.a2,
@@ -48,7 +45,7 @@ extern "C" fn trap_handler(trap_frame: &mut TrapFrame, scause: usize, stval: usi
         }
         Ok(other) => {
             info!("Trap! Cause = {:?}. Stval = {:#x?}", other, stval);
-            if trap_frame.sepc < usize::from(kernel_map::KERNEL_ADDRESS_SPACE_START) {
+            if trap_frame.sepc < usize::from(crate::VMM.get().higher_half_start) {
                 let cpu_scheduler = crate::SCHEDULER.get().for_this_cpu();
                 info!("Trap occurred in user task: {}", cpu_scheduler.running_task.as_ref().unwrap().name);
             }
@@ -96,7 +93,7 @@ pub struct TrapFrame {
     t6: usize,
 }
 
-#[repr(align(4))]
+#[align(4)]
 #[unsafe(naked)]
 extern "C" fn trap_handler_shim() -> ! {
     unsafe {
@@ -221,7 +218,7 @@ pub fn install_early_handler() {
     Stvec::set(VAddr::new(early_trap_handler as extern "C" fn() -> ! as usize));
 }
 
-#[repr(align(4))]
+#[align(4)]
 extern "C" fn early_trap_handler() -> ! {
     let scause = Scause::read();
     let sepc = Sepc::read();

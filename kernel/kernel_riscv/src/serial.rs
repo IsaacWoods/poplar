@@ -10,9 +10,8 @@ use core::{
     sync::atomic::{AtomicU64, Ordering},
 };
 use fdt::Fdt;
-use hal::memory::PAddr;
-use hal_riscv::{hw::uart16550::Uart16550, platform::kernel_map::physical_to_virtual};
-use kernel::tasklets::queue::QueueProducer;
+use hal_riscv::hw::uart16550::Uart16550;
+use kernel::{bootinfo::BootInfo, tasklets::queue::QueueProducer};
 use mulch::InitGuard;
 use spinning_top::Spinlock;
 use tracing::{span, Collect, Event, Level, Metadata};
@@ -22,7 +21,7 @@ static SERIAL: InitGuard<Uart16550<'static>> = InitGuard::uninit();
 static SERIAL_PRODUCER: InitGuard<kernel::tasklets::queue::QueueProducer> = InitGuard::uninit();
 static LOGGER: Logger = Logger::new();
 
-pub fn init(fdt: &Fdt) {
+pub fn init(fdt: &Fdt, boot_info: &BootInfo) {
     let Some(stdout) = fdt.chosen().stdout() else {
         // TODO: not sure the point of this as we won't be able to print the message? Can we report
         // the error through an SBI call or something instead?
@@ -37,7 +36,10 @@ pub fn init(fdt: &Fdt) {
         None => 1,
     };
 
-    let serial_mapped_address = physical_to_virtual(PAddr::new(addr).unwrap());
+    // TODO: if we make the direct map only cover conventional ram on RV64, this won't work. We'll
+    // need to do some extra early mapping logic to map the UART MMIO, or do it specially in Seed
+    // or something...
+    let serial_mapped_address = boot_info.physical_mapping_base() + addr;
     let serial = unsafe { Uart16550::new(serial_mapped_address, reg_width) };
     serial.init();
     SERIAL.initialize(serial);

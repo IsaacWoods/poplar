@@ -5,7 +5,7 @@ use core::{
 };
 use hal::memory::VAddr;
 use hal_riscv::hw::csr::Sscratch;
-use kernel::memory::vmm::Stack;
+use kernel::vmm::Stack;
 
 global_asm!(include_str!("task.s"));
 extern "C" {

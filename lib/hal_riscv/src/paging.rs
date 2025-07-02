@@ -352,26 +352,6 @@ impl fmt::Debug for PageTableImpl<Level4> {
 }
 
 impl PageTable<Size4KiB> for PageTableImpl<Level4> {
-    fn new_with_kernel_mapped<A>(kernel_page_table: &Self, allocator: &A) -> Self
-    where
-        A: FrameAllocator<Size4KiB>,
-    {
-        let mut page_table =
-            PageTableImpl::new(allocator.allocate(), crate::platform::kernel_map::PHYSICAL_MAP_BASE);
-
-        /*
-         * Install the address of the kernel's P3 in every address space, so that the kernel is always mapped.
-         * It's safe to unwrap the kernel P3 address, as we wouldn't be able to fetch these instructions
-         * if it wasn't there.
-         */
-        let kernel_p3_address =
-            kernel_page_table.top()[crate::platform::kernel_map::KERNEL_P4_ENTRY].address().unwrap();
-        page_table.top_mut()[crate::platform::kernel_map::KERNEL_P4_ENTRY]
-            .set(Some((kernel_p3_address, EntryFlags::empty())), false);
-
-        page_table
-    }
-
     unsafe fn switch_to(&self) {
         unsafe { self.satp().write() }
     }
@@ -602,27 +582,6 @@ impl fmt::Debug for PageTableImpl<Level3> {
 }
 
 impl PageTable<Size4KiB> for PageTableImpl<Level3> {
-    fn new_with_kernel_mapped<A>(kernel_page_table: &Self, allocator: &A) -> Self
-    where
-        A: FrameAllocator<Size4KiB>,
-    {
-        let mut page_table =
-            PageTableImpl::new(allocator.allocate(), crate::platform::kernel_map::PHYSICAL_MAP_BASE);
-
-        /*
-         * For three-level paging schemes, the entire upper half of the address space belongs to
-         * kernel-space. We need to walk the upper half of the kernel's P3 and copy it across.
-         * TODO: This could be problematic because the kernel could realistically need to map new
-         * top-level entries during the runtime, in which case tasks' page tables would need
-         * updating. Probably worth thinking about at some point...
-         */
-        for i in (ENTRY_COUNT / 2)..ENTRY_COUNT {
-            page_table.top_mut()[i] = kernel_page_table.top()[i];
-        }
-
-        page_table
-    }
-
     unsafe fn switch_to(&self) {
         unsafe { self.satp().write() }
     }

@@ -5,5 +5,5 @@ members = [
     "seed_riscv",
     "d1_boot0",
     "seed_bootinfo",
-    "seed_config",
+    "seed_config", "seed_ramdisk",
 ]

@@ -1,23 +1,5 @@
 #![no_std]
 
-/// On x86_64 with 4-level paging, the higher-half starts at `0xffff_8000_0000_0000`. We dedicate
-/// the first half of the higher-half (64 TiB) to the direct physical map. Following this is an
-/// area the kernel can use for dynamic virtual allocations (starting at `0xffff_c000_0000_0000`).
-///
-/// The actual kernel image is loaded at `-2GiB` (`0xffff_ffff_8000_0000`), and is followed by boot
-/// information constructed by Seed. This allows best utilisation of the `kernel` code model, which
-/// optimises for encoding offsets in signed 32-bit immediates, which are common in x86_64 instruction
-/// encodings.
-#[cfg(target_arch = "x86_64")]
-pub mod kernel_map {
-    use hal::memory::VAddr;
-
-    pub const HIGHER_HALF_START: VAddr = VAddr::new(0xffff_8000_0000_0000);
-    pub const PHYSICAL_MAPPING_BASE: VAddr = HIGHER_HALF_START;
-    pub const KERNEL_DYNAMIC_AREA_BASE: VAddr = VAddr::new(0xffff_c000_0000_0000);
-    pub const KERNEL_IMAGE_BASE: VAddr = VAddr::new(0xffff_ffff_8000_0000);
-}
-
 pub const MAGIC: u32 = 0xf0cacc1a;
 
 // TODO: framebuffer, seed version, kernel config, user task configs(?)
@@ -31,7 +13,15 @@ pub struct Header {
     /// Length of the memory map, in entries.
     pub mem_map_length: u16,
 
-    /// The **virtual** address, after the kernel and boot info, at which the kernel can start to dynamically allocate memory.
+    /// The **virtual** address of the start of the higher-half.
+    pub higher_half_base: u64,
+    /// The **virtual** address of the start of the direct physical mapping, as constructed by Seed.
+    pub physical_mapping_base: u64,
+    /// The **virtual** address of the start of the kernel dynamic area.
+    pub kernel_dynamic_area_base: u64,
+    /// The **virtual** address at which the kernel image has been loaded.
+    pub kernel_image_base: u64,
+    /// The first available **virtual** address, after the kernel and boot info.
     pub kernel_free_start: u64,
 
     /// The physical address of the RSDP, if found. If not, this will be `0`.
@@ -68,6 +58,9 @@ pub enum MemoryType {
 
     /// Memory used be the UEFI Runtime Services. The kernel should not use this data.
     UefiRuntimeServices,
+
+    /// Memory occupied by the device tree.
+    DeviceTree,
 
     /// Memory used by the kernel's loaded image and the kernel's page tables.
     Kernel,

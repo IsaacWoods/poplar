@@ -20,15 +20,16 @@ use crate::{
     fs::{ramdisk::Ramdisk, Filesystem},
     memory::Region,
 };
+use alloc::{string::ToString, vec::Vec};
 use core::{arch::asm, mem, ptr};
 use fdt::Fdt;
 use hal::memory::{Flags, FrameAllocator, FrameSize, PAddr, PageTable, Size4KiB, VAddr};
-use hal_riscv::{hw::csr::Stvec, platform::PageTableImpl};
+use hal_riscv::hw::csr::Stvec;
 use linked_list_allocator::LockedHeap;
 use memory::{MemoryManager, MemoryRegions};
 use mulch::{linker::LinkerSymbol, math::align_up};
 use pci::PciResolver;
-use seed::{boot_info::BootInfo, SeedConfig};
+use seed_config::SeedConfig;
 use tracing::info;
 
 /*
@@ -68,6 +69,62 @@ extern "C" {
     static _seed_end: LinkerSymbol;
 }
 
+#[cfg(feature = "platform_rv64_virt")]
+pub type PageTableImpl = hal_riscv::paging::PageTableImpl<hal_riscv::paging::Level4>;
+#[cfg(feature = "platform_mq_pro")]
+pub type PageTableImpl = hal_riscv::paging::PageTableImpl<hal_riscv::paging::Level3>;
+
+/// This module contains constants that define how the kernel address space is laid out on RISC-V
+/// using the Sv48 paging model. It closely resembles the layout used by x86_64.
+///
+/// The higher-half starts at `0xffff_8000_0000_0000`. We dedicate the first half of the
+/// higher-half (64 TiB) to the direct physical map. Following this is an area the kernel can use
+/// for dynamic virtual allocations (starting at `0xffff_c000_0000_0000`).
+///
+/// The actual kernel image is loaded at `-2GiB` (`0xffff_ffff_8000_0000`), and is followed by boot
+/// information constructed by Seed. This allows best utilisation of the `kernel` code model, which
+/// optimises for encoding offsets in signed 32-bit immediates, which are common in x86_64 instruction
+/// encodings.
+#[cfg(feature = "platform_rv64_virt")]
+pub mod kernel_map {
+    use hal::memory::{PAddr, VAddr};
+
+    pub const DRAM_START: PAddr = PAddr::new(0x8000_0000).unwrap();
+    pub const OPENSBI_ADDR: PAddr = DRAM_START;
+    // TODO: when const traits are implemented, this should be rewritten in terms of DRAM_START
+    pub const SEED_ADDR: PAddr = PAddr::new(0x8020_0000).unwrap();
+    pub const RAMDISK_ADDR: PAddr = PAddr::new(0xb000_0000).unwrap();
+
+    pub const HIGHER_HALF_START: VAddr = VAddr::new(0xffff_8000_0000_0000);
+    pub const PHYSICAL_MAPPING_BASE: VAddr = HIGHER_HALF_START;
+    pub const KERNEL_DYNAMIC_AREA_BASE: VAddr = VAddr::new(0xffff_c000_0000_0000);
+    pub const KERNEL_IMAGE_BASE: VAddr = VAddr::new(0xffff_ffff_8000_0000);
+}
+
+/// On platforms that only support Sv39, we follow a similar layout, but obviously with a smaller
+/// higher-half.
+///
+/// The higher-half and therefore physical mapping starts at `0xffff_ffc0_0000_0000`. We dedicate
+/// the first half of the higher-half to the physical mapping, and the dynamic kernel area
+/// therefore starts at `0xffff_ffe0_0000_0000`.
+///
+/// The kernel image is again loaded at `-2GiB`, so is at `0xffff_ffff_8000_0000`.
+#[cfg(feature = "platform_mq_pro")]
+pub mod kernel_map {
+    use hal::memory::{kibibytes, mebibytes, PAddr, VAddr};
+
+    pub const DRAM_START: PAddr = PAddr::new(0x4000_0000).unwrap();
+    pub const OPENSBI_ADDR: PAddr = DRAM_START;
+    // TODO: when const traits are implemented, this should be rewritten in terms of DRAM_START
+    pub const SEED_ADDR: PAddr = PAddr::new(0x4000_0000 + kibibytes(512)).unwrap();
+    pub const RAMDISK_ADDR: PAddr = PAddr::new(0x4000_0000 + mebibytes(1)).unwrap();
+
+    pub const HIGHER_HALF_START: VAddr = VAddr::new(0xffff_ffc0_0000_0000);
+    pub const PHYSICAL_MAPPING_BASE: VAddr = HIGHER_HALF_START;
+    pub const KERNEL_DYNAMIC_AREA_BASE: VAddr = VAddr::new(0xffff_ffe0_0000_0000);
+    pub const KERNEL_IMAGE_BASE: VAddr = VAddr::new(0xffff_ffff_8000_0000);
+}
+
 static MEMORY_MANAGER: MemoryManager = MemoryManager::new();
 
 #[global_allocator]
@@ -95,12 +152,13 @@ pub fn seed_main(hart_id: u64, fdt_ptr: *const u8) -> ! {
      * each of them.
      */
     let mut memory_regions = MemoryRegions::new(&fdt, fdt_address);
+    info!("Made memory regions");
 
     /*
      * Find the loaded ramdisk (if there is one) and mark it as a reserved region before we
      * initialize the physical memory manager (it is not otherwise described as a not-usable region).
      */
-    let mut ramdisk = unsafe { Ramdisk::new(usize::from(hal_riscv::platform::memory::RAMDISK_ADDR)) };
+    let mut ramdisk = unsafe { Ramdisk::new(usize::from(kernel_map::RAMDISK_ADDR)) };
     if let Some(ref ramdisk) = ramdisk {
         let (address, size) = ramdisk.memory_region();
         memory_regions.add_region(Region::reserved(
@@ -109,6 +167,7 @@ pub fn seed_main(hart_id: u64, fdt_ptr: *const u8) -> ! {
             align_up(size, Size4KiB::SIZE),
         ));
     }
+    info!("Found ramdisk");
 
     /*
      * We can then use this mapping of memory regions to initialise the physical memory manager so we can allocate
@@ -151,6 +210,25 @@ pub fn seed_main(hart_id: u64, fdt_ptr: *const u8) -> ! {
     PciResolver::initialize(&fdt);
 
     /*
+     * Create space to assemble boot info into, and map it into kernel space.
+     */
+    const BOOT_INFO_MAX_SIZE: usize = Size4KiB::SIZE;
+    let boot_info_phys = MEMORY_MANAGER.allocate_n(Size4KiB::frames_needed(BOOT_INFO_MAX_SIZE)).start.start;
+    let boot_info_kernel_address = next_available_kernel_address;
+    next_available_kernel_address += BOOT_INFO_MAX_SIZE;
+    kernel_page_table
+        .map_area(
+            boot_info_kernel_address,
+            boot_info_phys,
+            BOOT_INFO_MAX_SIZE,
+            Flags { writable: true, ..Default::default() },
+            &MEMORY_MANAGER,
+        )
+        .unwrap();
+    let mut boot_info_area = unsafe { BootInfoArea::new(boot_info_phys) };
+    let mut string_table = BootInfoStringTable::new();
+
+    /*
      * Find the initialize a Virtio block device if one is present.
      */
     // let mut virtio_block = VirtioBlockDevice::init(&fdt, &MEMORY_MANAGER);
@@ -170,16 +248,10 @@ pub fn seed_main(hart_id: u64, fdt_ptr: *const u8) -> ! {
     // }
 
     /*
-     * Allocate memory for the boot info and start filling it out.
-     */
-    let (boot_info_kernel_address, boot_info) =
-        create_boot_info(&mut next_available_kernel_address, &mut kernel_page_table);
-    boot_info.magic = seed::boot_info::BOOT_INFO_MAGIC;
-    boot_info.fdt_address = Some(PAddr::new(fdt_ptr as usize).unwrap());
-
-    /*
      * Load desired early tasks.
      */
+    let loaded_images_offset = boot_info_area.offset();
+    let mut num_loaded_images = 0;
     for name in &config.user_tasks {
         let file = if let Some(ref mut ramdisk) = ramdisk {
             ramdisk.load(&name).unwrap()
@@ -187,7 +259,20 @@ pub fn seed_main(hart_id: u64, fdt_ptr: *const u8) -> ! {
             panic!("No user tasks source is present!");
         };
         let info = image::load_image(&file, name, &MEMORY_MANAGER);
-        boot_info.loaded_images.push(info).unwrap();
+
+        let name_offset = string_table.add_string(name);
+        let info = seed_bootinfo::LoadedImage {
+            name_offset,
+            name_len: name.len() as u16,
+            num_segments: info.num_segments as u16,
+            _reserved0: 0,
+            segments: info.segments,
+            entry_point: usize::from(info.entry_point) as u64,
+        };
+        unsafe {
+            boot_info_area.write(info);
+        }
+        num_loaded_images += 1;
     }
 
     /*
@@ -195,19 +280,16 @@ pub fn seed_main(hart_id: u64, fdt_ptr: *const u8) -> ! {
      * TODO: we should probably do this properly by walking the FDT (you need RAM + devices) but we currently just
      * map 32GiB.
      */
-    use hal_riscv::platform::kernel_map::PHYSICAL_MAP_BASE;
     const PHYSICAL_MAP_SIZE: usize = hal::memory::gibibytes(16);
     kernel_page_table
         .map_area(
-            PHYSICAL_MAP_BASE,
+            kernel_map::PHYSICAL_MAPPING_BASE,
             PAddr::new(0x0).unwrap(),
             PHYSICAL_MAP_SIZE,
             Flags { writable: true, ..Default::default() },
             &MEMORY_MANAGER,
         )
         .unwrap();
-
-    alloc_and_map_kernel_heap(&mut next_available_kernel_address, &mut kernel_page_table, boot_info);
 
     /*
      * Identity-map all of Seed into the kernel's page tables, so we don't page fault when switching to them.
@@ -231,11 +313,47 @@ pub fn seed_main(hart_id: u64, fdt_ptr: *const u8) -> ! {
         )
         .unwrap();
 
+    // Write out the string table
+    let string_table_offset = boot_info_area.offset();
+    let string_table_length = string_table.table_len;
+    unsafe {
+        string_table.write(boot_info_area.cursor);
+    }
+    boot_info_area.advance(string_table_length as usize, 8);
+
     /*
      * Now that we've finished allocating memory, we can create the memory map we pass to the kernel. From here, we
      * can't allocate physical memory from the bootloader.
      */
-    MEMORY_MANAGER.populate_memory_map(&mut boot_info.memory_map);
+    let (mem_map_offset, mem_map_length) = MEMORY_MANAGER.populate_memory_map(&mut boot_info_area);
+
+    // Write the bootinfo header
+    let boot_info_header = seed_bootinfo::Header {
+        magic: seed_bootinfo::MAGIC,
+        mem_map_offset,
+        mem_map_length,
+
+        higher_half_base: usize::from(kernel_map::HIGHER_HALF_START) as u64,
+        physical_mapping_base: usize::from(kernel_map::PHYSICAL_MAPPING_BASE) as u64,
+        kernel_dynamic_area_base: usize::from(kernel_map::KERNEL_DYNAMIC_AREA_BASE) as u64,
+        kernel_image_base: usize::from(kernel_map::KERNEL_IMAGE_BASE) as u64,
+        kernel_free_start: usize::from(next_available_kernel_address) as u64,
+
+        rsdp_address: 0,
+        device_tree_address: usize::from(fdt_address) as u64,
+
+        loaded_images_offset,
+        num_loaded_images,
+
+        string_table_offset,
+        string_table_length,
+
+        video_mode_offset: 0,
+        _reserved0: [0; 3],
+    };
+    unsafe {
+        ptr::write(usize::from(boot_info_phys) as *mut seed_bootinfo::Header, boot_info_header);
+    }
 
     /*
      * Jump into the kernel by setting the required state, moving to the new kernel page table, and then jumping to
@@ -264,64 +382,77 @@ pub fn seed_main(hart_id: u64, fdt_ptr: *const u8) -> ! {
     }
 }
 
-/// Allocate memory for the boot info, and dynamically map it into the address space after the kernel.
-fn create_boot_info<'a>(
-    next_available_kernel_address: &mut VAddr,
-    kernel_page_table: &mut PageTableImpl,
-) -> (VAddr, &'a mut BootInfo) {
-    let boot_info_physical_start =
-        MEMORY_MANAGER.allocate_n(Size4KiB::frames_needed(mem::size_of::<BootInfo>())).start.start;
-    let identity_boot_info_ptr = usize::from(boot_info_physical_start) as *mut BootInfo;
-    unsafe {
-        ptr::write(identity_boot_info_ptr, BootInfo::default());
-    }
-
-    let boot_info_kernel_address = *next_available_kernel_address;
-    *next_available_kernel_address += align_up(mem::size_of::<BootInfo>(), Size4KiB::SIZE);
-
-    kernel_page_table
-        .map_area(
-            boot_info_kernel_address,
-            boot_info_physical_start,
-            align_up(mem::size_of::<BootInfo>(), Size4KiB::SIZE),
-            Flags::default(),
-            &MEMORY_MANAGER,
-        )
-        .unwrap();
-
-    (boot_info_kernel_address, unsafe { &mut *identity_boot_info_ptr })
-}
-
-/// Allocate memory for the kernel heap, and dynamically map it into the address space after the kernel. We tell
-/// the kernel where to find it via the boot info.
-fn alloc_and_map_kernel_heap(
-    next_available_kernel_address: &mut VAddr,
-    kernel_page_table: &mut PageTableImpl,
-    boot_info: &mut BootInfo,
-) {
-    const KERNEL_HEAP_SIZE: hal::memory::Bytes = hal::memory::kibibytes(800);
-
-    boot_info.heap_address = *next_available_kernel_address;
-    boot_info.heap_size = KERNEL_HEAP_SIZE;
-    *next_available_kernel_address += KERNEL_HEAP_SIZE;
-
-    let kernel_heap_physical_start =
-        MEMORY_MANAGER.allocate_n(Size4KiB::frames_needed(KERNEL_HEAP_SIZE)).start.start;
-    kernel_page_table
-        .map_area(
-            boot_info.heap_address,
-            kernel_heap_physical_start,
-            KERNEL_HEAP_SIZE,
-            Flags { writable: true, ..Default::default() },
-            &MEMORY_MANAGER,
-        )
-        .unwrap();
-}
-
-#[repr(align(4))]
+#[align(4)]
 pub extern "C" fn trap_handler() {
     use hal_riscv::hw::csr::{Scause, Sepc};
     let scause = Scause::read();
     let sepc = Sepc::read();
     panic!("Trap! Scause = {:?}, sepc = {:?}", scause, sepc);
+}
+
+pub struct BootInfoArea {
+    boot_info_ptr: *mut u8,
+    cursor: *mut u8,
+}
+
+impl BootInfoArea {
+    pub unsafe fn new(base_addr: PAddr) -> BootInfoArea {
+        let ptr = usize::from(base_addr) as *mut u8;
+        let cursor = unsafe { ptr.byte_add(mem::size_of::<seed_bootinfo::Header>()) };
+        BootInfoArea { boot_info_ptr: ptr, cursor }
+    }
+
+    /// Get the offset of the current `cursor` into the bootinfo area
+    pub fn offset(&self) -> u16 {
+        (self.cursor.addr() - self.boot_info_ptr.addr()) as u16
+    }
+
+    /// Reserve `count` bytes of boot info space, returning a pointer to the start of the reserved space.
+    /// Will ensure the final `cursor` has an alignment of at-least `align`.
+    pub fn advance(&mut self, count: usize, align: usize) -> *mut u8 {
+        let ptr = self.cursor;
+        // TODO: bounds checking
+        self.cursor = unsafe { self.cursor.byte_add(count) };
+        self.cursor = unsafe { self.cursor.byte_add(self.cursor.align_offset(align)) };
+        ptr
+    }
+
+    /// Write `value` at `cursor`, and advance `cursor` by the size of `T`.
+    pub unsafe fn write<T>(&mut self, value: T) {
+        // TODO: bounds checking
+        unsafe {
+            ptr::write(self.cursor as *mut T, value);
+            self.cursor = self.cursor.byte_add(mem::size_of::<T>());
+        }
+    }
+}
+
+pub struct BootInfoStringTable {
+    pub entries: Vec<(u16, alloc::string::String)>,
+    pub table_len: u16,
+}
+
+impl BootInfoStringTable {
+    pub fn new() -> BootInfoStringTable {
+        BootInfoStringTable { entries: Vec::new(), table_len: 0 }
+    }
+
+    pub fn add_string(&mut self, s: &str) -> u16 {
+        let offset = self.table_len;
+        self.table_len += s.len() as u16;
+        self.entries.push((offset, s.to_string()));
+        offset
+    }
+
+    /// Write the string table out to the given `ptr`. Returns a pointer to the next byte after the string table.
+    pub unsafe fn write(self, mut ptr: *mut u8) -> *mut u8 {
+        for (_offset, s) in self.entries {
+            unsafe {
+                ptr::copy(s.as_ptr(), ptr, s.len());
+            }
+            ptr = ptr.byte_add(s.len());
+        }
+
+        ptr.byte_add(1)
+    }
 }

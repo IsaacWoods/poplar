@@ -39,12 +39,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cf4b9d6a944f767f8e5e0db018570623c85f3d925ac718db4e06d0187adb21c1"
 
 [[package]]
-name = "byteorder"
-version = "1.4.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "14c189c53d098945499cdfa7ecc63567cf3886b3332b312a5b4585d8d3a6a610"
-
-[[package]]
 name = "cfg-if"
 version = "0.1.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -124,25 +118,6 @@ dependencies = [
  "mycelium-bitfield",
  "spinning_top 0.3.0",
  "tracing",
-]
-
-[[package]]
-name = "hash32"
-version = "0.3.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "47d60b12902ba28e2730cd37e95b8c9223af2808df9e902d4df49588d1470606"
-dependencies = [
- "byteorder",
-]
-
-[[package]]
-name = "heapless"
-version = "0.8.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0bfb9eb618601c89945a70e254898da93b13be0388091d42117462b265bb3fad"
-dependencies = [
- "hash32",
- "stable_deref_trait",
 ]
 
 [[package]]
@@ -345,6 +320,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "seed_ramdisk"
+version = "0.1.0"
+
+[[package]]
 name = "seed_riscv"
 version = "0.1.0"
 dependencies = [
@@ -354,7 +333,6 @@ dependencies = [
  "gpt",
  "hal",
  "hal_riscv",
- "heapless",
  "linked_list_allocator",
  "mer",
  "mulch",
@@ -362,6 +340,7 @@ dependencies = [
  "picotoml",
  "seed_bootinfo",
  "seed_config",
+ "seed_ramdisk",
  "serde",
  "spinning_top 0.2.5",
  "tracing",
@@ -425,12 +404,6 @@ checksum = "d96d2d1d716fb500937168cc09353ffdc7a012be8475ac7308e1bdf0e3923300"
 dependencies = [
  "lock_api",
 ]
-
-[[package]]
-name = "stable_deref_trait"
-version = "1.2.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a8f112729512f8e442d81f95a8a7ddf2b7c6b8a1a6f509a95864142b30cab2d3"
 
 [[package]]
 name = "syn"

@@ -4,19 +4,14 @@
  */
 
 use crate::{fs::File, memory::MemoryManager};
-use core::{
-    ptr,
-    slice,
-    str::{self, FromStr},
-};
+use core::{ptr, slice};
 use hal::memory::{Flags, FrameAllocator, FrameSize, PAddr, Page, PageTable, Size4KiB, VAddr};
-use hal_riscv::platform::kernel_map;
 use mer::{
     program::{ProgramHeader, SegmentType},
     Elf,
 };
 use mulch::math::align_up;
-use seed::boot_info::{LoadedImage, Segment};
+use seed_bootinfo::{LoadedSegment, SegmentFlags};
 
 #[derive(Clone, Debug)]
 pub struct LoadedKernel {
@@ -36,36 +31,37 @@ where
     let elf = Elf::new(file.data).expect("Failed to parse kernel ELF");
 
     let entry_point = VAddr::new(elf.entry_point());
-    let mut next_available_address = kernel_map::KERNEL_BASE;
+    let mut next_available_address = crate::kernel_map::KERNEL_IMAGE_BASE;
 
     for segment in elf.segments() {
         match segment.segment_type() {
             SegmentType::Load if segment.mem_size > 0 => {
                 let segment = load_segment(segment, &elf, false, memory_manager);
+                let phys_addr = PAddr::new(segment.phys_addr as usize).unwrap();
+                let virt_addr = VAddr::new(segment.virt_addr as usize);
+                let size = segment.size as usize;
 
                 /*
                  * If this segment loads past `next_available_address`, update it.
                  */
-                if (segment.virtual_address + segment.size) > next_available_address {
-                    next_available_address =
-                        (Page::<Size4KiB>::contains(segment.virtual_address + segment.size) + 1).start;
+                if (virt_addr + size) > next_available_address {
+                    next_available_address = (Page::<Size4KiB>::contains(virt_addr + size) + 1).start;
                 }
 
-                assert!(
-                    segment.virtual_address.is_aligned(Size4KiB::SIZE),
-                    "Segment's virtual address is not page-aligned"
-                );
-                assert!(
-                    segment.physical_address.is_aligned(Size4KiB::SIZE),
-                    "Segment's physical address is not frame-aligned"
-                );
-                assert!(segment.size % Size4KiB::SIZE == 0, "Segment size is not a multiple of page size!");
+                assert!(virt_addr.is_aligned(Size4KiB::SIZE), "Segment's virtual address is not page-aligned");
+                assert!(phys_addr.is_aligned(Size4KiB::SIZE), "Segment's physical address is not frame-aligned");
+                assert!(size % Size4KiB::SIZE == 0, "Segment size is not a multiple of page size!");
                 page_table
                     .map_area(
-                        segment.virtual_address,
-                        segment.physical_address,
-                        segment.size,
-                        segment.flags,
+                        virt_addr,
+                        phys_addr,
+                        size,
+                        Flags {
+                            writable: segment.flags.get(SegmentFlags::WRITABLE),
+                            executable: segment.flags.get(SegmentFlags::EXECUTABLE),
+                            user_accessible: false,
+                            cached: true,
+                        },
                         memory_manager,
                     )
                     .unwrap();
@@ -96,27 +92,34 @@ where
     LoadedKernel { entry_point, stack_top, global_pointer, next_available_address }
 }
 
-pub fn load_image(file: &File<'_>, name: &str, memory_manager: &MemoryManager) -> LoadedImage {
-    let elf = Elf::new(file.data).expect("Failed to parse user task ELF");
-    let mut image_data = LoadedImage::default();
-    image_data.entry_point = VAddr::new(elf.entry_point());
-    image_data.name = heapless::String::from_str(name).unwrap();
+pub struct LoadedImageInfo {
+    pub entry_point: VAddr,
+    pub num_segments: u16,
+    pub segments: [seed_bootinfo::LoadedSegment; seed_bootinfo::LOADED_IMAGE_MAX_SEGMENTS],
+}
 
+pub fn load_image(file: &File<'_>, name: &str, memory_manager: &MemoryManager) -> LoadedImageInfo {
+    let elf = Elf::new(file.data).expect("Failed to parse user task ELF");
+
+    let entry_point = VAddr::new(elf.entry_point());
+    let mut segments = [seed_bootinfo::LoadedSegment::default(); seed_bootinfo::LOADED_IMAGE_MAX_SEGMENTS];
+    let mut num_segments = 0;
     for segment in elf.segments() {
         match segment.segment_type() {
             SegmentType::Load if segment.mem_size > 0 => {
-                let segment = load_segment(segment, &elf, true, memory_manager);
-
-                match image_data.segments.push(segment) {
-                    Ok(()) => (),
-                    Err(_) => panic!("Image for '{}' has too many load segments!", name),
+                if (num_segments + 1) > seed_bootinfo::LOADED_IMAGE_MAX_SEGMENTS {
+                    panic!("Loaded image '{}' has too many loaded segments!", name);
                 }
+
+                let segment = load_segment(segment, &elf, true, memory_manager);
+                segments[num_segments] = segment;
+                num_segments += 1;
             }
             _ => (),
         }
     }
 
-    image_data
+    LoadedImageInfo { entry_point, num_segments: num_segments as u16, segments }
 }
 
 fn load_segment(
@@ -124,7 +127,7 @@ fn load_segment(
     elf: &Elf,
     user_accessible: bool,
     memory_manager: &MemoryManager,
-) -> Segment {
+) -> LoadedSegment {
     /*
      * We don't require each segment to fill up all the pages it needs - as long as the start of each segment is
      * page-aligned so they don't overlap, it's fine. This is mainly to support images linked by `lld` with the `-z
@@ -160,15 +163,13 @@ fn load_segment(
         );
     }
 
-    Segment {
-        physical_address: PAddr::new(usize::from(physical_address)).unwrap(),
-        virtual_address: VAddr::new(segment.virtual_address as usize),
-        size: num_frames * Size4KiB::SIZE,
-        flags: Flags {
-            writable: segment.is_writable(),
-            executable: segment.is_executable(),
-            user_accessible,
-            ..Default::default()
-        },
+    let flags = SegmentFlags::new()
+        .with(SegmentFlags::WRITABLE, segment.is_writable())
+        .with(SegmentFlags::EXECUTABLE, segment.is_executable());
+    LoadedSegment {
+        phys_addr: usize::from(physical_address) as u64,
+        virt_addr: segment.virtual_address,
+        size: (num_frames * Size4KiB::SIZE) as u32,
+        flags,
     }
 }

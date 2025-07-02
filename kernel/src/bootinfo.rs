@@ -30,10 +30,32 @@ impl BootInfo {
         }
     }
 
+    #[inline]
+    pub fn higher_half_base(&self) -> VAddr {
+        VAddr::new(unsafe { *self.base }.higher_half_base as usize)
+    }
+
+    #[inline]
+    pub fn physical_mapping_base(&self) -> VAddr {
+        VAddr::new(unsafe { *self.base }.physical_mapping_base as usize)
+    }
+
+    #[inline]
+    pub fn kernel_dynamic_area_base(&self) -> VAddr {
+        VAddr::new(unsafe { *self.base }.kernel_dynamic_area_base as usize)
+    }
+
+    #[inline]
+    pub fn kernel_image_base(&self) -> VAddr {
+        VAddr::new(unsafe { *self.base }.kernel_image_base as usize)
+    }
+
+    #[inline]
     pub fn kernel_free_start(&self) -> VAddr {
         VAddr::new(unsafe { *self.base }.kernel_free_start as usize)
     }
 
+    #[inline]
     pub fn rsdp_addr(&self) -> Option<u64> {
         match unsafe { *self.base }.rsdp_address {
             0 => None,
@@ -41,6 +63,7 @@ impl BootInfo {
         }
     }
 
+    #[inline]
     pub fn device_tree_addr(&self) -> Option<u64> {
         match unsafe { *self.base }.device_tree_address {
             0 => None,
@@ -48,6 +71,7 @@ impl BootInfo {
         }
     }
 
+    #[inline]
     pub fn num_loaded_images(&self) -> usize {
         unsafe { *self.base }.num_loaded_images as usize
     }

@@ -17,4 +17,5 @@ toml = "0.7.2"
 colored = "2.0.4"
 serialport = "4.2.2"
 seed_config = { path = "../../seed/seed_config" }
+seed_ramdisk = { path = "../../seed/seed_ramdisk" }
 fs_extra = "1.3.0"

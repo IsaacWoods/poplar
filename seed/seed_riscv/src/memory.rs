@@ -72,7 +72,9 @@ impl MemoryRegions {
         use crate::{_seed_end, _seed_start};
         use tracing::info;
 
+        info!("Here1");
         let mut regions = MemoryRegions(ArrayVec::new());
+        info!("Here2");
 
         for region in fdt.memory().regions() {
             info!("Memory region: {:?}", region);
@@ -264,11 +266,12 @@ impl MemoryManager {
         trace!("Finished tracing usable memory");
     }
 
-    pub fn populate_memory_map(&self, memory_map: &mut seed::boot_info::MemoryMap) {
-        use seed::boot_info::{MemoryMapEntry, MemoryType};
-
+    pub fn populate_memory_map(&self, boot_info_area: &mut crate::BootInfoArea) -> (u16, u16) {
         trace!("Populating memory map from gathered regions");
         let mut inner = self.0.lock();
+
+        let mem_map_offset = boot_info_area.offset();
+        let mut mem_map_length = 0;
 
         for region in &inner.regions.as_ref().unwrap().0 {
             trace!("Considering region: {:?}", region);
@@ -276,21 +279,26 @@ impl MemoryManager {
             /*
              * First, we walk the region map.
              */
-            match region.typ {
+            let typ = match region.typ {
                 // For usable regions, we need to check if any of it has already been allocated. We ignore these
                 // regions here and instead walk the free list.
-                RegionType::Usable => (),
-                RegionType::Reserved(Usage::Firmware) => (),
-                RegionType::Reserved(Usage::DeviceTree) => memory_map
-                    .push(MemoryMapEntry::new(MemoryType::FdtReclaimable, region.address, region.size))
-                    .unwrap(),
-                RegionType::Reserved(Usage::Seed) => memory_map
-                    .push(MemoryMapEntry::new(MemoryType::Conventional, region.address, region.size))
-                    .unwrap(),
-                RegionType::Reserved(Usage::Ramdisk) => memory_map
-                    .push(MemoryMapEntry::new(MemoryType::Conventional, region.address, region.size))
-                    .unwrap(),
-                RegionType::Reserved(Usage::Unknown) => (),
+                RegionType::Usable => None,
+                RegionType::Reserved(Usage::Firmware) => Some(seed_bootinfo::MemoryType::Reserved),
+                RegionType::Reserved(Usage::DeviceTree) => Some(seed_bootinfo::MemoryType::DeviceTree),
+                RegionType::Reserved(Usage::Seed) => Some(seed_bootinfo::MemoryType::Usable),
+                RegionType::Reserved(Usage::Ramdisk) => Some(seed_bootinfo::MemoryType::Usable),
+                RegionType::Reserved(Usage::Unknown) => Some(seed_bootinfo::MemoryType::Reserved),
+            };
+            if let Some(typ) = typ {
+                unsafe {
+                    boot_info_area.write(seed_bootinfo::MemoryEntry {
+                        base: usize::from(region.address) as u64,
+                        length: region.size as u64,
+                        typ,
+                        _reserved: 0,
+                    })
+                };
+                mem_map_length += 1;
             }
         }
 
@@ -301,19 +309,21 @@ impl MemoryManager {
         while let Some(node) = current_node {
             let inner_node = unsafe { *node.as_ptr() };
             trace!("Found some usable memory at {:#x}, {} bytes of it!", node.as_ptr().addr(), inner_node.size);
-            memory_map
-                .push(MemoryMapEntry::new(
-                    MemoryType::Conventional,
-                    PAddr::new(node.as_ptr().addr()).unwrap(),
-                    inner_node.size,
-                ))
-                .unwrap();
+            unsafe {
+                boot_info_area.write(seed_bootinfo::MemoryEntry {
+                    base: node.as_ptr().addr() as u64,
+                    length: inner_node.size as u64,
+                    typ: seed_bootinfo::MemoryType::Usable,
+                    _reserved: 0,
+                })
+            };
+            mem_map_length += 1;
             current_node = inner_node.next;
         }
 
         // Sort the entries by address to make it more readable. This is probably not necessary but makes debugging
         // easier.
-        memory_map.sort_unstable_by_key(|entry| entry.start);
+        // memory_map.sort_unstable_by_key(|entry| entry.start);
 
         /*
          * From this point, we don't want the bootloader to make any more allocations. We prevent this by removing
@@ -321,6 +331,8 @@ impl MemoryManager {
          */
         inner.usable_head = None;
         inner.usable_tail = None;
+
+        (mem_map_offset, mem_map_length)
     }
 }
 

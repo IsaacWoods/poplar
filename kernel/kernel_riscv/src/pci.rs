@@ -3,7 +3,7 @@ use alloc::{collections::BTreeMap, sync::Arc, vec, vec::Vec};
 use bit_field::BitField;
 use core::ptr;
 use fdt::Fdt;
-use hal::memory::PAddr;
+use hal::memory::{Flags, FrameSize, PAddr, Size4KiB};
 use kernel::{object::interrupt::Interrupt, pci::PciInterruptConfigurator};
 use pci_types::{
     capability::{MsiCapability, MsixCapability},
@@ -34,9 +34,14 @@ impl PciAccess {
             })
             .next()?;
         let ecam_window = pci_node.reg().expect("PCI entry doesn't have a reg property").next().unwrap();
-        let ecam_address = hal_riscv::platform::kernel_map::physical_to_virtual(
-            PAddr::new(ecam_window.starting_address as usize).unwrap(),
-        );
+        let ecam_address = crate::VMM
+            .get()
+            .map_kernel(
+                PAddr::new(ecam_window.starting_address as usize).unwrap(),
+                ecam_window.size.unwrap(),
+                Flags { writable: true, cached: false, ..Default::default() },
+            )
+            .unwrap();
 
         /*
          * Find routing information for legacy interrupt pins from the device tree.
@@ -156,8 +161,14 @@ impl PciInterruptConfigurator for PciAccess {
             Bar::Memory64 { address, .. } => address as usize + msix.table_offset() as usize,
             _ => panic!(),
         };
-        let table_base_virt =
-            hal_riscv::platform::kernel_map::physical_to_virtual(PAddr::new(table_base_phys).unwrap());
+        let table_base_virt = crate::VMM
+            .get()
+            .map_kernel(
+                PAddr::new(table_base_phys).unwrap(),
+                Size4KiB::SIZE,
+                Flags { writable: true, cached: false, ..Default::default() },
+            )
+            .unwrap();
         // TODO: offset into the table if we ever need an entry that isn't the first
         let entry_ptr = table_base_virt.mut_ptr() as *mut u32;
 
