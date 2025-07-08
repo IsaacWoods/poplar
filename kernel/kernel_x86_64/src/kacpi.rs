@@ -2,14 +2,14 @@ use crate::{clocksource::TscClocksource, pci::EcamAccess};
 use acpi::{
     aml::{AmlError, Interpreter},
     platform::{AcpiPlatform, PciConfigRegions},
-    AcpiHandler,
     AcpiTables,
     PhysicalMapping,
+    RegionMapper,
 };
 use alloc::sync::Arc;
 use bit_field::BitField;
 use core::ptr::NonNull;
-use hal::memory::{Flags, Frame, FrameSize, PAddr, Size4KiB, VAddr};
+use hal::memory::{Flags, Frame, FrameSize, PAddr, Size4KiB};
 use hal_x86_64::hw::port::Port;
 use kernel::{bootinfo::BootInfo, clocksource::Clocksource};
 use mulch::math::align_down;
@@ -39,11 +39,11 @@ use tracing::{debug, info};
  * it a kernel device on the PlatformBus maybe.
  */
 
-pub fn find_tables(boot_info: &BootInfo) -> AcpiTables<PoplarAcpiHandler> {
+pub fn find_tables(boot_info: &BootInfo) -> AcpiTables<PoplarRegionMapper> {
     let Some(rsdp_addr) = boot_info.rsdp_addr() else {
         panic!("Bootloader did not pass RSDP address. Booting without ACPI is not supported.");
     };
-    let tables = unsafe { AcpiTables::from_rsdp(PoplarAcpiHandler, rsdp_addr as usize).unwrap() };
+    let tables = unsafe { AcpiTables::from_rsdp(PoplarRegionMapper, rsdp_addr as usize).unwrap() };
 
     for (addr, table) in tables.table_headers() {
         info!(
@@ -64,17 +64,17 @@ pub fn find_tables(boot_info: &BootInfo) -> AcpiTables<PoplarAcpiHandler> {
 }
 
 pub struct AcpiManager {
-    pub platform: AcpiPlatform<PoplarAcpiHandler>,
+    pub platform: AcpiPlatform<PoplarRegionMapper>,
     pub interpreter: acpi::aml::Interpreter<AmlHandler<EcamAccess>>,
 }
 
 impl AcpiManager {
-    pub fn initialize(tables: AcpiTables<PoplarAcpiHandler>) -> (Arc<AcpiManager>, EcamAccess) {
+    pub fn initialize(tables: AcpiTables<PoplarRegionMapper>) -> (Arc<AcpiManager>, EcamAccess) {
         let platform = AcpiPlatform::new(tables).unwrap();
         let pci_access = crate::pci::EcamAccess::new(PciConfigRegions::new(&platform.tables).unwrap());
         let aml_handler = AmlHandler { pci_access: pci_access.clone() };
 
-        let interpreter = Interpreter::new_from_tables(PoplarAcpiHandler, aml_handler, &platform.tables).unwrap();
+        let interpreter = Interpreter::new_from_tables(PoplarRegionMapper, aml_handler, &platform.tables).unwrap();
         interpreter.initialize_namespace();
         info!("ACPI namespace: {}", interpreter.namespace.lock());
 
@@ -83,19 +83,19 @@ impl AcpiManager {
 }
 
 #[derive(Clone)]
-pub struct PoplarAcpiHandler;
+pub struct PoplarRegionMapper;
 
-impl AcpiHandler for PoplarAcpiHandler {
+impl RegionMapper for PoplarRegionMapper {
     unsafe fn map_physical_region<T>(&self, physical_address: usize, size: usize) -> PhysicalMapping<Self, T> {
         let virtual_address = crate::VMM.get().physical_to_virtual(PAddr::new(physical_address).unwrap());
 
-        PhysicalMapping::new(
-            usize::from(physical_address),
-            NonNull::new(virtual_address.mut_ptr()).unwrap(),
-            size,
-            size,
-            PoplarAcpiHandler,
-        )
+        PhysicalMapping {
+            physical_start: usize::from(physical_address),
+            virtual_start: NonNull::new(virtual_address.mut_ptr()).unwrap(),
+            region_length: size,
+            mapped_length: size,
+            mapper: PoplarRegionMapper,
+        }
     }
 
     fn unmap_physical_region<T>(_region: &PhysicalMapping<Self, T>) {}

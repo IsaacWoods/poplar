@@ -98,9 +98,15 @@ impl InterruptController {
                 /*
                  * Tell ACPI that we intend to use the APICs instead of the legacy PIC.
                  */
-                acpi.interpreter
-                    .invoke_method(AmlName::from_str("\\_PIC").unwrap(), vec![AmlObject::Integer(1).wrap()])
-                    .expect("Failed to invoke \\_PIC");
+                if let Err(err) = acpi
+                    .interpreter
+                    .evaluate(AmlName::from_str("\\_PIC").unwrap(), vec![AmlObject::Integer(1).wrap()])
+                {
+                    error!(
+                        "Failed to invoke `_PIC` AML method ({:?}). Continuing with attempted APIC configuration.",
+                        err
+                    );
+                }
 
                 /*
                  * Install handlers for the spurious interrupt and local APIC timer, and then

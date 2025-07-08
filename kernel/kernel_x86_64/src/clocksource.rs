@@ -6,7 +6,7 @@
 //! reported directly, or derived from the frequency of the ART (Always-Running Timer). Where this
 //! is not possible, we use another clock to calibrate the frequency of the TSC.
 
-use crate::kacpi::PoplarAcpiHandler;
+use crate::kacpi::PoplarRegionMapper;
 use acpi::{AcpiTables, HpetInfo};
 use core::{arch::asm, cell::SyncUnsafeCell};
 use hal::memory::{Flags, PAddr};
@@ -64,7 +64,7 @@ static HPET: InitGuard<Hpet> = InitGuard::uninit();
 pub struct TscClocksource;
 
 impl TscClocksource {
-    pub fn init(cpu_info: &CpuInfo, acpi_tables: &AcpiTables<PoplarAcpiHandler>) {
+    pub fn init(cpu_info: &CpuInfo, acpi_tables: &AcpiTables<PoplarRegionMapper>) {
         /*
          * If the TSC frequency is reported by `cpuid`, we just use that, and don't even try to initialize the HPET.
          */
