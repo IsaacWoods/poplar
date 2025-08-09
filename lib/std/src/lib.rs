@@ -65,6 +65,15 @@ pub mod prelude {
         };
         pub use core::{assert_eq, panic, prelude::rust_2021::*, todo, unreachable, write, writeln};
     }
+    pub mod rust_2024 {
+        pub use alloc_crate::{
+            boxed::Box,
+            format,
+            string::{String, ToString},
+            vec::Vec,
+        };
+        pub use core::{assert_eq, panic, prelude::rust_2024::*, todo, unreachable, write, writeln};
+    }
 }
 
 use core::panic::PanicInfo;
