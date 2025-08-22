@@ -46,9 +46,7 @@ extern "C" {
     static _kernel_end: LinkerSymbol;
 }
 
-pub struct PlatformImpl {
-    topology: Topology,
-}
+pub struct PlatformImpl;
 
 impl Platform for PlatformImpl {
     type PageTableSize = hal::memory::Size4KiB;
@@ -210,12 +208,19 @@ pub extern "C" fn kentry(boot_info_ptr: *const ()) -> ! {
     }
     INTERRUPT_CONTROLLER.get().lock().enable_local_timer(&topology.cpu_info, Duration::from_millis(10));
 
+    acpi_manager.enter_acpi_mode(&mut INTERRUPT_CONTROLLER.get().lock());
+    // TEMP: just for testing atm. We need a more dynamic kernel driver system it turns out.
+    acpi_manager
+        .platform
+        .registers
+        .pm1_event_registers
+        .set_event_enabled(acpi::registers::Pm1Event::PowerButton, true)
+        .unwrap();
+
     let pci_configurator = PciConfigurator::new(pci_access, acpi_manager.clone());
     kernel::initialize_pci(pci_configurator);
 
     task::install_syscall_handler();
-
-    let platform = PlatformImpl { topology };
 
     SCHEDULER.initialize(Scheduler::new());
     maitake::time::set_global_timer(&SCHEDULER.get().tasklet_scheduler.timer).unwrap();

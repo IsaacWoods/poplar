@@ -1,4 +1,4 @@
-use crate::kacpi::PoplarRegionMapper;
+use crate::{kacpi::PoplarHandler, pci::EcamAccess};
 use acpi::platform::{AcpiPlatform, ProcessorState};
 use alloc::vec::Vec;
 use hal_x86_64::hw::cpu::CpuInfo;
@@ -21,7 +21,7 @@ pub struct Topology {
 }
 
 impl Topology {
-    pub fn new(cpu_info: CpuInfo, acpi_info: &AcpiPlatform<PoplarRegionMapper>) -> Topology {
+    pub fn new(cpu_info: CpuInfo, acpi_info: &AcpiPlatform<PoplarHandler<EcamAccess>>) -> Topology {
         info!(
             "We're running on an {:?} processor. The microarchitecture is: {:?}",
             cpu_info.vendor,
