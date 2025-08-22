@@ -37,11 +37,6 @@ pub use core::{
 };
 pub use poplar;
 
-// Import our own prelude for this crate
-#[allow(unused_imports)] // Not sure why this counts as unused but the compiler thinks it is.
-#[prelude_import]
-pub use prelude::rust_2021::*;
-
 /*
  * These modules specify the preludes that are imported in crates that depend on our fake `std`. `rustc` will use
  * the `prelude_import` attribute, like above, to import the correct prelude for the edition being built against.

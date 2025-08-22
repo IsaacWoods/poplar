@@ -93,7 +93,7 @@ pub struct TrapFrame {
     t6: usize,
 }
 
-#[align(4)]
+#[rustc_align(4)]
 #[unsafe(naked)]
 extern "C" fn trap_handler_shim() -> ! {
     unsafe {
@@ -218,7 +218,7 @@ pub fn install_early_handler() {
     Stvec::set(VAddr::new(early_trap_handler as extern "C" fn() -> ! as usize));
 }
 
-#[align(4)]
+#[rustc_align(4)]
 extern "C" fn early_trap_handler() -> ! {
     let scause = Scause::read();
     let sepc = Sepc::read();

@@ -456,60 +456,58 @@ macro_rules! platform_handler_stub {
     ($name:ident, $number:literal) => {
         #[unsafe(naked)]
         extern "C" fn $name() -> ! {
-            unsafe {
-                core::arch::naked_asm!("
-                    // TODO: this could interrupt from usermode. We should test and `swapgs` if
-                    // needed
-                    /*
-                     * Save registers to match the layout of `InterruptStackFrame`.
-                     */
-                    push rax
-                    push rbx
-                    push rcx
-                    push rdx
-                    push rsi
-                    push rdi
-                    push rbp
-                    push r8
-                    push r9
-                    push r10
-                    push r11
-                    push r12
-                    push r13
-                    push r14
-                    push r15
+            core::arch::naked_asm!("
+                // TODO: this could interrupt from usermode. We should test and `swapgs` if
+                // needed
+                /*
+                 * Save registers to match the layout of `InterruptStackFrame`.
+                 */
+                push rax
+                push rbx
+                push rcx
+                push rdx
+                push rsi
+                push rdi
+                push rbp
+                push r8
+                push r9
+                push r10
+                push r11
+                push r12
+                push r13
+                push r14
+                push r15
 
-                    /*
-                     * Load the stack frame and interrupt number into the argument registers, and
-                     * then align the stack (as we've pushed `0xa0` bytes).
-                     */
-                    mov rdi, rsp
-                    mov rsi, {}
-                    sub rsp, 8
-                    call handle_platform_interrupt
-                    add rsp, 8
+                /*
+                 * Load the stack frame and interrupt number into the argument registers, and
+                 * then align the stack (as we've pushed `0xa0` bytes).
+                 */
+                mov rdi, rsp
+                mov rsi, {}
+                sub rsp, 8
+                call handle_platform_interrupt
+                add rsp, 8
 
-                    pop r15
-                    pop r14
-                    pop r13
-                    pop r12
-                    pop r11
-                    pop r10
-                    pop r9
-                    pop r8
-                    pop rbp
-                    pop rdi
-                    pop rsi
-                    pop rdx
-                    pop rcx
-                    pop rbx
-                    pop rax
+                pop r15
+                pop r14
+                pop r13
+                pop r12
+                pop r11
+                pop r10
+                pop r9
+                pop r8
+                pop rbp
+                pop rdi
+                pop rsi
+                pop rdx
+                pop rcx
+                pop rbx
+                pop rax
 
-                    // TODO: restore gs if needed
+                // TODO: restore gs if needed
 
-                    iretq
-                ", const $number)
-            }
+                iretq
+            ", const $number)
         }
     }
 }

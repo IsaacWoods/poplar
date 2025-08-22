@@ -382,7 +382,7 @@ pub fn seed_main(hart_id: u64, fdt_ptr: *const u8) -> ! {
     }
 }
 
-#[align(4)]
+#[rustc_align(4)]
 pub extern "C" fn trap_handler() {
     use hal_riscv::hw::csr::{Scause, Sepc};
     let scause = Scause::read();
