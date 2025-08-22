@@ -17,6 +17,7 @@ use std::{fs, path::PathBuf};
 pub struct Crate {
     path: PathBuf,
     target: Target,
+    features: Vec<String>,
     workspace: Option<PathBuf>,
 }
 
@@ -31,14 +32,31 @@ impl DocGenerator {
             flags,
             crates: vec![
                 Crate {
-                    path: PathBuf::from("kernel/kernel_riscv"),
-                    target: Target::Triple("riscv64imac-unknown-none-elf".to_string()),
+                    path: PathBuf::from("seed/seed_uefi"),
+                    target: Target::Triple("x86_64-unknown-uefi".to_string()),
+                    features: vec![],
+                    workspace: Some(PathBuf::from("seed")),
+                },
+                Crate {
+                    path: PathBuf::from("kernel/kernel_x86_64"),
+                    target: Target::Custom {
+                        triple: "x86_64-kernel".to_string(),
+                        spec: PathBuf::from("kernel/kernel_x86_64/x86_64-kernel.json"),
+                    },
+                    features: vec![],
                     workspace: Some(PathBuf::from("kernel")),
                 },
                 Crate {
                     path: PathBuf::from("seed/seed_riscv"),
                     target: Target::Triple("riscv64imac-unknown-none-elf".to_string()),
+                    features: vec!["platform_rv64_virt".to_string()],
                     workspace: Some(PathBuf::from("seed")),
+                },
+                Crate {
+                    path: PathBuf::from("kernel/kernel_riscv"),
+                    target: Target::Triple("riscv64imac-unknown-none-elf".to_string()),
+                    features: vec!["platform_rv64_virt".to_string()],
+                    workspace: Some(PathBuf::from("kernel")),
                 },
             ],
         }
@@ -50,8 +68,8 @@ impl DocGenerator {
             std::fs::create_dir_all(&self.flags.path)?;
         }
 
-        for crat in &self.crates {
-            let crate_doc_dir = self.document_crate(&crat)?;
+        for crat in self.crates {
+            let crate_doc_dir = document_crate(crat)?;
 
             /*
              * Copy each subdirectory over to the final destination.
@@ -82,17 +100,18 @@ impl DocGenerator {
 
         Ok(())
     }
+}
 
-    /// Document a crate, and its dependencies. Returns the directory containing the generated docs.
-    fn document_crate(&self, info: &Crate) -> Result<PathBuf> {
-        let mut cargo = RunCargo::new("doc", info.path.clone())
-            .subcommand(Subcommand::Doc)
-            .target(info.target.clone())
-            .extra(vec!["--document-private-items".to_string()]);
-        if let Some(workspace) = &info.workspace {
-            cargo = cargo.workspace(workspace.clone());
-        }
-
-        cargo.run()
+/// Document a crate, and its dependencies. Returns the directory containing the generated docs.
+fn document_crate(info: Crate) -> Result<PathBuf> {
+    let mut cargo = RunCargo::new("doc", info.path.clone())
+        .subcommand(Subcommand::Doc)
+        .target(info.target.clone())
+        .features(info.features)
+        .extra(vec!["--document-private-items".to_string()]);
+    if let Some(workspace) = &info.workspace {
+        cargo = cargo.workspace(workspace.clone());
     }
+
+    cargo.run()
 }

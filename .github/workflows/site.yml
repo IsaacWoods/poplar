@@ -17,9 +17,27 @@ jobs:
       uses: actions-rs/toolchain@v1
       with:
         toolchain: nightly
+        default: true
+        profile: minimal
+        components: rust-src
+
+    - name: Install Rust (RV64)
+      uses: actions-rs/toolchain@v1
+      with:
+        toolchain: nightly
         target: riscv64imac-unknown-none-elf
         default: true
         profile: minimal
+        components: rust-src
+
+    - name: Install Rust (x86 UEFI)
+      uses: actions-rs/toolchain@v1
+      with:
+        toolchain: nightly
+        target: x86_64-unknown-uefi
+        default: true
+        profile: minimal
+        components: rust-src
 
     - name: Install dependencies
       run: |
