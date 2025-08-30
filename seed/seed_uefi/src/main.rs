@@ -267,7 +267,7 @@ fn main() -> Status {
             _ => "????",
         };
         info!(
-            "    {:<30} {:<10x} .. {:<10x}",
+            "    {:<30} {:016x} .. {:016x}",
             ty_str,
             entry.phys_start,
             entry.phys_start + entry.page_count * Size4KiB::SIZE as u64
