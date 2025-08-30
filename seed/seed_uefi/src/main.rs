@@ -49,7 +49,7 @@ pub mod kernel_map {
 
 /// Records the usage of various memory allocations that need to be tracked in the memory map. Ideally, we would
 /// use UEFI custom memory types for this, but unfortunately due to a bug in Tianocore not behaving correctly with
-/// custom memory types (see https://wiki.osdev.org/UEFI#My_bootloader_hangs_if_I_use_user_defined_EFI_MEMORY_TYPE_values),
+/// custom memory types (see <https://wiki.osdev.org/UEFI#My_bootloader_hangs_if_I_use_user_defined_EFI_MEMORY_TYPE_values>),
 /// we have to track this ourselves.
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 enum MemoryUse {
@@ -245,8 +245,33 @@ fn main() -> Status {
      */
     let mem_map_offset = boot_info_area.offset();
     let mut mem_map_length = 0;
+    info!("Memory map:");
     for entry in memory_map.entries() {
-        info!("Memmap entry: {:x?}", entry);
+        let ty_str = match entry.ty {
+            MemoryType::RESERVED => "RESERVED",
+            MemoryType::LOADER_CODE => "LOADER_CODE",
+            MemoryType::LOADER_DATA => "LOADER_DATA",
+            MemoryType::BOOT_SERVICES_CODE => "BOOT_SERVICES_CODE",
+            MemoryType::BOOT_SERVICES_DATA => "BOOT_SERVICES_DATA",
+            MemoryType::RUNTIME_SERVICES_CODE => "RUNTIME_SERVICES_CODE",
+            MemoryType::RUNTIME_SERVICES_DATA => "RUNTIME_SERVICES_DATA",
+            MemoryType::CONVENTIONAL => "CONVENTIONAL",
+            MemoryType::UNUSABLE => "UNUSABLE",
+            MemoryType::ACPI_RECLAIM => "ACPI_RECLAIM",
+            MemoryType::ACPI_NON_VOLATILE => "ACPI_NON_VOLATILE",
+            MemoryType::MMIO => "MMIO",
+            MemoryType::MMIO_PORT_SPACE => "MMIO_PORT_SPACE",
+            MemoryType::PAL_CODE => "PAL_CODE",
+            MemoryType::PERSISTENT_MEMORY => "PERSISTENT_MEMORY",
+            MemoryType::UNACCEPTED => "UNACCEPTED",
+            _ => "????",
+        };
+        info!(
+            "    {:<30} {:<10x} .. {:<10x}",
+            ty_str,
+            entry.phys_start,
+            entry.phys_start + entry.page_count * Size4KiB::SIZE as u64
+        );
         let typ = match entry.ty {
             MemoryType::RESERVED => {
                 // memory_usage
