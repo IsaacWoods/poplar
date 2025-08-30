@@ -311,10 +311,8 @@ impl Dist {
         println!("{}", "[*] Building the kernel for x86_64".bold().magenta());
         let kernel = RunCargo::new("kernel_x86_64", PathBuf::from("kernel/kernel_x86_64/"))
             .workspace(PathBuf::from("kernel/"))
-            .target(Target::Custom {
-                triple: "x86_64-kernel".to_string(),
-                spec: PathBuf::from("kernel/kernel_x86_64/x86_64-kernel.json"),
-            })
+            .target(Target::Triple("x86_64-unknown-none".to_string()))
+            .rustflags("-Crelocation-model=static")
             .release(self.release)
             .features(self.kernel_features.clone())
             .std_components(vec!["core".to_string(), "alloc".to_string()])

@@ -22,30 +22,29 @@ SECTIONS
     .text :
     {
         *(.text .text.*)
-        . = ALIGN(4K);
     } :text
 
+    . = ALIGN(4K);
     .rodata :
     {
         *(.rodata .rodata.*)
-        /* We don't need to align to 4K here because the rodata segment is aligned by .got below */
     } :rodata
 
     .got :
     {
         *(.got)
-        . = ALIGN(4K);
     } :rodata
 
+    . = ALIGN(4K);
     .data :
     {
         *(.data .data.*)
-        /* We don't need to align to 4K here because it's done by .bss below */
     } :data
 
     .bss :
     {
         *(.bss .bss.*)
+        *(COMMON)
         . = ALIGN(4K);
 
         /*
@@ -58,7 +57,6 @@ SECTIONS
         _stack_bottom = .;
         . += 4M;
         _stack_top = .;
-        /* No need to add more alignment here - it will already be page-aligned */
     } :data
 
     _kernel_end = .;
