@@ -70,7 +70,7 @@ pub struct Token {
 pub enum TokenValue<'s> {
     Identifier(&'s str),
     String(&'s str),
-    Integer(isize),
+    Integer(usize),
     Decimal(f64),
 }
 
@@ -82,6 +82,23 @@ pub struct Lex<'s> {
     // Tracks info for the token that is currently being lexed
     start_offset: usize,
     current_length: usize,
+}
+
+fn token_to_integer_literal(value: &str) -> usize {
+    let mut c = value.chars();
+
+    if c.next().unwrap() == '0' {
+        match c.next().unwrap() {
+            'b' => usize::from_str_radix(&value[2..], 2).unwrap(),
+            'x' => usize::from_str_radix(&value[2..], 16).unwrap(),
+            'o' => usize::from_str_radix(&value[2..], 8).unwrap(),
+            // Also decimal
+            _ => str::parse(value).unwrap(),
+        }
+    } else {
+        // Decimal
+        str::parse(value).unwrap()
+    }
 }
 
 impl<'s> Lex<'s> {
@@ -96,7 +113,7 @@ impl<'s> Lex<'s> {
         match token.typ {
             TokenType::Identifier => Some(TokenValue::Identifier(value)),
             TokenType::String => Some(TokenValue::String(value)),
-            TokenType::Integer => Some(TokenValue::Integer(str::parse(value).unwrap())),
+            TokenType::Integer => Some(TokenValue::Integer(token_to_integer_literal(value))),
             TokenType::Decimal => Some(TokenValue::Decimal(str::parse(value).unwrap())),
             _ => None,
         }
@@ -196,12 +213,25 @@ impl<'s> Iterator for Lex<'s> {
                  * Number literals.
                  */
                 c if c.is_digit(10) => {
-                    // TODO: parse hex
-                    // TODO: support octal?
                     // TODO: scientfic notation
                     // TODO: separation with underscore between digits
 
-                    while self.stream.peek().map_or(false, |c| c.is_digit(10)) {
+                    let base = if c == '0'
+                        && let Some('x') = self.stream.peek()
+                    {
+                        self.advance();
+                        16
+                    } else if let Some('b') = self.stream.peek() {
+                        self.advance();
+                        2
+                    } else if let Some('o') = self.stream.peek() {
+                        self.advance();
+                        8
+                    } else {
+                        10
+                    };
+
+                    while self.stream.peek().map_or(false, |c| c.is_digit(base)) {
                         self.advance();
                     }
 
@@ -212,6 +242,11 @@ impl<'s> Iterator for Lex<'s> {
                     if self.stream.peek().map_or(false, |c| c == '.')
                         && self.stream.peek_next().map_or(false, |c| c.is_digit(10))
                     {
+                        if base != 10 {
+                            // TODO: produce a nice diagnostic here
+                            panic!("No floating point in your hex in this language!");
+                        }
+
                         self.advance();
                         while self.stream.peek().map_or(false, |c| c.is_digit(10)) {
                             self.advance();
@@ -394,6 +429,23 @@ mod tests {
         test_identifier("do_n0t_nam3_th1ngs_l1k3_thi5");
         test_identifier("Москва");
         test_identifier("東京");
+    }
+
+    #[test]
+    fn numbers() {
+        fn test_number(source: &str, typ: TokenType, literal: usize) {
+            let mut lex = Lex::new(source);
+            let number = lex.next().unwrap();
+            assert!(lex.next().is_none());
+
+            assert_eq!(number.typ, typ);
+            assert_eq!(lex.token_value(number).unwrap(), TokenValue::Integer(literal));
+        }
+
+        test_number("14", TokenType::Integer, 14);
+        test_number("0b00110101010101010", TokenType::Integer, 0b00110101010101010);
+        test_number("0xbeef", TokenType::Integer, 0xbeef);
+        test_number("0o777777777", TokenType::Integer, 0o777_777_777);
     }
 
     // TODO: test numbers - hex literals, octal literals, binary literals, scientific notation, underscore separation

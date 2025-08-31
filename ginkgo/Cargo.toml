@@ -4,7 +4,7 @@ version = "0.0.0"
 authors = ["Isaac Woods"]
 description = "Small programming language, designed for use as Poplar's shell language"
 license = "MPL-2.0"
-edition = "2021"
+edition = "2024"
 
 [lib]
 name = "ginkgo"

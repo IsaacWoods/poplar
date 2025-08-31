@@ -295,8 +295,12 @@ impl Vm {
                         let name = unsafe { name.as_obj::<GinkgoString>().unwrap() };
                         name.as_str().to_string()
                     };
-                    let value = self.globals.get(&name).unwrap().clone();
-                    self.stack.push(value);
+                    if let Some(value) = self.globals.get(&name) {
+                        self.stack.push(value.clone());
+                    } else {
+                        // TODO: runtime error
+                        panic!("No such global");
+                    }
                 }
                 Opcode::SetGlobal => {
                     let index = self.next() as usize;

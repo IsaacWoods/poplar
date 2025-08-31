@@ -318,13 +318,13 @@ impl<'s> Parser<'s> {
             };
 
             // See if the name resolves to a local
-            let local_idx = parser.current_function.locals.iter().enumerate().rev().find_map(|(i, local)| {
-                if local.name == value {
-                    Some(i)
-                } else {
-                    None
-                }
-            });
+            let local_idx = parser
+                .current_function
+                .locals
+                .iter()
+                .enumerate()
+                .rev()
+                .find_map(|(i, local)| if local.name == value { Some(i) } else { None });
             if let Some(local_idx) = local_idx {
                 parser.emit2(Opcode::GetLocal, local_idx as u8);
             } else {
