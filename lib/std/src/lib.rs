@@ -71,17 +71,25 @@ pub mod prelude {
     }
 }
 
+/*
+ * This defines the prelude for this crate. This must appear after the definition of the `prelude`
+ * module!
+ */
+#[allow(unused)]
+#[prelude_import]
+use prelude::rust_2024::*;
+
 use core::panic::PanicInfo;
 
 #[cfg(target_arch = "x86_64")]
-#[no_mangle]
+#[unsafe(no_mangle)]
 #[unsafe(naked)]
 unsafe extern "C" fn _start() -> ! {
     core::arch::naked_asm!("jmp rust_entry")
 }
 
 #[cfg(target_arch = "riscv64")]
-#[no_mangle]
+#[unsafe(no_mangle)]
 #[unsafe(naked)]
 unsafe extern "C" fn _start() -> ! {
     core::arch::naked_asm!(
@@ -95,13 +103,15 @@ unsafe extern "C" fn _start() -> ! {
     )
 }
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 unsafe extern "C" fn rust_entry() -> ! {
-    extern "C" {
+    unsafe extern "C" {
         fn main(argc: isize, argv: *const *const u8) -> isize;
     }
 
-    main(0, core::ptr::null());
+    unsafe {
+        main(0, core::ptr::null());
+    }
 
     poplar::syscall::early_log("Returned from main. Looping.").unwrap();
     loop {

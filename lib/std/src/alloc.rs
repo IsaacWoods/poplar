@@ -39,28 +39,34 @@ unsafe impl GlobalAlloc for ManagedHeap {
              */
             if self.mapped_heap.lock().is_none() {
                 let initial_size = usize::max(INITIAL_HEAP_SIZE, layout.size());
-                let memory = MemoryObject::create(initial_size, MemoryObjectFlags::WRITABLE).unwrap();
-                *self.mapped_heap.lock() = Some(memory.map_at(HEAP_START).unwrap());
-                self.inner.lock().init(HEAP_START as *mut u8, initial_size);
 
-                // Recurse to make the allocation so we can extend the heap if needed
-                self.alloc(layout)
+                unsafe {
+                    let memory = MemoryObject::create(initial_size, MemoryObjectFlags::WRITABLE).unwrap();
+                    *self.mapped_heap.lock() = Some(memory.map_at(HEAP_START).unwrap());
+                    self.inner.lock().init(HEAP_START as *mut u8, initial_size);
+
+                    // Recurse to make the allocation so we can extend the heap if needed
+                    self.alloc(layout)
+                }
             } else {
                 {
                     let mut memory_object = self.mapped_heap.lock();
                     let current_size = memory_object.as_ref().unwrap().inner.size;
                     let new_size = usize::max(current_size * 2, current_size + layout.size() + 256);
-                    memory_object.as_mut().unwrap().resize(new_size).unwrap();
-                    self.inner.lock().extend(new_size - current_size);
+
+                    unsafe {
+                        memory_object.as_mut().unwrap().resize(new_size).unwrap();
+                        self.inner.lock().extend(new_size - current_size);
+                    }
                 }
 
                 // Recurse to make the allocation / extend the heap more
-                self.alloc(layout)
+                unsafe { self.alloc(layout) }
             }
         }
     }
 
     unsafe fn dealloc(&self, ptr: *mut u8, layout: Layout) {
-        self.inner.lock().deallocate(NonNull::new_unchecked(ptr), layout);
+        unsafe { self.inner.lock().deallocate(NonNull::new_unchecked(ptr), layout) };
     }
 }
