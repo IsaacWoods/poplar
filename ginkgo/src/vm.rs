@@ -1,6 +1,10 @@
-use crate::object::{ErasedGc, GinkgoFunction, GinkgoNativeFunction, GinkgoObj, GinkgoString, ObjType};
+use crate::{
+    diagnostic::{Diagnostic, Result},
+    object::{ErasedGc, GinkgoFunction, GinkgoNativeFunction, GinkgoObj, GinkgoString, ObjType},
+};
 use core::{cmp, fmt};
 use std::collections::BTreeMap;
+use thiserror::Error;
 
 macro_rules! opcodes {
     { $($(#[$($attrss:meta)*])* $opcode:literal => $name:ident $(,)*)* } => {
@@ -16,7 +20,7 @@ macro_rules! opcodes {
         impl TryFrom<u8> for Opcode {
             type Error = ();
 
-            fn try_from(value: u8) -> Result<Self, Self::Error> {
+            fn try_from(value: u8) -> core::result::Result<Self, Self::Error> {
                 match value {
                     $(
                         $opcode => Ok(Self::$name),
@@ -218,14 +222,13 @@ impl Vm {
             .insert(name.to_string(), Value::Obj(GinkgoNativeFunction::new(name.to_string(), func).erase()));
     }
 
-    pub fn interpret(&mut self, chunk: Chunk) -> Value {
+    pub fn interpret(&mut self, chunk: Chunk) -> Result<Value> {
         self.chunk = Some(chunk);
         self.ip = 0;
 
         loop {
-            let Ok(op) = Opcode::try_from(self.next()) else {
-                panic!();
-            };
+            let opcode = self.next();
+            let Ok(op) = Opcode::try_from(opcode) else { Err(InvalidOpcodeInStream { opcode })? };
 
             // TODO: add `println` to Poplar's std
             // TODO: this should be behind a compiler flag or something maybe, as it's useful long-term
@@ -257,10 +260,11 @@ impl Vm {
                 Opcode::True => self.stack.push(Value::Bool(true)),
                 Opcode::False => self.stack.push(Value::Bool(false)),
                 Opcode::Negate => {
-                    if let Value::Integer(value) = self.stack.pop().unwrap() {
+                    let value = self.stack.pop().unwrap();
+                    if let Value::Integer(value) = value {
                         self.stack.push(Value::Integer(-value));
                     } else {
-                        panic!("Can't negate value!");
+                        Err(CannotNegateValue { typ: value.typ() })?
                     }
                 }
                 Opcode::Add
@@ -298,8 +302,7 @@ impl Vm {
                     if let Some(value) = self.globals.get(&name) {
                         self.stack.push(value.clone());
                     } else {
-                        // TODO: runtime error
-                        panic!("No such global");
+                        Err(NoSuchGlobal { name })?;
                     }
                 }
                 Opcode::SetGlobal => {
@@ -317,8 +320,7 @@ impl Vm {
                     // Replace the value, erroring if it doesn't yet exist
                     if let None = self.globals.insert(name.clone(), value) {
                         self.globals.remove(&name);
-                        // TODO: runtime error
-                        panic!("Tried to assign to undefined variable!");
+                        Err(AssignToUndefined { name })?;
                     }
                 }
                 Opcode::GetLocal => {
@@ -336,8 +338,9 @@ impl Vm {
                 }
                 Opcode::JumpIfTrue => {
                     let jump_offset = i16::from_le_bytes([self.next(), self.next()]);
-                    let Value::Bool(result) = self.stack.last().unwrap() else {
-                        panic!("Tried to jump but result is not a boolean!");
+                    let result = self.stack.last().unwrap();
+                    let Value::Bool(result) = result else {
+                        Err(WrongTypeForOperation { expected: ValueType::Bool, got: result.typ() })?
                     };
                     if *result {
                         self.ip = self.ip.checked_add_signed(jump_offset as isize).unwrap();
@@ -345,8 +348,9 @@ impl Vm {
                 }
                 Opcode::JumpIfFalse => {
                     let jump_offset = i16::from_le_bytes([self.next(), self.next()]);
-                    let Value::Bool(result) = self.stack.last().unwrap() else {
-                        panic!("Tried to jump but result is not a boolean!");
+                    let result = self.stack.last().unwrap();
+                    let Value::Bool(result) = result else {
+                        Err(WrongTypeForOperation { expected: ValueType::Bool, got: result.typ() })?
                     };
                     if !result {
                         self.ip = self.ip.checked_add_signed(jump_offset as isize).unwrap();
@@ -382,10 +386,10 @@ impl Vm {
                                 self.stack.resize(self.stack.len() - arg_count - 1, Value::Unit);
                                 self.stack.push(return_value);
                             }
-                            other => panic!("Cannot call value of type: {:?}", other),
+                            other => Err(ValueNotCallable { got: ValueType::Obj(other) })?,
                         }
                     } else {
-                        panic!();
+                        Err(ValueNotCallable { got: called_value.typ() })?;
                     }
                 }
                 Opcode::Unit => {
@@ -394,7 +398,7 @@ impl Vm {
             }
         }
 
-        Value::Unit
+        Ok(Value::Unit)
     }
 
     fn next(&mut self) -> u8 {
@@ -436,7 +440,7 @@ impl Vm {
             Opcode::LessEqual => self.stack.push(Value::Bool(left <= right)),
             Opcode::GreaterThan => self.stack.push(Value::Bool(left > right)),
             Opcode::GreaterEqual => self.stack.push(Value::Bool(left >= right)),
-            _ => panic!(),
+            _ => unreachable!(),
         }
     }
 }
@@ -449,33 +453,38 @@ pub enum Value {
     Obj(ErasedGc),
 }
 
+#[derive(Clone, Copy, PartialEq, Debug)]
+pub enum ValueType {
+    Unit,
+    Integer,
+    Bool,
+    Obj(ObjType),
+}
+
 impl Value {
     pub fn as_integer(&self) -> Option<i64> {
-        if let Value::Integer(value) = self {
-            Some(*value)
-        } else {
-            None
-        }
+        if let Value::Integer(value) = self { Some(*value) } else { None }
     }
 
     pub fn as_bool(&self) -> Option<bool> {
-        if let Value::Bool(value) = self {
-            Some(*value)
-        } else {
-            None
-        }
+        if let Value::Bool(value) = self { Some(*value) } else { None }
     }
 
     pub unsafe fn as_obj<T: GinkgoObj>(&self) -> Option<&T> {
         if let Value::Obj(obj) = self {
             let obj_typ = unsafe { (*obj.inner).typ };
-            if obj_typ == T::TYP {
-                Some(unsafe { &*(obj.inner as *const T) })
-            } else {
-                None
-            }
+            if obj_typ == T::TYP { Some(unsafe { &*(obj.inner as *const T) }) } else { None }
         } else {
             None
+        }
+    }
+
+    pub fn typ(&self) -> ValueType {
+        match self {
+            Value::Unit => ValueType::Unit,
+            Value::Integer(_) => ValueType::Integer,
+            Value::Bool(_) => ValueType::Bool,
+            Value::Obj(obj) => ValueType::Obj(unsafe { (*obj.inner).typ }),
         }
     }
 }
@@ -501,3 +510,46 @@ impl cmp::PartialOrd for Value {
         }
     }
 }
+
+#[derive(Clone, Debug, Error)]
+#[error("cannot negate value of type {typ:?}")]
+pub struct CannotNegateValue {
+    typ: ValueType,
+}
+impl Diagnostic for CannotNegateValue {}
+
+#[derive(Clone, Debug, Error)]
+#[error("cannot resolve global '{name}'")]
+pub struct NoSuchGlobal {
+    name: String,
+}
+impl Diagnostic for NoSuchGlobal {}
+
+#[derive(Clone, Debug, Error)]
+#[error("tried to assign to undefined variable '{name}'")]
+pub struct AssignToUndefined {
+    name: String,
+}
+impl Diagnostic for AssignToUndefined {}
+
+#[derive(Clone, Debug, Error)]
+#[error("expected value of type {expected:?}, got value of type {got:?}")]
+pub struct WrongTypeForOperation {
+    expected: ValueType,
+    got: ValueType,
+}
+impl Diagnostic for WrongTypeForOperation {}
+
+#[derive(Clone, Debug, Error)]
+#[error("tried to call non-callable value of type {got:?}")]
+pub struct ValueNotCallable {
+    got: ValueType,
+}
+impl Diagnostic for ValueNotCallable {}
+
+#[derive(Clone, Debug, Error)]
+#[error("invalid op-code in instruction stream ({opcode:#x}. This is a bug!")]
+pub struct InvalidOpcodeInStream {
+    opcode: u8,
+}
+impl Diagnostic for InvalidOpcodeInStream {}

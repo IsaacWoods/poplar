@@ -40,13 +40,16 @@ fn main() -> io::Result<()> {
         let parser = Parser::new(&source);
 
         match parser.parse() {
-            Ok(chunk) => {
-                vm.interpret(chunk);
-            }
+            Ok(chunk) => match vm.interpret(chunk) {
+                Ok(_) => (),
+                Err(err) => {
+                    println!("Encountered error while running input script: {}", err);
+                }
+            },
             Err(err) => {
                 println!("Encountered error while parsing input script: {}", err);
             }
-        }
+        };
     }
 
     let mut rl = Editor::new().unwrap();
@@ -60,12 +63,17 @@ fn main() -> io::Result<()> {
                 rl.add_history_entry(line.as_str()).unwrap();
 
                 let parser = Parser::new(&line);
-                match parser.parse() {
-                    Ok(chunk) => {
-                        vm.interpret(chunk);
-                    }
+                let chunk = match parser.parse() {
+                    Ok(chunk) => chunk,
                     Err(err) => {
-                        println!("Encountered error while parsing: {}", err);
+                        println!("Parse error: {}", err);
+                        continue;
+                    }
+                };
+                match vm.interpret(chunk) {
+                    Ok(_) => (),
+                    Err(err) => {
+                        println!("Runtime error: {}", err);
                     }
                 }
             }
