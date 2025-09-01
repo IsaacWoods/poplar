@@ -1,4 +1,6 @@
-use std::str::Chars;
+use crate::diagnostic::{self, BoxedDiagnostic, Result};
+use std::{error::Error, fmt, str::Chars};
+use thiserror::Error;
 use unicode_xid::UnicodeXID;
 
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Debug)]
@@ -82,7 +84,20 @@ pub struct Lex<'s> {
     // Tracks info for the token that is currently being lexed
     start_offset: usize,
     current_length: usize,
+
+    /*
+     * These are used to implement token peeking. They are populated by `peek` and `peek_next`
+     * using `Lex::next`.
+     */
+    peek: Option<Token>,
+    peek_next: Option<Token>,
 }
+
+#[derive(Clone, Debug, Error)]
+#[error("Lex error!")]
+pub struct LexError {}
+
+impl diagnostic::Diagnostic for LexError {}
 
 fn token_to_integer_literal(value: &str) -> usize {
     let mut c = value.chars();
@@ -103,7 +118,15 @@ fn token_to_integer_literal(value: &str) -> usize {
 
 impl<'s> Lex<'s> {
     pub fn new(source: &'s str) -> Lex<'s> {
-        Lex { source, stream: PeekingIter::new(source.chars()), offset: 0, start_offset: 0, current_length: 0 }
+        Lex {
+            source,
+            stream: PeekingIter::new(source.chars()),
+            offset: 0,
+            start_offset: 0,
+            current_length: 0,
+            peek: None,
+            peek_next: None,
+        }
     }
 
     /// Get the value of a token, if it has one. This can be called at any time, including after
@@ -126,15 +149,57 @@ impl<'s> Lex<'s> {
         Some(c)
     }
 
-    pub fn produce(&mut self, typ: TokenType) -> Token {
-        Token { typ, offset: self.start_offset, length: self.current_length }
+    pub fn produce(&mut self, typ: TokenType) -> Result<Token> {
+        Ok(Token { typ, offset: self.start_offset, length: self.current_length })
     }
-}
 
-impl<'s> Iterator for Lex<'s> {
-    type Item = Token;
+    pub fn peek(&mut self) -> Result<Option<Token>> {
+        if let Some(peek) = self.peek {
+            Ok(Some(peek))
+        } else {
+            match self.next_no_peeking() {
+                None => {
+                    self.peek = None;
+                    Ok(None)
+                }
+                Some(Ok(next)) => {
+                    self.peek = Some(next);
+                    Ok(Some(self.peek.unwrap()))
+                }
+                Some(Err(err)) => {
+                    // TODO: is this the correct behaviour?
+                    self.peek = None;
+                    Err(err)
+                }
+            }
+        }
+    }
 
-    fn next(&mut self) -> Option<Self::Item> {
+    pub fn peek_next(&mut self) -> Result<Option<Token>> {
+        assert!(self.peek.is_some());
+
+        if let Some(peek_next) = self.peek_next {
+            Ok(Some(peek_next))
+        } else {
+            match self.next_no_peeking() {
+                None => {
+                    self.peek_next = None;
+                    Ok(None)
+                }
+                Some(Ok(next)) => {
+                    self.peek_next = Some(next);
+                    Ok(Some(self.peek_next.unwrap()))
+                }
+                Some(Err(err)) => {
+                    // TODO: is this the correct behaviour?
+                    self.peek_next = None;
+                    Err(err)
+                }
+            }
+        }
+    }
+
+    fn next_no_peeking(&mut self) -> Option<Result<Token>> {
         loop {
             /*
              * Each loop iteration starts a new token. This ensures skipped whitespace etc. is not
@@ -239,12 +304,11 @@ impl<'s> Iterator for Lex<'s> {
                      * Handle floating-point numbers. We want to consume the decimal point, but
                      * only if it is followed by another digit.
                      */
-                    if self.stream.peek().map_or(false, |c| c == '.')
+                    if self.stream.peek().map_or(false, |c| *c == '.')
                         && self.stream.peek_next().map_or(false, |c| c.is_digit(10))
                     {
                         if base != 10 {
-                            // TODO: produce a nice diagnostic here
-                            panic!("No floating point in your hex in this language!");
+                            return Some(Err(LexError {}.into()));
                         }
 
                         self.advance();
@@ -258,7 +322,7 @@ impl<'s> Iterator for Lex<'s> {
                 }
 
                 '"' => {
-                    while self.stream.peek().map_or(false, |c| c != '"') {
+                    while self.stream.peek().map_or(false, |c| *c != '"') {
                         self.advance()?;
                     }
 
@@ -309,12 +373,28 @@ impl<'s> Iterator for Lex<'s> {
     }
 }
 
+impl<'s> Iterator for Lex<'s> {
+    type Item = Result<Token>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        /*
+         * If we've already peeked forward, use that token.
+         */
+        if let Some(peeked) = self.peek.take() {
+            // Bump the 2nd look-ahead token up a spot
+            self.peek = self.peek_next.take();
+            return Some(Ok(peeked));
+        }
+
+        self.next_no_peeking()
+    }
+}
+
 /// Wraps an `Iterator` and provides exactly two items of lookahead. This is enough to implement a
 /// wide variety of lexers and parsers.
-pub struct PeekingIter<I>
+struct PeekingIter<I>
 where
     I: Iterator,
-    I::Item: Clone,
 {
     pub inner: I,
     peek: Option<I::Item>,
@@ -324,31 +404,30 @@ where
 impl<I> PeekingIter<I>
 where
     I: Iterator,
-    I::Item: Clone,
 {
-    pub fn new(inner: I) -> PeekingIter<I> {
+    fn new(inner: I) -> PeekingIter<I> {
         PeekingIter { inner, peek: None, peek_next: None }
     }
 
-    pub fn peek(&mut self) -> Option<I::Item> {
-        if let Some(peek) = &self.peek {
-            Some(peek.clone())
+    fn peek(&mut self) -> Option<&I::Item> {
+        if let Some(ref peek) = self.peek {
+            Some(peek)
         } else {
             let next = self.inner.next()?;
-            self.peek = Some(next.clone());
-            Some(next)
+            self.peek = Some(next);
+            Some(self.peek.as_ref().unwrap())
         }
     }
 
-    pub fn peek_next(&mut self) -> Option<I::Item> {
+    fn peek_next(&mut self) -> Option<&I::Item> {
         assert!(self.peek.is_some());
 
-        if let Some(peek) = &self.peek_next {
-            Some(peek.clone())
+        if let Some(ref peek_next) = self.peek_next {
+            Some(peek_next)
         } else {
             let next = self.inner.next()?;
-            self.peek_next = Some(next.clone());
-            Some(next)
+            self.peek_next = Some(next);
+            Some(self.peek_next.as_ref().unwrap())
         }
     }
 }
@@ -356,7 +435,6 @@ where
 impl<I> Iterator for PeekingIter<I>
 where
     I: Iterator,
-    I::Item: Clone,
 {
     type Item = I::Item;
 
@@ -382,8 +460,9 @@ mod tests {
 
         for token_to_match in tokens.into_iter() {
             match lex.next() {
-                Some(token) if token.typ == *token_to_match => (),
-                Some(other) => panic!("Got wrong type of token: {:?} => {:?}", other, lex.token_value(other)),
+                Some(Ok(token)) if token.typ == *token_to_match => (),
+                Some(Ok(other)) => panic!("Got wrong type of token: {:?} => {:?}", other, lex.token_value(other)),
+                Some(Err(err)) => panic!("Got lex error: {:?}", err),
                 None => panic!(),
             }
         }
@@ -414,7 +493,7 @@ mod tests {
     fn identifiers() {
         fn test_identifier(ident: &str) {
             let mut lex = Lex::new(ident);
-            let token = lex.next().expect("Failed to lex identifier correctly!");
+            let token = lex.next().expect("Failed to lex identifier correctly!").unwrap();
             assert!(lex.next().is_none());
 
             match lex.token_value(token) {
@@ -435,7 +514,7 @@ mod tests {
     fn numbers() {
         fn test_number(source: &str, typ: TokenType, literal: usize) {
             let mut lex = Lex::new(source);
-            let number = lex.next().unwrap();
+            let number = lex.next().unwrap().unwrap();
             assert!(lex.next().is_none());
 
             assert_eq!(number.typ, typ);
@@ -446,6 +525,24 @@ mod tests {
         test_number("0b00110101010101010", TokenType::Integer, 0b00110101010101010);
         test_number("0xbeef", TokenType::Integer, 0xbeef);
         test_number("0o777777777", TokenType::Integer, 0o777_777_777);
+    }
+
+    #[test]
+    fn test_peeking() {
+        let source = "let x = 17;";
+        let mut lex = Lex::new(source);
+
+        assert_eq!(lex.peek().unwrap().unwrap().typ, TokenType::Let);
+        assert_eq!(lex.next().unwrap().unwrap().typ, TokenType::Let);
+        assert_eq!(lex.next().unwrap().unwrap().typ, TokenType::Identifier);
+        assert_eq!(lex.peek().unwrap().unwrap().typ, TokenType::Equals);
+        assert_eq!(lex.peek_next().unwrap().unwrap().typ, TokenType::Integer);
+        assert_eq!(lex.next().unwrap().unwrap().typ, TokenType::Equals);
+        assert_eq!(lex.peek().unwrap().unwrap().typ, TokenType::Integer);
+        assert_eq!(lex.next().unwrap().unwrap().typ, TokenType::Integer);
+        assert_eq!(lex.next().unwrap().unwrap().typ, TokenType::Semicolon);
+        assert!(lex.peek().unwrap().is_none());
+        assert!(lex.next().is_none());
     }
 
     // TODO: test numbers - hex literals, octal literals, binary literals, scientific notation, underscore separation

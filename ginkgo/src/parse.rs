@@ -1,12 +1,13 @@
 use crate::{
-    lex::{Lex, PeekingIter, Token, TokenType, TokenValue},
+    diagnostic::Result,
+    lex::{Lex, Token, TokenType, TokenValue},
     object::{GinkgoFunction, GinkgoString},
     vm::{Chunk, Opcode, Value},
 };
 use std::{collections::BTreeMap, mem};
 
 pub struct Parser<'s> {
-    stream: PeekingIter<Lex<'s>>,
+    stream: Lex<'s>,
 
     prefix_parselets: BTreeMap<TokenType, PrefixParselet>,
     infix_parselets: BTreeMap<TokenType, InfixParselet>,
@@ -36,11 +37,10 @@ pub struct Local {
 
 impl<'s> Parser<'s> {
     pub fn new(source: &'s str) -> Parser<'s> {
-        let lex = PeekingIter::new(Lex::new(source));
         // We treat the top-level as a special function
         let script_func = Function { chunk: Chunk::new(), scope_depth: 0, locals: Vec::new() };
         let mut parser = Parser {
-            stream: lex,
+            stream: Lex::new(source),
             prefix_parselets: BTreeMap::new(),
             infix_parselets: BTreeMap::new(),
             precedence: BTreeMap::new(),
@@ -52,9 +52,9 @@ impl<'s> Parser<'s> {
         parser
     }
 
-    pub fn parse(mut self) -> Result<Chunk, ()> {
-        while self.stream.peek().is_some() {
-            self.statement();
+    pub fn parse(mut self) -> Result<Chunk> {
+        while self.stream.peek()?.is_some() {
+            self.statement()?;
         }
         // TODO: where should we add the dubious return??
         self.emit(Opcode::Return);
@@ -63,9 +63,9 @@ impl<'s> Parser<'s> {
         Ok(script_func.chunk)
     }
 
-    pub fn statement(&mut self) {
-        if self.matches(TokenType::Let) {
-            let name = self.identifier();
+    pub fn statement(&mut self) -> Result<()> {
+        if self.matches(TokenType::Let)? {
+            let name = self.identifier()?;
 
             if self.current_function.scope_depth > 0 {
                 self.current_function
@@ -74,9 +74,9 @@ impl<'s> Parser<'s> {
             }
 
             // TODO: allow vars to not be initialized (initialize to unit maybe? Or a `nil` value?)
-            self.consume(TokenType::Equals);
-            self.expression(0);
-            self.consume(TokenType::Semicolon);
+            self.consume(TokenType::Equals)?;
+            self.expression(0)?;
+            self.consume(TokenType::Semicolon)?;
 
             if self.current_function.scope_depth == 0 {
                 let name = GinkgoString::new(&name);
@@ -84,20 +84,20 @@ impl<'s> Parser<'s> {
                 self.emit2(Opcode::Constant, name_constant as u8);
                 self.emit(Opcode::DefineGlobal);
             }
-        } else if self.matches(TokenType::LeftBrace) {
+        } else if self.matches(TokenType::LeftBrace)? {
             self.begin_scope();
-            while !self.matches(TokenType::RightBrace) {
-                self.statement();
+            while !self.matches(TokenType::RightBrace)? {
+                self.statement()?;
             }
             self.end_scope();
-        } else if self.matches(TokenType::If) {
-            self.expression(0);
+        } else if self.matches(TokenType::If)? {
+            self.expression(0)?;
             let then_jump = self.emit_jump(Opcode::JumpIfFalse);
             self.emit(Opcode::Pop); // Pop the condition on the then branch
-            self.consume(TokenType::LeftBrace);
+            self.consume(TokenType::LeftBrace)?;
             self.begin_scope();
-            while !self.matches(TokenType::RightBrace) {
-                self.statement();
+            while !self.matches(TokenType::RightBrace)? {
+                self.statement()?;
             }
             self.end_scope();
             let else_jump = self.emit_jump(Opcode::Jump);
@@ -105,38 +105,38 @@ impl<'s> Parser<'s> {
             self.current_function.chunk.patch_jump(then_jump);
             self.emit(Opcode::Pop); // Pop the condition on the else branch
 
-            if self.matches(TokenType::Else) {
-                self.consume(TokenType::LeftBrace);
+            if self.matches(TokenType::Else)? {
+                self.consume(TokenType::LeftBrace)?;
                 self.begin_scope();
-                while !self.matches(TokenType::RightBrace) {
-                    self.statement();
+                while !self.matches(TokenType::RightBrace)? {
+                    self.statement()?;
                 }
                 self.end_scope();
             }
             self.current_function.chunk.patch_jump(else_jump);
-        } else if self.matches(TokenType::While) {
+        } else if self.matches(TokenType::While)? {
             let loop_jump = self.current_function.chunk.current_offset();
-            self.expression(0);
+            self.expression(0)?;
             let exit_jump = self.emit_jump(Opcode::JumpIfFalse);
             self.emit(Opcode::Pop);
 
-            self.consume(TokenType::LeftBrace);
+            self.consume(TokenType::LeftBrace)?;
             self.begin_scope();
-            while !self.matches(TokenType::RightBrace) {
-                self.statement();
+            while !self.matches(TokenType::RightBrace)? {
+                self.statement()?;
             }
             self.end_scope();
             self.emit_jump_to(Opcode::Jump, loop_jump);
             self.current_function.chunk.patch_jump(exit_jump);
-        } else if self.matches(TokenType::Fn) {
-            self.function_decl();
-        } else if self.matches(TokenType::Return) {
-            if self.matches(TokenType::Semicolon) {
+        } else if self.matches(TokenType::Fn)? {
+            self.function_decl()?;
+        } else if self.matches(TokenType::Return)? {
+            if self.matches(TokenType::Semicolon)? {
                 self.emit(Opcode::Unit);
                 self.emit(Opcode::Return);
             } else {
-                self.expression(0);
-                self.consume(TokenType::Semicolon);
+                self.expression(0)?;
+                self.consume(TokenType::Semicolon)?;
                 self.emit(Opcode::Return);
             }
         } else {
@@ -145,8 +145,8 @@ impl<'s> Parser<'s> {
              * Expressions in statement position may or may not be terminated with a semicolon, so we
              * handle both cases here.
              */
-            self.expression(0);
-            if self.matches(TokenType::Semicolon) {
+            self.expression(0)?;
+            if self.matches(TokenType::Semicolon)? {
                 // Pop whatever the expression produces back off the stack
                 self.emit(Opcode::Pop);
             }
@@ -175,10 +175,12 @@ impl<'s> Parser<'s> {
 
         //     return Stmt::new_while(condition, Stmt::new_block(body));
         // }
+
+        Ok(())
     }
 
-    fn function_decl(&mut self) {
-        let name = self.identifier();
+    fn function_decl(&mut self) -> Result<()> {
+        let name = self.identifier()?;
 
         self.func_stack.push(mem::replace(&mut self.current_function, Function::new()));
         self.begin_scope();
@@ -186,27 +188,27 @@ impl<'s> Parser<'s> {
         // The first 'local' is the function being called, so put that in here
         self.current_function.locals.push(Local { name: name.clone(), depth: self.current_function.scope_depth });
 
-        self.consume(TokenType::LeftParen);
+        self.consume(TokenType::LeftParen)?;
         let mut arity = 0;
-        if !self.matches(TokenType::RightParen) {
+        if !self.matches(TokenType::RightParen)? {
             loop {
-                let param_name = self.identifier();
+                let param_name = self.identifier()?;
                 arity += 1;
 
                 self.current_function
                     .locals
                     .push(Local { name: param_name, depth: self.current_function.scope_depth });
 
-                if !self.matches(TokenType::Comma) {
+                if !self.matches(TokenType::Comma)? {
                     break;
                 }
             }
-            self.consume(TokenType::RightParen);
+            self.consume(TokenType::RightParen)?;
         }
 
-        self.consume(TokenType::LeftBrace);
-        while !self.matches(TokenType::RightBrace) {
-            self.statement();
+        self.consume(TokenType::LeftBrace)?;
+        while !self.matches(TokenType::RightBrace)? {
+            self.statement()?;
         }
         self.end_scope();
 
@@ -221,13 +223,15 @@ impl<'s> Parser<'s> {
             self.emit2(Opcode::Constant, name_constant as u8);
             self.emit(Opcode::DefineGlobal);
         }
+
+        Ok(())
     }
 
     // TODO: borrow out of the source string for the return value
-    pub fn identifier(&mut self) -> String {
-        let token = self.consume(TokenType::Identifier).unwrap();
-        if let Some(TokenValue::Identifier(name)) = self.stream.inner.token_value(token) {
-            name.to_string()
+    pub fn identifier(&mut self) -> Result<String> {
+        let token = self.consume(TokenType::Identifier)?.unwrap();
+        if let Some(TokenValue::Identifier(name)) = self.stream.token_value(token) {
+            Ok(name.to_string())
         } else {
             // TODO: report error properly - this shouldn't even be reachable so is probs
             // acc an ICE??
@@ -235,8 +239,8 @@ impl<'s> Parser<'s> {
         }
     }
 
-    pub fn expression(&mut self, precedence: u8) {
-        let token = self.stream.next().unwrap();
+    pub fn expression(&mut self, precedence: u8) -> Result<()> {
+        let token = self.stream.next().unwrap()?;
 
         /*
          * Start by parsing a prefix operator. Identifiers and literals both have prefix parselets,
@@ -245,7 +249,7 @@ impl<'s> Parser<'s> {
         let Some(prefix) = self.prefix_for(token.typ) else {
             panic!("No prefix parselet for token: {:?}", token.typ);
         };
-        (prefix)(self, token);
+        (prefix)(self, token)?;
 
         /*
          * Check if the next token, if it exists, represents a valid infix operator that we can
@@ -253,16 +257,19 @@ impl<'s> Parser<'s> {
          * currently allowed to parse, just return the current expression.
          */
         while {
-            self.stream.peek().map_or(false, |next| {
+            let next = self.stream.peek()?;
+            next.map_or(false, |next| {
                 self.precedence_for(next.typ).map_or(false, |next_precedence| precedence < next_precedence)
             })
         } {
-            let next = self.stream.next().unwrap();
+            let next = self.stream.next().unwrap()?;
             let Some(infix) = self.infix_for(next.typ) else {
                 panic!("No infix parselet for token: {:?}", token.typ);
             };
-            (infix)(self, next);
+            (infix)(self, next)?;
         }
+
+        Ok(())
     }
 
     fn begin_scope(&mut self) {
@@ -312,7 +319,7 @@ impl<'s> Parser<'s> {
          * Literals and identifiers are consumed as prefix operations.
          */
         self.register_prefix(TokenType::Identifier, |parser, token| {
-            let value = match parser.stream.inner.token_value(token) {
+            let value = match parser.stream.token_value(token) {
                 Some(TokenValue::Identifier(value)) => value,
                 _ => unreachable!(),
             };
@@ -332,28 +339,34 @@ impl<'s> Parser<'s> {
                 let name_constant = parser.current_function.chunk.create_constant(Value::Obj(name.erase()));
                 parser.emit2(Opcode::GetGlobal, name_constant as u8);
             }
+            Ok(())
         });
         self.register_prefix(TokenType::Integer, |parser, token| {
-            let value = match parser.stream.inner.token_value(token) {
+            let value = match parser.stream.token_value(token) {
                 Some(TokenValue::Integer(value)) => value,
                 _ => unreachable!(),
             };
             let constant = parser.current_function.chunk.create_constant(Value::Integer(value as i64));
             parser.emit2(Opcode::Constant, constant as u8);
+            Ok(())
         });
         self.register_prefix(TokenType::String, |parser, token| {
-            let value = match parser.stream.inner.token_value(token) {
+            let value = match parser.stream.token_value(token) {
                 Some(TokenValue::String(value)) => value.to_string(),
                 _ => unreachable!(),
             };
             let value = GinkgoString::new(&value.to_string());
             let constant = parser.current_function.chunk.create_constant(Value::Obj(value.erase()));
             parser.emit2(Opcode::Constant, constant as u8);
+            Ok(())
         });
-        let bool_literal: PrefixParselet = |parser, token| match token.typ {
-            TokenType::True => parser.emit(Opcode::True),
-            TokenType::False => parser.emit(Opcode::False),
-            _ => unreachable!(),
+        let bool_literal: PrefixParselet = |parser, token| {
+            match token.typ {
+                TokenType::True => parser.emit(Opcode::True),
+                TokenType::False => parser.emit(Opcode::False),
+                _ => unreachable!(),
+            }
+            Ok(())
         };
         self.register_prefix(TokenType::True, bool_literal);
         self.register_prefix(TokenType::False, bool_literal);
@@ -365,12 +378,14 @@ impl<'s> Parser<'s> {
          * 'Real' prefix operations.
          */
         self.register_prefix(TokenType::Minus, |parser, _token| {
-            parser.expression(PRECEDENCE_PREFIX);
+            parser.expression(PRECEDENCE_PREFIX)?;
             parser.emit(Opcode::Negate);
+            Ok(())
         });
         self.register_prefix(TokenType::LeftParen, |parser, _token| {
-            parser.expression(0);
-            parser.consume(TokenType::RightParen);
+            parser.expression(0)?;
+            parser.consume(TokenType::RightParen)?;
+            Ok(())
         });
 
         /*
@@ -433,8 +448,9 @@ impl<'s> Parser<'s> {
                 TokenType::LessEqual => (Opcode::LessEqual, PRECEDENCE_CONDITIONAL),
                 other => panic!("Unsupported binary op token: {:?}", other),
             };
-            parser.expression(precedence);
+            parser.expression(precedence)?;
             parser.emit(op);
+            Ok(())
         };
         self.register_infix(TokenType::Plus, PRECEDENCE_SUM, binary_op);
         self.register_infix(TokenType::Minus, PRECEDENCE_SUM, binary_op);
@@ -458,8 +474,9 @@ impl<'s> Parser<'s> {
              */
             let jump = parser.emit_jump(Opcode::JumpIfFalse);
             parser.emit(Opcode::Pop);
-            parser.expression(PRECEDENCE_LOGICAL_AND);
+            parser.expression(PRECEDENCE_LOGICAL_AND)?;
             parser.current_function.chunk.patch_jump(jump);
+            Ok(())
         });
         self.register_infix(TokenType::PipePipe, PRECEDENCE_LOGICAL_OR, |parser, _token| {
             /*
@@ -467,8 +484,9 @@ impl<'s> Parser<'s> {
              */
             let jump = parser.emit_jump(Opcode::JumpIfTrue);
             parser.emit(Opcode::Pop);
-            parser.expression(PRECEDENCE_LOGICAL_OR);
+            parser.expression(PRECEDENCE_LOGICAL_OR)?;
             parser.current_function.chunk.patch_jump(jump);
+            Ok(())
         });
 
         /*
@@ -490,8 +508,9 @@ impl<'s> Parser<'s> {
                 _ => panic!(),
             };
 
-            parser.expression(PRECEDENCE_ASSIGNMENT - 1);
+            parser.expression(PRECEDENCE_ASSIGNMENT - 1)?;
             parser.emit2(op_to_replace_with, hopefully_an_operand);
+            Ok(())
         });
 
         /*
@@ -499,13 +518,14 @@ impl<'s> Parser<'s> {
          */
         self.register_infix(TokenType::LeftParen, PRECEDENCE_CALL, |parser, _token| {
             let mut arg_count = 0;
-            while !parser.matches(TokenType::RightParen) {
-                parser.expression(0);
-                parser.matches(TokenType::Comma);
+            while !parser.matches(TokenType::RightParen)? {
+                parser.expression(0)?;
+                parser.matches(TokenType::Comma)?;
                 arg_count += 1;
             }
 
             parser.emit2(Opcode::Call, arg_count);
+            Ok(())
         });
 
         // self.register_infix(TokenType::Dot, PRECEDENCE_PROPERTY_ACCESS, |parser, left, _token| {
@@ -518,31 +538,32 @@ impl<'s> Parser<'s> {
 /*
  * Parser utilities.
  */
-type PrefixParselet = fn(&mut Parser, Token);
-type InfixParselet = fn(&mut Parser, Token);
+type PrefixParselet = fn(&mut Parser, Token) -> Result<()>;
+type InfixParselet = fn(&mut Parser, Token) -> Result<()>;
 
 impl<'s> Parser<'s> {
-    pub fn matches(&mut self, typ: TokenType) -> bool {
-        if let Some(token) = self.stream.peek() {
-            if token.typ == typ {
+    pub fn matches(&mut self, typ: TokenType) -> Result<bool> {
+        match self.stream.peek() {
+            Ok(Some(token)) if token.typ == typ => {
                 self.stream.next();
-                return true;
+                Ok(true)
             }
+            Err(err) => Err(err),
+            _ => Ok(false),
         }
-        false
     }
 
     /// Expect a token of the given type, issuing a parse error if the next token is not of the
     /// expected type.
-    pub fn consume(&mut self, typ: TokenType) -> Option<Token> {
-        let token = self.stream.next();
-        if token.is_none() || token.unwrap().typ != typ {
-            // TODO: real error
-            // TODO: for possible recovery, should we consume the token or not??
-            // println!("Parse error: expected token of type {:?}", typ);
-            panic!("Parse error: expected token of type {:?}", typ);
+    pub fn consume(&mut self, typ: TokenType) -> Result<Option<Token>> {
+        match self.stream.next() {
+            Some(Ok(token)) if token.typ == typ => Ok(Some(token)),
+            Some(Err(err)) => Err(err),
+            other => {
+                // TODO: should we consume the token or not for best chances of recovery?
+                panic!("Wrong token during consume, expected {typ:?}, got {other:?}");
+            }
         }
-        token
     }
 
     pub fn register_prefix(&mut self, token: TokenType, parselet: PrefixParselet) {
