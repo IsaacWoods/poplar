@@ -1,10 +1,15 @@
-use std::error::Error;
+use std::{error::Error, fmt};
 
-// TODO: miette seems to use a concrete type here that stores the trait object?
 pub type Result<T> = core::result::Result<T, BoxedDiagnostic>;
 
 #[derive(Debug)]
 pub struct BoxedDiagnostic(Box<dyn Diagnostic>);
+
+impl fmt::Display for BoxedDiagnostic {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.0)
+    }
+}
 
 pub trait Diagnostic: Error {}
 

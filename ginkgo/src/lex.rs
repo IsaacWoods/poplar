@@ -1,5 +1,5 @@
-use crate::diagnostic::{self, BoxedDiagnostic, Result};
-use std::{error::Error, fmt, str::Chars};
+use crate::diagnostic::{Diagnostic, Result};
+use std::str::Chars;
 use thiserror::Error;
 use unicode_xid::UnicodeXID;
 
@@ -92,12 +92,6 @@ pub struct Lex<'s> {
     peek: Option<Token>,
     peek_next: Option<Token>,
 }
-
-#[derive(Clone, Debug, Error)]
-#[error("Lex error!")]
-pub struct LexError {}
-
-impl diagnostic::Diagnostic for LexError {}
 
 fn token_to_integer_literal(value: &str) -> usize {
     let mut c = value.chars();
@@ -308,7 +302,7 @@ impl<'s> Lex<'s> {
                         && self.stream.peek_next().map_or(false, |c| c.is_digit(10))
                     {
                         if base != 10 {
-                            return Some(Err(LexError {}.into()));
+                            return Some(Err(NoFloatingPointHex.into()));
                         }
 
                         self.advance();
@@ -366,8 +360,7 @@ impl<'s> Lex<'s> {
                     }
                 }
 
-                // TODO: issue a lex error rather than panicking
-                other => panic!("Unknown char in lex: {:?}", other),
+                other => return Some(Err(UnexpectedChar { c: other }.into())),
             }
         }
     }
@@ -450,6 +443,18 @@ where
         }
     }
 }
+
+#[derive(Clone, Debug, Error)]
+#[error("unexpected char '{c}'")]
+pub struct UnexpectedChar {
+    c: char,
+}
+impl Diagnostic for UnexpectedChar {}
+
+#[derive(Clone, Debug, Error)]
+#[error("floating-point hex literals are not supported")]
+pub struct NoFloatingPointHex;
+impl Diagnostic for NoFloatingPointHex {}
 
 #[cfg(test)]
 mod tests {

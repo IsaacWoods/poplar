@@ -1,10 +1,11 @@
 use crate::{
-    diagnostic::Result,
+    diagnostic::{Diagnostic, Result},
     lex::{Lex, Token, TokenType, TokenValue},
     object::{GinkgoFunction, GinkgoString},
     vm::{Chunk, Opcode, Value},
 };
 use std::{collections::BTreeMap, mem};
+use thiserror::Error;
 
 pub struct Parser<'s> {
     stream: Lex<'s>,
@@ -246,9 +247,7 @@ impl<'s> Parser<'s> {
          * Start by parsing a prefix operator. Identifiers and literals both have prefix parselets,
          * so are parsed correctly if there is no 'real' prefix operator.
          */
-        let Some(prefix) = self.prefix_for(token.typ) else {
-            panic!("No prefix parselet for token: {:?}", token.typ);
-        };
+        let Some(prefix) = self.prefix_for(token.typ) else { Err(UnrecognisedPrefixOperator { op: token.typ })? };
         (prefix)(self, token)?;
 
         /*
@@ -263,9 +262,7 @@ impl<'s> Parser<'s> {
             })
         } {
             let next = self.stream.next().unwrap()?;
-            let Some(infix) = self.infix_for(next.typ) else {
-                panic!("No infix parselet for token: {:?}", token.typ);
-            };
+            let Some(infix) = self.infix_for(next.typ) else { Err(UnrecognisedInfixOperator { op: next.typ })? };
             (infix)(self, next)?;
         }
 
@@ -446,7 +443,7 @@ impl<'s> Parser<'s> {
                 TokenType::GreaterEqual => (Opcode::GreaterEqual, PRECEDENCE_CONDITIONAL),
                 TokenType::LessThan => (Opcode::LessThan, PRECEDENCE_CONDITIONAL),
                 TokenType::LessEqual => (Opcode::LessEqual, PRECEDENCE_CONDITIONAL),
-                other => panic!("Unsupported binary op token: {:?}", other),
+                _ => unreachable!(),
             };
             parser.expression(precedence)?;
             parser.emit(op);
@@ -559,10 +556,11 @@ impl<'s> Parser<'s> {
         match self.stream.next() {
             Some(Ok(token)) if token.typ == typ => Ok(Some(token)),
             Some(Err(err)) => Err(err),
-            other => {
+            Some(Ok(other)) => {
                 // TODO: should we consume the token or not for best chances of recovery?
-                panic!("Wrong token during consume, expected {typ:?}, got {other:?}");
+                Err(ExpectedTokenButGot { expected: typ, got: other.typ })?
             }
+            None => Err(UnexpectedEndOfTokenStream { expected: typ })?,
         }
     }
 
@@ -620,3 +618,32 @@ impl<'s> Parser<'s> {
         self.emit_raw(bytes[1]);
     }
 }
+
+#[derive(Clone, Debug, Error)]
+#[error("unexpected end of token stream, expected a {expected:?}")]
+pub struct UnexpectedEndOfTokenStream {
+    pub expected: TokenType,
+}
+impl Diagnostic for UnexpectedEndOfTokenStream {}
+
+#[derive(Clone, Debug, Error)]
+#[error("expected {expected:?} but got {got:?}")]
+pub struct ExpectedTokenButGot {
+    pub expected: TokenType,
+    pub got: TokenType,
+}
+impl Diagnostic for ExpectedTokenButGot {}
+
+#[derive(Clone, Debug, Error)]
+#[error("unrecognised prefix operator {op:?}")]
+pub struct UnrecognisedPrefixOperator {
+    pub op: TokenType,
+}
+impl Diagnostic for UnrecognisedPrefixOperator {}
+
+#[derive(Clone, Debug, Error)]
+#[error("unrecognised infix operator {op:?}")]
+pub struct UnrecognisedInfixOperator {
+    pub op: TokenType,
+}
+impl Diagnostic for UnrecognisedInfixOperator {}

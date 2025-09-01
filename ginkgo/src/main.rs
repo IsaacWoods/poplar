@@ -3,14 +3,14 @@ use ginkgo::{
     vm::{Value, Vm},
 };
 use rustyline::{
-    error::ReadlineError,
-    validate::MatchingBracketValidator,
     Completer,
     Editor,
     Helper,
     Highlighter,
     Hinter,
     Validator,
+    error::ReadlineError,
+    validate::MatchingBracketValidator,
 };
 use std::{io, path::Path};
 
@@ -38,8 +38,15 @@ fn main() -> io::Result<()> {
 
         let source = std::fs::read_to_string(Path::new(&path)).unwrap();
         let parser = Parser::new(&source);
-        let chunk = parser.parse().unwrap();
-        vm.interpret(chunk);
+
+        match parser.parse() {
+            Ok(chunk) => {
+                vm.interpret(chunk);
+            }
+            Err(err) => {
+                println!("Encountered error while parsing input script: {}", err);
+            }
+        }
     }
 
     let mut rl = Editor::new().unwrap();
@@ -53,9 +60,14 @@ fn main() -> io::Result<()> {
                 rl.add_history_entry(line.as_str()).unwrap();
 
                 let parser = Parser::new(&line);
-                let chunk = parser.parse().unwrap();
-
-                vm.interpret(chunk);
+                match parser.parse() {
+                    Ok(chunk) => {
+                        vm.interpret(chunk);
+                    }
+                    Err(err) => {
+                        println!("Encountered error while parsing: {}", err);
+                    }
+                }
             }
             Err(ReadlineError::Interrupted) => {
                 println!("Ctrl-C");
