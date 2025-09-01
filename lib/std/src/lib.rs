@@ -21,6 +21,7 @@ pub use core::{
     cmp,
     convert,
     default,
+    error,
     future,
     hash,
     hint,
