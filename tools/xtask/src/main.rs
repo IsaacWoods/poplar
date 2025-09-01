@@ -326,10 +326,7 @@ impl Dist {
             let artifact = self.build_userspace_task(
                 &task.name,
                 task.source_dir.clone(),
-                Target::Custom {
-                    triple: "x86_64-poplar".to_string(),
-                    spec: PathBuf::from("user/x86_64-poplar.json"),
-                },
+                Target::Triple("x86_64-unknown-none".to_string()),
             )?;
             let path = format!("{}.elf", task.name);
             result.add(Artifact::new(&task.name, ArtifactType::UserTask, artifact).include_in_disk_image(path));
@@ -345,11 +342,11 @@ impl Dist {
 
         RunCargo::new(name.to_string(), source_dir)
             .workspace(PathBuf::from("user/")) // TODO: we probably need to provide control over this too
-            .target(target)
             .release(self.release)
+            .target(target)
+            .rustflags("-Crelocation-model=static -Clink-arg=-Tlink.ld")
             .std_components(vec!["core".to_string(), "alloc".to_string()])
             .std_features(vec!["compiler-builtins-mem".to_string()])
-            .rustflags("-C link-arg=-Tlink.ld")
             .run()
     }
 

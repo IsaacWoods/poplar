@@ -15,29 +15,28 @@ SECTIONS {
 
     .text : {
         *(.text .text.*)
-        . = ALIGN(4K);
     } :text
 
+    . = ALIGN(4K);
     .rodata : {
         *(.rodata .rodata.*)
-        /* No need to align, because .got is aligned below */
     } :rodata
 
     .got : {
         *(.got)
-        . = ALIGN(4K);
     } :rodata
 
+    . = ALIGN(4K);
     .data : {
         *(.data .data.*)
-        /* No need to align, because .bss is aligned below */
     } :data
 
     .bss : {
         *(.bss .bss.*)
-        . = ALIGN(4K);
+        *(COMMON)
     } :data
 
+    . = ALIGN(4K);
     .tdata : {
         *(.tdata .tdata.*)
     } :tls
