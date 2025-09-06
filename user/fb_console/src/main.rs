@@ -4,6 +4,9 @@
 // TODO: make a window manager and then make it so that this can drive a framebuffer directly, or
 // create a window for itself.
 
+mod console;
+
+use crate::console::Console;
 use gfxconsole::{Framebuffer, GfxConsole};
 use ginkgo::{parse::Parser, vm::Vm};
 use log::info;
@@ -17,13 +20,14 @@ use platform_bus::{
 use service_host::ServiceHostClient;
 use spinning_top::Spinlock;
 use std::{
-    fmt::Write,
+    fmt::{self, Write},
     poplar::{
         channel::Channel,
         early_logger::EarlyLogger,
         memory_object::{MappedMemoryObject, MemoryObject},
         syscall::MemoryObjectFlags,
     },
+    sync::Arc,
 };
 
 #[derive(Clone, Copy, Default, Debug)]
@@ -36,50 +40,40 @@ enum InputEvent {
     RelY(i32),
 }
 
-struct Console {
-    framebuffer: MappedMemoryObject,
-    control_channel: Channel<(), ()>,
-    width: usize,
-    height: usize,
-    console: Spinlock<GfxConsole>,
-    input_events: thingbuf::mpsc::Receiver<InputEvent>,
+#[derive(Clone)]
+pub struct ConsoleWriter {
+    gfx: Arc<Spinlock<GfxConsole>>,
+}
 
-    // TODO: separate out the rendering/input management layer from the shell/console logic
-    platform_bus_inspect: Channel<(), platform_bus::PlatformBusInspect>,
+impl fmt::Write for ConsoleWriter {
+    fn write_str(&mut self, s: &str) -> fmt::Result {
+        self.gfx.lock().write_str(s)
+    }
 }
 
 fn spawn_framebuffer(
     framebuffer: MappedMemoryObject,
-    channel: Channel<(), ()>,
+    control_channel: Channel<(), ()>,
     width: usize,
     height: usize,
     input_events: thingbuf::mpsc::Receiver<InputEvent>,
     service_host_client: &ServiceHostClient,
 ) {
-    let platform_bus_inspect = service_host_client.subscribe_service("platform_bus.inspect").unwrap();
-
-    let console = Spinlock::new(GfxConsole::new(
-        Framebuffer::new(framebuffer.ptr() as *mut u32, width, height, width, 0, 8, 16),
-        0x00000000,
-        0xffffffff,
-    ));
-    let console = Console {
-        framebuffer,
-        control_channel: channel,
-        width,
-        height,
-        console,
-        input_events,
-        platform_bus_inspect,
+    let mut writer = ConsoleWriter {
+        gfx: Arc::new(Spinlock::new(GfxConsole::new(
+            Framebuffer::new(framebuffer.ptr() as *mut u32, width, height, width, 0, 8, 16),
+            0x00000000,
+            0xffffffff,
+        ))),
     };
+    let mut console = Console::new(&service_host_client, writer.clone());
 
     std::poplar::rt::spawn(async move {
-        writeln!(console.console.lock(), "Welcome to Poplar!").unwrap();
-        write!(console.console.lock(), "> ").unwrap();
-        console.control_channel.send(&()).unwrap();
+        writeln!(writer, "Welcome to Poplar!").unwrap();
+        write!(writer, "> ").unwrap();
+        control_channel.send(&()).unwrap();
 
         let mut current_line = String::new();
-        let mut vm = Vm::new();
 
         let mut mouse_x = 300u32;
         let mut mouse_y = 300u32;
@@ -87,24 +81,19 @@ fn spawn_framebuffer(
         loop {
             let mut needs_redraw = false;
 
-            if let Some(event) = console.input_events.recv().await {
+            if let Some(event) = input_events.recv().await {
                 match event {
                     InputEvent::KeyPressed(key) => {
                         // TODO: `noline` is a no-std REPL impl crate thingy that could be useful
                         // for improving this experience
                         match key {
                             '\n' => {
-                                let parser = Parser::new(&current_line);
-                                let chunk = parser.parse().unwrap();
-                                vm.interpret(chunk);
-                                // TODO: probs don't randomly pop stuff off the stack lmao
+                                write!(writer, "{}", key).unwrap();
 
-                                write!(console.console.lock(), "{}", key).unwrap();
-                                if let Some(result) = vm.stack.pop() {
-                                    writeln!(console.console.lock(), "Result: {:?}", result).unwrap();
-                                }
+                                console.interpret(&current_line);
 
-                                write!(console.console.lock(), "\n> ").unwrap();
+                                current_line.clear();
+                                write!(writer, "\n> ").unwrap();
                                 needs_redraw = true;
                             }
 
@@ -112,13 +101,13 @@ fn spawn_framebuffer(
                             '\x7f' => {
                                 // Only allow the user to delete characters they've typed.
                                 if current_line.pop().is_some() {
-                                    write!(console.console.lock(), "{}", key).unwrap();
+                                    write!(writer, "{}", key).unwrap();
                                     needs_redraw = true;
                                 }
                             }
 
                             _ => {
-                                write!(console.console.lock(), "{}", key).unwrap();
+                                write!(writer, "{}", key).unwrap();
                                 current_line.push(key);
                                 needs_redraw = true;
                             }
@@ -139,8 +128,8 @@ fn spawn_framebuffer(
 
             if needs_redraw {
                 // TODO: this obvs won't remove the old cursor - we need a proper thing for that...
-                console.console.lock().framebuffer.draw_rect(mouse_x as usize, mouse_y as usize, 4, 4, 0xffff00ff);
-                console.control_channel.send(&()).unwrap();
+                writer.gfx.lock().framebuffer.draw_rect(mouse_x as usize, mouse_y as usize, 4, 4, 0xffff00ff);
+                control_channel.send(&()).unwrap();
             }
         }
     });

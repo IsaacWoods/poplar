@@ -7,6 +7,7 @@ next steps for progression and stop the somewhat-aimless development we've had a
 - [x] Review `xtask` dependencies to make it a little leaner
 - [ ] Document aims, features, and external components in Readme
 - [ ] Build Github releases to allow easy testing without building Poplar
+- [ ] Fix docs generation and have a crate index
 
 ## Seed
 - [x] Migrate UEFI loader to new version of `uefi` crate
@@ -29,8 +30,8 @@ next steps for progression and stop the somewhat-aimless development we've had a
 - [x] Calibrate the TSC clocksource from the HPET if frequency is not reported via `cpuid`
 
 ## Ginkgo
-- [ ] Get REPL working again with new bytecode VM
-- [ ] Proper error handling so invalid input does not panic shell
+- [x] Get REPL working again with new bytecode VM
+- [x] Proper error handling so invalid input does not panic shell
 - [ ] Some builtin commands to show some functionality
 
 # Ideas for future versions (use this to prevent scope-creep of v0.1)
