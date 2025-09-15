@@ -13,29 +13,54 @@ const GINKGO_PRELUDE: &'static str = include_str!("prelude.ginkgo");
 pub struct Console {
     vm: Vm,
     writer: ConsoleWriter,
-
-    // Stuff for providing built-in functions
-    platform_bus_inspect: Channel<(), platform_bus::PlatformBusInspect>,
 }
 
 impl Console {
     pub fn new(service_host_client: &ServiceHostClient, writer: ConsoleWriter) -> Console {
         let mut vm = Vm::new();
-        let platform_bus_inspect = service_host_client.subscribe_service("platform_bus.inspect").unwrap();
 
-        let mut print_writer = writer.clone();
-        vm.define_native_fn("print", move |args| {
-            let mut print_writer = print_writer.clone();
-            assert!(args.len() == 1);
-            let value = args.get(0).unwrap();
-            writeln!(&mut print_writer, "PRINT: {:?}", value).unwrap();
-            Value::Unit
-        });
-
-        Console { vm, writer, platform_bus_inspect }
         let prelude = Parser::new(GINKGO_PRELUDE).parse().expect("Parse error in prelude");
         vm.interpret(prelude).expect("Runtime error in prelude");
 
+        {
+            let writer = writer.clone();
+            vm.define_native_fn("print", move |args| {
+                let mut writer = writer.clone();
+
+                assert!(args.len() == 1);
+                let value = args.get(0).unwrap();
+
+                writeln!(&mut writer, "PRINT: {:?}", value).unwrap();
+                Value::Unit
+            });
+        }
+
+        {
+            let platform_bus_inspect: Channel<(), platform_bus::PlatformBusInspect> =
+                service_host_client.subscribe_service("platform_bus.inspect").unwrap();
+            let writer = writer.clone();
+            vm.define_native_fn("inspect_pbus", move |args| {
+                let mut writer = writer.clone();
+                assert!(args.len() == 0);
+
+                // TODO: think about how the Ginkgo VM should interact with async stuff. Blocking
+                // til the pbus replies to us is not fantastic. We should probably have some sort
+                // of worker system to delegate these things to / utilise the userspace runtime?
+                platform_bus_inspect.send(&()).unwrap();
+                let reply = platform_bus_inspect.receive_blocking().unwrap();
+
+                for device in &reply.devices {
+                    writeln!(&mut writer, "Device: {}", device.name).unwrap();
+                    for (property, value) in &device.properties {
+                        writeln!(&mut writer, "    {}: {:?}", property, value);
+                    }
+                }
+
+                Value::Unit
+            });
+        }
+
+        Console { vm, writer }
     }
 
     pub fn interpret(&mut self, s: &str) {

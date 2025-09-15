@@ -260,16 +260,10 @@ pub struct PlatformBusInspect {
 
 // TODO: maybe include names of bus/bus+device drivers (will require a lookup for each)
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub enum DeviceInspect {
-    Unclaimed {
-        name: String,
-        device_info: BTreeMap<PropertyName, Property>,
-        // handoff_info_names: Vec<PropertyName>,
-    },
-    Claimed {
-        name: String,
-        device_info: BTreeMap<PropertyName, Property>,
-    },
+pub struct DeviceInspect {
+    pub name: String,
+    pub claimed: bool,
+    pub properties: BTreeMap<PropertyName, Property>,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]

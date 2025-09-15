@@ -152,35 +152,21 @@ impl PlatformBus {
         for (name, device) in self.devices.read().iter() {
             match device {
                 Device::Unclaimed { bus_driver, device_info, handoff_info } => {
-                    devices.push(DeviceInspect::Unclaimed {
+                    devices.push(DeviceInspect {
                         name: name.clone(),
-                        device_info: device_info.0.clone(),
-                        // TODO
-                        // handoff_info_names: Vec::new(),
+                        claimed: false,
+                        properties: device_info.0.clone(),
                     });
                 }
                 Device::Claimed { bus_driver, device_info, device_driver } => {
-                    devices
-                        .push(DeviceInspect::Claimed { name: name.clone(), device_info: device_info.0.clone() });
+                    devices.push(DeviceInspect {
+                        name: name.clone(),
+                        claimed: true,
+                        properties: device_info.0.clone(),
+                    });
                 }
             }
         }
-        // let devices = self
-        //     .devices
-        //     .read()
-        //     .iter()
-        //     .map(|(name, device)| match device {
-        //         Device::Unclaimed { bus_driver, device_info, handoff_info } => DeviceInspect::Unclaimed {
-        //             name: name.clone(),
-        //             device_info: device_info.0.clone(),
-        //             // TODO: actually process handoff map
-        //             handoff_info_names: Vec::new(),
-        //         },
-        //         Device::Claimed { bus_driver, device_info, device_driver } => {
-        //             DeviceInspect::Claimed { name: name.clone(), device_info: device_info.0.clone() }
-        //         }
-        //     })
-        //     .collect();
 
         // TODO
         let bus_drivers = Vec::new();
