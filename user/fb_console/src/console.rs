@@ -6,6 +6,8 @@ use ginkgo::{
 use service_host::ServiceHostClient;
 use std::{fmt::Write, poplar::channel::Channel};
 
+const GINKGO_PRELUDE: &'static str = include_str!("prelude.ginkgo");
+
 /// `Console` implements the logic of the console itself - it is fed input, maintains the Ginkgo
 /// interpreter and state needed to interface with the rest of the system, and returns output.
 pub struct Console {
@@ -31,6 +33,9 @@ impl Console {
         });
 
         Console { vm, writer, platform_bus_inspect }
+        let prelude = Parser::new(GINKGO_PRELUDE).parse().expect("Parse error in prelude");
+        vm.interpret(prelude).expect("Runtime error in prelude");
+
     }
 
     pub fn interpret(&mut self, s: &str) {

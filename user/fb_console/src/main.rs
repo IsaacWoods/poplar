@@ -6,9 +6,8 @@
 
 mod console;
 
-use crate::console::Console;
+use console::Console;
 use gfxconsole::{Framebuffer, GfxConsole};
-use ginkgo::{parse::Parser, vm::Vm};
 use log::info;
 use platform_bus::{
     input::{InputEvent as PlatformBusInputEvent, Key, KeyState},
