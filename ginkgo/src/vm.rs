@@ -403,7 +403,7 @@ impl Vm {
 
     fn next(&mut self) -> u8 {
         // TODO: handle error
-        let byte = *self.chunk.as_ref().unwrap().code.get(self.ip).unwrap();
+        let byte = *self.chunk.as_ref().unwrap().code.get(self.ip).expect("No next byte of bytecode");
         self.ip += 1;
         byte
     }

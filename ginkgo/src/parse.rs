@@ -18,6 +18,7 @@ pub struct Parser<'s> {
     func_stack: Vec<Function>,
 }
 
+#[derive(Debug)]
 pub struct Function {
     chunk: Chunk,
     scope_depth: usize,
@@ -30,6 +31,7 @@ impl Function {
     }
 }
 
+#[derive(Debug)]
 pub struct Local {
     // TODO: it'd be nice for this to borrow out of the source string for the duration of the parse
     name: String,
@@ -241,7 +243,11 @@ impl<'s> Parser<'s> {
     }
 
     pub fn expression(&mut self, precedence: u8) -> Result<()> {
-        let token = self.stream.next().unwrap()?;
+        let token = match self.stream.next() {
+            Some(Ok(token)) => token,
+            Some(Err(err)) => Err(err)?,
+            None => Err(EndOfTokenStreamInExpression)?,
+        };
 
         /*
          * Start by parsing a prefix operator. Identifiers and literals both have prefix parselets,
@@ -288,7 +294,7 @@ impl<'s> Parser<'s> {
         for _ in 0..locals_to_pop {
             self.emit(Opcode::Pop);
         }
-        self.current_function.locals.truncate(locals_to_pop);
+        self.current_function.locals.truncate(self.current_function.locals.len() - locals_to_pop);
     }
 }
 
@@ -625,6 +631,11 @@ pub struct UnexpectedEndOfTokenStream {
     pub expected: TokenType,
 }
 impl Diagnostic for UnexpectedEndOfTokenStream {}
+
+#[derive(Clone, Debug, Error)]
+#[error("unexpected end of token stream, expected an expression")]
+pub struct EndOfTokenStreamInExpression;
+impl Diagnostic for EndOfTokenStreamInExpression {}
 
 #[derive(Clone, Debug, Error)]
 #[error("expected {expected:?} but got {got:?}")]
