@@ -182,14 +182,13 @@ impl<'s> Parser<'s> {
         Ok(())
     }
 
+    // TODO: functions should emit implicit returns at the end if no return statement
     fn function_decl(&mut self) -> Result<()> {
         let name = self.identifier()?;
+        self.current_function.locals.push(Local { name: name.clone(), depth: self.current_function.scope_depth });
 
         self.func_stack.push(mem::replace(&mut self.current_function, Function::new()));
         self.begin_scope();
-
-        // The first 'local' is the function being called, so put that in here
-        self.current_function.locals.push(Local { name: name.clone(), depth: self.current_function.scope_depth });
 
         self.consume(TokenType::LeftParen)?;
         let mut arity = 0;

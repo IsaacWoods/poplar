@@ -369,7 +369,6 @@ impl Vm {
                                 let old_slot_offset = self.slot_offset;
 
                                 self.ip = 0;
-                                self.slot_offset += self.stack.len() - arg_count - 1;
 
                                 self.call_stack.push(CallFrame {
                                     chunk: old_chunk,
@@ -387,6 +386,7 @@ impl Vm {
                                 self.stack.push(return_value);
                             }
                             other => Err(ValueNotCallable { got: ValueType::Obj(other) })?,
+                            self.slot_offset += self.stack.len() - arg_count;
                         }
                     } else {
                         Err(ValueNotCallable { got: called_value.typ() })?;
