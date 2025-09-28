@@ -174,3 +174,19 @@ impl fmt::Write for PanicBuffer {
         Ok(())
     }
 }
+
+// TODO: this should be more versatile in the future - some concept of a stdout? Probs bring in
+// BufWriter/LineWriter from real std? (this crate probs should be licensed as MIT/Apache2 if
+// we're bringing stuff like that across?)
+#[macro_export]
+macro_rules! println {
+    () => {
+        $crate::print!("\n")
+    };
+    ($($arg:tt)*) => {{
+        use core::fmt::Write;
+        let mut s = alloc::string::String::new();
+        let _ = write!(s, "{}", format_args!($($arg)*));
+        $crate::poplar::syscall::early_log(&s).unwrap();
+    }};
+}
