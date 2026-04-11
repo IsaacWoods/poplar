@@ -4,7 +4,7 @@ version = 4
 
 [[package]]
 name = "acpi"
-version = "6.0.0"
+version = "6.0.1"
 dependencies = [
  "bit_field",
  "bitflags 2.9.0",

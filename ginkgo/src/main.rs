@@ -1,4 +1,5 @@
 use ginkgo::{
+    object::{GinkgoClosure, GinkgoFunction},
     parse::Parser,
     vm::{Value, Vm},
 };
@@ -40,12 +41,15 @@ fn main() -> io::Result<()> {
         let parser = Parser::new(&source);
 
         match parser.parse() {
-            Ok(chunk) => match vm.interpret(chunk) {
-                Ok(_) => (),
-                Err(err) => {
-                    println!("Encountered error while running input script: {}", err);
+            Ok(chunk) => {
+                let closure = GinkgoClosure::new(GinkgoFunction::new("".to_string(), 0, 0, chunk), vec![]);
+                match vm.interpret(closure) {
+                    Ok(_) => (),
+                    Err(err) => {
+                        println!("Encountered error while running input script: {}", err);
+                    }
                 }
-            },
+            }
             Err(err) => {
                 println!("Encountered error while parsing input script: {}", err);
             }
@@ -70,7 +74,8 @@ fn main() -> io::Result<()> {
                         continue;
                     }
                 };
-                match vm.interpret(chunk) {
+                let closure = GinkgoClosure::new(GinkgoFunction::new("".to_string(), 0, 0, chunk), vec![]);
+                match vm.interpret(closure) {
                     Ok(_) => (),
                     Err(err) => {
                         println!("Runtime error: {}", err);

@@ -1,0 +1,12 @@
+fn min(a, b) {
+    if a < b {
+        return a;
+    } else {
+        let added = a + b;
+        return added;
+    }
+}
+
+let three = min(3, 4);
+let four = min(11, 4);
+

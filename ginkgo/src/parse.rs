@@ -23,11 +23,33 @@ pub struct Function {
     chunk: Chunk,
     scope_depth: usize,
     locals: Vec<Local>,
+    upvalues: Vec<Upvalue>,
 }
 
 impl Function {
     pub fn new() -> Function {
-        Function { chunk: Chunk::new(), scope_depth: 0, locals: Vec::new() }
+        Function { chunk: Chunk::new(), scope_depth: 0, locals: Vec::new(), upvalues: Vec::new() }
+    }
+
+    /// Attempts to resolve `name` to a local of this function. If such a local is defined, returns
+    /// its index.
+    pub fn resolve_local(&self, name: &str) -> Option<usize> {
+        self.locals.iter().enumerate().rev().find_map(|(i, local)| if local.name == name { Some(i) } else { None })
+    }
+
+    /// Add an upvalue to a given binding. Returns the index of the upvalue in this function's
+    /// upvalue array.
+    pub fn add_upvalue(&mut self, index: usize, is_local: bool) -> usize {
+        // If we already have an upvalue to the correct binding, re-use that
+        for (i, upvalue) in self.upvalues.iter().enumerate() {
+            if upvalue.index == index && upvalue.is_local == is_local {
+                return i;
+            }
+        }
+
+        let upvalue_idx = self.upvalues.len();
+        self.upvalues.push(Upvalue { index, is_local });
+        upvalue_idx
     }
 }
 
@@ -36,12 +58,19 @@ pub struct Local {
     // TODO: it'd be nice for this to borrow out of the source string for the duration of the parse
     name: String,
     depth: usize,
+    is_captured: bool,
+}
+
+#[derive(Debug)]
+pub struct Upvalue {
+    index: usize,
+    is_local: bool,
 }
 
 impl<'s> Parser<'s> {
     pub fn new(source: &'s str) -> Parser<'s> {
         // We treat the top-level as a special function
-        let script_func = Function { chunk: Chunk::new(), scope_depth: 0, locals: Vec::new() };
+        let script_func = Function::new();
         let mut parser = Parser {
             stream: Lex::new(source),
             prefix_parselets: BTreeMap::new(),
@@ -71,9 +100,11 @@ impl<'s> Parser<'s> {
             let name = self.identifier()?;
 
             if self.current_function.scope_depth > 0 {
-                self.current_function
-                    .locals
-                    .push(Local { name: name.clone(), depth: self.current_function.scope_depth });
+                self.current_function.locals.push(Local {
+                    name: name.clone(),
+                    depth: self.current_function.scope_depth,
+                    is_captured: false,
+                });
             }
 
             // TODO: allow vars to not be initialized (initialize to unit maybe? Or a `nil` value?)
@@ -185,7 +216,11 @@ impl<'s> Parser<'s> {
     // TODO: functions should emit implicit returns at the end if no return statement
     fn function_decl(&mut self) -> Result<()> {
         let name = self.identifier()?;
-        self.current_function.locals.push(Local { name: name.clone(), depth: self.current_function.scope_depth });
+        self.current_function.locals.push(Local {
+            name: name.clone(),
+            depth: self.current_function.scope_depth,
+            is_captured: false,
+        });
 
         self.func_stack.push(mem::replace(&mut self.current_function, Function::new()));
         self.begin_scope();
@@ -197,9 +232,11 @@ impl<'s> Parser<'s> {
                 let param_name = self.identifier()?;
                 arity += 1;
 
-                self.current_function
-                    .locals
-                    .push(Local { name: param_name, depth: self.current_function.scope_depth });
+                self.current_function.locals.push(Local {
+                    name: param_name,
+                    depth: self.current_function.scope_depth,
+                    is_captured: false,
+                });
 
                 if !self.matches(TokenType::Comma)? {
                     break;
@@ -215,9 +252,21 @@ impl<'s> Parser<'s> {
         self.end_scope();
 
         let function = mem::replace(&mut self.current_function, self.func_stack.pop().unwrap());
-        let function = GinkgoFunction::new(name.clone(), arity, function.chunk);
-        let constant = self.current_function.chunk.create_constant(Value::Obj(function.erase())) as u8;
-        self.emit2(Opcode::Constant, constant);
+        let constant = {
+            let function = GinkgoFunction::new(name.clone(), arity, function.upvalues.len(), function.chunk);
+            self.current_function.chunk.create_constant(Value::Obj(function.erase())) as u8
+        };
+
+        /*
+         * To create the closure representation, we emit a `Closure` op. This takes the constant
+         * slot that contains the `Function` object, turns it into a `Closure` object (which
+         * captures the required upvalues), and then pushes that object onto the stack.
+         */
+        self.emit2(Opcode::Closure, constant);
+        for upvalue in &function.upvalues {
+            self.emit_raw(if upvalue.is_local { 1 } else { 0 });
+            self.emit_raw(upvalue.index as u8);
+        }
 
         if self.current_function.scope_depth == 0 {
             let name = GinkgoString::new(&name);
@@ -281,19 +330,69 @@ impl<'s> Parser<'s> {
     fn end_scope(&mut self) {
         self.current_function.scope_depth -= 1;
 
+        let mut locals_popped = 0;
+        for i in 0..self.current_function.locals.len() {
+            let local = &self.current_function.locals[i];
+            if local.depth <= self.current_function.scope_depth {
+                break;
+            }
+
+            locals_popped += 1;
+            if local.is_captured {
+                self.emit(Opcode::HoistUpvalue);
+            } else {
+                self.emit(Opcode::Pop);
+            }
+        }
+
         // Pop locals
         // TODO: can we do this from the back and then stop when we find a local to keep?
-        let locals_to_pop = self
-            .current_function
-            .locals
-            .iter()
-            .filter(|local| local.depth > self.current_function.scope_depth)
-            .count();
-        // TODO: PopN instruction
-        for _ in 0..locals_to_pop {
-            self.emit(Opcode::Pop);
+        // let locals_to_pop = self
+        //     .current_function
+        //     .locals
+        //     .iter()
+        //     .filter(|local| local.depth > self.current_function.scope_depth)
+        //     .count();
+        // // TODO: PopN instruction
+        // for _ in 0..locals_to_pop {
+        //     self.emit(Opcode::Pop);
+        // }
+        self.current_function.locals.truncate(self.current_function.locals.len() - locals_popped);
+    }
+
+    /// Resolve a name to a potential upvalue in an enclosing scope of the current function. If
+    /// such an upvalue is found, returns its index. This does not check if `name` should instead
+    /// refer to a local in the current function.
+    ///
+    /// ### Notes
+    /// When calling this, use a `func_depth` of `0`. Higher values are used by the method itself
+    /// to recurse up the function stack.
+    fn resolve_upvalue(&mut self, name: &str, func_depth: usize) -> Option<usize> {
+        if self.func_stack.len() <= func_depth {
+            return None;
         }
-        self.current_function.locals.truncate(self.current_function.locals.len() - locals_to_pop);
+
+        /*
+         * First, see if we're referring to a local defined in the enclosing function. If so, add
+         * an upvalue to it.
+         */
+        let func_idx = self.func_stack.len() - func_depth - 1;
+        let function = &mut self.func_stack[func_idx];
+        if let Some(local_idx) = function.resolve_local(name) {
+            function.locals[local_idx].is_captured = true;
+            return Some(self.current_function.add_upvalue(local_idx, true));
+        }
+
+        /*
+         * If not, try to resolve it in the enclosing scope as an upvalue. If this is successful,
+         * we add an upvalue in the current function that points to **that** upvalue. This allows
+         * us to capture values that aren't defined in the immediately surrounding scope.
+         */
+        if let Some(upvalue_idx) = self.resolve_upvalue(name, func_depth + 1) {
+            return Some(self.current_function.add_upvalue(upvalue_idx, false));
+        }
+
+        None
     }
 }
 
@@ -321,23 +420,18 @@ impl<'s> Parser<'s> {
          * Literals and identifiers are consumed as prefix operations.
          */
         self.register_prefix(TokenType::Identifier, |parser, token| {
-            let value = match parser.stream.token_value(token) {
-                Some(TokenValue::Identifier(value)) => value,
-                _ => unreachable!(),
+            let Some(TokenValue::Identifier(value)) = parser.stream.token_value(token) else {
+                panic!();
             };
+            let value = value.to_string();
 
             // See if the name resolves to a local
-            let local_idx = parser
-                .current_function
-                .locals
-                .iter()
-                .enumerate()
-                .rev()
-                .find_map(|(i, local)| if local.name == value { Some(i) } else { None });
-            if let Some(local_idx) = local_idx {
+            if let Some(local_idx) = parser.current_function.resolve_local(&value) {
                 parser.emit2(Opcode::GetLocal, local_idx as u8);
+            } else if let Some(upvalue_idx) = parser.resolve_upvalue(&value, 0) {
+                parser.emit2(Opcode::GetUpvalue, upvalue_idx as u8);
             } else {
-                let name = GinkgoString::new(&value.to_string());
+                let name = GinkgoString::new(&value);
                 let name_constant = parser.current_function.chunk.create_constant(Value::Obj(name.erase()));
                 parser.emit2(Opcode::GetGlobal, name_constant as u8);
             }

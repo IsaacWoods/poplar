@@ -218,10 +218,12 @@ fn main() {
                                         Key::BtnSide | Key::BtnExtra => {}
 
                                         other => {
-                                            input_sender
-                                                .send(InputEvent::KeyPressed(map_key(key, state).unwrap()))
-                                                .await
-                                                .unwrap();
+                                            if let Some(mapped_key) = map_key(other, state) {
+                                                input_sender
+                                                    .send(InputEvent::KeyPressed(mapped_key))
+                                                    .await
+                                                    .unwrap();
+                                            }
                                         }
                                     },
                                     PlatformBusInputEvent::RelX(value) => {

@@ -4,6 +4,7 @@ use core::{
     alloc::{Allocator, Layout},
     fmt,
     mem,
+    ops::Deref,
     ptr,
     str,
 };
@@ -12,7 +13,7 @@ pub struct Gc<T>
 where
     T: GinkgoObj,
 {
-    inner: *mut T,
+    pub(crate) inner: *mut T,
 }
 
 impl<T> Gc<T>
@@ -28,6 +29,26 @@ where
     }
 }
 
+impl<T> Deref for Gc<T>
+where
+    T: GinkgoObj,
+{
+    type Target = T;
+
+    fn deref(&self) -> &Self::Target {
+        unsafe { &*(self.inner) }
+    }
+}
+
+impl<T> Clone for Gc<T>
+where
+    T: GinkgoObj,
+{
+    fn clone(&self) -> Self {
+        Self { inner: self.inner.clone() }
+    }
+}
+
 #[derive(Clone, PartialEq, Eq)]
 pub struct ErasedGc {
     pub inner: *mut ObjHeader,
@@ -38,12 +59,12 @@ impl ErasedGc {
         unsafe { (*self.inner).typ }
     }
 
+    pub unsafe fn as_gc_typ<T: GinkgoObj>(&self) -> Option<Gc<T>> {
+        if unsafe { (*self.inner).typ == T::TYP } { Some(Gc { inner: (self.inner as *mut T) }) } else { None }
+    }
+
     pub unsafe fn as_typ<T: GinkgoObj>(&self) -> Option<&T> {
-        if unsafe { (*self.inner).typ == T::TYP } {
-            Some(unsafe { &*(self.inner as *const T) })
-        } else {
-            None
-        }
+        if unsafe { (*self.inner).typ == T::TYP } { Some(unsafe { &*(self.inner as *const T) }) } else { None }
     }
 }
 
@@ -61,6 +82,13 @@ impl fmt::Debug for ErasedGc {
             ObjType::GinkgoNativeFunction => {
                 let value = unsafe { self.as_typ::<GinkgoNativeFunction>().unwrap() };
                 write!(f, "GinkgoNativeFunction {{ name: {:?}, ... }}", value.name)
+            }
+            ObjType::GinkgoClosure => {
+                let value = unsafe { self.as_typ::<GinkgoClosure>().unwrap() };
+                write!(f, "GinkgoClosure {{ callable: {:?}, ... }}", value.callable.clone().erase())
+            }
+            ObjType::GinkgoUpvalue => {
+                write!(f, "GinkgoUpvalue")
             }
         }
     }
@@ -81,21 +109,20 @@ pub enum ObjType {
     GinkgoString,
     GinkgoFunction,
     GinkgoNativeFunction,
+    GinkgoClosure,
+    GinkgoUpvalue,
 }
 
 pub fn object_eq(l: &ErasedGc, r: &ErasedGc) -> bool {
     match unsafe { (*l.inner).typ } {
         ObjType::GinkgoString => {
             let l = unsafe { l.as_typ::<GinkgoString>().unwrap() };
-            if let Some(r) = unsafe { r.as_typ::<GinkgoString>() } {
-                l.as_str() == r.as_str()
-            } else {
-                false
-            }
+            if let Some(r) = unsafe { r.as_typ::<GinkgoString>() } { l.as_str() == r.as_str() } else { false }
         }
         ObjType::GinkgoFunction => todo!(),
         ObjType::GinkgoNativeFunction => todo!(),
-        _ => false,
+        ObjType::GinkgoClosure => todo!(),
+        ObjType::GinkgoUpvalue => todo!(),
     }
 }
 
@@ -104,7 +131,7 @@ pub struct GinkgoString {
     header: ObjHeader,
     capacity: usize,
     length: usize,
-    // data: str,
+    // data: str
 }
 
 impl GinkgoString {
@@ -137,12 +164,19 @@ pub struct GinkgoFunction {
     header: ObjHeader,
     pub name: String,
     pub arity: usize,
+    pub num_upvalues: usize,
     pub chunk: Chunk,
 }
 
 impl GinkgoFunction {
-    pub fn new(name: String, arity: usize, chunk: Chunk) -> Gc<GinkgoFunction> {
-        Gc::new(GinkgoFunction { header: ObjHeader { typ: ObjType::GinkgoFunction }, name, arity, chunk })
+    pub fn new(name: String, arity: usize, num_upvalues: usize, chunk: Chunk) -> Gc<GinkgoFunction> {
+        Gc::new(GinkgoFunction {
+            header: ObjHeader { typ: ObjType::GinkgoFunction },
+            name,
+            arity,
+            num_upvalues,
+            chunk,
+        })
     }
 }
 
@@ -172,4 +206,37 @@ impl GinkgoNativeFunction {
 
 impl GinkgoObj for GinkgoNativeFunction {
     const TYP: ObjType = ObjType::GinkgoNativeFunction;
+}
+
+#[repr(C)]
+pub struct GinkgoClosure {
+    header: ObjHeader,
+    pub callable: Gc<GinkgoFunction>,
+    pub upvalues: Vec<Gc<GinkgoUpvalue>>,
+}
+
+impl GinkgoClosure {
+    pub fn new(callable: Gc<GinkgoFunction>, upvalues: Vec<Gc<GinkgoUpvalue>>) -> Gc<GinkgoClosure> {
+        Gc::new(GinkgoClosure { header: ObjHeader { typ: ObjType::GinkgoClosure }, callable, upvalues })
+    }
+}
+
+impl GinkgoObj for GinkgoClosure {
+    const TYP: ObjType = ObjType::GinkgoClosure;
+}
+
+#[repr(C)]
+pub struct GinkgoUpvalue {
+    header: ObjHeader,
+    pub value: *mut Value,
+}
+
+impl GinkgoUpvalue {
+    pub fn new(value: *mut Value) -> Gc<GinkgoUpvalue> {
+        Gc::new(GinkgoUpvalue { header: ObjHeader { typ: ObjType::GinkgoUpvalue }, value })
+    }
+}
+
+impl GinkgoObj for GinkgoUpvalue {
+    const TYP: ObjType = ObjType::GinkgoUpvalue;
 }

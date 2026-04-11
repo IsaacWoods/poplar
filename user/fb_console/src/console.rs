@@ -1,5 +1,6 @@
 use crate::ConsoleWriter;
 use ginkgo::{
+    object::{GinkgoClosure, GinkgoFunction},
     parse::Parser,
     vm::{Value, Vm},
 };
@@ -20,6 +21,7 @@ impl Console {
         let mut vm = Vm::new();
 
         let prelude = Parser::new(GINKGO_PRELUDE).parse().expect("Parse error in prelude");
+        let prelude = GinkgoClosure::new(GinkgoFunction::new("prelude".to_string(), 0, 0, prelude), vec![]);
         vm.interpret(prelude).expect("Runtime error in prelude");
 
         {
@@ -52,7 +54,7 @@ impl Console {
                 for device in &reply.devices {
                     writeln!(&mut writer, "Device: {}", device.name).unwrap();
                     for (property, value) in &device.properties {
-                        writeln!(&mut writer, "    {}: {:?}", property, value);
+                        writeln!(&mut writer, "    {}: {:?}", property, value).unwrap();
                     }
                 }
 
@@ -66,16 +68,19 @@ impl Console {
     pub fn interpret(&mut self, s: &str) {
         let parser = Parser::new(s);
         match parser.parse() {
-            Ok(chunk) => match self.vm.interpret(chunk) {
-                Ok(_) => {
-                    if let Some(result) = self.vm.stack.pop() {
-                        writeln!(&mut self.writer, "Result: {:?}", result).unwrap();
+            Ok(chunk) => {
+                let closure = GinkgoClosure::new(GinkgoFunction::new("".to_string(), 0, 0, chunk), vec![]);
+                match self.vm.interpret(closure) {
+                    Ok(_) => {
+                        if let Some(result) = self.vm.stack.pop() {
+                            writeln!(&mut self.writer, "Result: {:?}", result).unwrap();
+                        }
+                    }
+                    Err(err) => {
+                        writeln!(&mut self.writer, "Runtime error: {}", err).unwrap();
                     }
                 }
-                Err(err) => {
-                    writeln!(&mut self.writer, "Runtime error: {}", err).unwrap();
-                }
-            },
+            }
             Err(err) => {
                 writeln!(&mut self.writer, "Parse error: {}", err).unwrap();
             }

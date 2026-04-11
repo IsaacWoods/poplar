@@ -23,6 +23,10 @@ Devices on the Platform Bus can be quite abstract, or represent literal devices 
 include a framebuffer "device" provided by a driver for a graphics-capable device, a power-management chip built into the platform, and USB devices,
 respectively.
 
+Each device is allocated a numerical ID. Devices can be organised into tree-like hierarchies based on various parent-child relationships. For example,
+one such relationship exists between each object and the device representing its parent bus. Numerical IDs allow multiple relationships of this nature
+to exist, if the implementation desires.
+
 Devices are described by a series of properties, which are typed pieces of data associated with a label. **Device properties** are used to identify
 devices, and are given to every device driver that claims it may be able to drive a device. **Handoff properties** are only transfered to a driver
 once it has been selected to drive a device, and can contain handles to kernel objects needed to drive the device. These handles are transferred

@@ -1,6 +1,16 @@
 use crate::{
     diagnostic::{Diagnostic, Result},
-    object::{ErasedGc, GinkgoFunction, GinkgoNativeFunction, GinkgoObj, GinkgoString, ObjType},
+    object::{
+        ErasedGc,
+        Gc,
+        GinkgoClosure,
+        GinkgoFunction,
+        GinkgoNativeFunction,
+        GinkgoObj,
+        GinkgoString,
+        GinkgoUpvalue,
+        ObjType,
+    },
 };
 use core::{cmp, fmt};
 use std::collections::BTreeMap;
@@ -66,6 +76,13 @@ opcodes! {
     27 => Call,
     /// Push a value of type `Unit` onto the stack. This is used by functions that don't return values.
     28 => Unit,
+    /// Constructs a closure from the function referenced in the chunk's constant table and push it
+    /// onto the stack. Followed by a single-byte operand which is the index into the constant
+    /// table.
+    29 => Closure,
+    30 => GetUpvalue,
+    31 => SetUpvalue,
+    32 => HoistUpvalue,
 }
 
 // TODO: we should probably be ref-counting these instead of cloning them...
@@ -172,6 +189,25 @@ impl fmt::Debug for Chunk {
                 Opcode::JumpIfFalse => decompile!("JumpIfFalse", jump_operand),
                 Opcode::Call => decompile!("Call", operand),
                 Opcode::Unit => decompile!("Unit"),
+                Opcode::Closure => {
+                    let (_, func_index) = stream.next().unwrap();
+                    let func = self.constants.get(*func_index as usize).unwrap();
+                    let Value::Obj(func) = func else {
+                        panic!();
+                    };
+                    writeln!(f, "[{:#x}] Closure {:?}", offset, func).unwrap();
+
+                    let func = unsafe { func.as_typ::<GinkgoFunction>().unwrap() };
+                    for _ in 0..func.num_upvalues {
+                        let (_, is_local) = stream.next().unwrap();
+                        let (_, index) = stream.next().unwrap();
+                        writeln!(f, "    | {} {}", if *is_local == 1 { "LOCAL" } else { "UPVALUE" }, index)
+                            .unwrap();
+                    }
+                }
+                Opcode::GetUpvalue => decompile!("GetUpvalue", operand),
+                Opcode::SetUpvalue => decompile!("SetUpvalue", operand),
+                Opcode::HoistUpvalue => decompile!("HoistUpvalue"),
             }
         }
         Ok(())
@@ -180,7 +216,7 @@ impl fmt::Debug for Chunk {
 
 pub struct Vm {
     pub stack: Vec<Value>,
-    chunk: Option<Chunk>,
+    closure: Option<Gc<GinkgoClosure>>,
     ip: usize,
     slot_offset: usize,
     call_stack: Vec<CallFrame>,
@@ -189,7 +225,7 @@ pub struct Vm {
 }
 
 pub struct CallFrame {
-    chunk: Chunk,
+    closure: Gc<GinkgoClosure>,
     ip: usize,
     slot_offset: usize,
 }
@@ -202,7 +238,7 @@ impl Vm {
     pub fn new() -> Vm {
         Vm {
             stack: Vec::new(),
-            chunk: None,
+            closure: None,
             ip: 0,
             slot_offset: 0,
             call_stack: Vec::new(),
@@ -222,15 +258,14 @@ impl Vm {
             .insert(name.to_string(), Value::Obj(GinkgoNativeFunction::new(name.to_string(), func).erase()));
     }
 
-    pub fn interpret(&mut self, chunk: Chunk) -> Result<Value> {
-        self.chunk = Some(chunk);
+    pub fn interpret(&mut self, closure: Gc<GinkgoClosure>) -> Result<Value> {
+        self.closure = Some(closure);
         self.ip = 0;
 
         loop {
             let opcode = self.next();
             let Ok(op) = Opcode::try_from(opcode) else { Err(InvalidOpcodeInStream { opcode })? };
 
-            // TODO: add `println` to Poplar's std
             // TODO: this should be behind a compiler flag or something maybe, as it's useful long-term
             // println!("{:?}", self.stack); // Print stack before we execute this op under last instruction
             // println!("[{:#x}] {:?}", self.ip - 1, op);
@@ -245,7 +280,7 @@ impl Vm {
                         self.stack.resize(self.slot_offset, Value::Unit);
                         self.stack.push(return_value);
 
-                        self.chunk = Some(frame.chunk);
+                        self.closure = Some(frame.closure);
                         self.ip = frame.ip;
                         self.slot_offset = frame.slot_offset;
                     } else {
@@ -254,7 +289,7 @@ impl Vm {
                 }
                 Opcode::Constant => {
                     let index = self.next() as usize;
-                    let constant = self.chunk.as_ref().unwrap().constants.get(index).unwrap();
+                    let constant = self.chunk().constants.get(index).unwrap();
                     self.stack.push(constant.clone());
                 }
                 Opcode::True => self.stack.push(Value::Bool(true)),
@@ -295,7 +330,7 @@ impl Vm {
                 Opcode::GetGlobal => {
                     let index = self.next() as usize;
                     let name = {
-                        let name = self.chunk.as_ref().unwrap().constants.get(index).unwrap();
+                        let name = self.chunk().constants.get(index).unwrap();
                         let name = unsafe { name.as_obj::<GinkgoString>().unwrap() };
                         name.as_str().to_string()
                     };
@@ -309,7 +344,7 @@ impl Vm {
                     let index = self.next() as usize;
                     let value = self.stack.pop().unwrap();
                     let name = {
-                        let name = self.chunk.as_ref().unwrap().constants.get(index).unwrap();
+                        let name = self.chunk().constants.get(index).unwrap();
                         let name = unsafe { name.as_obj::<GinkgoString>().unwrap() };
                         name.as_str().to_string()
                     };
@@ -358,52 +393,99 @@ impl Vm {
                 }
                 Opcode::Call => {
                     let arg_count = self.next() as usize;
-                    let called_value = self.stack.get(self.stack.len() - arg_count - 1).unwrap();
+                    let value = self.stack.get(self.stack.len() - arg_count - 1).unwrap();
+                    let Value::Obj(called_value) = value else { Err(ValueNotCallable { got: value.typ() })? };
 
-                    if let Value::Obj(called_value) = called_value {
-                        match called_value.typ() {
-                            ObjType::GinkgoFunction => {
-                                let called_value = unsafe { called_value.as_typ::<GinkgoFunction>().unwrap() };
-                                let old_chunk = self.chunk.replace(called_value.chunk.clone()).unwrap();
-                                let old_ip = self.ip;
-                                let old_slot_offset = self.slot_offset;
+                    match called_value.typ() {
+                        ObjType::GinkgoClosure => {
+                            let closure = unsafe { called_value.as_gc_typ::<GinkgoClosure>().unwrap() };
+                            let old_closure = self.closure.replace(closure).unwrap();
+                            let old_ip = self.ip;
+                            let old_slot_offset = self.slot_offset;
 
-                                self.ip = 0;
-
-                                self.call_stack.push(CallFrame {
-                                    chunk: old_chunk,
-                                    ip: old_ip,
-                                    slot_offset: old_slot_offset,
-                                });
-                            }
-                            ObjType::GinkgoNativeFunction => {
-                                let called_value =
-                                    unsafe { called_value.as_typ::<GinkgoNativeFunction>().unwrap() };
-                                let args = &self.stack[(self.stack.len() - arg_count)..];
-                                let return_value = (called_value.func)(args);
-
-                                self.stack.resize(self.stack.len() - arg_count - 1, Value::Unit);
-                                self.stack.push(return_value);
-                            }
-                            other => Err(ValueNotCallable { got: ValueType::Obj(other) })?,
+                            self.ip = 0;
                             self.slot_offset += self.stack.len() - arg_count;
+
+                            println!("Calling chunk:\n{:?}", self.closure.as_ref().unwrap().callable.chunk);
+
+                            self.call_stack.push(CallFrame {
+                                closure: old_closure,
+                                ip: old_ip,
+                                slot_offset: old_slot_offset,
+                            });
                         }
-                    } else {
-                        Err(ValueNotCallable { got: called_value.typ() })?;
+                        ObjType::GinkgoNativeFunction => {
+                            let called_value = unsafe { called_value.as_typ::<GinkgoNativeFunction>().unwrap() };
+                            let args = &self.stack[(self.stack.len() - arg_count)..];
+                            let return_value = (called_value.func)(args);
+
+                            self.stack.resize(self.stack.len() - arg_count - 1, Value::Unit);
+                            self.stack.push(return_value);
+                        }
+                        _ => Err(ValueNotCallable { got: ValueType::Obj(called_value.typ()) })?,
                     }
                 }
                 Opcode::Unit => {
                     self.stack.push(Value::Unit);
                 }
+                Opcode::Closure => {
+                    let index = self.next() as usize;
+                    let func = self.chunk().constants.get(index).unwrap();
+                    let func = unsafe { func.as_gc_obj::<GinkgoFunction>().unwrap() };
+
+                    // Capture upvalues
+                    let mut upvalues = Vec::with_capacity(func.num_upvalues);
+                    for _ in 0..func.num_upvalues {
+                        let is_local = self.next() == 1;
+                        let index = self.next() as usize;
+
+                        if is_local {
+                            /*
+                             * Create a pointer to the correct local, currently on the VM stack. This
+                             * being sound relies on the VM correctly hoisting the value into the
+                             * upvalue object when this value on the stack would become invalid.
+                             */
+                            let local =
+                                (self.stack.get(self.slot_offset + index)).unwrap() as *const Value as *mut Value;
+                            upvalues.push(GinkgoUpvalue::new(local));
+                        } else {
+                            /*
+                             * This is a chained upvalue that references an upvalue in the surrounding
+                             * scope - the current closure's list of upvalues. We can copy it.
+                             */
+                            upvalues.push(self.closure.as_ref().unwrap().upvalues[index].clone());
+                        }
+                    }
+
+                    let closure = GinkgoClosure::new(func, upvalues);
+                    self.stack.push(Value::Obj(closure.erase()));
+                }
+                Opcode::GetUpvalue => {
+                    let index = self.next() as usize;
+                    let upvalue = self.closure.as_ref().unwrap().upvalues.get(index).unwrap();
+                    self.stack.push(unsafe { (*upvalue.value).clone() });
+                }
+                Opcode::SetUpvalue => {
+                    let index = self.next() as usize;
+                    let upvalue = self.closure.as_ref().unwrap().upvalues.get(index).unwrap();
+                    unsafe {
+                        (*upvalue.value) = self.stack.last().unwrap().clone();
+                    }
+                }
+                Opcode::HoistUpvalue => todo!(),
             }
         }
 
         Ok(Value::Unit)
     }
 
+    fn chunk(&self) -> &Chunk {
+        &self.closure.as_ref().unwrap().callable.chunk
+    }
+
     fn next(&mut self) -> u8 {
         // TODO: handle error
-        let byte = *self.chunk.as_ref().unwrap().code.get(self.ip).expect("No next byte of bytecode");
+        let byte = *self.chunk().code.get(self.ip).expect("No next byte of bytecode");
         self.ip += 1;
         byte
     }
@@ -468,6 +550,19 @@ impl Value {
 
     pub fn as_bool(&self) -> Option<bool> {
         if let Value::Bool(value) = self { Some(*value) } else { None }
+    }
+
+    pub unsafe fn as_gc_obj<T: GinkgoObj>(&self) -> Option<Gc<T>> {
+        if let Value::Obj(obj) = self {
+            let obj_typ = unsafe { (*obj.inner).typ };
+            if obj_typ == T::TYP { Some(Gc { inner: obj.inner as *mut T }) } else { None }
+        } else {
+            None
+        }
+    }
+
+    pub fn as_erased_obj(&self) -> Option<&ErasedGc> {
+        if let Value::Obj(obj) = self { Some(obj) } else { None }
     }
 
     pub unsafe fn as_obj<T: GinkgoObj>(&self) -> Option<&T> {

@@ -59,6 +59,16 @@ pub fn find_tables(boot_info: &BootInfo) -> AcpiTables<PoplarHandler<EcamAccess>
         );
     }
 
+    if let Some(srat) = tables.find_table::<acpi::sdt::srat::Srat>() {
+        for entry in srat.get().entries() {
+            info!("SRAT Entry: {:?}", entry);
+        }
+    }
+    if let Some(slit) = tables.find_table::<acpi::sdt::slit::Slit>() {
+        info!("Slit for {} proximity domains", { slit.get().num_proximity_domains });
+        info!("Matrix: {:?}", slit.get().matrix());
+    }
+
     tables
 }
 
