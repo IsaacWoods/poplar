@@ -1,0 +1,12 @@
+[package]
+name = "xtask"
+version = "0.1.0"
+authors = ["Isaac Woods"]
+edition = "2024"
+
+[dependencies]
+xflags = "0.3"
+eyre = "0.6"
+color-eyre = { version = "0.6" }
+serde = { version = "1", features = ["derive"] }
+toml = "1"

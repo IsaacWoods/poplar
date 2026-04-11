@@ -1,0 +1,2 @@
+[qemu]
+ovmf = "/home/isaac/dev/ovmf/"
