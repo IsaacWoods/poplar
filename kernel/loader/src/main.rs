@@ -21,6 +21,7 @@ use core::{
 };
 use hal::{
     bootinfo,
+    cmdline::Cmdline,
     mem::{MemFlags, PAddr, PageTable, PageTableAllocator, VAddr},
 };
 use uefi::{
@@ -67,6 +68,18 @@ fn main() -> Status {
 
     let mut loader_fs =
         uefi::fs::FileSystem::new(boot::get_image_file_system(boot::image_handle()).unwrap());
+
+    let cmdline_str =
+        match loader_fs.read_to_string(Path::new(&CString16::try_from("cmdline").unwrap())) {
+            Ok(str) => str,
+            Err(err) => {
+                println!("Error reading cmdline from disk: {}. Using default.", err);
+                "".to_string()
+            }
+        };
+    let cmdline_str = cmdline_str.trim();
+    let cmdline = Cmdline::new(&cmdline_str);
+
     let mut kernel_page_table = PageTable::new(&BSPageTableAllocator, VAddr::new(0x0));
     let (kernel, mut next_available_address) = load_kernel(&mut loader_fs, &mut kernel_page_table);
 
@@ -74,7 +87,9 @@ fn main() -> Status {
         unsafe { BootInfoArea::new(next_available_address, &mut kernel_page_table) };
     let boot_info_kernel_addr = next_available_address;
     next_available_address += BootInfoArea::MAX_SIZE;
+
     let mut string_table = BootInfoStringTable::new();
+    let cmdline_offset = string_table.add_string(&cmdline_str);
 
     let (string_table_offset, string_table_length) =
         boot_info_area.write_string_table(string_table);
@@ -129,7 +144,8 @@ fn main() -> Status {
      */
     let mut memory_map = unsafe { boot::exit_boot_services(None) };
     memory_map.sort();
-    let (mem_map_offset, mem_map_length) = process_memory_map(&mut boot_info_area, memory_map);
+    let (mem_map_offset, mem_map_length) =
+        process_memory_map(&mut boot_info_area, memory_map, &cmdline);
 
     boot_info_area.write_header(bootinfo::Header {
         magic: bootinfo::MAGIC,
@@ -139,12 +155,14 @@ fn main() -> Status {
         rsdp_address: find_rsdp()
             .map(|addr| usize::from(addr) as u64)
             .unwrap_or(0),
+        cmdline_offset,
+        cmdline_len: cmdline_str.len() as u16,
         loaded_images_offset: 0,
         num_loaded_images: 0,
         string_table_offset,
         string_table_length,
         video_mode_offset: 0,
-        _reserved0: [0; 3],
+        _reserved0: [0; _],
     });
 
     unsafe {
@@ -159,37 +177,47 @@ fn main() -> Status {
 
 /// Takes the final UEFI memory map and processes it into a form suitable to pass to the kernel.
 /// Returns the `(offset, length)` of the emitted memory map in the `BootInfoArea`.
-fn process_memory_map(boot_info_area: &mut BootInfoArea, memory_map: MemoryMapOwned) -> (u16, u16) {
+fn process_memory_map(
+    boot_info_area: &mut BootInfoArea,
+    memory_map: MemoryMapOwned,
+    cmdline: &Cmdline,
+) -> (u16, u16) {
     let offset = boot_info_area.offset();
     let mut length = 0;
 
-    println!("UEFI memory map:");
+    let debug = cmdline.get("loader.debug_memmap").is_some();
+
+    if debug {
+        println!("UEFI memory map:");
+    }
     for entry in memory_map.entries() {
-        let ty_str = match entry.ty {
-            MemoryType::RESERVED => "RESERVED",
-            MemoryType::LOADER_CODE => "LOADER_CODE",
-            MemoryType::LOADER_DATA => "LOADER_DATA",
-            MemoryType::BOOT_SERVICES_CODE => "BOOT_SERVICES_CODE",
-            MemoryType::BOOT_SERVICES_DATA => "BOOT_SERVICES_DATA",
-            MemoryType::RUNTIME_SERVICES_CODE => "RUNTIME_SERVICES_CODE",
-            MemoryType::RUNTIME_SERVICES_DATA => "RUNTIME_SERVICES_DATA",
-            MemoryType::CONVENTIONAL => "CONVENTIONAL",
-            MemoryType::UNUSABLE => "UNUSABLE",
-            MemoryType::ACPI_RECLAIM => "ACPI_RECLAIM",
-            MemoryType::ACPI_NON_VOLATILE => "ACPI_NON_VOLATILE",
-            MemoryType::MMIO => "MMIO",
-            MemoryType::MMIO_PORT_SPACE => "MMIO_PORT_SPACE",
-            MemoryType::PAL_CODE => "PAL_CODE",
-            MemoryType::PERSISTENT_MEMORY => "PERSISTENT_MEMORY",
-            MemoryType::UNACCEPTED => "UNACCEPTED",
-            _ => "????",
-        };
-        println!(
-            "    {:<30} {:016x} .. {:016x}",
-            ty_str,
-            entry.phys_start,
-            entry.phys_start + entry.page_count * PageTable::PAGE_SIZE_4KIB as u64
-        );
+        if debug {
+            let ty_str = match entry.ty {
+                MemoryType::RESERVED => "RESERVED",
+                MemoryType::LOADER_CODE => "LOADER_CODE",
+                MemoryType::LOADER_DATA => "LOADER_DATA",
+                MemoryType::BOOT_SERVICES_CODE => "BOOT_SERVICES_CODE",
+                MemoryType::BOOT_SERVICES_DATA => "BOOT_SERVICES_DATA",
+                MemoryType::RUNTIME_SERVICES_CODE => "RUNTIME_SERVICES_CODE",
+                MemoryType::RUNTIME_SERVICES_DATA => "RUNTIME_SERVICES_DATA",
+                MemoryType::CONVENTIONAL => "CONVENTIONAL",
+                MemoryType::UNUSABLE => "UNUSABLE",
+                MemoryType::ACPI_RECLAIM => "ACPI_RECLAIM",
+                MemoryType::ACPI_NON_VOLATILE => "ACPI_NON_VOLATILE",
+                MemoryType::MMIO => "MMIO",
+                MemoryType::MMIO_PORT_SPACE => "MMIO_PORT_SPACE",
+                MemoryType::PAL_CODE => "PAL_CODE",
+                MemoryType::PERSISTENT_MEMORY => "PERSISTENT_MEMORY",
+                MemoryType::UNACCEPTED => "UNACCEPTED",
+                _ => "????",
+            };
+            println!(
+                "    {:<30} {:016x} .. {:016x}",
+                ty_str,
+                entry.phys_start,
+                entry.phys_start + entry.page_count * PageTable::PAGE_SIZE_4KIB as u64
+            );
+        }
 
         let typ = match entry.ty {
             MemoryType::RESERVED => bootinfo::MemoryType::Reserved,
@@ -296,17 +324,19 @@ fn process_memory_map(boot_info_area: &mut BootInfoArea, memory_map: MemoryMapOw
      * address at the end (if necessary).
      */
 
-    println!("Final memory map:");
-    for entry in memory_map {
-        if entry.typ == bootinfo::MemoryType::Scratch {
-            continue;
+    if debug {
+        println!("Final memory map:");
+        for entry in memory_map {
+            if entry.typ == bootinfo::MemoryType::Scratch {
+                continue;
+            }
+            println!(
+                "    {:<30?} {:016x} .. {:016x}",
+                entry.typ,
+                entry.base,
+                entry.base + entry.length
+            );
         }
-        println!(
-            "    {:<30?} {:016x} .. {:016x}",
-            entry.typ,
-            entry.base,
-            entry.base + entry.length
-        );
     }
 
     (offset, length as u16)
