@@ -1,3 +1,6 @@
+[workspace]
+members = ["hal", "loader"]
+
 [package]
 name = "kernel"
 version = "0.1.0"
@@ -5,3 +8,4 @@ authors = ["Isaac Woods"]
 edition = "2024"
 
 [dependencies]
+hal = { path = "hal" }

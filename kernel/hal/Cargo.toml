@@ -5,3 +5,5 @@ authors = ["Isaac Woods"]
 edition = "2024"
 
 [dependencies]
+bit_field = "0.10"
+mycelium-bitfield = "0.1"
