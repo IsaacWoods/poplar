@@ -33,6 +33,8 @@ name = "kernel"
 version = "0.1.0"
 dependencies = [
  "hal",
+ "tracing",
+ "tracing-core",
 ]
 
 [[package]]
@@ -55,6 +57,12 @@ name = "mycelium-bitfield"
 version = "0.1.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "24e0cc5e2c585acbd15c5ce911dff71e1f4d5313f43345873311c4f5efd741cc"
+
+[[package]]
+name = "pin-project-lite"
+version = "0.2.17"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a89322df9ebe1c1578d689c92318e070967d1042b512afbe49518723f4e6d5cd"
 
 [[package]]
 name = "proc-macro2"
@@ -104,6 +112,20 @@ dependencies = [
  "quote",
  "unicode-ident",
 ]
+
+[[package]]
+name = "tracing"
+version = "0.2.0"
+source = "git+https://github.com/tokio-rs/tracing?branch=v0.2.x#134f9371c67d241d147f9284cf5570135b577dc3"
+dependencies = [
+ "pin-project-lite",
+ "tracing-core",
+]
+
+[[package]]
+name = "tracing-core"
+version = "0.2.0"
+source = "git+https://github.com/tokio-rs/tracing?branch=v0.2.x#134f9371c67d241d147f9284cf5570135b577dc3"
 
 [[package]]
 name = "ucs2"

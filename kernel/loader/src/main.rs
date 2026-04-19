@@ -165,6 +165,7 @@ fn main() -> Status {
         _reserved0: [0; _],
     });
 
+    println!("Entering kernel...\n");
     unsafe {
         trampoline(
             boot_info_kernel_addr,
