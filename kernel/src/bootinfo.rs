@@ -35,7 +35,7 @@ impl BootInfo {
     }
 
     pub fn memory_map(&self) -> &[MemoryEntry] {
-        let header = unsafe { *self.base };
+        let header = self.header();
         unsafe {
             slice::from_raw_parts(
                 self.base.byte_add(header.mem_map_offset as usize) as *const MemoryEntry,
@@ -45,12 +45,20 @@ impl BootInfo {
     }
 
     pub fn memory_map_mut(&mut self) -> &mut [MemoryEntry] {
-        let header = unsafe { *self.base };
+        let header = self.header();
         unsafe {
             slice::from_raw_parts_mut(
                 self.base.byte_add(header.mem_map_offset as usize) as *mut MemoryEntry,
                 header.mem_map_length as usize,
             )
+        }
+    }
+
+    pub fn rsdp_addr(&self) -> Option<PAddr> {
+        let header = self.header();
+        match header.rsdp_address {
+            0 => None,
+            addr => Some(PAddr::new(addr as usize)),
         }
     }
 
@@ -64,7 +72,7 @@ impl BootInfo {
     }
 
     pub fn cmdline(&self) -> &'_ str {
-        let header = unsafe { *self.base };
+        let header = self.header();
         self.read_string(header.cmdline_offset, header.cmdline_len)
     }
 }

@@ -8,6 +8,7 @@ extern crate std;
 
 mod bootinfo;
 mod heap;
+mod kacpi;
 mod trace;
 
 use crate::bootinfo::BootInfo;
@@ -29,6 +30,8 @@ pub fn kentry(boot_info_ptr: VAddr) -> ! {
     let mut kernel_page_table =
         unsafe { PageTable::current(hal::mem::kernel_map::PHYSICAL_MAPPING_BASE) };
     heap::bootstrap(&mut kernel_page_table, &mut boot_info);
+
+    let _acpi_tables = kacpi::find_tables(&boot_info);
 
     loop {}
 }
