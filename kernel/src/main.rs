@@ -2,17 +2,18 @@
 #![cfg_attr(not(test), no_main)]
 #![feature(str_from_raw_parts)]
 
-// extern crate alloc;
-// #[cfg(test)]
-// extern crate std;
+extern crate alloc;
+#[cfg(test)]
+extern crate std;
 
 mod bootinfo;
+mod heap;
 mod trace;
 
 use crate::bootinfo::BootInfo;
+use hal::mem::PageTable;
 use hal::{cmdline::Cmdline, mem::VAddr};
 use tracing::info;
-use tracing::trace;
 
 #[unsafe(no_mangle)]
 pub fn kentry(boot_info_ptr: VAddr) -> ! {
@@ -20,14 +21,14 @@ pub fn kentry(boot_info_ptr: VAddr) -> ! {
         .unwrap();
     info!("Hello from the kernel!");
 
-    let boot_info = BootInfo::new(boot_info_ptr);
+    let mut boot_info = BootInfo::new(boot_info_ptr);
     info!("Kernel cmdline: \"{}\"", boot_info.cmdline());
     let cmdline = Cmdline::new(boot_info.cmdline());
     trace::SUBSCRIBER.configure(&cmdline);
 
-    for entry in boot_info.memory_map() {
-        trace!("Memory map entry: {:?}", entry);
-    }
+    let mut kernel_page_table =
+        unsafe { PageTable::current(hal::mem::kernel_map::PHYSICAL_MAPPING_BASE) };
+    heap::bootstrap(&mut kernel_page_table, &mut boot_info);
 
     loop {}
 }

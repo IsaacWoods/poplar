@@ -31,20 +31,7 @@ impl PAddr {
     /// Align this address to the given alignment, moving downwards if this is not already aligned.
     /// `align` must be `0` or a power-of-two.
     pub fn align_down(self, align: usize) -> PAddr {
-        if align.is_power_of_two() {
-            /*
-             * E.g.
-             *      align       =   0b00001000
-             *      align-1     =   0b00000111
-             *      !(align-1)  =   0b11111000
-             *                             ^^^ Masks the address to the value below it with the
-             *                                 correct alignment
-             */
-            PAddr(self.0 & !(align - 1))
-        } else {
-            assert!(align == 0);
-            self
-        }
+        PAddr(crate::align_down(self.0, align))
     }
 
     pub fn align_up(self, align: usize) -> PAddr {
@@ -166,20 +153,7 @@ impl VAddr {
     /// Align this address to the given alignment, moving downwards if this is not already aligned. `align` must
     /// be `0` or a power-of-two.
     pub fn align_down(self, align: usize) -> VAddr {
-        if align.is_power_of_two() {
-            /*
-             * E.g.
-             *      align       =   0b00001000
-             *      align-1     =   0b00000111
-             *      !(align-1)  =   0b11111000
-             *                             ^^^ Masks the address to the value below it with the
-             *                                 correct alignment
-             */
-            VAddr(self.0 & !(align - 1))
-        } else {
-            assert!(align == 0);
-            self
-        }
+        VAddr(crate::align_down(self.0, align)).canonicalise()
     }
 
     /// Align this address to the given alignment, moving upwards if this is not already aligned. `align` must be

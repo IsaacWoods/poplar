@@ -2,6 +2,8 @@ pub mod addr;
 
 pub use addr::{PAddr, VAddr};
 
+use crate::cpu::Cr3;
+use bit_field::BitField;
 use core::{fmt, ops};
 
 /// Poplar utilises 4-level paging on all x86_64 systems. This means the higher-half starts at
@@ -76,6 +78,16 @@ impl PageTable {
         let p4 = allocator.alloc();
         PageTable {
             p4,
+            virtual_mapping_base,
+        }
+    }
+
+    pub unsafe fn current(virtual_mapping_base: VAddr) -> PageTable {
+        let mut cr3 = Cr3::read();
+        cr3.set_bits(0..12, 0);
+
+        PageTable {
+            p4: PAddr::new(cr3 as usize),
             virtual_mapping_base,
         }
     }
