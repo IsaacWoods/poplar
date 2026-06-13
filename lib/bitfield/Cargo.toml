@@ -1,0 +1,12 @@
+[workspace]
+members = ["bitfield_macro"]
+
+[package]
+name = "bitfield"
+version = "0.1.0"
+authors = ["Isaac Woods"]
+edition = "2024"
+resolver = "2"
+
+[dependencies]
+bitfield_macro = { path = "bitfield_macro" }

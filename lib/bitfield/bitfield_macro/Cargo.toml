@@ -1,0 +1,15 @@
+[package]
+name = "bitfield_macro"
+version = "0.1.0"
+authors = ["Isaac Woods"]
+edition = "2024"
+
+[lib]
+name = "bitfield_macro"
+path = "src/lib.rs"
+proc-macro = true
+
+[dependencies]
+syn = { version = "2", features = ["full"] }
+proc-macro2 = "1"
+quote = "1"
