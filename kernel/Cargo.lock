@@ -21,6 +21,22 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1e4b40c7323adcfc0a41c4b88143ed58346ff65a288fc144329c5c45e05d70c6"
 
 [[package]]
+name = "bitfield"
+version = "0.1.0"
+dependencies = [
+ "bitfield_macro",
+]
+
+[[package]]
+name = "bitfield_macro"
+version = "0.1.0"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn",
+]
+
+[[package]]
 name = "bitflags"
 version = "2.11.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -43,7 +59,7 @@ name = "hal"
 version = "0.1.0"
 dependencies = [
  "bit_field",
- "mycelium-bitfield",
+ "bitfield",
 ]
 
 [[package]]
@@ -51,6 +67,7 @@ name = "kernel"
 version = "0.1.0"
 dependencies = [
  "acpi",
+ "bitfield",
  "hal",
  "tracing",
  "tracing-core",

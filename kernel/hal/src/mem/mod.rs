@@ -416,8 +416,7 @@ impl ops::IndexMut<usize> for Table {
     }
 }
 
-mycelium_bitfield::bitfield! {
-    #[derive(PartialEq, Eq)]
+bitfield::bitfield! {
     pub struct TableEntry<u64> {
         pub const PRESENT: bool;
         pub const WRITABLE: bool;
@@ -436,7 +435,7 @@ mycelium_bitfield::bitfield! {
 
 impl TableEntry {
     pub fn address(&self) -> PAddr {
-        PAddr::new((self.get(Self::ADDRESS) << 12) as usize)
+        PAddr::new(self.get::<usize>(Self::ADDRESS) << 12)
     }
 
     pub fn with_address(self, address: PAddr) -> Self {

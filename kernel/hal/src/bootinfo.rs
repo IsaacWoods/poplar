@@ -97,8 +97,8 @@ pub struct LoadedSegment {
     pub flags: SegmentFlags,
 }
 
-mycelium_bitfield::bitfield! {
-    #[derive(Default)]
+bitfield::bitfield! {
+    #[derive(Default, Debug)]
     pub struct SegmentFlags<u32> {
         pub const WRITABLE: bool;
         pub const EXECUTABLE: bool;
