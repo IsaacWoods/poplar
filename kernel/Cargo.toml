@@ -10,6 +10,7 @@ edition = "2024"
 
 [dependencies]
 hal = { path = "hal" }
+bnb = { path = "../lib/bnb" }
 tracing-core = { git = "https://github.com/tokio-rs/tracing", branch = "v0.2.x", default-features = false }
 tracing = { git = "https://github.com/tokio-rs/tracing", branch = "v0.2.x", default-features = false }
 acpi = { path = "acpi" }

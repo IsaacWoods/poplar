@@ -3,7 +3,7 @@ pub mod addr;
 pub use addr::{PAddr, VAddr};
 
 use crate::cpu::Cr3;
-use bit_field::BitField;
+use bnb::BitOps;
 use core::{fmt, ops};
 
 /// Poplar utilises 4-level paging on all x86_64 systems. This means the higher-half starts at

@@ -43,6 +43,10 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c4512299f36f043ab09a583e57bceb5a5aab7a73db1805848e8fef3c9e8c78b3"
 
 [[package]]
+name = "bnb"
+version = "0.1.0"
+
+[[package]]
 name = "byteorder"
 version = "1.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -58,8 +62,8 @@ checksum = "9330f8b2ff13f34540b44e946ef35111825727b38d33286ef986142615121801"
 name = "hal"
 version = "0.1.0"
 dependencies = [
- "bit_field",
  "bitfield",
+ "bnb",
 ]
 
 [[package]]
@@ -68,6 +72,7 @@ version = "0.1.0"
 dependencies = [
  "acpi",
  "bitfield",
+ "bnb",
  "hal",
  "tracing",
  "tracing-core",

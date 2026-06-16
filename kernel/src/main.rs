@@ -1,6 +1,6 @@
 #![no_std]
 #![cfg_attr(not(test), no_main)]
-#![feature(str_from_raw_parts)]
+#![feature(str_from_raw_parts, const_trait_impl, const_convert)]
 
 extern crate alloc;
 #[cfg(test)]

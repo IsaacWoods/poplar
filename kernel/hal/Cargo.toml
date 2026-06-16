@@ -5,5 +5,5 @@ authors = ["Isaac Woods"]
 edition = "2024"
 
 [dependencies]
-bit_field = "0.10"
+bnb = { path = "../../lib/bnb" }
 bitfield = { path = "../../lib/bitfield" }

@@ -1,5 +1,5 @@
 #![no_std]
-#![feature(pattern, trim_prefix_suffix, const_trait_impl)]
+#![feature(pattern, trim_prefix_suffix, const_trait_impl, const_convert)]
 
 pub mod bootinfo;
 pub mod cmdline;

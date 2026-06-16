@@ -1,4 +1,4 @@
-use bit_field::BitField;
+use bnb::BitOps;
 use core::{fmt, ops};
 
 /// Represents a **valid** physical address. For most x86_64 platforms, physical addresses must be
@@ -69,7 +69,7 @@ impl fmt::Debug for PAddr {
     }
 }
 
-impl From<PAddr> for usize {
+const impl From<PAddr> for usize {
     fn from(address: PAddr) -> usize {
         address.0
     }
@@ -175,19 +175,19 @@ impl VAddr {
     }
 
     pub fn p4_index(&self) -> usize {
-        self.0.get_bits(39..48)
+        self.0.bits(39..48)
     }
     pub fn p3_index(&self) -> usize {
-        self.0.get_bits(30..39)
+        self.0.bits(30..39)
     }
     pub fn p2_index(&self) -> usize {
-        self.0.get_bits(21..30)
+        self.0.bits(21..30)
     }
     pub fn p1_index(&self) -> usize {
-        self.0.get_bits(12..21)
+        self.0.bits(12..21)
     }
     pub fn p_offset(&self) -> usize {
-        self.0.get_bits(0..12)
+        self.0.bits(0..12)
     }
 }
 
@@ -209,7 +209,7 @@ impl fmt::Debug for VAddr {
     }
 }
 
-impl From<VAddr> for usize {
+const impl From<VAddr> for usize {
     fn from(address: VAddr) -> usize {
         address.0
     }
