@@ -1,11 +1,12 @@
 #![no_std]
 #![cfg_attr(not(test), no_main)]
-#![feature(str_from_raw_parts, const_trait_impl, const_convert)]
+#![feature(str_from_raw_parts, const_trait_impl, box_as_ptr)]
 
 extern crate alloc;
 #[cfg(test)]
 extern crate std;
 
+mod arch;
 mod bootinfo;
 mod heap;
 mod kacpi;
@@ -21,7 +22,7 @@ use tracing::info;
 pub fn kentry(boot_info_ptr: VAddr) -> ! {
     tracing::dispatch::set_global_default(tracing::Dispatch::from_static(&trace::SUBSCRIBER))
         .unwrap();
-    info!("Hello from the kernel!");
+    info!("Starting the Poplar kernel v{}", env!("CARGO_PKG_VERSION"));
 
     let mut boot_info = BootInfo::new(boot_info_ptr);
     info!("Kernel cmdline: \"{}\"", boot_info.cmdline());
@@ -35,6 +36,8 @@ pub fn kentry(boot_info_ptr: VAddr) -> ! {
     pmm::PMM.initialize(boot_info.memory_map());
 
     let _acpi_tables = kacpi::find_tables(&boot_info);
+
+    arch::initialize_bsp();
 
     loop {}
 }

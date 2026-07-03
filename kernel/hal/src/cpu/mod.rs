@@ -1,5 +1,7 @@
 use core::arch::asm;
 
+pub mod tables;
+
 macro_rules! read_control_reg {
     ($cr:ident) => {
         {
