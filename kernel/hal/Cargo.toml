@@ -7,3 +7,4 @@ edition = "2024"
 [dependencies]
 bnb = { path = "../../lib/bnb" }
 bitfield = { path = "../../lib/bitfield" }
+lock_api = "0.4"

@@ -132,6 +132,10 @@ pub fn bitfield(item: TokenStream) -> TokenStream {
                 Self(0)
             }
 
+            #vis const fn from_raw(value: #base) -> Self {
+                Self(value)
+            }
+
             #vis const fn with<T>(self, field: ::bitfield::pack::Packer<#base>, value: T) -> Self where T: const ::bitfield::FromBits<#base> {
                 Self(field.pack(self.0, value))
             }

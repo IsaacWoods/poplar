@@ -9,6 +9,7 @@ dependencies = [
  "bit_field",
  "bitflags",
  "byteorder",
+ "lock_api",
  "log",
  "pci_types",
  "spinning_top",
@@ -64,6 +65,7 @@ version = "0.1.0"
 dependencies = [
  "bitfield",
  "bnb",
+ "lock_api",
 ]
 
 [[package]]

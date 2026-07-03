@@ -1,101 +1,97 @@
+use crate::cpu::CpuFlags;
+use bnb::BitOps;
 use core::{
-    cell::UnsafeCell,
-    fmt,
-    ops::{Deref, DerefMut},
-    sync::atomic::{AtomicBool, Ordering},
+    arch::asm,
+    sync::atomic::{AtomicBool, AtomicUsize, Ordering},
 };
+use lock_api::{GuardNoSend, GuardSend, RawMutex};
 
-pub struct Spinlock<T> {
-    inner: UnsafeCell<T>,
-    locked: AtomicBool,
-}
+pub type Spinlock<T> = lock_api::Mutex<RawSpinlock, T>;
+pub type SpinlockGuard<'a, T> = lock_api::MutexGuard<'a, RawSpinlock, T>;
 
-unsafe impl<T: Send> Send for Spinlock<T> {}
-unsafe impl<T: Send> Sync for Spinlock<T> {}
+pub struct RawSpinlock(AtomicBool);
 
-impl<T> Spinlock<T> {
-    pub const fn new(value: T) -> Spinlock<T> {
-        Spinlock {
-            inner: UnsafeCell::new(value),
-            locked: AtomicBool::new(false),
-        }
-    }
+unsafe impl RawMutex for RawSpinlock {
+    const INIT: RawSpinlock = RawSpinlock(AtomicBool::new(false));
+    type GuardMarker = GuardSend;
 
-    pub fn lock(&self) -> SpinlockGuard<'_, T> {
+    fn lock(&self) {
         while self
-            .locked
+            .0
             .compare_exchange_weak(false, true, Ordering::Acquire, Ordering::Relaxed)
             .is_err()
         {
             core::hint::spin_loop();
         }
-
-        SpinlockGuard { lock: &self }
     }
 
-    pub fn try_lock(&self) -> Option<SpinlockGuard<'_, T>> {
-        if self
-            .locked
+    fn try_lock(&self) -> bool {
+        self.0
             .compare_exchange(false, true, Ordering::Acquire, Ordering::Relaxed)
             .is_ok()
+    }
+
+    unsafe fn unlock(&self) {
+        self.0.store(false, Ordering::Release);
+    }
+}
+
+/// A spinlock that disables interrupts when taken, and restores the previous interrupt state when
+/// released.
+pub type IrqSpinlock<T> = lock_api::Mutex<RawIrqSpinlock, T>;
+pub type IrqSpinlockGuard<'a, T> = lock_api::MutexGuard<'a, RawIrqSpinlock, T>;
+
+/// Backing spinlock for `IrqSpinlock`. Can be atomically taken and will disable interrupts on
+/// locking, storing the previous interrupt state for the current CPU. When the lock is released,
+/// the previous interrupt state is resumed.
+///
+/// Valid states
+///    - `0` - the lock is free and may be taken
+///    - `0b01` - the lock is taken, interrupts are disabled, and were disabled before taking the lock
+///    - `0b11` - the lock is taken, interrupts are disabled, but should be re-enabled when the lock is released
+pub struct RawIrqSpinlock(AtomicUsize);
+
+unsafe impl RawMutex for RawIrqSpinlock {
+    const INIT: RawIrqSpinlock = RawIrqSpinlock(AtomicUsize::new(0));
+    /// Locking the mutex disables interrupts on the *current* CPU, and therefore locks must not be
+    /// transferred between CPUs.
+    type GuardMarker = GuardNoSend;
+
+    fn lock(&self) {
+        let interrupts_enabled: bool = CpuFlags::read().get(CpuFlags::INTERRUPT_EN);
+        let value = 0b1 | if interrupts_enabled { 0b10 } else { 0 };
+        unsafe { asm!("cli") };
+
+        while self
+            .0
+            .compare_exchange_weak(0, value, Ordering::Acquire, Ordering::Relaxed)
+            .is_err()
         {
-            Some(SpinlockGuard { lock: &self })
-        } else {
-            None
+            core::hint::spin_loop();
         }
     }
 
-    fn unlock(&self) {
-        self.locked
-            .compare_exchange(true, false, Ordering::Release, Ordering::Relaxed)
-            .unwrap();
+    fn try_lock(&self) -> bool {
+        let interrupts_enabled: bool = CpuFlags::read().get(CpuFlags::INTERRUPT_EN);
+        let state = 0b1 | if interrupts_enabled { 0b10 } else { 0 };
+        unsafe { asm!("cli") };
+
+        let taken = self
+            .0
+            .compare_exchange(0, state, Ordering::Acquire, Ordering::Relaxed)
+            .is_ok();
+
+        if !taken && interrupts_enabled {
+            unsafe { asm!("sti") };
+        }
+
+        taken
     }
-}
 
-pub struct SpinlockGuard<'a, T> {
-    lock: &'a Spinlock<T>,
-}
-
-unsafe impl<'a, T> Sync for SpinlockGuard<'a, T> where T: Sync {}
-
-impl<'a, T> SpinlockGuard<'a, T> {}
-
-impl<'a, T> Deref for SpinlockGuard<'a, T> {
-    type Target = T;
-
-    #[inline]
-    fn deref(&self) -> &Self::Target {
-        unsafe { &*self.lock.inner.get() }
-    }
-}
-
-impl<'a, T> DerefMut for SpinlockGuard<'a, T> {
-    #[inline]
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        unsafe { &mut *self.lock.inner.get() }
-    }
-}
-
-impl<'a, T> Drop for SpinlockGuard<'a, T> {
-    fn drop(&mut self) {
-        self.lock.unlock();
-    }
-}
-
-impl<'a, T> fmt::Display for SpinlockGuard<'a, T>
-where
-    T: fmt::Display,
-{
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        fmt::Display::fmt(&**self, f)
-    }
-}
-
-impl<'a, T> fmt::Debug for SpinlockGuard<'a, T>
-where
-    T: fmt::Debug,
-{
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        fmt::Debug::fmt(&**self, f)
+    unsafe fn unlock(&self) {
+        let state = self.0.swap(0, Ordering::Release);
+        if state.bit(1) {
+            unsafe { asm!("sti") };
+        }
     }
 }
