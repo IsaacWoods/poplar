@@ -9,13 +9,22 @@
 //! APs (Application Processors) are either booted from the BSP, or are booted by the hardware
 //! alongside the BSP, and only perform initialization needed on each CPU.
 
+mod exception;
+pub mod interrupt;
+
 use alloc::boxed::Box;
 use bnb::BitOps;
-use core::mem;
-use core::mem::MaybeUninit;
-use core::{arch::global_asm, marker::PhantomPinned};
-use hal::cpu::tables::{DescriptorTablePtr, GdtDescriptor, Tss};
-use hal::mem::VAddr;
+use core::{arch::global_asm, marker::PhantomPinned, mem, mem::MaybeUninit};
+use hal::{
+    cpu::{
+        interrupt::Exception,
+        tables::{DescriptorTablePtr, GdtDescriptor, Tss},
+    },
+    mem::VAddr,
+    wrap_handler,
+    wrap_handler_with_error_code,
+};
+use interrupt::IDT;
 
 global_asm!(include_str!("helpers.asm"));
 
@@ -94,5 +103,43 @@ pub fn initialize_bsp() {
     };
     unsafe { load_gdt(&gdt_ptr as *const DescriptorTablePtr) };
 
+    {
+        use exception::*;
+        IDT.install_exception_handler(Exception::DivideError, wrap_handler!(divide_error));
+        IDT.install_exception_handler(Exception::Debug, wrap_handler!(debug_exception));
+        IDT.install_exception_handler(Exception::Nmi, wrap_handler!(nmi));
+        IDT.install_exception_handler(Exception::Breakpoint, wrap_handler!(breakpoint));
+        IDT.install_exception_handler(Exception::InvalidOpcode, wrap_handler!(invalid_opcode));
+        IDT.install_exception_handler(
+            Exception::DeviceNotAvailable,
+            wrap_handler!(device_not_available),
+        );
+        IDT.install_exception_handler(
+            Exception::DoubleFault,
+            wrap_handler_with_error_code!(double_fault),
+        );
+        IDT.install_exception_handler(
+            Exception::InvalidTss,
+            wrap_handler_with_error_code!(invalid_tss),
+        );
+        IDT.install_exception_handler(
+            Exception::SegmentNotPresent,
+            wrap_handler_with_error_code!(segment_not_present),
+        );
+        IDT.install_exception_handler(
+            Exception::StackSegmentFault,
+            wrap_handler_with_error_code!(stack_segment_fault),
+        );
+        IDT.install_exception_handler(
+            Exception::GeneralProtectionFault,
+            wrap_handler_with_error_code!(general_protection_fault),
+        );
+        IDT.install_exception_handler(
+            Exception::PageFault,
+            wrap_handler_with_error_code!(page_fault),
+        );
+        IDT.install_exception_handler(Exception::MathFault, wrap_handler!(math_fault));
+    }
+    IDT.install();
     todo!()
 }

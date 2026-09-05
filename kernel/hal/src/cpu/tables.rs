@@ -135,3 +135,19 @@ impl Tss {
         }
     }
 }
+
+bitfield::bitfield! {
+    pub struct IdtEntry<u128> {
+        pub const OFFSET_LO = 16;
+        pub const SEGMENT_SELECTOR = 16;
+        pub const IST = 3;
+        const _RESERVED0 = 5;
+        pub const TYPE = 4;
+        const _RESERVED1: bool;
+        pub const DPL = 2;
+        pub const PRESENT: bool;
+        pub const OFFSET_MI = 16;
+        pub const OFFSET_HI = 32;
+        const _RESERVED2 = 32;
+    }
+}

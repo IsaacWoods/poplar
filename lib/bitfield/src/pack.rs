@@ -68,7 +68,7 @@ macro_rules! make_packable {
     }
 }
 
-make_packable! { u8, u16, u32, u64, usize }
+make_packable! { u8, u16, u32, u64, u128, usize }
 
 /// `Packer` represents packing a value into some bits of an underlying value of type `B`.
 #[derive(Clone, Copy)]

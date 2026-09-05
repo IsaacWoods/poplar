@@ -1,5 +1,6 @@
 use core::arch::asm;
 
+pub mod interrupt;
 pub mod tables;
 
 macro_rules! read_control_reg {
@@ -38,6 +39,8 @@ impl Cr3 {
 }
 
 bitfield::bitfield! {
+    // TODO: the `bitfield` macro should generate a better `Debug`
+    #[derive(Debug)]
     pub struct CpuFlags<u64> {
         pub const CARRY: bool;
         const _RESERVED0: bool;
