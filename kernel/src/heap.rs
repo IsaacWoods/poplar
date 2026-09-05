@@ -14,8 +14,11 @@ use core::{
     mem,
     ptr::{self, NonNull},
 };
-use hal::mem::{MemFlags, PageTable, VAddr};
-use hal::{align_up, sync::Spinlock};
+use hal::{
+    align_up,
+    mem::{MemFlags, PageTable, VAddr},
+    sync::Spinlock,
+};
 use tracing::debug;
 
 #[cfg_attr(not(test), global_allocator)]

@@ -14,8 +14,10 @@ mod pmm;
 mod trace;
 
 use crate::bootinfo::BootInfo;
-use hal::mem::PageTable;
-use hal::{cmdline::Cmdline, mem::VAddr};
+use hal::{
+    cmdline::Cmdline,
+    mem::{PageTable, VAddr},
+};
 use tracing::info;
 
 #[unsafe(no_mangle)]

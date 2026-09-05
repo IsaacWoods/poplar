@@ -3,8 +3,7 @@ use core::{
     str::FromStr,
     sync::atomic::{AtomicU64, Ordering},
 };
-use hal::sync::Spinlock;
-use hal::{cmdline::Cmdline, io::IoPort};
+use hal::{cmdline::Cmdline, io::IoPort, sync::Spinlock};
 use tracing::warn;
 use tracing_core::{Event, Level, span};
 

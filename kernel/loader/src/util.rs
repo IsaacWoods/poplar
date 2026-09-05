@@ -1,6 +1,5 @@
 use core::fmt;
-use hal::io::IoPort;
-use hal::sync::Spinlock;
+use hal::{io::IoPort, sync::Spinlock};
 
 pub const DEBUG_WRITER: Spinlock<DebugWriter> = Spinlock::new(DebugWriter::new());
 
