@@ -66,6 +66,7 @@ dependencies = [
  "bitfield",
  "bnb",
  "lock_api",
+ "tracing",
 ]
 
 [[package]]

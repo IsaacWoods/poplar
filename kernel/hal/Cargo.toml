@@ -5,6 +5,7 @@ authors = ["Isaac Woods"]
 edition = "2024"
 
 [dependencies]
+tracing = { git = "https://github.com/tokio-rs/tracing", branch = "v0.2.x", default-features = false }
 bnb = { path = "../../lib/bnb" }
 bitfield = { path = "../../lib/bitfield" }
 lock_api = "0.4"

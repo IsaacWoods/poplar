@@ -39,6 +39,20 @@ pub fn kentry(boot_info_ptr: VAddr) -> ! {
 
     let _acpi_tables = kacpi::find_tables(&boot_info);
 
+    let cpuinfo = hal::cpuid::CpuInfo::new();
+    if let Some(brand_string) = cpuinfo.brand_string {
+        info!(
+            "Running on a {} processor ({})",
+            cpuinfo.vendor_string.as_str(),
+            brand_string.as_str()
+        );
+    } else {
+        info!(
+            "Running on an unknown {} processor",
+            cpuinfo.vendor_string.as_str()
+        );
+    }
+
     arch::initialize_bsp();
 
     loop {}
